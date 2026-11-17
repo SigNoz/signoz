@@ -165,22 +165,6 @@ func isNormalizerProcessor(name string) bool {
 	return name == normalizerProcessor || strings.HasPrefix(name, normalizerProcessorPrefix)
 }
 
-// collectorNormalizesFirst reports whether the logs pipeline of the collector config runs
-// signozlogsnormalizer ahead of user pipelines, judged by the first one as in buildCollectorPipelineProcessorsList.
-// Malformed configs report false; generateCollectorConfigWithPipelines surfaces their errors.
-func collectorNormalizesFirst(collectorConf map[string]interface{}) bool {
-	p, err := getOtelPipelineFromConfig(collectorConf)
-	if err != nil || p.Pipelines.Logs == nil {
-		return false
-	}
-	normalizerIdx := slices.IndexFunc(p.Pipelines.Logs.Processors, isNormalizerProcessor)
-	if normalizerIdx < 0 {
-		return false
-	}
-	processorConfigs, _ := collectorConf["processors"].(map[string]interface{})
-	return opampPosition(processorConfigs, p.Pipelines.Logs.Processors[normalizerIdx]) == normalizerBeforeUserPipelines
-}
-
 func opampPosition(processorConfigs map[string]interface{}, name string) string {
 	config, _ := processorConfigs[name].(map[string]interface{})
 	opamp, _ := config["opamp"].(map[string]interface{})

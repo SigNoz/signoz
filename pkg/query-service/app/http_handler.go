@@ -2688,19 +2688,7 @@ func (aH *APIHandler) PreviewLogsPipelinesHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	claims, errv2 := authtypes.ClaimsFromContext(r.Context())
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	orgID, errv2 := valuer.NewUUID(claims.OrgID)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
-
-	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), orgID, &req)
+	resultLogs, err := aH.LogsParsingPipelineController.PreviewLogsPipelines(r.Context(), &req)
 	if err != nil {
 		render.Error(w, err)
 		return
