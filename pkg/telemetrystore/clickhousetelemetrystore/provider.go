@@ -120,9 +120,18 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
 			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
 	},
-	chproto.ErrTooManyRows:       wrapReadTooLarge,
-	chproto.ErrTooManyBytes:      wrapReadTooLarge,
-	chproto.ErrTooManyPartitions: wrapReadTooLarge,
+	chproto.ErrTooManyRows: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyPartitions: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
 	// A write, or a change to the readonly setting, under a read-only settings profile.
 	chproto.ErrReadonly: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeReadonlyMode, "query not allowed in read-only mode: %s", ex.Message).
@@ -369,11 +378,6 @@ func (p *provider) beforeQuery(ctx context.Context, event *telemetrystore.QueryE
 		event.Settings["profile"] = clickhouse.CustomSetting{Value: p.profile}
 	}
 	return clickhouse.Context(ctx, clickhouse.WithSettings(event.Settings))
-}
-
-func wrapReadTooLarge(cause error, ex *clickhouse.Exception) error {
-	return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
-		WithSuggestions("narrow the time range or add filters so the query reads less data")
 }
 
 func castError(err error) error {
