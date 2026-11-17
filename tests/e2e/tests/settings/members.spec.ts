@@ -200,4 +200,30 @@ test.describe('settings — members', () => {
 			await member.remove();
 		}
 	});
+
+	test('TC-08 a user without update:user cannot rename another member', async ({
+		settings,
+		authFlows,
+		guestSettings,
+		activeEditor,
+	}, testInfo) => {
+		const member = await createGrantedUser(
+			settings,
+			testInfo.workerIndex,
+			'no-update',
+			[grantAll('list', 'user', 'user'), grantAll('read', 'user', 'user')],
+		);
+		try {
+			await authFlows.login(member.user);
+			await guestSettings.members.goto();
+			await guestSettings.members.openMember(activeEditor.user.email);
+
+			await expect(guestSettings.members.nameInput()).toHaveAttribute(
+				'data-denied-permissions',
+				/update/,
+			);
+		} finally {
+			await member.remove();
+		}
+	});
 });
