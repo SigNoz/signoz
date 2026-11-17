@@ -33,6 +33,12 @@ type TelemetryStoreHook interface {
 	AfterQuery(ctx context.Context, event *QueryEvent)
 }
 
+// TelemetryStoreProfileHook is a hook that TelemetryStore.WithProfile replaces with a copy for the profile.
+type TelemetryStoreProfileHook interface {
+	TelemetryStoreHook
+	WithProfile(profile string) TelemetryStoreHook
+}
+
 func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) context.Context {
 	for _, hook := range hooks {
 		ctx = hook.BeforeQuery(ctx, event)

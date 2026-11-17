@@ -220,12 +220,20 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	return p, nil
 }
 
-// withProfiles gives every profile a copy of p that runs its queries with that profile over p's pool.
+// withProfiles gives every profile a copy of the provider that runs its queries with that profile over the
+// provider's pool.
 func (provider *provider) withProfiles(profiles []string) {
 	provider.profiles = make(map[string]telemetrystore.TelemetryStore, len(profiles))
 	for _, profile := range profiles {
 		profiled := *provider
 		profiled.profile = profile
+		profiled.hooks = make([]telemetrystore.TelemetryStoreHook, len(provider.hooks))
+		for i, hook := range provider.hooks {
+			if profileHook, ok := hook.(telemetrystore.TelemetryStoreProfileHook); ok {
+				hook = profileHook.WithProfile(profile)
+			}
+			profiled.hooks[i] = hook
+		}
 		provider.profiles[profile] = &profiled
 	}
 }
@@ -276,7 +284,7 @@ func (provider *provider) Stats() driver.Stats {
 func (provider *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	rows, err := provider.clickHouseConn.Query(ctx, query, args...)
 	if err != nil {
 		event.Err = err
@@ -295,7 +303,7 @@ func (provider *provider) Query(ctx context.Context, query string, args ...inter
 func (provider *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	row := provider.clickHouseConn.QueryRow(ctx, query, args...)
 
 	if row == nil {
@@ -312,7 +320,7 @@ func (provider *provider) QueryRow(ctx context.Context, query string, args ...in
 func (provider *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	err := provider.clickHouseConn.Select(ctx, dest, query, args...)
 
 	event.Err = err
@@ -324,7 +332,7 @@ func (provider *provider) Select(ctx context.Context, dest interface{}, query st
 func (provider *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	err := provider.clickHouseConn.Exec(ctx, query, args...)
 
 	event.Err = err
@@ -336,7 +344,7 @@ func (provider *provider) Exec(ctx context.Context, query string, args ...interf
 func (provider *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	err := provider.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
@@ -348,7 +356,7 @@ func (provider *provider) AsyncInsert(ctx context.Context, query string, wait bo
 func (provider *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
 	event := telemetrystore.NewQueryEvent(query, nil)
 
-	ctx = provider.beforeQuery(ctx, event)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
 	batch, err := provider.clickHouseConn.PrepareBatch(ctx, query, opts...)
 
 	event.Err = err
@@ -366,18 +374,6 @@ func (provider *provider) ServerVersion() (*driver.ServerVersion, error) {
 
 func (provider *provider) Contributors() []string {
 	return provider.clickHouseConn.Contributors()
-}
-
-// beforeQuery runs the hooks, then sends the settings they added with the store's profile set last, so no
-// hook can change it.
-func (provider *provider) beforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
-	if provider.profile != "" {
-		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
-		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
-		event.Settings["profile"] = clickhouse.CustomSetting{Value: provider.profile}
-	}
-	return clickhouse.Context(ctx, clickhouse.WithSettings(event.Settings))
 }
 
 func castError(err error) error {

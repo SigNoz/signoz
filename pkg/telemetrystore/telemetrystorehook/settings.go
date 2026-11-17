@@ -3,6 +3,7 @@ package telemetrystorehook
 import (
 	"context"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -10,6 +11,7 @@ import (
 
 type provider struct {
 	settings telemetrystore.QuerySettings
+	profile  string
 }
 
 func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
@@ -24,8 +26,8 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 	}, nil
 }
 
-func (h *provider) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-	settings := event.Settings
+func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
+	settings := clickhouse.Settings{}
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
 
@@ -71,7 +73,20 @@ func (h *provider) BeforeQuery(ctx context.Context, event *telemetrystore.QueryE
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	if h.profile != "" {
+		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
+		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
+		settings["profile"] = clickhouse.CustomSetting{Value: h.profile}
+	}
+
+	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
+}
+
+func (h *provider) WithProfile(profile string) telemetrystore.TelemetryStoreHook {
+	profiled := *h
+	profiled.profile = profile
+	return &profiled
 }
 
 func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

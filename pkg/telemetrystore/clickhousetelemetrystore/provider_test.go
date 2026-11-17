@@ -9,11 +9,12 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehook"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehooktest"
 )
 
@@ -45,40 +46,16 @@ func TestCastError_ProfileErrors(t *testing.T) {
 	}
 }
 
-func TestProviderBeforeQuery(t *testing.T) {
-	testCases := []struct {
-		name    string
-		profile string
-		want    clickhouse.Settings
-	}{
-		{name: "NoProfile_HookSettings", profile: "", want: clickhouse.Settings{"max_threads": 2, "profile": "set_by_hook"}},
-		{name: "Profile_SetAfterHooks", profile: "clickhouse_query", want: clickhouse.Settings{"max_threads": 2, "profile": clickhouse.CustomSetting{Value: "clickhouse_query"}}},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			hook := telemetrystorehooktest.NewMockTelemetryStoreHook(t)
-			hook.EXPECT().BeforeQuery(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-				event.Settings["max_threads"] = 2
-				event.Settings["profile"] = "set_by_hook"
-				return ctx
-			})
-			p := &provider{profile: testCase.profile, hooks: []telemetrystore.TelemetryStoreHook{hook}}
-			event := telemetrystore.NewQueryEvent("SELECT 1", nil)
-
-			p.beforeQuery(context.Background(), event)
-
-			assert.Equal(t, testCase.want, event.Settings)
-		})
-	}
-}
-
 func TestProviderWithProfile(t *testing.T) {
 	conn, err := cmock.NewClickHouseWithQueryMatcher(&clickhouse.Options{}, sqlmock.QueryMatcherEqual)
 	require.NoError(t, err)
 	conn.ExpectClose()
 
-	p := &provider{clickHouseConn: conn, cluster: "cluster"}
+	settingsHook, err := telemetrystorehook.NewSettings(context.Background(), factorytest.NewSettings(), telemetrystore.Config{})
+	require.NoError(t, err)
+	otherHook := telemetrystorehooktest.NewMockTelemetryStoreHook(t)
+
+	p := &provider{clickHouseConn: conn, cluster: "cluster", hooks: []telemetrystore.TelemetryStoreHook{settingsHook, otherHook}}
 	p.withProfiles([]string{"clickhouse_query"})
 
 	profiled, ok := p.WithProfile("clickhouse_query").(*provider)
@@ -88,6 +65,10 @@ func TestProviderWithProfile(t *testing.T) {
 	assert.Same(t, p.clickHouseConn, profiled.clickHouseConn)
 	assert.Equal(t, "cluster", profiled.Cluster())
 	assert.Empty(t, p.profile)
+	require.Len(t, profiled.hooks, 2)
+	assert.Equal(t, settingsHook.(telemetrystore.TelemetryStoreProfileHook).WithProfile("clickhouse_query"), profiled.hooks[0])
+	assert.Same(t, otherHook, profiled.hooks[1])
+	assert.Same(t, settingsHook, p.hooks[0])
 
 	assert.Same(t, p, p.WithProfile("query_range"))
 	assert.Same(t, profiled, profiled.WithProfile("clickhouse_query"))
