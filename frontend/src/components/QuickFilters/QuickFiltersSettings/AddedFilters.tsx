@@ -52,6 +52,7 @@ function SortableFilter({
 				<Button
 					className="remove-filter-btn periscope-btn"
 					size="small"
+					data-testid={`quick-filters-remove-${filter.key}`}
 					onClick={(): void => {
 						onRemove(filter);
 					}}
@@ -103,7 +104,7 @@ function AddedFilters({
 	const allowRemove = addedFilters.length > 1;
 
 	return (
-		<div className="qf-filters added-filters">
+		<div className="qf-filters added-filters" data-testid="quick-filters-added">
 			<div className="qf-filters-header">ADDED FILTERS</div>
 			<div className="qf-added-filters-list">
 				<OverlayScrollbar>

@@ -1,3 +1,4 @@
+import type { Config } from '@jest/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -58,7 +59,7 @@ type ListRequest = {
 // Answers each offset with `rowsPerOffset[offset]` rows and records every request.
 const mockListPages = (
 	rowsPerOffset: Record<number, number>,
-	firstPageDelayMs = 0,
+	onFirstPage?: () => void,
 ): ListRequest[] => {
 	const requests: ListRequest[] = [];
 	server.use(
@@ -75,6 +76,9 @@ const mockListPages = (
 				start: body.start,
 				end: body.end,
 			});
+			if (offset === 0) {
+				onFirstPage?.();
+			}
 			const length = Math.min(rowsPerOffset[offset] ?? 0, spec.limit);
 			const rows = Array.from({ length }, (_, i) => ({
 				...listRows[0],
@@ -84,11 +88,7 @@ const mockListPages = (
 					span_id: `span-${offset + i}`,
 				},
 			}));
-			return res(
-				ctx.delay(offset === 0 ? firstPageDelayMs : 0),
-				ctx.status(200),
-				ctx.json(listResponse(rows)),
-			);
+			return res(ctx.status(200), ctx.json(listResponse(rows)));
 		}),
 	);
 	return requests;
@@ -97,23 +97,27 @@ const mockListPages = (
 // Tall enough that the mocked virtuoso renders every row and reaches the end.
 const FULL_HEIGHT = 200 * 54;
 
+const REAL_TIMER_APIS: Config.FakeableAPI[] = [
+	'hrtime',
+	'nextTick',
+	'performance',
+	'queueMicrotask',
+	'requestAnimationFrame',
+	'cancelAnimationFrame',
+	'requestIdleCallback',
+	'cancelIdleCallback',
+	'setImmediate',
+	'clearImmediate',
+	'setInterval',
+	'clearInterval',
+	'setTimeout',
+	'clearTimeout',
+];
+
 describe('Traces ListView - infinite scroll', () => {
 	afterEach(() => {
 		server.resetHandlers();
-	});
-
-	it('loads the next page at the end of the list over the same window', async () => {
-		// Past the one-second resolution of the window, so a recomputed "now" would show.
-		const requests = mockListPages({ 0: 100, 100: 5 }, 1100);
-		renderListView(initialQueriesMap.traces, FULL_HEIGHT);
-
-		await expect(
-			screen.findByText('span-104', undefined, { timeout: 3000 }),
-		).resolves.toBeInTheDocument();
-		expect(screen.getByText('span-0')).toBeInTheDocument();
-		expect(requests.map(({ offset }) => offset)).toStrictEqual([0, 100]);
-		expect(requests[1].start).toBe(requests[0].start);
-		expect(requests[1].end).toBe(requests[0].end);
+		jest.useRealTimers();
 	});
 
 	it('stops after a short page', async () => {
@@ -122,6 +126,21 @@ describe('Traces ListView - infinite scroll', () => {
 
 		await expect(screen.findByText('span-4')).resolves.toBeInTheDocument();
 		expect(requests.map(({ offset }) => offset)).toStrictEqual([0]);
+	});
+
+	it('loads the next page at the end of the list over the same window', async () => {
+		jest.useFakeTimers({ doNotFake: REAL_TIMER_APIS });
+		// Past the one-second resolution of the window, so a recomputed "now" would show.
+		const requests = mockListPages({ 0: 100, 100: 5 }, () =>
+			jest.setSystemTime(Date.now() + 1100),
+		);
+		renderListView(initialQueriesMap.traces, FULL_HEIGHT);
+
+		await expect(screen.findByText('span-104')).resolves.toBeInTheDocument();
+		expect(screen.getByText('span-0')).toBeInTheDocument();
+		expect(requests.map(({ offset }) => offset)).toStrictEqual([0, 100]);
+		expect(requests[1].start).toBe(requests[0].start);
+		expect(requests[1].end).toBe(requests[0].end);
 	});
 
 	it('stops at the query limit', async () => {

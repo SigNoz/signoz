@@ -128,6 +128,13 @@ jest.mock(
 		},
 );
 jest.mock(
+	'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch',
+	() =>
+		function MockQuerySearch(): JSX.Element {
+			return <div>MockQuerySearch</div>;
+		},
+);
+jest.mock(
 	'components/QuickFilters/QuickFilters',
 	() =>
 		function MockQuickFilters(): JSX.Element {
@@ -472,21 +479,16 @@ describe('Logs Explorer -> stage and run query', () => {
 			{ initialRoute: '/logs' },
 		);
 
-		await waitFor(() => {
-			expect(
-				screen.queryByText('pending_data_placeholder'),
-			).not.toBeInTheDocument();
-		});
+		await screen.findByTestId('logs-list-virtuoso');
+		expect(
+			screen.queryByText('pending_data_placeholder'),
+		).not.toBeInTheDocument();
 
 		// check for no data state to not be present
-		await waitFor(() => {
-			expect(screen.queryByText(/No logs yet/)).not.toBeInTheDocument();
-		});
+		expect(screen.queryByText(/No logs yet/)).not.toBeInTheDocument();
 
 		// Wait for the initial API calls to be made (component may make multiple calls during initialization)
-		await waitFor(() => {
-			expect(capturedPayloads.length).toBeGreaterThan(0);
-		});
+		expect(capturedPayloads.length).toBeGreaterThan(0);
 
 		// Store the initial payload timestamps (use the last one as the baseline)
 		const initialPayload = capturedPayloads[capturedPayloads.length - 1];
@@ -494,20 +496,13 @@ describe('Logs Explorer -> stage and run query', () => {
 		const initialEnd = initialPayload.end;
 
 		// Click the Run Query button
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		await user.click(
-			screen.getByRole('button', {
-				name: /run query/i,
-			}),
-		);
+		const user = userEvent.setup();
+		await user.click(screen.getByTestId('explorer-run-query-btn'));
 
 		// Wait for additional API calls to be made after clicking Run Query
-		await waitFor(
-			() => {
-				expect(capturedPayloads.length).toBeGreaterThan(1);
-			},
-			{ timeout: 5000 },
-		);
+		await waitFor(() => {
+			expect(capturedPayloads.length).toBeGreaterThan(1);
+		});
 
 		// Verify that the IDs have changed
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
@@ -528,5 +523,5 @@ describe('Logs Explorer -> stage and run query', () => {
 		// Verify that the IDs have changed (this confirms the Stage & Run Query button worked)
 		expect(currentStagedQuery.id).not.toBe(initialStagedQueryId);
 		expect(currentCurrentQuery.id).not.toBe(initialCurrentQueryId);
-	}, 15000);
+	});
 });
