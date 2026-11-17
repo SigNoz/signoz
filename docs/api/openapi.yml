@@ -4541,7 +4541,7 @@ components:
           description: Percentile markers drawn across the bucket axis.
         stack:
           allOf:
-          - $ref: '#/components/schemas/DashboardtypesStackMode'
+          - $ref: '#/components/schemas/DashboardtypesDistributionStackMode'
           description: 'How groups combine in a bucket: normal (default) stacks them,
             none draws them side by side, percent stacks them as shares of the bucket.'
       required:
@@ -4574,20 +4574,24 @@ components:
     DashboardtypesDistributionPercentiles:
       properties:
         enabled:
-          description: Whether percentile markers are drawn. Defaults to true.
+          description: Whether percentile markers are drawn. Null draws them.
+          nullable: true
           type: boolean
         values:
           description: The percentiles to mark, each in (0, 100), at most 5, no duplicates.
-            Defaults to [50, 90, 99].
+            Null means [50, 90, 99]; [] marks none.
           items:
             format: double
             type: number
           nullable: true
           type: array
-      required:
-      - enabled
-      - values
       type: object
+    DashboardtypesDistributionStackMode:
+      enum:
+      - none
+      - normal
+      - percent
+      type: string
     DashboardtypesDistributionXAxis:
       properties:
         max:

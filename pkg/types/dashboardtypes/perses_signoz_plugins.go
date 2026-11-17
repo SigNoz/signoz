@@ -360,23 +360,6 @@ type DistributionPanelSpec struct {
 	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Stacking and percentile markers."`
 }
 
-// UnmarshalJSON decodes over the defaults, since the stack default (normal)
-// differs from StackMode's own and percentile markers default to on.
-func (spec *DistributionPanelSpec) UnmarshalJSON(data []byte) error {
-	type alias DistributionPanelSpec
-	tmp := alias{ChartAppearance: DistributionChartAppearance{
-		Stack:       StackModeNormal,
-		Percentiles: DistributionPercentiles{Enabled: true, Values: []float64{50, 90, 99}},
-	}}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	if err := dec.Decode(&tmp); err != nil {
-		return err
-	}
-	*spec = DistributionPanelSpec(tmp)
-	return nil
-}
-
 type DistributionAxes struct {
 	X DistributionXAxis `json:"x" description:"The bucket axis."`
 	Y DistributionYAxis `json:"y" description:"The count axis."`
@@ -412,23 +395,22 @@ type DistributionYAxis struct {
 }
 
 type DistributionChartAppearance struct {
-	Stack       StackMode               `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
+	Stack       DistributionStackMode   `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
 	Percentiles DistributionPercentiles `json:"percentiles" description:"Percentile markers drawn across the bucket axis."`
 }
 
 const maxDistributionPercentiles = 5
 
 type DistributionPercentiles struct {
-	Enabled bool      `json:"enabled" required:"true" description:"Whether percentile markers are drawn. Defaults to true."`
-	Values  []float64 `json:"values" required:"true" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]."`
+	Enabled *bool     `json:"enabled" description:"Whether percentile markers are drawn. Null draws them."`
+	Values  []float64 `json:"values" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Null means [50, 90, 99]; [] marks none."`
 }
 
-// Decodes over the receiver to keep the defaults DistributionPanelSpec pre-fills.
 func (percentiles *DistributionPercentiles) UnmarshalJSON(data []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.DisallowUnknownFields()
 	type alias DistributionPercentiles
-	tmp := alias(*percentiles)
+	var tmp alias
 	if err := dec.Decode(&tmp); err != nil {
 		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid chartAppearance.percentiles")
 	}
@@ -437,10 +419,6 @@ func (percentiles *DistributionPercentiles) UnmarshalJSON(data []byte) error {
 }
 
 func (percentiles DistributionPercentiles) validate() error {
-	// Values starts at the defaults, so nil can only come from an explicit null.
-	if percentiles.Values == nil {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: must be a list, not null")
-	}
 	if len(percentiles.Values) > maxDistributionPercentiles {
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(percentiles.Values))
 	}
@@ -1778,6 +1756,44 @@ func (scale *DistributionYScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution y scale %q: must be `linear` or `log`", v)
+	}
+}
+
+type DistributionStackMode struct{ valuer.String }
+
+var (
+	DistributionStackModeNone    = DistributionStackMode{valuer.NewString("none")}
+	DistributionStackModeNormal  = DistributionStackMode{valuer.NewString("normal")} // default
+	DistributionStackModePercent = DistributionStackMode{valuer.NewString("percent")}
+)
+
+func (DistributionStackMode) Enum() []any {
+	return []any{DistributionStackModeNone, DistributionStackModeNormal, DistributionStackModePercent}
+}
+
+func (mode DistributionStackMode) ValueOrDefault() string {
+	if mode.IsZero() {
+		return DistributionStackModeNormal.StringValue()
+	}
+	return mode.StringValue()
+}
+
+func (mode DistributionStackMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(mode.ValueOrDefault())
+}
+
+func (mode *DistributionStackMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid distribution stack mode: must be a string, one of `none`, `normal`, or `percent`")
+	}
+	parsed := DistributionStackMode{valuer.NewString(v)}
+	switch parsed {
+	case DistributionStackModeNone, DistributionStackModeNormal, DistributionStackModePercent:
+		*mode = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution stack mode %q: must be `none`, `normal`, or `percent`", v)
 	}
 }
 

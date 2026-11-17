@@ -7233,17 +7233,22 @@ export interface DashboardtypesDistributionAxesDTO {
 
 export interface DashboardtypesDistributionPercentilesDTO {
 	/**
-	 * @type boolean
-	 * @description Whether percentile markers are drawn. Defaults to true.
+	 * @type boolean,null
+	 * @description Whether percentile markers are drawn. Null draws them.
 	 */
-	enabled: boolean;
+	enabled?: boolean | null;
 	/**
 	 * @type array,null
-	 * @description The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99].
+	 * @description The percentiles to mark, each in (0, 100), at most 5, no duplicates. Null means [50, 90, 99]; [] marks none.
 	 */
-	values: number[] | null;
+	values?: number[] | null;
 }
 
+export enum DashboardtypesDistributionStackModeDTO {
+	none = 'none',
+	normal = 'normal',
+	percent = 'percent',
+}
 export interface DashboardtypesDistributionChartAppearanceDTO {
 	/**
 	 * @description Percentile markers drawn across the bucket axis.
@@ -7252,7 +7257,7 @@ export interface DashboardtypesDistributionChartAppearanceDTO {
 	/**
 	 * @description How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket.
 	 */
-	stack: DashboardtypesStackModeDTO;
+	stack: DashboardtypesDistributionStackModeDTO;
 }
 
 export interface DashboardtypesDistributionPanelSpecDTO {
