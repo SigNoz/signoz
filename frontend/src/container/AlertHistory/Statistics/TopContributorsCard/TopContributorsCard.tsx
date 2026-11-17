@@ -5,6 +5,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
@@ -27,23 +28,15 @@ function TopContributorsCard({
 
 	const isDarkMode = useIsDarkMode();
 
-	const toggleViewAllParam = (isOpen: boolean): void => {
-		if (isOpen) {
-			searchParams.set('viewAllTopContributors', 'true');
-		} else {
-			searchParams.delete('viewAllTopContributors');
-		}
-	};
-
 	const toggleViewAllDrawer = (): void => {
-		setIsViewAllVisible((prev) => {
-			const newState = !prev;
-
-			toggleViewAllParam(newState);
-
-			return newState;
-		});
-		navigate({ search: searchParams.toString() });
+		const params = getUnstableCurrentSearchParams();
+		if (isViewAllVisible) {
+			params.delete('viewAllTopContributors');
+		} else {
+			params.set('viewAllTopContributors', 'true');
+		}
+		setIsViewAllVisible(!isViewAllVisible);
+		navigate({ search: params.toString() });
 	};
 
 	return (

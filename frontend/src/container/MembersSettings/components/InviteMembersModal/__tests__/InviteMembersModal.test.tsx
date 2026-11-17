@@ -1,5 +1,11 @@
 import { toast } from '@signozhq/ui/sonner';
-import { render, screen, userEvent } from 'tests/test-utils';
+import {
+	setupAuthzAdmin,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import { server } from 'mocks-server/server';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 
 import InviteMembersModal from '../InviteMembersModal';
 
@@ -55,6 +61,7 @@ describe('InviteMembersModal', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockInviteMembersProps = null;
+		server.use(setupAuthzAdmin());
 	});
 
 	describe('rendering', () => {
@@ -134,7 +141,7 @@ describe('InviteMembersModal', () => {
 			const { unmount } = renderComponent();
 			unmount();
 
-			const { getByRole } = render(
+			const { getByTestId } = render(
 				mockInviteMembersProps?.renderFooter({
 					submit: mockSubmit,
 					canSubmit: true,
@@ -142,9 +149,26 @@ describe('InviteMembersModal', () => {
 				}) as JSX.Element,
 			);
 
-			await user.click(getByRole('button', { name: /invite team members/i }));
+			const submit = getByTestId('invite-submit-btn');
+			await waitFor(() =>
+				expect(submit).not.toHaveAttribute('aria-disabled', 'true'),
+			);
+			await user.click(submit);
 
 			expect(mockSubmit).toHaveBeenCalledTimes(1);
+		});
+
+		it('disables the Invite button without create permission', async () => {
+			server.use(setupAuthzDeny(UserCreatePermission));
+
+			renderComponent();
+
+			await waitFor(() =>
+				expect(screen.getByTestId('invite-submit-btn')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				),
+			);
 		});
 	});
 
