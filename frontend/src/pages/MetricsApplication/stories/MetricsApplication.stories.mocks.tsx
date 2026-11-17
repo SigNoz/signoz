@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { rest } from 'msw';
@@ -95,7 +96,10 @@ export const metricsApplicationMocks = defineStoryMocks({
 
 					// the only scalar request is the span-metrics key operations table
 					return queryRangeV5ForRequest(body, {
-						count: body.requestType === 'scalar' ? values.operations : values.series,
+						count:
+							body.requestType === Querybuildertypesv5RequestTypeDTO.scalar
+								? values.operations
+								: values.series,
 						labelValues: METRICS_LABEL_VALUES,
 					});
 				}),

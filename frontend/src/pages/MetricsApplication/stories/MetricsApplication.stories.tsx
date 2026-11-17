@@ -40,6 +40,14 @@ type Story = StoryObj<MetricsApplicationArgs>;
  */
 export const Default: Story = {};
 
+/**
+ * The overview read from span metrics, which the `use_span_metrics` flag
+ * switches it to: histogram latency and the metrics key operations table.
+ */
+export const SpanMetrics: Story = {
+	args: { mode: 'span-metrics' },
+};
+
 /** The database calls the service makes, by system and by upstream. */
 export const DatabaseCalls: Story = {
 	args: { tab: 'DB_CALL_METRICS' },
