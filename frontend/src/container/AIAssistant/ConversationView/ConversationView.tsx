@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import cx from 'classnames';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
@@ -44,6 +51,17 @@ export default function ConversationView({
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
 	const analyticsCtx = useAIAssistantAnalyticsContext(conversationId);
+
+	const hasUnreadReply = useAIAssistantStore((s) =>
+		s.unreadReplyIds.includes(conversationId),
+	);
+	const markReplyRead = useAIAssistantStore((s) => s.markReplyRead);
+	// Layout effect: clears before paint, so the strip tab never flashes for an on-screen reply.
+	useLayoutEffect(() => {
+		if (hasUnreadReply) {
+			markReplyRead(conversationId);
+		}
+	}, [hasUnreadReply, conversationId, markReplyRead]);
 
 	// Auto-derived contexts come from the route the user is currently looking
 	// at (dashboard detail, service metrics, an explorer, …). Skip when the

@@ -528,9 +528,15 @@ function finalizeStreamingMessage(
 				createdAt: Date.now(),
 			});
 			conv.updatedAt = Date.now();
+			dropUnreadReply(s, conversationId);
+			s.unreadReplyIds.push(conversationId);
 		}
 		delete s.streams[conversationId];
 	});
+}
+
+function dropUnreadReply(s: AIAssistantStore, conversationId: string): void {
+	s.unreadReplyIds = s.unreadReplyIds.filter((id) => id !== conversationId);
 }
 
 function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
@@ -627,6 +633,9 @@ export interface AIAssistantStore {
 	// Per-conversation streaming state
 	streams: Record<string, ConversationStreamState>;
 
+	/** Thread ids whose finished reply no open view has shown yet, oldest first; persisted. */
+	unreadReplyIds: string[];
+
 	/**
 	 * Persists answered state for interactive blocks (ai-question, ai-confirm)
 	 * so re-renders/remounts don't reset the answered UI.
@@ -636,6 +645,8 @@ export interface AIAssistantStore {
 	// Loading state
 	isLoadingThreads: boolean;
 	isLoadingThread: boolean;
+	/** True once `fetchThreads` has succeeded; a failed fetch leaves it false. */
+	hasLoadedThreads: boolean;
 
 	// Actions
 	openDrawer: () => void;
@@ -648,6 +659,7 @@ export interface AIAssistantStore {
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
+	markReplyRead: (id: string) => void;
 	archiveConversation: (id: string) => void;
 	restoreConversation: (id: string) => void;
 	renameConversation: (id: string, title: string) => Promise<void>;
@@ -782,8 +794,10 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			activeConversationId: null,
 			conversations: {},
 			streams: {},
+			unreadReplyIds: [],
 			isLoadingThreads: false,
 			isLoadingThread: false,
+			hasLoadedThreads: false,
 			answeredBlocks: {},
 
 			openDrawer: (): void => {
@@ -892,7 +906,14 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							s.conversations[thread.threadId] = mapped;
 						}
 
+						// Restored ids may name a deleted, archived or another user's thread.
+						s.unreadReplyIds = s.unreadReplyIds.filter((id) => {
+							const conv = s.conversations[id];
+							return Boolean(conv && !conv.archived);
+						});
+
 						s.isLoadingThreads = false;
+						s.hasLoadedThreads = true;
 
 						// Clear the rehydrate-time hydration flag on any entries
 						// the server didn't claim — those are local-only chats
@@ -1054,6 +1075,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						state.conversations[id].archived = false;
 						state.conversations[id].updatedAt = Date.now();
 					}
+					dropUnreadReply(state, id);
+				});
+			},
+
+			markReplyRead: (id: string): void => {
+				set((state) => {
+					dropUnreadReply(state, id);
 				});
 			},
 
@@ -1063,6 +1091,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					return;
 				}
 				disconnectAndCommit(id, set, get);
+				set((state) => {
+					dropUnreadReply(state, id);
+				});
 				if (conv.threadId) {
 					updateThread(conv.threadId, { archived: true }).catch((err) => {
 						console.error('[AIAssistant] archiveThread failed:', err);
@@ -1460,6 +1491,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				// Persist the active conversation so a page reload returns the
 				// user to the same thread instead of dumping them into a new one.
 				activeConversationId: state.activeConversationId,
+				// A reply needs a thread, and a chat is re-keyed to its threadId on first send.
+				unreadReplyIds: state.unreadReplyIds,
 			}),
 			migrate: () => ({
 				isDrawerOpen: false,
