@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import MetricsApplication from '../MetricsApplication';
-import { openDownloadMenu } from './__story_mockdata__/metricsApplication.play';
+import {
+	openApDexSettings,
+	openDownloadMenu,
+} from './__story_mockdata__/metricsApplication.play';
 import { metricsApplicationMocks } from './MetricsApplication.stories.mocks';
 
 type MetricsApplicationArgs = PageStoryArgs<typeof metricsApplicationMocks>;
@@ -79,23 +81,5 @@ export const DownloadMenu: Story = {
 
 /** The apdex threshold popover, opened from the overview's settings control. */
 export const ApDexSettingsOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const trigger = await waitFor(
-			() => {
-				const found = canvasElement.querySelector<HTMLElement>(
-					'.ap-dex-settings-popover-content button',
-				);
-
-				if (!found) {
-					throw new Error('Apdex settings control is not rendered');
-				}
-
-				return found;
-			},
-			{ timeout: 15000 },
-		);
-
-		await userEvent.click(trigger);
-		await screen.findByText(/apdex threshold/i);
-	},
+	play: openApDexSettings,
 };

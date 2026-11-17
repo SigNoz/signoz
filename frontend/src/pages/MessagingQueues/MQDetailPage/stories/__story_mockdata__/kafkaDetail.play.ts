@@ -64,14 +64,12 @@ export const showConsumers = async ({
 	);
 };
 
-export const openDropRateInterval = async ({
+/** Only the drop rate view carries the evaluation interval selector. */
+export const openCustomInterval = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (
-		args.view !== MessagingQueuesViewTypeOptions.DropRate ||
-		args.dataState !== 'loaded'
-	) {
+	if (args.view !== MessagingQueuesViewTypeOptions.DropRate) {
 		return;
 	}
 

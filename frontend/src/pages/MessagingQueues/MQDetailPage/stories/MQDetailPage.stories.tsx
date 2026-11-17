@@ -4,7 +4,7 @@ import { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQ
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
-	openDropRateInterval,
+	openCustomInterval,
 	showConsumers,
 	showNetworkLatency,
 } from './__story_mockdata__/kafkaDetail.play';
@@ -74,7 +74,7 @@ export const ProducerLatencyConsumers: Story = {
 /** The custom-interval input inside the evaluation-time dropdown. */
 export const DropRateIntervalOpen: Story = {
 	args: { view: MessagingQueuesViewTypeOptions.DropRate },
-	play: openDropRateInterval,
+	play: openCustomInterval,
 };
 
 /** The broker, producer, consumer and JVM metrics kafka itself reports. */

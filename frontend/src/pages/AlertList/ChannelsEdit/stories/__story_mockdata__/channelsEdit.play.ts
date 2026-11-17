@@ -5,16 +5,18 @@
 
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-
 import { channelSpec } from '../../../stories/__story_mockdata__/alerts';
-import { PAGE_LOAD } from '../../../stories/channelAuthz';
-import type { channelsEditMocks } from '../ChannelsEdit.stories.mocks';
+import { expectDisabled, PAGE_LOAD } from '../../../stories/channelAuthz';
+import {
+	canTestChannel,
+	channelFormState,
+	type ChannelsEditArgs,
+} from '../ChannelsEdit.stories.mocks';
 import { channelTestRequests } from './channelsEdit';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: PageStoryArgs<typeof channelsEditMocks>;
+	args: ChannelsEditArgs;
 }
 
 /** Native text controls only: the switches and radios keep a hidden input of their own. */
@@ -35,7 +37,12 @@ const slackRowButtons = (canvasElement: HTMLElement): HTMLElement[] =>
 
 export const expectEditableForm = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (channelFormState(args) !== 'editable') {
+		return;
+	}
+
 	const save = await within(canvasElement).findByTestId(
 		'save-channel-button',
 		undefined,
@@ -66,6 +73,10 @@ export const expectReadOnlyForm = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (channelFormState(args) !== 'readOnly') {
+		return;
+	}
+
 	const canvas = within(canvasElement);
 	const save = await canvas.findByTestId(
 		'save-channel-button',
@@ -104,11 +115,20 @@ export const expectReadOnlyForm = async ({
  */
 export const expectModeRadioLocked = async (
 	context: PlayContext,
+	channelType: ChannelsEditArgs['channelType'],
 	radio: RegExp,
 ): Promise<void> => {
+	const { canvasElement, args } = context;
+
+	if (
+		args.channelType !== channelType ||
+		channelFormState(args) !== 'readOnly'
+	) {
+		return;
+	}
+
 	await expectReadOnlyForm(context);
 
-	const { canvasElement } = context;
 	const fieldCount = allFields(canvasElement).length;
 
 	await userEvent.click(
@@ -119,14 +139,35 @@ export const expectModeRadioLocked = async (
 };
 
 export const expectWebhookAuthLocked = (context: PlayContext): Promise<void> =>
-	expectModeRadioLocked(context, /bearer/i);
+	expectModeRadioLocked(context, 'webhook', /bearer/i);
 
 export const expectJiraDeploymentLocked = (
 	context: PlayContext,
-): Promise<void> => expectModeRadioLocked(context, /self-hosted/i);
+): Promise<void> => expectModeRadioLocked(context, 'jira', /self-hosted/i);
+
+export const expectReadOnlyFormTestLocked = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { canvasElement, args } = context;
+
+	await expectReadOnlyForm(context);
+
+	if (channelFormState(args) !== 'readOnly') {
+		return;
+	}
+
+	await expectDisabled(
+		await within(canvasElement).findByTestId('test-channel-button'),
+		!canTestChannel(args),
+	);
+};
 
 export const sendSavedConfig = async (context: PlayContext): Promise<void> => {
 	const { canvasElement, args } = context;
+
+	if (channelFormState(args) !== 'readOnly' || !canTestChannel(args)) {
+		return;
+	}
 
 	await expectReadOnlyForm(context);
 
@@ -143,4 +184,57 @@ export const sendSavedConfig = async (context: PlayContext): Promise<void> => {
 		kind: args.channelType,
 		spec: channelSpec(args.channelType, args.webhookAuth, args.jiraDeployment),
 	});
+};
+
+export const expectJiraAdvancedFields = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { canvasElement, args } = context;
+
+	await expectEditableForm(context);
+
+	if (args.channelType !== 'jira' || channelFormState(args) === 'absent') {
+		return;
+	}
+
+	// the advanced fields have their own card now, so nothing has to be
+	// expanded before they can be read
+	await expect(
+		await within(canvasElement).findByTestId(
+			'jira-reopen-duration-textbox',
+			undefined,
+			{ timeout: 15_000 },
+		),
+	).toBeVisible();
+};
+
+export const expectJiraConnectionFields = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { canvasElement, args } = context;
+
+	await expectEditableForm(context);
+
+	if (args.channelType !== 'jira' || channelFormState(args) === 'absent') {
+		return;
+	}
+
+	const canvas = within(canvasElement);
+
+	if (args.jiraDeployment === 'selfhosted') {
+		await expect(
+			await canvas.findByTestId('jira-pat-textbox', undefined, {
+				timeout: 15_000,
+			}),
+		).toHaveValue('story-jira-pat');
+		await expect(
+			canvas.queryByTestId('jira-email-textbox'),
+		).not.toBeInTheDocument();
+		return;
+	}
+
+	await canvas.findByTestId('jira-email-textbox', undefined, {
+		timeout: 15_000,
+	});
+	await expect(canvas.queryByTestId('jira-pat-textbox')).not.toBeInTheDocument();
 };

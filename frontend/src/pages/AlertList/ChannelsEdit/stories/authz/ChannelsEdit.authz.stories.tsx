@@ -16,6 +16,7 @@ import {
 import {
 	expectJiraDeploymentLocked,
 	expectReadOnlyForm,
+	expectReadOnlyFormTestLocked,
 	expectWebhookAuthLocked,
 	sendSavedConfig,
 } from '../__story_mockdata__/channelsEdit.play';
@@ -101,12 +102,7 @@ export const NoCreate: Story = {
  */
 export const ReadOnly: Story = {
 	args: { revoked: [UPDATE, CREATE, DELETE] },
-	play: async (context) => {
-		await expectReadOnlyForm(context);
-		await expectDisabled(
-			await within(context.canvasElement).findByTestId('test-channel-button'),
-		);
-	},
+	play: expectReadOnlyFormTestLocked,
 };
 
 /**

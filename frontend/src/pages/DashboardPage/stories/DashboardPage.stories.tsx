@@ -22,7 +22,12 @@ import {
 	tooltipRoute,
 	warnedPanelQueryHandler,
 } from './DashboardPage.stories.mocks';
-import { hoverJsonValidation } from './__story_mockdata__/dashboard.play';
+import {
+	expandPanelSearch,
+	hoverJsonValidation,
+	openDeleteDashboardDialog,
+	openRenameSectionDialog,
+} from './__story_mockdata__/dashboard.play';
 import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
 
 import DashboardPage from '../DashboardPage';
@@ -202,18 +207,7 @@ export const TooltipsInViewPanelModal: Story = {
 
 /** A list or table panel's search field, expanded and filled. */
 export const PanelSearchExpanded: Story = {
-	play: async ({ canvasElement }) => {
-		// Both the table and the log list render a search trigger; expand the first.
-		const [trigger] = await within(canvasElement).findAllByTestId(
-			'panel-header-search-trigger',
-			{},
-			{ timeout: 15000 },
-		);
-		await userEvent.click(trigger);
-		const input = await screen.findByTestId('panel-header-search-input');
-
-		await userEvent.type(input, 'error');
-	},
+	play: expandPanelSearch,
 };
 
 /**
@@ -270,30 +264,12 @@ export const SectionActionsMenu: Story = {
 
 /** Delete dashboard, the confirm dialog the Actions menu opens. */
 export const DeleteDashboardDialog: Story = {
-	play: async (context) => {
-		await ActionsMenu.play?.(context);
-		// The row stays inert until its authz checks resolve, so one click can
-		// land too early; keep clicking until the confirm dialog is up.
-		await waitFor(
-			async () => {
-				const item = screen.queryByTestId('dashboard-action-delete');
-				if (item) {
-					await userEvent.click(item);
-				}
-				screen.getByText('This action cannot be undone.');
-			},
-			{ timeout: 10000 },
-		);
-	},
+	play: openDeleteDashboardDialog,
 };
 
 /** Rename section, the title dialog a section menu opens. */
 export const RenameSectionDialog: Story = {
-	play: async (context) => {
-		await SectionActionsMenu.play?.(context);
-		await userEvent.click(await screen.findByText('Rename section'));
-		await screen.findByRole('dialog', { name: /rename section/i });
-	},
+	play: openRenameSectionDialog,
 };
 
 const openNewPanelPicker = async (

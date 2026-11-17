@@ -4,7 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { expectEditableForm } from './__story_mockdata__/channelsEdit.play';
+import {
+	expectEditableForm,
+	expectJiraAdvancedFields,
+	expectJiraConnectionFields,
+} from './__story_mockdata__/channelsEdit.play';
 import { channelsEditMocks } from './ChannelsEdit.stories.mocks';
 
 import AlertList from '../../index';
@@ -174,18 +178,7 @@ export const GoogleChat: Story = {
  */
 export const Jira: Story = {
 	args: { channelType: 'jira' },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectEditableForm({ canvasElement, args });
-		// the advanced fields have their own card now, so nothing has to be
-		// expanded before they can be read
-		await expect(
-			await within(canvasElement).findByTestId(
-				'jira-reopen-duration-textbox',
-				undefined,
-				{ timeout: 15_000 },
-			),
-		).toBeVisible();
-	},
+	play: expectJiraAdvancedFields,
 };
 
 /**
@@ -195,18 +188,7 @@ export const Jira: Story = {
  */
 export const JiraSelfHosted: Story = {
 	args: { channelType: 'jira', jiraDeployment: 'selfhosted' },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await expectEditableForm({ canvasElement, args });
-		const canvas = within(canvasElement);
-		await expect(
-			await canvas.findByTestId('jira-pat-textbox', undefined, {
-				timeout: 15_000,
-			}),
-		).toHaveValue('story-jira-pat');
-		await expect(
-			canvas.queryByTestId('jira-email-textbox'),
-		).not.toBeInTheDocument();
-	},
+	play: expectJiraConnectionFields,
 };
 
 /**

@@ -5,6 +5,7 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { homeMocks } from './HomePage.stories.mocks';
+import { openCommandPalette } from './__story_mockdata__/home.play';
 
 import HomePage from '../HomePage';
 
@@ -100,9 +101,5 @@ export const NavSettingsMenu: Story = {
 
 /** The command palette, opened with the same shortcut the shell listens for. */
 export const CommandPalette: Story = {
-	play: async (): Promise<void> => {
-		await userEvent.keyboard('{Meta>}k{/Meta}');
-		await screen.findByPlaceholderText('Search…', undefined, { timeout: 10000 });
-		await screen.findByText('Go to Home');
-	},
+	play: openCommandPalette,
 };

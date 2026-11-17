@@ -5,6 +5,17 @@
 
 import { expect, waitFor, within } from 'storybook/test';
 
+import {
+	offersEveryAddOn,
+	type QueryBuilderProps,
+	showsAggregationGroupBy,
+} from '../QueryBuilderV2.stories.mocks';
+
+interface PlayContext {
+	canvasElement: HTMLElement;
+	args: Partial<QueryBuilderProps>;
+}
+
 const TRACES_ADD_ONS = [
 	'group-by-content',
 	'having-content',
@@ -23,7 +34,11 @@ const groupByTags = (scope: HTMLElement): string[] =>
 /** Every add-on the seeded query fills opens on mount, group by with all its keys. */
 export const expectTracesAddOnsOpen =
 	(groupByCount: number) =>
-	async ({ canvasElement }: { canvasElement: HTMLElement }): Promise<void> => {
+	async ({ canvasElement, args }: PlayContext): Promise<void> => {
+		if (!offersEveryAddOn(args)) {
+			return;
+		}
+
 		const query = within(canvasElement).getByTestId('query-A');
 		await waitFor(async () => {
 			for (const testId of TRACES_ADD_ONS) {
@@ -37,7 +52,11 @@ export const expectTracesAddOnsOpen =
 /** The aggregation row's group by shows every seeded key. */
 export const expectMetricsGroupBy =
 	(groupByCount: number) =>
-	async ({ canvasElement }: { canvasElement: HTMLElement }): Promise<void> => {
+	async ({ canvasElement, args }: PlayContext): Promise<void> => {
+		if (!showsAggregationGroupBy(args)) {
+			return;
+		}
+
 		const query = within(canvasElement).getByTestId('query-A');
 		await waitFor(() => expect(groupByTags(query)).toHaveLength(groupByCount));
 	};

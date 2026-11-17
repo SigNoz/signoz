@@ -5,11 +5,14 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-
 import { dashboardDurationError } from '../../DashboardContainer/utils/dashboardDuration';
 import {
-	type dashboardMocks,
+	canDeleteDashboard,
+	canEditSections,
+	clickSectionAction,
+	type DashboardPageArgs,
+	hasPanelSearch,
+	openActionsMenu,
 	openJsonEditor,
 	openSettings,
 	PAGE_LOAD,
@@ -17,7 +20,7 @@ import {
 
 interface DashboardPlayContext {
 	canvasElement: HTMLElement;
-	args: PageStoryArgs<typeof dashboardMocks>;
+	args: DashboardPageArgs;
 }
 
 const findDefaultTimeRange = async ({
@@ -88,4 +91,59 @@ export const hoverJsonValidation = async ({
 	);
 	await userEvent.hover(validation);
 	await screen.findByRole('tooltip', {}, PAGE_LOAD);
+};
+
+export const expandPanelSearch = async ({
+	canvasElement,
+	args,
+}: DashboardPlayContext): Promise<void> => {
+	if (!hasPanelSearch(args)) {
+		return;
+	}
+
+	// Both the table and the log list render a search trigger; expand the first.
+	const [trigger] = await within(canvasElement).findAllByTestId(
+		'panel-header-search-trigger',
+		{},
+		{ timeout: 15000 },
+	);
+	await userEvent.click(trigger);
+	const input = await screen.findByTestId('panel-header-search-input');
+
+	await userEvent.type(input, 'error');
+};
+
+export const openDeleteDashboardDialog = async ({
+	canvasElement,
+	args,
+}: DashboardPlayContext): Promise<void> => {
+	if (!canDeleteDashboard(args)) {
+		return;
+	}
+
+	await openActionsMenu(canvasElement);
+	// The row stays inert until its authz checks resolve, so one click can
+	// land too early; keep clicking until the confirm dialog is up.
+	await waitFor(
+		async () => {
+			const item = screen.queryByTestId('dashboard-action-delete');
+			if (item) {
+				await userEvent.click(item);
+			}
+			screen.getByText('This action cannot be undone.');
+		},
+		{ timeout: 10000 },
+	);
+};
+
+export const openRenameSectionDialog = async ({
+	canvasElement,
+	args,
+}: DashboardPlayContext): Promise<void> => {
+	if (!canEditSections(args)) {
+		return;
+	}
+
+	await clickSectionAction(canvasElement, 'Rename section');
+	await screen.findByRole('dialog', { name: /rename section/i });
 };

@@ -12,6 +12,7 @@ import {
 	expandConfigSections,
 	openAddColumn,
 	openAIQueryBuilder,
+	openClickHouseQuery,
 	openPanelTypeSwitcher,
 	saveAndExpectToast,
 } from './__story_mockdata__/panelEditor.play';
@@ -53,16 +54,7 @@ export const Default: Story = {};
 
 /** The ClickHouse query tab, including its info callout. */
 export const ClickHouseQuery: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByText('ClickHouse Query', undefined, {
-				timeout: 15000,
-			}),
-		);
-		await screen.findByText(/ClickHouse query agent skill/i, undefined, {
-			timeout: 15000,
-		});
-	},
+	play: openClickHouseQuery,
 };
 
 /** The create route, seeding an unsaved panel of the chosen kind. */

@@ -23,3 +23,23 @@ export const raiseToast = async (): Promise<void> => {
 	toast.success('Service account deleted');
 	await screen.findByText('Service account deleted', undefined, untilLoaded);
 };
+
+/** Ask Noz is not rendered with Noz off, so there is no panel to open. */
+export const openNozPanel = async ({
+	args,
+}: {
+	args: { noz: boolean };
+}): Promise<void> => {
+	if (!args.noz) {
+		return;
+	}
+
+	await userEvent.click(
+		await screen.findByTestId(
+			'bottom-strip-ask-noz-button',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByTestId('ai-assistant-panel-close');
+};

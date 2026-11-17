@@ -5,6 +5,8 @@
 
 import { expect, screen, userEvent, within } from 'storybook/test';
 
+import { isCloudShell } from '@/storybook/globals/appShellMocks';
+
 import {
 	canCreate,
 	canDelete,
@@ -13,7 +15,6 @@ import {
 	canUpdate,
 	clickRowAction,
 	type DashboardsListArgs,
-	isCloudTenant,
 	listedDashboards,
 	openLegacyDialog,
 	openRowActions,
@@ -167,7 +168,12 @@ export const openSaveViewPopover = async ({
 
 export const openRenameViewPopover = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!listsSavedViews(args)) {
+		return;
+	}
+
 	const [rename] = await within(canvasElement).findAllByRole(
 		'button',
 		{ name: 'Rename view' },
@@ -460,7 +466,7 @@ export const submitTemplateRequest = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!canCreate(args) || !isCloudTenant(args)) {
+	if (!canCreate(args) || !isCloudShell(args)) {
 		return;
 	}
 

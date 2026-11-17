@@ -15,8 +15,14 @@ import {
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import type { QueryBuilderV2 } from '../QueryBuilderV2';
+import {
+	mergeQueryBuilderFieldsConfig,
+	RAW_QUERY_FIELDS,
+	resolveQueryBuilderFields,
+} from '../queryBuilderFields.utils';
+import { BASE_ADD_ONS } from '../QueryV2/QueryAddOns/constants';
 
-type QueryBuilderProps = Parameters<typeof QueryBuilderV2>[0];
+export type QueryBuilderProps = Parameters<typeof QueryBuilderV2>[0];
 
 /** The builder's provider reads its starting query from the URL, as every host seeds it. */
 export const routeWith = (path: string, query: Query): string =>
@@ -160,3 +166,30 @@ export const DEFAULT_ARGS: Partial<QueryBuilderProps> = {
 	panelType: PANEL_TYPES.TIME_SERIES,
 	version: 'v3',
 };
+
+/**
+ * A where-clause view has no add-ons and a Value panel offers the legend
+ * alone; a raw query or a fields config hides or disables the rest.
+ */
+export const offersEveryAddOn = (args: Partial<QueryBuilderProps>): boolean => {
+	if (args.showOnlyWhereClause || args.panelType === PANEL_TYPES.VALUE) {
+		return false;
+	}
+
+	const resolved = resolveQueryBuilderFields(
+		BASE_ADD_ONS.map((addOn) => addOn.key),
+		mergeQueryBuilderFieldsConfig(
+			args.isRawQuery ? RAW_QUERY_FIELDS : undefined,
+			args.fieldsConfig,
+		),
+	);
+
+	return [...resolved.values()].every(
+		({ hidden, disabled }) => !hidden && !disabled,
+	);
+};
+
+/** A metrics query's group by sits in the aggregation row, which a where-clause view drops. */
+export const showsAggregationGroupBy = (
+	args: Partial<QueryBuilderProps>,
+): boolean => !args.showOnlyWhereClause;

@@ -8,9 +8,16 @@ import ROUTES from 'constants/routes';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
+import { grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -23,6 +30,7 @@ import {
 	fieldValuesResponse,
 } from '@/storybook/msw/__story_mockdata__/fields';
 import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	currentDashboardDocument,
@@ -35,6 +43,7 @@ import {
 	VARIABLE_KINDS,
 	type DashboardArgs,
 	type DurationChoice,
+	type PanelId,
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
 import { publicDashboardMeta } from './__story_mockdata__/publicDashboard';
@@ -380,6 +389,42 @@ export const dashboardMocks = defineStoryMocks({
 		useDashboardPreferencesStore.setState({ preferences: {} });
 	},
 });
+
+export type DashboardPageArgs = PageStoryArgs<typeof dashboardMocks>;
+
+const SEARCHABLE_PANELS: readonly PanelId[] = ['top-endpoints', 'recent-logs'];
+
+/**
+ * The page mounts on `read`. A check that fails rather than denies still
+ * renders it.
+ */
+export const showsDashboard = (args: DashboardPageArgs): boolean =>
+	!args.notFound &&
+	(args.authzState === 'error' ||
+		grantsAll(args, buildDashboardReadPermission(STORY_DASHBOARD_ID)));
+
+/** A menu row whose check errors stays enabled; a lock disables it otherwise. */
+const rowEnabled = (
+	args: DashboardPageArgs,
+	...checks: BrandedPermission[]
+): boolean =>
+	showsDashboard(args) &&
+	(args.authzState === 'error' || (!args.locked && grantsAll(args, ...checks)));
+
+export const hasPanelSearch = (args: DashboardPageArgs): boolean =>
+	showsDashboard(args) &&
+	PANEL_IDS.slice(0, args.panels).some((id) => SEARCHABLE_PANELS.includes(id));
+
+export const canDeleteDashboard = (args: DashboardPageArgs): boolean =>
+	rowEnabled(args, buildDashboardDeletePermission(STORY_DASHBOARD_ID));
+
+export const canEditSections = (args: DashboardPageArgs): boolean =>
+	args.sectioned &&
+	rowEnabled(
+		args,
+		buildDashboardReadPermission(STORY_DASHBOARD_ID),
+		buildDashboardUpdatePermission(STORY_DASHBOARD_ID),
+	);
 
 /**
  * One panel's query answered with a warning beside its value, so its header
