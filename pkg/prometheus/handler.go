@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 	"github.com/prometheus/prometheus/util/stats"
@@ -30,15 +32,22 @@ type Handler interface {
 	Query(http.ResponseWriter, *http.Request)
 
 	QueryRange(http.ResponseWriter, *http.Request)
+
+	Labels(http.ResponseWriter, *http.Request)
+
+	LabelValues(http.ResponseWriter, *http.Request)
+
+	Series(http.ResponseWriter, *http.Request)
 }
 
 type handler struct {
 	logger *slog.Logger
 	prom   Prometheus
+	parser Parser
 }
 
 func NewHandler(logger *slog.Logger, prom Prometheus) Handler {
-	return &handler{logger: logger, prom: prom}
+	return &handler{logger: logger, prom: prom, parser: NewParser()}
 }
 
 // QueryRange evaluates an expression over a grid: query, start, end, step,
@@ -109,6 +118,163 @@ func (h *handler) Query(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.prom.Query(ctx, r.FormValue("query"), ts)
 	h.respondResult(ctx, w, r, res, err)
+}
+
+// Labels returns the union of label names visible under the request's
+// match[] selectors, or unfiltered when none are given.
+func (h *handler) Labels(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+	matcherSets, start, end, limit, err := h.parseSeriesParams(r)
+	if err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+
+	names, err := h.prom.LabelNames(r.Context(), matcherSets, start, end, limit)
+	if err != nil {
+		h.respondStoreError(r.Context(), w, "error listing prometheus label names", err)
+		return
+	}
+	if names == nil {
+		names = []string{}
+	}
+	h.respond(r.Context(), w, names, nil, nil)
+}
+
+// LabelValues returns the union of values for the {name} path segment,
+// scoped by the request's match[] selectors.
+func (h *handler) LabelValues(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["name"]
+	if !promModel.LabelName(name).IsValid() {
+		h.respondError(r.Context(), w, errBadData, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid label name %q", name))
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+
+	matcherSets, start, end, limit, err := h.parseSeriesParams(r)
+	if err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+
+	values, err := h.prom.LabelValues(r.Context(), name, matcherSets, start, end, limit)
+	if err != nil {
+		h.respondStoreError(r.Context(), w, "error listing prometheus label values", err)
+		return
+	}
+	if values == nil {
+		values = []string{}
+	}
+	h.respond(r.Context(), w, values, nil, nil)
+}
+
+// Series returns the deduplicated union of label sets matched by the
+// request's match[] selectors. Unlike Labels and LabelValues, at least one
+// match[] is required, as in Prometheus.
+func (h *handler) Series(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+	if len(r.Form["match[]"]) == 0 {
+		h.respondError(r.Context(), w, errBadData, errors.NewInvalidInputf(errors.CodeInvalidInput, "no match[] parameter provided"))
+		return
+	}
+
+	matcherSets, start, end, limit, err := h.parseSeriesParams(r)
+	if err != nil {
+		h.respondError(r.Context(), w, errBadData, err)
+		return
+	}
+
+	series, err := h.prom.Series(r.Context(), matcherSets, start, end, limit)
+	if err != nil {
+		h.respondStoreError(r.Context(), w, "error listing prometheus series", err)
+		return
+	}
+	if series == nil {
+		series = []labels.Labels{}
+	}
+	h.respond(r.Context(), w, series, nil, nil)
+}
+
+// parseSeriesParams parses the match[]/start/end/limit parameters shared by
+// Labels, LabelValues and Series. The caller must have already called
+// r.ParseForm.
+func (h *handler) parseSeriesParams(r *http.Request) (matcherSets [][]*labels.Matcher, start, end time.Time, limit int, err error) {
+	start, end, err = h.parseWindow(r)
+	if err != nil {
+		return nil, time.Time{}, time.Time{}, 0, err
+	}
+
+	limit, err = parseLimit(r.FormValue("limit"))
+	if err != nil {
+		return nil, time.Time{}, time.Time{}, 0, err
+	}
+
+	matcherSets, err = h.parser.ParseMetricSelectors(r.Form["match[]"])
+	if err != nil {
+		return nil, time.Time{}, time.Time{}, 0, err
+	}
+
+	return matcherSets, start, end, limit, nil
+}
+
+// parseWindow reads the optional start/end bounds. Prometheus defaults these
+// to the full retention window; this backend instead defaults to the Unix
+// epoch and now, since the storage layer picks its ClickHouse table from the
+// start/end span and an unbounded sentinel would pick a meaningless one.
+func (h *handler) parseWindow(r *http.Request) (time.Time, time.Time, error) {
+	start := time.Unix(0, 0)
+	if s := r.FormValue("start"); s != "" {
+		var err error
+		start, err = parseTime(s)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+	}
+	end := time.Now()
+	if e := r.FormValue("end"); e != "" {
+		var err error
+		end, err = parseTime(e)
+		if err != nil {
+			return time.Time{}, time.Time{}, err
+		}
+	}
+	if end.Before(start) {
+		return time.Time{}, time.Time{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "end timestamp must not be before start time")
+	}
+	return start, end, nil
+}
+
+// parseLimit accepts a non-negative integer; 0 (including unset) means unlimited.
+func parseLimit(s string) (int, error) {
+	if s == "" {
+		return 0, nil
+	}
+	limit, err := strconv.Atoi(s)
+	if err != nil || limit < 0 {
+		return 0, errors.NewInvalidInputf(errors.CodeInvalidInput, "cannot parse %q to a valid limit", s)
+	}
+	return limit, nil
+}
+
+// respondStoreError maps a metadata-lookup error to the Prometheus error
+// envelope: invalid-input errors (bad matchers, etc.) are bad_data, anything
+// else from the storage layer is internal.
+func (h *handler) respondStoreError(ctx context.Context, w http.ResponseWriter, msg string, err error) {
+	h.logger.ErrorContext(ctx, msg, errors.Attr(err))
+	if errors.Ast(err, errors.TypeInvalidInput) {
+		h.respondError(ctx, w, errBadData, err)
+		return
+	}
+	h.respondError(ctx, w, errInternal, err)
 }
 
 func (h *handler) respondResult(ctx context.Context, w http.ResponseWriter, r *http.Request, res *Result, err error) {
