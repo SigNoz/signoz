@@ -1,6 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import { toRequestQuery } from 'lib/query/builderSlot';
+import { foldAISlot } from 'lib/query/builderSlot';
 import {
 	BuilderClickHouseResource,
 	BuilderPromQLResource,
@@ -98,7 +98,7 @@ const queryTypeMethodMapping: Record<
 > = {
 	[EQueryType.QUERY_BUILDER]: buildBuilderQuery,
 	[EQueryType.AI_QUERY_BUILDER]: (query, panelType) =>
-		buildBuilderQuery(toRequestQuery(query), panelType),
+		buildBuilderQuery(foldAISlot(query), panelType),
 	[EQueryType.CLICKHOUSE]: buildClickHouseQuery,
 	[EQueryType.PROM]: buildPromQuery,
 };

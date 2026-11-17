@@ -3,7 +3,7 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { toRequestQuery } from 'lib/query/builderSlot';
+import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
@@ -560,15 +560,15 @@ export const prepareQueryRangePayloadV5 = (
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
 
-	const requestQuery = toRequestQuery(query);
+	const foldedQuery = foldAISlot(query);
 
-	switch (requestQuery.queryType) {
+	switch (foldedQuery.queryType) {
 		case EQueryType.QUERY_BUILDER: {
 			const {
 				queryData: data,
 				queryFormulas,
 				queryTraceOperator,
-			} = requestQuery.builder;
+			} = foldedQuery.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
 
@@ -631,7 +631,7 @@ export const prepareQueryRangePayloadV5 = (
 		}
 		case EQueryType.PROM: {
 			const promQueries = reduceQueriesToObject(
-				requestQuery[requestQuery.queryType],
+				foldedQuery[foldedQuery.queryType],
 			);
 			queries = convertPromQueriesToV5(promQueries.queries);
 			legendMap = promQueries.legends;
@@ -639,7 +639,7 @@ export const prepareQueryRangePayloadV5 = (
 		}
 		case EQueryType.CLICKHOUSE: {
 			const chQueries = reduceQueriesToObject(
-				requestQuery[requestQuery.queryType],
+				foldedQuery[foldedQuery.queryType],
 			);
 			queries = convertClickHouseQueriesToV5(chQueries.queries);
 			legendMap = chQueries.legends;

@@ -6,7 +6,7 @@ import {
 	getActiveBuilder,
 	getBuilderSlotKeyForQueryType,
 	isBuilderQueryType,
-	toRequestQuery,
+	foldAISlot,
 } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -67,9 +67,9 @@ describe('getActiveBuilder', () => {
 	});
 });
 
-describe('toRequestQuery', () => {
+describe('foldAISlot', () => {
 	it('passes non-AI queries through untouched', () => {
-		expect(toRequestQuery(baseQuery)).toBe(baseQuery);
+		expect(foldAISlot(baseQuery)).toBe(baseQuery);
 	});
 
 	it('sends AI as a builder query holding the AI slot, every query tagged', () => {
@@ -83,10 +83,10 @@ describe('toRequestQuery', () => {
 			builder_ai_query: { ...aiBuilder, queryData: [untagged] },
 		};
 
-		const requestQuery = toRequestQuery(query);
+		const foldedQuery = foldAISlot(query);
 
-		expect(requestQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
-		expect(requestQuery.builder.queryData).toStrictEqual([
+		expect(foldedQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
+		expect(foldedQuery.builder.queryData).toStrictEqual([
 			{ ...untagged, builderQueryType: 'builder_ai_query' },
 		]);
 	});
