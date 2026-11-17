@@ -25,6 +25,7 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
+import { fitQueryToKind } from '../../Panels/utils/seedBuilderForMode';
 import { toPerses } from '../../queryV5/persesQueryAdapters';
 import {
 	getSwitchedPluginSpec,
@@ -113,7 +114,11 @@ export function usePanelKindChange({
 	panelType,
 	setSpec,
 }: UsePanelKindChangeArgs): UsePanelKindChangeApi {
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+	const {
+		currentQuery,
+		redirectWithQueryBuilderData,
+		updateAllQueriesOperators,
+	} = useQueryBuilder();
 
 	const cacheRef = useRef<Map<PanelKind, KindState>>(new Map());
 
@@ -192,7 +197,7 @@ export function usePanelKindChange({
 					setSpec(buildSpec(cached.pluginSpec, cached.queries));
 					return;
 				}
-				const restored: Query = {
+				const unfitted: Query = {
 					...cached.query,
 					queryType,
 					...(!cached.query.builder_ai_query &&
@@ -200,6 +205,16 @@ export function usePanelKindChange({
 							builder_ai_query: rebuildForNewKind(query.builder_ai_query),
 						}),
 				};
+				// A tab other than the stashed one may never have been authored on this kind.
+				const restored =
+					queryType === cached.query.queryType
+						? unfitted
+						: fitQueryToKind(unfitted, {
+								supportedQueryTypesKindMap:
+									getQueryPanelDefinition(newKind)?.supportedQueryTypesKindMap,
+								panelType: newPanelType,
+								updateAllQueriesOperators,
+							});
 				// The stashed preview queries belong to the stashed query's type.
 				setSpec(
 					buildSpec(
@@ -243,7 +258,7 @@ export function usePanelKindChange({
 			);
 			redirectWithQueryBuilderData(nextQuery);
 		},
-		[setSpec, redirectWithQueryBuilderData],
+		[setSpec, redirectWithQueryBuilderData, updateAllQueriesOperators],
 	);
 
 	return { onChangePanelKind };

@@ -1,14 +1,10 @@
 import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import {
-	getQueryTypeSignals,
-	type SupportedQueryTypesKindMap,
-} from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
-import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
+import type { SupportedQueryTypesKindMap } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
+import { fitQueryToKind } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 
 interface UseQueryTypeChangeArgs {
 	panelType: PANEL_TYPES;
@@ -17,8 +13,7 @@ interface UseQueryTypeChangeArgs {
 
 /**
  * Tab switching: each query type keeps its own slot, so a switch only changes `queryType`.
- * A builder slot is seeded when it can't be used as-is: an AI slot never opened, or
- * Query Builder queries on a signal this kind can't author (an AI panel's default).
+ * A builder slot is seeded when it can't be used as-is (see `fitQueryToKind`).
  */
 export function useQueryTypeChange({
 	panelType,
@@ -32,32 +27,10 @@ export function useQueryTypeChange({
 
 	return useCallback(
 		(queryType: EQueryType): void => {
-			const builderSignals = getQueryTypeSignals(
-				supportedQueryTypesKindMap,
-				EQueryType.QUERY_BUILDER,
+			const next = fitQueryToKind(
+				{ ...currentQuery, queryType },
+				{ supportedQueryTypesKindMap, panelType, updateAllQueriesOperators },
 			);
-			const seed = (): Query['builder'] =>
-				seedBuilderForMode({
-					mode: queryType,
-					defaultSignal: builderSignals[0],
-					panelType,
-					updateAllQueriesOperators,
-				});
-
-			const next: Query = { ...currentQuery, queryType };
-			if (queryType === EQueryType.AI_QUERY_BUILDER && !next.builder_ai_query) {
-				next.builder_ai_query = seed();
-			}
-			const authorableSignals = new Set<string>(builderSignals);
-			const builderFitsKind =
-				next.builder.queryData.length > 0 &&
-				next.builder.queryData.every((query) =>
-					authorableSignals.has(query.dataSource),
-				);
-			if (queryType === EQueryType.QUERY_BUILDER && !builderFitsKind) {
-				next.builder = seed();
-			}
-
 			redirectWithQueryBuilderData(next);
 		},
 		[
