@@ -644,6 +644,7 @@ function GeneralSettings({
 									onClick={category.save.modalOpen}
 									disabled={category.save.isDisabled}
 									loading={category.save.isLoading}
+									testId={`${category.type}-retention-save-button`}
 								>
 									{category.save.saveButtonText}
 								</Button>
@@ -671,6 +672,9 @@ function GeneralSettings({
 							centered
 							open={category.save.modal}
 							confirmLoading={category.save.apiLoading}
+							okButtonProps={{
+								'data-testid': `${category.type}-retention-confirm-button`,
+							}}
 						>
 							<p className="retention-modal-description">
 								{t('retention_confirmation_description', {

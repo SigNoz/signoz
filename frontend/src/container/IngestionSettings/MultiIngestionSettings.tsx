@@ -1185,6 +1185,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="secondary"
 																			aria-label={`Edit ${signalName} limit`}
+																			testId={`edit-limit-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1711,6 +1712,7 @@ function MultiIngestionSettings(): JSX.Element {
 							target="_blank"
 							className="learn-more"
 							rel="noreferrer"
+							data-testid="ingestion-keys-learn-more"
 						>
 							Learn more <ArrowUpRight size={14} />
 						</a>
