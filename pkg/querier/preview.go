@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -83,6 +84,7 @@ func (q *querier) QueryRangePreview(
 	// Render each executing query's statement and collect the ClickHouse-bound
 	// analysis work to run concurrently.
 	var previewTasks []qbtypes.PreviewTask
+	stores := make(map[string]telemetrystore.TelemetryStore, len(req.CompositeQuery.Queries))
 	for _, query := range req.CompositeQuery.Queries {
 		name := query.GetQueryName()
 		ps := prepared[name]
@@ -130,9 +132,12 @@ func (q *querier) QueryRangePreview(
 
 		ps.Warnings = append(ps.Warnings, stmt.Warnings...)
 
+		// EXPLAIN runs as the user the query would run as, so it cannot see past that user's grants.
+		stores[name] = q.telemetryStore
 		if query.Type == qbtypes.QueryTypeClickHouseSQL {
-			if bindErr := q.telemetryStore.Plan(ctx, stmt.Query, stmt.Args...); bindErr != nil {
-				if errors.Ast(bindErr, errors.TypeInvalidInput) || errors.Ast(bindErr, errors.TypeNotFound) {
+			stores[name] = q.telemetryStore.WithProfile(ClickHouseSQLProfile)
+			if bindErr := stores[name].Plan(ctx, stmt.Query, stmt.Args...); bindErr != nil {
+				if errors.Ast(bindErr, errors.TypeInvalidInput) || errors.Ast(bindErr, errors.TypeNotFound) || errors.Ast(bindErr, errors.TypeForbidden) {
 					ps.Error = bindErr
 					results[name] = ps
 					continue
@@ -168,7 +173,7 @@ func (q *querier) QueryRangePreview(
 		}
 	}
 
-	q.runPreviewTasks(ctx, previewTasks, results)
+	q.runPreviewTasks(ctx, previewTasks, stores, results)
 
 	// a filter and a column on the same unknown key report the same warning;
 	// QueryRange dedupes before it builds its response too
@@ -289,7 +294,7 @@ func (q *querier) traceOperatorPreviewComposite(req *qbtypes.QueryRangeRequest, 
 	return append(queries, operator), nil
 }
 
-func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTask, previews map[string]qbtypes.QueryPreview) {
+func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTask, stores map[string]telemetrystore.TelemetryStore, previews map[string]qbtypes.QueryPreview) {
 	if len(tasks) == 0 {
 		return
 	}
@@ -307,13 +312,14 @@ func (q *querier) runPreviewTasks(ctx context.Context, tasks []qbtypes.PreviewTa
 		go func(i int) {
 			defer wg.Done()
 			t := tasks[i]
+			store := stores[t.Name]
 			var out outcome
-			if granules, ok, scErr := q.telemetryStore.Indexes(ctx, t.Query, t.Args...); scErr != nil {
+			if granules, ok, scErr := store.Indexes(ctx, t.Query, t.Args...); scErr != nil {
 				out.warnings = append(out.warnings, "could not compute granule stats: "+scErr.Error())
 			} else if ok {
 				out.granules = &granules
 			}
-			if estimate, eErr := q.telemetryStore.Estimate(ctx, t.Query, t.Args...); eErr != nil {
+			if estimate, eErr := store.Estimate(ctx, t.Query, t.Args...); eErr != nil {
 				out.warnings = append(out.warnings, "could not run EXPLAIN ESTIMATE: "+eErr.Error())
 			} else {
 				out.estimate = estimate
