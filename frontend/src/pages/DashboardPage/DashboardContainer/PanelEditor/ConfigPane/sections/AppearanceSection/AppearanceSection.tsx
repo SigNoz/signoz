@@ -2,12 +2,12 @@ import type {
 	SectionEditorProps,
 	SectionKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
-import { DEFAULT_BAR_COLOR } from 'pages/DashboardPage/DashboardContainer/Panels/utils/appearanceDefaults';
 
 import ConfigSwitch from '../../controls/ConfigSwitch/ConfigSwitch';
 import { SWITCH_SKETCHES } from '../../controls/drawings/switchSketches';
 import { createFieldResetter } from '../../utils/changes';
 import BarColorField from './BarColorField';
+import { DEFAULT_BAR_COLOR } from './barColorOptions';
 
 /**
  * Edits the `appearance` slice of a Top List panel spec: bar color, row numbers and

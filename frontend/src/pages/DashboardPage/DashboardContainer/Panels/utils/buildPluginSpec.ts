@@ -29,7 +29,7 @@ import {
 	type SectionSpecMap,
 	ThresholdVariant,
 } from '../types/sections';
-import { DEFAULT_BAR_COLOR } from './appearanceDefaults';
+import { DEFAULT_BAR_COLOR } from '../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { getTableColumnKeys } from './getTableColumnKeys';
 
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */

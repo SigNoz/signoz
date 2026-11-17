@@ -15,6 +15,9 @@ export const BAR_COLOR_OPTIONS: ColorSwatchOption<string>[] = [
 	fill: color,
 }));
 
+/** Matches the server's default for an unset `appearance.barColor`. */
+export const DEFAULT_BAR_COLOR = Color.BG_ROBIN_500;
+
 /** The preset a hex matches, ignoring case. */
 export function findBarColorPreset(hex: string): string | undefined {
 	return BAR_COLOR_OPTIONS.find(

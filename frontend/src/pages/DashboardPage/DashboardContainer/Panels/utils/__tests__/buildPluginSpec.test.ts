@@ -13,7 +13,7 @@ import {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { DEFAULT_BAR_COLOR } from '../appearanceDefaults';
+import { DEFAULT_BAR_COLOR } from '../../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
 import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
 import { sections as geoMapSections } from '../../kinds/GeoMapPanel/sections';
