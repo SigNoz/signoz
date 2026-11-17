@@ -1,0 +1,186 @@
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
+import { Button } from 'antd';
+import classNames from 'classnames';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
+import { QueryParams } from 'constants/query';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
+import useUrlQuery from 'hooks/useUrlQuery';
+import {
+	BarChart,
+	DraftingCompass,
+	FileText,
+	ScrollText,
+} from '@signozhq/icons';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
+
+import { useCreateAlertState } from '../context';
+import Stepper from '../Stepper';
+import ChartPreview from './ChartPreview';
+import { buildAlertDefForChartPreview } from './utils';
+
+import './styles.scss';
+
+function QuerySection(): JSX.Element {
+	const {
+		currentQuery,
+		stagedQuery,
+		handleRunQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+	const { alertType, setAlertType, thresholdState } = useCreateAlertState();
+	const urlQuery = useUrlQuery();
+
+	const alertDef = buildAlertDefForChartPreview({ alertType, thresholdState });
+
+	const onQueryCategoryChange = (queryType: EQueryType): void => {
+		const query: Query = { ...currentQuery, queryType };
+		redirectWithQueryBuilderData(query);
+	};
+
+	const source = useMemo(
+		() => urlQuery.get(QueryParams.source) as YAxisSource,
+		[urlQuery],
+	);
+
+	const didQueryChange = useMemo(() => {
+		if (alertType !== AlertTypes.METRICS_BASED_ALERT) {
+			return false;
+		}
+
+		const selectedQueryName = thresholdState.selectedQuery;
+		const currentQueryData = currentQuery.builder.queryData.find(
+			(query) => query.queryName === selectedQueryName,
+		);
+		const stagedQueryData = stagedQuery?.builder.queryData.find(
+			(query) => query.queryName === selectedQueryName,
+		);
+		if (!currentQueryData || !stagedQueryData) {
+			return false;
+		}
+
+		const currentQueryKey = getMetricNameFromQueryData(currentQueryData);
+		const stagedQueryKey = getMetricNameFromQueryData(stagedQueryData);
+		return currentQueryKey !== stagedQueryKey;
+	}, [currentQuery, alertType, thresholdState, stagedQuery]);
+
+	const queryClient = useQueryClient();
+	const [isLoadingQueries, setIsLoadingQueries] = useState(false);
+	const [isCancelled, setIsCancelled] = useState(false);
+
+	const handleFetchingStateChange = useCallback((isFetching: boolean): void => {
+		setIsLoadingQueries(isFetching);
+		if (isFetching) {
+			setIsCancelled(false);
+		}
+	}, []);
+
+	const handleCancelQuery = useCallback(() => {
+		void queryClient.cancelQueries([REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW]);
+		setIsCancelled(true);
+	}, [queryClient]);
+
+	const runQueryHandler = useCallback(() => {
+		setIsCancelled(false);
+		void queryClient.invalidateQueries([
+			REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,
+		]);
+		// Reset the source param when the query is changed
+		// Then manually run the query
+		if (source === YAxisSource.DASHBOARDS && didQueryChange) {
+			redirectWithQueryBuilderData(currentQuery, {
+				[QueryParams.source]: null,
+			});
+		} else {
+			handleRunQuery();
+		}
+	}, [
+		currentQuery,
+		didQueryChange,
+		handleRunQuery,
+		queryClient,
+		redirectWithQueryBuilderData,
+		source,
+	]);
+
+	const tabs = [
+		{
+			label: 'Metrics',
+			icon: <BarChart size={14} data-testid="metrics-view" />,
+			value: AlertTypes.METRICS_BASED_ALERT,
+		},
+		{
+			label: 'Logs',
+			icon: <ScrollText size={14} data-testid="logs-view" />,
+			value: AlertTypes.LOGS_BASED_ALERT,
+		},
+		{
+			label: 'Traces',
+			icon: <DraftingCompass size={14} data-testid="traces-view" />,
+			value: AlertTypes.TRACES_BASED_ALERT,
+		},
+		{
+			label: 'Exceptions',
+			icon: <FileText size={14} data-testid="exceptions-view" />,
+			value: AlertTypes.EXCEPTIONS_BASED_ALERT,
+		},
+	];
+
+	const isAnomalyDetection = alertType === AlertTypes.ANOMALY_BASED_ALERT;
+	const activeTab = isAnomalyDetection
+		? AlertTypes.METRICS_BASED_ALERT
+		: alertType;
+
+	return (
+		<div className="query-section">
+			<Stepper stepNumber={1} label="Define the query" />
+			<ChartPreview
+				alertDef={alertDef}
+				source={source}
+				isCancelled={isCancelled}
+				onFetchingStateChange={handleFetchingStateChange}
+			/>
+			<div className="query-section-tabs">
+				<div className="query-section-query-actions">
+					{tabs.map((tab) => (
+						<Button
+							key={tab.value}
+							className={classNames('list-view-tab', 'explorer-view-option', {
+								'active-tab': activeTab === tab.value,
+							})}
+							onClick={(): void => {
+								if (isAnomalyDetection && tab.value === activeTab) {
+									return;
+								}
+								setAlertType(tab.value as AlertTypes);
+							}}
+						>
+							{tab.icon}
+							{tab.label}
+						</Button>
+					))}
+				</div>
+			</div>
+			<QuerySectionComponent
+				queryCategory={currentQuery.queryType}
+				setQueryCategory={onQueryCategoryChange}
+				alertType={alertType}
+				runQuery={runQueryHandler}
+				isLoadingQueries={isLoadingQueries}
+				handleCancelQuery={handleCancelQuery}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				isAnomalyDetection={isAnomalyDetection}
+				key={currentQuery.queryType}
+				ruleId=""
+			/>
+		</div>
+	);
+}
+
+export default QuerySection;

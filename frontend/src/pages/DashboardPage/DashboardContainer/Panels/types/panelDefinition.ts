@@ -1,5 +1,6 @@
 import type { EQueryType } from 'types/common/dashboard';
 import type { ComponentType } from 'react';
+import type { StoreApi } from 'zustand';
 import {
 	type DashboardtypesPanelDTO,
 	type DashboardtypesPanelSpecDTO,
@@ -110,6 +111,11 @@ export interface QueryEditorPaneProps {
 	onChangeSpec: (spec: DashboardtypesPanelSpecDTO) => void;
 }
 
+export type WarningSourceStore = Pick<
+	StoreApi<unknown>,
+	'getState' | 'getInitialState' | 'subscribe'
+>;
+
 /**
  * A kind that renders from a query. Declares its whole query surface here, so a
  * kind without one carries no query declarations at all — no dummy capabilities,
@@ -134,6 +140,8 @@ export interface QueryPanelDefinition<
 		panel: PanelOfKind<K>,
 		data: PanelQueryData,
 	) => PanelStatusDetail | null;
+	/** State outside the panel that `getDataWarning` reads; the warning recomputes when it changes. */
+	dataWarningSource?: WarningSourceStore;
 	/** Reconciles the kind's options with the queries a save carries. */
 	reconcileWithQueries?: (
 		spec: DashboardtypesPanelSpecDTO,

@@ -76,13 +76,15 @@ function SectionSlot({
 	queryType,
 	stepInterval,
 	metricUnit,
+	geoMapPlacement,
 }: SectionSlotProps): JSX.Element | null {
 	const editor = resolveSectionEditor(config.kind);
 	// Controlled so the header slot can expand on click; list sections open when populated.
 	const [open, setOpen] = useState(() => {
 		if (
 			config.kind === SectionKind.Visualization ||
-			config.kind === SectionKind.Dimensions
+			config.kind === SectionKind.Dimensions ||
+			config.kind === SectionKind.Location
 		) {
 			return true;
 		}
@@ -149,6 +151,7 @@ function SectionSlot({
 		queryType,
 		stepInterval,
 		metricUnit,
+		geoMapPlacement,
 	};
 
 	const editorElement = (

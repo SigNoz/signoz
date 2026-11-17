@@ -12,12 +12,10 @@ import {
 	logsCompositeQuery,
 	metricsCompositeQuery,
 	tracesCompositeQuery,
-	v1RulePayload,
 	v2RulePayload,
 } from './payloads';
 import type {
 	AlertRulesSeedOptions,
-	AlertSchema,
 	LogsAlertSeed,
 	LogsSeedOptions,
 	MetricAlertSeed,
@@ -69,11 +67,8 @@ export interface AlertSeeder {
 export function alertSeeder(page: Page): AlertSeeder {
 	const api = apiDriver(page);
 
-	const postRule = (
-		schema: AlertSchema,
-		payload: Record<string, unknown>,
-	): Promise<string> =>
-		api.create(schema === 'v1' ? '/api/v1/rules' : '/api/v2/rules', payload);
+	const postRule = (payload: Record<string, unknown>): Promise<string> =>
+		api.create('/api/v2/rules', payload);
 
 	const postTelemetry = (path: TelemetryPath, data: unknown[]): Promise<void> =>
 		postToSeeder(page.request, path, data);
@@ -100,39 +95,29 @@ export function alertSeeder(page: Page): AlertSeeder {
 			name,
 			marker,
 			channels,
-			schema = 'v2',
 			evalWindow = '5m0s',
 			frequency = '15s',
-			severity = schema === 'v1' ? 'warning' : 'critical',
+			severity = 'critical',
 			extraLabels,
 			alertOnAbsent,
 			absentFor,
-			target,
-			op,
-			matchType,
-		}) => {
-			const args = {
-				name,
-				alertType: 'LOGS_BASED_ALERT',
-				compositeQuery: logsCompositeQuery(marker),
-				channels,
-				severity,
-				extraLabels,
-				evalWindow,
-				frequency,
-				extraCondition:
-					alertOnAbsent === undefined
-						? undefined
-						: { alertOnAbsent, absentFor: absentFor ?? 1 },
-				target,
-				op,
-				matchType,
-			};
-			return postRule(
-				schema,
-				schema === 'v1' ? v1RulePayload(args) : v2RulePayload(args),
-			);
-		},
+		}) =>
+			postRule(
+				v2RulePayload({
+					name,
+					alertType: 'LOGS_BASED_ALERT',
+					compositeQuery: logsCompositeQuery(marker),
+					channels,
+					severity,
+					extraLabels,
+					evalWindow,
+					frequency,
+					extraCondition:
+						alertOnAbsent === undefined
+							? undefined
+							: { alertOnAbsent, absentFor: absentFor ?? 1 },
+				}),
+			),
 
 		tracesRule: ({
 			name,
@@ -142,7 +127,6 @@ export function alertSeeder(page: Page): AlertSeeder {
 			frequency = '15s',
 		}) =>
 			postRule(
-				'v2',
 				v2RulePayload({
 					name,
 					alertType: 'TRACES_BASED_ALERT',
@@ -163,7 +147,6 @@ export function alertSeeder(page: Page): AlertSeeder {
 			frequency = '15s',
 		}) =>
 			postRule(
-				'v2',
 				v2RulePayload({
 					name,
 					alertType: 'METRIC_BASED_ALERT',

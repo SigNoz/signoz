@@ -19,6 +19,7 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
+import { parseAsString, useQueryStates } from 'nuqs';
 import { AppState } from 'store/reducers';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
@@ -27,16 +28,26 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';
+import {
+	ALL_ENDPOINTS_EXPRESSION_KEY,
+	ENDPOINT_STATS_EXPRESSION_KEY,
+} from '../../filterParamKeys';
 import { DEFAULT_PARAMS, useApiMonitoringParams } from '../../queryParams';
 import { columnsConfig, formatDataForTable } from '../../utils';
 import DomainDetails from './DomainDetails/DomainDetails';
+import { useConvertLegacyFilterLinks } from './hooks/useConvertLegacyFilterLinks';
 
 import '../Explorer.styles.scss';
 
 function DomainList(): JSX.Element {
 	const [params, setParams] = useApiMonitoringParams();
 	const { showIP, selectedDomain } = params;
+	const [, setDrawerFilters] = useQueryStates({
+		[ALL_ENDPOINTS_EXPRESSION_KEY]: parseAsString,
+		[ENDPOINT_STATS_EXPRESSION_KEY]: parseAsString,
+	});
 	const [selectedDomainIndex, setSelectedDomainIndex] = useState<number>(-1);
+	useConvertLegacyFilterLinks();
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -55,6 +66,8 @@ function DomainList(): JSX.Element {
 	});
 
 	const compositeData = useGetCompositeQueryParam();
+	const listFilterExpression =
+		compositeData?.builder?.queryData[0]?.filter?.expression ?? '';
 
 	const [isCancelled, setIsCancelled] = useState(false);
 
@@ -155,6 +168,7 @@ function DomainList(): JSX.Element {
 					dataSource={DataSource.TRACES}
 					queryData={query}
 					onChange={handleSearchChange}
+					onRun={handleStageAndRunQuery}
 					placeholder="Enter your filter query (e.g., deployment.environment = 'otel-demo' AND service.name = 'frontend')"
 					hardcodedAttributeKeys={ApiMonitoringHardcodedAttributeKeys}
 				/>
@@ -225,6 +239,11 @@ function DomainList(): JSX.Element {
 								);
 								setSelectedDomainIndex(dataIndex);
 								setParams({ selectedDomain: record.domainName });
+								// The drawer tabs start from the list's filter
+								void setDrawerFilters({
+									[ALL_ENDPOINTS_EXPRESSION_KEY]: listFilterExpression || null,
+									[ENDPOINT_STATS_EXPRESSION_KEY]: listFilterExpression || null,
+								});
 								logEvent('API Monitoring: Domain name row clicked', {});
 							}
 						},
@@ -245,8 +264,12 @@ function DomainList(): JSX.Element {
 					handleClose={(): void => {
 						setSelectedDomainIndex(-1);
 						setParams(DEFAULT_PARAMS);
+						void setDrawerFilters({
+							[ALL_ENDPOINTS_EXPRESSION_KEY]: null,
+							[ENDPOINT_STATS_EXPRESSION_KEY]: null,
+						});
 					}}
-					domainListFilters={query?.filters}
+					domainListFilterExpression={listFilterExpression}
 				/>
 			)}
 		</section>

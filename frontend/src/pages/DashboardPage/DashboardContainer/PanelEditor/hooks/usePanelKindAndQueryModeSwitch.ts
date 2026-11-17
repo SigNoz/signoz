@@ -7,6 +7,8 @@ import type {
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
+import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -60,6 +62,43 @@ function withDefaultListOrder(query: Query): Query {
 					? qd
 					: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
 			),
+		},
+	};
+}
+
+/**
+ * Fields the new kind hides could not be seen or cleared, yet would still apply: a limit
+ * would cut rows, and a trace operator would be saved and rejected by the backend.
+ */
+function withoutHiddenFields(query: Query, kind: PanelKind): Query {
+	const fields = getQueryPanelDefinition(kind)?.queryBuilderFields;
+	const limitHidden = resolveQueryBuilderField(
+		QueryBuilderField.Limit,
+		fields,
+	).hidden;
+	const traceOperatorHidden = resolveQueryBuilderField(
+		QueryBuilderField.TraceOperator,
+		fields,
+	).hidden;
+	if (!limitHidden && !traceOperatorHidden) {
+		return query;
+	}
+	return {
+		...query,
+		builder: {
+			...query.builder,
+			queryData: limitHidden
+				? query.builder.queryData.map((qd) => ({ ...qd, limit: null }))
+				: query.builder.queryData,
+			queryFormulas: limitHidden
+				? query.builder.queryFormulas.map((formula) => ({
+						...formula,
+						limit: null,
+					}))
+				: query.builder.queryFormulas,
+			queryTraceOperator: traceOperatorHidden
+				? []
+				: query.builder.queryTraceOperator,
 		},
 	};
 }
@@ -179,10 +218,12 @@ export function usePanelKindAndQueryModeSwitch({
 					panelTypeRef.current,
 				);
 				// Match a fresh list panel's default order so the builder's Order By isn't empty.
-				const ordered =
+				const ordered = withoutHiddenFields(
 					newKind === 'signoz/ListPanel'
 						? withDefaultListOrder(transformed)
-						: transformed;
+						: transformed,
+					newKind,
+				);
 				return newKind === 'signoz/HeatmapPanel'
 					? withSingleHeatmapQuery(ordered)
 					: withPercentileHistogramAggregation(ordered);

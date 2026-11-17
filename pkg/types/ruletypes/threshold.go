@@ -85,9 +85,6 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw["spec"], &basicThresholds); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threshold spec: %v", err)
 		}
-		if err := basicThresholds.Validate(); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
-		}
 		r.Spec = basicThresholds
 
 	default:
@@ -130,6 +127,9 @@ type RuleThreshold interface {
 	// using the given EvalData and returns the matching series
 	Eval(series *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
+	// Validate runs on the write path and before a task is built; a stored
+	// rule may hold a threshold that fails it and still decode.
+	Validate() error
 }
 
 type BasicRuleThreshold struct {
@@ -168,6 +168,37 @@ func (r BasicRuleThresholds) Validate() error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+func (r BasicRuleThresholds) validateUniqueNames() error {
+	names := make(map[string]struct{}, len(r))
+	for _, basicThreshold := range r {
+		if _, seen := names[basicThreshold.Name]; seen {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: duplicate threshold name %q", basicThreshold.Name)
+		}
+		names[basicThreshold.Name] = struct{}{}
+	}
+	return nil
+}
+
+func (r BasicRuleThresholds) validateRecoveryTargets() error {
+	for _, basicThreshold := range r {
+		if basicThreshold.RecoveryTarget == nil || basicThreshold.TargetValue == nil {
+			continue
+		}
+		// equal, not_equal and outside_bounds have no recovering side
+		switch basicThreshold.CompareOperator.Normalize() {
+		case ValueIsAbove, ValueAboveOrEq:
+			if *basicThreshold.RecoveryTarget >= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be below target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		case ValueIsBelow, ValueBelowOrEq:
+			if *basicThreshold.RecoveryTarget <= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be above target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		}
+	}
+	return nil
 }
 
 func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error) {

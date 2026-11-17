@@ -3,7 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { TraceAggregation } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { SPAN_ATTRIBUTES } from '../constants';
 import DomainMetrics from './DomainMetrics';
@@ -34,10 +33,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			startTime: 1758259531000,
 			endTime: 1758261331000,
 		},
-		domainListFilters: {
-			items: [],
-			op: 'AND' as const,
-		} as IBuilderQuery['filters'],
+		domainListFilterExpression: '',
 	};
 
 	const mockSuccessResponse = {
@@ -174,35 +170,12 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 		it('includes custom filters in filter expressions', async () => {
 			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
 
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'my-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND' as const,
-			};
+			const customFilterExpression =
+				"service.name = 'my-service' AND deployment.environment = 'production'";
 
 			renderComponent({
 				...mockProps,
-				domainListFilters: customFilters,
+				domainListFilterExpression: customFilterExpression,
 			});
 
 			await waitFor(() => {

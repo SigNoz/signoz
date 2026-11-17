@@ -973,7 +973,7 @@ export function QueryBuilderProvider({
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
-			newTab?: boolean,
+			navigateOptions?: { newTab?: boolean; replace?: boolean },
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1028,14 +1028,18 @@ export function QueryBuilderProvider({
 			);
 
 			if (searchParams) {
-				Object.keys(searchParams).forEach((param) =>
+				Object.keys(searchParams).forEach((param) => {
+					if (searchParams[param] === null) {
+						urlQuery.delete(param);
+						return;
+					}
 					urlQuery.set(
 						param,
 						shouldNotStringify
 							? (searchParams[param] as string)
 							: JSON.stringify(searchParams[param]),
-					),
-				);
+					);
+				});
 			}
 			// Remove Hidden Filters from URL query parameters on query change
 			urlQuery.delete(QueryParams.activeLogId);
@@ -1044,7 +1048,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab });
+			safeNavigate(generatedUrl, navigateOptions);
 		},
 		[location.pathname, safeNavigate],
 	);

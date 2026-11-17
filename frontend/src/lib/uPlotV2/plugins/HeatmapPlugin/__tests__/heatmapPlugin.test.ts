@@ -1,6 +1,6 @@
 import type uPlot from 'uplot';
 
-import { DEFAULT_HEATMAP_COLORS } from '../colorScale';
+import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
 import { resolveHeatmapYAxis } from '../geometry';
 import { createHeatmapHooks } from '../heatmapPlugin';
 import { HeatmapAxisScale, HeatmapCell } from '../types';
@@ -103,7 +103,7 @@ function createHooks(
 	return createHeatmapHooks({
 		yAxis: Y_AXIS,
 		step: STEP,
-		colors: DEFAULT_HEATMAP_COLORS,
+		colors: DEFAULT_COLOR_RAMP_OPTIONS,
 		isDarkMode: true,
 		seriesColor: '#4e74f8',
 		dimOnHover,

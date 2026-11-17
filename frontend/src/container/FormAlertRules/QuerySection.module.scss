@@ -1,0 +1,21 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--l1-border);
+	border-radius: var(--radius-2);
+	padding: var(--spacing-6);
+	background-color: var(--l1-background);
+
+	:global(.alert-tabs) {
+		padding: 0;
+	}
+
+	:global(.alert-tabs .ant-tabs .ant-tabs-nav) {
+		padding: var(--spacing-4) 0;
+	}
+
+	:global(.alert-tabs .ant-tabs-nav-wrap),
+	:global(.alert-tabs .ant-tabs-extra-content) {
+		padding: 0;
+	}
+}
