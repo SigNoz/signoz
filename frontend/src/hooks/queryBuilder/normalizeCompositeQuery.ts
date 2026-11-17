@@ -10,6 +10,7 @@ import {
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v5 as uuidv5 } from 'uuid';
+import { compactQueryForUrl } from 'utils/compactQueryForUrl';
 
 import {
 	ExplorerQueryRules,
@@ -20,7 +21,7 @@ const COMPOSITE_QUERY_ID_NAMESPACE = '2f1c6a4e-9b3d-4c57-8e21-7a0d5f6b9c13';
 
 export type NormalizedQuery = {
 	query: Query;
-	/** The url query had to be repaired, so the url should be rewritten. */
+	/** The url query needs a repair beyond restoring omitted defaults. */
 	changed: boolean;
 };
 
@@ -42,7 +43,10 @@ export function normalizeCompositeQuery(
 		fitQueryToExplorer(query, rules);
 	}
 
-	return { query, changed: !isEqual(query, urlQuery) };
+	return {
+		query,
+		changed: !isEqual(compactQueryForUrl(query), compactQueryForUrl(urlQuery)),
+	};
 }
 
 function addMissingBlocks(query: Query, urlQuery: object): void {
