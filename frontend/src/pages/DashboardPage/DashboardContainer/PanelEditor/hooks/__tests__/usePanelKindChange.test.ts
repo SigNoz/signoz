@@ -511,6 +511,39 @@ describe('usePanelKindChange', () => {
 			expect(lastSpec(setSpec).queries).toBe(CONVERTED);
 		});
 
+		it('re-seeds a revisited kind whose returning tab holds a signal it cannot author', () => {
+			const setSpec = jest.fn();
+			// A saved AI List: its unused builder slot is the default metrics query.
+			let state = builderState({
+				...withBothSlots('list', EQueryType.AI_QUERY_BUILDER),
+				builder: initialQueriesMap[DataSource.METRICS].builder,
+			});
+			mockUseQueryBuilder.mockImplementation(() => state);
+			mockResolveQueryType.mockReturnValue('builder_ai_query');
+
+			const { result, rerender } = renderHook(
+				(props: { spec: DashboardtypesPanelSpecDTO; panelType: PANEL_TYPES }) =>
+					usePanelKindChange({ ...props, setSpec }),
+				{ initialProps: { spec: listSpec, panelType: PANEL_TYPES.LIST } },
+			);
+			act(() => result.current.onChangePanelKind('signoz/TimeSeriesPanel'));
+			state = builderState(withBothSlots('ts', EQueryType.QUERY_BUILDER));
+			mockResolveQueryType.mockReturnValue('builder');
+			rerender({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+			});
+			act(() => result.current.onChangePanelKind('signoz/ListPanel'));
+
+			const restored = lastRedirect(state);
+			expect(restored.queryType).toBe('builder');
+			expect(restored.builder).toBe(QB_BUILDER);
+			const [persisted] = mockToPerses.mock.calls[
+				mockToPerses.mock.calls.length - 1
+			] as [Query];
+			expect(persisted.builder).toBe(QB_BUILDER);
+		});
+
 		it('carries the AI query into a revisited kind that never had one', () => {
 			const setSpec = jest.fn();
 			let state = builderState(
