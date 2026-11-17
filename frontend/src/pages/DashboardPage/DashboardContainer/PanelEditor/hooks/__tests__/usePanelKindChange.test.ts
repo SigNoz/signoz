@@ -26,6 +26,8 @@ jest.mock('lib/query/panelQuery', () => ({
 jest.mock('../../../Panels/capabilities', () => ({
 	resolveQueryType: jest.fn(),
 	getSupportedSignals: jest.fn(() => ['metrics']),
+	getQueryPanelDefinition: jest.requireActual('../../../Panels/capabilities')
+		.getQueryPanelDefinition,
 	// Real predicate: these specs use real (query) kinds and the static path is
 	// exercised through its own cases below.
 	isStaticPanelKind: jest.requireActual('../../../Panels/capabilities')
@@ -105,6 +107,8 @@ function builderState(currentQuery: Query): {
 		updateAllQueriesOperators: jest.fn((query: Query) => query),
 	};
 }
+
+type SetSpec = Parameters<typeof usePanelKindChange>[0]['setSpec'];
 
 describe('usePanelKindChange', () => {
 	beforeEach(() => {
@@ -189,6 +193,90 @@ describe('usePanelKindChange', () => {
 				{ columnName: 'timestamp', order: 'desc' },
 			]);
 		});
+	});
+
+	it('clears query and formula limits the new kind hides (Table → Geo Map)', () => {
+		const setSpec = jest.fn() as jest.MockedFunction<SetSpec>;
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('table-current', 'builder')),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: {
+				queryData: [{ queryName: 'A', limit: 10 }],
+				queryFormulas: [{ queryName: 'F1', limit: 5 }],
+			},
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TablePanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TABLE,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/GeoMapPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData[0].limit).toBeNull();
+		expect(persisted.builder.queryFormulas[0].limit).toBeNull();
+	});
+
+	it('keeps the limit when the new kind shows it (Geo Map → Table)', () => {
+		const setSpec = jest.fn() as jest.MockedFunction<SetSpec>;
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('geo-current', 'builder')),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: {
+				queryData: [{ queryName: 'A', limit: 10 }],
+				queryFormulas: [{ queryName: 'F1', limit: 5 }],
+			},
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/GeoMapPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TABLE,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/TablePanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData[0].limit).toBe(10);
+		expect(persisted.builder.queryFormulas[0].limit).toBe(5);
+	});
+
+	it('clears a trace operator the new kind hides (Table → Geo Map)', () => {
+		const setSpec = jest.fn() as jest.MockedFunction<SetSpec>;
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('table-current', 'builder')),
+		);
+		mockHandleQueryChange.mockReturnValue({
+			id: 'transformed',
+			queryType: 'builder',
+			builder: {
+				queryData: [{ queryName: 'A' }],
+				queryFormulas: [],
+				queryTraceOperator: [{ queryName: 'T1', expression: 'A => B' }],
+			},
+		} as unknown as Query);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TablePanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TABLE,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/GeoMapPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryTraceOperator).toStrictEqual([]);
 	});
 
 	it('keeps one query and drops the formulas when switching to a Heatmap panel', () => {

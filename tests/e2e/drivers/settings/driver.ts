@@ -130,6 +130,7 @@ export interface Settings {
 		search(text: string): Promise<void>;
 		/** The member's table row. Search for the email first: the list pages at 20. */
 		row(email: string): Locator;
+		inviteButton(): Locator;
 		openInvite(): Promise<void>;
 		inviteDialog(): Locator;
 		invite(rows: { email: string; role: string }[]): Promise<void>;
@@ -412,8 +413,9 @@ export function settingsDriver(page: Page): Settings {
 			},
 			// antd keys each row by the member id; the email is what callers hold.
 			row: (email) => page.locator('tr[data-row-key]').filter({ hasText: email }),
+			inviteButton: () => page.getByTestId('invite-member-btn'),
 			openInvite: async () => {
-				await page.getByTestId('invite-member-btn').click();
+				await settings.members.inviteButton().click();
 				await expect(settings.members.inviteDialog()).toBeVisible();
 			},
 			inviteDialog: () =>

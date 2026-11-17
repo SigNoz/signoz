@@ -41,7 +41,7 @@ export function getBuilderSlotKeyForQueryType(
  * The query as the backend takes it. AI goes out as a `builder` query whose queries carry
  * `builderQueryType: builder_ai_query`, the tag set from the slot so a stale one can't leak.
  */
-export function toRequestQuery(query: Query): Query {
+export function foldAISlot(query: Query): Query {
 	if (!isAIQueryType(query.queryType)) {
 		return query;
 	}
@@ -59,7 +59,7 @@ export function toRequestQuery(query: Query): Query {
 	};
 }
 
-/** Undoes `toRequestQuery` for `slotQuery`: builder edits made on the request shape land back in its slot. */
+/** Undoes `foldAISlot` for `slotQuery`: builder edits made on the request shape land back in its slot. */
 export function toSlotQuery(requestQuery: Query, slotQuery: Query): Query {
 	if (!isAIQueryType(slotQuery.queryType)) {
 		return requestQuery;

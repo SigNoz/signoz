@@ -28,7 +28,7 @@ type QueryBuilderFormula struct {
 
 	Offset int `json:"offset,omitempty" description:"The number of ordered series or rows to skip before the page starts. Requires limit."`
 
-	Having *Having `json:"having,omitempty" description:"Accepted but currently ignored; the computed values are returned unfiltered."`
+	Having *Having `json:"having,omitempty" description:"A filter on the formula values, referencing the formula by its name or as __result, for example F1 > 0. A time series keeps only the points that match and drops a series with none left; a scalar result keeps only the rows that match."`
 
 	Functions []Function `json:"functions,omitzero" description:"Post-processing functions applied in order to each result series."`
 
@@ -116,6 +116,10 @@ func (f QueryBuilderFormula) Validate() error {
 			f.Name,
 			err.Error(),
 		)
+	}
+
+	if f.Limit < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be non-negative, got %d", f.Limit)
 	}
 
 	// Validate functions if present

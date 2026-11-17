@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DEFAULT_ENTITY_VERSION } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -34,18 +34,26 @@ function LogsCountInInterval({
 			selectedTime: 'GLOBAL_TIME',
 			globalSelectedInterval: timeInterval,
 		},
-		DEFAULT_ENTITY_VERSION,
+		ENTITY_VERSION_V5,
 	);
+
+	const count = useMemo(() => {
+		const table = result.data?.payload?.data?.result?.[0]?.table;
+		const countColumn = table?.columns.find((column) => column.isValueColumn);
+		return (
+			countColumn && table?.rows[0]?.data[countColumn.id || countColumn.name]
+		);
+	}, [result.data]);
 
 	if (!result.isFetched) {
 		return null;
 	}
 
-	const count =
-		result?.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-			?.values?.[0]?.value;
 	return (
-		<div className="logs-filter-preview-matched-logs-count">
+		<div
+			className="logs-filter-preview-matched-logs-count"
+			data-testid="pipeline-filter-preview-count"
+		>
 			{count} matches in
 		</div>
 	);

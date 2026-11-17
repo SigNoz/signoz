@@ -2,6 +2,8 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
+import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
 import { EQueryType } from 'types/common/dashboard';
 
 import { UNSUPPORTED_PANEL } from '../kinds/UnsupportedPanel/definition';
@@ -64,6 +66,7 @@ const EXPECTED_QUERY_TYPES: Record<PanelKind, EQueryType[]> = {
 	'signoz/TablePanel': [QUERY_BUILDER, CLICKHOUSE, EQueryType.AI_QUERY_BUILDER],
 	'signoz/ListPanel': [QUERY_BUILDER, EQueryType.AI_QUERY_BUILDER],
 	'signoz/ScatterPlotPanel': [QUERY_BUILDER, CLICKHOUSE],
+	'signoz/GeoMapPanel': [QUERY_BUILDER, CLICKHOUSE],
 	'signoz/TextPanel': [],
 };
 
@@ -76,6 +79,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	// A heatmap needs a bucket axis, which only a metric carries.
 	'signoz/HeatmapPanel': [metrics],
 	'signoz/PieChartPanel': [metrics, logs, traces],
+	'signoz/GeoMapPanel': [metrics, logs, traces],
 	'signoz/TablePanel': [metrics, logs, traces],
 	// List renders raw rows; metrics produce no row data.
 	'signoz/ListPanel': [logs, traces],
@@ -142,7 +146,7 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		orderTiebreaker: false,
 		serverPaginated: false,
 	},
-	// Only Table and Scatter Plot ask the server to join their scalar results into UI rows.
+	// Only Table, Scatter Plot and Geo Map ask the server to join their scalar results into UI rows.
 	'signoz/TablePanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
@@ -151,6 +155,14 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 		serverPaginated: false,
 	},
 	'signoz/ScatterPlotPanel': {
+		requestType: scalar,
+		formatTableResultForUI: true,
+		bucketedStepInterval: false,
+		orderTiebreaker: false,
+		serverPaginated: false,
+		defaultRowLimit: 10_000,
+	},
+	'signoz/GeoMapPanel': {
 		requestType: scalar,
 		formatTableResultForUI: true,
 		bucketedStepInterval: false,
@@ -170,12 +182,29 @@ const EXPECTED_QUERY_CAPABILITIES: Partial<
 
 const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 
+// Their queries join row by row; a trace operator returns spans.
+const HIDES_TRACE_OPERATOR: PanelKind[] = [
+	'signoz/ScatterPlotPanel',
+	'signoz/GeoMapPanel',
+];
+
 describe('panel capabilities guard', () => {
 	describe('query capabilities', () => {
 		it.each(ALL_KINDS)('declares how %s shapes its request', (kind) => {
 			expect(getQueryPanelDefinition(kind)?.queryCapabilities).toStrictEqual(
 				EXPECTED_QUERY_CAPABILITIES[kind],
 			);
+		});
+	});
+
+	describe('trace operator', () => {
+		it.each(ALL_KINDS)('declares whether %s offers one', (kind) => {
+			expect(
+				resolveQueryBuilderField(
+					QueryBuilderField.TraceOperator,
+					getQueryPanelDefinition(kind)?.queryBuilderFields,
+				).hidden,
+			).toBe(HIDES_TRACE_OPERATOR.includes(kind));
 		});
 	});
 

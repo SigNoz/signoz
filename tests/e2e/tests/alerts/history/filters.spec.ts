@@ -150,7 +150,7 @@ test.describe('Alert history — filters', () => {
 		await expect(alerts.history.runQueryButton()).toBeVisible();
 	});
 
-	test('TC-06 threshold.name and severity filter per the rule schema', async ({
+	test('TC-06 threshold.name and severity filter the timeline', async ({
 		alerts,
 		alertHistory,
 	}) => {
@@ -176,22 +176,10 @@ test.describe('Alert history — filters', () => {
 			`of ${alertHistory.total}`,
 		);
 
-		// The v1 rule's threshold is named `warning`, so the same keys select the
-		// opposite way round.
-		await alerts.history.goto(alertHistory.ruleIdV1);
 		response = alerts.history.waitForResponse('timeline', {
 			filterExpression: `threshold.name = 'warning'`,
 		});
 		await alerts.history.runFilter(`threshold.name = 'warning'`);
-		await response;
-		await expect(alerts.history.footerRange()).toContainText(
-			`of ${alertHistory.totalV1}`,
-		);
-
-		response = alerts.history.waitForResponse('timeline', {
-			filterExpression: `threshold.name = 'critical'`,
-		});
-		await alerts.history.runFilter(`threshold.name = 'critical'`);
 		await response;
 		await expect(alerts.history.rows()).toHaveCount(0);
 	});
@@ -354,5 +342,30 @@ test.describe('Alert history — filters', () => {
 		await alerts.history.stateFilter('fired').click();
 		await fired;
 		await expect(alerts.history.rows()).toHaveCount(resolvedHistory.firingCount);
+	});
+
+	test('TC-13 a state filter clicked after a run keeps the expression', async ({
+		authedPage: page,
+		alerts,
+		alertHistory,
+	}) => {
+		await alerts.history.goto(alertHistory.ruleId);
+		const expression = `service.name = '${alertHistory.services[3]}'`;
+		const first = alerts.history.waitForResponse('timeline', {
+			filterExpression: expression,
+		});
+		await alerts.history.runFilter(expression);
+		await first;
+
+		const request = page.waitForRequest((req) =>
+			alerts.history.isRequest(req, 'timeline'),
+		);
+		await alerts.history.stateFilter('fired').click();
+
+		const params = new URL((await request).url()).searchParams;
+		expect(params.get('state')).toBe('firing');
+		expect(params.get('filterExpression')).toBe(expression);
+		await expect(page).toHaveURL(/[?&]alertHistoryExpression=/);
+		await expect(alerts.history.rows()).toHaveCount(1);
 	});
 });

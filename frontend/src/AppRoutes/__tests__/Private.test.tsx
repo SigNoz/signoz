@@ -1,10 +1,25 @@
 import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter, Route, Switch, useLocation } from 'react-router-dom';
+import {
+	MemoryRouter,
+	Route,
+	Routes,
+	useLocation,
+	useNavigationType,
+} from 'react-router';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import { useListUsers } from 'api/generated/services/users';
+import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
+import { UserListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import {
+	AUTHZ_CHECK_URL,
+	setupAuthzAdmin,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import { rest, server } from 'mocks-server/server';
 import { AppContext } from 'providers/App/App';
 import { IAppContext, IUser } from 'providers/App/types';
 import {
@@ -73,11 +88,13 @@ const queryClient = new QueryClient({
 // Component to capture current location for assertions
 function LocationDisplay(): ReactElement {
 	const location = useLocation();
+	const navigationType = useNavigationType();
 	return (
 		<>
 			<div data-testid="location-display">{location.pathname}</div>
 			<div data-testid="location-search">{location.search}</div>
 			<div data-testid="location-hash">{location.hash}</div>
+			<div data-testid="navigation-type">{navigationType}</div>
 		</>
 	);
 }
@@ -237,12 +254,17 @@ function buildPrivateRouteTree(
 			<MemoryRouter initialEntries={[initialRoute]}>
 				<AppContext.Provider value={contextValue}>
 					<PrivateRoute>
-						<Switch>
-							<Route path="*">
-								<div data-testid="children-rendered">Content</div>
-								<LocationDisplay />
-							</Route>
-						</Switch>
+						<Routes>
+							<Route
+								path="*"
+								element={
+									<>
+										<div data-testid="children-rendered">Content</div>
+										<LocationDisplay />
+									</>
+								}
+							/>
+						</Routes>
 					</PrivateRoute>
 				</AppContext.Provider>
 			</MemoryRouter>
@@ -505,6 +527,19 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
 		});
 
+		it('should replace the login entry when redirecting to the saved route', async () => {
+			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] =
+				ROUTES.ALL_DASHBOARD;
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.LOGIN,
+				appContext: { isLoggedIn: true },
+			});
+
+			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
+			expect(screen.getByTestId('navigation-type')).toHaveTextContent('REPLACE');
+		});
+
 		it('should clear localStorage after redirecting to saved route', async () => {
 			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] = ROUTES.HOME;
 
@@ -628,6 +663,19 @@ describe('PrivateRoute', () => {
 			await waitFor(() => {
 				expect(mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT]).toBe('');
 			});
+		});
+
+		it('should replace the unknown route entry when redirecting to the saved route', async () => {
+			mockLocalStorage[LOCALSTORAGE.UNAUTHENTICATED_ROUTE_HIT] =
+				ROUTES.ALL_DASHBOARD;
+
+			renderPrivateRoute({
+				initialRoute: '/unknown-route-that-does-not-exist',
+				appContext: { isLoggedIn: true },
+			});
+
+			await assertRedirectsTo(ROUTES.ALL_DASHBOARD);
+			expect(screen.getByTestId('navigation-type')).toHaveTextContent('REPLACE');
 		});
 	});
 
@@ -776,7 +824,7 @@ describe('PrivateRoute', () => {
 			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
 		});
 
-		it('should redirect VIEWER to workspace locked when trying to access members settings', async () => {
+		it('should allow VIEWER to access members settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.MEMBERS_SETTINGS,
 				appContext: {
@@ -789,7 +837,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.MEMBERS_SETTINGS);
 		});
 
 		it('should redirect VIEWER to workspace locked when trying to access my-settings', async () => {
@@ -1087,6 +1135,99 @@ describe('PrivateRoute', () => {
 			});
 
 			await assertRedirectsTo(ROUTES.ONBOARDING);
+		});
+
+		it('should not redirect the signoz admin to onboarding while the first user has not completed it', async () => {
+			mockUsersData = [
+				{ email: 'test@example.com' },
+				{ email: SIGNOZ_ADMIN_EMAIL },
+			];
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					isFetchingOrgPreferences: false,
+					orgPreferences: createMockOrgPreferences(false),
+					user: createMockUser({
+						role: USER_ROLES.ADMIN as ROLES,
+						email: SIGNOZ_ADMIN_EMAIL,
+					}),
+				},
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await Promise.resolve();
+			});
+
+			assertStaysOnRoute(ROUTES.HOME);
+		});
+
+		it('fetches the user list for a non-admin role that has list:user', async () => {
+			server.use(setupAuthzAdmin());
+			jest.mocked(useListUsers).mockClear();
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
+				},
+				isCloudUser: true,
+			});
+
+			await waitFor(() =>
+				expect(useListUsers).toHaveBeenLastCalledWith({
+					query: { enabled: true },
+				}),
+			);
+		});
+
+		it('does not check list:user while logged out', async () => {
+			const authzCheck = jest.fn();
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_, res, ctx) => {
+					authzCheck();
+					return res(ctx.status(401));
+				}),
+			);
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: { isLoggedIn: false },
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await new Promise((resolve) => {
+					setTimeout(resolve, 50);
+				});
+			});
+
+			expect(authzCheck).not.toHaveBeenCalled();
+		});
+
+		it('does not fetch the user list for an admin without list:user', async () => {
+			server.use(setupAuthzDeny(UserListPermission));
+			jest.mocked(useListUsers).mockClear();
+
+			renderPrivateRoute({
+				initialRoute: ROUTES.HOME,
+				appContext: {
+					isLoggedIn: true,
+					user: createMockUser({ role: USER_ROLES.ADMIN as ROLES }),
+				},
+				isCloudUser: true,
+			});
+
+			await act(async () => {
+				await Promise.resolve();
+			});
+
+			expect(useListUsers).not.toHaveBeenCalledWith({
+				query: { enabled: true },
+			});
 		});
 
 		it('should not redirect to onboarding when org preferences are still fetching', () => {
