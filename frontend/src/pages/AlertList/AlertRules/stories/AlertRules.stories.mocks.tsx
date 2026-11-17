@@ -16,7 +16,6 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { accessFor } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
-import { componentPermission } from 'utils/permission';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
@@ -315,11 +314,13 @@ export const listedRules = (
 	).data.rules;
 };
 
-export const hasRowMenu = (args: AlertRulesArgs): boolean =>
-	listedRules(args).length > 0 &&
-	componentPermission.action.includes(
-		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+export const hasRowMenu = (args: AlertRulesArgs): boolean => {
+	const { permissions } = accessFor(args.access, args.permissions, args.revoked);
+	return (
+		listedRules(args).length > 0 &&
+		['create:rule', 'update:rule', 'delete:rule'].every((p) => permissions.has(p))
 	);
+};
 
 export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
 	args.view === DEFAULT_RULE_VIEW &&
