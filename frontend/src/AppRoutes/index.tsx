@@ -44,9 +44,9 @@ import defaultRoutes, {
 } from './routes';
 import type { EnabledRouteKeys } from './RouteGate';
 import {
-	hasNoAppFrames,
+	isInjectedScriptError,
 	isExpectedRequestFailure,
-	isExternalIntegrationError,
+	isThirdPartyScriptError,
 	SENTRY_IGNORE_ERRORS,
 } from './sentryFilters';
 
@@ -360,12 +360,12 @@ function App(): JSX.Element {
 							return null;
 						}
 
-						if (isExternalIntegrationError(event)) {
+						if (isThirdPartyScriptError(event)) {
 							return null;
 						}
 
 						// Dev serves source from /src/, so every frame would look foreign there.
-						if (IS_PROD && hasNoAppFrames(event)) {
+						if (IS_PROD && isInjectedScriptError(event)) {
 							return null;
 						}
 
