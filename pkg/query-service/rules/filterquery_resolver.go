@@ -57,7 +57,7 @@ func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey stri
 	}
 
 	_, reservedAllowed := allowedOperations[operation]
-	// reserved severity already reads the severity label; an identical spelling would duplicate that predicate
+	// a severity label is decoration: the bare key reads threshold names and labels.severity reads the label
 	if ruletypes.DSLKey(key) == ruletypes.DSLKeySeverity && rawKey == string(ruletypes.DSLKeySeverity) {
 		labelAllowed = false
 	}
@@ -109,16 +109,8 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 }
 
 // severityComparison mirrors ruletypes' storedRuleData.extractSeverities. A positive term holds when any
-// threshold name matches and a negative term when none does, so the EXISTS takes the positive operator.
+// threshold name matches and a negative term when none does, so the subquery takes the positive operator.
 func (ruleFieldResolver) severityComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator) string {
-	key := string(ruletypes.DSLKeySeverity)
-
-	labelExpression := string(v.Formatter.JSONExtractMapValue(ruleDataColumn, ruleLabelsField, ruletypes.LabelSeverityName))
-	labelPredicate := v.BuildStringOperation(v.Sb, ctx, operation, labelExpression, key)
-	if labelPredicate == "" {
-		return ""
-	}
-
 	positiveOperation := operation
 	if operation.IsNegativeOperator() {
 		positiveOperation = operation.Inverse()
@@ -126,13 +118,15 @@ func (ruleFieldResolver) severityComparison(v *sqlcompiler.Visitor, ctx *grammar
 	thresholdsFrom, threshold := v.Formatter.JSONArrayElements(ruleDataColumn, thresholdSpecPath, "threshold")
 	nameExpression := string(v.Formatter.LowerExpression(string(v.Formatter.JSONExtractString(string(threshold), thresholdNamePath))))
 	subqueryBuilder := sqlbuilder.NewSelectBuilder()
-	subqueryBuilder.Select("1").From(string(thresholdsFrom)).Where(v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, nameExpression, key))
-	thresholdsPredicate := v.Sb.Exists(subqueryBuilder)
-	if operation.IsNegativeOperator() {
-		thresholdsPredicate = v.Sb.NotExists(subqueryBuilder)
+	namePredicate := v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, nameExpression, string(ruletypes.DSLKeySeverity))
+	if namePredicate == "" {
+		return ""
 	}
-
-	return fmt.Sprintf("CASE WHEN %s IS NOT NULL THEN %s ELSE %s END", labelExpression, labelPredicate, thresholdsPredicate)
+	subqueryBuilder.Select("1").From(string(thresholdsFrom)).Where(namePredicate)
+	if operation.IsNegativeOperator() {
+		return v.Sb.NotExists(subqueryBuilder)
+	}
+	return v.Sb.Exists(subqueryBuilder)
 }
 
 // A missing label evaluates as the empty string for every value operator; EXISTS/NOT EXISTS test the raw extraction.

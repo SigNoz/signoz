@@ -156,9 +156,8 @@ COLLIDER_RULE = {
 }
 
 SEVERITY_RULES = [
-    # this rule defines a severity label, so every notification it sends carries
-    # that severity whichever threshold fired; the list ignores the threshold
-    # names for it too
+    # the severity label is a plain label: a notification carries the name of
+    # the threshold that fired, so the list reports the threshold names
     {
         "alert": "api latency",
         "alertType": "METRIC_BASED_ALERT",
@@ -180,9 +179,8 @@ SEVERITY_RULES = [
         "version": "v5",
         "schemaVersion": "v2alpha1",
     },
-    # this rule has no severity label, so a notification carries the lowercased
-    # name of the threshold that fired as its severity; the list reports each
-    # distinct one, critical, error, warning and info first, then the rest
+    # threshold names are lowercased and deduplicated, critical, error, warning
+    # and info first, then the rest
     {
         "alert": "queue depth",
         "alertType": "METRIC_BASED_ALERT",
@@ -206,9 +204,8 @@ SEVERITY_RULES = [
         "version": "v5",
         "schemaVersion": "v2alpha1",
     },
-    # this rule has no severity label and a single threshold, so its only
-    # severity is error, which ranks between the other two rules' highest
-    # severities and is the one both negative filters leave standing
+    # a single threshold gives a single severity, error, which ranks below the
+    # other two rules' critical and is the one both negative filters leave standing
     {
         "alert": "cache miss ratio",
         "alertType": "METRIC_BASED_ALERT",
@@ -230,7 +227,7 @@ SEVERITY_RULES = [
 ]
 
 SEVERITIES_BY_NAME = {
-    "api latency": ["warning"],
+    "api latency": ["critical", "info"],
     "queue depth": ["critical", "warning", "p3"],
     "cache miss ratio": ["error"],
 }
@@ -294,11 +291,11 @@ def test_envelope_and_slim_rows(
         assert rule["createdBy"] == USER_ADMIN_EMAIL
         assert rule["updatedBy"] == USER_ADMIN_EMAIL
 
-    # rules without a severity label take their threshold names
+    # every seed rule has one threshold named critical; the severity labels are plain labels
     assert {name: rule["severities"] for name, rule in by_name.items()} == {
         "payment latency high": ["critical"],
-        "payment gateway errors": ["warning"],
-        "checkout conversion drop": ["important"],
+        "payment gateway errors": ["critical"],
+        "checkout conversion drop": ["critical"],
         "infra cpu saturation": ["critical"],
         "prom uptime probe": ["critical"],
     }
@@ -518,9 +515,8 @@ def test_sorting(
         "prom uptime probe",
     ]
 
-    # severity: known ranks first (critical > warning), then custom values;
-    # the two unlabelled rules are critical by threshold name, so the three
-    # critical rules tie and break on name asc
+    # severity: every seed rule is critical by threshold name, so all five tie
+    # and break on name asc; the severity labels play no part
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
         params={"sort": "severity", "order": "desc"},
@@ -529,11 +525,11 @@ def test_sorting(
     )
     assert response.status_code == HTTPStatus.OK
     assert [rule["alert"] for rule in response.json()["data"]["rules"]] == [
+        "checkout conversion drop",
         "infra cpu saturation",
+        "payment gateway errors",
         "payment latency high",
         "prom uptime probe",
-        "payment gateway errors",
-        "checkout conversion drop",
     ]
 
     for order in ("asc", "desc"):
@@ -672,27 +668,28 @@ def test_severities(
     assert {rule["alert"]: rule["severities"] for rule in response.json()["data"]["rules"]} == SEVERITIES_BY_NAME
 
 
-# a positive term matches any of the rule's severities, a negative term none of them
+# a positive term matches any of the rule's threshold names, a negative term none of them
 @pytest.mark.parametrize(
     ("query", "expected_names"),
     [
-        ("severity = 'warning'", {"api latency", "queue depth"}),
-        ("severity != 'warning'", {"cache miss ratio"}),
-        ("severity = 'critical'", {"queue depth"}),
+        ("severity = 'critical'", {"api latency", "queue depth"}),
+        # api latency carries a warning severity label, which the bare key ignores
+        ("severity = 'warning'", {"queue depth"}),
+        ("severity != 'warning'", {"api latency", "cache miss ratio"}),
         ("severity IN ['p3', 'error']", {"queue depth", "cache miss ratio"}),
         ("severity NOT IN ['critical', 'warning']", {"cache miss ratio"}),
-        ("severity CONTAINS 'warn'", {"api latency", "queue depth"}),
+        ("severity CONTAINS 'warn'", {"queue depth"}),
         ("severity ILIKE 'P3'", {"queue depth"}),
         # the labels. prefix reads the label alone
         ("labels.severity EXISTS", {"api latency"}),
         ("labels.severity = 'warning'", {"api latency"}),
     ],
     ids=[
-        "equals_matches_any_severity",
-        "not_equals_matches_no_severity",
-        "equals_threshold_name",
-        "in_matches_any_severity",
-        "not_in_matches_no_severity",
+        "equals_matches_any_threshold_name",
+        "equals_ignores_severity_label",
+        "not_equals_matches_no_threshold_name",
+        "in_matches_any_threshold_name",
+        "not_in_matches_no_threshold_name",
         "contains",
         "ilike",
         "labels_prefix_exists_reads_label_alone",
@@ -722,12 +719,12 @@ def test_severity_filter(
     assert data["total"] == len(expected_names)
 
 
-# a rule sorts by its highest severity
+# a rule sorts by its highest severity; the two critical rules tie and break on name asc
 @pytest.mark.parametrize(
     ("order", "expected_names"),
     [
-        ("desc", ["queue depth", "cache miss ratio", "api latency"]),
-        ("asc", ["api latency", "cache miss ratio", "queue depth"]),
+        ("desc", ["api latency", "queue depth", "cache miss ratio"]),
+        ("asc", ["cache miss ratio", "api latency", "queue depth"]),
     ],
     ids=["desc", "asc"],
 )

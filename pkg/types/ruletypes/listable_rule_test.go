@@ -40,7 +40,7 @@ func TestToListableRule(t *testing.T) {
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{CreatedAt: created, UpdatedAt: updated},
 		UserAuditable: types.UserAuditable{CreatedBy: "creator@signoz.io", UpdatedBy: "updater@signoz.io"},
-		Data:          `{"alert":"High CPU","description":"cpu is hot","alertType":"METRIC_BASED_ALERT","ruleType":"threshold_rule","disabled":true,"labels":{"severity":"critical"}}`,
+		Data:          `{"alert":"High CPU","description":"cpu is hot","alertType":"METRIC_BASED_ALERT","ruleType":"threshold_rule","disabled":true,"labels":{"severity":"info"},"condition":{"thresholds":{"kind":"basic","spec":[{"name":"Warning"},{"name":"critical"},{"name":"warning"}]}}}`,
 	}
 
 	listable, err := storable.ToListableRule()
@@ -52,8 +52,9 @@ func TestToListableRule(t *testing.T) {
 	assert.Equal(t, AlertTypeMetric, listable.AlertType)
 	assert.Equal(t, RuleTypeThreshold, listable.RuleType)
 	assert.True(t, listable.Disabled)
-	assert.Equal(t, map[string]string{"severity": "critical"}, listable.Labels)
-	assert.Equal(t, []string{"critical"}, listable.Severities)
+	assert.Equal(t, map[string]string{"severity": "info"}, listable.Labels)
+	// threshold names, lowercased and deduplicated, ranked; the severity label is not consulted
+	assert.Equal(t, []string{"critical", "warning"}, listable.Severities)
 	assert.Equal(t, created, listable.CreatedAt)
 	assert.Equal(t, "creator@signoz.io", listable.CreatedBy)
 	assert.Equal(t, updated, listable.UpdatedAt)

@@ -43,10 +43,16 @@ export const alertRulesPage = (
 	return {
 		status: 'success',
 		data: {
-			// every mock rule carries a severity label, so the threshold-name fallback is not mirrored
+			// distinct lowercased threshold names; the API's rank order is not mirrored
 			rules: rules.slice(offset, offset + limit).map((rule) => ({
 				...rule,
-				severities: rule.labels?.severity ? [rule.labels.severity] : [],
+				severities: [
+					...new Set(
+						(rule.condition.thresholds?.spec ?? []).map((threshold) =>
+							threshold.name.toLowerCase(),
+						),
+					),
+				],
 			})),
 			total: rules.length,
 			labels: [...labels.values()],

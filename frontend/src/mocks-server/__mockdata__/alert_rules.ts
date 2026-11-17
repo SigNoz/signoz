@@ -131,10 +131,16 @@ export const listRulesV3Response = (
 	return {
 		status: 'success',
 		data: {
-			// every mock rule carries a severity label, so the threshold-name fallback is not mirrored
+			// distinct lowercased threshold names; the API's rank order is not mirrored
 			rules: matching.slice(offset, offset + limit).map((rule) => ({
 				...rule,
-				severities: rule.labels?.severity ? [rule.labels.severity] : [],
+				severities: [
+					...new Set(
+						(rule.condition.thresholds?.spec ?? []).map((threshold) =>
+							threshold.name.toLowerCase(),
+						),
+					),
+				],
 			})),
 			total: matching.length,
 			labels: uniqueLabelPairs(rules),
