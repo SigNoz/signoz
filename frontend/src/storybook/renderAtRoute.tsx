@@ -1,17 +1,23 @@
 import type { ComponentType } from 'react';
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router';
 
 /**
  * A page that reads its params out of the pathname renders under its own route
- * rather than being mounted bare. Stories declare the pattern here instead of
- * mounting a router `<Route>` themselves.
+ * rather than being mounted bare. `<Route>` only resolves inside `<Routes>`, so
+ * the pattern a story declares is mounted here instead of in each meta.
  */
 export const renderAtRoute = (
 	path: string | string[],
 	Component: ComponentType,
 ): (() => JSX.Element) => {
 	function StoryAtRoute(): JSX.Element {
-		return <Route exact path={path} component={Component} />;
+		return (
+			<Routes>
+				{(Array.isArray(path) ? path : [path]).map((pattern) => (
+					<Route key={pattern} path={pattern} element={<Component />} />
+				))}
+			</Routes>
+		);
 	}
 
 	return StoryAtRoute;

@@ -1,13 +1,9 @@
-import {
-	type DashboardtypesPanelSpecDTO,
-	type DashboardtypesScatterPlotPanelSpecDTO,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-	Querybuildertypesv5QueryEnvelopePromQLDTOType,
+import type {
+	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { toQueryEnvelopes } from '../../../../queryV5/buildQueryRangeRequest';
-import { getBuilderQueries } from '../../../utils/getBuilderQueries';
-import { getTableColumnKeys } from '../../../utils/getTableColumnKeys';
+import { getQueryColumnKeys } from '../../../utils/getQueryColumnKeys';
 
 /**
  * Clears bindings to columns the queries no longer produce, so a query edit
@@ -21,24 +17,14 @@ export function pruneStaleDimensions(
 	if (plugin.kind !== 'signoz/ScatterPlotPanel') {
 		return spec;
 	}
-	const hasRuntimeColumns = toQueryEnvelopes(queries).some(
-		(envelope) =>
-			envelope.type ===
-				Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType.clickhouse_sql ||
-			envelope.type === Querybuildertypesv5QueryEnvelopePromQLDTOType.promql,
-	);
-	if (hasRuntimeColumns) {
+	const columnKeys = getQueryColumnKeys(queries);
+	if (!columnKeys) {
 		return spec;
 	}
+	const { valueKeys, groupKeys } = columnKeys;
 
 	const pluginSpec = plugin.spec as DashboardtypesScatterPlotPanelSpecDTO;
 	const dimensions = pluginSpec.dimensions ?? {};
-	const valueKeys = new Set(getTableColumnKeys(queries));
-	const groupKeys = new Set(
-		getBuilderQueries(queries).flatMap((query) =>
-			(query.groupBy ?? []).map((key) => key.name),
-		),
-	);
 	const keepValue = (key: string | undefined): string | undefined =>
 		key && !valueKeys.has(key) ? '' : key;
 
