@@ -97,7 +97,9 @@ const listRoute = (view: ViewChoice): string => {
 	if (filter?.query) {
 		params.set('query', filter.query);
 	}
-	filter?.states.forEach((state) => params.append('states', state));
+	if (filter?.states.length) {
+		params.set('states', filter.states.join(','));
+	}
 
 	return `/alerts?${params.toString()}`;
 };
