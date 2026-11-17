@@ -39,6 +39,7 @@ def test_clickhouse_sql_runs_with_profile(
         "max_partitions_to_read = 100",
         "max_partitions_to_read = -1",
         "profile = 'default', max_result_rows = 1000",
+        "max_result_rows = 1000, profile = 'default'",
     ],
     ids=[
         "result_rows_above_max",
@@ -49,6 +50,7 @@ def test_clickhouse_sql_runs_with_profile(
         "partitions_to_read_above_max",
         "partitions_to_read_unlimited",
         "switch_profile_then_raise",
+        "raise_then_switch_profile",
     ],
 )
 def test_clickhouse_sql_settings_cannot_escape_profile(

@@ -76,7 +76,6 @@ jobs:
           - querier_skip_resource_fingerprint
           - ttl
           - clickhousecluster
-          - telemetrystore
           - metricreduction
           - metricsexplorer
         sqlstore-provider:
