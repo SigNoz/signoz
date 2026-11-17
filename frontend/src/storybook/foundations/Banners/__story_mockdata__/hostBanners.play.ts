@@ -7,13 +7,15 @@ import type { AppShellArgs } from '@/storybook/globals/appShellMocks';
 
 import { showsBanner } from './banners.play';
 
-interface HostPlayContext<TArgs extends Pick<AppShellArgs, 'banner'>> {
+type HostArgs = Pick<AppShellArgs, 'banner' | 'license'>;
+
+interface HostPlayContext<TArgs extends HostArgs> {
 	mount: () => Promise<unknown>;
 	args: TArgs;
 	canvasElement: HTMLElement;
 }
 
-type OpenOverlay<TArgs extends Pick<AppShellArgs, 'banner'>> = (context: {
+type OpenOverlay<TArgs extends HostArgs> = (context: {
 	args: TArgs;
 	canvasElement: HTMLElement;
 }) => Promise<void>;
@@ -23,9 +25,7 @@ type OpenOverlay<TArgs extends Pick<AppShellArgs, 'banner'>> = (context: {
  * overlay. `mount` is destructured so a control change replays all of it.
  */
 export const withTrialBanner =
-	<TArgs extends Pick<AppShellArgs, 'banner'>>(
-		openOverlay?: OpenOverlay<TArgs>,
-	) =>
+	<TArgs extends HostArgs>(openOverlay?: OpenOverlay<TArgs>) =>
 	async ({
 		mount,
 		args,

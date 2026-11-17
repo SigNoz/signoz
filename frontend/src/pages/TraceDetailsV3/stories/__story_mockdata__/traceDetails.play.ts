@@ -14,6 +14,7 @@ import {
 
 import { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
 import {
+	listsThread,
 	openRowMenu,
 	showsSpanPanel,
 	showsTrace,
@@ -498,4 +499,56 @@ export const showsAnalyticsState = async (
 	if (showsTrace(context.args) && text) {
 		await screen.findAllByText(text, undefined, untilLoaded);
 	}
+};
+
+export const showsAiThread = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!listsThread(args)) {
+		return;
+	}
+
+	await within(canvasElement).findAllByText(
+		/Let me check the upgrade notes/,
+		undefined,
+		untilLoaded,
+	);
+};
+
+const openFunnelPicker = async (canvasElement: HTMLElement): Promise<void> => {
+	const [button] = await within(canvasElement).findAllByTestId(
+		'span-add-to-funnel-btn',
+		undefined,
+		untilLoaded,
+	);
+
+	await fireEvent.click(button);
+	await screen.findByText('Add span to funnel', undefined, untilLoaded);
+};
+
+export const openAddSpanToFunnel = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+};
+
+export const openCreateFunnelStep = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /create new funnel/i }),
+	);
+	await screen.findByTestId('create-funnel-name-input');
 };

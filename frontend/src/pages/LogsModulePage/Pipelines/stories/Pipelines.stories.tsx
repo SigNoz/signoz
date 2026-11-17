@@ -90,16 +90,6 @@ export const AddSeverityParserProcessor: Story = {
 	play: openSeverityParserProcessor,
 };
 
-/** Severity Parser is the type whose mapping fields are CSV inputs. */
-export const AddSeverityParserProcessor: Story = {
-	play: async (context): Promise<void> => {
-		await AddProcessor.play?.(context);
-		await userEvent.click(await screen.findByText('Grok'));
-		await userEvent.click(await screen.findByTitle('Severity Parser'));
-		await screen.findByText('Parse Severity Value From');
-	},
-};
-
 /**
  * The logs a pipeline matches, over the interval the preview asks for, with the
  * simulation of its processors one click away.

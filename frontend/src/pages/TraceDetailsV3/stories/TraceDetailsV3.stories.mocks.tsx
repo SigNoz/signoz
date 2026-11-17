@@ -44,6 +44,7 @@ import {
 	spanMatchRows,
 	spanPercentilesResponse,
 	STORY_TRACE_ID,
+	threadSpanCount,
 	traceAggregationsResponse,
 	traceDetailFieldKeys,
 	traceDetailFieldValues,
@@ -417,8 +418,32 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 });
 
+export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
+
 /** The waterfall renders once the trace resolves, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
+
+/** The header actions and the span rows are the overview tab's, once a trace loads. */
+export const showsTrace = ({
+	tab,
+	spans,
+	dataState,
+}: Pick<TraceDetailsArgs, 'tab' | 'spans' | 'dataState'>): boolean =>
+	tab === TraceDetailsTab.Overview && spans > 0 && dataState === 'loaded';
+
+/** The thread lists the spans that carry messages, which only the AI scenario has. */
+export const listsThread = ({
+	tab,
+	scenario,
+	spans,
+	dataState,
+}: Pick<
+	TraceDetailsArgs,
+	'tab' | 'scenario' | 'spans' | 'dataState'
+>): boolean =>
+	tab === TraceDetailsTab.Thread &&
+	dataState === 'loaded' &&
+	threadSpanCount(scenario, spans) > 0;
 
 /** Opens the pretty view's action menu on the first row that offers `item`. */
 export const openRowMenu = async (
@@ -469,15 +494,6 @@ export const startDownload = async (
 	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
 	await userEvent.click(await screen.findByTestId('download-trace-csv'));
 };
-
-export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
-
-/** The header actions and the span rows exist once a trace loads. */
-export const showsTrace = ({
-	spans,
-	dataState,
-}: Pick<TraceDetailsArgs, 'spans' | 'dataState'>): boolean =>
-	spans > 0 && dataState === 'loaded';
 
 /** The span panel opens on the focus span when the control asks for it. */
 export const showsSpanPanel = (args: TraceDetailsArgs): boolean =>

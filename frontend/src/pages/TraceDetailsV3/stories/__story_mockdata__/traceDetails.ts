@@ -616,6 +616,13 @@ export const traceThreadResponse = (
 	},
 });
 
+export const threadSpanCount = (
+	scenario: TraceScenario,
+	spans: number,
+): number =>
+	traceThreadResponse({ scenario, spans, errors: false, traceStart: 0 }).data
+		.spans.length;
+
 /**
  * `totalSpansCount` equals what the response carries, which is what puts the
  * waterfall in its all-loaded mode: every parent expands and no further window

@@ -14,10 +14,14 @@ import {
 	expandFilterBar,
 	hoverAiSpan,
 	hoverEventStacktrace,
+	openAddSpanToFunnel,
+	openAnalytics,
+	openCreateFunnelStep,
 	openPercentile,
 	openPercentileResourceSelector,
 	openSpanEvents,
 	openTraceOptions,
+	showsAiThread,
 	showsAnalyticsState,
 	showsHighlightedErrors,
 	showsTraceOnlyLogs,
@@ -120,13 +124,7 @@ export const AiTrace: Story = {
  */
 export const AiThread: Story = {
 	args: { scenario: 'ai', spans: AI_SPANS, tab: TraceDetailsTab.Thread },
-	play: async ({ canvasElement }): Promise<void> => {
-		await within(canvasElement).findAllByText(
-			/Let me check the upgrade notes/,
-			undefined,
-			untilLoaded,
-		);
-	},
+	play: showsAiThread,
 };
 
 /**
@@ -221,56 +219,23 @@ export const SpanPanelEventAttributePopover: Story = {
 
 /** The analytics panel the header toggle opens. */
 export const AnalyticsOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: 'Analytics' },
-				untilLoaded,
-			),
-		);
-		await screen.findByTestId('trace-analytics-panel', undefined, untilLoaded);
-	},
+	play: openAnalytics,
 };
 
 /** The download progress panel, held open by an export that never answers. */
 export const TraceDownload: Story = {
 	args: { exportState: 'loading' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await startDownload(canvasElement);
-		await screen.findByTestId('trace-download-panel', undefined, untilLoaded);
-	},
-};
-
-const openAddSpanToFunnel = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	const [button] = await within(canvasElement).findAllByTestId(
-		'span-add-to-funnel-btn',
-		undefined,
-		untilLoaded,
-	);
-
-	await fireEvent.click(button);
-	await screen.findByText('Add span to funnel', undefined, untilLoaded);
+	play: downloadTrace,
 };
 
 /** The funnel picker a span row's add-to-funnel action opens. */
 export const AddSpanToFunnel: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openAddSpanToFunnel(canvasElement);
-	},
+	play: openAddSpanToFunnel,
 };
 
 /** The name field behind "Create new funnel" in that picker. */
 export const AddSpanToFunnelCreateStep: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openAddSpanToFunnel(canvasElement);
-		await userEvent.click(
-			await screen.findByRole('button', { name: /create new funnel/i }),
-		);
-		await screen.findByTestId('create-funnel-name-input');
-	},
+	play: openCreateFunnelStep,
 };
 
 /** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */

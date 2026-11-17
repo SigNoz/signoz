@@ -6,10 +6,22 @@
 import { toast } from '@signozhq/ui/sonner';
 import { screen, userEvent } from 'storybook/test';
 
+import type { GlobalMockArgs } from '@/storybook/globals';
+import { isCloudShell } from '@/storybook/globals/appShellMocks';
+
 /** The shell renders its entry points after the global config and the license settle. */
 const untilLoaded = { timeout: 10_000 };
 
-export const openAddCardModal = async (): Promise<void> => {
+/** Support offers the modal only to a cloud workspace that has no premium support. */
+export const openAddCardModal = async ({
+	args,
+}: {
+	args: Pick<GlobalMockArgs, 'support' | 'license' | 'banner'>;
+}): Promise<void> => {
+	if (args.support !== 'add-card' || !isCloudShell(args)) {
+		return;
+	}
+
 	await userEvent.click(
 		await screen.findByTestId('bottom-strip-support', undefined, untilLoaded),
 	);

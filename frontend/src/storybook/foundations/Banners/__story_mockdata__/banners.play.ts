@@ -6,12 +6,17 @@
 import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import type { AppShellArgs } from '@/storybook/globals/appShellMocks';
+import {
+	type AppShellArgs,
+	shellLicense,
+} from '@/storybook/globals/appShellMocks';
 
 type Banner = AppShellArgs['banner'];
 
+type ShellArgs = Pick<AppShellArgs, 'banner' | 'license'>;
+
 interface PlayContext {
-	args: Pick<AppShellArgs, 'banner'>;
+	args: ShellArgs;
 }
 
 export const NO_AUTH_STORAGE_KEY = 'no-auth-banner-v1';
@@ -49,6 +54,11 @@ export const showsBanner = async ({ args }: PlayContext): Promise<void> => {
 
 	if (args.banner === 'no-auth') {
 		await screen.findByTestId(NO_AUTH_BANNER, undefined, untilLoaded);
+		return;
+	}
+
+	// The trial banner needs a license to read, which unlicensed deployments lack.
+	if (args.banner === 'trial-expiry' && !shellLicense(args)) {
 		return;
 	}
 

@@ -6,11 +6,13 @@
 import { expect, screen, userEvent, within } from 'storybook/test';
 
 import type { GlobalMockArgs } from '@/storybook/globals';
+import { isCloudShell, shellLicense } from '@/storybook/globals/appShellMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import type { createAlertMocks } from 'pages/CreateAlert/stories/CreateAlert.stories.mocks';
 import type { meterMocks } from 'pages/MeterExplorer/stories/MeterExplorer.stories.mocks';
 import { hasPendingRule } from 'pages/MetricsExplorer/stories/__story_mockdata__/metricsExplorer';
 import type { metricsMocks } from 'pages/MetricsExplorer/stories/MetricsExplorerPage.stories.mocks';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
 type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
 type MeterArgs = PageStoryArgs<typeof meterMocks>;
@@ -19,12 +21,16 @@ type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
 /** The pages fetch before they render, which outlasts the 1s default. */
 const untilLoaded = { timeout: 15_000 };
 
-/** A restricted license banner swaps the cloud license for a self-hosted one. */
-const isCloud = ({
-	license,
-	banner,
-}: Pick<GlobalMockArgs, 'license' | 'banner'>): boolean =>
-	license === 'cloud' && !/^(license|evaluation)-/.test(banner);
+const offersCancelSubscription = (
+	args: Pick<GlobalMockArgs, 'license' | 'banner'>,
+): boolean => {
+	const license = shellLicense(args);
+
+	return (
+		license?.platform === LicensePlatform.CLOUD &&
+		license.state === LicenseState.ACTIVATED
+	);
+};
 
 export const showsPendingActivation = async ({
 	args,
@@ -66,7 +72,7 @@ export const showsCancelSubscription = async ({
 }: {
 	args: Pick<GlobalMockArgs, 'license' | 'banner' | 'dataState'>;
 }): Promise<void> => {
-	if (!isCloud(args)) {
+	if (!offersCancelSubscription(args)) {
 		return;
 	}
 
@@ -150,7 +156,7 @@ export const showsMeterBillingNotice = meterNotice(
 
 export const showsMeterBeforeLaunch = meterNotice(
 	/Meter module data is accurate only from 22nd August 2025/,
-	(args) => isCloud(args) && args.timeRange === 'august-2025',
+	(args) => isCloudShell(args) && args.timeRange === 'august-2025',
 );
 
 export const showsMeterShortWindow = meterNotice(
