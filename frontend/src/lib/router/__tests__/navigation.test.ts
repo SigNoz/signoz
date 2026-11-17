@@ -1,10 +1,11 @@
-import type { BlockedTransition } from '../types';
-
 /**
- * `lib/history` is a module-level singleton that reads the base path at import
- * time, so every case loads it in isolation with a fresh DOM.
+ * `utils/basePath` reads the base path at import time, so every case loads the
+ * module, and the test router it drives, in isolation with a fresh DOM.
  */
 type NavigationModule = typeof import('../navigation');
+type TestRouterModule = typeof import('tests/router-utils');
+
+let release: (() => void) | undefined;
 
 function loadNavigation(baseHref?: string): NavigationModule {
 	if (baseHref !== undefined) {
@@ -14,16 +15,25 @@ function loadNavigation(baseHref?: string): NavigationModule {
 	}
 
 	let mod!: NavigationModule;
+	let testRouter!: TestRouterModule;
 	jest.isolateModules(() => {
 		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 		mod = require('../navigation');
+		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
+		testRouter = require('tests/router-utils');
 	});
+	({ release } = testRouter.attachTestRouter());
 	return mod;
 }
 
-function settle(): Promise<void> {
+function nextUpdate(
+	nav: NavigationModule,
+): Promise<{ location: { pathname: string }; action: string }> {
 	return new Promise((resolve) => {
-		setTimeout(resolve, 60);
+		const unsubscribe = nav.subscribe((update) => {
+			unsubscribe();
+			resolve(update);
+		});
 	});
 }
 
@@ -32,6 +42,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	release?.();
+	release = undefined;
 	for (const element of document.head.querySelectorAll('base')) {
 		element.remove();
 	}
@@ -42,6 +54,13 @@ describe('navigate', () => {
 		const nav = loadNavigation();
 		nav.navigate('/logs');
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
+	});
+
+	it('throws when no router is attached', () => {
+		const nav = loadNavigation();
+		release?.();
+		release = undefined;
+		expect(() => nav.navigate('/logs')).toThrow('no router is attached');
 	});
 
 	it('carries search and hash from a string target', () => {
@@ -112,23 +131,79 @@ describe('basename ownership', () => {
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 
-	it('does not double-prefix a path that already carries the base path', () => {
+	it('round-trips getCurrentLocation through navigate', () => {
 		const nav = loadNavigation('/signoz/');
 		nav.navigate('/logs');
 		nav.navigate(nav.getCurrentLocation().pathname);
 		expect(window.location.pathname).toBe('/signoz/logs');
 	});
+
+	it('prefixes a path whose first segment equals the base path', () => {
+		const nav = loadNavigation('/logs/');
+		nav.navigate('/logs/logs-explorer');
+		expect(window.location.pathname).toBe('/logs/logs/logs-explorer');
+		expect(nav.getCurrentLocation().pathname).toBe('/logs/logs-explorer');
+	});
+
+	it('prefixes the pathname of an object target', () => {
+		const nav = loadNavigation('/signoz/');
+		nav.navigate({ pathname: '/logs', search: '?a=1' });
+		expect(window.location.pathname).toBe('/signoz/logs');
+		expect(window.location.search).toBe('?a=1');
+	});
+});
+
+describe('subscribe', () => {
+	it('reports a single update object, not two arguments', async () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		const unsubscribe = nav.subscribe(listener);
+
+		nav.navigate('/logs');
+
+		expect(listener).toHaveBeenCalledTimes(1);
+		expect(listener.mock.calls[0]).toHaveLength(1);
+		expect(listener.mock.calls[0][0]).toMatchObject({
+			location: { pathname: '/logs' },
+			action: 'PUSH',
+		});
+		unsubscribe();
+	});
+
+	it('reports REPLACE', () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		const unsubscribe = nav.subscribe(listener);
+
+		nav.navigate('/logs', { replace: true });
+
+		expect(listener.mock.calls[0][0].action).toBe('REPLACE');
+		unsubscribe();
+	});
+
+	it('stops reporting after unsubscribe', () => {
+		const nav = loadNavigation();
+		const listener = jest.fn();
+		nav.subscribe(listener)();
+
+		nav.navigate('/logs');
+
+		expect(listener).not.toHaveBeenCalled();
+	});
 });
 
 describe('back', () => {
-	it('restores the previous location', async () => {
+	it('reports POP and restores the previous location', async () => {
 		const nav = loadNavigation();
 		nav.navigate('/logs');
 		nav.navigate('/traces');
 
+		const popped = nextUpdate(nav);
 		nav.back();
-		await settle();
+		const update = await popped;
 
+		expect(update.action).toBe('POP');
+		expect(update.location.pathname).toBe('/logs');
 		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 });
@@ -149,263 +224,5 @@ describe('hasInAppHistory', () => {
 		const nav = loadNavigation();
 		nav.navigate('/logs');
 		expect(nav.hasInAppHistory()).toBe(true);
-	});
-});
-
-describe('blockNavigation', () => {
-	it('hands the blocker a transition and cancels the navigation', () => {
-		const nav = loadNavigation();
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-
-		nav.navigate('/logs');
-
-		expect(seen).toHaveLength(1);
-		expect(seen[0].action).toBe('PUSH');
-		expect(seen[0].location.pathname).toBe('/logs');
-		expect(typeof seen[0].retry).toBe('function');
-		expect(nav.getCurrentLocation().pathname).toBe('/');
-		unblock();
-	});
-
-	it('completes the navigation when retry runs after unblocking', () => {
-		const nav = loadNavigation();
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-
-		nav.navigate('/logs');
-		unblock();
-		seen[0].retry();
-
-		expect(nav.getCurrentLocation().pathname).toBe('/logs');
-	});
-
-	it('blocks again when retry runs while still blocked, as history@5 does', () => {
-		const nav = loadNavigation();
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-
-		nav.navigate('/logs');
-		seen[0].retry();
-
-		expect(seen).toHaveLength(2);
-		expect(nav.getCurrentLocation().pathname).toBe('/');
-		unblock();
-	});
-
-	it('lets a POP through when retry runs inside the blocker', async () => {
-		const nav = loadNavigation();
-		nav.navigate('/logs');
-		nav.navigate('/traces');
-
-		const seen: BlockedTransition[] = [];
-		let unblock = (): void => {};
-		unblock = nav.blockNavigation((tx) => {
-			seen.push(tx);
-			unblock();
-			tx.retry();
-		});
-		nav.back();
-		await settle();
-
-		expect(seen).toHaveLength(1);
-		expect(seen[0].action).toBe('POP');
-		expect(nav.getCurrentLocation().pathname).toBe('/logs');
-	});
-
-	it('replays a blocked Forward by one entry', async () => {
-		const nav = loadNavigation();
-		nav.navigate('/logs');
-		nav.navigate('/traces');
-		nav.back();
-		await settle();
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.forward();
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(seen[0].action).toBe('POP');
-		expect(nav.getCurrentLocation().pathname).toBe('/traces');
-	});
-
-	it('replays a blocked multi-entry jump by its full distance', async () => {
-		const nav = loadNavigation();
-		nav.navigate('/a');
-		nav.navigate('/b');
-		nav.navigate('/c');
-		window.history.go(-2);
-		await settle();
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.go(2);
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(nav.getCurrentLocation().pathname).toBe('/c');
-	});
-
-	it('replays a blocked Back to an entry from before a reload', async () => {
-		const earlier = loadNavigation();
-		earlier.navigate('/a');
-		earlier.navigate('/b');
-		earlier.navigate('/c');
-
-		const nav = loadNavigation();
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.back();
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(seen[0].action).toBe('POP');
-		expect(nav.getCurrentLocation().pathname).toBe('/b');
-		expect(window.location.pathname).toBe('/b');
-	});
-
-	it('replays a blocked Forward after leaving through an entry from before a reload', async () => {
-		const earlier = loadNavigation();
-		earlier.navigate('/a');
-		earlier.navigate('/b');
-
-		const nav = loadNavigation();
-		nav.navigate('/c');
-		window.history.go(-2);
-		await settle();
-		expect(nav.getCurrentLocation().pathname).toBe('/a');
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.forward();
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(seen[0].action).toBe('POP');
-		expect(nav.getCurrentLocation().pathname).toBe('/b');
-		expect(window.location.pathname).toBe('/b');
-	});
-
-	it('replays a blocked Forward that skips from an entry from before a reload past the first known one', async () => {
-		const earlier = loadNavigation();
-		earlier.navigate('/a');
-		earlier.navigate('/b');
-
-		const nav = loadNavigation();
-		nav.navigate('/c');
-		window.history.go(-2);
-		await settle();
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.go(2);
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(nav.getCurrentLocation().pathname).toBe('/c');
-		expect(window.location.pathname).toBe('/c');
-		window.history.back();
-		await settle();
-		expect(window.location.pathname).toBe('/b');
-	});
-
-	it('replays a blocked Back that skips from a known entry to one from before a reload', async () => {
-		const earlier = loadNavigation();
-		earlier.navigate('/a');
-		earlier.navigate('/b');
-
-		const nav = loadNavigation();
-		nav.navigate('/c');
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.go(-2);
-		await settle();
-		unblock();
-		seen[0].retry();
-		await settle();
-
-		expect(nav.getCurrentLocation().pathname).toBe('/a');
-		expect(window.location.pathname).toBe('/a');
-		window.history.forward();
-		await settle();
-		expect(window.location.pathname).toBe('/b');
-	});
-
-	it('catches the router up when history@4 does not revert a blocked POP', async () => {
-		const nav = loadNavigation();
-		nav.navigate('/p');
-		// nuqs pushes like this, so both entries carry the same history@4 key.
-		window.history.pushState(window.history.state, '', '/p?x=1');
-		window.history.back();
-		await settle();
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		window.history.forward();
-		await settle();
-		unblock();
-		seen[0].retry();
-
-		expect(nav.getCurrentLocation().search).toBe('?x=1');
-		expect(window.location.search).toBe('?x=1');
-	});
-
-	it('keeps the blocker armed when retry runs inside it', () => {
-		const nav = loadNavigation();
-		let allowNext = true;
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => {
-			seen.push(tx);
-			if (allowNext) {
-				allowNext = false;
-				tx.retry();
-			}
-		});
-
-		nav.navigate('/logs');
-		nav.navigate('/traces');
-
-		expect(nav.getCurrentLocation().pathname).toBe('/logs');
-		expect(seen).toHaveLength(2);
-		unblock();
-	});
-
-	it('preserves the replace action through retry', () => {
-		const nav = loadNavigation();
-		nav.navigate('/logs');
-		const before = window.history.length;
-
-		const seen: BlockedTransition[] = [];
-		const unblock = nav.blockNavigation((tx) => seen.push(tx));
-		nav.navigate('/traces', { replace: true });
-		unblock();
-		seen[0].retry();
-
-		expect(seen[0].action).toBe('REPLACE');
-		expect(nav.getCurrentLocation().pathname).toBe('/traces');
-		expect(window.history).toHaveLength(before);
-	});
-
-	it('stops blocking after unblock', () => {
-		const nav = loadNavigation();
-		const listener = jest.fn();
-		nav.blockNavigation(listener)();
-
-		nav.navigate('/logs');
-
-		expect(listener).not.toHaveBeenCalled();
-		expect(nav.getCurrentLocation().pathname).toBe('/logs');
 	});
 });

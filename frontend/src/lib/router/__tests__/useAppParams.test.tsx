@@ -45,6 +45,18 @@ describe('useAppParams', () => {
 		expect(result.current).toMatchObject({ dashboardId: 'd1', panelId: 'p2' });
 	});
 
+	it.each([
+		['/', '/services/api%2Fworker', 'api/worker'],
+		['?', '/services/a%3Fb', 'a?b'],
+		['a space', '/services/my%20svc', 'my svc'],
+	])('decodes %s in a param value', (_, route, expected) => {
+		const { result } = renderHook(() => useAppParams<'servicename'>(), {
+			wrapper: wrapperAt(route, '/services/:servicename'),
+		});
+
+		expect(result.current.servicename).toBe(expected);
+	});
+
 	it('returns an empty object on a route without params', () => {
 		const { result } = renderHook(() => useAppParams(), {
 			wrapper: wrapperAt('/logs', '/logs'),

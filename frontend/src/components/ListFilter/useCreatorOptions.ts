@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useListUsers } from 'api/generated/services/users';
+import { UserListPermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import type { CreatorOption } from './types';
 
@@ -15,7 +17,12 @@ export function useCreatorOptions({
 	currentUserEmail,
 	fallbackEmails,
 }: Args): CreatorOption[] {
-	const { data } = useListUsers();
+	const { permissions } = useAuthZ([UserListPermission]);
+	const canListUsers = permissions?.[UserListPermission]?.isGranted ?? false;
+
+	// Without `list:user` the list isn't fetched: options shrink to "me" and the
+	// page's authors, with bare emails instead of display names.
+	const { data } = useListUsers({ query: { enabled: canListUsers } });
 
 	return useMemo<CreatorOption[]>(() => {
 		const users = data?.data ?? [];
