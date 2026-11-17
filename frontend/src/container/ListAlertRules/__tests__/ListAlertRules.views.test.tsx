@@ -18,10 +18,17 @@ import {
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 
-jest.setTimeout(15_000);
-
 const VIEW_1_ORDER_BY = JSON.stringify({ columnName: 'name', order: 'asc' });
 const VIEW_1_QUERY = "thresholds = 'critical'";
+const VIEW_2_QUERY = "team = 'infra'";
+
+const VIEW_1_ROUTE = `/?view=view-1&query=${encodeURIComponent(
+	VIEW_1_QUERY,
+)}&states=firing&orderBy=${encodeURIComponent(VIEW_1_ORDER_BY)}`;
+const VIEW_1_EDITED_ROUTE = `/?view=view-1&query=foo&states=firing&orderBy=${encodeURIComponent(
+	VIEW_1_ORDER_BY,
+)}`;
+const VIEW_2_ROUTE = `/?view=view-2&query=${encodeURIComponent(VIEW_2_QUERY)}`;
 
 type Body = Record<string, unknown>;
 type User = ReturnType<typeof userEvent.setup>;
@@ -125,7 +132,7 @@ describe('ListAlertRules — saved views rail', () => {
 		it('renders the builtin views with All active by default', async () => {
 			renderListAlertRules();
 
-			await screen.findByText('High CPU Alert');
+			await screen.findByTestId('alert-row-rule-1-name');
 			expect(viewItem('mine')).toHaveTextContent('My alert rules');
 			expect(viewItem('all')).toHaveTextContent('All alert rules');
 			expect(viewItem('recent')).toHaveTextContent('Recently viewed');
@@ -145,10 +152,10 @@ describe('ListAlertRules — saved views rail', () => {
 			['firing', 'Firing'],
 			['disabled', 'Disabled'],
 		])('%s sends states=%s', async (id, label) => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const requests = captureRulesRequests();
 			renderListAlertRules();
-			await screen.findByText('High CPU Alert');
+			await screen.findByTestId('alert-row-rule-1-name');
 
 			await selectView(user, id);
 
@@ -224,11 +231,11 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('My alert rules filters by the current user as creator', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const requests = captureRulesRequests();
 			const { email } = getAppContextMock('ADMIN').user;
 			renderListAlertRules();
-			await screen.findByText('High CPU Alert');
+			await screen.findByTestId('alert-row-rule-1-name');
 
 			await selectView(user, 'mine');
 
@@ -241,22 +248,29 @@ describe('ListAlertRules — saved views rail', () => {
 			expect(activeHeading()).toHaveTextContent('My alert rules');
 		});
 
-		it('editing a builtin view filter offers save as new view, which POSTs', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			const captured = captureViewWrites();
+		it('editing a builtin view filter offers save as new view only', async () => {
+			const user = userEvent.setup();
 			renderListAlertRules();
-			await screen.findByText('High CPU Alert');
+			await screen.findByTestId('alert-row-rule-1-name');
 
 			await runSearchQuery(user, 'foo');
 
-			await user.click(await screen.findByTestId('alert-rules-view-save-as-new'));
+			await screen.findByTestId('alert-rules-view-save-as-new');
 			expect(
 				screen.queryByTestId('alert-rules-view-save-changes'),
 			).not.toBeInTheDocument();
-			await user.type(
+		});
+
+		it('save as new view from an edited builtin view POSTs', async () => {
+			const user = userEvent.setup();
+			const captured = captureViewWrites();
+			renderListAlertRules({ initialRoute: '/?query=foo' });
+
+			await user.click(await screen.findByTestId('alert-rules-view-save-as-new'));
+			await user.click(
 				await screen.findByTestId('save-alert-rule-view-name-field'),
-				'Foo alerts',
 			);
+			await user.paste('Foo alerts');
 			await user.click(screen.getByTestId('save-alert-rule-view-confirm'));
 
 			await waitFor(() => expect(captured.posts).toHaveLength(1));
@@ -276,7 +290,7 @@ describe('ListAlertRules — saved views rail', () => {
 
 	describe('saved views', () => {
 		it('lists saved views and applies the selected one', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const requests = captureRulesRequests();
 			renderListAlertRules({ initialRoute: '/?page=2' });
 
@@ -308,9 +322,9 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('shows the unsaved-changes panel after editing an applied view filter', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			renderListAlertRules();
-			await selectView(user, 'view-1');
+			const user = userEvent.setup();
+			renderListAlertRules({ initialRoute: VIEW_1_ROUTE });
+			await screen.findByTestId('alert-rules-view-view-1');
 
 			await runSearchQuery(user, 'foo');
 
@@ -323,11 +337,9 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Save PUTs the full current filter and the unchanged name', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
-			renderListAlertRules();
-			await selectView(user, 'view-1');
-			await runSearchQuery(user, 'foo');
+			renderListAlertRules({ initialRoute: VIEW_1_EDITED_ROUTE });
 
 			await user.click(await screen.findByTestId('alert-rules-view-save-changes'));
 
@@ -353,17 +365,15 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Save as POSTs a new view and activates it', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
-			renderListAlertRules();
-			await selectView(user, 'view-1');
-			await runSearchQuery(user, 'foo');
+			renderListAlertRules({ initialRoute: VIEW_1_EDITED_ROUTE });
 
 			await user.click(await screen.findByTestId('alert-rules-view-save-as'));
-			await user.type(
+			await user.click(
 				await screen.findByTestId('save-alert-rule-view-name-field'),
-				'My view',
 			);
+			await user.paste('My view');
 			await user.click(screen.getByTestId('save-alert-rule-view-confirm'));
 
 			await waitFor(() => expect(captured.posts).toHaveLength(1));
@@ -382,14 +392,14 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('caps a view name at 64 characters', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
 			renderListAlertRules();
-			await screen.findByText('High CPU Alert');
 
-			await user.click(screen.getByLabelText('Save current filters as a view'));
+			await user.click(await screen.findByTestId('alert-rules-view-save-trigger'));
 			const input = await screen.findByTestId('save-alert-rule-view-name-field');
-			await user.type(input, 'x'.repeat(70));
+			await user.click(input);
+			await user.paste('x'.repeat(70));
 
 			expect(input).toHaveValue('x'.repeat(64));
 			await user.click(screen.getByTestId('save-alert-rule-view-confirm'));
@@ -399,11 +409,8 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Reset restores the active view filter', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			renderListAlertRules();
-			await selectView(user, 'view-1');
-			await runSearchQuery(user, 'foo');
-			await waitFor(() => expect(urlParam('query')).toBe('foo'));
+			const user = userEvent.setup();
+			renderListAlertRules({ initialRoute: VIEW_1_EDITED_ROUTE });
 
 			await user.click(await screen.findByTestId('alert-rules-view-reset'));
 
@@ -419,19 +426,16 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('rename PUTs the new name and keeps the stored filter', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
-			renderListAlertRules();
-			await selectView(user, 'view-2');
-			await runSearchQuery(user, 'foo');
+			renderListAlertRules({ initialRoute: '/?view=view-2&query=foo' });
 			await screen.findByTestId('alert-rules-view-save-changes');
 
-			const row = viewItem('view-1').parentElement as HTMLElement;
-			await user.click(within(row).getByLabelText('Rename view'));
+			await user.click(screen.getByTestId('alert-rules-view-rename-view-1'));
 			const input = await screen.findByTestId('rename-alert-rule-view-name-field');
 			expect(input).toHaveValue('Critical firing');
 			await user.clear(input);
-			await user.type(input, 'Renamed');
+			await user.paste('Renamed');
 			await user.click(screen.getByTestId('rename-alert-rule-view-confirm'));
 
 			await waitFor(() => expect(captured.puts).toHaveLength(1));
@@ -452,12 +456,13 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('delete asks for confirmation and sends DELETE', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
-			renderListAlertRules();
-			await selectView(user, 'view-1');
+			renderListAlertRules({ initialRoute: VIEW_1_ROUTE });
 
-			await user.click(screen.getByTestId('alert-rules-view-delete-view-2'));
+			await user.click(
+				await screen.findByTestId('alert-rules-view-delete-view-2'),
+			);
 
 			await expect(
 				screen.findByText(/Views are shared across your organization/),
@@ -470,13 +475,13 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('deleting the active view falls back to All', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const captured = captureViewWrites();
-			renderListAlertRules();
-			await selectView(user, 'view-1');
-			await waitFor(() => expect(urlParam('query')).toBe(VIEW_1_QUERY));
+			renderListAlertRules({ initialRoute: VIEW_1_ROUTE });
 
-			await user.click(screen.getByTestId('alert-rules-view-delete-view-1'));
+			await user.click(
+				await screen.findByTestId('alert-rules-view-delete-view-1'),
+			);
 			await user.click(await findConfirmDelete());
 
 			await waitFor(() => expect(captured.deletes).toStrictEqual(['view-1']));
@@ -489,12 +494,10 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('All alert rules clears the view and its filters', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			renderListAlertRules();
-			await selectView(user, 'view-1');
-			await waitFor(() => expect(urlParam('query')).not.toBeNull());
+			const user = userEvent.setup();
+			renderListAlertRules({ initialRoute: VIEW_1_ROUTE });
 
-			await user.click(viewItem('all'));
+			await user.click(await screen.findByTestId('alert-rules-view-all'));
 
 			await waitFor(() => {
 				expect(urlParam('view')).toBeNull();
@@ -531,9 +534,9 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('marks a cleared view filter in the URL', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			renderListAlertRules();
-			await selectView(user, 'view-2');
+			const user = userEvent.setup();
+			renderListAlertRules({ initialRoute: VIEW_2_ROUTE });
+			await screen.findByTestId('alert-rules-view-view-2');
 
 			await user.click(screen.getByTestId('alert-rules-filter-clear'));
 
@@ -584,24 +587,27 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('keeps a query run while the linked views are still loading', async () => {
+			let releaseViews = (): void => {};
+			const viewsReleased = new Promise<void>((resolve) => {
+				releaseViews = resolve;
+			});
 			server.use(
-				rest.get('http://localhost/api/v2/rule_views', (_, res, ctx) =>
-					res(
-						ctx.delay(300),
+				rest.get('http://localhost/api/v2/rule_views', async (_, res, ctx) => {
+					await viewsReleased;
+					return res(
 						ctx.status(200),
 						ctx.json({ data: { views: ruleViewsFixture }, status: 'success' }),
-					),
-				),
+					);
+				}),
 			);
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderListAlertRules({ initialRoute: '/?view=view-1' });
 
 			await runSearchQuery(user, 'foo');
-			await screen.findByTestId(
-				'alert-rules-view-save-changes',
-				{},
-				{ timeout: 5000 },
-			);
+			await waitFor(() => expect(urlParam('query')).toBe('foo'));
+			releaseViews();
+
+			await screen.findByTestId('alert-rules-view-save-changes');
 			await urlSettled();
 			expect(urlParam('query')).toBe('foo');
 			expect(urlParam('states')).toBeNull();
@@ -610,7 +616,7 @@ describe('ListAlertRules — saved views rail', () => {
 
 	describe('rail chrome', () => {
 		it('filters views by name', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderListAlertRules();
 			await screen.findByTestId('alert-rules-view-view-2');
 
@@ -630,11 +636,10 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('collapses the rail from the status bar and persists it', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderListAlertRules();
-			await screen.findByText('High CPU Alert');
 
-			const toggle = screen.getByTestId('alert-rules-rail-toggle');
+			const toggle = await screen.findByTestId('alert-rules-rail-toggle');
 			expect(toggle).toHaveTextContent('Collapse');
 
 			await user.click(toggle);

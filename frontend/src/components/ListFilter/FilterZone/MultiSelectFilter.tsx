@@ -52,7 +52,10 @@ function MultiSelectFilter({
 				disabled={disabled}
 				onClear={onClear}
 				optionRender={(option): JSX.Element => (
-					<div className={styles.checkOption}>
+					<div
+						className={styles.checkOption}
+						data-testid={`${testId}-option-${String(option.value)}`}
+					>
 						<div className={styles.checkOptionBox}>
 							<Checkbox
 								color="primary"
