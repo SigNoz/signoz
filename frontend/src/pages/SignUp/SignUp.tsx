@@ -135,6 +135,7 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
+										data-testid="signup-email"
 										className="signup-form-input"
 									/>
 								</FormContainer.Item>
@@ -150,6 +151,7 @@ function SignUp(): JSX.Element {
 									<AntdInput.Password
 										required
 										id="currentPassword"
+										data-testid="signup-password"
 										placeholder="Enter new password"
 										disabled={loading}
 										className="signup-antd-input"
@@ -173,6 +175,7 @@ function SignUp(): JSX.Element {
 									<AntdInput.Password
 										required
 										id="confirmPassword"
+										data-testid="signup-confirm-password"
 										placeholder="Confirm your new password"
 										disabled={loading}
 										className="signup-antd-input"
@@ -198,6 +201,7 @@ function SignUp(): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="signup"
+							testId="signup-submit"
 							disabled={!!invalidFormReason}
 							loading={loading}
 							width="100%"

@@ -1,5 +1,8 @@
 import { RestHandler } from 'msw';
 import { rest } from 'mocks-server/server';
+import { screen, userEvent } from 'tests/test-utils';
+
+type User = ReturnType<typeof userEvent.setup>;
 
 export const CREATE_USER_ENDPOINT = '*/api/v2/users';
 export const LIST_ROLES_ENDPOINT = '*/api/v1/roles';
@@ -51,4 +54,19 @@ export function createTrackingHandler(): {
 		return res(ctx.status(201), ctx.json({ data: { id: 'user-123' } }));
 	});
 	return { handler, calls };
+}
+
+export async function enterInviteEmail(
+	user: User,
+	rowIndex: number,
+	email: string,
+): Promise<void> {
+	await user.click(screen.getAllByTestId(/^invite-email-/)[rowIndex]);
+	await user.paste(email);
+}
+
+export async function pickInviteRole(user: User, role: string): Promise<void> {
+	await user.click(screen.getAllByText('Select roles')[0]);
+	const options = await screen.findAllByTitle(role);
+	await user.click(options[options.length - 1]);
 }
