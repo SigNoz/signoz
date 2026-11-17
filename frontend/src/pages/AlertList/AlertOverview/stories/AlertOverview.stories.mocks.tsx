@@ -4,10 +4,10 @@
  */
 
 import { rest } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	alertRuleByIdResponse,
@@ -25,7 +25,10 @@ import {
 	alertFieldValuesResponse,
 	alertMetricMetadataResponse,
 	alertMetricsResponse,
+	alertPreviewInvalidQueryError,
 	alertPreviewSeries,
+	PREVIEW_QUERY_CHOICES,
+	type PreviewQueryChoice,
 } from '../../stories/__story_mockdata__/alertQuery';
 
 const STORY_RULE_ID = 'rule-1';
@@ -69,6 +72,13 @@ export const alertOverviewMocks = defineStoryMocks({
 				'Lines the chart above the condition draws. Zero is the preview with nothing to plot.',
 			value: 3,
 			max: 6,
+		}),
+		previewQuery: choiceControl<PreviewQueryChoice>('Preview query', {
+			group: PREVIEW,
+			description:
+				'`invalid` makes `query_range` answer with the 400 a filter that does not parse gets, so the preview shows its error.',
+			options: PREVIEW_QUERY_CHOICES,
+			value: 'valid',
 		}),
 		testNotification: choiceControl<TestNotification>('Test notification', {
 			group: 'Alert overview · rule',
@@ -120,9 +130,12 @@ export const alertOverviewMocks = defineStoryMocks({
 			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
-		rest.post(
-			'http://localhost/api/v5/query_range',
-			response.json(async (req) => alertPreviewSeries(values.previewSeries, req)),
+		rest.post('http://localhost/api/v5/query_range', (req, res, ctx) =>
+			values.previewQuery === 'invalid'
+				? res(ctx.status(400), ctx.json(alertPreviewInvalidQueryError()))
+				: response.json(async (request) =>
+						alertPreviewSeries(values.previewSeries, request),
+					)(req, res, ctx),
 		),
 
 		rest.get(
@@ -161,21 +174,9 @@ export const alertOverviewMocks = defineStoryMocks({
 	}),
 });
 
-export const clickFooterButton = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	// The footer stays disabled, and remounts, until the rule has loaded.
-	const button = await waitFor(
-		() => {
-			const element = within(canvasElement).getByTestId(testId);
+export type AlertOverviewArgs = PageStoryArgs<typeof alertOverviewMocks>;
 
-			expect(element).toBeEnabled();
-			expect(element).not.toHaveAttribute('aria-disabled', 'true');
-
-			return element;
-		},
-		{ timeout: 15_000 },
-	);
-	await userEvent.click(button);
-};
+// The page renders nothing past the rule request, so a failed or pending rule
+// leaves no preview to fail.
+export const showsInvalidQueryError = (args: AlertOverviewArgs): boolean =>
+	args.previewQuery === 'invalid' && args.dataState === 'loaded';

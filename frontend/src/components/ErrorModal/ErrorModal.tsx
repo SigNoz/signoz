@@ -82,7 +82,7 @@ function ErrorModal({
 							onClick={handleClose}
 							data-testid="close-button"
 						>
-							<X size={16} color={Color.BG_VANILLA_400} />
+							<X size={16} />
 						</Button>
 					</>
 				}

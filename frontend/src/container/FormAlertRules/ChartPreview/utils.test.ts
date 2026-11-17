@@ -1,6 +1,8 @@
 import { DataFormats } from 'constants/formats/types';
 
-import { covertIntoDataFormats } from './utils';
+import APIError from 'types/api/error';
+
+import { covertIntoDataFormats, getPreviewErrorDetail } from './utils';
 
 describe('Convert One Unit to another unit', () => {
 	it('should convert from BitsIEC to BytesIEC', () => {
@@ -101,5 +103,46 @@ describe('Convert One Unit to another unit', () => {
 			targetUnit: DataFormats.BytesIEC,
 		});
 		expect(result).toBe(-1024);
+	});
+});
+
+describe('getPreviewErrorDetail', () => {
+	it('returns null without an error', () => {
+		expect(getPreviewErrorDetail(null)).toBeNull();
+	});
+
+	it('maps an API error to the panel status shape', () => {
+		const error = new APIError({
+			httpStatusCode: 400,
+			error: {
+				code: 'invalid_input',
+				message: 'Found 1 syntax errors while parsing the search expression.',
+				url: 'https://signoz.io/docs',
+				errors: [{ message: "line 1:21 expecting one of {'(', ')'}" }],
+			},
+		});
+
+		expect(getPreviewErrorDetail(error)).toStrictEqual({
+			code: 'invalid_input',
+			message: 'Found 1 syntax errors while parsing the search expression.',
+			docsUrl: 'https://signoz.io/docs',
+			messages: ["line 1:21 expecting one of {'(', ')'}"],
+		});
+	});
+
+	it('drops an empty docs url', () => {
+		const error = new APIError({
+			httpStatusCode: 500,
+			error: { code: 'internal', message: 'boom', url: '', errors: [] },
+		});
+
+		expect(getPreviewErrorDetail(error)?.docsUrl).toBeUndefined();
+	});
+
+	it('falls back to the message of a plain error', () => {
+		expect(getPreviewErrorDetail(new Error('Network Error'))).toStrictEqual({
+			message: 'Network Error',
+			messages: [],
+		});
 	});
 });

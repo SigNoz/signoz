@@ -13,6 +13,7 @@ import {
 	type GetMetricMetadata200,
 	type ListMetrics200,
 	type MetricsexplorertypesListMetricDTO,
+	type RenderErrorResponseDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
@@ -297,5 +298,28 @@ export const alertFieldValuesResponse = (
 			numberValues: matching(NUMBER_FIELD_VALUES[name] ?? [], searchText),
 			relatedValues: [],
 		},
+	},
+});
+
+export const PREVIEW_QUERY_CHOICES = ['valid', 'invalid'] as const;
+
+export type PreviewQueryChoice = (typeof PREVIEW_QUERY_CHOICES)[number];
+
+/** The 400 `query_range` answers when the filter expression does not parse. */
+export const alertPreviewInvalidQueryError = (): RenderErrorResponseDTO => ({
+	status: 'error',
+	error: {
+		code: 'invalid_input',
+		type: 'invalid_input',
+		message: 'Found 1 syntax errors while parsing the search expression.',
+		url: 'https://signoz.io/docs/userguide/search-troubleshooting/',
+		errors: [
+			{
+				message:
+					"line 1:24 expecting one of {'(', ')', AND, NOT, OR, EOF} but got 'AND'",
+				suggestions: [],
+			},
+		],
+		suggestions: [],
 	},
 });

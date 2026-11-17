@@ -55,7 +55,7 @@ function ErrorInPlace({
 		height,
 		padding: typeof padding === 'number' ? `${padding}px` : padding,
 		backgroundColor: background,
-		border: bordered ? '1px solid var(--bg-slate-400, #374151)' : 'none',
+		border: bordered ? '1px solid var(--l1-border)' : 'none',
 		borderRadius: bordered ? '4px' : '0',
 		overflow: 'auto',
 		...style,

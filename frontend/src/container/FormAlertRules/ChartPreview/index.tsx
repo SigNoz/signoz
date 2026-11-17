@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { RotateCw, TriangleAlert } from '@signozhq/icons';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -33,12 +33,13 @@ import { navigate } from 'lib/router/navigation';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
 import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
+import PanelMessage from 'pages/DashboardPage/DashboardContainer/Panels/components/PanelMessage/PanelMessage';
+import PanelStatusPopover from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/PanelStatusPopover';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { AlertDef } from 'types/api/alerts/def';
-import APIError from 'types/api/error';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -47,7 +48,7 @@ import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import ChartContent from './ChartContent';
-import { getThresholds } from './utils';
+import { getPreviewErrorDetail, getThresholds } from './utils';
 
 import styles from './ChartPreview.module.scss';
 import './ChartPreview.styles.scss';
@@ -290,6 +291,11 @@ function ChartPreview({
 
 	const isWarning = !isEmpty(queryResponse.data?.warning);
 
+	const errorDetail = useMemo(
+		() => (isCancelled ? null : getPreviewErrorDetail(queryResponse.error)),
+		[isCancelled, queryResponse.error],
+	);
+
 	const chartWidth = containerDimensions?.width
 		? containerDimensions.width - CHART_PREVIEW_CONTAINER_PADDING
 		: 0;
@@ -303,6 +309,13 @@ function ChartPreview({
 				<div className={styles.chartCardBody}>
 					<div className="chart-preview-header">
 						{headline}
+						{errorDetail && (
+							<PanelStatusPopover
+								variant="error"
+								detail={errorDetail}
+								testId="alert-preview-error-status"
+							/>
+						)}
 						{isWarning && (
 							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
@@ -312,8 +325,23 @@ function ChartPreview({
 						{queryResponse.isLoading && (
 							<Spinner size="large" tip="Loading..." height="100%" />
 						)}
-						{(queryResponse?.isError || queryResponse?.error) && !isCancelled && (
-							<ErrorInPlace error={queryResponse.error as APIError} />
+						{errorDetail && (
+							<div className={styles.previewMessage}>
+								<PanelMessage
+									icon={<TriangleAlert size={18} />}
+									tone="danger"
+									title="Couldn’t load preview data"
+									description={errorDetail.message}
+									action={{
+										label: 'Retry',
+										onClick: (): void => {
+											void queryResponse.refetch();
+										},
+										icon: <RotateCw size={14} />,
+									}}
+									data-testid="alert-preview-error"
+								/>
+							</div>
 						)}
 
 						{isCancelled && !queryResponse.isLoading && !hasResultData && (

@@ -5,6 +5,12 @@
 	background-color: var(--card);
 }
 
+.previewMessage {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
 .chartCardBody {
 	height: 57vh;
 	padding: var(--spacing-12) 0;

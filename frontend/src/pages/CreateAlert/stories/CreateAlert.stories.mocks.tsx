@@ -7,18 +7,21 @@ import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	alertFieldKeysResponse,
 	alertFieldValuesResponse,
 	alertMetricMetadataResponse,
 	alertMetricsResponse,
+	alertPreviewInvalidQueryError,
 	alertPreviewSeries,
+	PREVIEW_QUERY_CHOICES,
+	type PreviewQueryChoice,
 } from '../../AlertList/stories/__story_mockdata__/alertQuery';
 import {
 	notificationChannelsResponse,
@@ -93,6 +96,13 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		previewQuery: choiceControl<PreviewQueryChoice>('Preview query', {
+			group: FORM,
+			description:
+				'`invalid` makes `query_range` answer with the 400 a filter that does not parse gets, so the preview shows its error.',
+			options: PREVIEW_QUERY_CHOICES,
+			value: 'valid',
+		}),
 		testNotification: choiceControl<TestNotification>('Test notification', {
 			group: 'Create alert · form',
 			description:
@@ -124,9 +134,12 @@ export const createAlertMocks = defineStoryMocks({
 			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
-		rest.post(
-			'http://localhost/api/v5/query_range',
-			response.json(async (req) => alertPreviewSeries(values.previewSeries, req)),
+		rest.post('http://localhost/api/v5/query_range', (req, res, ctx) =>
+			values.previewQuery === 'invalid'
+				? res(ctx.status(400), ctx.json(alertPreviewInvalidQueryError()))
+				: response.json(async (request) =>
+						alertPreviewSeries(values.previewSeries, request),
+					)(req, res, ctx),
 		),
 
 		rest.get(
@@ -163,37 +176,7 @@ export const createAlertMocks = defineStoryMocks({
 	config: (values) => ({ route: routeFor(values.alertMode) }),
 });
 
-const untilLoaded = { timeout: 15_000 };
+export type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
 
-export const fillValidAlert = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	const canvas = within(canvasElement);
-
-	await userEvent.type(
-		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
-		'Toast alert',
-	);
-	const channels = await canvas.findByTestId(
-		'threshold-notification-channel-select',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(within(channels).getByRole('combobox'));
-	await userEvent.click(await screen.findByTitle('ops-slack'));
-	await userEvent.keyboard('{Escape}');
-};
-
-export const clickFooterButton = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	const button = await within(canvasElement).findByTestId(testId);
-
-	await waitFor(() => {
-		expect(button).toBeEnabled();
-		expect(button).not.toHaveAttribute('aria-disabled', 'true');
-	});
-	await userEvent.click(button);
-};
+export const showsInvalidQueryError = (args: CreateAlertArgs): boolean =>
+	args.previewQuery === 'invalid' && args.alertMode !== 'select-type';

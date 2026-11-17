@@ -27,7 +27,9 @@ import {
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { hasSingleVisiblePoint } from 'lib/uPlotV2/utils/dataUtils';
 import { get } from 'lodash-es';
+import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -269,3 +271,23 @@ export const buildAlertChartConfig = ({
 
 export const buildChartId = (id?: string): string =>
 	id ? `${CHART_ID_PREFIX}_${id}` : CHART_ID_PREFIX;
+
+export const getPreviewErrorDetail = (
+	error: APIError | Error | null | undefined,
+): PanelStatusDetail | null => {
+	if (!error) {
+		return null;
+	}
+
+	if (!(error instanceof APIError)) {
+		return { message: error.message, messages: [] };
+	}
+
+	const { code, message, url, errors } = error.getErrorDetails().error;
+	return {
+		code,
+		message,
+		docsUrl: url || undefined,
+		messages: (errors ?? []).map((e) => e.message),
+	};
+};

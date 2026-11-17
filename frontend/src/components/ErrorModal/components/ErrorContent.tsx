@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -93,11 +92,7 @@ function ErrorContent({ error, icon }: ErrorContentProps): JSX.Element {
 					</OverlayScrollbar>
 					{errorMessages?.length > 10 && (
 						<div className="error-content__scroll-hint">
-							<ChevronsDown
-								size={16}
-								color={Color.BG_VANILLA_100}
-								className="error-content__scroll-hint-icon"
-							/>
+							<ChevronsDown size={16} className="error-content__scroll-hint-icon" />
 							<span className="error-content__scroll-hint-text">Scroll for more</span>
 						</div>
 					)}
