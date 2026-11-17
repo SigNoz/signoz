@@ -14,6 +14,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { MockResolver } from '@/storybook/msw/types';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	ACCOUNT_CAP,
@@ -285,6 +286,12 @@ export const cloudIntegrationMocks = defineStoryMocks({
 		seedServiceSignals(values.provider, values.services, values.enabledServices);
 	},
 });
+
+export type CloudIntegrationArgs = PageStoryArgs<typeof cloudIntegrationMocks>;
+
+/** The hero offers Integrate Now only once the account list has answered with none. */
+export const offersIntegrateNow = (args: CloudIntegrationArgs): boolean =>
+	args.dataState === 'loaded' && args.accounts === 0;
 
 /** The page picks its first service before it can render it. */
 export const untilLoaded = { timeout: 20_000 };

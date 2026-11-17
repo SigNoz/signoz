@@ -4,10 +4,13 @@
  */
 
 import ROUTES from 'constants/routes';
+import { IsAdminPermission } from 'lib/authz/hooks/useAuthZ/legacy';
 import { rest } from 'msw';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	GROUP_SAVES,
@@ -88,3 +91,9 @@ export const attributeMappingMocks = defineStoryMocks({
 	},
 	config: () => ({ route: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING }),
 });
+
+export type AttributeMappingArgs = PageStoryArgs<typeof attributeMappingMocks>;
+
+/** Adding a mapping needs a group to open, and the admin grant the page gates managing on. */
+export const canAddMapping = (args: AttributeMappingArgs): boolean =>
+	args.groups > 0 && grantsAll(args, IsAdminPermission);

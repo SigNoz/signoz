@@ -6,6 +6,10 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import LLMObservabilityPage from '../../index';
 import { modelPricingMocks } from './ModelPricing.stories.mocks';
+import {
+	openModelCostDrawerCreate,
+	openUnpricedModels,
+} from './__story_mockdata__/modelPricing.play';
 
 type ModelPricingArgs = PageStoryArgs<typeof modelPricingMocks>;
 
@@ -41,30 +45,12 @@ export const NothingPriced: Story = {
 
 /** Models seen in spans that no rule prices yet. */
 export const UnpricedModels: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'tab',
-				{ name: /unpriced models/i },
-				{ timeout: 15000 },
-			),
-		);
-		await screen.findByRole('tab', { name: /unpriced models/i, selected: true });
-	},
+	play: openUnpricedModels,
 };
 
 /** Creating a rule: the blank drawer, with the provider select enabled. */
 export const ModelCostDrawerCreate: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: /add model cost/i },
-				{ timeout: 15000 },
-			),
-		);
-		await screen.findByTestId('drawer-provider-select');
-	},
+	play: openModelCostDrawerCreate,
 };
 
 /**

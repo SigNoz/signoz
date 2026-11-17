@@ -5,13 +5,15 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-
-import type { singleSignOnMocks } from '../SingleSignOn.stories.mocks';
+import {
+	listsDomains,
+	showsOrgSettings,
+	type SingleSignOnArgs,
+} from '../SingleSignOn.stories.mocks';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: PageStoryArgs<typeof singleSignOnMocks>;
+	args: SingleSignOnArgs;
 }
 
 /** The table fetches before it renders a row, which outlasts the 1s default. */
@@ -40,14 +42,22 @@ const MAPPING_SECTION = {
 
 export const openConfigureDomain = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
 	await clickFirst(canvasElement, 'auth-domain-configure');
 	await screen.findByText(/role mapping \(advanced\)/i, undefined, untilLoaded);
 };
 
 export const openAddDomain = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!showsOrgSettings(args)) {
+		return;
+	}
 	await userEvent.click(
 		await within(canvasElement).findByTestId(
 			'auth-domain-add',
@@ -60,6 +70,9 @@ export const openAddDomain = async ({
 export const openProviderSelector = async (
 	context: PlayContext,
 ): Promise<void> => {
+	if (!showsOrgSettings(context.args)) {
+		return;
+	}
 	await openAddDomain(context);
 	await screen.findByText(
 		/configure authentication method/i,
@@ -70,7 +83,11 @@ export const openProviderSelector = async (
 
 export const expandRoleMappings = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
 	await clickFirst(canvasElement, 'auth-domain-configure');
 	await userEvent.click(
 		await screen.findByTestId('role-mapping-header', undefined, untilLoaded),
@@ -81,6 +98,9 @@ export const expandRoleMappings = async ({
 export const expandAttributeMapping = async (
 	context: PlayContext,
 ): Promise<void> => {
+	if (!listsDomains(context.args)) {
+		return;
+	}
 	await openConfigureDomain(context);
 	const section = MAPPING_SECTION[context.args.provider];
 	if (!section) {
@@ -96,6 +116,9 @@ export const expandAttributeMapping = async (
 export const submitEmptyProvider = async (
 	context: PlayContext,
 ): Promise<void> => {
+	if (!showsOrgSettings(context.args)) {
+		return;
+	}
 	await openAddDomain(context);
 	await userEvent.click(
 		await screen.findByTestId(
@@ -112,7 +135,11 @@ export const submitEmptyProvider = async (
 
 export const openDeleteDomain = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
 	await clickFirst(canvasElement, 'auth-domain-delete');
 	await screen.findByTestId(
 		'auth-domain-delete-confirm',
@@ -125,6 +152,9 @@ export const updateDisplayName = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!showsOrgSettings(args)) {
+		return;
+	}
 	const input = await within(canvasElement).findByLabelText(
 		/display name/i,
 		undefined,
@@ -145,6 +175,9 @@ export const deleteDomain = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
 	await clickFirst(canvasElement, 'auth-domain-delete');
 	await userEvent.click(
 		await screen.findByTestId(
