@@ -28,6 +28,8 @@ var (
 	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
 	ErrCodeSettingNotAllowed         = errors.MustNewCode("setting_not_allowed")
 	ErrCodeSettingsProfileNotFound   = errors.MustNewCode("settings_profile_not_found")
+	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
+	ErrCodeReadTooLarge              = errors.MustNewCode("read_too_large")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -112,6 +114,22 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 	chproto.ErrCannotCompileRegexp: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
 			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
+	},
+	chproto.ErrTooManyRowsOrBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
+			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
+	},
+	chproto.ErrTooManyRows: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyPartitions: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
 	},
 	chproto.ErrThereIsNoProfile: func(cause error, ex *clickhouse.Exception) error {
 		return errors.WrapNotFoundf(cause, ErrCodeSettingsProfileNotFound, "settings profile not found: %s", ex.Message)
