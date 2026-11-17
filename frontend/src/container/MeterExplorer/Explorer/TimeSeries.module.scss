@@ -4,14 +4,12 @@
 	gap: var(--spacing-5);
 	width: 100%;
 
-	:global(.builder-units-filter) {
+	.unitsFilter {
 		padding: 0 var(--spacing-4);
 		margin-top: 10px;
-		margin-bottom: 0 !important;
 	}
 
-	:global(.builder-units-filter-label) {
-		margin-bottom: 0 !important;
+	.unitsFilterLabel {
 		font-size: 12px;
 	}
 }
