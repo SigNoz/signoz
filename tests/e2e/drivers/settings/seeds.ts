@@ -144,10 +144,15 @@ export async function createGrantedUser(
 ): Promise<GrantedUser> {
 	const name = roleName(kind, workerIndex);
 	const roleId = await settings.roles.createApi({ name, transactionGroups });
-	const member = await settings.users.createActive(
-		name,
-		`${kind}-w${workerIndex}-${Date.now()}`,
-	);
+	const label = `${kind}-w${workerIndex}-${Date.now()}`;
+	let member: CreatedUser;
+	try {
+		member = await settings.users.createActive(name, label);
+	} catch (error) {
+		await settings.users.removeByEmail(`e2e-${label}@signoz.test`);
+		await settings.roles.removeApi(roleId);
+		throw error;
+	}
 	return {
 		user: member.user,
 		role: name,
