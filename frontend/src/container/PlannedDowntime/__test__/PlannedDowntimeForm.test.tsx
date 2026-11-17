@@ -16,6 +16,12 @@ const ALERT_OPTIONS = [
 ];
 
 const RULE_PICKER_PLACEHOLDER = 'Search for alert rules or groups...';
+const ALL_SCOPE_TEST_ID = 'planned-downtime-alert-scope-item-all';
+const SPECIFIC_SCOPE_TEST_ID = 'planned-downtime-alert-scope-item-specific';
+
+function scopeLabel(testId: string): HTMLElement | null {
+	return screen.getByTestId(testId).closest('label');
+}
 
 function FormHarness({
 	initialValues,
@@ -50,12 +56,12 @@ describe('PlannedDowntimeForm alert rule scope', () => {
 			/>,
 		);
 
-		await expect(
-			screen.findByRole('radio', { name: 'All alert rules' }),
-		).resolves.toBeChecked();
-		expect(
-			screen.getByRole('radio', { name: 'Specific alert rules' }),
-		).not.toBeChecked();
+		await expect(screen.findByTestId(ALL_SCOPE_TEST_ID)).resolves.toBeChecked();
+		expect(scopeLabel(ALL_SCOPE_TEST_ID)).toHaveTextContent('All alert rules');
+		expect(screen.getByTestId(SPECIFIC_SCOPE_TEST_ID)).not.toBeChecked();
+		expect(scopeLabel(SPECIFIC_SCOPE_TEST_ID)).toHaveTextContent(
+			'Specific alert rules',
+		);
 		expect(screen.queryByText(RULE_PICKER_PLACEHOLDER)).not.toBeInTheDocument();
 	});
 
@@ -71,13 +77,9 @@ describe('PlannedDowntimeForm alert rule scope', () => {
 			/>,
 		);
 
-		await user.click(
-			await screen.findByRole('radio', { name: 'Specific alert rules' }),
-		);
+		await user.click(await screen.findByTestId(SPECIFIC_SCOPE_TEST_ID));
 
-		expect(
-			screen.getByRole('radio', { name: 'Specific alert rules' }),
-		).toBeChecked();
+		expect(screen.getByTestId(SPECIFIC_SCOPE_TEST_ID)).toBeChecked();
 		expect(screen.getByText(RULE_PICKER_PLACEHOLDER)).toBeInTheDocument();
 	});
 
@@ -93,7 +95,7 @@ describe('PlannedDowntimeForm alert rule scope', () => {
 		);
 
 		await expect(
-			screen.findByRole('radio', { name: 'Specific alert rules' }),
+			screen.findByTestId(SPECIFIC_SCOPE_TEST_ID),
 		).resolves.toBeChecked();
 		expect(screen.getByText('High CPU')).toBeInTheDocument();
 	});

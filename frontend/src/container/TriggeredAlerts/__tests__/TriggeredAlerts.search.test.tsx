@@ -1,118 +1,115 @@
-import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from 'tests/test-utils';
+import { act, screen, userEvent } from 'tests/test-utils';
 
-import { renderTriggeredAlerts } from './_helpers';
+import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
+
+const SEARCH_INPUT = 'triggered-alerts-search-input';
+// The 300 ms search debounce plus the URL write that follows it.
+const SEARCH_SETTLE_MS = 1000;
+
+function nameCell(fingerprint: string): HTMLElement | null {
+	return screen.queryByTestId(getTriggeredAlertRowTestId(fingerprint, 'name'));
+}
+
+async function search(text: string): Promise<void> {
+	jest.useFakeTimers();
+	const user = userEvent.setup({
+		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+	});
+	await user.type(screen.getByTestId(SEARCH_INPUT), text);
+	act(() => {
+		jest.advanceTimersByTime(SEARCH_SETTLE_MS);
+	});
+}
 
 describe('TriggeredAlerts — search', () => {
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('filters rows by alertname when typing in the search input', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
 
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-		);
-		expect(screen.getByText('Memory Warning')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId(getTriggeredAlertRowTestId('fp-critical-1', 'name')),
+		).resolves.toHaveTextContent('High CPU Usage');
+		expect(nameCell('fp-warning-1')).toHaveTextContent('Memory Warning');
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'CPU');
+		await search('CPU');
 
-		await waitFor(() => {
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument();
-			expect(screen.queryByText('Memory Warning')).not.toBeInTheDocument();
-		});
+		expect(nameCell('fp-critical-1')).toHaveTextContent('High CPU Usage');
+		expect(nameCell('fp-warning-1')).not.toBeInTheDocument();
 	});
 
 	it('shows all rows again when search is cleared', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
-
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		await screen.findByTestId(
+			getTriggeredAlertRowTestId('fp-critical-1', 'name'),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'CPU');
+		await search('CPU');
+		expect(nameCell('fp-warning-1')).not.toBeInTheDocument();
 
-		await waitFor(() =>
-			expect(screen.queryByText('Memory Warning')).not.toBeInTheDocument(),
-		);
-
-		await user.clear(input);
-
-		await waitFor(() => {
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument();
-			expect(screen.getByText('Memory Warning')).toBeInTheDocument();
-			expect(screen.getByText('Disk Slow')).toBeInTheDocument();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
 		});
+		await user.clear(screen.getByTestId(SEARCH_INPUT));
+		act(() => {
+			jest.advanceTimersByTime(SEARCH_SETTLE_MS);
+		});
+
+		expect(nameCell('fp-critical-1')).toHaveTextContent('High CPU Usage');
+		expect(nameCell('fp-warning-1')).toHaveTextContent('Memory Warning');
+		expect(nameCell('fp-info-1')).toHaveTextContent('Disk Slow');
 	});
 
 	it('matches rows by label value (case-insensitive)', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
-
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		await screen.findByTestId(
+			getTriggeredAlertRowTestId('fp-critical-1', 'name'),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
 		// "backend" matches `service: backend` labels on Memory Warning and Network Hiccup.
-		await user.type(input, 'backend');
+		await search('backend');
 
-		await waitFor(() => {
-			expect(screen.getByText('Memory Warning')).toBeInTheDocument();
-			expect(screen.getByText('Network Hiccup')).toBeInTheDocument();
-			expect(screen.queryByText('High CPU Usage')).not.toBeInTheDocument();
-			expect(screen.queryByText('Disk Slow')).not.toBeInTheDocument();
-		});
+		expect(nameCell('fp-warning-1')).toHaveTextContent('Memory Warning');
+		expect(nameCell('fp-suppressed-1')).toHaveTextContent('Network Hiccup');
+		expect(nameCell('fp-critical-1')).not.toBeInTheDocument();
+		expect(nameCell('fp-info-1')).not.toBeInTheDocument();
 	});
 
 	it('matches rows by label key', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
-
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		await screen.findByTestId(
+			getTriggeredAlertRowTestId('fp-critical-1', 'name'),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'staging');
+		await search('staging');
 
-		await waitFor(() => {
-			expect(screen.getByText('Disk Slow')).toBeInTheDocument();
-			expect(screen.queryByText('High CPU Usage')).not.toBeInTheDocument();
-			expect(screen.queryByText('Memory Warning')).not.toBeInTheDocument();
-		});
+		expect(nameCell('fp-info-1')).toHaveTextContent('Disk Slow');
+		expect(nameCell('fp-critical-1')).not.toBeInTheDocument();
+		expect(nameCell('fp-warning-1')).not.toBeInTheDocument();
 	});
 
 	it('renders the no-results empty state when the search matches nothing', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts();
-
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
+		await screen.findByTestId(
+			getTriggeredAlertRowTestId('fp-critical-1', 'name'),
 		);
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'zzzzznever-matches-anything');
+		await search('zzzzznever-matches-anything');
 
-		await waitFor(() =>
-			expect(screen.getByTestId('no-results-empty-state')).toBeInTheDocument(),
-		);
+		expect(screen.getByTestId('no-results-empty-state')).toBeInTheDocument();
 	});
 
 	it('resets pagination to page 1 when the search changes', async () => {
-		const user = userEvent.setup({ delay: null });
 		renderTriggeredAlerts({ initialRoute: '/?page=2&limit=2' });
 
-		await waitFor(() =>
-			expect(screen.getByText('Disk Slow')).toBeInTheDocument(),
-		);
+		await expect(
+			screen.findByTestId(getTriggeredAlertRowTestId('fp-info-1', 'name')),
+		).resolves.toHaveTextContent('Disk Slow');
 
-		const input = screen.getByTestId('triggered-alerts-search-input');
-		await user.type(input, 'CPU');
+		await search('CPU');
 
-		await waitFor(() =>
-			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
-		);
+		expect(nameCell('fp-critical-1')).toHaveTextContent('High CPU Usage');
 	});
 });

@@ -1,65 +1,64 @@
-import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { ActionsMenu } from 'container/ListAlertRules/components';
+import type { AlertRule } from 'container/ListAlertRules/types';
+import { useAlertRulesHandlers } from 'container/ListAlertRules/useAlertRulesHandlers';
 import { server } from 'mocks-server/server';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import { findAlertRow, renderListAlertRules } from './_helpers';
+const [HIGH_CPU_RULE, , , DISABLED_RULE] = alertRulesFixture;
 
-async function openActionsMenu(row: HTMLElement): Promise<void> {
-	const trigger = row.querySelector(
-		'[data-testid="alert-actions"]',
-	) as HTMLElement | null;
-	expect(trigger).not.toBeNull();
-	const user = userEvent.setup({ delay: null });
-	await user.click(trigger as HTMLElement);
-	// Radix renders the menu items in a portal once the trigger is activated.
-	await screen.findByRole('menu');
+function ActionsMenuWithHandlers({ rule }: { rule: AlertRule }): JSX.Element {
+	const { handleEdit } = useAlertRulesHandlers(alertRulesFixture.length);
+	return <ActionsMenu rule={rule} onEdit={handleEdit} />;
 }
 
-async function clickMenuItem(label: string): Promise<void> {
-	const user = userEvent.setup({ delay: null });
-	const item = await screen.findByRole('menuitem', { name: label });
-	await user.click(item);
+async function openActionsMenu(
+	user: ReturnType<typeof userEvent.setup>,
+	rule: AlertRule = HIGH_CPU_RULE,
+): Promise<void> {
+	render(<ActionsMenuWithHandlers rule={rule} />);
+	await user.click(screen.getByTestId('alert-actions'));
+	await screen.findByTestId('alert-actions-item-edit');
 }
 
 describe('ListAlertRules — actions menu', () => {
-	beforeEach(() => {
-		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-	});
-
 	it('renders Enable/Disable/Edit/Edit in New Tab/Clone/Delete items after opening the menu', async () => {
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
+		const user = userEvent.setup();
+		render(<ActionsMenuWithHandlers rule={HIGH_CPU_RULE} />);
 
-		expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('alert-actions-item-edit'),
+		).not.toBeInTheDocument();
 
-		await openActionsMenu(row);
+		await user.click(screen.getByTestId('alert-actions'));
 
-		const items = screen.getAllByRole('menuitem');
-		const labels = items.map((it) => it.textContent);
-		expect(labels).toStrictEqual(
-			expect.arrayContaining([
-				'Edit',
-				'Edit in New Tab',
-				'Clone',
-				'Delete',
-				'Disable',
-			]),
+		await expect(
+			screen.findByTestId('alert-actions-item-toggle'),
+		).resolves.toHaveTextContent(/^Disable$/);
+		expect(screen.getByTestId('alert-actions-item-edit')).toHaveTextContent(
+			/^Edit$/,
+		);
+		expect(
+			screen.getByTestId('alert-actions-item-edit-new-tab'),
+		).toHaveTextContent(/^Edit in New Tab$/);
+		expect(screen.getByTestId('alert-actions-item-clone')).toHaveTextContent(
+			/^Clone$/,
+		);
+		expect(screen.getByTestId('alert-actions-item-delete')).toHaveTextContent(
+			/^Delete$/,
 		);
 	});
 
 	it('disabled rule (rule-4) shows "Enable" instead of "Disable"', async () => {
-		renderListAlertRules();
-		const row = await findAlertRow('Disabled Alert');
-		await openActionsMenu(row);
+		const user = userEvent.setup();
+		await openActionsMenu(user, DISABLED_RULE);
 
-		const items = screen.getAllByRole('menuitem');
-		const labels = items.map((it) => it.textContent);
-		expect(labels).toContain('Enable');
-		expect(labels).not.toContain('Disable');
+		expect(screen.getByTestId('alert-actions-item-toggle')).toHaveTextContent(
+			/^Enable$/,
+		);
 	});
 
 	it('toggle action: clicking Disable sends PATCH with disabled:true', async () => {
@@ -73,10 +72,9 @@ describe('ListAlertRules — actions menu', () => {
 			}),
 		);
 
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Disable');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-toggle'));
 
 		await waitFor(() => {
 			expect(capturedBody).toStrictEqual(
@@ -92,10 +90,9 @@ describe('ListAlertRules — actions menu', () => {
 	});
 
 	it('edit action: clicking Edit navigates via safeNavigate and logs event', async () => {
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Edit');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-edit'));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -109,10 +106,9 @@ describe('ListAlertRules — actions menu', () => {
 	});
 
 	it('edit in new tab action: clicking opens with newTab:true', async () => {
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Edit in New Tab');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-edit-new-tab'));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -133,7 +129,7 @@ describe('ListAlertRules — actions menu', () => {
 						ctx.status(201),
 						ctx.json({
 							data: {
-								...alertRulesFixture[0],
+								...HIGH_CPU_RULE,
 								id: 'cloned-from-server',
 								alert: 'High CPU Alert - Copy',
 							},
@@ -144,10 +140,9 @@ describe('ListAlertRules — actions menu', () => {
 			),
 		);
 
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Clone');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-clone'));
 
 		await waitFor(() => {
 			expect(capturedRuleId).toBe('rule-1');
@@ -177,10 +172,9 @@ describe('ListAlertRules — actions menu', () => {
 			}),
 		);
 
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Delete');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-delete'));
 
 		await waitFor(() => {
 			expect(deletedId).toBe('rule-1');
@@ -201,10 +195,9 @@ describe('ListAlertRules — actions menu', () => {
 			}),
 		);
 
-		renderListAlertRules();
-		const row = await findAlertRow('High CPU Alert');
-		await openActionsMenu(row);
-		await clickMenuItem('Disable');
+		const user = userEvent.setup();
+		await openActionsMenu(user);
+		await user.click(screen.getByTestId('alert-actions-item-toggle'));
 
 		await waitFor(() => {
 			expect(patchAttempted).toBe(true);
