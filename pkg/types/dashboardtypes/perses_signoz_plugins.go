@@ -11,6 +11,7 @@ import (
 	qb "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/go-playground/validator/v10"
 	"github.com/prometheus/common/model"
 	"github.com/swaggest/jsonschema-go"
 )
@@ -287,7 +288,7 @@ type TopListPanelSpec struct {
 type TopListAppearance struct {
 	ShowRank  bool            `json:"showRank" description:"Numbers each row by its position in the list."`
 	ShowShare bool            `json:"showShare" description:"Shows each row's share of the listed rows' total."`
-	BarColor  TopListBarColor `json:"barColor" required:"true" validate:"omitempty,hexcolor" description:"Hex color of every bar; a matching background threshold overrides it."`
+	BarColor  TopListBarColor `json:"barColor" required:"true" description:"Hex color of every bar; a matching background threshold overrides it."`
 }
 
 type TopListBarColor string
@@ -303,6 +304,18 @@ func (c TopListBarColor) ValueOrDefault() string {
 
 func (c TopListBarColor) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.ValueOrDefault())
+}
+
+func (c *TopListBarColor) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid barColor: must be a hex color string")
+	}
+	if err := validator.New().Var(v, "hexcolor"); err != nil {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid barColor %q: must be a hex color such as #4E74F8", v)
+	}
+	*c = TopListBarColor(v)
+	return nil
 }
 
 type TablePanelSpec struct {

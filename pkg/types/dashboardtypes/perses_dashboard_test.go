@@ -2271,8 +2271,18 @@ func TestTopListPanelSpec(t *testing.T) {
 			wantAppearance: TopListAppearance{ShowRank: true, BarColor: DefaultTopListBarColor},
 		},
 		{
+			name:           "MissingAppearance_Defaulted",
+			spec:           `{"formatting": {"unit": "ms", "decimalPrecision": 0}}`,
+			wantAppearance: TopListAppearance{BarColor: DefaultTopListBarColor},
+		},
+		{
 			name:    "InvalidBarColor_Rejected",
 			spec:    `{"appearance": {"barColor": "blue"}}`,
+			wantErr: true,
+		},
+		{
+			name:    "EmptyBarColor_Rejected",
+			spec:    `{"appearance": {"barColor": ""}}`,
 			wantErr: true,
 		},
 		{
