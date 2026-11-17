@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	AuthtypesAuthDomainConfigGoogleDTO,
@@ -27,6 +27,7 @@ jest.mock('@signozhq/ui/button', () => ({
 		'aria-label': ariaLabel,
 		prefix,
 		suffix,
+		testId,
 	}: {
 		children?: React.ReactNode;
 		onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -35,12 +36,14 @@ jest.mock('@signozhq/ui/button', () => ({
 		'aria-label'?: string;
 		prefix?: React.ReactNode;
 		suffix?: React.ReactNode;
+		testId?: string;
 	}) => (
 		<button
 			type="button"
 			onClick={onClick}
 			disabled={disabled || loading}
 			aria-label={ariaLabel}
+			data-testid={testId}
 		>
 			{prefix}
 			{children}
@@ -60,6 +63,7 @@ type SavedPayload = {
 async function submitForm(
 	record: AuthtypesGettableAuthDomainDTO,
 ): Promise<SavedPayload> {
+	const user = userEvent.setup();
 	const requests: SavedPayload[] = [];
 
 	server.use(
@@ -70,7 +74,7 @@ async function submitForm(
 	);
 
 	render(<CreateEdit isCreate={false} record={record} onClose={jest.fn()} />);
-	fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
+	await user.click(screen.getByTestId('auth-domain-save'));
 	await waitFor(() => expect(requests).toHaveLength(1));
 
 	return requests[0];
