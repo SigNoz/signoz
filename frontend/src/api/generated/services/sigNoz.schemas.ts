@@ -13303,6 +13303,13 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
+export enum ServiceaccounttypesDSLKeyDTO {
+	created_at = 'created_at',
+	email = 'email',
+	name = 'name',
+	status = 'status',
+	updated_at = 'updated_at',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -13349,6 +13356,59 @@ export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
 	key: string;
 }
 
+export enum ServiceaccounttypesServiceAccountStatusDTO {
+	active = 'active',
+	deleted = 'deleted',
+}
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: string;
+}
+
+export interface ServiceaccounttypesListableServiceAccountDTO {
+	/**
+	 * @type array
+	 * @description The filter keys the query accepts.
+	 */
+	reservedKeywords: ServiceaccounttypesDSLKeyDTO[];
+	/**
+	 * @type array
+	 * @description The service accounts on this page.
+	 */
+	serviceAccounts: ServiceaccounttypesServiceAccountDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The number of service accounts the filter matches across all pages.
+	 */
+	total: number;
+}
+
 export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	/**
 	 * @type integer
@@ -13379,39 +13439,15 @@ export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	serviceAccountId: string;
 }
 
-export interface ServiceaccounttypesServiceAccountDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
+export enum ServiceaccounttypesServiceAccountListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
 }
-
+export enum ServiceaccounttypesServiceAccountListSortDTO {
+	created_at = 'created_at',
+	updated_at = 'updated_at',
+	name = 'name',
+}
 export interface ServiceaccounttypesServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -13464,10 +13500,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type array,null
 	 */
 	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
 	/**
 	 * @type string
 	 * @format date-time
@@ -15520,11 +15553,34 @@ export type GetServiceAccountRole200 = {
 	status: string;
 };
 
-export type ListServiceAccounts200 = {
+export type ListServiceAccountsParams = {
 	/**
-	 * @type array
+	 * @type string
+	 * @description A filter expression over the reserved keys name, email, status, created_at and updated_at using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'ci' AND status = 'active'. A bare or quoted token without a key matches name or email case-insensitively. At most 1024 characters. Empty matches every service account.
 	 */
-	data: ServiceaccounttypesServiceAccountDTO[];
+	query?: string;
+	/**
+	 * @description The sort column: created_at (default), updated_at or name.
+	 */
+	sort?: ServiceaccounttypesServiceAccountListSortDTO;
+	/**
+	 * @description The sort order: asc or desc (default).
+	 */
+	order?: ServiceaccounttypesServiceAccountListOrderDTO;
+	/**
+	 * @type integer
+	 * @description The page size; defaults to 20 and is capped at 200.
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description The number of service accounts to skip; defaults to 0.
+	 */
+	offset?: number;
+};
+
+export type ListServiceAccounts200 = {
+	data: ServiceaccounttypesListableServiceAccountDTO;
 	/**
 	 * @type string
 	 */

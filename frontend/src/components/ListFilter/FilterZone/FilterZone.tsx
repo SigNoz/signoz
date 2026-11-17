@@ -22,7 +22,8 @@ interface Props {
 	// Ids: `${testIdPrefix}-search-zone`, `-list-search*`, `-filter-zone`,
 	// `-filter-clear`, `-filter-created-by`, `-filter-updated`, `-query-error`.
 	testIdPrefix: string;
-	creatorOptions: CreatorOption[];
+	// Omitted when the entity has no creator, which drops the Created-by chip.
+	creatorOptions?: CreatorOption[];
 	source: SuggestionSource;
 	// Commit (run) the draft — the only path that triggers a fetch.
 	onQueryChange: (value: string) => void;

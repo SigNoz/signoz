@@ -47,16 +47,19 @@ export const clause = (key: string, op: string, value: ClauseValue): string => {
 	return `${key} ${op} [${value.map(literal).join(', ')}]`;
 };
 
-// The `created_by` clause for a set of emails (single `=`, multiple `IN [...]`).
-export const createdByClause = (emails: string[]): string | null => {
-	if (emails.length === 0) {
+// The clause for a set of values on `key`: none, a single `=`, or `IN [...]`.
+export const valuesClause = (key: string, values: string[]): string | null => {
+	if (values.length === 0) {
 		return null;
 	}
-	if (emails.length === 1) {
-		return `created_by = ${literal(emails[0])}`;
+	if (values.length === 1) {
+		return `${key} = ${literal(values[0])}`;
 	}
-	return `created_by IN [${emails.map(literal).join(', ')}]`;
+	return `${key} IN [${values.map(literal).join(', ')}]`;
 };
+
+export const createdByClause = (emails: string[]): string | null =>
+	valuesClause('created_by', emails);
 
 // Strip matching surrounding quotes and unescape a DSL string value.
 const unquote = (raw: string): string => {
@@ -133,17 +136,14 @@ export interface ReflectedClauses {
 	updated: UpdatedWindow;
 }
 
-// Best-effort extraction of the two dropdown-reflected clauses from the query.
-// Only top-level, AND-joined, simple `key OP value` terms reflect; OR/nested/
-// duplicate/other-operator clauses fall back to the dropdown default.
-export const parseReflectedClauses = (query: string): ReflectedClauses => {
-	const terms = splitTopLevelTerms(query);
-	let createdBy: string[] = [];
-	let updated: UpdatedWindow = 'any';
-	let createdByCount = 0;
-	let updatedCount = 0;
+// The values of the one top-level `key = value` or `key IN [...]` term, else an
+// empty list: absent, repeated, nested or other-operator terms do not reflect.
+export const reflectedValues = (query: string, key: string): string[] => {
+	const target = key.toLowerCase();
+	let values: string[] = [];
+	let count = 0;
 
-	terms.forEach((term) => {
+	splitTopLevelTerms(query).forEach((term) => {
 		const trimmed = term.text.trim();
 		if (!trimmed || trimmed.startsWith('(')) {
 			return;
@@ -152,31 +152,53 @@ export const parseReflectedClauses = (query: string): ReflectedClauses => {
 		if (!scan.key || !scan.operator || !scan.value) {
 			return;
 		}
-		const key = scan.key.text.toLowerCase();
+		if (scan.key.text.toLowerCase() !== target) {
+			return;
+		}
+		count += 1;
 		const op = scan.operator.canonical;
-		const value = scan.value.text.trim();
-		if (key === 'created_by') {
-			createdByCount += 1;
-			if (op === '=') {
-				createdBy = [unquote(value)];
-			} else if (op === 'IN') {
-				createdBy = parseValueList(value);
-			} else {
-				createdBy = [];
-			}
-		} else if (key === 'updated_at') {
-			updatedCount += 1;
-			updated = op === '>=' ? (updatedWindowFromTimestamp(value) ?? 'any') : 'any';
+		if (op === '=') {
+			values = [unquote(scan.value.text)];
+		} else if (op === 'IN') {
+			values = parseValueList(scan.value.text);
+		} else {
+			values = [];
 		}
 	});
 
-	if (createdByCount > 1) {
-		createdBy = [];
-	}
+	return count === 1 ? values : [];
+};
+
+// Best-effort extraction of the two dropdown-reflected clauses from the query.
+// Only top-level, AND-joined, simple `key OP value` terms reflect; OR/nested/
+// duplicate/other-operator clauses fall back to the dropdown default.
+export const parseReflectedClauses = (query: string): ReflectedClauses => {
+	let updated: UpdatedWindow = 'any';
+	let updatedCount = 0;
+
+	splitTopLevelTerms(query).forEach((term) => {
+		const trimmed = term.text.trim();
+		if (!trimmed || trimmed.startsWith('(')) {
+			return;
+		}
+		const scan = scanTerm(term.text);
+		if (!scan.key || !scan.operator || !scan.value) {
+			return;
+		}
+		if (scan.key.text.toLowerCase() !== 'updated_at') {
+			return;
+		}
+		updatedCount += 1;
+		updated =
+			scan.operator.canonical === '>='
+				? (updatedWindowFromTimestamp(scan.value.text.trim()) ?? 'any')
+				: 'any';
+	});
+
 	if (updatedCount > 1) {
 		updated = 'any';
 	}
-	return { createdBy, updated };
+	return { createdBy: reflectedValues(query, 'created_by'), updated };
 };
 
 // Add / replace / remove a top-level simple clause for `key`, leaving every other
@@ -218,7 +240,15 @@ export const spliceClause = (
 		}
 	});
 
+	// An appended clause must apply to the whole query, so OR-joined terms are
+	// grouped first: `a OR b AND c` would bind `c` to `b` alone.
 	if (clause !== null && matches.length === 0) {
+		if (kept.some((k) => k.joiner === 'OR')) {
+			const grouped = kept
+				.map((k, i) => (i === 0 ? k.text : ` ${k.joiner} ${k.text}`))
+				.join('');
+			return `(${grouped}) AND ${clause}`;
+		}
 		kept.push({ text: clause, joiner: joinerFor('AND') });
 	}
 

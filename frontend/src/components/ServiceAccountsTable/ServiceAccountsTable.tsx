@@ -1,6 +1,11 @@
 import React from 'react';
 import { Table } from 'antd';
-import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
+import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState/NoResultsEmptyState';
+import {
+	SA_PAGE_SIZE,
+	SA_QUERY_PARAMS,
+} from 'container/ServiceAccountsSettings/constants';
+import { SERVICE_ACCOUNTS_DEFAULT_QUERY } from 'container/ServiceAccountsSettings/list.config';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
@@ -12,17 +17,21 @@ import {
 
 import './ServiceAccountsTable.styles.scss';
 
-export const PAGE_SIZE = 20;
-
 interface ServiceAccountsTableProps {
 	data: ServiceAccountRow[];
+	total: number;
 	loading: boolean;
+	queryError?: string | null;
+	onClearSearch: () => void;
 	onRowClick?: (row: ServiceAccountRow) => void;
 }
 
 function ServiceAccountsTable({
 	data,
+	total,
 	loading,
+	queryError,
+	onClearSearch,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
 	const [currentPage, setPage] = useQueryState(
@@ -31,7 +40,7 @@ function ServiceAccountsTable({
 	);
 	const [searchQuery] = useQueryState(
 		SA_QUERY_PARAMS.SEARCH,
-		parseAsString.withDefault(''),
+		parseAsString.withDefault(SERVICE_ACCOUNTS_DEFAULT_QUERY),
 	);
 
 	return (
@@ -43,11 +52,11 @@ function ServiceAccountsTable({
 				rowKey="id"
 				loading={loading}
 				pagination={
-					data.length > PAGE_SIZE
+					total > SA_PAGE_SIZE
 						? {
 								current: currentPage,
-								pageSize: PAGE_SIZE,
-								total: data.length,
+								pageSize: SA_PAGE_SIZE,
+								total,
 								showTotal: showPaginationTotal,
 								showSizeChanger: false,
 								onChange: (page: number): void => void setPage(page),
@@ -60,12 +69,27 @@ function ServiceAccountsTable({
 				}
 				showSorterTooltip={false}
 				locale={{
-					emptyText: <ServiceAccountsEmptyState searchQuery={searchQuery} />,
+					emptyText:
+						queryError || searchQuery !== SERVICE_ACCOUNTS_DEFAULT_QUERY ? (
+							<NoResultsEmptyState
+								title="No matching service accounts"
+								subtitle={
+									queryError
+										? 'The filter query is invalid. Fix it or clear the search.'
+										: 'No service accounts match your search. Try adjusting your search criteria.'
+								}
+								onClear={onClearSearch}
+								clearButtonText="Clear Search"
+							/>
+						) : (
+							<ServiceAccountsEmptyState />
+						),
 				}}
 				className="sa-table"
 				onRow={(
 					record,
 				): {
+					'data-testid': string;
 					onClick?: () => void;
 					onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
 					style?: React.CSSProperties;
@@ -74,10 +98,11 @@ function ServiceAccountsTable({
 					'aria-label'?: string;
 				} => {
 					if (!onRowClick) {
-						return {};
+						return { 'data-testid': `sa-row-${record.id}` };
 					}
 
 					return {
+						'data-testid': `sa-row-${record.id}`,
 						onClick: (): void => onRowClick(record),
 						onKeyDown: (e: React.KeyboardEvent<HTMLElement>): void => {
 							if (e.key === 'Enter' || e.key === ' ') {
