@@ -60,10 +60,10 @@ export const setListOrderBy = (query: Query, orderBy: string): Query => {
 	const nextOrderBy = [parseListOrderBy(orderBy)];
 
 	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
-	const builder = getBuilderBySlotKey(query, slotKey);
+	const activeBuilder = getBuilderBySlotKey(query, slotKey);
 	return replaceBuilderBySlotKey(query, slotKey, {
-		...builder,
-		queryData: builder.queryData.map((item) => ({
+		...activeBuilder,
+		queryData: activeBuilder.queryData.map((item) => ({
 			...item,
 			orderBy: nextOrderBy,
 		})),

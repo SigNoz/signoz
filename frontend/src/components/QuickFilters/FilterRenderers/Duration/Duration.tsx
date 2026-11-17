@@ -191,10 +191,10 @@ function Duration({
 
 	const removeFilterItemIds = (query: Query): Query => {
 		const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
-		const builder = getBuilderBySlotKey(query, slotKey);
+		const activeBuilder = getBuilderBySlotKey(query, slotKey);
 		return replaceBuilderBySlotKey(cloneDeep(query), slotKey, {
-			...builder,
-			queryData: builder.queryData.map((data) => ({
+			...activeBuilder,
+			queryData: activeBuilder.queryData.map((data) => ({
 				...data,
 				filters: {
 					...data.filters,
@@ -212,10 +212,10 @@ function Duration({
 	const handleRun = useCallback(
 		(props?: HandleRunProps): void => {
 			const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
-			const builder = getBuilderBySlotKey(currentQuery, slotKey);
+			const activeBuilder = getBuilderBySlotKey(currentQuery, slotKey);
 			const preparedQuery: Query = replaceBuilderBySlotKey(currentQuery, slotKey, {
-				...builder,
-				queryData: builder.queryData.map((item, idx) => {
+				...activeBuilder,
+				queryData: activeBuilder.queryData.map((item, idx) => {
 					if (idx !== activeQueryIndex) {
 						return item;
 					}

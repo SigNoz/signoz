@@ -163,8 +163,9 @@ export function applyCheckboxToggle({
 	sectionType?: SectionType;
 }): Query {
 	const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
-	const builder = getBuilderBySlotKey(currentQuery, slotKey);
-	const activeItems = builder.queryData?.[activeQueryIndex]?.filters?.items;
+	const activeBuilder = getBuilderBySlotKey(currentQuery, slotKey);
+	const activeItems =
+		activeBuilder.queryData?.[activeQueryIndex]?.filters?.items;
 
 	const isSomeFilterPresentForCurrentAttribute = !!activeItems?.some((item) =>
 		isKeyMatch(item.key?.key, filter.attributeKey.key),
@@ -179,7 +180,7 @@ export function applyCheckboxToggle({
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
-	const query = cloneDeep(builder.queryData?.[activeQueryIndex]);
+	const query = cloneDeep(activeBuilder.queryData?.[activeQueryIndex]);
 
 	// if only or all are clicked we do not need to worry about anything just override whatever we have
 	// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
@@ -437,9 +438,9 @@ export function applyCheckboxToggle({
 	}
 
 	return replaceBuilderBySlotKey(currentQuery, slotKey, {
-		...builder,
+		...activeBuilder,
 		queryData: [
-			...builder.queryData.map((q, idx) => {
+			...activeBuilder.queryData.map((q, idx) => {
 				if (idx === activeQueryIndex) {
 					return query;
 				}

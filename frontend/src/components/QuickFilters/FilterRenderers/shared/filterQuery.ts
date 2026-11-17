@@ -26,10 +26,10 @@ export function clearFilterFromQuery({
 	operators?: string[];
 }): Query {
 	const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
-	const builder = getBuilderBySlotKey(currentQuery, slotKey);
+	const activeBuilder = getBuilderBySlotKey(currentQuery, slotKey);
 	return replaceBuilderBySlotKey(currentQuery, slotKey, {
-		...builder,
-		queryData: builder.queryData.map((item, idx) => {
+		...activeBuilder,
+		queryData: activeBuilder.queryData.map((item, idx) => {
 			if (idx !== activeQueryIndex) {
 				return item;
 			}

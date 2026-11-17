@@ -114,9 +114,12 @@ function fitQueryToExplorer(query: Query, rules: ExplorerQueryRules): void {
 	} else {
 		delete query.builder_ai_query;
 	}
-	const builder = getActiveBuilder(query);
-	if (!isListOfObjects(builder.queryData) || builder.queryData.length === 0) {
-		builder.queryData = cloneDeep(initialQueryState.builder.queryData);
+	const activeBuilder = getActiveBuilder(query);
+	if (
+		!isListOfObjects(activeBuilder.queryData) ||
+		activeBuilder.queryData.length === 0
+	) {
+		activeBuilder.queryData = cloneDeep(initialQueryState.builder.queryData);
 	}
 
 	if (query.promql.some((promql) => promql.query !== '')) {
@@ -128,10 +131,10 @@ function fitQueryToExplorer(query: Query, rules: ExplorerQueryRules): void {
 	}
 
 	if (!rules.allowsTraceOperator) {
-		builder.queryTraceOperator = [];
+		activeBuilder.queryTraceOperator = [];
 	}
 
-	builder.queryData = builder.queryData.map((builderQuery) =>
+	activeBuilder.queryData = activeBuilder.queryData.map((builderQuery) =>
 		fitBuilderQueryToExplorer(builderQuery, rules),
 	);
 }

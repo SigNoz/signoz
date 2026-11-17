@@ -34,7 +34,6 @@ import {
 import { isFunction } from 'lodash-es';
 import {
 	getActiveBuilder,
-	getBuilderBySlotKey,
 	getBuilderSlotKeyForQueryType,
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
@@ -135,15 +134,14 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const handleReset = (): void => {
 		const activeQuery = activeBuilder?.queryData?.[activeQueryIndex];
 
-		if (!activeQuery) {
+		if (!activeBuilder || !activeQuery) {
 			return;
 		}
 
 		const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
-		const builder = getBuilderBySlotKey(currentQuery, slotKey);
 		const preparedQuery: Query = replaceBuilderBySlotKey(currentQuery, slotKey, {
-			...builder,
-			queryData: builder.queryData.map((item, idx) => {
+			...activeBuilder,
+			queryData: activeBuilder.queryData.map((item, idx) => {
 				if (idx !== activeQueryIndex) {
 					return item;
 				}

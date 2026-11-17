@@ -62,10 +62,13 @@ export function replaceFirstQueryData(
 	updated: IBuilderQuery,
 ): Query {
 	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
-	const builder = getBuilderBySlotKey(query, slotKey);
-	const queryData = [...builder.queryData];
+	const activeBuilder = getBuilderBySlotKey(query, slotKey);
+	const queryData = [...activeBuilder.queryData];
 	queryData[0] = updated;
-	return replaceBuilderBySlotKey(query, slotKey, { ...builder, queryData });
+	return replaceBuilderBySlotKey(query, slotKey, {
+		...activeBuilder,
+		queryData,
+	});
 }
 
 /** Page-state deps required by the runQuery / addFilter actions. */
