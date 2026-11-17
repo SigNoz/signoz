@@ -1,13 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import ResetPassword from '../index';
-import { resetPasswordMocks } from './ResetPassword.stories.mocks';
-
-type ResetPasswordArgs = PageStoryArgs<typeof resetPasswordMocks>;
+import {
+	type ResetPasswordArgs,
+	resetPasswordMocks,
+} from './ResetPassword.stories.mocks';
+import { showPasswordMismatch } from './__story_mockdata__/resetPassword.play';
 
 const pageStory = storyMocks(resetPasswordMocks, { layout: 'app' });
 
@@ -39,17 +39,5 @@ export const ExpiredLink: Story = {
 
 /** The mismatch callout, after the two password fields disagree and blur. */
 export const PasswordMismatch: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const password = await screen.findByTestId('password', undefined, {
-			timeout: 15000,
-		});
-		const confirm = await screen.findByPlaceholderText(
-			/confirm your new password/i,
-		);
-
-		await userEvent.type(password, 'password123');
-		await userEvent.type(confirm, 'password456');
-		await userEvent.click(canvasElement);
-		await screen.findByText(/passwords don't match/i);
-	},
+	play: showPasswordMismatch,
 };

@@ -8,10 +8,12 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	canInvite,
 	clickWhenEnabled,
 	closeRoles,
 	MEMBERS_PAGE_SIZE,
 	membersMocks,
+	offersRole,
 	openInviteRoleDropdown,
 	openMember,
 	openResetLink,
@@ -153,7 +155,11 @@ export const openRoleDropdown = async ({
 
 export const openInviteForm = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args)) {
+		return;
+	}
 	await clickWhenEnabled(
 		await within(canvasElement).findByText(
 			/invite member/i,
@@ -166,6 +172,11 @@ export const openInviteForm = async ({
 };
 
 export const openInviteRoles = async (context: PlayContext): Promise<void> => {
+	const { args } = context;
+
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 	await openInviteForm(context);
 	await openInviteRoleDropdown(0);
 	await screen.findAllByText('viewer', undefined, untilLoaded);
@@ -174,9 +185,17 @@ export const openInviteRoles = async (context: PlayContext): Promise<void> => {
 export const selectInviteRoles = async (
 	context: PlayContext,
 ): Promise<void> => {
+	const { args } = context;
+	const roles = ['viewer', 'editor', 'oncall-responder'].filter((role) =>
+		offersRole(args, role),
+	);
+
+	if (!canInvite(args) || roles.length === 0) {
+		return;
+	}
 	await openInviteForm(context);
 	await openInviteRoleDropdown(0);
-	for (const role of ['viewer', 'editor', 'oncall-responder']) {
+	for (const role of roles) {
 		await pickOpenRole(role);
 	}
 	await closeRoles();
@@ -185,7 +204,7 @@ export const selectInviteRoles = async (
 		() =>
 			expect(
 				document.querySelector(
-					'.ant-select-selection-item[title="oncall-responder"]',
+					`.ant-select-selection-item[title="${roles[roles.length - 1]}"]`,
 				),
 			).toBeVisible(),
 		untilLoaded,
@@ -196,6 +215,9 @@ export const sendInvitesToast = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 	await sendInvites(canvasElement, [
 		'bran@nightswatch.io',
 		'hodor@nightswatch.io',
@@ -211,6 +233,9 @@ export const sendPartialInvitesToast = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 	await sendInvites(canvasElement, [
 		'bran@nightswatch.io',
 		'hodor@blocked.example',

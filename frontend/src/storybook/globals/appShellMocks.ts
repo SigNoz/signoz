@@ -2,7 +2,10 @@ import { StatusCodes } from 'http-status-codes';
 import { FeatureKeys } from 'constants/features';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { IAppContext } from 'providers/App/types';
-import { createAppContextMock } from 'tests/fixtures/appContextMock';
+import {
+	createAppContextMock,
+	defaultFeatureFlags,
+} from 'tests/fixtures/appContextMock';
 import APIError from 'types/api/error';
 import type { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 import {
@@ -327,3 +330,24 @@ export const appShellMocks = defineStoryMocks({
 });
 
 export type AppShellArgs = StoryMockArgs<typeof appShellMocks>;
+
+type ShellArgs = Parameters<typeof appShellMocks.read>[0];
+
+const shellContext = (args: ShellArgs): Partial<IAppContext> | undefined =>
+	appShellMocks.config?.(appShellMocks.read(args)).appContext;
+
+/** A restricted-license banner swaps the cloud license for a self-hosted one. */
+export const shellLicense = (
+	args: ShellArgs,
+): LicenseResModel | null | undefined => shellContext(args)?.activeLicense;
+
+export const isCloudShell = (args: ShellArgs): boolean =>
+	shellLicense(args)?.platform === LicensePlatform.CLOUD;
+
+export const shellFeatureActive = (
+	args: ShellArgs,
+	name: FeatureKeys,
+): boolean =>
+	(shellContext(args)?.featureFlags ?? defaultFeatureFlags).some(
+		(flag) => flag.name === name && flag.active,
+	);

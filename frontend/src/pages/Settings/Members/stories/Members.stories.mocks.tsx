@@ -4,11 +4,14 @@
  */
 
 import ROUTES from 'constants/routes';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	ACTIVE_MEMBER_MAX,
@@ -176,6 +179,17 @@ export const membersMocks = defineStoryMocks({
 	],
 	config: () => ({ route: ROUTES.MEMBERS_SETTINGS }),
 });
+
+export type MembersArgs = PageStoryArgs<typeof membersMocks>;
+
+/** `AuthZButton` leaves Invite member enabled when the check itself fails. */
+export const canInvite = (args: MembersArgs): boolean =>
+	args.authzState === 'error' || grantsAll(args, UserCreatePermission);
+
+/** The roles dropdown lists what the roles endpoint answers, which State holds back or fails. */
+export const offersRole = (args: MembersArgs, role: string): boolean =>
+	args.dataState === 'loaded' &&
+	rolesListResponse(args.roles).data.some((listed) => listed.name === role);
 
 /** The table fetches before it renders a row, which outlasts the 1s default. */
 export const MEMBERS_PAGE_SIZE = 20;

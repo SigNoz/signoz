@@ -3,26 +3,22 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { USER_ROLES } from 'types/roles';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { accessFor } from '@/storybook/access/access';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-
-import type { workspaceMocks } from '../Workspace.stories.mocks';
+import {
+	offersAddCard,
+	offersContactSupport,
+	showsDomainCard,
+	showsLicenseKey,
+	type WorkspaceArgs,
+} from '../Workspace.stories.mocks';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: PageStoryArgs<typeof workspaceMocks>;
+	args: WorkspaceArgs;
 }
 
 const untilLoaded = { timeout: 10000 };
-
-/** The domain card only renders for an admin on cloud. */
-const canEditDomain = ({ args }: Pick<PlayContext, 'args'>): boolean =>
-	args.license === 'cloud' &&
-	accessFor(args.access, args.permissions, args.revoked).legacyRole ===
-		USER_ROLES.ADMIN;
 
 const submitNewSubdomain = async (
 	canvasElement: HTMLElement,
@@ -44,7 +40,11 @@ const submitNewSubdomain = async (
 
 export const openCustomDomainMenu = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!showsDomainCard(args)) {
+		return;
+	}
 	await userEvent.click(
 		await within(canvasElement).findByTestId(
 			'custom-domain-menu-trigger',
@@ -59,6 +59,9 @@ export const updateCustomDomain = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!showsDomainCard(args)) {
+		return;
+	}
 	await submitNewSubdomain(canvasElement);
 	if (args.domainUpdate === 'success') {
 		await waitFor(() =>
@@ -69,7 +72,11 @@ export const updateCustomDomain = async ({
 
 export const copyLicenseKey = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!showsLicenseKey(args)) {
+		return;
+	}
 	await userEvent.click(
 		await within(canvasElement).findByTestId(
 			'license-key-row-copy-btn',
@@ -84,13 +91,13 @@ export const openAddCreditCardFromConflict = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!canEditDomain({ args })) {
+	if (!showsDomainCard(args)) {
 		return;
 	}
 
 	await submitNewSubdomain(canvasElement);
 
-	if (args.domainUpdate !== 'error') {
+	if (args.domainUpdate !== 'error' || !offersContactSupport(args)) {
 		return;
 	}
 
@@ -99,7 +106,7 @@ export const openAddCreditCardFromConflict = async ({
 	);
 
 	// Only a plan without premium support is offered the modal over the chat widget.
-	if (args.support === 'add-card') {
+	if (offersAddCard(args)) {
 		await screen.findByRole(
 			'dialog',
 			{ name: /Add Credit Card for Chat Support/i },

@@ -4,13 +4,21 @@
  */
 
 import { QueryParams } from 'constants/query';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { rest } from 'msw';
 import { ingestionKeysResponse } from 'pages/Settings/Ingestion/stories/__story_mockdata__/ingestion';
 import { rolesListResponse } from 'pages/Settings/stories/__story_mockdata__/roles';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	isCloudShell,
+	shellFeatureActive,
+} from '@/storybook/globals/appShellMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 const SOURCE = 'Onboarding · source';
 const INVITES = 'Onboarding · invites';
@@ -48,6 +56,8 @@ export type SetupStep = (typeof SETUP_STEPS)[number];
 
 export const INVITE_RESULTS = ['success', 'loading', 'error'] as const;
 
+const INVITE_CUSTOM_ROLES = 0;
+
 export type InviteResult = (typeof INVITE_RESULTS)[number];
 
 export const onboardingV2Mocks = defineStoryMocks({
@@ -84,7 +94,7 @@ export const onboardingV2Mocks = defineStoryMocks({
 		// The header's invite modal offers the roles a new teammate can be given.
 		rest.get(
 			'http://localhost/api/v1/roles',
-			response.json(() => rolesListResponse(0)),
+			response.json(() => rolesListResponse(INVITE_CUSTOM_ROLES)),
 		),
 		// Add Credit Card creates the subscription; an empty redirect keeps the
 		// story from opening a billing tab.
@@ -120,3 +130,22 @@ export const onboardingV2Mocks = defineStoryMocks({
 		};
 	},
 });
+
+export type OnboardingV2Args = PageStoryArgs<typeof onboardingV2Mocks>;
+
+/** Only a cloud workspace with chat support and without premium support is offered the card. */
+export const offersAddCard = (args: OnboardingV2Args): boolean =>
+	isCloudShell(args) &&
+	shellFeatureActive(args, FeatureKeys.CHAT_SUPPORT) &&
+	!shellFeatureActive(args, FeatureKeys.PREMIUM_SUPPORT);
+
+/** `AuthZButton` leaves Send Invites enabled when the check itself fails. */
+export const canInvite = (args: OnboardingV2Args): boolean =>
+	args.authzState === 'error' || grantsAll(args, UserCreatePermission);
+
+/** The roles dropdown lists what the roles endpoint answers, which State holds back or fails. */
+export const offersRole = (args: OnboardingV2Args, role: string): boolean =>
+	args.dataState === 'loaded' &&
+	rolesListResponse(INVITE_CUSTOM_ROLES).data.some(
+		(listed) => listed.name === role,
+	);

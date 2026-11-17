@@ -3,12 +3,22 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
+import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { rest } from 'msw';
 import type { TStatus } from 'types/api/settings/getRetention';
+import { USER_ROLES } from 'types/roles';
 
+import { accessFor, grantsAll } from '@/storybook/access/access';
 import { choiceControl, toggleControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	isCloudShell,
+	shellFeatureActive,
+	shellLicense,
+} from '@/storybook/globals/appShellMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	disksResponse,
@@ -107,3 +117,27 @@ export const workspaceMocks = defineStoryMocks({
 	],
 	config: () => ({ route: ROUTES.SETTINGS }),
 });
+
+export type WorkspaceArgs = PageStoryArgs<typeof workspaceMocks>;
+
+/** The domain card only renders for an admin on cloud. */
+export const showsDomainCard = (args: WorkspaceArgs): boolean =>
+	isCloudShell(args) &&
+	accessFor(args.access, args.permissions, args.revoked).legacyRole ===
+		USER_ROLES.ADMIN;
+
+/** Contact Support, which the edit modal offers after a 409, needs the chat support flag. */
+export const offersContactSupport = (args: WorkspaceArgs): boolean =>
+	showsDomainCard(args) && shellFeatureActive(args, FeatureKeys.CHAT_SUPPORT);
+
+/** Only a plan without premium support is offered the modal over the chat widget. */
+export const offersAddCard = (args: WorkspaceArgs): boolean =>
+	offersContactSupport(args) &&
+	!shellFeatureActive(args, FeatureKeys.PREMIUM_SUPPORT);
+
+/** The key is fetched once `authz/check` has granted the read on the active license. */
+export const showsLicenseKey = (args: WorkspaceArgs): boolean => {
+	const license = shellLicense(args);
+
+	return !!license && grantsAll(args, buildLicenseReadPermission(license.id));
+};

@@ -5,15 +5,14 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-
 import {
-	onboardingV2Mocks,
+	canInvite,
+	offersAddCard,
+	offersRole,
+	type OnboardingV2Args,
 	SETUP_STEPS,
 	type SetupStep,
 } from '../OnboardingPageV2.stories.mocks';
-
-type OnboardingV2Args = PageStoryArgs<typeof onboardingV2Mocks>;
 
 interface PlayContext {
 	mount: () => Promise<unknown>;
@@ -119,9 +118,14 @@ export const openInviteModal = async ({
 
 export const searchWithoutResults = async ({
 	mount,
+	args,
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await mount();
+
+	if (args.source !== 'catalogue') {
+		return;
+	}
 
 	const canvas = within(canvasElement);
 
@@ -140,6 +144,10 @@ export const sendInvite = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await mount();
+
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 
 	await userEvent.click(
 		await within(canvasElement).findByRole(
@@ -177,18 +185,6 @@ export const sendInvite = async ({
 		);
 	}
 };
-
-/** Banners that turn the cloud license into a self-hosted one. */
-const SELF_HOSTED_BANNERS: readonly OnboardingV2Args['banner'][] = [
-	'license-expired',
-	'license-terminated',
-];
-
-/** Only a cloud workspace without premium support is offered the card. */
-const offersAddCard = (args: OnboardingV2Args): boolean =>
-	args.support === 'add-card' &&
-	args.license === 'cloud' &&
-	!SELF_HOSTED_BANNERS.includes(args.banner);
 
 const ADD_CARD_DIALOG = { name: /Add Credit Card for Chat Support/i };
 
