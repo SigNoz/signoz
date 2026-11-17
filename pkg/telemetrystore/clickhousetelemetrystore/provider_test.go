@@ -6,11 +6,15 @@ import (
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/DATA-DOG/go-sqlmock"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystorehooktest"
 )
 
 func TestCastError_ProfileErrors(t *testing.T) {
@@ -41,22 +45,7 @@ func TestCastError_ProfileErrors(t *testing.T) {
 	}
 }
 
-type settingHook struct {
-	settings clickhouse.Settings
-}
-
-func (h settingHook) BeforeQuery(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
-	for key, value := range h.settings {
-		event.Settings[key] = value
-	}
-	return ctx
-}
-
-func (settingHook) AfterQuery(context.Context, *telemetrystore.QueryEvent) {}
-
 func TestProviderBeforeQuery(t *testing.T) {
-	hook := settingHook{settings: clickhouse.Settings{"max_threads": 2, "profile": "set_by_hook"}}
-
 	testCases := []struct {
 		name    string
 		profile string
@@ -68,6 +57,12 @@ func TestProviderBeforeQuery(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			hook := telemetrystorehooktest.NewMockTelemetryStoreHook(t)
+			hook.EXPECT().BeforeQuery(mock.Anything, mock.Anything).RunAndReturn(func(ctx context.Context, event *telemetrystore.QueryEvent) context.Context {
+				event.Settings["max_threads"] = 2
+				event.Settings["profile"] = "set_by_hook"
+				return ctx
+			})
 			p := &provider{profile: testCase.profile, hooks: []telemetrystore.TelemetryStoreHook{hook}}
 			event := telemetrystore.NewQueryEvent("SELECT 1", nil)
 
@@ -78,18 +73,11 @@ func TestProviderBeforeQuery(t *testing.T) {
 	}
 }
 
-type closeCountingConn struct {
-	clickhouse.Conn
-	closes int
-}
-
-func (c *closeCountingConn) Close() error {
-	c.closes++
-	return nil
-}
-
 func TestProviderWithProfile(t *testing.T) {
-	conn := &closeCountingConn{}
+	conn, err := cmock.NewClickHouseWithQueryMatcher(&clickhouse.Options{}, sqlmock.QueryMatcherEqual)
+	require.NoError(t, err)
+	conn.ExpectClose()
+
 	p := &provider{clickHouseConn: conn, cluster: "cluster"}
 	p.withProfiles([]string{"clickhouse_query"})
 
@@ -97,7 +85,7 @@ func TestProviderWithProfile(t *testing.T) {
 	require.True(t, ok)
 	assert.NotSame(t, p, profiled)
 	assert.Equal(t, "clickhouse_query", profiled.profile)
-	assert.Same(t, conn, profiled.clickHouseConn)
+	assert.Same(t, p.clickHouseConn, profiled.clickHouseConn)
 	assert.Equal(t, "cluster", profiled.Cluster())
 	assert.Empty(t, p.profile)
 
@@ -105,7 +93,6 @@ func TestProviderWithProfile(t *testing.T) {
 	assert.Same(t, profiled, profiled.WithProfile("clickhouse_query"))
 
 	require.NoError(t, profiled.Close())
-	assert.Equal(t, 0, conn.closes)
 	require.NoError(t, p.Close())
-	assert.Equal(t, 1, conn.closes)
+	assert.NoError(t, conn.ExpectationsWereMet())
 }
