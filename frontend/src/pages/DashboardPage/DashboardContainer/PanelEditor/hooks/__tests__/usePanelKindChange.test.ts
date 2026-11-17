@@ -5,6 +5,7 @@ import {
 	initialQueryAIWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -419,7 +420,7 @@ describe('usePanelKindChange', () => {
 	describe('AI query slot', () => {
 		const logsQuery = initialQueriesMap[DataSource.LOGS];
 		const QB_BUILDER = logsQuery.builder;
-		const AI_BUILDER = initialQueryAIWithType.builder;
+		const AI_BUILDER = getActiveBuilder(initialQueryAIWithType);
 		const withBothSlots = (id: string, queryType: EQueryType): Query => ({
 			...logsQuery,
 			id,
@@ -566,9 +567,7 @@ describe('usePanelKindChange', () => {
 			const restored = lastRedirect(state);
 			expect(restored.id).toBe('table');
 			expect(restored.queryType).toBe('builder_ai_query');
-			expect(restored.builder_ai_query?.queryData[0].builderQueryType).toBe(
-				'builder_ai_query',
-			);
+			expect(restored.builder_ai_query).toStrictEqual(AI_BUILDER);
 			expect(lastSpec(setSpec).queries).toBe(CONVERTED);
 		});
 	});
