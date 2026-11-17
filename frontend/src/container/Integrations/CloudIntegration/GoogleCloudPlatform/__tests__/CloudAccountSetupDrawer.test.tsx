@@ -112,11 +112,15 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
-		// A slow check-in keeps the connection in flight long enough to observe it.
+		let releaseCheckIn = (): void => {};
+		const checkInHeld = new Promise<void>((resolve) => {
+			releaseCheckIn = resolve;
+		});
 		server.use(
 			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
 				checkInPayload = await req.json();
-				return res(ctx.delay(300), ctx.status(200), ctx.json(checkInResponse));
+				await checkInHeld;
+				return res(ctx.status(200), ctx.json(checkInResponse));
 			}),
 		);
 		const user = userEvent.setup();
@@ -145,7 +149,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 
 		// Switching away mid-request would let its success close the other form.
 		await waitFor(() => {
-			expect(screen.getByRole('radiogroup')).toHaveAttribute(
+			expect(screen.getByTestId('gcp-connection-method')).toHaveAttribute(
 				'aria-disabled',
 				'true',
 			);
@@ -175,11 +179,14 @@ describe('GCP CloudAccountSetupDrawer', () => {
 				data: {},
 			});
 		});
+		expect(onClose).not.toHaveBeenCalled();
+
+		releaseCheckIn();
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	}, 15000);
+	});
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -221,5 +228,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	}, 15000);
+	});
 });
