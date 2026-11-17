@@ -21,6 +21,7 @@ interface UseDashboardStaleCheck {
 export function useDashboardStaleCheck(
 	dashboard: DashboardtypesGettableDashboardV2DTO,
 	refetch: () => void,
+	enabled = true,
 ): UseDashboardStaleCheck {
 	const {
 		id: dashboardId,
@@ -34,7 +35,7 @@ export function useDashboardStaleCheck(
 	const [dismissedAt, setDismissedAt] = useState<string | null>(null);
 
 	useEffect(() => {
-		if (!dashboardId) {
+		if (!dashboardId || !enabled) {
 			return undefined;
 		}
 		const probe = async (): Promise<void> => {
@@ -56,7 +57,7 @@ export function useDashboardStaleCheck(
 			document.removeEventListener('visibilitychange', probe);
 			window.removeEventListener('focus', probe);
 		};
-	}, [dashboardId]);
+	}, [dashboardId, enabled]);
 
 	const serverUpdatedAt = server?.updatedAt;
 

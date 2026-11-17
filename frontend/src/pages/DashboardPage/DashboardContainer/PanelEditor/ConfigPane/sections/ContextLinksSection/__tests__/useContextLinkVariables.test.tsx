@@ -2,33 +2,17 @@ import { renderHook } from '@testing-library/react';
 
 import { useContextLinkVariables } from '../useContextLinkVariables';
 
-const mockUseGetDashboardV2 = jest.fn();
+const mockUseDashboardVariableNames = jest.fn();
 const mockUseQueryBuilder = jest.fn();
-
-jest.mock(
-	'pages/DashboardPage/DashboardContainer/store/useDashboardStore',
-	() => ({
-		useDashboardStore: (
-			selector: (s: { dashboardId: string }) => unknown,
-		): unknown => selector({ dashboardId: 'dash-1' }),
-	}),
-);
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): unknown => mockUseQueryBuilder(),
 }));
 
-jest.mock('api/generated/services/dashboard', () => ({
-	useGetDashboardV2: (): unknown => mockUseGetDashboardV2(),
-}));
-
-// dtoToFormModel is exercised by its own suite; here we only need it to surface a name.
 jest.mock(
-	'pages/DashboardPage/DashboardContainer/DashboardSettings/Variables/variableAdapters',
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardVariableNames',
 	() => ({
-		dtoToFormModel: (dto: { name: string }): { name: string } => ({
-			name: dto.name,
-		}),
+		useDashboardVariableNames: (): unknown => mockUseDashboardVariableNames(),
 	}),
 );
 
@@ -45,11 +29,7 @@ describe('useContextLinkVariables', () => {
 				},
 			},
 		});
-		mockUseGetDashboardV2.mockReturnValue({
-			data: {
-				data: { spec: { variables: [{ name: 'region' }, { name: 'tier' }] } },
-			},
-		});
+		mockUseDashboardVariableNames.mockReturnValue(['region', 'tier']);
 	});
 
 	it('orders globals, then _prefixed query fields (deduped), then dashboard vars', () => {
@@ -69,9 +49,7 @@ describe('useContextLinkVariables', () => {
 		mockUseQueryBuilder.mockReturnValue({
 			currentQuery: { builder: { queryData: [] } },
 		});
-		// Loaded dashboard with no variables — useDashboardFetchRequired guarantees the
-		// dashboard is present, so the empty case is an empty spec, not `undefined`.
-		mockUseGetDashboardV2.mockReturnValue({ data: { data: { spec: {} } } });
+		mockUseDashboardVariableNames.mockReturnValue([]);
 
 		const { result } = renderHook(() => useContextLinkVariables());
 
