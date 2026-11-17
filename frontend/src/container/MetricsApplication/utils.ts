@@ -54,9 +54,6 @@ export const getNearestHighestBucketValue = (
 	return nearestBucket?.toString() || '+Inf';
 };
 
-export const convertMilSecToNanoSec = (value: number): number =>
-	value * 1000000000;
-
 export const convertedTracesToDownloadData = (
 	originalData: TopOperationList[],
 ): Record<string, string>[] =>
