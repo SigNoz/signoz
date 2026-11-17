@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import MetricsApplication from '../MetricsApplication';
+import { openDownloadMenu } from './__story_mockdata__/metricsApplication.play';
 import { metricsApplicationMocks } from './MetricsApplication.stories.mocks';
 
 type MetricsApplicationArgs = PageStoryArgs<typeof metricsApplicationMocks>;
@@ -73,14 +73,5 @@ export const NoOperations: Story = {
  * be taken away in.
  */
 export const DownloadMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'download-menu-trigger',
-				{},
-				{ timeout: 15000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openDownloadMenu,
 };
