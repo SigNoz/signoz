@@ -38,7 +38,13 @@ function MapperActionsMenu({
 	);
 
 	return (
-		<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+		<Dropdown
+			items={menuItems}
+			nativeButton
+			align="end"
+			side="bottom"
+			testId={`mapper-actions-${mapper.localId}`}
+		>
 			<Button
 				variant="ghost"
 				color="secondary"
