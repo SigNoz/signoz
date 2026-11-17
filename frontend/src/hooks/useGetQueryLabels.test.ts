@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react';
+import { initialFormulaBuilderFormValues } from 'constants/queryBuilder';
 import {
 	IBuilderFormula,
 	IClickHouseQuery,
@@ -73,7 +74,7 @@ describe('useGetQueryLabels', () => {
 				queryType: EQueryType.AI_QUERY_BUILDER,
 				builder_ai_query: {
 					queryData: [],
-					queryFormulas: [{ queryName: 'F1' } as unknown as IBuilderFormula],
+					queryFormulas: [{ ...initialFormulaBuilderFormValues, queryName: 'F1' }],
 					queryTraceOperator: [],
 				},
 			});
