@@ -59,12 +59,6 @@ export function AlertsEmptyState({
 	return (
 		<div className={styles.alertListContainer}>
 			<div className={styles.alertListViewContent}>
-				<div>
-					<Typography.Title className={styles.title}>Alert Rules</Typography.Title>
-					<Typography.Text className={styles.subtitle}>
-						Create and manage alert rules for your resources.
-					</Typography.Text>
-				</div>
 				<section className={styles.emptyAlertInfoContainer}>
 					<div className={styles.alertContent}>
 						<section className={styles.heading}>
