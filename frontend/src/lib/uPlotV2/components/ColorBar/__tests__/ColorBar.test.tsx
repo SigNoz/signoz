@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 
 import ColorBar from '../ColorBar';
 
@@ -35,12 +35,13 @@ describe('ColorBar', () => {
 	});
 
 	it('clamps a marker outside the ramp to its ends', () => {
-		const { rerender } = render(
+		const { unmount } = render(
 			<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" markerPosition={-2} />,
 		);
 		expect(screen.getByTestId('color-bar-marker')).toHaveStyle({ left: '0%' });
+		unmount();
 
-		rerender(
+		render(
 			<ColorBar ramp={RAMP} minLabel="0" maxLabel="10" markerPosition={4} />,
 		);
 		expect(screen.getByTestId('color-bar-marker')).toHaveStyle({ left: '100%' });
@@ -81,5 +82,21 @@ describe('ColorBar', () => {
 			background:
 				'linear-gradient(to right, #111111 0%, #111111 50%, #dddddd 50%, #dddddd 100%)',
 		});
+	});
+
+	it('runs low to high from the bottom when vertical', () => {
+		render(
+			<ColorBar
+				ramp={['#000', '#fff']}
+				minLabel="0.18%"
+				maxLabel="14.2%"
+				markerPosition={0.25}
+				orientation="vertical"
+			/>,
+		);
+
+		const labels = screen.getAllByText(/%$/).map((label) => label.textContent);
+		expect(labels).toStrictEqual(['14.2%', '0.18%']);
+		expect(screen.getByTestId('color-bar-marker')).toHaveStyle({ bottom: '25%' });
 	});
 });
