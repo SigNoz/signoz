@@ -278,9 +278,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel)
 		resultLabels := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel).Labels()
 
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
+		lb.SetRuleLabels(r.labels.Map(), expand)
 
 		lb.Set(ruletypes.AlertNameLabel, r.Name())
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
