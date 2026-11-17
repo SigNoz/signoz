@@ -7,6 +7,7 @@ import { rest } from 'msw';
 
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	scenarioSpanCount,
@@ -19,11 +20,10 @@ import {
 	SPAN_WITHOUT_MESSAGES,
 	THREAD_PAGINGS,
 	THREAD_SCENARIOS,
-	type ThreadPaging,
-	type ThreadScenario,
 	threadSpanIdAt,
 	traceThreadResponse,
 } from './__story_mockdata__/traceThread';
+import type { ThreadPaging, ThreadScenario } from './__story_mockdata__/types';
 
 const MESSAGES = 'Thread · messages';
 const NAVIGATION = 'Thread · navigation';
@@ -147,6 +147,8 @@ export const traceThreadMocks = defineStoryMocks({
 		return { route: `/trace/${STORY_TRACE_ID}?${params.toString()}` };
 	},
 });
+
+export type TraceThreadArgs = PageStoryArgs<typeof traceThreadMocks>;
 
 /** The thread renders once its first page resolves, which outlasts the 1s default. */
 export const untilThreadLoaded = { timeout: 15_000 };

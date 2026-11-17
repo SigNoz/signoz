@@ -1,19 +1,21 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import TraceDetailsV3 from '../../index';
 import { ThreadView } from '../types';
 import {
+	expandEveryPart,
+	expandSystemPrompts,
+	followToolResultLink,
+	scrollToNextPage,
+} from './__story_mockdata__/traceThread.play';
+import {
+	type TraceThreadArgs,
 	traceThreadMocks,
-	untilThreadLoaded,
 } from './TraceDetailsThread.stories.mocks';
-
-type TraceThreadArgs = PageStoryArgs<typeof traceThreadMocks>;
 
 const pageStory = storyMocks(traceThreadMocks, { layout: 'app' });
 
@@ -40,22 +42,6 @@ export default meta;
 
 type Story = StoryObj<TraceThreadArgs>;
 
-const clickAll = async (
-	canvasElement: HTMLElement,
-	testId: string,
-): Promise<void> => {
-	const toggles = await within(canvasElement).findAllByTestId(
-		testId,
-		undefined,
-		untilThreadLoaded,
-	);
-
-	await toggles.reduce(
-		(previous, toggle) => previous.then(() => userEvent.click(toggle)),
-		Promise.resolve(),
-	);
-};
-
 /**
  * A tool-calling conversation: the model reasons and calls a weather tool, the
  * tool span returns its result, and a second call answers in markdown. The
@@ -70,9 +56,7 @@ export const Json: Story = {
 
 /** The system prompt opened from its collapsed line. */
 export const SystemPromptExpanded: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickAll(canvasElement, 'ai-message-system-toggle');
-	},
+	play: expandSystemPrompts,
 };
 
 /**
@@ -89,11 +73,7 @@ export const EveryPart: Story = {
 /** Every part type with reasoning, compaction and long text expanded. */
 export const EveryPartExpanded: Story = {
 	args: { scenario: 'every-part' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickAll(canvasElement, 'ai-message-thinking-toggle');
-		await clickAll(canvasElement, 'ai-message-compaction-toggle');
-		await clickAll(canvasElement, 'ai-message-show-more');
-	},
+	play: expandEveryPart,
 };
 
 /** Every part type as raw JSON. */
@@ -103,14 +83,7 @@ export const EveryPartJson: Story = {
 
 /** A tool result's link followed to its call in the same span, highlighted. */
 export const ToolCallLinkFollowed: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const [link] = await within(canvasElement).findAllByTestId(
-			'ai-tool-result-link',
-			undefined,
-			untilThreadLoaded,
-		);
-		await userEvent.click(link);
-	},
+	play: followToolResultLink,
 };
 
 /**
@@ -164,4 +137,5 @@ export const SpanNotFound: Story = {
 /** The first page shown and the next one still loading below it. */
 export const NextPageLoading: Story = {
 	args: { scenario: 'every-part', paging: 'next-page-pending' },
+	play: scrollToNextPage,
 };

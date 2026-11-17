@@ -4,12 +4,9 @@
  */
 
 import {
-	type AiobservabilitytypesChatMessageDTO,
 	AiobservabilitytypesBlobPartDTOType,
 	AiobservabilitytypesCompactionPartDTOType,
 	AiobservabilitytypesFilePartDTOType,
-	type AiobservabilitytypesOutputMessageDTO,
-	type AiobservabilitytypesPartDTO,
 	AiobservabilitytypesReasoningPartDTOType,
 	AiobservabilitytypesServerToolCallPartDTOType,
 	AiobservabilitytypesServerToolCallResponsePartDTOType,
@@ -22,6 +19,14 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import { STORY_TRACE_ID } from '../../../stories/__story_mockdata__/traceDetails';
+import type {
+	InputMessage,
+	OutputMessage,
+	Part,
+	ThreadPageOptions,
+	ThreadScenario,
+	ThreadSpanTemplate,
+} from './types';
 
 export const THREAD_SCENARIOS = [
 	'conversation',
@@ -31,24 +36,16 @@ export const THREAD_SCENARIOS = [
 	'no-ai-spans',
 ] as const;
 
-export type ThreadScenario = (typeof THREAD_SCENARIOS)[number];
-
 export const THREAD_PAGINGS = [
 	'single-page',
 	'two-pages',
 	'next-page-pending',
 ] as const;
 
-export type ThreadPaging = (typeof THREAD_PAGINGS)[number];
-
 export const SECOND_PAGE_CURSOR = 'page-2';
 
 /** A span id the thread never returns, for an anchor the backend dropped. */
 export const SPAN_WITHOUT_MESSAGES = 'ffffffffffffffff';
-
-type Part = AiobservabilitytypesPartDTO;
-type InputMessage = AiobservabilitytypesChatMessageDTO;
-type OutputMessage = AiobservabilitytypesOutputMessageDTO;
 
 const text = (content: string): Part => ({
 	type: AiobservabilitytypesTextPartDTOType.text,
@@ -80,16 +77,6 @@ const output = (
 	parts: Part[],
 	finishReason?: string,
 ): OutputMessage => ({ role, parts, finish_reason: finishReason });
-
-interface ThreadSpanTemplate {
-	name: string;
-	operation: 'chat' | 'execute_tool' | 'invoke_agent';
-	input?: InputMessage[];
-	output?: OutputMessage[];
-	/** Raw `gen_ai.*.messages`, for spans the backend could not format. */
-	rawInput?: unknown;
-	rawOutput?: unknown;
-}
 
 const WEATHER_CALL = 'call_aA3FJchumEvBrIxxheORri8j';
 const WEATHER = { city: 'Bengaluru', unit: 'c' };
@@ -454,13 +441,6 @@ const toSpan = (
 
 export const threadSpanCount = (scenario: ThreadScenario): number =>
 	SCENARIO_TEMPLATES[scenario].length;
-
-interface ThreadPageOptions {
-	scenario: ThreadScenario;
-	paging: ThreadPaging;
-	traceStart: number;
-	after: string | null;
-}
 
 /** The first page, or the second when `after` is its cursor. */
 export const traceThreadResponse = ({
