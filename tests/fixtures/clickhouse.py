@@ -642,3 +642,22 @@ def clickhouse_settings_profile(
         container.exec_run(["rm", "-f", f"/etc/clickhouse-server/users.d/{name}.xml"])
     for name in names:
         wait_for_profile(name, exists=False)
+
+
+@pytest.fixture(name="clickhouse_partitioned_table", scope="package")
+def clickhouse_partitioned_table(
+    clickhouse: types.TestContainerClickhouse,
+) -> Generator[str, Any]:
+    """
+    Yields a MergeTree table with one partition per day for 5 days, where the first day holds
+    300000 rows, for queries that hit limits on partitions or rows read.
+    """
+    table = "default.integration_partitioned"
+    clickhouse.conn.command(f"CREATE TABLE IF NOT EXISTS {table} (day Date, value UInt8) ENGINE = MergeTree PARTITION BY day ORDER BY value")
+    clickhouse.conn.command(f"TRUNCATE TABLE {table}")
+    clickhouse.conn.command(f"INSERT INTO {table} SELECT toDate('2026-01-01'), 1 FROM numbers(300000)")
+    clickhouse.conn.command(f"INSERT INTO {table} SELECT toDate('2026-01-02') + number, 1 FROM numbers(4)")
+
+    yield table
+
+    clickhouse.conn.command(f"DROP TABLE IF EXISTS {table}")

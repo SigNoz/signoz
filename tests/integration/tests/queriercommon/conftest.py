@@ -25,7 +25,19 @@ def signoz_clickhouse_query_profile(
     """
     clickhouse_settings_profile(
         "clickhouse_query",
-        "<max_result_rows>100</max_result_rows><constraints><max_result_rows><min>1</min><max>100</max></max_result_rows></constraints>",
+        "<readonly>2</readonly>"
+        "<max_result_rows>100</max_result_rows>"
+        "<max_result_bytes>100000</max_result_bytes>"
+        "<max_bytes_to_read>1000000</max_bytes_to_read>"
+        "<max_rows_to_read>200000</max_rows_to_read>"
+        "<max_partitions_to_read>2</max_partitions_to_read>"
+        "<constraints>"
+        "<max_result_rows><min>1</min><max>100</max></max_result_rows>"
+        "<max_result_bytes><min>1</min><max>100000</max></max_result_bytes>"
+        "<max_bytes_to_read><min>1</min><max>1000000</max></max_bytes_to_read>"
+        "<max_rows_to_read><min>1</min><max>200000</max></max_rows_to_read>"
+        "<max_partitions_to_read><min>1</min><max>2</max></max_partitions_to_read>"
+        "</constraints>",
     )
     return create_signoz(
         network=network,
