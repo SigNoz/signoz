@@ -1,3 +1,4 @@
+import { QueryBuilderV2Provider } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AllTheProviders, renderHook } from 'tests/test-utils';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -9,6 +10,7 @@ import { useBuilderQueryType } from '../useBuilderQueryType';
 function renderBuilderQueryType(
 	queryType: EQueryType,
 	query: Pick<IBuilderQuery, 'builderQueryType'>,
+	inQueryBuilder = true,
 ): BuilderQueryType | undefined {
 	return renderHook(() => useBuilderQueryType(query), {
 		wrapper: ({ children }) => (
@@ -17,13 +19,23 @@ function renderBuilderQueryType(
 					currentQuery: { ...initialQueriesMap.traces, queryType },
 				}}
 			>
-				{children}
+				{inQueryBuilder ? (
+					<QueryBuilderV2Provider>{children}</QueryBuilderV2Provider>
+				) : (
+					children
+				)}
 			</AllTheProviders>
 		),
 	}).result.current;
 }
 
 describe('useBuilderQueryType', () => {
+	it('ignores the AI query type outside the query builder', () => {
+		expect(
+			renderBuilderQueryType(EQueryType.AI_QUERY_BUILDER, {}, false),
+		).toBeUndefined();
+	});
+
 	it('is AI for every query while AI is the query type', () => {
 		expect(renderBuilderQueryType(EQueryType.AI_QUERY_BUILDER, {})).toBe(
 			'builder_ai_query',

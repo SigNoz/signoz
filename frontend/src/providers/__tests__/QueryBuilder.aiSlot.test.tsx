@@ -1,8 +1,11 @@
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,
+	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getRecentQueries } from 'lib/recentQueries/getRecentQueries';
+import { navigate } from 'lib/router/navigation';
 import { act, AllTheProviders, renderHook } from 'tests/test-utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -83,5 +86,41 @@ describe('QueryBuilder AI slot', () => {
 
 		expect(result.current.currentQuery.builder.queryData).toHaveLength(2);
 		expect(result.current.currentQuery.builder_ai_query).toStrictEqual(aiBuilder);
+	});
+
+	it('saves recent queries from the AI slot on run', () => {
+		const { result } = renderQueryBuilder({
+			...aiQuery,
+			builder_ai_query: {
+				...initialQueryAIWithType.builder,
+				queryData: [
+					{
+						...initialQueryBuilderFormValuesMap.traces,
+						filter: { expression: "service.name = 'ai-recent'" },
+					},
+				],
+			},
+		});
+
+		act(() => {
+			result.current.handleRunQuery();
+		});
+
+		expect(
+			getRecentQueries('traces').map((entry) => entry.filter.expression),
+		).toContain("service.name = 'ai-recent'");
+	});
+
+	it('drops the AI query type when navigating to a page without one', () => {
+		const { result } = renderQueryBuilder(aiQuery);
+		expect(result.current.currentQuery.queryType).toBe(
+			EQueryType.AI_QUERY_BUILDER,
+		);
+
+		act(() => {
+			navigate('/trace/abc');
+		});
+
+		expect(result.current.currentQuery.queryType).toBe(EQueryType.QUERY_BUILDER);
 	});
 });
