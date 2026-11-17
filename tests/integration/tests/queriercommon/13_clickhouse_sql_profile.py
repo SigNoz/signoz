@@ -113,3 +113,83 @@ def test_clickhouse_sql_over_profile_limit(  # pylint: disable=too-many-argument
     error = response.json()["error"]
     assert (error["code"], error["suggestions"]) == (code, [suggestion]), error
     assert reason in error["message"], error
+
+
+@pytest.mark.parametrize(
+    "name,value",
+    [("readonly", 2), ("max_result_rows", 50), ("max_threads", 1)],
+    ids=["readonly_same_as_profile", "result_rows_below_max", "unconstrained_setting"],
+)
+def test_clickhouse_sql_settings_within_profile(
+    signoz_clickhouse_query_profile: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    name: str,
+    value: int,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    response = querier.make_query_request(
+        signoz_clickhouse_query_profile,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": f"SELECT toFloat64(getSetting('{name}')) AS value SETTINGS {name} = {value}", "disabled": False}}],
+        request_type=querier.RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["data"]["results"][0]["data"][0][0] == value
+
+
+def test_clickhouse_sql_lower_limit_in_settings_is_enforced(
+    signoz_clickhouse_query_profile: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    response = querier.make_query_request(
+        signoz_clickhouse_query_profile,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": "SELECT toFloat64(number) AS value FROM numbers(10) SETTINGS max_result_rows = 5", "disabled": False}}],
+        request_type=querier.RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    error = response.json()["error"]
+    assert (error["code"], error["suggestions"]) == ("result_too_large", [RESULT_TOO_LARGE]), error
+    assert "max rows: 5" in error["message"], error
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "SELECT toFloat64(1) AS value SETTINGS readonly = 1",
+        "SELECT toFloat64(1) AS value SETTINGS readonly = 0",
+        "CREATE TABLE default.integration_readonly_probe (x UInt8) ENGINE = Memory",
+    ],
+    ids=["readonly_stricter", "readonly_lifted", "write"],
+)
+def test_clickhouse_sql_readonly_profile_rejects(
+    signoz_clickhouse_query_profile: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    query: str,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+
+    response = querier.make_query_request(
+        signoz_clickhouse_query_profile,
+        get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD),
+        int((now - timedelta(hours=1)).timestamp() * 1000),
+        int(now.timestamp() * 1000),
+        [{"type": "clickhouse_sql", "spec": {"name": "A", "query": query, "disabled": False}}],
+        request_type=querier.RequestType.SCALAR,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    error = response.json()["error"]
+    assert (error["code"], error["suggestions"]) == ("readonly_mode", ["run only SELECT queries and remove readonly from the SETTINGS clause"]), error
