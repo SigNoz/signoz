@@ -2,6 +2,7 @@ package clickhousetelemetrystore
 
 import (
 	"context"
+	"log/slog"
 
 	chproto "github.com/ClickHouse/ch-go/proto"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -150,6 +151,7 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
+	profiles       map[string]telemetrystore.TelemetryStore
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
@@ -174,11 +176,6 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	// the flattened serialization, and reading them as a string collapses a key stored at both a
 	// scalar and an object path.
 	options.Settings["output_format_native_use_flattened_dynamic_and_json_serialization"] = 1
-	if config.Clickhouse.Profile != "" {
-		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
-		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
-		options.Settings["profile"] = clickhouse.CustomSetting{Value: config.Clickhouse.Profile}
-	}
 
 	chConn, err := clickhouse.Open(options)
 	if err != nil {
@@ -217,7 +214,26 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
 	}
+
+	p.profiles = make(map[string]telemetrystore.TelemetryStore, len(config.Clickhouse.Profiles))
+	for _, profile := range config.Clickhouse.Profiles {
+		store := telemetrystore.NewProfileStore(p, profile)
+		// A listed profile missing in ClickHouse would fail every query, so those run without it instead.
+		if err := store.ClickhouseDB().Exec(ctx, "SELECT 1"); err != nil && errors.Asc(err, ErrCodeSettingsProfileNotFound) {
+			settings.Logger().WarnContext(ctx, "clickhouse settings profile is not in clickhouse, running its queries without it", slog.String("profile", profile))
+			continue
+		}
+		p.profiles[profile] = store
+	}
+
 	return p, nil
+}
+
+func (p *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
+	if store, ok := p.profiles[profile]; ok {
+		return store
+	}
+	return p
 }
 
 func (p *provider) ClickhouseDB() clickhouse.Conn {

@@ -30,6 +30,12 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
 
+	if profile := telemetrystore.ProfileFromContext(ctx); profile != "" {
+		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
+		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
+		settings["profile"] = clickhouse.CustomSetting{Value: profile}
+	}
+
 	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = h.settings.MaxResultRows
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/emailing"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
@@ -60,7 +59,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/subscription"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/clickhousetelemetrystore"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
@@ -311,24 +309,6 @@ func New(
 		return nil, err
 	}
 
-	clickhouseSQLStore := telemetrystore
-	if clickhouseSQLConfig, ok := config.TelemetryStore.ForProfile(querier.ClickHouseSQLProfile); ok {
-		profileStore, err := factory.NewProviderFromNamedMap(ctx, providerSettings, clickhouseSQLConfig, telemetrystoreProviderFactories, clickhouseSQLConfig.Provider)
-		if err != nil {
-			return nil, err
-		}
-
-		// A listed profile missing in ClickHouse would fail every query, so those run without it instead.
-		if err := profileStore.ClickhouseDB().Exec(ctx, "SELECT 1"); err != nil && errors.Asc(err, clickhousetelemetrystore.ErrCodeSettingsProfileNotFound) {
-			instrumentation.Logger().WarnContext(ctx, "clickhouse settings profile is not in clickhouse, running its queries without it", slog.String("profile", querier.ClickHouseSQLProfile))
-			if err := profileStore.ClickhouseDB().Close(); err != nil {
-				return nil, err
-			}
-		} else {
-			clickhouseSQLStore = profileStore
-		}
-	}
-
 	retentionGetter := implretention.NewGetter(implretention.NewStore(sqlstore))
 
 	// Initialize prometheus from the available prometheus provider factories
@@ -355,7 +335,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Querier,
-		NewQuerierProviderFactories(telemetrystore, clickhouseSQLStore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		NewQuerierProviderFactories(telemetrystore, prometheus, telemetryMetadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 		config.Querier.Provider(),
 	)
 	if err != nil {

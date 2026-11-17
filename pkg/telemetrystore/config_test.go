@@ -89,29 +89,3 @@ func TestNewWithEnvProviderWithQuerySettings(t *testing.T) {
 
 	assert.Equal(t, expected.Clickhouse.QuerySettings, actual.Clickhouse.QuerySettings)
 }
-
-func TestConfigForProfile(t *testing.T) {
-	config := Config{Clickhouse: ClickhouseConfig{DSN: "tcp://main:9000", Cluster: "cluster", Profiles: []string{"clickhouse_query"}}}
-
-	testCases := []struct {
-		name    string
-		profile string
-		ok      bool
-		want    string
-	}{
-		{name: "Configured_Profile", profile: "clickhouse_query", ok: true, want: "clickhouse_query"},
-		{name: "NotConfigured_NoProfile", profile: "query_range", ok: false, want: ""},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			actual, ok := config.ForProfile(testCase.profile)
-			assert.Equal(t, testCase.ok, ok)
-			assert.Equal(t, testCase.want, actual.Clickhouse.Profile)
-			assert.Equal(t, "tcp://main:9000", actual.Clickhouse.DSN)
-			assert.Equal(t, "cluster", actual.Clickhouse.Cluster)
-		})
-	}
-
-	assert.Empty(t, config.Clickhouse.Profile)
-}

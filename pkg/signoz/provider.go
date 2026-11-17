@@ -335,9 +335,9 @@ func NewStatsReporterProviderFactories(aggregator statsreporter.Aggregator, orgG
 	)
 }
 
-func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, clickhouseSQLStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, metadataStore telemetrytypes.MetadataStore, traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder, bucketCache querier.BucketCache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
+func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, prometheus prometheus.Prometheus, metadataStore telemetrytypes.MetadataStore, traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], aiTraceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation], logStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], auditStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation], metricStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], meterStmtBuilder qbtypes.StatementBuilder[qbtypes.MetricAggregation], traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder, bucketCache querier.BucketCache, flagger flagger.Flagger) factory.NamedMap[factory.ProviderFactory[querier.Querier, querier.Config]] {
 	return factory.MustNewNamedMap(
-		signozquerier.NewFactory(telemetryStore, clickhouseSQLStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
+		signozquerier.NewFactory(telemetryStore, prometheus, metadataStore, traceStmtBuilder, aiTraceStmtBuilder, logStmtBuilder, auditStmtBuilder, metricStmtBuilder, meterStmtBuilder, traceOperatorStmtBuilder, bucketCache, flagger),
 	)
 }
 

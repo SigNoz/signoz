@@ -17,7 +17,6 @@ import (
 // signoz.go and injected here.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
-	clickhouseSQLStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,
 	metadataStore telemetrytypes.MetadataStore,
 	traceStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
@@ -40,7 +39,6 @@ func NewFactory(
 			return querier.New(
 				settings,
 				telemetryStore,
-				clickhouseSQLStore,
 				metadataStore,
 				prometheus,
 				traceStmtBuilder,

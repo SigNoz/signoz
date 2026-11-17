@@ -11,6 +11,10 @@ type TelemetryStore interface {
 	// ClickhouseDB returns the clickhouse connection, which can also EXPLAIN.
 	ClickhouseDB() clickhouse.Conn
 
+	// WithProfile returns a store that runs every query with the ClickHouse settings profile, or this store
+	// when the profile is not listed in the config or is missing in ClickHouse.
+	WithProfile(profile string) TelemetryStore
+
 	// Cluster returns the cluster name.
 	Cluster() string
 

@@ -46,7 +46,6 @@ func TestQueryRange_MetricTypeMissing(t *testing.T) {
 	q := New(
 		providerSettings,
 		nil, // telemetryStore
-		nil, // clickhouseSQLStore
 		metadataStore,
 		nil,                // prometheus
 		nil,                // traceStmtBuilder
@@ -119,7 +118,6 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 
 	q := New(
 		providerSettings,
-		telemetryStore,
 		telemetryStore,
 		metadataStore,
 		nil, // prometheus

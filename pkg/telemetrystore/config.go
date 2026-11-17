@@ -1,7 +1,6 @@
 package telemetrystore
 
 import (
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -39,11 +38,8 @@ type ClickhouseConfig struct {
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
 
-	// Profile is the ClickHouse settings profile every query of the store runs with. Empty runs with the
-	// user's own profile.
-	Profile string `mapstructure:"profile"`
-
-	// Profiles are the settings profiles a store can be built with (ForProfile). Each must exist in ClickHouse.
+	// Profiles are the settings profiles TelemetryStore.WithProfile can run queries with. Each must exist in
+	// ClickHouse, or its queries run without it.
 	Profiles []string `mapstructure:"profiles"`
 }
 
@@ -74,18 +70,6 @@ func newConfig() factory.Config {
 		},
 	}
 
-}
-
-// ForProfile returns the config of a store that runs queries with the profile, or false when the profile
-// is not configured.
-func (c Config) ForProfile(name string) (Config, bool) {
-	if !slices.Contains(c.Clickhouse.Profiles, name) {
-		return c, false
-	}
-
-	c.Clickhouse.Profile = name
-	c.Clickhouse.Profiles = nil
-	return c, true
 }
 
 func (c Config) Validate() error {
