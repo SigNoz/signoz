@@ -642,9 +642,7 @@ export const prepareQueryRangePayloadV5 = (
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
-			const chQueries = reduceQueriesToObject(
-				foldedQuery[foldedQuery.queryType],
-			);
+			const chQueries = reduceQueriesToObject(foldedQuery[foldedQuery.queryType]);
 			queries = convertClickHouseQueriesToV5(chQueries.queries);
 			legendMap = chQueries.legends;
 			break;
