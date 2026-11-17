@@ -210,6 +210,7 @@ function OptimiseSignozNeeds({
 									min={0}
 									max={100}
 									value={sliderValues.logsPerDay}
+									testId="logs-per-day-slider"
 									marks={marks}
 									onChange={(value): void =>
 										handleSliderChange('logsPerDay', value as number)
@@ -237,6 +238,7 @@ function OptimiseSignozNeeds({
 									min={0}
 									max={100}
 									value={sliderValues.hostsPerDay}
+									testId="hosts-per-day-slider"
 									marks={hostMarks}
 									onChange={(value): void =>
 										handleSliderChange('hostsPerDay', value as number)
@@ -264,6 +266,7 @@ function OptimiseSignozNeeds({
 									min={0}
 									max={100}
 									value={sliderValues.services}
+									testId="services-slider"
 									marks={serviceMarks}
 									onChange={(value): void =>
 										handleSliderChange('services', value as number)
@@ -293,6 +296,7 @@ function OptimiseSignozNeeds({
 						disabled={isNextDisabled}
 						disabledTooltip="Set at least one of the values above"
 						suffix={<ArrowRight size={12} />}
+						testId="optimise-needs-next"
 					>
 						Next
 					</Button>
@@ -303,6 +307,7 @@ function OptimiseSignozNeeds({
 						width="100%"
 						onClick={handleWillDoLater}
 						loading={isUpdatingProfile}
+						testId="optimise-needs-do-later"
 					>
 						I&apos;ll do this later
 					</Button>
