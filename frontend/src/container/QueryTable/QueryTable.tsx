@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
-import { IServiceName } from 'container/MetricsApplication/Tabs/types';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -34,10 +34,10 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const isQueryTypeBuilder = query.queryType === 'builder';
+	const isQueryTypeBuilder = isBuilderQueryType(query.queryType);
 
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { loading, enableDrillDown = false, contextLinks } = props;
 
 	const {
@@ -161,7 +161,7 @@ export function QueryTable({
 
 	return (
 		<>
-			<div className="query-table">
+			<div className="query-table" data-testid="query-table">
 				{isDownloadEnabled && (
 					<div className="query-table--download">
 						<Download

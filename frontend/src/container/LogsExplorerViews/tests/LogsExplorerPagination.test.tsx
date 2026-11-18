@@ -9,6 +9,7 @@ import { logsresponse } from 'mocks-server/__mockdata__/query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
+import { mockAppLocation } from 'tests/router-mocks';
 import {
 	act,
 	AllTheProviders,
@@ -62,15 +63,6 @@ jest.mock('store/actions', () => {
 	};
 });
 
-jest.mock('react-router-dom-v5-compat', () => ({
-	...jest.requireActual('react-router-dom-v5-compat'),
-	useSearchParams: jest.fn(() => {
-		const searchParams = new URLSearchParams();
-
-		return [searchParams, jest.fn()];
-	}),
-}));
-
 // Mock the Redux store's getState method to return updated global time
 const store = jest.requireActual('store').default;
 const originalGetState = store.getState;
@@ -93,14 +85,11 @@ getStateSpy.mockImplementation(() => {
 	return originalState;
 });
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { search: string; pathname: string } => ({
-		pathname: ROUTES.LOGS_EXPLORER,
-		search:
-			'?compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522logs%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522noop%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522------%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522isColumn%2522%253Afalse%252C%2522type%2522%253A%2522%2522%252C%2522isJSON%2522%253Afalse%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253A60%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%257B%2522columnName%2522%253A%2522timestamp%2522%252C%2522order%2522%253A%2522desc%2522%257D%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%25220d764438-8023-44b9-9bab-2f05012eca7b%2522%257D&options=%7B%22selectColumns%22%3A%5B%7B%22key%22%3A%22timestamp%22%2C%22dataType%22%3A%22string%22%2C%22type%22%3A%22tag%22%2C%22isColumn%22%3Atrue%2C%22isJSON%22%3Afalse%2C%22id%22%3A%22timestamp--string--tag--true%22%2C%22isIndexed%22%3Afalse%7D%2C%7B%22key%22%3A%22body%22%2C%22dataType%22%3A%22string%22%2C%22type%22%3A%22tag%22%2C%22isColumn%22%3Atrue%2C%22isJSON%22%3Afalse%2C%22id%22%3A%22body--string--tag--true%22%2C%22isIndexed%22%3Afalse%7D%5D%2C%22maxLines%22%3A2%2C%22format%22%3A%22raw%22%2C%22fontSize%22%3A%22small%22%2C%22version%22%3A1%7D',
-	}),
-}));
+mockAppLocation({
+	pathname: ROUTES.LOGS_EXPLORER,
+	search:
+		'?compositeQuery=%257B%2522queryType%2522%253A%2522builder%2522%252C%2522builder%2522%253A%257B%2522queryData%2522%253A%255B%257B%2522dataSource%2522%253A%2522logs%2522%252C%2522queryName%2522%253A%2522A%2522%252C%2522aggregateOperator%2522%253A%2522noop%2522%252C%2522aggregateAttribute%2522%253A%257B%2522id%2522%253A%2522------%2522%252C%2522dataType%2522%253A%2522%2522%252C%2522key%2522%253A%2522%2522%252C%2522isColumn%2522%253Afalse%252C%2522type%2522%253A%2522%2522%252C%2522isJSON%2522%253Afalse%257D%252C%2522timeAggregation%2522%253A%2522rate%2522%252C%2522spaceAggregation%2522%253A%2522sum%2522%252C%2522functions%2522%253A%255B%255D%252C%2522filters%2522%253A%257B%2522items%2522%253A%255B%255D%252C%2522op%2522%253A%2522AND%2522%257D%252C%2522expression%2522%253A%2522A%2522%252C%2522disabled%2522%253Afalse%252C%2522stepInterval%2522%253A60%252C%2522having%2522%253A%255B%255D%252C%2522limit%2522%253Anull%252C%2522orderBy%2522%253A%255B%257B%2522columnName%2522%253A%2522timestamp%2522%252C%2522order%2522%253A%2522desc%2522%257D%255D%252C%2522groupBy%2522%253A%255B%255D%252C%2522legend%2522%253A%2522%2522%252C%2522reduceTo%2522%253A%2522avg%2522%257D%255D%252C%2522queryFormulas%2522%253A%255B%255D%257D%252C%2522promql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522query%2522%253A%2522%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%257D%255D%252C%2522clickhouse_sql%2522%253A%255B%257B%2522name%2522%253A%2522A%2522%252C%2522legend%2522%253A%2522%2522%252C%2522disabled%2522%253Afalse%252C%2522query%2522%253A%2522%2522%257D%255D%252C%2522id%2522%253A%25220d764438-8023-44b9-9bab-2f05012eca7b%2522%257D&options=%7B%22selectColumns%22%3A%5B%7B%22key%22%3A%22timestamp%22%2C%22dataType%22%3A%22string%22%2C%22type%22%3A%22tag%22%2C%22isColumn%22%3Atrue%2C%22isJSON%22%3Afalse%2C%22id%22%3A%22timestamp--string--tag--true%22%2C%22isIndexed%22%3Afalse%7D%2C%7B%22key%22%3A%22body%22%2C%22dataType%22%3A%22string%22%2C%22type%22%3A%22tag%22%2C%22isColumn%22%3Atrue%2C%22isJSON%22%3Afalse%2C%22id%22%3A%22body--string--tag--true%22%2C%22isIndexed%22%3Afalse%7D%5D%2C%22maxLines%22%3A2%2C%22format%22%3A%22raw%22%2C%22fontSize%22%3A%22small%22%2C%22version%22%3A1%7D',
+});
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
@@ -136,13 +125,6 @@ jest.mock(
 	() =>
 		function MockQueryBuilderSearchV2(): JSX.Element {
 			return <div>MockQueryBuilderSearchV2</div>;
-		},
-);
-jest.mock(
-	'container/ExplorerOptions/ExplorerOptionWrapper',
-	() =>
-		function MockExplorerOptionWrapper(): JSX.Element {
-			return <div>MockExplorerOptionWrapper</div>;
 		},
 );
 jest.mock(
@@ -416,7 +398,6 @@ function LogsExplorerWithMockContext({
 			updateQueriesData: (): Query => initialQueriesMap.logs,
 			initQueryBuilderData: noop,
 			handleOnUnitsChange: noop,
-			isStagedQueryUpdated: (): boolean => false,
 		}),
 		[currentQuery, stagedQuery, handleRunQuery],
 	);
@@ -430,10 +411,7 @@ function LogsExplorerWithMockContext({
 	);
 
 	return (
-		<AllTheProviders
-			queryBuilderOverrides={contextValue as any}
-			initialRoute="/logs"
-		>
+		<AllTheProviders queryBuilderOverrides={contextValue as any}>
 			<VirtuosoMockContext.Provider value={virtuosoContextValue}>
 				<LogsExplorer />
 			</VirtuosoMockContext.Provider>
@@ -490,6 +468,8 @@ describe('Logs Explorer -> stage and run query', () => {
 				initialCurrentQuery={mockCurrentQuery}
 				onStateChange={handleStateChange}
 			/>,
+			undefined,
+			{ initialRoute: '/logs' },
 		);
 
 		await waitFor(() => {

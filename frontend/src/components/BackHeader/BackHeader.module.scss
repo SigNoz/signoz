@@ -1,0 +1,24 @@
+/* The space sits between the way back and the title, rather than above both of
+   them, so the two read as separate steps. */
+.header {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-4);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	min-height: 26px;
+	font-size: 18px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--l1-foreground);
+}
+
+.divider {
+	--divider-color: var(--l1-border);
+	--divider-margin: 10px 0 16px 0;
+}

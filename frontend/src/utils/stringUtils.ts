@@ -19,6 +19,16 @@ export function isQuoted(str: string): boolean {
 	return trimmed.length >= 2 && /^(["'`])(.*)\1$/.test(trimmed);
 }
 
+export type ScalarFieldValue = string | number | boolean;
+
+export function isScalarFieldValue(value: unknown): value is ScalarFieldValue {
+	return (
+		typeof value === 'string' ||
+		typeof value === 'number' ||
+		typeof value === 'boolean'
+	);
+}
+
 /**
  * Coerce an arbitrary value to a string for display/storage: nullish → '',
  * objects/arrays → JSON, other primitives → their string form.

@@ -172,7 +172,7 @@ const normalizeDataType = (
 // key is fabricated locally (empty source list), so no click-time getAggregateKeys fetch.
 export const getFilterQueryData = (
 	item: IBuilderQuery,
-	target: LogFilterTarget,
+	target: Pick<LogFilterTarget, 'fieldKey' | 'dataType' | 'metricsType'>,
 	value: unknown,
 	operator: string,
 ): IBuilderQuery => {

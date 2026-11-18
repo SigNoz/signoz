@@ -1,4 +1,5 @@
 import { MouseEvent } from 'react';
+import { ScalarFieldValue } from 'utils/stringUtils';
 import { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
@@ -21,9 +22,8 @@ export type UseActiveLog = {
 	onClearActiveLog: () => void;
 	onAddToQuery: (
 		fieldKey: string,
-		fieldValue: string,
+		fieldValue: ScalarFieldValue,
 		operator: string,
 		dataType?: DataTypes,
 	) => void;
-	onGroupByAttribute: (fieldKey: string, dataType?: DataTypes) => Promise<void>;
 };

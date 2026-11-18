@@ -21,16 +21,6 @@
 	justify-content: flex-end;
 }
 
-.traces-explorer-views {
-	padding: 8px;
-	padding-bottom: 60px;
-	margin-bottom: 24px;
-
-	.ant-tabs-tabpane {
-		padding: 0 8px;
-	}
-}
-
 .qb-search-view-container {
 	padding: 8px;
 
@@ -46,22 +36,6 @@
 		height: 34px !important;
 		box-sizing: border-box !important;
 	}
-}
-
-.trace-explorer-list-view {
-	flex: 1;
-}
-
-.trace-explorer-traces-view {
-	flex: 1;
-}
-
-.trace-explorer-table-view {
-	flex: 1;
-}
-
-.trace-explorer-time-series-view {
-	flex: 1;
 }
 
 .trace-explorer-page {

@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
@@ -28,7 +28,6 @@ import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
-import ChatSupportGateway from 'components/ChatSupportGateway/ChatSupportGateway';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -51,10 +50,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
-import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import useTabVisibility from 'hooks/useTabFocus';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
@@ -193,7 +190,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const { t } = useTranslation(['titles']);
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
@@ -401,7 +398,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [pathname]);
 
 	const isToDisplayLayout = isLoggedIn;
-	const isSavedViewEnabled = useSavedViewEnabled();
 
 	const routeKey = useMemo(() => getRouteKey(pathname), [pathname]);
 	const pageTitle = t(routeKey);
@@ -468,7 +464,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	}, [isLoggedIn]);
 
 	const handleUpgrade = useCallback((): void => {
-		history.push(ROUTES.BILLING);
+		navigate(ROUTES.BILLING);
 	}, []);
 
 	const handleFailedPayment = useCallback((): void => {
@@ -488,8 +484,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			document.body.classList.remove('darkMode');
 		}
 	}, [isDarkMode]);
-
-	const chatSupport = useChatSupport();
 
 	// Listen for API warnings
 	const handleWarning = (
@@ -834,9 +828,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 							</LayoutContent>
 						</Sentry.ErrorBoundary>
 
-						{isSavedViewEnabled && isToDisplayLayout && !renderFullScreen && (
-							<BottomStrip />
-						)}
+						{isToDisplayLayout && !renderFullScreen && <BottomStrip />}
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
@@ -847,9 +839,6 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					)}
 				</Flex>
 
-				{chatSupport === ChatSupportState.NeedsCard && !isSavedViewEnabled && (
-					<ChatSupportGateway />
-				)}
 				{showChangelogModal && changelog && (
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}

@@ -131,14 +131,6 @@ export const QuickFiltersSettingsWithBanner: Story = {
 	play: dirtyQuickFiltersSettings,
 };
 
-/**
- * The exception count in the bottom strip, in place of the build version: the
- * rows on the page against the total the count query returns.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
 /** The resource filter opened: every key the exceptions can be narrowed by. */
 export const FilterKeySuggestions: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

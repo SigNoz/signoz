@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getQueryData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	getBreakoutPanelType,
@@ -66,7 +66,13 @@ export function useDrilldownBreakout({
 				groupBy,
 				aggregateData.filters ?? [],
 			);
-			openViewWithQuery(panelId, breakoutQuery, getBreakoutPanelType(panelType));
+			// A regrouped query no longer joins the scatter's others, nor places a
+			// geo map's rows; show it as a table.
+			const breakoutPanelType =
+				panelType === PANEL_TYPES.SCATTER || panelType === PANEL_TYPES.GEO_MAP
+					? PANEL_TYPES.TABLE
+					: getBreakoutPanelType(panelType);
+			openViewWithQuery(panelId, breakoutQuery, breakoutPanelType);
 			onClose();
 		},
 		[aggregateData, v1Query, panelType, panelId, openViewWithQuery, onClose],

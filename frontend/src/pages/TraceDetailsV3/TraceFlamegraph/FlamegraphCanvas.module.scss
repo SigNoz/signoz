@@ -30,13 +30,9 @@
 // lives here. Shares visual treatment with the waterfall hover popover
 // but is positioned `fixed` instead of anchored.
 .tooltip {
+	composes: tooltipSurface from '../shared.module.scss';
 	position: fixed;
 	z-index: 1000;
 	pointer-events: none;
-	background-color: var(--l1-background);
-	padding: 8px 12px;
-	border-radius: 4px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-	border: 1px solid var(--l2-border);
 	color: var(--l1-foreground);
 }

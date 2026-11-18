@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from 'tests/test-utils';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { TestRouter } from 'tests/router';
 
 import Header from '../Header';
 
@@ -27,7 +27,7 @@ function renderHeader(
 	props: Partial<ComponentProps<typeof Header>> = {},
 ): void {
 	render(
-		<MemoryRouter>
+		<TestRouter>
 			<Header
 				isDirty={false}
 				isSaving={false}
@@ -35,7 +35,7 @@ function renderHeader(
 				onClose={jest.fn()}
 				{...props}
 			/>
-		</MemoryRouter>,
+		</TestRouter>,
 	);
 }
 

@@ -3,9 +3,11 @@ package querybuildertypesv5
 import (
 	"math"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 const (
@@ -15,6 +17,9 @@ const (
 	// ones are what says whether two rows bucketed the same way.
 	HeatmapBucketMinColumn = "__bucket_min"
 	HeatmapBucketMaxColumn = "__bucket_max"
+
+	// A logs or traces heatmap counts events, so its field renders as count().
+	heatmapCountExpression = "count()"
 
 	DefaultNumBuckets = 60
 
@@ -81,7 +86,69 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	return resolved
 }
 
-// This cannot be called in validateHeatmap cuz metric type is resolved in querier.go.
+// HeatmapAggregationField returns the field a logs or traces heatmap buckets,
+// written as the bare field. ok is false for any other aggregation.
+func HeatmapAggregationField(expression string) (telemetrytypes.TelemetryFieldKey, bool) {
+	keyText := strings.TrimSpace(expression)
+	if keyText == "" || strings.ContainsAny(keyText, "() \t\n") {
+		return telemetrytypes.TelemetryFieldKey{}, false
+	}
+	return telemetrytypes.GetFieldKeyFromKeyText(keyText), true
+}
+
+// HeatmapCountQuery splits a logs or traces heatmap query into the field its
+// aggregation buckets and a copy of query that counts events in its place,
+// which is what every cell holds.
+func HeatmapCountQuery[T LogAggregation | TraceAggregation](query QueryBuilderQuery[T]) (*telemetrytypes.TelemetryFieldKey, QueryBuilderQuery[T], error) {
+	if len(query.Aggregations) != 1 {
+		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a heatmap renders one bucket axis, but the query has %d aggregations", len(query.Aggregations))
+	}
+
+	query.Aggregations = slices.Clone(query.Aggregations)
+	var expression *string
+	switch aggregation := any(&query.Aggregations[0]).(type) {
+	case *LogAggregation:
+		expression = &aggregation.Expression
+	case *TraceAggregation:
+		expression = &aggregation.Expression
+	}
+
+	field, ok := HeatmapAggregationField(*expression)
+	if !ok {
+		return nil, query, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"a logs or traces heatmap counts events by the field named as its aggregation, got %q", *expression)
+	}
+
+	// An order on the aggregation names it by its expression, which decoding
+	// splits into a context, a name and a data type, and which metadata may
+	// complete, as it does any field.
+	query.Order = slices.Clone(query.Order)
+	for i := range query.Order {
+		key := query.Order[i].Key.TelemetryFieldKey
+		sameField := key.Name == field.Name &&
+			(field.FieldContext == telemetrytypes.FieldContextUnspecified || key.FieldContext == field.FieldContext) &&
+			(field.FieldDataType == telemetrytypes.FieldDataTypeUnspecified || key.FieldDataType == field.FieldDataType)
+		if key.Name == *expression || sameField {
+			query.Order[i].Key = OrderByKey{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: heatmapCountExpression}}
+		}
+	}
+	*expression = heatmapCountExpression
+
+	return &field, query, nil
+}
+
+// RequireHeatmapField keeps only the rows of query that carry field.
+func RequireHeatmapField[T LogAggregation | TraceAggregation](query QueryBuilderQuery[T], field telemetrytypes.TelemetryFieldKey) QueryBuilderQuery[T] {
+	exists := telemetrytypes.TelemetryFieldKeyToText(&field) + " EXISTS"
+	if query.Filter != nil && strings.TrimSpace(query.Filter.Expression) != "" {
+		exists = "(" + query.Filter.Expression + ") AND " + exists
+	}
+	query.Filter = &Filter{Expression: exists}
+	return query
+}
+
+// This cannot be called in validateBucketCounting cuz metric type is resolved in querier.go.
 func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
@@ -130,6 +197,35 @@ func MergeBucketUpperBounds(tsData ...*TimeSeriesData) map[int][]float64 {
 	}
 
 	return upperBoundsByAggregation
+}
+
+// ToDistributionData sums every series over all its steps, keeping the bucket
+// axis, and ranks the percentiles over every series together. A partial step
+// counts too, since what it holds was observed.
+func (tsData *TimeSeriesData) ToDistributionData() *DistributionData {
+	data := &DistributionData{QueryName: tsData.QueryName, Aggregations: make([]*DistributionAggregation, 0, len(tsData.Aggregations))}
+	for _, aggBucket := range tsData.Aggregations {
+		if aggBucket == nil {
+			continue
+		}
+		aggregation := &DistributionAggregation{Index: aggBucket.Index, Alias: aggBucket.Alias, Meta: aggBucket.Meta, Distributions: make([]*Distribution, 0, len(aggBucket.Series))}
+		totalCounts := make([]float64, len(aggBucket.Meta.Buckets)+1)
+		for _, series := range aggBucket.Series {
+			counts := make([]float64, len(totalCounts))
+			for _, point := range series.Values {
+				for i, count := range point.Values {
+					if i < len(counts) {
+						counts[i] += count
+						totalCounts[i] += count
+					}
+				}
+			}
+			aggregation.Distributions = append(aggregation.Distributions, &Distribution{Labels: series.Labels, Counts: counts})
+		}
+		aggregation.Percentiles = newDistributionPercentiles(aggBucket.Meta.Buckets, totalCounts)
+		data.Aggregations = append(data.Aggregations, aggregation)
+	}
+	return data
 }
 
 // DownscaleHeatmapResolution folds the MaxLogScale axis ClickHouse buckets at
@@ -242,19 +338,28 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 		}
 		indexes[i] = bucketing.calculateIndexOfUpperBound(upperBound)
 	}
-	lowest, highest := slices.Min(indexes), slices.Max(indexes)
+	lowestIndexOnAxis, highestIndexOnAxis := slices.Min(indexes), slices.Max(indexes)
 
-	// The lowest bucket reached needs the rung under it on the axis, or its own
-	// lower bound goes unstated and it reads as holding everything below. That
-	// one rung is enough: everything under it merges into the single leading
-	// bucket, which no series reached.
-	from := lowest - 1
-	if offset == 1 && bucketing.calculateUpperBoundAtIndex(from) <= aggBucket.Meta.Buckets[0] {
-		from = lowest
+	// Start one rung below the lowest bucket that holds a count, so its lower
+	// bound is on the axis. The axis may already begin with an empty bucket that
+	// states that bound, in which case nothing is added beneath it.
+	firstDenseIndex := lowestIndexOnAxis
+	for _, series := range aggBucket.Series {
+		for _, point := range series.Values {
+			for i := offset; i < len(point.Values) && i < len(aggBucket.Meta.Buckets); i++ {
+				if point.Values[i] != 0 {
+					firstDenseIndex = min(firstDenseIndex, indexes[i-offset]-1)
+				}
+			}
+		}
+	}
+	// The zero bucket is the floor, so no rung goes at or under it.
+	if offset == 1 && bucketing.calculateUpperBoundAtIndex(firstDenseIndex) <= aggBucket.Meta.Buckets[0] {
+		firstDenseIndex = lowestIndexOnAxis
 	}
 
 	denseUpperBounds := append([]float64{}, aggBucket.Meta.Buckets[:offset]...)
-	for index := from; index <= highest; index++ {
+	for index := firstDenseIndex; index <= highestIndexOnAxis; index++ {
 		denseUpperBounds = append(denseUpperBounds, bucketing.calculateUpperBoundAtIndex(index))
 	}
 	if len(denseUpperBounds) == len(aggBucket.Meta.Buckets) {
@@ -266,7 +371,7 @@ func addHeatmapBucketsWithNoCountsForAggregation(aggBucket *AggregationBucket, b
 	// lands where it came from.
 	shiftedTo := make([]int, len(aggBucket.Meta.Buckets))
 	for i, index := range indexes {
-		shiftedTo[i+offset] = index - from + offset
+		shiftedTo[i+offset] = index - firstDenseIndex + offset
 	}
 
 	overflowIndex := len(denseUpperBounds)
@@ -305,4 +410,43 @@ func (h HeatmapBucketing) calculateUpperBoundAtIndex(index int) float64 {
 		return float64(index) * h.MaxValue / float64(h.NumBuckets)
 	}
 	return math.Exp2(float64(index) / math.Exp2(float64(h.LogScale)))
+}
+
+func newDistributionPercentiles(upperBounds, counts []float64) *DistributionPercentiles {
+	total := 0.0
+	for _, count := range counts {
+		total += count
+	}
+	if total == 0 || len(upperBounds) == 0 {
+		return nil
+	}
+	return &DistributionPercentiles{
+		P50: bucketQuantile(0.5, total, upperBounds, counts),
+		P75: bucketQuantile(0.75, total, upperBounds, counts),
+		P90: bucketQuantile(0.9, total, upperBounds, counts),
+		P95: bucketQuantile(0.95, total, upperBounds, counts),
+		P99: bucketQuantile(0.99, total, upperBounds, counts),
+	}
+}
+
+// bucketQuantile is histogram_quantile over per-bucket counts. q and total must
+// be positive, so the bucket the rank lands in holds a count.
+func bucketQuantile(q, total float64, upperBounds, counts []float64) float64 {
+	rank := q * total
+	cumulative := 0.0
+	for i, upperBound := range upperBounds {
+		if cumulative+counts[i] < rank {
+			cumulative += counts[i]
+			continue
+		}
+		if i == 0 && upperBound <= 0 {
+			return upperBound
+		}
+		lowerBound := 0.0
+		if i > 0 {
+			lowerBound = upperBounds[i-1]
+		}
+		return lowerBound + (upperBound-lowerBound)*(rank-cumulative)/counts[i]
+	}
+	return upperBounds[len(upperBounds)-1]
 }

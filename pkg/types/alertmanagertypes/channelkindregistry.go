@@ -74,6 +74,12 @@ var channelKinds = []channelKindEntry{
 		countConfigs: func(receiver *Receiver) int { return len(receiver.IncidentIOConfigs) },
 		extractSpec:  newChannelIncidentIOConfigFromReceiver,
 	},
+	{
+		kind:         ChannelKindTelegram,
+		newEmptySpec: func() ChannelSpec { return new(ChannelTelegramConfig) },
+		countConfigs: func(receiver *Receiver) int { return len(receiver.TelegramConfigs) },
+		extractSpec:  newChannelTelegramConfigFromReceiver,
+	},
 }
 
 func buildEmptyChannelSpecForKind(kind ChannelKind) (ChannelSpec, bool) {

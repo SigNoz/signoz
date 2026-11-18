@@ -94,6 +94,7 @@ function StepsContent({
 							<Button
 								type="default"
 								className="steps-content__add-btn"
+								data-testid="funnel-add-step-btn"
 								onClick={isTraceDetailsPage ? handleAddForNewStep : handleAddStep}
 								icon={<Plus size={14} />}
 								disabled={!hasEditPermission}

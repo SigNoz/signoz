@@ -2,12 +2,9 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InfraMonitoringEvents } from 'constants/events';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
@@ -18,7 +15,10 @@ import {
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
+import { within } from 'tests/test-utils';
 import APIError from 'types/api/error';
+import logEvent from 'api/common/logEvent';
 import { openInNewTab } from 'utils/navigation';
 
 import { TableColumnDef } from 'components/TanStackTableView';
@@ -41,7 +41,13 @@ jest.mock('utils/navigation', () => ({
 	openInNewTab: jest.fn(),
 }));
 
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve()),
+}));
+
 const openInNewTabMock = openInNewTab as jest.Mock;
+const logEventMock = jest.mocked(logEvent);
 
 // Mock Date.now to prevent flaky tests due to time-dependent values
 const MOCK_NOW = 1700000000000; // Fixed timestamp
@@ -190,31 +196,26 @@ function renderComponent<
 	});
 
 	return render(
-		<MemoryRouter>
-			<MemoryRouterV5>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<AppProvider>
-							<Provider store={store}>
-								<NuqsTestingAdapter
-									searchParams={queryParams}
-									onUrlUpdate={onUrlUpdate}
+		<TestRouter>
+			<TimezoneProvider>
+				<QueryClientProvider client={queryClient}>
+					<AppProvider>
+						<Provider store={store}>
+							<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
+								<VirtuosoMockContext.Provider
+									value={{ viewportHeight: 800, itemHeight: 50 }}
 								>
-									<VirtuosoMockContext.Provider
-										value={{ viewportHeight: 800, itemHeight: 50 }}
-									>
-										<K8sBaseList<T, TItemKey>
-											{...props}
-											detailsQueryKeyPrefix={detailsQueryKeyPrefix}
-										/>
-									</VirtuosoMockContext.Provider>
-								</NuqsTestingAdapter>
-							</Provider>
-						</AppProvider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</MemoryRouterV5>
-		</MemoryRouter>,
+									<K8sBaseList<T, TItemKey>
+										{...props}
+										detailsQueryKeyPrefix={detailsQueryKeyPrefix}
+									/>
+								</VirtuosoMockContext.Provider>
+							</NuqsTestingAdapter>
+						</Provider>
+					</AppProvider>
+				</QueryClientProvider>
+			</TimezoneProvider>
+		</TestRouter>,
 	);
 }
 
@@ -233,6 +234,7 @@ describe('K8sBaseList', () => {
 		beforeEach(() => {
 			onUrlUpdateMock.mockClear();
 			fetchListDataMock.mockClear();
+			logEventMock.mockClear();
 			openInNewTabMock.mockClear();
 			fetchListDataMock.mockResolvedValue({
 				data: [
@@ -246,7 +248,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItemWithTitle>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithTitle(),
 				getRowKey: (row): string => row.id,
@@ -303,6 +304,40 @@ describe('K8sBaseList', () => {
 					.pop();
 				expect(selectedItem).toBe(`PodId:${itemId}`);
 			});
+		});
+
+		it('should log the list row clicked event when a row opens the drawer', async () => {
+			const user = userEvent.setup();
+
+			const row = await screen.findByTestId(`row-PodId:${itemId}`);
+			await user.click(within(row).getByText(`PodId:${itemId}`));
+
+			expect(logEventMock).toHaveBeenCalledWith(
+				'Infra Monitoring: List row clicked',
+				{
+					entityType: InfraMonitoringEntity.PODS,
+					openedInNewTab: false,
+					isGrouped: false,
+				},
+			);
+		});
+
+		it('should log the list row clicked event as a new tab on ctrl+click', async () => {
+			const user = userEvent.setup();
+			const row = await screen.findByTestId(`row-PodId:${itemId}`);
+
+			await user.keyboard('{Control>}');
+			await user.click(within(row).getByText(`PodId:${itemId}`));
+			await user.keyboard('{/Control}');
+
+			expect(logEventMock).toHaveBeenCalledWith(
+				'Infra Monitoring: List row clicked',
+				{
+					entityType: InfraMonitoringEntity.PODS,
+					openedInNewTab: true,
+					isGrouped: false,
+				},
+			);
 		});
 
 		it('should update orderBy in URL when clicking sortable column header', async () => {
@@ -469,7 +504,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
@@ -544,7 +578,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					orderBy: JSON.stringify({ columnName: 'cpu', order: 'desc' }),
@@ -609,7 +642,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -668,7 +700,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: { page: '7', pageSize: '10' },
 				tableColumns: createTestColumns(),
@@ -740,7 +771,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: { page: '0', pageSize: '10' },
 				tableColumns: createTestColumns(),
@@ -825,7 +855,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -863,7 +892,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -901,7 +929,6 @@ describe('K8sBaseList', () => {
 		it('should show all columns defined in tableColumns', async () => {
 			renderComponent<TestItemWithName>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithName(),
 				getRowKey: (row): string => row.id,
@@ -949,7 +976,6 @@ describe('K8sBaseList', () => {
 		it('should show columns when NOT grouped', async () => {
 			renderComponent<TestItemWithGroup>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {},
 				tableColumns: createTestColumnsWithGroup(),
@@ -974,7 +1000,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItemWithGroup>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					groupBy: JSON.stringify(groupByValue),
@@ -1016,7 +1041,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					groupBy: JSON.stringify(groupByValue),
@@ -1061,7 +1085,6 @@ describe('K8sBaseList', () => {
 		it('should render all defined columns', async () => {
 			renderComponent<TestItemWithName>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithName(),
 				getRowKey: (row): string => row.id,
@@ -1084,7 +1107,6 @@ describe('K8sBaseList', () => {
 		it('should render data in cells correctly', async () => {
 			renderComponent<TestItemWithName>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithName(),
 				getRowKey: (row): string => row.id,
@@ -1121,7 +1143,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1169,7 +1190,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItemWithTitle, SelectedItemParams>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithTitle(),
 				getRowKey: (row): string => row.id,
@@ -1194,7 +1214,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItemWithTitle, SelectedItemParams>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithTitle(),
 				getRowKey: (row): string => row.id,
@@ -1221,7 +1240,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItemWithTitle, SelectedItemParams>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumnsWithTitle(),
 				getRowKey: (row): string => row.id,
@@ -1283,7 +1301,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1318,7 +1335,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1358,7 +1374,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1407,7 +1422,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1455,7 +1469,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1512,7 +1525,6 @@ describe('K8sBaseList', () => {
 
 			renderComponent<TestItem>({
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				tableColumns: createTestColumns(),
 				getRowKey: (row): string => row.id,
@@ -1586,7 +1598,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					// k8s.pod.name is a name column - should be cleared
@@ -1629,7 +1640,6 @@ describe('K8sBaseList', () => {
 			renderComponent<TestItem>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
-				eventCategory: InfraMonitoringEvents.Pod,
 				fetchListData: fetchListDataMock,
 				queryParams: {
 					// cpu is NOT a name column - should be kept
@@ -1682,7 +1692,6 @@ describe('K8sBaseList status filters', () => {
 		renderComponent<TestItem>({
 			queryParams,
 			entity: InfraMonitoringEntity.PODS,
-			eventCategory: InfraMonitoringEvents.Pod,
 			fetchListData: fetchListDataMock,
 			tableColumns: createTestColumns(),
 			getRowKey: (row): string => row.id,

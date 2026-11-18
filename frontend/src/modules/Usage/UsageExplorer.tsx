@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
-import { withRouter } from 'react-router-dom';
 import { Select, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
@@ -32,7 +31,6 @@ interface UsageExplorerProps {
 		selectedTimeInterval: GlobalReducer['selectedTime'];
 	}) => void;
 	globalTime: GlobalTime;
-	servicesList: servicesListItem[];
 	totalCount: number;
 }
 const timeDaysOptions = [
@@ -213,9 +211,7 @@ const mapStateToProps = (
 	};
 };
 
-export const UsageExplorer = withRouter(
-	connect(mapStateToProps, {
-		getUsageData,
-		getServicesList: GetService,
-	})(_UsageExplorer),
-);
+export const UsageExplorer = connect(mapStateToProps, {
+	getUsageData,
+	getServicesList: GetService,
+})(_UsageExplorer);

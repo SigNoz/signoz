@@ -277,3 +277,13 @@ func ModelMatchesAnyRule(model string, rules []*LLMPricingRule) bool {
 	}
 	return false
 }
+
+func UnmappedModels(models []*UnmappedModel, rules []*LLMPricingRule) []*UnmappedModel {
+	unmapped := make([]*UnmappedModel, 0, len(models))
+	for _, model := range models {
+		if !ModelMatchesAnyRule(model.ModelName, rules) {
+			unmapped = append(unmapped, model)
+		}
+	}
+	return unmapped
+}

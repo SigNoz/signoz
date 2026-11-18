@@ -124,50 +124,59 @@ export function handleQueryChange(
 ): Query {
 	return {
 		...supersetQuery,
-		builder: {
-			...supersetQuery.builder,
-			queryData: supersetQuery.builder.queryData.map((query, index) => {
-				const { dataSource } = query;
-				const tempQuery = cloneDeep(initialQueryBuilderFormValuesMap[dataSource]);
+		builder: rebuildBuilderForPanelType(
+			newPanelType,
+			supersetQuery.builder,
+			currentPanelType,
+		),
+	};
+}
 
-				const fieldsToSelect =
-					panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
-						.queryData;
+export function rebuildBuilderForPanelType(
+	newPanelType: keyof PartialPanelTypes,
+	builder: Query['builder'],
+	currentPanelType: PANEL_TYPES,
+): Query['builder'] {
+	return {
+		...builder,
+		queryData: builder.queryData.map((query, index) => {
+			const { dataSource } = query;
+			const tempQuery = cloneDeep(initialQueryBuilderFormValuesMap[dataSource]);
 
-				fieldsToSelect.forEach((field) => {
-					set(tempQuery, field, supersetQuery.builder.queryData[index][field]);
-				});
+			const fieldsToSelect =
+				panelTypeDataSourceFormValuesMap[newPanelType][dataSource].builder
+					.queryData;
 
-				if (newPanelType === PANEL_TYPES.LIST) {
-					set(tempQuery, 'aggregateOperator', 'noop');
-					set(tempQuery, 'offset', 0);
-					set(tempQuery, 'pageSize', 10);
-					set(tempQuery, 'orderBy', undefined);
-				} else if (tempQuery.aggregateOperator === 'noop') {
-					// this condition takes care of the part where we start with the list panel type and then shift to other panels
-					// because in other cases we never set list operator and other fields in superset query rather just update in the current / staged query
-					set(tempQuery, 'aggregateOperator', 'count');
-					unset(tempQuery, 'offset');
-					unset(tempQuery, 'pageSize');
-				}
+			fieldsToSelect.forEach((field) => {
+				set(tempQuery, field, builder.queryData[index][field]);
+			});
 
-				if (
-					currentPanelType === PANEL_TYPES.LIST &&
-					newPanelType !== PANEL_TYPES.LIST
-				) {
-					set(tempQuery, 'orderBy', undefined);
-				}
+			if (newPanelType === PANEL_TYPES.LIST) {
+				set(tempQuery, 'aggregateOperator', 'noop');
+				set(tempQuery, 'offset', 0);
+				set(tempQuery, 'pageSize', 10);
+				set(tempQuery, 'orderBy', undefined);
+			} else if (tempQuery.aggregateOperator === 'noop') {
+				// this condition takes care of the part where we start with the list panel type and then shift to other panels
+				// because in other cases we never set list operator and other fields in superset query rather just update in the current / staged query
+				set(tempQuery, 'aggregateOperator', 'count');
+				unset(tempQuery, 'offset');
+				unset(tempQuery, 'pageSize');
+			}
 
-				return tempQuery;
-			}),
-			queryFormulas: withHeatmapBucketOptions(
-				supersetQuery.builder.queryFormulas,
-				newPanelType,
-			),
-			queryTraceOperator:
-				newPanelType === PANEL_TYPES.LIST
-					? []
-					: supersetQuery.builder.queryTraceOperator,
-		},
+			if (
+				currentPanelType === PANEL_TYPES.LIST &&
+				newPanelType !== PANEL_TYPES.LIST
+			) {
+				set(tempQuery, 'orderBy', undefined);
+			}
+
+			return tempQuery;
+		}),
+		queryFormulas: withHeatmapBucketOptions(builder.queryFormulas, newPanelType),
+		queryTraceOperator:
+			newPanelType === PANEL_TYPES.LIST || newPanelType === PANEL_TYPES.SCATTER
+				? []
+				: builder.queryTraceOperator,
 	};
 }

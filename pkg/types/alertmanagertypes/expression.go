@@ -4,12 +4,34 @@ import (
 	"strings"
 
 	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/ast"
 	"github.com/prometheus/common/model"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
-var ErrCodeInvalidScopeExpression = errors.MustNewCode("invalid_scope_expression")
+var ErrCodeInvalidExpression = errors.MustNewCode("invalid_expression")
+
+const nilSafeMemberFunc = "__nilSafeMember"
+
+// NilSafeMemberAccess rewrites every string-keyed member access a.b into a
+// lookup that yields nil unless a is a map, so a dotted label that is missing,
+// or whose prefix is a plain label, evaluates to nil instead of failing the run.
+type NilSafeMemberAccess struct{}
+
+func (NilSafeMemberAccess) Visit(node *ast.Node) {
+	member, ok := (*node).(*ast.MemberNode)
+	if !ok {
+		return
+	}
+	if _, ok := member.Property.(*ast.StringNode); !ok {
+		return
+	}
+	ast.Patch(node, &ast.CallNode{
+		Callee:    &ast.IdentifierNode{Value: nilSafeMemberFunc},
+		Arguments: []ast.Node{member.Node, member.Property},
+	})
+}
 
 // ConvertLabelSetToEnv converts a label set into a map suitable for use as an
 // expr environment. Dotted keys (e.g. "kubernetes.node") are expanded into
@@ -66,23 +88,28 @@ func ConvertLabelSetToEnv(lset model.LabelSet) (map[string]any, bool) {
 	return env, conflict
 }
 
-// EvalScopeExpression compiles and runs the expression against the provided
-// labels. It returns (result, error). Callers should log the error and
-// decide how to handle a failed evaluation (the maintenance muter treats a
-// failure as "don't skip" so alerts pass through).
-func EvalScopeExpression(expression string, lset model.LabelSet) (bool, error) {
-	env, _ := ConvertLabelSetToEnv(lset)
-	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables())
+// EvalExpression compiles and runs the expression against env, as built by
+// ConvertLabelSetToEnv. Callers should log the error and decide how to handle
+// a failed evaluation (the maintenance muter treats a failure as "don't skip"
+// so alerts pass through).
+func EvalExpression(expression string, env map[string]any) (bool, error) {
+	program, err := expr.Compile(expression, expr.Env(env), expr.AllowUndefinedVariables(), expr.Function(nilSafeMemberFunc, nilSafeMember), expr.Patch(NilSafeMemberAccess{}))
 	if err != nil {
-		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "compile scope expression %q", expression)
+		return false, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeInvalidExpression, "compile expression %q", expression)
 	}
 	output, err := expr.Run(program, env)
 	if err != nil {
-		return false, errors.Wrapf(err, errors.TypeInternal, ErrCodeInvalidScopeExpression, "run scope expression %q", expression)
+		return false, errors.Wrapf(err, errors.TypeInternal, ErrCodeInvalidExpression, "run expression %q", expression)
 	}
 	result, ok := output.(bool)
 	if !ok {
-		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidScopeExpression, "scope expression %q returned non-bool value %T (%v)", expression, output, output)
+		return false, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidExpression, "expression %q returned non-bool value %T (%v)", expression, output, output)
 	}
 	return result, nil
+}
+
+func nilSafeMember(params ...any) (any, error) {
+	m, _ := params[0].(map[string]any)
+	key, _ := params[1].(string)
+	return m[key], nil
 }

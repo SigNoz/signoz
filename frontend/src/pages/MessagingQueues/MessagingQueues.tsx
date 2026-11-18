@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 import { Button } from 'antd';
+import { navigate } from 'lib/router/navigation';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import MessagingQueueHealthCheck from 'components/MessagingQueueHealthCheck/MessagingQueueHealthCheck';
@@ -21,7 +21,6 @@ import {
 import './MessagingQueues.styles.scss';
 
 function MessagingQueues(): JSX.Element {
-	const history = useHistory();
 	const { t } = useTranslation('messagingQueuesKafkaOverview');
 
 	const redirectToDetailsPage = (
@@ -37,7 +36,7 @@ function MessagingQueues(): JSX.Element {
 		if (event && isModifierKeyPressed(event)) {
 			openInNewTab(path);
 		} else {
-			history.push(path);
+			navigate(path);
 		}
 	};
 
@@ -56,7 +55,7 @@ function MessagingQueues(): JSX.Element {
 			if (event && isModifierKeyPressed(event)) {
 				openInNewTab(link);
 			} else {
-				history.push(link);
+				navigate(link);
 			}
 		} else {
 			openInNewTab(KAFKA_SETUP_DOC_LINK);
@@ -160,6 +159,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-consumerLag"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.consumerLag.value, e)
@@ -178,6 +178,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-producerLatency"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.producerLatency.value, e)
@@ -196,6 +197,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-partitionLatency"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(
@@ -217,6 +219,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-dropRate"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value, e)
@@ -235,6 +238,7 @@ function MessagingQueues(): JSX.Element {
 						</div>
 						<div className="button-grp">
 							<Button
+								data-testid="mq-view-details-metricPage"
 								type="default"
 								onClick={(e): void =>
 									redirectToDetailsPage(MessagingQueuesViewType.metricPage.value, e)

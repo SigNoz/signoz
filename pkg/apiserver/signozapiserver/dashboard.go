@@ -77,6 +77,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Description:         "This endpoint creates a dashboard in the v2 format that follows Perses spec.",
 			Request:             new(dashboardtypes.PostableDashboardV2),
 			RequestContentType:  "application/json",
+			RequestExamples:     createDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
@@ -200,6 +201,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			Description:         "This endpoint updates a v2-shape dashboard's metadata, data, and tag set. Locked dashboards are rejected.",
 			Request:             new(dashboardtypes.UpdatableDashboardV2),
 			RequestContentType:  "application/json",
+			RequestExamples:     updateDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
@@ -233,6 +235,7 @@ func (provider *provider) addDashboardRoutes(router *mux.Router) error {
 			// the array-of-ops schema visible to spec consumers; the runtime decoder
 			// parses JSON regardless of the request's actual Content-Type header.
 			RequestContentType:  "application/json",
+			RequestExamples:     patchDashboardExamples(),
 			Response:            new(dashboardtypes.GettableDashboardV2),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,

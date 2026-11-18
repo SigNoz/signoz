@@ -2,6 +2,7 @@ import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { Col, Input, Row, Select } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
+import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
@@ -112,7 +113,7 @@ export function Formula({
 	);
 
 	return (
-		<Row gutter={[0, 15]}>
+		<Row gutter={[0, 15]} data-testid={`formula-${formula.queryName}`}>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				showFunctions={false}
@@ -130,6 +131,7 @@ export function Formula({
 						<Input.TextArea
 							name="expression"
 							className="formula-expression"
+							data-testid="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
@@ -141,6 +143,7 @@ export function Formula({
 						<Input
 							name="legend"
 							className="formula-legend"
+							data-testid="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
@@ -169,7 +172,8 @@ export function Formula({
 								<InputWithLabel
 									label="Limit"
 									type="number"
-									onChange={(value): void => handleChangeLimit(Number(value))}
+									onChange={(value): void => handleChangeLimit(parseLimit(value))}
+									sanitize={sanitizeLimit}
 									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
 								/>

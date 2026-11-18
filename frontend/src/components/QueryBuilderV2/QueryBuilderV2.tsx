@@ -1,14 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Formula } from 'container/QueryBuilder/components/Formula';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { getBuilderVariant } from 'lib/query/queryMode';
-import {
-	BuilderVariant,
-	IBuilderTraceOperator,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderField } from './queryBuilderFields.types';
@@ -54,6 +50,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		initialDataSource,
 		handleRunQuery,
 	} = useQueryBuilder();
+	const activeBuilder = getActiveBuilder(currentQuery);
 
 	const containerRef = useRef(null);
 
@@ -64,20 +61,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[config],
 	);
 
-	const isAIQuery =
-		getBuilderVariant(currentQuery.builder) === BuilderVariant.AI;
-
 	useEffect(() => {
 		if (currentDataSource !== initialDataSource || newPanelType !== panelType) {
-			// AI queries are traces-only; BAR must not force metrics on them.
-			if (isAIQuery) {
-				handleSetConfig(newPanelType, DataSource.TRACES);
-				return;
-			}
-			if (newPanelType === PANEL_TYPES.BAR) {
-				handleSetConfig(PANEL_TYPES.BAR, DataSource.METRICS);
-				return;
-			}
 			handleSetConfig(newPanelType, currentDataSource);
 		}
 	}, [
@@ -86,7 +71,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		initialDataSource,
 		currentDataSource,
 		newPanelType,
-		isAIQuery,
 	]);
 
 	useEffect(() => {
@@ -124,9 +108,17 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[resolvedConfig],
 	);
 
+	const traceOperatorField = useMemo(
+		() =>
+			resolveQueryBuilderField(QueryBuilderField.TraceOperator, resolvedConfig),
+		[resolvedConfig],
+	);
+
+	const canShowTraceOperator = showTraceOperator && !traceOperatorField.hidden;
+
 	const isMultiQueryAllowed = useMemo(
-		() => !additionalQueries.hidden && (!isRawQuery || showTraceOperator),
-		[additionalQueries.hidden, showTraceOperator, isRawQuery],
+		() => !additionalQueries.hidden && (!isRawQuery || canShowTraceOperator),
+		[additionalQueries.hidden, canShowTraceOperator, isRawQuery],
 	);
 
 	const queryDataSources = useMemo(
@@ -139,38 +131,39 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	const renderedQueries = useMemo(
 		() =>
 			isMultiQueryAllowed
-				? currentQuery.builder.queryData
-				: currentQuery.builder.queryData.slice(0, 1),
-		[isMultiQueryAllowed, currentQuery.builder.queryData],
+				? activeBuilder.queryData
+				: activeBuilder.queryData.slice(0, 1),
+		[isMultiQueryAllowed, activeBuilder.queryData],
 	);
 
 	const traceOperator = useMemo((): IBuilderTraceOperator | undefined => {
 		if (
-			currentQuery.builder.queryTraceOperator &&
-			currentQuery.builder.queryTraceOperator.length > 0
+			activeBuilder.queryTraceOperator &&
+			activeBuilder.queryTraceOperator.length > 0
 		) {
-			return currentQuery.builder.queryTraceOperator[0];
+			return activeBuilder.queryTraceOperator[0];
 		}
 
 		return undefined;
-	}, [currentQuery.builder.queryTraceOperator]);
+	}, [activeBuilder.queryTraceOperator]);
 
 	const hasAtLeastOneTraceQuery = useMemo(
 		() =>
-			currentQuery.builder.queryData.some(
+			activeBuilder.queryData.some(
 				(query) => query.dataSource === DataSource.TRACES,
 			),
-		[currentQuery.builder.queryData],
+		[activeBuilder.queryData],
 	);
 
 	const hasTraceOperator = useMemo(
-		() => showTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() =>
+			canShowTraceOperator && hasAtLeastOneTraceQuery && Boolean(traceOperator),
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	const showQueryList = useMemo(
-		() => (!showOnlyWhereClause && !isRawQuery) || showTraceOperator,
-		[isRawQuery, showOnlyWhereClause, showTraceOperator],
+		() => (!showOnlyWhereClause && !isRawQuery) || canShowTraceOperator,
+		[isRawQuery, showOnlyWhereClause, canShowTraceOperator],
 	);
 
 	const showFormula = useMemo(() => {
@@ -186,8 +179,8 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	}, [formula.hidden, isRawQuery, currentDataSource]);
 
 	const showAddTraceOperator = useMemo(
-		() => showTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
-		[showTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
+		() => canShowTraceOperator && !traceOperator && hasAtLeastOneTraceQuery,
+		[canShowTraceOperator, traceOperator, hasAtLeastOneTraceQuery],
 	);
 
 	// Nothing left to add means no footer at all, rather than an empty bar under the
@@ -196,13 +189,13 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		() =>
 			(!additionalQueries.hidden || showFormula || showAddTraceOperator) &&
 			((!showOnlyWhereClause && !isRawQuery) ||
-				(currentDataSource === DataSource.TRACES && showTraceOperator)),
+				(currentDataSource === DataSource.TRACES && canShowTraceOperator)),
 		[
 			additionalQueries.hidden,
 			showFormula,
 			showAddTraceOperator,
 			isRawQuery,
-			showTraceOperator,
+			canShowTraceOperator,
 			showOnlyWhereClause,
 			currentDataSource,
 		],
@@ -234,20 +227,20 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 					{!isMultiQueryAllowed ? (
 						<QueryV2
 							ref={containerRef}
-							key={currentQuery.builder.queryData[0].queryName}
+							key={activeBuilder.queryData[0].queryName}
 							index={0}
-							query={currentQuery.builder.queryData[0]}
+							query={activeBuilder.queryData[0]}
 							fieldsConfig={fieldsConfig}
 							allowedDataSources={queryDataSources}
 							isMultiQueryAllowed={isMultiQueryAllowed}
-							showTraceOperator={showTraceOperator}
+							showTraceOperator={canShowTraceOperator}
 							hasTraceOperator={hasTraceOperator}
 							version={version}
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
 							isRawQuery={isRawQuery}
-							signalSource={currentQuery.builder.queryData[0].source as 'meter' | ''}
+							signalSource={activeBuilder.queryData[0].source as 'meter' | ''}
 							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 							signalSourceChangeEnabled={signalSourceChangeEnabled}
 							queriesCount={1}
@@ -265,7 +258,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								version={version}
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
-								showTraceOperator={showTraceOperator}
+								showTraceOperator={canShowTraceOperator}
 								hasTraceOperator={hasTraceOperator}
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
@@ -273,28 +266,26 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								signalSource={query.source as 'meter' | ''}
 								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
-								queriesCount={currentQuery.builder.queryData.length}
+								queriesCount={activeBuilder.queryData.length}
 								savePreviousQuery={savePreviousQuery}
 							/>
 						))
 					)}
 
-					{!showOnlyWhereClause &&
-						currentQuery.builder.queryFormulas?.length > 0 && (
-							<div className="qb-formulas-container">
-								{currentQuery.builder.queryFormulas.map((formula, index) => {
-									const query =
-										currentQuery.builder.queryData[index] ||
-										currentQuery.builder.queryData[0];
+					{!showOnlyWhereClause && activeBuilder.queryFormulas?.length > 0 && (
+						<div className="qb-formulas-container">
+							{activeBuilder.queryFormulas.map((formula, index) => {
+								const query =
+									activeBuilder.queryData[index] || activeBuilder.queryData[0];
 
-									return (
-										<div key={formula.queryName} className="qb-formula">
-											<Formula query={query} formula={formula} index={index} isQBV2 />
-										</div>
-									);
-								})}
-							</div>
-						)}
+								return (
+									<div key={formula.queryName} className="qb-formula">
+										<Formula query={query} formula={formula} index={index} isQBV2 />
+									</div>
+								);
+							})}
+						</div>
+					)}
 
 					{shouldShowFooter && (
 						<QueryFooter
@@ -328,7 +319,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							</div>
 						))}
 
-						{currentQuery.builder.queryFormulas?.map((formula) => (
+						{activeBuilder.queryFormulas?.map((formula) => (
 							<div key={formula.queryName} className="formula-name">
 								{formula.queryName}
 							</div>

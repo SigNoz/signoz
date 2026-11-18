@@ -13,6 +13,8 @@ import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/uti
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
+import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
+
 import type { TableColumnOption } from '../hooks/useTableColumns';
 import ConfigActions from './ConfigActions/ConfigActions';
 import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
@@ -40,6 +42,8 @@ interface ConfigPaneProps {
 	legendSeries: LegendSeries[];
 	/** Table panel's resolved value columns, for the table-only editors. */
 	tableColumns: TableColumnOption[];
+	/** Group-by columns of the joined scalar result. */
+	groupColumns?: string[];
 	/** Query step interval (seconds), for the chart-appearance span-gaps floor. */
 	stepInterval?: number;
 	/**
@@ -50,6 +54,7 @@ interface ConfigPaneProps {
 	panelId: string;
 	/** Unit the selected metric was sent with; drives the unit selector's mismatch warning. */
 	metricUnit?: string;
+	geoMapPlacement?: GeoMapPlacement;
 }
 
 /**
@@ -67,10 +72,12 @@ function ConfigPane({
 	queryType,
 	legendSeries,
 	tableColumns,
+	groupColumns,
 	stepInterval,
 	panel,
 	panelId,
 	metricUnit,
+	geoMapPlacement,
 }: ConfigPaneProps): JSX.Element {
 	const panelKind = spec.plugin.kind;
 	const definition = getPanelDefinition(panelKind);
@@ -96,7 +103,7 @@ function ConfigPane({
 		onChangeSpec({ ...spec, display: { ...spec.display, [field]: value } });
 
 	return (
-		<div className={styles.config}>
+		<div className={styles.config} data-testid="panel-editor-v2-config">
 			<header className={styles.heading}>
 				<span className={styles.marker} />
 				<Typography.Text>Panel Details</Typography.Text>
@@ -133,6 +140,7 @@ function ConfigPane({
 						defaults={defaults}
 						legendSeries={legendSeries}
 						tableColumns={tableColumns}
+						groupColumns={groupColumns}
 						signal={signal}
 						panelKind={panelKind}
 						onChangePanelKind={onChangePanelKind}
@@ -160,6 +168,7 @@ function ConfigPane({
 									defaults={defaults}
 									legendSeries={legendSeries}
 									tableColumns={tableColumns}
+									groupColumns={groupColumns}
 									signal={signal}
 									panelKind={panelKind}
 									onChangePanelKind={onChangePanelKind}
@@ -167,6 +176,7 @@ function ConfigPane({
 									queryType={queryType}
 									stepInterval={stepInterval}
 									metricUnit={metricUnit}
+									geoMapPlacement={geoMapPlacement}
 								/>
 							))}
 						</div>

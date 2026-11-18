@@ -1,41 +1,50 @@
 import { useMemo } from 'react';
 import { Check } from '@signozhq/icons';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import {
+	buildSavedViewUpdatePermission,
+	SavedViewCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
 import { SaveChangesMenuProps } from './types';
 
 function SaveChangesMenu({
+	viewId,
 	disabled,
 	onSaveAsNew,
 	onUpdate,
 }: SaveChangesMenuProps): JSX.Element {
-	const items = useMemo<DropdownItemType[]>(
+	const items = useMemo<AuthZDropdownItemType[]>(
 		() => [
 			{
 				type: 'item',
 				value: 'save-as-new',
 				label: 'Save as new view',
+				checks: [SavedViewCreatePermission],
 				onClick: onSaveAsNew,
 			},
 			{
 				type: 'item',
 				value: 'update',
 				label: 'Update selected view',
+				checks: [buildSavedViewUpdatePermission(viewId)],
 				onClick: onUpdate,
 			},
 		],
-		[onSaveAsNew, onUpdate],
+		[viewId, onSaveAsNew, onUpdate],
 	);
 
 	return (
-		<Dropdown
+		<AuthZDropdown
 			items={items}
 			nativeButton
 			align="end"
 			side="bottom"
 			disabled={disabled}
 			disabledTooltip="Saving the view"
+			testId="saved-views-save-changes"
 		>
 			<SavedViewsIconButton
 				title="Save changes"
@@ -43,7 +52,7 @@ function SaveChangesMenu({
 				color="warning"
 				testId="saved-views-save-changes"
 			/>
-		</Dropdown>
+		</AuthZDropdown>
 	);
 }
 

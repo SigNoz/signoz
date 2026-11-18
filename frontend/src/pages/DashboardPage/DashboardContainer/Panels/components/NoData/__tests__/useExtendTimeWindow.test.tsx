@@ -2,11 +2,11 @@ import { act, renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
+import { TestRouter } from 'tests/router';
 
 import { useExtendTimeWindow } from '../useExtendTimeWindow';
 
@@ -46,7 +46,7 @@ function setup(globalTime: GlobalReducer): {
 	const { result } = renderHook(() => useExtendTimeWindow(), {
 		wrapper: ({ children }: { children: ReactNode }): JSX.Element => (
 			<Provider store={store}>
-				<MemoryRouter>{children}</MemoryRouter>
+				<TestRouter>{children}</TestRouter>
 			</Provider>
 		),
 	});

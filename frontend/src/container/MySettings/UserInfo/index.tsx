@@ -8,7 +8,7 @@ import {
 	useUpdateMyUserV2,
 } from 'api/generated/services/users';
 import { toast } from '@signozhq/ui/sonner';
-import { Check, FileTerminal, Mail, User } from '@signozhq/icons';
+import { Check, FileTerminal, Mail } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -124,15 +124,13 @@ function UserInfo(): JSX.Element {
 	return (
 		<div className="user-info-card">
 			<div className="user-info">
-				<div className="user-name">{user.displayName}</div>
+				<div className="user-name" data-testid="user-info-name">
+					{user.displayName}
+				</div>
 
 				<div className="user-info-subsection">
-					<div className="user-email">
+					<div className="user-email" data-testid="user-info-email">
 						<Mail size={16} /> {user.email}
-					</div>
-
-					<div className="user-role">
-						<User size={16} /> {user.role.toLowerCase()}
 					</div>
 				</div>
 			</div>
@@ -143,6 +141,7 @@ function UserInfo(): JSX.Element {
 					className="periscope-btn secondary"
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsUpdateNameModalOpen(true)}
+					data-testid="update-name-open-btn"
 				>
 					Update name
 				</Button>
@@ -152,6 +151,7 @@ function UserInfo(): JSX.Element {
 					className="periscope-btn secondary"
 					icon={<FileTerminal size={16} />}
 					onClick={(): void => setIsResetPasswordModalOpen(true)}
+					data-testid="reset-password-open-btn"
 				>
 					Reset password
 				</Button>
@@ -180,6 +180,7 @@ function UserInfo(): JSX.Element {
 				<div className="update-name-input">
 					<Input
 						placeholder="e.g. John Doe"
+						data-testid="update-name-input"
 						value={changedName}
 						disabled={isLoading}
 						onChange={(e): void => setChangedName(e.target.value)}

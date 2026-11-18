@@ -1,6 +1,7 @@
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
+import { reportBarRect } from '../../utils/barRect';
 import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
 import { DrawStyle, FillMode, LineInterpolation, LineStyle } from '../types';
@@ -397,5 +398,66 @@ describe('UPlotSeriesBuilder', () => {
 		);
 
 		expect(builder.getConfig().fill).toBeUndefined();
+	});
+
+	it('exposes partial timestamps only when there are some', () => {
+		const partialTimestamps = new Set([40]);
+
+		expect(
+			new UPlotSeriesBuilder(createBaseProps({ partialTimestamps })).getConfig(),
+		).toHaveProperty('partialTimestamps', partialTimestamps);
+		expect(
+			new UPlotSeriesBuilder(
+				createBaseProps({ partialTimestamps: new Set() }),
+			).getConfig(),
+		).not.toHaveProperty('partialTimestamps');
+	});
+
+	it('reports bar rects from bar path builders', () => {
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Bar, barMaxWidth: 321 }),
+		).getConfig();
+
+		config.paths?.({} as uPlot, 1, 0, 1);
+
+		expect(uPlot.paths.bars).toHaveBeenCalledWith(
+			expect.objectContaining({ each: reportBarRect }),
+		);
+	});
+});
+
+describe('UPlotSeriesBuilder scatter', () => {
+	it('draws through the given path builder and hides uPlot points', () => {
+		const pathBuilder = jest.fn();
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Scatter,
+				pathBuilder,
+				facets: [{ scale: 'x' }, { scale: 'y' }],
+				lineColor: '#ff0000',
+				fillOpacity: 0.5,
+				lineWidth: 1,
+				pointSize: 8,
+			}),
+		).getConfig();
+
+		expect(config.paths).toBe(pathBuilder);
+		expect(config.facets).toStrictEqual([{ scale: 'x' }, { scale: 'y' }]);
+		expect(config.points?.show).toBe(false);
+		expect(config.points?.size).toBe(8);
+		expect(config.stroke).toBe('#ff0000');
+		expect(config.width).toBe(1);
+		expect(config.fill).toBe('#ff000080');
+	});
+
+	it('draws nothing without a path builder', () => {
+		const config = new UPlotSeriesBuilder(
+			createBaseProps({ drawStyle: DrawStyle.Scatter }),
+		).getConfig();
+
+		expect(
+			(config.paths as uPlot.Series.PathBuilder)({} as uPlot, 1, 0, 0),
+		).toBeNull();
+		expect(config.facets).toBeUndefined();
 	});
 });

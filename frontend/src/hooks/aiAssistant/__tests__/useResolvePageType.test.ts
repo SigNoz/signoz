@@ -2,16 +2,11 @@ import { renderHook } from '@testing-library/react';
 import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type { AIAssistantVariant } from 'container/AIAssistant/VariantContext';
 import ROUTES from 'constants/routes';
+import { mockAppLocation } from 'tests/router-mocks';
 
 import { useResolvePageType } from '../useResolvePageType';
 
-const mockUseLocation = jest.fn();
 const mockUseVariant = jest.fn();
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): unknown => mockUseLocation(),
-}));
 
 jest.mock('container/AIAssistant/VariantContext', () => ({
 	useVariant: (): unknown => mockUseVariant(),
@@ -22,7 +17,7 @@ function setup(
 	search: string,
 	variant: AIAssistantVariant,
 ): PageTypeDTO {
-	mockUseLocation.mockReturnValue({ pathname, search });
+	mockAppLocation({ pathname, search });
 	mockUseVariant.mockReturnValue(variant);
 
 	return renderHook(() => useResolvePageType()).result.current;

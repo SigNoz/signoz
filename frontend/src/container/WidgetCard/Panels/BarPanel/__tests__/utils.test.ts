@@ -1,3 +1,4 @@
+import type { ExtendedSeries } from 'lib/uPlotV2/config/types';
 import { Widgets } from 'types/api/widgets/widget';
 import {
 	MetricRangePayloadProps,
@@ -162,6 +163,27 @@ describe('BarPanel utils', () => {
 				apiResponse,
 			}).getConfig();
 			expect(config.series).toHaveLength(3);
+		});
+
+		it('passes partial timestamps to the series', () => {
+			const apiResponse = createApiResponse([
+				{
+					metric: {},
+					queryName: 'Q1',
+					values: [
+						[1000, '1'],
+						[1060, '0.2'],
+					],
+					partialTimestamps: [1060],
+				} as MetricRangePayloadProps['data']['result'][0],
+			]);
+
+			const series = prepareBarPanelConfig({
+				...baseParams,
+				apiResponse,
+			}).getConfig().series?.[1] as ExtendedSeries;
+
+			expect(series.partialTimestamps).toStrictEqual(new Set([1060]));
 		});
 
 		it('uses getLegend for label when currentQuery is provided', () => {

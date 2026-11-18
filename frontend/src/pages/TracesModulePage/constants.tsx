@@ -1,8 +1,7 @@
-import { matchPath } from 'react-router-dom';
 import { TabRoutes } from 'components/RouteTab/types';
+import { matchRoute } from 'lib/router/matchRoute';
 import ROUTES from 'constants/routes';
-import { Compass, Cone, TowerControl } from '@signozhq/icons';
-import SaveView from 'pages/SaveView';
+import { Compass, Cone } from '@signozhq/icons';
 import TracesExplorer from 'pages/TracesExplorer';
 import TracesFunnelDetails from 'pages/TracesFunnelDetails';
 import TracesFunnels from 'pages/TracesFunnels';
@@ -20,7 +19,7 @@ export const tracesExplorer: TabRoutes = {
 
 export const tracesFunnel = (pathname: string): TabRoutes => ({
 	Component: (): JSX.Element => {
-		const isFunnelDetails = matchPath(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
+		const isFunnelDetails = matchRoute(pathname, ROUTES.TRACES_FUNNELS_DETAIL);
 
 		return isFunnelDetails ? <TracesFunnelDetails /> : <TracesFunnels />;
 	},
@@ -32,14 +31,3 @@ export const tracesFunnel = (pathname: string): TabRoutes => ({
 	route: ROUTES.TRACES_FUNNELS,
 	key: ROUTES.TRACES_FUNNELS,
 });
-
-export const tracesSaveView: TabRoutes = {
-	Component: SaveView,
-	name: (
-		<div className="tab-item">
-			<TowerControl size={16} /> Views
-		</div>
-	),
-	route: ROUTES.TRACES_SAVE_VIEWS,
-	key: ROUTES.TRACES_SAVE_VIEWS,
-};

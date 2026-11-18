@@ -33,7 +33,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "METRIC_BASED_ALERT",
 				"description":   "CPU usage for api-service pods exceeds 80% of the requested CPU",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -93,7 +92,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "METRIC_BASED_ALERT",
 				"description":   "Disk utilization for a persistent volume is above 80%",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -176,7 +174,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "METRIC_BASED_ALERT",
 				"description":   "Consumer group lag computed via PromQL",
 				"ruleType":      "promql_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -221,16 +218,14 @@ func postableRuleExamples() []handler.OpenAPIExample {
 		},
 		{
 			Name:        "metric_anomaly",
-			Summary:     "Metric anomaly rule (v1 only)",
-			Description: "Anomaly rules are not yet supported under schemaVersion v2alpha1, so this example uses the v1 shape. Wraps a builder query in the `anomaly` function with daily seasonality SigNoz compares each point against the forecast for that time of day. Fires when the anomaly score stays below the threshold for the entire window; `requireMinPoints` guards against noisy intervals.",
+			Summary:     "Metric anomaly rule",
+			Description: "Wraps a builder query in the `anomaly` function with daily seasonality, so SigNoz compares each point against the forecast for that time of day. The threshold is compared against the signed anomaly score, so `below` with a target of -2 fires when an abrupt drop holds for the entire window; `requireMinPoints` guards against noisy intervals.",
 			Value: map[string]any{
-				"alert":       "Anomalous drop in ingested spans",
-				"alertType":   "METRIC_BASED_ALERT",
-				"description": "Detect an abrupt drop in span ingestion using a z-score anomaly function",
-				"ruleType":    "anomaly_rule",
-				"version":     "v5",
-				"evalWindow":  "24h",
-				"frequency":   "3h",
+				"alert":         "Anomalous drop in ingested spans",
+				"alertType":     "METRIC_BASED_ALERT",
+				"description":   "Detect an abrupt drop in span ingestion using a z-score anomaly function",
+				"ruleType":      "anomaly_rule",
+				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
 						"queryType": "builder",
@@ -256,17 +251,28 @@ func postableRuleExamples() []handler.OpenAPIExample {
 							},
 						},
 					},
-					"op":                "below",
-					"matchType":         "all_the_times",
-					"target":            2,
-					"algorithm":         "standard",
 					"seasonality":       "daily",
 					"selectedQueryName": "A",
 					"requireMinPoints":  true,
 					"requiredNumPoints": 3,
+					"thresholds": map[string]any{
+						"kind": "basic",
+						"spec": []any{
+							map[string]any{
+								"name":      "warning",
+								"op":        "below",
+								"matchType": "all_the_times",
+								"target":    -2,
+								"channels":  []any{"slack-ingestion"},
+							},
+						},
+					},
 				},
-				"labels":            map[string]any{"severity": "warning"},
-				"preferredChannels": []any{"slack-ingestion"},
+				"evaluation": rolling("24h", "3h"),
+				"notificationSettings": map[string]any{
+					"renotify": renotify("4h", "firing"),
+				},
+				"labels": map[string]any{"severity": "warning"},
 				"annotations": map[string]any{
 					"description": "Ingestion rate for tenant {{$tenant_id}} is anomalously low (z-score {{$value}}).",
 					"summary":     "Span ingestion anomaly",
@@ -282,7 +288,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "LOGS_BASED_ALERT",
 				"description":   "Any panic log line emitted by the payments service",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -341,7 +346,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "LOGS_BASED_ALERT",
 				"description":   "Error log ratio as a percentage of total logs for payments-api",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -418,7 +422,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "TRACES_BASED_ALERT",
 				"description":   "p99 duration of the search endpoint exceeds 5s",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -479,7 +482,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "TRACES_BASED_ALERT",
 				"description":   "Request error rate for search-api, grouped by route",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -562,7 +564,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "METRIC_BASED_ALERT",
 				"description":   "Warn at lag ≥ 50 and page at ≥ 200, tiered via thresholds.spec.",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{
@@ -653,7 +654,6 @@ func postableRuleExamples() []handler.OpenAPIExample {
 				"alertType":     "TRACES_BASED_ALERT",
 				"description":   "Noise-controlled 5xx error rate alert with renotify on gaps",
 				"ruleType":      "threshold_rule",
-				"version":       "v5",
 				"schemaVersion": "v2alpha1",
 				"condition": map[string]any{
 					"compositeQuery": map[string]any{

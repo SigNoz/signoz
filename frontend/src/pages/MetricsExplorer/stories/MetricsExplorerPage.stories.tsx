@@ -1,18 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	findSuggestion,
-	openKeySuggestions,
-	typeFilter,
-} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { metricsMocks, saveUnit } from './MetricsExplorerPage.stories.mocks';
+import {
+	type MetricsArgs,
+	metricsMocks,
+} from './MetricsExplorerPage.stories.mocks';
+import {
+	openDashboardsMenu,
+	saveMetricUnit,
+	suggestFilterKeys,
+	suggestFilterValues,
+} from './__story_mockdata__/metricsExplorer.play';
 import MetricsExplorerPage from '../MetricsExplorerPage';
-
-type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
 
 const pageStory = storyMocks(metricsMocks, { layout: 'app' });
 
@@ -69,15 +69,10 @@ export const VolumeControl: Story = {
 
 /**
  * The Explorer tab plotting one metric, with the query builder above the chart
- * and the saved-view actions in the toolbar.
+ * and the saved views beside it.
  */
 export const Explorer: Story = {
 	args: { tab: 'explorer' },
-};
-
-/** The Views tab, where the saved views the explorer offers are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
 };
 
 /**
@@ -108,31 +103,17 @@ export const Tooltips: Story = {
  */
 export const MetricDetailsDashboardsMenu: Story = {
 	args: { drawer: 'details' },
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId(
-				'metric-dashboards-popover',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openDashboardsMenu,
 };
 
 /** The summary's metric search focused: the attributes metrics can be found by. */
 export const FilterKeySuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openKeySuggestions(canvasElement, 'k8s.cluster.name');
-	},
+	play: suggestFilterKeys,
 };
 
 /** The metric search on an attribute and an operator: the values it holds. */
 export const FilterValueSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name = ');
-		await findSuggestion(canvasElement, 'checkout');
-	},
+	play: suggestFilterValues,
 };
 
 /**
@@ -141,14 +122,7 @@ export const FilterValueSuggestions: Story = {
  */
 export const UnitSavedToast: Story = {
 	args: { tab: 'explorer', metricUnit: 'unset' },
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await saveUnit(
-			canvasElement,
-			args.unitSave === 'success'
-				? 'Unit saved successfully'
-				: 'Failed to save unit',
-		);
-	},
+	play: saveMetricUnit,
 };
 
 /** The same save with the metadata write failing. */
@@ -156,7 +130,5 @@ export const UnitSaveErrorToast: Story = {
 	args: { tab: 'explorer', metricUnit: 'unset', unitSave: 'error' },
 	// The deliberate 500 is the state under test.
 	parameters: { allowConsoleErrors: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await saveUnit(canvasElement, 'Failed to save unit');
-	},
+	play: saveMetricUnit,
 };

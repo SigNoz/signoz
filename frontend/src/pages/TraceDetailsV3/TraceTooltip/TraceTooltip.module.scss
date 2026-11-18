@@ -1,0 +1,47 @@
+.section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+	padding: var(--spacing-2) 0;
+	border-top: 1px solid;
+	border-image: linear-gradient(
+			90deg,
+			var(--l3-background-transparent),
+			var(--l3-border),
+			var(--l3-background-transparent)
+		)
+		1;
+}
+
+.section:first-child {
+	padding-top: 0;
+	border-top: none;
+}
+
+.section:last-child {
+	padding-bottom: 0;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: auto auto;
+	justify-content: space-between;
+	column-gap: var(--spacing-2);
+	min-width: 0;
+}
+
+.nestedRow {
+	padding-left: var(--spacing-6);
+}
+
+.rowLabel {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.rowValue {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}

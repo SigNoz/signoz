@@ -2,6 +2,7 @@ package implrulestatehistory
 
 import (
 	"context"
+	"log/slog"
 	"math"
 	"time"
 
@@ -15,10 +16,11 @@ import (
 type module struct {
 	store     rulestatehistorytypes.Store
 	ruleStore ruletypes.RuleStore
+	logger    *slog.Logger
 }
 
-func NewModule(store rulestatehistorytypes.Store, ruleStore ruletypes.RuleStore) rulestatehistory.Module {
-	return &module{store: store, ruleStore: ruleStore}
+func NewModule(store rulestatehistorytypes.Store, ruleStore ruletypes.RuleStore, logger *slog.Logger) rulestatehistory.Module {
+	return &module{store: store, ruleStore: ruleStore, logger: logger}
 }
 
 func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]rulestatehistorytypes.RuleStateHistory, error) {
@@ -34,7 +36,7 @@ func (m *module) GetHistoryTimeline(ctx context.Context, orgID valuer.UUID, rule
 	if builder := m.relatedLinkBuilderForRule(ctx, orgID, ruleID); builder != nil {
 		for idx := range items {
 			start, end := builder.queryWindow(items[idx].UnixMilli)
-			items[idx].RelatedLinks = builder.links(items[idx].Labels, start, end)
+			items[idx].RelatedLinks = builder.links(ctx, items[idx].Labels, start, end)
 		}
 	}
 
@@ -60,7 +62,7 @@ func (m *module) GetHistoryContributors(ctx context.Context, orgID valuer.UUID, 
 		// span it too instead of a single evaluation window
 		start, end := time.UnixMilli(query.Start), time.UnixMilli(query.End)
 		for idx := range contributors {
-			contributors[idx].RelatedLinks = builder.links(contributors[idx].Labels, start, end)
+			contributors[idx].RelatedLinks = builder.links(ctx, contributors[idx].Labels, start, end)
 		}
 	}
 
@@ -137,9 +139,14 @@ func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rule
 func (m *module) RecordRuleStateHistory(ctx context.Context, ruleID string, handledRestart bool, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
 	revisedItemsToAdd := map[uint64]rulestatehistorytypes.RuleStateHistory{}
 
-	lastSavedState, err := m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
-	if err != nil {
-		return err
+	// the stored state is only read to reconcile the first record after a restart
+	var lastSavedState []rulestatehistorytypes.RuleStateHistory
+	if !handledRestart {
+		var err error
+		lastSavedState, err = m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !handledRestart && len(lastSavedState) > 0 {

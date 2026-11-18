@@ -167,7 +167,8 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// openinference capture, input.value of the ChatCompletion span
+			// ChatCompletionRequestMessageContentPartFile {file: {file_id}}, as OpenInference records the request in input.value:
+			// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L42650
 			name:   "FileByID_FilePart",
 			input:  `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"file_id": "file-6F2ksmvXxt4VdoqmHRw6kL"}}]}], "max_tokens": 60}`,
 			output: `{"id":"chatcmpl-DktFileCapture0001","object":"chat.completion","model":"gpt-4o-mini-2024-07-18","choices":[{"index":0,"finish_reason":"stop","logprobs":null,"message":{"role":"assistant","content":"The document is a short PDF about dragons.","refusal":null,"annotations":[]}}]}`,
@@ -189,7 +190,8 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			]`,
 		},
 		{
-			// openinference capture, input.value of the ChatCompletion span
+			// ChatCompletionRequestMessageContentPartFile {file: {filename, file_data}}, file_data a data URL:
+			// https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L42650
 			name:  "FileInline_BlobPart",
 			input: `{"model": "gpt-4o-mini", "messages": [{"role": "user", "content": [{"type": "text", "text": "Summarise this document in one sentence."}, {"type": "file", "file": {"filename": "draconomicon.pdf", "file_data": "data:application/pdf;base64,JVBERi0xLjQKMSAwIG9iajw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+ZW5kb2JqCjIgMCBvYmo8PC9UeXBlL1BhZ2VzL0tpZHNbXS9Db3VudCAwPj5lbmRvYmoKdHJhaWxlcjw8L1Jvb3QgMSAwIFI+PgolJUVPRgo="}}]}], "max_tokens": 60}`,
 			wantInput: `[
@@ -204,6 +206,30 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
+			// Langfuse SDK generation: the history as a list, the first choice's message as the output
+			name:       "SingleMessageOutput_AssistantMessage",
+			input:      `[{"role": "system", "content": "You are a support agent on a phone call."}, {"role": "user", "content": "Hello?"}]`,
+			output:     `{"role": "assistant", "content": "Hi, this is a courtesy call about your order. Do you have a minute?"}`,
+			wantInput:  `[{"role": "system", "parts": [{"type": "text", "content": "You are a support agent on a phone call."}]}, {"role": "user", "parts": [{"type": "text", "content": "Hello?"}]}]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Hi, this is a courtesy call about your order. Do you have a minute?"}]}]`,
+		},
+		{
+			// a structured output that happens to carry a role key is not a message
+			name:       "ObjectWithRoleKeyButNoContent_KeptAsGeneric",
+			output:     `{"role": "admin", "permissions": ["read", "write"]}`,
+			warnings:   []string{"message format not recognised, kept as generic"},
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "", "parts": [{"type": "generic", "content": "{\"permissions\":[\"read\",\"write\"],\"role\":\"admin\"}"}]}]`,
+		},
+		{
+			// Langfuse LangChain handler: the additional_kwargs of the AIMessage, without a role, as the output
+			// of a tool-calling turn
+			name:       "RolelessToolCallsOutput_AssistantToolCallPart",
+			output:     `{"tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Oslo\"}"}}], "refusal": null}`,
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_1", "arguments": {"city": "Oslo"}}]}]`,
+		},
+		{
 			name:      "ResponseWithScalarChoice_KeptAsGeneric",
 			output:    `{"choices":["oops",{"finish_reason":"stop","index":1,"message":{"role":"assistant","content":"hi"}}]}`,
 			wantInput: `[]`,
@@ -211,6 +237,17 @@ func TestFormat_OpenAIChat(t *testing.T) {
 			  {"role": "", "parts": [{"type": "generic", "content": "oops"}]},
 			  {"role": "assistant", "parts": [{"type": "text", "content": "hi"}], "finish_reason": "stop"}
 			]`,
+		},
+		{
+			// openrouter-gateway capture: OpenRouter replaces the image with a placeholder, which is no URL
+			name:     "RedactedImageURL_GenericPart_Warns",
+			input:    `{"messages":[{"role":"user","content":[{"type":"text","text":"What animal is in this image? One sentence."},{"type":"image_url","image_url":{"url":"[OR_REDACTED]"}}]}]}`,
+			warnings: []string{"media without a URL kept as generic"},
+			wantInput: `[{"role": "user", "parts": [
+			  {"type": "text", "content": "What animal is in this image? One sentence."},
+			  {"type": "generic", "modality": "image", "content": "[OR_REDACTED]"}
+			]}]`,
+			wantOutput: `[]`,
 		},
 	})
 }

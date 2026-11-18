@@ -15,16 +15,14 @@ function PromQLQueryContainer(): JSX.Element | null {
 
 	return (
 		<>
-			{currentQuery.promql.map(
-				(q: IPromQLQuery, idx: number): JSX.Element => (
-					<PromQLQueryBuilder
-						key={q.name}
-						deletable={currentQuery.promql.length > 1}
-						queryIndex={idx}
-						queryData={q}
-					/>
-				),
-			)}
+			{currentQuery.promql.map((q: IPromQLQuery, idx: number): JSX.Element => (
+				<PromQLQueryBuilder
+					key={q.name}
+					deletable={currentQuery.promql.length > 1}
+					queryIndex={idx}
+					queryData={q}
+				/>
+			))}
 			<QueryButton
 				onClick={addQueryHandler}
 				icon={<Plus size="md" />}

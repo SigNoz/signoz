@@ -1,15 +1,19 @@
-import { Route, Switch } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const rolesApiBase = '*/api/v1/roles';
+const VIEW_ROLE_URL = `${ROUTES.ROLE_DETAILS.replace(
+	':roleId',
+	CUSTOM_ROLE_ID,
+)}?name=${encodeURIComponent('Custom Role')}`;
 
 const roleWithTransactionGroups = {
 	status: 'success',
@@ -41,21 +45,9 @@ afterEach(() => {
 });
 
 function renderEditPage(roleId = CUSTOM_ROLE_ID): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_DETAILS} exact>
-				<div data-testid="role-details-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_EDIT}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: `/settings/roles/${roleId}/edit?name=Custom%20Role` },
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: `/settings/roles/${roleId}/edit?name=Custom%20Role`,
+	});
 }
 
 describe('EditRolePage', () => {
@@ -144,9 +136,10 @@ describe('EditRolePage', () => {
 			const cancelButton = await screen.findByTestId('cancel-button');
 			await user.click(cancelButton);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 	});
 
@@ -268,9 +261,10 @@ describe('EditRolePage', () => {
 			const cancelBtn = screen.getByTestId('cancel-button');
 			await user.click(cancelBtn);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 	});
 
@@ -292,9 +286,10 @@ describe('EditRolePage', () => {
 			const saveBtn = screen.getByTestId('save-button');
 			await user.click(saveBtn);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 
 		it('calls update API when save clicked', async () => {

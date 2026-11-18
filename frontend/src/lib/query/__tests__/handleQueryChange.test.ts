@@ -76,3 +76,39 @@ describe('handleQueryChange bucket options', () => {
 		});
 	});
 });
+
+describe('handleQueryChange trace operator', () => {
+	function queryWithTraceOperator(): Query {
+		const base = initialQueriesMap[DataSource.TRACES];
+		return {
+			...base,
+			builder: {
+				...base.builder,
+				queryTraceOperator: [
+					{ ...base.builder.queryData[0], queryName: 'T1', expression: 'A => B' },
+				],
+			},
+		};
+	}
+
+	// The API rejects a trace operator on a scatter plot, so the switch sheds it.
+	it('drops the trace operator when switching to a scatter plot', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.SCATTER,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TABLE,
+		);
+
+		expect(result.builder.queryTraceOperator).toStrictEqual([]);
+	});
+
+	it('keeps the trace operator when switching to a table', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.TABLE,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TIME_SERIES,
+		);
+
+		expect(result.builder.queryTraceOperator).toHaveLength(1);
+	});
+});

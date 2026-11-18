@@ -1,10 +1,10 @@
-import { useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
+import { useAppLocation } from 'lib/router/useAppLocation';
 
 import { TableLabel } from '../types';
 
 function TabLabel({ routeKey, label }: TableLabel): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	if (pathname === routeKey) {
 		return <Typography.Link>{label}</Typography.Link>;

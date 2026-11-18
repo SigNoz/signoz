@@ -1,12 +1,12 @@
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { useFunnelMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
 
 function OverallMetrics(): JSX.Element {
-	const { funnelId } = useParams<{ funnelId: string }>();
+	const { funnelId } = useAppParams<'funnelId'>();
 	const { isLoading, metricsData, conversionRate, isError } = useFunnelMetrics({
-		funnelId,
+		funnelId: funnelId || '',
 	});
 
 	return (

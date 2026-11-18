@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, ArrowRightToLine, BookOpenText } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
@@ -68,6 +68,7 @@ function HomeChecklist({
 						{whatsNextChecklistItems.map((item, index) => (
 							<div
 								key={item.id}
+								data-testid={`checklist-item-${item.id}`}
 								className={`whats-next-checklist-item ${
 									item.isSkipped && !item.completed ? 'skipped' : ''
 								} ${
@@ -93,12 +94,12 @@ function HomeChecklist({
 														});
 
 														if (item.toRoute !== ROUTES.GET_STARTED_WITH_CLOUD) {
-															history.push(item.toRoute || '');
+															navigate(item.toRoute || '');
 														} else if (
 															activeLicense &&
 															activeLicense.platform === LicensePlatform.CLOUD
 														) {
-															history.push(item.toRoute || '');
+															navigate(item.toRoute || '');
 														} else {
 															openInNewTab(item.docsLink || '');
 														}
@@ -129,6 +130,7 @@ function HomeChecklist({
 													<Button
 														type="link"
 														className="periscope-btn link skip-btn"
+														data-testid={`checklist-skip-${item.id}`}
 														onClick={(): void => {
 															logEvent('Welcome Checklist: Skip clicked', {
 																step: item.id,

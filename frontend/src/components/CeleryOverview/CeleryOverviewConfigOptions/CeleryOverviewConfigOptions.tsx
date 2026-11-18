@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Row, Select, Spin } from 'antd';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	getValuesFromQueryParams,
 	setQueryParamsFromOptions,
@@ -16,6 +18,7 @@ export interface SelectOptionConfig {
 	placeholder: string;
 	queryParam: QueryParams;
 	filterType: string | string[];
+	fieldContext?: TelemetrytypesFieldContextDTO;
 	shouldSetQueryParams?: boolean;
 	onChange?: (value: string | string[]) => void;
 	values?: string | string[];
@@ -26,17 +29,19 @@ export function FilterSelect({
 	placeholder,
 	queryParam,
 	filterType,
+	fieldContext,
 	values,
 	shouldSetQueryParams,
 	onChange,
 	isMultiple,
 }: SelectOptionConfig): JSX.Element {
-	const { handleSearch, isFetching, options } =
-		useCeleryFilterOptions(filterType);
+	const { handleSearch, isFetching, options } = useCeleryFilterOptions(
+		filterType,
+		fieldContext,
+	);
 
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	// Add state to track the current search input
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -66,7 +71,7 @@ export function FilterSelect({
 				setQueryParamsFromOptions(
 					value as string[],
 					urlQuery,
-					history,
+					navigate,
 					location,
 					queryParam,
 				);
@@ -77,7 +82,6 @@ export function FilterSelect({
 			handleSearch,
 			shouldSetQueryParams,
 			urlQuery,
-			history,
 			location,
 			queryParam,
 			onChange,
@@ -119,6 +123,7 @@ export function FilterSelect({
 }
 
 FilterSelect.defaultProps = {
+	fieldContext: undefined,
 	shouldSetQueryParams: true,
 	onChange: (): void => {},
 	values: [],
@@ -130,12 +135,14 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 		{
 			placeholder: 'Service Name',
 			queryParam: QueryParams.service,
-			filterType: 'serviceName',
+			filterType: 'service.name',
+			fieldContext: TelemetrytypesFieldContextDTO.resource,
 		},
 		{
 			placeholder: 'Span Name',
 			queryParam: QueryParams.spanName,
 			filterType: 'name',
+			fieldContext: TelemetrytypesFieldContextDTO.span,
 		},
 		{
 			placeholder: 'Msg System',
@@ -163,6 +170,7 @@ function CeleryOverviewConfigOptions(): JSX.Element {
 						placeholder={config.placeholder}
 						queryParam={config.queryParam}
 						filterType={config.filterType}
+						fieldContext={config.fieldContext}
 					/>
 				))}
 			</Row>

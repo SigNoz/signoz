@@ -1,8 +1,8 @@
 import cx from 'classnames';
 import { Undo2 } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
 
 import SavedViewsRowButton from './SavedViewsRowButton';
+import SavedViewsRowLink from './SavedViewsRowLink';
 import SavedViewsRowMenu from './SavedViewsRowMenu';
 import { SavedViewsListRowProps } from './types';
 
@@ -16,33 +16,17 @@ function SavedViewsListRow({
 	onAction,
 	hover,
 }: SavedViewsListRowProps): JSX.Element {
-	const name = view.spec.displayName;
-
 	return (
 		<div
 			className={cx(styles.row, { [styles.isActive]: isActive })}
 			data-testid="saved-views-row"
 			data-view-id={view.id}
-			onMouseEnter={(event): void => hover.onRowEnter(view, event.currentTarget)}
+			onMouseEnter={(event): void =>
+				hover.onRowEnter(view.id, event.currentTarget)
+			}
 			onMouseLeave={hover.onRowLeave}
 		>
-			<div className={styles.rowName}>
-				<Button
-					size="md"
-					variant="ghost"
-					color="secondary"
-					width="100%"
-					textOverflow="ellipsis"
-					onClick={(): void => {
-						if (!isActive) {
-							onSelect(view);
-						}
-					}}
-					testId="saved-views-row-name"
-				>
-					{name}
-				</Button>
-			</div>
+			<SavedViewsRowLink view={view} isActive={isActive} onSelect={onSelect} />
 			{isActive && (
 				<SavedViewsRowButton
 					icon={<Undo2 size={14} />}
@@ -54,6 +38,7 @@ function SavedViewsListRow({
 			)}
 			<span className={styles.rowMenu}>
 				<SavedViewsRowMenu
+					viewId={view.id}
 					onAction={(key): void => onAction(view, key)}
 					onOpen={hover.onMenuOpen}
 				/>

@@ -1,7 +1,6 @@
 # Verifying a page story
 
-A story is not done because it compiles. It is done when each control has been
-seen changing the page and the console is silent.
+A story is not done because it compiles. It is done when each control has been seen changing the page and the console is silent.
 
 ## Run it
 
@@ -9,12 +8,9 @@ seen changing the page and the console is silent.
 cd frontend && pnpm storybook --ci --quiet   # :6006, background it
 ```
 
-A newly added `.stories.tsx` takes a few seconds to appear in `index.json` on an
-already-running server; an empty first poll is not a broken `stories` glob.
+A newly added `.stories.tsx` takes a few seconds to appear in `index.json` on an already-running server; an empty first poll is not a broken `stories` glob.
 
-Story ids come from the meta title: `Pages/Services/List` →
-`pages-services-list`, plus the story export in kebab-case. Render one story on
-its own:
+Story ids come from the meta title: `Pages/Services/List` → `pages-services-list`, plus the story export in kebab-case. Render one story on its own:
 
 ```
 http://localhost:6006/iframe.html?id=pages-services-list--default&viewMode=story
@@ -22,9 +18,7 @@ http://localhost:6006/iframe.html?id=pages-services-list--default&viewMode=story
 
 ## Flip controls from the URL
 
-Args are settable in the iframe URL, so a whole sweep runs headless without
-touching the panel. Booleans go as `!true` / `!false`, numbers bare, arrays
-indexed, several separated by `;`, and the theme through `globals`:
+Args are settable in the iframe URL, so a whole sweep runs headless without touching the panel. Booleans go as `!true` / `!false`, numbers bare, arrays indexed, several separated by `;`, and the theme through `globals`:
 
 ```
 &args=services:0;apdex:poor;access:viewer;dataState:loading
@@ -32,13 +26,11 @@ indexed, several separated by `;`, and the theme through `globals`:
 &globals=theme:light
 ```
 
-That is the cheap way to check a control does something: load with and without
-it, diff the page text.
+That is the cheap way to check a control does something: load with and without it, diff the page text.
 
 ## Drive it
 
-Playwright lives in the repo's e2e workspace, so a scratch script can use it
-directly:
+Playwright lives in the repo's e2e workspace, so a scratch script can use it directly:
 
 ```js
 import pw from '<repo>/tests/e2e/node_modules/playwright/index.js';
@@ -58,36 +50,18 @@ console.log((await page.locator('body').innerText()).slice(0, 1500), problems);
 await browser.close();
 ```
 
-Screenshots are worth taking for `Default` in both themes: text extraction does
-not catch an unstyled page. Take them with
-[sbshot](https://github.com/SigNoz/sbshot), e.g.
-`sbshot capture http://localhost:6006 --title <story title> --theme dark,light`.
+Screenshots are worth taking for `Default` in both themes: text extraction does not catch an unstyled page. Take them with [sbshot](https://github.com/SigNoz/sbshot), e.g. `sbshot capture http://localhost:6006 --title <story title> --theme dark,light`.
+
+That is one run, for checking the story you just wrote. Comparing two branches is a different job: see the `sbshot-visual-diff` skill, which covers the baseline to pick, measuring the noise and exporting something a reviewer can open.
 
 ## Gates
 
-- **Console silent.** `[storybook] no msw handler`, a 501 from the catch-all, an
-  msw unhandled-request warning, a React key or state warning: assume the story
-  is wrong first. A warning that survives is sometimes the app's. Prove it by
-  turning off the control that renders the widget and watching the warning go
-  with it, and by finding the same component elsewhere doing it right. Then
-  report the app bug in the PR. Never invent a field the API does not return to
-  silence a warning.
-- **No navigation overlay on mount.** "Navigation blocked in Storybook" on load
-  means the page is trying to leave: wrong `route`, or a guard denying on a
-  permission the controls did not grant.
-- **Every control moves something.** Sweep them one at a time from the URL and
-  diff the page text. A control with no diff is either wired to nothing or aimed
-  at a widget that is not rendering. Some only show their effect after an
-  interaction, such as a tab that has to be clicked or a select that has to be
-  opened. Drive that interaction rather than calling the control unobservable.
-- **Both themes render styled.** An unstyled page means the story is not inside
-  the provider decorator, or `<body data-theme>` was lost.
-- **Roles agree.** `<body data-signoz-story-role>` and
-  `<body data-signoz-context-role>` disagreeing means the page reads a different
-  `AppContext` than the story config fills.
-- **The page's own navigation works.** Tabs, filters and pagination that write
-  query params should re-render the page in place; only leaving the page belongs
-  in the overlay.
+- **Console silent.** `[storybook] no msw handler`, a 501 from the catch-all, an msw unhandled-request warning, a React key or state warning: assume the story is wrong first. A warning that survives is sometimes the app's. Prove it by turning off the control that renders the widget and watching the warning go with it, and by finding the same component elsewhere doing it right. Then report the app bug in the PR. Never invent a field the API does not return to silence a warning.
+- **No navigation overlay on mount.** "Navigation blocked in Storybook" on load means the page is trying to leave: wrong `route`, or a guard denying on a permission the controls did not grant.
+- **Every control moves something.** Sweep them one at a time from the URL and diff the page text. A control with no diff is either wired to nothing or aimed at a widget that is not rendering. Some only show their effect after an interaction, such as a tab that has to be clicked or a select that has to be opened. Drive that interaction rather than calling the control unobservable.
+- **Both themes render styled.** An unstyled page means the story is not inside the provider decorator, or `<body data-theme>` was lost.
+- **Roles agree.** `<body data-signoz-story-role>` and `<body data-signoz-context-role>` disagreeing means the page reads a different `AppContext` than the story config fills.
+- **The page's own navigation works.** Tabs, filters and pagination that write query params should re-render the page in place; only leaving the page belongs in the overlay.
 
 ## Then the usual
 
@@ -97,9 +71,7 @@ pnpm exec oxlint <changed files>
 pnpm exec oxfmt --check <changed files>
 ```
 
-There is no prettier in this repo. `pnpm exec prettier --check` fetches something
-else, prints `Prettier: All files formatted correctly` and exits 254: a pass that is
-not one.
+There is no prettier in this repo. `pnpm exec prettier --check` fetches something else, prints `Prettier: All files formatted correctly` and exits 254: a pass that is not one.
 
 ## Common failures
 

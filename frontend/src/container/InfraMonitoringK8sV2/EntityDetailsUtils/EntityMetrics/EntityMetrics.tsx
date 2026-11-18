@@ -2,7 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
-import { InfraMonitoringEvents } from 'constants/events';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import {
@@ -41,7 +40,6 @@ import ChartTooltipFooter from './ChartTooltipFooter';
 
 interface EntityMetricsProps<T> {
 	entity: T;
-	eventEntity: string;
 	entityWidgetInfo: K8sDetailsWidgetInfo[];
 	getEntityQueryPayload: (
 		node: T,
@@ -55,7 +53,6 @@ interface EntityMetricsProps<T> {
 
 function EntityMetrics<T>({
 	entity,
-	eventEntity,
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKey,
@@ -152,13 +149,16 @@ function EntityMetrics<T>({
 		}
 
 		const panelType = queryPayloads[idx]?.graphType;
+		const isNoData =
+			!query.isLoading && !query?.data?.payload?.data?.result?.length;
 
 		return (
 			<div
 				className={cx(styles.chartContainer, {
-					[styles.noDataContainer]:
-						!query.isLoading && !query?.data?.payload?.data?.result?.length,
+					[styles.noDataContainer]: isNoData,
 				})}
+				data-testid="entity-metrics-chart"
+				data-has-data={isNoData ? 'false' : 'true'}
 			>
 				{panelType === PANEL_TYPES.TABLE ? (
 					<MetricsTable
@@ -200,11 +200,7 @@ function EntityMetrics<T>({
 			<div ref={setTooltipPortalEl} style={{ display: 'contents' }} />
 
 			<div className={styles.metricsHeader}>
-				<EntityDateTimeSelector
-					eventEntity={eventEntity}
-					category={category}
-					view={InfraMonitoringEvents.MetricsView}
-				/>
+				<EntityDateTimeSelector category={category} />
 			</div>
 			<div className={styles.entityMetricsContainer}>
 				{queries.map((query, idx) => (

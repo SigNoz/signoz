@@ -1,18 +1,23 @@
 import {
 	DashboardtypesComparisonOperatorDTO,
 	DashboardtypesFillModeDTO,
+	DashboardtypesHeatmapYScaleDTO,
 	DashboardtypesLegendPositionDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
 	DashboardtypesStackModeDTO,
+	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTimePreferenceDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { DEFAULT_BAR_COLOR } from '../../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
 import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
+import { sections as geoMapSections } from '../../kinds/GeoMapPanel/sections';
+import { sections as heatmapSections } from '../../kinds/HeatmapPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
 import { sections as timeSeriesSections } from '../../kinds/TimeSeriesPanel/sections';
 import {
@@ -312,6 +317,19 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
+		it('carries only the y scale, dropping fields a scatter y axis adds', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Axes, controls: { y: true } },
+			];
+			const oldSpec = oldSpecWith({
+				axes: { y: { label: 'Latency', softMin: 0, softMax: 100 } },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).axes).toStrictEqual({
+				y: { scale: DashboardtypesHeatmapYScaleDTO.auto },
+			});
+		});
+
 		it('skips null soft bounds and seeds nothing on a new panel or empty axes', () => {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Axes, controls: { minMax: true, logScale: true } },
@@ -322,6 +340,33 @@ describe('buildPluginSpec', () => {
 					oldSpec: oldSpecWith({ axes: { softMin: null, softMax: null } }),
 				}),
 			).toStrictEqual({});
+		});
+	});
+
+	describe('appearance seed', () => {
+		const sections: SectionConfig[] = [
+			{
+				kind: SectionKind.Appearance,
+				controls: { showRank: true, showShare: true, barColor: true },
+			},
+		];
+
+		it('carries the toggles and bar color across a switch between kinds that declare them', () => {
+			const oldSpec = oldSpecWith({
+				appearance: { showRank: true, showShare: false, barColor: '#00C853' },
+			});
+
+			expect(buildPluginSpec(sections, { oldSpec }).appearance).toStrictEqual({
+				barColor: '#00C853',
+				showRank: true,
+				showShare: false,
+			});
+		});
+
+		it('seeds only the default bar color for a new panel, where unset toggles read as off', () => {
+			expect(buildPluginSpec(sections)).toStrictEqual({
+				appearance: { barColor: DEFAULT_BAR_COLOR },
+			});
 		});
 	});
 
@@ -535,6 +580,40 @@ describe('buildPluginSpec', () => {
 			});
 		});
 
+		it('carries per-column units between kinds that both key them by column (Table ↔ Scatter Plot)', () => {
+			const sections: SectionConfig[] = [
+				{
+					kind: SectionKind.Formatting,
+					controls: { decimals: true, columnUnits: true },
+				},
+			];
+			const oldSpec = oldSpecWith(
+				{
+					formatting: {
+						columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+						decimalPrecision: 1,
+					},
+				},
+				[builderQueryNamed('A')],
+			);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toStrictEqual({
+				decimalPrecision: 1,
+				columnUnits: { 'A.count()': 'short', 'A.p99(duration_nano)': 'ns' },
+			});
+		});
+
+		it('keeps an emptied column unit map empty rather than fanning a unit out', () => {
+			const sections: SectionConfig[] = [
+				{ kind: SectionKind.Formatting, controls: { columnUnits: true } },
+			];
+			const oldSpec = oldSpecWith({ formatting: { columnUnits: {} } }, [
+				builderQueryNamed('A'),
+			]);
+
+			expect(buildPluginSpec(sections, { oldSpec }).formatting).toBeUndefined();
+		});
+
 		it('never seeds a panel-wide unit from per-column units (Table → TimeSeries)', () => {
 			const sections: SectionConfig[] = [
 				{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },
@@ -604,9 +683,10 @@ describe('buildPluginSpec', () => {
 			variant: ThresholdVariant | undefined,
 			thresholds: unknown[],
 			queries: unknown[] = [],
+			axis?: boolean,
 		): unknown {
 			const sections: SectionConfig[] = [
-				{ kind: SectionKind.Thresholds, controls: { variant } },
+				{ kind: SectionKind.Thresholds, controls: { variant, axis } },
 			];
 			return buildPluginSpec(sections, {
 				oldSpec: oldSpecWith({ thresholds }, queries),
@@ -701,6 +781,37 @@ describe('buildPluginSpec', () => {
 			).toStrictEqual([{ value: 0, color: '#F1575F' }]);
 		});
 
+		it('drops x thresholds and the axis field for a kind without an axis picker', () => {
+			expect(
+				switchThresholds(ThresholdVariant.LABEL, [
+					{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+					{ value: 80, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.y },
+				]),
+			).toStrictEqual([{ value: 80, color: '#F1575F' }]);
+			expect(
+				switchThresholds(ThresholdVariant.COMPARISON, [
+					{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+				]),
+			).toBeUndefined();
+		});
+
+		it('keeps the axis for a kind with an axis picker, defaulting to y', () => {
+			expect(
+				switchThresholds(
+					ThresholdVariant.LABEL,
+					[
+						{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+						{ value: 80, color: '#F1575F' },
+					],
+					[],
+					true,
+				),
+			).toStrictEqual([
+				{ value: 5, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.x },
+				{ value: 80, color: '#F1575F', axis: DashboardtypesThresholdAxisDTO.y },
+			]);
+		});
+
 		it('seeds nothing for an empty or absent threshold list', () => {
 			expect(switchThresholds(ThresholdVariant.LABEL, [])).toBeUndefined();
 			const sections: SectionConfig[] = [
@@ -746,6 +857,79 @@ describe('buildPluginSpec', () => {
 
 		it('returns an empty spec for List (only switchPanelKind, nothing to seed)', () => {
 			expect(buildPluginSpec(listSections)).toStrictEqual({});
+		});
+	});
+
+	describe('geo map', () => {
+		it('seeds the ramp only, so every other field reads as derived', () => {
+			expect(buildPluginSpec(geoMapSections)).toStrictEqual({
+				visualization: { timePreference: 'global_time' },
+				chartAppearance: {
+					colors: { mode: 'palette', palette: 'lava', scale: 'log' },
+				},
+				legend: { position: 'bottom' },
+			});
+		});
+
+		it('keeps the ramp across a heatmap switch but not the fields the other kind lacks', () => {
+			const fromHeatmap = oldSpecWith({
+				chartAppearance: {
+					colors: {
+						mode: 'opacity',
+						palette: 'ice',
+						scale: 'sqrt',
+						steps: 16,
+						minCount: 1,
+						fill: '#fff',
+					},
+				},
+			});
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromHeatmap }).chartAppearance,
+			).toStrictEqual({
+				colors: {
+					mode: 'opacity',
+					fill: '#fff',
+					palette: 'ice',
+					scale: 'sqrt',
+					steps: 16,
+				},
+			});
+
+			const fromGeoMap = oldSpecWith({
+				chartAppearance: {
+					colors: { palette: 'ice', scale: 'linear', min: 0, max: 10 },
+					bubbles: { minRadius: 2 },
+					labels: false,
+				},
+			});
+			expect(
+				buildPluginSpec(heatmapSections, { oldSpec: fromGeoMap }).chartAppearance,
+			).toStrictEqual({
+				colors: { palette: 'ice', scale: 'linear', mode: 'palette' },
+			});
+		});
+
+		it('carries comparison thresholds without their format', () => {
+			const fromNumber = oldSpecWith({
+				thresholds: [
+					{ value: 5, color: 'Red', operator: 'below', format: 'background' },
+				],
+			});
+
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromNumber }).thresholds,
+			).toStrictEqual([{ value: 5, color: 'Red', operator: 'below' }]);
+		});
+
+		it('shares column units with Table', () => {
+			const fromTable = oldSpecWith({
+				formatting: { columnUnits: { A: 'percent' }, decimalPrecision: '2' },
+			});
+
+			expect(
+				buildPluginSpec(geoMapSections, { oldSpec: fromTable }).formatting,
+			).toStrictEqual({ columnUnits: { A: 'percent' }, decimalPrecision: '2' });
 		});
 	});
 });

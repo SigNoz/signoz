@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { mockAppLocation } from 'tests/router-mocks';
 import { userEvent } from 'tests/test-utils';
 
 import ROUTES from '../../../../constants/routes';
@@ -8,12 +9,7 @@ import AllAttributes from '../AllAttributes';
 import { AllAttributesValue } from '../AllAttributesValue';
 import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER}`,
-	}),
-}));
+mockAppLocation({ pathname: ROUTES.METRICS_EXPLORER });
 
 const useGetMetricAttributesMock = jest.spyOn(
 	metricsExplorerHooks,

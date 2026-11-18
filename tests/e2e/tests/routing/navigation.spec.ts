@@ -4,19 +4,6 @@ import { dashboardListParams, expect, PATH, test } from '../../drivers/routing';
 // `useSafeNavigate`'s same-url suppression, and its `newTab` branch.
 
 test.describe('Routing — imperative navigation', () => {
-	test('TC-05 Back from a detail page restores the list with its params', async ({
-		routing,
-		dashboard,
-	}) => {
-		await routing.dashboards.gotoList(dashboard.title);
-		await routing.dashboards.row(dashboard.title).click();
-		await routing.waitForPath(dashboard.path);
-
-		await routing.goBackTo(PATH.dashboards);
-
-		expect(routing.params()).toMatchObject(dashboardListParams(dashboard.title));
-	});
-
 	// Both branches of the trace header's Back button in one document:
 	// `hasInAppHistory() ? goBack() : push(TRACES_EXPLORER)`.
 	test('TC-06 the trace-details previous button pushes when deep-linked and pops once in-app', async ({

@@ -18,10 +18,10 @@ import (
 // Name is the immutable DNS1123 identity references will point at; DisplayName is the
 // free-text label.
 type PostableNotificationChannel struct {
-	Name         string        `json:"name"`
-	GenerateName bool          `json:"generateName"`
-	DisplayName  string        `json:"displayName"`
-	Config       ChannelConfig `json:"config" required:"true"`
+	Name         string        `json:"name" description:"The immutable DNS-1123 identifier of the channel (lowercase letters, digits and hyphens, at most 63 characters). Required unless generateName is true, in which case it must be empty. Alert rules and routing policies reference displayName, not name."`
+	GenerateName bool          `json:"generateName" description:"Derive name from displayName plus a random suffix instead of supplying it. Defaults to false."`
+	DisplayName  string        `json:"displayName" description:"The label shown in the UI. Alert rules and routing policies reference it, not name. Defaults to name; required when generateName is true."`
+	Config       ChannelConfig `json:"config" required:"true" description:"The provider kind and its spec."`
 }
 
 func (p *PostableNotificationChannel) UnmarshalJSON(data []byte) error {
@@ -93,7 +93,7 @@ func (p *PostableNotificationChannel) validateName() error {
 // Name is immutable, and DisplayName cannot be edited until the routing
 // policies and rules referencing it migrate onto Name.
 type UpdatableNotificationChannel struct {
-	Config ChannelConfig `json:"config" required:"true"`
+	Config ChannelConfig `json:"config" required:"true" description:"The replacement provider kind and spec. Name and displayName are immutable and not part of the body."`
 }
 
 func (u *UpdatableNotificationChannel) UnmarshalJSON(data []byte) error {
@@ -115,7 +115,7 @@ func (u *UpdatableNotificationChannel) Validate() error {
 // It carries no name because nothing is persisted: the receiver a test builds
 // is thrown away once the notification is delivered.
 type TestableNotificationChannel struct {
-	Config ChannelConfig `json:"config" required:"true"`
+	Config ChannelConfig `json:"config" required:"true" description:"The replacement provider kind and spec. Name and displayName are immutable and not part of the body."`
 }
 
 func (t *TestableNotificationChannel) UnmarshalJSON(data []byte) error {
@@ -166,12 +166,12 @@ func decodeStrict(data []byte, target any) error {
 // ════════════════════════════════════════════════════════════════════════
 
 type GettableNotificationChannel struct {
-	Name        string        `json:"name" required:"true"`
-	DisplayName string        `json:"displayName" required:"true"`
-	Config      ChannelConfig `json:"config" required:"true"`
-	ID          valuer.UUID   `json:"id" required:"true"`
-	CreatedAt   time.Time     `json:"createdAt" required:"true"`
-	UpdatedAt   time.Time     `json:"updatedAt" required:"true"`
+	Name        string        `json:"name" required:"true" description:"The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name."`
+	DisplayName string        `json:"displayName" required:"true" description:"The label shown in the UI. Alert rules and routing policies reference it, not name."`
+	Config      ChannelConfig `json:"config" required:"true" description:"The provider kind and spec, credentials included."`
+	ID          valuer.UUID   `json:"id" required:"true" description:"The channel UUID."`
+	CreatedAt   time.Time     `json:"createdAt" required:"true" description:"When the channel was created, as an RFC 3339 timestamp."`
+	UpdatedAt   time.Time     `json:"updatedAt" required:"true" description:"When the channel was last updated, as an RFC 3339 timestamp."`
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -179,19 +179,19 @@ type GettableNotificationChannel struct {
 // ════════════════════════════════════════════════════════════════════════
 
 // ListedNotificationChannel carries no configuration. The spec, credentials
-// included, is only returned by a fetch by ID.
+// included, is returned by create, update and fetch by ID, never by list.
 type ListedNotificationChannel struct {
-	ID          valuer.UUID `json:"id" required:"true"`
-	Name        string      `json:"name" required:"true"`
-	DisplayName string      `json:"displayName" required:"true"`
-	Kind        ChannelKind `json:"kind" required:"true"`
-	CreatedAt   time.Time   `json:"createdAt" required:"true"`
-	UpdatedAt   time.Time   `json:"updatedAt" required:"true"`
+	ID          valuer.UUID `json:"id" required:"true" description:"The channel UUID."`
+	Name        string      `json:"name" required:"true" description:"The immutable DNS-1123 identifier of the channel. Alert rules and routing policies reference displayName, not name."`
+	DisplayName string      `json:"displayName" required:"true" description:"The label shown in the UI. Alert rules and routing policies reference it, not name."`
+	Kind        ChannelKind `json:"kind" required:"true" description:"The channel provider kind."`
+	CreatedAt   time.Time   `json:"createdAt" required:"true" description:"When the channel was created, as an RFC 3339 timestamp."`
+	UpdatedAt   time.Time   `json:"updatedAt" required:"true" description:"When the channel was last updated, as an RFC 3339 timestamp."`
 }
 
 // ListableNotificationChannel is one page of the channel list. Total counts every
 // channel the filter matches, not just the ones on the page.
 type ListableNotificationChannel struct {
-	Channels []*ListedNotificationChannel `json:"channels" required:"true" nullable:"false"`
-	Total    int64                        `json:"total" required:"true"`
+	Channels []*ListedNotificationChannel `json:"channels" required:"true" nullable:"false" description:"The channels on this page, without their configuration; fetch a channel by ID for that."`
+	Total    int64                        `json:"total" required:"true" description:"The number of channels the filter matches across all pages."`
 }

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
@@ -6,6 +7,10 @@ import {
 import { DataSource } from 'types/common/queryBuilder';
 import { getParsedAggregationOptionsForOrderBy } from 'utils/aggregationConverter';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
+
+jest.mock('@sentry/react', () => ({
+	captureEvent: jest.fn(),
+}));
 
 jest.mock('utils/aggregationConverter', () => ({
 	getParsedAggregationOptionsForOrderBy: jest.fn(),
@@ -117,6 +122,7 @@ describe('sanitizeOrderByForExplorer', () => {
 
 		const result = sanitizeOrderByForExplorer(query);
 		expect(result).toStrictEqual([]);
+		expect(Sentry.captureEvent).not.toHaveBeenCalled();
 	});
 
 	it('handles missing orderBy by returning an empty array', () => {

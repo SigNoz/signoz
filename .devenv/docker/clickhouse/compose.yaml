@@ -67,7 +67,7 @@ services:
       timeout: 5s
       retries: 3
   telemetrystore-migrator:
-    image: signoz/signoz-otel-collector:v0.144.6
+    image: signoz/signoz-otel-collector:v0.144.15
     container_name: telemetrystore-migrator
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000

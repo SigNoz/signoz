@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
-import ExplorerCard from 'components/ExplorerCard/ExplorerCard';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
-import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
+import {
+	defaultOptionsQuery,
+	URL_OPTIONS,
+} from 'container/OptionsMenu/constants';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
@@ -21,6 +25,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -61,7 +66,7 @@ function Explorer(): JSX.Element {
 
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 
-	const [searchParams] = useSearchParams();
+	const [searchParams] = useAppSearchParams();
 	const queryClient = useQueryClient();
 	const listQueryKeyRef = useRef<any>();
 
@@ -86,8 +91,9 @@ function Explorer(): JSX.Element {
 		setIsLoadingQueries(false);
 	}, [queryClient]);
 
-	const [selectedView, setSelectedView] = useState<ExplorerViews>(() =>
-		getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+	const selectedView = useMemo(
+		() => getExplorerViewFromUrl(searchParams, panelTypesFromUrl),
+		[searchParams, panelTypesFromUrl],
 	);
 
 	const [warning, setWarning] = useState<Warning | undefined>();
@@ -114,13 +120,16 @@ function Explorer(): JSX.Element {
 
 	const handleChangeSelectedView = useCallback(
 		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
-			handleSetConfig(explorerViewToPanelType[view], DataSource.TRACES);
+			const panelType = explorerViewToPanelType[view];
+			handleSetConfig(panelType, DataSource.TRACES);
 
-			setSelectedView(view);
-
+			// Drop the left panel's url columns; each panel loads its own.
 			handleExplorerTabChange(
-				explorerViewToPanelType[view],
+				panelType,
 				querySearchParameters,
+				undefined,
+				undefined,
+				{ [URL_OPTIONS]: defaultOptionsQuery },
 			);
 		},
 		[handleExplorerTabChange, handleSetConfig],
@@ -178,7 +187,9 @@ function Explorer(): JSX.Element {
 
 	const isFilterApplied = useMemo(() => {
 		// if any of the non-disabled queries has filters applied, return true
-		const result = stagedQuery?.builder?.queryData?.filter(
+		const result = (
+			stagedQuery ? getActiveBuilder(stagedQuery) : undefined
+		)?.queryData?.filter(
 			(item) => !isEmpty(item.filters?.items) && !item.disabled,
 		);
 		return !!result?.length;
@@ -191,10 +202,10 @@ function Explorer(): JSX.Element {
 				testId="llm-observability-explorer"
 				showFilters={isOpen}
 				onToggleFilters={(): void => setOpen(!isOpen)}
+				savedViewProps={{ source: SavedviewtypesSourceDTO.ai_observability }}
 				quickFilterProps={{
 					className: 'qf-traces-explorer',
-					source: QuickFiltersSource.AI_OBSERVABILITY,
-					signal: SignalType.AI_OBSERVABILITY,
+					quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
 					useFieldApis: quickFiltersFieldApis,
 				}}
 			>
@@ -226,11 +237,9 @@ function Explorer(): JSX.Element {
 							}
 						/>
 					</div>
-					<ExplorerCard sourcepage={DataSource.TRACES}>
-						<div className="query-section-container">
-							<QuerySection />
-						</div>
-					</ExplorerCard>
+					<div className="query-section-container">
+						<QuerySection />
+					</div>
 
 					<div className="traces-explorer-views">
 						{isCancelled && (

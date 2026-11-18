@@ -1,0 +1,243 @@
+import { Badge } from '@signozhq/ui/badge';
+import { Skeleton } from '@signozhq/ui/skeleton';
+import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
+import TanStackTable from 'components/TanStackTableView';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
+
+import styles from './PlannedDowntime.module.scss';
+import {
+	formatRepeats,
+	formatScheduleDuration,
+	formatWindow,
+} from './PlannedDowntimeutils';
+import { DowntimeSchedulesTableData } from './types';
+
+const STATUS_BADGE: Record<
+	AlertmanagertypesMaintenanceStatusDTO,
+	{ label: string; color: 'success' | 'info' | 'secondary' }
+> = {
+	[AlertmanagertypesMaintenanceStatusDTO.active]: {
+		label: 'Active',
+		color: 'success',
+	},
+	[AlertmanagertypesMaintenanceStatusDTO.upcoming]: {
+		label: 'Upcoming',
+		color: 'info',
+	},
+	[AlertmanagertypesMaintenanceStatusDTO.expired]: {
+		label: 'Expired',
+		color: 'secondary',
+	},
+};
+
+const COLUMN_WIDTH = { default: 'auto', min: '120px' };
+
+export function getPlannedDowntimeColumns(
+	formatTimezoneAdjustedTimestamp: (date: string, format: string) => string,
+	isAlertsLoading?: boolean,
+): TableColumnDef<DowntimeSchedulesTableData>[] {
+	const textCell = (value: string | undefined): JSX.Element => (
+		<TanStackTable.Text title={value || undefined}>
+			{value || '-'}
+		</TanStackTable.Text>
+	);
+
+	const timestampCell = (
+		row: DowntimeSchedulesTableData,
+		value: string | undefined,
+	): JSX.Element => {
+		if (!value) {
+			return <TanStackTable.Text>-</TanStackTable.Text>;
+		}
+
+		return (
+			<TanStackTable.HoverTooltip
+				rowId={row.id}
+				title={formatTimezoneAdjustedTimestamp(
+					value,
+					DATE_TIME_FORMATS.DASH_DATETIME,
+				)}
+			>
+				<span className={styles.timeText}>{toRelativeTime(value)}</span>
+			</TanStackTable.HoverTooltip>
+		);
+	};
+
+	return [
+		{
+			id: 'name',
+			header: 'Downtime',
+			accessorKey: 'name',
+			width: COLUMN_WIDTH,
+			enableSort: true,
+			enableResize: true,
+			enableRemove: false,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => (
+				<TanStackTable.Text
+					title={row.name}
+					data-testid={`downtime-row-${row.id}-name`}
+				>
+					{row.name}
+				</TanStackTable.Text>
+			),
+		},
+		{
+			id: 'status',
+			header: 'Status',
+			accessorKey: 'status',
+			width: COLUMN_WIDTH,
+			enableSort: true,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => {
+				const status = STATUS_BADGE[row.status];
+				return status ? (
+					<Badge textTransform="none" variant="outlined" color={status.color}>
+						{status.label}
+					</Badge>
+				) : (
+					textCell(row.status)
+				);
+			},
+		},
+		{
+			id: 'window',
+			header: 'Schedule',
+			accessorFn: (row) => row.schedule?.startTime,
+			width: COLUMN_WIDTH,
+			enableSort: true,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(formatWindow(row.schedule)),
+		},
+		{
+			id: 'timezone',
+			header: 'Timezone',
+			accessorFn: (row) => row.schedule?.timezone,
+			width: COLUMN_WIDTH,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(row.schedule?.timezone),
+		},
+		{
+			id: 'repeats',
+			header: 'Repeats',
+			accessorFn: (row) => row.schedule?.recurrence?.repeatType,
+			width: COLUMN_WIDTH,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(formatRepeats(row.schedule)),
+		},
+		{
+			id: 'duration',
+			header: 'Duration',
+			accessorFn: (row) => row.schedule?.recurrence?.duration,
+			width: COLUMN_WIDTH,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element =>
+				textCell(formatScheduleDuration(row.schedule)),
+		},
+		{
+			id: 'alertsSilenced',
+			header: 'Alerts Silenced',
+			accessorKey: 'alertIds',
+			width: COLUMN_WIDTH,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => {
+				const hasScopedAlerts = Boolean(row.alertIds && row.alertIds.length > 0);
+				if (!hasScopedAlerts) {
+					return (
+						<Badge textTransform="none" variant="solid" color="secondary">
+							All alert rules
+						</Badge>
+					);
+				}
+
+				if (isAlertsLoading) {
+					return (
+						<Skeleton.Input
+							testId="alerts-silenced-skeleton"
+							active
+							size="small"
+							style={{ width: 100, height: 22 }}
+						/>
+					);
+				}
+
+				return (
+					<OverflowBadges
+						items={row.alertOptions.map((alert) => ({
+							key: String(alert.value),
+							label: alert.label,
+						}))}
+					/>
+				);
+			},
+		},
+		{
+			id: 'description',
+			header: 'Description',
+			accessorKey: 'description',
+			width: COLUMN_WIDTH,
+			defaultVisibility: false,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(row.description),
+		},
+		{
+			id: 'createdBy',
+			header: 'Created By',
+			accessorKey: 'createdBy',
+			width: COLUMN_WIDTH,
+			defaultVisibility: false,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(row.createdBy),
+		},
+		{
+			id: 'createdAt',
+			header: 'Created At',
+			accessorKey: 'createdAt',
+			width: COLUMN_WIDTH,
+			defaultVisibility: false,
+			enableSort: true,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => timestampCell(row, row.createdAt),
+		},
+		{
+			id: 'updatedBy',
+			header: 'Updated By',
+			accessorKey: 'updatedBy',
+			width: COLUMN_WIDTH,
+			defaultVisibility: false,
+			enableSort: false,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => textCell(row.updatedBy),
+		},
+		{
+			id: 'updatedAt',
+			header: 'Updated At',
+			accessorKey: 'updatedAt',
+			width: COLUMN_WIDTH,
+			defaultVisibility: false,
+			enableSort: true,
+			enableResize: true,
+			enableMove: false,
+			cell: ({ row }): JSX.Element => timestampCell(row, row.updatedAt),
+		},
+	];
+}

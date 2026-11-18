@@ -2,6 +2,7 @@ import { TanStackHoverTooltip } from './TanStackHoverTooltip';
 import { TanStackTableBase } from './TanStackTable';
 import TanStackTableText from './TanStackTableText';
 
+export { default as ColumnSelector } from './ColumnSelector';
 export * from './TanStackHoverTooltip';
 export * from './TanStackTableStateContext';
 export * from './types';

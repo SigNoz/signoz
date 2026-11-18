@@ -76,6 +76,7 @@ function IntergrationsUninstallBar(
 				</Typography.Text>
 			</div>
 			<Button
+				data-testid="integration-remove-btn"
 				className="uninstall-integration-btn"
 				icon={<X size={14} />}
 				onClick={(): void => showModal()}
@@ -92,6 +93,7 @@ function IntergrationsUninstallBar(
 				okButtonProps={{
 					danger: true,
 					disabled: isUninstallLoading,
+					'data-testid': 'integration-remove-confirm',
 				}}
 			>
 				<Typography.Text className="remove-integration-text">

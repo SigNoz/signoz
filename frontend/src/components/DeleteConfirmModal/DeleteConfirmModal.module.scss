@@ -9,3 +9,8 @@
 	margin-inline-end: 12px;
 	flex-shrink: 0;
 }
+
+.name {
+	color: var(--danger-background);
+	font-weight: var(--font-weight-medium);
+}

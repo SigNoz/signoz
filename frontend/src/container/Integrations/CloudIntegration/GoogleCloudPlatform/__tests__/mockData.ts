@@ -1,4 +1,7 @@
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	CloudintegrationtypesCredentialsDTO,
+	CloudintegrationtypesGCPConnectionMethodDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	CloudAccount,
 	GCPCloudAccountConfig,
@@ -17,6 +20,7 @@ export const GCP_ACCOUNT_ID = 'acc-gcp-1';
 export const GCP_ACCOUNT_URL = `${GCP_ACCOUNTS_URL}/${GCP_ACCOUNT_ID}`;
 
 export const gcpAccountConfig: GCPCloudAccountConfig = {
+	connection_method: CloudintegrationtypesGCPConnectionMethodDTO.manual,
 	deployment_region: 'asia-south1',
 	deployment_project_id: 'my-deployment-project-123',
 	project_ids: ['project-a', 'project-b'],
@@ -27,6 +31,19 @@ export const gcpAccount: CloudAccount = {
 	cloud_account_id: 'gcp-cloud-1',
 	providerAccountId: 'billing@company.com',
 	config: gcpAccountConfig,
+	status: { integration: { last_heartbeat_ts_ms: 1_700_000_000_000 } },
+};
+
+export const gcpAgentAccount: CloudAccount = {
+	id: 'acc-gcp-agent-1',
+	cloud_account_id: 'acc-gcp-agent-1',
+	providerAccountId: 'my-agent-project',
+	config: {
+		connection_method: CloudintegrationtypesGCPConnectionMethodDTO.agent,
+		deployment_region: 'us-central1',
+		deployment_project_id: 'my-agent-project',
+		project_ids: ['my-agent-project'],
+	},
 	status: { integration: { last_heartbeat_ts_ms: 1_700_000_000_000 } },
 };
 
@@ -62,4 +79,54 @@ export const createAccountResponse = {
 export const checkInResponse = {
 	status: 'success',
 	data: {},
+};
+
+export const gcpConnectionCommand = {
+	cliCommand:
+		"curl -fsSL 'https://signoz.io/foundry.sh' | bash -s -- cloudintegration gcp terraform --gcp-project 'my-deployment-project-123'",
+};
+
+export const createAgentAccountResponse = {
+	status: 'success',
+	data: {
+		id: CLOUD_INTEGRATION_ID,
+		connectionArtifact: { gcp: gcpConnectionCommand },
+	},
+};
+
+export const GCP_AGENT_ACCOUNT_URL = `${GCP_ACCOUNTS_URL}/${CLOUD_INTEGRATION_ID}`;
+
+const pendingAgentAccount = {
+	id: CLOUD_INTEGRATION_ID,
+	orgId: 'org-1',
+	provider: 'gcp',
+	providerAccountId: null,
+	removedAt: null,
+	agentReport: null,
+	config: {
+		gcp: {
+			connectionMethod: 'agent',
+			deploymentProjectId: 'my-deployment-project-123',
+			deploymentRegion: 'asia-south1',
+			projectIds: ['my-deployment-project-123'],
+		},
+	},
+};
+
+export const pendingAgentAccountResponse = {
+	status: 'success',
+	data: pendingAgentAccount,
+};
+
+export const connectedAgentAccountResponse = {
+	status: 'success',
+	data: {
+		...pendingAgentAccount,
+		providerAccountId: 'my-deployment-project-123',
+		agentReport: {
+			timestampMillis: 1_700_000_000_000,
+			data: {},
+			syncState: null,
+		},
+	},
 };

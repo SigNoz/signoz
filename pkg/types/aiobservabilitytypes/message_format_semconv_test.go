@@ -157,3 +157,47 @@ func TestFormat_Semconv(t *testing.T) {
 		},
 	})
 }
+
+func TestFormat_Semconv_Repairs(t *testing.T) {
+	runFormatCases(t, []formatCase{
+		{
+			// pydantic-ai keeps string tool call arguments as sent, writes the tool result under result, and the
+			// instructions as a gen_ai.system_instructions text part:
+			// https://github.com/pydantic/pydantic-ai/blob/9ac853bb84ffed7ba0edccb026c5b4f3228c1de7/pydantic_ai_slim/pydantic_ai/messages.py#L3130
+			// https://github.com/pydantic/pydantic-ai/blob/9ac853bb84ffed7ba0edccb026c5b4f3228c1de7/pydantic_ai_slim/pydantic_ai/messages.py#L1724
+			// https://github.com/pydantic/pydantic-ai/blob/9ac853bb84ffed7ba0edccb026c5b4f3228c1de7/pydantic_ai_slim/pydantic_ai/models/instrumented.py#L292
+			name:       "PydanticAI_ArgumentsDecoded_ResultBecomesResponse_InstructionsLead",
+			input:      `[{"role":"user","parts":[{"type":"text","content":"Weather in Paris?"}]},{"role":"assistant","parts":[{"type":"tool_call","id":"call_stub1","name":"get_weather","arguments":"{\"city\": \"Paris\"}"}],"finish_reason":"tool_call"},{"role":"user","parts":[{"type":"tool_call_response","id":"call_stub1","name":"get_weather","result":{"city":"Paris","temp_c":18}}]}]`,
+			output:     `[{"role":"assistant","parts":[{"type":"text","content":"Paris is clear at 18C."}],"finish_reason":"stop"}]`,
+			attributes: map[string]any{GenAISystemInstructions: `[{"type":"text","content":"Use the tool."}]`},
+			wantInput: `[
+			  {"role": "system", "parts": [{"type": "text", "content": "Use the tool."}]},
+			  {"role": "user", "parts": [{"type": "text", "content": "Weather in Paris?"}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_stub1", "arguments": {"city": "Paris"}}]},
+			  {"role": "user", "parts": [{"type": "tool_call_response", "id": "call_stub1", "response": {"city": "Paris", "temp_c": 18}}]}
+			]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "text", "content": "Paris is clear at 18C."}], "finish_reason": "stop"}]`,
+		},
+		{
+			// litellm copies the choice finish_reason into the semconv message as OpenAI spells it:
+			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2822
+			name:       "LiteLLMFinishReasonSpelling_Normalised",
+			output:     `[{"role": "assistant", "parts": [], "finish_reason": "tool_calls"}]`,
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [], "finish_reason": "tool_call"}]`,
+		},
+		{
+			// litellm capture, litellm_request span: litellm keeps the OpenAI tool_calls and tool_call_id beside
+			// parts on each message:
+			// https://github.com/BerriAI/litellm/blob/9d72bae336ec0d14c41651adcb0d2e1149721f46/litellm/integrations/opentelemetry.py#L2803
+			name:  "LiteLLMToolFieldsBesideParts_ToolCallAndResponseParts",
+			input: `[{"role": "user", "parts": [{"type": "text", "content": "What's the weather in Bengaluru? Use the tool."}]}, {"role": "assistant", "parts": [], "tool_calls": [{"function": {"arguments": "{\"city\":\"Bengaluru\"}", "name": "get_current_weather"}, "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "type": "function"}]}, {"role": "tool", "parts": [{"type": "text", "content": "{\"city\": \"Bengaluru\", \"temp_c\": 28, \"summary\": \"Partly cloudy\"}"}], "tool_call_id": "call_GuU9siyYfjnx3DfHKzFbRrvD"}]`,
+			wantInput: `[
+			  {"role": "user", "parts": [{"type": "text", "content": "What's the weather in Bengaluru? Use the tool."}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_current_weather", "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "arguments": {"city": "Bengaluru"}}]},
+			  {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_GuU9siyYfjnx3DfHKzFbRrvD", "response": {"city": "Bengaluru", "temp_c": 28, "summary": "Partly cloudy"}}]}
+			]`,
+			wantOutput: `[]`,
+		},
+	})
+}

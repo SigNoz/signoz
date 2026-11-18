@@ -13,6 +13,7 @@ from fixtures.auth import (
     find_user_by_email,
 )
 from fixtures.role import find_role_by_name, flatten_transaction_groups, transaction_group
+from fixtures.serviceaccount import create_service_account, delete_service_account
 
 CRUD_ROLE_NAME = "crud-test-role"
 CRUD_ASSIGNEE_ROLE_NAME = "crud-assignee-role"
@@ -299,6 +300,24 @@ def test_delete_role_after_deleting_assigned_user(
 
     resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
     assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete role after deleting its only assignee: {resp.text}"
+
+
+def test_delete_role_after_deleting_assigned_service_account(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_role: Callable[..., str],
+):
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    role_id = create_role(admin_token, "crud-deleted-sa-assignee-role", [transaction_group("read", "metaresource", "dashboard", ["*"])])
+
+    service_account_id = create_service_account(signoz, admin_token, "crud-deleted-sa-assignee", role="crud-deleted-sa-assignee-role")
+
+    delete_service_account(signoz, admin_token, service_account_id)
+
+    resp = requests.delete(signoz.self.host_configs["8080"].get(f"/api/v1/roles/{role_id}"), headers={"Authorization": f"Bearer {admin_token}"}, timeout=5)
+    assert resp.status_code == HTTPStatus.NO_CONTENT, f"delete role after deleting its only service account assignee: {resp.text}"
 
 
 def test_delete_removes_role(

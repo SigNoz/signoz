@@ -1,77 +1,118 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { Form } from 'antd';
-import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
+import { RadioGroup } from '@signozhq/ui/radio-group';
 
-import { WebhookChannel } from '../../CreateAlertChannels/config';
+import {
+	ChannelFormValues,
+	WebhookAuth,
+} from '../../CreateAlertChannels/types';
+import { webhookAuthOf } from '../../CreateAlertChannels/utils';
+import FormCard from '../FormCard';
+import FormField from '../FormField';
 
-function WebhookSettings({ setSelectedConfig }: WebhookProps): JSX.Element {
+import styles from './Webhook.module.scss';
+
+function WebhookSettings(): JSX.Element {
 	const { t } = useTranslation('channels');
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelFormValues>();
+	const [webhookAuth, username, password, bearerToken] = useWatch({
+		control,
+		name: ['webhookAuth', 'username', 'password', 'bearerToken'],
+	});
+	const auth = webhookAuthOf({ webhookAuth, username, password, bearerToken });
 
 	return (
 		<>
-			<Form.Item
-				name="api_url"
-				label={t('field_webhook_url')}
-				tooltip={{
-					title: (
-						<MarkdownRenderer
-							markdownContent={t('tooltip_webhook_url')}
-							variables={{}}
+			<FormCard title={t('section_connection')}>
+				<FormField
+					label={t('field_webhook_url')}
+					tooltip={t('tooltip_webhook_url')}
+					error={errors.url?.message}
+					required
+				>
+					<Input
+						{...register('url')}
+						aria-required
+						data-testid="webhook-url-textbox"
+					/>
+				</FormField>
+				<FormField label={t('field_webhook_auth')}>
+					<Controller
+						control={control}
+						name="webhookAuth"
+						render={({ field }): JSX.Element => (
+							<div className={styles.auth}>
+								<RadioGroup
+									color="primary"
+									aria-label={t('field_webhook_auth')}
+									value={auth}
+									onChange={field.onChange}
+									testId="webhook-auth-radio"
+									items={[
+										{
+											value: WebhookAuth.none,
+											label: t('option_webhook_auth_none'),
+										},
+										{
+											value: WebhookAuth.basic,
+											label: t('option_webhook_auth_basic'),
+										},
+										{
+											value: WebhookAuth.bearer,
+											label: t('option_webhook_auth_bearer'),
+										},
+									]}
+								/>
+							</div>
+						)}
+					/>
+				</FormField>
+				{auth === WebhookAuth.basic && (
+					<>
+						<FormField
+							label={t('field_webhook_username')}
+							error={errors.username?.message}
+						>
+							<Input
+								{...register('username')}
+								data-testid="webhook-username-textbox"
+							/>
+						</FormField>
+						<FormField
+							label={t('field_webhook_password')}
+							error={errors.password?.message}
+						>
+							<Input
+								{...register('password')}
+								type="password"
+								data-testid="webhook-password-textbox"
+							/>
+						</FormField>
+					</>
+				)}
+				{auth === WebhookAuth.bearer && (
+					<FormField
+						label={t('field_webhook_bearer_token')}
+						help={t('help_webhook_bearer_token')}
+						error={errors.bearerToken?.message}
+						required
+					>
+						<Input
+							{...register('bearerToken')}
+							type="password"
+							aria-required
+							data-testid="webhook-bearer-token-textbox"
 						/>
-					),
-					overlayInnerStyle: { maxWidth: 400 },
-					placement: 'right',
-				}}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							api_url: event.target.value,
-						}));
-					}}
-					data-testid="webhook-url-textbox"
-				/>
-			</Form.Item>
-			<Form.Item
-				name="username"
-				label={t('field_webhook_username')}
-				help={t('help_webhook_username')}
-			>
-				<Input
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							username: event.target.value,
-						}));
-					}}
-					data-testid="webhook-username-textbox"
-				/>
-			</Form.Item>
-			<Form.Item
-				name="password"
-				label="Password (optional)"
-				help={t('help_webhook_password')}
-			>
-				<Input
-					type="password"
-					onChange={(event): void => {
-						setSelectedConfig((value) => ({
-							...value,
-							password: event.target.value,
-						}));
-					}}
-					data-testid="webhook-password-textbox"
-				/>
-			</Form.Item>
+					</FormField>
+				)}
+			</FormCard>
 		</>
 	);
-}
-
-interface WebhookProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<WebhookChannel>>>;
 }
 
 export default WebhookSettings;

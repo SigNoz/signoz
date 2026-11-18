@@ -11,13 +11,16 @@ const PERSISTED_KEY = `@signoz/table-columns/${STORAGE_KEY}`;
 
 const ROWS = [{ id: 't1', trace_id: 'abc', 'service.name': 'checkout' }];
 
-// An aggregate outside the default order starts hidden, so the persisted
-// defaults are observable.
+// An aggregate that starts hidden, so the persisted defaults are observable.
 const COLUMNS = buildTraceViewColumns([
 	{ name: 'trace_id' },
 	{ name: 'service.name', fieldContext: 'resource' },
 	{ name: 'unlisted_aggregate' },
-]);
+]).map((column) =>
+	column.id === 'unlisted_aggregate'
+		? { ...column, defaultVisibility: false }
+		: column,
+);
 
 function RaceHarness(): JSX.Element {
 	const [columnsReady, setColumnsReady] = useState(false);

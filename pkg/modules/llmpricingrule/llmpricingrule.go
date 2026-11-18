@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/llmpricingruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -12,6 +13,8 @@ import (
 type Module interface {
 	// Since this module interacts with OpAMP, it must implement the AgentFeature interface.
 	agentConf.AgentFeature
+
+	statsreporter.StatsCollector
 
 	List(ctx context.Context, orgID valuer.UUID, offset, limit int, search string, isOverride *bool) ([]*llmpricingruletypes.LLMPricingRule, int, error)
 	Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*llmpricingruletypes.LLMPricingRule, error)

@@ -164,12 +164,12 @@ export const TILE_DRAWINGS = {
 			<path d="M4 20 C 20 20, 22 12, 32 12 S 44 4, 60 4" />
 		</TileSvg>
 	),
-	barsSideBySide: (
+	barsOverlap: (
 		<TileSvg>
-			<rect x={10} y={10} width={7} height={12} {...FILLED} opacity={0.5} />
-			<rect x={18} y={4} width={7} height={18} {...FILLED} />
-			<rect x={36} y={12} width={7} height={10} {...FILLED} opacity={0.5} />
-			<rect x={44} y={7} width={7} height={15} {...FILLED} />
+			<rect x={14} y={6} width={11} height={16} {...FILLED} opacity={0.5} />
+			<rect x={14} y={12} width={11} height={10} {...FILLED} />
+			<rect x={38} y={10} width={11} height={12} {...FILLED} opacity={0.5} />
+			<rect x={38} y={14} width={11} height={8} {...FILLED} />
 		</TileSvg>
 	),
 	barsStacked: (

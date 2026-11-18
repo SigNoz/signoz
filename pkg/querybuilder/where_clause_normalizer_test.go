@@ -26,6 +26,15 @@ func TestNormalizeWhereClauseEquivalenceClasses(t *testing.T) {
 			expected: "service.name = 'frontend' AND status = 200",
 		},
 		{
+			name: "nested not keeps its parentheses",
+			expressions: []string{
+				"NOT (NOT a = 1)",
+				"NOT(NOT a=1)",
+				"not (not a = 1)",
+			},
+			expected: "NOT (NOT a = 1)",
+		},
+		{
 			name: "operand order",
 			expressions: []string{
 				"a = 1 AND b = 2",
@@ -275,14 +284,24 @@ func TestNormalizeWhereClauseTopLevel(t *testing.T) {
 			expected:   map[string]bool{"service.name": false, "status": true},
 		},
 		{
-			name:       "double negation restores top level",
+			name:       "any negation disqualifies even when it cancels",
 			expression: "NOT (NOT (service.name = 'a'))",
-			expected:   map[string]bool{"service.name": true},
+			expected:   map[string]bool{"service.name": false},
 		},
 		{
 			name:       "in condition under and is top level",
 			expression: "service.name IN ('a', 'b') AND x = 1",
 			expected:   map[string]bool{"service.name": true, "x": true},
+		},
+		{
+			name:       "nested negation over an and is a disjunction",
+			expression: "NOT (NOT service.name = 'a' AND NOT status = 500)",
+			expected:   map[string]bool{"service.name": false, "status": false},
+		},
+		{
+			name:       "negation over an or is a conjunction of negations",
+			expression: "NOT (service.name = 'a' OR status = 500)",
+			expected:   map[string]bool{"service.name": false, "status": false},
 		},
 	}
 
@@ -327,6 +346,8 @@ func TestNormalizeWhereClauseIdempotence(t *testing.T) {
 		"a IN [3, 1, 2] AND hasAll(tags, ['a', 'b']) AND body CONTAINS 'x'",
 		"duration BETWEEN 1 AND 10 OR duration > 100",
 		`msg = 'with \'escapes\' and "quotes"'`,
+		"NOT (NOT resource.region = 'us-east')",
+		"NOT (NOT (a = 1 OR b = 2)) AND NOT c EXISTS",
 	}
 
 	for _, expression := range expressions {
@@ -438,4 +459,14 @@ func TestFilterStringLiteral(t *testing.T) {
 			assert.Equal(t, testCase.expected, FilterStringLiteral(testCase.input))
 		})
 	}
+}
+
+func TestNormalizeWhereClauseDedupesRepeatedConditions(t *testing.T) {
+	normalized, err := NormalizeWhereClause("service.name IN ('checkout') AND service.name IN ('checkout') AND status = 500 AND status = 500", nil)
+	require.NoError(t, err)
+	assert.Equal(t, "service.name IN ('checkout') AND status = 500", normalized.Expression)
+	assert.Equal(t, []WhereClauseCondition{
+		{Key: "service.name", Operator: "IN", Values: []string{"checkout"}, TopLevel: true},
+		{Key: "status", Operator: "=", Values: []string{"500"}, TopLevel: true},
+	}, normalized.Conditions)
 }

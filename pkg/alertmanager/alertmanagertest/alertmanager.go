@@ -1023,6 +1023,80 @@ func (_c *MockAlertmanager_GetChannelByID_Call) RunAndReturn(run func(context1 c
 	return _c
 }
 
+// GetChannelIDsByNames provides a mock function for the type MockAlertmanager
+func (_mock *MockAlertmanager) GetChannelIDsByNames(context1 context.Context, s string, strings []string) ([]string, error) {
+	ret := _mock.Called(context1, s, strings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetChannelIDsByNames")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) ([]string, error)); ok {
+		return returnFunc(context1, s, strings)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) []string); ok {
+		r0 = returnFunc(context1, s, strings)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []string) error); ok {
+		r1 = returnFunc(context1, s, strings)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAlertmanager_GetChannelIDsByNames_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetChannelIDsByNames'
+type MockAlertmanager_GetChannelIDsByNames_Call struct {
+	*mock.Call
+}
+
+// GetChannelIDsByNames is a helper method to define mock.On call
+//   - context1 context.Context
+//   - s string
+//   - strings []string
+func (_e *MockAlertmanager_Expecter) GetChannelIDsByNames(context1 any, s any, strings any) *MockAlertmanager_GetChannelIDsByNames_Call {
+	return &MockAlertmanager_GetChannelIDsByNames_Call{Call: _e.mock.On("GetChannelIDsByNames", context1, s, strings)}
+}
+
+func (_c *MockAlertmanager_GetChannelIDsByNames_Call) Run(run func(context1 context.Context, s string, strings []string)) *MockAlertmanager_GetChannelIDsByNames_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAlertmanager_GetChannelIDsByNames_Call) Return(strings1 []string, err error) *MockAlertmanager_GetChannelIDsByNames_Call {
+	_c.Call.Return(strings1, err)
+	return _c
+}
+
+func (_c *MockAlertmanager_GetChannelIDsByNames_Call) RunAndReturn(run func(context1 context.Context, s string, strings []string) ([]string, error)) *MockAlertmanager_GetChannelIDsByNames_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetConfig provides a mock function for the type MockAlertmanager
 func (_mock *MockAlertmanager) GetConfig(context1 context.Context, s string) (*alertmanagertypes.Config, error) {
 	ret := _mock.Called(context1, s)

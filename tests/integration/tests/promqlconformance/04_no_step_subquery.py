@@ -40,7 +40,7 @@ def test_promql_subquery_without_step_evaluates(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    query = {"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric}[5m:])"}}
+    query = {"type": "promql", "spec": {"name": "A", "query": f"max_over_time({metric}[5m:])", "skipStepAlignment": True}}
     response = make_query_request(signoz, token, start_ms, end_ms, [query])
     assert response.status_code == HTTPStatus.OK, response.text[:300]
     series = get_all_series(response.json(), "A")
@@ -54,6 +54,6 @@ def test_promql_subquery_without_step_evaluates(
         token,
         start_ms,
         end_ms,
-        [{"type": "promql", "spec": {"name": "A", "query": metric}}],
+        [{"type": "promql", "spec": {"name": "A", "query": metric, "skipStepAlignment": True}}],
     )
     assert response.status_code == HTTPStatus.OK, response.text[:300]

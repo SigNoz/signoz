@@ -25,10 +25,10 @@ const MaxDisplayNameLen = 128
 const MaxLayoutTitleLen = 256
 
 type Display struct {
-	Name string `json:"name" required:"true"`
+	Name string `json:"name" required:"true" maxLength:"128" description:"The human-readable title, at most 128 characters."`
 	// Description always serializes ("" included) so a create -> GET round-trip
 	// preserves what a typed client sent; omitempty would drop an explicit "".
-	Description string `json:"description"`
+	Description string `json:"description" description:"A free-text description."`
 }
 
 func (d Display) Validate(label, path string) error {
@@ -43,8 +43,8 @@ func (d Display) Validate(label, path string) error {
 // ══════════════════════════════════════════════
 
 type Panel struct {
-	Kind PanelKind `json:"kind" required:"true"`
-	Spec PanelSpec `json:"spec" required:"true"`
+	Kind PanelKind `json:"kind" required:"true" description:"The panel envelope kind. Always Panel."`
+	Spec PanelSpec `json:"spec" required:"true" description:"The panel content: display, plugin, queries and links."`
 }
 
 // PanelKind is the panel envelope discriminator. Perses leaves it a free
@@ -69,10 +69,10 @@ func (k *PanelKind) UnmarshalJSON(data []byte) error {
 }
 
 type PanelSpec struct {
-	Display Display     `json:"display" required:"true"`
-	Plugin  PanelPlugin `json:"plugin" required:"true"`
-	Queries []Query     `json:"queries" required:"true" nullable:"false"`
-	Links   []Link      `json:"links,omitzero"`
+	Display Display     `json:"display" required:"true" description:"The panel title and description."`
+	Plugin  PanelPlugin `json:"plugin" required:"true" description:"The visualization: kind is one of signoz/TimeSeriesPanel, signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel, signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel or signoz/HeatmapPanel, and spec holds that kind's options ({} accepts every default)."`
+	Queries []Query     `json:"queries" required:"true" nullable:"false" description:"The queries the panel runs. Use exactly one entry for a data panel and [] for signoz/TextPanel. To run several named queries or formulas, use one entry whose spec.plugin.kind is signoz/CompositeQuery and put the constituent queries in its plugin spec."`
+	Links   []Link      `json:"links,omitzero" description:"Context links offered in the data point drilldown menu of the panel, with dashboard variables resolved in the URL."`
 }
 
 // Link replicates dashboard.Link (Perses) so its zero-valued fields survive the
@@ -80,11 +80,11 @@ type PanelSpec struct {
 // omitempty, which drops "" and false; here every field always serializes so a
 // typed client reads back exactly what it sent.
 type Link struct {
-	Name            string `json:"name"`
-	URL             string `json:"url"`
-	Tooltip         string `json:"tooltip"`
-	RenderVariables bool   `json:"renderVariables"`
-	TargetBlank     bool   `json:"targetBlank"`
+	Name            string `json:"name" description:"The link label."`
+	URL             string `json:"url" description:"The link target. May reference dashboard variables as {{name}} when renderVariables is true."`
+	Tooltip         string `json:"tooltip" description:"Hover text for the link. Stored, but not shown by the UI."`
+	RenderVariables bool   `json:"renderVariables" description:"Whether dashboard variable values are substituted into url before opening it."`
+	TargetBlank     bool   `json:"targetBlank" description:"Whether the link opens in a new tab."`
 }
 
 // ══════════════════════════════════════════════
@@ -92,13 +92,13 @@ type Link struct {
 // ══════════════════════════════════════════════
 
 type Query struct {
-	Kind qb.RequestType `json:"kind" required:"true"`
-	Spec QuerySpec      `json:"spec" required:"true"`
+	Kind qb.RequestType `json:"kind" required:"true" description:"The result shape the panel requests: time_series for time series, bar, area and histogram panels, scalar for number, table and pie panels, raw for list panels, heatmap for heatmap panels, trace for trace panels."`
+	Spec QuerySpec      `json:"spec" required:"true" description:"The query content: an optional name and the query plugin."`
 }
 
 type QuerySpec struct {
-	Name   string      `json:"name,omitempty"`
-	Plugin QueryPlugin `json:"plugin" required:"true"`
+	Name   string      `json:"name,omitempty" description:"An optional label for the query. The name queries refer to each other by lives in the plugin spec."`
+	Plugin QueryPlugin `json:"plugin" required:"true" description:"The query: kind is one of signoz/BuilderQuery, signoz/AIBuilderQuery (builder query over AI observability traces), signoz/CompositeQuery (several named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL or signoz/TraceOperator, and spec holds that kind's query. Pie and table panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only signoz/BuilderQuery and signoz/AIBuilderQuery."`
 }
 
 // ══════════════════════════════════════════════
@@ -109,8 +109,8 @@ type QuerySpec struct {
 // *TextVariableSpec by UnmarshalJSON based on Kind. The schema is a
 // discriminated oneOf (see JSONSchemaOneOf).
 type Variable struct {
-	Kind variable.Kind `json:"kind" required:"true"`
-	Spec any           `json:"spec" required:"true"`
+	Kind variable.Kind `json:"kind" required:"true" description:"The variable kind: ListVariable (values from a plugin) or TextVariable (a free-text value)."`
+	Spec any           `json:"spec" required:"true" description:"The kind-specific variable spec."`
 }
 
 func (Variable) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -154,8 +154,8 @@ func (Variable) JSONSchemaOneOf() []any {
 }
 
 type VariableEnvelope[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The variable kind."`
+	Spec S      `json:"spec" required:"true" description:"The kind-specific variable spec."`
 }
 
 func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
@@ -165,15 +165,15 @@ func (v VariableEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {
 // ListVariableSpec mirrors dashboard.ListVariableSpec (variable.ListSpec
 // fields + Name) but with a typed VariablePlugin replacing common.Plugin.
 type ListVariableSpec struct {
-	Display         Display               `json:"display" required:"true"`
-	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty"`
-	AllowAllValue   bool                  `json:"allowAllValue"`
-	AllowMultiple   bool                  `json:"allowMultiple"`
-	CustomAllValue  string                `json:"customAllValue"`
-	CapturingRegexp string                `json:"capturingRegexp"`
-	Sort            ListVariableSpecSort  `json:"sort"`
-	Plugin          VariablePlugin        `json:"plugin"`
-	Name            string                `json:"name" required:"true" minLength:"1"`
+	Display         Display               `json:"display" required:"true" description:"The label shown for the variable control."`
+	DefaultValue    *VariableDefaultValue `json:"defaultValue,omitempty" description:"The initially selected value: a string, or a list of strings when allowMultiple is true."`
+	AllowAllValue   bool                  `json:"allowAllValue" description:"Whether an all option is offered. Requires allowMultiple."`
+	AllowMultiple   bool                  `json:"allowMultiple" description:"Whether several values can be selected at once."`
+	CustomAllValue  string                `json:"customAllValue" description:"The value meant to replace every value when all is selected. Requires allowAllValue. Stored, but currently ignored by the UI."`
+	CapturingRegexp string                `json:"capturingRegexp" description:"A regular expression meant to keep only matching values, reduced to the capture group when one is present. Stored, but not applied by the UI."`
+	Sort            ListVariableSpecSort  `json:"sort" description:"How the values are ordered: none (default), alphabetical-asc, alphabetical-desc, numerical-asc, numerical-desc, alphabetical-ci-asc or alphabetical-ci-desc."`
+	Plugin          VariablePlugin        `json:"plugin" description:"Where the values come from: kind is signoz/DynamicVariable (observed attribute values), signoz/QueryVariable (a ClickHouse query) or signoz/CustomVariable (a fixed list), and spec holds that kind's settings."`
+	Name            string                `json:"name" required:"true" minLength:"1" description:"The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard."`
 }
 
 // VariableDefaultValue is a list variable's defaultValue: the string | []string
@@ -294,10 +294,10 @@ func (s *ListVariableSpecSort) UnmarshalJSON(data []byte) error {
 // TextVariableSpec replicates dashboard.TextVariableSpec so name can carry the
 // required/non-empty schema tags perses leaves off.
 type TextVariableSpec struct {
-	Display  Display `json:"display" required:"true"`
-	Value    string  `json:"value" required:"true"`
-	Constant bool    `json:"constant"`
-	Name     string  `json:"name" required:"true" minLength:"1"`
+	Display  Display `json:"display" required:"true" description:"The label shown for the variable control."`
+	Value    string  `json:"value" required:"true" description:"The default text. Must be non-empty when constant is true."`
+	Constant bool    `json:"constant" description:"Whether the value is meant to be fixed. Stored, but not applied by the UI."`
+	Name     string  `json:"name" required:"true" minLength:"1" description:"The handle queries reference as $name. Up to 75 characters from letters, digits, dot, underscore and hyphen, not all digits, unique within the dashboard."`
 }
 
 // validate mirrors perses TextVariableSpec validation. path is the JSON path to
@@ -328,8 +328,8 @@ func (s *TextVariableSpec) validate(path string) error {
 // based on Kind. No plugin is involved, so we reuse the Perses spec types as
 // leaf imports.
 type Layout struct {
-	Kind dashboard.LayoutKind `json:"kind" required:"true"`
-	Spec any                  `json:"spec" required:"true"`
+	Kind dashboard.LayoutKind `json:"kind" required:"true" description:"The layout kind. Always Grid."`
+	Spec any                  `json:"spec" required:"true" description:"The grid section: an optional display title and up to 100 items that place panels. Each item has a content.$ref of #/spec/panels/<id> plus x, y, width and height on a 12-column grid: x and y at least 0, width and height at least 1, x plus width at most 12, and no two items overlapping."`
 }
 
 // layoutSpecs is the layout sum type factory. Perses only defines
@@ -419,8 +419,8 @@ func (Layout) JSONSchemaOneOf() []any {
 }
 
 type LayoutEnvelope[S any] struct {
-	Kind string `json:"kind" required:"true"`
-	Spec S      `json:"spec" required:"true"`
+	Kind string `json:"kind" required:"true" description:"The layout kind."`
+	Spec S      `json:"spec" required:"true" description:"The grid section: an optional display title and up to 100 items that place panels. Each item has a content.$ref of #/spec/panels/<id> plus x, y, width and height on a 12-column grid: x and y at least 0, width and height at least 1, x plus width at most 12, and no two items overlapping."`
 }
 
 func (v LayoutEnvelope[S]) PrepareJSONSchema(s *jsonschema.Schema) error {

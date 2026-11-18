@@ -8,7 +8,6 @@ import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
-import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import QueryBuilder from '../QueryBuilder';
 import {
@@ -16,13 +15,6 @@ import {
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
-	}),
-}));
 
 jest.mock('api/generated/services/metrics', () => ({
 	useListMetrics: jest.fn().mockReturnValue({

@@ -7,6 +7,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type SchemaMetadataStore interface {
+	GetBaseColumnEvolutions(ctx context.Context, signal Signal, fieldContext FieldContext) ([]*EvolutionEntry, error)
+}
+
 // MetadataStore is the interface for the telemetry metadata store.
 type MetadataStore interface {
 	// GetKeys returns a map of field keys types.TelemetryFieldKey by name, there can be multiple keys with the same name
@@ -44,6 +48,9 @@ type MetadataStore interface {
 	// PromotePaths records promoted paths in the column evolution table as
 	// rows templated by entry; FieldName and ReleaseTime are set per path.
 	PromotePaths(ctx context.Context, entry EvolutionEntry, paths ...string) error
+
+	// GetMaterializedKeys lists the keys materialized as dedicated columns.
+	GetMaterializedKeys(ctx context.Context, signal Signal) ([]*TelemetryFieldKey, error)
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)

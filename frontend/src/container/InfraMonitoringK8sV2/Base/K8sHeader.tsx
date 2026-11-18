@@ -1,8 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import logEvent from 'api/common/logEvent';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
@@ -44,7 +42,7 @@ function K8sHeader({
 
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
-	const location = useLocation();
+	const location = useAppLocation();
 	const invalidateQueries = useGlobalTimeQueryInvalidate();
 
 	const queryData = useMemo(
@@ -62,7 +60,6 @@ function K8sHeader({
 			const currentExpression =
 				currentQuery.builder.queryData[0]?.filter?.expression || '';
 			const finalExpression = newExpression ?? currentExpression;
-			void setCurrentPage(1);
 
 			const updatedQuery = {
 				...currentQuery,
@@ -89,15 +86,11 @@ function K8sHeader({
 			);
 
 			safeNavigate(`${location.pathname}?${newUrlQuery.toString()}`);
+			// After the navigation: a navigation drops the nuqs writes still queued.
+			void setCurrentPage(1);
 			void invalidateQueries();
 
 			if (finalExpression?.trim()) {
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: entity,
-				});
-
 				logInfraFilterCustomizedEvent(entity, 'search', finalExpression);
 			}
 		},
@@ -141,6 +134,7 @@ function K8sHeader({
 					isLoadingQueries={isFetching}
 					onStageRunQuery={handleStageRunQuery}
 					handleCancelQuery={handleCancelQuery}
+					testId="list-run-query-btn"
 				/>
 			</div>
 

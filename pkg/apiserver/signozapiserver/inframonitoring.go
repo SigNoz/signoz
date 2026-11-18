@@ -4,14 +4,16 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/inframonitoringtypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/infra_monitoring/hosts", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListHosts),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListHosts, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListHosts",
 			Tags:                []string{"inframonitoring"},
@@ -24,13 +26,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pods", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListPods),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListPods, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListPods",
 			Tags:                []string{"inframonitoring"},
@@ -43,13 +50,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/kube_containers", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListContainers),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListContainers, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListContainers",
 			Tags:                []string{"inframonitoring"},
@@ -62,13 +74,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/nodes", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNodes),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListNodes, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListNodes",
 			Tags:                []string{"inframonitoring"},
@@ -81,13 +98,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/namespaces", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListNamespaces),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListNamespaces, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListNamespaces",
 			Tags:                []string{"inframonitoring"},
@@ -100,13 +122,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/clusters", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListClusters),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListClusters, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListClusters",
 			Tags:                []string{"inframonitoring"},
@@ -119,13 +146,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/pvcs", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListVolumes),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListVolumes, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListVolumes",
 			Tags:                []string{"inframonitoring"},
@@ -138,13 +170,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/deployments", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDeployments),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListDeployments, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListDeployments",
 			Tags:                []string{"inframonitoring"},
@@ -157,13 +194,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/statefulsets", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListStatefulSets),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListStatefulSets, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListStatefulSets",
 			Tags:                []string{"inframonitoring"},
@@ -176,13 +218,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/jobs", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListJobs),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListJobs, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListJobs",
 			Tags:                []string{"inframonitoring"},
@@ -195,13 +242,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/daemonsets", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.ListDaemonSets),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.ListDaemonSets, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListDaemonSets",
 			Tags:                []string{"inframonitoring"},
@@ -214,13 +266,18 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/infra_monitoring/checks", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.infraMonitoringHandler.GetChecks),
+		provider.authzMiddleware.CheckResources(provider.infraMonitoringHandler.GetChecks, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetChecks",
 			Tags:                []string{"inframonitoring"},
@@ -232,8 +289,13 @@ func (provider *provider) addInfraMonitoringRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

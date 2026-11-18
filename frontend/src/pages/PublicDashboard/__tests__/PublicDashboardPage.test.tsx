@@ -3,12 +3,11 @@ import {
 	PublicDashboardSchema,
 	useGetResolvedPublicDashboard,
 } from 'hooks/dashboard/useGetResolvedPublicDashboard';
+import { mockAppParams } from 'tests/router-mocks';
 
 import PublicDashboardPage from '..';
 
-jest.mock('react-router-dom', () => ({
-	useParams: (): { dashboardId: string } => ({ dashboardId: 'dash-1' }),
-}));
+mockAppParams({ dashboardId: 'dash-1' });
 
 jest.mock('hooks/dashboard/useGetResolvedPublicDashboard', () => ({
 	PublicDashboardSchema: { Legacy: 'legacy', V2: 'v2' },

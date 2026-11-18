@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { red } from '@ant-design/colors';
 // eslint-disable-next-line signoz/no-antd-components -- Upload has no @signozhq/ui equivalent yet
 import { Upload, UploadProps } from 'antd';
@@ -82,7 +82,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 			void logEvent(DashboardListEvents.DashboardCreated, { method: 'import' });
 			onClose();
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
 		} catch (error) {
 			showErrorModal(error as APIError);

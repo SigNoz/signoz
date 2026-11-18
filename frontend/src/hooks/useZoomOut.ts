@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -35,7 +35,7 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 		(state) => state.globalTime,
 	);
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { safeNavigate } = useSafeNavigate();
 
 	return useCallback((): void => {

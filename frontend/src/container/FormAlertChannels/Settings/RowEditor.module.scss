@@ -1,0 +1,95 @@
+/* One height for every control a repeating row renders, so the remove button,
+   the add button and the inputs beside them agree. */
+.entry,
+.add {
+	--row-control-height: 28px;
+}
+
+.row {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	margin-bottom: var(--spacing-2);
+}
+
+.field {
+	flex: 1 1 0;
+	min-width: 0;
+	max-width: 300px;
+}
+
+.row > :not(.field) {
+	flex: 0 0 auto;
+}
+
+.heading {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.add {
+	/* Sits with the blocks it adds to, not against the next field's label. */
+	margin-top: var(--spacing-2);
+	--button-height: var(--row-control-height);
+}
+
+@media (max-width: 720px) {
+	.row {
+		flex-wrap: wrap;
+	}
+
+	.field {
+		max-width: none;
+	}
+}
+
+/* One entry per block, every input labelled. A row of bare boxes gave no way to
+   tell which column was which once a value was typed. The block keeps a readable
+   width while the rest of the form fills the page, so its two columns do not
+   stretch into a row of six. */
+.entry {
+	max-width: 760px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	padding: var(--spacing-6) var(--spacing-7);
+	margin-bottom: var(--spacing-4);
+}
+
+.entryTop {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--spacing-4);
+
+	/* The remove control is an icon button, so give it the height the design
+	   system gives a small control rather than letting the glyph set it. */
+	--button-height: var(--row-control-height);
+	--button-icon-size: 14px;
+}
+
+.entryIndex {
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted-foreground);
+}
+
+.entryGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 0 var(--spacing-6);
+}
+
+/* The toggle reads as a sentence, so it takes the whole width rather than
+   sitting in a column sized for an input. */
+.entryWide {
+	grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+	.entryGrid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

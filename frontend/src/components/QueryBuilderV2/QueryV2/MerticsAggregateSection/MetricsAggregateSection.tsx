@@ -129,6 +129,7 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										onChange={handleChangeOperator}
 										operators={operators}
 										className="metrics-operators-select"
+										data-testid="metrics-time-aggregation"
 									/>
 								</div>
 							</div>
@@ -192,7 +193,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 										AGGREGATE ACROSS TIME SERIES
 									</div>
 								</Tooltip>
-								<div className="metrics-aggregation-section-content-item-value">
+								<div
+									className="metrics-aggregation-section-content-item-value"
+									data-testid="metrics-space-aggregation"
+								>
 									<SpaceAggregationOptions
 										panelType={panelType}
 										key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}
@@ -229,7 +233,10 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 				<div className="metrics-space-aggregation-section">
 					<div className="metrics-aggregation-section-content">
 						<div className="metrics-aggregation-section-content-item">
-							<div className="metrics-aggregation-section-content-item-value">
+							<div
+								className="metrics-aggregation-section-content-item-value"
+								data-testid="metrics-space-aggregation"
+							>
 								<SpaceAggregationOptions
 									panelType={panelType}
 									key={`${panelType}${queryAggregation.spaceAggregation}${queryAggregation.timeAggregation}`}

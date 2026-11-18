@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -33,9 +33,7 @@ const meta = {
 	title: 'Pages/Dashboards/Detail/Authz',
 	tags: ['authz', 'play'],
 	component: DashboardPage as ComponentType<DashboardArgs>,
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD, DashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<DashboardArgs>;

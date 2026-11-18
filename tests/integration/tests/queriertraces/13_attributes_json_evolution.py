@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from http import HTTPStatus
 
 from fixtures import types
@@ -13,8 +13,12 @@ from fixtures.querier import (
     build_aggregation,
     build_group_by_field,
     build_traces_scalar_query,
+    get_all_warnings,
+    get_attribute_evolution_time,
+    get_preview_sql,
     get_rows,
     index_series_by_label,
+    make_preview_query_request,
     make_query_request,
 )
 from fixtures.traces import TraceIdGenerator, Traces
@@ -25,7 +29,6 @@ def test_traces_attributes_json_evolution(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """`http.route` is a dotted key, so the `attributes` JSON column nests it under the path
     http.route while the legacy attributes_string map keys it verbatim. Spans before the attribute
@@ -34,8 +37,7 @@ def test_traces_attributes_json_evolution(
     map+JSON multiIf (straddling), and must return identical rows across the boundary."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     before_2 = evolution_time - timedelta(minutes=10)
     before_1 = evolution_time - timedelta(minutes=5)
@@ -159,15 +161,13 @@ def test_traces_attributes_json_typed_filters(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """In the JSON-only window each dotted attribute reads through the nested path with its native
     cast: string (::String), Int64 (toFloat64(...::Nullable(Float64))), Bool (::Nullable(Bool)),
     and existence via the raw path. Filters must select the same rows the Map path would."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     hit = evolution_time + timedelta(minutes=5)
     miss = evolution_time + timedelta(minutes=6)
@@ -227,7 +227,6 @@ def test_traces_attributes_json_collision_and_map_parity(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """A name stored under two types (`app.status` as 200 and 'teapot') is one JSON path with
     per-row types. The Map-era behavior must hold on it: group-by reads each row as its stored
@@ -236,8 +235,7 @@ def test_traces_attributes_json_collision_and_map_parity(
     across every stored type."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     hit = evolution_time + timedelta(minutes=5)
     insert_traces(
@@ -335,19 +333,72 @@ def test_traces_attributes_json_collision_and_map_parity(
         assert set(series.keys()) == expected, label
 
 
+def test_traces_attributes_json_number_reads(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """A JSON number reads like the attributes_number map: a numeric string as its number, an
+    integer above 2^53 rounded, and a non-numeric string as no number."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
+
+    hit = evolution_time + timedelta(minutes=5)
+    insert_traces(
+        [
+            Traces(
+                timestamp=hit,
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=route,
+                attributes={"http.route": route, "app.code": code},
+                attribute_write_mode="dual_write",
+            )
+            for route, code in [("/int", 404), ("/numeric_string", "404"), ("/big", 2**53 + 1), ("/text", "abc")]
+        ]
+    )
+
+    start_ms = int((hit - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((hit + timedelta(minutes=1)).timestamp() * 1000)
+
+    for label, filter_expression, expected in [
+        ("numeric_string_eq", "app.code = 404", {"/int", "/numeric_string"}),
+        ("big_int_rounded", f"app.code = {2**53}", {"/big"}),
+        ("text_not_a_number", "app.code > 0", {"/int", "/numeric_string", "/big"}),
+    ]:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type=RequestType.TIME_SERIES,
+            queries=[
+                build_traces_scalar_query(
+                    aggregations=[build_aggregation("count()")],
+                    group_by=[build_group_by_field("http.route", field_context="attribute")],
+                    filter_expression=filter_expression,
+                )
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK, label
+        aggregations = (response.json()["data"]["data"]["results"][0].get("aggregations")) or []
+        series = index_series_by_label(aggregations[0]["series"], "http.route") if aggregations else {}
+        assert set(series.keys()) == expected, label
+
+
 def test_traces_attributes_json_list_view(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
-    seed_attribute_evolution: Callable[[str, datetime], None],
 ) -> None:
     """One straddling list query surfaces each row's attributes bag from its own home
     (legacy maps / dual-written / JSON-only), flattened to dotted keys with native types."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    evolution_time = datetime.now(tz=UTC).replace(second=0, microsecond=0) - timedelta(minutes=30)
-    seed_attribute_evolution("traces", evolution_time)
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
 
     service = "list-homes-service"
     spans = [
@@ -410,3 +461,77 @@ def test_traces_attributes_json_list_view(
         assert row["data"]["name"] == name
         # int/float compare equal in Python, so map-sourced float64 and JSON-sourced numbers both match.
         assert row["data"]["attributes"] == attributes, name
+
+
+def test_traces_attributes_json_unreported_key(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    """An attribute metadata does not report follows the rollout like a reported one: the legacy
+    map before it, the attributes JSON column after it."""
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    evolution_time = get_attribute_evolution_time(signoz, "traces").replace(second=0, microsecond=0)
+
+    before = evolution_time - timedelta(minutes=5)
+    after = evolution_time + timedelta(minutes=5)
+    spans = [
+        Traces(
+            timestamp=before,
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="before",
+            attributes={"unreported.key": "value"},
+            attribute_write_mode="legacy_only",
+        ),
+        Traces(
+            timestamp=after,
+            trace_id=TraceIdGenerator.trace_id(),
+            span_id=TraceIdGenerator.span_id(),
+            name="after",
+            attributes={"unreported.key": "value"},
+            attribute_write_mode="json_only",
+        ),
+    ]
+    # no metadata rows, so the querier does not know the key
+    for span in spans:
+        span.attribute_keys = []
+        span.tag_attributes = []
+    insert_traces(spans)
+
+    queries = [
+        build_traces_scalar_query(
+            aggregations=[build_aggregation("count()")],
+            filter_expression="unreported.key = 'value'",
+        )
+    ]
+
+    # before the rollout -> legacy map
+    start_ms = int((before - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((before + timedelta(minutes=1)).timestamp() * 1000)
+
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    assert "attributes_string['unreported.key']" in sql
+    assert "attributes.`unreported.key`" not in sql
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    assert response.status_code == HTTPStatus.OK
+    series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
+    assert [value["value"] for value in series[0]["values"]] == [1]
+    assert any("not found in metadata" in warning.get("message", "") for warning in get_all_warnings(response.json()))
+
+    # after the rollout -> attributes JSON column
+    start_ms = int((after - timedelta(minutes=1)).timestamp() * 1000)
+    end_ms = int((after + timedelta(minutes=1)).timestamp() * 1000)
+
+    sql = get_preview_sql(make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries), "A")
+    assert "attributes.`unreported.key`" in sql
+    assert "attributes_string" not in sql
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, queries=queries)
+    assert response.status_code == HTTPStatus.OK
+    series = response.json()["data"]["data"]["results"][0]["aggregations"][0]["series"]
+    assert [value["value"] for value in series[0]["values"]] == [1]
+    assert any("not found in metadata" in warning.get("message", "") for warning in get_all_warnings(response.json()))

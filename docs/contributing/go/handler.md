@@ -82,7 +82,7 @@ In the module implementation, implement the new method. A typical implementation
 - Uses the `render` package to write responses or errors
 
 ```go
-func (h *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
+func (handler *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
     // Extract authentication and organization context from req.Context()
     claims, err := authtypes.ClaimsFromContext(req.Context())
     if err != nil {
@@ -98,7 +98,7 @@ func (h *handler) CreateThing(rw http.ResponseWriter, req *http.Request) {
     }
     
     // Call module functions
-    out, err := h.module.CreateThing(req.Context(), claims.OrgID, &in)
+    out, err := handler.module.CreateThing(req.Context(), claims.OrgID, &in)
     if err != nil {
         render.Error(rw, err)
         return

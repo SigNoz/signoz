@@ -51,7 +51,7 @@ function FunnelResults(): JSX.Element {
 	}
 
 	return (
-		<div className="funnel-results">
+		<div className="funnel-results" data-testid="funnel-results">
 			<OverallMetrics />
 			<FunnelGraph />
 			<StepsTransitionResults />

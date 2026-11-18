@@ -61,6 +61,7 @@ export function RevokeKeyFooter({
 				color="danger"
 				loading={isRevoking}
 				onClick={onConfirm}
+				testId="revoke-key-confirm-btn"
 				prefix={<Trash2 size={12} />}
 			>
 				Revoke Key

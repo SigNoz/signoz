@@ -3,10 +3,8 @@ package app
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 
 	"github.com/SigNoz/signoz/pkg/clickhousesql"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -15,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"log/slog"
-	"math"
 	"net/http"
 	"regexp"
 	"slices"
@@ -39,7 +36,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	_ "modernc.org/sqlite"
 
-	"github.com/SigNoz/signoz/pkg/contextlinks"
 	traceFunnelsModule "github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
@@ -64,7 +60,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
@@ -363,18 +358,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v1/rules", am.ViewAccess(aH.listRules)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules/{id}", am.ViewAccess(aH.getRule)).Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/rules", am.EditAccess(aH.createRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.editRule)).Methods(http.MethodPut)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.deleteRule)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/rules/{id}", am.EditAccess(aH.patchRule)).Methods(http.MethodPatch)
-	router.HandleFunc("/api/v1/testRule", am.EditAccess(aH.testRule)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/stats", am.ViewAccess(aH.getRuleStats)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/timeline", am.ViewAccess(aH.getRuleStateHistory)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/top_contributors", am.ViewAccess(aH.getRuleStateHistoryTopContributors)).Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/rules/{id}/history/overall_status", am.ViewAccess(aH.getOverallStateTransitions)).Methods(http.MethodPost)
-
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -501,377 +484,6 @@ func (aH *APIHandler) PopulateTemporality(ctx context.Context, orgID valuer.UUID
 		}
 	}
 	return nil
-}
-
-func (aH *APIHandler) listRules(w http.ResponseWriter, r *http.Request) {
-
-	rules, err := aH.ruleManager.ListRuleStates(r.Context())
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	// todo(amol): need to add sorter
-
-	aH.Respond(w, rules)
-}
-
-func (aH *APIHandler) getRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ruleResponse, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	aH.Respond(w, ruleResponse)
-}
-
-func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for create rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.CreateRule(r.Context(), string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, rule)
-}
-
-func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for edit rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	err = aH.ruleManager.EditRule(r.Context(), string(body), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully edited")
-}
-
-func (aH *APIHandler) deleteRule(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-
-	err := aH.ruleManager.DeleteRule(r.Context(), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, "rule successfully deleted")
-}
-
-func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for patch rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	gettableRule, err := aH.ruleManager.PatchRule(r.Context(), string(body), id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			RespondError(w, &model.ApiError{Typ: model.ErrorNotFound, Err: fmt.Errorf("rule not found")}, nil)
-			return
-		}
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	aH.Respond(w, gettableRule)
-}
-
-func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
-	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
-	if err != nil {
-		aH.logger.ErrorContext(r.Context(), "error reading request body for test rule", errors.Attr(err))
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	alertCount, err := aH.ruleManager.TestNotification(ctx, orgID, string(body))
-	if err != nil {
-		RespondError(w, toApiError(err), nil)
-		return
-	}
-
-	response := map[string]interface{}{
-		"alertCount": alertCount,
-		"message":    "notification sent",
-	}
-	aH.Respond(w, response)
-}
-
-func (aH *APIHandler) getRuleStats(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	totalCurrentTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	currentAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	currentAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	if params.End-params.Start >= 86400000 {
-		days := int64(math.Ceil(float64(params.End-params.Start) / 86400000))
-		params.Start -= days * 86400000
-		params.End -= days * 86400000
-	} else {
-		params.Start -= 86400000
-		params.End -= 86400000
-	}
-
-	totalPastTriggers, err := aH.reader.GetTotalTriggers(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastTriggersSeries, err := aH.reader.GetTriggersByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	pastAvgResolutionTime, err := aH.reader.GetAvgResolutionTime(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	pastAvgResolutionTimeSeries, err := aH.reader.GetAvgResolutionTimeByInterval(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
-		currentAvgResolutionTime = 0
-	}
-	if math.IsNaN(pastAvgResolutionTime) || math.IsInf(pastAvgResolutionTime, 0) {
-		pastAvgResolutionTime = 0
-	}
-
-	stats := model.Stats{
-		TotalCurrentTriggers:           totalCurrentTriggers,
-		TotalPastTriggers:              totalPastTriggers,
-		CurrentTriggersSeries:          currentTriggersSeries,
-		PastTriggersSeries:             pastTriggersSeries,
-		CurrentAvgResolutionTime:       strconv.FormatFloat(currentAvgResolutionTime, 'f', -1, 64),
-		PastAvgResolutionTime:          strconv.FormatFloat(pastAvgResolutionTime, 'f', -1, 64),
-		CurrentAvgResolutionTimeSeries: currentAvgResolutionTimeSeries,
-		PastAvgResolutionTimeSeries:    pastAvgResolutionTimeSeries,
-	}
-
-	aH.Respond(w, stats)
-}
-
-func (aH *APIHandler) getOverallStateTransitions(w http.ResponseWriter, r *http.Request) {
-	ruleID := mux.Vars(r)["id"]
-	params := model.QueryRuleStateHistory{}
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	stateItems, err := aH.reader.GetOverallStateTransitions(r.Context(), ruleID, &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, stateItems)
-}
-
-func (aH *APIHandler) getRuleStateHistory(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-	if err := params.Validate(); err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	rule, err := aH.ruleManager.GetRule(r.Context(), id)
-	if err == nil {
-		for idx := range res.Items {
-			lbls := make(map[string]string)
-			err := json.Unmarshal([]byte(res.Items[idx].Labels), &lbls)
-			if err != nil {
-				continue
-			}
-			end := time.Unix(res.Items[idx].UnixMilli/1000, 0)
-			// why are we subtracting 3 minutes?
-			// the query range is calculated based on the rule's evalWindow and evalDelay
-			// alerts have 2 minutes delay built in, so we need to subtract that from the start time
-			// to get the correct query range
-			start := end.Add(-rule.EvalWindow.Duration() - 3*time.Minute)
-			if rule.AlertType == ruletypes.AlertTypeLogs {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-
-				res.Items[idx].RelatedLogsLink = contextlinks.PrepareParamsForLogsV5(start, end, whereClause).Encode()
-			} else if rule.AlertType == ruletypes.AlertTypeTraces || rule.AlertType == ruletypes.AlertTypeAITraces {
-				// TODO(srikanthccv): re-visit this and support multiple queries
-				var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
-
-				for _, query := range rule.RuleCondition.CompositeQuery.Queries {
-					if query.Type == qbtypes.QueryTypeBuilder || query.Type == qbtypes.QueryTypeBuilderAI {
-						switch spec := query.Spec.(type) {
-						case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-							q = spec
-						}
-					}
-				}
-
-				filterExpr := ""
-				if q.Filter != nil && q.Filter.Expression != "" {
-					filterExpr = q.Filter.Expression
-				}
-
-				whereClause := contextlinks.PrepareFilterExpression(lbls, filterExpr, q.GroupBy)
-				res.Items[idx].RelatedTracesLink = contextlinks.PrepareParamsForTracesV5(start, end, whereClause, rule.AlertType.BuilderQueryType()).Encode()
-			}
-		}
-	}
-
-	aH.Respond(w, res)
-}
-
-func (aH *APIHandler) getRuleStateHistoryTopContributors(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	params := model.QueryRuleStateHistory{}
-	err = json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
-		return
-	}
-
-	res, err := aH.reader.ReadRuleStateHistoryTopContributorsByRuleID(r.Context(), id.StringValue(), &params)
-	if err != nil {
-		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: err}, nil)
-		return
-	}
-
-	aH.Respond(w, res)
 }
 
 func prepareQuery(r *http.Request) (string, error) {

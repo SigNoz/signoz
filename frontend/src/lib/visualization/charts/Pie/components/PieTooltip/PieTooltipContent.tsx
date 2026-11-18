@@ -1,0 +1,71 @@
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import cx from 'classnames';
+import TooltipItem from 'lib/uPlotV2/components/Tooltip/components/TooltipItem/TooltipItem';
+import TooltipList from 'lib/uPlotV2/components/Tooltip/components/TooltipList/TooltipList';
+import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
+
+import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
+import PieTooltipFooter from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltipFooter';
+
+import styles from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltip.module.scss';
+
+interface PieTooltipContentProps {
+	/** Widget id, for the list's analytics. */
+	id: string;
+	data: PieTooltipData;
+	/** Pinned by a click on a grouped slice: its members become drill-down targets. */
+	isPinned: boolean;
+	canDrilldown: boolean;
+	onMemberClick: (index: number, event: ReactMouseEvent) => void;
+	onUnpin: () => void;
+}
+
+/** Hovered slice's label and value, in the timeseries tooltip's look; a grouped slice also lists its members. */
+export default function PieTooltipContent({
+	id,
+	data,
+	isPinned,
+	canDrilldown,
+	onMemberClick,
+	onUnpin,
+}: PieTooltipContentProps): JSX.Element {
+	const { slice, groupedMembers } = data;
+	const canDrillMember = isPinned && canDrilldown;
+	const showFooter = !!groupedMembers || canDrilldown;
+
+	return (
+		<div
+			className={cx(styles.body, {
+				[styles.pinned]: isPinned,
+			})}
+		>
+			{isPinned && (
+				<div className={styles.headerRow}>
+					<span>{groupedMembers?.length} series</span>
+					<TooltipPinnedBadge />
+				</div>
+			)}
+			<div className={styles.activeItem}>
+				<TooltipItem item={slice} isItemActive />
+			</div>
+			{groupedMembers && (
+				<>
+					<span className={styles.divider} />
+					<TooltipList
+						id={id}
+						content={groupedMembers}
+						onItemClick={canDrillMember ? onMemberClick : undefined}
+					/>
+				</>
+			)}
+			{showFooter && (
+				<PieTooltipFooter
+					isGroup={!!groupedMembers}
+					isPinned={isPinned}
+					canDrilldown={canDrilldown}
+					onUnpin={onUnpin}
+				/>
+			)}
+		</div>
+	);
+}

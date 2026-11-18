@@ -1,5 +1,6 @@
 import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
+import { partialPointsDrawHook } from 'lib/uPlotV2/hooks/partialPointsDrawHook';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
@@ -19,6 +20,7 @@ import {
 	ConfigBuilder,
 	ConfigBuilderProps,
 	LegendItem,
+	PlotMode,
 	SelectionPreferencesSource,
 	StackMode,
 } from './types';
@@ -65,6 +67,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	private stackMode: StackMode = StackMode.None;
 
+	private mode: PlotMode = PlotMode.Aligned;
+
 	private cursor: Cursor | undefined;
 
 	private hooks: Hooks.Arrays = {};
@@ -80,6 +84,8 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	private select: uPlot.Select | undefined;
 
 	private thresholds: Record<string, ThresholdsDrawHookOptions> = {};
+
+	private hasPartialPointsHook = false;
 
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
@@ -160,6 +166,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 		return this.stackMode;
 	}
 
+	setMode(mode: PlotMode): void {
+		this.mode = mode;
+	}
+
 	/**
 	 * Add or merge a scale configuration
 	 */
@@ -177,6 +187,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 */
 	addSeries(props: SeriesProps): void {
 		this.series.push(new UPlotSeriesBuilder(props));
+		if (props.partialTimestamps?.size && !this.hasPartialPointsHook) {
+			this.hasPartialPointsHook = true;
+			this.addHook('draw', partialPointsDrawHook);
+		}
 	}
 
 	getSeriesSpanGapsOptions(): SeriesSpanGapsOption[] {
@@ -511,6 +525,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 			(acc, s) => ({ ...acc, ...this.resolveScale(s).getConfig() }),
 			{} as Record<string, uPlot.Scale>,
 		);
+
+		if (this.mode === PlotMode.Faceted) {
+			config.mode = this.mode as number as uPlot.Mode;
+		}
 
 		config.hooks = this.hooks;
 		config.select = this.select;

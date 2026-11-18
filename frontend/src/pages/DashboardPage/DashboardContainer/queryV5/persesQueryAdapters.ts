@@ -26,6 +26,11 @@ import {
 	isAIBuilderEnvelope,
 	isBuilderEnvelope,
 } from 'lib/query/builderEnvelope';
+import {
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { toQueryEnvelopes } from './buildQueryRangeRequest';
 
 /**
@@ -54,17 +59,18 @@ const toGeneratedEnvelopes = (
  * `pageSize` into the V5 `limit`, which usePanelQuery would read as a user cap and hide the
  * pager. Dropped here, `limit` reflects only a real user limit and List panels page by default.
  */
-const withoutExplorerPaging = (query: Query): Query => ({
-	...query,
-	builder: {
-		...query.builder,
-		queryData: query.builder.queryData.map((data) => ({
+const withoutExplorerPaging = (query: Query): Query => {
+	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+	const builder = getBuilderBySlotKey(query, slotKey);
+	return replaceBuilderBySlotKey(query, slotKey, {
+		...builder,
+		queryData: builder.queryData.map((data) => ({
 			...data,
 			pageSize: undefined,
 			offset: undefined,
 		})),
-	},
-});
+	});
+};
 
 export function deriveQueryType(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
@@ -84,6 +90,9 @@ export function deriveQueryType(
 		)
 	) {
 		return EQueryType.CLICKHOUSE;
+	}
+	if (envelopes.some(isAIBuilderEnvelope)) {
+		return EQueryType.AI_QUERY_BUILDER;
 	}
 	return EQueryType.QUERY_BUILDER;
 }
@@ -106,6 +115,9 @@ export function panelTypeToRequestType(
 		case PANEL_TYPES.TABLE:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.SCATTER:
+		case PANEL_TYPES.GEO_MAP:
+		case PANEL_TYPES.TOP_LIST:
 			return Querybuildertypesv5RequestTypeDTO.scalar;
 		case PANEL_TYPES.LIST:
 			return Querybuildertypesv5RequestTypeDTO.raw;

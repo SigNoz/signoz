@@ -1,0 +1,7 @@
+.drawerSection {
+	composes: drawerSection from './shared.module.scss';
+}
+
+.fieldError {
+	composes: fieldError from './shared.module.scss';
+}

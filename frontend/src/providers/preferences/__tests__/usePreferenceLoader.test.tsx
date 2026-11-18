@@ -1,6 +1,9 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { Dispatch, SetStateAction } from 'react';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
-import { DataSource } from 'types/common/queryBuilder';
+import { FontSize } from 'container/OptionsMenu/types';
+import { renderHook, waitFor } from 'tests/test-utils';
+import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
@@ -42,15 +45,18 @@ jest.mock('../configs/tracesLoaderConfig', () => ({
 }));
 
 describe('usePreferenceLoader', () => {
+	const setReSync = jest.fn() as jest.MockedFunction<
+		Dispatch<SetStateAction<boolean>>
+	>;
+
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
 
 	it('should load logs preferences based on priority order', async () => {
-		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: false,
 				setReSync,
 			}),
@@ -71,10 +77,9 @@ describe('usePreferenceLoader', () => {
 	});
 
 	it('should load traces preferences', async () => {
-		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.TRACES,
+				sourcePage: SavedviewtypesSourceDTO.traces,
 				reSync: false,
 				setReSync,
 			}),
@@ -93,13 +98,11 @@ describe('usePreferenceLoader', () => {
 	});
 
 	it('should call setReSync when reSync is true', async () => {
-		const setReSync = jest.fn();
-
 		// Test that the hook calls setReSync(false) when reSync is true
 		// We'll unmount quickly to avoid the infinite loop
 		const { unmount } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: true,
 				setReSync,
 			}),
@@ -118,19 +121,25 @@ describe('usePreferenceLoader', () => {
 
 	it('should handle errors during loading', async () => {
 		// Make first call succeed (initial state), second call throw in reSync effect
-		const localSpy: jest.SpyInstance = jest.spyOn(logsLoaderConfig, 'local');
+		const localSpy = jest.spyOn(logsLoaderConfig, 'local');
+		// The loader reads stored columns by name, though `local()` types them as
+		// the older key-based shape.
 		localSpy.mockImplementationOnce(() => ({
-			columns: [{ name: 'local-column' }],
-			formatting: { maxLines: 5, format: 'table', fontSize: 'medium', version: 1 },
+			columns: [{ name: 'local-column' }] as unknown as BaseAutocompleteData[],
+			formatting: {
+				maxLines: 5,
+				format: 'table',
+				fontSize: FontSize.MEDIUM,
+				version: 1,
+			},
 		}));
 		localSpy.mockImplementationOnce(() => {
 			throw new Error('Loading failed');
 		});
 
-		const setReSync = jest.fn();
 		const { result } = renderHook(() =>
 			usePreferenceLoader({
-				dataSource: DataSource.LOGS,
+				sourcePage: SavedviewtypesSourceDTO.logs,
 				reSync: true,
 				setReSync,
 			}),

@@ -4,6 +4,10 @@ import type {
 	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesFillOpacityDTO,
+	DashboardtypesGeoMapBubblesDTO,
+	DashboardtypesGeoMapColorsDTO,
+	DashboardtypesGeoMapPanelSpecDTO,
+	DashboardtypesGeoMapThresholdDTO,
 	DashboardtypesHeatmapAxesDTO,
 	DashboardtypesHeatmapColorsDTO,
 	DashboardtypesHeaderOptionsDTO,
@@ -13,6 +17,10 @@ import type {
 	DashboardtypesLineStyleDTO,
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesPanelSpecDTO,
+	DashboardtypesScatterPlotAxesDTO,
+	DashboardtypesScatterPlotDimensionsDTO,
+	DashboardtypesScatterPlotPointsDTO,
+	DashboardtypesScatterPlotThresholdDTO,
 	DashboardtypesSpanGapsDTO,
 	DashboardtypesStackModeDTO,
 	DashboardtypesTableFormattingDTO,
@@ -20,6 +28,7 @@ import type {
 	DashboardtypesTextPresentationDTO,
 	DashboardtypesThresholdWithLabelDTO,
 	DashboardtypesTimePreferenceDTO,
+	DashboardtypesTopListAppearanceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
@@ -27,8 +36,10 @@ import {
 	Antenna,
 	BarChart,
 	Columns3,
+	Crosshair,
 	Hash,
 	Link2,
+	MapPin,
 	Palette,
 	PanelTop,
 	PencilRuler,
@@ -64,6 +75,13 @@ export enum SectionKind {
 	Columns = 'columns',
 	TextLayout = 'presentation',
 	PanelHeader = 'headerOptions',
+	Dimensions = 'dimensions',
+	/** Scatter Plot's per-axis `axes` shape; `Axes` is the single y-axis shape. */
+	ScatterAxes = 'scatterAxes',
+	/** Geo Map's placement: what a row is, its columns, the area, the layer and the value columns. */
+	Location = 'location',
+	/** Top List's row display, for a kind with no chart to style. */
+	Appearance = 'appearance',
 }
 
 /**
@@ -72,18 +90,22 @@ export enum SectionKind {
  * - `label` — value + color + label lines (TimeSeries / Bar)
  * - `comparison` — value crosses an operator → recolor (Number)
  * - `table` — per-column comparison (Table)
+ * - `color` — comparison that always recolors, so it has no format (Geo Map)
  */
 export enum ThresholdVariant {
 	LABEL = 'label',
 	COMPARISON = 'comparison',
 	TABLE = 'table',
+	COLOR = 'color',
 }
 
 /** Union of every threshold element shape stored under `plugin.spec.thresholds`. */
 export type AnyThreshold =
 	| DashboardtypesThresholdWithLabelDTO
+	| DashboardtypesScatterPlotThresholdDTO
 	| DashboardtypesComparisonThresholdDTO
-	| DashboardtypesTableThresholdDTO;
+	| DashboardtypesTableThresholdDTO
+	| DashboardtypesGeoMapThresholdDTO;
 
 /**
  * Each section ↔ one slice of the panel spec it edits. Most slices live under
@@ -103,9 +125,21 @@ export interface PanelChartAppearanceSlice {
 	fillOpacity?: DashboardtypesFillOpacityDTO;
 	showPoints?: boolean;
 	spanGaps?: DashboardtypesSpanGapsDTO;
-	/** The heatmap's cell colour ramp. */
-	colors?: DashboardtypesHeatmapColorsDTO;
+	/** The heatmap's cell colour ramp, or the geo map's value ramp. */
+	colors?: DashboardtypesHeatmapColorsDTO & DashboardtypesGeoMapColorsDTO;
+	/** Scatter Plot's dot size and opacity. */
+	points?: DashboardtypesScatterPlotPointsDTO;
+	/** Geo Map's circle radius range. */
+	bubbles?: DashboardtypesGeoMapBubblesDTO;
+	/** Geo Map's shape names; unset shows them. */
+	labels?: boolean | null;
 }
+
+/** Geo Map edits `location` and `map` together: what a row is decides the area and layer. */
+export type GeoMapPlacementSlice = Pick<
+	DashboardtypesGeoMapPanelSpecDTO,
+	'location' | 'map'
+>;
 
 /** Superset spanning every kind's visualization DTO. */
 export interface PanelVisualizationSlice {
@@ -135,6 +169,10 @@ export interface SectionSpecMap {
 	[SectionKind.Columns]: TelemetrytypesTelemetryFieldKeyDTO[]; // spec.plugin.spec.selectFields (List)
 	[SectionKind.TextLayout]: DashboardtypesTextPresentationDTO; // spec.plugin.spec.presentation (Text)
 	[SectionKind.PanelHeader]: DashboardtypesHeaderOptionsDTO; // spec.plugin.spec.headerOptions (Text)
+	[SectionKind.Dimensions]: DashboardtypesScatterPlotDimensionsDTO; // spec.plugin.spec.dimensions (Scatter Plot)
+	[SectionKind.ScatterAxes]: DashboardtypesScatterPlotAxesDTO; // spec.plugin.spec.axes (Scatter Plot)
+	[SectionKind.Location]: GeoMapPlacementSlice; // spec.plugin.spec.location + .map (Geo Map)
+	[SectionKind.Appearance]: DashboardtypesTopListAppearanceDTO; // spec.plugin.spec.appearance (Top List)
 }
 
 /**
@@ -173,6 +211,14 @@ export interface SectionControls {
 		spanGaps?: boolean;
 		// colors → the heatmap's cell colour ramp; nothing else here applies to a grid.
 		colors?: boolean;
+		/** Scatter Plot's dots: one size, or a min/max range when a size column is bound. */
+		points?: boolean;
+		/** Geo Map's value ramp: palette, scale, steps and a value range. */
+		mapColors?: boolean;
+		/** Geo Map's circle radius range. */
+		bubbles?: boolean;
+		/** Geo Map's shape names. */
+		labels?: boolean;
 	};
 	[SectionKind.Buckets]: {
 		count?: boolean;
@@ -190,7 +236,13 @@ export interface SectionControls {
 		fillSpans?: boolean;
 	};
 	// Editor discriminator (not a spec field): which threshold variant a kind edits.
-	[SectionKind.Thresholds]: { variant?: ThresholdVariant };
+	// axis → a `label` threshold picks the axis it marks (Scatter Plot).
+	[SectionKind.Thresholds]: { variant?: ThresholdVariant; axis?: boolean };
+	[SectionKind.Appearance]: {
+		showRank?: boolean;
+		showShare?: boolean;
+		barColor?: boolean;
+	};
 }
 
 export type ControlledSectionKind = keyof SectionControls;
@@ -200,7 +252,10 @@ export type AtomicSectionKind =
 	| SectionKind.ContextLinks
 	| SectionKind.Columns
 	| SectionKind.TextLayout
-	| SectionKind.PanelHeader;
+	| SectionKind.PanelHeader
+	| SectionKind.Dimensions
+	| SectionKind.ScatterAxes
+	| SectionKind.Location;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
 export type SectionVisibilityPredicate = (
@@ -235,6 +290,10 @@ export const SECTION_METADATA = {
 	[SectionKind.Columns]: { title: 'Columns', icon: Columns3 },
 	[SectionKind.TextLayout]: { title: 'Panel appearance', icon: AlignLeft },
 	[SectionKind.PanelHeader]: { title: 'Panel header', icon: PanelTop },
+	[SectionKind.Dimensions]: { title: 'Dimensions', icon: Crosshair },
+	[SectionKind.ScatterAxes]: { title: 'Axes', icon: Scale3D },
+	[SectionKind.Location]: { title: 'Location', icon: MapPin },
+	[SectionKind.Appearance]: { title: 'Appearance', icon: Palette },
 } as const satisfies Record<SectionKind, SectionMetadata>;
 
 /**

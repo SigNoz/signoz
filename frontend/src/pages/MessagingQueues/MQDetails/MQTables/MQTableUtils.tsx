@@ -21,14 +21,12 @@ export function getTableDataForProducerLatencyOverview(
 
 	// Merge the data from both tables
 	const mergedTableData: RowData[] =
-		firstTableData.map(
-			(row, index): RowData => ({
-				...row.data,
-				byte_rate:
-					byteRateMap.get(`${row.data.service_name}--${row.data.topic}`) || 0,
-				key: index,
-			}),
-		) || [];
+		firstTableData.map((row, index): RowData => ({
+			...row.data,
+			byte_rate:
+				byteRateMap.get(`${row.data.service_name}--${row.data.topic}`) || 0,
+			key: index,
+		})) || [];
 
 	return mergedTableData;
 }

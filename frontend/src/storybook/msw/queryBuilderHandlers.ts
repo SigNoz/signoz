@@ -8,10 +8,16 @@ import { rest } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource, SIGNAL_TO_DATA_SOURCE } from 'types/common/queryBuilder';
 
+import { fieldValuesResponse } from './__story_mockdata__/fields';
+import {
+	listMetricsResponse,
+	metricMetadataResponse,
+} from './__story_mockdata__/metrics';
 import {
 	autocompleteKeysResponse,
 	autocompleteValuesResponse,
 } from './__story_mockdata__/queryBuilderAutocomplete';
+import { QUERY_BUILDER_METRICS } from './__story_mockdata__/queryBuilderMetrics';
 
 /**
  * The v5 keys list, served from the same per-signal fixture as the v3 pair so
@@ -95,6 +101,61 @@ export const queryBuilderHandlers = [
 				fieldKeysResponseForSignal(
 					req.url.searchParams.get('signal'),
 					req.url.searchParams.get('searchText') ?? '',
+				),
+			),
+		),
+	),
+	// The AI query builder pins traces and reads the same shapes from its own
+	// endpoints.
+	rest.get(
+		'http://localhost/api/v1/ai_observability/fields/keys',
+		(req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json(
+					fieldKeysResponseForSignal(
+						TelemetrytypesSignalDTO.traces,
+						req.url.searchParams.get('searchText') ?? '',
+					),
+				),
+			),
+	),
+	...[
+		'http://localhost/api/v1/fields/values',
+		'http://localhost/api/v1/ai_observability/fields/values',
+	].map((url) =>
+		rest.get(url, (req, res, ctx) =>
+			res(
+				ctx.status(200),
+				ctx.json(
+					fieldValuesResponse(
+						autocompleteValuesResponse(
+							req.url.searchParams.get('name'),
+							req.url.searchParams.get('searchText') ?? '',
+						).data.stringAttributeValues ?? [],
+					),
+				),
+			),
+		),
+	),
+	rest.get('http://localhost/api/v2/metrics', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(
+				listMetricsResponse(
+					QUERY_BUILDER_METRICS,
+					req.url.searchParams.get('searchText') ?? '',
+				),
+			),
+		),
+	),
+	rest.get('http://localhost/api/v2/metrics/metadata', (req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(
+				metricMetadataResponse(
+					QUERY_BUILDER_METRICS,
+					req.url.searchParams.get('metricName') ?? '',
 				),
 			),
 		),

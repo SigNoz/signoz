@@ -1,10 +1,16 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
+import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
+import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
+import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
+import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
 import logEvent from 'api/common/logEvent';
 
@@ -12,22 +18,35 @@ import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { AIAssistantEvents } from '../events';
 import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
+import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
 import styles from './AIAssistantPanel.module.scss';
 
-const AI_ASSISTANT_PANEL_OPEN_CLASS = 'ai-assistant-panel-open';
-const AI_ASSISTANT_PANEL_WIDTH_VAR = '--ai-assistant-panel-width';
+const PANEL_WIDTH = 420;
+const PANEL_HEIGHT = 601;
+const PANEL_MIN_WIDTH = 380;
+const PANEL_MIN_HEIGHT = 500;
+const PANEL_MARGIN = 8;
+const PANEL_RESIZE_EDGES = {
+	top: true,
+	right: true,
+	bottom: true,
+	left: true,
+	topRight: false,
+	bottomRight: false,
+	bottomLeft: false,
+	topLeft: false,
+};
+const PANEL_AVOID = [supportChatObstacle];
 
 export default function AIAssistantPanel(): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
-	const isFullScreenPage = !!matchPath(pathname, {
-		path: ROUTES.AI_ASSISTANT,
+	const isFullScreenPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
 		exact: true,
 	});
 	const activeConversationId = useAIAssistantStore(
@@ -38,6 +57,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		(s) => s.startNewConversation,
 	);
 	const analyticsCtx = useAIAssistantAnalyticsContext();
+	const chatTitle = useActiveChatTitle();
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
@@ -47,11 +67,11 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the drawer, so this is a surface
 		// switch, not a new open.
-		history.push(
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ fromInApp: true },
+			{ state: { fromInApp: true } },
 		);
-	}, [activeConversationId, closeDrawer, history]);
+	}, [activeConversationId, closeDrawer]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -72,75 +92,36 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		setShowHistory(false);
 	}, []);
 
-	// ── Resize logic ──────────────────────────────────────────────────────────
-	const [panelWidth, setPanelWidth] = useState(380);
-	const dragStartX = useRef(0);
-	const dragStartWidth = useRef(0);
-
-	useLayoutEffect(() => {
-		const shouldOffsetChatSupport = isOpen && !isFullScreenPage;
-
-		document.body.classList.toggle(
-			AI_ASSISTANT_PANEL_OPEN_CLASS,
-			shouldOffsetChatSupport,
-		);
-
-		if (shouldOffsetChatSupport) {
-			document.body.style.setProperty(
-				AI_ASSISTANT_PANEL_WIDTH_VAR,
-				`${panelWidth}px`,
-			);
-		} else {
-			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
-		}
-
-		return (): void => {
-			document.body.classList.remove(AI_ASSISTANT_PANEL_OPEN_CLASS);
-			document.body.style.removeProperty(AI_ASSISTANT_PANEL_WIDTH_VAR);
-		};
-	}, [isFullScreenPage, isOpen, panelWidth]);
-
-	const handleResizeMouseDown = useCallback(
-		(e: React.MouseEvent) => {
-			e.preventDefault();
-			dragStartX.current = e.clientX;
-			dragStartWidth.current = panelWidth;
-
-			const onMouseMove = (ev: MouseEvent): void => {
-				// Panel is on the right; dragging left (lower clientX) increases width
-				const delta = dragStartX.current - ev.clientX;
-				const next = Math.min(Math.max(dragStartWidth.current + delta, 380), 800);
-				setPanelWidth(next);
-			};
-
-			const onMouseUp = (): void => {
-				document.removeEventListener('mousemove', onMouseMove);
-				document.removeEventListener('mouseup', onMouseUp);
-				document.body.style.cursor = '';
-				document.body.style.userSelect = '';
-			};
-
-			document.body.style.cursor = 'col-resize';
-			document.body.style.userSelect = 'none';
-			document.addEventListener('mousemove', onMouseMove);
-			document.addEventListener('mouseup', onMouseUp);
-		},
-		[panelWidth],
-	);
-
 	if (!isOpen || isFullScreenPage) {
 		return null;
 	}
 
+	const availableHeight = Math.max(
+		0,
+		window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
+	);
+	const panelHeight = Math.min(PANEL_HEIGHT, availableHeight);
+
 	return (
 		<VariantContext.Provider value="panel">
-			<div className={styles.panel} style={{ width: panelWidth }}>
-				{/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-				<div className={styles.resizeHandle} onMouseDown={handleResizeMouseDown} />
-				<div className={styles.header}>
+			<FloatingPanel
+				isOpen
+				width={PANEL_WIDTH}
+				height={panelHeight}
+				minWidth={PANEL_MIN_WIDTH}
+				minHeight={Math.min(PANEL_MIN_HEIGHT, availableHeight)}
+				enableResizing={PANEL_RESIZE_EDGES}
+				keepInViewport
+				avoid={PANEL_AVOID}
+				defaultPosition={{
+					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
+					y: PANEL_MARGIN + availableHeight - panelHeight,
+				}}
+			>
+				<div className={`${styles.header} floating-panel__drag-handle`}>
 					<div className={`${styles.title} noz-wave`}>
 						<Noz size={18} />
-						<span>Noz</span>
+						{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
 					</div>
 
 					<div className={styles.actions}>
@@ -191,6 +172,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								size="sm"
 								icon
 								color="secondary"
+								testId="ai-assistant-panel-close"
 								onClick={closeDrawer}
 								aria-label="Close panel"
 							>
@@ -207,7 +189,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 						<ConversationView conversationId={activeConversationId} />
 					)
 				)}
-			</div>
+			</FloatingPanel>
 		</VariantContext.Provider>
 	);
 }

@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	QuickfiltertypesSourceDTO,
+	TelemetrytypesSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SIGNAL_DATA_SOURCE_MAP } from 'components/QuickFilters/QuickFiltersSettings/constants';
-import { SignalType } from 'components/QuickFilters/types';
+import { QUICK_FILTER_SOURCE_TO_SIGNAL } from 'components/QuickFilters/constants';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import {
@@ -13,7 +15,6 @@ import {
 	FieldDataType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
-import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 function OtherFiltersSkeleton(): JSX.Element {
 	return (
@@ -32,18 +33,20 @@ function OtherFiltersSkeleton(): JSX.Element {
 }
 
 function OtherFilters({
-	signal,
+	savedFiltersSource,
 	inputValue,
 	addedFilters,
 	setAddedFilters,
 }: {
-	signal: SignalType | undefined;
+	savedFiltersSource: QuickfiltertypesSourceDTO;
 	inputValue: string;
 	addedFilters: TelemetryFieldKey[];
 	setAddedFilters: React.Dispatch<React.SetStateAction<TelemetryFieldKey[]>>;
 }): JSX.Element {
-	const isMeterDataSource = signal === SignalType.METER_EXPLORER;
-	const isAIObservability = signal === SignalType.AI_OBSERVABILITY;
+	const isMeterDataSource =
+		savedFiltersSource === QuickfiltertypesSourceDTO.meter;
+	const isAIObservability =
+		savedFiltersSource === QuickfiltertypesSourceDTO.ai_observability;
 
 	const builderQueryType: BuilderQueryType | undefined = isAIObservability
 		? 'builder_ai_query'
@@ -53,9 +56,7 @@ function OtherFilters({
 		? { searchText: inputValue }
 		: {
 				searchText: inputValue,
-				signal: signal
-					? DATA_SOURCE_TO_SIGNAL[SIGNAL_DATA_SOURCE_MAP[signal]]
-					: undefined,
+				signal: QUICK_FILTER_SOURCE_TO_SIGNAL[savedFiltersSource],
 				source: isMeterDataSource ? TelemetrytypesSourceDTO.meter : undefined,
 			};
 

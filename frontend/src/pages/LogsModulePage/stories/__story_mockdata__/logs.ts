@@ -23,12 +23,12 @@ import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickF
 import type { AppState } from 'store/reducers';
 import type { Warning } from 'types/api';
 import type { ILogBody } from 'types/api/logs/log';
-import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
-import type { IGetAttributeSuggestionsSuccessResponse } from 'types/api/queryBuilder/getAttributeSuggestions';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import type { MetricRangePayloadV5, TimeSeries } from 'types/api/v5/queryRange';
-import type { ListItem } from 'types/api/widgets/getQuery';
+import type {
+	MetricRangePayloadV5,
+	TelemetryFieldKey,
+	TimeSeries,
+} from 'types/api/v5/queryRange';
 
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
@@ -138,6 +138,19 @@ const jsonBodyFor = (
 	http: { method: 'POST', route: '/api/v1/checkout', status_code: 200 },
 });
 
+/**
+ * Every fourth JSON-body log is what the collector makes of a plain line on a
+ * `use_json_body` tenant: an object holding only `message`.
+ */
+const jsonBodyAt = (
+	severity: LogSeverity,
+	service: string,
+	index: number,
+): ILogBody =>
+	index % 4 === 3
+		? { message: MESSAGES[severity] }
+		: jsonBodyFor(severity, service, index);
+
 export interface LogsResponseOptions {
 	/** `use_json_body`: the body arrives as an object instead of a line. */
 	jsonBody?: boolean;
@@ -169,7 +182,7 @@ export const logRows = (
 			data: {
 				id: `01JBQ${hex(index, 8).toUpperCase()}`,
 				body: jsonBody
-					? jsonBodyFor(severity, service, index)
+					? jsonBodyAt(severity, service, index)
 					: `${timestamp} ${severity} ${service} ${MESSAGES[severity]}`,
 				severity_text: severity,
 				severity_number: SEVERITY_NUMBERS[severity],
@@ -202,53 +215,6 @@ export const logRowsResponse = (
 		logRows(count, severities, endMilli, jsonBody),
 		{ warning },
 	);
-
-/**
- * The pipeline preview queries on `DEFAULT_ENTITY_VERSION`, so it reads its
- * sample logs off v3, where rows arrive as `list` and a count as a series.
- */
-export const logRowsV3Response = (
-	count: number,
-	severities: readonly LogSeverity[],
-	endMilli: number,
-): { status: string } & MetricRangePayloadV3 => ({
-	status: 'success',
-	data: {
-		resultType: '',
-		result: [
-			{
-				queryName: 'A',
-				series: null,
-				// `ListItem['data']` is the frontend's `ILog`, which carries fields the
-				// backend never sends.
-				list: logRows(count, severities, endMilli, false) as unknown as ListItem[],
-			},
-		],
-	},
-});
-
-export const logCountV3Response = (
-	value: number,
-	endMilli: number,
-): { status: string } & MetricRangePayloadV3 => ({
-	status: 'success',
-	data: {
-		resultType: '',
-		result: [
-			{
-				queryName: 'A',
-				list: null,
-				series: [
-					{
-						labels: {},
-						labelsArray: [],
-						values: [{ timestamp: endMilli, value: String(value) }],
-					},
-				],
-			},
-		],
-	},
-});
 
 /** Counts per severity, which the frequency chart stacks and the legend names. */
 export const logHistogramResponse = (
@@ -432,37 +398,39 @@ export const attributeValuesResponse = (
 });
 
 /**
- * What the query builder's search box offers while a filter is being typed. The
- * types are the v3 spelling of the same fields the v5 endpoints answer with.
- */
-export const filterSuggestionsResponse = (
-	searchText: string,
-): { status: string; data: IGetAttributeSuggestionsSuccessResponse } => ({
-	status: 'success',
-	data: {
-		attributes: LOG_FIELDS.filter((field) =>
-			field.name.includes(searchText.toLowerCase()),
-		).map((field) => ({
-			key: field.name,
-			dataType: field.fieldDataType === int64 ? DataTypes.Int64 : DataTypes.String,
-			type: field.fieldContext === resource ? 'resource' : 'tag',
-		})),
-		example_queries: [],
-	},
-});
-
-/**
  * The list's own options: the loader reads localStorage ahead of the URL, so
  * this is what decides the format, and the columns have to be in it or the list
  * loses `body` and `timestamp`.
  */
-export const logsListOptions = (
-	options: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'>,
-): OptionsQuery => ({
-	selectColumns: defaultLogsSelectedColumns,
+export const logsListOptions = ({
+	bodyColumns = false,
+	...options
+}: Pick<OptionsQuery, 'format' | 'maxLines' | 'fontSize'> & {
+	bodyColumns?: boolean;
+}): OptionsQuery => ({
+	selectColumns: bodyColumns
+		? [...defaultLogsSelectedColumns, ...BODY_FIELD_COLUMNS]
+		: defaultLogsSelectedColumns,
 	version: 1,
 	...options,
 });
+
+/**
+ * Keys of the JSON body picked as columns: a nested object, an array and a
+ * leaf, which is what tells a list format apart on how it renders a non-string
+ * field value.
+ */
+const BODY_FIELD_COLUMNS: TelemetryFieldKey[] = [
+	'order',
+	'order.coupons',
+	'http.status_code',
+].map((name) => ({
+	name,
+	signal: 'logs',
+	fieldContext: 'log',
+	fieldDataType: '',
+	isIndexed: false,
+}));
 
 const DASHBOARD_NAMES = [
 	'Logs overview',

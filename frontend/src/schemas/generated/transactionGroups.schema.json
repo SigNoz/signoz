@@ -73,7 +73,9 @@
         "audit-logs",
         "meter-metrics",
         "logs-field",
-        "traces-field"
+        "traces-field",
+        "metrics-field",
+        "llm-pricing-rule"
       ],
       "type": "string"
     },

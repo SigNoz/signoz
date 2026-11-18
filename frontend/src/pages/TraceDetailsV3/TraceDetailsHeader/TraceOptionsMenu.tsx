@@ -50,6 +50,7 @@ function TraceOptionsMenu({
 			type: 'item',
 			value: 'toggle-trace-details',
 			label: showTraceDetails ? 'Hide trace details' : 'Show trace details',
+			testId: 'toggle-trace-details',
 			onClick: onToggleTraceDetails,
 		},
 		{
@@ -127,6 +128,7 @@ function TraceOptionsMenu({
 				icon
 				color="secondary"
 				aria-label="Trace options"
+				testId="trace-options-button"
 			>
 				<Settings2 size={14} />
 			</Button>

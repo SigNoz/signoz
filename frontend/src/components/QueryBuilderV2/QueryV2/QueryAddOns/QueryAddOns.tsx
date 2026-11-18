@@ -12,7 +12,13 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { ChevronUp } from '@signozhq/icons';
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5BucketOptionsDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
+	Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType,
+} from 'api/generated/services/sigNoz.schemas';
+import { isLoneBuilderQuery } from 'lib/query/builderEnvelope';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -26,6 +32,7 @@ import {
 	RAW_QUERY_FIELDS,
 	resolveQueryBuilderFields,
 } from '../../queryBuilderFields.utils';
+import { parseLimit, sanitizeLimit } from '../../utils';
 
 import BucketOptions from './BucketOptions/BucketOptions';
 import HavingFilter from './HavingFilter/HavingFilter';
@@ -146,10 +153,34 @@ function QueryAddOns({
 		[resolvedFields],
 	);
 
+	// A panel's default limit applies only to a lone query: per-query limits can keep
+	// different groups and break a formula's join.
+	const isLoneQuery = useMemo(
+		() =>
+			isLoneBuilderQuery([
+				...(currentQuery.builder?.queryData ?? [query]).map((data) => ({
+					type:
+						data.builderQueryType ??
+						Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+				})),
+				...(currentQuery.builder?.queryFormulas ?? []).map(() => ({
+					type: Querybuildertypesv5QueryEnvelopeFormulaDTOType.builder_formula,
+				})),
+				...(currentQuery.builder?.queryTraceOperator ?? []).map(() => ({
+					type:
+						Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType.builder_trace_operator,
+				})),
+			]),
+		[currentQuery.builder, query],
+	);
+
 	const placeholderOf = useCallback(
 		(key: InputAddOnField): string =>
-			resolvedFields.get(key)?.placeholder ?? ADD_ON_DEFINITIONS[key].placeholder,
-		[resolvedFields],
+			(key === QueryBuilderField.Limit && !isLoneQuery
+				? undefined
+				: resolvedFields.get(key)?.placeholder) ??
+			ADD_ON_DEFINITIONS[key].placeholder,
+		[resolvedFields, isLoneQuery],
 	);
 
 	const isDisabled = useCallback(
@@ -278,7 +309,7 @@ function QueryAddOns({
 
 	const handleChangeLimit = useCallback(
 		(value: string) => {
-			handleChangeQueryData('limit', Number(value) || null);
+			handleChangeQueryData('limit', parseLimit(value));
 		},
 		[handleChangeQueryData],
 	);
@@ -374,6 +405,7 @@ function QueryAddOns({
 									label="Limit"
 									type="number"
 									onChange={handleChangeLimit}
+									sanitize={sanitizeLimit}
 									initialValue={query?.limit ?? undefined}
 									placeholder={placeholderOf(QueryBuilderField.Limit)}
 									onClose={(): void => handleRemoveView(QueryBuilderField.Limit)}

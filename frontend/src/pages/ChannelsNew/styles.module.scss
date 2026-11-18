@@ -1,4 +1,10 @@
-.content {
-	padding: var(--spacing-8);
-	padding-top: 0px;
+.loading {
+	padding: var(--spacing-6);
+}
+
+.page {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--spacing-4) var(--spacing-6) 0;
 }

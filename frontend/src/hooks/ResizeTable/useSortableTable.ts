@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { TableProps } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 
@@ -11,14 +13,13 @@ const useSortableTable = <T>(
 	sortedInfo: SorterResult<T>;
 	handleChange: TableProps<T>['onChange'];
 } => {
-	const history = useHistory();
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 
 	useEffect(() => {
 		const searchParams = new URLSearchParams(search);
 		searchParams.set('search', searchString);
-		history.replace({ search: searchParams.toString() });
-	}, [history, search, searchString]);
+		navigate({ search: searchParams.toString() }, { replace: true });
+	}, [search, searchString]);
 
 	const [sortedInfo, setSortedInfo] = useState<SorterResult<T>>({
 		order: initialOrder,
@@ -37,7 +38,7 @@ const useSortableTable = <T>(
 			'page',
 			pagination.current ? pagination.current.toString() : '1',
 		);
-		history.replace({ search: searchParams.toString() });
+		navigate({ search: searchParams.toString() }, { replace: true });
 	};
 
 	return { sortedInfo, handleChange };

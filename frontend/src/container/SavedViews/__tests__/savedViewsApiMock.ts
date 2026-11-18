@@ -1,4 +1,5 @@
 import { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 
@@ -13,15 +14,20 @@ export interface Requests {
 }
 
 // Mutates `views` on create, update and delete, so a refetch sees the change.
+// Grants every permission; a later server.use overrides it.
 export function mockSavedViewsApi(
 	views: SavedviewtypesSavedViewDTO[],
 	{
 		createStatus = 201,
+		updateStatus = 204,
+		deleteStatus = 204,
 		createdId = 'view-new',
 		getDelay = 0,
 		listFailures = 0,
 	}: {
 		createStatus?: number;
+		updateStatus?: number;
+		deleteStatus?: number;
 		createdId?: string;
 		getDelay?: number;
 		listFailures?: number;
@@ -30,6 +36,7 @@ export function mockSavedViewsApi(
 	const requests: Requests = { created: [], updated: [], deleted: [] };
 	let failedLists = 0;
 	server.use(
+		setupAuthzAdmin(),
 		rest.get(API, (req, res, ctx) => {
 			if (failedLists < listFailures) {
 				failedLists += 1;
@@ -82,20 +89,38 @@ export function mockSavedViewsApi(
 			const body = await req.json();
 			const id = String(req.params.id);
 			requests.updated.push({ id, body });
+			if (updateStatus >= 400) {
+				return res(
+					ctx.status(updateStatus),
+					ctx.json({
+						status: 'error',
+						error: { code: 'internal', message: 'boom' },
+					}),
+				);
+			}
 			const index = views.findIndex((v) => v.id === id);
 			if (index >= 0) {
 				views[index] = { ...views[index], spec: body.spec };
 			}
-			return res(ctx.status(204));
+			return res(ctx.status(updateStatus));
 		}),
 		rest.delete(`${API}/:id`, (req, res, ctx) => {
 			const id = String(req.params.id);
 			requests.deleted.push(id);
+			if (deleteStatus >= 400) {
+				return res(
+					ctx.status(deleteStatus),
+					ctx.json({
+						status: 'error',
+						error: { code: 'internal', message: 'boom' },
+					}),
+				);
+			}
 			const index = views.findIndex((v) => v.id === id);
 			if (index >= 0) {
 				views.splice(index, 1);
 			}
-			return res(ctx.status(204));
+			return res(ctx.status(deleteStatus));
 		}),
 	);
 	return requests;

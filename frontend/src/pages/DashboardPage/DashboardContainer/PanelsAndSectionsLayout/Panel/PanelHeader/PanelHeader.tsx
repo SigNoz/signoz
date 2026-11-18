@@ -6,7 +6,10 @@ import type {
 	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import { createStore, useStore } from 'zustand';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';
+import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import type { WarningSourceStore } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import type { PanelActionsConfig } from '../Panel';
@@ -63,6 +66,8 @@ interface StaticPanelHeaderProps extends PanelHeaderBaseProps {
 
 type PanelHeaderProps = QueryPanelHeaderProps | StaticPanelHeaderProps;
 
+const NO_SOURCE: WarningSourceStore = createStore(() => ({}));
+
 /** Panel chrome: drag handle, title, refetch + status indicators, actions. */
 function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	const { panelId, panel, panelActions, hideActions } = props;
@@ -86,6 +91,17 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 		[panel],
 	);
 
+	const queryData = query?.data;
+	const definition = getQueryPanelDefinition(panel.spec.plugin.kind);
+	const sourceState = useStore(definition?.dataWarningSource ?? NO_SOURCE);
+	const dataWarningDetail = useMemo(
+		() =>
+			queryData ? (definition?.getDataWarning?.(panel, queryData) ?? null) : null,
+		// getDataWarning reads sourceState itself.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[queryData, panel, definition, sourceState],
+	);
+
 	/**
 	 * Hide the entire header when there's no title, description, or status to show,
 	 * and the actions menu is suppressed (editor preview).
@@ -96,6 +112,7 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 		!errorDetail &&
 		!warningDetail &&
 		!multiQueryWarningDetail &&
+		!dataWarningDetail &&
 		hideActions
 	) {
 		return <Fragment />;
@@ -104,7 +121,9 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 	return (
 		<div className={cx(styles.header, 'panel-drag-handle')}>
 			<div className={styles.headerLeft}>
-				<Typography.Text className={styles.headerTitle}>{name}</Typography.Text>
+				<Typography.Text className={styles.headerTitle} data-testid="panel-title">
+					{name}
+				</Typography.Text>
 				{description && (
 					<Tooltip title={description}>
 						<Info
@@ -147,6 +166,13 @@ function PanelHeader(props: PanelHeaderProps): JSX.Element {
 						variant="warning"
 						detail={multiQueryWarningDetail}
 						testId="panel-status-config-warning"
+					/>
+				)}
+				{dataWarningDetail && (
+					<PanelStatusPopover
+						variant="warning"
+						detail={dataWarningDetail}
+						testId="panel-status-data-warning"
 					/>
 				)}
 				{/* Renders nothing when no action survives its gates (kind/role/context). */}

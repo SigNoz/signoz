@@ -1,20 +1,75 @@
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {
+	adjustQueryForV5,
 	convertAggregationToExpression,
 	convertExpressionToFilters,
 	convertFiltersToExpression,
 	convertFiltersToExpressionWithExistingQuery,
+	convertHavingToExpression,
 	formatValueForExpression,
+	parseLimit,
 	removeKeysFromExpression,
+	sanitizeLimit,
 } from '../utils';
+
+describe('convertHavingToExpression', () => {
+	it.each([
+		['COUNT()', 'count() > 5'],
+		['COUNT_DISTINCT(service.name)', 'count_distinct(service.name) > 5'],
+		['P99(duration_nano)', 'p99(duration_nano) > 5'],
+		['SUM(http.Request.Size)', 'sum(http.Request.Size) > 5'],
+		['count()', 'count() > 5'],
+	])('references %s by its lower-case function', (columnName, expected) => {
+		expect(
+			convertHavingToExpression([{ columnName, op: '>', value: 5 }]),
+		).toStrictEqual({ expression: expected });
+	});
+
+	it('joins several conditions and formats list values', () => {
+		expect(
+			convertHavingToExpression([
+				{ columnName: 'COUNT()', op: '>', value: 5 },
+				{ columnName: 'COUNT()', op: 'NOT IN', value: [1, 2] },
+			]),
+		).toStrictEqual({ expression: 'count() > 5 AND count() NOT IN [1, 2]' });
+	});
+});
+
+describe('sanitizeLimit', () => {
+	it.each([
+		['10', '10'],
+		['-10', '10'],
+		['2.5', '25'],
+		['1e3', '13'],
+		['', ''],
+	])('sanitizes %j to %j', (value, expected) => {
+		expect(sanitizeLimit(value)).toBe(expected);
+	});
+});
+
+describe('parseLimit', () => {
+	it.each([
+		['10', 10],
+		['1', 1],
+		['', null],
+		['0', null],
+		['-5', null],
+		['2.5', null],
+		['abc', null],
+	])('parses %j as %j', (value, expected) => {
+		expect(parseLimit(value)).toBe(expected);
+	});
+});
 
 describe('convertFiltersToExpression', () => {
 	beforeEach(() => {
@@ -1630,5 +1685,33 @@ describe('formatValueForExpression', () => {
 			);
 			expect(pass2.filter.expression).toBe(EXPR);
 		});
+	});
+});
+
+describe('adjustQueryForV5', () => {
+	it('adjusts the AI builder slot for AI query builder queries', () => {
+		const emptyBuilder = {
+			queryData: [],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		};
+		const query: Query = {
+			id: 'q',
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			promql: [],
+			clickhouse_sql: [],
+			builder: emptyBuilder,
+			builder_ai_query: {
+				...emptyBuilder,
+				queryData: [initialQueryBuilderFormValuesMap.logs],
+			},
+		};
+
+		const result = adjustQueryForV5(query);
+
+		expect(result.builder).toBe(emptyBuilder);
+		expect(result.builder_ai_query?.queryData[0]).not.toHaveProperty(
+			'aggregateOperator',
+		);
 	});
 });

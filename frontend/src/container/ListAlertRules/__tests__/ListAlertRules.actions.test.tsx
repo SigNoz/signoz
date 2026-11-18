@@ -2,6 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
+import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
 import { screen, waitFor } from 'tests/test-utils';
 
@@ -121,22 +122,26 @@ describe('ListAlertRules — actions menu', () => {
 		expect(options).toStrictEqual(expect.objectContaining({ newTab: true }));
 	});
 
-	it('clone action: sends POST with " - Copy" suffix and opens the cloned rule returned by the API', async () => {
-		let capturedPostBody: unknown = null;
+	it('clone action: sends POST to clone endpoint and opens the cloned rule returned by the API', async () => {
+		let capturedRuleId: string | null = null;
 		server.use(
-			rest.post('http://localhost/api/v2/rules', async (req, res, ctx) => {
-				capturedPostBody = await req.json();
-				return res(
-					ctx.status(201),
-					ctx.json({
-						data: {
-							...(capturedPostBody as Record<string, unknown>),
-							id: 'cloned-from-server',
-						},
-						status: 'success',
-					}),
-				);
-			}),
+			rest.post(
+				'http://localhost/api/v2/rules/:id/clone',
+				async (req, res, ctx) => {
+					capturedRuleId = req.params.id as string;
+					return res(
+						ctx.status(201),
+						ctx.json({
+							data: {
+								...alertRulesFixture[0],
+								id: 'cloned-from-server',
+								alert: 'High CPU Alert - Copy',
+							},
+							status: 'success',
+						}),
+					);
+				},
+			),
 		);
 
 		renderListAlertRules();
@@ -145,9 +150,7 @@ describe('ListAlertRules — actions menu', () => {
 		await clickMenuItem('Clone');
 
 		await waitFor(() => {
-			expect(capturedPostBody).toStrictEqual(
-				expect.objectContaining({ alert: 'High CPU Alert - Copy' }),
-			);
+			expect(capturedRuleId).toBe('rule-1');
 		});
 
 		// The id from the server response round-trips into the navigate URL — this

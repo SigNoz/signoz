@@ -220,8 +220,7 @@ export type ClarificationSummaryDTODiscoveredContextAnyOf = {
 	[key: string]: unknown;
 };
 
-export type ClarificationSummaryDTODiscoveredContext =
-	ClarificationSummaryDTODiscoveredContextAnyOf | null;
+export type ClarificationSummaryDTODiscoveredContext = ClarificationSummaryDTODiscoveredContextAnyOf | null;
 
 export interface ClarificationSummaryDTO {
 	/**
@@ -784,8 +783,7 @@ export type ThreadDetailResponseDTOActiveExecutionId = string | null;
 
 export type ThreadDetailResponseDTOPendingApproval = ApprovalSummaryDTO | null;
 
-export type ThreadDetailResponseDTOPendingClarification =
-	ClarificationSummaryDTO | null;
+export type ThreadDetailResponseDTOPendingClarification = ClarificationSummaryDTO | null;
 
 /**
  * Full thread state for cold-start reconstruction (GET /threads/{id}).
@@ -975,8 +973,7 @@ export type ClarificationEventDTODiscoveredContextAnyOf = {
 	[key: string]: unknown;
 };
 
-export type ClarificationEventDTODiscoveredContext =
-	ClarificationEventDTODiscoveredContextAnyOf | null;
+export type ClarificationEventDTODiscoveredContext = ClarificationEventDTODiscoveredContextAnyOf | null;
 
 export interface ClarificationEventDTO {
 	/**
@@ -1299,8 +1296,7 @@ export type CreateThreadApiV1AssistantThreadsPostHeaders = {
 	'X-SigNoz-URL'?: string | null;
 };
 
-export type CreateThreadApiV1AssistantThreadsPostBody =
-	CreateThreadRequestDTO | null;
+export type CreateThreadApiV1AssistantThreadsPostBody = CreateThreadRequestDTO | null;
 
 export type ListThreadsApiV1AssistantThreadsGetParams = {
 	/**

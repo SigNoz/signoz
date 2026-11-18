@@ -1,0 +1,14 @@
+.toggle {
+	display: flex;
+	min-width: 0;
+	--button-height: auto;
+	// A flex label lets the chip shrink and use its own ellipsis.
+	--button-label-display: flex;
+}
+
+// The chip inherits its type from the button; doubled to outrank the button's
+// size rule so the chip reads the same as when it is not a toggle.
+.toggle.toggle > button {
+	font: inherit;
+	letter-spacing: inherit;
+}

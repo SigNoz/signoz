@@ -7,8 +7,9 @@ import "testing"
 func TestFormat_Tool(t *testing.T) {
 	runFormatCases(t, []formatCase{
 		{
-			// langchain capture, execute_tool get_weather span; opentelemetry-instrumentation-langchain
-			// callback_handler.py on_tool_start/on_tool_end envelopes
+			// gen_ai.tool.call.arguments and gen_ai.tool.call.result written by the langchain instrumentation itself,
+			// wrapped in its on_tool_start and on_tool_end payloads:
+			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/opentelemetry-instrumentation-langchain/opentelemetry/instrumentation/langchain/callback_handler.py#L837
 			name: "LangChainEnvelopes_InputsAndOutputUnwrapped",
 			attributes: map[string]any{
 				GenAIToolName:          "get_weather",
@@ -19,8 +20,9 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": {"city": "Bengaluru", "temp_c": 18, "summary": "Clear"}}]}]`,
 		},
 		{
-			// openllmetry capture, get_weather.tool span; traceloop-sdk decorators/base.py
-			// _handle_span_input {args, kwargs} and the result encoded as a JSON string twice
+			// traceloop.entity.input and traceloop.entity.output from the @tool decorator, copied by the mapper;
+			// the tool returned a JSON string, which json.dumps encoded again:
+			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/traceloop-sdk/traceloop/sdk/decorators/base.py#L169
 			name: "TraceloopDecorator_KwargsUnwrapped_ResultDecodedTwice",
 			attributes: map[string]any{
 				GenAIToolName:          "get_weather",
@@ -31,8 +33,8 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": {"city": "Bengaluru", "temp_c": 28, "summary": "Partly cloudy"}}]}]`,
 		},
 		{
-			// a decorated function returning None is json.dumps(None); the openllmetry capture shows it on
-			// workflow spans, with this positional-args input
+			// traceloop.entity.output of a @tool returning None, json.dumps(None), copied by the mapper:
+			// https://github.com/traceloop/openllmetry/blob/93429cfb9767e6b51db6cb35f6b70f758117669a/packages/traceloop-sdk/traceloop/sdk/decorators/base.py#L185
 			name: "TraceloopDecorator_PositionalArgsOnly_ListKept",
 			attributes: map[string]any{
 				GenAIToolName:          "lookup",
@@ -52,8 +54,8 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
-			// openinference-openai-agents capture, get_weather TOOL span: input.value and output.value
-			// copied by the mapper (Arize-ai/openinference@12f2cc03, spec/traces.md)
+			// input.value and output.value of an OpenInference TOOL span, copied by the mapper:
+			// https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/spec/traces.md
 			name: "OpenInferenceToolSpan_PlainJSONAndText",
 			attributes: map[string]any{
 				GenAIToolName:          "get_weather",
@@ -64,8 +66,8 @@ func TestFormat_Tool(t *testing.T) {
 			wantOutput: `[{"role": "tool", "parts": [{"type": "tool_call_response", "response": "27C, partly cloudy, light breeze from the south."}]}]`,
 		},
 		{
-			// vercel capture, ai.toolCall span: ai.toolCall.{id,name,args,result} copied by the mapper
-			// (https://ai-sdk.dev/docs/ai-sdk-core/telemetry)
+			// ai.toolCall.{id,name,args,result} of a Vercel ai.toolCall span, copied by the mapper:
+			// https://ai-sdk.dev/docs/ai-sdk-core/telemetry
 			name: "VercelToolCall_IDOnBothParts",
 			attributes: map[string]any{
 				GenAIToolName:          "get_current_weather",

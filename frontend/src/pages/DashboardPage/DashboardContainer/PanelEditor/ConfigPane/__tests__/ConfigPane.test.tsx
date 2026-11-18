@@ -47,6 +47,75 @@ function spec(unit?: string): DashboardtypesPanelSpecDTO {
 	} as unknown as DashboardtypesPanelSpecDTO;
 }
 
+function kindSpec(kind: string): DashboardtypesPanelSpecDTO {
+	return {
+		display: { name: 'Panel' },
+		plugin: { kind, spec: {} },
+		queries: [],
+	} as unknown as DashboardtypesPanelSpecDTO;
+}
+
+// In render order. Text's header toggle sits inline with the title, not in a section.
+const SECTIONS_BY_KIND: [string, string[]][] = [
+	[
+		'signoz/TimeSeriesPanel',
+		[
+			'visualization',
+			'formatting-&-units',
+			'axes',
+			'legend',
+			'chart-appearance',
+			'thresholds',
+			'context-links',
+		],
+	],
+	[
+		'signoz/BarChartPanel',
+		[
+			'visualization',
+			'formatting-&-units',
+			'axes',
+			'legend',
+			'thresholds',
+			'context-links',
+		],
+	],
+	[
+		'signoz/AreaChartPanel',
+		[
+			'visualization',
+			'formatting-&-units',
+			'axes',
+			'legend',
+			'chart-appearance',
+			'thresholds',
+			'context-links',
+		],
+	],
+	[
+		'signoz/NumberPanel',
+		['visualization', 'formatting-&-units', 'thresholds', 'context-links'],
+	],
+	[
+		'signoz/PieChartPanel',
+		['visualization', 'formatting-&-units', 'legend', 'context-links'],
+	],
+	[
+		'signoz/TablePanel',
+		['visualization', 'formatting-&-units', 'thresholds', 'context-links'],
+	],
+	[
+		'signoz/HistogramPanel',
+		['visualization', 'legend', 'buckets', 'context-links'],
+	],
+	[
+		'signoz/HeatmapPanel',
+		['visualization', 'chart-appearance', 'formatting-&-units', 'axes', 'legend'],
+	],
+	['signoz/ListPanel', ['visualization']],
+	['signoz/TextPanel', ['visualization', 'panel-appearance']],
+];
+
 function renderConfigPane(
 	overrides: Partial<React.ComponentProps<typeof ConfigPane>> = {},
 ): React.ComponentProps<typeof ConfigPane> {
@@ -156,4 +225,17 @@ describe('ConfigPane', () => {
 			screen.queryByTestId('panel-editor-v2-create-alert'),
 		).not.toBeInTheDocument();
 	});
+
+	it.each(SECTIONS_BY_KIND)(
+		'renders the config sections of %s',
+		(kind, expected) => {
+			renderConfigPane({ spec: kindSpec(kind), savedSpec: kindSpec(kind) });
+
+			expect(
+				screen
+					.queryAllByTestId(/^config-section-/)
+					.map((section) => section.getAttribute('data-testid')),
+			).toStrictEqual(expected.map((title) => `config-section-${title}`));
+		},
+	);
 });

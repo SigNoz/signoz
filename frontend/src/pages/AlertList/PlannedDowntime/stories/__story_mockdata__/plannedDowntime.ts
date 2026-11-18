@@ -47,7 +47,15 @@ const SEEDS: DowntimeSeed[] = [
 		timezone: 'UTC',
 		startsInMs: -2 * HOUR,
 		lastsMs: 6 * HOUR,
-		alertIds: ['rule-5', 'rule-3'],
+		alertIds: [
+			'rule-5',
+			'rule-3',
+			'rule-1',
+			'rule-2',
+			'rule-4',
+			'rule-6',
+			'rule-7',
+		],
 	},
 	{
 		name: 'Nightly ETL window',

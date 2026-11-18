@@ -1,3 +1,4 @@
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AWSCloudAccountConfig,
 	AWSServiceConfig,
@@ -102,6 +103,7 @@ export interface AzureCloudAccountConfig {
 }
 
 export interface GCPCloudAccountConfig {
+	connection_method: CloudintegrationtypesGCPConnectionMethodDTO;
 	deployment_region: string;
 	deployment_project_id: string;
 	project_ids: string[];

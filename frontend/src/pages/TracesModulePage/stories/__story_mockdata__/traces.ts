@@ -4,16 +4,23 @@
  */
 
 import {
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TracesSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5RequestTypeDTO,
 	QuickfiltertypesSourceDTO,
+	SavedviewtypesPanelTypeDTO,
+	SavedviewtypesSchemaVersionDTO,
+	SavedviewtypesSourceDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
 	GetQuickFilters200,
+	GetTraceSummary200,
+	ListSavedViews200,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import type { FunnelData } from 'types/api/traceFunnels';
@@ -22,7 +29,7 @@ import type { RawRow } from 'types/api/v5/queryRange';
 import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
-export const TRACES_TABS = ['explorer', 'funnels', 'views'] as const;
+export const TRACES_TABS = ['explorer', 'funnels'] as const;
 
 export type TracesTab = (typeof TRACES_TABS)[number];
 
@@ -139,7 +146,7 @@ const timestampAt = (index: number, start: number, end: number): string => {
 	return new Date(end - index * step).toISOString();
 };
 
-export const traceSpanRows = ({
+const flatSpanRows = ({
 	count,
 	offset,
 	limit,
@@ -167,15 +174,164 @@ export const traceSpanRows = ({
 		};
 	});
 
+/** The list API's event shape: `attributes`, where the trace API says `attributeMap`. */
+const exceptionEvent = (
+	timestamp: string,
+): {
+	name: string;
+	timeUnixNano: number;
+	attributes: Record<string, string>;
+} => ({
+	name: 'exception',
+	timeUnixNano: new Date(timestamp).getTime() * 1_000_000,
+	attributes: {
+		'exception.type': 'UpstreamTimeoutError',
+		'exception.message': 'upstream did not answer within 1s',
+	},
+});
+
+/** The List view returns every span field, with resource and attribute fields nested in maps. */
+export const traceSpanRows = (options: SpanRowsOptions): RawRow[] =>
+	flatSpanRows(options).map(
+		({ timestamp, data: { 'service.name': serviceName, ...data } }) => ({
+			timestamp,
+			data: {
+				...data,
+				attributes: {},
+				resource: { 'service.name': serviceName },
+				events: data.has_error ? [exceptionEvent(timestamp)] : [],
+				links: data.has_error
+					? [{ traceId: traceIdAt(0), spanId: spanIdAt(0) }]
+					: [],
+			},
+		}),
+	);
+
 /** The Trace view lists root spans, with the span count of the whole trace. */
 export const traceRootSpanRows = (options: SpanRowsOptions): RawRow[] =>
-	traceSpanRows(options).map((row, index) => ({
+	flatSpanRows(options).map((row, index) => ({
 		...row,
 		data: {
 			...row.data,
 			span_count: 6 + ((index * 7) % 34),
 		},
 	}));
+
+export const TRACE_SUMMARY_STATES = ['found', 'not found', 'loading'] as const;
+
+export type TraceSummaryState = (typeof TRACE_SUMMARY_STATES)[number];
+
+const TRACE_PADDING_MS = 250;
+
+/** Null for a trace the list never showed. */
+export const traceSummaryResponse = ({
+	traceId,
+	count,
+	start,
+	end,
+}: Pick<SpanRowsOptions, 'count' | 'start' | 'end'> & {
+	traceId: string;
+}): GetTraceSummary200 | null => {
+	const index = rowWindow({ count, offset: 0, limit: count }).find(
+		(i) => traceIdAt(i) === traceId,
+	);
+	if (index === undefined) {
+		return null;
+	}
+	const spanStart = new Date(timestampAt(index, start, end)).getTime();
+	const span = SPANS[index % SPANS.length];
+
+	return {
+		status: 'success',
+		data: {
+			startTimestampMillis: spanStart - TRACE_PADDING_MS,
+			endTimestampMillis: spanStart + span.durationMs + TRACE_PADDING_MS,
+			rootServiceName: SPANS[0].service,
+			rootServiceEntryPoint: SPANS[0].operation,
+			rootSpanStatusCode: '200',
+			totalSpansCount: SPANS.length,
+			totalErrorSpansCount: SPANS.filter(({ failing }) => failing).length,
+			hasMissingSpans: false,
+		},
+	};
+};
+
+export const SPAN_LOGS_STATES = [
+	'span',
+	'trace only',
+	'none',
+	'loading',
+	'error',
+] as const;
+
+export type SpanLogsState = (typeof SPAN_LOGS_STATES)[number];
+
+/**
+ * Which of the drawer's log queries is asking: the span's own logs, the context
+ * either side of them, or the whole trace when the span has none.
+ */
+export type SpanLogScope = 'span' | 'before' | 'after' | 'trace';
+
+export const spanLogScopeOf = (expression: string): SpanLogScope => {
+	if (expression.includes('span_id')) {
+		return 'span';
+	}
+	if (expression.includes('id <')) {
+		return 'before';
+	}
+	return expression.includes('id >') ? 'after' : 'trace';
+};
+
+const SPAN_LOG_BODIES = [
+	'request received',
+	'cache miss, querying orders',
+	'payment provider timed out',
+	'response sent',
+];
+
+const CONTEXT_OFFSET_MS: Record<SpanLogScope, number> = {
+	before: -60_000,
+	span: 0,
+	after: 60_000,
+	trace: 0,
+};
+
+/**
+ * Log rows for one of the drawer's queries, placed in the middle of the window
+ * it asked for. The span-log queries send that window in microseconds.
+ */
+export const spanLogRows = ({
+	scope,
+	expression,
+	startMicros,
+	endMicros,
+}: {
+	scope: SpanLogScope;
+	expression: string;
+	startMicros: number;
+	endMicros: number;
+}): RawRow[] => {
+	const traceId = expression.match(/trace_id = '([^']+)'/)?.[1] ?? '';
+	const spanId = expression.match(/span_id = '([^']+)'/)?.[1] ?? '';
+	const middle = (startMicros + endMicros) / 2 / 1e3;
+
+	return SPAN_LOG_BODIES.map((body, index) => ({
+		timestamp: new Date(
+			middle + CONTEXT_OFFSET_MS[scope] + index * 100,
+		).toISOString(),
+		data: {
+			body,
+			id: `storybook-${scope}-log-${index + 1}`,
+			trace_id: traceId,
+			span_id: scope === 'span' ? spanId : '',
+			severity_text: index === 2 ? 'ERROR' : 'INFO',
+			severity_number: index === 2 ? 17 : 9,
+			attributes_string: {},
+			resources_string: { 'service.name': SPANS[0].service },
+			scope_name: '',
+		},
+	}));
+};
 
 const { resource, attribute } = TelemetrytypesFieldContextDTO;
 const { string: stringType, bool } = TelemetrytypesFieldDataTypeDTO;
@@ -311,20 +467,29 @@ const VIEW_NAMES = [
 	'Notification retries',
 ];
 
-export const savedTraceViewsResponse = (
-	count: number,
-): { status: string; data: unknown[] } => ({
+export const savedTraceViewsResponse = (count: number): ListSavedViews200 => ({
 	status: 'success',
-	data: Array.from(
-		{ length: Math.min(count, VIEW_NAMES.length) },
-		(_, index) => ({
-			...explorerView.data[0],
-			id: `storybook-traces-view-${index + 1}`,
-			name: VIEW_NAMES[index],
-			sourcePage: 'traces',
-			tags: ['traces'],
-		}),
-	),
+	data: VIEW_NAMES.slice(0, count).map((displayName, index) => ({
+		id: `storybook-traces-view-${index + 1}`,
+		name: `storybook-traces-view-${index + 1}`,
+		source: SavedviewtypesSourceDTO.traces,
+		schemaVersion: SavedviewtypesSchemaVersionDTO.v2,
+		createdAt: '2026-08-20T09:00:00Z',
+		createdBy: 'ada@signoz.io',
+		updatedAt: '2026-08-20T09:00:00Z',
+		updatedBy: 'ada@signoz.io',
+		spec: {
+			displayName,
+			panelType: SavedviewtypesPanelTypeDTO.list,
+			requestType: Querybuildertypesv5RequestTypeDTO.raw,
+			queries: [
+				{
+					type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+					spec: { name: 'A', signal: TracesSignal.traces },
+				},
+			],
+		},
+	})),
 });
 
 const FUNNEL_NAMES = [

@@ -1,0 +1,8 @@
+{ "timestamp": "2026-01-29T10:00:00.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:00:30.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:01:00.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:01:30.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:02:00.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:02:30.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:03:00.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }
+{ "timestamp": "2026-01-29T10:03:30.000000Z", "resources": { "service.name": "payment-service" }, "attributes": { "code.file": "payment_handler.py" }, "body": "payment success", "severity_text": "INFO" }

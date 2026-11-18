@@ -7,18 +7,18 @@ import (
 )
 
 type ChannelPagerdutyConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	RoutingKey   string                       `json:"routingKey" required:"true" format:"password"`
-	URL          string                       `json:"url"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero"`
-	Client       valuer.UnsetOrNonEmptyString `json:"client,omitzero"`
-	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl,omitzero"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Severity     string                       `json:"severity"`
-	Component    string                       `json:"component"`
-	Group        string                       `json:"group"`
-	Class        string                       `json:"class"`
-	Details      map[string]string            `json:"details,omitzero"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
+	RoutingKey   string                       `json:"routingKey" required:"true" format:"password" description:"The Events API v2 integration key. A secret; returned by create, update and fetch by ID, never by list."`
+	URL          string                       `json:"url" description:"The Events API endpoint; empty uses the PagerDuty default."`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero" description:"Alertmanager template for the unique location of the affected system; defaults to client."`
+	Client       valuer.UnsetOrNonEmptyString `json:"client,omitzero" description:"Alertmanager template for the client identifier; defaults to the Alertmanager PagerDuty default."`
+	ClientURL    valuer.UnsetOrNonEmptyString `json:"clientUrl,omitzero" description:"Alertmanager template for the client URL; defaults to the Alertmanager PagerDuty default."`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the incident summary; defaults to the Alertmanager PagerDuty default."`
+	Severity     string                       `json:"severity" description:"The incident severity: critical, error, warning or info."`
+	Component    string                       `json:"component" description:"The component of the source machine that is responsible for the event."`
+	Group        string                       `json:"group" description:"The logical grouping of components the event belongs to."`
+	Class        string                       `json:"class" description:"The class or type of the event."`
+	Details      map[string]string            `json:"details,omitzero" description:"Custom details keyed by name, each an Alertmanager template; defaults to the Alertmanager firing and resolved summary set."`
 }
 
 func (c *ChannelPagerdutyConfig) UnmarshalJSON(data []byte) error {

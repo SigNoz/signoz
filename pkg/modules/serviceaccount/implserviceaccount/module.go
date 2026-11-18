@@ -176,7 +176,11 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 			return err
 		}
 
-		// update the status but do not delete the role mappings as we will use them for audits
+		err = module.store.DeleteServiceAccountRolesByServiceAccountID(ctx, id)
+		if err != nil {
+			return err
+		}
+
 		err = module.store.Update(ctx, orgID, serviceAccount.ServiceAccount)
 		if err != nil {
 			return err

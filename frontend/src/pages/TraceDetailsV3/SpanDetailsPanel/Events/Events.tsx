@@ -13,7 +13,8 @@ import styles from './Events.module.scss';
 
 interface IEventsTableProps {
 	span: SpanV3;
-	startTime: number;
+	/** Trace start; the "since trace start" offset is hidden without it. */
+	startTime?: number;
 	isSearchVisible: boolean;
 }
 
@@ -80,17 +81,19 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 														<Typography.Text className={styles.attributeKey}>
 															Start Time
 														</Typography.Text>
-														<div className={styles.timestampContainer}>
-															<Typography.Text className={styles.attributeValue}>
-																{getYAxisFormattedValue(
-																	`${(timeUnixNano || 0) / 1e6 - startTime}`,
-																	'ms',
-																)}
-															</Typography.Text>
-															<Typography.Text className={styles.timestampText}>
-																since trace start
-															</Typography.Text>
-														</div>
+														{startTime !== undefined && (
+															<div className={styles.timestampContainer}>
+																<Typography.Text className={styles.attributeValue}>
+																	{getYAxisFormattedValue(
+																		`${(timeUnixNano || 0) / 1e6 - startTime}`,
+																		'ms',
+																	)}
+																</Typography.Text>
+																<Typography.Text className={styles.timestampText}>
+																	since trace start
+																</Typography.Text>
+															</div>
+														)}
 														<div className={styles.timestampContainer}>
 															<Typography.Text className={styles.attributeValue}>
 																{getYAxisFormattedValue(

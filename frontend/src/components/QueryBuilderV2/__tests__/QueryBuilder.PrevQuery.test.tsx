@@ -136,7 +136,6 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 			updateAllQueriesOperators: ((q: any) => q) as any,
 			updateQueriesData: ((q: any) => q) as any,
 			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
 		});
 	});
@@ -293,7 +292,6 @@ describe('DataSource change - Logs to Traces', () => {
 			updateAllQueriesOperators: ((q: any) => q) as any,
 			updateQueriesData: ((q: any) => q) as any,
 			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
 		});
 	});

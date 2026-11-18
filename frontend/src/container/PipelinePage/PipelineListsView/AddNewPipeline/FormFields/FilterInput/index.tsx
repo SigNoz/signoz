@@ -4,6 +4,7 @@ import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import { toLegacyLogsFilter } from 'utils/fieldContext';
 
 import { ProcessorFormField } from '../../../AddNewProcessor/config';
 import { formValidationRules } from '../../../config';
@@ -22,9 +23,10 @@ function TagFilterInput({
 	}
 
 	const onQueryChange = (newValue: TagFilter): void => {
+		const legacyValue = toLegacyLogsFilter(newValue);
 		// Avoid unnecessary onChange calls
-		if (!isEqual(newValue, query.filters)) {
-			onChange(newValue);
+		if (!isEqual(legacyValue, query.filters)) {
+			onChange(legacyValue);
 		}
 	};
 

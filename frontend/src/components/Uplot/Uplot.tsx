@@ -50,14 +50,11 @@ const Uplot = forwardRef<ToggleGraphProps | undefined, UplotProps>(
 		const onCreateRef = useRef(onCreate);
 		const onDeleteRef = useRef(onDelete);
 
-		useImperativeHandle(
-			ref,
-			(): ToggleGraphProps => ({
-				toggleGraph(graphIndex: number, isVisible: boolean): void {
-					chartRef.current?.setSeries(graphIndex, { show: isVisible });
-				},
-			}),
-		);
+		useImperativeHandle(ref, (): ToggleGraphProps => ({
+			toggleGraph(graphIndex: number, isVisible: boolean): void {
+				chartRef.current?.setSeries(graphIndex, { show: isVisible });
+			},
+		}));
 
 		useEffect(() => {
 			onCreateRef.current = onCreate;

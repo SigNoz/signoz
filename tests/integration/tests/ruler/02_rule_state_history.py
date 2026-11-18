@@ -151,3 +151,81 @@ def test_ai_traces_rule_history_related_links(
     assert contributor_link["end"] == query_end_ms * 1_000_000
     assert_related_link_query(contributor_link, "traces", ["trace.input_tokens", "100", "service.name", "llm-gateway"])
     assert contributor_link["composite_query"]["builder"]["queryData"][0]["builderQueryType"] == "builder_ai_query"
+
+
+def test_multi_query_logs_rule_history_related_links(
+    signoz: types.SigNoz,
+    create_alert_rule_with_channel: Callable[[str], str],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
+
+    insert_alert_data(
+        [types.AlertData(type="logs", data_path="ruler/test_scenarios/rule_state_history_multi_query_logs/alert_data.jsonl")],
+        base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
+    )
+    rule_id = create_alert_rule_with_channel("ruler/test_scenarios/rule_state_history_multi_query_logs/rule.json")
+
+    (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
+
+    assert labels_to_map(item["labels"]).get("service.name") == "payment-service"
+    assert item.get("relatedLogsLink", "") != ""
+
+    # the rule evaluates query A alone, so query B plays no part in the alert
+    # and its filter stays out of the link
+    link = parse_related_link(item["relatedLogsLink"])
+    assert link["composite_query"]["builder"]["queryData"] == [{"dataSource": "logs", "filter": {"expression": "(body CONTAINS 'payment success') AND service.name='payment-service'"}}]
+
+    contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
+    contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "payment-service"]
+    assert len(contributors) == 1
+    assert contributors[0].get("relatedLogsLink", "") != ""
+
+    contributor_link = parse_related_link(contributors[0]["relatedLogsLink"])
+    assert contributor_link["composite_query"]["builder"]["queryData"] == [{"dataSource": "logs", "filter": {"expression": "(body CONTAINS 'payment success') AND service.name='payment-service'"}}]
+
+
+def test_formula_logs_rule_history_related_links(
+    signoz: types.SigNoz,
+    create_alert_rule_with_channel: Callable[[str], str],
+    insert_alert_data: Callable[[list[types.AlertData], datetime], None],
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query_start_ms = int((datetime.now(tz=UTC) - timedelta(minutes=30)).timestamp() * 1000)
+
+    insert_alert_data(
+        [types.AlertData(type="logs", data_path="ruler/test_scenarios/rule_state_history_formula_logs/alert_data.jsonl")],
+        base_time=datetime.now(tz=UTC) - timedelta(minutes=5),
+    )
+    rule_id = create_alert_rule_with_channel("ruler/test_scenarios/rule_state_history_formula_logs/rule.json")
+
+    (item, query_end_ms) = wait_for_firing_timeline_entry(signoz, token, rule_id, query_start_ms)
+
+    assert labels_to_map(item["labels"]).get("service.name") == "payment-service"
+    assert item.get("relatedLogsLink", "") != ""
+
+    # the rule evaluates formula F1 over the hidden queries A and B, so the
+    # link's one query ORs both filters, each narrowed to the firing series' labels
+    link = parse_related_link(item["relatedLogsLink"])
+    assert link["composite_query"]["builder"]["queryData"] == [
+        {
+            "dataSource": "logs",
+            "filter": {"expression": "((body CONTAINS 'payment success') AND service.name='payment-service') OR ((severity_text='INFO') AND service.name='payment-service')"},
+        }
+    ]
+
+    contributors = get_rule_history_top_contributors(signoz, token, rule_id, query_start_ms, query_end_ms)
+    contributors = [c for c in contributors if labels_to_map(c["labels"]).get("service.name") == "payment-service"]
+    assert len(contributors) == 1
+    assert contributors[0].get("relatedLogsLink", "") != ""
+
+    contributor_link = parse_related_link(contributors[0]["relatedLogsLink"])
+    assert contributor_link["composite_query"]["builder"]["queryData"] == [
+        {
+            "dataSource": "logs",
+            "filter": {"expression": "((body CONTAINS 'payment success') AND service.name='payment-service') OR ((severity_text='INFO') AND service.name='payment-service')"},
+        }
+    ]

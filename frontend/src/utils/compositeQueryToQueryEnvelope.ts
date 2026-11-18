@@ -26,14 +26,12 @@ function convertFormulasToV5(
 				limit: formulaData.limit ?? undefined,
 				legend: formulaData.legend,
 				bucketOptions: formulaData.bucketOptions,
-				order: formulaData.orderBy?.map(
-					(order: any): OrderBy => ({
-						key: {
-							name: order.columnName,
-						},
-						direction: order.order,
-					}),
-				),
+				order: formulaData.orderBy?.map((order: any): OrderBy => ({
+					key: {
+						name: order.columnName,
+					},
+					direction: order.order,
+				})),
 			},
 		}),
 	);

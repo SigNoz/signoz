@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Typography } from '@signozhq/ui/typography';
 import Spinner from 'components/Spinner';
 import { NotFoundContainer } from 'container/WidgetCard/Card/FullView/styles';
@@ -11,8 +11,10 @@ import FunnelResults from './components/FunnelResults/FunnelResults';
 import './TracesFunnelDetails.styles.scss';
 
 function TracesFunnelDetails(): JSX.Element {
-	const { funnelId } = useParams<{ funnelId: string }>();
-	const { data, isLoading, isError } = useFunnelDetails({ funnelId });
+	const { funnelId } = useAppParams<'funnelId'>();
+	const { data, isLoading, isError } = useFunnelDetails({
+		funnelId: funnelId || '',
+	});
 
 	if (isLoading || !data?.payload) {
 		return <Spinner size="large" tip="Loading..." />;
@@ -27,7 +29,7 @@ function TracesFunnelDetails(): JSX.Element {
 	}
 
 	return (
-		<FunnelProvider funnelId={funnelId}>
+		<FunnelProvider funnelId={funnelId || ''}>
 			<div className="traces-funnel-details">
 				<div className="traces-funnel-details__steps-config">
 					<FunnelConfiguration funnel={data.payload} />

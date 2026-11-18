@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'tests/test-utils';
 
-import { AlertRuleTags } from '../PlannedDowntimeList';
+import { AlertRuleTags } from '../AlertRuleTags';
 
 const RULES = [
 	{ label: 'Postgres connections near limit', value: 'rule-5' },

@@ -195,3 +195,22 @@ describe('scale utils', () => {
 		});
 	});
 });
+
+describe('symmetric log scale', () => {
+	it('maps to uPlot arcsinh with the given linear threshold', () => {
+		expect(
+			scaleUtils.getDistributionConfig({
+				time: false,
+				distr: DistributionType.SymmetricLog,
+				asinhThreshold: 0.01,
+			}),
+		).toStrictEqual({ distr: 4, log: 10, asinh: 0.01 });
+
+		expect(
+			scaleUtils.getDistributionConfig({
+				time: false,
+				distr: DistributionType.SymmetricLog,
+			}).asinh,
+		).toBe(scaleUtils.DEFAULT_ASINH_THRESHOLD);
+	});
+});

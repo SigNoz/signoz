@@ -1,8 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { IAppContext } from 'providers/App/types';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
@@ -18,7 +15,7 @@ import type { UserPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
 import { setNoAuthMode } from 'utils/noAuthMode';
 
-import { choiceControl, toggleControl } from '../controls/controls';
+import { choiceControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
 import type { StoryMockArgs } from '../controls/types';
 import { RESPONSE_STATES, type ResponseState } from '../runtime/responseState';
@@ -266,12 +263,6 @@ export const appShellMocks = defineStoryMocks({
 			options: SIDENAV_STATES,
 			value: 'pinned',
 		}),
-		bottomStrip: toggleControl('Bottom strip', {
-			group: APP_SHELL,
-			description:
-				'The `SAVED_VIEW_ENABLED` localStorage flag the bottom strip ships behind.',
-			value: false,
-		}),
 		support: choiceControl<SupportState>('Support', {
 			group: APP_SHELL,
 			description:
@@ -299,14 +290,8 @@ export const appShellMocks = defineStoryMocks({
 			},
 		};
 	},
-	effect: ({ banner, bottomStrip, support }) => {
+	effect: ({ banner, support }) => {
 		setNoAuthMode(banner === 'no-auth');
-
-		if (bottomStrip) {
-			set(LOCALSTORAGE.SAVED_VIEW_ENABLED, 'true');
-		} else {
-			remove(LOCALSTORAGE.SAVED_VIEW_ENABLED);
-		}
 
 		const pylon = window.signozBootData?.settings?.pylon;
 

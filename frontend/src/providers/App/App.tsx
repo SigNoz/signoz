@@ -300,22 +300,32 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
-	const { data: userPreferencesData, isFetching: isFetchingUserPreferences } =
-		useQuery({
-			queryFn: () => listUserPreferences(),
-			queryKey: ['getAllUserPreferences', 'app-context'],
-			enabled: !!isLoggedIn && !!user.email,
-		});
+	const {
+		data: userPreferencesData,
+		isFetching: isFetchingUserPreferencesQuery,
+		isIdle: isUserPreferencesQueryIdle,
+	} = useQuery({
+		queryFn: () => listUserPreferences(),
+		queryKey: ['getAllUserPreferences', 'app-context'],
+		enabled: !!isLoggedIn && !!user.email,
+	});
 
 	useEffect(() => {
 		if (
 			userPreferencesData &&
 			userPreferencesData.data &&
-			!isFetchingUserPreferences
+			!isFetchingUserPreferencesQuery
 		) {
 			setUserPreferences(userPreferencesData.data);
 		}
-	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
+	}, [userPreferencesData, isFetchingUserPreferencesQuery, isLoggedIn]);
+
+	// Idle means waiting for `user.email`, unless `/users/me` failed and it never
+	// arrives.
+	const isFetchingUserPreferences =
+		isFetchingUserPreferencesQuery ||
+		(isUserPreferencesQueryIdle && !userFetchError) ||
+		(!!userPreferencesData?.data && userPreferences === null);
 
 	function updateUser(user: IUser): void {
 		setDefaultUser((prev) => ({

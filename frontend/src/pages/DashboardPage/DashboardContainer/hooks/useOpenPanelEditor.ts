@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -9,7 +9,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import type { PanelEditorHandoffState } from '../PanelEditor/panelEditorHandoff';
 import { getPanelBuilderQuery } from '../Panels/utils/getPanelBuilderQuery';
 import { useDashboardStore } from '../store/useDashboardStore';
-import { useTimeSearchParams } from './useTimeSearchParams';
+import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 import logEvent from '@/api/common/logEvent';
 import { DashboardDetailEvents } from '../../constants/events';
 
@@ -38,7 +38,7 @@ export function useOpenPanelEditor(): (
 				panelId,
 				dashboardId,
 			});
-			const path = generatePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
+			const path = buildRoutePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 				dashboardId,
 				panelId,
 			});

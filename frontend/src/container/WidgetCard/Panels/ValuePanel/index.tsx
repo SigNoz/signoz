@@ -1,11 +1,12 @@
 import { memo, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import ValueGraph from 'components/ValueGraph';
 import { generateGridTitle } from 'utils/generateGridTitle';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 
 import {
@@ -26,7 +27,7 @@ function GridValueComponent({
 }: GridValueComponentProps): JSX.Element {
 	const value = ((data[1] || [])[0] || 0) as number;
 
-	const location = useLocation();
+	const location = useAppLocation();
 	const gridTitle = useMemo(() => generateGridTitle(title), [title]);
 
 	const isDashboardPage = location.pathname.split('/').length === 3;
@@ -73,7 +74,7 @@ function GridValueComponent({
 	}
 
 	const isQueryTypeBuilder =
-		widget?.query?.queryType === EQueryType.QUERY_BUILDER;
+		!!widget && isBuilderQueryType(widget.query.queryType);
 
 	return (
 		<>

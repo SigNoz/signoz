@@ -87,7 +87,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -100,7 +99,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -114,7 +112,6 @@ SEED_RULES = [
         "disabled": True,
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -127,7 +124,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
     {
@@ -140,7 +136,6 @@ SEED_RULES = [
         "annotations": {"summary": "s", "description": "d"},
         "evaluation": EVALUATION,
         "notificationSettings": NOTIFICATION_SETTINGS,
-        "version": "v5",
         "schemaVersion": "v2alpha1",
     },
 ]
@@ -156,7 +151,6 @@ COLLIDER_RULE = {
     "annotations": {"summary": "s", "description": "d"},
     "evaluation": EVALUATION,
     "notificationSettings": NOTIFICATION_SETTINGS,
-    "version": "v5",
     "schemaVersion": "v2alpha1",
 }
 
@@ -573,24 +567,3 @@ def test_error_contract(
         error = response.json()["error"]
         assert error["code"] == expected_code, f"params {params!r}"
         assert expected_message_part in error["message"], f"params {params!r}: {error['message']}"
-
-
-def test_v2_list_still_serves_bare_array(
-    signoz: SigNoz,
-    create_user_admin: Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    seed_alert_rules: Callable[[str, list[dict]], None],
-):
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    seed_alert_rules(SEED_CHANNEL_NAME, SEED_RULES)
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v2/rules"),
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=5,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()["data"]
-    assert isinstance(data, list), "deprecated v2 must keep returning a bare array"
-    assert {rule["alert"] for rule in data} == {r["alert"] for r in SEED_RULES}

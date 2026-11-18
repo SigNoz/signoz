@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Select, Skeleton } from 'antd';
@@ -69,6 +69,8 @@ function AccountActionsRenderer({
 
 					<span className="account-selector">
 						<Select
+							data-testid="cloud-account-selector"
+							aria-label="Cloud account"
 							value={activeAccount?.providerAccountId}
 							options={selectOptions}
 							rootClassName={cx('cloud-account-selector', {
@@ -88,6 +90,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						prefix={<PencilLine size={14} />}
 						onClick={onAccountSettingsModalOpen}
+						testId="cloud-edit-account-btn"
 					>
 						Edit Account
 					</Button>
@@ -98,6 +101,7 @@ function AccountActionsRenderer({
 						color="secondary"
 						onClick={onIntegrationModalOpen}
 						prefix={<Plus size={14} />}
+						testId="cloud-add-account-btn"
 					>
 						Add New Account
 					</Button>
@@ -112,6 +116,7 @@ function AccountActionsRenderer({
 			prefix={<Plug size={14} />}
 			onClick={onIntegrationModalOpen}
 			size="sm"
+			testId="cloud-integrate-now-btn"
 		>
 			Integrate Now
 		</Button>
@@ -120,7 +125,7 @@ function AccountActionsRenderer({
 
 function AccountActions({ type }: { type: IntegrationType }): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const navigate = useNavigate();
+	const navigate = useAppNavigate();
 
 	const { data: listAccountsResponse, isLoading } = useListAccounts({
 		cloudProvider: type,

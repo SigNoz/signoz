@@ -116,7 +116,7 @@ func (c *clickhouse) EstimateCardinality(ctx context.Context, metricName string,
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	reducedExpr := "1"
+	reducedExpr := "toUInt64(1)"
 	if len(keptLabels) > 0 {
 		reducedExpr = "uniq(("
 		for i, label := range keptLabels {

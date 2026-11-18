@@ -11,12 +11,12 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
 	alertRuleByIdResponse,
-	ALERT_SCHEMAS,
-	channelsResponse,
+	notificationChannelsResponse,
 	CHANNEL_MAX,
+	RULE_KINDS,
 	RULE_STATE_CHOICES,
 	SEVERITY_CHOICES,
-	type AlertSchema,
+	type RuleKind,
 	type RuleStateChoice,
 	type SeverityChoice,
 } from '../../stories/__story_mockdata__/alerts';
@@ -39,12 +39,12 @@ type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
 
 export const alertOverviewMocks = defineStoryMocks({
 	controls: {
-		alertSchema: choiceControl<AlertSchema>('Alert schema', {
+		ruleKind: choiceControl<RuleKind>('Rule kind', {
 			group: RULE,
 			description:
-				'`v2` opens the stepper the new alert form uses; `classic` is the single-form page rules written before it still open in.',
-			options: ALERT_SCHEMAS,
-			value: 'v2',
+				'`anomaly` fires on how far each point strays from the seasonal forecast, in deviations, rather than on a fixed value.',
+			options: RULE_KINDS,
+			value: 'threshold',
 		}),
 		ruleState: choiceControl<RuleStateChoice>('State', {
 			group: RULE,
@@ -85,7 +85,7 @@ export const alertOverviewMocks = defineStoryMocks({
 				alertRuleByIdResponse(String(req.params.id), {
 					severity: values.ruleSeverity,
 					state: values.ruleState,
-					schema: values.alertSchema,
+					kind: values.ruleKind,
 				}),
 			),
 		),
@@ -116,8 +116,8 @@ export const alertOverviewMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v1/channels',
-			response.json(() => channelsResponse(values.channels)),
+			'http://localhost/api/v2/notification_channels',
+			response.json(() => notificationChannelsResponse(values.channels)),
 		),
 
 		rest.post(

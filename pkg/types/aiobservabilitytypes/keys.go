@@ -17,8 +17,10 @@ const (
 	GenAIUsageCacheCreationInputTokens = "gen_ai.usage.cache_creation.input_tokens"
 	GenAIUsageReasoningOutputTokens    = "gen_ai.usage.reasoning.output_tokens"
 
-	GenAIInputMessages  = "gen_ai.input.messages"
-	GenAIOutputMessages = "gen_ai.output.messages"
+	GenAIInputMessages         = "gen_ai.input.messages"
+	GenAIOutputMessages        = "gen_ai.output.messages"
+	GenAISystemInstructions    = "gen_ai.system_instructions"
+	GenAIResponseFinishReasons = "gen_ai.response.finish_reasons"
 
 	GenAIToolCallID        = "gen_ai.tool.call.id"
 	GenAIToolCallArguments = "gen_ai.tool.call.arguments"

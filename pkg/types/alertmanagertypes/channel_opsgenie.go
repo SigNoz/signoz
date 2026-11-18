@@ -7,14 +7,14 @@ import (
 )
 
 type ChannelOpsgenieConfig struct {
-	SendResolved *bool                        `json:"sendResolved,omitempty"`
-	APIKey       string                       `json:"apiKey" required:"true" format:"password"`
-	APIURL       string                       `json:"apiUrl"`
-	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero"`
-	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero"`
-	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero"`
-	Details      map[string]string            `json:"details,omitzero"`
-	Priority     string                       `json:"priority"`
+	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
+	APIKey       string                       `json:"apiKey" required:"true" format:"password" description:"The Opsgenie API integration key. A secret; returned by create, update and fetch by ID, never by list."`
+	APIURL       string                       `json:"apiUrl" description:"The Opsgenie API host; empty uses the global Alertmanager default."`
+	Message      valuer.UnsetOrNonEmptyString `json:"message,omitzero" description:"Alertmanager template for the alert message; defaults to the Alertmanager Opsgenie default."`
+	Description  valuer.UnsetOrNonEmptyString `json:"description,omitzero" description:"Alertmanager template for the alert description; defaults to the Alertmanager Opsgenie default."`
+	Source       valuer.UnsetOrNonEmptyString `json:"source,omitzero" description:"Alertmanager template for the alert source; defaults to the Alertmanager Opsgenie default."`
+	Details      map[string]string            `json:"details,omitzero" description:"Custom alert details keyed by name, each an Alertmanager template."`
+	Priority     string                       `json:"priority" description:"The alert priority, P1 to P5."`
 }
 
 func (c *ChannelOpsgenieConfig) UnmarshalJSON(data []byte) error {

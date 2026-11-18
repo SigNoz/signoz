@@ -16,7 +16,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import {
 	otherFiltersResponse,
-	quickFiltersAttributeValuesResponse,
+	quickFiltersFieldValuesResponse,
 	quickFiltersListResponse,
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
@@ -24,8 +24,8 @@ import { rest } from 'msw';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import QuickFilters from '../QuickFilters';
-import { QuickFiltersSource, SignalType } from '../types';
-import { QuickFiltersConfig } from './constants';
+import { QuickFiltersSource } from '../types';
+import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -35,10 +35,8 @@ jest.mock('container/ApiMonitoring/queryParams');
 const mockUseApiMonitoringParams = jest.mocked(useApiMonitoringParams);
 
 const BASE_URL = ENVIRONMENT.baseURL;
-const SIGNAL = SignalType.LOGS;
-const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/${SIGNAL}`;
+const quickFiltersListURL = `${BASE_URL}/api/v2/quick_filters/logs`;
 const fieldsKeysURL = `${BASE_URL}/api/v1/fields/keys`;
-const attributeValuesURL = `${BASE_URL}/api/v3/autocomplete/attribute_values`;
 const fieldsValuesURL = `${BASE_URL}/api/v1/fields/values`;
 
 const NOT_AUTHORIZED_TEXT = /is not authorized to perform/i;
@@ -71,11 +69,8 @@ beforeEach(() => {
 		rest.get(fieldsKeysURL, (_req, res, ctx) =>
 			res(ctx.status(200), ctx.json(otherFiltersResponse)),
 		),
-		rest.get(attributeValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
-		),
 		rest.get(fieldsValuesURL, (_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(quickFiltersAttributeValuesResponse)),
+			res(ctx.status(200), ctx.json(quickFiltersFieldValuesResponse)),
 		),
 	);
 });
@@ -85,12 +80,12 @@ afterEach(() => {
 	jest.clearAllMocks();
 });
 
-function renderWithSignal(): void {
+function renderWithSavedList(): void {
 	render(
 		<QuickFilters
-			source={QuickFiltersSource.LOGS_EXPLORER}
-			signal={SIGNAL}
+			quickFilterSource={QuickFiltersSource.LOGS_EXPLORER}
 			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
 		/>,
 	);
 }
@@ -98,9 +93,10 @@ function renderWithSignal(): void {
 function renderStaticConfig(): void {
 	render(
 		<QuickFilters
-			source={QuickFiltersSource.EXCEPTIONS}
+			quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 			config={QuickFiltersConfig}
 			handleFilterVisibilityChange={jest.fn()}
+			useFieldApis={QuickFiltersFieldApis}
 		/>,
 	);
 }
@@ -110,7 +106,7 @@ describe('QuickFilters - AuthZ', () => {
 		it('shows the inline denial instead of the filters, header stays', async () => {
 			server.use(setupAuthzDeny(QuickFilterReadPermission));
 
-			renderWithSignal();
+			renderWithSavedList();
 
 			await expect(
 				screen.findByText(NOT_AUTHORIZED_TEXT),
@@ -135,7 +131,7 @@ describe('QuickFilters - AuthZ', () => {
 		it('renders the filters but disables the settings trigger', async () => {
 			server.use(setupAuthzDeny(QuickFilterUpdatePermission));
 
-			renderWithSignal();
+			renderWithSavedList();
 
 			await expect(
 				screen.findByText(FILTER_SERVICE_NAME),
@@ -160,7 +156,7 @@ describe('QuickFilters - AuthZ', () => {
 		it('renders the filters and opens settings from the trigger', async () => {
 			server.use(setupAuthzAdmin());
 
-			renderWithSignal();
+			renderWithSavedList();
 
 			await expect(
 				screen.findByText(FILTER_SERVICE_NAME),
@@ -178,7 +174,7 @@ describe('QuickFilters - AuthZ', () => {
 		});
 	});
 
-	describe('static config pages (no signal)', () => {
+	describe('static config pages (no saved list)', () => {
 		it('is not gated even when every permission is denied', async () => {
 			server.use(setupAuthzDenyAll());
 
@@ -197,7 +193,7 @@ describe('QuickFilters - AuthZ', () => {
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
 			);
 
-			renderWithSignal();
+			renderWithSavedList();
 
 			await waitFor(() =>
 				// eslint-disable-next-line testing-library/no-node-access

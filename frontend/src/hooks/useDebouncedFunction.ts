@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash-es/debounce';
 
 export interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
@@ -28,10 +28,19 @@ const useDebouncedFn = <T extends (...args: Array<unknown>) => unknown>(
 	const fnRef = useRef(fn);
 	fnRef.current = fn;
 
-	return useMemo(
+	const debounced = useMemo(
 		() => debounce(((...args) => fnRef.current(...args)) as T, wait, options),
 		[options, wait],
 	);
+
+	useEffect(
+		() => (): void => {
+			debounced.cancel();
+		},
+		[debounced],
+	);
+
+	return debounced;
 };
 
 export default useDebouncedFn;

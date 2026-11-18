@@ -3,7 +3,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -312,14 +311,10 @@ export const initialQueryMeterWithType: Query = {
 
 export const initialQueryAIWithType: Query = {
 	...initialQueryWithType,
-	builder: {
+	queryType: EQueryType.AI_QUERY_BUILDER,
+	builder_ai_query: {
 		...initialQueryWithType.builder,
-		queryData: [
-			{
-				...initialQueryBuilderFormValuesMap.traces,
-				builderQueryType: 'builder_ai_query',
-			},
-		],
+		queryData: [initialQueryBuilderFormValuesMap.traces],
 	},
 };
 
@@ -337,9 +332,12 @@ export enum PANEL_TYPES {
 	TRACE = 'trace',
 	BAR = 'bar',
 	AREA = 'area',
+	SCATTER = 'scatter',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
 	HEATMAP = 'heatmap',
+	GEO_MAP = 'geo_map',
+	TOP_LIST = 'top_list',
 	TEXT = 'text',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
@@ -511,7 +509,7 @@ export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
 };
 
 export enum OperatorConfigKeys {
-	'EXCEPTIONS' = 'EXCEPTIONS',
+	EXCEPTIONS = 'EXCEPTIONS',
 }
 
 export const OPERATORS_CONFIG = {
@@ -591,7 +589,6 @@ export const listViewInitialTraceQuery: Query = {
 				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
 				offset: 0,
 				pageSize: 10,
-				selectColumns: defaultTraceSelectedColumns,
 			},
 		],
 	},

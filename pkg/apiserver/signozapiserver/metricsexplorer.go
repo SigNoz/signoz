@@ -4,14 +4,16 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/metrics", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.ListMetrics),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.ListMetrics, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListMetrics",
 			Tags:                []string{"metrics"},
@@ -25,13 +27,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsField.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsField,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/stats", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetStats),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetStats, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricsStats",
 			Tags:                []string{"metrics"},
@@ -44,13 +51,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/treemap", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetTreemap),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetTreemap, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricsTreemap",
 			Tags:                []string{"metrics"},
@@ -58,18 +70,24 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Description:         "This endpoint returns a treemap visualization showing the proportional distribution of metrics by sample count or time series count",
 			Request:             new(metricsexplorertypes.TreemapRequest),
 			RequestContentType:  "application/json",
+			RequestExamples:     treemapRequestExamples(),
 			Response:            new(metricsexplorertypes.TreemapResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/attributes", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricAttributes),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricAttributes, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAttributes",
 			Tags:                []string{"metrics"},
@@ -83,13 +101,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsField.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsField,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/metadata", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricMetadata),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricMetadata, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricMetadata",
 			Tags:                []string{"metrics"},
@@ -103,13 +126,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsField.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsField,
+			Verb:     coretypes.VerbRead,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/metadata", handler.New(
-		provider.authzMiddleware.EditAccess(provider.metricsExplorerHandler.UpdateMetricMetadata),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.UpdateMetricMetadata, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateMetricMetadata",
 			Tags:                []string{"metrics"},
@@ -122,13 +150,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceMetricsField.Scope(coretypes.VerbUpdate)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceMetricsField,
+			Verb:     coretypes.VerbUpdate,
+			Category: coretypes.ActionCategoryConfigurationChange,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/highlights", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricHighlights),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricHighlights, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricHighlights",
 			Tags:                []string{"metrics"},
@@ -142,13 +175,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/alerts", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricAlerts),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricAlerts, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAlerts",
 			Tags:                []string{"metrics"},
@@ -162,13 +200,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceRule.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceRule,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v3/metrics/dashboards", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboardsV2),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetMetricDashboardsV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricDashboardsV2",
 			Tags:                []string{"metrics"},
@@ -182,13 +225,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceMetaResourceDashboard.Scope(coretypes.VerbList)}),
+		}, handler.WithResourceDefs(handler.BasicResourceDef{
+			Resource: coretypes.ResourceMetaResourceDashboard,
+			Verb:     coretypes.VerbList,
+			Category: coretypes.ActionCategoryDataAccess,
+			Selector: coretypes.WildcardSelector,
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/inspect", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.InspectMetrics),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.InspectMetrics, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "InspectMetrics",
 			Tags:                []string{"metrics"},
@@ -201,13 +249,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWithFilterExpressionResources(coretypes.ResourceTelemetryResourceMetrics, "filter.expression"),
+		}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
 	if err := router.Handle("/api/v2/metrics/onboarding", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.metricsExplorerHandler.GetOnboardingStatus),
+		provider.authzMiddleware.CheckResources(provider.metricsExplorerHandler.GetOnboardingStatus, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricsOnboardingStatus",
 			Tags:                []string{"metrics"},
@@ -220,8 +273,13 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusInternalServerError},
 			Deprecated:          false,
-			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodGet).GetError(); err != nil {
+			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceTelemetryResourceMetrics.Scope(coretypes.VerbRead)}),
+		}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+			Verb:      coretypes.VerbRead,
+			Category:  coretypes.ActionCategoryDataAccess,
+			Selector:  querybuilder.TelemetrySelector,
+			Resources: querybuilder.BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceMetrics),
+		}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

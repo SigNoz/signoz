@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -69,6 +69,7 @@ export type K8sExpandedRowProps<T, TItemKey = string> = {
 	getRowKey?: (record: T) => string;
 	/** Function to get the item key used for selection. Defaults to getRowKey if not provided. */
 	getItemKey?: (record: T) => TItemKey;
+	getRowTestId?: (record: T) => string;
 	/** Query key prefix for pre-caching detail data on row click */
 	detailsQueryKeyPrefix?: string;
 };
@@ -85,6 +86,7 @@ export function K8sExpandedRow<
 	extraQueryKeyParts = [],
 	getRowKey,
 	getItemKey,
+	getRowTestId,
 	detailsQueryKeyPrefix,
 }: K8sExpandedRowProps<T, TItemKey>): JSX.Element {
 	const fontSize = useInfraMonitoringFontSize();
@@ -96,7 +98,7 @@ export function K8sExpandedRow<
 	const [, setSelectedItemParams] = useInfraMonitoringSelectedItemParams();
 	const [, setMainOrderBy] = useInfraMonitoringOrderBy();
 	const { safeNavigate } = useSafeNavigate();
-	const location = useLocation();
+	const location = useAppLocation();
 	const queryClient = useQueryClient();
 
 	const orderByParamKey = useMemo(
@@ -321,6 +323,7 @@ export function K8sExpandedRow<
 						isLoading={isLoading}
 						getRowKey={getRowKey}
 						getItemKey={getItemKey}
+						getRowTestId={getRowTestId}
 						onRowClick={handleRowClick}
 						onSort={handleSort}
 						enableQueryParams={{

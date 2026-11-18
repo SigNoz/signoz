@@ -29,6 +29,17 @@
 	}
 }
 
+.tabs {
+	flex-shrink: 0;
+}
+
+.aiDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent-primary);
+}
+
 .filterSection {
 	display: flex;
 	align-items: center;

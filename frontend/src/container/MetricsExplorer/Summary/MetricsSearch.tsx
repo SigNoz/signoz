@@ -60,6 +60,7 @@ function MetricsSearch({
 				onStageRunQuery={handleStageAndRunQuery}
 				isLoadingQueries={isLoading}
 				handleCancelQuery={handleCancelQuery}
+				testId="metrics-summary-run-query"
 			/>
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2

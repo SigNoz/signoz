@@ -12,14 +12,14 @@ import (
 
 // PublicWidgetQueryRangeParams are the query params of the public panel query-range endpoint.
 type PublicWidgetQueryRangeParams struct {
-	StartTime string `query:"startTime" required:"false"`
-	EndTime   string `query:"endTime" required:"false"`
+	StartTime string `query:"startTime" required:"false" description:"Start of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled."`
+	EndTime   string `query:"endTime" required:"false" description:"End of the time range as a Unix timestamp in milliseconds. Honored only when the public dashboard has timeRangeEnabled."`
 }
 
 // GettablePublicDashboardDataV2 is the anonymous-facing payload of a v2 dashboard.
 type GettablePublicDashboardDataV2 struct {
-	Dashboard       *GettableDashboardV2      `json:"dashboard"`
-	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard"`
+	Dashboard       *GettableDashboardV2      `json:"dashboard" description:"The dashboard with panel and variable queries redacted."`
+	PublicDashboard *GettablePublicDasbhboard `json:"publicDashboard" description:"The sharing settings."`
 }
 
 // NewPublicDashboardDataFromDashboardV2 builds the anonymous v2 payload: panel queries
@@ -146,13 +146,14 @@ func redactLeafQuery(spec any) any {
 	case qb.ClickHouseQuery:
 		return qb.ClickHouseQuery{Name: s.Name, Legend: s.Legend}
 	case qb.QueryBuilderFormula:
-		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Legend: s.Legend}
+		return qb.QueryBuilderFormula{Name: s.Name, Expression: s.Expression, Order: s.Order, Legend: s.Legend}
 	case qb.QueryBuilderTraceOperator:
 		return qb.QueryBuilderTraceOperator{
 			Name:         s.Name,
 			Expression:   s.Expression,
 			Aggregations: s.Aggregations,
 			GroupBy:      s.GroupBy,
+			Order:        s.Order,
 			Legend:       s.Legend,
 		}
 	}
@@ -166,6 +167,7 @@ func redactBuilderQuery[T any](q qb.QueryBuilderQuery[T]) qb.QueryBuilderQuery[T
 		Source:       q.Source,
 		Aggregations: q.Aggregations,
 		GroupBy:      q.GroupBy,
+		Order:        q.Order,
 		Legend:       q.Legend,
 	}
 }
@@ -221,7 +223,7 @@ func (d *DashboardV2) GetPanelQuery(startTime, endTime uint64, panelKey string) 
 		CompositeQuery: composite,
 		FormatOptions: &qb.FormatOptions{
 			FillGaps:               fillGaps,
-			FormatTableResultForUI: panel.Spec.Plugin.Kind == PanelKindTable,
+			FormatTableResultForUI: panel.Spec.Plugin.Kind.joinsQueryRowsIntoOneTable(),
 		},
 	}, nil
 }

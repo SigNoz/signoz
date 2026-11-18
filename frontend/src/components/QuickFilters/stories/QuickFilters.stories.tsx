@@ -7,15 +7,17 @@ import type { GlobalMockArgs } from '@/storybook/globals';
 
 import QuickFilters from '../QuickFilters';
 import {
-	attributeValuesHandler,
 	checkboxConfig,
+	fieldApis,
+	fieldValuesHandler,
 	handlers,
 	LONG_FILTER_VALUES,
 	loadingFiltersHandlers,
 	queryBuilder,
 	selectedServiceQueryBuilder,
+	noSavedFiltersHandler,
 } from './QuickFilters.stories.mocks';
-import { QuickFiltersSource, SignalType } from '../types';
+import { QuickFiltersSource } from '../types';
 
 const meta = {
 	title: 'Components/Quick Filters',
@@ -32,8 +34,8 @@ const meta = {
 	args: {
 		config: checkboxConfig,
 		handleFilterVisibilityChange: (): void => undefined,
-		signal: SignalType.LOGS,
-		source: QuickFiltersSource.LOGS_EXPLORER,
+		quickFilterSource: QuickFiltersSource.LOGS_EXPLORER,
+		useFieldApis: fieldApis,
 	},
 	parameters: {
 		msw: { handlers },
@@ -92,13 +94,16 @@ export const LoadingFilters: Story = {
 
 /** Empty: a loaded quick-filter configuration with no filters has no result rows. */
 export const NoResults: Story = {
-	args: { config: [], signal: undefined },
+	args: { config: [] },
+	parameters: {
+		msw: { handlers: [noSavedFiltersHandler, ...handlers] },
+	},
 };
 
 /** Selection: an expanded checkbox shows the actual selected service values. */
 export const SelectedExpandedCheckbox: Story = {
-	args: { signal: undefined },
 	parameters: {
+		msw: { handlers: [noSavedFiltersHandler, ...handlers] },
 		signoz: {
 			queryBuilder: selectedServiceQueryBuilder,
 		},
@@ -109,12 +114,18 @@ export const SelectedExpandedCheckbox: Story = {
  * Every tooltip the panel renders, held open: the reveal on each truncated
  * filter value. Nothing bounds those values, so the panel is answered with
  * service names long enough to be cut. The Service name filter carries them, so
- * the signal that would add the workspace's own dynamic filters is left off.
+ * the workspace's own saved filter list is answered empty.
  */
 export const Tooltips: TooltipsStory = {
-	args: { signal: undefined, tooltipsOpen: true },
+	args: { tooltipsOpen: true },
 	parameters: {
-		msw: { handlers: [attributeValuesHandler(LONG_FILTER_VALUES), ...handlers] },
+		msw: {
+			handlers: [
+				noSavedFiltersHandler,
+				fieldValuesHandler(LONG_FILTER_VALUES),
+				...handlers,
+			],
+		},
 	},
 };
 

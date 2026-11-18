@@ -1068,10 +1068,28 @@ const K8S_EVENT_BODIES = [
 	{ severity: 'INFO', body: 'Pulled image "signoz/checkout:1.4.2" in 812ms' },
 ];
 
+/**
+ * What the k8sobjects receiver sends on a `use_json_body` tenant: the event
+ * object for a warning, and a `message`-only object for a plain info line.
+ */
+const eventJsonBody = (
+	event: (typeof K8S_EVENT_BODIES)[number],
+	index: number,
+): Record<string, unknown> =>
+	event.severity === 'WARN'
+		? {
+				message: event.body,
+				type: 'Warning',
+				reason: 'BackOff',
+				involvedObject: { kind: 'Pod', name: pick(WORKLOADS, index) },
+			}
+		: { message: event.body };
+
 export const entityEventRows = (
 	start: number,
 	end: number,
 	count: number,
+	jsonBody = false,
 ): RawRow[] =>
 	Array.from({ length: count }, (_unused, index) => {
 		const event = pick(K8S_EVENT_BODIES, index);
@@ -1082,7 +1100,7 @@ export const entityEventRows = (
 			).toISOString(),
 			data: {
 				id: `event-${index + 1}`,
-				body: event.body,
+				body: jsonBody ? eventJsonBody(event, index) : event.body,
 				severity_text: event.severity,
 				severity_number: event.severity === 'WARN' ? 13 : 9,
 				attributes_string: {

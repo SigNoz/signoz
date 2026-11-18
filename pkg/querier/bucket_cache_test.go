@@ -2,7 +2,9 @@ package querier
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -1069,8 +1071,11 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	// Get cached data - should be filtered to requested range
 	cached, missing := bc.GetMissRanges(ctx, orgID, query2, qbtypes.Step{Duration: 1000 * time.Millisecond})
 
-	// Should have no missing ranges
-	assert.Len(t, missing, 0)
+	// The value at 3000 stands for the whole step to 4000, which reaches past the
+	// window, so it is left to be recomputed as a partial rather than served.
+	require.Len(t, missing, 1)
+	assert.Equal(t, uint64(3000), missing[0].From)
+	assert.Equal(t, uint64(3500), missing[0].To)
 	assert.NotNil(t, cached)
 
 	// Verify the cached result only contains values within the requested range
@@ -1080,16 +1085,63 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	require.Len(t, tsData.Aggregations[0].Series, 1)
 
 	series := tsData.Aggregations[0].Series[0]
-	assert.Len(t, series.Values, 2) // Only values at 2000 and 3000 should be included
+	require.Len(t, series.Values, 1)
 
 	// Verify the exact values
 	assert.Equal(t, int64(2000), series.Values[0].Timestamp)
 	assert.Equal(t, float64(20), series.Values[0].Value)
-	assert.Equal(t, int64(3000), series.Values[1].Timestamp)
-	assert.Equal(t, float64(30), series.Values[1].Value)
 
 	// Value at 1000 should not be included (before requested range)
 	// Value at 4000 should not be included (after requested range)
+}
+
+// A promql value is the query evaluated at a single moment rather than over a
+// span, so the one at the window's end belongs to it and has to survive caching.
+func TestBucketCache_PromQLKeepsTheValueAtTheWindowEnd(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+	step := qbtypes.Step{Duration: time.Minute}
+
+	query := &promqlQuery{
+		logger:      slog.Default(),
+		query:       qbtypes.PromQuery{Query: "up", Step: step},
+		tr:          qbtypes.TimeRange{From: 600_000, To: 780_000},
+		requestType: qbtypes.RequestTypeTimeSeries,
+	}
+
+	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+		Type: qbtypes.RequestTypeTimeSeries,
+		Value: &qbtypes.TimeSeriesData{
+			QueryName: "A",
+			Aggregations: []*qbtypes.AggregationBucket{{
+				Series: []*qbtypes.TimeSeries{{
+					Values: []*qbtypes.TimeSeriesValue{
+						{Timestamp: 600_000, Value: 1},
+						{Timestamp: 660_000, Value: 2},
+						{Timestamp: 720_000, Value: 3},
+						{Timestamp: 780_000, Value: 4},
+					},
+				}},
+			}},
+		},
+	})
+	time.Sleep(10 * time.Millisecond)
+
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
+	assert.Empty(t, missing)
+	require.NotNil(t, cached)
+
+	tsData, ok := cached.Value.(*qbtypes.TimeSeriesData)
+	require.True(t, ok)
+	require.Len(t, tsData.Aggregations, 1)
+	require.Len(t, tsData.Aggregations[0].Series, 1)
+
+	timestamps := []int64{}
+	for _, value := range tsData.Aggregations[0].Series[0].Values {
+		timestamps = append(timestamps, value.Timestamp)
+	}
+	assert.Equal(t, []int64{600_000, 660_000, 720_000, 780_000}, timestamps)
 }
 
 func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
@@ -1150,7 +1202,20 @@ func TestBucketCache_FindMissingRangesWithStep(t *testing.T) {
 			expectedMiss: []*qbtypes.TimeRange{
 				{From: 1000, To: 1500},
 			},
-			description: "Window smaller than step should use basic algorithm",
+			description: "Window smaller than step is fetched whole",
+		},
+		{
+			name: "small_window_less_than_step_inside_a_bucket",
+			buckets: []*qbtypes.CachedBucket{
+				{StartMs: 0, EndMs: 3000},
+			},
+			startMs: 1000,
+			endMs:   1500,
+			stepMs:  1000,
+			expectedMiss: []*qbtypes.TimeRange{
+				{From: 1000, To: 1500},
+			},
+			description: "A cached point spans its whole step, so it cannot answer a window shorter than the step",
 		},
 		{
 			name:    "zero_step_uses_basic_algorithm",
@@ -1400,4 +1465,162 @@ func TestBucketCache_NoCache(t *testing.T) {
 	// Test NoCache behavior in querier would bypass the cache entirely
 	// The actual NoCache logic is implemented in querier.run(), not in bucket cache
 	// This test verifies that the cache works normally and NoCache bypasses it at a higher level
+}
+
+func TestBucketCachePutSlicesAtCellBoundaries(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+	step := qbtypes.Step{Duration: time.Second}
+
+	// a 1s step gives 60s cells, so 30s to 150s spans three of them
+	query := &mockQuery{fingerprint: "sliced-query", startMs: 30000, endMs: 150000}
+	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+		Type:  qbtypes.RequestTypeTimeSeries,
+		Value: createTestTimeSeries("A", 30000, 150000, 1000),
+		Stats: qbtypes.ExecStats{RowsScanned: 120, BytesScanned: 1200, DurationMS: 12},
+	})
+
+	type bucketShape struct {
+		cell, startMs, endMs, rowsScanned uint64
+		valueCount                        int
+	}
+	shapes := []bucketShape{}
+	for cell := uint64(0); cell < 3; cell++ {
+		var cellEntry qbtypes.CachedData
+		require.NoError(t, bc.cache.Get(ctx, orgID, bc.generateCacheKey(query, cell), &cellEntry))
+		for _, bucket := range cellEntry.Buckets {
+			var tsData qbtypes.TimeSeriesData
+			require.NoError(t, json.Unmarshal(bucket.Value, &tsData))
+			require.Len(t, tsData.Aggregations, 1)
+			require.Len(t, tsData.Aggregations[0].Series, 1)
+			shapes = append(shapes, bucketShape{cell, bucket.StartMs, bucket.EndMs, bucket.Stats.RowsScanned, len(tsData.Aggregations[0].Series[0].Values)})
+		}
+	}
+	assert.Equal(t, []bucketShape{
+		{0, 30000, 60000, 30, 30},
+		{1, 60000, 120000, 60, 60},
+		{2, 120000, 150000, 30, 30},
+	}, shapes)
+
+	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
+	assert.Equal(t, []*qbtypes.TimeRange{}, missing)
+	assert.Len(t, cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values, 120)
+	assert.Equal(t, uint64(120), cached.Stats.RowsScanned)
+}
+
+func TestBucketCachePutAbsorbsWritesWithinACell(t *testing.T) {
+	type bucketShape struct{ startMs, endMs, rowsScanned uint64 }
+	testCases := []struct {
+		name                  string
+		firstWindow           qbtypes.TimeRange
+		secondWindow          qbtypes.TimeRange
+		expectedBuckets       []bucketShape
+		expectedMissingRanges []*qbtypes.TimeRange
+		expectedValueCount    int
+	}{
+		{
+			name:                  "DisjointWrites_StayApart",
+			firstWindow:           qbtypes.TimeRange{From: 1000, To: 3000},
+			secondWindow:          qbtypes.TimeRange{From: 5000, To: 8000},
+			expectedBuckets:       []bucketShape{{1000, 3000, 2}, {5000, 8000, 3}},
+			expectedMissingRanges: []*qbtypes.TimeRange{{From: 3000, To: 5000}},
+			expectedValueCount:    5,
+		},
+		{
+			name:                  "EdgeToEdgeWrites_BecomeOne",
+			firstWindow:           qbtypes.TimeRange{From: 1000, To: 3000},
+			secondWindow:          qbtypes.TimeRange{From: 3000, To: 5000},
+			expectedBuckets:       []bucketShape{{1000, 5000, 4}},
+			expectedMissingRanges: []*qbtypes.TimeRange{},
+			expectedValueCount:    4,
+		},
+		{
+			name:                  "OverlappingWrites_BecomeOne",
+			firstWindow:           qbtypes.TimeRange{From: 1000, To: 4000},
+			secondWindow:          qbtypes.TimeRange{From: 3000, To: 6000},
+			expectedBuckets:       []bucketShape{{1000, 6000, 6}},
+			expectedMissingRanges: []*qbtypes.TimeRange{},
+			expectedValueCount:    5,
+		},
+		{
+			name:                  "ContainedWrite_KeepsExistingBucket",
+			firstWindow:           qbtypes.TimeRange{From: 1000, To: 10000},
+			secondWindow:          qbtypes.TimeRange{From: 3000, To: 5000},
+			expectedBuckets:       []bucketShape{{1000, 10000, 9}},
+			expectedMissingRanges: []*qbtypes.TimeRange{},
+			expectedValueCount:    9,
+		},
+		{
+			name:                  "ContainingWrite_ReplacesExistingBucket",
+			firstWindow:           qbtypes.TimeRange{From: 3000, To: 5000},
+			secondWindow:          qbtypes.TimeRange{From: 1000, To: 10000},
+			expectedBuckets:       []bucketShape{{1000, 10000, 9}},
+			expectedMissingRanges: []*qbtypes.TimeRange{},
+			expectedValueCount:    9,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			bc := createTestBucketCache(t)
+			ctx := context.Background()
+			orgID := valuer.UUID{}
+			step := qbtypes.Step{Duration: time.Second}
+
+			for _, window := range []qbtypes.TimeRange{testCase.firstWindow, testCase.secondWindow} {
+				query := &mockQuery{fingerprint: "absorb-query", startMs: window.From, endMs: window.To}
+				bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+					Type:  qbtypes.RequestTypeTimeSeries,
+					Value: createTestTimeSeries("A", window.From, window.To, 1000),
+					// one row per second, so a bucket's stats read as the seconds it was scanned for
+					Stats: qbtypes.ExecStats{RowsScanned: (window.To - window.From) / 1000},
+				})
+			}
+
+			query := &mockQuery{
+				fingerprint: "absorb-query",
+				startMs:     min(testCase.firstWindow.From, testCase.secondWindow.From),
+				endMs:       max(testCase.firstWindow.To, testCase.secondWindow.To),
+			}
+			var cellEntry qbtypes.CachedData
+			require.NoError(t, bc.cache.Get(ctx, orgID, bc.generateCacheKey(query, 0), &cellEntry))
+			shapes := make([]bucketShape, 0, len(cellEntry.Buckets))
+			for _, bucket := range cellEntry.Buckets {
+				shapes = append(shapes, bucketShape{bucket.StartMs, bucket.EndMs, bucket.Stats.RowsScanned})
+			}
+			assert.Equal(t, testCase.expectedBuckets, shapes)
+
+			cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
+			assert.Equal(t, testCase.expectedMissingRanges, missing)
+			assert.Len(t, cached.Value.(*qbtypes.TimeSeriesData).Aggregations[0].Series[0].Values, testCase.expectedValueCount)
+		})
+	}
+}
+
+func TestBucketCachePutLeavesAnUnchangedCellAlone(t *testing.T) {
+	bc := createTestBucketCache(t)
+	ctx := context.Background()
+	orgID := valuer.UUID{}
+	step := qbtypes.Step{Duration: time.Second}
+
+	wide := &mockQuery{fingerprint: "unchanged-query", startMs: 1000, endMs: 10000}
+	bc.Put(ctx, orgID, wide, step, &qbtypes.Result{
+		Type:     qbtypes.RequestTypeTimeSeries,
+		Value:    createTestTimeSeries("A", 1000, 10000, 1000),
+		Warnings: []string{"from the wide write"},
+	})
+
+	// a write already covered by the cell's bucket must not rewrite the entry,
+	// which shows as its warnings never arriving
+	inside := &mockQuery{fingerprint: "unchanged-query", startMs: 3000, endMs: 5000}
+	bc.Put(ctx, orgID, inside, step, &qbtypes.Result{
+		Type:     qbtypes.RequestTypeTimeSeries,
+		Value:    createTestTimeSeries("A", 3000, 5000, 1000),
+		Warnings: []string{"from the inside write"},
+	})
+
+	var cellEntry qbtypes.CachedData
+	require.NoError(t, bc.cache.Get(ctx, orgID, bc.generateCacheKey(wide, 0), &cellEntry))
+	assert.Equal(t, []string{"from the wide write"}, cellEntry.Warnings)
 }

@@ -1,10 +1,14 @@
 import { useCallback } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type DashboardtypesScatterPlotThresholdDTO,
+	DashboardtypesThresholdAxisDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
 import ThresholdAmountField from './shared/ThresholdAmountField';
+import ThresholdAxisField from './shared/ThresholdAxisField';
 import ThresholdColorField from './shared/ThresholdColorField';
 import ThresholdMarker from './shared/ThresholdMarker';
 import ThresholdRowShell from './shared/ThresholdRowShell';
@@ -12,16 +16,22 @@ import { useThresholdDraft } from './shared/useThresholdDraft';
 
 import styles from '../ThresholdsSection.module.scss';
 
+/** `axis` is set only where the row picks one (Scatter Plot). */
+type LabelThreshold = DashboardtypesScatterPlotThresholdDTO;
+
 interface LabelThresholdRowProps {
 	index: number;
-	threshold: DashboardtypesThresholdWithLabelDTO;
+	threshold: LabelThreshold;
 	/** Panel formatting unit — scopes the unit picker to its category (V1 parity). */
 	yAxisUnit?: string;
+	/** Shows the axis picker; the unit picker then scopes to the picked axis's unit. */
+	showAxis?: boolean;
+	axisUnits?: { x?: string; y?: string };
 	isEditing: boolean;
 	isNew: boolean;
 	onEdit: () => void;
-	onSave: (next: DashboardtypesThresholdWithLabelDTO) => void;
-	onLiveChange: (next: DashboardtypesThresholdWithLabelDTO) => void;
+	onSave: (next: LabelThreshold) => void;
+	onLiveChange: (next: LabelThreshold) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
 }
@@ -31,6 +41,8 @@ function LabelThresholdRow({
 	index,
 	threshold,
 	yAxisUnit,
+	showAxis,
+	axisUnits,
 	isEditing,
 	isNew,
 	onEdit,
@@ -50,6 +62,17 @@ function LabelThresholdRow({
 		onSave({ ...draft, label: draft.label ?? '' });
 	}, [onSave, draft]);
 
+	const draftAxis = draft.axis ?? DashboardtypesThresholdAxisDTO.y;
+	const scopeUnit = showAxis ? axisUnits?.[draftAxis] : yAxisUnit;
+	const subtitle = showAxis
+		? [
+				`${(threshold.axis ?? DashboardtypesThresholdAxisDTO.y).toUpperCase()} axis`,
+				threshold.label,
+			]
+				.filter(Boolean)
+				.join(' · ')
+		: threshold.label;
+
 	return (
 		<ThresholdRowShell
 			index={index}
@@ -58,12 +81,19 @@ function LabelThresholdRow({
 			isEditing={isEditing}
 			isNew={isNew}
 			title={`Line at ${formatPanelValue(threshold.value, threshold.unit)}`}
-			subtitle={threshold.label}
+			subtitle={subtitle}
 			onEdit={onEdit}
 			onSave={handleSave}
 			onDiscard={onDiscard}
 			onRemove={onRemove}
 		>
+			{showAxis && (
+				<ThresholdAxisField
+					testId={`threshold-axis-${index}`}
+					value={draftAxis}
+					onChange={(axis): void => setDraft((d) => ({ ...d, axis }))}
+				/>
+			)}
 			<ThresholdAmountField
 				label="Draw a line at"
 				testIdPrefix="threshold"
@@ -71,8 +101,8 @@ function LabelThresholdRow({
 				value={draft.value}
 				onValueChange={setValue}
 				unit={draft.unit}
-				scopeUnit={yAxisUnit}
-				scopeLabel="y-axis unit"
+				scopeUnit={scopeUnit}
+				scopeLabel={`${showAxis ? draftAxis : 'y'}-axis unit`}
 				onUnitChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
 			/>
 			<ThresholdColorField

@@ -37,6 +37,7 @@ function DeleteRoleModal({
 			onConfirm={onConfirm}
 			onCancel={onCancel}
 			disableOutsideClick
+			testId="delete-role-modal"
 		>
 			<Typography>
 				Are you sure you want to delete the role <strong>{roleName}</strong>? This

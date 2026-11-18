@@ -1,12 +1,10 @@
 import { TelemetryFieldKey } from 'api/v5/v5';
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import {
 	getFieldColumn,
 	TracesTableRow,
 } from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
-
-export const PER_PAGE_OPTIONS: number[] = [10, ...DEFAULT_PER_PAGE_OPTIONS];
 
 const TRACE_FIELDS = [
 	{ name: 'service.name', fieldContext: 'resource' },
@@ -18,7 +16,7 @@ const TRACE_FIELDS = [
 
 export const columns: TableColumnDef<TracesTableRow>[] = TRACE_FIELDS.map(
 	(field) => ({
-		...getFieldColumn(field),
+		...getFieldColumn(field, PANEL_TYPES.TRACE),
 		enableRemove: false,
 		canBeHidden: false,
 	}),

@@ -8,6 +8,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/blockkit"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/mrkdwn"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/plaintext"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/telegram"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer/wikimarkup"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 )
@@ -38,6 +40,16 @@ var (
 			return goldmark.New(goldmark.WithExtensions(plaintext.Extender))
 		},
 	}
+	telegramPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(telegram.Extender))
+		},
+	}
+	wikimarkupPool = sync.Pool{
+		New: func() any {
+			return goldmark.New(goldmark.WithExtensions(wikimarkup.Extender))
+		},
+	}
 )
 
 // RenderHTML converts markdown to HTML.
@@ -65,6 +77,22 @@ func RenderPlainText(markdown string) (string, error) {
 	md := plaintextPool.Get().(goldmark.Markdown)
 	defer plaintextPool.Put(md)
 	return render(md, markdown, "plain text")
+}
+
+// RenderTelegramHTML converts markdown to the HTML subset Telegram's
+// parse_mode HTML accepts, flattening constructs it has no tag for.
+func RenderTelegramHTML(markdown string) (string, error) {
+	md := telegramPool.Get().(goldmark.Markdown)
+	defer telegramPool.Put(md)
+	return render(md, markdown, "Telegram HTML")
+}
+
+// RenderJiraWikiMarkup converts markdown to Jira wiki markup, the format the
+// self-hosted Jira v2 API renders for issue descriptions and comments.
+func RenderJiraWikiMarkup(markdown string) (string, error) {
+	md := wikimarkupPool.Get().(goldmark.Markdown)
+	defer wikimarkupPool.Put(md)
+	return render(md, markdown, "Jira wiki markup")
 }
 
 func render(md goldmark.Markdown, markdown string, format string) (string, error) {

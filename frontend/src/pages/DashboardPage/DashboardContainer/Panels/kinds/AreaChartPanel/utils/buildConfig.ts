@@ -15,6 +15,7 @@ import {
 import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Panels/utils/resolveSeriesLabel';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import {
+	getPartialTimestamps,
 	hasSingleVisiblePoint,
 	toClickPluginPayload,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
@@ -155,6 +156,7 @@ function addSeries({
 			fillOpacity,
 			isDarkMode,
 			metric: s.labels,
+			partialTimestamps: getPartialTimestamps(s.values),
 		});
 	});
 }

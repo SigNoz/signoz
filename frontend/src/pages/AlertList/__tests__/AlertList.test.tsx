@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { mockAppLocation } from 'tests/router-mocks';
 
 import AlertList from '../index';
 
@@ -8,16 +9,12 @@ const LIST_ALERT_RULES_TEXT = 'List Alert Rules Component';
 const TRIGGERED_ALERTS_TEXT = 'Triggered Alerts';
 const ALERT_RULES_TEXT = 'Alert Rules';
 const CONFIGURATION_TEXT = 'Configuration';
+const NOTIFICATION_CHANNELS_TEXT = 'Notification Channels';
 const PLANNED_DOWNTIME_TEXT = 'Planned Downtime';
 const ROUTING_POLICIES_TEXT = 'Routing Policies';
+const CHANNELS_SUB_TAB = 'channels';
 const PLANNED_DOWNTIME_SUB_TAB = 'planned-downtime';
 const ROUTING_POLICIES_SUB_TAB = 'routing-policies';
-
-const mockUseLocation = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): unknown => mockUseLocation(),
-}));
 
 let mockUrlQuery: URLSearchParams;
 jest.mock('hooks/useUrlQuery', () => ({
@@ -45,6 +42,12 @@ jest.mock('pages/AlertDetails', () => ({
 		return <div>Alert Details Component</div>;
 	},
 }));
+jest.mock('../NotificationChannels/NotificationChannels', () => ({
+	__esModule: true,
+	default: function MockNotificationChannels(): JSX.Element {
+		return <div>Notification Channels Component</div>;
+	},
+}));
 jest.mock('container/PlannedDowntime/PlannedDowntime', () => ({
 	PlannedDowntime: function MockPlannedDowntime(): JSX.Element {
 		return <div>Planned Downtime Component</div>;
@@ -70,9 +73,7 @@ jest.mock('container/ListAlertRules', () => ({
 }));
 
 const mockLocation = (pathname: string): void => {
-	mockUseLocation.mockReturnValue({
-		pathname,
-	});
+	mockAppLocation({ pathname });
 };
 
 const mockQueryParams = (params: Record<string, string | null>): void => {
@@ -137,15 +138,6 @@ describe('AlertList', () => {
 			expect(screen.getByText(LIST_ALERT_RULES_TEXT)).toBeInTheDocument();
 		});
 
-		it('should render Configuration tab with default Planned Downtime sub-tab when tab query param is Configuration', () => {
-			mockQueryParams({ tab: 'Configuration' });
-			mockLocation(ALERTS_PATH);
-
-			render(<AlertList />);
-
-			expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
-		});
-
 		it('should navigate to TriggeredAlerts tab when clicked', () => {
 			mockQueryParams({ tab: 'AlertRules' });
 			mockLocation(ALERTS_PATH);
@@ -167,74 +159,109 @@ describe('AlertList', () => {
 
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
 		});
+
+		it('should navigate to Configuration tab with default channels subTab when clicked', () => {
+			mockQueryParams({ tab: 'AlertRules' });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			clickTab(CONFIGURATION_TEXT);
+
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=Configuration&subTab=${CHANNELS_SUB_TAB}`,
+			);
+		});
 	});
 
-	describe('Configuration Tab', () => {
-		describe('Rendering', () => {
-			it('should render Configuration tab with default Planned Downtime sub-tab', () => {
-				mockQueryParams({ tab: CONFIGURATION_TEXT });
-				mockLocation(ALERTS_PATH);
+	describe('Configuration Tab with Secondary Sidebar', () => {
+		it('should render Configuration tab with secondary sidebar containing channels, routing policies, and planned downtime', () => {
+			mockQueryParams({ tab: 'Configuration' });
+			mockLocation(ALERTS_PATH);
 
-				render(<AlertList />);
+			render(<AlertList />);
 
-				expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
-				expect(screen.getByText(ROUTING_POLICIES_TEXT)).toBeInTheDocument();
-				expect(screen.getByText('Planned Downtime Component')).toBeInTheDocument();
-			});
-
-			it('should render Routing Policies sub-tab when subTab query param is routing-policies', () => {
-				mockQueryParams({
-					tab: CONFIGURATION_TEXT,
-					subTab: ROUTING_POLICIES_SUB_TAB,
-				});
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				expect(screen.getByText('Routing Policies Component')).toBeInTheDocument();
-			});
+			expect(
+				screen.getByTestId('alert-configuration-sidebar'),
+			).toBeInTheDocument();
+			expect(screen.getByText(NOTIFICATION_CHANNELS_TEXT)).toBeInTheDocument();
+			expect(screen.getByText(ROUTING_POLICIES_TEXT)).toBeInTheDocument();
+			expect(screen.getByText(PLANNED_DOWNTIME_TEXT)).toBeInTheDocument();
+			expect(
+				screen.getByText('Notification Channels Component'),
+			).toBeInTheDocument();
 		});
 
-		describe('Navigation', () => {
-			it('should navigate to Configuration tab with default subTab when clicked', () => {
-				mockQueryParams({ tab: 'AlertRules' });
-				mockLocation(ALERTS_PATH);
-
-				render(<AlertList />);
-
-				clickTab(CONFIGURATION_TEXT);
-
-				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/alerts?tab=Configuration&subTab=${PLANNED_DOWNTIME_SUB_TAB}`,
-				);
+		it('should render Routing Policies when subTab is routing-policies', () => {
+			mockQueryParams({
+				tab: 'Configuration',
+				subTab: ROUTING_POLICIES_SUB_TAB,
 			});
+			mockLocation(ALERTS_PATH);
 
-			it('should preserve existing subTab when navigating to Configuration tab', () => {
-				mockQueryParams({ tab: 'AlertRules', subTab: ROUTING_POLICIES_SUB_TAB });
-				mockLocation(ALERTS_PATH);
+			render(<AlertList />);
 
-				render(<AlertList />);
+			expect(screen.getByText('Routing Policies Component')).toBeInTheDocument();
+		});
 
-				clickTab(CONFIGURATION_TEXT);
-
-				expect(mockSafeNavigate).toHaveBeenCalledWith(
-					`/alerts?tab=Configuration&subTab=${ROUTING_POLICIES_SUB_TAB}`,
-				);
+		it('should render Planned Downtime when subTab is planned-downtime', () => {
+			mockQueryParams({
+				tab: 'Configuration',
+				subTab: PLANNED_DOWNTIME_SUB_TAB,
 			});
+			mockLocation(ALERTS_PATH);
 
-			it('should clear subTab when navigating away from Configuration tab', () => {
-				mockQueryParams({
-					tab: CONFIGURATION_TEXT,
-					subTab: PLANNED_DOWNTIME_SUB_TAB,
-				});
-				mockLocation(ALERTS_PATH);
+			render(<AlertList />);
 
-				render(<AlertList />);
+			expect(screen.getByText('Planned Downtime Component')).toBeInTheDocument();
+		});
 
-				clickTab(ALERT_RULES_TEXT);
+		it('should navigate to Routing Policies subtab when clicked in secondary sidebar', () => {
+			mockQueryParams({ tab: 'Configuration', subTab: CHANNELS_SUB_TAB });
+			mockLocation(ALERTS_PATH);
 
-				expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
-			});
+			render(<AlertList />);
+
+			fireEvent.click(
+				screen.getByTestId('configuration-sidebar-routing-policies'),
+			);
+
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=Configuration&subTab=${ROUTING_POLICIES_SUB_TAB}`,
+			);
+		});
+
+		it('should navigate to Planned Downtime subtab when clicked in secondary sidebar', () => {
+			mockQueryParams({ tab: 'Configuration', subTab: CHANNELS_SUB_TAB });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			fireEvent.click(
+				screen.getByTestId('configuration-sidebar-planned-downtime'),
+			);
+
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=Configuration&subTab=${PLANNED_DOWNTIME_SUB_TAB}`,
+			);
+		});
+
+		it('should support legacy RoutingPolicies query param as Configuration tab', () => {
+			mockQueryParams({ tab: 'RoutingPolicies' });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			expect(screen.getByText('Routing Policies Component')).toBeInTheDocument();
+		});
+
+		it('should support legacy PlannedDowntime query param as Configuration tab', () => {
+			mockQueryParams({ tab: 'PlannedDowntime' });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			expect(screen.getByText('Planned Downtime Component')).toBeInTheDocument();
 		});
 	});
 });

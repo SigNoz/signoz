@@ -2,16 +2,15 @@ import { Expand } from '@signozhq/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { getBodyDisplayString } from 'container/LogDetailedView/utils';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
 import { ILog } from 'types/api/logs/log';
 
 import './styles.scss';
 
 function LogsList({ logs }: LogsListProps): JSX.Element {
-	const { activeLog, onSetActiveLog, onClearActiveLog, onAddToQuery } =
-		useActiveLog();
+	const { activeLog, onSetActiveLog, onClearActiveLog } = useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
 
@@ -20,7 +19,11 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 	return (
 		<div className="logs-preview-list-container">
 			{logs.map((log) => (
-				<div key={log.id} className="logs-preview-list-item">
+				<div
+					key={log.id}
+					className="logs-preview-list-item"
+					data-testid="pipeline-preview-log"
+				>
 					<div className="logs-preview-list-item-timestamp">
 						{formatTimezoneAdjustedTimestamp(
 							log.timestamp,
@@ -28,7 +31,7 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 						)}
 					</div>
 					<div className="logs-preview-list-item-body">
-						{getBodyDisplayString(log.body)}
+						{getBodyDisplay(log.body)}
 					</div>
 					<div
 						className="logs-preview-list-item-expand"
@@ -45,8 +48,6 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 				selectedTab={VIEW_TYPES.OVERVIEW}
 				log={activeLog}
 				onClose={onClearActiveLog}
-				onAddToQuery={onAddToQuery}
-				onClickActionItem={onAddToQuery}
 			/>
 		</div>
 	);

@@ -11,7 +11,7 @@ import {
 } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	envelopesToQuery,
@@ -85,6 +85,19 @@ describe('persesQueryAdapters', () => {
 			];
 			expect(fromPerses(queries, PANEL_TYPES.TIME_SERIES).queryType).toBe(
 				EQueryType.CLICKHOUSE,
+			);
+		});
+
+		it('opens an AI panel on the AI query type with its queries in the AI slot', () => {
+			const restored = fromPerses(
+				toPerses(initialQueryAIWithType, PANEL_TYPES.LIST),
+				PANEL_TYPES.LIST,
+			);
+
+			expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(restored.builder.queryData).toStrictEqual([]);
+			expect(restored.builder_ai_query?.queryData[0].dataSource).toBe(
+				DataSource.TRACES,
 			);
 		});
 	});
@@ -232,15 +245,43 @@ describe('persesQueryAdapters', () => {
 			expect(result[0].spec.plugin.kind).toBe('signoz/AIBuilderQuery');
 		});
 
+		it('emits signoz/AIBuilderQuery for an AI-typed List query, from its own slot', () => {
+			const query: Query = {
+				...initialQueriesMap[DataSource.METRICS],
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder_ai_query: initialQueryAIWithType.builder,
+			};
+
+			const result = toPerses(query, PANEL_TYPES.LIST);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].spec.plugin.kind).toBe('signoz/AIBuilderQuery');
+		});
+
+		it('emits only the active slot, never a parked AI query', () => {
+			const query: Query = {
+				...initialQueriesMap[DataSource.METRICS],
+				builder_ai_query: initialQueryAIWithType.builder,
+			};
+
+			const result = toPerses(query, PANEL_TYPES.TIME_SERIES);
+			const envelopes = (
+				result[0].spec.plugin.spec as { queries?: { type?: string }[] }
+			).queries;
+
+			expect(envelopes?.map((e) => e.type)).toStrictEqual(['builder_query']);
+		});
+
 		it('preserves an AI List query through toPerses → fromPerses', () => {
 			const restored = fromPerses(
 				toPerses(initialQueryAIWithType, PANEL_TYPES.LIST),
 				PANEL_TYPES.LIST,
 			);
 
-			expect(restored.builder.queryData[0].builderQueryType).toBe(
-				'builder_ai_query',
-			);
+			expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(
+				restored.builder_ai_query?.queryData[0].builderQueryType,
+			).toBeUndefined();
 		});
 
 		it('preserves an AI time-series query through fromPerses → toPerses', () => {
@@ -251,11 +292,41 @@ describe('persesQueryAdapters', () => {
 				savedAgain[0].spec.plugin.spec as { queries?: { type?: string }[] }
 			).queries;
 
-			expect(restored.builder.queryData[0].builderQueryType).toBe(
-				'builder_ai_query',
-			);
+			expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+			expect(
+				restored.builder_ai_query?.queryData[0].builderQueryType,
+			).toBeUndefined();
 			expect(envelopes?.[0]?.type).toBe('builder_ai_query');
 		});
+
+		it.each([PANEL_TYPES.TABLE, PANEL_TYPES.SCATTER])(
+			'sends a %s panel metric query as scalar with its reduceTo, which the API requires',
+			(panelType) => {
+				const metrics = initialQueriesMap[DataSource.METRICS];
+				const query: Query = {
+					...metrics,
+					builder: {
+						...metrics.builder,
+						queryData: metrics.builder.queryData.map((queryData) => ({
+							...queryData,
+							// `aggregations` is a union of arrays, which `map` widens.
+							aggregations: queryData.aggregations?.map((aggregation) => ({
+								...aggregation,
+								reduceTo: ReduceOperators.SUM,
+							})) as typeof queryData.aggregations,
+						})),
+					},
+				};
+
+				const [envelope] = toPerses(query, panelType);
+				const composite = envelope.spec.plugin.spec as {
+					queries: { spec: { aggregations?: { reduceTo?: string }[] } }[];
+				};
+
+				expect(envelope.kind).toBe('scalar');
+				expect(composite.queries[0].spec.aggregations?.[0]?.reduceTo).toBe('sum');
+			},
+		);
 
 		it('emits a bare signoz/BuilderQuery for a List panel (not a CompositeQuery)', () => {
 			const result = toPerses(
@@ -281,6 +352,24 @@ describe('persesQueryAdapters', () => {
 							pageSize: 100,
 						},
 					],
+				},
+			};
+
+			const result = toPerses(withPageSize, PANEL_TYPES.LIST);
+
+			const spec = result[0].spec.plugin.spec as { limit?: number };
+			expect(spec.limit).toBeUndefined();
+		});
+
+		it('drops the pageSize-promoted limit for an AI List query', () => {
+			const aiBuilder = initialQueryAIWithType.builder;
+			const withPageSize: Query = {
+				...initialQueryAIWithType,
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder: { ...aiBuilder, queryData: [] },
+				builder_ai_query: {
+					...aiBuilder,
+					queryData: [{ ...aiBuilder.queryData[0], limit: null, pageSize: 10 }],
 				},
 			};
 

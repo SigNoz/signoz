@@ -29,13 +29,13 @@ type DashboardView struct {
 	types.Identifiable
 	types.TimeAuditable
 
-	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true"`
-	Data  DashboardViewData `bun:"data,type:text,notnull" json:"data" required:"true"`
-	OrgID valuer.UUID       `bun:"org_id,type:text,notnull" json:"orgId" required:"true"`
+	Name  string            `bun:"name,type:text,notnull" json:"name" required:"true" description:"The view name."`
+	Data  DashboardViewData `bun:"data,type:text,notnull" json:"data" required:"true" description:"The saved list filter and sort."`
+	OrgID valuer.UUID       `bun:"org_id,type:text,notnull" json:"orgId" required:"true" description:"The organization that owns the view."`
 }
 
 type DashboardViewData struct {
-	Version string `json:"version" required:"true"`
+	Version string `json:"version" required:"true" description:"The view data schema version. Must be v1."`
 	ListFilter
 }
 
@@ -52,8 +52,8 @@ func (d *DashboardViewData) Validate() error {
 // ════════════════════════════════════════════════════════════════════════
 
 type PostableDashboardView struct {
-	Name string            `json:"name" required:"true"`
-	Data DashboardViewData `json:"data" required:"true"`
+	Name string            `json:"name" required:"true" maxLength:"64" description:"The view name, at most 64 characters."`
+	Data DashboardViewData `json:"data" required:"true" description:"The list filter and sort to save."`
 }
 
 func (p *PostableDashboardView) UnmarshalJSON(data []byte) error {
@@ -103,7 +103,7 @@ func (v *DashboardView) Update(updateable UpdatableDashboardView) {
 // ════════════════════════════════════════════════════════════════════════
 
 type ListableDashboardView struct {
-	Views []*DashboardView `json:"views" required:"true" nullable:"false"`
+	Views []*DashboardView `json:"views" required:"true" nullable:"false" description:"The saved dashboard list views."`
 }
 
 // ════════════════════════════════════════════════════════════════════════

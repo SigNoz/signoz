@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
 
 export enum FiltersType {
 	SLIDER = 'SLIDER',
@@ -19,15 +19,6 @@ export enum SpecficFilterOperations {
 	ONLY = 'ONLY',
 }
 
-export enum SignalType {
-	TRACES = 'traces',
-	LOGS = 'logs',
-	API_MONITORING = 'api_monitoring',
-	EXCEPTIONS = 'exceptions',
-	METER_EXPLORER = 'meter',
-	AI_OBSERVABILITY = 'ai_observability',
-}
-
 /**
  * Missing export from signozhq/ui/checkbox, TODO(H4ad): Add and remove this type definition
  */
@@ -39,7 +30,6 @@ export interface IQuickFiltersConfig {
 	attributeKey: BaseAutocompleteData;
 	aggregateOperator?: string;
 	aggregateAttribute?: string;
-	dataSource?: DataSource;
 	customRendererForValue?: (value: string) => JSX.Element;
 	defaultOpen: boolean;
 }
@@ -53,31 +43,30 @@ export interface QuickFilterChangeEventData {
 export interface IQuickFiltersProps {
 	config: IQuickFiltersConfig[];
 	handleFilterVisibilityChange?: () => void;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
-	/** Pass to fetch quick filters for this signal; omit to use `config` as-is */
-	signal?: SignalType;
 	className?: string;
 	showFilterCollapse?: boolean;
 	showQueryName?: boolean;
-	useFieldApis?: QuickFilterCheckboxUseFieldApis;
+	useFieldApis: QuickFilterCheckboxUseFieldApis;
 	savedViewsHeader?: ReactNode;
 }
 
-export enum QuickFiltersSource {
-	LOGS_EXPLORER = 'logs-explorer',
-	INFRA_MONITORING = 'infra-monitoring',
-	TRACES_EXPLORER = 'traces-explorer',
-	API_MONITORING = 'api-monitoring',
-	EXCEPTIONS = 'exceptions',
-	METER_EXPLORER = 'meter',
-	AI_OBSERVABILITY = 'ai-observability',
-}
+export const QuickFiltersSource = {
+	LOGS_EXPLORER: QuickfiltertypesSourceDTO.logs,
+	TRACES_EXPLORER: QuickfiltertypesSourceDTO.traces,
+	EXCEPTIONS: QuickfiltertypesSourceDTO.exceptions,
+	API_MONITORING: QuickfiltertypesSourceDTO.api_monitoring,
+	METER_EXPLORER: QuickfiltertypesSourceDTO.meter,
+	AI_OBSERVABILITY: QuickfiltertypesSourceDTO.ai_observability,
+	/** No saved filter list: renders `config` as given. */
+	INFRA_MONITORING: 'infra-monitoring',
+} as const;
 
-/**
- * Opt-in: fetch values from the /v1/fields/values API instead of /v3/autocomplete/attribute_values
- */
+export type QuickFiltersSource =
+	(typeof QuickFiltersSource)[keyof typeof QuickFiltersSource];
+
 export type QuickFilterCheckboxUseFieldApis = {
 	startUnixMilli: number;
 	endUnixMilli: number;

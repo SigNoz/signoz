@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
-import classNames from 'classnames';
 import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
 import {
@@ -12,11 +11,13 @@ import {
 } from 'components/QuickFilters/types';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { NON_SELECTED_OPERATORS } from '../checkboxFilterQuery';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 import useCheckboxDisclosure from '../useCheckboxDisclosure';
 import useCheckboxFilterActions from '../useCheckboxFilterActions';
 import useCheckboxFilterState from '../useCheckboxFilterState';
@@ -33,7 +34,7 @@ import styles from './CheckboxFilterV2.module.scss';
 
 interface CheckboxFilterV2Props {
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	onFilterChange?: (query: Query) => void;
 	onQuickFilterChange?: (data: QuickFilterChangeEventData) => void;
 	useFieldApis: QuickFilterCheckboxUseFieldApis;
@@ -42,19 +43,18 @@ interface CheckboxFilterV2Props {
 export default function CheckboxFilterV2(
 	props: CheckboxFilterV2Props,
 ): JSX.Element {
-	const { source, filter, onFilterChange, onQuickFilterChange, useFieldApis } =
-		props;
+	const {
+		quickFilterSource,
+		filter,
+		onFilterChange,
+		onQuickFilterChange,
+		useFieldApis,
+	} = props;
 	const [searchText, setSearchText] = useState<string>('');
-	const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
 	const [userToggleState, setUserToggleState] = useState<boolean | null>(null);
 
-	const handleToggleSearch = (): void => {
-		setIsSearchOpen((prev) => !prev);
-		setSearchText('');
-	};
-
 	const { currentQuery } = useQueryBuilder();
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(quickFilterSource);
 
 	const {
 		isOpen,
@@ -81,7 +81,7 @@ export default function CheckboxFilterV2(
 		searchText,
 		existingQuery,
 		metricNamespace: useFieldApis.metricNamespace,
-		source,
+		quickFilterSource,
 		startUnixMilli: useFieldApis.startUnixMilli,
 		endUnixMilli: useFieldApis.endUnixMilli,
 		enabled: isOpen,
@@ -110,7 +110,7 @@ export default function CheckboxFilterV2(
 
 	const { onChange, onClear } = useCheckboxFilterActions({
 		filter,
-		source,
+		quickFilterSource,
 		attributeValues,
 		activeQueryIndex,
 		onFilterChange,
@@ -121,18 +121,23 @@ export default function CheckboxFilterV2(
 		setSearchText(args[0] as string);
 	}, DEBOUNCE_DELAY);
 
+	const handleToggleOpen = (): void => {
+		if (isOpen) {
+			setSearchTextDebounced.cancel();
+			setSearchText('');
+		}
+		onToggleOpen();
+	};
+
+	const activeQueryData = currentQuery
+		? getActiveBuilder(currentQuery).queryData
+		: undefined;
 	const currentFilterOp = useMemo(() => {
-		const filterSync = currentQuery?.builder.queryData?.[
-			activeQueryIndex
-		]?.filters?.items.find((item) =>
-			isKeyMatch(item.key?.key, filter.attributeKey.key),
+		const filterSync = activeQueryData?.[activeQueryIndex]?.filters?.items.find(
+			(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
 		);
 		return filterSync?.op;
-	}, [
-		currentQuery?.builder.queryData,
-		activeQueryIndex,
-		filter.attributeKey.key,
-	]);
+	}, [activeQueryData, activeQueryIndex, filter.attributeKey.key]);
 
 	const isNotInOperator = NON_SELECTED_OPERATORS.includes(currentFilterOp || '');
 
@@ -166,19 +171,26 @@ export default function CheckboxFilterV2(
 		relatedExclusions,
 	});
 
+	// Kept while a search is typed, so narrowing the list does not remove the box,
+	// and while a refetch still shows the previous, narrowed results.
+	const wasSearchShown = useRef(false);
+	const isSearchShown =
+		searchText !== '' ||
+		totalCount > DEFAULT_VISIBLE_ITEMS_COUNT ||
+		(isFetching && wasSearchShown.current);
+	wasSearchShown.current = isSearchShown;
+
 	return (
-		<div className={styles.checkboxFilter} data-testid="checkbox-filter-v2">
+		<div
+			className={styles.checkboxFilter}
+			data-testid="checkbox-filter-v2"
+			data-filter-key={filter.attributeKey.key}
+		>
 			<CheckboxFilterV2Header
 				title={filter.title}
 				isOpen={isOpen}
-				actionsClassName={classNames(styles.sectionActions, {
-					[styles.sectionActionsPinned]: isSearchOpen,
-				})}
-				resetActionClassName={
-					isSearchOpen ? styles.sectionActionHoverOnly : undefined
-				}
-				onToggleOpen={onToggleOpen}
-				onToggleSearch={handleToggleSearch}
+				canReset={isSomeFilterPresentForCurrentAttribute}
+				onToggleOpen={handleToggleOpen}
 				onClear={onClear}
 			/>
 			{isOpen && isLoading && !hasLoadedOnce.current && (
@@ -188,10 +200,9 @@ export default function CheckboxFilterV2(
 			)}
 			{isOpen && (!isLoading || hasLoadedOnce.current) && (
 				<>
-					{isSearchOpen && (
+					{isSearchShown && (
 						<section className={styles.search}>
 							<Input
-								autoFocus
 								placeholder="Filter values"
 								onChange={(e): void => setSearchTextDebounced(e.target.value)}
 								disabled={isFilterDisabled}

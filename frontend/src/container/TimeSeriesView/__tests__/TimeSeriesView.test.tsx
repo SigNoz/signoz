@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { DataSource } from 'types/common/queryBuilder';
 
 import TimeSeriesView from '../TimeSeriesView';
@@ -88,7 +88,7 @@ function renderView(props: {
 	const { allowExport, withRawV5 = true, onYAxisUnitChange } = props;
 	return render(
 		<Provider store={mockStore}>
-			<MemoryRouter>
+			<TestRouter>
 				<TimeSeriesView
 					isLoading={false}
 					isError={false}
@@ -98,7 +98,7 @@ function renderView(props: {
 					allowExport={allowExport}
 					onYAxisUnitChange={onYAxisUnitChange}
 				/>
-			</MemoryRouter>
+			</TestRouter>
 		</Provider>,
 	);
 }

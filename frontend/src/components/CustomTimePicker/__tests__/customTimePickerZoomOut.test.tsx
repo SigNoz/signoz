@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryParams } from 'constants/query';
+import { mockAppLocation } from 'tests/router-mocks';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomTimePicker from '../CustomTimePicker';
@@ -59,10 +60,6 @@ jest.mock('providers/Timezone', () => ({
 	}),
 }));
 
-jest.mock('react-router-dom', () => ({
-	useLocation: (): { pathname: string } => ({ pathname: '/logs-explorer' }),
-}));
-
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const now = Date.now();
 const defaultProps = {
@@ -85,6 +82,7 @@ describe('CustomTimePicker - zoom out button', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
+		mockAppLocation({ pathname: '/logs-explorer' });
 	});
 
 	afterEach(() => {

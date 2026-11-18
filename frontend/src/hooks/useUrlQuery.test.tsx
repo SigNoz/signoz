@@ -1,17 +1,17 @@
-import { Router } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { navigate } from 'lib/router/navigation';
+import { TestRouter } from 'tests/router';
 
 import useUrlQuery from './useUrlQuery';
 
 describe('useUrlQuery', () => {
 	it('returns URLSearchParams object for the current URL search', () => {
-		const history = createMemoryHistory({
-			initialEntries: ['/test?param1=value1&param2=value2'],
-		});
-
 		const { result } = renderHook(() => useUrlQuery(), {
-			wrapper: ({ children }) => <Router history={history}>{children}</Router>,
+			wrapper: ({ children }) => (
+				<TestRouter initialRoute="/test?param1=value1&param2=value2">
+					{children}
+				</TestRouter>
+			),
 		});
 
 		expect(result.current.get('param1')).toBe('value1');
@@ -19,19 +19,17 @@ describe('useUrlQuery', () => {
 	});
 
 	it('updates URLSearchParams object when URL search changes', () => {
-		const history = createMemoryHistory({
-			initialEntries: ['/test?param1=value1'],
-		});
-
 		const { result, rerender } = renderHook(() => useUrlQuery(), {
-			wrapper: ({ children }) => <Router history={history}>{children}</Router>,
+			wrapper: ({ children }) => (
+				<TestRouter initialRoute="/test?param1=value1">{children}</TestRouter>
+			),
 		});
 
 		expect(result.current.get('param1')).toBe('value1');
 		expect(result.current.get('param2')).toBeNull();
 
 		act(() => {
-			history.push('/test?param1=newValue1&param2=value2');
+			navigate('/test?param1=newValue1&param2=value2');
 		});
 
 		rerender();
@@ -41,12 +39,10 @@ describe('useUrlQuery', () => {
 	});
 
 	it('returns empty URLSearchParams object when no query parameters are present', () => {
-		const history = createMemoryHistory({
-			initialEntries: ['/test'],
-		});
-
 		const { result } = renderHook(() => useUrlQuery(), {
-			wrapper: ({ children }) => <Router history={history}>{children}</Router>,
+			wrapper: ({ children }) => (
+				<TestRouter initialRoute="/test">{children}</TestRouter>
+			),
 		});
 
 		expect(result.current.toString()).toBe('');

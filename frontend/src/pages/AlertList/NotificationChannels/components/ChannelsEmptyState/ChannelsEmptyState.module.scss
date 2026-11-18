@@ -1,0 +1,48 @@
+/* The same shape as the page's no-matches state, so the two empty screens read
+   as the same product rather than two designs. */
+.emptyState {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--spacing-3);
+	padding: 48px 24px;
+	text-align: center;
+}
+
+.icon {
+	color: var(--l2-foreground);
+}
+
+.title {
+	color: var(--l1-foreground);
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 24px;
+}
+
+.subtitle {
+	color: var(--l2-foreground);
+	font-size: 14px;
+	line-height: 20px;
+	max-width: 420px;
+}
+
+/* The button sizes to its label here, so "New channel" is never clipped. */
+.actions {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-2);
+	margin-top: var(--spacing-1);
+}
+
+.docsLink {
+	color: var(--l2-foreground);
+	font-size: 13px;
+	text-decoration: none;
+
+	&:hover {
+		color: var(--l1-foreground);
+		text-decoration: underline;
+	}
+}

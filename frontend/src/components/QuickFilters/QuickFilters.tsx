@@ -32,9 +32,13 @@ import {
 	QuickFilterReadPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
 import { isFunction } from 'lodash-es';
+import {
+	getActiveBuilder,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import Checkbox from './FilterRenderers/Checkbox/Checkbox';
 import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
 import Duration from './FilterRenderers/Duration/Duration';
@@ -50,15 +54,18 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		className,
 		config,
 		handleFilterVisibilityChange,
-		source,
+		quickFilterSource,
 		onFilterChange,
 		onQuickFilterChange,
-		signal,
 		showFilterCollapse = true,
 		showQueryName = true,
 		useFieldApis,
 		savedViewsHeader,
 	} = props;
+	const savedFiltersSource =
+		quickFilterSource === QuickFiltersSource.INFRA_MONITORING
+			? undefined
+			: quickFilterSource;
 	const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 	const [params, setParams] = useApiMonitoringParams();
 	const showIP = params.showIP ?? true;
@@ -69,7 +76,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		customFilters,
 		refetchCustomFilters,
 		isCustomFiltersLoading,
-	} = useFilterConfig({ signal, config });
+	} = useFilterConfig({ savedFiltersSource, config });
 	const {
 		deniedPermissions: deniedSettingsPermissions,
 		isLoading: isSettingsChecking,
@@ -85,15 +92,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		panelType,
 	} = useQueryBuilder();
 	const [open, setOpen] = useState(false);
+	const activeBuilder = currentQuery
+		? getActiveBuilder(currentQuery)
+		: undefined;
 
 	// Sync lastUsedQuery when queries change (e.g., after deletion)
 	const validQueryIndex = useMemo(
 		() =>
-			Math.min(
-				lastUsedQuery || 0,
-				(currentQuery?.builder?.queryData?.length || 1) - 1,
-			),
-		[lastUsedQuery, currentQuery?.builder?.queryData?.length],
+			Math.min(lastUsedQuery || 0, (activeBuilder?.queryData?.length || 1) - 1),
+		[lastUsedQuery, activeBuilder?.queryData?.length],
 	);
 
 	// Determine if we're in ListView mode
@@ -101,60 +108,58 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// Generate query options based on available queries
 	const queryOptions = useMemo(() => {
-		if (!currentQuery?.builder?.queryData) {
+		if (!activeBuilder?.queryData) {
 			return [];
 		}
 
-		return currentQuery.builder.queryData.map((query, index) => ({
+		return activeBuilder.queryData.map((query, index) => ({
 			label: query.queryName || String.fromCharCode(65 + index),
 			value: index,
 		}));
-	}, [currentQuery?.builder?.queryData]);
+	}, [activeBuilder?.queryData]);
 
 	// Show dropdown in ListView only for TRACES_EXPLORER source
 	const shouldShowDropdownInListView =
-		isListView && source === QuickFiltersSource.TRACES_EXPLORER;
+		isListView && quickFilterSource === QuickFiltersSource.TRACES_EXPLORER;
 
 	// AI observability builds a single query in the row-level views, so there is
 	// no query for the selector to switch between.
 	const isAIObservabilityRowView =
-		source === QuickFiltersSource.AI_OBSERVABILITY &&
+		quickFilterSource === QuickFiltersSource.AI_OBSERVABILITY &&
 		(isListView || panelType === PANEL_TYPES.TRACE);
 
-	const activeQueryIndex = useActiveQueryIndex(source);
+	const activeQueryIndex = useActiveQueryIndex(quickFilterSource);
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
-		const activeQuery = currentQuery?.builder.queryData?.[activeQueryIndex];
+		const activeQuery = activeBuilder?.queryData?.[activeQueryIndex];
 
-		if (!activeQuery) {
+		if (!activeBuilder || !activeQuery) {
 			return;
 		}
 
-		const preparedQuery: Query = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item, idx) => {
-					if (idx !== activeQueryIndex) {
-						return item;
-					}
+		const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+		const preparedQuery: Query = replaceBuilderBySlotKey(currentQuery, slotKey, {
+			...activeBuilder,
+			queryData: activeBuilder.queryData.map((item, idx) => {
+				if (idx !== activeQueryIndex) {
+					return item;
+				}
 
-					return {
-						...item,
-						filter: {
-							...item.filter,
-							expression: '',
-						},
-						filters: {
-							...item.filters,
-							items: [],
-							op: item.filters?.op || 'AND',
-						},
-					};
-				}),
-			},
-		};
+				return {
+					...item,
+					filter: {
+						...item.filter,
+						expression: '',
+					},
+					filters: {
+						...item.filters,
+						items: [],
+						op: item.filters?.op || 'AND',
+					},
+				};
+			}),
+		});
 
 		if (onFilterChange && isFunction(onFilterChange)) {
 			onFilterChange(preparedQuery);
@@ -164,13 +169,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	};
 
 	const lastQueryName =
-		showQueryName &&
-		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
+		showQueryName && activeBuilder?.queryData?.[lastUsedQuery || 0]?.queryName;
 
 	// In ListView, always show the 0th query's name; otherwise use the active query's name
 	const displayedQueryName =
 		isListView || isAIObservabilityRowView
-			? showQueryName && currentQuery.builder.queryData?.[0]?.queryName
+			? showQueryName && activeBuilder?.queryData?.[0]?.queryName
 			: lastQueryName;
 
 	const handleQueryChange = (value: number): void => {
@@ -291,7 +295,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	const renderContent = (): JSX.Element => (
 		<>
-			{source === QuickFiltersSource.API_MONITORING && (
+			{quickFilterSource === QuickFiltersSource.API_MONITORING && (
 				<div className="api-quick-filters-header">
 					<Typography.Text>Show IP addresses</Typography.Text>
 					<Switch
@@ -310,54 +314,26 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 			<section className="filters">
 				{filterConfig.map((filter) => {
 					switch (filter.type) {
-						case FiltersType.CHECKBOX:
-							return useFieldApis ? (
-								<CheckboxV2
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
-									useFieldApis={useFieldApis}
-								/>
-							) : (
-								<Checkbox
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
-								/>
-							);
 						case FiltersType.DURATION:
 							return (
 								<Duration
 									key={filter.attributeKey.key}
-									source={source}
+									quickFilterSource={quickFilterSource}
 									filter={filter}
 									onFilterChange={onFilterChange}
 								/>
 							);
 						case FiltersType.SLIDER:
 							return <Slider key={filter.attributeKey.key} />;
-						// eslint-disable-next-line sonarjs/no-duplicated-branches
 						default:
-							return useFieldApis ? (
+							return (
 								<CheckboxV2
 									key={filter.attributeKey.key}
-									source={source}
+									quickFilterSource={quickFilterSource}
 									filter={filter}
 									onFilterChange={onFilterChange}
 									onQuickFilterChange={onQuickFilterChange}
 									useFieldApis={useFieldApis}
-								/>
-							) : (
-								<Checkbox
-									key={filter.attributeKey.key}
-									source={source}
-									filter={filter}
-									onFilterChange={onFilterChange}
-									onQuickFilterChange={onQuickFilterChange}
 								/>
 							);
 					}
@@ -392,14 +368,14 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<div className="quick-filters-container">
 			<div className="quick-filters">
 				{savedViewsHeader}
-				{source !== QuickFiltersSource.INFRA_MONITORING && (
+				{quickFilterSource !== QuickFiltersSource.INFRA_MONITORING && (
 					<section className="header">
 						{renderLeftActions()}
 						{renderRightActions()}
 					</section>
 				)}
 
-				{signal ? (
+				{savedFiltersSource ? (
 					<AuthZGuardContent
 						checks={[QuickFilterReadPermission]}
 						fallbackOnLoading={filtersSkeleton}
@@ -420,9 +396,9 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						className,
 					)}
 				>
-					{isSettingsOpen && (
+					{isSettingsOpen && savedFiltersSource && (
 						<QuickFiltersSettings
-							signal={signal}
+							savedFiltersSource={savedFiltersSource}
 							setIsSettingsOpen={setIsSettingsOpen}
 							customFilters={customFilters}
 							refetchCustomFilters={refetchCustomFilters}
@@ -436,9 +412,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 QuickFilters.defaultProps = {
 	onFilterChange: null,
-	signal: '',
 	config: [],
 	showFilterCollapse: true,
 	showQueryName: true,
-	useFieldApis: undefined,
 };

@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
 import store from 'store';
@@ -192,6 +193,23 @@ describe.each([
 			expect(query.spec.signal).toBe(signal);
 			expect(query.spec.limit).toBe(DownloadRowCounts.TEN_K);
 		});
+	});
+
+	it('sends the chosen jsonl format and 30k row limit', async () => {
+		renderWithStore(dataSource);
+		await userEvent.click(screen.getByTestId(testId));
+		await userEvent.click(screen.getByRole('radio', { name: 'jsonl' }));
+		await userEvent.click(screen.getByRole('radio', { name: '30k' }));
+		await userEvent.click(screen.getByText('Export'));
+
+		await waitFor(() => {
+			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
+		});
+		const callArgs = mockDownloadExportData.mock.calls[0][0];
+		expect(callArgs.format).toBe(DownloadFormats.JSONL);
+		expect(callArgs.body.compositeQuery.queries[0].spec.limit).toBe(
+			DownloadRowCounts.THIRTY_K,
+		);
 	});
 
 	it('clears groupBy and having in the export payload', async () => {

@@ -1,0 +1,23 @@
+.card {
+	border: 1px solid var(--l1-border);
+	border-radius: 4px;
+	background: var(--l2-background);
+}
+
+.head {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+	padding: var(--spacing-4) var(--spacing-5) 0;
+}
+
+.title {
+	font-weight: var(--font-weight-medium);
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	padding: var(--spacing-4) var(--spacing-5) var(--spacing-5);
+}

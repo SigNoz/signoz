@@ -19,16 +19,15 @@ logger = setup_logger(__name__)
 AWS_SERVICE_SPEC = ProviderServiceSpec(
     provider="aws",
     service_id="rds",
-    supports_logs=True,
     account_config={"aws": {"deploymentRegion": "us-east-1", "regions": ["us-east-1"]}},
 )
 
 GCP_SERVICE_SPEC = ProviderServiceSpec(
     provider="gcp",
     service_id="cloudsql_postgres",
-    supports_logs=False,
     account_config={
         "gcp": {
+            "connectionMethod": "manual",
             "deploymentProjectId": "signoz-test-project",
             "deploymentRegion": "us-central1",
             "projectIds": ["signoz-test-project"],
@@ -162,7 +161,7 @@ def test_get_service_details_without_account(
     assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
 
     assert data["supportedSignals"]["metrics"] is True, "metrics should be a supported signal"
-    assert data["supportedSignals"]["logs"] is spec.supports_logs, f"logs support should be {spec.supports_logs} for {spec.provider}"
+    assert data["supportedSignals"]["logs"] is True, "logs should be a supported signal"
 
 
 @provider_spec
@@ -253,10 +252,7 @@ def test_update_service_config(
     assert svc["config"][spec.provider]["metrics"]["enabled"] is True, "metrics should be enabled"
     assert svc["cloudIntegrationId"] == account_id, "cloudIntegrationId should match the account"
 
-    if spec.supports_logs:
-        assert svc["config"][spec.provider]["logs"]["enabled"] is True, "logs should be enabled"
-    else:
-        assert svc["config"][spec.provider].get("logs") is None, f"logs should not be stored for {spec.provider}, got: {svc['config'][spec.provider]}"
+    assert svc["config"][spec.provider]["logs"]["enabled"] is True, "logs should be enabled"
 
 
 @provider_spec
@@ -307,8 +303,7 @@ def test_update_service_config_disable(
     assert svc is not None, "cloudIntegrationService should still be present after disable"
     assert svc["config"][spec.provider]["metrics"]["enabled"] is False, "metrics should be disabled"
 
-    if spec.supports_logs:
-        assert svc["config"][spec.provider]["logs"]["enabled"] is False, "logs should be disabled"
+    assert svc["config"][spec.provider]["logs"]["enabled"] is False, "logs should be disabled"
 
 
 @provider_spec
@@ -337,7 +332,7 @@ def test_update_gcp_service_without_metrics_config(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """GCP services support metrics only, so a config omitting metrics is rejected."""
+    """A GCP config omitting metrics is rejected."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     account = create_cloud_integration_account(admin_token, "gcp", config=GCP_SERVICE_SPEC.account_config)

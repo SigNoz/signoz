@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
@@ -25,7 +25,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				!isWorkspaceAccessRestricted ||
 				activeLicense.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicense, activeLicense]);

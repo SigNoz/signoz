@@ -1,117 +1,143 @@
-import { Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Collapse, Form, Input, Select } from 'antd';
+import { Controller, useFormContext } from 'react-hook-form';
+import { Input } from '@signozhq/ui/input';
+import { Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { JsmOpsChannel } from '../../CreateAlertChannels/config';
+import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import FormCard from '../FormCard';
+import FormField from '../FormField';
 
-function JsmOpsSettings({ setSelectedConfig }: JsmOpsProps): JSX.Element {
+const { TextArea } = AntdInput;
+
+function JsmOpsSettings(): JSX.Element {
 	const { t } = useTranslation('channels');
-
-	const update = (patch: Partial<JsmOpsChannel>): void =>
-		setSelectedConfig((value) => ({ ...value, ...patch }));
+	const {
+		register,
+		control,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 
 	const advanced = (
 		<>
-			<Form.Item
-				name="priority"
+			<FormField
 				label={t('field_jsmops_priority')}
 				help={t('help_jsmops_priority')}
+				error={errors.priority?.message}
 			>
-				<Input.TextArea
-					rows={2}
-					onChange={(event): void => update({ priority: event.target.value })}
-					data-testid="jsmops-priority-textarea"
+				<Controller
+					control={control}
+					name="priority"
+					render={({ field }): JSX.Element => (
+						<TextArea
+							rows={2}
+							data-testid="jsmops-priority-textarea"
+							value={(field.value as string) ?? ''}
+							onChange={field.onChange}
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 
-			<Form.Item
-				name="tags"
+			<FormField
 				label={t('field_jsmops_tags')}
 				help={t('help_jsmops_tags')}
+				error={errors.tags?.message}
 			>
-				<Select
-					mode="tags"
-					open={false}
-					placeholder={t('placeholder_jsmops_tags')}
-					onChange={(value): void => update({ tags: value as string[] })}
-					data-testid="jsmops-tags-select"
+				{/* the API takes one comma-separated string, the control edits chips */}
+				<Controller
+					control={control}
+					name="tags"
+					render={({ field }): JSX.Element => (
+						<Select
+							mode="tags"
+							open={false}
+							placeholder={t('placeholder_jsmops_tags')}
+							value={field.value ? String(field.value).split(',') : []}
+							onChange={(value): void => field.onChange((value as string[]).join(','))}
+							data-testid="jsmops-tags-select"
+						/>
+					)}
 				/>
-			</Form.Item>
+			</FormField>
 		</>
 	);
 
 	return (
 		<>
-			<Typography.Text
-				color="muted"
-				size="sm"
-				testId="jsmops-tip"
-				style={{ display: 'block', marginBottom: 16 }}
-			>
-				{t('jsmops_tip')}{' '}
-				<Typography.Link
-					href="https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/"
-					target="_blank"
-					rel="noopener noreferrer"
+			<FormCard title={t('section_connection')}>
+				<Typography.Text
+					color="muted"
+					size="sm"
+					testId="jsmops-tip"
+					style={{ display: 'block', marginBottom: 16 }}
 				>
-					{t('jsmops_tip_link')}
-				</Typography.Link>
-			</Typography.Text>
+					{t('jsmops_tip')}{' '}
+					<Typography.Link
+						href="https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{t('jsmops_tip_link')}
+					</Typography.Link>
+				</Typography.Text>
 
-			<Form.Item
-				name="api_key"
-				label={t('field_jsmops_api_key')}
-				help={t('help_jsmops_api_key')}
-				required
-			>
-				<Input
-					type="password"
-					onChange={(event): void => update({ api_key: event.target.value })}
-					data-testid="jsmops-api-key-textbox"
-				/>
-			</Form.Item>
+				<FormField
+					label={t('field_jsmops_api_key')}
+					help={t('help_jsmops_api_key')}
+					error={errors.apiKey?.message}
+					required
+				>
+					<Input
+						{...register('apiKey')}
+						aria-required
+						type="password"
+						data-testid="jsmops-api-key-textbox"
+					/>
+				</FormField>
 
-			<Form.Item
-				name="message"
-				label={t('field_jsmops_message')}
-				help={t('help_jsmops_message')}
-			>
-				<Input.TextArea
-					rows={2}
-					onChange={(event): void => update({ message: event.target.value })}
-					data-testid="jsmops-message-textarea"
-				/>
-			</Form.Item>
+				<FormField
+					label={t('field_jsmops_message')}
+					help={t('help_jsmops_message')}
+					error={errors.message?.message}
+				>
+					<Controller
+						control={control}
+						name="message"
+						render={({ field }): JSX.Element => (
+							<TextArea
+								rows={2}
+								data-testid="jsmops-message-textarea"
+								value={(field.value as string) ?? ''}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				</FormField>
 
-			<Form.Item
-				name="description"
-				label={t('field_jsmops_description')}
-				help={t('help_jsmops_description')}
-			>
-				<Input.TextArea
-					rows={6}
-					onChange={(event): void => update({ description: event.target.value })}
-					data-testid="jsmops-description-textarea"
-				/>
-			</Form.Item>
+				<FormField
+					label={t('field_jsmops_description')}
+					help={t('help_jsmops_description')}
+					error={errors.description?.message}
+				>
+					<Controller
+						control={control}
+						name="description"
+						render={({ field }): JSX.Element => (
+							<TextArea
+								rows={6}
+								data-testid="jsmops-description-textarea"
+								value={(field.value as string) ?? ''}
+								onChange={field.onChange}
+							/>
+						)}
+					/>
+				</FormField>
+			</FormCard>
 
-			<Collapse
-				ghost
-				items={[
-					{
-						key: 'advanced',
-						label: t('jsmops_advanced_section'),
-						children: advanced,
-					},
-				]}
-			/>
+			<FormCard title={t('section_advanced')}>{advanced}</FormCard>
 		</>
 	);
-}
-
-interface JsmOpsProps {
-	setSelectedConfig: Dispatch<SetStateAction<Partial<JsmOpsChannel>>>;
 }
 
 export default JsmOpsSettings;

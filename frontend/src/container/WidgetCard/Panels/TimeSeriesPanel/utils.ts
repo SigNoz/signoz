@@ -101,6 +101,9 @@ export const prepareUPlotConfig = ({
 			fillMode: widget.fillMode || FillMode.None,
 			isDarkMode,
 			metric: series.metric,
+			partialTimestamps: series.partialTimestamps
+				? new Set(series.partialTimestamps)
+				: undefined,
 		});
 	});
 

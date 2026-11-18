@@ -3,7 +3,7 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { VIEW_TYPES, type VIEWS } from 'components/LogDetail/constants';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import type { ILog } from 'types/api/logs/log';
 import { openInNewTab } from 'utils/navigation';
@@ -18,7 +18,6 @@ export interface ListLogDetail {
 	selectedTab: VIEWS;
 	logs: ILog[];
 	onClose: () => void;
-	onAddToQuery: ReturnType<typeof useLogDetailHandlers>['onAddToQuery'];
 	onNavigateLog: (log: ILog) => void;
 }
 
@@ -49,13 +48,8 @@ export function useListRowInteraction({
 	const isLogs = signal === TelemetrytypesSignalDTO.logs;
 	const isTraces = signal === TelemetrytypesSignalDTO.traces;
 
-	const {
-		activeLog,
-		onAddToQuery,
-		selectedTab,
-		handleSetActiveLog,
-		handleCloseLogDetail,
-	} = useLogDetailHandlers();
+	const { activeLog, selectedTab, handleSetActiveLog, handleCloseLogDetail } =
+		useLogDetailHandlers();
 
 	const logs = useMemo(
 		() => (isLogs ? rows.map(rawRowToILog) : []),
@@ -70,7 +64,7 @@ export function useListRowInteraction({
 					if (event.metaKey || event.ctrlKey) {
 						openInNewTab(link);
 					} else {
-						history.push(link);
+						navigate(link);
 					}
 					return;
 				}
@@ -90,7 +84,6 @@ export function useListRowInteraction({
 						selectedTab: selectedTab ?? VIEW_TYPES.OVERVIEW,
 						logs,
 						onClose: handleCloseLogDetail,
-						onAddToQuery,
 						onNavigateLog: handleSetActiveLog,
 					}
 				: null,
@@ -100,7 +93,6 @@ export function useListRowInteraction({
 			selectedTab,
 			logs,
 			handleCloseLogDetail,
-			onAddToQuery,
 			handleSetActiveLog,
 		],
 	);

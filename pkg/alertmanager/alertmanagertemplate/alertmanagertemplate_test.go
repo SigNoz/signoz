@@ -191,6 +191,58 @@ Description: Request rate exceeded 10k/s`},
 			wantIsDefaultBody: false,
 		},
 		{
+			// Rule templates hand the block the preprocessed per-alert map, so the
+			// related links must resolve from its lowercase annotations.
+			name: "related links block: rule body renders markdown links from preprocessed data",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighErrorRate"},
+					map[string]string{"related_logs": "https://signoz.example/logs?q=1", "related_traces": "https://signoz.example/traces?q=1"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name",
+				BodyTemplate:  `$rule.name fired.{{ "\n\n" }}{{ template "signoz.relatedLinks.markdown" . }}`,
+			},
+			wantTitle:         "HighErrorRate",
+			wantBody:          []string{"HighErrorRate fired.\n\n[View Related Logs](https://signoz.example/logs?q=1)\n\n[View Related Traces](https://signoz.example/traces?q=1)"},
+			wantIsDefaultBody: false,
+		},
+		{
+			name: "related links block: rule body per alert, slack format, links absent on one alert",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-1"}, map[string]string{"related_logs": "https://signoz.example/logs?pod=api-1"}, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-2"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate: "$rule.name",
+				BodyTemplate:  `$labels.pod: {{ template "signoz.relatedLinks.slack" . }}`,
+			},
+			wantTitle:         "PodCrashLoop",
+			wantBody:          []string{"api-1: <https://signoz.example/logs?pod=api-1|View Related Logs>", "api-2:"},
+			wantIsDefaultBody: false,
+		},
+		{
+			// Channel default templates range over upstream template.Alert values,
+			// the other shape the block has to accept.
+			name: "related links block: channel default body renders from template.Alert",
+			alerts: []*types.Alert{
+				createAlert(
+					map[string]string{ruletypes.LabelAlertName: "HighLatency"},
+					map[string]string{"related_traces": "https://signoz.example/traces?q=2"},
+					true,
+				),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  `{{ range .Alerts }}{{ template "signoz.relatedLinks.slack" . }}{{ end }}`,
+			},
+			wantTitle:         "HighLatency",
+			wantBody:          []string{"<https://signoz.example/traces?q=2|View Related Traces>"},
+			wantIsDefaultBody: true,
+		},
+		{
 			// $environment is not a known AlertData or NotificationTemplateData field,
 			// so it lands in MissingVars and renders as "<no value>" in the output.
 			name: "missing vars: unknown $environment variable in title",

@@ -45,7 +45,7 @@ func (ChannelRepairAction) Enum() []any {
 
 // RepairChannelParams defaults to a dry run; only apply=true writes anything.
 type RepairChannelParams struct {
-	Apply bool `query:"apply" json:"apply"`
+	Apply bool `query:"apply" json:"apply" description:"Apply the diagnosed action; defaults to false, a dry run that only reports it."`
 }
 
 // ChannelRepair is one channel's diagnosis and the action that makes it
@@ -53,13 +53,13 @@ type RepairChannelParams struct {
 // channel itself for none and retype, every part of a split, nothing for a
 // delete. Blockers explain why an action was not, or would not be, applied.
 type ChannelRepair struct {
-	ID       valuer.UUID                  `json:"id" required:"true"`
-	Defect   ChannelDefect                `json:"defect" required:"true"`
-	Detail   string                       `json:"detail"`
-	Action   ChannelRepairAction          `json:"action" required:"true"`
-	Blockers []string                     `json:"blockers,omitempty"`
-	Channels []*ListedNotificationChannel `json:"channels"`
-	Applied  bool                         `json:"applied" required:"true"`
+	ID       valuer.UUID                  `json:"id" required:"true" description:"The UUID of the diagnosed channel."`
+	Defect   ChannelDefect                `json:"defect" required:"true" description:"Why v2 cannot read the channel; none when it is readable."`
+	Detail   string                       `json:"detail" description:"A human-readable explanation of the defect."`
+	Action   ChannelRepairAction          `json:"action" required:"true" description:"The repair that makes the channel readable: none, retype, split or delete."`
+	Blockers []string                     `json:"blockers,omitempty" description:"Why the action was not, or would not be, applied."`
+	Channels []*ListedNotificationChannel `json:"channels" description:"The channels that exist once the action is applied."`
+	Applied  bool                         `json:"applied" required:"true" description:"Whether the action was written; false on a dry run."`
 }
 
 // Diagnose reads the channel the way v2 does and reports the first defect in

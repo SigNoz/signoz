@@ -14,8 +14,11 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.AREA]: 'area';
 	[PANEL_TYPES.VALUE]: 'value';
 	[PANEL_TYPES.PIE]: 'pie';
+	[PANEL_TYPES.SCATTER]: 'scatter';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 	[PANEL_TYPES.HEATMAP]: 'heatmap';
+	[PANEL_TYPES.GEO_MAP]: 'geo_map';
+	[PANEL_TYPES.TOP_LIST]: 'top_list';
 };
 
 export type BuilderField = keyof IBuilderQuery;
@@ -150,6 +153,9 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.HEATMAP]: bySource(HEATMAP, HEATMAP_METRICS),
 	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
+	[PANEL_TYPES.SCATTER]: bySource(SERIES, SCALAR_METRICS),
+	[PANEL_TYPES.GEO_MAP]: bySource(SERIES, SCALAR_METRICS),
+	[PANEL_TYPES.TOP_LIST]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.VALUE]: bySource(SINGLE_VALUE, SINGLE_VALUE_METRICS),
 	[PANEL_TYPES.LIST]: bySource(RAW_ROWS, RAW_ROWS_METRICS),
 };

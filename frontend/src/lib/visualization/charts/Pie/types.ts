@@ -4,6 +4,8 @@
  * (PieSlice, PieChartProps) live in the parent charts/types.ts.
  */
 
+import type { TooltipContentItem } from 'lib/uPlotV2/components/types';
+
 export interface ScaledFontSizeArgs {
 	text: string;
 	baseSize: number;
@@ -39,7 +41,7 @@ export interface ParsedRgb {
 
 /** Resolved tooltip payload shown when a slice is hovered. */
 export interface PieTooltipData {
-	label: string;
-	value: string;
-	color: string;
+	slice: TooltipContentItem;
+	/** Grouped slice only: every member, largest first. */
+	groupedMembers?: TooltipContentItem[];
 }

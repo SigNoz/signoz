@@ -1,15 +1,14 @@
 import React from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Button } from 'antd';
-import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useTableContextMenu from '../useTableContextMenu';
@@ -43,13 +42,6 @@ jest.mock('container/WidgetCard/hooks/useResolveQuery', () => ({
 	default: (): any => ({
 		getUpdatedQuery: jest.fn().mockResolvedValue({}),
 		isLoading: false,
-	}),
-}));
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/`,
 	}),
 }));
 
@@ -126,9 +118,9 @@ const renderWithProviders = (
 ): ReturnType<typeof render> =>
 	render(
 		<MockQueryClientProvider>
-			<MemoryRouter>
+			<TestRouter>
 				<Provider store={store}>{component}</Provider>
-			</MemoryRouter>
+			</TestRouter>
 		</MockQueryClientProvider>,
 	);
 
