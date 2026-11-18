@@ -14223,9 +14223,8 @@ paths:
   /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
     post:
       deprecated: true
-      description: 'This endpoint is called by the deployed agent to check in. Deprecated:
-        use POST /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in instead.
-        Send cloudIntegrationId and providerAccountId instead of account_id and cloud_account_id.'
+      description: '[Deprecated] This endpoint is called by the deployed agent to
+        check in'
       operationId: AgentCheckInDeprecated
       parameters:
       - in: path
