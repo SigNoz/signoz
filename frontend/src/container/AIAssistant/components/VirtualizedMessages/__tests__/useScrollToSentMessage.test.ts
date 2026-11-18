@@ -23,7 +23,9 @@ const followUp: Message = {
 	createdAt: 2,
 };
 
-const scrollToIndex = jest.fn();
+const scrollToIndex = jest.fn() as jest.MockedFunction<
+	VirtuosoHandle['scrollToIndex']
+>;
 const virtuoso: VirtuosoHandle = {
 	scrollToIndex,
 	scrollIntoView: jest.fn(),

@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ChatInput from '../ChatInput';
@@ -26,7 +27,9 @@ describe('ChatInput composer', () => {
 
 	it('lets the user type but not send while sending is blocked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSend = jest.fn();
+		const onSend = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof ChatInput>['onSend']
+		>;
 		render(<ChatInput onSend={onSend} sendDisabled />);
 		const textarea = screen.getByTestId('ai-chat-input-textarea');
 

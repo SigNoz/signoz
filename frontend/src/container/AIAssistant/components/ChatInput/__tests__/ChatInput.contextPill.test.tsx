@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import type { MessageContext } from 'api/ai-assistant/chat';
 import { render, screen, userEvent } from 'tests/test-utils';
 
@@ -12,7 +13,9 @@ const serviceContext: MessageContext = {
 describe('ChatInput — context pills', () => {
 	it('names a page context by its type and drops it on remove', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onDismissAutoContext = jest.fn();
+		const onDismissAutoContext = jest.fn() as jest.MockedFunction<
+			NonNullable<ComponentProps<typeof ChatInput>['onDismissAutoContext']>
+		>;
 		render(
 			<ChatInput
 				onSend={jest.fn()}
