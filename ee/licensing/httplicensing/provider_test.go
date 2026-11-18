@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/SigNoz/signoz/pkg/analytics/analyticstest"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/cache/cachetest"
@@ -19,8 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/SigNoz/signoz/pkg/zeus/noopzeus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -33,7 +34,6 @@ const (
 	selectLicensesQuery = `SELECT (.+) FROM "license"`
 	updateLicenseQuery  = `UPDATE "license"`
 	deleteLicenseQuery  = `DELETE FROM "license"`
-	testLicenseData     = `{"status":"VALID","state":"EVALUATING","platform":"SELF_HOSTED","plan":{"name":"ENTERPRISE"},"valid_from":1732146923,"valid_until":-1,"features":[],"event_queue":{}}`
 )
 
 func newTestLicensing(t *testing.T) (licensing.Licensing, sqlmock.Sqlmock, cache.Cache) {
@@ -57,9 +57,10 @@ func newTestLicensing(t *testing.T) (licensing.Licensing, sqlmock.Sqlmock, cache
 
 func newLicenseRows(lastValidatedAt time.Time) *sqlmock.Rows {
 	createdAt := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	data := `{"status":"VALID","state":"EVALUATING","platform":"SELF_HOSTED","plan":{"name":"ENTERPRISE"},"valid_from":1732146923,"valid_until":-1,"features":[],"event_queue":{}}`
 	return sqlmock.
 		NewRows(licenseColumns).
-		AddRow(testLicenseID.StringValue(), createdAt, createdAt, "test-license-key", testLicenseData, lastValidatedAt, testOrganizationID.StringValue())
+		AddRow(testLicenseID.StringValue(), createdAt, createdAt, "test-license-key", data, lastValidatedAt, testOrganizationID.StringValue())
 }
 
 func TestGetActiveServesRepeatReadsFromCache(t *testing.T) {

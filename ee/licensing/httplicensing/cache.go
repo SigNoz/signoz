@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	activeLicenseCacheKey string = "active_license"
-
-	// Not in licensing.Config as no deployment needs to tune it yet.
+	activeLicenseCacheKey string        = "active_license"
 	activeLicenseCacheTTL time.Duration = time.Minute
 )
 
@@ -19,10 +17,10 @@ type cachedActiveLicense struct {
 	License *licensetypes.License
 }
 
-func (l cachedActiveLicense) MarshalBinary() ([]byte, error) {
-	return json.Marshal(l)
+func (typ cachedActiveLicense) MarshalBinary() ([]byte, error) {
+	return json.Marshal(typ)
 }
 
-func (l *cachedActiveLicense) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, l)
+func (typ *cachedActiveLicense) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, typ)
 }
