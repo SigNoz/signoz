@@ -6,8 +6,8 @@ import {
 	buildAPIKeyDeletePermission,
 	buildSADetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-import { toast } from '@signozhq/ui/sonner';
+import { Dialog } from '@signozhq/ui/dialog';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountKeysQueryKey,
@@ -72,7 +72,7 @@ export function RevokeKeyFooter({
 
 function RevokeKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
-	const { showErrorModal, isErrorModalVisible } = useErrorModal();
+	const { showErrorModal } = useErrorModal();
 	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [revokeKeyId, setRevokeKeyId] = useQueryState(
 		SA_QUERY_PARAMS.REVOKE_KEY,
@@ -119,19 +119,12 @@ function RevokeKeyModal(): JSX.Element {
 	}
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleCancel();
-				}
-			}}
+			onClose={handleCancel}
 			title={`Revoke ${keyName ?? 'key'}?`}
 			width="narrow"
-			className="alert-dialog sa-delete-dialog"
-			showCloseButton={false}
-			disableOutsideClick={isErrorModalVisible}
-			footer={
+			footerSuffix={
 				<RevokeKeyFooter
 					isRevoking={isRevoking}
 					onCancel={handleCancel}
@@ -143,7 +136,7 @@ function RevokeKeyModal(): JSX.Element {
 		>
 			Revoking this key will permanently invalidate it. Any systems using this key
 			will lose access immediately.
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

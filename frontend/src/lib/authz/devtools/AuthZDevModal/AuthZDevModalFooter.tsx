@@ -16,15 +16,29 @@ export function AuthZDevModalFooter({
 		<div className={styles.footer}>
 			<div className={styles.hint}>
 				<span className={styles.hintGroup}>
-					<Kbd>Esc</Kbd>
-					<Typography.Text as="span" size="small" color="muted">
+					<Kbd value="Escape" testId="authz-dev-modal-escape-key" />
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						close
-					</Typography.Text>
+					</Typography>
 				</span>
 			</div>
-			<Typography.Text size="small" color="muted" className={styles.count}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="visible"
+			>
 				{orderedPermissionsCount} of {observedListLength} permissions
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }
