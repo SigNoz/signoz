@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz-otel-collector/pkg/llmpricing"
+	"github.com/uptrace/bun"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 )
 
 const (
