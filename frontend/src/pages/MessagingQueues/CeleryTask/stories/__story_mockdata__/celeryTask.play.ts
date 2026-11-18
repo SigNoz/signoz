@@ -38,27 +38,30 @@ export const openStateDrawer = async ({
 		return;
 	}
 
-	const plot = await waitFor(() => {
-		const drawn = canvasElement.querySelector<HTMLElement>(
-			'.celery-task-graph-bar .u-over',
-		);
-		if (!drawn) {
-			throw new Error('The state graph has not drawn yet.');
-		}
-		return drawn;
-	}, untilLoaded);
-
-	// The click plugin picks the series nearest the pointer at that timestamp,
-	// so a point just above the x axis lands on the bottom bar.
-	const { left, width, bottom } = plot.getBoundingClientRect();
-	const coords = { clientX: left + width / 2, clientY: bottom - 5 };
-	await userEvent.pointer([
-		{ target: plot, coords },
-		{ keys: '[MouseLeft]', target: plot, coords },
-	]);
-
 	// The drawer renders into the document body, outside the story canvas.
 	const page = within(canvasElement.ownerDocument.body);
+
+	// The plot draws before its click handler can resolve a series, so a click
+	// that lands too early opens nothing; click again until the drawer opens.
+	await waitFor(async () => {
+		const plot = canvasElement.querySelector<HTMLElement>(
+			'.celery-task-graph-bar .u-over',
+		);
+		if (!plot) {
+			throw new Error('The state graph has not drawn yet.');
+		}
+		// The click plugin picks the series nearest the pointer at that timestamp,
+		// so a point just above the x axis lands on the bottom bar.
+		const { left, width, bottom } = plot.getBoundingClientRect();
+		const coords = { clientX: left + width / 2, clientY: bottom - 5 };
+		await userEvent.pointer([
+			{ target: plot, coords },
+			{ keys: '[MouseLeft]', target: plot, coords },
+		]);
+		await page.findByText('Details - celery.state', undefined, {
+			timeout: 500,
+		});
+	}, untilLoaded);
 	await waitFor(
 		() => expect(page.getByText('Details - celery.state')).toBeVisible(),
 		untilLoaded,
