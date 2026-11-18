@@ -50,11 +50,12 @@ type ServiceAccount struct {
 	bun.BaseModel `bun:"table:service_account,alias:service_account"`
 
 	types.Identifiable
-	types.TimeAuditable
-	Name   string               `bun:"name" json:"name" required:"true"`
-	Email  valuer.Email         `bun:"email" json:"email" required:"true"`
-	Status ServiceAccountStatus `bun:"status" json:"status" required:"true"`
-	OrgID  valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
+	CreatedAt time.Time            `bun:"created_at" json:"createdAt" required:"true"`
+	UpdatedAt time.Time            `bun:"updated_at" json:"updatedAt" required:"true"`
+	Name      string               `bun:"name" json:"name" required:"true"`
+	Email     valuer.Email         `bun:"email" json:"email" required:"true"`
+	Status    ServiceAccountStatus `bun:"status" json:"status" required:"true"`
+	OrgID     valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
 }
 
 type ServiceAccountRole struct {
@@ -90,14 +91,12 @@ func NewServiceAccount(name string, emailDomain string, status ServiceAccountSta
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:   name,
-		Email:  valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
-		Status: status,
-		OrgID:  orgID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      name,
+		Email:     valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
+		Status:    status,
+		OrgID:     orgID,
 	}
 }
 
