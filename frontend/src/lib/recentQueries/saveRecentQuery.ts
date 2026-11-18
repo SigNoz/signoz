@@ -1,5 +1,7 @@
+import { getBuilderSlotKeyForQueryType } from 'lib/query/builderSlot';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import type { SignalType } from 'types/api/v5/queryRange';
+import { EQueryType } from 'types/common/dashboard';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import * as store from './recentQueriesStore';
@@ -16,7 +18,9 @@ function toSignal(dataSource: IBuilderQuery['dataSource']): SignalType | null {
 }
 
 type CompositeWithBuilder = {
+	queryType?: EQueryType;
 	builder?: { queryData?: IBuilderQuery[] };
+	builder_ai_query?: { queryData?: IBuilderQuery[] };
 };
 
 export function saveRecentQueryByExpression(
@@ -43,13 +47,16 @@ export function saveRecentQueryByExpression(
 	});
 }
 
-// Persists each builder query in the composite as a recent entry. Call this
+// Persists each query of the composite's active builder as a recent entry. Call this
 // only from explicit user-driven Run triggers — reacting to stagedQuery or any
 // other derived state pollutes recents with navigation/refresh/go-to traffic.
 export function saveRecentQuery(
 	query: CompositeWithBuilder | null | undefined,
 ): void {
-	const queryData = query?.builder?.queryData;
+	const slotKey = getBuilderSlotKeyForQueryType(
+		query?.queryType ?? EQueryType.QUERY_BUILDER,
+	);
+	const queryData = query?.[slotKey]?.queryData;
 	if (!Array.isArray(queryData) || queryData.length === 0) {
 		return;
 	}

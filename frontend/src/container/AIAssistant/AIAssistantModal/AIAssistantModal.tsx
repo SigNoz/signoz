@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@signozhq/ui/button';
+import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -17,6 +18,7 @@ import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
 } from '../hooks/useAIAssistantAnalyticsContext';
+import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -39,6 +41,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
+	const chatTitle = useActiveChatTitle();
 	const openModal = useAIAssistantStore((s) => s.openModal);
 	const closeModal = useAIAssistantStore((s) => s.closeModal);
 	const minimizeModal = useAIAssistantStore((s) => s.minimizeModal);
@@ -151,7 +154,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					<div className={styles.header}>
 						<div className={`${styles.title} noz-wave`}>
 							<Noz size={16} />
-							<span>Noz</span>
+							{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>

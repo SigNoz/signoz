@@ -53,6 +53,11 @@ const PANEL_TYPE_META: Record<PanelKind, PanelTypeMeta> = {
 		description: 'Values by country, state or coordinates',
 		isNew: true,
 	},
+	'signoz/TopListPanel': {
+		group: 'compare',
+		description: 'Groups ranked by a single value',
+		isNew: true,
+	},
 	'signoz/HistogramPanel': {
 		group: 'distributions',
 		description: 'Distribution of values into buckets',
