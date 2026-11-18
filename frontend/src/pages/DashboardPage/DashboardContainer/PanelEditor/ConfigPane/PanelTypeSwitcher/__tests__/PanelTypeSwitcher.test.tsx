@@ -81,7 +81,7 @@ describe('PanelTypeSwitcher', () => {
 			return {
 				...OPTIONS.find((option) => option.kind === kind),
 				mode: kind === 'signoz/TextPanel' ? 'static' : 'query',
-				supportedQueryModesKindMap: Object.fromEntries(
+				supportedQueryTypesKindMap: Object.fromEntries(
 					queryTypes.map((queryType) => [
 						queryType,
 						queryType === EQueryType.QUERY_BUILDER
