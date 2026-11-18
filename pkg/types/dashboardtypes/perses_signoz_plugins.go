@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"maps"
+	"regexp"
 	"slices"
 	"strconv"
 
@@ -201,10 +202,11 @@ const (
 	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
 	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
 	PanelKindGeoMap      PanelPluginKind = "signoz/GeoMapPanel"
+	PanelKindTopList     PanelPluginKind = "signoz/TopListPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindGeoMap}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindGeoMap, PanelKindTopList}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
@@ -274,6 +276,49 @@ type PieChartPanelSpec struct {
 	Visualization BasicVisualization `json:"visualization" description:"The time range the slices are computed over."`
 	Formatting    PanelFormatting    `json:"formatting" description:"Unit and decimal precision of the slice values."`
 	Legend        Legend             `json:"legend" description:"Legend placement and slice colors."`
+}
+
+type TopListPanelSpec struct {
+	Visualization BasicVisualization    `json:"visualization" description:"The time range the rows are computed over."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the values."`
+	Appearance    TopListAppearance     `json:"appearance" description:"Rank, share and bar color options."`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive" description:"Rules that recolor a row when its value compares to a threshold as specified."`
+}
+
+type TopListAppearance struct {
+	ShowRank  bool            `json:"showRank" description:"Numbers each row by its position in the list."`
+	ShowShare bool            `json:"showShare" description:"Shows each row's share of the listed rows' total."`
+	BarColor  TopListBarColor `json:"barColor" required:"true" description:"Hex color of every bar; a matching background threshold overrides it."`
+}
+
+type TopListBarColor string
+
+const DefaultTopListBarColor TopListBarColor = "#4E74F8"
+
+// Same forms as go-playground/validator's hexcolor: #RGB, #RGBA, #RRGGBB, #RRGGBBAA.
+var hexColorRegex = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$`)
+
+func (c TopListBarColor) ValueOrDefault() string {
+	if c == "" {
+		return string(DefaultTopListBarColor)
+	}
+	return string(c)
+}
+
+func (c TopListBarColor) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.ValueOrDefault())
+}
+
+func (c *TopListBarColor) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid barColor: must be a hex color string")
+	}
+	if !hexColorRegex.MatchString(v) {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid barColor %q: must be a hex color such as #4E74F8", v)
+	}
+	*c = TopListBarColor(v)
+	return nil
 }
 
 type TablePanelSpec struct {

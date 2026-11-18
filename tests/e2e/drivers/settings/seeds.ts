@@ -1,9 +1,11 @@
 import type { Browser, TestType } from '@playwright/test';
 
+import type { User } from '../auth';
+import type { AuthtypesTransactionGroupDTO } from '../schemas';
 import { onAdminPage, type Layer } from '../kit';
 import { usersApi, type CreatedUser } from '../users';
 
-import { grantAll, roleName, settingsDriver } from './driver';
+import { grantAll, roleName, settingsDriver, type Settings } from './driver';
 
 /**
  * Test-scoped seeds. Each test that asks for one gets its own copy, created on
@@ -123,3 +125,40 @@ export const withActiveEditor = perTest(
 	({ browser, value }) =>
 		onAdminPage(browser, (page) => usersApi(page).remove(value.id)),
 );
+
+export interface GrantedUser {
+	user: User;
+	role: string;
+	remove(): Promise<void>;
+}
+
+/**
+ * An active member whose only role is a fresh custom role holding
+ * `transactionGroups`. Call `remove` in a `finally`.
+ */
+export async function createGrantedUser(
+	settings: Settings,
+	workerIndex: number,
+	kind: string,
+	transactionGroups: AuthtypesTransactionGroupDTO[],
+): Promise<GrantedUser> {
+	const name = roleName(kind, workerIndex);
+	const roleId = await settings.roles.createApi({ name, transactionGroups });
+	const label = `${kind}-w${workerIndex}-${Date.now()}`;
+	let member: CreatedUser;
+	try {
+		member = await settings.users.createActive(name, label);
+	} catch (error) {
+		await settings.users.removeByEmail(`e2e-${label}@signoz.test`);
+		await settings.roles.removeApi(roleId);
+		throw error;
+	}
+	return {
+		user: member.user,
+		role: name,
+		remove: async () => {
+			await settings.users.remove(member.id);
+			await settings.roles.removeApi(roleId);
+		},
+	};
+}
