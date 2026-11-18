@@ -131,14 +131,23 @@ export interface Settings {
 		/** The member's table row. Search for the email first: the list pages at 20. */
 		row(email: string): Locator;
 		inviteButton(): Locator;
+		searchInput(): Locator;
+		resetLinkButton(): Locator;
+		/** The "is not authorized" message a denied list or drawer renders. */
+		deniedMessage(): Locator;
 		openInvite(): Promise<void>;
 		inviteDialog(): Locator;
 		invite(rows: { email: string; role: string }[]): Promise<void>;
 		openMember(email: string): Promise<void>;
 		drawer(): Locator;
+		nameInput(): Locator;
 		roleSelect(): Locator;
 		deleteButton(): Locator;
 		setRoles(roles: string[]): Promise<void>;
+		/** Add a role to the open member without clearing the others. */
+		addRole(role: string): Promise<void>;
+		/** Remove one role from the open member, leaving the others. */
+		removeRole(role: string): Promise<void>;
 		saveMember(): Promise<void>;
 		/** Mint a reset or invite link from the drawer and return it. */
 		generateLink(): Promise<string>;
@@ -414,6 +423,9 @@ export function settingsDriver(page: Page): Settings {
 			// antd keys each row by the member id; the email is what callers hold.
 			row: (email) => page.locator('tr[data-row-key]').filter({ hasText: email }),
 			inviteButton: () => page.getByTestId('invite-member-btn'),
+			searchInput: () => page.getByTestId('members-search-input'),
+			resetLinkButton: () => page.getByTestId('member-reset-link-btn'),
+			deniedMessage: () => page.getByText(/is not authorized/).first(),
 			openInvite: async () => {
 				await settings.members.inviteButton().click();
 				await expect(settings.members.inviteDialog()).toBeVisible();
@@ -449,6 +461,7 @@ export function settingsDriver(page: Page): Settings {
 				await expect(settings.members.drawer().getByText(email)).toBeVisible();
 			},
 			drawer: () => page.getByRole('dialog', { name: 'Member Details' }),
+			nameInput: () => page.getByPlaceholder('Enter name'),
 			roleSelect: () => selectById('member-role'),
 			deleteButton: () => page.getByTestId('member-delete-btn'),
 			setRoles: async (roles) => {
@@ -457,6 +470,21 @@ export function settingsDriver(page: Page): Settings {
 				for (const role of roles) {
 					await pickInDialog(settings.members.drawer(), select, role);
 				}
+			},
+			addRole: async (role) => {
+				await pickInDialog(
+					settings.members.drawer(),
+					settings.members.roleSelect(),
+					role,
+				);
+			},
+			removeRole: async (role) => {
+				await settings.members
+					.roleSelect()
+					.locator('.ant-select-selection-item')
+					.filter({ hasText: role })
+					.locator('.ant-select-selection-item-remove')
+					.click();
 			},
 			saveMember: async () => {
 				await page.getByTestId('member-save-btn').click();
