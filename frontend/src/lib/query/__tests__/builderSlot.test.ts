@@ -15,7 +15,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 const baseQuery = initialQueriesMap[DataSource.METRICS];
-const aiBuilder = initialQueryAIWithType.builder;
+const aiBuilder = getActiveBuilder(initialQueryAIWithType);
 
 describe('isBuilderQueryType', () => {
 	it.each([

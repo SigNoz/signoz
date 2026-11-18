@@ -41,6 +41,7 @@ import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperato
 import {
 	getBuilderBySlotKey,
 	getBuilderSlotKeyForQueryType,
+	isAIQueryType,
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
@@ -230,7 +231,7 @@ export function QueryBuilderProvider({
 			const aiBuilder =
 				query.builder_ai_query ??
 				(query.queryType === EQueryType.AI_QUERY_BUILDER
-					? initialQueryAIWithType.builder
+					? initialQueryAIWithType.builder_ai_query
 					: undefined);
 
 			const promql: IPromQLQuery[] =
@@ -1069,7 +1070,7 @@ export function QueryBuilderProvider({
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}
-		saveRecentQuery(currentQuery);
+		saveRecentQuery({ ...currentQuery, queryType });
 
 		const builder = getBuilderBySlotKey(currentQuery, builderSlotKey);
 		const currentQueryData = replaceBuilderBySlotKey(
@@ -1112,6 +1113,10 @@ export function QueryBuilderProvider({
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
 			setCalledFromHandleRunQuery(false);
+			// Pages without an AI compositeQuery must not suggest from the AI field endpoints.
+			setQueryType((prev) =>
+				isAIQueryType(prev) ? EQueryType.QUERY_BUILDER : prev,
+			);
 		}
 	}, [location.pathname]);
 

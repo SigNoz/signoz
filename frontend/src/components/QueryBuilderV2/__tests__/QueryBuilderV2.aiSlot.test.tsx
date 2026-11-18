@@ -3,6 +3,7 @@ import {
 	initialQueryAIWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { render, screen } from 'tests/test-utils';
 import type {
 	IBuilderQuery,
@@ -49,7 +50,10 @@ const builderWithQuery = (
 const query: Query = {
 	...initialQueriesMap.metrics,
 	builder: builderWithQuery(initialQueriesMap.metrics.builder, 'MAIN'),
-	builder_ai_query: builderWithQuery(initialQueryAIWithType.builder, 'AI'),
+	builder_ai_query: builderWithQuery(
+		getActiveBuilder(initialQueryAIWithType),
+		'AI',
+	),
 };
 
 describe('QueryBuilderV2 builder slot', () => {

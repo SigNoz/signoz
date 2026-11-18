@@ -25,6 +25,7 @@ import {
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
@@ -186,7 +187,9 @@ function Explorer(): JSX.Element {
 
 	const isFilterApplied = useMemo(() => {
 		// if any of the non-disabled queries has filters applied, return true
-		const result = stagedQuery?.builder?.queryData?.filter(
+		const result = (
+			stagedQuery ? getActiveBuilder(stagedQuery) : undefined
+		)?.queryData?.filter(
 			(item) => !isEmpty(item.filters?.items) && !item.disabled,
 		);
 		return !!result?.length;
