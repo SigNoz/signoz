@@ -85,6 +85,13 @@ function renderActions(isDashboardLocked = false): Handlers {
 	return handlers;
 }
 
+function setFullscreenEnabled(enabled: boolean): void {
+	Object.defineProperty(document, 'fullscreenEnabled', {
+		configurable: true,
+		value: enabled,
+	});
+}
+
 async function clickRow(testId: string): Promise<void> {
 	await userEvent.click(screen.getByRole('button', { name: /Actions/ }));
 	const row = await screen.findByTestId(testId);
@@ -98,6 +105,7 @@ async function clickRow(testId: string): Promise<void> {
 describe('DashboardActions menu rows', () => {
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
+		setFullscreenEnabled(true);
 	});
 
 	afterEach(() => {
@@ -152,6 +160,21 @@ describe('DashboardActions menu rows', () => {
 
 		expect(handlers.enter).toHaveBeenCalledTimes(1);
 		expect(handlers.onLockToggle).not.toHaveBeenCalled();
+	});
+
+	it('Full screen is disabled with a reason when the browser has no fullscreen support', async () => {
+		setFullscreenEnabled(false);
+		const handlers = renderActions();
+		await userEvent.click(screen.getByRole('button', { name: /Actions/ }));
+		const row = await screen.findByTestId('dashboard-action-fullscreen');
+
+		expect(row).toHaveAttribute('data-disabled');
+		await userEvent.click(row);
+		expect(handlers.enter).not.toHaveBeenCalled();
+		await userEvent.hover(row);
+		await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+			"Full screen isn't supported in this browser",
+		);
 	});
 
 	it('New section opens the section title modal', async () => {
