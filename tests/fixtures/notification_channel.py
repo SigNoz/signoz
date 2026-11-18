@@ -768,9 +768,12 @@ def cleanup_notification_channels(
 def create_webhook_notification_channel(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
+    notification_channel: types.TestContainerDocker,
     get_token: Callable[[str, str], str],
 ) -> Callable[[str, str, dict, bool], str]:
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    # The ruler drops alerts put before the org's alertmanager registers and resends only after a minute.
+    wait_for_alertmanager_sync(signoz, admin_token, notification_channel)
 
     # function to create notification channel
     def _create_webhook_notification_channel(

@@ -34,6 +34,12 @@
 			pylon: { enabled: false, appId: '', identitySecret: '' },
 		},
 	};
+
+	// OverlayScrollbars drives its handles with scroll-driven animations when the
+	// browser has `ScrollTimeline`. Those never finish, and Storybook waits up to
+	// 5s for running animations after every `play`, so each story with a scroller
+	// would pay the full 5s. Without it the handles are positioned from script.
+	delete window.ScrollTimeline;
 </script>
 
 <script>
