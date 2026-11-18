@@ -35,6 +35,9 @@ export const BASIC_SETUP = {
 	bracketMatching: false,
 	closeBrackets: false,
 	autocompletion: false,
+	// Its find panel is dropped by every reconfigure @uiw/react-codemirror runs on
+	// re-render, and the focused panel input then dispatches mid-update and throws.
+	searchKeymap: false,
 	// Use the browser's native caret so it blinks (a CM-drawn cursor needs extra
 	// styling and doesn't blink by default).
 	drawSelection: false,
