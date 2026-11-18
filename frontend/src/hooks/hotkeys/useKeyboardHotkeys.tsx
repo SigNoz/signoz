@@ -79,11 +79,11 @@ export function KeyboardHotkeysProvider({
 	const wasExtended = useRef(false);
 
 	const handleKeyDown = (event: KeyboardEvent): void => {
-		if (event.repeat) {
+		const { target } = event;
+		if (event.repeat || !(target instanceof Element)) {
 			return;
 		}
 
-		const target = event.target as HTMLElement;
 		const isCodeMirrorEditor = target.closest('.cm-editor') !== null;
 		const isMonacoEditor = target.closest('.monaco-editor') !== null;
 		if (
