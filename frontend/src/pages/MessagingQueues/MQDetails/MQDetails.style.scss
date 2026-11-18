@@ -32,64 +32,6 @@
 	}
 }
 
-.droprate-view {
-	.mq-table {
-		width: 100%;
-
-		.ant-table-content {
-			border-radius: 6px;
-			border: 1px solid var(--l1-border);
-			box-shadow: 0px 4px 12px 0px rgba(0, 0, 0, 0.1);
-		}
-
-		.ant-table-tbody {
-			.ant-table-cell {
-				max-width: 250px;
-				border-bottom: none;
-			}
-		}
-
-		.ant-table-thead {
-			.ant-table-cell {
-				background-color: var(--l1-background);
-				border-bottom: 1px solid var(--l1-border);
-			}
-		}
-	}
-
-	.trace-id-list {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		width: max-content;
-
-		.traceid-style {
-			display: flex;
-			gap: 8px;
-			align-items: center;
-
-			.traceid-text {
-				border-radius: 2px;
-				border: 1px solid var(--l1-border);
-				background: var(--l1-border);
-				padding: 2px;
-				cursor: pointer;
-			}
-
-			.remaing-count {
-				cursor: pointer;
-				color: var(--l1-foreground);
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: normal;
-				letter-spacing: -0.06px;
-			}
-		}
-	}
-}
-
 .pagination-left {
 	&.mq-table {
 		.ant-pagination {
