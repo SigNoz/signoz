@@ -32,7 +32,7 @@ export function useServiceAccountsData({
 	const { data, isFetching, isError, error } = useListServiceAccounts(
 		{
 			limit: SA_PAGE_SIZE,
-			offset: (page - 1) * SA_PAGE_SIZE,
+			offset: Math.max(0, page - 1) * SA_PAGE_SIZE,
 			...(query ? { query } : {}),
 		},
 		{ query: { enabled, keepPreviousData: true } },

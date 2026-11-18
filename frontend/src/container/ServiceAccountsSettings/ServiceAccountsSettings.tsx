@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Plus } from '@signozhq/icons';
 import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
@@ -12,6 +12,7 @@ import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import FilterZone from 'components/ListFilter/FilterZone/FilterZone';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
+import { useRecoverFromEmptyPage } from 'components/TanStackTableView';
 import {
 	SACreatePermission,
 	SAListPermission,
@@ -74,18 +75,15 @@ function ServiceAccountsSettings(): JSX.Element {
 
 	const controlsDisabled = isAuthZLoading || !canListServiceAccounts;
 
-	useEffect(() => {
-		if (total === 0) {
-			return;
-		}
-
-		const maxPage = Math.max(1, Math.ceil(total / SA_PAGE_SIZE));
-		if (currentPage > maxPage) {
-			void setPage(maxPage);
-		} else if (currentPage < 1) {
-			void setPage(1);
-		}
-	}, [total, currentPage, setPage]);
+	useRecoverFromEmptyPage({
+		page: currentPage,
+		pageSize: SA_PAGE_SIZE,
+		rowCount: accounts.length,
+		total,
+		isFetching: isFetching || isAuthZLoading,
+		isDisabled: isError || Boolean(queryError) || !canListServiceAccounts,
+		setPage,
+	});
 
 	const source = useMemo<SuggestionSource>(
 		() => ({
