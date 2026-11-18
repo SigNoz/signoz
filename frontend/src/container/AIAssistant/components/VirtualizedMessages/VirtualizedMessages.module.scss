@@ -17,13 +17,17 @@
 
 .empty {
 	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	justify-content: center;
+	// `safe` falls back to the top once the content overflows, so it stays scrollable.
+	justify-content: safe center;
 	padding: 32px 24px;
 	gap: 8px;
 	text-align: center;
+	@include scrollbar;
 }
 
 .emptyIcon {
@@ -54,6 +58,7 @@
 }
 
 .suggestion {
+	box-sizing: border-box;
 	width: 100%;
 	padding: 10px 14px;
 	border: 1px solid var(--l2-border);
