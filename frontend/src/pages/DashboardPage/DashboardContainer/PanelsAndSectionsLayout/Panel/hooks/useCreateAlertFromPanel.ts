@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports -- global time still lives in redux
 import { useSelector } from 'react-redux';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { useReplaceVariables } from 'api/generated/services/querier';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -95,7 +95,8 @@ export function useCreateAlertFromPanel(): (
 						safeNavigate(url, { newTab: true });
 					},
 					onError: () => {
-						toast.error(SOMETHING_WENT_WRONG, {
+						toast.danger(SOMETHING_WENT_WRONG, {
+							action: { label: 'Dismiss' },
 							description: 'Failed to create alert from panel',
 						});
 					},
