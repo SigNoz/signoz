@@ -18,7 +18,9 @@ tag <diff> <tag> <story-id>...           # what the reviewer should look at
 export <diff> --out <dir>                # a static site, hostable
 ```
 
-`<storybook>` is a running dev server (`http://localhost:6006`), a build directory holding `index.json`, or a project directory with `.storybook/`. The frontend has **no `build-storybook` script**, only `storybook dev -p 6006`, so point `capture` at a dev server.
+`<storybook>` is a running dev server (`http://localhost:6006`), a build directory holding `index.json`, or a project directory with `.storybook/`. **Capture from a build**: `pnpm storybook:build` in `frontend` (about 2 minutes) writes `storybook-static/`. A dev server serves the preview module by module, which adds 5 to 10 seconds to every story and, with several stories at once, ends in `page.goto: Timeout 30000ms exceeded` retries.
+
+Pass `--globals 'a11y.manual:!true'` to every `capture`. The a11y addon otherwise runs axe after every story, about 2 seconds each, and nothing it does shows in a shot.
 
 ## Cover the change with stories first
 
@@ -30,7 +32,7 @@ Then confirm it worked: the two runs' story counts should differ by exactly the 
 
 ## Rules that are not optional
 
-**One freshly started Storybook per ref.** Never start one server and switch git branches under it. Vite's HMR reloads the page, but some modules do not re-initialise, so the shot differs silently from a clean boot and the difference looks like a real change. Settle time does not fix this and is not the variable. Use one worktree and one port per ref, and stop each server before the next.
+**One freshly started Storybook per ref.** Never start one server and switch git branches under it. Vite's HMR reloads the page, but some modules do not re-initialise, so the shot differs silently from a clean boot and the difference looks like a real change. Settle time does not fix this and is not the variable. Use one worktree and one port per ref, and stop each server before the next. A build made in each ref's worktree has none of this.
 
 **Capture both themes: `--theme dark,light`.** Without it sbshot shoots the story's own default and everything lands in a single `default/` folder, so every regression in the other theme is invisible. Themes double the shot count, so scope with `--stories` or `--title`, never by dropping a theme.
 

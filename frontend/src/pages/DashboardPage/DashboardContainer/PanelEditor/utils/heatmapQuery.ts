@@ -35,30 +35,29 @@ const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
  * so a percentile draws the grid a count already draws, and the statement builder sums
  * the `le` counts either way.
  */
-export function withSingleHeatmapQuery(query: Query): Query {
-	const [first] = query.builder.queryData;
+export function withSingleHeatmapQuery(
+	builder: Query['builder'],
+): Query['builder'] {
+	const [first] = builder.queryData;
 	if (!first) {
-		return query;
+		return builder;
 	}
 
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: [
-				{
-					...first,
-					spaceAggregation: withoutPercentile(first.spaceAggregation),
-					aggregations: first.aggregations?.map((aggregation) => ({
-						...aggregation,
-						spaceAggregation: withoutPercentile(
-							(aggregation as MetricAggregation).spaceAggregation,
-						),
-					})) as IBuilderQuery['aggregations'],
-				},
-			],
-			queryFormulas: [],
-		},
+		...builder,
+		queryData: [
+			{
+				...first,
+				spaceAggregation: withoutPercentile(first.spaceAggregation),
+				aggregations: first.aggregations?.map((aggregation) => ({
+					...aggregation,
+					spaceAggregation: withoutPercentile(
+						(aggregation as MetricAggregation).spaceAggregation,
+					),
+				})) as IBuilderQuery['aggregations'],
+			},
+		],
+		queryFormulas: [],
 	};
 }
 
@@ -78,30 +77,29 @@ function withoutPercentile<T extends string | undefined>(
  * so a count carried out of a heatmap would sit in the selector with no option behind
  * it. Other metric types are left alone — count is a real choice for a sum or a gauge.
  */
-export function withPercentileHistogramAggregation(query: Query): Query {
+export function withPercentileHistogramAggregation(
+	builder: Query['builder'],
+): Query['builder'] {
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: query.builder.queryData.map((queryData) => {
-				if (
-					!HISTOGRAM_ATTRIBUTE_TYPES.has(queryData.aggregateAttribute?.type ?? '')
-				) {
-					return queryData;
-				}
+		...builder,
+		queryData: builder.queryData.map((queryData) => {
+			if (
+				!HISTOGRAM_ATTRIBUTE_TYPES.has(queryData.aggregateAttribute?.type ?? '')
+			) {
+				return queryData;
+			}
 
-				return {
-					...queryData,
-					spaceAggregation: withoutCount(queryData.spaceAggregation),
-					aggregations: queryData.aggregations?.map((aggregation) => ({
-						...aggregation,
-						spaceAggregation: withoutCount(
-							(aggregation as MetricAggregation).spaceAggregation,
-						),
-					})) as IBuilderQuery['aggregations'],
-				};
-			}),
-		},
+			return {
+				...queryData,
+				spaceAggregation: withoutCount(queryData.spaceAggregation),
+				aggregations: queryData.aggregations?.map((aggregation) => ({
+					...aggregation,
+					spaceAggregation: withoutCount(
+						(aggregation as MetricAggregation).spaceAggregation,
+					),
+				})) as IBuilderQuery['aggregations'],
+			};
+		}),
 	};
 }
 

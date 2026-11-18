@@ -198,3 +198,22 @@ func (FieldDataType) Enum() []any {
 		// FieldDataTypeArrayNumber,
 	}
 }
+
+// sameDataTypeFamily treats the numeric types as one family: static fields
+// declare "number" while callers may ask for int64 or float64.
+func sameDataTypeFamily(requested, actual FieldDataType) bool {
+	if requested == actual {
+		return true
+	}
+	return isNumericDataType(requested) && isNumericDataType(actual)
+}
+
+// isNumericDataType also accepts spellings that skipped normalization, such as
+// "double" sent as a query parameter.
+func isNumericDataType(dataType FieldDataType) bool {
+	switch fieldDataTypes[strings.ToLower(dataType.StringValue())] {
+	case FieldDataTypeNumber, FieldDataTypeInt64:
+		return true
+	}
+	return false
+}
