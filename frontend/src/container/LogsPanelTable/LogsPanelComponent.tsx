@@ -169,17 +169,15 @@ function LogsPanelComponent({
 					</div>
 				)}
 			</div>
-			{selectedTab && activeLog && (
-				<LogDetail
-					selectedTab={selectedTab}
-					log={activeLog}
-					onClose={handleCloseLogDetail}
-					isListViewPanel
-					listViewPanelSelectedFields={widget?.selectedLogFields}
-					logs={logs}
-					onNavigateLog={handleSetActiveLog}
-				/>
-			)}
+			<LogDetail
+				selectedTab={selectedTab}
+				log={activeLog}
+				onClose={handleCloseLogDetail}
+				isListViewPanel
+				listViewPanelSelectedFields={widget?.selectedLogFields}
+				logs={logs}
+				onNavigateLog={handleSetActiveLog}
+			/>
 		</>
 	);
 }

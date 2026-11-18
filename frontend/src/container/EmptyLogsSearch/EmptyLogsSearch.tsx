@@ -55,13 +55,27 @@ export default function EmptyLogsSearch({
 					{customMessage ? (
 						<>
 							<div className="empty-logs-search__header">
-								<Typography.Text className="empty-logs-search__title">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="main"
+									as="span"
+									textOverflow="wrap"
+								>
 									{customMessage.title}
-								</Typography.Text>
+								</Typography>
 								{customMessage.subTitle && (
-									<Typography.Text className="empty-logs-search__subtitle">
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
 										{customMessage.subTitle}
-									</Typography.Text>
+									</Typography>
 								)}
 							</div>
 							{Array.isArray(customMessage.description) ? (
@@ -71,9 +85,16 @@ export default function EmptyLogsSearch({
 									))}
 								</ul>
 							) : (
-								<Typography.Text className="empty-logs-search__description">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{customMessage.description}
-								</Typography.Text>
+								</Typography>
 							)}
 							{/* Clear filters button */}
 							{customMessage.showClearFiltersButton && (
@@ -91,12 +112,19 @@ export default function EmptyLogsSearch({
 							)}
 						</>
 					) : (
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							<span className="empty-logs-search__sub-text">
 								This query had no results.{' '}
 							</span>
 							Edit your query and try again!
-						</Typography.Text>
+						</Typography>
 					)}
 				</div>
 				{customMessage?.documentationLinks && (
