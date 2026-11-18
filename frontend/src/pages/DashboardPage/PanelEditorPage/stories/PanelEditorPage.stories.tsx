@@ -85,21 +85,6 @@ export const PieChartPanel: Story = {
 	args: { panel: 'traffic-share' },
 };
 
-/** A new area chart: the time series options with the area filled. */
-export const AreaChartPanel: Story = {
-	args: { panel: 'new', newPanelKind: 'area-chart' },
-};
-
-/** A new histogram, where the display options are its buckets. */
-export const HistogramPanel: Story = {
-	args: { panel: 'new', newPanelKind: 'histogram' },
-};
-
-/** A new text panel: a markdown body in place of the query builder. */
-export const TextPanel: Story = {
-	args: { panel: 'new', newPanelKind: 'text' },
-};
-
 /** A list panel, where the config pane is the column editor. */
 export const ListPanel: Story = {
 	args: { panel: 'recent-logs' },

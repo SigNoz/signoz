@@ -127,12 +127,6 @@ export const AzureConnectAccount: Story = {
 	play: openConnectDialog,
 };
 
-/** The GCP region combobox, opened from the connect drawer. */
-export const GcpRegionDropdown: Story = {
-	args: { provider: 'gcp', accounts: 0 },
-	play: openGcpRegionDropdown,
-};
-
 /** The regions an already-connected account collects from. */
 export const EditAccount: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
@@ -337,17 +331,7 @@ export const GcpAccountConnectedToast: Story = {
 /** Interaction: the deployment region menu of the GCP setup drawer. */
 export const GcpRegionOpen: Story = {
 	args: { provider: 'gcp', accounts: 0 },
-	play: async ({ canvasElement }): Promise<void> => {
-		await openConnectFlow(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId(
-				'gcp-deployment-region-select',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByRole('listbox');
-	},
+	play: openGcpRegionDropdown,
 };
 
 /**
