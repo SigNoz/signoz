@@ -42,7 +42,7 @@
 	flex-direction: column;
 	align-items: flex-start;
 	gap: var(--spacing-10);
-	max-width: 336px;
+	max-width: calc(var(--spacing-56) * 3);
 	// Auto margins centre it without clipping the top when it outgrows the view.
 	margin: auto;
 

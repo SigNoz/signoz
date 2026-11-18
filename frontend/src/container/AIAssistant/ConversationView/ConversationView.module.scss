@@ -33,7 +33,7 @@
 			right: 0;
 			bottom: 0;
 			left: 0;
-			height: 46px;
+			height: calc(var(--spacing-20) + var(--spacing-3));
 			background: linear-gradient(to bottom, transparent, var(--l1-background));
 			pointer-events: none;
 		}
