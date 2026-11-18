@@ -139,9 +139,14 @@ func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rule
 func (m *module) RecordRuleStateHistory(ctx context.Context, ruleID string, handledRestart bool, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
 	revisedItemsToAdd := map[uint64]rulestatehistorytypes.RuleStateHistory{}
 
-	lastSavedState, err := m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
-	if err != nil {
-		return err
+	// the stored state is only read to reconcile the first record after a restart
+	var lastSavedState []rulestatehistorytypes.RuleStateHistory
+	if !handledRestart {
+		var err error
+		lastSavedState, err = m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !handledRestart && len(lastSavedState) > 0 {
