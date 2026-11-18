@@ -55,6 +55,13 @@ type BaseRule struct {
 	lastError error
 	Active    map[uint64]*ruletypes.Alert
 
+	// restoredHistory exists only between Restore and the next evaluation. Restore fills it
+	// with the last history row that recorded each alert as firing before this process
+	// started, keyed by query-result fingerprint; that evaluation adopts the rows whose
+	// alerts are back, resolves the rest, and leaves it nil. It is never the rule's running
+	// history, which is written through RecordRuleStateHistory and not read back.
+	restoredHistory map[uint64]rulestatehistorytypes.RuleStateHistory
+
 	// lastTimestampWithDatapoints is the timestamp of the last datapoint we
 	// observed for this rule.
 	// This is used for missing data alerts.
@@ -81,9 +88,17 @@ type BaseRule struct {
 	ruleStateHistoryModule rulestatehistory.Module
 
 	queryParser queryparser.QueryParser
+
+	// loadLastSeenSeries is how Restore reads the data the nodata seed takes the last-seen
+	// time from; each rule type sets its own right after construction.
+	loadLastSeenSeries LoadLastSeenSeries
 }
 
 type RuleOption func(*BaseRule)
+
+// LoadLastSeenSeries returns the series of the rule's selected query over the lookback
+// that ends at the evaluation time ts.
+type LoadLastSeenSeries func(ctx context.Context, ts time.Time, lookback time.Duration) ([]*qbtypes.TimeSeries, error)
 
 func WithSendAlways() RuleOption {
 	return func(r *BaseRule) {
@@ -179,6 +194,121 @@ func NewBaseRule(
 	return baseRule, nil
 }
 
+func (r *BaseRule) SetLoadLastSeenSeries(load LoadLastSeenSeries) {
+	r.loadLastSeenSeries = load
+}
+
+// Restore rebuilds what the previous process held: the alerts the rule state history last
+// recorded as firing, for the next evaluation to adopt, and the last time the query had
+// data, which the nodata alert waits on.
+func (r *BaseRule) Restore(ctx context.Context, ts time.Time) error {
+	if err := r.restoreHistory(ctx); err != nil {
+		return err
+	}
+	if !r.ruleCondition.AlertOnAbsent || r.loadLastSeenSeries == nil {
+		return nil
+	}
+	series, err := r.loadLastSeenSeries(ctx, ts, time.Duration(r.ruleCondition.AbsentFor)*time.Minute)
+	if err != nil {
+		return err
+	}
+	r.seedLastSeen(series)
+	return nil
+}
+
+// restoreHistory picks up the alerts the rule state history last recorded as firing. A
+// restore that succeeds only after earlier evaluations leaves the alerts those evaluations
+// already track alone.
+func (r *BaseRule) restoreHistory(ctx context.Context) error {
+	if r.ruleStateHistoryModule == nil || r.handledRestart {
+		return nil
+	}
+	lastSaved, err := r.ruleStateHistoryModule.GetLastSavedRuleStateHistory(ctx, r.ID())
+	if err != nil {
+		return err
+	}
+
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	tracked := make(map[uint64]struct{}, len(r.Active))
+	for _, alert := range r.Active {
+		if alert != nil && alert.QueryResultLabels != nil {
+			tracked[alert.QueryResultLabels.Hash()] = struct{}{}
+		}
+	}
+	r.restoredHistory = make(map[uint64]rulestatehistorytypes.RuleStateHistory)
+	for _, item := range lastSaved {
+		if _, ok := tracked[item.Fingerprint]; ok {
+			continue
+		}
+		if item.State == ruletypes.StateFiring || item.State == ruletypes.StateNoData || item.State == ruletypes.StateRecovering {
+			r.restoredHistory[item.Fingerprint] = item
+		}
+	}
+	r.handledRestart = true
+	return nil
+}
+
+// MergeAlerts folds this evaluation's alerts into Active and returns the history rows the
+// restore leaves behind: every restored row no alert picked up belongs to an alert that
+// stopped firing while the previous process was down, recorded as resolved at ts.
+func (r *BaseRule) MergeAlerts(ts time.Time, alerts map[uint64]*ruletypes.Alert, receivers map[string][]string) []rulestatehistorytypes.RuleStateHistory {
+	for h, a := range alerts {
+		// Check whether we already have alerting state for the identifying label set.
+		// Update the last value and annotations if so, create a new alert entry otherwise.
+		if alert, ok := r.Active[h]; ok && alert.State != ruletypes.StateInactive {
+			alert.Value = a.Value
+			alert.Annotations = a.Annotations
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = receivers[v]
+			}
+			continue
+		}
+
+		// when the restored history holds a firing row for these labels, the new alert
+		// starts from that row's state and fired-at time instead of pending; a nodata row
+		// starts it firing, the sample already marks the alert missing.
+		fingerprint := a.QueryResultLabels.Hash()
+		if item, ok := r.restoredHistory[fingerprint]; ok {
+			delete(r.restoredHistory, fingerprint)
+			a.State = item.State
+			if item.State == ruletypes.StateNoData {
+				a.State = ruletypes.StateFiring
+			}
+			a.ActiveAt = time.UnixMilli(item.UnixMilli)
+			a.FiredAt = a.ActiveAt
+		}
+		r.Active[h] = a
+	}
+
+	// Rows no alert picked up stopped firing while the previous process was down.
+	resolved := make([]rulestatehistorytypes.RuleStateHistory, 0, len(r.restoredHistory))
+	for _, item := range r.restoredHistory {
+		item.State = ruletypes.StateInactive
+		item.StateChanged = true
+		item.UnixMilli = ts.UnixMilli()
+		resolved = append(resolved, item)
+	}
+	r.restoredHistory = nil
+	return resolved
+}
+
+// seedLastSeen takes the latest point of series spanning the nodata lookback as the last
+// time the query had data, so a restart does not fire the nodata alert on its first evaluation.
+func (r *BaseRule) seedLastSeen(series []*qbtypes.TimeSeries) {
+	for _, s := range series {
+		if len(s.Values) == 0 {
+			continue
+		}
+		if lastPoint := time.UnixMilli(s.Values[len(s.Values)-1].Timestamp); lastPoint.After(r.lastTimestampWithDatapoints) {
+			r.lastTimestampWithDatapoints = lastPoint
+		}
+	}
+}
+
 func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
@@ -208,12 +338,15 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
-	activeAlerts := make(map[uint64]struct{}, len(r.Active))
+	activeAlerts := make(map[uint64]struct{}, len(r.Active)+len(r.restoredHistory))
 	for _, alert := range r.Active {
 		if alert == nil || alert.QueryResultLabels == nil {
 			continue
 		}
 		activeAlerts[alert.QueryResultLabels.Hash()] = struct{}{}
+	}
+	for fingerprint := range r.restoredHistory {
+		activeAlerts[fingerprint] = struct{}{}
 	}
 	return activeAlerts
 }
@@ -348,6 +481,17 @@ func (r *BaseRule) State() ruletypes.AlertState {
 			maxState = a.State
 		}
 	}
+	// Counting restored alerts makes the first evaluation after a restart compare its
+	// overall state against the one recorded before the restart.
+	for _, item := range r.restoredHistory {
+		state := item.State
+		if state == ruletypes.StateNoData {
+			state = ruletypes.StateFiring
+		}
+		if state.Severity() > maxState.Severity() {
+			maxState = state
+		}
+	}
 	return maxState
 }
 
@@ -406,11 +550,10 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, itemsToAdd []rule
 		return nil
 	}
 
-	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, itemsToAdd); err != nil {
+	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, itemsToAdd); err != nil {
 		r.logger.ErrorContext(ctx, "error while recording rule state history", errors.Attr(err), slog.Any("items_to_add", itemsToAdd))
 		return err
 	}
-	r.handledRestart = true
 
 	return nil
 }

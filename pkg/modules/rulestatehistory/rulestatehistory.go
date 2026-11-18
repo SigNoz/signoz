@@ -12,9 +12,8 @@ import (
 // Module defines the core operations for managing rule state history.
 type Module interface {
 	// RecordRuleStateHistory persists a batch of rule state history entries for a given rule.
-	// The bool parameter indicates whether restart is handled.
 	// TODO(srikanthccv): remove when rule state history record moved to AM
-	RecordRuleStateHistory(context.Context, string, bool, []rulestatehistorytypes.RuleStateHistory) error
+	RecordRuleStateHistory(context.Context, []rulestatehistorytypes.RuleStateHistory) error
 
 	// GetLastSavedRuleStateHistory retrieves the most recently saved state history entries for a given rule.
 	GetLastSavedRuleStateHistory(context.Context, string) ([]rulestatehistorytypes.RuleStateHistory, error)

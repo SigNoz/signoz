@@ -127,6 +127,18 @@ func (p QueryPreview) MarshalJSON() ([]byte, error) {
 
 var _ jsonschema.Preparer = &QueryRangeResponse{}
 
+// FindSeries returns the series of the named query in a time series response, nil when
+// the response holds none.
+func (q *QueryRangeResponse) FindSeries(queryName string) []*TimeSeries {
+	for _, item := range q.Data.Results {
+		tsData, ok := item.(*TimeSeriesData)
+		if ok && tsData.QueryName == queryName && len(tsData.Aggregations) > 0 && tsData.Aggregations[0] != nil {
+			return tsData.Aggregations[0].Series
+		}
+	}
+	return nil
+}
+
 // PrepareJSONSchema adds description to the QueryRangeResponse schema.
 func (q *QueryRangeResponse) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	schema.WithDescription("Response from the v5 query range endpoint. The data.results array contains typed results depending on the requestType: TimeSeriesData for time_series and heatmap, ScalarData for scalar, RawData for raw, or DistributionData for distribution requests.")
