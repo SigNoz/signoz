@@ -375,6 +375,13 @@ const ATTRIBUTES: { key: string; values: string[] }[] = [
 		values: ['production', 'staging'],
 	},
 	{
+		key: 'k8s.deployment.annotation.deployment.kubernetes.io/revision-history',
+		values: [
+			'arn:aws:eks:us-east-1:123456789012:cluster/checkout-production-primary',
+			'7',
+		],
+	},
+	{
 		key: 'k8s.cluster.name',
 		values: ['us-east-1-prod', 'eu-west-1-prod'],
 	},

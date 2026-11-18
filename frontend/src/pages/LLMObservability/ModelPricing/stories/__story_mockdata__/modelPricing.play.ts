@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
 import {
 	canManagePricing,
@@ -42,5 +42,8 @@ export const openModelCostDrawerCreate = async ({
 			{ timeout: 15000 },
 		),
 	);
-	await screen.findByTestId('drawer-provider-select');
+	const provider = await screen.findByTestId('drawer-provider-select');
+
+	await expect(provider).toHaveTextContent('OpenAI');
+	await expect(provider).not.toHaveAttribute('aria-disabled', 'true');
 };

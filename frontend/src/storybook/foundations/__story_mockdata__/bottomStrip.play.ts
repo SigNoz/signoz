@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '@/storybook/globals';

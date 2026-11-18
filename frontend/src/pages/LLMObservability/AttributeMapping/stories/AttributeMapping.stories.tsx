@@ -7,7 +7,6 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import LLMObservabilityPage from '../../index';
 import {
 	attributeMappingMocks,
-	groupMappers,
 	wideConditionGroup,
 } from './AttributeMapping.stories.mocks';
 import { openAddMappingDrawer } from './__story_mockdata__/attributeMapping.play';
@@ -72,6 +71,11 @@ export const GroupActionsMenu: Story = {
 	},
 };
 
+/** The drawer that adds a mapping to the first group, opened from its expanded row. */
+export const AddMappingDrawer: Story = {
+	play: openAddMappingDrawer,
+};
+
 /** The first mapping group's edit drawer, opened from its menu. */
 export const GroupFormDrawer: Story = {
 	play: async (context): Promise<void> => {
@@ -79,12 +83,6 @@ export const GroupFormDrawer: Story = {
 		await userEvent.click(await screen.findByText('Edit'));
 		await screen.findByText('Edit group');
 	},
-};
-
-/** The drawer that adds a mapping to the first group. */
-export const AddMappingDrawer: Story = {
-	parameters: { msw: { handlers: [groupMappers] } },
-	play: openAddMappingDrawer,
 };
 
 /**

@@ -22,14 +22,14 @@ export const openAddMappingDrawer = async ({
 	if (!canAddMapping(args)) {
 		return;
 	}
-	const canvas = within(canvasElement);
-	const [firstGroup] = await canvas.findAllByTestId(
-		/^group-expand-/,
-		{},
-		{ timeout: 15000 },
-	);
 
-	await userEvent.click(firstGroup);
+	const canvas = within(canvasElement);
+
+	await userEvent.click(
+		await canvas.findByTestId('group-expand-group-1', undefined, {
+			timeout: 15000,
+		}),
+	);
 	await userEvent.click(
 		await canvas.findByRole(
 			'button',

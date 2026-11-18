@@ -6,6 +6,7 @@
 import type {
 	ListSpanMapperGroups200,
 	ListSpanMappers200,
+	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -77,36 +78,42 @@ export const spanMapperGroupsResponse = (
 	data: { items: GROUPS.slice(0, count).map(group) },
 });
 
-/** The mappings an expanded group lists, which the groups response does not carry. */
-export const spanMappersResponse = (groupId: string): ListSpanMappers200 => ({
-	status: 'success',
-	data: {
-		items: [
+const MAPPERS: { name: string; source: string }[] = [
+	{ name: 'gen_ai.request.model', source: 'langchain.model' },
+	{ name: 'gen_ai.usage.input_tokens', source: 'langchain.prompt_tokens' },
+];
+
+const mapper = (
+	groupId: string,
+	seed: (typeof MAPPERS)[number],
+	index: number,
+): SpantypesSpanMapperDTO => ({
+	id: `${groupId}-mapper-${index + 1}`,
+	groupId,
+	name: seed.name,
+	enabled: true,
+	origin: SpantypesSpanMapperOriginDTO.user,
+	fieldContext: SpantypesFieldContextDTO.attribute,
+	config: {
+		sources: [
 			{
-				id: `${groupId}-mapper-1`,
-				groupId,
-				name: 'gen_ai.request.model',
+				key: seed.source,
+				context: SpantypesFieldContextDTO.attribute,
+				operation: SpantypesSpanMapperOperationDTO.copy,
+				priority: 1,
 				enabled: true,
-				origin: SpantypesSpanMapperOriginDTO.user,
-				fieldContext: SpantypesFieldContextDTO.attribute,
-				config: {
-					sources: [
-						{
-							key: 'langchain.model',
-							context: SpantypesFieldContextDTO.attribute,
-							operation: SpantypesSpanMapperOperationDTO.copy,
-							priority: 0,
-							enabled: true,
-						},
-					],
-				},
-				createdAt: '2026-07-18T11:20:00Z',
-				createdBy: 'anna@signoz.io',
-				updatedAt: '2026-08-05T08:40:00Z',
-				updatedBy: 'anna@signoz.io',
 			},
 		],
 	},
+	createdAt: '2026-07-18T11:20:00Z',
+	createdBy: 'anna@signoz.io',
+	updatedAt: '2026-08-05T08:40:00Z',
+	updatedBy: 'anna@signoz.io',
+});
+
+export const spanMappersResponse = (groupId: string): ListSpanMappers200 => ({
+	status: 'success',
+	data: { items: MAPPERS.map((seed, index) => mapper(groupId, seed, index)) },
 });
 
 const MANY_ATTRIBUTES = [

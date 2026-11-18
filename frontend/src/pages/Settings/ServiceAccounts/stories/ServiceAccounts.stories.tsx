@@ -154,10 +154,7 @@ export const DeletedAccount: Story = {
 	parameters: at('account=service-account-5'),
 };
 
-/**
- * The roles an account can be given. The dropdown opens off the inner combobox,
- * not the wrapper the click lands on first.
- */
+/** The roles an account can be given. */
 export const AssignRoles: Story = {
 	parameters: at(`account=${ACCOUNT}`),
 	play: assignRoles,

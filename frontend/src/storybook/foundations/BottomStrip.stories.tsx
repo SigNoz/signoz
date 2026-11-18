@@ -77,8 +77,8 @@ export const Tooltips: Story = {
 };
 
 /**
- * A toast above the strip. Sonner pins itself to the foot of the viewport, so
- * without an offset it lands on top of Ask Noz and Support.
+ * A toast above the strip. The toaster pins itself to the foot of the viewport,
+ * so without an offset it lands on top of Ask Noz and Support.
  */
 export const WithToast: Story = {
 	args: { noz: true, support: 'pylon' },

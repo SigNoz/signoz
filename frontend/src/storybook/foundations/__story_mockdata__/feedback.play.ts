@@ -5,6 +5,12 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import {
+	findToastAction,
+	findToastText,
+	getToastAction,
+	getToastText,
+} from '../../play/toastText';
 import type { FeedbackState } from '../FeedbackFixture';
 
 interface PlayContext {
@@ -44,16 +50,12 @@ export const showsActionableErrorToast = async ({
 	}
 
 	await showFeedback(canvasElement);
-	await screen.findByText('Failed to save the notification channel');
+	await findToastText('Failed to save the notification channel');
 	await waitFor(() =>
-		expect(
-			screen.getByText('Failed to save the notification channel'),
-		).toBeVisible(),
+		expect(getToastText('Failed to save the notification channel')).toBeVisible(),
 	);
-	await screen.findByRole('button', { name: 'Retry' });
-	await waitFor(() =>
-		expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible(),
-	);
+	await findToastAction('Retry');
+	await waitFor(() => expect(getToastAction('Retry')).toBeVisible());
 };
 
 export const showsLongMultilineToast = async ({
@@ -66,7 +68,7 @@ export const showsLongMultilineToast = async ({
 
 	await showFeedback(canvasElement);
 	await expect(
-		await screen.findByText(/could not apply the retention policy/i),
+		await findToastText(/could not apply the retention policy/i),
 	).toBeVisible();
 };
 
@@ -91,10 +93,8 @@ export const showsPromiseErrorToast = async ({
 	}
 
 	await showFeedback(canvasElement);
-	await expect(
-		await screen.findByText('Could not clone the panel'),
-	).toBeVisible();
-	await screen.findByRole('button', { name: 'Dismiss' });
+	await expect(await findToastText('Could not clone the panel')).toBeVisible();
+	await findToastAction('Dismiss');
 };
 
 export const showsWarningToast = async ({
@@ -131,10 +131,10 @@ export const showsDangerWithDescription = async ({
 
 	await showFeedback(canvasElement);
 	await expect(
-		await screen.findByText('Failed to update account settings'),
+		await findToastText('Failed to update account settings'),
 	).toBeVisible();
-	await screen.findByText(/does not have permission/i);
-	await screen.findByRole('button', { name: 'Dismiss' });
+	await findToastText(/does not have permission/i);
+	await findToastAction('Dismiss');
 };
 
 export const closesConfirmationOnEscape = async ({
@@ -150,14 +150,14 @@ export const closesConfirmationOnEscape = async ({
 	);
 
 	await userEvent.click(trigger);
-	await screen.findByRole('dialog', { name: 'Delete environment' });
+	await screen.findByRole('alertdialog', { name: 'Delete environment' });
 
 	await userEvent.keyboard('{Escape}');
 	// Escape can close the dialog before the assertion runs, which
 	// `waitForElementToBeRemoved` treats as an error rather than a pass.
 	await waitFor(() =>
 		expect(
-			screen.queryByRole('dialog', { name: 'Delete environment' }),
+			screen.queryByRole('alertdialog', { name: 'Delete environment' }),
 		).not.toBeInTheDocument(),
 	);
 };
@@ -173,11 +173,11 @@ export const showsToastOverConfirmation = async ({
 	await userEvent.click(
 		within(canvasElement).getByTestId('open-feedback-confirmation'),
 	);
-	await screen.findByRole('dialog', { name: 'Delete environment' });
+	await screen.findByRole('alertdialog', { name: 'Delete environment' });
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Show error notification' }),
 	);
 	await expect(
-		await screen.findByText(/could not apply the retention policy/i),
+		await findToastText(/could not apply the retention policy/i),
 	).toBeVisible();
 };
