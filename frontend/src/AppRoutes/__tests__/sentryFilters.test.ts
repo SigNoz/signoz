@@ -2,9 +2,9 @@ import type { ErrorEvent, StackFrame } from '@sentry/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 
 import {
-	hasNoAppFrames,
+	isInjectedScriptError,
 	isExpectedRequestFailure,
-	isExternalIntegrationError,
+	isThirdPartyScriptError,
 	SENTRY_IGNORE_ERRORS,
 } from '../sentryFilters';
 
@@ -27,7 +27,7 @@ function eventWithFrames(...filenames: string[]): ErrorEvent {
 	};
 }
 
-describe('isExternalIntegrationError', () => {
+describe('isThirdPartyScriptError', () => {
 	it.each([
 		[
 			'PostHog recorder',
@@ -39,14 +39,12 @@ describe('isExternalIntegrationError', () => {
 		],
 		['Appcues', 'https://fast.appcues.com/123456.js'],
 	])('drops an error with a %s frame', (_, url) => {
-		expect(isExternalIntegrationError(eventWithFrames(APP_BUNDLE, url))).toBe(
-			true,
-		);
+		expect(isThirdPartyScriptError(eventWithFrames(APP_BUNDLE, url))).toBe(true);
 	});
 
 	it('drops it when the top frame is our bundle', () => {
 		expect(
-			isExternalIntegrationError(
+			isThirdPartyScriptError(
 				eventWithFrames(
 					'https://us-assets.i.posthog.com/static/posthog-recorder.js?v=1.298.0',
 					'<anonymous>',
@@ -58,13 +56,13 @@ describe('isExternalIntegrationError', () => {
 
 	it('keeps an error from our bundle only', () => {
 		expect(
-			isExternalIntegrationError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
+			isThirdPartyScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
 		).toBe(false);
 	});
 
 	it('keeps an error from a host that only contains an integration name', () => {
 		expect(
-			isExternalIntegrationError(
+			isThirdPartyScriptError(
 				eventWithFrames(
 					'https://posthog.example.com/app.js',
 					'https://notusepylon.com/widget.js',
@@ -74,11 +72,11 @@ describe('isExternalIntegrationError', () => {
 	});
 
 	it('keeps an error without a stack trace', () => {
-		expect(isExternalIntegrationError({ type: undefined })).toBe(false);
+		expect(isThirdPartyScriptError({ type: undefined })).toBe(false);
 	});
 });
 
-describe('hasNoAppFrames', () => {
+describe('isInjectedScriptError', () => {
 	const PAGE_URL = 'https://example.us.signoz.cloud/dashboard/01a081e1';
 
 	function eventWithStackFrames(frames: StackFrame[]): ErrorEvent {
@@ -92,7 +90,7 @@ describe('hasNoAppFrames', () => {
 
 	it('drops a script appended to the page', () => {
 		expect(
-			hasNoAppFrames(
+			isInjectedScriptError(
 				eventWithStackFrames([
 					{ filename: PAGE_URL, lineno: 1, colno: 30, function: 'global code' },
 					{ filename: '[native code]', function: 'eval' },
@@ -104,7 +102,7 @@ describe('hasNoAppFrames', () => {
 
 	it('drops a browser extension error', () => {
 		expect(
-			hasNoAppFrames(
+			isInjectedScriptError(
 				eventWithStackFrames([
 					{ filename: 'chrome-extension://abc/content.js', lineno: 4, colno: 12 },
 				]),
@@ -112,18 +110,43 @@ describe('hasNoAppFrames', () => {
 		).toBe(true);
 	});
 
+	it('drops an error thrown from injected code behind the Sentry wrapper', () => {
+		expect(
+			isInjectedScriptError(eventWithFrames(APP_BUNDLE, '<anonymous>')),
+		).toBe(true);
+	});
+
+	it('keeps an error thrown from our bundle after an anonymous frame', () => {
+		expect(
+			isInjectedScriptError(eventWithFrames('<anonymous>', APP_BUNDLE)),
+		).toBe(false);
+	});
+
 	it('keeps an error with a frame from our bundle', () => {
-		expect(hasNoAppFrames(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(false);
+		expect(isInjectedScriptError(eventWithFrames(PAGE_URL, APP_BUNDLE))).toBe(
+			false,
+		);
 	});
 
 	it('keeps an error without a stack trace', () => {
-		expect(hasNoAppFrames({ type: undefined })).toBe(false);
+		expect(isInjectedScriptError({ type: undefined })).toBe(false);
 	});
 
 	it('keeps an error whose frames have no position', () => {
 		expect(
-			hasNoAppFrames(
+			isInjectedScriptError(
 				eventWithStackFrames([{ filename: '[native code]', function: 'eval' }]),
+			),
+		).toBe(false);
+	});
+
+	it('keeps an error a builtin threw for our bundle', () => {
+		expect(
+			isInjectedScriptError(
+				eventWithStackFrames([
+					{ filename: APP_BUNDLE, lineno: 1, colno: 1 },
+					{ filename: '<anonymous>', function: 'JSON.parse' },
+				]),
 			),
 		).toBe(false);
 	});

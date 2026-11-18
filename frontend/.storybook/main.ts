@@ -8,8 +8,8 @@ const srcPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
 /**
  * Modules replaced for every story. Same idea as `moduleNameMapper` in
  * `jest.config.ts`: the app keeps importing its own paths, Storybook resolves
- * them to a mock. Regexes so only exact specifiers match: `lib/history` must
- * not catch `lib/historyUtils`.
+ * them to a mock. Regexes so only exact specifiers match: `store` must not
+ * catch `store/actions`.
  *
  * Each replacement is typed as the module it stands in for, so drift is a
  * compile error rather than a story that fails at render. The `jest` note on
@@ -17,11 +17,6 @@ const srcPath = resolve(dirname(fileURLToPath(import.meta.url)), '../src');
  * only diverge where the runner needs them to.
  */
 const mockAliases = [
-	{
-		// jest: not replaced, jsdom drives a real browser history.
-		find: /^(?:src\/)?lib\/history$/,
-		replacement: `${srcPath}/storybook/navigation/history.alias.ts`,
-	},
 	{
 		// jest: src/__tests__/logEventMock.ts
 		find: /^(?:src\/)?api\/common\/logEvent$/,

@@ -364,7 +364,7 @@ tokenizer:
       interval: 1h
     token:
       # The maximum number of tokens a user can have. This limits the number of concurrent sessions a user can have.
-      max_per_user: 5
+      max_per_user: 20
 
 ##################### Flagger #####################
 flagger:
