@@ -225,6 +225,16 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 			},
 			wantContains: []string{"<b>Summary:</b> p99 is 612ms"},
 		},
+		{
+			// Templates written against the channel data model do not render
+			// against the rule's, and the channel's own title and message stand in.
+			name: "UnrenderableRuleTemplates_FallBackToChannel",
+			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
+				ruletypes.AnnotationTitleTemplate: "Rule title: {{ .CommonLabels.alertname }}",
+				ruletypes.AnnotationBodyTemplate:  "{{ .Labels.alertname }}: {{ .Annotations.summary }}",
+			})},
+			wantContains: []string{"<b>[FIRING:1] checkout-latency-high</b>\n\n<b>Alert:</b>", "<b>Summary:</b> p99 is 612ms"},
+		},
 	}
 
 	for _, testCase := range testCases {

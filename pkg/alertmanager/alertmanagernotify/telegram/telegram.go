@@ -154,8 +154,8 @@ func (n *Notifier) encodeSendMessage(chatID int64, text string) (*bytes.Buffer, 
 }
 
 // buildMessage sends the title in bold above the message. Each half comes from
-// the rule's template when it has one and from the channel's otherwise; an
-// empty title sends the message alone.
+// the rule's template when it has one that renders and from the channel's
+// otherwise; an empty title sends the message alone.
 func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*types.Alert) (string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
 
@@ -179,7 +179,7 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 		title, body string
 		err         error
 	)
-	if customTitle != "" {
+	if result != nil && !result.IsDefaultTitle {
 		title, err = n.renderRuleTemplate(result.Title)
 	} else {
 		title, err = n.renderChannelTemplate(ctx, as, n.conf.Title)
@@ -188,7 +188,7 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 		return "", err
 	}
 
-	if customBody != "" {
+	if result != nil && !result.IsDefaultBody {
 		body, err = n.renderRuleTemplate(strings.Join(nonEmpty(result.Body), "\n\n"))
 	} else {
 		body, err = n.renderChannelTemplate(ctx, as, n.conf.Message)

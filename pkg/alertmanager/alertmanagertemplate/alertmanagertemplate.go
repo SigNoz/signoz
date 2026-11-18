@@ -36,11 +36,14 @@ func (at *templater) Expand(
 
 	title, titleMissingVars, err := at.expandTitle(req.TitleTemplate, ntd)
 	if err != nil {
-		return nil, err
+		at.logger.WarnContext(ctx, "custom title template failed, falling back to default template", slog.String("rule.id", ntd.Rule.ID), errors.Attr(err))
+		title, titleMissingVars = "", nil
 	}
 	// if title template results in empty string, use default template
 	// this happens for rules where custom title annotation was not set
-	if title == "" && req.DefaultTitleTemplate != "" {
+	// or failed to render
+	isDefaultTitle := title == ""
+	if isDefaultTitle && req.DefaultTitleTemplate != "" {
 		title, err = at.expandDefaultTemplate(ctx, req.DefaultTitleTemplate, alerts)
 		if err != nil {
 			return nil, err
@@ -52,10 +55,12 @@ func (at *templater) Expand(
 	isDefaultBody := false
 	body, bodyMissingVars, err := at.expandBody(req.BodyTemplate, ntd)
 	if err != nil {
-		return nil, err
+		at.logger.WarnContext(ctx, "custom body template failed, falling back to default template", slog.String("rule.id", ntd.Rule.ID), errors.Attr(err))
+		body, bodyMissingVars = nil, nil
 	}
 	// if body template results in nil, use default template
 	// this happens for rules where custom body annotation was not set
+	// or failed to render
 	if body == nil {
 		isDefaultBody = true
 		defaultBody, err := at.expandDefaultTemplate(ctx, req.DefaultBodyTemplate, alerts)
@@ -78,6 +83,7 @@ func (at *templater) Expand(
 		Title:            title,
 		Body:             body,
 		MissingVars:      missingVarsList,
+		IsDefaultTitle:   isDefaultTitle,
 		IsDefaultBody:    isDefaultBody,
 		NotificationData: ntd,
 	}, nil

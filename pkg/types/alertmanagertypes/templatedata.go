@@ -37,7 +37,7 @@ func FilterPublicAnnotations(kv template.KV) template.KV {
 
 // ExpandRequest carries the title/body templates and their defaults handed to
 // Templater.Expand. Default templates are used when the custom templates
-// expand to empty strings.
+// expand to empty strings or fail to render.
 type ExpandRequest struct {
 	TitleTemplate        string
 	BodyTemplate         string
@@ -52,8 +52,13 @@ type ExpandResult struct {
 	// Body is the expanded notification body, one entry per input alert. The
 	// body template is applied per-alert and concatenated by the caller.
 	Body []string
+	// IsDefaultTitle is true when Title came from the default template (no
+	// user-authored title was supplied, it expanded to nothing, or it failed
+	// to render), false when a custom template was used.
+	IsDefaultTitle bool
 	// IsDefaultBody is true when Body came from the default template (no
-	// user-authored body was supplied), false when a custom template was used.
+	// user-authored body was supplied, or it failed to render), false when a
+	// custom template was used.
 	IsDefaultBody bool
 	// MissingVars is the union of $-references in the title and body templates
 	// that did not resolve to any known field. Surfaced for preview warnings;
