@@ -9,6 +9,7 @@ import { rest } from 'msw';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import { queryRangeV5ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
@@ -97,3 +98,5 @@ export const celeryTaskMocks = defineStoryMocks({
 		reduxState: timeRangeState(),
 	}),
 });
+
+export type CeleryTaskArgs = PageStoryArgs<typeof celeryTaskMocks>;
