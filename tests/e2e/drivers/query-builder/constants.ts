@@ -6,6 +6,7 @@ export const EXPLORER = {
 	logs: '/logs/logs-explorer',
 	traces: '/traces-explorer',
 	metrics: '/metrics-explorer/explorer',
+	ai: '/ai-observability/explorer',
 } as const;
 
 /** A monotonic Sum in the golden dataset. */
