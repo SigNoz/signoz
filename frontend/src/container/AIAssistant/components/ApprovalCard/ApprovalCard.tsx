@@ -195,6 +195,7 @@ export default function ApprovalCard({
 					color="primary"
 					variant="solid"
 					size="md"
+					width="100%"
 					onClick={handleApprove}
 					disabled={isStreaming}
 					prefix={<Check />}
@@ -205,6 +206,7 @@ export default function ApprovalCard({
 					disabledTooltip="Wait for the response to finish"
 					variant="outlined"
 					size="md"
+					width="100%"
 					color="secondary"
 					onClick={handleReject}
 					disabled={isStreaming}

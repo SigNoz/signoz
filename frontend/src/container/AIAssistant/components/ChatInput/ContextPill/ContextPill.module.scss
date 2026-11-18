@@ -31,10 +31,7 @@
 			max-width 0.12s,
 			margin-left 0.12s,
 			opacity 0.12s;
-		--button-width: 12px;
-		--button-min-width: 0;
 		--button-height: 15px;
-		--button-padding: 0;
 	}
 
 	&:hover > [data-slot='button'],
