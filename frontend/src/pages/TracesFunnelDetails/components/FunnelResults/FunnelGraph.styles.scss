@@ -56,7 +56,6 @@
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			font-family: 'Geist Mono', monospace;
 			font-size: 12px;
 
 			&__left {
@@ -94,7 +93,7 @@
 
 			&__value {
 				color: var(--l1-foreground);
-				font-family: 'Geist Mono';
+				font-family: var(--code-small-400-font-family);
 				font-size: 12px;
 			}
 		}
