@@ -61,6 +61,8 @@ interface ChatInputProps {
 	) => void;
 	onCancel?: () => void;
 	disabled?: boolean;
+	/** Keeps the field editable but blocks sending. */
+	sendDisabled?: boolean;
 	disabledTooltip?: string;
 	placeholder?: string;
 	/** Focuses the textarea each time it changes. */
@@ -212,6 +214,7 @@ export default function ChatInput({
 	onSend,
 	onCancel,
 	disabled,
+	sendDisabled = false,
 	disabledTooltip,
 	placeholder = 'Ask Noz…',
 	focusRequest,
@@ -446,7 +449,7 @@ export default function ChatInput({
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
-		if (!trimmed && pendingFiles.length === 0) {
+		if (disabled || sendDisabled || (!trimmed && pendingFiles.length === 0)) {
 			return;
 		}
 
@@ -478,7 +481,16 @@ export default function ChatInput({
 		setPendingFiles([]);
 		setSelectedContexts([]);
 		textareaRef.current?.focus();
-	}, [text, pendingFiles, onSend, selectedContexts, autoContexts, capText]);
+	}, [
+		text,
+		pendingFiles,
+		disabled,
+		sendDisabled,
+		onSend,
+		selectedContexts,
+		autoContexts,
+		capText,
+	]);
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -940,13 +952,17 @@ export default function ChatInput({
 					) : (
 						<Tooltip title="Send message">
 							<Button
-								disabledTooltip={disabled ? disabledTooltip : 'Type a message first'}
+								disabledTooltip={
+									disabled || sendDisabled ? disabledTooltip : 'Type a message first'
+								}
 								variant="solid"
 								size="sm"
 								icon
 								color="primary"
 								onClick={handleSend}
-								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
+								disabled={
+									disabled || sendDisabled || (!text.trim() && pendingFiles.length === 0)
+								}
 								aria-label="Send message"
 							>
 								<ArrowUp size={14} />

@@ -140,10 +140,9 @@ export default function ConversationView({
 
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
-	const inputDisabled =
-		isPlayingSnake ||
+	const inputDisabled = isPlayingSnake || isLoadingThread;
+	const sendDisabled =
 		isStreamingHere ||
-		isLoadingThread ||
 		Boolean(pendingApprovalHere) ||
 		Boolean(pendingClarificationHere);
 	let inputDisabledTooltip: string | undefined;
@@ -221,6 +220,7 @@ export default function ConversationView({
 					onSend={handleSend}
 					onCancel={handleCancel}
 					disabled={inputDisabled}
+					sendDisabled={sendDisabled}
 					disabledTooltip={inputDisabledTooltip}
 					placeholder={isPlayingSnake ? SNAKE_PLACEHOLDER : undefined}
 					focusRequest={inputFocusRequest}
