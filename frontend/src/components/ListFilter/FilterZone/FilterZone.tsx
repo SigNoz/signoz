@@ -7,6 +7,7 @@ import type { DslGrammar, SuggestionSource } from '../dsl/types';
 import SearchBar from '../SearchBar/SearchBar';
 import type {
 	CreatorOption,
+	ExtraFiltersApi,
 	FilterAppliedPayload,
 	FilterAppliedType,
 } from '../types';
@@ -30,8 +31,8 @@ interface Props {
 	placeholder?: string;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	// Rendered in the filters row after the chips.
-	extraFilters?: ReactNode;
+	// Rendered in the filters row after the chips. A function receives the draft.
+	extraFilters?: ReactNode | ((api: ExtraFiltersApi) => ReactNode);
 	// Shows Clear even when the query is empty.
 	hasExtraFilters?: boolean;
 	// Called by Clear after it empties the query.
@@ -80,6 +81,7 @@ function FilterZone({
 		dirty,
 		isEmpty,
 		run,
+		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
 		handleClearCreatedBy,
@@ -148,7 +150,9 @@ function FilterZone({
 							onApply={run}
 							disabled={disabled}
 						/>
-						{extraFilters}
+						{typeof extraFilters === 'function'
+							? extraFilters({ draft, applyDraft, setDraft })
+							: extraFilters}
 						{(!isEmpty || hasExtraFilters) && (
 							<Button
 								disabledTooltip={undefined}

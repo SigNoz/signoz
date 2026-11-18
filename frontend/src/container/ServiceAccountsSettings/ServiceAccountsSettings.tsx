@@ -161,13 +161,14 @@ function ServiceAccountsSettings(): JSX.Element {
 					wrapControl={wrapControl}
 					onQueryChange={handleQueryChange}
 					error={queryError ?? undefined}
-					extraFilters={
+					extraFilters={({ draft, applyDraft, setDraft }): JSX.Element => (
 						<ServiceAccountStatusFilter
-							query={searchQuery}
+							draft={draft}
 							disabled={controlsDisabled}
-							onQueryChange={handleQueryChange}
+							onApplyDraft={applyDraft}
+							setDraft={setDraft}
 						/>
-					}
+					)}
 					rightSlot={
 						<AuthZButton
 							size="md"

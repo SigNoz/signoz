@@ -191,6 +191,48 @@ describe('ServiceAccountsSettings (integration)', () => {
 		);
 	});
 
+	it('keeps an unrun draft when the status chip changes', async () => {
+		const onRequest = jest.fn() as ListRequestSpy;
+		server.use(listServiceAccountsHandler(onRequest));
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(
+			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
+
+		await screen.findByTestId('sa-row-sa-1');
+
+		setSearchDraft("name CONTAINS 'ci'");
+		await screen.findByTestId('sa-list-search-dirty');
+
+		await user.click(
+			within(screen.getByTestId('sa-filter-status')).getByRole('combobox'),
+		);
+		await user.click(
+			await waitFor(() => {
+				const option = screen
+					.getAllByTitle('Deleted')
+					.find((el) => el.classList.contains('ant-select-item-option'));
+				if (!option) {
+					throw new Error('the Deleted option has not rendered yet');
+				}
+				return option;
+			}),
+		);
+		await user.click(document.body);
+
+		await waitFor(() =>
+			expect(onRequest).toHaveBeenLastCalledWith(
+				listParams({
+					limit: '20',
+					offset: '0',
+					query: "name CONTAINS 'ci' AND status = 'deleted'",
+				}),
+			),
+		);
+	});
+
 	it('sends the draft query only when it is run', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
