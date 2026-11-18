@@ -4,8 +4,13 @@
  */
 
 import {
+	Querybuildertypesv5ColumnTypeDTO,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
 	Querybuildertypesv5RequestTypeDTO,
 	type QueryRangeV5200,
+	type Querybuildertypesv5ColumnDescriptorDTO,
+	type Querybuildertypesv5QueryRangeRequestDTO,
 	type Querybuildertypesv5TimeSeriesDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { Warning } from 'types/api';
@@ -224,8 +229,8 @@ export const queryRangeV5TimeSeriesResponse = (
 
 /**
  * The v3 shapes, which the legacy dashboard path still answers on: `GridCard`
- * without a `version` prop and `useGetValueFromWidget` both go to
- * `/api/v3/query_range` or `/api/v4/query_range` rather than v5.
+ * without a `version` prop goes to `/api/v3/query_range` or
+ * `/api/v4/query_range` rather than v5.
  */
 export interface QueryRangeV3Body extends MetricRangePayloadV3 {
 	status: string;
@@ -517,3 +522,131 @@ export const queryRangeV5HeatmapResponse = ({
 		},
 	},
 });
+
+/** The v5 request's builder queries and formulas in the shape `keysFor` reads them. */
+const v5QueryShapes = (
+	body: Querybuildertypesv5QueryRangeRequestDTO,
+): (BuilderQueryShape & { aggregations: number })[] =>
+	(body.compositeQuery?.queries ?? []).flatMap((envelope) => {
+		if (
+			envelope.type ===
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+		) {
+			const { spec } = envelope;
+			return [
+				{
+					queryName: spec?.name ?? '',
+					legend: spec?.legend,
+					disabled: spec?.disabled,
+					groupBy: (spec?.groupBy ?? []).map(({ name }) => ({ key: name })),
+					aggregations: Math.max(spec?.aggregations?.length ?? 0, 1),
+				},
+			];
+		}
+		if (
+			envelope.type ===
+			Querybuildertypesv5QueryEnvelopeFormulaDTOType.builder_formula
+		) {
+			const { spec } = envelope;
+			return [
+				{
+					queryName: spec?.name ?? '',
+					legend: spec?.legend,
+					disabled: spec?.disabled,
+					aggregations: 1,
+				},
+			];
+		}
+		return [];
+	});
+
+/**
+ * Answers a v5 request from the request itself: a time-series request gets one
+ * series per group-by combination, a scalar request one row per combination with
+ * a column per aggregation.
+ */
+export const queryRangeV5ForRequest = (
+	body: Querybuildertypesv5QueryRangeRequestDTO,
+	{ count = 1, labelValues = {} }: BuilderResponseOptions = {},
+): QueryRangeV5200 => {
+	const queries = v5QueryShapes(body);
+	const enabled = queries.filter((query) => !query.disabled);
+	const start = body.start ?? 0;
+	const end = body.end ?? 0;
+
+	if (body.requestType === Querybuildertypesv5RequestTypeDTO.scalar) {
+		const keys = [
+			...new Set(enabled.flatMap((query) => keysFor(query, queries))),
+		];
+		const columns: Querybuildertypesv5ColumnDescriptorDTO[] = [
+			...keys.map((name) => ({
+				name,
+				queryName: '',
+				columnType: Querybuildertypesv5ColumnTypeDTO.group,
+			})),
+			...enabled.flatMap((query) =>
+				Array.from({ length: query.aggregations }, (_unused, aggregationIndex) => ({
+					name: `__result_${aggregationIndex}`,
+					queryName: query.queryName,
+					aggregationIndex,
+					columnType: Querybuildertypesv5ColumnTypeDTO.aggregation,
+				})),
+			),
+		];
+		const rows = Array.from({ length: count }, (_unused, index) => [
+			...keys.map((key) => builderLabelValue(key, index, labelValues)),
+			...columns
+				.slice(keys.length)
+				.map((_column, columnIndex) =>
+					seededMetricValue(index + columnIndex, 20 + columnIndex * 30, 60),
+				),
+		]);
+
+		return {
+			status: 'success',
+			data: {
+				type: Querybuildertypesv5RequestTypeDTO.scalar,
+				data: { results: [{ columns, data: rows }] },
+			},
+		};
+	}
+
+	return {
+		status: 'success',
+		data: {
+			type: Querybuildertypesv5RequestTypeDTO.time_series,
+			data: {
+				results: enabled.map((query, queryIndex) => {
+					const keys = keysFor(query, queries);
+					const seriesCount = keys.length ? count : Math.min(count, 1);
+
+					return {
+						queryName: query.queryName,
+						aggregations: [
+							{
+								index: 0,
+								alias: '',
+								series: Array.from(
+									{ length: seriesCount },
+									(_unused, seriesIndex): Querybuildertypesv5TimeSeriesDTO => ({
+										labels: keys.map((key) => ({
+											key: { name: key },
+											value: builderLabelValue(key, seriesIndex, labelValues),
+										})),
+										values: timeSeriesPoints({
+											start,
+											end,
+											base: 40 + queryIndex * 15 + seriesIndex * 8,
+											amplitude: 12 + seriesIndex * 3,
+											seed: queryIndex * 5 + seriesIndex,
+										}),
+									}),
+								),
+							},
+						],
+					};
+				}),
+			},
+		},
+	};
+};
