@@ -75,7 +75,7 @@ describe('KeyboardHotkeysProvider', () => {
 	});
 
 	it('ignores keydown events dispatched on document itself', () => {
-		const handleShortcut = jest.fn();
+		const handleShortcut = jest.fn() as jest.MockedFunction<() => void>;
 
 		render(
 			<KeyboardHotkeysProvider>
