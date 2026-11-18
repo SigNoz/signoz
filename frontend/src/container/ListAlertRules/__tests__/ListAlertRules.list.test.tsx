@@ -126,7 +126,7 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders header controls (search, columns, new alert) and no state filter', async () => {
+	it('renders header controls (search, states, columns, new alert)', async () => {
 		renderListAlertRules();
 
 		await waitFor(() =>
@@ -137,9 +137,7 @@ describe('ListAlertRules — list rendering', () => {
 		expect(
 			screen.getByTestId('alert-rules-list-search-submit'),
 		).toBeInTheDocument();
-		expect(
-			screen.queryByTestId('alert-rules-filter-states'),
-		).not.toBeInTheDocument();
+		expect(screen.getByTestId('alert-rules-filter-states')).toBeInTheDocument();
 		expect(screen.getByTestId('alert-columns-button')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('list-alerts-new-alert-button'),

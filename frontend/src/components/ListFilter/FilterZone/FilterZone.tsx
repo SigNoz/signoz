@@ -29,7 +29,7 @@ interface Props {
 	placeholder?: string;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	// Rendered in the filters row after the chips.
+	// Rendered in the filters row before the chips.
 	extraFilters?: ReactNode;
 	// Shows Clear even when the query is empty.
 	hasExtraFilters?: boolean;
@@ -130,6 +130,7 @@ function FilterZone({
 						className={styles.filterControls}
 						data-testid={`${testIdPrefix}-filter-zone`}
 					>
+						{extraFilters}
 						<FilterChips
 							createdBy={reflected.createdBy}
 							updated={reflected.updated}
@@ -141,7 +142,6 @@ function FilterZone({
 							onClearCreatedBy={handleClearCreatedBy}
 							disabled={disabled}
 						/>
-						{extraFilters}
 						{(!isEmpty || hasExtraFilters) && (
 							<Button
 								disabledTooltip={undefined}
