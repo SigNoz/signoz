@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { UseQueryResult } from 'react-query';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/widgets/widget';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
@@ -131,7 +132,9 @@ describe('usePanelContextMenu', () => {
 	});
 
 	it('passes the click to onClickHandler when enableDrillDown is false', () => {
-		const onClickHandler = jest.fn();
+		const onClickHandler = jest.fn() as jest.MockedFunction<
+			OnClickPluginOpts['onClick']
+		>;
 		const { result } = renderHook(() =>
 			usePanelContextMenu({
 				widget: mockWidget,
@@ -162,7 +165,9 @@ describe('usePanelContextMenu', () => {
 	});
 
 	it('opens the popover instead of onClickHandler when enableDrillDown is true', () => {
-		const onClickHandler = jest.fn();
+		const onClickHandler = jest.fn() as jest.MockedFunction<
+			OnClickPluginOpts['onClick']
+		>;
 		const { result } = renderHook(() =>
 			usePanelContextMenu({
 				widget: mockWidget,
