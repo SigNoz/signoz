@@ -4,9 +4,19 @@
  */
 
 import { EditorView } from '@codemirror/view';
+import {
+	findSuggestion,
+	typeFilter,
+} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
+import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	type GetFieldsKeys200,
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -131,4 +141,129 @@ export const appendToAggregation = (
 export const DEFAULT_ARGS: Partial<QueryBuilderProps> = {
 	panelType: PANEL_TYPES.TIME_SERIES,
 	version: 'v3',
+};
+
+export const expectLogsQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, {
+		signal: 'logs',
+		aggregations: [{ expression: 'count()' }],
+	});
+};
+
+export const expectTracesQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, { signal: 'traces' });
+};
+
+export const expectMetricsQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, { signal: 'metrics' });
+};
+
+export const expectMeterQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, { signal: 'metrics', source: 'meter' });
+};
+
+export const expectPanelEditorQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, { signal: 'logs' });
+	await expect(
+		within(canvasElement).getByTestId('query-data-source-selector-0'),
+	).toBeVisible();
+};
+
+export const expectLogsAlertQuery = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await expectFirstQuery(canvasElement, { signal: 'logs' });
+};
+
+export const calculatedTraceFieldHandlers = [
+	rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) => {
+		const body: GetFieldsKeys200 = {
+			status: 'success',
+			data: {
+				complete: true,
+				keys: {
+					response_status_code: [
+						{
+							name: 'response_status_code',
+							description:
+								'Derived response status code from the HTTP/RPC status code attributes. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code)',
+							signal: TelemetrytypesSignalDTO.traces,
+							fieldContext: TelemetrytypesFieldContextDTO.span,
+							fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
+						},
+						{
+							name: 'response_status_code',
+							signal: TelemetrytypesSignalDTO.traces,
+							fieldContext: TelemetrytypesFieldContextDTO.attribute,
+							fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
+						},
+					],
+				},
+			},
+		};
+		return res(ctx.status(200), ctx.json(body));
+	}),
+];
+
+export const showCalculatedTraceFieldInfo = async ({
+	canvasElement,
+}: {
+	canvasElement: HTMLElement;
+}): Promise<void> => {
+	await typeFilter(canvasElement, 'attribute.response_status');
+	await findSuggestion(canvasElement, 'attribute.response_status_code');
+	await expect(
+		within(canvasElement).queryByTestId('calculated-trace-field-info'),
+	).toBeNull();
+
+	const editor = canvasElement.querySelector<HTMLElement>(
+		'.code-mirror-where-clause .cm-content',
+	);
+	const view = editor ? EditorView.findFromDOM(editor) : null;
+	if (!view) {
+		throw new Error('filter editor not mounted');
+	}
+	view.dispatch({
+		changes: { from: 0, to: view.state.doc.length, insert: '' },
+		selection: { anchor: 0 },
+	});
+	await typeFilter(canvasElement, 'span.response_status');
+	await findSuggestion(canvasElement, 'span.response_status_code');
+	await userEvent.keyboard('{ArrowDown}');
+	const info = await within(canvasElement).findByTestId(
+		'calculated-trace-field-info',
+		undefined,
+		{ timeout: 15_000 },
+	);
+	await expect(info).toHaveTextContent(
+		'Derived response status code from the HTTP/RPC status code attributes.',
+	);
+	await expect(
+		within(info).getByTestId('calculated-trace-field-docs'),
+	).toHaveAttribute(
+		'href',
+		'https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code',
+	);
 };

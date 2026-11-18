@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 
@@ -9,12 +8,19 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
 import {
+	calculatedTraceFieldHandlers,
 	DEFAULT_ARGS,
-	expectFirstQuery,
+	expectLogsAlertQuery,
+	expectLogsQuery,
+	expectMeterQuery,
+	expectMetricsQuery,
+	expectPanelEditorQuery,
+	expectTracesQuery,
 	meterQuery,
 	PANEL_EDITOR_ARGS,
 	PANEL_EDITOR_PATH,
 	routeWith,
+	showCalculatedTraceFieldInfo,
 } from './QueryBuilderV2.stories.mocks';
 import QueryProbe from './QueryProbe';
 
@@ -49,12 +55,7 @@ export const LogsExplorer: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.LOGS_EXPLORER, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, {
-			signal: 'logs',
-			aggregations: [{ expression: 'count()' }],
-		});
-	},
+	play: expectLogsQuery,
 };
 
 /** Traces explorer: a fixed traces signal, with trace matching offered. */
@@ -68,9 +69,17 @@ export const TracesExplorer: Story = {
 			route: routeWith(ROUTES.TRACES_EXPLORER, initialQueriesMap.traces),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'traces' });
+	play: expectTracesQuery,
+};
+
+/** The calculated span field explains its source attributes and links to its derivation rules. */
+export const CalculatedTraceFieldDetails: Story = {
+	...TracesExplorer,
+	parameters: {
+		...TracesExplorer.parameters,
+		msw: { handlers: calculatedTraceFieldHandlers },
 	},
+	play: showCalculatedTraceFieldInfo,
 };
 
 /** Metrics explorer: a fixed metrics signal, functions hidden. */
@@ -87,9 +96,7 @@ export const MetricsExplorer: Story = {
 			),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'metrics' });
-	},
+	play: expectMetricsQuery,
 };
 
 /** Meter explorer: metrics read from the meter source. */
@@ -105,9 +112,7 @@ export const MeterExplorer: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.METER_EXPLORER, meterQuery) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'metrics', source: 'meter' });
-	},
+	play: expectMeterQuery,
 };
 
 /**
@@ -121,12 +126,7 @@ export const PanelEditor: Story = {
 			route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.logs),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'logs' });
-		await expect(
-			within(canvasElement).getByTestId('query-data-source-selector-0'),
-		).toBeVisible();
-	},
+	play: expectPanelEditorQuery,
 };
 
 /** Logs alert: a fixed logs signal with functions, as the alert form mounts it. */
@@ -139,7 +139,5 @@ export const LogsAlert: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.ALERTS_NEW, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'logs' });
-	},
+	play: expectLogsAlertQuery,
 };

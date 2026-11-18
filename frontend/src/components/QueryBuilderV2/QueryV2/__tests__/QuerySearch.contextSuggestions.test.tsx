@@ -1,8 +1,16 @@
+import type { Completion } from '@codemirror/autocomplete';
+import {
+	type GetFieldsKeys200,
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+	TelemetrytypesSignalDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import { render, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { getCalculatedTraceFieldInfo } from '../QuerySearch/calculatedTraceFieldInfo';
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
@@ -101,12 +109,15 @@ beforeEach(() => {
 	);
 });
 
-async function renderAndType(text: string): Promise<HTMLElement> {
+async function renderAndType(
+	text: string,
+	dataSource: DataSource.LOGS | DataSource.TRACES = DataSource.LOGS,
+): Promise<HTMLElement> {
 	render(
 		<QuerySearch
 			onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
-			queryData={initialQueriesMap.logs.builder.queryData[0]}
-			dataSource={DataSource.LOGS}
+			queryData={initialQueriesMap[dataSource].builder.queryData[0]}
+			dataSource={dataSource}
 		/>,
 	);
 
@@ -215,4 +226,118 @@ describe('QuerySearch operator suggestions by key type', () => {
 		expect(labels).toContain('LIKE');
 		expect(labels).not.toContain('>');
 	});
+});
+
+describe('QuerySearch calculated trace field suggestions', () => {
+	it.each([
+		{
+			text: 'response_stat',
+			fieldName: 'response_status_code',
+			description:
+				'Derived response status code from the HTTP/RPC status code attributes. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code)',
+			expectedText:
+				'Derived response status code from the HTTP/RPC status code attributes.',
+		},
+		{
+			text: 'span.response_stat',
+			fieldName: 'response_status_code',
+			description:
+				'Derived response status code from the HTTP/RPC status code attributes. Learn more [here](https://signoz.io/docs/traces-management/guides/derived-fields-spans/#response_status_code)',
+			expectedText:
+				'Derived response status code from the HTTP/RPC status code attributes.',
+		},
+		{
+			text: 'response_stat',
+			fieldName: 'response_status_code',
+			description: undefined,
+			expectedText: 'http.response.status_code',
+		},
+		{
+			text: 'is_rem',
+			fieldName: 'is_remote',
+			description: undefined,
+			expectedText: 'Whether the span is remote.',
+		},
+	])(
+		'shows derivation help for $text with API description $description',
+		async ({ text, fieldName, description, expectedText }) => {
+			server.use(
+				rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								complete: true,
+								keys: {
+									[fieldName]: [
+										{
+											name: fieldName,
+											description,
+											fieldContext: TelemetrytypesFieldContextDTO.span,
+											fieldDataType: TelemetrytypesFieldDataTypeDTO.string,
+											signal: TelemetrytypesSignalDTO.traces,
+										},
+									],
+								},
+							},
+						} satisfies GetFieldsKeys200),
+					),
+				),
+			);
+
+			await renderAndType(text, DataSource.TRACES);
+
+			const info = await screen.findByTestId('calculated-trace-field-info');
+			expect(info).toHaveTextContent(expectedText);
+			expect(info).not.toHaveTextContent('[here]');
+			expect(screen.getByTestId('calculated-trace-field-docs')).toHaveAttribute(
+				'href',
+				`https://signoz.io/docs/traces-management/guides/derived-fields-spans/#${fieldName}`,
+			);
+		},
+	);
+
+	it.each([
+		{ dataSource: DataSource.LOGS, fieldContext: 'span', label: 'http_method' },
+		{
+			dataSource: DataSource.METRICS,
+			fieldContext: 'span',
+			label: 'http_method',
+		},
+		{
+			dataSource: DataSource.TRACES,
+			fieldContext: 'attribute',
+			label: 'http_method',
+		},
+		{
+			dataSource: DataSource.TRACES,
+			fieldContext: 'resource',
+			label: 'http_method',
+		},
+		{
+			dataSource: DataSource.TRACES,
+			fieldContext: undefined,
+			label: 'http_method',
+		},
+		{
+			dataSource: DataSource.TRACES,
+			fieldContext: 'span',
+			label: 'service.name',
+		},
+		{ dataSource: DataSource.TRACES, fieldContext: 'span', label: 'toString' },
+	])(
+		'preserves existing help for $dataSource / $fieldContext / $label',
+		({ dataSource, fieldContext, label }) => {
+			const completion: Completion & { fieldContext?: string } = {
+				label,
+				fieldContext,
+				info: 'Existing field help',
+			};
+
+			expect(getCalculatedTraceFieldInfo(completion, dataSource)).toBe(
+				'Existing field help',
+			);
+		},
+	);
 });
