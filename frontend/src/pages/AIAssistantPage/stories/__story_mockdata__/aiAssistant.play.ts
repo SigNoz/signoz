@@ -141,9 +141,9 @@ export const openContextPicker = async ({
 
 	await clickUntil(
 		() =>
-			within(canvasElement).findByRole(
-				'button',
-				{ name: /add context/i },
+			within(canvasElement).findByTestId(
+				'ai-chat-input-add-context',
+				undefined,
 				untilLoaded,
 			),
 		/checkout overview/i,
