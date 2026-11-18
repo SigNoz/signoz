@@ -6,7 +6,10 @@ import {
 } from 'components/ListFilter/dsl/filterQuery';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
-import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
+import {
+	NuqsTestingAdapter,
+	type OnUrlUpdateFunction,
+} from 'nuqs/adapters/testing';
 import {
 	act,
 	fireEvent,
@@ -326,6 +329,106 @@ describe('ServiceAccountsSettings (integration)', () => {
 		expect(onRequest).toHaveBeenLastCalledWith(
 			listParams({ limit: '20', offset: '20', query: ACTIVE_QUERY }),
 		);
+	});
+
+	it('repairs page=0 to the first page without asking for a negative offset', async () => {
+		const onRequest = jest.fn() as ListRequestSpy;
+		const onUrlUpdate = jest.fn() as jest.MockedFunction<OnUrlUpdateFunction>;
+		server.use(
+			rest.get(SA_LIST_ENDPOINT, (req, res, ctx) => {
+				onRequest(req.url.searchParams.toString());
+				if (Number(req.url.searchParams.get('offset')) < 0) {
+					return res(
+						ctx.status(400),
+						ctx.json({
+							status: 'error',
+							error: {
+								code: 'service_account_invalid_input',
+								type: 'invalid_input',
+								message: 'offset must not be negative',
+								url: '',
+								errors: [],
+								suggestions: [],
+							},
+						}),
+					);
+				}
+
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: { serviceAccounts: mockServiceAccountsAPI, total: 3 },
+					}),
+				);
+			}),
+		);
+		render(
+			<NuqsTestingAdapter
+				searchParams="?page=0"
+				rateLimitFactor={0}
+				onUrlUpdate={onUrlUpdate}
+			>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
+
+		await expect(screen.findByTestId('sa-row-sa-1')).resolves.toHaveTextContent(
+			'CI Bot',
+		);
+		expect(screen.queryByTestId('sa-query-error')).not.toBeInTheDocument();
+		expect(onRequest).not.toHaveBeenCalledWith(
+			expect.stringContaining('offset=-'),
+		);
+		await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+		const update = onUrlUpdate.mock.lastCall?.[0];
+		expect(update?.options.history).toBe('replace');
+		expect(update?.searchParams.get('page')).not.toBe('0');
+	});
+
+	it('recovers an out-of-range page to the last page that has rows', async () => {
+		const onUrlUpdate = jest.fn() as jest.MockedFunction<OnUrlUpdateFunction>;
+		server.use(
+			rest.get(SA_LIST_ENDPOINT, (req, res, ctx) => {
+				const offset = Number(req.url.searchParams.get('offset')) || 0;
+				const length = Math.max(0, Math.min(20, 25 - offset));
+
+				return res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: {
+							serviceAccounts: Array.from({ length }, (_, index) => ({
+								id: `sa-${offset + index}`,
+								name: `Bot ${offset + index}`,
+								email: `bot-${offset + index}@signoz.io`,
+								status: 'active',
+								createdAt: 1700000000 + index,
+								updatedAt: 1700000000 + index,
+							})),
+							total: 25,
+						},
+					}),
+				);
+			}),
+		);
+		render(
+			<NuqsTestingAdapter
+				searchParams="?page=99"
+				hasMemory
+				rateLimitFactor={0}
+				onUrlUpdate={onUrlUpdate}
+			>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
+
+		await expect(screen.findByTestId('sa-row-sa-20')).resolves.toHaveTextContent(
+			'Bot 20',
+		);
+		const update = onUrlUpdate.mock.lastCall?.[0];
+		expect(update?.searchParams.get('page')).toBe('2');
+		expect(update?.options.history).toBe('replace');
 	});
 
 	it('clicking a row opens the drawer with account details visible', async () => {
