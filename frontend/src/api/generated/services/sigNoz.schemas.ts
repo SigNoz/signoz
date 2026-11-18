@@ -7190,6 +7190,63 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesGeoMapPanelSpecDTO;
 }
 
+/**
+ * The panel kind.
+ */
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind {
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
+}
+export interface DashboardtypesTopListAppearanceDTO {
+	/**
+	 * @type string
+	 * @description Hex color of every bar; a matching background threshold overrides it.
+	 */
+	barColor: string;
+	/**
+	 * @type boolean
+	 * @description Numbers each row by its position in the list.
+	 */
+	showRank?: boolean;
+	/**
+	 * @type boolean
+	 * @description Shows each row's share of the listed rows' total.
+	 */
+	showShare?: boolean;
+}
+
+export interface DashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @description Rank, share and bar color options.
+	 */
+	appearance?: DashboardtypesTopListAppearanceDTO;
+	/**
+	 * @description Unit and decimal precision of the values.
+	 */
+	formatting?: DashboardtypesPanelFormattingDTO;
+	/**
+	 * @type array,null
+	 * @description Rules that recolor a row when its value compares to a threshold as specified.
+	 */
+	thresholds?: DashboardtypesComparisonThresholdDTO[] | null;
+	/**
+	 * @description The time range the rows are computed over.
+	 */
+	visualization?: DashboardtypesBasicVisualizationDTO;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO {
+	/**
+	 * @enum signoz/TopListPanel
+	 * @type string
+	 * @description The panel kind.
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind;
+	/**
+	 * @description The options for this panel kind. {} accepts every default.
+	 */
+	spec: DashboardtypesTopListPanelSpecDTO;
+}
+
 export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpecDTO
@@ -7202,7 +7259,8 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpecDTO
-	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO;
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
 	scalar = 'scalar',
@@ -8490,6 +8548,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 	'signoz/ScatterPlotPanel' = 'signoz/ScatterPlotPanel',
 	'signoz/GeoMapPanel' = 'signoz/GeoMapPanel',
+	'signoz/TopListPanel' = 'signoz/TopListPanel',
 }
 /**
  * The RFC 6902 operations, applied in order against the dashboard's postable shape.
@@ -13156,7 +13215,7 @@ export interface RuletypesNotificationSettingsDTO {
 export type RuletypesPostableRuleDTOAnnotations = { [key: string]: string };
 
 /**
- * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
  */
 export type RuletypesPostableRuleDTOLabels = { [key: string]: string };
 
@@ -13273,7 +13332,7 @@ export interface RuletypesPostableRuleDTO {
 	evaluation: RuletypesEvaluationEnvelopeDTO;
 	/**
 	 * @type object
-	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
 	 */
 	labels?: RuletypesPostableRuleDTOLabels;
 	/**
@@ -13306,7 +13365,7 @@ export interface RuletypesPostableRuleViewDTO {
 export type RuletypesRuleDTOAnnotations = { [key: string]: string };
 
 /**
- * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+ * Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
  */
 export type RuletypesRuleDTOLabels = { [key: string]: string };
 
@@ -13365,7 +13424,7 @@ export interface RuletypesRuleDTO {
 	id: string;
 	/**
 	 * @type object
-	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label.
+	 * @description Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored.
 	 */
 	labels?: RuletypesRuleDTOLabels;
 	/**

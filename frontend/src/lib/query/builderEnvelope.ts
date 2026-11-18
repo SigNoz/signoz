@@ -32,6 +32,17 @@ export function isAIBuilderEnvelope(
 	);
 }
 
+/** Exactly one `builder_query`: the only request a panel's default row limit applies to. */
+export function isLoneBuilderQuery<T extends { type: string }>(
+	envelopes: T[],
+): envelopes is [Extract<T, Querybuildertypesv5QueryEnvelopeBuilderDTO>] {
+	return (
+		envelopes.length === 1 &&
+		envelopes[0].type ===
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+	);
+}
+
 const BUILDER_PLUGIN_KINDS: string[] = [
 	DashboardtypesQueryPluginKindDTO['signoz/BuilderQuery'],
 	DashboardtypesQueryPluginKindDTO['signoz/AIBuilderQuery'],
