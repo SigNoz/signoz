@@ -5,15 +5,17 @@ import {
 import {
 	getActiveBuilder,
 	getBuilderSlotKeyForQueryType,
+	isAIQueryType,
 	isBuilderQueryType,
 	foldAISlot,
+	toSlotQuery,
 } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 const baseQuery = initialQueriesMap[DataSource.METRICS];
-const aiBuilder = initialQueryAIWithType.builder;
+const aiBuilder = getActiveBuilder(initialQueryAIWithType);
 
 describe('isBuilderQueryType', () => {
 	it.each([
@@ -89,5 +91,41 @@ describe('foldAISlot', () => {
 		expect(foldedQuery.builder.queryData).toStrictEqual([
 			{ ...untagged, builderQueryType: 'builder_ai_query' },
 		]);
+	});
+});
+
+describe('isAIQueryType', () => {
+	it.each([
+		[EQueryType.AI_QUERY_BUILDER, true],
+		[EQueryType.QUERY_BUILDER, false],
+		[EQueryType.CLICKHOUSE, false],
+		[EQueryType.PROM, false],
+	])('%s → %s', (queryType, expected) => {
+		expect(isAIQueryType(queryType)).toBe(expected);
+	});
+});
+
+describe('toSlotQuery', () => {
+	it('returns non-AI queries unchanged', () => {
+		expect(toSlotQuery(baseQuery, baseQuery)).toBe(baseQuery);
+	});
+
+	it('moves request-shape builder edits back into the AI slot', () => {
+		const slotQuery: Query = {
+			...baseQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: aiBuilder,
+		};
+		const requestQuery = foldAISlot(slotQuery);
+		const refined: Query = {
+			...requestQuery,
+			builder: { ...requestQuery.builder, queryFormulas: [] },
+		};
+
+		const restored = toSlotQuery(refined, slotQuery);
+
+		expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(restored.builder).toBe(baseQuery.builder);
+		expect(restored.builder_ai_query).toBe(refined.builder);
 	});
 });

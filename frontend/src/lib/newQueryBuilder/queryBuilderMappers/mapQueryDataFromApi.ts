@@ -38,6 +38,7 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
+	const isAIQuery = compositeQuery.queryType === EQueryType.AI_QUERY_BUILDER;
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;
@@ -50,10 +51,13 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 			}
 		} else if (q.type === 'builder_ai_query') {
 			if (spec.name) {
-				builderQueries[spec.name] = {
-					...convertBuilderQueryToIBuilderQuery(spec as BuilderQuery),
-					builderQueryType: 'builder_ai_query',
-				};
+				const builderQuery = convertBuilderQueryToIBuilderQuery(
+					spec as BuilderQuery,
+				);
+				// Only AI queries kept in `builder` (alerts) need the tag; the AI slot marks its own.
+				builderQueries[spec.name] = isAIQuery
+					? builderQuery
+					: { ...builderQuery, builderQueryType: 'builder_ai_query' };
 				builderQueryTypes[spec.name] = 'builder_ai_query';
 			}
 		} else if (q.type === 'builder_formula') {
@@ -93,8 +97,6 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 		builderQueries,
 		builderQueryTypes,
 	);
-	const isAIQuery = compositeQuery.queryType === EQueryType.AI_QUERY_BUILDER;
-
 	return {
 		builder: isAIQuery ? transformQueryBuilderDataModel({}) : builder,
 		...(isAIQuery && { builder_ai_query: builder }),

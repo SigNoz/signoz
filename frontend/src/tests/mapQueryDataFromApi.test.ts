@@ -264,10 +264,11 @@ describe('mapQueryDataFromApi', (): void => {
 			queryFormulas: [],
 			queryTraceOperator: [],
 		});
-		expect(result.builder_ai_query?.queryData[0]).toMatchObject({
-			queryName: 'A',
-			builderQueryType: 'builder_ai_query',
-		});
+		expect(result.builder_ai_query?.queryData[0].queryName).toBe('A');
+		// The AI slot marks its queries as AI; only queries kept in `builder` carry the tag.
+		expect(
+			result.builder_ai_query?.queryData[0].builderQueryType,
+		).toBeUndefined();
 		expect(result.builder_ai_query?.queryFormulas[0].queryName).toBe('F1');
 	});
 });

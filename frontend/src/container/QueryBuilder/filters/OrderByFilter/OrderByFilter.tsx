@@ -14,6 +14,7 @@ import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { getMetricNameForQuery } from '../utils';
 import { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 
 export function OrderByFilter({
 	query,
@@ -34,6 +35,7 @@ export function OrderByFilter({
 		handleSearchKeys,
 	} = useOrderByFilter({ query, onChange, entityVersion });
 
+	const builderQueryType = useBuilderQueryType(query);
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
 			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
@@ -41,7 +43,7 @@ export function OrderByFilter({
 			metricName: getMetricNameForQuery(query),
 			searchText: debouncedSearchText,
 		},
-		query.builderQueryType,
+		builderQueryType,
 		{
 			enabled: !!query.aggregateAttribute?.key || isRawQuery,
 			keepPreviousData: true,
