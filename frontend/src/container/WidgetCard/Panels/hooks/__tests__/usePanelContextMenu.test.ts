@@ -130,6 +130,61 @@ describe('usePanelContextMenu', () => {
 		expect(onClickMock).toHaveBeenCalledTimes(1);
 	});
 
+	it('passes the click to onClickHandler when enableDrillDown is false', () => {
+		const onClickHandler = jest.fn();
+		const { result } = renderHook(() =>
+			usePanelContextMenu({
+				widget: mockWidget,
+				queryResponse: mockQueryResponse,
+				enableDrillDown: false,
+				onClickHandler,
+			}),
+		);
+
+		result.current.clickHandlerWithContextMenu(
+			100,
+			200,
+			0,
+			0,
+			{ serviceName: 'svc' },
+			{ queryName: 'A', inFocusOrNot: true },
+		);
+
+		expect(onClickHandler).toHaveBeenCalledWith(
+			100,
+			200,
+			0,
+			0,
+			{ serviceName: 'svc' },
+			{ queryName: 'A', inFocusOrNot: true },
+		);
+		expect(onClickMock).not.toHaveBeenCalled();
+	});
+
+	it('opens the popover instead of onClickHandler when enableDrillDown is true', () => {
+		const onClickHandler = jest.fn();
+		const { result } = renderHook(() =>
+			usePanelContextMenu({
+				widget: mockWidget,
+				queryResponse: mockQueryResponse,
+				enableDrillDown: true,
+				onClickHandler,
+			}),
+		);
+
+		result.current.clickHandlerWithContextMenu(
+			100,
+			200,
+			0,
+			0,
+			{ serviceName: 'svc' },
+			{ queryName: 'A', inFocusOrNot: true },
+		);
+
+		expect(onClickMock).toHaveBeenCalledTimes(1);
+		expect(onClickHandler).not.toHaveBeenCalled();
+	});
+
 	it('defaults to disabled when enableDrillDown is not provided', () => {
 		const { result } = renderHook(() =>
 			usePanelContextMenu({
