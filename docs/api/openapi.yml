@@ -12321,6 +12321,8 @@ components:
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status
@@ -12389,6 +12391,8 @@ components:
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status

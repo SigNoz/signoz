@@ -13365,7 +13365,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: string;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -13387,7 +13387,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: string;
+	updatedAt: string;
 }
 
 export interface ServiceaccounttypesListableServiceAccountDTO {
@@ -13479,7 +13479,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: string;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -13505,7 +13505,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: string;
+	updatedAt: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
