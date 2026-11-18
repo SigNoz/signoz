@@ -151,7 +151,7 @@ export function getWidgetQuery({
 						queryName: 'A',
 						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'avg',
-						stepInterval: 60,
+						stepInterval: null,
 						timeAggregation: 'max',
 					},
 				],
