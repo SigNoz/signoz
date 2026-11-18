@@ -82,6 +82,13 @@ function renderActions(): ReturnType<typeof render> {
 }
 
 describe('DashboardActions - AuthZ', () => {
+	beforeAll(() => {
+		Object.defineProperty(document, 'fullscreenEnabled', {
+			configurable: true,
+			value: true,
+		});
+	});
+
 	afterEach(() => {
 		jest.restoreAllMocks();
 		server.resetHandlers();
