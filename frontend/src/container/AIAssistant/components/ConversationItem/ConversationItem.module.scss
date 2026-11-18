@@ -103,33 +103,4 @@
 	right: 0;
 	transform: translateY(-50%);
 	pointer-events: var(--actions-pointer, none);
-	--button-width: 16px;
-	--button-max-width: 16px;
-	--button-min-width: 16px;
-	--button-height: 20px;
-	--button-padding: 0;
-}
-
-// The row menu is portalled to the body, so it is reached through the attribute it carries.
-:global([data-slot='dropdown-popup'][data-conversation-menu]) {
-	--dropdown-min-inline-size: 207px;
-	--dropdown-padding-block: var(--spacing-4);
-	--dropdown-border-radius: var(--radius-2);
-	--dropdown-background-color: var(--l3-background-60);
-	--dropdown-backdrop-filter: blur(20px);
-	--dropdown-item-gap: var(--spacing-3);
-	--dropdown-item-padding: var(--spacing-2) var(--spacing-7);
-	--dropdown-item-slot-gap: var(--spacing-4);
-	--dropdown-item-icon-size: 16px;
-	--dropdown-item-line-height: 20px;
-	--dropdown-item-border-radius: 0;
-	--dropdown-item-color: var(--l1-foreground);
-	--dropdown-item-icon-color: var(--l1-foreground);
-	--dropdown-item-hover-background-color: var(--l3-background);
-	// Rows sit 20px apart across the divider, 14px elsewhere.
-	--dropdown-separator-margin-block: 0 -1px;
-
-	[data-slot='dropdown-item'] {
-		letter-spacing: -0.005em;
-	}
 }

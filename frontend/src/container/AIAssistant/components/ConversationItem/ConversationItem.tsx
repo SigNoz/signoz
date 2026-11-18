@@ -208,13 +208,7 @@ export default function ConversationItem({
 					// own clicks don't bubble, but the trigger button does.
 					onClick={(e): void => e.stopPropagation()}
 				>
-					<Dropdown
-						items={menuItems}
-						nativeButton
-						align="end"
-						side="bottom"
-						data-conversation-menu
-					>
+					<Dropdown items={menuItems} nativeButton align="end" side="bottom">
 						<Button
 							variant="link"
 							size="sm"

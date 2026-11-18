@@ -183,6 +183,8 @@ export default function ConversationsList({
 						variant="outlined"
 						size="md"
 						color="secondary"
+						width="100%"
+						maxWidth="100%"
 						prefix={<Plus size={16} />}
 						onClick={onNewConversation}
 						testId="ai-assistant-new-conversation"
