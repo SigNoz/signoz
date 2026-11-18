@@ -10,7 +10,7 @@ import type {
 	FilterAppliedPayload,
 	FilterAppliedType,
 } from '../types';
-import FilterChips from './FilterChips';
+import FilterChips, { type CreatedByProps } from './FilterChips';
 import { useFilterZoneDraft } from './useFilterZoneDraft';
 
 import styles from './FilterZone.module.scss';
@@ -92,6 +92,15 @@ function FilterZone({
 		onClearAll,
 	});
 
+	const createdByProps: CreatedByProps = creatorOptions
+		? {
+				creatorOptions,
+				createdBy: reflected.createdBy,
+				onCreatedByChange: handleCreatedByChange,
+				onClearCreatedBy: handleClearCreatedBy,
+			}
+		: {};
+
 	return (
 		<div className={styles.filterZone}>
 			<div className={styles.searchRow}>
@@ -132,14 +141,11 @@ function FilterZone({
 						data-testid={`${testIdPrefix}-filter-zone`}
 					>
 						<FilterChips
-							createdBy={reflected.createdBy}
+							{...createdByProps}
 							updated={reflected.updated}
-							creatorOptions={creatorOptions}
 							testIdPrefix={testIdPrefix}
-							onCreatedByChange={handleCreatedByChange}
 							onUpdatedChange={handleUpdatedChange}
 							onApply={run}
-							onClearCreatedBy={handleClearCreatedBy}
 							disabled={disabled}
 						/>
 						{extraFilters}
