@@ -1,7 +1,4 @@
-import {
-	Querybuildertypesv5BucketOptionsDTO,
-	Querybuildertypesv5QueryTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'constants/formats/types';
 import { EQueryType } from 'types/common/dashboard';
@@ -22,14 +19,6 @@ import {
 	TraceAggregation,
 } from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
-
-export const QueryMode = {
-	...EQueryType,
-	/** Not an `EQueryType`: AI queries are builder queries tagged `builderQueryType: builder_ai_query`. */
-	AI_QUERY_BUILDER: Querybuildertypesv5QueryTypeDTO.builder_ai_query,
-} as const;
-
-export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode];
 
 // Type for Formula
 export interface IBuilderFormula {

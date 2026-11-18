@@ -1,9 +1,8 @@
 import { type TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { EQueryType } from 'types/common/dashboard';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getPanelDefinition } from './registry';
-import { getQueryModeSignals } from './types/panelCapabilities';
+import { getQueryTypeSignals } from './types/panelCapabilities';
 import type { RenderableQueryPanelDefinition } from './types/panelDefinition';
 import type { PanelKind } from './types/panelKind';
 
@@ -50,16 +49,16 @@ export function requireQueryPanelDefinition(
 	return definition;
 }
 
-const DEFAULT_QUERY_MODE = QueryMode.QUERY_BUILDER;
+const DEFAULT_QUERY_TYPE = EQueryType.QUERY_BUILDER;
 
-/** Signals a kind can visualize in `mode`. */
+/** Signals a kind can visualize in `queryType`. */
 export function getSupportedSignals(
 	kind: PanelKind,
-	mode: QueryMode = DEFAULT_QUERY_MODE,
+	queryType: EQueryType = DEFAULT_QUERY_TYPE,
 ): TelemetrytypesSignalDTO[] {
-	return getQueryModeSignals(
-		getQueryPanelDefinition(kind)?.supportedQueryModesKindMap,
-		mode,
+	return getQueryTypeSignals(
+		getQueryPanelDefinition(kind)?.supportedQueryTypesKindMap,
+		queryType,
 	);
 }
 
@@ -71,14 +70,14 @@ export function isSignalSupported(
 }
 
 /** Authoring modes a kind supports, in tab order. */
-export function getSupportedQueryModes(kind: PanelKind): QueryMode[] {
-	const modes = getQueryPanelDefinition(kind)?.supportedQueryModesKindMap ?? {};
-	return Object.keys(modes) as QueryMode[];
+export function getSupportedQueryModes(kind: PanelKind): EQueryType[] {
+	const modes = getQueryPanelDefinition(kind)?.supportedQueryTypesKindMap ?? {};
+	return Object.keys(modes) as EQueryType[];
 }
 /** Query languages a kind supports (Query Builder / ClickHouse / PromQL). */
 export function getSupportedQueryTypes(kind: PanelKind): EQueryType[] {
 	return getSupportedQueryModes(kind).filter(
-		(mode): mode is EQueryType => mode !== QueryMode.AI_QUERY_BUILDER,
+		(queryType) => queryType !== EQueryType.AI_QUERY_BUILDER,
 	);
 }
 
@@ -116,15 +115,15 @@ export function isPanelCombinationValid({
 	return true;
 }
 
-/** `preferred` if the kind supports it, else its first supported mode (e.g. PromQL → List gives Query Builder). */
-export function resolveQueryMode(
+/** `preferred` if the kind supports it, else its first supported query type (e.g. PromQL → List gives Query Builder). */
+export function resolveQueryType(
 	kind: PanelKind,
-	preferred: QueryMode,
-): QueryMode {
+	preferred: EQueryType,
+): EQueryType {
 	const supported = getSupportedQueryModes(kind);
 	if (supported.includes(preferred)) {
 		return preferred;
 	}
-	// A query-less kind has no supported modes; the builder is the neutral answer.
-	return supported[0] ?? DEFAULT_QUERY_MODE;
+	// A query-less kind has no supported query types; the builder is the neutral answer.
+	return supported[0] ?? DEFAULT_QUERY_TYPE;
 }
