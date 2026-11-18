@@ -33,6 +33,7 @@ import {
 	queryOperatorSuggestions,
 } from 'constants/antlrQueryConstants';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
@@ -148,6 +149,7 @@ function QuerySearch({
 	metricNamespace,
 	valueSuggestionsOverride,
 }: QuerySearchProps): JSX.Element {
+	const builderQueryType = useBuilderQueryType(queryData);
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
 	const [activeKey, setActiveKey] = useState<string>('');
@@ -359,7 +361,7 @@ function QuerySearch({
 					source: signalSource as TelemetrytypesSourceDTO,
 					metricNamespace,
 				},
-				queryData.builderQueryType,
+				builderQueryType,
 			);
 
 			if (response.data.keys) {
@@ -397,7 +399,7 @@ function QuerySearch({
 			hardcodedAttributeKeys,
 			showFilterSuggestionsWithoutMetric,
 			metricNamespace,
-			queryData.builderQueryType,
+			builderQueryType,
 		],
 	);
 
@@ -539,7 +541,7 @@ function QuerySearch({
 								source: signalSource as TelemetrytypesSourceDTO,
 								metricName: debouncedMetricName ?? undefined,
 							},
-							queryData.builderQueryType,
+							builderQueryType,
 						).then((response) => {
 							const responseData = response.data;
 							const responseDataValues = responseData.values;
@@ -642,7 +644,7 @@ function QuerySearch({
 			signalSource,
 			toggleSuggestions,
 			valueSuggestionsOverride,
-			queryData.builderQueryType,
+			builderQueryType,
 		],
 	);
 
