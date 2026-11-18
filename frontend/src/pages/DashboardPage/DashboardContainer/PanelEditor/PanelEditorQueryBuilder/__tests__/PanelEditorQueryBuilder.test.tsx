@@ -7,6 +7,8 @@ import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/ty
 
 import PanelEditorQueryBuilder from '../PanelEditorQueryBuilder';
 
+const tabId = (queryType: EQueryType): string => `query-type-tab-${queryType}`;
+
 // Capture the props the (real-guard-fed) QueryBuilderV2 receives without rendering it.
 const mockQueryBuilderV2 = jest.fn();
 
@@ -98,36 +100,36 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 	it('shows no ClickHouse or PromQL tab for the List kind', () => {
 		renderBuilder('signoz/ListPanel');
 
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-		expect(screen.queryByText('ClickHouse Query')).not.toBeInTheDocument();
-		expect(screen.queryByText('PromQL')).not.toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
+		expect(screen.queryByTestId(tabId(EQueryType.CLICKHOUSE))).not.toBeInTheDocument();
+		expect(screen.queryByTestId(tabId(EQueryType.PROM))).not.toBeInTheDocument();
 	});
 
 	it('shows Query Builder + ClickHouse but not PromQL for the Table kind', () => {
 		renderBuilder('signoz/TablePanel');
 
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-		expect(screen.getByText('ClickHouse Query')).toBeInTheDocument();
-		expect(screen.queryByText('PromQL')).not.toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.CLICKHOUSE))).toBeInTheDocument();
+		expect(screen.queryByTestId(tabId(EQueryType.PROM))).not.toBeInTheDocument();
 	});
 
 	it('shows all four tabs for the Time Series kind', () => {
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-		expect(screen.getByText('ClickHouse Query')).toBeInTheDocument();
-		expect(screen.getByText('PromQL')).toBeInTheDocument();
-		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.CLICKHOUSE))).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.PROM))).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
 	});
 
 	it('shows the AI tab for the Table kind', () => {
 		renderBuilder('signoz/TablePanel');
-		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
 	});
 
 	it('shows the AI tab for the List kind', () => {
 		renderBuilder('signoz/ListPanel');
-		expect(screen.getByText('AI Query Builder')).toBeInTheDocument();
+		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
 	});
 });
 
@@ -152,8 +154,10 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		renderBuilder('signoz/TimeSeriesPanel');
 
 		expect(
-			screen.getByRole('tab', { name: 'AI Query Builder', selected: true }),
-		).toBeInTheDocument();
+			screen
+				.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))
+				.closest('[role="tab"]'),
+		).toHaveAttribute('aria-selected', 'true');
 		expect(lastQueryBuilderProps()).toMatchObject({
 			config: { initialDataSource: 'traces', queryVariant: 'static' },
 			showTraceOperator: false,
@@ -165,7 +169,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(BUILDER_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		await user.click(screen.getByText('AI Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)));
 
 		expect(updateAllQueriesOperators).toHaveBeenCalledWith(
 			expect.anything(),
@@ -190,7 +194,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(logsQuery);
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		await user.click(screen.getByText('ClickHouse Query'));
+		await user.click(screen.getByTestId(tabId(EQueryType.CLICKHOUSE)));
 		const [onClickHouse] = redirectWithQueryBuilderData.mock.calls[0];
 		expect(onClickHouse.queryType).toBe(EQueryType.CLICKHOUSE);
 		// The builder slot already holds the Query Builder query — nothing to swap.
@@ -202,7 +206,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(AI_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		await user.click(screen.getByText('Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)));
 
 		const [next] = redirectWithQueryBuilderData.mock.calls[0];
 		expect(next.queryType).toBe(EQueryType.QUERY_BUILDER);
@@ -218,7 +222,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		});
 		renderBuilder('signoz/ListPanel');
 
-		await user.click(screen.getByText('Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)));
 
 		const [next] = redirectWithQueryBuilderData.mock.calls[0];
 		expect(next.builder.queryData[0].dataSource).toBe('logs');
@@ -236,7 +240,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(logsQuery);
 		const { rerender } = render(host());
 
-		await user.click(screen.getByText('AI Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)));
 		const [aiQuery] = redirectWithQueryBuilderData.mock.calls[0];
 		// The user writes an AI query, then goes back to Query Builder.
 		const editedAIBuilder = {
@@ -244,7 +248,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		};
 		mockBuilder({ ...aiQuery, builder_ai_query: editedAIBuilder });
 		rerender(host());
-		await user.click(screen.getByText('Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)));
 		const [backToQB] = redirectWithQueryBuilderData.mock.calls[1];
 		expect(backToQB.queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(backToQB.builder).toBe(logsQuery.builder);
@@ -252,7 +256,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 
 		mockBuilder(backToQB);
 		rerender(host());
-		await user.click(screen.getByText('AI Query Builder'));
+		await user.click(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)));
 		const [backToAI] = redirectWithQueryBuilderData.mock.calls[2];
 		expect(backToAI.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
 		expect(backToAI.builder_ai_query).toBe(editedAIBuilder);
