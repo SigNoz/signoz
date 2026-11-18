@@ -10,7 +10,7 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import {
 	defineJsonEditorTheme,
@@ -140,15 +140,25 @@ function JsonEditorDrawer({
 				<div className={styles.footer}>
 					<div className={styles.footerStatus}>
 						<Tooltip title={validity.valid ? undefined : validationText}>
-							<Typography.Text
+							<span
 								className={cx(styles.validation, {
 									[styles.validationValid]: validity.valid,
 									[styles.validationInvalid]: !validity.valid,
 								})}
-								data-testid="json-editor-validation"
 							>
-								{validationText}
-							</Typography.Text>
+								<Typography
+									variant="code"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="inline"
+									textOverflow="visible"
+									data-testid="json-editor-validation"
+								>
+									{validationText}
+								</Typography>
+							</span>
 						</Tooltip>
 						{danglingWarning && (
 							<Tooltip title={danglingPanelIds.join(', ')}>
@@ -157,9 +167,19 @@ function JsonEditorDrawer({
 									data-testid="json-editor-dangling-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{danglingWarning}
-									</Typography.Text>
+									<span className={styles.warningText}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="warning"
+											as="span"
+											display="inline"
+											textOverflow="visible"
+										>
+											{danglingWarning}
+										</Typography>
+									</span>
 								</span>
 							</Tooltip>
 						)}
@@ -170,9 +190,19 @@ function JsonEditorDrawer({
 									data-testid="json-editor-missing-ref-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{missingRefWarning}
-									</Typography.Text>
+									<span className={styles.warningText}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="warning"
+											as="span"
+											display="inline"
+											textOverflow="visible"
+										>
+											{missingRefWarning}
+										</Typography>
+									</span>
 								</span>
 							</Tooltip>
 						)}
