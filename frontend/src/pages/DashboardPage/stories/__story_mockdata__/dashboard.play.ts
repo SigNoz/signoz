@@ -20,9 +20,21 @@ interface DashboardPlayContext {
 	args: PageStoryArgs<typeof dashboardMocks>;
 }
 
-const findDefaultTimeRange = async (
-	canvasElement: HTMLElement,
-): Promise<HTMLElement> => {
+const findDefaultTimeRange = async ({
+	canvasElement,
+	args,
+}: DashboardPlayContext): Promise<HTMLElement | null> => {
+	if (args.locked) {
+		await waitFor(
+			() =>
+				expect(within(canvasElement).getByTestId('show-drawer')).toHaveAttribute(
+					'aria-disabled',
+					'true',
+				),
+			PAGE_LOAD,
+		);
+		return null;
+	}
 	const panel = await openSettings(canvasElement);
 
 	return within(panel).findByTestId(
@@ -32,10 +44,10 @@ const findDefaultTimeRange = async (
 	);
 };
 
-export const showDefaultTimeRange = async ({
-	canvasElement,
-}: DashboardPlayContext): Promise<void> => {
-	await findDefaultTimeRange(canvasElement);
+export const showDefaultTimeRange = async (
+	context: DashboardPlayContext,
+): Promise<void> => {
+	await findDefaultTimeRange(context);
 };
 
 const isSliding = (element: HTMLElement): boolean => {
@@ -48,10 +60,13 @@ const isSliding = (element: HTMLElement): boolean => {
 	return false;
 };
 
-export const openDefaultTimeRange = async ({
-	canvasElement,
-}: DashboardPlayContext): Promise<void> => {
-	const select = await findDefaultTimeRange(canvasElement);
+export const openDefaultTimeRange = async (
+	context: DashboardPlayContext,
+): Promise<void> => {
+	const select = await findDefaultTimeRange(context);
+	if (!select) {
+		return;
+	}
 
 	await waitFor(() => expect(isSliding(select)).toBe(false), PAGE_LOAD);
 	await userEvent.click(select);

@@ -98,7 +98,7 @@ describe('useJsonEditor', () => {
 	const withDuration = (duration: unknown): string =>
 		JSON.stringify({ ...redacted, spec: { ...redacted.spec, duration } });
 
-	it.each(['1s', '90s', '500ms', '0m', 'abc', 30])(
+	it.each(['1s', '90s', '500ms', '0m', 'abc', '30m1h', '1m1m', 30])(
 		'rejects a spec.duration of %p the time picker cannot open',
 		(duration) => {
 			const { result } = renderHook(() =>

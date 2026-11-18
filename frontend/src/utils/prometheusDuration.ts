@@ -8,12 +8,13 @@ export const PROMETHEUS_DURATION_UNIT_MS: Record<string, number> = {
 	w: 604_800_000,
 	y: 31_536_000_000,
 };
-const DURATION_RE = /^(\d+(ms|s|m|h|d|w|y))+$/;
+// Largest unit first, each at most once: `30m1h` and `1m1m` are rejected by the API.
+const DURATION_RE = /^(\d+y)?(\d+w)?(\d+d)?(\d+h)?(\d+m)?(\d+s)?(\d+ms)?$/;
 const DURATION_TOKEN_RE = /(\d+)(ms|s|m|h|d|w|y)/g;
 
 /** Milliseconds in a Prometheus duration such as `1h30m`, or null when it is not one. */
 export function prometheusDurationToMs(value: string): number | null {
-	if (!DURATION_RE.test(value)) {
+	if (!value || !DURATION_RE.test(value)) {
 		return null;
 	}
 	let totalMs = 0;

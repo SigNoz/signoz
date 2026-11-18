@@ -231,10 +231,18 @@ describe('dashboard default time initialization', () => {
 	});
 
 	it('moves a viewer off 30 minutes when a default is first set', () => {
-		const { update } = mountDashboard('?relativeTime=30m', '');
+		const { update } = mountDashboard('', '');
+		act(() => navigate(`${PATH}?relativeTime=30m`, { replace: true }));
 		update(dashboard('1d'));
 		expect(getCurrentLocation().search).toBe('?relativeTime=1d');
 		expect(mockUpdateTimeInterval).toHaveBeenCalledWith('1d');
+	});
+
+	it('keeps a shared link time that matches the old default', () => {
+		const { update } = mountDashboard('?relativeTime=1h');
+		update(dashboard('1d'));
+		expect(getCurrentLocation().search).toBe('?relativeTime=1h');
+		expect(mockUpdateTimeInterval).not.toHaveBeenCalled();
 	});
 
 	it('keeps the time a viewer picked when the default changes', () => {

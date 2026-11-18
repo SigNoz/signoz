@@ -27,9 +27,11 @@ export function useDashboardDefaultTime(
 	const [initialized, setInitialized] = useState<{
 		dashboardId: string;
 		pathname: string;
+		followsDefault: boolean;
 	}>();
 	const isInitialized =
 		initialized?.dashboardId === dashboardId && initialized.pathname === pathname;
+	const followsDefault = isInitialized && initialized.followsDefault;
 
 	useEffect(() => {
 		if (isInitialized) {
@@ -42,18 +44,24 @@ export function useDashboardDefaultTime(
 			QueryParams.endTime,
 		].some((key) => params.has(key));
 		const relativeTime = toPickerRelativeTime(duration);
+		const opensOnDefault = !hasUrlTime && !hasPersistedTimeForRoute(pathname);
 
-		if (!hasUrlTime && !hasPersistedTimeForRoute(pathname) && relativeTime) {
+		if (opensOnDefault && relativeTime) {
 			params.set(QueryParams.relativeTime, relativeTime);
 			navigate(`${pathname}?${params.toString()}`, { replace: true });
 		}
-		setInitialized({ dashboardId, pathname });
+		// Keep the first run: StrictMode reruns this after it has already written the URL.
+		setInitialized((current) =>
+			current?.dashboardId === dashboardId && current.pathname === pathname
+				? current
+				: { dashboardId, pathname, followsDefault: opensOnDefault },
+		);
 	}, [dashboardId, duration, pathname, isInitialized, navigate]);
 
 	useEffect(() => {
 		const previous = previousDuration.current;
 		previousDuration.current = duration;
-		if (!isInitialized || previous === duration) {
+		if (!followsDefault || previous === duration) {
 			return;
 		}
 		const params = getUnstableCurrentSearchParams();
@@ -71,7 +79,7 @@ export function useDashboardDefaultTime(
 		params.set(QueryParams.relativeTime, next);
 		navigate(`${pathname}?${params.toString()}`, { replace: true });
 		dispatch(UpdateTimeInterval(next as Time));
-	}, [duration, isInitialized, pathname, navigate, dispatch]);
+	}, [duration, followsDefault, pathname, navigate, dispatch]);
 
 	return isInitialized;
 }
