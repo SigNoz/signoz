@@ -15,6 +15,7 @@ import {
 	GCP_CREDENTIALS_URL,
 } from './mockData';
 import { addProjectIds } from './projectIdsTestUtils';
+import { selectRegion } from './regionTestUtils';
 
 // `useManualAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
@@ -124,13 +125,12 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('billing@company.com');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
 
-		await user.click(screen.getByTestId('gcp-deployment-region-select'));
-		await user.click(await screen.findByText('Mumbai (asia-south1)'));
+		await selectRegion(user, 'Mumbai');
 
 		await addProjectIds(user, 'gcp-project-ids-select', [
 			'project-a',
@@ -200,12 +200,11 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('my-org');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
-		await user.click(screen.getByTestId('gcp-deployment-region-select'));
-		await user.click(await screen.findByText('Mumbai (asia-south1)'));
+		await selectRegion(user, 'Mumbai');
 
 		await addProjectIds(user, 'gcp-project-ids-select', ['project-a']);
 

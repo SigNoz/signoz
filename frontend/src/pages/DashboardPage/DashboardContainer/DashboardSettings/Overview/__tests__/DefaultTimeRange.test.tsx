@@ -88,7 +88,7 @@ describe('Dashboard settings - default time range', () => {
 		await user.click(await screen.findByTestId('dashboard-default-time-range'));
 
 		expect(
-			screen.getByRole('option', { name: 'Default (Last 30 minutes)' }),
+			await screen.findByRole('option', { name: 'Default (Last 30 minutes)' }),
 		).toBeInTheDocument();
 		expect(
 			screen.queryByRole('option', { name: 'Last 30 minutes', exact: true }),
@@ -126,7 +126,7 @@ describe('Dashboard settings - default time range', () => {
 	it('does not patch the window when it is untouched', async () => {
 		render(<Overview dashboard={buildDashboard('1h')} />);
 
-		await user.type(await screen.findByTestId('dashboard-name'), 'X');
+		await user.type(await screen.findByTestId('dashboard-name-field'), 'X');
 		await save();
 
 		await waitFor(() => {

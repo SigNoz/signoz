@@ -21,6 +21,10 @@ jest.mock('../../../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
+// Opening the region Combobox inside the Drawer takes seconds in jsdom: Base UI
+// walks every tabbable with getComputedStyle on each focus move.
+jest.setTimeout(20000);
+
 describe('GCP AgentSetup connection polling', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
