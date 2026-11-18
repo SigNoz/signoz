@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -66,6 +67,9 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 func (provider *provider) AddToRouter(router *mux.Router) error {
 	cache := middleware.NewCache(0)
 	err := router.PathPrefix("/").
+		MatcherFunc(func(req *http.Request, rm *mux.RouteMatch) bool {
+			return !strings.HasPrefix(req.URL.Path, "/api/") && req.URL.Path != "/api"
+		}).
 		Handler(
 			cache.Wrap(http.HandlerFunc(provider.ServeHTTP)),
 		).GetError()
