@@ -56,10 +56,33 @@ function ListHeader({
 
 	const metadataContent = (
 		<div className={styles.metaPanel}>
-			<Typography.Text className={styles.sortHeading}>Columns</Typography.Text>
+			<Typography
+				variant="uppercase"
+				size="small"
+				weight="bold"
+				color="tertiary"
+				as="span"
+				display="inline-block"
+				paddingTop={6}
+				paddingRight={8}
+				paddingBottom={3}
+				paddingLeft={7}
+				textOverflow="wrap"
+			>
+				Columns
+			</Typography>
 			{METADATA_COLUMNS.map((col) => (
 				<div key={col.key} className={styles.metaRow}>
-					<Typography.Text className={styles.metaLabel}>{col.label}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						{col.label}
+					</Typography>
 					<Switch
 						color="primary"
 						textPlacement="right"
@@ -80,13 +103,36 @@ function ListHeader({
 
 	return (
 		<div className={styles.wrapper}>
-			<Typography.Text className={styles.label}>Results</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				Results
+			</Typography>
 			<section className={styles.rightActions}>
 				<Popover
 					trigger="click"
 					content={
 						<div className={styles.sortContent}>
-							<Typography.Text className={styles.sortHeading}>Sort By</Typography.Text>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="bold"
+								color="tertiary"
+								as="span"
+								display="inline-block"
+								paddingTop={6}
+								paddingRight={8}
+								paddingBottom={3}
+								paddingLeft={7}
+								textOverflow="wrap"
+							>
+								Sort By
+							</Typography>
 							<Button
 								size="md"
 								variant="ghost"
@@ -133,7 +179,21 @@ function ListHeader({
 								Last updated
 							</Button>
 							<div className={styles.sortDivider} />
-							<Typography.Text className={styles.sortHeading}>Order</Typography.Text>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="bold"
+								color="tertiary"
+								as="span"
+								display="inline-block"
+								paddingTop={6}
+								paddingRight={8}
+								paddingBottom={3}
+								paddingLeft={7}
+								textOverflow="wrap"
+							>
+								Order
+							</Typography>
 							<Button
 								size="md"
 								variant="ghost"
@@ -184,7 +244,16 @@ function ListHeader({
 							)
 						}
 					>
-						<Typography.Text className={styles.sortPrefix}>Sort:</Typography.Text>{' '}
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
+							Sort:
+						</Typography>{' '}
 						{SORT_LABELS[sortColumn]}{' '}
 					</Button>
 				</Popover>
