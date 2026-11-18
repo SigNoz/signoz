@@ -168,6 +168,13 @@ describe('MySettings Flows', () => {
 			expect(modalUpdateNameButton).toBeInTheDocument();
 		});
 
+		it('Should show the email and not the role', () => {
+			expect(screen.getByTestId('user-info-email')).toHaveTextContent(
+				'does-not-matter@signoz.io',
+			);
+			expect(screen.queryByText('admin')).not.toBeInTheDocument();
+		});
+
 		it('Should update the name on clicking Update button', async () => {
 			// Open the Update name modal first
 			const updateNameButton = screen.getByText(UPDATE_NAME_BUTTON_TEXT);
@@ -462,5 +469,36 @@ describe('MySettings Flows', () => {
 				});
 			});
 		});
+	});
+});
+
+describe('MySettings name update and app context', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
+	});
+
+	it('updates the user in the app context with the new name', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const updateUser = jest.fn();
+		render(<MySettingsContainer />, undefined, {
+			appContextOverrides: { updateUser },
+		});
+
+		await user.click(screen.getByTestId('update-name-open-btn'));
+		const nameInput = screen.getByTestId('update-name-input');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+		await user.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
+
+		await waitFor(() =>
+			expect(updateUser).toHaveBeenCalledWith(
+				expect.objectContaining({ displayName: 'New Name' }),
+			),
+		);
 	});
 });

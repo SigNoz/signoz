@@ -12,7 +12,7 @@ import (
 )
 
 func TestRedactLeafQuery(t *testing.T) {
-	t.Run("builder query drops filter, having, limit and keeps display fields", func(t *testing.T) {
+	t.Run("builder query drops filter, having, limit and keeps display fields and order", func(t *testing.T) {
 		input := qb.QueryBuilderQuery[qb.MetricAggregation]{
 			Name:         "A",
 			Signal:       telemetrytypes.SignalMetrics,
@@ -24,6 +24,7 @@ func TestRedactLeafQuery(t *testing.T) {
 			Filter:       &qb.Filter{Expression: "service.name = 'checkout'"},
 			Having:       &qb.Having{},
 			Limit:        100,
+			Order:        []qb.OrderBy{{Direction: qb.OrderDirectionAsc}},
 		}
 
 		redacted, ok := redactLeafQuery(input).(qb.QueryBuilderQuery[qb.MetricAggregation])
@@ -43,6 +44,7 @@ func TestRedactLeafQuery(t *testing.T) {
 		require.Len(t, redacted.Aggregations, 1)
 		assert.Equal(t, "system_cpu_usage", redacted.Aggregations[0].MetricName)
 		assert.Len(t, redacted.GroupBy, 1)
+		assert.Equal(t, input.Order, redacted.Order)
 	})
 
 	t.Run("promql query drops the raw query, step and disabled", func(t *testing.T) {
@@ -75,13 +77,15 @@ func TestRedactLeafQuery(t *testing.T) {
 		assert.Equal(t, "logs", redacted.Legend)
 	})
 
-	t.Run("formula keeps its expression but drops limit and having", func(t *testing.T) {
+	t.Run("formula keeps its expression and order but drops limit and having", func(t *testing.T) {
+		order := []qb.OrderBy{{Direction: qb.OrderDirectionAsc}}
 		redacted, ok := redactLeafQuery(qb.QueryBuilderFormula{
 			Name:       "F1",
 			Expression: "A / B",
 			Legend:     "ratio",
 			Limit:      50,
 			Having:     &qb.Having{},
+			Order:      order,
 		}).(qb.QueryBuilderFormula)
 		require.True(t, ok)
 
@@ -90,6 +94,7 @@ func TestRedactLeafQuery(t *testing.T) {
 		assert.Equal(t, "ratio", redacted.Legend)
 		assert.Zero(t, redacted.Limit)
 		assert.Nil(t, redacted.Having)
+		assert.Equal(t, order, redacted.Order)
 	})
 
 	t.Run("trace operator drops filter but keeps expression and aggregations", func(t *testing.T) {

@@ -139,6 +139,14 @@
       ]
     },
     {
+      "type": "organization",
+      "kind": "organization",
+      "verbs": [
+        "read",
+        "update"
+      ]
+    },
+    {
       "type": "metaresource",
       "kind": "public-dashboard",
       "verbs": [
