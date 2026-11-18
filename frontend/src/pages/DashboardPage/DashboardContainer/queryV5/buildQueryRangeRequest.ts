@@ -19,7 +19,10 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
-import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
+import {
+	isBuilderEnvelope,
+	isLoneBuilderQuery,
+} from 'lib/query/builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
@@ -221,13 +224,11 @@ function withDefaultRowLimit(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	limit: number,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
+	if (!isLoneBuilderQuery(envelopes)) {
+		return envelopes;
+	}
 	const [envelope] = envelopes;
-	if (
-		envelopes.length !== 1 ||
-		envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query ||
-		envelope.spec?.limit
-	) {
+	if (envelope.spec?.limit) {
 		return envelopes;
 	}
 	return [

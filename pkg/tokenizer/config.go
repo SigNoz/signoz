@@ -75,7 +75,7 @@ func newConfig() factory.Config {
 				Interval: 1 * time.Hour, // 1 hour
 			},
 			Token: TokenConfig{
-				MaxPerUser: 5,
+				MaxPerUser: 20,
 			},
 		},
 		JWT: JWTConfig{

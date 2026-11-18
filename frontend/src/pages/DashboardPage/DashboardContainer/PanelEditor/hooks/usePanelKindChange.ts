@@ -9,33 +9,23 @@ import type {
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
-import { handleQueryChange } from 'lib/query/panelQuery';
+import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import {
-	type BuilderVariant,
-	type BuildersByVariant,
-	type OrderByPayload,
-	type Query,
-	QueryMode,
+import type {
+	OrderByPayload,
+	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	getQueryPanelDefinition,
 	isStaticPanelKind,
-	resolveQueryMode,
+	resolveQueryType,
 } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
-import { getQueryModeSignals } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
-import {
-	getBuilderVariant,
-	getQueryMode,
-	toBuilderVariant,
-	withoutAIQueryTag,
-} from 'lib/query/queryMode';
-import { seedBuilderForMode } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';
 import { toPanelType, type PanelKind } from '../../Panels/types/panelKind';
 import { getBuilderQueries } from '../../Panels/utils/getBuilderQueries';
+import { fitQueryToKind } from '../../Panels/utils/seedBuilderForMode';
 import { toPerses } from '../../queryV5/persesQueryAdapters';
 import {
 	getSwitchedPluginSpec,
@@ -45,24 +35,20 @@ import {
 	withPercentileHistogramAggregation,
 	withSingleHeatmapQuery,
 } from '../utils/heatmapQuery';
-import { useQueryModeChange } from './useQueryModeChange';
 
-// V1's handleQueryChange clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
+// V1's panel-type rebuild clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
 	{ columnName: 'timestamp', order: 'desc' },
 ];
 
-function withDefaultListOrder(query: Query): Query {
+function withDefaultListOrder(builder: Query['builder']): Query['builder'] {
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: query.builder.queryData.map((qd) =>
-				qd.orderBy && qd.orderBy.length > 0
-					? qd
-					: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
-			),
-		},
+		...builder,
+		queryData: builder.queryData.map((qd) =>
+			qd.orderBy && qd.orderBy.length > 0
+				? qd
+				: { ...qd, orderBy: DEFAULT_LIST_ORDER_BY },
+		),
 	};
 }
 
@@ -70,7 +56,10 @@ function withDefaultListOrder(query: Query): Query {
  * Fields the new kind hides could not be seen or cleared, yet would still apply: a limit
  * would cut rows, and a trace operator would be saved and rejected by the backend.
  */
-function withoutHiddenFields(query: Query, kind: PanelKind): Query {
+function withoutHiddenFields(
+	builder: Query['builder'],
+	kind: PanelKind,
+): Query['builder'] {
 	const fields = getQueryPanelDefinition(kind)?.queryBuilderFields;
 	const limitHidden = resolveQueryBuilderField(
 		QueryBuilderField.Limit,
@@ -81,25 +70,17 @@ function withoutHiddenFields(query: Query, kind: PanelKind): Query {
 		fields,
 	).hidden;
 	if (!limitHidden && !traceOperatorHidden) {
-		return query;
+		return builder;
 	}
 	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: limitHidden
-				? query.builder.queryData.map((qd) => ({ ...qd, limit: null }))
-				: query.builder.queryData,
-			queryFormulas: limitHidden
-				? query.builder.queryFormulas.map((formula) => ({
-						...formula,
-						limit: null,
-					}))
-				: query.builder.queryFormulas,
-			queryTraceOperator: traceOperatorHidden
-				? []
-				: query.builder.queryTraceOperator,
-		},
+		...builder,
+		queryData: limitHidden
+			? builder.queryData.map((qd) => ({ ...qd, limit: null }))
+			: builder.queryData,
+		queryFormulas: limitHidden
+			? builder.queryFormulas.map((formula) => ({ ...formula, limit: null }))
+			: builder.queryFormulas,
+		queryTraceOperator: traceOperatorHidden ? [] : builder.queryTraceOperator,
 	};
 }
 
@@ -108,21 +89,17 @@ interface KindState {
 	pluginSpec: DashboardtypesPanelPluginDTO['spec'];
 	queries: DashboardtypesQueryDTO[];
 	query: Query;
-	/** Both builder variants' queries as the kind was left. */
-	builders: BuildersByVariant;
 }
 
-interface UsePanelKindAndQueryModeSwitchArgs {
+interface UsePanelKindChangeArgs {
 	spec: DashboardtypesPanelSpecDTO;
 	panelType: PANEL_TYPES;
 	setSpec: (next: DashboardtypesPanelSpecDTO) => void;
 }
 
-interface UsePanelKindAndQueryModeSwitchApi {
+interface UsePanelKindChangeApi {
 	/** Switch the panel to `newKind`, transforming/restoring its query + spec. */
 	onChangePanelKind: (newKind: PanelKind) => void;
-	/** Switch authoring tab; shares the off-screen builder stash with the kind switch. */
-	onChangeQueryMode: (key: string) => void;
 }
 
 /**
@@ -130,14 +107,13 @@ interface UsePanelKindAndQueryModeSwitchApi {
  * renderer, config sections, query-builder tabs and request type for free; this hook adds
  * the two things that don't: a per-kind session cache that makes switching reversible
  * (`Table → List → Table` restores the original query + spec), and, on first visit to a
- * kind, a query rebuild (`handleQueryChange`) + spec reset (`getSwitchedPluginSpec`).
- * It also owns the tab switch, stashing the off-screen builder variant per kind.
+ * kind, a query rebuild (`rebuildBuilderForPanelType`) + spec reset (`getSwitchedPluginSpec`).
  */
-export function usePanelKindAndQueryModeSwitch({
+export function usePanelKindChange({
 	spec,
 	panelType,
 	setSpec,
-}: UsePanelKindAndQueryModeSwitchArgs): UsePanelKindAndQueryModeSwitchApi {
+}: UsePanelKindChangeArgs): UsePanelKindChangeApi {
 	const {
 		currentQuery,
 		redirectWithQueryBuilderData,
@@ -145,8 +121,6 @@ export function usePanelKindAndQueryModeSwitch({
 	} = useQueryBuilder();
 
 	const cacheRef = useRef<Map<PanelKind, KindState>>(new Map());
-	// Builder queries for the tabs not on screen; the live one is `currentQuery.builder`.
-	const parkedBuilders = useRef<BuildersByVariant>({});
 
 	// Latest spec/query/type, read inside the stable callback without re-subscribing.
 	const specRef = useRef(spec);
@@ -155,14 +129,6 @@ export function usePanelKindAndQueryModeSwitch({
 	queryRef.current = currentQuery;
 	const panelTypeRef = useRef(panelType);
 	panelTypeRef.current = panelType;
-
-	const onChangeQueryMode = useQueryModeChange({
-		panelType,
-		supportedQueryModesKindMap:
-			getQueryPanelDefinition(spec.plugin.kind as PanelKind)
-				?.supportedQueryModesKindMap ?? {},
-		parkedBuilders,
-	});
 
 	const onChangePanelKind = useCallback(
 		(newKind: PanelKind): void => {
@@ -181,20 +147,9 @@ export function usePanelKindAndQueryModeSwitch({
 				pluginSpec: currentSpec.plugin.spec,
 				queries: currentSpec.queries,
 				query,
-				builders: {
-					...parkedBuilders.current,
-					[getBuilderVariant(query.builder)]: query.builder,
-				},
 			});
 
 			const newPanelType = toPanelType(newKind);
-			const targetMode = resolveQueryMode(newKind, getQueryMode(query));
-			const targetVariant = toBuilderVariant(targetMode);
-			// An AI query is a builder query carrying the tag, so it rides on `builder`.
-			const targetQueryType =
-				targetMode === QueryMode.AI_QUERY_BUILDER
-					? QueryMode.QUERY_BUILDER
-					: targetMode;
 
 			// Only `plugin` needs a cast: it's a discriminated union over `kind`, and a
 			// dynamically-chosen kind can't be correlated with its spec statically (as in
@@ -211,10 +166,13 @@ export function usePanelKindAndQueryModeSwitch({
 				} as DashboardtypesPanelPluginDTO,
 				queries,
 			});
-			const rebuildForNewKind = (source: Query): Query => {
-				const transformed = handleQueryChange(
+
+			const queryType = resolveQueryType(newKind, query.queryType);
+			const rebuildForNewKind = (builder: Query['builder']): Query['builder'] => {
+				// Builder-only, so either slot goes through it and the query type can't leak in.
+				const transformed = rebuildBuilderForPanelType(
 					newPanelType as keyof PartialPanelTypes,
-					{ ...source, queryType: targetQueryType },
+					builder,
 					panelTypeRef.current,
 				);
 				// Match a fresh list panel's default order so the builder's Order By isn't empty.
@@ -228,58 +186,45 @@ export function usePanelKindAndQueryModeSwitch({
 					? withSingleHeatmapQuery(ordered)
 					: withPercentileHistogramAggregation(ordered);
 			};
-			// Tab unused on this kind: AI gets a fresh seed, Query Builder reuses `source` untagged.
-			const seedTargetTab = (source: Query): Query =>
-				targetMode === QueryMode.AI_QUERY_BUILDER
-					? {
-							...source,
-							builder: seedBuilderForMode({
-								mode: targetMode,
-								defaultSignal: getQueryModeSignals(
-									getQueryPanelDefinition(newKind)?.supportedQueryModesKindMap,
-									QueryMode.QUERY_BUILDER,
-								)[0],
-								panelType: newPanelType,
-								updateAllQueriesOperators,
-							}),
-						}
-					: withoutAIQueryTag(source);
-			// Target tab's query comes from the stash; the rest stay parked.
-			const unparkTargetTab = (
-				source: Query,
-				builders: BuildersByVariant,
-			): { query: Query; parked: BuildersByVariant } => {
-				const stored = targetVariant ? builders[targetVariant] : source.builder;
-				const next = stored
-					? { ...source, builder: stored }
-					: seedTargetTab(source);
-				const parked: BuildersByVariant = { ...builders };
-				delete parked[getBuilderVariant(next.builder)];
-				return { query: next, parked };
-			};
 
-			// Revisit → restore the stash in the active mode; a static kind has no builder to re-seed.
+			// Revisit → restore the stash (the reversibility path) on the tab in use, an AI
+			// query the kind never had riding along. A static kind's stash carries
+			// `queries: []` and its builder query is untouched — there is no builder to
+			// re-seed for it.
 			const cached = cacheRef.current.get(newKind);
 			if (cached) {
 				if (isStaticPanelKind(newKind)) {
 					setSpec(buildSpec(cached.pluginSpec, cached.queries));
 					return;
 				}
-				const restored = unparkTargetTab(cached.query, cached.builders);
-				parkedBuilders.current = restored.parked;
-				// The stashed preview queries belong to the stashed query, not a swapped-in one.
+				const unfitted: Query = {
+					...cached.query,
+					queryType,
+					...(!cached.query.builder_ai_query &&
+						query.builder_ai_query && {
+							builder_ai_query: rebuildForNewKind(query.builder_ai_query),
+						}),
+				};
+				// A tab other than the stashed one may never have been authored on this kind.
+				const restored =
+					queryType === cached.query.queryType
+						? unfitted
+						: fitQueryToKind(unfitted, {
+								supportedQueryTypesKindMap:
+									getQueryPanelDefinition(newKind)?.supportedQueryTypesKindMap,
+								panelType: newPanelType,
+								updateAllQueriesOperators,
+							});
+				// The stashed preview queries belong to the stashed query's type.
 				setSpec(
 					buildSpec(
 						cached.pluginSpec,
-						restored.query.builder === cached.query.builder
+						queryType === cached.query.queryType
 							? cached.queries
-							: toPerses(restored.query, newPanelType),
+							: toPerses(restored, newPanelType),
 					),
 				);
-				redirectWithQueryBuilderData({
-					...restored.query,
-					queryType: targetQueryType,
-				});
+				redirectWithQueryBuilderData(restored);
 				return;
 			}
 
@@ -293,25 +238,15 @@ export function usePanelKindAndQueryModeSwitch({
 				return;
 			}
 
-			// First visit → rebuild both builder tabs' queries for the new panel type.
-			const transformed = rebuildForNewKind(query);
-			const rebuiltBuilders: BuildersByVariant = {};
-			(Object.keys(parkedBuilders.current) as BuilderVariant[]).forEach(
-				(variant) => {
-					const parked = parkedBuilders.current[variant];
-					if (parked) {
-						rebuiltBuilders[variant] = rebuildForNewKind({
-							...query,
-							builder: parked,
-						}).builder;
-					}
-				},
-			);
-			rebuiltBuilders[getBuilderVariant(transformed.builder)] =
-				transformed.builder;
-			const picked = unparkTargetTab(transformed, rebuiltBuilders);
-			parkedBuilders.current = picked.parked;
-			const nextQuery = picked.query;
+			// First visit → rebuild every builder slot for the new kind.
+			const nextQuery: Query = {
+				...query,
+				queryType,
+				builder: rebuildForNewKind(query.builder),
+				...(query.builder_ai_query && {
+					builder_ai_query: rebuildForNewKind(query.builder_ai_query),
+				}),
+			};
 			const signal = getBuilderQueries(currentSpec.queries)[0]
 				?.signal as TelemetrytypesSignalDTO;
 
@@ -326,5 +261,5 @@ export function usePanelKindAndQueryModeSwitch({
 		[setSpec, redirectWithQueryBuilderData, updateAllQueriesOperators],
 	);
 
-	return { onChangePanelKind, onChangeQueryMode };
+	return { onChangePanelKind };
 }
