@@ -12,6 +12,7 @@ const QUERY_TYPE_LABEL: Record<EQueryType, string> = {
 	[EQueryType.QUERY_BUILDER]: 'Query Builder',
 	[EQueryType.CLICKHOUSE]: 'ClickHouse',
 	[EQueryType.PROM]: 'PromQL',
+	[EQueryType.AI_QUERY_BUILDER]: 'AI Query Builder',
 };
 
 const SIGNAL_LABEL: Record<TelemetrytypesSignalDTO, string> = {

@@ -8,11 +8,7 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import {
-	IBuilderQuery,
-	Query,
-	QueryMode,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -63,7 +59,7 @@ describe('normalizeCompositeQuery', () => {
 			extra: 'kept',
 		};
 		const aiQuery = withBuilderQueries(initialQueriesMap.traces, [
-			{ ...tracesQuery, builderQueryType: QueryMode.AI_QUERY_BUILDER },
+			{ ...tracesQuery, builderQueryType: EQueryType.AI_QUERY_BUILDER },
 		]);
 
 		[NOT_AN_EXPLORER, ROUTES.LOGS_EXPLORER].forEach((pathname) =>
@@ -209,7 +205,7 @@ describe('normalizeCompositeQuery', () => {
 		expect(
 			firstBuilderQuery(
 				logs,
-				[{ ...logsQuery, builderQueryType: QueryMode.AI_QUERY_BUILDER }],
+				[{ ...logsQuery, builderQueryType: EQueryType.AI_QUERY_BUILDER }],
 				ROUTES.LOGS_EXPLORER,
 			).builderQueryType,
 		).toBeUndefined();
@@ -220,7 +216,7 @@ describe('normalizeCompositeQuery', () => {
 					{
 						...tracesQuery,
 						queryName: 'D',
-						builderQueryType: QueryMode.AI_QUERY_BUILDER,
+						builderQueryType: EQueryType.AI_QUERY_BUILDER,
 						...llmFilter,
 					},
 				],
@@ -244,7 +240,7 @@ describe('normalizeCompositeQuery', () => {
 		expect(
 			firstBuilderQuery(traces, [{ ...tracesQuery, ...llmFilter }], ai),
 		).toMatchObject({
-			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			builderQueryType: EQueryType.AI_QUERY_BUILDER,
 			...llmFilter,
 		});
 		expect(
@@ -261,14 +257,14 @@ describe('normalizeCompositeQuery', () => {
 				ai,
 			),
 		).toMatchObject({
-			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			builderQueryType: EQueryType.AI_QUERY_BUILDER,
 			queryName: 'B',
 			filter: { expression: '' },
 		});
 		expect(
 			firstBuilderQuery(traces, [{ ...logsQuery, queryName: 'C' }], ai),
 		).toMatchObject({
-			builderQueryType: QueryMode.AI_QUERY_BUILDER,
+			builderQueryType: EQueryType.AI_QUERY_BUILDER,
 			dataSource: DataSource.TRACES,
 			queryName: 'C',
 		});

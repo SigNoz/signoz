@@ -4,7 +4,7 @@ import { loadedSubdivisionsStore } from 'lib/visualization/charts/GeoMap/geo/sub
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
-import { QueryModeKind } from '../../types/panelCapabilities';
+import { QueryTypeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { MAX_ROWS } from './constants';
@@ -15,7 +15,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/GeoMapPanel'> = {
 	kind: 'signoz/GeoMapPanel',
@@ -25,16 +25,16 @@ export const definition: PanelDefinition<'signoz/GeoMapPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedQueryModesKindMap: {
-		[QueryMode.QUERY_BUILDER]: {
-			kind: QueryModeKind.SIGNAL,
+	supportedQueryTypesKindMap: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: QueryTypeKind.SIGNAL,
 			signals: [
 				TelemetrytypesSignalDTO.metrics,
 				TelemetrytypesSignalDTO.logs,
 				TelemetrytypesSignalDTO.traces,
 			],
 		},
-		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[EQueryType.CLICKHOUSE]: { kind: QueryTypeKind.SIGNAL_LESS },
 	},
 	queryBuilderFields: {
 		// The location comes from the group by.

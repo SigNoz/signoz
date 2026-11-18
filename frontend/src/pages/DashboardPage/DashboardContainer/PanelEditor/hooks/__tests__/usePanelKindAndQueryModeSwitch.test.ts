@@ -1,3 +1,4 @@
+import { EQueryType } from 'types/common/dashboard';
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -5,7 +6,7 @@ import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { resolveQueryMode } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
+import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
 import { toPerses } from '../../../queryV5/persesQueryAdapters';
 import { getSwitchedPluginSpec } from '../../getSwitchedPluginSpec';
@@ -18,7 +19,7 @@ jest.mock('lib/query/panelQuery', () => ({
 	handleQueryChange: jest.fn(),
 }));
 jest.mock('../../../Panels/capabilities', () => ({
-	resolveQueryMode: jest.fn(),
+	resolveQueryType: jest.fn(),
 	getSupportedSignals: jest.fn(() => ['metrics']),
 	getQueryPanelDefinition: jest.requireActual('../../../Panels/capabilities')
 		.getQueryPanelDefinition,
@@ -39,7 +40,7 @@ jest.mock('../../../Panels/utils/getBuilderQueries', () => ({
 
 const mockUseQueryBuilder = useQueryBuilder as unknown as jest.Mock;
 const mockHandleQueryChange = handleQueryChange as unknown as jest.Mock;
-const mockResolveQueryMode = resolveQueryMode as unknown as jest.Mock;
+const mockResolveQueryMode = resolveQueryType as unknown as jest.Mock;
 const mockToPerses = toPerses as unknown as jest.Mock;
 const mockGetSwitchedPluginSpec = getSwitchedPluginSpec as unknown as jest.Mock;
 const mockGetBuilderQueries = getBuilderQueries as unknown as jest.Mock;
@@ -530,7 +531,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 		expect(restored.queries).toBe(CONVERTED);
 
 		// Table's Query Builder query waited behind the AI tab — the tab switch gives it back.
-		act(() => result.current.onChangeQueryMode('builder'));
+		act(() => result.current.onChangeQueryMode(EQueryType.QUERY_BUILDER));
 		const backToQB = state.redirectWithQueryBuilderData.mock.calls[1][0] as Query;
 		expect(backToQB.builder).toBe(qbQuery.builder);
 	});
@@ -565,7 +566,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 				return state;
 			};
 
-			act(() => result.current.onChangeQueryMode('builder_ai_query'));
+			act(() => result.current.onChangeQueryMode(EQueryType.AI_QUERY_BUILDER));
 			setState(aiQuery);
 			rerender({ spec: tableSpec, panelType: PANEL_TYPES.TABLE });
 			mockResolveQueryMode.mockReturnValue('builder_ai_query');
@@ -582,7 +583,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 				expect.objectContaining({ builder: qbQuery.builder }),
 				PANEL_TYPES.TABLE,
 			);
-			act(() => result.current.onChangeQueryMode('builder'));
+			act(() => result.current.onChangeQueryMode(EQueryType.QUERY_BUILDER));
 			const { redirectWithQueryBuilderData } =
 				mockUseQueryBuilder.mock.results[
 					mockUseQueryBuilder.mock.results.length - 1
@@ -616,7 +617,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 			expect(restoredSpec.queries).toBe(TABLE_QUERIES);
 
 			// Table's Query Builder query is one tab away.
-			act(() => result.current.onChangeQueryMode('builder'));
+			act(() => result.current.onChangeQueryMode(EQueryType.QUERY_BUILDER));
 			const backToQB = state.redirectWithQueryBuilderData.mock
 				.calls[1][0] as Query;
 			expect(backToQB.builder).toBe(qbQuery.builder);
@@ -643,7 +644,7 @@ describe('usePanelKindAndQueryModeSwitch', () => {
 			expect(restoredSpec.queries).toBe(CONVERTED);
 
 			// Table's AI query is one tab away.
-			act(() => result.current.onChangeQueryMode('builder_ai_query'));
+			act(() => result.current.onChangeQueryMode(EQueryType.AI_QUERY_BUILDER));
 			const backToAI = state.redirectWithQueryBuilderData.mock
 				.calls[1][0] as Query;
 			expect(backToAI.builder).toBe(aiQuery.builder);
