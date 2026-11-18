@@ -26,4 +26,27 @@ describe('getSpanDisplayData', () => {
 			resource: { 'service.name': 'api' },
 		});
 	});
+
+	it('parses JSON object and array attributes without changing other strings', () => {
+		const span = {
+			attributes: {
+				'payment.request': '{"amount":129.99,"metadata":{"order_id":"order-42"}}',
+				'payment.tags': '["priority","online"]',
+				'http.method': 'POST',
+				'payment.note': '{"unclosed":',
+				'payment.code': '200',
+			},
+		} as unknown as SpanV3;
+
+		expect(getSpanDisplayData(span).attributes).toStrictEqual({
+			'payment.request': {
+				amount: 129.99,
+				metadata: { order_id: 'order-42' },
+			},
+			'payment.tags': ['priority', 'online'],
+			'http.method': 'POST',
+			'payment.note': '{"unclosed":',
+			'payment.code': '200',
+		});
+	});
 });
