@@ -89,7 +89,10 @@ function CeleryTaskStateGraphConfig({
 				>
 					<div className="celery-task-states__label-wrapper">
 						<div className="celery-task-states__label">{tab.label}</div>
-						<div className="celery-task-states__value">
+						<div
+							className="celery-task-states__value"
+							data-testid={`celery-state-value-${tab.key}`}
+						>
 							{isLoading
 								? '-'
 								: isError
