@@ -19,6 +19,7 @@ type SixWeek = '6w';
 type OneMonth = '1month';
 type TwoMonths = '2months';
 type Custom = 'custom';
+type Around = 'around';
 
 export type Time =
 	| FiveMin
@@ -41,7 +42,8 @@ export type Time =
 	| TenDay
 	| TwoWeek
 	| OneMonth
-	| TwoMonths;
+	| TwoMonths
+	| Around;
 
 export type TimeUnit = 'm' | 'h' | 'd' | 'w';
 
