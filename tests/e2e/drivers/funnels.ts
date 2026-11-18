@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { antdDriver } from './antd';
 import { apiDriver } from './api';
+import { inputField } from './input';
 import {
 	driver,
 	kit,
@@ -220,7 +221,7 @@ export function funnelsDriver(page: Page): Funnels {
 		newFunnelButton: () => page.getByTestId('traces-funnels-new-btn'),
 
 		search: async (text) => {
-			await page.getByTestId('traces-funnels-search').fill(text);
+			await inputField(page, 'traces-funnels-search').fill(text);
 		},
 
 		item: (name) =>
@@ -233,7 +234,7 @@ export function funnelsDriver(page: Page): Funnels {
 
 		submitCreate: async (name) => {
 			await funnels.newFunnelButton().click();
-			await page.getByTestId('create-funnel-name-input').fill(name);
+			await inputField(page, 'create-funnel-name-input').fill(name);
 			const created = page.waitForResponse(isFunnelsCall('POST', '/new'));
 			await page.getByRole('button', { name: 'Create Funnel' }).click();
 			return (await created).status();
@@ -252,7 +253,7 @@ export function funnelsDriver(page: Page): Funnels {
 		rename: async (name, next) => {
 			await openActions(funnels.item(name));
 			await page.getByTestId('funnel-action-rename').click();
-			await page.getByTestId('rename-funnel-name-input').fill(next);
+			await inputField(page, 'rename-funnel-name-input').fill(next);
 			const renamed = page.waitForResponse(
 				isFunnelsCall('PUT', /^\/[0-9a-f-]{36}$/),
 			);

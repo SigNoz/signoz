@@ -5,6 +5,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { antdDriver } from '../antd';
+import { inputField } from '../input';
 
 import { editorAt } from './editor';
 import type { AddOnField, AddOns, MetricControls } from './types';
@@ -81,8 +82,8 @@ export function addOnsAt(page: Page, root: () => Locator): AddOns {
 			},
 		},
 		having: editorAt(page, () => root().getByTestId('having-editor')),
-		limit: () => content('limit').getByTestId('input-Limit'),
-		legend: () => content('legend_format').getByTestId('input-Legend format'),
+		limit: () => inputField(content('limit'), 'input-Limit'),
+		legend: () => inputField(content('legend_format'), 'input-Legend format'),
 		reduceTo: {
 			value: () =>
 				root().getByTestId('reduce-to').locator('.ant-select-selection-item'),
