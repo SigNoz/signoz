@@ -6,7 +6,7 @@
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { rest } from 'msw';
 
-import { countControl } from '@/storybook/controls/controls';
+import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
@@ -30,6 +30,10 @@ import {
 
 const STORY_RULE_ID = 'rule-1';
 const STORY_RELATIVE_TIME = '6h';
+const STORY_CUSTOM_START = Date.UTC(2026, 10, 10);
+const STORY_CUSTOM_END = Date.UTC(2026, 10, 12);
+
+type HistoryRange = 'relative' | 'custom';
 
 const STATISTICS = 'Alert history · statistics';
 const TIMELINE = 'Alert history · timeline';
@@ -44,6 +48,13 @@ const windowOf = (req: { url: URL }): HistoryWindow => {
 
 export const alertHistoryMocks = defineStoryMocks({
 	controls: {
+		range: choiceControl<HistoryRange>('Time range', {
+			group: STATISTICS,
+			description:
+				'Relative opens the last 6h. Custom opens a fixed start and end, where the cards and the timeline title have no relative window to name.',
+			value: 'relative',
+			options: ['relative', 'custom'],
+		}),
 		triggers: countControl('Times triggered', {
 			group: STATISTICS,
 			description:
@@ -142,7 +153,10 @@ export const alertHistoryMocks = defineStoryMocks({
 			response.json(() => notificationChannelsResponse(CHANNEL_MAX)),
 		),
 	],
-	config: () => ({
-		route: `/alerts/history?ruleId=${STORY_RULE_ID}&relativeTime=${STORY_RELATIVE_TIME}`,
+	config: (values) => ({
+		route:
+			values.range === 'custom'
+				? `/alerts/history?ruleId=${STORY_RULE_ID}&startTime=${STORY_CUSTOM_START}&endTime=${STORY_CUSTOM_END}`
+				: `/alerts/history?ruleId=${STORY_RULE_ID}&relativeTime=${STORY_RELATIVE_TIME}`,
 	}),
 });
