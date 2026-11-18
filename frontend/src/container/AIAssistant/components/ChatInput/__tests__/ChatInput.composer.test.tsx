@@ -11,4 +11,16 @@ describe('ChatInput composer', () => {
 			'Ask Noz…',
 		);
 	});
+
+	it('focuses the textarea when asked again', () => {
+		const { rerender } = render(
+			<ChatInput onSend={jest.fn()} focusRequest={0} />,
+		);
+		const textarea = screen.getByTestId('ai-chat-input-textarea');
+		textarea.blur();
+
+		rerender(<ChatInput onSend={jest.fn()} focusRequest={1} />);
+
+		expect(textarea).toHaveFocus();
+	});
 });

@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useState } from 'react';
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import {
 	DOT_RADIUS,
@@ -22,18 +22,29 @@ import { getSnakeColors } from './dotGridTheme';
 
 const GAME_OVER_LABEL_MS = 4000;
 const REPLAY_LABEL = '↑ to replay';
+const playingLabel = (score: number): string =>
+	`Snake · score ${score} · ↑ ↓ ← → · Esc to quit`;
 
 // Unlocked once per page load; after that a click on the dots starts a game.
 let isSnakeUnlocked = false;
 // Room left under the snake's lowest row for the score line, so the two never touch.
 const SCORE_LINE_CLEARANCE = 30;
 
+const isField = (target: EventTarget | null): target is HTMLElement =>
+	target instanceof HTMLElement &&
+	Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+
 /** Draws the aurora dot grid; the Konami code turns it into Snake. Returns the score line. */
 export function useDotGrid(
 	canvasRef: RefObject<HTMLCanvasElement>,
 	isDarkMode: boolean,
+	onGameChange?: (isPlaying: boolean) => void,
 ): string | null {
 	const [label, setLabel] = useState<string | null>(null);
+	const onGameChangeRef = useRef(onGameChange);
+	useLayoutEffect(() => {
+		onGameChangeRef.current = onGameChange;
+	});
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -81,14 +92,24 @@ export function useDotGrid(
 			lastStep = performance.now();
 			canReplay = false;
 			window.clearTimeout(labelTimer);
-			showScoreLine(game ? 'Snake · score 0 · ↑ ↓ ← →' : null);
+			showScoreLine(game ? playingLabel(0) : null);
 			showPlayCursor();
+			onGameChangeRef.current?.(game !== null);
+		};
+		const quit = (): void => {
+			game = null;
+			canReplay = false;
+			window.clearTimeout(labelTimer);
+			showScoreLine(null);
+			showPlayCursor();
+			onGameChangeRef.current?.(false);
 		};
 		const endGame = (score: number): void => {
 			game = null;
 			canReplay = true;
 			showScoreLine(`Game over · score ${score} · ${REPLAY_LABEL}`);
 			showPlayCursor();
+			onGameChangeRef.current?.(false);
 			labelTimer = window.setTimeout(() => {
 				canReplay = false;
 				showScoreLine(null);
@@ -152,10 +173,7 @@ export function useDotGrid(
 
 		// Keys typed into a field outside this chat belong to that field.
 		const isOtherField = (target: EventTarget | null): boolean => {
-			if (
-				!(target instanceof HTMLElement) ||
-				!target.closest('input, textarea, select, [contenteditable="true"]')
-			) {
+			if (!isField(target)) {
 				return false;
 			}
 			let chat = canvas.parentElement;
@@ -171,6 +189,11 @@ export function useDotGrid(
 			}
 			const key = event.key.toLowerCase();
 			if (game) {
+				if (key === 'escape') {
+					event.preventDefault();
+					quit();
+					return;
+				}
 				const next = SNAKE_DIRECTIONS[key];
 				if (next) {
 					// Steering keys drive the snake, not the input; no turning back onto the neck.
@@ -181,7 +204,8 @@ export function useDotGrid(
 				}
 				return;
 			}
-			if (canReplay && key.startsWith('arrow')) {
+			// Arrows in the chat's input move its caret instead.
+			if (canReplay && key.startsWith('arrow') && !isField(event.target)) {
 				event.preventDefault();
 				play();
 				return;
@@ -210,7 +234,7 @@ export function useDotGrid(
 				const next = stepSnake(game, cols, gameRows);
 				if (next) {
 					if (next.score !== game.score) {
-						showScoreLine(`Snake · score ${next.score} · ↑ ↓ ← →`);
+						showScoreLine(playingLabel(next.score));
 					}
 					game = next;
 				} else {
@@ -281,6 +305,10 @@ export function useDotGrid(
 			cancelAnimationFrame(frame);
 			observer.disconnect();
 			window.clearTimeout(labelTimer);
+			setLabel(null);
+			if (game) {
+				onGameChangeRef.current?.(false);
+			}
 			window.removeEventListener('pointermove', onPointer);
 			window.removeEventListener('pointerdown', onPointer);
 			window.removeEventListener('keydown', onKeyDown);

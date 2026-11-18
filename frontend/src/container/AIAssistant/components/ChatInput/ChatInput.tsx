@@ -66,6 +66,9 @@ interface ChatInputProps {
 	onCancel?: () => void;
 	disabled?: boolean;
 	disabledTooltip?: string;
+	placeholder?: string;
+	/** Focuses the textarea each time it changes. */
+	focusRequest?: number;
 	isStreaming?: boolean;
 	/** When the current stream began; drives the top-edge sweep. */
 	streamStartedAt?: number | null;
@@ -236,6 +239,8 @@ export default function ChatInput({
 	onCancel,
 	disabled,
 	disabledTooltip,
+	placeholder = 'Ask Noz…',
+	focusRequest,
 	isStreaming = false,
 	streamStartedAt = null,
 	showNozPeek = false,
@@ -439,6 +444,12 @@ export default function ChatInput({
 	useEffect(() => {
 		textareaRef.current?.focus();
 	}, []);
+
+	useEffect(() => {
+		if (focusRequest) {
+			textareaRef.current?.focus();
+		}
+	}, [focusRequest]);
 
 	// Auto-grow the textarea so long prompts aren't trapped in a 2-line
 	// scrolling porthole. Reset to `auto` first to let the field shrink back
@@ -778,7 +789,7 @@ export default function ChatInput({
 					ref={textareaRef}
 					className={styles.textarea}
 					data-testid="ai-chat-input-textarea"
-					placeholder="Ask Noz…"
+					placeholder={placeholder}
 					value={text}
 					onChange={(e): void => {
 						const next = capText(e.target.value);

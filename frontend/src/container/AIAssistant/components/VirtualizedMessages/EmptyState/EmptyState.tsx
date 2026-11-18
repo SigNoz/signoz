@@ -15,11 +15,13 @@ import styles from './EmptyState.module.scss';
 
 interface EmptyStateProps {
 	onSendSuggestedPrompt: (text: string) => void;
+	onSnakeGameChange?: (isPlaying: boolean) => void;
 }
 
 /** A new chat: the dot grid, Noz's intro and the suggested prompts. */
 export default function EmptyState({
 	onSendSuggestedPrompt,
+	onSnakeGameChange,
 }: EmptyStateProps): JSX.Element {
 	const isCompact = useVariant() === 'panel';
 	const { chips: emptyStateChips, isLoading: areChipsLoading } =
@@ -27,7 +29,7 @@ export default function EmptyState({
 
 	return (
 		<div className={cx(styles.empty, { [styles.compact]: isCompact })}>
-			<DotGrid className={styles.dotGrid} />
+			<DotGrid className={styles.dotGrid} onGameChange={onSnakeGameChange} />
 			<div className={styles.emptyContent}>
 				<div className={styles.emptyIntro}>
 					<div className={styles.emptyHeading}>

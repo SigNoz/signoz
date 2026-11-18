@@ -27,6 +27,8 @@ interface VirtualizedMessagesProps {
 	 * page/mode/context attribution as a normal send.
 	 */
 	onSendSuggestedPrompt: (text: string) => void;
+	/** A Snake game on the empty state's dot grid started or ended. */
+	onSnakeGameChange?: (isPlaying: boolean) => void;
 }
 
 export default function VirtualizedMessages({
@@ -34,6 +36,7 @@ export default function VirtualizedMessages({
 	messages,
 	isStreaming,
 	onSendSuggestedPrompt,
+	onSnakeGameChange,
 }: VirtualizedMessagesProps): JSX.Element {
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
@@ -159,7 +162,12 @@ export default function VirtualizedMessages({
 	const isEmptyState = messages.length === 0 && !showStreamingSlot;
 
 	if (isEmptyState) {
-		return <EmptyState onSendSuggestedPrompt={onSendSuggestedPrompt} />;
+		return (
+			<EmptyState
+				onSendSuggestedPrompt={onSendSuggestedPrompt}
+				onSnakeGameChange={onSnakeGameChange}
+			/>
+		);
 	}
 
 	const totalCount = messages.length + (showStreamingSlot ? 1 : 0);

@@ -17,6 +17,8 @@ import { useVariant } from '../VariantContext';
 
 import styles from './ConversationView.module.scss';
 
+const SNAKE_PLACEHOLDER = 'Playing Snake · Esc to quit';
+
 interface ConversationViewProps {
 	conversationId: string;
 }
@@ -28,6 +30,15 @@ export default function ConversationView({
 	const isCompact = variant === 'panel';
 	const isFullPage = variant === 'page';
 	const location = useAppLocation();
+
+	const [isPlayingSnake, setIsPlayingSnake] = useState(false);
+	const [inputFocusRequest, setInputFocusRequest] = useState(0);
+	const handleSnakeGameChange = useCallback((isPlaying: boolean): void => {
+		setIsPlayingSnake(isPlaying);
+		if (!isPlaying) {
+			setInputFocusRequest((n) => n + 1);
+		}
+	}, []);
 
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
@@ -130,12 +141,15 @@ export default function ConversationView({
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
 	const inputDisabled =
+		isPlayingSnake ||
 		isStreamingHere ||
 		isLoadingThread ||
 		Boolean(pendingApprovalHere) ||
 		Boolean(pendingClarificationHere);
 	let inputDisabledTooltip: string | undefined;
-	if (isStreamingHere) {
+	if (isPlayingSnake) {
+		inputDisabledTooltip = SNAKE_PLACEHOLDER;
+	} else if (isStreamingHere) {
 		inputDisabledTooltip = 'Wait for the response to finish';
 	} else if (isLoadingThread) {
 		inputDisabledTooltip = 'Wait for the conversation to load';
@@ -187,6 +201,7 @@ export default function ConversationView({
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
+				onSnakeGameChange={handleSnakeGameChange}
 				onSendSuggestedPrompt={(text): void => {
 					handleSend(
 						text,
@@ -207,6 +222,8 @@ export default function ConversationView({
 					onCancel={handleCancel}
 					disabled={inputDisabled}
 					disabledTooltip={inputDisabledTooltip}
+					placeholder={isPlayingSnake ? SNAKE_PLACEHOLDER : undefined}
+					focusRequest={inputFocusRequest}
 					isStreaming={isStreamingHere}
 					streamStartedAt={streamStartedAt}
 					showNozPeek={messages.length === 0 && !isStreamingHere}
