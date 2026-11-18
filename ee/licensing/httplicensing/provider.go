@@ -172,12 +172,7 @@ func (provider *provider) GetActive(ctx context.Context, organizationID valuer.U
 		return cached.License, nil
 	}
 
-	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
-	if err != nil {
-		return nil, err
-	}
-
-	activeLicense, err := licensetypes.GetActiveLicenseFromStorableLicenses(storableLicenses, organizationID)
+	activeLicense, err := provider.getActiveFromStore(ctx, organizationID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
@@ -189,26 +184,8 @@ func (provider *provider) GetActive(ctx context.Context, organizationID valuer.U
 	return activeLicense, err
 }
 
-func (provider *provider) getActiveFromCache(ctx context.Context, organizationID valuer.UUID) (*cachedActiveLicense, bool) {
-	cached := new(cachedActiveLicense)
-	err := provider.cache.Get(ctx, organizationID, activeLicenseCacheKey, cached)
-	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			provider.settings.Logger().WarnContext(ctx, "failed to read active license from cache", errors.Attr(err), slog.String("org_id", organizationID.StringValue()))
-		}
-
-		return nil, false
-	}
-
-	if cached.License != nil && cached.License.IsExpired() {
-		return nil, false
-	}
-
-	return cached, true
-}
-
 func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUID) error {
-	activeLicense, err := provider.GetActive(ctx, organizationID)
+	activeLicense, err := provider.getActiveFromStore(ctx, organizationID)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil
@@ -291,4 +268,31 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	}
 
 	return licensetypes.NewStatsFromLicense(activeLicense), nil
+}
+
+func (provider *provider) getActiveFromCache(ctx context.Context, organizationID valuer.UUID) (*cachedActiveLicense, bool) {
+	cached := new(cachedActiveLicense)
+	err := provider.cache.Get(ctx, organizationID, activeLicenseCacheKey, cached)
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			provider.settings.Logger().WarnContext(ctx, "failed to read active license from cache", errors.Attr(err), slog.String("org_id", organizationID.StringValue()))
+		}
+
+		return nil, false
+	}
+
+	if cached.License != nil && cached.License.IsExpired() {
+		return nil, false
+	}
+
+	return cached, true
+}
+
+func (provider *provider) getActiveFromStore(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error) {
+	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return licensetypes.GetActiveLicenseFromStorableLicenses(storableLicenses, organizationID)
 }

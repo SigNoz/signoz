@@ -9,7 +9,7 @@ import (
 
 const (
 	activeLicenseCacheKey string        = "active_license"
-	activeLicenseCacheTTL time.Duration = time.Minute
+	activeLicenseCacheTTL time.Duration = 5 * time.Minute
 )
 
 // A nil License means the organization has no active license.

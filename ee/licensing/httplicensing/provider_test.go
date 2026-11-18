@@ -175,6 +175,7 @@ func TestRefreshClearsCachedActiveLicenseOnDowngrade(t *testing.T) {
 
 	staleLastValidatedAt := time.Now().Add(-4 * time.Hour).UTC()
 	mock.ExpectQuery(selectLicensesQuery).WillReturnRows(newLicenseRows(staleLastValidatedAt))
+	mock.ExpectQuery(selectLicensesQuery).WillReturnRows(newLicenseRows(staleLastValidatedAt))
 	mock.ExpectExec(updateLicenseQuery).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectQuery(selectLicensesQuery).WillReturnRows(newLicenseRows(staleLastValidatedAt))
 
@@ -185,6 +186,29 @@ func TestRefreshClearsCachedActiveLicenseOnDowngrade(t *testing.T) {
 
 	_, err = licensing.GetActive(ctx, testOrganizationID)
 	require.NoError(t, err)
+
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestRefreshWritesActiveLicenseFromStoreNotCache(t *testing.T) {
+	ctx := context.Background()
+	licensing, mock, licenseCache := newTestLicensing(t)
+
+	staleLastValidatedAt := time.Now().Add(-4 * time.Hour).UTC()
+	staleCachedLicense := &licensetypes.License{
+		ID:              testLicenseID,
+		Key:             "stale-cached-license-key",
+		ValidFrom:       1732146923,
+		ValidUntil:      -1,
+		LastValidatedAt: staleLastValidatedAt,
+		OrganizationID:  testOrganizationID,
+	}
+	require.NoError(t, licenseCache.Set(ctx, testOrganizationID, activeLicenseCacheKey, &cachedActiveLicense{License: staleCachedLicense}, activeLicenseCacheTTL))
+
+	mock.ExpectQuery(selectLicensesQuery).WillReturnRows(newLicenseRows(staleLastValidatedAt))
+	mock.ExpectExec(`UPDATE "license" .*'test-license-key'`).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	require.NoError(t, licensing.Refresh(ctx, testOrganizationID))
 
 	require.NoError(t, mock.ExpectationsWereMet())
 }
