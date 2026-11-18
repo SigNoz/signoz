@@ -11,6 +11,7 @@ import {
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
 import { QuickFilterManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import { DataSource } from 'types/common/queryBuilder';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { grantsAll } from '@/storybook/access/access';
@@ -85,6 +86,35 @@ export const loadNextListPage = async ({
 
 		await expect(Math.max(...indexes)).toBeGreaterThanOrEqual(LIST_PAGE_SIZE);
 	}, untilLoaded);
+};
+
+export const openDownloadOptions = async ({
+	args,
+}: PlayContext): Promise<void> => {
+	const inTraceView = showsView(args, ExplorerViews.TRACE);
+	if (!inTraceView && !showsView(args, ExplorerViews.LIST)) {
+		return;
+	}
+
+	await userEvent.click(
+		await screen.findByTestId(
+			`periscope-btn-download-${DataSource.TRACES}`,
+			{},
+			untilLoaded,
+		),
+	);
+	await screen.findByRole('dialog', { name: 'Export options' });
+
+	if (inTraceView) {
+		await expect(
+			screen.queryByTestId('export-columns-scope'),
+		).not.toBeInTheDocument();
+		return;
+	}
+
+	await waitFor(() =>
+		expect(screen.getByTestId('export-columns-scope')).toBeVisible(),
+	);
 };
 
 export const openQuickFiltersSettings = async ({

@@ -7,6 +7,7 @@ import { type TracesArgs, tracesMocks } from './TracesModulePage.stories.mocks';
 import {
 	dirtyQuickFiltersSettings,
 	loadNextListPage,
+	openDownloadOptions,
 	openQuickFiltersSettings,
 	showRootSpansNextPage,
 	suggestBooleanValues,
@@ -65,6 +66,15 @@ export const RootSpansNextPage: Story = {
 export const ListNextPage: Story = {
 	args: { spans: 150 },
 	play: loadNextListPage,
+};
+
+/**
+ * The List view's export menu: format, row count, and whether to export all
+ * span fields or only the selected columns. The Trace view's menu has no
+ * columns choice.
+ */
+export const DownloadOptions: Story = {
+	play: openDownloadOptions,
 };
 
 /** The charted view of the same trace query. */
