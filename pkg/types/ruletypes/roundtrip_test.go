@@ -51,7 +51,6 @@ func TestV2RoundTripRolling(t *testing.T) {
 		"description": "watches cpu",
 		"ruleType": "promql_rule",
 		"schemaVersion": "v2alpha1",
-		"version": "v5",
 		"disabled": true,
 		"labels": ` + labels + `,
 		"annotations": ` + annotations + `,
@@ -159,7 +158,6 @@ func TestV2MinimalReadShape(t *testing.T) {
 	assert.JSONEq(t, `false`, string(ns["usePolicy"]))
 
 	assert.JSONEq(t, `false`, string(body["disabled"]))
-	assert.JSONEq(t, `""`, string(body["version"]))
 
 	var condition struct {
 		Thresholds struct {

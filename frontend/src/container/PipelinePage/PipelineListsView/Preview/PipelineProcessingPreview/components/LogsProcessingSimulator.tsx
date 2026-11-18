@@ -19,6 +19,7 @@ function LogsProcessingSimulator({
 					disabled={(inputLogs?.length || 0) < 1}
 					type="primary"
 					onClick={simulate}
+					data-testid="pipeline-simulate-processing"
 				>
 					Simulate Processing
 				</Button>

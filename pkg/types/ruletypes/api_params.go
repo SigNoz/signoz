@@ -54,6 +54,9 @@ const (
 	SchemaVersionV2Alpha1 = "v2alpha1"
 )
 
+// legacyRuleKeys are accepted from older clients but kept out of the schema; nothing reads them.
+var legacyRuleKeys = []string{"source", "version"}
+
 type RuleDataKind string
 
 const (
@@ -68,14 +71,14 @@ type PostableRule struct {
 	RuleType    RuleType           `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
 
 	RuleCondition *RuleCondition    `json:"condition" required:"true" description:"The query to evaluate and the thresholds applied to its result."`
-	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label."`
+	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored."`
 	Annotations   map[string]string `json:"annotations,omitempty" description:"Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels."`
 
 	Disabled bool `json:"disabled" description:"Whether the rule is paused. A disabled rule is neither evaluated nor notifies. Defaults to false."`
 
-	Source string `json:"source,omitempty" description:"The URL of the page the rule was created from. Informational; it is not used for evaluation."`
-
-	Version string `json:"version" description:"The query payload version. Nothing reads it."`
+	// legacyRuleKeys: stored and echoed as sent
+	Source  string `json:"source,omitempty"`
+	Version string `json:"version,omitempty"`
 
 	Evaluation    *EvaluationEnvelope `json:"evaluation" required:"true" description:"The evaluation window, as a kind and spec."`
 	SchemaVersion string              `json:"schemaVersion" required:"true" enum:"v2alpha1" description:"The rule payload schema."`
@@ -247,6 +250,21 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	return r.validate()
 }
 
+func NewPatchedPostableRule(stored []byte, patch []byte) (*PostableRule, error) {
+	patched := new(PostableRule)
+	if err := json.Unmarshal(stored, patched); err != nil {
+		return nil, err
+	}
+	// a rule stored before selectedQueryName was required resolves it the way evaluation does
+	patched.RuleCondition.SelectedQuery = patched.RuleCondition.SelectedQueryName()
+
+	if err := patched.DecodeStrict(string(patch)); err != nil {
+		return nil, err
+	}
+
+	return patched, nil
+}
+
 func (r *PostableRule) DecodeStrict(ruleStr string) error {
 	err := json.Unmarshal([]byte(ruleStr), r)
 	if err == nil {
@@ -263,13 +281,9 @@ func (r *PostableRule) DecodeStrict(ruleStr string) error {
 
 var _ jsonschema.Preparer = PostableRule{}
 
-// PrepareJSONSchema marks version and source deprecated: nothing reads them,
-// they stay only so existing clients keep a stable schema.
 func (PostableRule) PrepareJSONSchema(schema *jsonschema.Schema) error {
-	for _, name := range []string{"version", "source"} {
-		if property, ok := schema.Properties[name]; ok && property.TypeObject != nil {
-			property.TypeObject.WithDeprecated(true)
-		}
+	for _, key := range legacyRuleKeys {
+		delete(schema.Properties, key)
 	}
 	return nil
 }

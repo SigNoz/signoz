@@ -6,7 +6,6 @@ import useComponentPermission from './useComponentPermission';
 describe('useComponentPermission', () => {
 	const componentList: ComponentTypes[] = [
 		'current_org_settings',
-		'invite_members',
 		'create_new_dashboards',
 		'import_dashboard',
 		'export_dashboard',
@@ -29,7 +28,6 @@ describe('useComponentPermission', () => {
 		);
 		const expectedResult = [
 			true, // current_org_settings
-			true, // invite_members
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
@@ -54,7 +52,6 @@ describe('useComponentPermission', () => {
 		);
 		const expectedResult = [
 			false, // current_org_settings
-			false, // invite_members
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
@@ -79,7 +76,6 @@ describe('useComponentPermission', () => {
 		);
 		const expectedResult = [
 			false, // current_org_settings
-			false, // invite_members
 			false, // create_new_dashboards
 			false, // import_dashboard
 			true, // export_dashboard

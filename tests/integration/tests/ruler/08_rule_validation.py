@@ -309,6 +309,25 @@ def test_create_rejects_unknown_field(
     }
 
 
+def test_writes_accept_version_and_source(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_alert_rule: Callable[[dict], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    rule_id = create_alert_rule({**VALID_RULE, "version": "v5", "source": "https://signoz.test/alerts/new"})
+
+    response = requests.patch(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{rule_id}"),
+        json={"version": "v4", "source": "https://signoz.test/alerts/edit"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+
+
 def test_create_rejects_numeric_eval_window(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
@@ -403,8 +422,8 @@ def test_update_rejects_malformed_id(
         "status": "error",
         "error": {
             "type": "invalid-input",
-            "code": "invalid_input",
-            "message": "id is not a valid uuid",
+            "code": "invalid_selector",
+            "message": "invalid selector for type metaresource: not-a-uuid",
             "errors": [],
             "suggestions": [],
         },

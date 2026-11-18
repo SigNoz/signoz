@@ -6,7 +6,7 @@ import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -15,7 +15,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
 import { Atom, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
 import ChQuerySection from './ChQuerySection';
@@ -37,7 +36,6 @@ function QuerySection({
 	runQuery,
 	isLoadingQueries,
 	handleCancelQuery,
-	alertDef,
 	panelType,
 	ruleId,
 	isAnomalyDetection,
@@ -71,12 +69,8 @@ function QuerySection({
 				signalSource: signalSource === 'meter' ? 'meter' : '',
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
-			showFunctions={
-				(alertType === AlertTypes.METRICS_BASED_ALERT &&
-					alertDef.version === ENTITY_VERSION_V4) ||
-				alertType === AlertTypes.LOGS_BASED_ALERT
-			}
-			version={alertDef.version || 'v3'}
+			showFunctions={alertType === AlertTypes.LOGS_BASED_ALERT}
+			version={ENTITY_VERSION_V5}
 			onSignalSourceChange={handleSignalSourceChange}
 			signalSourceChangeEnabled
 		/>
@@ -301,7 +295,6 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	isLoadingQueries: boolean;
 	handleCancelQuery: () => void;
-	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
 	isAnomalyDetection?: boolean;

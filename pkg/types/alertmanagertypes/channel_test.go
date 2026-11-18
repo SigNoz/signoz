@@ -332,3 +332,28 @@ func TestMapChannelNamesToIDs(t *testing.T) {
 		})
 	}
 }
+
+func TestMapKnownChannelNamesToIDs(t *testing.T) {
+	slackID := valuer.GenerateUUID()
+	pagerID := valuer.GenerateUUID()
+	channels := Channels{
+		{Identifiable: types.Identifiable{ID: slackID}, DisplayName: "slack-alerts"},
+		{Identifiable: types.Identifiable{ID: pagerID}, DisplayName: "pager-oncall"},
+	}
+
+	testCases := []struct {
+		name  string
+		names []string
+		want  []string
+	}{
+		{name: "AllKnown_IDsInRequestOrder", names: []string{"pager-oncall", "slack-alerts"}, want: []string{pagerID.StringValue(), slackID.StringValue()}},
+		{name: "UnknownName_Skipped", names: []string{"slack-alerts", "deleted-channel"}, want: []string{slackID.StringValue()}},
+		{name: "NoNames_Empty", names: nil, want: []string{}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.want, MapKnownChannelNamesToIDs(channels, testCase.names))
+		})
+	}
+}

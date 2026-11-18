@@ -1,14 +1,14 @@
 import { createRef } from 'react';
 import type { ReactNode } from 'react';
-import { useHistory } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen } from 'tests/test-utils';
 
 import { AppLink, type AppLinkProps } from '../AppLink';
 import { useAppLocation } from '../useAppLocation';
+import { useAppNavigationType } from '../useAppNavigationType';
 
 function LocationProbe(): JSX.Element {
 	const location = useAppLocation();
-	const history = useHistory();
+	const navigationType = useAppNavigationType();
 
 	return (
 		<div>
@@ -16,7 +16,7 @@ function LocationProbe(): JSX.Element {
 			<span data-testid="search">{location.search}</span>
 			<span data-testid="hash">{location.hash}</span>
 			<span data-testid="state">{JSON.stringify(location.state ?? null)}</span>
-			<span data-testid="length">{history.length}</span>
+			<span data-testid="action">{navigationType}</span>
 		</div>
 	);
 }
@@ -146,17 +146,23 @@ describe('AppLink', () => {
 		expect(screen.getByTestId('state')).toHaveTextContent('{"from":"test"}');
 	});
 
+	it('pushes by default', () => {
+		renderLink({ to: '/logs', 'data-testid': 'link' } as AppLinkProps);
+		fireEvent.click(screen.getByTestId('link'));
+
+		expect(screen.getByTestId('action')).toHaveTextContent('PUSH');
+	});
+
 	it('replaces the entry when replace is set', () => {
 		renderLink({
 			to: '/logs',
 			replace: true,
 			'data-testid': 'link',
 		} as AppLinkProps);
-		const before = screen.getByTestId('length').textContent;
 		fireEvent.click(screen.getByTestId('link'));
 
 		expect(screen.getByTestId('pathname')).toHaveTextContent('/logs');
-		expect(screen.getByTestId('length').textContent).toBe(before);
+		expect(screen.getByTestId('action')).toHaveTextContent('REPLACE');
 	});
 
 	it('forwards a ref to the anchor', () => {
