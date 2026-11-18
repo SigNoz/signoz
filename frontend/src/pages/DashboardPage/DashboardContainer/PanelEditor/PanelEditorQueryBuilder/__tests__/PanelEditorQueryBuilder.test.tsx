@@ -100,15 +100,21 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 	it('shows no ClickHouse or PromQL tab for the List kind', () => {
 		renderBuilder('signoz/ListPanel');
 
-		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
-		expect(screen.queryByTestId(tabId(EQueryType.CLICKHOUSE))).not.toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)),
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId(tabId(EQueryType.CLICKHOUSE)),
+		).not.toBeInTheDocument();
 		expect(screen.queryByTestId(tabId(EQueryType.PROM))).not.toBeInTheDocument();
 	});
 
 	it('shows Query Builder + ClickHouse but not PromQL for the Table kind', () => {
 		renderBuilder('signoz/TablePanel');
 
-		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)),
+		).toBeInTheDocument();
 		expect(screen.getByTestId(tabId(EQueryType.CLICKHOUSE))).toBeInTheDocument();
 		expect(screen.queryByTestId(tabId(EQueryType.PROM))).not.toBeInTheDocument();
 	});
@@ -116,20 +122,28 @@ describe('PanelEditorQueryBuilder query-type tabs (driven by the capabilities gu
 	it('shows all four tabs for the Time Series kind', () => {
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		expect(screen.getByTestId(tabId(EQueryType.QUERY_BUILDER))).toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.QUERY_BUILDER)),
+		).toBeInTheDocument();
 		expect(screen.getByTestId(tabId(EQueryType.CLICKHOUSE))).toBeInTheDocument();
 		expect(screen.getByTestId(tabId(EQueryType.PROM))).toBeInTheDocument();
-		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)),
+		).toBeInTheDocument();
 	});
 
 	it('shows the AI tab for the Table kind', () => {
 		renderBuilder('signoz/TablePanel');
-		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)),
+		).toBeInTheDocument();
 	});
 
 	it('shows the AI tab for the List kind', () => {
 		renderBuilder('signoz/ListPanel');
-		expect(screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))).toBeInTheDocument();
+		expect(
+			screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)),
+		).toBeInTheDocument();
 	});
 });
 
