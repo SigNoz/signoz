@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"math"
 	"runtime"
@@ -352,7 +353,13 @@ func parseAggregationReference(variable string) (aggregationRef, error) {
 }
 
 // EvaluateFormula processes multiple time series with proper aggregation handling.
-func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSeriesData) ([]*TimeSeries, error) {
+// When ctx is done it stops between two label sets of the result and returns
+// the error of ctx. Building the lookup is not interrupted.
+func (fe *FormulaEvaluator) EvaluateFormula(ctx context.Context, timeSeriesData map[string]*TimeSeriesData) ([]*TimeSeries, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
 	// Build lookup structures for all referenced aggregations
 	lookup := fe.buildSeriesLookup(timeSeriesData)
 
@@ -388,7 +395,7 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 				defer wg.Done()
 				for {
 					i := int(next.Add(1)) - 1
-					if i >= n {
+					if i >= n || ctx.Err() != nil {
 						return
 					}
 					results[i] = fe.evaluateForLabelSet(uniqueLabelSets[i], lookup)
@@ -396,6 +403,10 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 			}()
 		}
 		wg.Wait()
+	}
+
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
 	// Compact non-empty results in place (results[j] is read before it is

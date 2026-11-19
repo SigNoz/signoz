@@ -93,7 +93,10 @@ func (q *querier) postProcessResults(ctx context.Context, orgID valuer.UUID, res
 	}
 
 	// Apply formula calculations
-	typedResults = q.applyFormulas(ctx, typedResults, req)
+	typedResults, err := q.applyFormulas(ctx, typedResults, req)
+	if err != nil {
+		return nil, err
+	}
 
 	// Filter out disabled queries
 	typedResults = q.filterDisabledQueries(typedResults, req)
@@ -349,7 +352,7 @@ func (q *querier) applyFunctions(result *qbtypes.Result, functions []qbtypes.Fun
 }
 
 // applyFormulas processes formula queries in the composite query.
-func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]*qbtypes.Result {
+func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) (map[string]*qbtypes.Result, error) {
 	// Collect formula queries
 	formulaQueries := make(map[string]qbtypes.QueryBuilderFormula)
 
@@ -396,9 +399,19 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 			// For scalar results, apply limit by processScalarFormula itself since it needs to be applied before converting back to scalar format
 			results[name] = result
 		}
+
+		// A formula stops when the request is cancelled or out of time, and
+		// leaves no result. The request must fail then, and not answer
+		// without the formula.
+		if err := ctx.Err(); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return nil, errors.WrapTimeoutf(err, errors.CodeTimeout, "query timed out")
+			}
+			return nil, errors.WrapCanceledf(err, errors.CodeCanceled, "query canceled")
+		}
 	}
 
-	return results
+	return results, nil
 }
 
 // processTimeSeriesFormula handles formula evaluation for time series data.
@@ -427,9 +440,12 @@ func (q *querier) processTimeSeriesFormula(
 	}
 
 	// Evaluate the formula
-	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
+	formulaSeries, err := evaluator.EvaluateFormula(ctx, timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
+		// applyFormulas returns the error of a done ctx
+		if ctx.Err() == nil {
+			q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
+		}
 		return nil
 	}
 
@@ -668,9 +684,12 @@ func (q *querier) processScalarFormula(
 		return nil
 	}
 
-	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
+	formulaSeries, err := evaluator.EvaluateFormula(ctx, timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
+		// applyFormulas returns the error of a done ctx
+		if ctx.Err() == nil {
+			q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
+		}
 		return nil
 	}
 

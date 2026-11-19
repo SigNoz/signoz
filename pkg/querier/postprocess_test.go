@@ -3,7 +3,9 @@ package querier
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -115,7 +117,8 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 			Limit:      2,
 		}
 
-		out := q.applyFormulas(context.Background(), makeInputs(), makeReq(formula))
+		out, err := q.applyFormulas(context.Background(), makeInputs(), makeReq(formula))
+		require.NoError(t, err)
 		got, ok := out["F1"]
 		require.True(t, ok, "formula result missing")
 		scalar, ok := got.Value.(*qbtypes.ScalarData)
@@ -136,7 +139,8 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 			Order:      orderByFormula("F1", qbtypes.OrderDirectionAsc),
 		}
 
-		out := q.applyFormulas(context.Background(), makeInputs(), makeReq(formula))
+		out, err := q.applyFormulas(context.Background(), makeInputs(), makeReq(formula))
+		require.NoError(t, err)
 		got, ok := out["F1"]
 		require.True(t, ok)
 		scalar, ok := got.Value.(*qbtypes.ScalarData)
@@ -148,6 +152,77 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 		require.Equal(t, "a", scalar.Data[1][0])
 		require.InDelta(t, 100.0, scalar.Data[1][1].(float64), 1e-9)
 	})
+}
+
+func TestApplyFormulas_ContextDone(t *testing.T) {
+	q := &querier{
+		logger: instrumentationtest.New().Logger(),
+	}
+
+	scalarInput := func(queryName string) *qbtypes.Result {
+		return scalarInputResult(queryName, []struct {
+			service string
+			value   float64
+		}{
+			{"cart", 4},
+			{"checkout", 2},
+		})
+	}
+	timeSeriesInput := func(queryName string) *qbtypes.Result {
+		return &qbtypes.Result{
+			Value: &qbtypes.TimeSeriesData{
+				QueryName: queryName,
+				Aggregations: []*qbtypes.AggregationBucket{{
+					Index: 0,
+					Series: []*qbtypes.TimeSeries{{
+						Labels: []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: "payment"}},
+						Values: []*qbtypes.TimeSeriesValue{{Timestamp: 1000, Value: 4}},
+					}},
+				}},
+			},
+		}
+	}
+
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
+	defer cancelExpired()
+
+	testCases := []struct {
+		name        string
+		requestType qbtypes.RequestType
+		input       func(queryName string) *qbtypes.Result
+		ctx         context.Context
+		expected    error
+		// the type decides the status of the response
+		isTimeout bool
+	}{
+		{name: "Scalar_Canceled", requestType: qbtypes.RequestTypeScalar, input: scalarInput, ctx: canceled, expected: context.Canceled},
+		{name: "TimeSeries_Canceled", requestType: qbtypes.RequestTypeTimeSeries, input: timeSeriesInput, ctx: canceled, expected: context.Canceled},
+		{name: "Scalar_DeadlineExceeded", requestType: qbtypes.RequestTypeScalar, input: scalarInput, ctx: expired, expected: context.DeadlineExceeded, isTimeout: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req := &qbtypes.QueryRangeRequest{
+				RequestType: testCase.requestType,
+				CompositeQuery: qbtypes.CompositeQuery{
+					Queries: []qbtypes.QueryEnvelope{
+						{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "A"}},
+						{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "B"}},
+						{Type: qbtypes.QueryTypeFormula, Spec: qbtypes.QueryBuilderFormula{Name: "F1", Expression: "A + B"}},
+					},
+				},
+			}
+
+			// the request must fail, and not return the other results without the formula
+			out, err := q.applyFormulas(testCase.ctx, map[string]*qbtypes.Result{"A": testCase.input("A"), "B": testCase.input("B")}, req)
+			require.ErrorIs(t, err, testCase.expected)
+			assert.Nil(t, out)
+			assert.Equal(t, testCase.isTimeout, errors.Ast(err, errors.TypeTimeout))
+			assert.Equal(t, !testCase.isTimeout, errors.Ast(err, errors.TypeCanceled))
+		})
+	}
 }
 
 func TestPostProcessMetricQuery_LimitRanksByReducedValue(t *testing.T) {

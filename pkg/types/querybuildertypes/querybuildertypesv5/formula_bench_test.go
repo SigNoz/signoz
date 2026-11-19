@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -85,7 +86,7 @@ func BenchmarkFormulaEvaluator_10k_Series_300_Points(b *testing.B) {
 		numSeries, numPoints, totalDataPoints)
 
 	for i := 0; i < b.N; i++ {
-		result, err := evaluator.EvaluateFormula(timeSeriesData)
+		result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -116,7 +117,7 @@ func BenchmarkFormulaEvaluator_1k_Series_300_Points(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		result, err := evaluator.EvaluateFormula(timeSeriesData)
+		result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -142,7 +143,7 @@ func BenchmarkFormulaEvaluator_5k_Series_300_Points(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		result, err := evaluator.EvaluateFormula(timeSeriesData)
+		result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -170,7 +171,7 @@ func BenchmarkFormulaEvaluator_10k_Series_Complex(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		result, err := evaluator.EvaluateFormula(timeSeriesData)
+		result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -198,7 +199,7 @@ func BenchmarkFormulaEvaluator_Memory_Reuse(b *testing.B) {
 
 	// Run multiple times to test pool reuse
 	for i := 0; i < b.N; i++ {
-		result, err := evaluator.EvaluateFormula(timeSeriesData)
+		result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
 		if err != nil {
 			b.Fatal(err)
 		}

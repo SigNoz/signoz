@@ -1,7 +1,9 @@
 package querybuildertypesv5
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
@@ -249,7 +251,7 @@ func TestBasicFormulaEvaluation(t *testing.T) {
 			evaluator, err := NewFormulaEvaluator(tt.expression, map[string]bool{"A": true, "B": true})
 			require.NoError(t, err)
 
-			result, err := evaluator.EvaluateFormula(tt.tsData)
+			result, err := evaluator.EvaluateFormula(context.Background(), tt.tsData)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 
@@ -305,7 +307,7 @@ func TestErrorRateCalculation(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("B/A", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -360,7 +362,7 @@ func TestNoGroupKeysOnLeftSide(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("B/A", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -450,7 +452,7 @@ func TestSameGroupKeys(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A/B", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -540,7 +542,7 @@ func TestGroupKeysDifferentValues(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A/B", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -618,7 +620,7 @@ func TestLeftSideSuperset(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A/B", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -677,7 +679,7 @@ func TestNoDefaultZero(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": false, "B": false})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 
 	// Should have no result series since labels don't match and no default zero
@@ -727,7 +729,7 @@ func TestMixedQueries(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": true, "B": true, "C": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -832,7 +834,7 @@ func TestComplexExpression(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("A/B + C", map[string]bool{"A": true, "B": true, "C": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -1003,7 +1005,7 @@ func TestCaseInsensitiveQueryNames(t *testing.T) {
 			evaluator, err := NewFormulaEvaluator(tt.expression, map[string]bool{"a": true, "A": true, "b": true, "B": true, "c": true, "C": true})
 			require.NoError(t, err)
 
-			result, err := evaluator.EvaluateFormula(tt.tsData)
+			result, err := evaluator.EvaluateFormula(context.Background(), tt.tsData)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 
@@ -1041,7 +1043,7 @@ func TestAbsValueExpression(t *testing.T) {
 	evaluator, err := NewFormulaEvaluator("abs(A) + abs(B)", map[string]bool{"A": true, "B": true})
 	require.NoError(t, err)
 
-	result, err := evaluator.EvaluateFormula(tsData)
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, 1, len(result))
@@ -1104,7 +1106,7 @@ func TestSeriesMatching(t *testing.T) {
 			evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": false, "B": false})
 			require.NoError(t, err)
 
-			result, err := evaluator.EvaluateFormula(map[string]*TimeSeriesData{
+			result, err := evaluator.EvaluateFormula(context.Background(), map[string]*TimeSeriesData{
 				"A": createFormulaTestTimeSeriesData("A", testCase.a),
 				"B": createFormulaTestTimeSeriesData("B", testCase.b),
 			})
@@ -1116,6 +1118,46 @@ func TestSeriesMatching(t *testing.T) {
 				values = append(values, series.Values[0].Value)
 			}
 			assert.ElementsMatch(t, testCase.expected, values)
+		})
+	}
+}
+
+func TestEvaluateFormula_ContextDone(t *testing.T) {
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
+	defer cancelExpired()
+
+	// enough label sets to take the path with workers
+	series := make([]*TimeSeries, 0, 32)
+	for _, name := range []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"} {
+		series = append(series, &TimeSeries{
+			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: name}},
+			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
+		})
+	}
+	tsData := map[string]*TimeSeriesData{
+		"A": createFormulaTestTimeSeriesData("A", series),
+		"B": createFormulaTestTimeSeriesData("B", series),
+	}
+
+	testCases := []struct {
+		name     string
+		ctx      context.Context
+		expected error
+	}{
+		{name: "Canceled", ctx: canceled, expected: context.Canceled},
+		{name: "DeadlineExceeded", ctx: expired, expected: context.DeadlineExceeded},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": false, "B": false})
+			require.NoError(t, err)
+
+			result, err := evaluator.EvaluateFormula(testCase.ctx, tsData)
+			require.ErrorIs(t, err, testCase.expected)
+			assert.Nil(t, result)
 		})
 	}
 }

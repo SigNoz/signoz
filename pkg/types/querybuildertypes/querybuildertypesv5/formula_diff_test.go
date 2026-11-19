@@ -1,6 +1,7 @@
 package querybuildertypesv5
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"math/rand"
@@ -309,7 +310,7 @@ func TestFormulaEvaluator_DifferentialRandom(t *testing.T) {
 
 		evaluator, err := NewFormulaEvaluator(ec.expr, canDefaultZero)
 		require.NoError(t, err)
-		got, err := evaluator.EvaluateFormula(tsData)
+		got, err := evaluator.EvaluateFormula(context.Background(), tsData)
 		require.NoError(t, err)
 
 		want := referenceEvaluate(t, ec.expr, canDefaultZero, tsData)
