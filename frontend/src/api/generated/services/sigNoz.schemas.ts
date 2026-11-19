@@ -13073,14 +13073,14 @@ export interface RuletypesListableRuleDTO {
 	 */
 	ruleType: RuletypesRuleTypeDTO;
 	/**
-	 * @type array
-	 * @description The severities the rule's alerts carry: each distinct threshold name in lowercase, ordered critical, error, warning, info, then other names. Read-only.
-	 */
-	severities: string[];
-	/**
 	 * @description The current evaluation state: inactive, pending, recovering, firing, nodata or disabled.
 	 */
 	state: RuletypesAlertStateDTO;
+	/**
+	 * @type array
+	 * @description The rule's threshold names in lowercase, deduplicated and ordered critical, error, warning, info, then other names. An alert carries the name of the threshold that fired as its severity. Read-only.
+	 */
+	thresholds: string[];
 	/**
 	 * @type string
 	 * @format date-time
