@@ -71,6 +71,10 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { IngestionKeyListPermission } from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -209,6 +213,13 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
+	const { permissions: authzPermissions } = useAuthZ([
+		IngestionKeyListPermission,
+	]);
+
+	const canListIngestionKeys =
+		authzPermissions?.[IngestionKeyListPermission].isGranted ?? false;
+
 	const [
 		hasCreateLimitForIngestionKeyError,
 		setHasCreateLimitForIngestionKeyError,
@@ -313,7 +324,7 @@ function MultiIngestionSettings(): JSX.Element {
 		},
 		{
 			query: {
-				enabled: !isSearching,
+				enabled: !isSearching && canListIngestionKeys,
 			},
 		},
 	);
@@ -333,7 +344,7 @@ function MultiIngestionSettings(): JSX.Element {
 		},
 		{
 			query: {
-				enabled: isSearching,
+				enabled: isSearching && canListIngestionKeys,
 			},
 		},
 	);
@@ -1691,12 +1702,17 @@ function MultiIngestionSettings(): JSX.Element {
 				)}
 
 				<div className="ingestion-keys-search-add-new">
-					<Input
-						placeholder="Search for ingestion key..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchValue}
-						onChange={handleSearch}
-					/>
+					<AuthZTooltip
+						triggerClassName="ingestion-keys-search-auth-trigger"
+						checks={[IngestionKeyListPermission]}
+					>
+						<Input
+							placeholder="Search for ingestion key..."
+							prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+							value={searchValue}
+							onChange={handleSearch}
+						/>
+					</AuthZTooltip>
 
 					<Button
 						size="md"
@@ -1711,21 +1727,23 @@ function MultiIngestionSettings(): JSX.Element {
 					</Button>
 				</div>
 
-				<Table
-					columns={columns}
-					dataSource={dataSource}
-					loading={isLoading || isRefetching}
-					showHeader={false}
-					onChange={handleTableChange}
-					pagination={{
-						pageSize: isSearching ? SEARCH_PAGE_SIZE : paginationParams?.per_page,
-						hideOnSinglePage: true,
-						showTotal: (total: number, range: number[]): string =>
-							`${range[0]}-${range[1]} of ${total} Ingestion keys`,
-						total: totalIngestionKeys,
-					}}
-					className="ingestion-keys-table"
-				/>
+				<AuthZGuardContent checks={[IngestionKeyListPermission]}>
+					<Table
+						columns={columns}
+						dataSource={dataSource}
+						loading={isLoading || isRefetching}
+						showHeader={false}
+						onChange={handleTableChange}
+						pagination={{
+							pageSize: isSearching ? SEARCH_PAGE_SIZE : paginationParams?.per_page,
+							hideOnSinglePage: true,
+							showTotal: (total: number, range: number[]): string =>
+								`${range[0]}-${range[1]} of ${total} Ingestion keys`,
+							total: totalIngestionKeys,
+						}}
+						className="ingestion-keys-table"
+					/>
+				</AuthZGuardContent>
 			</div>
 
 			{/* Delete Key Modal */}
