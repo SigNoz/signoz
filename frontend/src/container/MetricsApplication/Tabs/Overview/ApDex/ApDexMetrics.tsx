@@ -1,6 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
 import {

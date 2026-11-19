@@ -27,6 +27,7 @@ const awaitingStream = (): ConversationStreamState => ({
 	streamingActions: null,
 	pendingApproval: null,
 	pendingClarification: null,
+	startedAt: null,
 });
 
 /**
