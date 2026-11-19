@@ -108,12 +108,20 @@ describe('NozActiveChat', () => {
 			);
 		});
 
-		it('renders nothing on the Noz full page', () => {
-			seed({ conversations: [chat('a', 'Alpha')], tabs: ['a'] });
+		it('shows on the Noz page, with the chat on the page current', () => {
+			seed({
+				conversations: [chat('a', 'Alpha'), chat('b', 'Beta')],
+				tabs: ['a', 'b'],
+				activeConversationId: 'a',
+			});
 
 			render(<NozActiveChat />, undefined, { initialRoute: '/ai-assistant/a' });
 
-			expect(screen.queryByTestId(TABS)).not.toBeInTheDocument();
+			expect(tabLabels()).toStrictEqual(['Alpha', 'Beta']);
+			expect(screen.getByTestId(`${TABS}-a-open`)).toHaveAttribute(
+				'aria-current',
+				'true',
+			);
 		});
 
 		it('renders nothing when the assistant is disabled', () => {
@@ -270,6 +278,21 @@ describe('NozActiveChat', () => {
 
 			expect(loadThread).not.toHaveBeenCalled();
 			expect(useAIAssistantStore.getState().activeConversationId).toBe('a');
+		});
+
+		it('opens a chat in the Noz page rather than the panel', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			seed({
+				conversations: [chat('a', 'Alpha', true), chat('b', 'Beta', true)],
+				tabs: ['a', 'b'],
+				activeConversationId: 'a',
+			});
+			render(<NozActiveChat />, undefined, { initialRoute: '/ai-assistant/a' });
+
+			await user.click(screen.getByTestId(`${TABS}-b-open`));
+
+			expect(useAIAssistantStore.getState().activeConversationId).toBe('b');
+			expect(useAIAssistantStore.getState().isDrawerOpen).toBe(false);
 		});
 
 		it('switches to a loaded chat without refetching it', async () => {
