@@ -1,7 +1,9 @@
 import { TableProps } from 'antd';
 import { ServicesList } from 'types/api/metrics/getService';
 
-export const columns: TableProps<ServicesList>['columns'] = [
+export const getColumns = (
+	isMetricData: boolean,
+): TableProps<ServicesList>['columns'] => [
 	{
 		title: 'APPLICATION',
 		dataIndex: 'serviceName',
@@ -11,7 +13,8 @@ export const columns: TableProps<ServicesList>['columns'] = [
 		title: 'P99 LATENCY (in ms)',
 		dataIndex: 'p99',
 		key: 'p99',
-		render: (value: number): string => (value / 1000000).toFixed(2),
+		render: (value: number): string =>
+			isMetricData ? value.toFixed(2) : (value / 1000000).toFixed(2),
 	},
 	{
 		title: 'ERROR RATE (% of total)',

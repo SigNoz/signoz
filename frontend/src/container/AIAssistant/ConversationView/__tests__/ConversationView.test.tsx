@@ -37,7 +37,16 @@ jest.mock('container/AIAssistant/hooks/useAIAssistantAnalyticsContext', () => ({
 // ConversationView imports for its dismissed-context filter.
 jest.mock('container/AIAssistant/components/ChatInput', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="chat-input" />,
+	default: ({
+		streamStartedAt,
+	}: {
+		streamStartedAt?: number | null;
+	}): JSX.Element => (
+		<div
+			data-testid="chat-input"
+			data-stream-started-at={streamStartedAt ?? ''}
+		/>
+	),
 	autoContextKey: (): string => '',
 }));
 
@@ -137,5 +146,47 @@ describe('ConversationView — empty-state chip context', () => {
 
 		expect(sendMessage).toHaveBeenCalledTimes(1);
 		expect(sendMessage).toHaveBeenCalledWith(CHIP_TEXT, undefined, undefined);
+	});
+});
+
+describe('ConversationView — reply start time', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('carries on from when the reply began when the view is reopened mid-reply', () => {
+		jest.spyOn(Date, 'now').mockReturnValue(5000);
+		useAIAssistantStore.setState({
+			conversations: {
+				[CONVERSATION_ID]: {
+					id: CONVERSATION_ID,
+					messages: [],
+					createdAt: 1,
+					updatedAt: 1,
+				},
+			},
+			streams: {
+				[CONVERSATION_ID]: {
+					isStreaming: true,
+					streamingContent: '',
+					streamingStatus: '',
+					streamingEvents: [],
+					streamingMessageId: null,
+					streamingActions: null,
+					pendingApproval: null,
+					pendingClarification: null,
+					startedAt: 1000,
+				},
+			},
+			activeConversationId: CONVERSATION_ID,
+			isLoadingThread: false,
+		});
+
+		const { getByTestId } = renderView('panel');
+
+		expect(getByTestId('chat-input')).toHaveAttribute(
+			'data-stream-started-at',
+			'1000',
+		);
 	});
 });

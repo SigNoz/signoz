@@ -86,7 +86,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		zeus.Config{},
 		noopzeus.NewProviderFactory(),
 		licensing.Config{},
-		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter, _ analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+		func(_ sqlstore.SQLStore, _ zeus.Zeus, _ organization.Getter, _ analytics.Analytics, _ cache.Cache) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 			return nooplicensing.NewFactory()
 		},
 		func(_ zeus.Zeus, _ licensing.Licensing) subscription.Subscription {

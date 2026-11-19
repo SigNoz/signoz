@@ -103,8 +103,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		enterprisezeus.Config(),
 		httpzeus.NewProviderFactory(),
 		enterpriselicensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
+		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics, cache cache.Cache) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics, cache)
 		},
 		func(zeus zeus.Zeus, licensing licensing.Licensing) subscription.Subscription {
 			return httpsubscription.New(zeus, licensing)

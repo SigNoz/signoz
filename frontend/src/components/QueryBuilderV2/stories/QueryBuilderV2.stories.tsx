@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, within } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 
@@ -8,9 +7,21 @@ import ROUTES from 'constants/routes';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
+import { traceMatchingQuery } from './__story_mockdata__/queryBuilder';
+import {
+	expectLogsCount,
+	expectLogsQuery,
+	expectMeterQuery,
+	expectMetricsQuery,
+	expectPanelEditorQuery,
+	expectTraceMatching,
+	expectTracesQuery,
+	hoverAddFormula,
+	hoverAddFunction,
+	hoverAddTraceMatching,
+} from './__story_mockdata__/queryBuilder.play';
 import {
 	DEFAULT_ARGS,
-	expectFirstQuery,
 	meterQuery,
 	PANEL_EDITOR_ARGS,
 	PANEL_EDITOR_PATH,
@@ -49,12 +60,7 @@ export const LogsExplorer: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.LOGS_EXPLORER, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, {
-			signal: 'logs',
-			aggregations: [{ expression: 'count()' }],
-		});
-	},
+	play: expectLogsCount,
 };
 
 /** Traces explorer: a fixed traces signal, with trace matching offered. */
@@ -68,9 +74,7 @@ export const TracesExplorer: Story = {
 			route: routeWith(ROUTES.TRACES_EXPLORER, initialQueriesMap.traces),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'traces' });
-	},
+	play: expectTracesQuery,
 };
 
 /** Metrics explorer: a fixed metrics signal, functions hidden. */
@@ -87,9 +91,7 @@ export const MetricsExplorer: Story = {
 			),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'metrics' });
-	},
+	play: expectMetricsQuery,
 };
 
 /** Meter explorer: metrics read from the meter source. */
@@ -105,9 +107,7 @@ export const MeterExplorer: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.METER_EXPLORER, meterQuery) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'metrics', source: 'meter' });
-	},
+	play: expectMeterQuery,
 };
 
 /**
@@ -121,12 +121,7 @@ export const PanelEditor: Story = {
 			route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.logs),
 		},
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'logs' });
-		await expect(
-			within(canvasElement).getByTestId('query-data-source-selector-0'),
-		).toBeVisible();
-	},
+	play: expectPanelEditorQuery,
 };
 
 /** Logs alert: a fixed logs signal with functions, as the alert form mounts it. */
@@ -139,7 +134,54 @@ export const LogsAlert: Story = {
 	parameters: {
 		signoz: { route: routeWith(ROUTES.ALERTS_NEW, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, { signal: 'logs' });
+	play: expectLogsQuery,
+};
+
+const TRACES_EXPLORER_ARGS = {
+	config: { initialDataSource: DataSource.TRACES, queryVariant: 'static' },
+	showTraceOperator: true,
+} as const;
+
+/** Traces explorer with trace matching: two queries joined by `A => B`. */
+export const TraceMatching: Story = {
+	args: TRACES_EXPLORER_ARGS,
+	parameters: {
+		signoz: { route: routeWith(ROUTES.TRACES_EXPLORER, traceMatchingQuery) },
 	},
+	play: expectTraceMatching,
+};
+
+/** The tooltip on Add Formula, with its Learn more link. */
+export const AddFormulaTooltip: Story = {
+	args: TRACES_EXPLORER_ARGS,
+	parameters: {
+		signoz: {
+			route: routeWith(ROUTES.TRACES_EXPLORER, initialQueriesMap.traces),
+		},
+	},
+	play: hoverAddFormula,
+};
+
+/** The tooltip on Add Trace Matching, with its Learn more link. */
+export const AddTraceMatchingTooltip: Story = {
+	args: TRACES_EXPLORER_ARGS,
+	parameters: {
+		signoz: {
+			route: routeWith(ROUTES.TRACES_EXPLORER, initialQueriesMap.traces),
+		},
+	},
+	play: hoverAddTraceMatching,
+};
+
+/** The tooltip on a query's add-function button, with its Learn more link. */
+export const AddFunctionTooltip: Story = {
+	args: {
+		config: { initialDataSource: DataSource.LOGS, queryVariant: 'static' },
+		showFunctions: true,
+		signalSourceChangeEnabled: true,
+	},
+	parameters: {
+		signoz: { route: routeWith(ROUTES.ALERTS_NEW, initialQueriesMap.logs) },
+	},
+	play: hoverAddFunction,
 };
