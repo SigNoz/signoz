@@ -69,36 +69,33 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders severity badges for rules with severity', async () => {
+	it('renders a badge per severity', async () => {
 		renderListAlertRules();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('alert-row-rule-1-severity')).toBeInTheDocument(),
-		);
-
-		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveTextContent(
-			'critical',
-		);
-		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveTextContent(
-			'warning',
-		);
-		expect(screen.getByTestId('alert-row-rule-3-severity')).toHaveTextContent(
-			'info',
-		);
-		expect(screen.getByTestId('alert-row-rule-4-severity')).toHaveTextContent(
-			'critical',
+		await expect(
+			screen.findByTestId('alert-row-rule-1-severity'),
+		).resolves.toHaveTextContent('criticalwarning');
+		expect(
+			screen.getByTestId('alert-row-rule-1-severity-critical'),
+		).toHaveAttribute('data-color', 'danger');
+		expect(
+			screen.getByTestId('alert-row-rule-1-severity-warning'),
+		).toHaveAttribute('data-color', 'warning');
+		expect(screen.getByTestId('alert-row-rule-3-severity-info')).toHaveAttribute(
+			'data-color',
+			'primary',
 		);
 		expect(screen.getByTestId('alert-row-rule-5-severity')).toHaveTextContent(
 			'-',
 		);
-		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveAttribute(
-			'data-color',
-			'danger',
-		);
-		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveAttribute(
-			'data-color',
-			'warning',
-		);
+	});
+
+	it('shows the severity label among the labels', async () => {
+		renderListAlertRules();
+
+		await expect(
+			screen.findByTestId('alert-row-rule-1-labels'),
+		).resolves.toHaveTextContent('severity: critical');
 	});
 
 	it('renders header controls (search, states, columns, new alert)', async () => {

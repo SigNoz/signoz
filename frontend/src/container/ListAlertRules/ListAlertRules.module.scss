@@ -51,6 +51,12 @@
 	--badge-cursor: pointer;
 }
 
+.severities {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
 .actionsColumn {
 	display: flex;
 	justify-content: flex-end;

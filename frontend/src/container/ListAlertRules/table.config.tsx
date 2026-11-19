@@ -5,6 +5,7 @@ import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 
+import styles from './ListAlertRules.module.scss';
 import type { AlertRule } from './types';
 
 const STATE_CONFIG: Record<string, { color: BadgeColorType; label: string }> = {
@@ -64,28 +65,30 @@ export function getAlertRuleColumns(
 		{
 			id: 'severity',
 			header: 'Severity',
-			accessorFn: (row) => row.labels?.severity ?? '',
-			width: { fixed: '120px' },
+			accessorKey: 'severities',
+			width: { fixed: '160px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => {
-				const severity = String(value ?? '').toLowerCase();
-				if (!severity) {
-					return (
-						<TanStackTable.Text data-testid={`alert-row-${row.id ?? ''}-severity`}>
-							-
-						</TanStackTable.Text>
-					);
+				const testId = `alert-row-${row.id ?? ''}-severity`;
+				const severities = (value as string[] | undefined) ?? [];
+				if (!severities.length) {
+					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
 				}
 				return (
-					<Badge
-						textTransform="none"
-						color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
-						variant="outlined"
-						testId={`alert-row-${row.id ?? ''}-severity`}
-					>
-						{severity}
-					</Badge>
+					<div className={styles.severities} data-testid={testId}>
+						{severities.map((severity) => (
+							<Badge
+								key={severity}
+								textTransform="none"
+								color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
+								variant="outlined"
+								testId={`${testId}-${severity}`}
+							>
+								{severity}
+							</Badge>
+						))}
+					</div>
 				);
 			},
 		},
@@ -96,18 +99,25 @@ export function getAlertRuleColumns(
 			width: { default: '100%' },
 			enableSort: false,
 			enableMove: false,
-			cell: ({ value }): JSX.Element => {
+			cell: ({ row, value }): JSX.Element => {
 				const labels = value as Record<string, string> | undefined;
 				if (!labels) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				const tagKeys = Object.keys(labels).filter((k) => k !== 'severity');
+				const tagKeys = Object.keys(labels);
 				if (!tagKeys.length) {
 					return <TanStackTable.Text>-</TanStackTable.Text>;
 				}
 
-				return <LabelColumn labels={tagKeys} value={labels} color="secondary" />;
+				return (
+					<LabelColumn
+						labels={tagKeys}
+						value={labels}
+						color="secondary"
+						testId={`alert-row-${row.id ?? ''}-labels`}
+					/>
+				);
 			},
 		},
 		{

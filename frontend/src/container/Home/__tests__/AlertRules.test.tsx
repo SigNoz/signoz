@@ -116,4 +116,16 @@ describe('Home alert rules', () => {
 			'home-alert-rule-quiet',
 		]);
 	});
+
+	it('shows a badge per rule severity', async () => {
+		serveRules([burning]);
+		renderAlertRules();
+
+		await expect(
+			screen.findByTestId('home-alert-severity-burning-critical'),
+		).resolves.toHaveTextContent('critical');
+		expect(
+			screen.getByTestId('home-alert-severity-burning-warning'),
+		).toHaveTextContent('warning');
+	});
 });

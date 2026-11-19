@@ -1,13 +1,16 @@
 import {
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
+	RuletypesCompareOperatorDTO,
 	RuletypesEvaluationRollingDTOKind,
 	RuletypesListOrderDTO,
 	RuletypesListSortDTO,
+	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
 	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
+	RuletypesThresholdBasicDTOKind,
 } from 'api/generated/services/sigNoz.schemas';
 import type {
 	ListRulesV3200,
@@ -23,6 +26,20 @@ const baseCondition: RuletypesRuleConditionDTO = {
 		queries: null,
 	},
 } as unknown as RuletypesRuleConditionDTO;
+
+// The v3 list derives a rule's severities from these names.
+const withThresholds = (...names: string[]): RuletypesRuleConditionDTO => ({
+	...baseCondition,
+	thresholds: {
+		kind: RuletypesThresholdBasicDTOKind.basic,
+		spec: names.map((name) => ({
+			name,
+			matchType: RuletypesMatchTypeDTO.at_least_once,
+			op: RuletypesCompareOperatorDTO.above,
+			target: 0,
+		})),
+	},
+});
 
 const make = (
 	id: string,
@@ -52,21 +69,25 @@ const make = (
 
 export const alertRulesFixture: RuletypesRuleDTO[] = [
 	make('rule-1', {
+		condition: withThresholds('critical', 'warning'),
 		alert: 'High CPU Alert',
 		state: RuletypesAlertStateDTO.firing,
 		labels: { severity: 'critical', team: 'infra' },
 	}),
 	make('rule-2', {
+		condition: withThresholds('warning'),
 		alert: 'Memory Pending Alert',
 		state: RuletypesAlertStateDTO.pending,
 		labels: { severity: 'warning', team: 'backend' },
 	}),
 	make('rule-3', {
+		condition: withThresholds('info'),
 		alert: 'Healthy Alert',
 		state: RuletypesAlertStateDTO.inactive,
 		labels: { severity: 'info', team: 'infra' },
 	}),
 	make('rule-4', {
+		condition: withThresholds('critical'),
 		alert: 'Disabled Alert',
 		state: RuletypesAlertStateDTO.disabled,
 		disabled: true,
@@ -88,6 +109,7 @@ export const alertRulesPaginationFixture: RuletypesRuleDTO[] = Array.from(
 				i % 2 === 0
 					? RuletypesAlertStateDTO.firing
 					: RuletypesAlertStateDTO.inactive,
+			condition: withThresholds(i % 2 === 0 ? 'critical' : 'warning'),
 			labels: { severity: i % 2 === 0 ? 'critical' : 'warning' },
 			createdAt: `2023-10-${String(i + 1).padStart(2, '0')}T10:00:00Z`,
 		}),

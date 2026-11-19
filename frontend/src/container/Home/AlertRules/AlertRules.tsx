@@ -135,9 +135,17 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							<Badge textTransform="uppercase" color="archive" variant="outlined">
-								{rule?.labels?.severity}
-							</Badge>
+							{rule.severities.map((severity) => (
+								<Badge
+									key={severity}
+									textTransform="uppercase"
+									color="archive"
+									variant="outlined"
+									testId={`home-alert-severity-${rule.id}-${severity}`}
+								>
+									{severity}
+								</Badge>
+							))}
 
 							{rule.state === 'firing' && (
 								<Badge color="danger" variant="outlined" textTransform="uppercase">
