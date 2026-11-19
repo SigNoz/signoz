@@ -12,6 +12,7 @@ import {
 } from 'nuqs/adapters/testing';
 import {
 	act,
+	configure,
 	fireEvent,
 	render,
 	screen,
@@ -21,6 +22,8 @@ import {
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
+
+configure({ asyncUtilTimeout: 3000 });
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
@@ -465,9 +468,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await expect(
-			screen.findByTestId('sa-row-sa-20', undefined, { timeout: 5000 }),
-		).resolves.toHaveTextContent('Bot 20');
+		await expect(screen.findByTestId('sa-row-sa-20')).resolves.toHaveTextContent(
+			'Bot 20',
+		);
 		const update = onUrlUpdate.mock.lastCall?.[0];
 		expect(update?.searchParams.get('page')).toBe('2');
 		expect(update?.options.history).toBe('replace');
