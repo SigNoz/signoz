@@ -2,6 +2,8 @@ package querybuildertypesv5
 
 import (
 	"context"
+	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1128,14 +1130,10 @@ func TestEvaluateFormula_ContextDone(t *testing.T) {
 	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
 	defer cancelExpired()
 
-	// enough label sets to take the path with workers
-	series := make([]*TimeSeries, 0, 32)
-	for _, name := range []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p"} {
-		series = append(series, &TimeSeries{
-			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: name}},
-			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
-		})
-	}
+	series := []*TimeSeries{{
+		Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "web-1"}},
+		Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
+	}}
 	tsData := map[string]*TimeSeriesData{
 		"A": createFormulaTestTimeSeriesData("A", series),
 		"B": createFormulaTestTimeSeriesData("B", series),
@@ -1160,4 +1158,48 @@ func TestEvaluateFormula_ContextDone(t *testing.T) {
 			assert.Nil(t, result)
 		})
 	}
+}
+
+// canceledAfterFirstCheck is not done at the first call of Err and is canceled
+// at every later call. It puts the cancellation after the start of an
+// evaluation without the use of time.
+type canceledAfterFirstCheck struct {
+	context.Context
+	checks atomic.Int64
+}
+
+func (c *canceledAfterFirstCheck) Err() error {
+	if c.checks.Add(1) == 1 {
+		return nil
+	}
+	return context.Canceled
+}
+
+func TestEvaluateFormula_ContextDoneDuringEvaluation(t *testing.T) {
+	const labelSets = 1000
+	series := make([]*TimeSeries, 0, labelSets)
+	for i := range labelSets {
+		series = append(series, &TimeSeries{
+			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: fmt.Sprintf("web-%d", i)}},
+			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
+		})
+	}
+	tsData := map[string]*TimeSeriesData{
+		"A": createFormulaTestTimeSeriesData("A", series),
+		"B": createFormulaTestTimeSeriesData("B", series),
+	}
+
+	evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": false, "B": false})
+	require.NoError(t, err)
+
+	ctx := &canceledAfterFirstCheck{Context: context.Background()}
+	result, err := evaluator.EvaluateFormula(ctx, tsData)
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Nil(t, result)
+
+	// The evaluation started, and each worker stopped when it saw the
+	// cancellation: there is far less than one check for each label set.
+	checks := ctx.checks.Load()
+	assert.Greater(t, checks, int64(2))
+	assert.Less(t, checks, int64(labelSets))
 }
