@@ -20,6 +20,7 @@ import StreamingMessage from '../StreamingMessage';
 
 import EmptyState from './EmptyState/EmptyState';
 import styles from './VirtualizedMessages.module.scss';
+import { AT_BOTTOM_THRESHOLD_PX } from './constants';
 import { useScrollToSentMessage } from './useScrollToSentMessage';
 
 const EMPTY_EVENTS: StreamingEventItem[] = [];
@@ -184,7 +185,7 @@ export default function VirtualizedMessages({
 				className={styles.messages}
 				totalCount={totalCount}
 				atBottomStateChange={setIsAtBottom}
-				atBottomThreshold={64}
+				atBottomThreshold={AT_BOTTOM_THRESHOLD_PX}
 				// End-aligned: a short thread shows from its first message, a long one opens on the latest.
 				initialTopMostItemIndex={{ index: 'LAST', align: 'end' }}
 				increaseViewportBy={{ top: PRERENDER_ABOVE_PX, bottom: 0 }}

@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { AT_BOTTOM_THRESHOLD_PX } from 'container/AIAssistant/components/VirtualizedMessages/constants';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
@@ -11,7 +12,6 @@ import {
 	listsConversations,
 	showsThread,
 } from '../AIAssistantPage.stories.mocks';
-import { MESSAGE_IDS } from './aiAssistant';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -227,9 +227,6 @@ export const openLiveSteps = async ({
 	}, /how much of that budget/i);
 };
 
-/** `VirtualizedMessages`' `atBottomThreshold`: a thread within it of its end shows no Latest pill. */
-const AT_BOTTOM_PX = 64;
-
 /** Scrolls the thread to its first message, which brings up the Latest pill. */
 export const scrollToTop = async ({
 	canvasElement,
@@ -240,27 +237,39 @@ export const scrollToTop = async ({
 	}
 
 	const canvas = within(canvasElement);
-	await canvas.findByTestId(
-		`ai-message-${MESSAGE_IDS.final}`,
-		undefined,
-		untilLoaded,
-	);
-
-	await waitFor(async () => {
-		const scroller = canvasElement.querySelector<HTMLElement>(
+	let height = -1;
+	let since = 0;
+	const scroller = await waitFor(() => {
+		const list = canvasElement.querySelector<HTMLElement>(
 			'[data-virtuoso-scroller]',
 		);
-		if (
-			!scroller ||
-			scroller.scrollHeight - scroller.clientHeight <= AT_BOTTOM_PX
-		) {
-			return;
+		if (!list) {
+			throw new Error('The thread has not loaded');
 		}
+		if (list.scrollHeight !== height) {
+			height = list.scrollHeight;
+			since = performance.now();
+		}
+		// Rows measure as they mount, so the height has to hold before it counts.
+		if (performance.now() - since < HOLD_MS) {
+			throw new Error('The thread is still laying out');
+		}
+		return list;
+	}, untilLoaded);
+	if (scroller.scrollHeight - scroller.clientHeight <= AT_BOTTOM_THRESHOLD_PX) {
+		return;
+	}
+	await waitFor(async () => {
 		// The app's deferred page scrollbar can reset the list to 0 without a scroll event.
 		scroller.scrollTo({ top: scroller.scrollTop === 0 ? 1 : 0 });
 		await canvas.findByTestId('ai-assistant-latest', undefined, {
 			timeout: 1_000,
 		});
+		// A list still pinning itself to its end takes the pill away again.
+		await new Promise((resolve) => {
+			setTimeout(resolve, HOLD_MS);
+		});
+		canvas.getByTestId('ai-assistant-latest');
 	}, untilLoaded);
 };
 
