@@ -1,7 +1,7 @@
 import { getQueryRangeRequestData } from '../utils';
 
 describe('getQueryRangeRequestData', () => {
-	it('keeps sending the card step on the services list queries', () => {
+	it('leaves the step of the services list queries to v5', () => {
 		const [request] = getQueryRangeRequestData({
 			topLevelOperations: [['frontend', ['GET /']]],
 			globalSelectedInterval: '15m',
@@ -11,6 +11,6 @@ describe('getQueryRangeRequestData', () => {
 			(query) => query.stepInterval,
 		);
 
-		expect(steps).toStrictEqual(Array(steps.length).fill(60));
+		expect(steps).toStrictEqual(Array(steps.length).fill(null));
 	});
 });
