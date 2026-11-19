@@ -17,6 +17,7 @@ import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import APIError from 'types/api/error';
 
 import { isValidDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
+import { dashboardDurationError } from 'pages/DashboardPage/DashboardContainer/utils/dashboardDuration';
 
 import { normalizeToPostable } from './importUtils';
 import JsonEditor from './JsonEditor';
@@ -46,10 +47,10 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 		reader.onload = (event): void => {
 			try {
 				const target = event.target?.result;
-				if (!target) {
+				if (typeof target !== 'string') {
 					return;
 				}
-				const parsed = JSON.parse(target.toString());
+				const parsed = JSON.parse(target);
 				setEditorValue(JSON.stringify(parsed, null, 2));
 				setIsUploadError(false);
 			} catch {
@@ -63,7 +64,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 	const handleImport = async (): Promise<void> => {
 		try {
 			setIsCreating(true);
-			logEvent('Dashboard List V2: Import and next clicked', {});
+			void logEvent('Dashboard List V2: Import and next clicked', {});
 			const parsed = JSON.parse(editorValue) as Record<string, unknown>;
 			const payload = normalizeToPostable(parsed);
 			// Only an icon/logo path or a base64 image is a storable `image`; reject
@@ -76,6 +77,15 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 				toast.error(
 					'Dashboard "image" must be an /assets/Icons or /assets/Logos path, or a base64 image',
 				);
+				return;
+			}
+			const durationError = dashboardDurationError(payload.spec?.duration);
+			if (durationError) {
+				setIsCreateError(true);
+				void logEvent(DashboardListEvents.ImportFailed, {
+					reason: 'invalid-duration',
+				});
+				toast.error(durationError);
 				return;
 			}
 			const response = await createDashboardV2(payload);
@@ -129,7 +139,7 @@ function ImportJsonPanel({ onClose }: Props): JSX.Element {
 						prefix={<MonitorDot size={14} />}
 						testId="upload-json-file"
 						onClick={(): void => {
-							logEvent('Dashboard List V2: Upload JSON file clicked', {});
+							void logEvent('Dashboard List V2: Upload JSON file clicked', {});
 						}}
 					>
 						{t('upload_json_file')}
