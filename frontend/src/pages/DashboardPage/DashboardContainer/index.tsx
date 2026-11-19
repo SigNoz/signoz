@@ -14,6 +14,7 @@ import DashboardPageHeader from './components/DashboardPageHeader/DashboardPageH
 import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
+import { useDashboardDefaultTime } from './hooks/useDashboardDefaultTime';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
@@ -33,8 +34,9 @@ function DashboardContainer({
 	dashboard,
 	refetch,
 	canEditDashboardOverride,
-}: DashboardContainerProps): JSX.Element {
+}: DashboardContainerProps): JSX.Element | null {
 	const spec = dashboard.spec;
+	const isTimeInitialized = useDashboardDefaultTime(dashboard.id, spec.duration);
 	const image = resolveDashboardImage(dashboard.image);
 	const name = spec.display.name;
 
@@ -67,6 +69,10 @@ function DashboardContainer({
 	useSyncVariablesForSuggestions(dashboard);
 
 	const staleCheck = useDashboardStaleCheck(dashboard, refetch);
+
+	if (!isTimeInitialized) {
+		return null;
+	}
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).
