@@ -916,6 +916,7 @@ export default function ChatInput({
 														size="sm"
 														aria-pressed={isSelected}
 														width="100%"
+														testId={`ai-context-option-${activeContextCategory}-${option.id}`}
 														onClick={(): void =>
 															toggleContextSelection(
 																activeContextCategory,

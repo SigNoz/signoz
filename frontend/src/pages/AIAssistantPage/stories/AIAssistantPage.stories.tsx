@@ -14,10 +14,15 @@ import type { ThreadPart } from './__story_mockdata__/aiAssistant';
 import {
 	copyConversationLink,
 	expandActivity,
+	expandSingleStep,
 	openApprovalDiff,
 	openContextPicker,
 	openConversationActions,
+	openLiveSteps,
 	openNegativeFeedback,
+	pickContexts,
+	scrollToTop,
+	typeDraft,
 } from './__story_mockdata__/aiAssistant.play';
 
 const pageStory = storyMocks(aiAssistantMocks, { layout: 'app' });
@@ -94,12 +99,35 @@ export const AnsweredBlocks: Story = {
 	args: { contents: INTERACTIVE, answered: true },
 };
 
+/** Just sent, with nothing back yet: the reply is one live Thinking… step. */
+export const Thinking: Story = {
+	args: { agent: 'thinking', contents: BRIEF },
+};
+
 /**
- * Mid-answer: a step already done, the text so far, and a step still running
- * with the elapsed clock on it. The composer waits its turn.
+ * Mid-answer: steps already done, the text so far, and the running step named
+ * on a shimmering row. The input takes a draft; sending waits for the reply.
  */
 export const Streaming: Story = {
 	args: { agent: 'streaming', contents: BRIEF },
+};
+
+/** The running reply's steps opened: a timeline whose newest step shimmers. */
+export const StreamingSteps: Story = {
+	args: { agent: 'streaming', contents: BRIEF },
+	play: openLiveSteps,
+};
+
+/** The next question drafted while Noz still replies, with Stop in place of Send. */
+export const DraftWhileStreaming: Story = {
+	args: { agent: 'streaming', contents: BRIEF },
+	play: typeDraft,
+};
+
+/** Scrolled up while Noz replies: a shimmering Latest pill leads back to the end. */
+export const ScrolledUp: Story = {
+	args: { agent: 'streaming' },
+	play: scrollToTop,
 };
 
 /** A change the agent will not make until the user reads the diff and approves. */
@@ -125,6 +153,12 @@ export const ActivityExpanded: Story = {
 	play: expandActivity,
 };
 
+/** An answer that took one step: its row names the step and opens to its input and output, with no timeline. */
+export const SingleStep: Story = {
+	args: { contents: ['one-step'] },
+	play: expandSingleStep,
+};
+
 /** The approval diff at full size, before against after. */
 export const ApprovalDiff: Story = {
 	args: { agent: 'awaiting-approval', contents: BRIEF },
@@ -147,6 +181,16 @@ export const ConversationActions: Story = {
  */
 export const AddContext: Story = {
 	play: openContextPicker,
+};
+
+/** A dashboard and a service picked, as pills over the input; focus shows a pill's remove. */
+export const PickedContexts: Story = {
+	play: pickContexts,
+};
+
+/** A question sent with picked contexts, which sit under it as added to context. */
+export const SentContexts: Story = {
+	args: { contents: ['contexts'] },
 };
 
 /** "Copy link" on a conversation row, which toasts once the link is copied. */

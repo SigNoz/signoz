@@ -29,6 +29,8 @@ import type {
 	MessageBlock,
 } from 'container/AIAssistant/types';
 
+import { FINAL_ANSWER, oneStepBlocks, SENT_CONTEXTS } from './aiAssistantTurns';
+
 export const THREAD_ID = 'thread-checkout-latency';
 
 /** The thread a first visit mints, which the page opens with nothing in it. */
@@ -38,10 +40,12 @@ export const THREAD_TITLE = 'Checkout p99 regression after 14:00';
 
 /** What the open thread contains, one entry per turn the builder can add. */
 export const THREAD_PARTS = [
+	'contexts',
 	'prose',
 	'table',
 	'code',
 	'activity',
+	'one-step',
 	'actions',
 	'question',
 	'checkboxes',
@@ -55,6 +59,7 @@ export type ThreadPart = (typeof THREAD_PARTS)[number];
 /** What the agent is doing when the thread opens. */
 export const AGENT_STATES = [
 	'idle',
+	'thinking',
 	'streaming',
 	'awaiting-approval',
 	'awaiting-clarification',
@@ -307,11 +312,16 @@ const ACTION_BLOCK = fence('action', {
 
 type Turn = Omit<MessageSummaryDTO, 'createdAt' | 'updatedAt'>;
 
-const user = (id: string, content: string): Turn => ({
+const user = (
+	id: string,
+	content: string,
+	extra: Partial<Turn> = {},
+): Turn => ({
 	messageId: id,
 	role: MessageRoleDTO.user,
 	contentType: MessageContentTypeDTO.markdown,
 	content,
+	...extra,
 });
 
 const assistant = (
@@ -333,6 +343,7 @@ const turnsFor = (parts: readonly ThreadPart[]): Turn[] => {
 		user(
 			'message-opening',
 			'Why did checkout get slower after 14:00? Deploys look clean.',
+			{ contexts: parts.includes('contexts') ? SENT_CONTEXTS : undefined },
 		),
 		assistant(MESSAGE_IDS.analysis, prose, {
 			blocks: parts.includes('activity')
@@ -378,15 +389,12 @@ const turnsFor = (parts: readonly ThreadPart[]): Turn[] => {
 
 	turns.push(
 		user('message-upstream-ask', 'Which upstream is rate-limiting us?'),
-		assistant(
-			MESSAGE_IDS.final,
-			'`payment.svc.cluster.local:8080`. It answered `429` on 12% of calls between 14:00 and 15:00, and none in the hour before. The quota is 600 requests per minute and checkout alone asked for 780.',
-			{
-				feedbackRating: parts.includes('voted')
-					? FeedbackRatingDTO.positive
-					: undefined,
-			},
-		),
+		assistant(MESSAGE_IDS.final, FINAL_ANSWER, {
+			blocks: parts.includes('one-step') ? asBlocks(oneStepBlocks()) : undefined,
+			feedbackRating: parts.includes('voted')
+				? FeedbackRatingDTO.positive
+				: undefined,
+		}),
 	);
 
 	return turns;
@@ -667,9 +675,22 @@ export const newConversation = (): Conversation => ({
 	updatedAt: Date.now(),
 });
 
+/** A reply sent a moment ago, before the stream's first event. */
+export const thinkingState = (): ConversationStreamState => ({
+	isStreaming: true,
+	streamingStatus: 'running',
+	streamingMessageId: null,
+	streamingActions: null,
+	pendingApproval: null,
+	pendingClarification: null,
+	startedAt: Date.now(),
+	streamingContent: '',
+	streamingEvents: [],
+});
+
 /**
  * A stream caught mid-answer: a finished step, some text, and a step still
- * running, which is the trailing group the elapsed timer ticks on.
+ * running, which is the trailing group whose row names it, shimmering.
  */
 export const streamingState = (): ConversationStreamState => ({
 	isStreaming: true,
