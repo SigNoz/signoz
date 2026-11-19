@@ -4,13 +4,25 @@
  */
 
 import { toast } from '@signozhq/ui/toast';
-import { screen, userEvent } from 'storybook/test';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 
 import type { GlobalMockArgs } from '@/storybook/globals';
 import { isCloudShell } from '@/storybook/globals/appShellMocks';
 
 /** The shell renders its entry points after the global config and the license settle. */
 const untilLoaded = { timeout: 10_000 };
+
+/** How long the thread has to stay scrolled to its end to count as settled there. */
+const HOLD_MS = 1_000;
+
+const gapBelowView = (): number => {
+	const scroller = document.querySelector<HTMLElement>(
+		'[data-virtuoso-scroller]',
+	);
+	return scroller
+		? scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop
+		: Infinity;
+};
 
 /** Support offers the modal only to a cloud workspace that has no premium support. */
 export const openAddCardModal = async ({
@@ -72,8 +84,25 @@ export const openNozHistory = async ({
 	await screen.findByText('Earlier conversations');
 };
 
-/** Opens the newest tab's chat in the panel, which marks that tab active and clears its dot. */
-export const openNozChatTab = async ({
+/** Waits until the thread has stayed scrolled to its end for `HOLD_MS`. */
+const expectThreadAtEnd = async (): Promise<void> => {
+	await waitFor(
+		async () => {
+			await expect(gapBelowView()).toBeLessThanOrEqual(1);
+			await new Promise((resolve) => {
+				setTimeout(resolve, HOLD_MS);
+			});
+			await expect(gapBelowView()).toBeLessThanOrEqual(1);
+		},
+		{ timeout: 10_000 },
+	);
+};
+
+/**
+ * Opens the newest tab's chat in the panel, which clears its dot, then switches
+ * to the tab before it. Each chat opens on its end, with the last message in full.
+ */
+export const openNozChatTabs = async ({
 	args,
 }: {
 	args: Pick<GlobalMockArgs, 'noz' | 'nozChats'>;
@@ -88,4 +117,12 @@ export const openNozChatTab = async ({
 	);
 	await userEvent.click(tabs[tabs.length - 1]);
 	await screen.findByTestId('ai-assistant-panel-close');
+	await expectThreadAtEnd();
+	if (tabs.length < 2) {
+		return;
+	}
+	const previous = tabs[tabs.length - 2];
+	await userEvent.click(previous);
+	await waitFor(() => expect(previous).toHaveAttribute('aria-current', 'true'));
+	await expectThreadAtEnd();
 };

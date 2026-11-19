@@ -8,6 +8,7 @@ import {
 } from 'container/AIAssistant/store/useAIAssistantOpenConversationsStore';
 import {
 	chipsResponse,
+	THREAD_PARTS,
 	threadDetailResponse,
 	threadListResponse,
 } from 'pages/AIAssistantPage/stories/__story_mockdata__/aiAssistant';
@@ -112,7 +113,7 @@ export const nozMocks = defineStoryMocks({
 							return res(
 								ctx.status(200),
 								ctx.json({
-									...threadDetailResponse(['prose'], 'idle'),
+									...threadDetailResponse(THREAD_PARTS, 'idle'),
 									threadId,
 									title: listed?.title,
 								}),

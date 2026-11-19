@@ -4,7 +4,7 @@ import ROUTES from 'constants/routes';
 import type { GlobalMockArgs } from '../globals';
 import {
 	openAddCardModal,
-	openNozChatTab,
+	openNozChatTabs,
 	openNozHistory,
 	openNozPanel,
 	raiseToast,
@@ -90,10 +90,13 @@ export const NozChats: Story = {
 	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
 };
 
-/** A tab opened in the Noz panel: it stays highlighted and its dot clears. */
+/**
+ * Tabs opened in the Noz panel, the newest then the one before it: the open one
+ * stays highlighted, the newest's dot clears, and each chat opens on its end.
+ */
 export const NozChatOpen: Story = {
 	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
-	play: openNozChatTab,
+	play: openNozChatTabs,
 };
 
 /** Every tooltip the strip carries, held open. */
