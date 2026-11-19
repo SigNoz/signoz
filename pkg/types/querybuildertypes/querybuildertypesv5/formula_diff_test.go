@@ -165,83 +165,58 @@ func referenceEvaluate(t *testing.T, expr string, canDefaultZero map[string]bool
 	return out
 }
 
-// canonicalize turns a result set into a comparable map: labelSig -> ts -> value.
-func canonicalize(series []*TimeSeries) map[string]map[int64]float64 {
-	out := make(map[string]map[int64]float64, len(series))
+// canonicalize turns a result set into sorted lines, one for each series. A
+// label value keeps its type and a point keeps the bits of its float, so two
+// results are equal only when they are exactly the same.
+func canonicalize(series []*TimeSeries) []string {
+	lines := make([]string, 0, len(series))
 	for _, s := range series {
-		keys := make([]string, 0, len(s.Labels))
-		kv := make(map[string]string, len(s.Labels))
+		labels := make([]string, 0, len(s.Labels))
 		for _, l := range s.Labels {
-			keys = append(keys, l.Key.Name)
-			kv[l.Key.Name] = fmt.Sprintf("%v", l.Value)
+			value := l.Value
+			if f, ok := value.(float64); ok {
+				// -0 and 0 are the same label value, and either one can be
+				// the label of the result.
+				value = f + 0
+			}
+			labels = append(labels, fmt.Sprintf("%s=%T(%v)", l.Key.Name, value, value))
 		}
-		sort.Strings(keys)
-		var sb strings.Builder
-		for _, k := range keys {
-			sb.WriteString(k)
-			sb.WriteByte('=')
-			sb.WriteString(kv[k])
-			sb.WriteByte('|')
-		}
-		m := make(map[int64]float64, len(s.Values))
+		sort.Strings(labels)
+
+		points := make([]string, 0, len(s.Values))
 		for _, v := range s.Values {
-			m[v.Timestamp] = v.Value
+			points = append(points, fmt.Sprintf("%d:%x", v.Timestamp, math.Float64bits(v.Value)))
 		}
-		out[sb.String()] = m
-	}
-	return out
-}
+		sort.Strings(points)
 
-func assertSameResults(t *testing.T, caseName string, got, want []*TimeSeries) {
-	t.Helper()
-	gc := canonicalize(got)
-	wc := canonicalize(want)
-	if len(gc) != len(wc) {
-		t.Fatalf("%s: series count mismatch: got %d, want %d\ngot keys=%v\nwant keys=%v",
-			caseName, len(gc), len(wc), keysOf(gc), keysOf(wc))
+		lines = append(lines, strings.Join(labels, ",")+" => "+strings.Join(points, " "))
 	}
-	for sig, wm := range wc {
-		gm, ok := gc[sig]
-		if !ok {
-			t.Fatalf("%s: missing series %q in got", caseName, sig)
-		}
-		if len(gm) != len(wm) {
-			t.Fatalf("%s: series %q point count mismatch: got %d want %d", caseName, sig, len(gm), len(wm))
-		}
-		for ts, wv := range wm {
-			gv, ok := gm[ts]
-			if !ok {
-				t.Fatalf("%s: series %q missing ts %d", caseName, sig, ts)
-			}
-			if math.Abs(gv-wv) > 1e-9 {
-				t.Fatalf("%s: series %q ts %d value mismatch: got %v want %v", caseName, sig, ts, gv, wv)
-			}
-		}
-	}
-}
-
-func keysOf(m map[string]map[int64]float64) []string {
-	ks := make([]string, 0, len(m))
-	for k := range m {
-		ks = append(ks, k)
-	}
-	sort.Strings(ks)
-	return ks
+	sort.Strings(lines)
+	return lines
 }
 
 // randomTSData builds randomized time series data for a query, exercising both
 // the "regular" case (all series share a key set) and the "irregular" case
-// (series have differing key sets), plus empty label sets and overlaps.
+// (series have differing key sets), plus empty label sets, duplicate label sets
+// and values of different types with the same text.
 func randomTSData(rng *rand.Rand, queryName string) *TimeSeriesData {
 	keyPool := []string{"svc", "op", "env"}
-	valPool := []string{"x", "y", "z"}
+	valPool := []any{
+		"x", "y", "", "200", "true",
+		int64(200), uint64(200), float64(200), float64(1.5), float64(0), math.Copysign(0, -1),
+		true, nil,
+	}
 	tsPool := []int64{1, 2, 3, 4, 5}
 
 	// Decide a base key set for the query.
 	regular := rng.Intn(2) == 0
 	baseKeys := randomSubset(rng, keyPool)
 
-	numSeries := rng.Intn(6) // 0..5
+	maxSeries := 5
+	if rng.Intn(5) == 0 {
+		maxSeries = 40
+	}
+	numSeries := rng.Intn(maxSeries + 1)
 	series := make([]*TimeSeries, 0, numSeries)
 	for range numSeries {
 		keys := baseKeys
@@ -251,10 +226,13 @@ func randomTSData(rng *rand.Rand, queryName string) *TimeSeriesData {
 		labels := make([]*Label, 0, len(keys))
 		for _, k := range keys {
 			labels = append(labels, &Label{
-				Key:   telemetrytypes.TelemetryFieldKey{Name: k, FieldDataType: telemetrytypes.FieldDataTypeString},
+				Key:   telemetrytypes.TelemetryFieldKey{Name: k},
 				Value: valPool[rng.Intn(len(valPool))],
 			})
 		}
+		// the order of the labels of a series must not matter
+		rng.Shuffle(len(labels), func(i, j int) { labels[i], labels[j] = labels[j], labels[i] })
+
 		// random timestamps subset
 		var values []*TimeSeriesValue
 		for _, ts := range tsPool {
@@ -289,8 +267,8 @@ func randomSubset(rng *rand.Rand, pool []string) []string {
 
 // TestFormulaEvaluator_DifferentialRandom fuzzes EvaluateFormula against the
 // naive reference oracle to guarantee the optimized implementation preserves
-// exact semantics across subset matching, empty labels, defaults and irregular
-// key sets.
+// exact semantics across subset matching, empty labels, defaults, irregular
+// key sets and label value types.
 func TestFormulaEvaluator_DifferentialRandom(t *testing.T) {
 	rng := rand.New(rand.NewSource(0xC0FFEE))
 
@@ -336,6 +314,6 @@ func TestFormulaEvaluator_DifferentialRandom(t *testing.T) {
 
 		want := referenceEvaluate(t, ec.expr, canDefaultZero, tsData)
 
-		assertSameResults(t, fmt.Sprintf("iter=%d expr=%q", it, ec.expr), got, want)
+		require.Equal(t, canonicalize(want), canonicalize(got), "iter=%d expr=%q", it, ec.expr)
 	}
 }

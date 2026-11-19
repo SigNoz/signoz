@@ -168,35 +168,27 @@ type aggregationRef struct {
 	Alias     *string // Alias-based reference (e.g., A.my_alias)
 }
 
-// seriesEntry holds one series' values and its canonical label signature so that
-// matching can be a map lookup instead of rebuilding maps for every comparison.
+// seriesEntry is one series of a variable.
 type seriesEntry struct {
 	labels []*Label
-	keys   []string          // sorted label key names
-	sig    string            // canonical value signature over keys
-	data   map[int64]float64 // timestamp -> value
+	// index of the series in its aggregation bucket
+	position int
+	data     map[int64]float64 // timestamp -> value
 }
 
-// variableLookup indexes a single variable's (one aggregation's) series.
-type variableLookup struct {
-	// keys is the sorted set of label key names shared by this variable's series
-	// (taken from the first series). Only meaningful when regular is true.
-	keys []string
-	// regular is true when every series shares the same set of label keys, which
-	// is the normal case for a group-by. It lets matching be an O(1) signature
-	// lookup instead of an O(n) subset scan.
-	regular bool
-	// entries holds the series in bucket order; used for the irregular fallback.
-	entries []*seriesEntry
-	// bySig maps a value signature to the first series (in bucket order) carrying
-	// it. It both drives regular-case matching and enumerates the variable's
-	// distinct label sets for findUniqueLabelSets.
-	bySig map[string]*seriesEntry
+// keySetIndex holds the series of a variable that share one set of label keys.
+type keySetIndex struct {
+	keys []string // sorted label key names
+	// value signature (see valueSignature) -> the first series in the bucket
+	// with those values
+	series map[string]*seriesEntry
 }
 
-// seriesLookup provides lookup for series data, grouped by variable.
+// seriesLookup provides lookup for series data, grouped by variable. A variable
+// has one keySetIndex for each set of label keys among its series. A group by
+// gives every series the same keys, so there is usually one.
 type seriesLookup struct {
-	byVariable map[string]*variableLookup
+	byVariable map[string][]*keySetIndex
 }
 
 // FormulaEvaluator handles formula evaluation b/w time series from different aggregations
@@ -422,7 +414,7 @@ func (fe *FormulaEvaluator) EvaluateFormula(timeSeriesData map[string]*TimeSerie
 // aggregations.
 func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSeriesData) *seriesLookup {
 	lookup := &seriesLookup{
-		byVariable: make(map[string]*variableLookup, len(fe.aggRefs)),
+		byVariable: make(map[string][]*keySetIndex, len(fe.aggRefs)),
 	}
 
 	for variable, aggRef := range fe.aggRefs {
@@ -463,115 +455,117 @@ func (fe *FormulaEvaluator) buildSeriesLookup(timeSeriesData map[string]*TimeSer
 			continue
 		}
 
-		vl := &variableLookup{
-			regular: true,
-			entries: make([]*seriesEntry, 0, len(targetBucket.Series)),
-			bySig:   make(map[string]*seriesEntry, len(targetBucket.Series)),
-		}
+		var indexes []*keySetIndex
+		byKeys := make(map[string]*keySetIndex)
+		var index *keySetIndex
 
 		// Process all series in the target bucket.
-		for seriesIdx, series := range targetBucket.Series {
-			keys, sig := labelKeysAndSig(series.Labels)
-
-			if seriesIdx == 0 {
-				vl.keys = keys
-			} else if vl.regular && !slices.Equal(keys, vl.keys) {
-				// A series with a different key set means we can no longer rely on
-				// the signature index for subset matching and must fall back to a
-				// scan for this variable.
-				vl.regular = false
-			}
-
-			entry, seen := vl.bySig[sig]
-			if !seen {
-				entry = &seriesEntry{
-					labels: series.Labels,
-					keys:   keys,
-					sig:    sig,
-					data:   make(map[int64]float64, len(series.Values)),
+		for position, series := range targetBucket.Series {
+			// Consecutive series almost always have the same keys.
+			if index == nil || !hasExactKeys(series.Labels, index.keys) {
+				keys := make([]string, len(series.Labels))
+				for i, label := range series.Labels {
+					keys[i] = label.Key.Name
 				}
-				vl.bySig[sig] = entry
-				vl.entries = append(vl.entries, entry)
-			}
+				slices.Sort(keys)
 
-			// Store all timestamp-value pairs. The first series carrying a given
-			// signature wins, matching the original "first match" behaviour; a
-			// later duplicate's points are ignored.
-			if !seen {
-				for _, value := range series.Values {
-					entry.data[value.Timestamp] = value.Value
+				keysSig := keysSignature(keys)
+				index = byKeys[keysSig]
+				if index == nil {
+					sizeHint := 0
+					if len(indexes) == 0 {
+						// A group by gives every series the same keys, so the
+						// first key set usually holds all of them.
+						sizeHint = len(targetBucket.Series)
+					}
+					index = &keySetIndex{keys: keys, series: make(map[string]*seriesEntry, sizeHint)}
+					byKeys[keysSig] = index
+					indexes = append(indexes, index)
 				}
 			}
+
+			signature, _ := valueSignature(series.Labels, index.keys)
+			if _, exists := index.series[signature]; exists {
+				// The first series with a label set wins, matching the original
+				// "first match" behaviour; a later duplicate's points are ignored.
+				continue
+			}
+
+			data := make(map[int64]float64, len(series.Values))
+			for _, value := range series.Values {
+				data[value.Timestamp] = value.Value
+			}
+			index.series[signature] = &seriesEntry{labels: series.Labels, position: position, data: data}
 		}
 
-		lookup.byVariable[variable] = vl
+		lookup.byVariable[variable] = indexes
 	}
 
 	return lookup
 }
 
-// labelKeysAndSig returns the sorted label key names and a canonical value
-// signature for a label set. The signature is built so that two label sets with
-// the same keys and values produce identical strings, and so that projecting a
-// superset onto these keys (see projectSig) yields the same string.
-func labelKeysAndSig(labels []*Label) ([]string, string) {
-	n := len(labels)
-	if n == 0 {
-		return nil, ""
+// hasExactKeys reports whether the key names of labels are exactly keys.
+func hasExactKeys(labels []*Label, keys []string) bool {
+	if len(labels) != len(keys) {
+		return false
 	}
-	sorted := make([]*Label, n)
-	copy(sorted, labels)
-	slices.SortFunc(sorted, func(i, j *Label) int {
-		return strings.Compare(i.Key.Name, j.Key.Name)
-	})
-
-	keys := make([]string, n)
-	var sb strings.Builder
-	sb.Grow(n * 16)
-	for i, label := range sorted {
-		keys[i] = label.Key.Name
-		appendKVSig(&sb, label.Key.Name, label.Value)
+	for _, key := range keys {
+		if _, ok := findLabelValue(labels, key); !ok {
+			return false
+		}
 	}
-	return keys, sb.String()
+	return true
 }
 
-// projectSig builds the signature of labels projected onto keys (which must be
-// sorted). It returns false if labels is missing any of the keys, meaning labels
-// cannot match a target that requires those keys.
-func projectSig(labels []*Label, keys []string) (string, bool) {
-	if len(keys) == 0 {
-		return "", true
-	}
+// writeSized writes s with its length first, so that the end of s is known
+// without a separator, which s could contain.
+func writeSized(sb *strings.Builder, s string) {
+	sb.WriteString(strconv.Itoa(len(s)))
+	sb.WriteByte(':')
+	sb.WriteString(s)
+}
+
+// keysSignature is the same for two sorted lists of key names exactly when the
+// names are the same.
+func keysSignature(keys []string) string {
 	var sb strings.Builder
-	sb.Grow(len(keys) * 16)
 	for _, key := range keys {
-		value, ok := findLabelValue(labels, key)
-		if !ok {
+		writeSized(&sb, key)
+	}
+	return sb.String()
+}
+
+// valueSignature returns the values of labels for keys, in the order of keys.
+// It is the same for two label sets exactly when each value has the same type
+// and the same value, so the string "200" and the number 200 differ. It returns
+// false when labels has no value for one of the keys.
+func valueSignature(labels []*Label, keys []string) (string, bool) {
+	// Checked first, so that a label set without the keys costs no allocation.
+	for _, key := range keys {
+		if _, ok := findLabelValue(labels, key); !ok {
 			return "", false
 		}
-		appendKVSig(&sb, key, value)
+	}
+
+	var sb strings.Builder
+	sb.Grow(len(keys) * 24)
+	for _, key := range keys {
+		value, _ := findLabelValue(labels, key)
+		switch v := value.(type) {
+		case string:
+			sb.WriteByte('s')
+			writeSized(&sb, v)
+			continue
+		// -0 and 0 are equal values with a different text.
+		case float64:
+			value = v + 0
+		case float32:
+			value = v + 0
+		}
+		sb.WriteByte('o')
+		writeSized(&sb, fmt.Sprintf("%T:%v", value, value))
 	}
 	return sb.String(), true
-}
-
-// appendKVSig appends a single key/value pair to a signature builder using NUL
-// separators, which do not occur in practical label names or values.
-func appendKVSig(sb *strings.Builder, key string, value any) {
-	sb.WriteString(key)
-	sb.WriteByte(0)
-	writeLabelValue(sb, value)
-	sb.WriteByte(0)
-}
-
-// writeLabelValue writes the canonical string form of a label value. Strings are
-// written directly (the common case for telemetry labels); other types fall back
-// to fmt, matching how series are keyed elsewhere (see GetUniqueSeriesKey).
-func writeLabelValue(sb *strings.Builder, value any) {
-	if s, ok := value.(string); ok {
-		sb.WriteString(s)
-		return
-	}
-	fmt.Fprintf(sb, "%v", value)
 }
 
 // findLabelValue returns the value for key in labels, scanning linearly since
@@ -596,83 +590,62 @@ func findLabelValue(labels []*Label, key string) (any, bool) {
 // and `{"service": "frontend"}` would be the series with `{"service": "frontend", "operation": "GET /api"}`
 // So, we create a set of labels sets that can be termed as candidates for the final result.
 func (fe *FormulaEvaluator) findUniqueLabelSets(lookup *seriesLookup) [][]*Label {
-	// Collect the distinct label sets across all variables, keyed by their full
-	// canonical signature. bySig already deduplicates within a variable, so this
-	// merges duplicates across variables (e.g. A and B grouped identically).
-	distinct := make(map[string]*seriesEntry)
-	for _, vl := range lookup.byVariable {
-		for sig, entry := range vl.bySig {
-			if _, ok := distinct[sig]; !ok {
-				distinct[sig] = entry
+	type candidates struct {
+		keys []string
+		// value signature -> labels
+		labelSets map[string][]*Label
+	}
+
+	// Merge the label sets of all variables by key set. Two variables with the
+	// same label set (e.g. A and B grouped identically) give one candidate.
+	byKeys := make(map[string]*candidates)
+	for _, indexes := range lookup.byVariable {
+		for _, index := range indexes {
+			keysSig := keysSignature(index.keys)
+			group := byKeys[keysSig]
+			if group == nil {
+				group = &candidates{keys: index.keys, labelSets: make(map[string][]*Label, len(index.series))}
+				byKeys[keysSig] = group
 			}
-		}
-	}
-
-	if len(distinct) == 0 {
-		return nil
-	}
-
-	// Group the distinct sets by their key set. A label set can only be a subset
-	// of another when its keys are a subset of the other's keys, so subset
-	// relationships only ever cross groups. Within a group all sets share the same
-	// keys and distinct values, so none is a subset of another.
-	groups := make(map[string]*keyGroup)
-	for _, entry := range distinct {
-		ksig := strings.Join(entry.keys, "\x00")
-		g := groups[ksig]
-		if g == nil {
-			g = &keyGroup{keys: entry.keys}
-			groups[ksig] = g
-		}
-		g.entries = append(g.entries, entry)
-	}
-
-	// In the overwhelmingly common case every series shares one key set, so there
-	// is exactly one group and nothing can be a subset of anything else.
-	if len(groups) == 1 {
-		result := make([][]*Label, 0, len(distinct))
-		for _, entry := range distinct {
-			result = append(result, entry.labels)
-		}
-		return result
-	}
-
-	// Otherwise, mark as "covered" every signature that is dominated by a set from
-	// a group with a strictly larger key set: project the larger set's labels onto
-	// the smaller key set and that projection covers any equal set there. A set is
-	// kept iff it is not covered (i.e. it is maximal).
-	groupList := make([]*keyGroup, 0, len(groups))
-	for _, g := range groups {
-		groupList = append(groupList, g)
-	}
-
-	covered := make(map[string]bool)
-	for _, gy := range groupList { // provider of supersets
-		for _, gx := range groupList { // smaller key set being dominated
-			if gx == gy || !keysSubset(gx.keys, gy.keys) {
-				continue
-			}
-			for _, y := range gy.entries {
-				if sig, ok := projectSig(y.labels, gx.keys); ok {
-					covered[sig] = true
+			for signature, entry := range index.series {
+				if _, exists := group.labelSets[signature]; !exists {
+					group.labelSets[signature] = entry.labels
 				}
 			}
 		}
 	}
 
-	result := make([][]*Label, 0, len(distinct))
-	for sig, entry := range distinct {
-		if !covered[sig] {
-			result = append(result, entry.labels)
+	// A label set is a subset of another one only when its keys are a subset of
+	// the other's keys, so only a label set with more keys can remove it. A label
+	// set that is removed here still removes its own subsets, because the label
+	// set that removed it has them as subsets too.
+	for _, larger := range byKeys {
+		for _, smaller := range byKeys {
+			if smaller == larger || !keysSubset(smaller.keys, larger.keys) {
+				continue
+			}
+			for _, labels := range larger.labelSets {
+				if signature, ok := valueSignature(labels, smaller.keys); ok {
+					delete(smaller.labelSets, signature)
+				}
+			}
 		}
 	}
-	return result
-}
 
-// keyGroup holds the distinct label sets that share a key set.
-type keyGroup struct {
-	keys    []string
-	entries []*seriesEntry
+	count := 0
+	for _, group := range byKeys {
+		count += len(group.labelSets)
+	}
+	if count == 0 {
+		return nil
+	}
+	uniqueSets := make([][]*Label, 0, count)
+	for _, group := range byKeys {
+		for _, labels := range group.labelSets {
+			uniqueSets = append(uniqueSets, labels)
+		}
+	}
+	return uniqueSets
 }
 
 // keysSubset reports whether the sorted key set a is a subset of the sorted key
@@ -690,25 +663,6 @@ func keysSubset(a, b []string) bool {
 			return false
 		}
 		i++
-	}
-	return true
-}
-
-func labelsToMap(labels []*Label) map[string]any {
-	m := make(map[string]any, len(labels))
-	for _, label := range labels {
-		m[label.Key.Name] = label.Value
-	}
-	return m
-}
-
-// isSubset reports whether every label in subset is present with the same value in
-// supersetMap (i.e. subset ⊆ superset).
-func isSubset(supersetMap map[string]any, subset []*Label) bool {
-	for _, label := range subset {
-		if val, ok := supersetMap[label.Key.Name]; !ok || val != label.Value {
-			return false
-		}
 	}
 	return true
 }
@@ -740,40 +694,24 @@ func (fe *FormulaEvaluator) evaluateForLabelSet(targetLabels []*Label, lookup *s
 	clear(allTimestamps)
 	defer fe.tsSetPool.Put(allTimestamps)
 
-	// targetMap is only needed for the irregular fallback; built lazily.
-	var targetMap map[string]any
-
 	for i, variable := range fe.variables {
-		vl := lookup.byVariable[variable]
-		if vl == nil {
-			continue
-		}
-
-		var data map[int64]float64
-		if vl.regular {
-			// Fast path: the matching series (labels ⊆ target) is exactly the one
-			// whose signature equals the target projected onto this variable's keys.
-			if sig, ok := projectSig(targetLabels, vl.keys); ok {
-				if e := vl.bySig[sig]; e != nil {
-					data = e.data
-				}
+		// The series of a variable to use is the first one in its bucket whose
+		// labels are a subset of the target. Each key set has at most one such
+		// series: the one with the target's values for those keys.
+		var match *seriesEntry
+		for _, index := range lookup.byVariable[variable] {
+			signature, ok := valueSignature(targetLabels, index.keys)
+			if !ok {
+				continue
 			}
-		} else {
-			// Fallback: series have mixed key sets, so scan for the first subset.
-			if targetMap == nil {
-				targetMap = labelsToMap(targetLabels)
-			}
-			for _, e := range vl.entries {
-				if isSubset(targetMap, e.labels) {
-					data = e.data
-					break
-				}
+			if entry, exists := index.series[signature]; exists && (match == nil || entry.position < match.position) {
+				match = entry
 			}
 		}
 
-		if data != nil {
-			matched[i] = data
-			for ts := range data {
+		if match != nil {
+			matched[i] = match.data
+			for ts := range match.data {
 				allTimestamps[ts] = struct{}{}
 			}
 		}

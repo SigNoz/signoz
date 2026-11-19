@@ -1051,3 +1051,71 @@ func TestAbsValueExpression(t *testing.T) {
 	assert.Equal(t, 15.0, series.Values[0].Value) // |−10| + |5| = 15
 	assert.Equal(t, 24.0, series.Values[1].Value) // |20| + |−4| = 24
 }
+
+func TestSeriesMatching(t *testing.T) {
+	label := func(name string, value any) *Label {
+		return &Label{Key: telemetrytypes.TelemetryFieldKey{Name: name}, Value: value}
+	}
+	point := func(value float64) []*TimeSeriesValue {
+		return []*TimeSeriesValue{{Timestamp: 1, Value: value}}
+	}
+
+	testCases := []struct {
+		name string
+		a    []*TimeSeries
+		b    []*TimeSeries
+		// the value of each result series of A / B
+		expected []float64
+	}{
+		{
+			name:     "SameTextSameType_Match",
+			a:        []*TimeSeries{{Labels: []*Label{label("code", "200")}, Values: point(10)}},
+			b:        []*TimeSeries{{Labels: []*Label{label("code", "200")}, Values: point(5)}},
+			expected: []float64{2},
+		},
+		{
+			name:     "SameTextDifferentType_NoMatch",
+			a:        []*TimeSeries{{Labels: []*Label{label("status", "404")}, Values: point(10)}},
+			b:        []*TimeSeries{{Labels: []*Label{label("status", float64(404))}, Values: point(5)}},
+			expected: nil,
+		},
+		{
+			name: "MixedKeySets_FirstSeriesInBucketWins",
+			a:    []*TimeSeries{{Labels: []*Label{label("svc", "cart"), label("op", "add")}, Values: point(100)}},
+			b: []*TimeSeries{
+				{Labels: []*Label{label("svc", "cart")}, Values: point(10)},
+				{Labels: nil, Values: point(1000)},
+			},
+			expected: []float64{10},
+		},
+		{
+			name: "MixedKeySets_EmptyLabelSetFirst_Wins",
+			a:    []*TimeSeries{{Labels: []*Label{label("svc", "checkout"), label("op", "pay")}, Values: point(100)}},
+			b: []*TimeSeries{
+				{Labels: nil, Values: point(1000)},
+				{Labels: []*Label{label("svc", "checkout")}, Values: point(10)},
+			},
+			expected: []float64{0.1},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": false, "B": false})
+			require.NoError(t, err)
+
+			result, err := evaluator.EvaluateFormula(map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", testCase.a),
+				"B": createFormulaTestTimeSeriesData("B", testCase.b),
+			})
+			require.NoError(t, err)
+
+			values := make([]float64, 0, len(result))
+			for _, series := range result {
+				require.Len(t, series.Values, 1)
+				values = append(values, series.Values[0].Value)
+			}
+			assert.ElementsMatch(t, testCase.expected, values)
+		})
+	}
+}
