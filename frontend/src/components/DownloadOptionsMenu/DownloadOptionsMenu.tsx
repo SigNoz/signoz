@@ -46,7 +46,7 @@ export default function DownloadOptionsMenu({
 			format: exportFormat,
 			rowLimit,
 			clearSelectColumns:
-				dataSource !== DataSource.TRACES &&
+				panelType !== PANEL_TYPES.TRACE &&
 				columnsScope === DownloadColumnsScopes.ALL,
 			selectedColumns,
 		});
@@ -56,7 +56,7 @@ export default function DownloadOptionsMenu({
 		columnsScope,
 		selectedColumns,
 		handleExportRawData,
-		dataSource,
+		panelType,
 	]);
 
 	const popoverContent = useMemo(
@@ -96,7 +96,7 @@ export default function DownloadOptionsMenu({
 					/>
 				</div>
 
-				{dataSource !== DataSource.TRACES && (
+				{panelType !== PANEL_TYPES.TRACE && (
 					<>
 						<div className="horizontal-line" />
 
@@ -104,6 +104,7 @@ export default function DownloadOptionsMenu({
 							<Typography.Text className="title">Columns</Typography.Text>
 							<RadioGroup
 								color="primary"
+								testId="export-columns-scope"
 								value={columnsScope}
 								onChange={setColumnsScope}
 								items={[
@@ -123,6 +124,7 @@ export default function DownloadOptionsMenu({
 					width="100%"
 					onClick={handleExport}
 					loading={isDownloading}
+					testId="export-options-submit"
 				>
 					Export
 				</Button>
@@ -134,7 +136,7 @@ export default function DownloadOptionsMenu({
 			columnsScope,
 			isDownloading,
 			handleExport,
-			dataSource,
+			panelType,
 		],
 	);
 

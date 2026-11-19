@@ -55,7 +55,7 @@ export function useExportRawData({
 				setIsDownloading(true);
 
 				const selectColumnsOverride = clearSelectColumns
-					? {}
+					? { selectColumns: [] }
 					: selectedColumns?.length
 						? { selectColumns: selectedColumns }
 						: {};
