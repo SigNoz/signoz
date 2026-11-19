@@ -46,7 +46,7 @@ export const alertRulesPage = (
 			// distinct lowercased threshold names; the API's rank order is not mirrored
 			rules: rules.slice(offset, offset + limit).map((rule) => ({
 				...rule,
-				severities: [
+				thresholds: [
 					...new Set(
 						(rule.condition.thresholds?.spec ?? []).map((threshold) =>
 							threshold.name.toLowerCase(),
@@ -69,7 +69,7 @@ const RESERVED_RULE_KEYWORDS = [
 	'labels.<key>',
 	'name',
 	'rule_type',
-	'severity',
+	'thresholds',
 	'updated_at',
 	'updated_by',
 ] as const;

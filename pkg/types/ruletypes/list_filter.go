@@ -14,14 +14,14 @@ var ErrCodeRuleListFilterInvalid = errors.MustNewCode("rule_list_filter_invalid"
 type DSLKey string
 
 const (
-	DSLKeyName      DSLKey = "name"
-	DSLKeySeverity  DSLKey = "severity"
-	DSLKeyCreatedBy DSLKey = "created_by"
-	DSLKeyUpdatedBy DSLKey = "updated_by"
-	DSLKeyCreatedAt DSLKey = "created_at"
-	DSLKeyUpdatedAt DSLKey = "updated_at"
-	DSLKeyAlertType DSLKey = "alert_type"
-	DSLKeyRuleType  DSLKey = "rule_type"
+	DSLKeyName       DSLKey = "name"
+	DSLKeyThresholds DSLKey = "thresholds"
+	DSLKeyCreatedBy  DSLKey = "created_by"
+	DSLKeyUpdatedBy  DSLKey = "updated_by"
+	DSLKeyCreatedAt  DSLKey = "created_at"
+	DSLKeyUpdatedAt  DSLKey = "updated_at"
+	DSLKeyAlertType  DSLKey = "alert_type"
+	DSLKeyRuleType   DSLKey = "rule_type"
 
 	// Label keys under this prefix are matched exactly (case-sensitive).
 	DSLLabelsKeyPrefix = "labels."
@@ -45,14 +45,14 @@ func ReservedFilterKeys() []DSLKey {
 // ReservedOps lists the operators each reserved DSL key accepts; `labels.<key>` terms use LabelsKeyOps.
 var ReservedOps = map[DSLKey]map[qbtypesv5.FilterOperator]struct{}{
 	DSLKeyName: stringSearchOps(),
-	// every rule has severities (see storedRuleData.extractSeverities), so EXISTS and NOT EXISTS do not apply.
-	DSLKeySeverity:  stringSearchOps(),
-	DSLKeyCreatedBy: stringSearchOps(),
-	DSLKeyUpdatedBy: stringSearchOps(),
-	DSLKeyCreatedAt: numericRangeOps(),
-	DSLKeyUpdatedAt: numericRangeOps(),
-	DSLKeyAlertType: enumOps(),
-	DSLKeyRuleType:  enumOps(),
+	// every rule has thresholds (see storedRuleData.extractThresholdNames), so EXISTS and NOT EXISTS do not apply.
+	DSLKeyThresholds: stringSearchOps(),
+	DSLKeyCreatedBy:  stringSearchOps(),
+	DSLKeyUpdatedBy:  stringSearchOps(),
+	DSLKeyCreatedAt:  numericRangeOps(),
+	DSLKeyUpdatedAt:  numericRangeOps(),
+	DSLKeyAlertType:  enumOps(),
+	DSLKeyRuleType:   enumOps(),
 }
 
 // LabelsKeyOps operators target the label's value; EXISTS/NOT EXISTS test its presence.

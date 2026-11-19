@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func listableRule(name string, state AlertState, severity string, updatedAt time.Time) *ListableRule {
+func listableRule(name string, state AlertState, thresholdName string, updatedAt time.Time) *ListableRule {
 	rule := &ListableRule{
 		AlertName: name,
 		State:     state,
@@ -18,8 +18,8 @@ func listableRule(name string, state AlertState, severity string, updatedAt time
 			UpdatedAt: updatedAt,
 		},
 	}
-	if severity != "" {
-		rule.Severities = []string{severity}
+	if thresholdName != "" {
+		rule.Thresholds = []string{thresholdName}
 	}
 	return rule
 }
@@ -53,8 +53,8 @@ func TestToListableRule(t *testing.T) {
 	assert.Equal(t, RuleTypeThreshold, listable.RuleType)
 	assert.True(t, listable.Disabled)
 	assert.Equal(t, map[string]string{"severity": "info"}, listable.Labels)
-	// threshold names, lowercased and deduplicated, ranked; the severity label is not consulted
-	assert.Equal(t, []string{"critical", "warning"}, listable.Severities)
+	// lowercased, deduplicated and ranked; the severity label is not consulted
+	assert.Equal(t, []string{"critical", "warning"}, listable.Thresholds)
 	assert.Equal(t, created, listable.CreatedAt)
 	assert.Equal(t, "creator@signoz.io", listable.CreatedBy)
 	assert.Equal(t, updated, listable.UpdatedAt)

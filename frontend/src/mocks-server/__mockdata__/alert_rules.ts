@@ -117,7 +117,7 @@ export const alertRulesPaginationFixture: RuletypesRuleDTO[] = Array.from(
 
 const RULES_RESERVED_KEYWORDS = [
 	'name',
-	'severity',
+	'thresholds',
 	'alert_type',
 	'rule_type',
 	'created_by',
@@ -156,7 +156,7 @@ export const listRulesV3Response = (
 			// distinct lowercased threshold names; the API's rank order is not mirrored
 			rules: matching.slice(offset, offset + limit).map((rule) => ({
 				...rule,
-				severities: [
+				thresholds: [
 					...new Set(
 						(rule.condition.thresholds?.spec ?? []).map((threshold) =>
 							threshold.name.toLowerCase(),

@@ -57,10 +57,6 @@ func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey stri
 	}
 
 	_, reservedAllowed := allowedOperations[operation]
-	// a severity label is decoration: the bare key reads threshold names and labels.severity reads the label
-	if ruletypes.DSLKey(key) == ruletypes.DSLKeySeverity && rawKey == string(ruletypes.DSLKeySeverity) {
-		labelAllowed = false
-	}
 
 	switch {
 	case reservedAllowed && labelAllowed:
@@ -89,8 +85,8 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 	case ruletypes.DSLKeyName:
 		columnExpression := string(v.Formatter.JSONExtractString(ruleDataColumn, nameJSONPath))
 		return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, string(key))
-	case ruletypes.DSLKeySeverity:
-		return r.severityComparison(v, ctx, operation)
+	case ruletypes.DSLKeyThresholds:
+		return r.thresholdsComparison(v, ctx, operation)
 	case ruletypes.DSLKeyCreatedBy:
 		return v.BuildStringOperation(v.Sb, ctx, operation, "rule.created_by", string(key))
 	case ruletypes.DSLKeyUpdatedBy:
@@ -108,9 +104,9 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 	return ""
 }
 
-// severityComparison mirrors ruletypes' storedRuleData.extractSeverities. A positive term holds when any
+// thresholdsComparison mirrors ruletypes' storedRuleData.extractThresholdNames. A positive term holds when any
 // threshold name matches and a negative term when none does, so the subquery takes the positive operator.
-func (ruleFieldResolver) severityComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator) string {
+func (ruleFieldResolver) thresholdsComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator) string {
 	positiveOperation := operation
 	if operation.IsNegativeOperator() {
 		positiveOperation = operation.Inverse()
@@ -118,7 +114,7 @@ func (ruleFieldResolver) severityComparison(v *sqlcompiler.Visitor, ctx *grammar
 	thresholdsFrom, threshold := v.Formatter.JSONArrayElements(ruleDataColumn, thresholdSpecPath, "threshold")
 	nameExpression := string(v.Formatter.LowerExpression(string(v.Formatter.JSONExtractString(string(threshold), thresholdNamePath))))
 	subqueryBuilder := sqlbuilder.NewSelectBuilder()
-	namePredicate := v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, nameExpression, string(ruletypes.DSLKeySeverity))
+	namePredicate := v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, nameExpression, string(ruletypes.DSLKeyThresholds))
 	if namePredicate == "" {
 		return ""
 	}
