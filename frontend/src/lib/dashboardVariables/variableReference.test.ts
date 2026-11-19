@@ -1,3 +1,4 @@
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
@@ -159,6 +160,37 @@ describe('extractQueryTextStrings', () => {
 
 		const texts = extractQueryTextStrings(query);
 		expect(texts).toStrictEqual(['env = $deployment_environment']);
+	});
+
+	it('extracts from the AI slot, not builder, for an AI query', () => {
+		const query: Query = {
+			...baseQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: {
+				queryData: [
+					{
+						...initialQueryBuilderFormValues,
+						filter: { expression: 'env = $ignored' },
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+			builder_ai_query: {
+				queryData: [
+					{
+						...initialQueryBuilderFormValues,
+						filter: { expression: 'service.name = $service' },
+					},
+				],
+				queryFormulas: [],
+				queryTraceOperator: [],
+			},
+		};
+
+		expect(extractQueryTextStrings(query)).toStrictEqual([
+			'service.name = $service',
+		]);
 	});
 
 	it('skips non-string filter values', () => {

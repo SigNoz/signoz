@@ -307,10 +307,12 @@ describe('prepareTopListRows', () => {
 
 		const { rows } = prepareTopListRows([table]);
 
-		expect(rows.map((row) => [row.queryName, row.labels])).toStrictEqual([
-			['A', {}],
-			['A', { 'service.name': '' }],
-			['A', { 'service.name': 'checkout' }],
+		expect(
+			rows.map((row) => [row.queryName, row.labels, row.missingLabels]),
+		).toStrictEqual([
+			['A', {}, ['service.name']],
+			['A', { 'service.name': '' }, []],
+			['A', { 'service.name': 'checkout' }, []],
 		]);
 	});
 

@@ -69,16 +69,11 @@ export function isSignalSupported(
 	return getSupportedSignals(kind).includes(signal);
 }
 
-/** Authoring modes a kind supports, in tab order. */
-export function getSupportedQueryModes(kind: PanelKind): EQueryType[] {
-	const modes = getQueryPanelDefinition(kind)?.supportedQueryTypesKindMap ?? {};
-	return Object.keys(modes) as EQueryType[];
-}
-/** Query languages a kind supports (Query Builder / ClickHouse / PromQL). */
+/** Query types a kind supports, in tab order. */
 export function getSupportedQueryTypes(kind: PanelKind): EQueryType[] {
-	return getSupportedQueryModes(kind).filter(
-		(queryType) => queryType !== EQueryType.AI_QUERY_BUILDER,
-	);
+	const queryTypes =
+		getQueryPanelDefinition(kind)?.supportedQueryTypesKindMap ?? {};
+	return Object.keys(queryTypes) as EQueryType[];
 }
 
 export function isQueryTypeSupportedByPanelKind(
@@ -120,7 +115,7 @@ export function resolveQueryType(
 	kind: PanelKind,
 	preferred: EQueryType,
 ): EQueryType {
-	const supported = getSupportedQueryModes(kind);
+	const supported = getSupportedQueryTypes(kind);
 	if (supported.includes(preferred)) {
 		return preferred;
 	}
