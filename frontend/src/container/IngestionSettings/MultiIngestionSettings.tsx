@@ -75,6 +75,7 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
+	buildIngestionKeyUpdatePermission,
 	IngestionKeyCreatePermission,
 	IngestionKeyListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
@@ -1854,7 +1855,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						color="primary"
 						key="submit"
@@ -1862,9 +1863,15 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Check size={14} />}
 						loading={isLoadingUpdateAPIKey}
 						onClick={onUpdateApiKey}
+						testId="ingestion-key-update-btn"
+						checks={
+							isEditModalOpen && activeAPIKey?.id
+								? [buildIngestionKeyUpdatePermission(activeAPIKey.id)]
+								: []
+						}
 					>
 						Update Ingestion Key
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Form
