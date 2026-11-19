@@ -48,7 +48,7 @@
 		}
 
 		// The next button overlaps this edge by 1px and draws the divider.
-		.ant-btn-group > .ant-btn:not(:last-child) {
+		.ant-btn-group > .ant-btn:not(:last-child, :hover, :focus-visible) {
 			border-right-color: transparent;
 		}
 

@@ -6,6 +6,9 @@
 	&.non-list-view {
 		padding-left: 40px;
 		position: relative;
+		// The query rail runs past the add buttons into this section; the fields' fill is translucent.
+		background: var(--query-builder-v2-surface);
+		box-shadow: 0 -16px 0 0 var(--query-builder-v2-surface);
 
 		&::before {
 			content: '';
@@ -87,11 +90,15 @@
 		flex-direction: row;
 
 		border-radius: 2px;
-		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+		background: var(--query-builder-v2-background-color, var(--input-background));
 
+		// The field draws one outline around the label and the editor, so the
+		// editor inside draws none
 		.qb-trace-operator-editor-container {
 			flex: 1;
+			--query-builder-v2-border-color: transparent;
+			--query-builder-v2-background-color: transparent;
 			.cm-activeLine > span {
 				font-size: 12px;
 			}
@@ -110,12 +117,16 @@
 		}
 
 		.label {
+			align-self: stretch;
+			display: flex;
+			align-items: center;
 			color: var(--l2-foreground);
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			padding: 0px 8px;
-			border-right: 1px solid var(--l1-border);
+			border-right: 1px solid
+				var(--query-builder-v2-border-color, var(--l2-border));
 			font-size: 12px;
 			font-weight: 300;
 		}
