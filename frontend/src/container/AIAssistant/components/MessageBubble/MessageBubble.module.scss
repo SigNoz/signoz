@@ -37,6 +37,11 @@
 	.assistant & {
 		align-items: flex-start;
 	}
+
+	// The full page's column is already narrow, so replies use all of it.
+	.assistant &.fullPage {
+		max-width: 100%;
+	}
 }
 
 .bubble {
@@ -50,9 +55,11 @@
 	max-width: 100%;
 
 	.user & {
-		background: var(--accent-primary);
-		color: var(--primary-foreground);
-		border-bottom-right-radius: var(--radius-2);
+		padding: var(--spacing-4) var(--spacing-6);
+		border-radius: var(--radius-3);
+		background: var(--l3-background-60);
+		color: var(--l1-foreground);
+		font-size: var(--periscope-font-size-base);
 	}
 
 	.assistant & {

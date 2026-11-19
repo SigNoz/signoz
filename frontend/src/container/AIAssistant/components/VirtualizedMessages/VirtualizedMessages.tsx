@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import Noz from 'components/Noz/Noz';
+import cx from 'classnames';
 
 import logEvent from 'api/common/logEvent';
 
-import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
+import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Message, StreamingEventItem } from '../../types';
+import { useVariant } from '../../VariantContext';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 
+import EmptyState from './EmptyState/EmptyState';
 import styles from './VirtualizedMessages.module.scss';
-import { useEmptyStateChips } from './useEmptyStateChips';
 
 const EMPTY_EVENTS: StreamingEventItem[] = [];
 
@@ -26,6 +27,8 @@ interface VirtualizedMessagesProps {
 	 * page/mode/context attribution as a normal send.
 	 */
 	onSendSuggestedPrompt: (text: string) => void;
+	/** A Snake game on the empty state's dot grid started or ended. */
+	onSnakeGameChange?: (isPlaying: boolean) => void;
 }
 
 export default function VirtualizedMessages({
@@ -33,6 +36,7 @@ export default function VirtualizedMessages({
 	messages,
 	isStreaming,
 	onSendSuggestedPrompt,
+	onSnakeGameChange,
 }: VirtualizedMessagesProps): JSX.Element {
 	const regenerateAssistantMessage = useAIAssistantStore(
 		(s) => s.regenerateAssistantMessage,
@@ -73,6 +77,7 @@ export default function VirtualizedMessages({
 	// the user was scrolled — sending a message and not seeing it is worse
 	// than the anti-yank guarantee.
 	const lastSeenUserMessageIdRef = useRef<string | null>(null);
+	const isFullPage = useVariant() === 'page';
 
 	const handleRegenerate = useCallback(
 		(messageId: string): void => {
@@ -155,37 +160,13 @@ export default function VirtualizedMessages({
 	const showStreamingSlot =
 		isStreaming || Boolean(pendingApproval) || Boolean(pendingClarification);
 	const isEmptyState = messages.length === 0 && !showStreamingSlot;
-	const { chips: emptyStateChips } = useEmptyStateChips(isEmptyState);
 
 	if (isEmptyState) {
 		return (
-			<div className={styles.empty}>
-				<div className={`${styles.emptyIcon} noz-wave`}>
-					<Noz size={48} />
-				</div>
-				<h3 className={styles.emptyTitle}>Noz</h3>
-				<p className={styles.emptySubtitle}>
-					Ask questions about your traces, logs, metrics, and infrastructure.
-				</p>
-				<div className={styles.suggestions}>
-					{emptyStateChips.map((chip) => (
-						<div
-							key={chip.id}
-							className={styles.suggestion}
-							onClick={(): void => {
-								void logEvent(AIAssistantEvents.SuggestedPromptClicked, {
-									promptId: chip.id,
-									category: SuggestedPromptCategory.EmptyState,
-								});
-								onSendSuggestedPrompt(chip.text);
-							}}
-							data-testid={`empty-state-chip-${chip.id}`}
-						>
-							{chip.text}
-						</div>
-					))}
-				</div>
-			</div>
+			<EmptyState
+				onSendSuggestedPrompt={onSendSuggestedPrompt}
+				onSnakeGameChange={onSnakeGameChange}
+			/>
 		);
 	}
 
@@ -204,36 +185,41 @@ export default function VirtualizedMessages({
 			atBottomThreshold={64}
 			initialTopMostItemIndex={Math.max(0, totalCount - 1)}
 			itemContent={(index): JSX.Element => {
+				const rowClass = cx(styles.row, { [styles.fullPage]: isFullPage });
 				if (index < messages.length) {
 					const msg = messages[index];
 					const isLastAssistant =
 						msg.role === 'assistant' &&
 						messages.slice(index + 1).every((m) => m.role !== 'assistant');
 					return (
-						<MessageBubble
-							message={msg}
-							onRegenerate={
-								isLastAssistant && !showStreamingSlot
-									? (): void => handleRegenerate(msg.id)
-									: undefined
-							}
-							onRetry={
-								msg.isError && isLastAssistant && !showStreamingSlot
-									? handleRetry
-									: undefined
-							}
-							isLastAssistant={isLastAssistant}
-						/>
+						<div className={rowClass}>
+							<MessageBubble
+								message={msg}
+								onRegenerate={
+									isLastAssistant && !showStreamingSlot
+										? (): void => handleRegenerate(msg.id)
+										: undefined
+								}
+								onRetry={
+									msg.isError && isLastAssistant && !showStreamingSlot
+										? handleRetry
+										: undefined
+								}
+								isLastAssistant={isLastAssistant}
+							/>
+						</div>
 					);
 				}
 				return (
-					<StreamingMessage
-						conversationId={conversationId}
-						events={streamingEvents}
-						status={streamingStatus}
-						pendingApproval={pendingApproval}
-						pendingClarification={pendingClarification}
-					/>
+					<div className={rowClass}>
+						<StreamingMessage
+							conversationId={conversationId}
+							events={streamingEvents}
+							status={streamingStatus}
+							pendingApproval={pendingApproval}
+							pendingClarification={pendingClarification}
+						/>
+					</div>
 				);
 			}}
 		/>

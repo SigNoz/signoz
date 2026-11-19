@@ -141,7 +141,10 @@ export default function MessageBubble({
 			[styles.compact]: isCompact,
 		},
 	);
-	const bodyClass = cx(styles.body, { [styles.compact]: isCompact });
+	const bodyClass = cx(styles.body, {
+		[styles.compact]: isCompact,
+		[styles.fullPage]: variant === 'page',
+	});
 
 	return (
 		<div className={messageClass} data-testid={`ai-message-${message.id}`}>
