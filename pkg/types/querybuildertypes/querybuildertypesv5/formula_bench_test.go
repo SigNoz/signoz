@@ -265,3 +265,80 @@ func BenchmarkFormulaEvaluator_EvaluationOnly(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkFormulaEvaluator_ScalarGroups evaluates A / B on the series of a
+// scalar request, which have one point each. The group counts are the ones
+// where a scan of all series for each group does not end in a useful time.
+func BenchmarkFormulaEvaluator_ScalarGroups(b *testing.B) {
+	label := func(name, value string) *Label {
+		return &Label{Key: telemetrytypes.TelemetryFieldKey{Name: name}, Value: value}
+	}
+	series := func(value float64, labels ...*Label) *TimeSeries {
+		return &TimeSeries{Labels: labels, Values: []*TimeSeriesValue{{Timestamp: 0, Value: value}}}
+	}
+	data := func(queryName string, series []*TimeSeries) *TimeSeriesData {
+		return &TimeSeriesData{QueryName: queryName, Aggregations: []*AggregationBucket{{Index: 0, Series: series}}}
+	}
+
+	// one query grouped by a key with a distinct value in each group, and one total
+	groupedAndTotal := func(groups int) map[string]*TimeSeriesData {
+		grouped := make([]*TimeSeries, groups)
+		for i := range grouped {
+			grouped[i] = series(float64(i+1), label("url", fmt.Sprintf("/shop/v2/products/%09d/variations", i)))
+		}
+		return map[string]*TimeSeriesData{"A": data("A", grouped), "B": data("B", []*TimeSeries{series(1000)})}
+	}
+	// both queries grouped by the same key, with the same values
+	sameKey := func(groups int) map[string]*TimeSeriesData {
+		left, right := make([]*TimeSeries, groups), make([]*TimeSeries, groups)
+		for i := range left {
+			left[i] = series(float64(i+1), label("url", fmt.Sprintf("/shop/v2/products/%09d/variations", i)))
+			right[i] = series(float64(i+2), label("url", fmt.Sprintf("/shop/v2/products/%09d/variations", i)))
+		}
+		return map[string]*TimeSeriesData{"A": data("A", left), "B": data("B", right)}
+	}
+	// one query where half of the series have one more label, and one total
+	mixedKeySets := func(groups int) map[string]*TimeSeriesData {
+		mixed := make([]*TimeSeries, groups)
+		for i := range mixed {
+			if i%2 == 0 {
+				mixed[i] = series(float64(i+1), label("svc", fmt.Sprintf("service-%09d", i)))
+			} else {
+				mixed[i] = series(float64(i+1), label("svc", fmt.Sprintf("service-%09d", i)), label("op", "GET"))
+			}
+		}
+		return map[string]*TimeSeriesData{"A": data("A", mixed), "B": data("B", []*TimeSeries{series(1000)})}
+	}
+
+	benchmarks := []struct {
+		name   string
+		groups int
+		input  func(groups int) map[string]*TimeSeriesData
+	}{
+		{name: "GroupedAndTotal_100k", groups: 100_000, input: groupedAndTotal},
+		{name: "GroupedAndTotal_627k", groups: 626_950, input: groupedAndTotal},
+		{name: "SameKey_100k", groups: 100_000, input: sameKey},
+		{name: "MixedKeySets_100k", groups: 100_000, input: mixedKeySets},
+	}
+
+	for _, benchmark := range benchmarks {
+		b.Run(benchmark.name, func(b *testing.B) {
+			timeSeriesData := benchmark.input(benchmark.groups)
+			evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": false, "B": false})
+			require.NoError(b, err)
+
+			b.ResetTimer()
+			b.ReportAllocs()
+
+			for i := 0; i < b.N; i++ {
+				result, err := evaluator.EvaluateFormula(context.Background(), timeSeriesData)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if len(result) != benchmark.groups {
+					b.Fatalf("Expected %d result series, got %d", benchmark.groups, len(result))
+				}
+			}
+		})
+	}
+}
