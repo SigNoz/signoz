@@ -9,15 +9,16 @@
 .activityHeader {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 4px 0;
+	gap: 3px;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
 	background: transparent;
 	border: none;
 	cursor: pointer;
-	color: var(--l3-foreground);
+	color: var(--l2-foreground);
 	user-select: none;
 	transition: color 0.12s ease;
-	width: 100%;
 	text-align: left;
 
 	&:hover {
@@ -45,11 +46,14 @@
 }
 
 .activitySummary {
-	flex: 1;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-weight: 400;
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	line-height: 18px;
+	letter-spacing: -0.005em;
 }
 
 .toggleChevron {
