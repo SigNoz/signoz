@@ -2,7 +2,11 @@ import {
 	type AIAssistantStore,
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
-import type { Conversation, Message } from 'container/AIAssistant/types';
+import type {
+	Conversation,
+	ConversationStreamState,
+	Message,
+} from 'container/AIAssistant/types';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -26,6 +30,18 @@ const message: Message = {
 	createdAt: 0,
 };
 
+const awaitingApproval: ConversationStreamState = {
+	isStreaming: false,
+	streamingContent: '',
+	streamingStatus: 'awaiting_approval',
+	streamingEvents: [],
+	streamingMessageId: null,
+	streamingActions: null,
+	pendingApproval: null,
+	pendingClarification: null,
+	startedAt: 0,
+};
+
 const chat = (id: string, title: string, loaded = false): Conversation => ({
 	id,
 	threadId: id,
@@ -38,6 +54,7 @@ interface Seed {
 	conversations: Conversation[];
 	tabs?: string[];
 	unread?: string[];
+	streams?: Record<string, ConversationStreamState>;
 	activeConversationId?: string | null;
 	isDrawerOpen?: boolean;
 	hasLoadedThreads?: boolean;
@@ -47,6 +64,7 @@ function seed({
 	conversations,
 	tabs = [],
 	unread = [],
+	streams = {},
 	activeConversationId = null,
 	isDrawerOpen = false,
 	hasLoadedThreads = true,
@@ -58,6 +76,7 @@ function seed({
 	useAIAssistantStore.setState({
 		conversations: Object.fromEntries(conversations.map((c) => [c.id, c])),
 		unreadReplyIds: unread,
+		streams,
 		activeConversationId,
 		isDrawerOpen,
 		hasLoadedThreads,
@@ -104,6 +123,31 @@ describe('NozActiveChat', () => {
 				'Noz replied in Beta',
 			);
 			expect(screen.getByTestId(`${TABS}-a-open`)).not.toHaveAttribute(
+				'aria-label',
+			);
+		});
+
+		it('marks a chat Noz is waiting on with a dot, until it is on screen', () => {
+			seed({
+				conversations: [chat('a', 'Alpha'), chat('b', 'Beta')],
+				tabs: ['a', 'b'],
+				streams: { b: awaitingApproval },
+			});
+			render(<NozActiveChat />);
+
+			expect(screen.getByTestId(`${TABS}-b-open`)).toHaveAttribute(
+				'aria-label',
+				'Noz needs your response in Beta',
+			);
+
+			act(() => {
+				useAIAssistantStore.setState({
+					activeConversationId: 'b',
+					isDrawerOpen: true,
+				});
+			});
+
+			expect(screen.getByTestId(`${TABS}-b-open`)).not.toHaveAttribute(
 				'aria-label',
 			);
 		});
@@ -182,6 +226,36 @@ describe('NozActiveChat', () => {
 			});
 
 			expect(openTabs()).toStrictEqual(['b', 'c', 'd', 'e', 'f']);
+		});
+
+		it('adds a chat once Noz starts waiting on the user in it', () => {
+			seed({ conversations: [chat('a', 'Alpha')] });
+			render(<NozActiveChat />);
+
+			act(() => {
+				useAIAssistantStore.setState({ streams: { a: awaitingApproval } });
+			});
+
+			expect(openTabs()).toStrictEqual(['a']);
+		});
+
+		it('keeps a closed chat out while Noz still waits in it', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			seed({
+				conversations: [chat('a', 'Alpha'), chat('b', 'Beta')],
+				tabs: ['a'],
+				streams: { a: awaitingApproval },
+			});
+			render(<NozActiveChat />);
+
+			await user.click(screen.getByTestId(`${TABS}-a-close`));
+			act(() => {
+				useAIAssistantStore.setState({
+					streams: { a: awaitingApproval, b: awaitingApproval },
+				});
+			});
+
+			expect(openTabs()).toStrictEqual(['b']);
 		});
 
 		it('closing a tab removes it and dismisses its unseen reply', async () => {
