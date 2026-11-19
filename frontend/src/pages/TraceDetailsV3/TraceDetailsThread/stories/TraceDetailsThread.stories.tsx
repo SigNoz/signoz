@@ -97,8 +97,8 @@ export const RolesAndFinishReasons: Story = {
 };
 
 /**
- * Spans the backend could not format: messages rebuilt from the raw
- * attributes, and a tool span with none at all.
+ * Spans the backend could not format, one with only raw `gen_ai.*.messages`
+ * attributes and a tool span with none: both cards show no input or output.
  */
 export const RawAttributes: Story = {
 	args: { scenario: 'raw-attributes' },
