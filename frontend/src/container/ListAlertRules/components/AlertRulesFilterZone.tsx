@@ -10,7 +10,6 @@ interface Props {
 	states: string[];
 	creatorOptions: CreatorOption[];
 	source: SuggestionSource;
-	error: string | null;
 	onQueryChange: (query: string) => void;
 	onStatesChange: (states: string[]) => void;
 }
@@ -20,7 +19,6 @@ function AlertRulesFilterZone({
 	states,
 	creatorOptions,
 	source,
-	error,
 	onQueryChange,
 	onStatesChange,
 }: Props): JSX.Element {
@@ -36,7 +34,6 @@ function AlertRulesFilterZone({
 			extraFilters={<RuleStatesFilter states={states} onChange={onStatesChange} />}
 			hasExtraFilters={states.length > 0}
 			onClearAll={(): void => onStatesChange([])}
-			error={error ?? undefined}
 		/>
 	);
 }

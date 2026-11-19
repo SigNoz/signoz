@@ -4,11 +4,9 @@
  */
 
 import { AI_API_PATH, setAIBackendUrl } from 'api/AIAPIInstance';
-import removeSessionStorage from 'api/browser/sessionstorage/remove';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { rest, type RequestHandler } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -20,6 +18,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { globalConfigResponse } from '@/storybook/msw/__story_mockdata__/appShell';
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
 import type { MockResolver } from '@/storybook/msw/types';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	AGENT_STATES,
@@ -241,6 +240,23 @@ export const aiAssistantMocks = defineStoryMocks({
 	},
 });
 
+export type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
+
+/** The thread and the sidebar both come from endpoints the State control holds. */
+const loads = (args: AIAssistantArgs): boolean => args.dataState === 'loaded';
+
+/** Whether the open thread's messages render. */
+export const showsThread = (args: AIAssistantArgs): boolean =>
+	loads(args) && args.conversation;
+
+/** Whether the sidebar lists a conversation row, with its actions menu. */
+export const listsConversations = (args: AIAssistantArgs): boolean =>
+	loads(args) && (args.conversation || args.history > 0);
+
+/** Whether the composer takes input: any agent state but idle disables it. */
+export const composerFree = (args: AIAssistantArgs): boolean =>
+	loads(args) && args.agent === 'idle';
+
 /**
  * An action chip's tooltip is the one text on the page the backend writes, and
  * the thread fixture keeps it to a line. This answers with the same turns and a
@@ -272,58 +288,3 @@ export const longActionTooltipHandlers: RequestHandler[] = onBothBases(
 		);
 	},
 );
-
-/** The recognizer `.storybook/preview-head.html` installs in place of the browser's. */
-interface StorySpeechRecognition {
-	listening: {
-		hear: (transcript: string) => void;
-		onerror: ((event: { error: string }) => void) | null;
-	} | null;
-}
-
-/**
- * Clicks the composer's mic and waits for the recording to start. The composer
- * stays disabled until the thread has loaded.
- */
-export const startVoiceInput = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	const canvas = within(canvasElement);
-	const mic = await waitFor(
-		async () => {
-			const button = canvas.getByRole('button', { name: /start voice input/i });
-
-			// Depending on its version, Button disables through `disabled` or `aria-disabled`.
-			await expect(button).toBeEnabled();
-			await expect(button).not.toHaveAttribute('aria-disabled', 'true');
-
-			return button;
-		},
-		{ timeout: 15_000 },
-	);
-
-	await userEvent.click(mic);
-	await canvas.findByRole('status', { name: /recording voice input/i });
-};
-
-/** Speaks into the open recording: the words so far, still listening. */
-export const speak = (transcript: string): void => {
-	(
-		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
-	).webkitSpeechRecognition.listening?.hear(transcript);
-};
-
-/**
- * Clears the flag `ChatInput` keeps in sessionStorage after a failed recording,
- * which hides the mic for the rest of the tab, test-runner's included.
- */
-export const forgetVoiceFailure = (): void => {
-	removeSessionStorage('ai-assistant-voice-unavailable');
-};
-
-/** Fails the open recording the way the browser's recognizer reports it. */
-export const failVoiceInput = (error: 'network' | 'not-allowed'): void => {
-	(
-		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
-	).webkitSpeechRecognition.listening?.onerror?.({ error });
-};
