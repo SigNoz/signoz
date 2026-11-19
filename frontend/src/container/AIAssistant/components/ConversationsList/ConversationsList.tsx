@@ -7,7 +7,6 @@ import { Plus } from '@signozhq/icons';
 import { useOpenConversation } from '../../hooks/useOpenConversation';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
-import { useVariant } from '../../VariantContext';
 import ConversationItem from '../ConversationItem';
 
 import styles from './ConversationsList.module.scss';
@@ -73,7 +72,6 @@ export default function ConversationsList({
 	onNewConversation,
 	showAddNewConversation = false,
 }: ConversationsListProps): JSX.Element {
-	const variant = useVariant();
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
@@ -136,11 +134,8 @@ export default function ConversationsList({
 		onSelect?.(id);
 	};
 
-	const variantClass =
-		variant === 'page' ? styles.variantPage : styles.variantPanel;
-
 	return (
-		<div className={cx(styles.conversationsList, variantClass)}>
+		<div className={styles.conversationsList}>
 			<div className={styles.searchBar}>
 				<Input
 					type="text"

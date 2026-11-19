@@ -1533,6 +1533,27 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 // Standalone imperative accessors
 export const openAIAssistant = (): void =>
 	useAIAssistantStore.getState().openDrawer();
+/** Opens the panel on a fresh chat, reusing the open one while nothing has been sent in it. */
+export const openNewAIAssistantChat = (): void => {
+	const {
+		activeConversationId,
+		conversations,
+		startNewConversation,
+		openDrawer,
+	} = useAIAssistantStore.getState();
+	const active = activeConversationId
+		? conversations[activeConversationId]
+		: undefined;
+	if (
+		!active ||
+		active.threadId ||
+		active.isHydrating ||
+		active.messages.length > 0
+	) {
+		startNewConversation();
+	}
+	openDrawer();
+};
 export const closeAIAssistant = (): void =>
 	useAIAssistantStore.getState().closeDrawer();
 export const openAIAssistantModal = (): void =>
