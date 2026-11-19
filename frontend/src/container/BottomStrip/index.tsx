@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react';
 
 import AskNoz from './AskNoz/AskNoz';
 import LeftSlot from './LeftSlot/LeftSlot';
+import NozHistory from './NozHistory/NozHistory';
 import { useBottomStripStore } from './store/useBottomStripStore';
 import SupportButton from './SupportButton/SupportButton';
 
@@ -60,6 +61,7 @@ function BottomStrip(): JSX.Element {
 				</div>
 				<div className={styles.right}>
 					<AskNoz />
+					<NozHistory />
 					<SupportButton />
 				</div>
 			</div>

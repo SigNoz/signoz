@@ -620,6 +620,8 @@ export interface AIAssistantStore {
 	// UI state
 	isDrawerOpen: boolean;
 	isModalOpen: boolean;
+	/** The bottom strip's recent-conversations list. */
+	isHistoryOpen: boolean;
 	activeConversationId: string | null;
 
 	// Data
@@ -644,6 +646,7 @@ export interface AIAssistantStore {
 	openModal: () => void;
 	closeModal: () => void;
 	minimizeModal: () => void;
+	setHistoryOpen: (open: boolean) => void;
 	fetchThreads: () => Promise<void>;
 	loadThread: (threadId: string) => Promise<void>;
 	startNewConversation: () => string;
@@ -781,6 +784,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		immer<AIAssistantStore>((set, get) => ({
 			isDrawerOpen: false,
 			isModalOpen: false,
+			isHistoryOpen: false,
 			activeConversationId: null,
 			conversations: {},
 			streams: {},
@@ -791,6 +795,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			openDrawer: (): void => {
 				set((state) => {
 					state.isDrawerOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -813,6 +818,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			openModal: (): void => {
 				set((state) => {
 					state.isModalOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -836,6 +842,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				set((state) => {
 					state.isModalOpen = false;
 					state.isDrawerOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -845,6 +852,16 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							updatedAt: Date.now(),
 						};
 						state.activeConversationId = id;
+					}
+				});
+			},
+
+			// One Noz surface at a time: the list replaces the panel behind it.
+			setHistoryOpen: (open: boolean): void => {
+				set((state) => {
+					state.isHistoryOpen = open;
+					if (open) {
+						state.isDrawerOpen = false;
 					}
 				});
 			},

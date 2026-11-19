@@ -390,3 +390,36 @@ describe('useAIAssistantStore — message contexts', () => {
 		expect(lastMessage('thread-1').contexts).toStrictEqual([pickedDashboard]);
 	});
 });
+
+describe('history list', () => {
+	beforeEach(() => {
+		useAIAssistantStore.setState((s) => {
+			s.isDrawerOpen = false;
+			s.isModalOpen = false;
+			s.isHistoryOpen = false;
+		});
+	});
+
+	it('closes the panel when it opens', () => {
+		useAIAssistantStore.setState((s) => {
+			s.isDrawerOpen = true;
+		});
+
+		useAIAssistantStore.getState().setHistoryOpen(true);
+
+		const { isHistoryOpen, isDrawerOpen } = useAIAssistantStore.getState();
+		expect(isHistoryOpen).toBe(true);
+		expect(isDrawerOpen).toBe(false);
+	});
+
+	it.each([
+		['panel', (): void => useAIAssistantStore.getState().openDrawer()],
+		['popup chat', (): void => useAIAssistantStore.getState().openModal()],
+	])('closes when the %s opens', (_surface, open) => {
+		useAIAssistantStore.getState().setHistoryOpen(true);
+
+		open();
+
+		expect(useAIAssistantStore.getState().isHistoryOpen).toBe(false);
+	});
+});

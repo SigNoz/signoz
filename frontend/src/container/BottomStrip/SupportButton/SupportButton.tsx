@@ -43,6 +43,7 @@ function SupportButton(): JSX.Element | null {
 				prefix={<MessageSquareText size={16} />}
 				onClick={handleClick}
 				testId="bottom-strip-support"
+				data-support-chat-trigger
 			>
 				Support
 			</Button>
