@@ -1,0 +1,29 @@
+.comparison {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-12);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	height: 360px;
+}
+
+.label {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l2-foreground);
+}
+
+.frame {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	border: 1px dashed var(--l3-border);
+}
+
+.aside {
+	width: var(--spacing-40);
+	background: var(--l3-background);
+}

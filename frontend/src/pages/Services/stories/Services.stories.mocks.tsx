@@ -47,12 +47,6 @@ const featureFlagsFor = (mode: ServiceMode): FeatureFlagProps[] =>
 			: flag,
 	);
 
-/**
- * The span-metrics table derives one point per series, so every request answers
- * on the same timestamp and a refetch redraws the same numbers.
- */
-const POINT_AT = 1_735_689_600_000;
-
 export const servicesMocks = defineStoryMocks({
 	controls: {
 		mode: choiceControl<ServiceMode>('Source', {
@@ -95,14 +89,13 @@ export const servicesMocks = defineStoryMocks({
 			response.json(() => topLevelOperationsResponse(values.services)),
 		),
 		rest.post(
-			'http://localhost/api/v4/query_range',
+			'http://localhost/api/v5/query_range',
 			response.json(async (req) =>
 				serviceMetricsResponse(
 					(await req.json()) as Record<string, unknown>,
 					values.services,
 					values.health,
 					values.traffic,
-					POINT_AT,
 				),
 			),
 		),

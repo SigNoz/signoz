@@ -4,14 +4,10 @@
  */
 
 import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
-import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type { ServicesList } from 'types/api/metrics/getService';
-import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
 
-import {
-	queryRangeV3TimeSeriesResponse,
-	v3Series,
-} from '@/storybook/msw/__story_mockdata__/queryRange';
+import { queryRangeV5ScalarTableResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 export const SERVICE_MODES = ['traces', 'span-metrics'] as const;
 
@@ -64,7 +60,7 @@ export const RESOURCE_ATTRIBUTE_KEYS = [
 const namesFor = (count: number): string[] =>
 	SERVICE_NAMES.slice(0, Math.min(count, SERVICE_MAX));
 
-/** Latency in nanoseconds, which is what both the table columns divide down from. */
+/** Latency in nanoseconds, as `/v2/services` sends it. */
 const p99Of = (index: number, health: ServiceHealth): number => {
 	const base = 118_000_000 + index * 11_500_000;
 
@@ -161,28 +157,31 @@ const serviceOf = (
 	names: string[],
 ): string | undefined => {
 	const composite = body.compositeQuery as
-		| { builderQueries?: Record<string, IBuilderQuery> }
+		| {
+				queries?: {
+					spec?: { name?: string; filter?: { expression?: string } };
+				}[];
+		  }
 		| undefined;
-	const item = composite?.builderQueries?.A?.filters?.items?.find(
-		(filter) => filter.key?.key === 'service.name',
-	);
-	const value = Array.isArray(item?.value) ? item?.value[0] : item?.value;
+	const expression =
+		composite?.queries?.find((query) => query.spec?.name === 'A')?.spec?.filter
+			?.expression ?? '';
 
-	return names.find((name) => name === value);
+	return names.find((name) => expression.includes(`'${name}'`));
 };
 
 /**
  * One request per service, so the row a response fills is the one named in its
- * own `service.name` filter. `A` is p99, `D` the call rate and `F1` the error
- * rate formula, which is the only three values the table reads back.
+ * own `service.name` filter. `A` is p99 in ms (span metrics, unlike the ns of
+ * `/v2/services`), `D` the call rate and `F1` the error rate formula, which is
+ * the only three values the table reads back.
  */
 export const serviceMetricsResponse = (
 	body: Record<string, unknown>,
 	count: number,
 	health: ServiceHealth,
 	traffic: ServiceTraffic,
-	timestamp: number,
-): MetricRangePayloadProps => {
+): MetricRangePayloadV5 => {
 	const names = namesFor(count);
 	const service = serviceOf(body, names);
 	const index = service ? names.indexOf(service) : 0;
@@ -193,20 +192,11 @@ export const serviceMetricsResponse = (
 		traffic,
 	);
 
-	const point = (value: number): { timestamp: number; value: string } => ({
-		timestamp,
-		value: String(Number(value.toFixed(4))),
-	});
+	const round = (value: number): number => Number(value.toFixed(4));
 
-	return {
-		data: {
-			result: [],
-			resultType: '',
-			newResult: queryRangeV3TimeSeriesResponse([
-				{ queryName: 'A', series: [v3Series({}, [point(p99)])] },
-				{ queryName: 'D', series: [v3Series({}, [point(callRate)])] },
-				{ queryName: 'F1', series: [v3Series({}, [point(errorRate)])] },
-			]),
-		},
-	};
+	return queryRangeV5ScalarTableResponse({
+		groupBy: ['service.name'],
+		aggregations: ['A', 'D', 'F1'],
+		rows: [[service, round(p99 / 1_000_000), round(callRate), round(errorRate)]],
+	});
 };

@@ -101,15 +101,17 @@ export default function ActivityGroup({
 	return (
 		<div className={styles.activityGroup}>
 			<div className={styles.activityHeader} onClick={toggle}>
-				<Sparkles
-					size={12}
-					className={cx(styles.sparkleIcon, { [styles.iconPulsing]: isLive })}
-				/>
+				{isLive && (
+					<Sparkles
+						size={12}
+						className={cx(styles.sparkleIcon, styles.iconPulsing)}
+					/>
+				)}
 				<span className={styles.activitySummary}>{summary}</span>
 				{expanded ? (
-					<ChevronDown size={12} className={styles.toggleChevron} />
+					<ChevronDown size={14} className={styles.toggleChevron} />
 				) : (
-					<ChevronRight size={12} className={styles.toggleChevron} />
+					<ChevronRight size={14} className={styles.toggleChevron} />
 				)}
 			</div>
 

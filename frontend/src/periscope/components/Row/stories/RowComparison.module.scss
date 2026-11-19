@@ -1,0 +1,42 @@
+.comparison {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-12);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.label {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l2-foreground);
+}
+
+.frame {
+	padding: var(--spacing-12);
+	border: 1px dashed var(--l3-border);
+}
+
+.item {
+	background: var(--l3-background);
+	border: 1px solid var(--l2-border);
+}
+
+.itemSmall {
+	width: var(--spacing-40);
+	height: var(--spacing-12);
+}
+
+.itemMedium {
+	width: var(--spacing-48);
+	height: var(--spacing-20);
+}
+
+.itemLarge {
+	width: var(--spacing-64);
+	height: var(--spacing-32);
+}
