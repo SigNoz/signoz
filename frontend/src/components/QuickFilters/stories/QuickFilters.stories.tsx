@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ComponentProps, ComponentType } from 'react';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
