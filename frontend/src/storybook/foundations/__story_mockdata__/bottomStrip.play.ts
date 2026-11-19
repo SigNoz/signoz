@@ -55,3 +55,19 @@ export const openNozPanel = async ({
 	);
 	await screen.findByTestId('ai-assistant-panel-close');
 };
+
+/** The icon only shows once the shell has loaded at least one saved conversation. */
+export const openNozHistory = async ({
+	args,
+}: {
+	args: Pick<GlobalMockArgs, 'noz' | 'nozThreads'>;
+}): Promise<void> => {
+	if (!args.noz || args.nozThreads === 0) {
+		return;
+	}
+
+	await userEvent.click(
+		await screen.findByTestId('noz-history-trigger', undefined, untilLoaded),
+	);
+	await screen.findByText('Earlier conversations');
+};
