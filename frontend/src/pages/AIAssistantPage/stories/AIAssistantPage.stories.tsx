@@ -153,7 +153,7 @@ export const ActivityExpanded: Story = {
 	play: expandActivity,
 };
 
-/** An answer that took one step: its row names the step and opens straight to it. */
+/** An answer that took one step: its row names the step and opens to its input and output, with no timeline. */
 export const SingleStep: Story = {
 	args: { contents: ['one-step'] },
 	play: expandSingleStep,

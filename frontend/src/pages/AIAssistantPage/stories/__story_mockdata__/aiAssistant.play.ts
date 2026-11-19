@@ -163,6 +163,17 @@ export const copyConversationLink = async (
 	await screen.findByText(/conversation link copied to clipboard/i);
 };
 
+const contextOption = (category: string, label = /./): Promise<HTMLElement> =>
+	waitFor(() => {
+		const option = screen
+			.getAllByTestId(new RegExp(`^ai-context-option-${category}-`))
+			.find((el) => label.test(el.textContent ?? ''));
+		if (!option) {
+			throw new Error(`No ${category} option reads ${label}`);
+		}
+		return option;
+	}, untilLoaded);
+
 /** Picks a dashboard and a service, closes the picker, and focuses the last pill's remove. */
 export const pickContexts = async (context: PlayContext): Promise<void> => {
 	if (!composerFree(context.args)) {
@@ -170,17 +181,14 @@ export const pickContexts = async (context: PlayContext): Promise<void> => {
 	}
 
 	await openContextPicker(context);
-	await userEvent.click(
-		await screen.findByRole('button', { name: /checkout overview/i }),
-	);
+	await userEvent.click(await contextOption('Dashboards', /checkout overview/i));
 	await userEvent.click(await screen.findByTestId('ai-context-tab-Services'));
-	const [service] = await within(
-		await screen.findByRole('tabpanel'),
-	).findAllByRole('button', { pressed: false }, untilLoaded);
-	await userEvent.click(service);
+	await userEvent.click(await contextOption('Services'));
 	await userEvent.keyboard('{Escape}');
 	// Closing hands focus back to the picker's button.
-	await waitFor(() => expect(screen.queryByRole('tabpanel')).toBeNull());
+	await waitFor(() =>
+		expect(screen.queryByTestId('ai-context-search')).toBeNull(),
+	);
 
 	const removes = await within(context.canvasElement).findAllByTestId(
 		'ai-context-pill-remove',
@@ -189,43 +197,40 @@ export const pickContexts = async (context: PlayContext): Promise<void> => {
 	removes[removes.length - 1].focus();
 };
 
-/** Opens the last answer's lone step. */
-export const expandSingleStep = async ({
-	canvasElement,
-	args,
-}: PlayContext): Promise<void> => {
-	if (!(showsThread(args) && args.contents.includes('one-step'))) {
-		return;
-	}
+/** A play that opens the activity row whose summary matches, on the threads that have one. */
+const openActivity =
+	(has: (args: AIAssistantArgs) => boolean, summary: RegExp, opens: RegExp) =>
+	async ({ canvasElement, args }: PlayContext): Promise<void> => {
+		if (!(showsThread(args) && has(args))) {
+			return;
+		}
 
-	await clickUntil(async () => {
-		const [step] = await within(canvasElement).findAllByText(
-			/matched the 429s to their upstream/i,
-			undefined,
-			untilLoaded,
-		);
-		return step;
-	}, /signoz_search_traces/);
-};
+		const row = (): Promise<HTMLElement> =>
+			waitFor(() => {
+				const found = within(canvasElement)
+					.getAllByTestId('ai-activity-toggle')
+					.find((el) => summary.test(el.textContent ?? ''));
+				if (!found) {
+					throw new Error(`No activity row reads ${summary}`);
+				}
+				return found;
+			}, untilLoaded);
+		await clickUntil(row, opens);
+	};
+
+/** Opens the last answer's lone step. */
+export const expandSingleStep = openActivity(
+	(args) => args.contents.includes('one-step'),
+	/matched the 429s to their upstream/i,
+	/signoz_search_traces/,
+);
 
 /** Opens the running reply's live steps. */
-export const openLiveSteps = async ({
-	canvasElement,
-	args,
-}: PlayContext): Promise<void> => {
-	if (!(showsThread(args) && args.agent === 'streaming')) {
-		return;
-	}
-
-	await clickUntil(async () => {
-		const [row] = await within(canvasElement).findAllByText(
-			/counting checkout calls per minute/i,
-			undefined,
-			untilLoaded,
-		);
-		return row;
-	}, /how much of that budget/i);
-};
+export const openLiveSteps = openActivity(
+	(args) => args.agent === 'streaming',
+	/counting checkout calls per minute/i,
+	/how much of that budget/i,
+);
 
 /** Scrolls the thread to its first message, which brings up the Latest pill. */
 export const scrollToTop = async ({
