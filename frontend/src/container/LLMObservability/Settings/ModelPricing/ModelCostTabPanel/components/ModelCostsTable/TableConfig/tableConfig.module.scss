@@ -8,10 +8,12 @@
 .extraBuckets {
 	display: flex;
 	// Keep chips on a single line so the row stays at the table's fixed row
-	// height; the column flexes to 100% so there's room for both.
+	// height; the column is sized for both.
 	flex-wrap: nowrap;
 	gap: var(--spacing-3);
 	overflow: hidden;
+	// Lets a chip shrink below its text so its label ends in an ellipsis.
+	--badge-min-width: 0;
 }
 
 .tableCellStyles {

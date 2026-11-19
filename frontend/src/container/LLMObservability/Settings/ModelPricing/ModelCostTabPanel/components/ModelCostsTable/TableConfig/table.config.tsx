@@ -34,9 +34,9 @@ export function getModelCostsColumns({
 			id: 'model',
 			header: 'Model',
 			accessorFn: (row): string => row.modelName ?? '',
-			// Flexes to absorb spare width alongside Extra buckets so the row fills
-			// the container instead of leaving a gap on the right.
-			width: { min: 240, default: '100%' },
+			// Flexes to absorb spare width so the row fills the container instead of
+			// leaving a gap on the right.
+			width: { min: 200, default: '100%' },
 			enableMove: false,
 			enableRemove: false,
 			cell: ({ row }): JSX.Element => (
@@ -124,7 +124,8 @@ export function getModelCostsColumns({
 		{
 			id: 'extraBuckets',
 			header: 'Extra buckets',
-			width: { min: 200, default: '100%' },
+			// Fits both cache chips on one line.
+			width: { min: 264 },
 			enableMove: false,
 			cell: ({ row }): JSX.Element => {
 				const buckets = getExtraBuckets(row);
@@ -157,7 +158,7 @@ export function getModelCostsColumns({
 									weight="regular"
 									color="main"
 									as="span"
-									textOverflow="wrap"
+									textOverflow="visible"
 								>
 									{startCase(bucket.key)}
 								</Typography>{' '}
@@ -167,7 +168,7 @@ export function getModelCostsColumns({
 									weight="bold"
 									color="main"
 									as="span"
-									textOverflow="wrap"
+									textOverflow="visible"
 								>
 									{formatPricePerMillion(bucket.pricePerMillion)}
 								</Typography>
