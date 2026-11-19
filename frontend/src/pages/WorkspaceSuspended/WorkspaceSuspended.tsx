@@ -1,7 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import { updateSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';

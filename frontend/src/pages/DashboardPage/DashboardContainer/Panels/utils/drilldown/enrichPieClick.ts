@@ -9,6 +9,8 @@ import { resolveDrilldownSignal } from './signal';
 
 interface EnrichPieClickArgs {
 	slice: PieSlice;
+	/** Group-by keys the slice has no value for. */
+	missingLabels?: string[];
 	builderQueries: BuilderQuery[];
 	coordinates: { x: number; y: number };
 	/** Explorer time window — the panel's fetched window (pie slices have no clicked bucket). */
@@ -22,6 +24,7 @@ interface EnrichPieClickArgs {
  */
 export function enrichPieClick({
 	slice,
+	missingLabels = [],
 	builderQueries,
 	coordinates,
 	timeRange,
@@ -34,7 +37,7 @@ export function enrichPieClick({
 	const builderQuery = builderQueries.find((query) => query.name === queryName);
 
 	const filters = builderQuery
-		? getGroupByFilters(slice.labels ?? {}, builderQuery)
+		? getGroupByFilters(slice.labels ?? {}, builderQuery, missingLabels)
 		: [];
 	return {
 		coordinates,

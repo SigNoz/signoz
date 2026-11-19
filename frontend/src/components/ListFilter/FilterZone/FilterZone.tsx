@@ -20,7 +20,7 @@ interface Props {
 	query: string;
 	grammar: DslGrammar;
 	// Ids: `${testIdPrefix}-search-zone`, `-list-search*`, `-filter-zone`,
-	// `-filter-clear`, `-filter-created-by`, `-filter-updated`, `-query-error`.
+	// `-filter-clear`, `-filter-created-by`, `-filter-updated`.
 	testIdPrefix: string;
 	creatorOptions: CreatorOption[];
 	source: SuggestionSource;
@@ -35,8 +35,6 @@ interface Props {
 	hasExtraFilters?: boolean;
 	// Called by Clear after it empties the query.
 	onClearAll?: () => void;
-	// Shown under the search row.
-	error?: string;
 	// Wraps the search box and the filter controls (e.g. in an authz tooltip).
 	wrapControl?: (node: ReactElement) => ReactElement;
 	onSubmitted?: (hasQuery: boolean) => void;
@@ -65,7 +63,6 @@ function FilterZone({
 	extraFilters,
 	hasExtraFilters = false,
 	onClearAll,
-	error,
 	wrapControl = identity,
 	onSubmitted,
 	onFilterApplied,
@@ -115,14 +112,6 @@ function FilterZone({
 				)}
 				{rightSlot}
 			</div>
-			{error && (
-				<Typography.Text
-					className={styles.error}
-					testId={`${testIdPrefix}-query-error`}
-				>
-					{error}
-				</Typography.Text>
-			)}
 			<div className={styles.filtersRow}>
 				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
 				{wrapControl(

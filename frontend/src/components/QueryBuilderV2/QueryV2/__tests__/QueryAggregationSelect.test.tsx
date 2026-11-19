@@ -10,7 +10,11 @@ import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 
 import { QueryBuilderV2Provider } from '../../QueryBuilderV2Context';
 import QueryAggregationSelect from '../QueryAggregation/QueryAggregationSelect';
@@ -107,12 +111,18 @@ beforeEach(() => {
 	);
 });
 
-async function enterAggregation(text: string): Promise<void> {
+async function enterAggregation(
+	text: string,
+	queryData: IBuilderQuery = aiQuery,
+	currentQuery?: Query,
+): Promise<void> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
 	render(
 		<QueryBuilderV2Provider>
-			<QueryAggregationSelect queryData={aiQuery} />
+			<QueryAggregationSelect queryData={queryData} />
 		</QueryBuilderV2Provider>,
+		undefined,
+		{ queryBuilderOverrides: currentQuery && { currentQuery } },
 	);
 
 	const content = (
@@ -162,6 +172,28 @@ describe('QueryAggregationSelect field suggestions for an AI query', () => {
 					fieldContext: params.get('fieldContext'),
 				})),
 			).toStrictEqual([{ signal: 'traces', fieldDataType, fieldContext: null }]);
+		},
+		TEST_TIMEOUT_MS,
+	);
+
+	it(
+		'uses the AI keys endpoint for an untagged query on the AI query type',
+		async () => {
+			await enterAggregation(
+				'avg(',
+				{ ...aiQuery, builderQueryType: undefined },
+				{ ...initialQueriesMap.traces, queryType: EQueryType.AI_QUERY_BUILDER },
+			);
+
+			await waitFor(
+				() =>
+					expect(suggestionLabels()).toStrictEqual([
+						'duration_nano',
+						'trace.total_tokens',
+					]),
+				{ timeout: SUGGESTIONS_TIMEOUT_MS },
+			);
+			expect(keysRequests).toHaveLength(0);
 		},
 		TEST_TIMEOUT_MS,
 	);

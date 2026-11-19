@@ -1,4 +1,3 @@
-import { fireEvent } from '@testing-library/react';
 import logEvent from 'api/common/logEvent';
 import {
 	AIAssistantEvents,
@@ -6,15 +5,11 @@ import {
 } from 'container/AIAssistant/events';
 import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { render } from 'tests/test-utils';
+import { render, userEvent } from 'tests/test-utils';
 
 import AskNoz from '../AskNoz';
 
 jest.mock('hooks/useIsAIAssistantEnabled');
-jest.mock('api/common/logEvent', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
 jest.mock('container/AIAssistant/store/useAIAssistantStore', () => ({
 	openAIAssistant: jest.fn(),
 	useAIAssistantStore: jest.fn(),
@@ -24,6 +19,7 @@ const mockEnabled = useIsAIAssistantEnabled as jest.MockedFunction<
 	typeof useIsAIAssistantEnabled
 >;
 const mockOpen = openAIAssistant as jest.MockedFunction<typeof openAIAssistant>;
+const mockClose = jest.fn() as jest.MockedFunction<() => void>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { useAIAssistantStore } = jest.requireMock(
@@ -40,7 +36,12 @@ function mockStore({
 	isModalOpen?: boolean;
 	pendingCount?: number;
 } = {}): void {
-	const state = { isDrawerOpen, isModalOpen, streams: {} };
+	const state = {
+		isDrawerOpen,
+		isModalOpen,
+		streams: {},
+		closeDrawer: mockClose,
+	};
 	useAIAssistantStore.mockImplementation((selector: (s: unknown) => unknown) => {
 		const picked = selector(state);
 		// `selectPendingUserInputStreamCount` walks `streams`, which is empty here,
@@ -49,9 +50,8 @@ function mockStore({
 	});
 }
 
-// `TooltipSimple` replaces its trigger's props, so the testId lives on the
-// wrapper and the button itself is reached by role — there is only ever one.
 const SLOT = 'bottom-strip-ask-noz';
+const BUTTON = 'bottom-strip-ask-noz-button';
 
 describe('AskNoz', () => {
 	beforeEach(() => {
@@ -62,9 +62,9 @@ describe('AskNoz', () => {
 
 	describe('visibility', () => {
 		it('renders when the assistant is enabled', () => {
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toBeInTheDocument();
+			expect(getByTestId(BUTTON)).toBeInTheDocument();
 		});
 
 		it('renders nothing when the assistant is disabled', () => {
@@ -75,12 +75,12 @@ describe('AskNoz', () => {
 			expect(queryByTestId(SLOT)).not.toBeInTheDocument();
 		});
 
-		it('renders nothing while the drawer is open', () => {
+		it('stays pressed while the drawer is open', () => {
 			mockStore({ isDrawerOpen: true });
 
-			const { queryByTestId } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(queryByTestId(SLOT)).not.toBeInTheDocument();
+			expect(getByTestId(BUTTON)).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('renders nothing on the Noz full page, where the drawer does not mount', () => {
@@ -93,18 +93,32 @@ describe('AskNoz', () => {
 	});
 
 	describe('what it does', () => {
-		it('opens the drawer on click', () => {
-			const { getByRole } = render(<AskNoz />);
+		it('opens the drawer on click', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { getByTestId } = render(<AskNoz />);
 
-			fireEvent.click(getByRole('button'));
+			await user.click(getByTestId(BUTTON));
 
 			expect(mockOpen).toHaveBeenCalledTimes(1);
 		});
 
-		it('reports the open as coming from the strip', () => {
-			const { getByRole } = render(<AskNoz />);
+		it('closes the open drawer on the same chat instead of starting a new one', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			mockStore({ isDrawerOpen: true });
+			const { getByTestId } = render(<AskNoz />);
 
-			fireEvent.click(getByRole('button'));
+			await user.click(getByTestId(BUTTON));
+
+			expect(mockClose).toHaveBeenCalledTimes(1);
+			expect(mockOpen).not.toHaveBeenCalled();
+			expect(logEvent).not.toHaveBeenCalled();
+		});
+
+		it('reports the open as coming from the strip', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const { getByTestId } = render(<AskNoz />);
+
+			await user.click(getByTestId(BUTTON));
 
 			expect(logEvent).toHaveBeenCalledWith(
 				AIAssistantEvents.Opened,
@@ -117,9 +131,9 @@ describe('AskNoz', () => {
 		it('announces the count when Noz is waiting on the user', () => {
 			mockStore({ pendingCount: 2 });
 
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toHaveAttribute(
+			expect(getByTestId(BUTTON)).toHaveAttribute(
 				'aria-label',
 				'Ask Noz, 2 actions need your response',
 			);
@@ -128,26 +142,34 @@ describe('AskNoz', () => {
 		it('uses the singular for one pending action', () => {
 			mockStore({ pendingCount: 1 });
 
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toHaveAttribute(
+			expect(getByTestId(BUTTON)).toHaveAttribute(
 				'aria-label',
 				'Ask Noz, 1 action needs your response',
 			);
 		});
 
 		it('stays quiet when nothing is pending', () => {
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toHaveAttribute('aria-label', 'Ask Noz');
+			expect(getByTestId(BUTTON)).toHaveAttribute('aria-label', 'Ask Noz');
+		});
+
+		it('stays quiet while the drawer is open, Noz is already on screen', () => {
+			mockStore({ isDrawerOpen: true, pendingCount: 3 });
+
+			const { getByTestId } = render(<AskNoz />);
+
+			expect(getByTestId(BUTTON)).toHaveAttribute('aria-label', 'Ask Noz');
 		});
 
 		it('stays quiet while the modal is open, Noz is already on screen', () => {
 			mockStore({ isModalOpen: true, pendingCount: 3 });
 
-			const { getByRole } = render(<AskNoz />);
+			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByRole('button')).toHaveAttribute('aria-label', 'Ask Noz');
+			expect(getByTestId(BUTTON)).toHaveAttribute('aria-label', 'Ask Noz');
 		});
 	});
 });

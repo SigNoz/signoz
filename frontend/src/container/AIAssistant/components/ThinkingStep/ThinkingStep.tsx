@@ -1,7 +1,4 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
-
-import styles from './ThinkingStep.module.scss';
+import ActivityStep from '../ActivityStep/ActivityStep';
 
 interface ThinkingStepProps {
 	content: string;
@@ -13,40 +10,18 @@ interface ThinkingStepProps {
 	isLive?: boolean;
 }
 
-/** Body of a thinking step — extracted so ActivityGroup can render it directly. */
-export function ThinkingContent({ content }: { content: string }): JSX.Element {
-	return (
-		<div className={styles.body}>
-			<p className={styles.content}>{content}</p>
-		</div>
-	);
-}
-
 export function thinkingLabel(isLive: boolean): string {
 	return isLive ? 'Thinking…' : 'Thought for a few seconds';
 }
 
-/** Collapsible thinking row — chevron + label, content in the expanded body. */
+/** A thinking pass on the activity timeline, with what the agent thought as its detail. */
 export default function ThinkingStep({
 	content,
 	isLive = false,
 }: ThinkingStepProps): JSX.Element {
-	const [expanded, setExpanded] = useState(false);
-
-	const toggle = (): void => setExpanded((v) => !v);
-
 	return (
-		<div className={styles.row}>
-			<div className={styles.header} onClick={toggle}>
-				{expanded ? (
-					<ChevronDown size={12} className={styles.chevron} />
-				) : (
-					<ChevronRight size={12} className={styles.chevron} />
-				)}
-				<span className={styles.label}>{thinkingLabel(isLive)}</span>
-			</div>
-
-			{expanded && <ThinkingContent content={content} />}
-		</div>
+		<ActivityStep title={thinkingLabel(isLive)} isLive={isLive}>
+			{content.trim()}
+		</ActivityStep>
 	);
 }

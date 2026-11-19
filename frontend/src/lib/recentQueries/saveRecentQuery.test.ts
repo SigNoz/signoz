@@ -1,3 +1,4 @@
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { validateQuery } from 'utils/queryValidationUtils';
@@ -100,6 +101,23 @@ describe('saveRecentQuery', () => {
 		expect(store.list('logs')).toHaveLength(0);
 		expect(store.list('traces')).toHaveLength(0);
 		expect(store.list('metrics')).toHaveLength(0);
+	});
+
+	it('saves from the AI slot when the query type is AI', () => {
+		saveRecentQuery({
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: buildComposite([{ filter: { expression: "service.name = 'qb'" } }])
+				.builder,
+			builder_ai_query: buildComposite([
+				{
+					dataSource: DataSource.TRACES,
+					filter: { expression: "service.name = 'ai'" },
+				},
+			]).builder,
+		});
+
+		expect(store.list('logs')).toHaveLength(0);
+		expect(store.list('traces')[0].filter.expression).toBe("service.name = 'ai'");
 	});
 
 	it('is a no-op when the composite is null, undefined, or empty', () => {

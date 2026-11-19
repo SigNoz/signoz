@@ -1,0 +1,14 @@
+@use '../../_scrollbar' as *;
+
+.panel {
+	margin: 0 0 0.65em;
+	overflow-x: auto;
+	border: 1px solid var(--l1-border);
+	border-radius: var(--radius-2);
+	background: var(--l2-background);
+	@include scrollbar(0.25rem);
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}

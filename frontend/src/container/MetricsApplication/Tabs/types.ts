@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -43,6 +44,12 @@ export interface BuilderQuerieswithFormulaProps {
 	additionalItems: TagFilterItem[][];
 	timeAggregateOperators: MetricAggregateOperator[];
 	spaceAggregateOperators: MetricAggregateOperator[];
+	comparisonSpaceAggregationParams?: (
+		| MetrictypesComparisonSpaceAggregationParamDTO
+		| undefined
+	)[];
+	// v5 picks its own step when none is sent; v4 needs one
+	stepInterval?: number;
 	dataSource: DataSource;
 }
 

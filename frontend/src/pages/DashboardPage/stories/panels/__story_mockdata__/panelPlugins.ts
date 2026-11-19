@@ -14,6 +14,8 @@ import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTOKind as TableKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind as TextKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
+	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListKind,
+	MetrictypesSpaceAggregationDTO as SpaceAggregation,
 	DashboardtypesStackModeDTO as StackMode,
 	DashboardtypesTextModeDTO as TextMode,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
@@ -24,7 +26,9 @@ import {
 import {
 	HEATMAP_FIXED_COUNTS,
 	TABLE_SECOND_COLUMN,
+	TABLE_THRESHOLD_VALUE,
 	TABLE_VALUE_COLUMN,
+	TOP_LIST_BAR_COLOR,
 } from './constants';
 import {
 	comparisonThresholds,
@@ -195,6 +199,31 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					},
 				},
 				queries: [],
+			};
+		case 'TopList':
+			return {
+				plugin: {
+					kind: TopListKind['signoz/TopListPanel'],
+					spec: {
+						formatting,
+						appearance: {
+							barColor: TOP_LIST_BAR_COLOR,
+							showRank: args.showRank,
+							showShare: args.showShare,
+						},
+						thresholds: comparisonThresholds(args.thresholds, TABLE_THRESHOLD_VALUE),
+					},
+				},
+				queries: [
+					metricQuery(RequestType.scalar, {
+						grouped: true,
+						metricName: 'signoz_calls',
+						spaceAggregation:
+							args.topListAggregation === 'sum'
+								? SpaceAggregation.sum
+								: SpaceAggregation.p99,
+					}),
+				],
 			};
 		case 'TimeSeries':
 		default:
