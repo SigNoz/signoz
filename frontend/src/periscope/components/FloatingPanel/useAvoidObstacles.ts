@@ -1,11 +1,15 @@
 import { RefObject, useEffect } from 'react';
 import type { Rnd } from 'react-rnd';
 
-import type { FloatingObstacle, FloatingRect, Position } from './types';
-import { getPositionClearOf, isAt } from './utils';
+import type { Obstacle, Rect, Position } from 'lib/obstacles/types';
+import {
+	getPositionClearOf,
+	isAt,
+	SLIDE_DURATION_MS,
+	watchObstacles,
+} from 'lib/obstacles/utils';
 
 const SLIDING_CLASS = 'floating-panel--sliding';
-const SLIDE_DURATION_MS = 200;
 
 /**
  * Slides the panel clear of `obstacles` while they show, and back once they
@@ -13,7 +17,7 @@ const SLIDE_DURATION_MS = 200;
  */
 export function useAvoidObstacles(
 	rndRef: RefObject<Rnd>,
-	obstacles: FloatingObstacle[] | undefined,
+	obstacles: Obstacle[] | undefined,
 	enabled: boolean,
 ): void {
 	useEffect(() => {
@@ -26,7 +30,7 @@ export function useAvoidObstacles(
 		let placed: Position | null = null;
 		let slideTimer: number | undefined;
 
-		const update = (): void => {
+		const update = (rects: Rect[]): void => {
 			const rnd = rndRef.current;
 			const element = rnd?.getSelfElement();
 			if (!rnd || !element) {
@@ -39,9 +43,7 @@ export function useAvoidObstacles(
 			const base = home ?? position;
 			const target = getPositionClearOf(
 				{ ...base, width: element.offsetWidth, height: element.offsetHeight },
-				obstacles
-					.map((obstacle) => obstacle.getRect())
-					.filter((rect): rect is FloatingRect => rect !== null),
+				rects,
 			);
 			if (!isAt(position, target)) {
 				element.classList.add(SLIDING_CLASS);
@@ -57,9 +59,6 @@ export function useAvoidObstacles(
 			placed = slid ? target : null;
 		};
 
-		const unsubscribes = obstacles.map((obstacle) => obstacle.subscribe(update));
-		update();
-
-		return (): void => unsubscribes.forEach((unsubscribe) => unsubscribe());
+		return watchObstacles(obstacles, update);
 	}, [enabled, obstacles, rndRef]);
 }
