@@ -515,11 +515,11 @@ def test_sorting(
         "prom uptime probe",
     ]
 
-    # severity: every seed rule's only threshold is critical, so all five tie
+    # thresholds: every seed rule's only threshold is critical, so all five tie
     # and break on name asc; the severity labels play no part
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        params={"sort": "severity", "order": "desc"},
+        params={"sort": "thresholds", "order": "desc"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
@@ -730,7 +730,7 @@ def test_thresholds_filter(
     ],
     ids=["desc", "asc"],
 )
-def test_severity_sort(
+def test_thresholds_sort(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -743,7 +743,7 @@ def test_severity_sort(
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(BASE_URL),
-        params={"sort": "severity", "order": order},
+        params={"sort": "thresholds", "order": order},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
