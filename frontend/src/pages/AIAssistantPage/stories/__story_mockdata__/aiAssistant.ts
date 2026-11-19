@@ -21,8 +21,6 @@ import {
 	FeedbackRatingDTO,
 	MessageActionKindDTO,
 	MessageContentTypeDTO,
-	MessageContextDTOSource,
-	MessageContextDTOType,
 	MessageRoleDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import type {
@@ -30,6 +28,8 @@ import type {
 	ConversationStreamState,
 	MessageBlock,
 } from 'container/AIAssistant/types';
+
+import { FINAL_ANSWER, oneStepBlocks, SENT_CONTEXTS } from './aiAssistantTurns';
 
 export const THREAD_ID = 'thread-checkout-latency';
 
@@ -305,52 +305,6 @@ const ACTION_BLOCK = fence('action', {
 		to: '2026-08-28T15:00:00Z',
 	},
 });
-
-/**
- * What the opening question was sent with. The page it came from is sent too,
- * as an `auto` context, and the thread leaves that one off.
- */
-const SENT_CONTEXTS: MessageSummaryDTO['contexts'] = [
-	{
-		source: MessageContextDTOSource.auto,
-		type: MessageContextDTOType.traces_explorer,
-	},
-	// Not a dashboard the picker offers, so the picker plays never find it in the thread instead.
-	{
-		source: MessageContextDTOSource.mention,
-		type: MessageContextDTOType.dashboard,
-		resourceId: 'dashboard-checkout-slos',
-		resourceName: 'Checkout SLOs',
-	},
-	{
-		source: MessageContextDTOSource.mention,
-		type: MessageContextDTOType.service,
-		resourceId: 'payment',
-		resourceName: 'payment',
-	},
-];
-
-const FINAL_ANSWER =
-	'`payment.svc.cluster.local:8080`. It answered `429` on 12% of calls between 14:00 and 15:00, and none in the hour before. The quota is 600 requests per minute and checkout alone asked for 780.';
-
-const oneStepBlocks = (): MessageBlock[] => [
-	{
-		type: 'tool_call',
-		toolCallId: 'call-rate-limited-upstream',
-		toolName: 'signoz_search_traces',
-		displayText: 'Matched the 429s to their upstream',
-		toolInput: {
-			service: 'payment',
-			filter: 'http.status_code = 429',
-			groupBy: ['net.peer.name'],
-		},
-		result: {
-			'payment.svc.cluster.local:8080': { calls: 6512, rate_limited: 781 },
-		},
-		success: true,
-	},
-	{ type: 'text', content: FINAL_ANSWER },
-];
 
 // ---------------------------------------------------------------------------
 // Messages
