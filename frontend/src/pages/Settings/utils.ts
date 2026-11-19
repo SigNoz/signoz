@@ -31,7 +31,6 @@ export const getRoutes = (
 	const settings = [];
 
 	const isAdmin = userRole === USER_ROLES.ADMIN;
-	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked) {
 		if (isAdmin) {
@@ -59,16 +58,14 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isGatewayEnabled && (isAdmin || isEditor)) {
-		settings.push(...multiIngestionSettings(t));
-	}
-
 	if (isCloudUser && !isGatewayEnabled) {
+		// Can this be removed? is it dead code?
 		settings.push(...ingestionSettings(t));
 	}
 
 	// Visible to all authenticated users
 	settings.push(
+		...multiIngestionSettings(t), // is this correct?
 		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),
