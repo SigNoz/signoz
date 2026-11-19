@@ -6,7 +6,7 @@
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -139,13 +139,13 @@ export const untilLoaded = { timeout: 15_000 };
 export async function openCreateKey(
 	canvasElement: HTMLElement,
 ): Promise<ReturnType<typeof within>> {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			'New Ingestion key',
-			undefined,
-			untilLoaded,
-		),
+	const add = await within(canvasElement).findByTestId(
+		'ingestion-key-add-btn',
+		undefined,
+		untilLoaded,
 	);
+	await waitFor(() => expect(add).not.toHaveAttribute('aria-busy'), untilLoaded);
+	await userEvent.click(add);
 	return within(
 		await screen.findByRole(
 			'dialog',
