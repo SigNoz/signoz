@@ -1,8 +1,42 @@
 package spantypes
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+const (
+	inspectListSize     = 10
+	inspectServiceLimit = 20
+	inspectLinkTargets  = 5
+	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
+	inspectTreeSpans       = 50
+	inspectSmallTraceChars = 20_000
+	// inspectMaxResponseChars keeps a response under 50,000 characters with its envelope.
+	inspectMaxResponseChars = 48_000
+)
+
+var (
+	ErrCodeInspectInvalidCursor = errors.MustNewCode("trace_inspect_invalid_cursor")
+	ErrCodeInspectInvalidDepth  = errors.MustNewCode("trace_inspect_invalid_depth")
+	ErrCodeInspectInvalidLimit  = errors.MustNewCode("trace_inspect_invalid_limit")
+	ErrCodeInspectInvalidParams = errors.MustNewCode("trace_inspect_invalid_params")
+)
+
+// The lists of the overview, as a cursor names them.
+const (
+	OverviewListErrors           = "errors"
+	OverviewListUnmarkedFailures = "unmarkedFailures"
+	OverviewListSlowest          = "slowest"
+	OverviewListExpensive        = "expensive"
+	OverviewListLinks            = "links"
+)
+
+var overviewLists = []string{OverviewListErrors, OverviewListUnmarkedFailures, OverviewListSlowest, OverviewListExpensive, OverviewListLinks}
 
 var (
 	UnmarkedFailureHTTP4xx        = UnmarkedFailureReason{valuer.NewString("http_4xx")}
@@ -240,4 +274,63 @@ type GettableTraceInspection struct {
 	Span     *TraceSpanDetail `json:"span,omitempty"`
 	// Find holds the spans matching search, or every span for allSpans.
 	Find *TraceSpanList `json:"find,omitempty"`
+}
+
+// InspectQuery is a validated inspect request.
+type InspectQuery struct {
+	Type InspectType
+	// List and Offset page one list of the overview; List is empty on a first call.
+	List   string
+	Offset int
+}
+
+// inspectCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
+type inspectCursor struct {
+	List   string `json:"list,omitempty"`
+	Offset int    `json:"offset,omitempty"`
+}
+
+// NewInspectQuery validates the parameters of an overview request. A parameter that does not
+// apply to the overview is an error.
+func NewInspectQuery(params *InspectTraceParams) (*InspectQuery, error) {
+	query := &InspectQuery{Type: InspectTypeOverview}
+	switch {
+	case params.SpanID != "" || params.Search != "" || params.AllSpans:
+		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "spanId, search and allSpans are not implemented yet")
+	case params.Depth != 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth needs spanId")
+	case len(params.SelectFields) > 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "selectFields needs spanId")
+	case params.Limit != 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit needs search or allSpans")
+	case params.Cursor == "":
+		return query, nil
+	}
+
+	cursor, err := decodeInspectCursor(params.Cursor)
+	if err != nil {
+		return nil, err
+	}
+	if !slices.Contains(overviewLists, cursor.List) || cursor.Offset <= 0 {
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	query.List, query.Offset = cursor.List, cursor.Offset
+	return query, nil
+}
+
+func decodeInspectCursor(encoded string) (*inspectCursor, error) {
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	cursor := new(inspectCursor)
+	if err := json.Unmarshal(data, cursor); err != nil {
+		return nil, errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	return cursor, nil
+}
+
+func (c inspectCursor) encode() string {
+	data, _ := json.Marshal(c)
+	return base64.RawURLEncoding.EncodeToString(data)
 }

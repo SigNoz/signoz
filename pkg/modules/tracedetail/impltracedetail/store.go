@@ -24,6 +24,15 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
+var genAIUsageValues = []struct{ key, alias string }{
+	{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
+	{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
+	{aiobservabilitytypes.GenAIUsageCacheReadInputTokens, "cache_read_tokens_value"},
+	{aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, "cache_write_tokens_value"},
+	{aiobservabilitytypes.GenAIUsageReasoningOutputTokens, "reasoning_tokens_value"},
+	{aiobservabilitytypes.SignozGenAITotalCost, "total_cost_value"},
+}
+
 // storableSpanColumns are the columns a waterfall span scans. A row's legacy maps are blanked when its
 // JSON holds the attributes.
 var storableSpanColumns = []string{
@@ -172,20 +181,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 
 // genAISpanColumns returns the gen_ai columns aggregated per span, resolved across attribute evolutions.
 func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bounds *spantypes.TraceBounds, sb *sqlbuilder.SelectBuilder) ([]string, error) {
-	values := []struct{ key, alias string }{
-		{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
-		{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
-		{aiobservabilitytypes.GenAIUsageCacheReadInputTokens, "cache_read_tokens_value"},
-		{aiobservabilitytypes.GenAIUsageCacheCreationInputTokens, "cache_write_tokens_value"},
-		{aiobservabilitytypes.GenAIUsageReasoningOutputTokens, "reasoning_tokens_value"},
-		{aiobservabilitytypes.SignozGenAITotalCost, "total_cost_value"},
-	}
-
-	names := slices.Clone(aiobservabilitytypes.GenAISpanGateKeys)
-	for _, value := range values {
-		names = append(names, value.key)
-	}
-	keys, err := s.genAIFieldKeys(ctx, orgID, names)
+	keys, err := s.genAIFieldKeys(ctx, orgID, genAIUsageKeyNames())
 	if err != nil {
 		return nil, err
 	}
@@ -195,9 +191,26 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	if err != nil {
 		return nil, err
 	}
-	columns := []string{isGenAI + " AS is_gen_ai"}
+	usage, err := s.genAIUsageColumns(ctx, q, keys)
+	if err != nil {
+		return nil, err
+	}
+	return append([]string{isGenAI + " AS is_gen_ai"}, usage...), nil
+}
 
-	for _, value := range values {
+// genAIUsageKeyNames lists the gate keys and the usage keys a gen_ai query resolves.
+func genAIUsageKeyNames() []string {
+	names := slices.Clone(aiobservabilitytypes.GenAISpanGateKeys)
+	for _, value := range genAIUsageValues {
+		names = append(names, value.key)
+	}
+	return names
+}
+
+// genAIUsageColumns returns the token and cost columns of a span, resolved across attribute evolutions.
+func (s *traceStore) genAIUsageColumns(ctx context.Context, q qbtypes.QueryInfo, keys map[string][]*telemetrytypes.TelemetryFieldKey) ([]string, error) {
+	columns := make([]string, 0, len(genAIUsageValues))
+	for _, value := range genAIUsageValues {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast
 		// fixed gen_ai keys that many traces lack, so a not-found warning means nothing here
 		expr, _, err := querybuilder.ResolveColumn(ctx, q, s.storage, attributeKey(value.key, telemetrytypes.FieldDataTypeNumber), telemetrytypes.FieldDataTypeFloat64, keys)
@@ -522,4 +535,161 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 		conds = append(conds, keyConds...)
 	}
 	return sb.Or(conds...), nil
+}
+
+// The collector marks an exception event with isError when it writes the span.
+const colHasExceptionEvent = `(NOT has_error AND arrayExists(e -> position(e, '"isError":true') > 0, events)) AS has_exception_event`
+
+type spanStatusMessageRow struct {
+	SpanID        string `ch:"span_id"`
+	StatusMessage string `ch:"status_message"`
+}
+
+type spanLinksRow struct {
+	SpanID string `ch:"span_id"`
+	Links  string `ch:"links"`
+}
+
+func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.TraceSkeleton, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"DISTINCT ON (span_id) span_id", "parent_span_id", "timestamp", "duration_nano", "has_error",
+		"name", colServiceName, "kind_string", "response_status_code", colHasExceptionEvent,
+	)
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+	)
+	sb.OrderByAsc("timestamp")
+	sb.OrderByAsc("name")
+	sb.OrderByAsc("span_id")
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := s.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace skeleton")
+	}
+	defer rows.Close()
+
+	builder := spantypes.NewTraceSkeletonBuilder(traceID, int(bounds.NumSpans))
+	var span spantypes.SkeletonSpan
+	// Scanning into one reused list of fields, not ScanStruct, keeps the per-row cost to the strings.
+	fields := []any{
+		&span.SpanID, &span.ParentSpanID, &span.StartTime, &span.DurationNano, &span.HasError,
+		&span.Name, &span.ServiceName, &span.KindString, &span.ResponseStatusCode, &span.HasExceptionEvent,
+	}
+	for rows.Next() {
+		if err := rows.Scan(fields...); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "error scanning trace skeleton")
+		}
+		builder.Add(&span)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error reading trace skeleton")
+	}
+	return builder.Build(), nil
+}
+
+func (s *traceStore) GetAISpanUsage(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.AISpanUsage, error) {
+	keys, err := s.genAIFieldKeys(ctx, orgID, genAIUsageKeyNames())
+	if err != nil {
+		return nil, err
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	// Like the waterfall, read the JSON attributes wherever that column is registered for the trace's
+	// time range and the legacy maps otherwise, without waiting for the use_trace_attributes_json flag.
+	q.TraceAttrsJSONOn = true
+	isGenAI, err := s.anyExistsCondition(ctx, q, aiobservabilitytypes.GenAISpanGateKeys, keys, sb)
+	if err != nil {
+		return nil, err
+	}
+	isModelCall, err := s.anyExistsCondition(ctx, q, []string{aiobservabilitytypes.GenAIRequestModel}, keys, sb)
+	if err != nil {
+		return nil, err
+	}
+	isToolCall, err := s.anyExistsCondition(ctx, q, []string{aiobservabilitytypes.GenAIToolName}, keys, sb)
+	if err != nil {
+		return nil, err
+	}
+	usage, err := s.genAIUsageColumns(ctx, q, keys)
+	if err != nil {
+		return nil, err
+	}
+
+	sb.Select("DISTINCT ON (span_id) span_id", isModelCall+" AS is_model_call", isToolCall+" AS is_tool_call")
+	sb.SelectMore(usage...)
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+		isGenAI,
+	)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	spans := []spantypes.AISpanUsage{}
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying gen_ai span usage")
+	}
+	return spans, nil
+}
+
+func (s *traceStore) GetLinkedSpans(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) ([]spantypes.LinkedSpan, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT ON (span_id) span_id", "links")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+		// The collector writes a link as a FOLLOWS_FROM reference; the parent is a CHILD_OF one.
+		"position(links, 'FOLLOWS_FROM') > 0",
+	)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var rows []spanLinksRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying linked spans")
+	}
+	linkedSpans := make([]spantypes.LinkedSpan, 0, len(rows))
+	for _, row := range rows {
+		if linked, ok := spantypes.NewLinkedSpan(row.SpanID, row.Links); ok {
+			linkedSpans = append(linkedSpans, linked)
+		}
+	}
+	return linkedSpans, nil
+}
+
+func (s *traceStore) GetSpanStatusMessages(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, spanIDs []string) (map[string]string, error) {
+	messages := make(map[string]string, len(spanIDs))
+	if len(spanIDs) == 0 {
+		return messages, nil
+	}
+	ids := make([]any, len(spanIDs))
+	for i, id := range spanIDs {
+		ids[i] = id
+	}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT ON (span_id) span_id", "status_message")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.In("span_id", ids...),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+	)
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var rows []spanStatusMessageRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, query, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying span status messages")
+	}
+	for _, row := range rows {
+		messages[row.SpanID] = row.StatusMessage
+	}
+	return messages, nil
 }

@@ -3,7 +3,6 @@ package impltracedetail
 import (
 	"net/http"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -129,7 +128,30 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, result)
 }
 
-// InspectTrace is registered for its place in the API spec; the implementation follows.
-func (h *handler) InspectTrace(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace inspect is not implemented yet"))
+func (h *handler) InspectTrace(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	params := new(spantypes.InspectTraceParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewInspectQuery(params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.InspectTrace(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
 }

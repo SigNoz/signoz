@@ -40,6 +40,12 @@ type TraceStore interface {
 	GetThreadSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, page ThreadPage) ([]StorableSpan, error)
 	GetThreadCursor(ctx context.Context, traceID string, bounds *TraceBounds, spanID string) (*ThreadCursor, error)
 
+	GetTraceSkeleton(ctx context.Context, traceID string, bounds *TraceBounds) (*TraceSkeleton, error)
+	GetAISpanUsage(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds) ([]AISpanUsage, error)
+	// GetLinkedSpans returns the spans of the trace that link to other spans.
+	GetLinkedSpans(ctx context.Context, traceID string, bounds *TraceBounds) ([]LinkedSpan, error)
+	GetSpanStatusMessages(ctx context.Context, traceID string, bounds *TraceBounds, spanIDs []string) (map[string]string, error)
+
 	GetSpanCountByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
 	GetSpanDurationByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
 }
