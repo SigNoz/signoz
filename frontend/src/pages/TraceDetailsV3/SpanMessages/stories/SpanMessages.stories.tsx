@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { userEvent, within } from 'storybook/test';
 
 import type { ThreadMessage } from '../../AIThreadMessage/types';
 import { ThreadSpan, ThreadView } from '../../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../../utils/aiTraceUtils';
 import SpanMessages from '../SpanMessages';
+import { clickShowMore } from './__story_mockdata__/spanMessages.play';
 
 const makeSpan = (overrides: Partial<ThreadSpan>): ThreadSpan =>
 	({
@@ -52,15 +52,6 @@ const RAW_OUTPUT: ThreadMessage[] = [
 const rawAttributes = {
 	[GEN_AI_KEYS.inputMessages]: JSON.stringify(RAW_INPUT),
 	[GEN_AI_KEYS.outputMessages]: JSON.stringify(RAW_OUTPUT),
-};
-
-const clickShowMore = async (canvasElement: HTMLElement): Promise<void> => {
-	const toggles =
-		await within(canvasElement).findAllByTestId('ai-json-show-more');
-	await toggles.reduce(
-		(previous, toggle) => previous.then(() => userEvent.click(toggle)),
-		Promise.resolve(),
-	);
 };
 
 // Input and output messages of one AI span, as rendered on a Thread card.
@@ -157,7 +148,7 @@ export const LargeJsonPart: Story = {
 /** The large tool-call JSON after Show more. */
 export const LargeJsonPartExpanded: Story = {
 	...LargeJsonPart,
-	play: async ({ canvasElement }): Promise<void> => clickShowMore(canvasElement),
+	play: clickShowMore,
 };
 
 /** Small JSON part: no Show more, copy still available. */
@@ -192,5 +183,5 @@ export const JsonView: Story = {
 /** The JSON tab after Show more. */
 export const JsonViewExpanded: Story = {
 	...JsonView,
-	play: async ({ canvasElement }): Promise<void> => clickShowMore(canvasElement),
+	play: clickShowMore,
 };
