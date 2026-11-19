@@ -12,7 +12,7 @@ import styles from './NozActiveChat.module.scss';
 
 const UNTITLED = 'New conversation';
 
-/** One tab per open Noz conversation; a dot marks an unseen reply. */
+/** One tab per open Noz conversation; a dot marks an unseen reply or Noz waiting on the user. */
 function NozActiveChat(): JSX.Element | null {
 	const { pathname } = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
@@ -26,14 +26,20 @@ function NozActiveChat(): JSX.Element | null {
 		() =>
 			chats.map((chat): StripTabItem => {
 				const title = chat.title ?? UNTITLED;
+				let ariaLabel: string | undefined;
+				if (chat.isAwaitingUser) {
+					ariaLabel = `Noz needs your response in ${title}`;
+				} else if (chat.hasUnreadReply) {
+					ariaLabel = `Noz replied in ${title}`;
+				}
 				return {
 					id: chat.threadId,
 					label: title,
 					isActive: chat.isActive,
-					prefix: chat.hasUnreadReply ? (
-						<span className={styles.unreadDot} aria-hidden />
+					prefix: ariaLabel ? (
+						<span className={styles.dot} aria-hidden />
 					) : undefined,
-					ariaLabel: chat.hasUnreadReply ? `Noz replied in ${title}` : undefined,
+					ariaLabel,
 				};
 			}),
 		[chats],

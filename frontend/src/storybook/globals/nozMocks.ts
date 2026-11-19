@@ -21,8 +21,10 @@ import { nozGlobalConfigHandler } from '../msw/appShellHandlers';
 
 const NOZ = 'Noz';
 
-/** The streams this module seeds, so it only ever removes its own. */
 const AWAITING_PREFIX = 'storybook-awaiting-';
+
+/** The streams this module seeded, so it only ever removes its own. */
+const seededStreamIds = new Set<string>();
 
 /** Open tabs are saved conversations, so the list holds at least as many as are open. */
 const listedThreads = (saved: number, open: number): number =>
@@ -55,7 +57,7 @@ export const nozMocks = defineStoryMocks({
 		nozAwaiting: countControl('Awaiting you', {
 			group: NOZ,
 			description:
-				'Conversations blocked on an approval, which is what the pending badge on the Noz entry points counts.',
+				"Conversations blocked on an approval. The oldest open chats among them get a dot on their tab; the top nav's Noz entry counts them all.",
 			value: 0,
 			max: 3,
 		}),
@@ -136,14 +138,16 @@ export const nozMocks = defineStoryMocks({
 		// The store is a singleton another story's mocks may have seeded, so
 		// only this module's own streams are replaced.
 		useAIAssistantStore.setState((state) => {
-			Object.keys(state.streams)
-				.filter((id) => id.startsWith(AWAITING_PREFIX))
-				.forEach((id) => {
-					delete state.streams[id];
-				});
+			seededStreamIds.forEach((id) => {
+				delete state.streams[id];
+			});
+			seededStreamIds.clear();
 
 			for (let index = 0; index < nozAwaiting; index += 1) {
-				state.streams[`${AWAITING_PREFIX}${index}`] = awaitingStream();
+				// Past the open chats, a waiting chat has no tab and only the top nav counts it.
+				const id = openThreadIds[index] ?? `${AWAITING_PREFIX}${index}`;
+				state.streams[id] = awaitingStream();
+				seededStreamIds.add(id);
 			}
 
 			// The store outlives a story, so a panel, modal or history list one story opened would still be open in the next.

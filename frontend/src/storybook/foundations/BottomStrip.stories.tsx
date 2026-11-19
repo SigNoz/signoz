@@ -60,11 +60,17 @@ export const AddCardModal: Story = {
 };
 
 /**
- * The pulsing dot beside Ask Noz while conversations wait on an approval. The
- * top nav's Noz entry carries the same count.
+ * A dot on the tab of a chat waiting on an approval, beside one with an unseen
+ * reply. The top nav's Noz entry counts the waiting chats.
  */
 export const NozAwaitingYou: Story = {
-	args: { noz: true, nozAwaiting: 2, support: 'pylon' },
+	args: {
+		noz: true,
+		nozChats: 3,
+		nozAwaiting: 1,
+		nozUnread: 1,
+		support: 'pylon',
+	},
 };
 
 /** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
