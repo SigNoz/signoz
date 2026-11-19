@@ -82,6 +82,9 @@ importers:
       '@signozhq/icons':
         specifier: 0.4.0
         version: 0.4.0
+      '@signozhq/noz-client':
+        specifier: 1.12.2
+        version: 1.12.2(axios@1.21.1)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@signozhq/ui':
         specifier: 0.2.0
         version: 0.2.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
@@ -3607,6 +3610,13 @@ packages:
 
   '@signozhq/icons@0.4.0':
     resolution: {integrity: sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==}
+
+  '@signozhq/noz-client@1.12.2':
+    resolution: {integrity: sha512-0uo6Z8gyqv78teTxqDJu/jnbC/KJfz+oJ9f82ljgyFA+bmZcPi1NVE0OVV25fZKiB2pTQjfwP7cA1RUMqrM2Bw==}
+    peerDependencies:
+      axios: ^1.20.0
+      react: ^18.2.0
+      react-query: ^3.39.3
 
   '@signozhq/ui@0.2.0':
     resolution: {integrity: sha512-j20ldiOkR150ON0BCDhlq6fXGoPN++7w6e4t2HtM2XMM4buJO7aHzPzNKvDRZ2UUf/LGPULPAW8w6sg6gUVHyw==}
@@ -13230,6 +13240,12 @@ snapshots:
   '@signozhq/design-tokens@2.2.1': {}
 
   '@signozhq/icons@0.4.0': {}
+
+  '@signozhq/noz-client@1.12.2(axios@1.21.1)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      axios: 1.21.1
+      react: 18.2.0
+      react-query: 3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
 
   '@signozhq/ui@0.2.0(@date-fns/tz@1.4.1)(@emotion/is-prop-valid@1.2.0)(@signozhq/icons@0.4.0)(@types/react-dom@18.0.10)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react-router-dom@5.3.4(react@18.2.0))(react-router@7.18.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
     dependencies:

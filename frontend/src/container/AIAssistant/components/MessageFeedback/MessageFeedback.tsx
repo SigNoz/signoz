@@ -10,7 +10,7 @@ import { useTimezone } from 'providers/Timezone';
 
 import logEvent from 'api/common/logEvent';
 
-import { FeedbackRatingDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { FeedbackRatingDTO } from '@signozhq/noz-client';
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';

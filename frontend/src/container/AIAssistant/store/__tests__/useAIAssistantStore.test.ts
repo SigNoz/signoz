@@ -1,7 +1,4 @@
-import {
-	ErrorCodeDTO,
-	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ErrorCodeDTO, RetryActionDTO } from '@signozhq/noz-client';
 import type { SSEEvent } from 'api/ai-assistant/chat';
 
 import { useAIAssistantStore } from '../useAIAssistantStore';

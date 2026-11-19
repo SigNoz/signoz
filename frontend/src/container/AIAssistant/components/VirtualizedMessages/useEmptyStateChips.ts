@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 
 import { getEmptyStateChips } from 'api/ai-assistant/chat';
-import type { ChipDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { ChipDTO } from '@signozhq/noz-client';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 import { useResolvePageType } from 'hooks/aiAssistant/useResolvePageType';

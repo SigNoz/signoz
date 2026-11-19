@@ -1,9 +1,6 @@
 import React from 'react';
 import { render, screen, userEvent } from 'tests/test-utils';
-import {
-	ErrorCodeDTO,
-	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ErrorCodeDTO, RetryActionDTO } from '@signozhq/noz-client';
 
 import { Message } from '../../../types';
 
