@@ -71,3 +71,21 @@ export const openNozHistory = async ({
 	);
 	await screen.findByText('Earlier conversations');
 };
+
+/** Opens the newest tab's chat in the panel, which marks that tab active and clears its dot. */
+export const openNozChatTab = async ({
+	args,
+}: {
+	args: Pick<GlobalMockArgs, 'noz' | 'nozChats'>;
+}): Promise<void> => {
+	if (!args.noz || args.nozChats === 0) {
+		return;
+	}
+	const tabs = await screen.findAllByTestId(
+		/^bottom-strip-noz-chats-.+-open$/,
+		undefined,
+		untilLoaded,
+	);
+	await userEvent.click(tabs[tabs.length - 1]);
+	await screen.findByTestId('ai-assistant-panel-close');
+};
