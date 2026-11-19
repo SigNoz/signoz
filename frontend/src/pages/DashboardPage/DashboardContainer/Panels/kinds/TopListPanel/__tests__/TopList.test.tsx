@@ -16,6 +16,7 @@ function rowsOf(count: number): TopListRow[] {
 		share: null,
 		queryName: 'A',
 		labels: { 'service.name': `service-${index}` },
+		missingLabels: [],
 	}));
 }
 

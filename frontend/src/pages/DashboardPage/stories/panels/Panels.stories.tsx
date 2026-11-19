@@ -196,6 +196,36 @@ export const Text: Story = {
 	play: playPanel,
 };
 
+/** The busiest services by calls, highest first, each bar scaled to the top row. */
+export const TopList: Story = {
+	args: { kind: 'TopList' },
+	play: playPanel,
+};
+
+/** The top list numbered by position, with each row's share of the listed total. */
+export const TopListRankAndShare: Story = {
+	args: { kind: 'TopList', showRank: true, showShare: true },
+	play: playPanel,
+};
+
+/** Rows above the threshold drawn in its colour instead of the bar colour. */
+export const TopListThresholds: Story = {
+	args: { kind: 'TopList', thresholds: true },
+	play: playPanel,
+};
+
+/** Shares of a p99, which does not add up across services, flagged in the panel header. */
+export const TopListShareOfP99: Story = {
+	args: { kind: 'TopList', showShare: true, topListAggregation: 'p99' },
+	play: playPanel,
+};
+
+/** The top list's query matched nothing. */
+export const TopListNoData: Story = {
+	args: { kind: 'TopList', result: 'empty' },
+	play: playPanel,
+};
+
 /** The time series on a logarithmic y axis. */
 export const LogScale: Story = {
 	args: { yScale: 'log' },

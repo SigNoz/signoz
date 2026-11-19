@@ -139,9 +139,12 @@ export function prepareTopListRows(
 	const keyCounts = new Map<string, number>();
 	const rows = table.rows.map((row): TopListRow => {
 		const labels: Record<string, string> = {};
+		const missingLabels: string[] = [];
 		labelColumns.forEach((column) => {
 			const value = getCell(row, column);
-			if (value != null) {
+			if (value == null) {
+				missingLabels.push(column.name);
+			} else {
 				labels[column.name] = toGroupValue(value);
 			}
 		});
@@ -162,6 +165,7 @@ export function prepareTopListRows(
 			share: null,
 			queryName: valueColumn.queryName,
 			labels,
+			missingLabels,
 		};
 	});
 

@@ -379,6 +379,32 @@ describe('enrichPieClick', () => {
 		]);
 	});
 
+	it('filters group-by keys the slice has no value for as missing', () => {
+		const payload = enrichPieClick({
+			slice: {
+				label: '(empty) · eu',
+				value: 3,
+				color: '#abc',
+				queryName: 'A',
+				labels: { region: 'eu' },
+			},
+			missingLabels: ['service.name', 'host.name'],
+			builderQueries: [
+				builderQuery({
+					name: 'A',
+					signal: 'logs',
+					groupBy: [{ name: 'service.name' }, { name: 'region' }],
+				}),
+			],
+			coordinates: { x: 0, y: 0 },
+		});
+
+		expect(payload?.context.filters).toStrictEqual([
+			{ filterKey: 'region', filterValue: 'eu', operator: '=' },
+			{ filterKey: 'service.name', filterValue: '', operator: 'NOT EXISTS' },
+		]);
+	});
+
 	it('returns null for a slice with no source query', () => {
 		expect(
 			enrichPieClick({

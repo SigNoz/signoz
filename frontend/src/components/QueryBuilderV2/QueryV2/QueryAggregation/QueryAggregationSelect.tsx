@@ -25,6 +25,7 @@ import CodeMirror, {
 import { Button, Popover, Tooltip } from 'antd';
 import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from '@signozhq/icons';
@@ -321,6 +322,7 @@ function QueryAggregationSelect({
 		functionContextForFetch &&
 		OPERATORS_WITHOUT_DATA_TYPE.includes(functionContextForFetch)
 	);
+	const builderQueryType = useBuilderQueryType(queryData);
 	const { data: fieldKeys, isLoading: isLoadingFields } = useFieldKeysSuggestion(
 		{
 			signal: DATA_SOURCE_TO_SIGNAL[queryData.dataSource],
@@ -329,7 +331,7 @@ function QueryAggregationSelect({
 				? TelemetrytypesFieldDataTypeDTO.number
 				: undefined,
 		},
-		queryData.builderQueryType,
+		builderQueryType,
 		{
 			enabled:
 				!!functionContextForFetch &&

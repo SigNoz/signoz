@@ -18,6 +18,7 @@ import {
 	FilterDeps,
 	replaceFirstQueryData,
 } from 'container/AIAssistant/pageActions/builderQueryHelpers';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import {
 	ActionResult,
 	PageAction,
@@ -93,7 +94,7 @@ export function tracesRunQueryAction(
 		},
 		autoApply: true,
 		execute: async ({ filters }): Promise<ActionResult> => {
-			const baseQuery = deps.currentQuery.builder.queryData[0];
+			const baseQuery = getActiveBuilder(deps.currentQuery).queryData[0];
 			if (!baseQuery) {
 				throw new Error('No active query found in Traces Explorer.');
 			}
@@ -117,7 +118,7 @@ export function tracesRunQueryAction(
 		},
 		getContext: (): Record<string, unknown> => ({
 			filters:
-				deps.currentQuery.builder.queryData[0]?.filters?.items?.map(
+				getActiveBuilder(deps.currentQuery).queryData[0]?.filters?.items?.map(
 					(f: TagFilterItem) => ({
 						key: f.key?.key,
 						op: f.op,
@@ -158,7 +159,7 @@ export function tracesAddFilterAction(
 		},
 		autoApply: true,
 		execute: async ({ key, op, value }): Promise<ActionResult> => {
-			const baseQuery = deps.currentQuery.builder.queryData[0];
+			const baseQuery = getActiveBuilder(deps.currentQuery).queryData[0];
 			if (!baseQuery) {
 				throw new Error('No active query found in Traces Explorer.');
 			}

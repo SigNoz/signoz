@@ -4,6 +4,7 @@ import {
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEqual, isFunction } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -77,7 +78,7 @@ function useCheckboxFilterActions({
 		dispatch(updatedQuery);
 
 		if (onQuickFilterChange) {
-			const queryData = updatedQuery.builder.queryData[activeQueryIndex];
+			const queryData = getActiveBuilder(updatedQuery).queryData[activeQueryIndex];
 			const expression = queryData?.filter?.expression || '';
 			const filterItemKeys = (queryData?.filters?.items || [])
 				.map((item) => item.key?.key)

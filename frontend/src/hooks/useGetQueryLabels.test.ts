@@ -1,4 +1,5 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook } from 'tests/test-utils';
+import { initialFormulaBuilderFormValues } from 'constants/queryBuilder';
 import {
 	IBuilderFormula,
 	IClickHouseQuery,
@@ -64,6 +65,23 @@ describe('useGetQueryLabels', () => {
 				{ label: 'F1', value: 'F1' },
 				{ label: 'F2', value: 'F2' },
 			]);
+		});
+	});
+
+	describe('AI_QUERY_BUILDER type', () => {
+		it('returns formula labels from builder_ai_query', () => {
+			const query = buildQuery({
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				builder_ai_query: {
+					queryData: [],
+					queryFormulas: [{ ...initialFormulaBuilderFormValues, queryName: 'F1' }],
+					queryTraceOperator: [],
+				},
+			});
+
+			const { result } = renderHook(() => useGetQueryLabels(query));
+
+			expect(result.current).toStrictEqual([{ label: 'F1', value: 'F1' }]);
 		});
 	});
 

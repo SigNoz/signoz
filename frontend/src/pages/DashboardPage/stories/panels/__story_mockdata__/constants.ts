@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { Color } from '@signozhq/design-tokens';
 import {
 	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
@@ -29,6 +30,7 @@ export const PANEL_KINDS = [
 	'Table',
 	'List',
 	'Text',
+	'TopList',
 ] as const;
 
 export const PANEL_RESULTS = ['data', 'empty', 'warning'] as const;
@@ -67,6 +69,9 @@ export const LINE_STYLES = Object.values(LineStyle);
 
 export const GAPS = ['none', 'hole'] as const;
 
+/** `sum` adds up across services; `p99` does not, so its shares get a warning. */
+export const TOP_LIST_AGGREGATIONS = ['sum', 'p99'] as const;
+
 export const PIE_SLICES = ['even', 'long-tail'] as const;
 
 /** Slices `long-tail` answers with: 14 drawn, the other 10 grouped (the pie draws at most 15). */
@@ -88,7 +93,11 @@ export const PANEL_NAME: Record<PanelKind, string> = {
 	Table: 'Calls by service',
 	List: 'Recent logs',
 	Text: 'Runbook',
+	TopList: 'Busiest services',
 };
+
+/** The bars' fill, unless a threshold recolours the row. */
+export const TOP_LIST_BAR_COLOR = Color.BG_ROBIN_500;
 
 /** A colour no series palette draws in, so a canvas probe for it finds only the line. */
 export const THRESHOLD_COLOR = '#00e5ff';
