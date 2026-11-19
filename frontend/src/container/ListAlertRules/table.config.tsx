@@ -63,14 +63,14 @@ export function getAlertRuleColumns(
 			),
 		},
 		{
-			id: 'severity',
+			id: 'thresholds',
 			header: 'Thresholds',
 			accessorKey: 'thresholds',
 			width: { fixed: '160px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => {
-				const testId = `alert-row-${row.id ?? ''}-severity`;
+				const testId = `alert-row-${row.id ?? ''}-thresholds`;
 				const thresholds = (value as string[] | undefined) ?? [];
 				if (!thresholds.length) {
 					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;

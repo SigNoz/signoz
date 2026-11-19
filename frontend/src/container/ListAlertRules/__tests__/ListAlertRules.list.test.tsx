@@ -73,20 +73,19 @@ describe('ListAlertRules — list rendering', () => {
 		renderListAlertRules();
 
 		await expect(
-			screen.findByTestId('alert-row-rule-1-severity'),
+			screen.findByTestId('alert-row-rule-1-thresholds'),
 		).resolves.toHaveTextContent('criticalwarning');
 		expect(screen.getByTitle('Thresholds')).toBeInTheDocument();
 		expect(
-			screen.getByTestId('alert-row-rule-1-severity-critical'),
+			screen.getByTestId('alert-row-rule-1-thresholds-critical'),
 		).toHaveAttribute('data-color', 'danger');
 		expect(
-			screen.getByTestId('alert-row-rule-1-severity-warning'),
+			screen.getByTestId('alert-row-rule-1-thresholds-warning'),
 		).toHaveAttribute('data-color', 'warning');
-		expect(screen.getByTestId('alert-row-rule-3-severity-info')).toHaveAttribute(
-			'data-color',
-			'primary',
-		);
-		expect(screen.getByTestId('alert-row-rule-5-severity')).toHaveTextContent(
+		expect(
+			screen.getByTestId('alert-row-rule-3-thresholds-info'),
+		).toHaveAttribute('data-color', 'primary');
+		expect(screen.getByTestId('alert-row-rule-5-thresholds')).toHaveTextContent(
 			'-',
 		);
 	});

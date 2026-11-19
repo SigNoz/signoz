@@ -50,7 +50,7 @@ describe('toListSort', () => {
 	it.each([
 		['state', RuletypesListSortDTO.state],
 		['name', RuletypesListSortDTO.name],
-		['severity', RuletypesListSortDTO.severity],
+		['thresholds', RuletypesListSortDTO.thresholds],
 		['createdAt', RuletypesListSortDTO.created_at],
 		['updatedAt', RuletypesListSortDTO.updated_at],
 	])('maps column "%s" to sort "%s"', (columnName, sort) => {
@@ -85,7 +85,7 @@ describe('toOrderBy', () => {
 	});
 
 	it('round-trips with toListSort', () => {
-		const orderBy: SortState = { columnName: 'severity', order: 'desc' };
+		const orderBy: SortState = { columnName: 'thresholds', order: 'desc' };
 		const { sort, order } = toListSort(orderBy);
 		expect(toOrderBy(sort, order)).toStrictEqual(orderBy);
 	});

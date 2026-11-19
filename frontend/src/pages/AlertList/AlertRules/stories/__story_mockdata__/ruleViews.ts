@@ -126,7 +126,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 			version: 'v1',
 			query: '',
 			states: [RuletypesAlertStateDTO.firing],
-			sort: RuletypesListSortDTO.severity,
+			sort: RuletypesListSortDTO.thresholds,
 			order: RuletypesListOrderDTO.desc,
 		},
 	},
