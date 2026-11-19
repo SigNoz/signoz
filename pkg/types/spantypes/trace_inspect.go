@@ -80,16 +80,14 @@ type TraceIdentity struct {
 	StartTimestampMillis uint64 `json:"startTimestampMillis" required:"true"`
 	DurationNano         uint64 `json:"durationNano" required:"true"`
 	// Root is the earliest span without a parent; omitted when every span's parent is missing.
-	Root            *SpanSummary `json:"root,omitempty"`
-	SpanCount       uint64       `json:"spanCount" required:"true"`
-	ErrorSpanCount  uint64       `json:"errorSpanCount" required:"true"`
-	RootCount       uint64       `json:"rootCount" required:"true"`
-	HasMissingSpans bool         `json:"hasMissingSpans" required:"true"`
-	// Truncated is set when the trace has more spans than the server loads; counts and lists then cover the loaded spans.
-	Truncated    bool                `json:"truncated" required:"true"`
-	ServiceCount uint64              `json:"serviceCount" required:"true"`
-	Services     []TraceServiceStats `json:"services" required:"true" nullable:"false"`
-	AI           *TraceAIIdentity    `json:"ai,omitempty"`
+	Root            *SpanSummary        `json:"root,omitempty"`
+	SpanCount       uint64              `json:"spanCount" required:"true"`
+	ErrorSpanCount  uint64              `json:"errorSpanCount" required:"true"`
+	RootCount       uint64              `json:"rootCount" required:"true"`
+	HasMissingSpans bool                `json:"hasMissingSpans" required:"true"`
+	ServiceCount    uint64              `json:"serviceCount" required:"true"`
+	Services        []TraceServiceStats `json:"services" required:"true" nullable:"false"`
+	AI              *TraceAIIdentity    `json:"ai,omitempty"`
 }
 
 // Every list has a total, items and a nextCursor when more items follow. Every item starts with

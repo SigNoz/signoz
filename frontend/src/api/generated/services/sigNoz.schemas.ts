@@ -14433,10 +14433,6 @@ export interface SpantypesTraceIdentityDTO {
 	 * @type string
 	 */
 	traceId: string;
-	/**
-	 * @type boolean
-	 */
-	truncated: boolean;
 }
 
 export interface SpantypesLinkDTO {

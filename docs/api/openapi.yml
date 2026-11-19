@@ -13509,8 +13509,6 @@ components:
           type: integer
         traceId:
           type: string
-        truncated:
-          type: boolean
       required:
       - traceId
       - startTimestampMillis
@@ -13519,7 +13517,6 @@ components:
       - errorSpanCount
       - rootCount
       - hasMissingSpans
-      - truncated
       - serviceCount
       - services
       type: object
@@ -19819,9 +19816,10 @@ paths:
         started, the failures not marked as errors (a 4xx response, a gRPC status
         other than OK, an exception event), the slowest spans by own time with same-name
         spans under one parent taken together, the most expensive gen_ai spans, and
-        the span tree. A trace of up to 100 spans returns every span in the tree,
-        and a small one also each span''s full record; a larger trace returns the
-        top levels. With spanId it returns that span''s summary and full record, its
+        the span tree. The tree holds the first 50 spans of the trace: level by level
+        from the root, and in time order on the level that does not fit. A trace of
+        up to 50 spans also returns each span''s full record when they fit in 20,000
+        characters. With spanId it returns that span''s summary and full record, its
         ancestors, and the spans below it level by level, at most 20 per level; values
         over 500 characters are cut and listed in truncated. With search it returns
         the matching spans, each with where the words were found; allSpans returns
