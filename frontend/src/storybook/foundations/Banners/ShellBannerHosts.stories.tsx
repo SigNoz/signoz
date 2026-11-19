@@ -18,8 +18,6 @@ import { dashboardMocks } from 'pages/DashboardPage/stories/DashboardPage.storie
 import DashboardsListPage from 'pages/DashboardsListPage/DashboardsListPage';
 import { dashboardsListMocks } from 'pages/DashboardsListPage/stories/DashboardsListPage.stories.mocks';
 import { openRenameDialog } from 'pages/DashboardsListPage/stories/__story_mockdata__/dashboardsList.play';
-import HomePage from 'pages/HomePage/HomePage';
-import { homeMocks } from 'pages/HomePage/stories/HomePage.stories.mocks';
 import InfrastructureMonitoringPage from 'pages/InfrastructureMonitoring/InfrastructureMonitoringPage';
 import { podsMocks } from 'pages/InfrastructureMonitoring/stories/Kubernetes.stories.mocks';
 import { openDrawerLogsTab } from 'pages/InfrastructureMonitoring/stories/__story_mockdata__/pods.play';
@@ -37,7 +35,6 @@ import { dirtyQuickFiltersSettings as dirtyTracesQuickFilters } from 'pages/Trac
 
 import { withTrialBanner } from './__story_mockdata__/hostBanners.play';
 
-type HomeArgs = PageStoryArgs<typeof homeMocks>;
 type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
 type DashboardArgs = PageStoryArgs<typeof dashboardMocks>;
 type MetricsArgs = PageStoryArgs<typeof metricsMocks>;
@@ -48,7 +45,6 @@ type PodsArgs = PageStoryArgs<typeof podsMocks>;
 type DashboardsListArgs = PageStoryArgs<typeof dashboardsListMocks>;
 type PanelEditorArgs = PageStoryArgs<typeof panelEditorMocks>;
 
-const home = storyMocks(homeMocks, { route: ROUTES.HOME, layout: 'app' });
 const createAlert = storyMocks(createAlertMocks, { layout: 'app' });
 const dashboard = storyMocks(dashboardMocks, { layout: 'app' });
 const metrics = storyMocks(metricsMocks, { layout: 'app' });
@@ -72,13 +68,6 @@ const meta = {
 } satisfies Meta<GlobalMockArgs>;
 
 export default meta;
-
-/** Home: nothing fixed to the bottom but the strip. */
-export const Home: StoryObj<HomeArgs> = {
-	...home,
-	render: () => <HomePage />,
-	play: withTrialBanner(),
-};
 
 /** Create alert: the fixed footer with the save and test actions. */
 export const AlertsCreate: StoryObj<CreateAlertArgs> = {

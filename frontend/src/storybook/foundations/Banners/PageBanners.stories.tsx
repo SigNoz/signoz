@@ -108,14 +108,7 @@ export const ClickHouseQuery: StoryObj<CreateAlertArgs> = {
 	play: showsClickHouseInfo,
 };
 
-/** "Billing is calculated in UTC": above the breakdown until it is dismissed. */
-export const MeterBillingNotice: StoryObj<MeterArgs> = {
-	...meter,
-	render: () => <MeterExplorerPage />,
-	play: showsMeterBillingNotice,
-};
-
-/** The same notice closed, which the app remembers across visits. */
+/** "Billing is calculated in UTC", closed: the app remembers it across visits. */
 export const MeterBillingNoticeDismissed: StoryObj<MeterArgs> = {
 	...meter,
 	args: { ...meter.args, billingNotice: false },
@@ -145,6 +138,7 @@ export const MeterShortWindow: StoryObj<MeterArgs> = {
  */
 export const TopLevelOperationsThreshold: StoryObj<TopLevelOperationsArgs> = {
 	...topLevelOperations,
+	args: { ...topLevelOperations.args, operations: 2501 },
 	render: renderAtRoute(
 		ROUTES.SERVICE_TOP_LEVEL_OPERATIONS,
 		ServiceTopLevelOperations,
