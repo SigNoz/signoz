@@ -117,6 +117,34 @@ export async function seedOne(
 	]);
 }
 
+// The chart step is a 300th of the window, so this gap is wider than the step
+// of any window up to a day.
+const BURST_GAP_MS = 5 * 60_000;
+
+/**
+ * `counts[i]` rows under `service` per burst, oldest burst first. The rows of a
+ * burst share one timestamp, so they fall in one chart bucket, and the bursts
+ * sit `BURST_GAP_MS` apart, so no two share a bucket.
+ */
+export async function seedBursts(
+	request: APIRequestContext,
+	service: string,
+	body: string,
+	counts: number[],
+): Promise<void> {
+	const now = Date.now();
+	await seedLogs(
+		request,
+		counts.flatMap((count, burst) =>
+			Array.from({ length: count }, () => ({
+				timestamp: iso(now - (counts.length - burst) * BURST_GAP_MS),
+				body,
+				resources: resources(service),
+			})),
+		),
+	);
+}
+
 export const withLogsSeed: WorkerLayer<{ logsSeed: LogsSeed }> = seeded(
 	'logsSeed',
 	async ({ page, workerIndex }) =>
