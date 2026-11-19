@@ -1,7 +1,4 @@
-import type {
-	FloatingObstacle,
-	FloatingRect,
-} from 'periscope/components/FloatingPanel/types';
+import type { Obstacle, Rect } from 'lib/obstacles/types';
 
 // Pylon's own class names, which styles.scss also targets.
 const SUPPORT_CHAT_SELECTOR = '.PylonChat-chatWindowFrameContainer';
@@ -20,7 +17,7 @@ const onShow = (): void => setOpen(true);
 const onHide = (): void => setOpen(false);
 
 // Offsets ignore the scale animation Pylon opens with, so this is the settled box.
-function getSupportChatRect(): FloatingRect | null {
+function getSupportChatRect(): Rect | null {
 	const element = document.querySelector<HTMLElement>(SUPPORT_CHAT_SELECTOR);
 	if (!element) {
 		return null;
@@ -58,7 +55,7 @@ function subscribeToSupportChat(onChange: () => void): () => void {
 	};
 }
 
-export const supportChatObstacle: FloatingObstacle = {
+export const supportChatObstacle: Obstacle = {
 	getRect: getSupportChatRect,
 	subscribe: subscribeToSupportChat,
 };
