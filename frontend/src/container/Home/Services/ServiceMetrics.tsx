@@ -4,7 +4,7 @@ import { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import ROUTES from 'constants/routes';
 import {
 	getQueryRangeRequestData,
@@ -36,9 +36,11 @@ import { openInNewTab } from 'utils/navigation';
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { DOCS_LINKS } from '../constants';
-import { columns, TIME_PICKER_OPTIONS } from './constants';
+import { getColumns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
+
+const columns = getColumns(true);
 
 // Extracted EmptyState component
 const EmptyState = memo(
@@ -69,7 +71,7 @@ const EmptyState = memo(
 							type="default"
 							className="periscope-btn secondary"
 							onClick={(): void => {
-								logEvent('Homepage: Get Started clicked', {
+								void logEvent('Homepage: Get Started clicked', {
 									source: 'Service Metrics',
 								});
 
@@ -90,7 +92,7 @@ const EmptyState = memo(
 							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
-								logEvent('Homepage: Learn more clicked', {
+								void logEvent('Homepage: Learn more clicked', {
 									source: 'Service Metrics',
 								});
 								window.open(
@@ -118,7 +120,10 @@ const ServicesListTable = memo(
 		services: ServicesList[];
 		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
-		<div className="services-list-container home-data-item-container metrics-services-list">
+		<div
+			className="services-list-container home-data-item-container metrics-services-list"
+			data-testid="home-services-table"
+		>
 			<div className="services-list">
 				<Table<ServicesList>
 					columns={columns}
@@ -197,7 +202,7 @@ function ServiceMetrics({
 			(option) => option.value === value,
 		);
 
-		logEvent('Homepage: Services time interval updated', {
+		void logEvent('Homepage: Services time interval updated', {
 			updatedTimeInterval: timeInterval?.label,
 		});
 
@@ -222,7 +227,7 @@ function ServiceMetrics({
 
 	const dataQueries = useGetQueriesRange(
 		queryRangeRequestData,
-		ENTITY_VERSION_V4,
+		ENTITY_VERSION_V5,
 		{
 			queryKey: useMemo(
 				() => [
@@ -258,12 +263,7 @@ function ServiceMetrics({
 	);
 
 	const sortedServices = useMemo(
-		() =>
-			services?.sort((a, b) => {
-				const aUpdateAt = new Date(a.p99).getTime();
-				const bUpdateAt = new Date(b.p99).getTime();
-				return bUpdateAt - aUpdateAt;
-			}) || [],
+		() => [...services].sort((a, b) => b.p99 - a.p99),
 		[services],
 	);
 
@@ -281,7 +281,7 @@ function ServiceMetrics({
 
 	const handleRowClick = useCallback(
 		(record: ServicesList, event: React.MouseEvent) => {
-			logEvent('Homepage: Service clicked', {
+			void logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
 			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
@@ -348,7 +348,7 @@ function ServiceMetrics({
 								type="link"
 								className="periscope-btn link learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: All Services clicked', {});
+									void logEvent('Homepage: All Services clicked', {});
 								}}
 							>
 								All Services <ArrowRight size={12} />

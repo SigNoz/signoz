@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import styled from 'styled-components';
 
 export const FormatFieldWrapper = styled(Space)`

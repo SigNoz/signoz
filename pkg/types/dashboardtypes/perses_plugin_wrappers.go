@@ -40,6 +40,7 @@ func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 		string(PanelKindHeatmap):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
 		string(PanelKindScatterPlot):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec"),
 		string(PanelKindGeoMap):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec"),
+		string(PanelKindTopList):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec"),
 		string(PanelKindDistribution): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec"),
 	})
 }
@@ -76,6 +77,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[HeatmapPanelSpec]{Kind: string(PanelKindHeatmap)},
 		PanelPluginVariant[ScatterPlotPanelSpec]{Kind: string(PanelKindScatterPlot)},
 		PanelPluginVariant[GeoMapPanelSpec]{Kind: string(PanelKindGeoMap)},
+		PanelPluginVariant[TopListPanelSpec]{Kind: string(PanelKindTopList)},
 		PanelPluginVariant[DistributionPanelSpec]{Kind: string(PanelKindDistribution)},
 	}
 }
@@ -252,6 +254,7 @@ var (
 		PanelKindHeatmap:      func() any { return new(HeatmapPanelSpec) },
 		PanelKindScatterPlot:  func() any { return new(ScatterPlotPanelSpec) },
 		PanelKindGeoMap:       func() any { return new(GeoMapPanelSpec) },
+		PanelKindTopList:      func() any { return new(TopListPanelSpec) },
 		PanelKindDistribution: func() any { return new(DistributionPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
@@ -281,6 +284,7 @@ var (
 		PanelKindHeatmap:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 		PanelKindScatterPlot:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
 		PanelKindGeoMap:       {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
+		PanelKindTopList:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
 		PanelKindDistribution: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}
 )

@@ -15,6 +15,7 @@ import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../../types';
+import { useVariant } from '../../VariantContext';
 
 import styles from './MessageFeedback.module.scss';
 
@@ -72,6 +73,7 @@ export default function MessageFeedback({
 }: MessageFeedbackProps): JSX.Element {
 	const [copied, setCopied] = useState(false);
 	const [, copyToClipboard] = useCopyToClipboard();
+	const isFullPage = useVariant() === 'page';
 	const submitMessageFeedback = useAIAssistantStore(
 		(s) => s.submitMessageFeedback,
 	);
@@ -172,7 +174,12 @@ export default function MessageFeedback({
 
 	return (
 		<>
-			<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
+			<div
+				className={cx(styles.feedback, {
+					[styles.visible]: isLastAssistant,
+					[styles.fullPage]: isFullPage,
+				})}
+			>
 				<div className={styles.actions}>
 					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 						<Button
@@ -183,7 +190,7 @@ export default function MessageFeedback({
 							color="secondary"
 							aria-label={copied ? 'Copied' : 'Copy message'}
 						>
-							{copied ? <Check size={12} /> : <Copy size={12} />}
+							{copied ? <Check size={14} /> : <Copy size={14} />}
 						</Button>
 					</Tooltip>
 
@@ -198,7 +205,7 @@ export default function MessageFeedback({
 							aria-label={VOTE_LABEL[FeedbackRatingDTO.positive].ariaLabel}
 							aria-pressed={vote === FeedbackRatingDTO.positive}
 						>
-							<ThumbsUp size={12} />
+							<ThumbsUp size={14} />
 						</Button>
 					</Tooltip>
 
@@ -213,25 +220,25 @@ export default function MessageFeedback({
 							aria-label={VOTE_LABEL[FeedbackRatingDTO.negative].ariaLabel}
 							aria-pressed={vote === FeedbackRatingDTO.negative}
 						>
-							<ThumbsDown size={12} />
+							<ThumbsDown size={14} />
 						</Button>
 					</Tooltip>
-
-					{onRegenerate && (
-						<Tooltip title="Regenerate">
-							<Button
-								size="sm"
-								icon
-								variant="ghost"
-								color="secondary"
-								onClick={onRegenerate}
-								aria-label="Regenerate response"
-							>
-								<RefreshCw size={12} />
-							</Button>
-						</Tooltip>
-					)}
 				</div>
+
+				{onRegenerate && (
+					<Tooltip title="Regenerate">
+						<Button
+							size="sm"
+							icon
+							variant="ghost"
+							color="secondary"
+							onClick={onRegenerate}
+							aria-label="Regenerate response"
+						>
+							<RefreshCw size={14} />
+						</Button>
+					</Tooltip>
+				)}
 
 				<span className={styles.time}>
 					{relativeTime} · {absoluteTime}

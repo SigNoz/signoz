@@ -235,6 +235,13 @@ export const panelQueryResponse = ({
 				warning,
 			});
 		}
+		case 'TopList':
+			return queryRangeV5ScalarTableResponse({
+				groupBy: ['service.name'],
+				aggregations: [QUERY_NAME],
+				rows: TABLE_VALUES(series).map((value, index) => [serviceAt(index), value]),
+				warning,
+			});
 		case 'Number':
 			return queryRangeV5ScalarResponse(NUMBER_VALUE, QUERY_NAME, { warning });
 		case 'List':

@@ -160,11 +160,14 @@ describe('jira reopen duration', () => {
 		).toMatchObject({ reopenDuration: sent });
 	});
 
-	it('leaves a duration it cannot parse for the validator to reject', () => {
-		expect(
-			toChannelConfig(ChannelKind.jira, { reopenDuration: 'tomorrow' }).spec,
-		).toMatchObject({ reopenDuration: 'tomorrow' });
-	});
+	it.each(['tomorrow', '30m1h'])(
+		'leaves %s, which it cannot parse, for the validator to reject',
+		(typed) => {
+			expect(
+				toChannelConfig(ChannelKind.jira, { reopenDuration: typed }).spec,
+			).toMatchObject({ reopenDuration: typed });
+		},
+	);
 });
 
 describe('jira deployment', () => {

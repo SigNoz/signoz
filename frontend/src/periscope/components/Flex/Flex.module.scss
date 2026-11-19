@@ -1,0 +1,162 @@
+.flex {
+	font-family: var(--periscope-font-family-sans);
+	font-size: var(--periscope-font-size-base);
+
+	box-sizing: border-box;
+	display: flex;
+
+	&::before,
+	&::after {
+		box-sizing: border-box;
+	}
+
+	&:empty {
+		display: none;
+	}
+}
+
+:where(.flex) a {
+	color: var(--primary-background);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color 0.3s;
+	-webkit-text-decoration-skip: objects;
+
+	&:active,
+	&:hover {
+		color: var(--primary-background);
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&[disabled] {
+		color: var(--l3-foreground);
+		cursor: not-allowed;
+	}
+}
+
+.vertical {
+	flex-direction: column;
+}
+
+.gapSmall {
+	gap: var(--spacing-4);
+}
+
+.gapMiddle {
+	gap: var(--spacing-8);
+}
+
+.gapLarge {
+	gap: var(--spacing-12);
+}
+
+.wrapWrap {
+	flex-wrap: wrap;
+}
+
+.wrapNowrap {
+	flex-wrap: nowrap;
+}
+
+.wrapWrapReverse {
+	flex-wrap: wrap-reverse;
+}
+
+.alignCenter {
+	align-items: center;
+}
+
+.alignStart {
+	align-items: start;
+}
+
+.alignEnd {
+	align-items: end;
+}
+
+.alignFlexStart {
+	align-items: flex-start;
+}
+
+.alignFlexEnd {
+	align-items: flex-end;
+}
+
+.alignSelfStart {
+	align-items: self-start;
+}
+
+.alignSelfEnd {
+	align-items: self-end;
+}
+
+.alignBaseline {
+	align-items: baseline;
+}
+
+.alignNormal {
+	align-items: normal;
+}
+
+.alignStretch {
+	align-items: stretch;
+}
+
+.justifyFlexStart {
+	justify-content: flex-start;
+}
+
+.justifyFlexEnd {
+	justify-content: flex-end;
+}
+
+.justifyStart {
+	justify-content: start;
+}
+
+.justifyEnd {
+	justify-content: end;
+}
+
+.justifyCenter {
+	justify-content: center;
+}
+
+.justifySpaceBetween {
+	justify-content: space-between;
+}
+
+.justifySpaceAround {
+	justify-content: space-around;
+}
+
+.justifySpaceEvenly {
+	justify-content: space-evenly;
+}
+
+.justifyStretch {
+	justify-content: stretch;
+}
+
+.justifyNormal {
+	justify-content: normal;
+}
+
+.justifyLeft {
+	justify-content: left;
+}
+
+.justifyRight {
+	justify-content: right;
+}

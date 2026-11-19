@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@signozhq/ui/button';
+import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -17,6 +18,7 @@ import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
 } from '../hooks/useAIAssistantAnalyticsContext';
+import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -32,13 +34,14 @@ import styles from './AIAssistantModal.module.scss';
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
-	const { pathname } = useAppLocation();
+	const { pathname, search } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
+	const chatTitle = useActiveChatTitle();
 	const openModal = useAIAssistantStore((s) => s.openModal);
 	const closeModal = useAIAssistantStore((s) => s.closeModal);
 	const minimizeModal = useAIAssistantStore((s) => s.minimizeModal);
@@ -93,12 +96,12 @@ export default function AIAssistantModal(): JSX.Element | null {
 		closeModal();
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the modal, so this is a surface
-		// switch, not a new open.
+		// switch, not a new open. `returnTo` is where its minimize button comes back to.
 		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ state: { fromInApp: true } },
+			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
-	}, [activeConversationId, closeModal]);
+	}, [activeConversationId, closeModal, pathname, search]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -151,7 +154,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 					<div className={styles.header}>
 						<div className={`${styles.title} noz-wave`}>
 							<Noz size={16} />
-							<span>Noz</span>
+							{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>

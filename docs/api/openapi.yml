@@ -4420,7 +4420,8 @@ components:
           description: The dashboard title and description.
         duration:
           description: The default time range, as a Prometheus duration such as 1h
-            or 7d. Stored, but not applied by the UI.
+            or 7d. The UI opens the dashboard on it, rounded up to whole minutes,
+            when neither the URL nor the viewer's last pick sets a time range.
           type: string
         layouts:
           description: The Grid layouts that place panels, at most 500. Each panel
@@ -5625,6 +5626,7 @@ components:
           signoz/TablePanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
           signoz/TextPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec'
           signoz/TimeSeriesPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
+          signoz/TopListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
         propertyName: kind
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
@@ -5639,6 +5641,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
@@ -5655,6 +5658,7 @@ components:
       - signoz/HeatmapPanel
       - signoz/ScatterPlotPanel
       - signoz/GeoMapPanel
+      - signoz/TopListPanel
       - signoz/DistributionPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
@@ -5847,6 +5851,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesTimeSeriesPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/TopListPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTopListPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind
@@ -6613,6 +6632,43 @@ components:
             the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
             last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
             fixed window.'
+      type: object
+    DashboardtypesTopListAppearance:
+      properties:
+        barColor:
+          description: Hex color of every bar; a matching background threshold overrides
+            it.
+          type: string
+        showRank:
+          description: Numbers each row by its position in the list.
+          type: boolean
+        showShare:
+          description: Shows each row's share of the listed rows' total.
+          type: boolean
+      required:
+      - barColor
+      type: object
+    DashboardtypesTopListPanelSpec:
+      properties:
+        appearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTopListAppearance'
+          description: Rank, share and bar color options.
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the values.
+        thresholds:
+          description: Rules that recolor a row when its value compares to a threshold
+            as specified.
+          items:
+            $ref: '#/components/schemas/DashboardtypesComparisonThreshold'
+          nullable: true
+          type: array
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
+          description: The time range the rows are computed over.
       type: object
     DashboardtypesUpdatableDashboardV2:
       properties:
@@ -12107,8 +12163,9 @@ components:
           additionalProperties:
             type: string
           description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
-            values may use Go templates such as {{$labels.service_name}}. severity
-            is the conventional routing label.
+            values may use Go templates such as {{$labels.service_name}}. A label
+            named after one the engine writes, such as severity or threshold.name,
+            is ignored.
           type: object
         notificationSettings:
           allOf:
@@ -12225,8 +12282,9 @@ components:
           additionalProperties:
             type: string
           description: Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*;
-            values may use Go templates such as {{$labels.service_name}}. severity
-            is the conventional routing label.
+            values may use Go templates such as {{$labels.service_name}}. A label
+            named after one the engine writes, such as severity or threshold.name,
+            is ignored.
           type: object
         notificationSettings:
           allOf:

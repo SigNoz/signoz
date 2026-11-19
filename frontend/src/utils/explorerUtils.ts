@@ -2,6 +2,12 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
+import {
+	getActiveBuilder,
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -10,7 +16,7 @@ import { getParsedAggregationOptionsForOrderBy } from './aggregationConverter';
 export const DEFAULT_LIST_ORDER_BY = 'timestamp:desc';
 
 export const getRawPanelOrderBy = (query: Query | null): OrderByPayload[] => {
-	const queryData = query?.builder?.queryData?.[0];
+	const queryData = query ? getActiveBuilder(query).queryData?.[0] : undefined;
 
 	if (!queryData) {
 		return [];
@@ -53,16 +59,15 @@ export const parseListOrderBy = (orderBy: string): OrderByPayload => {
 export const setListOrderBy = (query: Query, orderBy: string): Query => {
 	const nextOrderBy = [parseListOrderBy(orderBy)];
 
-	return {
-		...query,
-		builder: {
-			...query.builder,
-			queryData: query.builder.queryData.map((item) => ({
-				...item,
-				orderBy: nextOrderBy,
-			})),
-		},
-	};
+	const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+	const activeBuilder = getBuilderBySlotKey(query, slotKey);
+	return replaceBuilderBySlotKey(query, slotKey, {
+		...activeBuilder,
+		queryData: activeBuilder.queryData.map((item) => ({
+			...item,
+			orderBy: nextOrderBy,
+		})),
+	});
 };
 
 // Mapping between panel types and explorer views
@@ -78,6 +83,7 @@ export const panelTypeToExplorerView: Record<PANEL_TYPES, ExplorerViews> = {
 	[PANEL_TYPES.HISTOGRAM]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.HEATMAP]: ExplorerViews.TIMESERIES,
 	[PANEL_TYPES.GEO_MAP]: ExplorerViews.TABLE,
+	[PANEL_TYPES.TOP_LIST]: ExplorerViews.TABLE,
 	// Dashboard-only visualisation; explorers never offer it.
 	[PANEL_TYPES.TEXT]: ExplorerViews.LIST,
 	[PANEL_TYPES.SCATTER]: ExplorerViews.TABLE,

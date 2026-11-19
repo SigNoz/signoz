@@ -6,13 +6,18 @@
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 import type { ILog } from 'types/api/logs/log';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type {
+	BuilderQuery,
+	QueryRangeRequestV5,
+} from 'types/api/v5/queryRange';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	infraMetricsResponse,
 	logFieldKeysResponse,
 	logFieldValuesResponse,
 	LOG_SEVERITIES,
@@ -104,6 +109,14 @@ export const pipelinesMocks = defineStoryMocks({
 				'http://localhost/api/v5/query_range',
 				response.json(async (req) => {
 					const body = (await req.json()) as QueryRangeRequestV5;
+					const spec = body.compositeQuery?.queries?.[0]?.spec as
+						| BuilderQuery
+						| undefined;
+
+					// The preview's log detail drawer asks for its infra charts here.
+					if (spec?.signal === 'metrics') {
+						return infraMetricsResponse(body);
+					}
 
 					if (body.requestType === 'scalar') {
 						return queryRangeV5ScalarResponse(4213);
@@ -136,3 +149,5 @@ export const pipelinesMocks = defineStoryMocks({
 		reduxState: timeRangeState(),
 	}),
 });
+
+export type PipelinesArgs = PageStoryArgs<typeof pipelinesMocks>;

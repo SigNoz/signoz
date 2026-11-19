@@ -1,8 +1,6 @@
-import {
-	Card as CardComponent,
-	Col as ColComponent,
-	Row as RowComponent,
-} from 'antd';
+import { Card as CardComponent } from 'antd';
+import ColComponent from 'periscope/components/Col/Col';
+import RowComponent from 'periscope/components/Row/Row';
 import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
@@ -15,28 +16,25 @@ function TraceOperatorSection({
 	addTraceOperator?: () => void;
 }): JSX.Element {
 	const { currentQuery, panelType } = useQueryBuilder();
+	const activeBuilder = getActiveBuilder(currentQuery);
 
 	const showTraceOperatorWarning = useMemo(() => {
 		const isRawQueryPanel =
 			panelType === PANEL_TYPES.LIST || panelType === PANEL_TYPES.TRACE;
-		const hasMultipleQueries = currentQuery.builder.queryData.length > 1;
+		const hasMultipleQueries = activeBuilder.queryData.length > 1;
 		const hasTraceOperator =
-			currentQuery.builder.queryTraceOperator &&
-			currentQuery.builder.queryTraceOperator.length > 0;
+			activeBuilder.queryTraceOperator &&
+			activeBuilder.queryTraceOperator.length > 0;
 		return isRawQueryPanel && hasMultipleQueries && !hasTraceOperator;
-	}, [
-		currentQuery?.builder?.queryData,
-		currentQuery?.builder?.queryTraceOperator,
-		panelType,
-	]);
+	}, [activeBuilder.queryData, activeBuilder.queryTraceOperator, panelType]);
 
 	const traceOperatorWarning = useMemo(() => {
-		if (currentQuery.builder.queryData.length === 0) {
+		if (activeBuilder.queryData.length === 0) {
 			return '';
 		}
-		const firstQuery = currentQuery.builder.queryData[0];
+		const firstQuery = activeBuilder.queryData[0];
 		return `Currently, you are only seeing results from query ${firstQuery.queryName}. Add a trace operator to combine results of multiple queries.`;
-	}, [currentQuery]);
+	}, [activeBuilder.queryData]);
 	return (
 		<div className="qb-trace-operator-button-container">
 			<Tooltip

@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { Card, Flex, Table } from 'antd';
+import { Card, Table } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 
-import { InspectMetricsSeries } from './types';
-import { TableViewProps } from './types';
+import { InspectMetricsSeries, TableViewProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
 function TableView({
