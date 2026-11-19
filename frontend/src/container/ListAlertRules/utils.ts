@@ -3,6 +3,7 @@ import {
 	RuletypesListOrderDTO,
 	RuletypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { EmptyStateCopy } from 'components/ListViews/types';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
@@ -114,4 +115,57 @@ export const DEFAULT_RULE_LIST_FILTER: RuleListFilter = {
 
 export function isDefaultRuleListFilter(filter: RuleListFilter): boolean {
 	return isSameRuleListFilter(filter, DEFAULT_RULE_LIST_FILTER);
+}
+
+interface RuleListEmptyStateArgs {
+	isFetching: boolean;
+	isError: boolean;
+	queryError: string | null;
+	hasActiveFilters: boolean;
+	total: number;
+	viewEmptyState?: EmptyStateCopy;
+}
+
+interface RuleListEmptyState {
+	isEmptyDueToFilters: boolean;
+	isEmptyNoRules: boolean;
+	noResults: EmptyStateCopy;
+	// An empty view with its own copy (Recently viewed) has no search to clear.
+	canClear: boolean;
+}
+
+const NO_MATCHING_RULES = 'No matching alert rules';
+
+export function ruleListEmptyState({
+	isFetching,
+	isError,
+	queryError,
+	hasActiveFilters,
+	total,
+	viewEmptyState,
+}: RuleListEmptyStateArgs): RuleListEmptyState {
+	const viewEmptyCopy =
+		hasActiveFilters || queryError ? undefined : viewEmptyState;
+	const isEmpty = !isFetching && total === 0;
+	let noResults: EmptyStateCopy = {
+		title: NO_MATCHING_RULES,
+		description:
+			'No alert rules match your search. Try adjusting your search criteria.',
+	};
+	if (queryError) {
+		noResults = {
+			title: NO_MATCHING_RULES,
+			description: 'The filter query is invalid. Fix it or clear the search.',
+		};
+	} else if (viewEmptyCopy) {
+		noResults = viewEmptyCopy;
+	}
+	return {
+		isEmptyDueToFilters:
+			isEmpty && (hasActiveFilters || !!queryError || !!viewEmptyCopy),
+		isEmptyNoRules:
+			isEmpty && !isError && !queryError && !hasActiveFilters && !viewEmptyCopy,
+		noResults,
+		canClear: !viewEmptyCopy,
+	};
 }

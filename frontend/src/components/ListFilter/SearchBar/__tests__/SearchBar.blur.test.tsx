@@ -1,7 +1,10 @@
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import type { DslGrammar } from '../../dsl/types';
 import SearchBar from '../SearchBar';
+
+type SearchBarProps = ComponentProps<typeof SearchBar>;
 
 const GRAMMAR: DslGrammar = {
 	fields: [{ key: 'name', type: 'string' }],
@@ -9,11 +12,13 @@ const GRAMMAR: DslGrammar = {
 };
 
 function renderSearchBar(props: { dirty: boolean; disabled?: boolean }): {
-	onSubmit: jest.Mock;
-	onSubmitted: jest.Mock;
+	onSubmit: jest.MockedFunction<SearchBarProps['onSubmit']>;
+	onSubmitted: jest.MockedFunction<NonNullable<SearchBarProps['onSubmitted']>>;
 } {
-	const onSubmit = jest.fn();
-	const onSubmitted = jest.fn();
+	const onSubmit = jest.fn() as jest.MockedFunction<SearchBarProps['onSubmit']>;
+	const onSubmitted = jest.fn() as jest.MockedFunction<
+		NonNullable<SearchBarProps['onSubmitted']>
+	>;
 	render(
 		<>
 			<SearchBar

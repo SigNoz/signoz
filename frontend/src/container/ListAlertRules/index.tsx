@@ -31,6 +31,7 @@ import {
 	RULE_BUILTIN_VIEWS,
 } from './list.config';
 import { useRuleViewCtx } from './useRuleViewCtx';
+import { ruleListEmptyState } from './utils';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',
@@ -68,7 +69,7 @@ function ListAlertRules(): JSX.Element {
 		},
 	);
 
-	const { filter, applyFilter, submitQuery, changeStates } =
+	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
 	const ruleViews = useAlertRuleViews({ filter, applyFilter });
@@ -172,10 +173,15 @@ function ListAlertRules(): JSX.Element {
 	}, [action, columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
-	const isEmptyDueToFilters =
-		!isFetching && total === 0 && (hasActiveFilters || !!queryError);
-	const isEmptyNoRules =
-		!isFetching && !isError && !queryError && !hasActiveFilters && total === 0;
+	const { isEmptyDueToFilters, isEmptyNoRules, noResults, canClear } =
+		ruleListEmptyState({
+			isFetching,
+			isError,
+			queryError,
+			hasActiveFilters,
+			total,
+			viewEmptyState: findRuleBuiltinView(ruleViews.activeViewId)?.emptyState,
+		});
 
 	const activeLabel =
 		ruleViews.activeView?.name ??
@@ -236,13 +242,9 @@ function ListAlertRules(): JSX.Element {
 						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
 					) : isEmptyDueToFilters ? (
 						<NoResultsEmptyState
-							title="No matching alert rules"
-							subtitle={
-								queryError
-									? 'The filter query is invalid. Fix it or clear the search.'
-									: 'No alert rules match your search. Try adjusting your search criteria.'
-							}
-							onClear={handleClearFilters}
+							title={noResults.title}
+							subtitle={noResults.description}
+							onClear={canClear ? handleClearFilters : undefined}
 							clearButtonText="Clear Search"
 						/>
 					) : isEmptyNoRules ? (
@@ -256,6 +258,7 @@ function ListAlertRules(): JSX.Element {
 							getItemKey={(row): string => row.id ?? ''}
 							columnStorageKey="alert-rules-columns"
 							enableQueryParams={QUERY_PARAMS_CONFIG}
+							onSort={changeSort}
 							onRowClick={handleRowClick}
 							onRowClickNewTab={handleRowClickNewTab}
 							pagination={{

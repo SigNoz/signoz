@@ -96,6 +96,14 @@ export const RecentlyViewed: Story = {
 	args: { view: 'recent' },
 };
 
+/**
+ * Recently viewed before any rule was opened: the search stays, and the view says
+ * how it fills instead of offering the first-rule page.
+ */
+export const NoRecentlyViewed: Story = {
+	args: { view: 'recent', recentRules: 0 },
+};
+
 /** A workspace with no saved view yet, where the rail says how to make one. */
 export const NoSavedViews: Story = {
 	args: { ruleViews: 0 },

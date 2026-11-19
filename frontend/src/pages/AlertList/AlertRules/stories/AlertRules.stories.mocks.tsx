@@ -17,6 +17,7 @@ import { accessFor } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import { componentPermission } from 'utils/permission';
+import type { RuleViewCtx } from 'container/ListAlertRules/types';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
@@ -68,10 +69,10 @@ const VIEW_CHOICES = [
 /** Rules the browser remembers opening, most recent first. */
 const STORY_RECENT_RULE_IDS = ['rule-3', 'rule-1', 'rule-6'];
 
-const STORY_VIEW_CTX = {
+const storyViewCtx = (recentRules: number): RuleViewCtx => ({
 	userEmail: STORY_USER_EMAIL,
-	recent: STORY_RECENT_RULE_IDS,
-};
+	recent: STORY_RECENT_RULE_IDS.slice(0, recentRules),
+});
 type ViewChoice = (typeof VIEW_CHOICES)[number];
 
 /**
@@ -90,7 +91,7 @@ const listRoute = (view: ViewChoice): string => {
 			? { query: saved.data.query ?? '', states: saved.data.states ?? [] }
 			: RULE_BUILTIN_VIEWS.find((v) => v.id === view)?.filter(
 					DEFAULT_RULE_LIST_FILTER,
-					STORY_VIEW_CTX,
+					storyViewCtx(STORY_RECENT_RULE_IDS.length),
 				);
 
 	params.set('view', view === 'saved' ? saved.id : view);
@@ -162,6 +163,13 @@ export const alertRulesMocks = defineStoryMocks({
 				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set, and `recent` narrows one large page to the rules the browser remembers opening.',
 			options: VIEW_CHOICES,
 			value: DEFAULT_RULE_VIEW,
+		}),
+		recentRules: countControl('Recently viewed', {
+			group: VIEWS,
+			description:
+				'How many rules the browser remembers opening. At 0 the Recently viewed view shows its own empty state.',
+			value: STORY_RECENT_RULE_IDS.length,
+			max: STORY_RECENT_RULE_IDS.length,
 		}),
 		railCollapsed: toggleControl('Rail collapsed', {
 			group: VIEWS,
@@ -280,7 +288,7 @@ export const alertRulesMocks = defineStoryMocks({
 	effect: (values) => {
 		useAlertRuleViewsStore.setState({
 			railCollapsed: values.railCollapsed,
-			recent: STORY_RECENT_RULE_IDS,
+			recent: storyViewCtx(values.recentRules).recent,
 		});
 	},
 });
@@ -308,6 +316,12 @@ export const listedRules = (
 	args: AlertRulesArgs,
 ): RuletypesListableRuleDTO[] => {
 	const params = new URL(listRoute(args.view), 'http://localhost').searchParams;
+	// The URL joins states with commas; the request repeats the key.
+	const states = params.get('states');
+	if (states) {
+		params.delete('states');
+		states.split(',').forEach((state) => params.append('states', state));
+	}
 	if (
 		args.dataState !== 'loaded' ||
 		(args.invalidQuery !== 'off' && params.get('query'))
@@ -321,7 +335,9 @@ export const listedRules = (
 		params,
 	).data;
 	const clientFilter = findRuleBuiltinView(args.view)?.clientFilter;
-	return clientFilter ? clientFilter(rules, STORY_VIEW_CTX) : rules;
+	return clientFilter
+		? clientFilter(rules, storyViewCtx(args.recentRules))
+		: rules;
 };
 
 export const hasRowMenu = (args: AlertRulesArgs): boolean =>

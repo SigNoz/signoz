@@ -26,7 +26,7 @@ describe('ListAlertRules — list rendering', () => {
 		);
 		renderListAlertRules();
 
-		await screen.findByText('High CPU Alert');
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		expect(requests[0].get('sort')).toBe('state');
 		expect(requests[0].get('order')).toBe('desc');
