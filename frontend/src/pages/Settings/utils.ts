@@ -5,7 +5,6 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	billingSettings,
 	generalSettings,
-	ingestionSettings,
 	keyboardShortcuts,
 	mcpServerSettings,
 	membersSettings,
@@ -22,7 +21,6 @@ import {
 export const getRoutes = (
 	userRole: ROLES | null,
 	isCurrentOrgSettings: boolean,
-	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
 	isCloudUser: boolean,
 	isEnterpriseSelfHostedUser: boolean,
@@ -58,14 +56,9 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	if (isCloudUser && !isGatewayEnabled) {
-		// Can this be removed? is it dead code?
-		settings.push(...ingestionSettings(t));
-	}
-
 	// Visible to all authenticated users
 	settings.push(
-		...multiIngestionSettings(t), // is this correct?
+		...multiIngestionSettings(t),
 		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),

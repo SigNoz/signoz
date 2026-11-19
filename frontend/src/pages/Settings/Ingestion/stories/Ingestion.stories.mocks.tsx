@@ -3,18 +3,15 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { rest } from 'msw';
 import { screen, userEvent, within } from 'storybook/test';
-import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 
 import {
 	choiceControl,
 	countControl,
 	multiChoiceControl,
-	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { MockResolver } from '@/storybook/msw/types';
@@ -27,7 +24,6 @@ import {
 	ingestionKeyCreateError,
 	ingestionKeysResponse,
 	KEYS_PER_PAGE,
-	legacyIngestionResponse,
 	LIMIT_SIGNALS,
 	type LimitSignal,
 } from './__story_mockdata__/ingestion';
@@ -42,12 +38,6 @@ const holdCreate: MockResolver = (_req, res, ctx) => res(ctx.delay('infinite'));
 
 export const ingestionMocks = defineStoryMocks({
 	controls: {
-		gateway: toggleControl('Gateway', {
-			group: KEYS,
-			description:
-				'The feature that puts key management in the console. Without it the tab is the read-only card of the single key the workspace was given.',
-			value: true,
-		}),
 		keys: countControl('Ingestion keys', {
 			group: KEYS,
 			description: 'The page asks for ten at a time, which is the whole page.',
@@ -137,19 +127,9 @@ export const ingestionMocks = defineStoryMocks({
 			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
 			response.json(() => ({ status: 'success', data: null })),
 		),
-
-		rest.get(
-			'http://localhost/api/v1/settings/ingestion_key',
-			response.json(() => legacyIngestionResponse()),
-		),
 	],
-	config: ({ gateway }) => ({
+	config: () => ({
 		route: ROUTES.INGESTION_SETTINGS,
-		appContext: {
-			featureFlags: defaultFeatureFlags.map((flag) =>
-				flag.name === FeatureKeys.GATEWAY ? { ...flag, active: gateway } : flag,
-			),
-		},
 	}),
 });
 
