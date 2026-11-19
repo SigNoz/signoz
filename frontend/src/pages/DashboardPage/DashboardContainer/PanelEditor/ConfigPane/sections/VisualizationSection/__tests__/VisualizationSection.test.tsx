@@ -14,7 +14,7 @@ jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 		displayName: 'Time Series',
 		icon: (): null => null,
 		mode: 'query',
-		supportedQueryModesKindMap: {
+		supportedQueryTypesKindMap: {
 			builder: { kind: 'signal', signals: ['metrics', 'logs', 'traces'] },
 			clickhouse_sql: { kind: 'signal-less' },
 			promql: { kind: 'signal-less' },

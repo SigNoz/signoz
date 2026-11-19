@@ -56,6 +56,8 @@
 .title {
 	display: flex;
 	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
 	gap: 7px;
 	font-size: 13px;
 	font-weight: 600;
@@ -63,6 +65,7 @@
 }
 
 .shortcut {
+	flex-shrink: 0;
 	font-size: 10px;
 	font-family: var(--font-mono, monospace);
 	font-weight: 500;
@@ -81,6 +84,7 @@
 
 .actions {
 	display: flex;
+	flex-shrink: 0;
 	align-items: center;
 	gap: 2px;
 

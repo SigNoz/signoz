@@ -1,12 +1,14 @@
 .alertListContainer {
-	margin-top: auto;
-	margin-bottom: auto;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
 	display: flex;
-	justify-content: center;
 	width: 100%;
 }
 
 .alertListViewContent {
+	margin: auto;
+	padding: 24px 0;
 	width: calc(100% - 30px);
 	max-width: 836px;
 }

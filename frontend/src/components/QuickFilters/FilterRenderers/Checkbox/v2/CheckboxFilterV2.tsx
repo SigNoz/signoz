@@ -11,6 +11,7 @@ import {
 } from 'components/QuickFilters/types';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -128,18 +129,15 @@ export default function CheckboxFilterV2(
 		onToggleOpen();
 	};
 
+	const activeQueryData = currentQuery
+		? getActiveBuilder(currentQuery).queryData
+		: undefined;
 	const currentFilterOp = useMemo(() => {
-		const filterSync = currentQuery?.builder.queryData?.[
-			activeQueryIndex
-		]?.filters?.items.find((item) =>
-			isKeyMatch(item.key?.key, filter.attributeKey.key),
+		const filterSync = activeQueryData?.[activeQueryIndex]?.filters?.items.find(
+			(item) => isKeyMatch(item.key?.key, filter.attributeKey.key),
 		);
 		return filterSync?.op;
-	}, [
-		currentQuery?.builder.queryData,
-		activeQueryIndex,
-		filter.attributeKey.key,
-	]);
+	}, [activeQueryData, activeQueryIndex, filter.attributeKey.key]);
 
 	const isNotInOperator = NON_SELECTED_OPERATORS.includes(currentFilterOp || '');
 

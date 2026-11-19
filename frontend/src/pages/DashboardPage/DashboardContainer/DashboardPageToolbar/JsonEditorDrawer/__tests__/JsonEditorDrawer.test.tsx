@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 import JsonEditorDrawer from '../JsonEditorDrawer';
@@ -167,6 +167,36 @@ describe('JsonEditorDrawer', () => {
 
 		expect(screen.getByTestId('json-editor-validation')).toHaveTextContent(
 			'Line 3 · Unexpected token',
+		);
+	});
+
+	it('shows only the message when the error line is unknown', () => {
+		mockUseJsonEditor.mockReturnValue(
+			hookValue({
+				validity: { valid: false, lineCount: 4, message: 'Bad value' },
+			}),
+		);
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+
+		expect(screen.getByTestId('json-editor-validation')).toHaveTextContent(
+			/^Bad value$/,
+		);
+	});
+
+	it('shows the whole error on hover', async () => {
+		const message = 'A long error that the footer cuts off';
+		mockUseJsonEditor.mockReturnValue(
+			hookValue({
+				validity: { valid: false, lineCount: 4, errorLine: 2, message },
+			}),
+		);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
+
+		await user.hover(screen.getByTestId('json-editor-validation'));
+
+		await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
+			`Line 2 · ${message}`,
 		);
 	});
 

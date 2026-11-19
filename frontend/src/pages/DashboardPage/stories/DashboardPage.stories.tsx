@@ -22,6 +22,7 @@ import {
 	tooltipRoute,
 	warnedPanelQueryHandler,
 } from './DashboardPage.stories.mocks';
+import { hoverJsonValidation } from './__story_mockdata__/dashboard.play';
 import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
 
 import DashboardPage from '../DashboardPage';
@@ -98,6 +99,14 @@ export const PanelQueryError: Story = {
 	args: { dataState: 'error' },
 	// The mocked queries deliberately fail; the resulting console errors are the state under test.
 	parameters: { allowConsoleErrors: true },
+};
+
+/**
+ * A dashboard whose default time range is `6h`, opened without a time in the
+ * URL: the time picker starts on the last 6 hours instead of 30 minutes.
+ */
+export const DefaultTimeRange: Story = {
+	args: { duration: '6h' },
 };
 
 /** The panels mid-fetch, with the header, variable bar and grid already laid out. */
@@ -502,6 +511,15 @@ export const JsonCopiedToast: Story = {
 		await userEvent.click(screen.getByTestId('json-editor-copy'));
 		await expectToast('JSON copied to clipboard');
 	},
+};
+
+/**
+ * The JSON editor on a dashboard stored with `1s`: the footer rejects
+ * `spec.duration` on its line, and hovering it shows the full message.
+ */
+export const JsonDurationRejected: Story = {
+	args: { duration: '1s' },
+	play: hoverJsonValidation,
 };
 
 /**
