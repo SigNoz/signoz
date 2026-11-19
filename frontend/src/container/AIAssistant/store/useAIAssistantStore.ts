@@ -540,6 +540,15 @@ function dropUnreadReply(s: AIAssistantStore, conversationId: string): void {
 	s.unreadReplyIds = s.unreadReplyIds.filter((id) => id !== conversationId);
 }
 
+function setThreadLoading(
+	s: AIAssistantStore,
+	threadId: string,
+	isLoading: boolean,
+): void {
+	const others = s.loadingThreadIds.filter((id) => id !== threadId);
+	s.loadingThreadIds = isLoading ? [...others, threadId] : others;
+}
+
 function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
 	const stream = get().streams[conversationId];
 	return Boolean(stream?.pendingApproval || stream?.pendingClarification);
@@ -647,7 +656,8 @@ export interface AIAssistantStore {
 
 	// Loading state
 	isLoadingThreads: boolean;
-	isLoadingThread: boolean;
+	/** Threads whose messages are being fetched. */
+	loadingThreadIds: string[];
 	/** True once `fetchThreads` has succeeded; a failed fetch leaves it false. */
 	hasLoadedThreads: boolean;
 
@@ -802,7 +812,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			streams: {},
 			unreadReplyIds: [],
 			isLoadingThreads: false,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 			hasLoadedThreads: false,
 			answeredBlocks: {},
 
@@ -953,7 +963,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							const conv = s.conversations[id];
 							if (conv?.threadId && conv.messages.length === 0) {
 								activeThreadIdToLoad = conv.threadId;
-								s.isLoadingThread = true;
+								setThreadLoading(s, conv.threadId, true);
 							}
 						}
 					});
@@ -982,7 +992,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			loadThread: async (threadId: string): Promise<void> => {
 				set((s) => {
-					s.isLoadingThread = true;
+					setThreadLoading(s, threadId, true);
 					s.activeConversationId = threadId;
 				});
 				try {
@@ -1016,7 +1026,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								startedAt: null,
 							};
 						}
-						s.isLoadingThread = false;
+						setThreadLoading(s, threadId, false);
 					});
 
 					// Reconnect to SSE if backend execution is still running
@@ -1050,13 +1060,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						}
 					}
 				} catch (err) {
+					set((s) => {
+						setThreadLoading(s, threadId, false);
+					});
 					if (err instanceof DOMException && err.name === 'AbortError') {
 						return;
 					}
 					console.error('[AIAssistant] loadThread failed:', err);
-					set((s) => {
-						s.isLoadingThread = false;
-					});
 				}
 			},
 

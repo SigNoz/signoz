@@ -247,7 +247,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		useAIAssistantStore.setState({
 			conversations: { [conversation.id]: conversation },
 			activeConversationId: conversation.id,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 			isLoadingThreads: false,
 			answeredBlocks: values.answered ? answeredBlocks() : {},
 			// A stream is client state with no response behind it: the events the

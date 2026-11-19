@@ -1,0 +1,7 @@
+.unreadDot {
+	flex-shrink: 0;
+	width: var(--spacing-3);
+	height: var(--spacing-3);
+	border-radius: var(--radius-round);
+	background: var(--accent-primary);
+}
