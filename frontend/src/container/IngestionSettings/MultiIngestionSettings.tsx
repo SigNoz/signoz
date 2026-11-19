@@ -1032,12 +1032,14 @@ function MultiIngestionSettings(): JSX.Element {
 										icon
 										color="secondary"
 										aria-label="Edit ingestion key"
+										testId={`ingestion-key-edit-btn-${APIKey.id}`}
 										onClick={onEditKey}
 									>
 										<PenLine size={14} />
 									</Button>
 									<Button
 										aria-label="Delete ingestion key"
+										testId={`ingestion-key-delete-open-btn-${APIKey.id}`}
 										variant="ghost"
 										size="sm"
 										icon
@@ -1174,6 +1176,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="secondary"
 																			aria-label={`Edit ${signalName} limit`}
+																			testId={`ingestion-limit-edit-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1188,6 +1191,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="danger"
 																			aria-label={`Delete ${signalName} limit`}
+																			testId={`ingestion-limit-delete-open-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1205,6 +1209,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		prefix={<Plus size={12} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
+																		testId={`ingestion-limit-add-btn-${signalName}`}
 																	>
 																		Limits
 																	</Button>
