@@ -71,9 +71,13 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
-import { IngestionKeyListPermission } from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
+import {
+	IngestionKeyCreatePermission,
+	IngestionKeyListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
@@ -1714,7 +1718,7 @@ function MultiIngestionSettings(): JSX.Element {
 						/>
 					</AuthZTooltip>
 
-					<Button
+					<AuthZButton
 						size="md"
 						color="primary"
 						variant="solid"
@@ -1722,9 +1726,10 @@ function MultiIngestionSettings(): JSX.Element {
 						onClick={showAddModal}
 						width="200px"
 						testId="ingestion-key-add-btn"
+						checks={[IngestionKeyCreatePermission]}
 					>
 						New Ingestion key
-					</Button>
+					</AuthZButton>
 				</div>
 
 				<AuthZGuardContent checks={[IngestionKeyListPermission]}>
