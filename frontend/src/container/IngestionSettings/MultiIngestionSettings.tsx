@@ -75,6 +75,7 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
+	buildIngestionKeyDeletePermission,
 	buildIngestionKeyUpdatePermission,
 	IngestionKeyCreatePermission,
 	IngestionKeyListPermission,
@@ -1772,7 +1773,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						key="submit"
 						variant="solid"
@@ -1780,9 +1781,15 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
+						testId="ingestion-key-delete-btn"
+						checks={
+							isDeleteModalOpen && activeAPIKey?.id
+								? [buildIngestionKeyDeletePermission(activeAPIKey.id)]
+								: []
+						}
 					>
 						Delete Ingestion Key
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Typography.Text className="delete-text">
