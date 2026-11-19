@@ -28,22 +28,36 @@ export function matchTypeForMode(
 		: MetricreductionruletypesMatchTypeDTO.drop;
 }
 
+const COMPACT_UNITS = [
+	{ threshold: 1e3, suffix: 'K' },
+	{ threshold: 1e6, suffix: 'M' },
+] as const;
+
+function formatCompactUnit(value: number): string {
+	for (const { threshold, suffix } of COMPACT_UNITS) {
+		const formatted = (value / threshold).toFixed(1);
+		if (Number(formatted) < 1e3) {
+			return `${formatted}${suffix}`;
+		}
+	}
+	return `${(value / 1e9).toFixed(1)}B`;
+}
+
 export function formatCompact(value: number): string {
-	if (value >= 1e9) {
-		return `${(value / 1e9).toFixed(1)}B`;
-	}
-	if (value >= 1e6) {
-		return `${(value / 1e6).toFixed(1)}M`;
-	}
 	if (value >= 1e3) {
-		return `${(value / 1e3).toFixed(1)}K`;
+		return formatCompactUnit(value);
 	}
 	return `${value}`;
 }
 
 export function formatUsd(value: number): string {
 	if (value >= 1e3) {
-		return `$${(value / 1e3).toFixed(1)}K`;
+		return `$${formatCompactUnit(value)}`;
 	}
-	return `$${value.toFixed(2)}`;
+	const fixed = value.toFixed(2);
+	const rounded = Number(fixed);
+	if (rounded >= 1e3) {
+		return `$${formatCompactUnit(rounded)}`;
+	}
+	return `$${fixed}`;
 }
