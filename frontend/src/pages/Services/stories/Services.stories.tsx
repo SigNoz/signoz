@@ -6,6 +6,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import Services from '../index';
 import { servicesMocks } from './Services.stories.mocks';
+import { openColumnFilter } from './__story_mockdata__/services.play';
 
 type ServicesArgs = PageStoryArgs<typeof servicesMocks>;
 
@@ -22,6 +23,7 @@ const pageStory = storyMocks(servicesMocks, {
  */
 const meta = {
 	title: 'Pages/Services/List',
+	tags: ['play'],
 	component: Services,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -60,4 +62,9 @@ export const Pagination: Story = {
 /** Cloud trial pushed past 100 rps, which is what the warning above the table reads. */
 export const OverTrialLimit: Story = {
 	args: { traffic: 'over-trial-limit', banner: 'trial-expiry' },
+};
+
+/** The search dropdown on the Application column, open over the table. */
+export const ColumnFilterOpen: Story = {
+	play: openColumnFilter,
 };

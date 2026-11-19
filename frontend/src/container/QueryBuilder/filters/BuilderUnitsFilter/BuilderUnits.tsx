@@ -1,4 +1,6 @@
-import { Select, SelectProps, Space } from 'antd';
+import { Select, SelectProps } from 'antd';
+import cx from 'classnames';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import { getCategorySelectOptionByName } from 'constants/formats/alertFormatCategories';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -12,6 +14,8 @@ import { filterOption } from './utils';
 function BuilderUnitsFilter({
 	onChange,
 	yAxisUnit,
+	className,
+	labelClassName,
 }: IBuilderUnitsFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const { currentQuery, handleOnUnitsChange } = useQueryBuilder();
@@ -32,8 +36,14 @@ function BuilderUnitsFilter({
 	};
 
 	return (
-		<Space className="builder-units-filter">
-			<Typography.Text className="builder-units-filter-label">
+		<Space
+			className={cx('builder-units-filter', className)}
+			data-testid="builder-units-filter"
+		>
+			<Typography.Text
+				className={cx('builder-units-filter-label', labelClassName)}
+				data-testid="builder-units-filter-label"
+			>
 				Y-axis unit
 			</Typography.Text>
 			<Select
