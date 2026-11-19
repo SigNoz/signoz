@@ -1,0 +1,120 @@
+.space {
+	display: inline-flex;
+
+	.item:empty {
+		display: none;
+	}
+}
+
+:where(.space) a {
+	color: var(--primary-background);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color 0.3s;
+	-webkit-text-decoration-skip: objects;
+
+	&:active,
+	&:hover {
+		color: var(--primary-background);
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&[disabled] {
+		color: var(--l3-foreground);
+		cursor: not-allowed;
+	}
+}
+
+.vertical {
+	flex-direction: column;
+}
+
+.alignCenter {
+	align-items: center;
+}
+
+.alignStart {
+	align-items: flex-start;
+}
+
+.alignEnd {
+	align-items: flex-end;
+}
+
+.alignBaseline {
+	align-items: baseline;
+}
+
+.gapRowSmall {
+	row-gap: var(--spacing-4);
+}
+
+.gapRowMiddle {
+	row-gap: var(--spacing-8);
+}
+
+.gapRowLarge {
+	row-gap: var(--spacing-12);
+}
+
+.gapColSmall {
+	column-gap: var(--spacing-4);
+}
+
+.gapColMiddle {
+	column-gap: var(--spacing-8);
+}
+
+.gapColLarge {
+	column-gap: var(--spacing-12);
+}
+
+.compact {
+	display: inline-flex;
+}
+
+:where(.compact) a {
+	color: var(--primary-background);
+	text-decoration: none;
+	background-color: transparent;
+	outline: none;
+	cursor: pointer;
+	transition: color 0.3s;
+	-webkit-text-decoration-skip: objects;
+
+	&:active,
+	&:hover {
+		color: var(--primary-background);
+		outline: 0;
+	}
+
+	&:focus {
+		text-decoration: none;
+		outline: 0;
+	}
+
+	&:hover {
+		text-decoration: underline;
+	}
+
+	&[disabled] {
+		color: var(--l3-foreground);
+		cursor: not-allowed;
+	}
+}
+
+.compactBlock {
+	display: flex;
+	width: 100%;
+}
