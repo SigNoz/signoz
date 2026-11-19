@@ -135,15 +135,15 @@ export default function AlertRules({
 						</div>
 
 						<div className="alert-rule-item-description home-data-item-tag">
-							{rule.severities.map((severity) => (
+							{rule.thresholds.map((threshold) => (
 								<Badge
-									key={severity}
+									key={threshold}
 									textTransform="uppercase"
 									color="archive"
 									variant="outlined"
-									testId={`home-alert-severity-${rule.id}-${severity}`}
+									testId={`home-alert-threshold-${rule.id}-${threshold}`}
 								>
-									{severity}
+									{threshold}
 								</Badge>
 							))}
 

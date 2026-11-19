@@ -69,12 +69,13 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders a badge per severity', async () => {
+	it('renders a badge per threshold under the Thresholds column', async () => {
 		renderListAlertRules();
 
 		await expect(
 			screen.findByTestId('alert-row-rule-1-severity'),
 		).resolves.toHaveTextContent('criticalwarning');
+		expect(screen.getByTitle('Thresholds')).toBeInTheDocument();
 		expect(
 			screen.getByTestId('alert-row-rule-1-severity-critical'),
 		).toHaveAttribute('data-color', 'danger');

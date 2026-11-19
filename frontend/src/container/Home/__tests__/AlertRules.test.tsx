@@ -122,10 +122,10 @@ describe('Home alert rules', () => {
 		renderAlertRules();
 
 		await expect(
-			screen.findByTestId('home-alert-severity-burning-critical'),
+			screen.findByTestId('home-alert-threshold-burning-critical'),
 		).resolves.toHaveTextContent('critical');
 		expect(
-			screen.getByTestId('home-alert-severity-burning-warning'),
+			screen.getByTestId('home-alert-threshold-burning-warning'),
 		).toHaveTextContent('warning');
 	});
 });

@@ -48,7 +48,7 @@ type Story = StoryObj<AlertRulesArgs>;
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
- * on its last run and the severities it fires at.
+ * on its last run and the thresholds it fires at.
  */
 export const Default: Story = {};
 

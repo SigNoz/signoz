@@ -64,28 +64,28 @@ export function getAlertRuleColumns(
 		},
 		{
 			id: 'severity',
-			header: 'Severity',
-			accessorKey: 'severities',
+			header: 'Thresholds',
+			accessorKey: 'thresholds',
 			width: { fixed: '160px' },
 			enableSort: true,
 			enableMove: false,
 			cell: ({ row, value }): JSX.Element => {
 				const testId = `alert-row-${row.id ?? ''}-severity`;
-				const severities = (value as string[] | undefined) ?? [];
-				if (!severities.length) {
+				const thresholds = (value as string[] | undefined) ?? [];
+				if (!thresholds.length) {
 					return <TanStackTable.Text data-testid={testId}>-</TanStackTable.Text>;
 				}
 				return (
-					<div className={styles.severities} data-testid={testId}>
-						{severities.map((severity) => (
+					<div className={styles.thresholds} data-testid={testId}>
+						{thresholds.map((threshold) => (
 							<Badge
-								key={severity}
+								key={threshold}
 								textTransform="none"
-								color={SEVERITY_BADGE_COLORS[severity] ?? 'secondary'}
+								color={SEVERITY_BADGE_COLORS[threshold] ?? 'secondary'}
 								variant="outlined"
-								testId={`${testId}-${severity}`}
+								testId={`${testId}-${threshold}`}
 							>
-								{severity}
+								{threshold}
 							</Badge>
 						))}
 					</div>

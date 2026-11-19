@@ -104,7 +104,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 		name: 'Critical prod alerts',
 		data: {
 			version: 'v1',
-			query: "env = 'prod' AND severity = 'critical'",
+			query: "env = 'prod' AND thresholds = 'critical'",
 			states: [RuletypesAlertStateDTO.firing, RuletypesAlertStateDTO.pending],
 			sort: RuletypesListSortDTO.updated_at,
 			order: RuletypesListOrderDTO.desc,
@@ -145,7 +145,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 			'Payments on-call, everything that pages the payments rotation overnight',
 		data: {
 			version: 'v1',
-			query: "team = 'payments' AND severity IN ('critical', 'error')",
+			query: "team = 'payments' AND thresholds IN ('critical', 'error')",
 			states: [],
 			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.asc,

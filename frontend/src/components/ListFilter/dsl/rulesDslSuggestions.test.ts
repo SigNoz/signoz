@@ -11,7 +11,7 @@ const source: SuggestionSource = {
 		'labels.<key>',
 		'name',
 		'rule_type',
-		'severity',
+		'thresholds',
 		'updated_at',
 		'updated_by',
 	],
@@ -29,7 +29,7 @@ describe('getSuggestions — rules grammar', () => {
 	it('orders reserved keys, hides labels.<key> and appends label keys', () => {
 		expect(labels('')).toStrictEqual([
 			'name',
-			'severity',
+			'thresholds',
 			'alert_type',
 			'rule_type',
 			'created_by',
@@ -57,10 +57,10 @@ describe('getSuggestions — rules grammar', () => {
 		expect(labels("alert_type = 'LOGS")).toStrictEqual(['LOGS_BASED_ALERT']);
 	});
 
-	it('gives severity the string operators and no label values', () => {
-		expect(labels('severity ')).toContain('severity IN');
-		expect(labels('severity ')).not.toContain('severity EXISTS');
-		expect(labels('severity = ')).toStrictEqual([]);
+	it('gives thresholds the string operators and no label values', () => {
+		expect(labels('thresholds ')).toContain('thresholds IN');
+		expect(labels('thresholds ')).not.toContain('thresholds EXISTS');
+		expect(labels('thresholds = ')).toStrictEqual([]);
 	});
 
 	it('gives labels.* the label operators and values', () => {

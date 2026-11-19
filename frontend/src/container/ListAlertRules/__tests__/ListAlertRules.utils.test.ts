@@ -93,7 +93,7 @@ describe('toOrderBy', () => {
 
 describe('isSameRuleListFilter', () => {
 	const filter: RuleListFilter = {
-		query: "severity = 'critical'",
+		query: "thresholds = 'critical'",
 		states: ['firing', 'pending'],
 		sort: RuletypesListSortDTO.name,
 		order: RuletypesListOrderDTO.asc,
@@ -112,7 +112,7 @@ describe('isSameRuleListFilter', () => {
 	});
 
 	it.each<[string, Partial<RuleListFilter>]>([
-		['query', { query: "severity = 'warning'" }],
+		['query', { query: "thresholds = 'warning'" }],
 		['states', { states: ['firing'] }],
 		['sort', { sort: RuletypesListSortDTO.state }],
 		['order', { order: RuletypesListOrderDTO.desc }],

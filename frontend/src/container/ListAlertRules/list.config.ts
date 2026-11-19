@@ -13,8 +13,8 @@ import type { RuleListFilter, RuleViewCtx } from './types';
 export const RULES_DSL_GRAMMAR = {
 	fields: [
 		{ key: 'name', type: 'string' },
-		// Matches the rule's severities; the severity label is `labels.severity`.
-		{ key: 'severity', type: 'string' },
+		// Matches the rule's threshold names; a same-named label is `labels.thresholds`.
+		{ key: 'thresholds', type: 'string' },
 		{
 			key: 'alert_type',
 			type: 'enum',

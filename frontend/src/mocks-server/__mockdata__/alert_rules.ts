@@ -27,7 +27,7 @@ const baseCondition: RuletypesRuleConditionDTO = {
 	},
 } as unknown as RuletypesRuleConditionDTO;
 
-// The v3 list derives a rule's severities from these names.
+// The v3 list reports these names as the rule's thresholds.
 const withThresholds = (...names: string[]): RuletypesRuleConditionDTO => ({
 	...baseCondition,
 	thresholds: {
@@ -180,7 +180,7 @@ export const ruleViewsFixture: RuletypesRuleViewDTO[] = [
 		updatedAt: '2023-10-19T10:00:00Z',
 		data: {
 			version: 'v1',
-			query: "severity = 'critical'",
+			query: "thresholds = 'critical'",
 			states: [RuletypesAlertStateDTO.firing],
 			sort: RuletypesListSortDTO.name,
 			order: RuletypesListOrderDTO.asc,
