@@ -57,9 +57,15 @@ describe('getSuggestions — rules grammar', () => {
 		expect(labels("alert_type = 'LOGS")).toStrictEqual(['LOGS_BASED_ALERT']);
 	});
 
-	it('gives severity and labels.* the label operators and values', () => {
-		expect(labels('severity ')).toContain('severity EXISTS');
-		expect(labels('severity = ')).toStrictEqual(['critical']);
+	it('gives severity the string operators and no label values', () => {
+		expect(labels('severity ')).toContain('severity IN');
+		expect(labels('severity ')).not.toContain('severity EXISTS');
+		expect(labels('severity = ')).toStrictEqual([]);
+	});
+
+	it('gives labels.* the label operators and values', () => {
+		expect(labels('labels.severity ')).toContain('labels.severity EXISTS');
+		expect(labels('labels.severity = ')).toStrictEqual(['critical']);
 		expect(labels('labels.team = ')).toStrictEqual(['infra']);
 	});
 
