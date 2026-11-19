@@ -38,3 +38,25 @@ export const enableRoutingPolicies = async ({
 		).not.toBeInTheDocument(),
 	);
 };
+
+/** Turns on repeat notifications, which reveals the interval, unit and conditions row. */
+export const enableRepeatNotifications = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.alertMode === 'select-type') {
+		return;
+	}
+
+	const canvas = within(canvasElement);
+	const option = await canvas.findByTestId(
+		'repeat-notifications-container',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(within(option).getByRole('switch'));
+	await waitFor(() =>
+		expect(canvas.getByTestId('repeat-notifications-time-input')).toBeVisible(),
+	);
+};

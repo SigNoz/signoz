@@ -9,14 +9,17 @@ import { dashboardDurationError } from '../../DashboardContainer/utils/dashboard
 import {
 	canDeleteDashboard,
 	canEditSections,
+	clickPanelAction,
 	clickSectionAction,
 	type DashboardPageArgs,
+	hasPanel,
 	hasPanelSearch,
 	openActionsMenu,
 	openJsonEditor,
 	openSettings,
 	PAGE_LOAD,
 } from '../DashboardPage.stories.mocks';
+import type { PanelId } from './dashboard';
 
 interface DashboardPlayContext {
 	canvasElement: HTMLElement;
@@ -147,3 +150,40 @@ export const openRenameSectionDialog = async ({
 	await clickSectionAction(canvasElement, 'Rename section');
 	await screen.findByRole('dialog', { name: /rename section/i });
 };
+
+/** Opens `panelId` in view mode and, given a `tab`, switches its editor to it. */
+const openViewPanelModal =
+	(panelId: PanelId, tab?: string) =>
+	async ({ canvasElement, args }: DashboardPlayContext): Promise<void> => {
+		if (!hasPanel(args, panelId)) {
+			return;
+		}
+
+		await clickPanelAction(canvasElement, panelId, 'View');
+		await screen.findByText(/\(View mode\)/);
+		if (tab) {
+			await userEvent.click(await screen.findByRole('tab', { name: tab }));
+			await waitFor(() =>
+				expect(screen.getByRole('tab', { name: tab })).toHaveAttribute(
+					'aria-selected',
+					'true',
+				),
+			);
+		}
+	};
+
+export const openRequestRateViewPanel = openViewPanelModal('request-rate');
+
+export const openRecentLogsViewPanel = openViewPanelModal('recent-logs');
+
+export const openClickHouseViewPanel = openViewPanelModal(
+	'request-rate',
+	'ClickHouse Query',
+);
+
+export const openPromQLViewPanel = openViewPanelModal('request-rate', 'PromQL');
+
+export const openAIQueryBuilderViewPanel = openViewPanelModal(
+	'request-rate',
+	'AI Query Builder',
+);

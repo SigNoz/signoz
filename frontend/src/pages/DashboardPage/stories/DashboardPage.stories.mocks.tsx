@@ -415,6 +415,9 @@ export const hasPanelSearch = (args: DashboardPageArgs): boolean =>
 	showsDashboard(args) &&
 	PANEL_IDS.slice(0, args.panels).some((id) => SEARCHABLE_PANELS.includes(id));
 
+export const hasPanel = (args: DashboardPageArgs, id: PanelId): boolean =>
+	showsDashboard(args) && PANEL_IDS.slice(0, args.panels).includes(id);
+
 export const canDeleteDashboard = (args: DashboardPageArgs): boolean =>
 	rowEnabled(args, buildDashboardDeletePermission(STORY_DASHBOARD_ID));
 

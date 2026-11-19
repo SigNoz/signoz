@@ -9,6 +9,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import {
 	hasClickHouseTab,
 	hasDisconnectValues,
+	hasPromQLTab,
 	type PanelEditorArgs,
 	pickSegment,
 	savePanel,
@@ -127,6 +128,24 @@ export const openClickHouseQuery = async ({
 		}),
 	);
 	await screen.findByText(/ClickHouse query agent skill/i, undefined, {
+		timeout: 15000,
+	});
+};
+
+export const openPromQLQuery = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!hasPromQLTab(args)) {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByText('PromQL', undefined, {
+			timeout: 15000,
+		}),
+	);
+	await screen.findByTestId('promql-query-input', undefined, {
 		timeout: 15000,
 	});
 };

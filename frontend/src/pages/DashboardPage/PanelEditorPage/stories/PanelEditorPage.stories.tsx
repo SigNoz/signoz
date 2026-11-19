@@ -14,6 +14,7 @@ import {
 	openAIQueryBuilder,
 	openClickHouseQuery,
 	openPanelTypeSwitcher,
+	openPromQLQuery,
 	saveAndExpectToast,
 } from './__story_mockdata__/panelEditor.play';
 
@@ -55,6 +56,11 @@ export const Default: Story = {};
 /** The ClickHouse query tab, including its info callout. */
 export const ClickHouseQuery: Story = {
 	play: openClickHouseQuery,
+};
+
+/** The PromQL query tab, its query and legend fields empty. */
+export const PromQLQuery: Story = {
+	play: openPromQLQuery,
 };
 
 /** The create route, seeding an unsaved panel of the chosen kind. */

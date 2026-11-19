@@ -228,6 +228,19 @@ const NEW_PANEL_KINDS_WITHOUT_CLICKHOUSE: readonly NewPanelKind[] = [
 	'text',
 ];
 
+const PANELS_WITHOUT_PROMQL: readonly PanelId[] = [
+	'top-endpoints',
+	'traffic-share',
+	'recent-logs',
+];
+
+const NEW_PANEL_KINDS_WITHOUT_PROMQL: readonly NewPanelKind[] = [
+	'table',
+	'pie-chart',
+	'list',
+	'text',
+];
+
 const NEW_PANEL_KINDS_WITH_SPAN_GAPS: readonly NewPanelKind[] = [
 	'time-series',
 	'area-chart',
@@ -255,6 +268,17 @@ export const hasClickHouseTab = (args: PanelEditorArgs): boolean => {
 		panelQueryShape(args.panel).requestType !==
 		Querybuildertypesv5RequestTypeDTO.raw
 	);
+};
+
+/** Table, pie, list and text panels offer no PromQL query mode. */
+export const hasPromQLTab = (args: PanelEditorArgs): boolean => {
+	if (!showsEditor(args)) {
+		return false;
+	}
+
+	return args.panel === NEW_PANEL_ID
+		? !NEW_PANEL_KINDS_WITHOUT_PROMQL.includes(args.newPanelKind)
+		: !PANELS_WITHOUT_PROMQL.includes(args.panel);
 };
 
 /** Only the time series and area kinds offer "When data is missing". */

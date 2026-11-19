@@ -9,6 +9,7 @@ import {
 	createAlertMocks,
 	fillValidAlert,
 } from './CreateAlert.stories.mocks';
+import { enableRepeatNotifications } from './__story_mockdata__/createAlert.play';
 
 import CreateAlertPage from '../index';
 
@@ -117,4 +118,12 @@ export const TestNotificationSentToast: Story = {
 export const TestNotificationNoAlertsToast: Story = {
 	args: { testNotification: 'no-alerts' },
 	play: TestNotificationSentToast.play,
+};
+
+/**
+ * Repeat notifications turned on: the interval, its unit and the conditions it
+ * repeats under, on one line beside the option.
+ */
+export const RepeatNotifications: Story = {
+	play: enableRepeatNotifications,
 };
