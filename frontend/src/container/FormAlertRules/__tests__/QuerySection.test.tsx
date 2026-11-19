@@ -104,10 +104,7 @@ describe('FormAlertRules QuerySection', () => {
 	});
 
 	it('keeps the traces alert tabs without the AI tab', () => {
-		renderQuerySection(
-			AlertTypes.TRACES_BASED_ALERT,
-			EQueryType.QUERY_BUILDER,
-		);
+		renderQuerySection(AlertTypes.TRACES_BASED_ALERT, EQueryType.QUERY_BUILDER);
 
 		expect(screen.getByTestId('query-builder-tab')).toBeInTheDocument();
 		expect(screen.getByTestId('clickhouse-tab')).toBeInTheDocument();
@@ -115,10 +112,7 @@ describe('FormAlertRules QuerySection', () => {
 	});
 
 	it('keeps the metrics alert tabs without the AI tab', () => {
-		renderQuerySection(
-			AlertTypes.METRICS_BASED_ALERT,
-			EQueryType.QUERY_BUILDER,
-		);
+		renderQuerySection(AlertTypes.METRICS_BASED_ALERT, EQueryType.QUERY_BUILDER);
 
 		expect(screen.getByTestId('query-builder-tab')).toBeInTheDocument();
 		expect(screen.getByTestId('clickhouse-tab')).toBeInTheDocument();
