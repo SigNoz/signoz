@@ -1,0 +1,96 @@
+@use '../../AIAssistant/_scrollbar' as *;
+@use '../../AIAssistant/_bareInput' as *;
+@use '../../AIAssistant/_pickerRow' as *;
+
+.nozHistory {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.popover {
+	box-sizing: border-box;
+	height: 326px;
+	max-height: calc(100vh - var(--spacing-16));
+	overflow: hidden;
+
+	--popover-width: 269px;
+	--popover-padding: 0;
+	// Above the floating panel (999), below the popup chat (1050).
+	--popover-z-index: 1000;
+}
+
+// Radix places the list by its wrapper's transform; ease only the slide, not the first placement.
+:global([data-radix-popper-content-wrapper]):has(> .isSliding) {
+	transition: transform 0.2s ease;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.search {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	height: 44px;
+	padding: 0 var(--spacing-6);
+	border-bottom: 1px solid var(--l2-border);
+	@include bare-input;
+}
+
+.searchInput {
+	width: 100%;
+	caret-color: var(--accent-primary);
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--spacing-6) 0 calc(var(--spacing-2) + 1px);
+	@include scrollbar(0.2rem);
+	@include picker-row(var(--spacing-6));
+
+	--button-gap: var(--spacing-4);
+	// Titles read the same as the Noz page's conversation list.
+	--button-variant-ghost-color: var(--text-vanilla-400);
+	--button-size-line-height: var(--line-height-20);
+}
+
+// vanilla-400 doesn't follow the theme.
+:global(.lightMode) .list {
+	--button-variant-ghost-color: var(--l2-foreground);
+}
+
+.label {
+	flex-shrink: 0;
+	padding: 0 var(--spacing-6) calc(var(--spacing-3) + 1px);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--l3-foreground);
+}
+
+.time {
+	margin-left: auto;
+	font-size: var(--periscope-font-size-small);
+	line-height: var(--line-height-18);
+	// Not the title's tracking, which the row sets.
+	letter-spacing: normal;
+	color: var(--l3-foreground);
+}
+
+.empty {
+	padding: 0 var(--spacing-6);
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
+	color: var(--l3-foreground);
+	overflow-wrap: anywhere;
+}
