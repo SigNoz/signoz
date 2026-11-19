@@ -9,11 +9,6 @@ import type {
 } from 'hooks/useResourceAttribute/types';
 import { getResourceDeploymentKeys } from 'hooks/useResourceAttribute/utils';
 import type { ServicesMapItem } from 'store/actions/serviceMap';
-import type {
-	TagKeysPayloadProps,
-	TagValuesPayloadProps,
-} from 'types/api/metrics/getResourceAttributes';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export const SERVICE_HEALTH = ['healthy', 'degraded', 'failing'] as const;
 
@@ -301,30 +296,6 @@ export const attributeValuesFor = (
 
 	return attributeKey === NAMESPACE_KEY ? NAMESPACES : [];
 };
-
-export const attributeKeysResponse = (
-	keys: readonly string[],
-): TagKeysPayloadProps & { status: string } => ({
-	status: 'success',
-	data: {
-		attributeKeys: keys.map((key) => ({
-			key,
-			type: 'resource',
-			dataType: DataTypes.String,
-		})),
-	},
-});
-
-export const attributeValuesResponse = (
-	values: readonly string[],
-): TagValuesPayloadProps & { status: string } => ({
-	status: 'success',
-	data: {
-		boolAttributeValues: null,
-		numberAttributeValues: null,
-		stringAttributeValues: [...values],
-	},
-});
 
 export const RESOURCE_FILTERS = ['environment', 'cluster'] as const;
 
