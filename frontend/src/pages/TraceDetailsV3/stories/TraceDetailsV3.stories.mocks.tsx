@@ -34,7 +34,6 @@ import {
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import { traceFunnelsResponse } from '../../TracesModulePage/stories/__story_mockdata__/traces';
-import { TraceDetailsTab } from '../constants';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import {
 	focusSpanIndex,
@@ -44,13 +43,11 @@ import {
 	spanMatchRows,
 	spanPercentilesResponse,
 	STORY_TRACE_ID,
-	threadSpanCount,
 	traceAggregationsResponse,
 	traceDetailFieldKeys,
 	traceDetailFieldValues,
 	traceFlamegraphResponse,
 	traceSummaryResponse,
-	traceThreadResponse,
 	TRACE_SCENARIOS,
 	type TraceScenario,
 	traceWaterfallResponse,
@@ -68,8 +65,6 @@ type ExportState = (typeof EXPORT_STATES)[number];
 const ANALYTICS_STATES = ['loaded', 'empty', 'loading', 'error'] as const;
 
 type AnalyticsState = (typeof ANALYTICS_STATES)[number];
-
-const TABS = [TraceDetailsTab.Overview, TraceDetailsTab.Thread] as const;
 
 const PANEL_POSITIONS = [
 	SpanDetailVariant.DOCKED_RIGHT,
@@ -139,13 +134,6 @@ export const traceDetailsMocks = defineStoryMocks({
 			description:
 				'Marks the payment and shipping spans as errored, each with an exception event, which is what the error counts and the red bars read.',
 			value: true,
-		}),
-		tab: choiceControl<TraceDetailsTab>('Tab', {
-			group: TRACE,
-			description:
-				'The tab the page opens on. `thread` lists the LLM calls as a conversation, and shows its no-AI-spans state outside the `ai` scenario.',
-			options: TABS,
-			value: TraceDetailsTab.Overview,
 		}),
 		missingSpans: toggleControl('Missing spans', {
 			group: TRACE,
@@ -234,11 +222,6 @@ export const traceDetailsMocks = defineStoryMocks({
 				response.json(() =>
 					traceSummaryResponse({ ...trace, missingSpans: values.missingSpans }),
 				),
-			),
-
-			rest.get(
-				'http://localhost/api/v1/traces/:traceId/thread',
-				response.json(() => traceThreadResponse(trace)),
 			),
 
 			rest.post(
@@ -391,28 +374,11 @@ export const traceDetailsMocks = defineStoryMocks({
 			),
 		];
 	},
-	config: (values) => {
-		const params = new URLSearchParams();
-
-		if (values.tab !== TraceDetailsTab.Overview) {
-			params.set('tab', values.tab);
-		}
-
-		if (values.spanPanel) {
-			params.set(
-				'spanId',
-				spanIdAt(focusSpanIndex(values.scenario, values.spans)),
-			);
-		}
-
-		const search = params.toString();
-
-		return {
-			route: search
-				? `/trace/${STORY_TRACE_ID}?${search}`
-				: `/trace/${STORY_TRACE_ID}`,
-		};
-	},
+	config: (values) => ({
+		route: values.spanPanel
+			? `/trace/${STORY_TRACE_ID}?spanId=${spanIdAt(focusSpanIndex(values.scenario, values.spans))}`
+			: `/trace/${STORY_TRACE_ID}`,
+	}),
 	effect: (values) => {
 		set(LOCALSTORAGE.TRACE_DETAILS_SPAN_DETAILS_POSITION, values.panelPosition);
 	},
@@ -423,27 +389,12 @@ export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
 /** The waterfall renders once the trace resolves, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
 
-/** The header actions and the span rows are the overview tab's, once a trace loads. */
+/** The header actions and the span rows exist once a trace loads. */
 export const showsTrace = ({
-	tab,
 	spans,
 	dataState,
-}: Pick<TraceDetailsArgs, 'tab' | 'spans' | 'dataState'>): boolean =>
-	tab === TraceDetailsTab.Overview && spans > 0 && dataState === 'loaded';
-
-/** The thread lists the spans that carry messages, which only the AI scenario has. */
-export const listsThread = ({
-	tab,
-	scenario,
-	spans,
-	dataState,
-}: Pick<
-	TraceDetailsArgs,
-	'tab' | 'scenario' | 'spans' | 'dataState'
->): boolean =>
-	tab === TraceDetailsTab.Thread &&
-	dataState === 'loaded' &&
-	threadSpanCount(scenario, spans) > 0;
+}: Pick<TraceDetailsArgs, 'spans' | 'dataState'>): boolean =>
+	spans > 0 && dataState === 'loaded';
 
 /** Opens the pretty view's action menu on the first row that offers `item`. */
 export const openRowMenu = async (

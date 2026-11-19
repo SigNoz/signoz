@@ -21,7 +21,6 @@ import {
 	openPercentileResourceSelector,
 	openSpanEvents,
 	openTraceOptions,
-	showsAiThread,
 	showsAnalyticsState,
 	showsHighlightedErrors,
 	showsTraceOnlyLogs,
@@ -32,7 +31,6 @@ import {
 	type TraceDetailsArgs,
 	traceDetailsMocks,
 } from './TraceDetailsV3.stories.mocks';
-import { TraceDetailsTab } from '../constants';
 import TraceDetailsV3 from '../index';
 
 const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
@@ -115,16 +113,6 @@ const AI_SPANS = scenarioSpanCount('ai');
 export const AiTrace: Story = {
 	args: { scenario: 'ai', spans: AI_SPANS },
 	play: hoverAiSpan,
-};
-
-/**
- * The same agent run on the Thread tab: each LLM call's messages in order, with
- * the tool call and its response, the model's reasoning folded into a thinking
- * block, and the span panel open on the Claude call.
- */
-export const AiThread: Story = {
-	args: { scenario: 'ai', spans: AI_SPANS, tab: TraceDetailsTab.Thread },
-	play: showsAiThread,
 };
 
 /**

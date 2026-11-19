@@ -14,7 +14,6 @@ import {
 
 import { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
 import {
-	listsThread,
 	openRowMenu,
 	showsSpanPanel,
 	showsTrace,
@@ -499,21 +498,6 @@ export const showsAnalyticsState = async (
 	if (showsTrace(context.args) && text) {
 		await screen.findAllByText(text, undefined, untilLoaded);
 	}
-};
-
-export const showsAiThread = async ({
-	canvasElement,
-	args,
-}: PageContext): Promise<void> => {
-	if (!listsThread(args)) {
-		return;
-	}
-
-	await within(canvasElement).findAllByText(
-		/Let me check the upgrade notes/,
-		undefined,
-		untilLoaded,
-	);
 };
 
 const openFunnelPicker = async (canvasElement: HTMLElement): Promise<void> => {
