@@ -7,10 +7,10 @@ import { userEvent, waitFor, within } from 'storybook/test';
 
 import { ThreadView } from '../../types';
 import {
+	hasSecondPage,
 	type TraceThreadArgs,
 	untilThreadLoaded,
 } from '../TraceDetailsThread.stories.mocks';
-import { threadSpanCount } from './traceThread';
 import type { ThreadScenario } from './types';
 
 interface PlayContext {
@@ -99,7 +99,7 @@ export const scrollToNextPage = async ({
 		args.dataState !== 'loaded' ||
 		args.paging !== 'next-page-pending' ||
 		args.anchor === 'span-not-found' ||
-		threadSpanCount(args.scenario) < 2
+		!hasSecondPage(args)
 	) {
 		return;
 	}

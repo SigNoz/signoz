@@ -107,9 +107,6 @@ const toSpan = (
 	};
 };
 
-export const threadSpanCount = (scenario: ThreadScenario): number =>
-	SCENARIO_TEMPLATES[scenario].length;
-
 /** The first page, holding `spanId` if given, or the second when `after` is its cursor. */
 export const traceThreadResponse = ({
 	scenario,

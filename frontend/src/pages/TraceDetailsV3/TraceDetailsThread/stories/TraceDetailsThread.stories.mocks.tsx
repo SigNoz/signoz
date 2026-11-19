@@ -151,5 +151,19 @@ export const traceThreadMocks = defineStoryMocks({
 
 export type TraceThreadArgs = PageStoryArgs<typeof traceThreadMocks>;
 
+/** The first page leaves a second one unless it holds every span. */
+export const hasSecondPage = ({
+	scenario,
+	paging,
+	anchor,
+}: Pick<TraceThreadArgs, 'scenario' | 'paging' | 'anchor'>): boolean =>
+	!!traceThreadResponse({
+		scenario,
+		paging,
+		traceStart: 0,
+		after: null,
+		spanId: interestedSpanId(anchor),
+	}).data.nextCursor;
+
 /** The thread renders once its first page resolves, which outlasts the 1s default. */
 export const untilThreadLoaded = { timeout: 15_000 };
