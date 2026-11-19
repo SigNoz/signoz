@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	type AIAssistantArgs,
@@ -11,6 +11,7 @@ import {
 	listsConversations,
 	showsThread,
 } from '../AIAssistantPage.stories.mocks';
+import { MESSAGE_IDS } from './aiAssistant';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -160,4 +161,128 @@ export const copyConversationLink = async (
 	await openConversationActions(context);
 	await userEvent.click(await screen.findByText(/copy link/i));
 	await screen.findByText(/conversation link copied to clipboard/i);
+};
+
+/** Picks a dashboard and a service, closes the picker, and focuses the last pill's remove. */
+export const pickContexts = async (context: PlayContext): Promise<void> => {
+	if (!composerFree(context.args)) {
+		return;
+	}
+
+	await openContextPicker(context);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /checkout overview/i }),
+	);
+	await userEvent.click(await screen.findByTestId('ai-context-tab-Services'));
+	const [service] = await within(
+		await screen.findByRole('tabpanel'),
+	).findAllByRole('button', { pressed: false }, untilLoaded);
+	await userEvent.click(service);
+	await userEvent.keyboard('{Escape}');
+	// Closing hands focus back to the picker's button.
+	await waitFor(() => expect(screen.queryByRole('tabpanel')).toBeNull());
+
+	const removes = await within(context.canvasElement).findAllByTestId(
+		'ai-context-pill-remove',
+	);
+	await expect(removes).toHaveLength(2);
+	removes[removes.length - 1].focus();
+};
+
+/** Opens the last answer's lone step. */
+export const expandSingleStep = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!(showsThread(args) && args.contents.includes('one-step'))) {
+		return;
+	}
+
+	await clickUntil(async () => {
+		const [step] = await within(canvasElement).findAllByText(
+			/matched the 429s to their upstream/i,
+			undefined,
+			untilLoaded,
+		);
+		return step;
+	}, /signoz_search_traces/);
+};
+
+/** Opens the running reply's live steps. */
+export const openLiveSteps = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!(showsThread(args) && args.agent === 'streaming')) {
+		return;
+	}
+
+	await clickUntil(async () => {
+		const [row] = await within(canvasElement).findAllByText(
+			/counting checkout calls per minute/i,
+			undefined,
+			untilLoaded,
+		);
+		return row;
+	}, /how much of that budget/i);
+};
+
+/** `VirtualizedMessages`' `atBottomThreshold`: a thread within it of its end shows no Latest pill. */
+const AT_BOTTOM_PX = 64;
+
+/** Scrolls the thread to its first message, which brings up the Latest pill. */
+export const scrollToTop = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!showsThread(args)) {
+		return;
+	}
+
+	const canvas = within(canvasElement);
+	await canvas.findByTestId(
+		`ai-message-${MESSAGE_IDS.final}`,
+		undefined,
+		untilLoaded,
+	);
+
+	await waitFor(async () => {
+		const scroller = canvasElement.querySelector<HTMLElement>(
+			'[data-virtuoso-scroller]',
+		);
+		if (
+			!scroller ||
+			scroller.scrollHeight - scroller.clientHeight <= AT_BOTTOM_PX
+		) {
+			return;
+		}
+		// The app's deferred page scrollbar can reset the list to 0 without a scroll event.
+		scroller.scrollTo({ top: scroller.scrollTop === 0 ? 1 : 0 });
+		await canvas.findByTestId('ai-assistant-latest', undefined, {
+			timeout: 1_000,
+		});
+	}, untilLoaded);
+};
+
+const DRAFT = 'Would a client-side limiter in front of payment.authorize';
+
+/** Types the start of the next question into the composer. */
+export const typeDraft = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!composerFree(args)) {
+		return;
+	}
+
+	// The loading view has a locked composer of its own, swapped out once the thread lands.
+	const input = await waitFor(() => {
+		const textarea = within(canvasElement).getByTestId('ai-chat-input-textarea');
+		if (textarea.hasAttribute('disabled')) {
+			throw new Error('The composer is still locked');
+		}
+		return textarea;
+	}, untilLoaded);
+	await userEvent.type(input, DRAFT);
+	await expect(input).toHaveValue(DRAFT);
 };
