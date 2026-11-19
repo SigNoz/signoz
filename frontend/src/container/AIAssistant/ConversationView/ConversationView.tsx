@@ -52,7 +52,9 @@ export default function ConversationView({
 	const isStreamingHere = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
-	const isLoadingThread = useAIAssistantStore((s) => s.isLoadingThread);
+	const isLoadingThread = useAIAssistantStore((s) =>
+		s.loadingThreadIds.includes(conversationId),
+	);
 	const pendingApprovalHere = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.pendingApproval ?? null,
 	);

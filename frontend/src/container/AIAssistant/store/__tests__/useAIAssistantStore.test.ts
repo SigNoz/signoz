@@ -483,6 +483,57 @@ describe('useAIAssistantStore — unread replies', () => {
 	});
 });
 
+describe('useAIAssistantStore — loading threads', () => {
+	const detail = (threadId: string): ThreadDetailResponse => ({
+		threadId,
+		createdAt: '2026-11-17T00:00:00Z',
+		updatedAt: '2026-11-17T00:00:00Z',
+		messages: [],
+	});
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.loadingThreadIds = [];
+			s.activeConversationId = null;
+		});
+	});
+
+	it('keeps each thread loading until its own request settles', async () => {
+		let resolveA: (value: ThreadDetailResponse) => void = () => undefined;
+		let rejectB: (reason: Error) => void = () => undefined;
+		chat.getThreadDetail
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveA = resolve;
+				}),
+			)
+			.mockReturnValueOnce(
+				new Promise((_resolve, reject) => {
+					rejectB = reject;
+				}),
+			);
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		const loadA = useAIAssistantStore.getState().loadThread('a');
+		const loadB = useAIAssistantStore.getState().loadThread('b');
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual([
+			'a',
+			'b',
+		]);
+
+		resolveA(detail('a'));
+		await loadA;
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual(['b']);
+		expect(useAIAssistantStore.getState().activeConversationId).toBe('b');
+
+		rejectB(new Error('network'));
+		await loadB;
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual([]);
+	});
+});
+
 describe('openNewAIAssistantChat', () => {
 	const reply: Message = {
 		id: 'm1',
