@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import type { GlobalMockArgs } from '../globals';
 import {
 	openAddCardModal,
+	openNozChatTab,
 	openNozHistory,
 	openNozPanel,
 	raiseToast,
@@ -16,9 +17,9 @@ function EmptyPage(): JSX.Element {
 
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
- * build version when it puts nothing, and the shell's own Ask Noz, Noz history
- * and Support on the right. Support follows the chat support the workspace has,
- * the way the floating bubble it replaces did.
+ * build version when it puts nothing, and the shell's own Noz chat tabs, Ask
+ * Noz, Noz history and Support on the right. Support follows the chat support
+ * the workspace has, the way the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -79,6 +80,20 @@ export const NozPanel: Story = {
 export const NozHistory: Story = {
 	args: { noz: true, nozThreads: 6, support: 'pylon' },
 	play: openNozHistory,
+};
+
+/**
+ * Open Noz chats as tabs beside Ask Noz, newest last; a dot marks a reply the
+ * user has not seen yet.
+ */
+export const NozChats: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+};
+
+/** A tab opened in the Noz panel: it stays highlighted and its dot clears. */
+export const NozChatOpen: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+	play: openNozChatTab,
 };
 
 /** Every tooltip the strip carries, held open. */

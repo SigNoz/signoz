@@ -3,6 +3,10 @@ import { AI_API_PATH } from 'api/AIAPIInstance';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import type { ConversationStreamState } from 'container/AIAssistant/types';
 import {
+	MAX_OPEN_CONVERSATIONS,
+	useAIAssistantOpenConversationsStore,
+} from 'container/AIAssistant/store/useAIAssistantOpenConversationsStore';
+import {
 	chipsResponse,
 	threadDetailResponse,
 	threadListResponse,
@@ -18,6 +22,10 @@ const NOZ = 'Noz';
 
 /** The streams this module seeds, so it only ever removes its own. */
 const AWAITING_PREFIX = 'storybook-awaiting-';
+
+/** Open tabs are saved conversations, so the list holds at least as many as are open. */
+const listedThreads = (saved: number, open: number): number =>
+	Math.max(saved, open);
 
 const awaitingStream = (): ConversationStreamState => ({
 	isStreaming: false,
@@ -57,8 +65,22 @@ export const nozMocks = defineStoryMocks({
 			value: 0,
 			max: 6,
 		}),
+		nozChats: countControl('Open chats', {
+			group: NOZ,
+			description:
+				'Conversations open as tabs in the bottom strip, newest beside Ask Noz. Clicking one opens it in the panel.',
+			value: 0,
+			max: MAX_OPEN_CONVERSATIONS,
+		}),
+		nozUnread: countControl('Unseen replies', {
+			group: NOZ,
+			description:
+				'How many of the newest open chats carry a reply the user has not seen yet, marked with a dot.',
+			value: 0,
+			max: MAX_OPEN_CONVERSATIONS,
+		}),
 	},
-	handlers: ({ noz, nozThreads }) =>
+	handlers: ({ noz, nozThreads, nozChats }) =>
 		noz
 			? [
 					nozGlobalConfigHandler,
@@ -70,20 +92,23 @@ export const nozMocks = defineStoryMocks({
 								ctx.status(200),
 								ctx.json(
 									threadListResponse(
-										req.url.searchParams.get('archived') === 'true' ? 0 : nozThreads,
+										req.url.searchParams.get('archived') === 'true'
+											? 0
+											: listedThreads(nozThreads, nozChats),
 										false,
 									),
 								),
 							),
 					),
-					// A chat picked from the history opens in the panel.
+					// A chat picked from the history or a tab opens in the panel.
 					rest.get(
 						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/threads/:threadId`,
 						(req, res, ctx) => {
 							const threadId = String(req.params.threadId);
-							const listed = threadListResponse(nozThreads, false).threads.find(
-								(thread) => thread.threadId === threadId,
-							);
+							const listed = threadListResponse(
+								listedThreads(nozThreads, nozChats),
+								false,
+							).threads.find((thread) => thread.threadId === threadId);
 							return res(
 								ctx.status(200),
 								ctx.json({
@@ -100,7 +125,13 @@ export const nozMocks = defineStoryMocks({
 					),
 				]
 			: [],
-	effect: ({ nozAwaiting }) => {
+	effect: ({ nozAwaiting, nozChats, nozUnread }) => {
+		// Oldest first, so the newest tab sits beside Ask Noz.
+		const openThreadIds = threadListResponse(nozChats, false)
+			.threads.map((thread) => thread.threadId)
+			.reverse();
+		useAIAssistantOpenConversationsStore.setState({ threadIds: openThreadIds });
+
 		// The store is a singleton another story's mocks may have seeded, so
 		// only this module's own streams are replaced.
 		useAIAssistantStore.setState((state) => {
@@ -117,6 +148,12 @@ export const nozMocks = defineStoryMocks({
 			// The store outlives a story, so a panel or history list it opened would still be open in the next.
 			state.isDrawerOpen = false;
 			state.isHistoryOpen = false;
+			// A list loaded by the previous story would prune the seeded tabs before the remount refetches.
+			state.hasLoadedThreads = false;
+
+			state.unreadReplyIds = openThreadIds.slice(
+				Math.max(0, openThreadIds.length - nozUnread),
+			);
 		});
 	},
 });
