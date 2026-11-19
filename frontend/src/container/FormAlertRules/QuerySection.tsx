@@ -16,8 +16,8 @@ import { isEmpty } from 'lodash-es';
 import { Atom, Brain, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
 
+import AIQuerySection from './AIQuerySection';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 
@@ -74,18 +74,6 @@ function QuerySection({
 			version={ENTITY_VERSION_V5}
 			onSignalSourceChange={handleSignalSourceChange}
 			signalSourceChangeEnabled
-		/>
-	);
-
-	const renderAIQueryUI = (): JSX.Element => (
-		<QueryBuilderV2
-			panelType={panelType}
-			config={{
-				queryVariant: 'static',
-				initialDataSource: DataSource.TRACES,
-			}}
-			showTraceOperator={false}
-			version={ENTITY_VERSION_V5}
 		/>
 	);
 
@@ -306,7 +294,7 @@ function QuerySection({
 			return renderMetricUI();
 		}
 		if (c === EQueryType.AI_QUERY_BUILDER) {
-			return renderAIQueryUI();
+			return <AIQuerySection panelType={panelType} />;
 		}
 		return null;
 	};
