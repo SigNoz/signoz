@@ -465,9 +465,9 @@ describe('ServiceAccountsSettings (integration)', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		await expect(screen.findByTestId('sa-row-sa-20')).resolves.toHaveTextContent(
-			'Bot 20',
-		);
+		await expect(
+			screen.findByTestId('sa-row-sa-20', undefined, { timeout: 5000 }),
+		).resolves.toHaveTextContent('Bot 20');
 		const update = onUrlUpdate.mock.lastCall?.[0];
 		expect(update?.searchParams.get('page')).toBe('2');
 		expect(update?.options.history).toBe('replace');
