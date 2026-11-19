@@ -75,10 +75,15 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {
+	buildIngestionKeyAttachPermission,
 	buildIngestionKeyDeletePermission,
+	buildIngestionKeyDetachPermission,
 	buildIngestionKeyUpdatePermission,
+	buildIngestionLimitDeletePermission,
+	buildIngestionLimitUpdatePermission,
 	IngestionKeyCreatePermission,
 	IngestionKeyListPermission,
+	IngestionLimitCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
@@ -1133,8 +1138,19 @@ function MultiIngestionSettings(): JSX.Element {
 													});
 												};
 
+												const isAddingNewLimit = !hasLimits(signalName);
+
+												const ingestionLimitPermissions = APIKey?.id
+													? isAddingNewLimit
+														? [
+																IngestionLimitCreatePermission,
+																buildIngestionKeyAttachPermission(APIKey.id),
+															]
+														: [buildIngestionLimitUpdatePermission(limit.id)]
+													: [];
+
 												const onSaveSignalLimit = (): void => {
-													if (!hasLimits(signalName)) {
+													if (isAddingNewLimit) {
 														handleAddLimit(APIKey, signalName);
 													} else {
 														handleUpdateLimit(APIKey, limitsDict[signalName]);
@@ -1420,7 +1436,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
-																					<Button
+																					<AuthZButton
 																						color="primary"
 																						variant="solid"
 																						size="sm"
@@ -1428,9 +1444,11 @@ function MultiIngestionSettings(): JSX.Element {
 																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																						}
 																						onClick={onSaveSignalLimit}
+																						testId="ingestion-limit-save-btn"
+																						checks={ingestionLimitPermissions}
 																					>
 																						Save
-																					</Button>
+																					</AuthZButton>
 																					<Button
 																						disabledTooltip="Wait for the limit to save"
 																						variant="outlined"
@@ -1819,7 +1837,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						key="submit"
 						variant="solid"
@@ -1827,9 +1845,18 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
+						testId="ingestion-limit-delete-btn"
+						checks={
+							isDeleteLimitModalOpen && activeSignal?.id && activeAPIKey?.id
+								? [
+										buildIngestionLimitDeletePermission(activeSignal.id),
+										buildIngestionKeyDetachPermission(activeAPIKey.id),
+									]
+								: []
+						}
 					>
 						Delete Limit
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Typography.Text className="delete-text">
