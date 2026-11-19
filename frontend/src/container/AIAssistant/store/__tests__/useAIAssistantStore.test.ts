@@ -11,7 +11,10 @@ import type {
 	ThreadDetailResponse,
 } from 'api/ai-assistant/chat';
 
-import { useAIAssistantStore } from '../useAIAssistantStore';
+import {
+	openNewAIAssistantChat,
+	useAIAssistantStore,
+} from '../useAIAssistantStore';
 import type { Message } from '../../types';
 
 // The store talks to the chat API only through these named exports. Mock the
@@ -388,6 +391,58 @@ describe('useAIAssistantStore — message contexts', () => {
 		await useAIAssistantStore.getState().loadThread('thread-1');
 
 		expect(lastMessage('thread-1').contexts).toStrictEqual([pickedDashboard]);
+	});
+});
+
+describe('openNewAIAssistantChat', () => {
+	const reply: Message = {
+		id: 'm1',
+		role: 'assistant',
+		content: 'Hi',
+		createdAt: 0,
+	};
+
+	beforeEach(() => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.activeConversationId = null;
+			s.isDrawerOpen = false;
+		});
+	});
+
+	it('opens the drawer on a new chat, leaving the open one as it was', () => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations.old = {
+				id: 'old',
+				threadId: 'old',
+				messages: [reply],
+				createdAt: 0,
+			};
+			s.activeConversationId = 'old';
+		});
+
+		openNewAIAssistantChat();
+
+		const { activeConversationId, conversations, isDrawerOpen } =
+			useAIAssistantStore.getState();
+		expect(activeConversationId).not.toBe('old');
+		expect(conversations[activeConversationId ?? ''].messages).toStrictEqual([]);
+		expect(conversations.old.messages).toStrictEqual([reply]);
+		expect(isDrawerOpen).toBe(true);
+	});
+
+	it('reuses the open chat while nothing has been sent in it', () => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations.blank = { id: 'blank', messages: [], createdAt: 0 };
+			s.activeConversationId = 'blank';
+		});
+
+		openNewAIAssistantChat();
+
+		expect(useAIAssistantStore.getState().activeConversationId).toBe('blank');
+		expect(
+			Object.keys(useAIAssistantStore.getState().conversations),
+		).toStrictEqual(['blank']);
 	});
 });
 
