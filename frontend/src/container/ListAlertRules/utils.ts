@@ -124,17 +124,16 @@ interface RuleListEmptyStateArgs {
 	hasActiveFilters: boolean;
 	total: number;
 	viewEmptyState?: EmptyStateCopy;
+	onClear: () => void;
 }
 
 interface RuleListEmptyState {
 	isEmptyDueToFilters: boolean;
 	isEmptyNoRules: boolean;
 	noResults: EmptyStateCopy;
-	// An empty view with its own copy (Recently viewed) has no search to clear.
-	canClear: boolean;
+	// Unset for an empty view with its own copy (Recently viewed): no search to clear.
+	onClear?: () => void;
 }
-
-const NO_MATCHING_RULES = 'No matching alert rules';
 
 export function ruleListEmptyState({
 	isFetching,
@@ -143,29 +142,22 @@ export function ruleListEmptyState({
 	hasActiveFilters,
 	total,
 	viewEmptyState,
+	onClear,
 }: RuleListEmptyStateArgs): RuleListEmptyState {
 	const viewEmptyCopy =
 		hasActiveFilters || queryError ? undefined : viewEmptyState;
 	const isEmpty = !isFetching && total === 0;
-	let noResults: EmptyStateCopy = {
-		title: NO_MATCHING_RULES,
+	const noResults: EmptyStateCopy = viewEmptyCopy ?? {
+		title: 'No matching alert rules',
 		description:
 			'No alert rules match your search. Try adjusting your search criteria.',
 	};
-	if (queryError) {
-		noResults = {
-			title: NO_MATCHING_RULES,
-			description: 'The filter query is invalid. Fix it or clear the search.',
-		};
-	} else if (viewEmptyCopy) {
-		noResults = viewEmptyCopy;
-	}
 	return {
 		isEmptyDueToFilters:
 			isEmpty && (hasActiveFilters || !!queryError || !!viewEmptyCopy),
 		isEmptyNoRules:
 			isEmpty && !isError && !queryError && !hasActiveFilters && !viewEmptyCopy,
 		noResults,
-		canClear: !viewEmptyCopy,
+		onClear: viewEmptyCopy ? undefined : onClear,
 	};
 }

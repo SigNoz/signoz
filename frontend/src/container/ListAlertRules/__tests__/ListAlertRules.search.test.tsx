@@ -245,7 +245,7 @@ describe('ListAlertRules — search', () => {
 	});
 
 	it.each(['rule_list_filter_invalid', 'rule_list_invalid'])(
-		'shows the backend message and no-results state for %s',
+		'shows the invalid query state with the backend message for %s',
 		async (code) => {
 			const user = userEvent.setup({ delay: null });
 			server.use(
@@ -270,12 +270,11 @@ describe('ListAlertRules — search', () => {
 			await runSearchQuery(user, "nme = 'x'");
 
 			await expect(
-				screen.findByTestId('alert-rules-query-error'),
+				screen.findByTestId('alert-rules-invalid-query-detail'),
 			).resolves.toHaveTextContent('unknown field "nme"');
-			const empty = screen.getByTestId('no-results-empty-state');
-			expect(within(empty).getByTestId('no-results-subtitle')).toHaveTextContent(
-				'The filter query is invalid. Fix it or clear the search.',
-			);
+			expect(
+				screen.queryByTestId('no-results-empty-state'),
+			).not.toBeInTheDocument();
 			expect(screen.queryByTestId('error-empty-state')).not.toBeInTheDocument();
 			expect(screen.queryByText('High CPU Alert')).not.toBeInTheDocument();
 		},

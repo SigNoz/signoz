@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
@@ -8,6 +9,7 @@ import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -47,6 +49,7 @@ const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
+	const { isCloudUser } = useGetTenantLicense();
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,
@@ -173,7 +176,7 @@ function ListAlertRules(): JSX.Element {
 	}, [action, columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
-	const { isEmptyDueToFilters, isEmptyNoRules, noResults, canClear } =
+	const { isEmptyDueToFilters, isEmptyNoRules, noResults, onClear } =
 		ruleListEmptyState({
 			isFetching,
 			isError,
@@ -181,6 +184,7 @@ function ListAlertRules(): JSX.Element {
 			hasActiveFilters,
 			total,
 			viewEmptyState: findRuleBuiltinView(ruleViews.activeViewId)?.emptyState,
+			onClear: handleClearFilters,
 		});
 
 	const activeLabel =
@@ -230,7 +234,6 @@ function ListAlertRules(): JSX.Element {
 							states={filter.states}
 							creatorOptions={creatorOptions}
 							source={source}
-							error={queryError}
 							onQueryChange={submitQuery}
 							onStatesChange={changeStates}
 						/>
@@ -240,11 +243,17 @@ function ListAlertRules(): JSX.Element {
 				<div ref={containerRef} className={styles.tableContainer}>
 					{isError ? (
 						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+					) : isEmptyDueToFilters && queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="alert-rules"
+						/>
 					) : isEmptyDueToFilters ? (
 						<NoResultsEmptyState
 							title={noResults.title}
 							subtitle={noResults.description}
-							onClear={canClear ? handleClearFilters : undefined}
+							onClear={onClear}
 							clearButtonText="Clear Search"
 						/>
 					) : isEmptyNoRules ? (

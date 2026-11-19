@@ -678,6 +678,7 @@ export const streamingState = (): ConversationStreamState => ({
 	streamingActions: null,
 	pendingApproval: null,
 	pendingClarification: null,
+	startedAt: Date.now(),
 	streamingContent:
 		'The quota is per tenant rather than per endpoint, so every service shares the same 600 requests a minute.',
 	streamingEvents: [
