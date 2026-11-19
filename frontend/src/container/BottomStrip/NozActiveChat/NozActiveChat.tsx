@@ -16,7 +16,11 @@ const UNTITLED = 'New conversation';
 function NozActiveChat(): JSX.Element | null {
 	const { pathname } = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const { chats, openChat, closeChat } = useAIAssistantActiveChats();
+	const isAIAssistantPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
+		exact: true,
+	});
+	const { chats, openChat, closeChat } =
+		useAIAssistantActiveChats(isAIAssistantPage);
 
 	const items = useMemo(
 		() =>
@@ -35,12 +39,7 @@ function NozActiveChat(): JSX.Element | null {
 		[chats],
 	);
 
-	// The drawer does not render on the Noz full page.
-	const isAIAssistantPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
-		exact: true,
-	});
-
-	if (!isAIAssistantEnabled || isAIAssistantPage) {
+	if (!isAIAssistantEnabled) {
 		return null;
 	}
 

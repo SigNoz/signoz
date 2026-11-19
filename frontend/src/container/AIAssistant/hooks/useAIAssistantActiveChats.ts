@@ -23,11 +23,16 @@ interface UseAIAssistantActiveChatsResult {
 
 /**
  * Open Noz conversations for the strip, kept in localStorage by thread id.
- * A chat joins when it becomes active in the drawer or modal, or when a reply
- * lands in it; it leaves on close, archive, clear, or once the server no
- * longer lists it.
+ * A chat joins when it becomes active in the drawer, the modal or the Noz page,
+ * or when a reply lands in it; it leaves on close, archive, clear, or once the
+ * server no longer lists it.
+ *
+ * On the Noz page a chat opens in the page itself, which follows the active chat.
+ * A reply landing in a chat that isn't on screen chimes.
  */
-export function useAIAssistantActiveChats(): UseAIAssistantActiveChatsResult {
+export function useAIAssistantActiveChats(
+	isOnAssistantPage: boolean,
+): UseAIAssistantActiveChatsResult {
 	const threadIds = useAIAssistantOpenConversationsStore((s) => s.threadIds);
 	const openTab = useAIAssistantOpenConversationsStore((s) => s.open);
 	const closeTab = useAIAssistantOpenConversationsStore((s) => s.close);
@@ -39,7 +44,7 @@ export function useAIAssistantActiveChats(): UseAIAssistantActiveChatsResult {
 		(s) => s.activeConversationId,
 	);
 	const isAssistantOpen = useAIAssistantStore(
-		(s) => s.isDrawerOpen || s.isModalOpen,
+		(s) => isOnAssistantPage || s.isDrawerOpen || s.isModalOpen,
 	);
 	const hasLoadedThreads = useAIAssistantStore((s) => s.hasLoadedThreads);
 	const setActiveConversation = useAIAssistantStore(
@@ -156,9 +161,12 @@ export function useAIAssistantActiveChats(): UseAIAssistantActiveChatsResult {
 			} else if (conversation.id !== activeConversationId) {
 				setActiveConversation(conversation.id);
 			}
-			openAIAssistant();
+			if (!isOnAssistantPage) {
+				openAIAssistant();
+			}
 		},
 		[
+			isOnAssistantPage,
 			conversationByThreadId,
 			activeConversationId,
 			loadingThreadIds,
