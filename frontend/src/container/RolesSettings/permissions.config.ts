@@ -165,6 +165,22 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 			'Type password ID, separate multiple with comma or space',
 		docsAnchor: 'factor-password',
 	},
+	'ingestion-key': {
+		label: 'Ingestion Keys',
+		description: 'Keys used to send telemetry to the workspace.',
+		icon: Key,
+		selectorPlaceholder:
+			'Type ingestion key ID, separate multiple with comma or space',
+		docsAnchor: 'ingestion-key',
+	},
+	'ingestion-limit': {
+		label: 'Ingestion Limits',
+		description: 'Daily and per-second limits set on ingestion keys.',
+		icon: Gauge,
+		selectorPlaceholder:
+			'Type ingestion limit ID, separate multiple with comma or space',
+		docsAnchor: 'ingestion-limit',
+	},
 };
 
 export const RESOURCE_ORDER = (
