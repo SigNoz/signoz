@@ -176,7 +176,7 @@ func compareListableRules(a, b *ListableRule, sortBy ListSort) int {
 		return a.CreatedAt.Compare(b.CreatedAt)
 	case ListSortState:
 		return cmp.Compare(a.State.DisplayRank(), b.State.DisplayRank())
-	case ListSortSeverity:
+	case ListSortThresholds:
 		// a rule sorts by its first threshold name, the highest ranked
 		thresholdA, thresholdB := "", ""
 		if len(a.Thresholds) > 0 {

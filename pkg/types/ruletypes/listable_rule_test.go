@@ -155,7 +155,7 @@ func TestSortListableRules(t *testing.T) {
 			wantNames: []string{"firing", "nodata", "pending", "recovering", "inactive", "disabled"},
 		},
 		{
-			name: "SeverityDesc_KnownRanksThenCustomLexical",
+			name: "ThresholdsDesc_KnownRanksThenCustomLexical",
 			rules: []*ListableRule{
 				listableRule("warn", StateInactive, "warning", base),
 				listableRule("custom-b", StateInactive, "bbb", base),
@@ -163,7 +163,7 @@ func TestSortListableRules(t *testing.T) {
 				listableRule("custom-a", StateInactive, "aaa", base),
 				listableRule("none", StateInactive, "", base),
 			},
-			sortBy: ListSortSeverity,
+			sortBy: ListSortThresholds,
 			order:  ListOrderDesc,
 			// desc flips the lexical compare between custom values too
 			wantNames: []string{"crit", "warn", "custom-b", "custom-a", "none"},
