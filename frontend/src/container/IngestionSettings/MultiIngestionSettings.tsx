@@ -26,13 +26,13 @@ import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {
 	useCreateIngestionKey,
-	useCreateIngestionKeyLimit,
+	useCreateIngestionLimit,
 	useDeleteIngestionKey,
-	useDeleteIngestionKeyLimit,
+	useDeleteIngestionLimit,
 	useGetIngestionKeys,
 	useSearchIngestionKeys,
 	useUpdateIngestionKey,
-	useUpdateIngestionKeyLimit,
+	useUpdateIngestionLimit,
 } from 'api/generated/services/gateway';
 import {
 	GatewaytypesIngestionKeyDTO,
@@ -414,15 +414,15 @@ function MultiIngestionSettings(): JSX.Element {
 		useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: createLimitForIngestionKey, isLoading: isLoadingLimitForKey } =
-		useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+		useCreateIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const {
 		mutate: updateLimitForIngestionKey,
 		isLoading: isLoadingUpdatedLimitForKey,
-	} = useUpdateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	} = useUpdateIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: deleteLimitForKey, isLoading: isDeletingLimit } =
-		useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+		useDeleteIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const onDeleteHandler = (): void => {
 		clearSearch();
@@ -659,8 +659,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 		createLimitForIngestionKey(
 			{
-				pathParams: { keyId: payload.keyID },
 				data: {
+					keyId: payload.keyID,
 					signal: payload.signal,
 					config: payload.config,
 				},

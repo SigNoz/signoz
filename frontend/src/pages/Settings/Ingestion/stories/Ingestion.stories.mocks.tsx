@@ -114,17 +114,17 @@ export const ingestionMocks = defineStoryMocks({
 		),
 
 		rest.post(
-			'http://localhost/api/v2/gateway/ingestion_keys/:keyId/limits',
+			'http://localhost/api/v2/gateway/ingestion_limits',
 			response.json(() => ({ status: 'success', data: { id: 'limit-new' } })),
 		),
 
 		rest.patch(
-			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			'http://localhost/api/v2/gateway/ingestion_limits/:limitId',
 			response.json(() => ({ status: 'success', data: null })),
 		),
 
 		rest.delete(
-			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			'http://localhost/api/v2/gateway/ingestion_limits/:limitId',
 			response.json(() => ({ status: 'success', data: null })),
 		),
 	],
