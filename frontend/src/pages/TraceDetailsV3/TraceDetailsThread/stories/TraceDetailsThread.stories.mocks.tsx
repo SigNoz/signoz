@@ -128,6 +128,7 @@ export const traceThreadMocks = defineStoryMocks({
 						paging: values.paging,
 						traceStart,
 						after: req.url.searchParams.get('after'),
+						spanId: interestedSpanId(values.anchor),
 					}),
 				),
 			),

@@ -110,18 +110,23 @@ const toSpan = (
 export const threadSpanCount = (scenario: ThreadScenario): number =>
 	SCENARIO_TEMPLATES[scenario].length;
 
-/** The first page, or the second when `after` is its cursor. */
+/** The first page, holding `spanId` if given, or the second when `after` is its cursor. */
 export const traceThreadResponse = ({
 	scenario,
 	paging,
 	traceStart,
 	after,
+	spanId,
 }: ThreadPageOptions): GetTraceThread200 => {
 	const spans = SCENARIO_TEMPLATES[scenario].map((template, index) =>
 		toSpan(template, index, traceStart),
 	);
-	const split =
+	const half =
 		paging === 'single-page' ? spans.length : Math.ceil(spans.length / 2);
+	const split = Math.max(
+		half,
+		spans.findIndex((span) => span.span_id === spanId) + 1,
+	);
 	const isSecondPage = after === SECOND_PAGE_CURSOR;
 
 	return {

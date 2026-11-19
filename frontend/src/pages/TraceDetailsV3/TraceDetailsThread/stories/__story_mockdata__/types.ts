@@ -34,4 +34,6 @@ export interface ThreadPageOptions {
 	paging: ThreadPaging;
 	traceStart: number;
 	after: string | null;
+	/** The span the tab opened on; the first page extends to include it. */
+	spanId?: string;
 }
