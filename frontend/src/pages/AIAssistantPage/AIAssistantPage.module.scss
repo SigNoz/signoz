@@ -1,8 +1,11 @@
+@use '../../container/AIAssistant/_selection' as *;
+
 .page {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	background: var(--l1-background);
+	@include selection;
 }
 
 .header {

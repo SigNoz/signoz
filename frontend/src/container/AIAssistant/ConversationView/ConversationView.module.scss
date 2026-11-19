@@ -1,8 +1,11 @@
+@use '../_selection' as *;
+
 .conversation {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	overflow: hidden;
+	@include selection;
 
 	// The full page sits the thread in a faint pane whose bottom edge runs behind the input.
 	&.fullPage {

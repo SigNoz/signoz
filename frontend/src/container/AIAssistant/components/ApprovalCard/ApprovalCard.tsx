@@ -88,7 +88,7 @@ export default function ApprovalCard({
 	return (
 		<div className={styles.card}>
 			<div className={styles.header}>
-				<Shield size={13} className={styles.shieldIcon} />
+				<Shield size={16} className={styles.shieldIcon} />
 				<span className={styles.headerLabel}>Action requires approval</span>
 				<span className={styles.resourceBadge}>
 					{approval.actionType} · {approval.resourceType}
@@ -194,7 +194,8 @@ export default function ApprovalCard({
 					disabledTooltip="Wait for the response to finish"
 					color="primary"
 					variant="solid"
-					size="sm"
+					size="md"
+					width="100%"
 					onClick={handleApprove}
 					disabled={isStreaming}
 					prefix={<Check />}
@@ -204,7 +205,8 @@ export default function ApprovalCard({
 				<Button
 					disabledTooltip="Wait for the response to finish"
 					variant="outlined"
-					size="sm"
+					size="md"
+					width="100%"
 					color="secondary"
 					onClick={handleReject}
 					disabled={isStreaming}

@@ -56,10 +56,15 @@
 	font-size: var(--periscope-font-size-base);
 	line-height: 20px;
 	letter-spacing: -0.005em;
-	color: var(--l2-foreground);
+	color: var(--text-vanilla-400);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+// vanilla-400 doesn't follow the theme.
+:global(.lightMode) .title {
+	color: var(--l2-foreground);
 }
 
 // Gives way to the action buttons that float over it.

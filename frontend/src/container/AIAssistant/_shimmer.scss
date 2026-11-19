@@ -1,0 +1,29 @@
+// A highlight sweeping across text, for work still in progress.
+@mixin shimmer-text($base, $highlight) {
+	background: linear-gradient(
+		90deg,
+		$base 0%,
+		$base 35%,
+		$highlight 50%,
+		$base 65%,
+		$base 100%
+	);
+	background-size: 300% 100%;
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+	animation: shimmer 1.8s linear infinite;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
+
+	@keyframes shimmer {
+		from {
+			background-position: 100% 0;
+		}
+		to {
+			background-position: 0% 0;
+		}
+	}
+}

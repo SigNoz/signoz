@@ -1,8 +1,15 @@
 import {
 	ErrorCodeDTO,
+	MessageContextDTOSource,
+	MessageContextDTOType,
+	MessageRoleDTO,
 	RetryActionDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import type { SSEEvent } from 'api/ai-assistant/chat';
+import type {
+	MessageContext,
+	SSEEvent,
+	ThreadDetailResponse,
+} from 'api/ai-assistant/chat';
 
 import { useAIAssistantStore } from '../useAIAssistantStore';
 import type { Message } from '../../types';
@@ -309,5 +316,67 @@ describe('useAIAssistantStore — resumed replies', () => {
 		void resume('conv-1');
 
 		expect(useAIAssistantStore.getState().streams['conv-1'].startedAt).toBe(5000);
+	});
+});
+
+describe('useAIAssistantStore — message contexts', () => {
+	const pickedDashboard: MessageContext = {
+		source: 'mention',
+		type: 'dashboard',
+		resourceId: 'dash-1',
+		resourceName: 'Checkout latency',
+	};
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.streams = {};
+			s.activeConversationId = null;
+		});
+	});
+
+	it('keeps the contexts a question was sent with', async () => {
+		chat.createThread.mockResolvedValue('thread-1');
+		chat.sendMessage.mockResolvedValue('exec-1');
+		chat.streamEvents.mockReturnValueOnce(eventStream([]));
+
+		useAIAssistantStore.getState().startNewConversation();
+		await useAIAssistantStore
+			.getState()
+			.sendMessage('Why is checkout slow?', undefined, [pickedDashboard]);
+
+		const conv = useAIAssistantStore.getState().conversations['thread-1'];
+		expect(conv.messages[0].contexts).toStrictEqual([pickedDashboard]);
+	});
+
+	it('reopens a chat with the contexts its questions were sent with', async () => {
+		const detail: ThreadDetailResponse = {
+			threadId: 'thread-1',
+			createdAt: '2026-11-17T00:00:00Z',
+			updatedAt: '2026-11-17T00:00:00Z',
+			messages: [
+				{
+					messageId: 'q-1',
+					role: MessageRoleDTO.user,
+					content: 'Why is checkout slow?',
+					contexts: [
+						{
+							source: MessageContextDTOSource.mention,
+							type: MessageContextDTOType.dashboard,
+							resourceId: 'dash-1',
+							resourceName: 'Checkout latency',
+						},
+					],
+					createdAt: '2026-11-17T00:00:00Z',
+					updatedAt: '2026-11-17T00:00:00Z',
+				},
+			],
+		};
+		chat.getThreadDetail.mockResolvedValue(detail);
+
+		await useAIAssistantStore.getState().loadThread('thread-1');
+
+		expect(lastMessage('thread-1').contexts).toStrictEqual([pickedDashboard]);
 	});
 });

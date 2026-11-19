@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import cx from 'classnames';
-import { ChevronDown, ChevronRight, Sparkles } from '@signozhq/icons';
-
-import { formatTime } from 'utils/timeUtils';
+import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
 import { StreamingToolCall } from '../../types';
-import ThinkingStep, { ThinkingContent, thinkingLabel } from '../ThinkingStep';
+import ThinkingStep, { thinkingLabel } from '../ThinkingStep';
 import ToolCallStep, {
 	getToolDisplayLabel,
 	ToolCallContent,
@@ -19,130 +17,88 @@ export type ActivityItem =
 
 interface ActivityGroupProps {
 	items: ActivityItem[];
-	/**
-	 * True only for the trailing activity group of an active stream — drives
-	 * the live "Working…" label and the elapsed-time tick (which re-stamps on
-	 * approval/clarification resume so wait time isn't counted).
-	 */
+	/** The trailing group of an active stream: its row names the running step, shimmering. */
 	isLive?: boolean;
 }
 
 /**
  * Single-item groups get a step-specific summary so the user doesn't see a
- * pointless "Worked through 1 step". Multi-item groups roll up into the
- * generic "Working… / Worked through N steps" treatment.
+ * pointless "Worked through 1 step".
  */
-function buildSummary(
-	items: ActivityItem[],
-	isLive: boolean,
-	elapsed: number,
-): string {
+function buildSummary(items: ActivityItem[], isLive: boolean): string {
+	// While Noz works, the row names the step it's on.
+	if (isLive) {
+		const latest = items[items.length - 1];
+		return latest.kind === 'thinking'
+			? thinkingLabel(true)
+			: getToolDisplayLabel(latest.toolCall);
+	}
 	if (items.length === 1) {
 		const [only] = items;
 		if (only.kind === 'thinking') {
-			return thinkingLabel(isLive);
+			return thinkingLabel(false);
 		}
 		return getToolDisplayLabel(only.toolCall);
 	}
-	const stepLabel = `${items.length} steps`;
-	if (!isLive) {
-		return `Worked through ${stepLabel}`;
-	}
-	// Suppress the elapsed token until ≥ 1s — the first tick fires after
-	// 1s anyway, and showing "0s" or "<1s" briefly adds noise.
-	return elapsed >= 1000
-		? `Working… · ${formatTime(elapsed / 1000)} · ${stepLabel}`
-		: `Working… · ${stepLabel}`;
+	return `Worked through ${items.length} steps`;
 }
 
-/**
- * Single collapsed summary row that hides a run of thinking + tool-call steps.
- * Expands to show each underlying step inline. Used for every activity row
- * (including single-item ones) so all "what the agent did" rows share a
- * consistent ✨-led visual contract.
- */
+/** A run of thinking and tool-call steps on a timeline, folded behind the running step, then a summary. */
 export default function ActivityGroup({
 	items,
 	isLive = false,
 }: ActivityGroupProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
 
-	// Captures the moment this live phase started. Re-stamped on every
-	// false→true transition so a stream that pauses on
-	// approval/clarification and resumes doesn't roll the user's wait time
-	// into the elapsed counter.
-	const startedAtRef = useRef<number>(Date.now());
-	const wasLiveRef = useRef<boolean>(isLive);
-	const [elapsed, setElapsed] = useState(0);
-
-	useEffect(() => {
-		if (isLive && !wasLiveRef.current) {
-			startedAtRef.current = Date.now();
-			setElapsed(0);
-		}
-		wasLiveRef.current = isLive;
-
-		if (!isLive) {
-			return undefined;
-		}
-		// Tick once per second — the display is integer-second precision, so
-		// faster ticks would just re-render the bubble for no visible change.
-		const id = window.setInterval(() => {
-			setElapsed(Date.now() - startedAtRef.current);
-		}, 1000);
-		return (): void => window.clearInterval(id);
-	}, [isLive]);
-
-	const summary = buildSummary(items, isLive, elapsed);
-	const isSingle = items.length === 1;
-
 	const toggle = (): void => setExpanded((v) => !v);
+	const [solo] = items;
+	const isSolo = items.length === 1;
 
 	return (
-		<div className={styles.activityGroup}>
-			<div className={styles.activityHeader} onClick={toggle}>
-				{isLive && (
-					<Sparkles
-						size={12}
-						className={cx(styles.sparkleIcon, styles.iconPulsing)}
-					/>
-				)}
-				<span className={styles.activitySummary}>{summary}</span>
+		<div className={cx(styles.activityGroup, { [styles.live]: isLive })}>
+			<button
+				type="button"
+				className={styles.activityHeader}
+				onClick={toggle}
+				aria-expanded={expanded}
+				data-testid="ai-activity-toggle"
+			>
+				<span className={styles.activitySummary}>
+					{buildSummary(items, isLive)}
+				</span>
 				{expanded ? (
 					<ChevronDown size={14} className={styles.toggleChevron} />
 				) : (
 					<ChevronRight size={14} className={styles.toggleChevron} />
 				)}
-			</div>
+			</button>
 
-			{expanded && (
-				<div className={styles.activityBody}>
-					{isSingle ? (
-						// Single-item: the outer chevron already provides disclosure,
-						// so render the underlying content directly instead of wrapping
-						// it in a second collapsible step row.
-						items[0].kind === 'thinking' ? (
-							<ThinkingContent content={items[0].content} />
-						) : (
-							<ToolCallContent toolCall={items[0].toolCall} />
-						)
+			{/* The summary row already names a lone step, so show only what it did. */}
+			{expanded && isSolo && (
+				<div className={styles.soloBody}>
+					{solo.kind === 'thinking' ? (
+						<p className={styles.soloThought}>{solo.content.trim()}</p>
 					) : (
-						items.map((item, i) => {
-							// A thinking step is live only while it's the trailing item
-							// in a trailing live group — once any later event (text or
-							// tool) arrives, the pass is done.
-							const isLastItem = i === items.length - 1;
-							return item.kind === 'thinking' ? (
-								<ThinkingStep
-									key={item.id}
-									content={item.content}
-									isLive={isLive && isLastItem}
-								/>
-							) : (
-								<ToolCallStep key={item.id} toolCall={item.toolCall} />
-							);
-						})
+						<ToolCallContent toolCall={solo.toolCall} />
 					)}
+				</div>
+			)}
+
+			{expanded && !isSolo && (
+				<div className={styles.activityBody}>
+					{items.map((item, i) => {
+						// The newest step stays live until the next event, so a running reply always shows progress.
+						const isStepLive = isLive && i === items.length - 1;
+						return item.kind === 'thinking' ? (
+							<ThinkingStep key={item.id} content={item.content} isLive={isStepLive} />
+						) : (
+							<ToolCallStep
+								key={item.id}
+								toolCall={item.toolCall}
+								isLive={isStepLive}
+							/>
+						);
+					})}
 				</div>
 			)}
 		</div>
