@@ -29,6 +29,9 @@ import type {
 	GetTraceThreadPathParameters,
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
+	InspectTrace200,
+	InspectTraceParams,
+	InspectTracePathParameters,
 	RenderErrorResponseDTO,
 	SpantypesPostableFlamegraphDTO,
 	SpantypesPostableTraceAggregationsDTO,
@@ -158,6 +161,117 @@ export const useGetTraceAggregations = <
 > => {
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
+/**
+ * Returns one of three parts of a trace of any size, named by type, each within 50,000 characters. Without spanId or search it returns the overview: the trace's identity with per-service totals, the spans where each error started, the failures not marked as errors (a 4xx response, a gRPC status other than OK, an exception event), the slowest spans by own time with same-name spans under one parent taken together, the most expensive gen_ai spans, and the span tree. A trace of up to 100 spans returns every span in the tree, and a small one also each span's full record; a larger trace returns the top levels. With spanId it returns that span's summary and full record, its ancestors, and the spans below it level by level, at most 20 per level; values over 500 characters are cut and listed in truncated. With search it returns the matching spans, each with where the words were found; allSpans returns every span instead. Every list carries its total, and every list item the span's direct parent. Pass a nextCursor as cursor with the same parameters to get the next page.
+ * @summary Inspect a trace
+ */
+export const inspectTrace = (
+	{ traceID }: InspectTracePathParameters,
+	params?: InspectTraceParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<InspectTrace200>({
+		url: `/api/v1/traces/${traceID}/inspect`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getInspectTraceQueryKey = (
+	{ traceID }: InspectTracePathParameters,
+	params?: InspectTraceParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/inspect`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getInspectTraceQueryOptions = <
+	TData = Awaited<ReturnType<typeof inspectTrace>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: InspectTracePathParameters,
+	params?: InspectTraceParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTrace>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getInspectTraceQueryKey({ traceID }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof inspectTrace>>> = ({
+		signal,
+	}) => inspectTrace({ traceID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: traceID !== null && traceID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof inspectTrace>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type InspectTraceQueryResult = NonNullable<
+	Awaited<ReturnType<typeof inspectTrace>>
+>;
+export type InspectTraceQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Inspect a trace
+ */
+
+export function useInspectTrace<
+	TData = Awaited<ReturnType<typeof inspectTrace>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: InspectTracePathParameters,
+	params?: InspectTraceParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTrace>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getInspectTraceQueryOptions({ traceID }, params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Inspect a trace
+ */
+export const invalidateInspectTrace = async (
+	queryClient: QueryClient,
+	{ traceID }: InspectTracePathParameters,
+	params?: InspectTraceParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getInspectTraceQueryKey({ traceID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * Returns the trace's time range, root span, span and error counts, and whether any spans are missing. AI traces also include token and cost totals.
  * @summary Get summary for a trace

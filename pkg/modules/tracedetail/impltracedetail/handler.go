@@ -3,6 +3,7 @@ package impltracedetail
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -126,4 +127,9 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, result)
+}
+
+// InspectTrace is registered for its place in the API spec; the implementation follows.
+func (h *handler) InspectTrace(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace inspect is not implemented yet"))
 }
