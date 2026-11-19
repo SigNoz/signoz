@@ -37,7 +37,7 @@
 	min-width: 0;
 	border: 1px solid var(--l2-border);
 	border-radius: 2px;
-	background: var(--l1-background);
+	background: var(--input-background);
 
 	// The row draws the field outline, so the editor inside it draws none
 	--query-builder-v2-border-color: transparent;
