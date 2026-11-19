@@ -31,3 +31,33 @@ describe('getRoutes for a blocked workspace', () => {
 		]);
 	});
 });
+
+describe('getRoutes Ingestion tab', () => {
+	it.each([
+		['a cloud viewer', USER_ROLES.VIEWER, true, false],
+		['an enterprise self-hosted viewer', USER_ROLES.VIEWER, false, true],
+		['a community viewer', USER_ROLES.VIEWER, false, false],
+		['an editor', USER_ROLES.EDITOR, true, false],
+		['an admin', USER_ROLES.ADMIN, true, false],
+	])(
+		'is shown to %s',
+		(_name, role, isCloudUser, isEnterpriseSelfHostedUser) => {
+			const keys = getRoutes(
+				role as ROLES,
+				false,
+				false,
+				isCloudUser,
+				isEnterpriseSelfHostedUser,
+				t,
+			).map((route) => route.key);
+
+			expect(keys).toContain(ROUTES.INGESTION_SETTINGS);
+		},
+	);
+
+	it('is hidden when the workspace is blocked', () => {
+		expect(routeKeys(USER_ROLES.ADMIN as ROLES, true)).not.toContain(
+			ROUTES.INGESTION_SETTINGS,
+		);
+	});
+});
