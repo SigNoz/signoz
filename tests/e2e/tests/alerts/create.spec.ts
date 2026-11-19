@@ -27,7 +27,7 @@ test.describe('Alert create', () => {
 			await expect(alerts.form.typeCard(type)).toBeVisible();
 		}
 		// Pins the exact set *and* order for whichever branch applies, so
-		// adding a sixth signal still fails here.
+		// adding a seventh signal still fails here.
 		await alerts.form.expectTypeCardSet();
 
 		await alerts.form.typeCard(AlertType.METRICS).click();
