@@ -427,12 +427,12 @@ func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallCont
 	return "search" + result
 }
 
-func (v *variableReplacementVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
+func (visitor *variableReplacementVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
 	if ctx.ValueList() == nil {
 		return "pattern()"
 	}
 	// VisitValueList already parenthesizes the args and propagates the __all__ marker.
-	result := v.Visit(ctx.ValueList()).(string)
+	result := visitor.Visit(ctx.ValueList()).(string)
 	if result == specialSkipMarker {
 		return specialSkipMarker
 	}

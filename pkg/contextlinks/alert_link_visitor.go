@@ -378,8 +378,8 @@ func (r *WhereClauseRewriter) VisitSearchCall(ctx *parser.SearchCallContext) any
 
 // VisitPatternCall visits pattern() calls. It has no keys to rewrite, so it
 // is preserved verbatim.
-func (r *WhereClauseRewriter) VisitPatternCall(ctx *parser.PatternCallContext) any {
-	r.rewritten.WriteString(ctx.GetText())
+func (rewriter *WhereClauseRewriter) VisitPatternCall(ctx *parser.PatternCallContext) any {
+	rewriter.rewritten.WriteString(ctx.GetText())
 	return nil
 }
 

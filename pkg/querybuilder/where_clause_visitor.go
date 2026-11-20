@@ -847,8 +847,8 @@ func (v *filterExpressionVisitor) VisitSearchCall(ctx *grammar.SearchCallContext
 
 // VisitPatternCall handles pattern('<pattern text>'[, ...]), the log pattern
 // filter. The grammar accepts it, but no storage evaluates it yet.
-func (v *filterExpressionVisitor) VisitPatternCall(_ *grammar.PatternCallContext) any {
-	v.errors = append(v.errors, "function `pattern` is not supported yet")
+func (visitor *filterExpressionVisitor) VisitPatternCall(_ *grammar.PatternCallContext) any {
+	visitor.errors = append(visitor.errors, "function `pattern` is not supported yet")
 	return ErrorConditionLiteral
 }
 

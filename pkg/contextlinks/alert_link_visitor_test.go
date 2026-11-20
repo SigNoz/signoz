@@ -26,7 +26,7 @@ func TestPrepareFiltersV5(t *testing.T) {
 			description:  "Should return empty string for empty inputs",
 		},
 		{
-			name:        "pattern_call_kept",
+			name:        "PatternCall_Kept",
 			labels:      map[string]string{},
 			whereClause: "service.name = 'serviceB' AND pattern('User <*> logged in')",
 			groupByItems: []qbtypes.GroupByKey{
