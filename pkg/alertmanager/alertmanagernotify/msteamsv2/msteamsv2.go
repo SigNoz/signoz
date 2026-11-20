@@ -12,7 +12,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
@@ -35,6 +34,10 @@ const (
 
 const (
 	Integration = "msteamsv2"
+
+	// Teams rejects messages over 28 KB; the margin covers the workflow's own envelope.
+	// https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
+	maxMessageBytes = 25 * 1024
 )
 
 type Notifier struct {
@@ -67,18 +70,12 @@ type Body struct {
 	Wrap   bool   `json:"wrap,omitempty"`
 	Style  string `json:"style,omitempty"`
 	Color  string `json:"color,omitempty"`
-	Facts  []Fact `json:"facts,omitempty"`
 }
 
 type Action struct {
 	Type  string `json:"type"`
 	Title string `json:"title"`
 	URL   string `json:"url"`
-}
-
-type Fact struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
 }
 
 type Msteams struct {
@@ -154,39 +151,24 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	// A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema
-	t := teamsMessage{
-		Type: "message",
-		Attachments: []Attachment{
-			{
-				ContentType: "application/vnd.microsoft.card.adaptive",
-				ContentURL:  nil,
-				Content: Content{
-					Schema:  "http://adaptivecards.io/schemas/adaptive-card.json",
-					Type:    "AdaptiveCard",
-					Version: "1.2",
-					Body:    bodyBlocks,
-					Actions: []Action{
-						{
-							Type:  "Action.OpenUrl",
-							Title: "View Alert",
-							URL:   titleLink,
-						},
-					},
-					Msteams: Msteams{
-						Width: "full",
-					},
-				},
-			},
-		},
-	}
-
-	var payload bytes.Buffer
-	if err = json.NewEncoder(&payload).Encode(t); err != nil {
+	payload, err := encodeMessage(bodyBlocks, titleLink)
+	if err != nil {
 		return false, err
 	}
+	for payload.Len() > maxMessageBytes {
+		longest := indexLongestText(bodyBlocks)
+		if longest < 0 {
+			break
+		}
+		text := bodyBlocks[longest].Text
+		bodyBlocks[longest].Text, _ = notify.TruncateInBytes(text, max(len(text)-(payload.Len()-maxMessageBytes), 0))
+		n.logger.WarnContext(ctx, "truncated message text to fit the size limit", slog.Int("max_bytes", maxMessageBytes))
+		if payload, err = encodeMessage(bodyBlocks, titleLink); err != nil {
+			return false, err
+		}
+	}
 
-	resp, err := n.postJSONFunc(ctx, n.client, url, &payload) //nolint:bodyclose
+	resp, err := n.postJSONFunc(ctx, n.client, url, payload) //nolint:bodyclose
 	if err != nil {
 		return true, notify.RedactURL(err)
 	}
@@ -201,8 +183,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 }
 
 // prepareContent builds the Adaptive Card body blocks for the notification.
-// The first block is always the title; the remainder depends on whether the
-// alerts carried a custom body template.
+// The first block is always the title; the remainder is the channel text, or
+// one block per alert when the alerts carried a custom body template.
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
@@ -234,16 +216,10 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 	}}
 
 	if result.IsDefaultBody {
-		for _, alert := range alerts {
-			blocks = append(blocks, Body{
-				Type:   "TextBlock",
-				Text:   "Alerts",
-				Weight: "Bolder",
-				Size:   "Medium",
-				Wrap:   true,
-				Color:  color,
-			})
-			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
+		for _, body := range result.Body {
+			if body = strings.TrimSpace(body); body != "" {
+				blocks = append(blocks, Body{Type: "TextBlock", Text: body, Wrap: true})
+			}
 		}
 		return blocks, nil
 	}
@@ -269,47 +245,53 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 	return blocks, nil
 }
 
-func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
-	bodies := []Body{}
-	bodies = append(bodies, Body{
-		Type:   "TextBlock",
-		Text:   "Labels",
-		Weight: "Bolder",
-		Size:   "Medium",
-	})
-
-	facts := []Fact{}
-	for k, v := range alert.Labels {
-		if slices.Contains([]string{"alertname", "severity", "ruleId", "ruleSource"}, string(k)) {
-			continue
-		}
-		facts = append(facts, Fact{Title: string(k), Value: string(v)})
-	}
-	bodies = append(bodies, Body{
-		Type:  "FactSet",
-		Facts: facts,
-	})
-
-	bodies = append(bodies, Body{
-		Type:   "TextBlock",
-		Text:   "Annotations",
-		Weight: "Bolder",
-		Size:   "Medium",
-	})
-
-	annotationsFacts := []Fact{}
-	for k, v := range alert.Annotations {
-		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
-			alertmanagertypes.IsPrivateAnnotation(string(k)) {
-			continue
-		}
-		annotationsFacts = append(annotationsFacts, Fact{Title: string(k), Value: string(v)})
+// A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema
+func encodeMessage(bodyBlocks []Body, titleLink string) (*bytes.Buffer, error) {
+	message := teamsMessage{
+		Type: "message",
+		Attachments: []Attachment{
+			{
+				ContentType: "application/vnd.microsoft.card.adaptive",
+				ContentURL:  nil,
+				Content: Content{
+					Schema:  "http://adaptivecards.io/schemas/adaptive-card.json",
+					Type:    "AdaptiveCard",
+					Version: "1.2",
+					Body:    bodyBlocks,
+					Actions: []Action{
+						{
+							Type:  "Action.OpenUrl",
+							Title: "View Alert",
+							URL:   titleLink,
+						},
+					},
+					Msteams: Msteams{
+						Width: "full",
+					},
+				},
+			},
+		},
 	}
 
-	bodies = append(bodies, Body{
-		Type:  "FactSet",
-		Facts: annotationsFacts,
-	})
+	var payload bytes.Buffer
+	if err := json.NewEncoder(&payload).Encode(message); err != nil {
+		return nil, err
+	}
 
-	return bodies
+	return &payload, nil
+}
+
+// indexLongestText returns -1 once no block has text left to trim; the title at index 0 goes last.
+func indexLongestText(blocks []Body) int {
+	longest := -1
+	for i := 1; i < len(blocks); i++ {
+		if len(blocks[i].Text) > 0 && (longest < 0 || len(blocks[i].Text) > len(blocks[longest].Text)) {
+			longest = i
+		}
+	}
+	if longest < 0 && len(blocks) > 0 && len(blocks[0].Text) > 0 {
+		return 0
+	}
+
+	return longest
 }

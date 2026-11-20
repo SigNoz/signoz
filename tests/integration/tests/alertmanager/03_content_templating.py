@@ -57,8 +57,16 @@ CONTENT_TEMPLATING_TEST = [
                                         "body": [
                                             {
                                                 "type": "TextBlock",
+                                                "text": "[FIRING:1] content_templating_metrics",
+                                            },
+                                            {
+                                                "type": "TextBlock",
                                                 "text": re.compile(
-                                                    r'\[FIRING:1\] content_templating_metrics for  \(alertname="content_templating_metrics", container="checkout", namespace="production", node="ip-10-0-1-23", pod="checkout-7d9c8b5f4-x2k9p", ruleSource="http://localhost:8080/alerts/overview\?ruleId=[0-9a-f-]+", severity="critical", threshold\.name="critical"\)'
+                                                    r"^\*\*Alert:\*\* content_templating_metrics \(critical\) - firing\n\n"
+                                                    r"\*\*Summary:\*\* High container memory in production/checkout-7d9c8b5f4-x2k9p\n\n"
+                                                    r"\*\*Description:\*\* Container checkout in pod checkout-7d9c8b5f4-x2k9p \(production\) exceeded memory threshold\n\n"
+                                                    r"\*\*Details:\*\*\n\n- \*\*container:\*\* checkout\n- \*\*namespace:\*\* production\n"
+                                                    r"- \*\*node:\*\* ip-10-0-1-23\n- \*\*pod:\*\* checkout-7d9c8b5f4-x2k9p\n- \*\*threshold\.name:\*\* critical$"
                                                 ),
                                             },
                                         ],

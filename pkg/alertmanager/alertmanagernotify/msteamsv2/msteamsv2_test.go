@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -339,4 +340,160 @@ func TestMSTeamsV2ReadingURLFromFile(t *testing.T) {
 	require.NoError(t, err)
 
 	test.AssertNotifyLeaksNoSecret(ctx, t, notifier, u.String())
+}
+
+func TestPrepareContentChannelText(t *testing.T) {
+	testCases := []struct {
+		name          string
+		title         string
+		text          string
+		annotations   model.LabelSet
+		expectedTitle string
+		expectedBody  []Body
+	}{
+		{
+			name:          "CustomChannelText_Rendered",
+			title:         "Team alert: {{ .CommonLabels.alertname }}",
+			text:          "Service {{ range .Alerts }}{{ .Labels.service }}{{ end }} needs attention",
+			expectedTitle: "Team alert: checkout errors",
+			expectedBody:  []Body{{Type: "TextBlock", Text: "Service checkout needs attention", Wrap: true}},
+		},
+		{
+			name:          "DefaultMarkers_RenderTeamsDefault",
+			title:         `{{ template "msteamsv2.default.title" . }}`,
+			text:          `{{ template "msteamsv2.default.text" . }}`,
+			annotations:   model.LabelSet{"description": "error rate crossed 5%"},
+			expectedTitle: "[FIRING:1] checkout errors",
+			expectedBody: []Body{{
+				Type: "TextBlock",
+				Text: "**Alert:** checkout errors (critical) - firing\n\n**Description:** error rate crossed 5%\n\n**Details:**\n\n- **service:** checkout",
+				Wrap: true,
+			}},
+		},
+		{
+			name:          "RuleBodyTemplate_OverridesChannelText",
+			title:         "Rule wins: {{ .CommonLabels.alertname }}",
+			text:          "channel text that must not appear",
+			annotations:   model.LabelSet{ruletypes.AnnotationBodyTemplate: "rule body for $alertname"},
+			expectedTitle: "Rule wins: checkout errors",
+			expectedBody:  []Body{{Type: "TextBlock", Text: "rule body for checkout errors", Wrap: true, Color: colorRed}},
+		},
+		{
+			name:          "EmptyText_TitleOnly",
+			title:         "Only a title",
+			text:          "",
+			expectedTitle: "Only a title",
+			expectedBody:  []Body{},
+		},
+		{
+			name:          "WhitespaceText_TitleOnly",
+			title:         "Still only a title",
+			text:          "{{ if false }}never{{ end }}\n  ",
+			expectedTitle: "Still only a title",
+			expectedBody:  []Body{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			tmpl, err := alertmanagertypes.FromGlobs([]string{})
+			require.NoError(t, err)
+			tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "signoz.test"}
+
+			notifier, err := New(
+				&config.MSTeamsV2Config{
+					WebhookURL: &config.SecretURL{URL: testWebhookURL},
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					Title:      testCase.title,
+					Text:       testCase.text,
+				},
+				tmpl,
+				`{{ template "msteamsv2.default.titleLink" . }}`,
+				promslog.NewNopLogger(),
+				newTestTemplater(tmpl),
+			)
+			require.NoError(t, err)
+
+			alerts := []*types.Alert{{
+				Alert: model.Alert{
+					Labels:      model.LabelSet{"alertname": "checkout errors", "severity": "critical", "service": "checkout", "ruleId": "0199051c-f374-71f7-a340-ec79ad81e70f"},
+					Annotations: testCase.annotations,
+					StartsAt:    time.Now(),
+					EndsAt:      time.Now().Add(time.Hour),
+				},
+			}}
+
+			blocks, err := notifier.prepareContent(notify.WithGroupKey(context.Background(), "1"), alerts)
+			require.NoError(t, err)
+			require.NotEmpty(t, blocks)
+			assert.Equal(t, testCase.expectedTitle, blocks[0].Text)
+			assert.Equal(t, colorRed, blocks[0].Color)
+			assert.Equal(t, testCase.expectedBody, blocks[1:])
+		})
+	}
+}
+
+func TestNotifyMessageSize(t *testing.T) {
+	testCases := []struct {
+		name              string
+		text              string
+		expectedTruncated bool
+	}{
+		{
+			name:              "UnderLimit_TextUntouched",
+			text:              strings.Repeat("short body ", 100),
+			expectedTruncated: false,
+		},
+		{
+			name:              "OverLimit_TextTrimmedToFit",
+			text:              strings.Repeat("a very long body line\n\n", 4000),
+			expectedTruncated: true,
+		},
+		{
+			name:              "OverLimit_EscapedCharacters_StillFits",
+			text:              strings.Repeat(`"quoted" <tag> & more `, 4000),
+			expectedTruncated: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var received []byte
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				received, _ = io.ReadAll(r.Body)
+			}))
+			defer srv.Close()
+			u, err := url.Parse(srv.URL)
+			require.NoError(t, err)
+
+			tmpl := test.CreateTmpl(t)
+			notifier, err := New(
+				&config.MSTeamsV2Config{
+					WebhookURL: &config.SecretURL{URL: u},
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					Title:      "size check",
+					Text:       testCase.text,
+				},
+				tmpl,
+				`{{ template "msteamsv2.default.titleLink" . }}`,
+				promslog.NewNopLogger(),
+				newTestTemplater(tmpl),
+			)
+			require.NoError(t, err)
+
+			_, err = notifier.Notify(notify.WithGroupKey(context.Background(), "1"), &types.Alert{
+				Alert: model.Alert{Labels: model.LabelSet{"alertname": "size"}, StartsAt: time.Now(), EndsAt: time.Now().Add(time.Hour)},
+			})
+			require.NoError(t, err)
+			require.NotEmpty(t, received)
+			assert.LessOrEqual(t, len(received), maxMessageBytes)
+
+			var message teamsMessage
+			require.NoError(t, json.Unmarshal(received, &message))
+			require.Len(t, message.Attachments, 1)
+			require.Len(t, message.Attachments[0].Content.Body, 2)
+			assert.Equal(t, "size check", message.Attachments[0].Content.Body[0].Text)
+			assert.Equal(t, testCase.expectedTruncated, len(message.Attachments[0].Content.Body[1].Text) < len(strings.TrimSpace(testCase.text)))
+		})
+	}
 }

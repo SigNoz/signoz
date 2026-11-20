@@ -2,6 +2,7 @@ package alertmanagertypes
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 
 	tmplhtml "html/template"
@@ -42,17 +43,19 @@ func FromGlobs(paths []string) (*alertmanagertemplate.Template, error) {
 		return nil, err
 	}
 
-	if err := t.Parse(bytes.NewReader([]byte(`
+	if err := t.Parse(bytes.NewReader([]byte(fmt.Sprintf(`
 	{{ define "__ruleIdPath" }}{{- $isTestAlert := "" -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "testalert" -}}{{- if eq .Value "true" -}}{{- $isTestAlert = "true" -}}{{- end -}}{{- end -}}{{- end -}}{{- range .CommonLabels.SortedPairs -}}{{- if eq .Name "ruleId" -}}{{- if ne .Value "" -}}/edit?ruleId={{ .Value | urlescape }}{{- if $isTestAlert -}}&isTestAlert=true{{- end -}}{{- end -}}{{- end -}}{{- end -}}{{- end }}
 	{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/alerts{{ template "__ruleIdPath" . }}{{ end }}
 	{{ define "msteamsv2.default.titleLink" }}{{ template "__alertmanagerURL" . }}{{ end }}
+	{{ define "msteamsv2.default.title" }}%s{{ end }}
+	{{ define "msteamsv2.default.text" }}%s{{ end }}
 	{{ define "signoz.relatedLinks.slack" }}{{ range $i, $link := relatedLinks . }}{{ if $i }} · {{ end }}<{{ $link.URL }}|{{ $link.Label }}>{{ end }}{{ end }}
 	{{ define "signoz.relatedLinks.markdown" }}{{ range relatedLinks . }}[{{ .Label }}]({{ .URL }})
 
 {{ end }}{{ end }}
 	{{ define "signoz.relatedLinks.html" }}{{ range relatedLinks . }}<a href="{{ .URL | html }}">{{ .Label | html }}</a>
 {{ end }}{{ end }}
-	`))); err != nil {
+	`, DefaultMSTeamsTitleTemplate, DefaultMSTeamsTextTemplate)))); err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error parsing alertmanager templates")
 	}
 

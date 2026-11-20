@@ -314,3 +314,84 @@ func TestFromGlobsRelatedLinksHTML(t *testing.T) {
 		}
 	}
 }
+
+func TestFromGlobsMSTeamsDefaults(t *testing.T) {
+	tmpl, err := FromGlobs([]string{})
+	require.NoError(t, err)
+	tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "localhost:8080"}
+
+	firing := time.Now().Add(time.Hour)
+	resolved := time.Now().Add(-time.Minute)
+
+	testCases := []struct {
+		name     string
+		template string
+		alerts   []*types.Alert
+		expected string
+	}{
+		{
+			name:     "Title_Firing_CountAndAlertName",
+			template: `{{ template "msteamsv2.default.title" . }}`,
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"alertname": "High CPU"}, EndsAt: firing}},
+			},
+			expected: "[FIRING:1] High CPU",
+		},
+		{
+			name:     "Title_Resolved_NoCount",
+			template: `{{ template "msteamsv2.default.title" . }}`,
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"alertname": "Disk Full"}, EndsAt: resolved}},
+			},
+			expected: "[RESOLVED] Disk Full",
+		},
+		{
+			name:     "Text_AllFields_HidesRuleLabels",
+			template: `{{ template "msteamsv2.default.text" . }}`,
+			alerts: []*types.Alert{
+				{Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "Error Rate", "severity": "critical", "ruleId": "0199051c-f374-71f7-a340-ec79ad81e70f",
+						"ruleSource": "http://localhost:8080/alerts/overview?ruleId=0199051c", "service.name": "checkout",
+					},
+					Annotations: model.LabelSet{
+						"summary": "errors are up", "description": "error rate crossed 5%",
+						"related_logs": "https://signoz.io/logs/logs-explorer?f=6", "related_traces": "https://signoz.io/traces-explorer?f=6",
+					},
+					EndsAt: firing,
+				}},
+			},
+			expected: "**Alert:** Error Rate (critical) - firing\n\n**Summary:** errors are up\n\n**Description:** error rate crossed 5%\n\n" +
+				"[View Related Logs](https://signoz.io/logs/logs-explorer?f=6)\n\n[View Related Traces](https://signoz.io/traces-explorer?f=6)\n\n" +
+				"**Details:**\n\n- **service.name:** checkout\n\n",
+		},
+		{
+			name:     "Text_NoAnnotationsNoExtraLabels_AlertLineOnly",
+			template: `{{ template "msteamsv2.default.text" . }}`,
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"alertname": "Queue Lag", "ruleId": "01a10b3d-e55d-75e3-aa44-8d73f1d969d7"}, EndsAt: resolved}},
+			},
+			expected: "**Alert:** Queue Lag - resolved\n\n",
+		},
+		{
+			name:     "Text_TwoAlerts_OneBlockEach",
+			template: `{{ template "msteamsv2.default.text" . }}`,
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"alertname": "Pod Restarts", "pod": "api-1"}, EndsAt: firing}},
+				{Alert: model.Alert{Labels: model.LabelSet{"alertname": "Pod Restarts", "pod": "api-2"}, EndsAt: resolved}},
+			},
+			expected: "**Alert:** Pod Restarts - firing\n\n**Details:**\n\n- **pod:** api-1\n\n" +
+				"**Alert:** Pod Restarts - resolved\n\n**Details:**\n\n- **pod:** api-2\n\n",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := tmpl.Data("__receiver", model.LabelSet{}, testCase.alerts...)
+
+			got, err := tmpl.ExecuteTextString(testCase.template, data)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, got)
+		})
+	}
+}

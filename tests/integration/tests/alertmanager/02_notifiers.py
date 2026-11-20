@@ -19,6 +19,7 @@ from fixtures.logger import setup_logger
 from fixtures.maildev import delete_all_mails
 from fixtures.notification_channel import (
     email_default_config,
+    msteams_custom_text_config,
     msteams_default_config,
     opsgenie_default_config,
     pagerduty_default_config,
@@ -92,7 +93,7 @@ NOTIFIERS_TEST = [
                                         "body": [
                                             {
                                                 "type": "TextBlock",
-                                                "text": "Alerts",
+                                                "text": "[FIRING:1] threshold_above_at_least_once",
                                                 "weight": "Bolder",
                                                 "size": "Medium",
                                                 "wrap": True,
@@ -100,35 +101,13 @@ NOTIFIERS_TEST = [
                                             },
                                             {
                                                 "type": "TextBlock",
-                                                "text": "Labels",
-                                                "weight": "Bolder",
-                                                "size": "Medium",
-                                            },
-                                            {
-                                                "type": "FactSet",
-                                                "text": "",
-                                                "facts": [
-                                                    {
-                                                        "title": "threshold.name",
-                                                        "value": "critical",
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "type": "TextBlock",
-                                                "text": "Annotations",
-                                                "weight": "Bolder",
-                                                "size": "Medium",
-                                            },
-                                            {
-                                                "type": "FactSet",
-                                                "text": "",
-                                                "facts": [
-                                                    {
-                                                        "title": "description",
-                                                        "value": "This alert is fired when the defined metric (current value: 15) crosses the threshold (10)",
-                                                    },
-                                                ],
+                                                "text": re.compile(
+                                                    r"^\*\*Alert:\*\* threshold_above_at_least_once \(critical\) - firing\n\n"
+                                                    r"\*\*Summary:\*\* This alert is fired when the defined metric \(current value: 15\) crosses the threshold \(10\)\n\n"
+                                                    r"\*\*Description:\*\* This alert is fired when the defined metric \(current value: 15\) crosses the threshold \(10\)\n\n"
+                                                    r"\*\*Details:\*\*\n\n- \*\*threshold\.name:\*\* critical"
+                                                ),
+                                                "wrap": True,
                                             },
                                         ],
                                         "msteams": {"width": "full"},
@@ -137,6 +116,98 @@ NOTIFIERS_TEST = [
                                                 "type": "Action.OpenUrl",
                                                 "title": "View Alert",
                                             }
+                                        ],
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="msteams_notifier_custom_channel_text",
+        rule_path="ruler/test_scenarios/threshold_above_at_least_once/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=msteams_custom_text_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=120,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/msteams/custom_text_webhook_url",
+                        "json_body": {
+                            "type": "message",
+                            "attachments": [
+                                {
+                                    "contentType": "application/vnd.microsoft.card.adaptive",
+                                    "content": {
+                                        "type": "AdaptiveCard",
+                                        "body": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Teams custom title: threshold_above_at_least_once",
+                                                "color": "Attention",
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Teams custom description for threshold_above_at_least_once (critical)",
+                                                "wrap": True,
+                                            },
+                                        ],
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
+        name="msteams_notifier_rule_body_template",
+        rule_path="alertmanager/rule_body_template_rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=msteams_custom_text_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=120,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/msteams/custom_text_webhook_url",
+                        "json_body": {
+                            "type": "message",
+                            "attachments": [
+                                {
+                                    "contentType": "application/vnd.microsoft.card.adaptive",
+                                    "content": {
+                                        "type": "AdaptiveCard",
+                                        "body": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Teams custom title: rule_body_template",
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Rule body for rule_body_template at severity critical",
+                                                "wrap": True,
+                                                "color": "Attention",
+                                            },
                                         ],
                                     },
                                 }
