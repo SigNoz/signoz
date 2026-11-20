@@ -278,6 +278,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateRelatedLinksTemplateFactory(),
 		sqlmigration.NewAddOrganizationTuplesFactory(sqlstore),
 		sqlmigration.NewAddOrgPreferenceTuplesFactory(sqlstore),
+		sqlmigration.NewMigrateMSTeamsDefaultTemplatesFactory(),
 	)
 }
 
