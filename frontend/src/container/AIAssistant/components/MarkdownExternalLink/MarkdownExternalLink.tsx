@@ -1,4 +1,7 @@
 import type { ComponentProps } from 'react';
+import { Link } from '@signozhq/icons';
+
+import styles from './MarkdownExternalLink.module.scss';
 
 type MarkdownExternalLinkProps = ComponentProps<'a'> & {
 	// react-markdown passes `node` — accept and ignore it
@@ -18,9 +21,12 @@ export default function MarkdownExternalLink({
 			target="_blank"
 			rel="noopener noreferrer"
 			data-testid="ai-markdown-link"
+			title={href}
 			{...props}
+			className={styles.pill}
 		>
-			{children}
+			<Link size={14} className={styles.icon} />
+			<span className={styles.label}>{children}</span>
 		</a>
 	);
 }

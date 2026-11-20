@@ -5,15 +5,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import { CircleCheck, Landmark, MonitorDown } from '@signozhq/icons';
-import {
-	Card,
-	Col,
-	Flex,
-	Row,
-	Skeleton,
-	Table,
-	TableColumnsType as ColumnsType,
-} from 'antd';
+import { Card, Skeleton, Table, TableColumnsType as ColumnsType } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import Flex from 'periscope/components/Flex/Flex';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type {

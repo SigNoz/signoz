@@ -755,6 +755,7 @@ function toMessage(m: MessageSummary): Message {
 		id: m.messageId,
 		role: m.role as MessageRole,
 		content,
+		contexts: m.contexts ?? undefined,
 		blocks: toBlocks(m.blocks),
 		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
@@ -1198,6 +1199,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					role: 'user',
 					content: text,
 					attachments,
+					contexts,
 					createdAt: Date.now(),
 				};
 

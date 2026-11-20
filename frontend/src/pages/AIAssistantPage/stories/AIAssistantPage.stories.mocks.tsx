@@ -6,6 +6,7 @@
 import { AI_API_PATH, setAIBackendUrl } from 'api/AIAPIInstance';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import type { ConversationStreamState } from 'container/AIAssistant/types';
 import { rest, type RequestHandler } from 'msw';
 
 import {
@@ -32,6 +33,7 @@ import {
 	openConversation,
 	THREAD_ID,
 	streamingState,
+	thinkingState,
 	THREAD_PARTS,
 	type ThreadPart,
 	threadDetailResponse,
@@ -51,10 +53,12 @@ const AI_BACKEND_URL = 'http://localhost';
 
 /** The analysis thread, without the turns that carry an interactive block. */
 const ANALYSIS: ThreadPart[] = [
+	'contexts',
 	'prose',
 	'table',
 	'code',
 	'activity',
+	'one-step',
 	'actions',
 	'voted',
 ];
@@ -83,6 +87,11 @@ const onBothBases = (
 	rest[method](path, resolver),
 ];
 
+const STREAMS: Partial<Record<AgentState, () => ConversationStreamState>> = {
+	thinking: thinkingState,
+	streaming: streamingState,
+};
+
 const ok: MockResolver = (_req, res, ctx) => res(ctx.status(200), ctx.json({}));
 
 const startedExecution: MockResolver = (_req, res, ctx) =>
@@ -99,7 +108,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		contents: multiChoiceControl<ThreadPart>('Thread contents', {
 			group: THREAD,
 			description:
-				'What the open thread holds. Each interactive block arrives as its own turn, and `voted` is a rating already on the last answer.',
+				'What the open thread holds. Each interactive block arrives as its own turn, `contexts` are the picks the opening question was sent with, `one-step` is the last answer working in a single step, and `voted` is a rating already on it.',
 			options: THREAD_PARTS,
 			value: ANALYSIS,
 		}),
@@ -112,7 +121,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		agent: choiceControl<AgentState>('Agent', {
 			group: AGENT,
 			description:
-				'What the agent is doing when the thread opens. Both waiting states block the composer until the user answers.',
+				'What the agent is doing when the thread opens: `thinking` is a reply sent with nothing back yet. Every state but idle holds the send; the input still takes a draft.',
 			options: AGENT_STATES,
 			value: 'idle',
 		}),
@@ -225,6 +234,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		const conversation = values.conversation
 			? openConversation()
 			: newConversation();
+		const stream = STREAMS[values.agent]?.();
 
 		useAIAssistantStore.setState({
 			conversations: { [conversation.id]: conversation },
@@ -234,8 +244,7 @@ export const aiAssistantMocks = defineStoryMocks({
 			answeredBlocks: values.answered ? answeredBlocks() : {},
 			// A stream is client state with no response behind it: the events the
 			// reducer folds into it only exist while the SSE connection is open.
-			streams:
-				values.agent === 'streaming' ? { [conversation.id]: streamingState() } : {},
+			streams: stream ? { [conversation.id]: stream } : {},
 		});
 	},
 });
@@ -253,9 +262,8 @@ export const showsThread = (args: AIAssistantArgs): boolean =>
 export const listsConversations = (args: AIAssistantArgs): boolean =>
 	loads(args) && (args.conversation || args.history > 0);
 
-/** Whether the composer takes input: any agent state but idle disables it. */
-export const composerFree = (args: AIAssistantArgs): boolean =>
-	loads(args) && args.agent === 'idle';
+/** Whether the composer takes input: only a thread still loading locks it. */
+export const composerFree = (args: AIAssistantArgs): boolean => loads(args);
 
 /**
  * An action chip's tooltip is the one text on the page the backend writes, and

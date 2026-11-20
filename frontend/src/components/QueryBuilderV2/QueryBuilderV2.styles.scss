@@ -215,7 +215,8 @@
 		padding-left: 8px;
 
 		.qb-formula {
-			.ant-row {
+			.formula-row,
+			.formula-container {
 				row-gap: 8px !important;
 			}
 
@@ -229,7 +230,7 @@
 				padding: 8px;
 				margin-left: 74px;
 
-				.ant-col {
+				.formula-item {
 					&::before {
 						content: '';
 						position: absolute;

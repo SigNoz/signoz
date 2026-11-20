@@ -14,9 +14,9 @@ import { USER_ROLES } from 'types/roles';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
-	attributeKeysResponse,
-	attributeValuesResponse,
-} from '@/storybook/msw/__story_mockdata__/attributes';
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 import { queryRangeV5ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
@@ -136,11 +136,11 @@ export const metricsApplicationMocks = defineStoryMocks({
 				(_req, res, ctx) => res(ctx.json(metricMetaResponse())),
 			),
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_keys',
+				'http://localhost/api/v1/fields/keys',
 				response.json((req) => {
 					const match = req.url.searchParams.get('searchText') ?? '';
 
-					return attributeKeysResponse(
+					return fieldKeysResponse(
 						match === DEPLOYMENT_KEY
 							? [DEPLOYMENT_KEY]
 							: RESOURCE_ATTRIBUTE_KEYS.filter((key) => key !== DEPLOYMENT_KEY),
@@ -148,14 +148,14 @@ export const metricsApplicationMocks = defineStoryMocks({
 				}),
 			),
 			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_values',
+				'http://localhost/api/v1/fields/values',
 				response.json((req) => {
-					const attributeKey = req.url.searchParams.get('attributeKey') ?? '';
+					const name = req.url.searchParams.get('name') ?? '';
 
-					return attributeValuesResponse(
-						attributeKey === DEPLOYMENT_KEY
+					return fieldValuesResponse(
+						name === DEPLOYMENT_KEY
 							? ['production', 'staging', 'canary']
-							: [`${attributeKey.replace('resource_', '')}-01`],
+							: [`${name.replace('resource_', '')}-01`],
 					);
 				}),
 			),
