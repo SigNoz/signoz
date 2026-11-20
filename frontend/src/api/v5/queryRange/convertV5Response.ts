@@ -4,7 +4,6 @@ import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import {
 	BuilderQuery,
-	DistributionData,
 	MetricRangePayloadV5,
 	QueryEnvelope,
 	QueryRangeRequestV5,
@@ -315,20 +314,6 @@ function convertRawData(
 }
 
 /**
- * Converts V5 DistributionData to legacy format
- */
-function convertDistributionData(
-	distributionData: DistributionData,
-	legendMap: Record<string, string>,
-): any {
-	// Convert V5 distribution format to legacy histogram format
-	return {
-		...distributionData,
-		legendMap,
-	};
-}
-
-/**
  * Helper function to convert V5 data based on type
  */
 function convertV5DataByType(
@@ -373,15 +358,6 @@ function convertV5DataByType(
 			return {
 				resultType: 'trace',
 				result: traceData.map((trace) => convertRawData(trace, legendMap)),
-			};
-		}
-		case 'distribution': {
-			const distributionData = v5Data.data.results as DistributionData[];
-			return {
-				resultType: 'distribution',
-				result: distributionData.map((distribution) =>
-					convertDistributionData(distribution, legendMap),
-				),
 			};
 		}
 		default:
