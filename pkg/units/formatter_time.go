@@ -127,7 +127,7 @@ func toMinutes(value float64) string {
 		return toFixedScaled(value/60, " hour")
 	} else if absValue < 10080 {
 		return toFixedScaled(value/1440, " day")
-	} else if absValue < 604800 {
+	} else if absValue < 5.25948e5 {
 		return toFixedScaled(value/10080, " week")
 	} else {
 		return toFixedScaled(value/5.25948e5, " year")
