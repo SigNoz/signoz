@@ -76,6 +76,15 @@ func TestNewSpanRecord(t *testing.T) {
 		assert.Equal(t, []TruncatedField{{Field: "attributes.completion", Length: 100_000}, {Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
 	})
 
+	t.Run("SelectFields_MultiByteValue_FitsTheResponse", func(t *testing.T) {
+		span := recordSpan("span-h", map[string]string{"prompt": strings.Repeat("プロンプト", 20_000)})
+
+		record := NewSpanRecord(&span, []string{"prompt"})
+
+		assert.LessOrEqual(t, jsonChars(record), spanRecordSelectMaxChars)
+		assert.Equal(t, []TruncatedField{{Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
+	})
+
 	t.Run("MultiByteValue_IsCutOnACharacterBoundary", func(t *testing.T) {
 		span := recordSpan("span-c", map[string]string{"note": strings.Repeat("é", 600)})
 

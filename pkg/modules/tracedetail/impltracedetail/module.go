@@ -326,7 +326,8 @@ func (m *module) GetTraceSpan(ctx context.Context, orgID valuer.UUID, traceID st
 	group.Go(func() error {
 		var err error
 		spans, err = m.store.GetTraceSpansByIDs(groupCtx, traceID, bounds.Start, bounds.End, []string{query.SpanID})
-		if err != nil || len(spans) == 0 {
+		// A call with selectFields reads more of a span that was already opened with its percentile.
+		if err != nil || len(spans) == 0 || len(query.SelectFields) > 0 {
 			return err
 		}
 		percentile = m.getSpanPercentile(groupCtx, orgID, &spans[0])

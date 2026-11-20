@@ -319,6 +319,8 @@ func (s *TraceSkeleton) SpanDetail(i int32, depth int) *TraceSpanDetail {
 		if len(next) == 0 {
 			break
 		}
+		// Positions are in start time order; sorting puts the children of different parents in time order.
+		slices.Sort(next)
 		shown := make([]SpanSummary, 0, min(len(next), inspectLevelSize))
 		for _, child := range next[:min(len(next), inspectLevelSize)] {
 			shown = append(shown, s.Summary(child))

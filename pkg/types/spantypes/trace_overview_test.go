@@ -454,6 +454,21 @@ func TestSpanDetail(t *testing.T) {
 		assert.Empty(t, detail.Descendants)
 		assert.Equal(t, uint64(7), detail.AncestorCount)
 	})
+
+	t.Run("LevelBelowAcrossParents_IsInTimeOrder", func(t *testing.T) {
+		twoBranches := buildSkeleton(
+			skeletonSpec{id: "top", startMs: 0, durationMs: 1000},
+			skeletonSpec{id: "first", parent: "top", startMs: 1, durationMs: 900},
+			skeletonSpec{id: "second", parent: "top", startMs: 2, durationMs: 900},
+			skeletonSpec{id: "second-early", parent: "second", startMs: 10, durationMs: 1},
+			skeletonSpec{id: "first-late", parent: "first", startMs: 500, durationMs: 1},
+		)
+
+		detail := twoBranches.SpanDetail(0, 2)
+
+		require.Len(t, detail.Descendants, 2)
+		assert.Equal(t, []string{"second-early", "first-late"}, summaryIDs(detail.Descendants[1].Spans))
+	})
 }
 
 func TestFitSpan(t *testing.T) {

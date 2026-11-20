@@ -14,7 +14,9 @@ const (
 	spanRecordShrunkChars  = 100
 	spanRecordMinimumChars = 20
 	spanRecordSelectChars  = 40_000
-	truncationMark         = "…"
+	// spanRecordSelectMaxChars leaves room in the response for the span's summary and ancestors.
+	spanRecordSelectMaxChars = 44_000
+	truncationMark           = "…"
 )
 
 // TruncatedField names a value of a span record that was cut, with its full length in characters.
@@ -127,7 +129,13 @@ func (r *SpanRecord) selectOnly(fields []string) {
 		}
 	}
 
-	r.cut(selectLimit(lengths, spanRecordSelectChars))
+	limit := min(selectLimit(lengths, spanRecordSelectChars), spanRecordSelectChars)
+	r.cut(limit)
+	// The budget counts characters; escaped and multi-byte text takes more room than that in the response.
+	for limit > spanRecordValueChars && jsonChars(r) > spanRecordSelectMaxChars {
+		limit /= 2
+		r.cut(limit)
+	}
 }
 
 // selectLimit returns the length each selected value may keep for all of them to fit the budget:

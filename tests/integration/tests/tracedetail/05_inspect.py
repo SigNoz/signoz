@@ -345,7 +345,10 @@ def test_inspect_span(
     assert [line["spanId"] for line in one_level["ancestors"]] == [middle_id, root_id]
     assert [level["level"] for level in one_level["descendants"]] == [1]
 
-    selected = requests.get(f"{spans_url}/{target_id}", params={"selectFields": "db.statement"}, headers=headers, timeout=10).json()["data"]["record"]
+    selected = requests.get(f"{spans_url}/{target_id}", params={"selectFields": "db.statement"}, headers=headers, timeout=10).json()["data"]
+    # a call for named fields reads more of an opened span, so the percentile is not computed again
+    assert "percentile" not in selected
+    selected = selected["record"]
     assert selected["attributes"] == {"db.statement": long_statement}
     assert selected["truncated"] == []
 
