@@ -27,6 +27,10 @@
 	border-bottom: 1px solid var(--l2-border);
 }
 
+.guardInset {
+	margin-inline: var(--spacing-8);
+}
+
 .tableContainer {
 	flex: 1;
 	min-height: 0;

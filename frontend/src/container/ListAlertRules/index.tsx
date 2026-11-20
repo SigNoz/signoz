@@ -8,8 +8,10 @@ import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -37,15 +39,11 @@ const QUERY_PARAMS_CONFIG = {
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
+const RULE_LIST_CHECKS = [RuleListPermission];
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
 	const { isCloudUser } = useGetTenantLicense();
-	const [addNewAlert, action] = useComponentPermission(
-		['add_new_alert', 'action'],
-		user.role,
-	);
-
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
@@ -123,10 +121,6 @@ function ListAlertRules(): JSX.Element {
 	});
 
 	const columnsWithActions = useMemo(() => {
-		if (!action) {
-			return columns;
-		}
-
 		return [
 			...columns,
 			{
@@ -147,7 +141,7 @@ function ListAlertRules(): JSX.Element {
 				),
 			},
 		];
-	}, [action, columns, handleEdit]);
+	}, [columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
 	const isEmptyDueToFilters =
@@ -159,6 +153,45 @@ function ListAlertRules(): JSX.Element {
 		ruleViews.activeView?.name ??
 		RULE_BUILTIN_VIEWS.find((v) => v.id === ruleViews.activeViewId)?.label ??
 		'Alert rules';
+
+	const listContent = isError ? (
+		<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+	) : isEmptyDueToFilters && queryError ? (
+		<InvalidQueryState
+			errorMessage={queryError}
+			isCloudUser={!!isCloudUser}
+			testIdPrefix="alert-rules"
+		/>
+	) : isEmptyDueToFilters ? (
+		<NoResultsEmptyState
+			title="No matching alert rules"
+			subtitle="No alert rules match your search. Try adjusting your search criteria."
+			onClear={handleClearFilters}
+			clearButtonText="Clear Search"
+		/>
+	) : isEmptyNoRules ? (
+		<AlertsEmptyState onRefresh={refetch} />
+	) : (
+		<TanStackTable<AlertRule>
+			data={rules}
+			columns={columnsWithActions}
+			isLoading={isFetching}
+			getRowKey={(row): string => row.id ?? ''}
+			getItemKey={(row): string => row.id ?? ''}
+			columnStorageKey="alert-rules-columns"
+			enableQueryParams={QUERY_PARAMS_CONFIG}
+			onRowClick={handleRowClick}
+			onRowClickNewTab={handleRowClickNewTab}
+			pagination={{
+				total,
+				calculatedPageSize,
+				onLimitChange: setLimit,
+				showTotalCount: true,
+			}}
+			paginationClassname={styles.paginationContainer}
+			plainTextCellLineClamp={2}
+		/>
+	);
 
 	return (
 		<div className={styles.layout}>
@@ -192,7 +225,6 @@ function ListAlertRules(): JSX.Element {
 							action={
 								<AlertRulesHeaderActions
 									columns={columns}
-									canAddAlert={addNewAlert}
 									onNewAlert={handleNewAlert}
 								/>
 							}
@@ -209,44 +241,20 @@ function ListAlertRules(): JSX.Element {
 				)}
 
 				<div ref={containerRef} className={styles.tableContainer}>
-					{isError ? (
-						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
-					) : isEmptyDueToFilters && queryError ? (
-						<InvalidQueryState
-							errorMessage={queryError}
-							isCloudUser={!!isCloudUser}
-							testIdPrefix="alert-rules"
-						/>
-					) : isEmptyDueToFilters ? (
-						<NoResultsEmptyState
-							title="No matching alert rules"
-							subtitle="No alert rules match your search. Try adjusting your search criteria."
-							onClear={handleClearFilters}
-							clearButtonText="Clear Search"
-						/>
-					) : isEmptyNoRules ? (
-						<AlertsEmptyState onRefresh={refetch} />
-					) : (
-						<TanStackTable<AlertRule>
-							data={rules}
-							columns={columnsWithActions}
-							isLoading={isFetching}
-							getRowKey={(row): string => row.id ?? ''}
-							getItemKey={(row): string => row.id ?? ''}
-							columnStorageKey="alert-rules-columns"
-							enableQueryParams={QUERY_PARAMS_CONFIG}
-							onRowClick={handleRowClick}
-							onRowClickNewTab={handleRowClickNewTab}
-							pagination={{
-								total,
-								calculatedPageSize,
-								onLimitChange: setLimit,
-								showTotalCount: true,
-							}}
-							paginationClassname={styles.paginationContainer}
-							plainTextCellLineClamp={2}
-						/>
-					)}
+					<AuthZGuardContent
+						checks={RULE_LIST_CHECKS}
+						fallback={({ deniedPermissions }): JSX.Element => (
+							<PermissionDeniedCallout
+								deniedPermissions={deniedPermissions}
+								className={styles.guardInset}
+							/>
+						)}
+						// The list renders while the check is pending, so the table mounts
+						// with the page and its URL state settles as before.
+						fallbackOnLoading={listContent}
+					>
+						{listContent}
+					</AuthZGuardContent>
 				</div>
 				<ListStatusBar
 					collapsed={railCollapsed}

@@ -1,10 +1,11 @@
-import userEvent from '@testing-library/user-event';
 import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { server } from 'mocks-server/server';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
+import { screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { findAlertRow, renderListAlertRules } from './_helpers';
 
@@ -16,17 +17,31 @@ async function openActionsMenu(row: HTMLElement): Promise<void> {
 	const user = userEvent.setup({ delay: null });
 	await user.click(trigger as HTMLElement);
 	// Radix renders the menu items in a portal once the trigger is activated.
-	await screen.findByRole('menu');
+	await screen.findByTestId('alert-action-edit');
 }
 
-async function clickMenuItem(label: string): Promise<void> {
+const MENU_ITEMS = [
+	'alert-action-toggle',
+	'alert-action-edit',
+	'alert-action-edit-new-tab',
+	'alert-action-clone',
+	'alert-action-delete',
+];
+
+const menuLabels = (): (string | null)[] =>
+	MENU_ITEMS.map((testId) => screen.getByTestId(testId).textContent);
+
+async function clickMenuItem(testId: string): Promise<void> {
 	const user = userEvent.setup({ delay: null });
-	const item = await screen.findByRole('menuitem', { name: label });
-	await user.click(item);
+	await user.click(await screen.findByTestId(testId));
 }
+
+// Gating is covered in ListAlertRules.permissions.test.tsx.
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
+		jest.mocked(useAuthZ).mockImplementation(mockUseAuthZGrantAll);
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 	});
 
@@ -34,12 +49,11 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 
-		expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('alert-action-edit')).not.toBeInTheDocument();
 
 		await openActionsMenu(row);
 
-		const items = screen.getAllByRole('menuitem');
-		const labels = items.map((it) => it.textContent);
+		const labels = menuLabels();
 		expect(labels).toStrictEqual(
 			expect.arrayContaining([
 				'Edit',
@@ -56,8 +70,7 @@ describe('ListAlertRules — actions menu', () => {
 		const row = await findAlertRow('Disabled Alert');
 		await openActionsMenu(row);
 
-		const items = screen.getAllByRole('menuitem');
-		const labels = items.map((it) => it.textContent);
+		const labels = menuLabels();
 		expect(labels).toContain('Enable');
 		expect(labels).not.toContain('Disable');
 	});
@@ -76,7 +89,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Disable');
+		await clickMenuItem('alert-action-toggle');
 
 		await waitFor(() => {
 			expect(capturedBody).toStrictEqual(
@@ -95,7 +108,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Edit');
+		await clickMenuItem('alert-action-edit');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -112,7 +125,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Edit in New Tab');
+		await clickMenuItem('alert-action-edit-new-tab');
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -147,7 +160,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Clone');
+		await clickMenuItem('alert-action-clone');
 
 		await waitFor(() => {
 			expect(capturedRuleId).toBe('rule-1');
@@ -180,7 +193,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Delete');
+		await clickMenuItem('alert-action-delete');
 
 		await waitFor(() => {
 			expect(deletedId).toBe('rule-1');
@@ -204,7 +217,7 @@ describe('ListAlertRules — actions menu', () => {
 		renderListAlertRules();
 		const row = await findAlertRow('High CPU Alert');
 		await openActionsMenu(row);
-		await clickMenuItem('Disable');
+		await clickMenuItem('alert-action-toggle');
 
 		await waitFor(() => {
 			expect(patchAttempted).toBe(true);

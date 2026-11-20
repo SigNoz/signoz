@@ -5,7 +5,7 @@
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
 import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -13,10 +13,13 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import { accessFor } from '@/storybook/access/access';
+import { grantsAll } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import {
+	getRuleActionChecks,
+	type RuleAction,
+} from 'container/ListAlertRules/components/ruleActionChecks';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
-import { componentPermission } from 'utils/permission';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
@@ -274,7 +277,7 @@ export const untilLoaded = { timeout: 15_000 };
 
 export const runRowAction = async (
 	canvasElement: HTMLElement,
-	name: RegExp,
+	action: RuleAction,
 ): Promise<void> => {
 	const [actions] = await within(canvasElement).findAllByTestId(
 		'alert-actions',
@@ -283,7 +286,20 @@ export const runRowAction = async (
 	);
 
 	await userEvent.click(actions);
-	await userEvent.click(await screen.findByRole('menuitem', { name }));
+	const item = await screen.findByTestId(
+		`alert-action-${action}`,
+		undefined,
+		untilLoaded,
+	);
+	// A gated row stays inert until its permission check answers.
+	await waitFor(
+		() =>
+			expect(
+				item.hasAttribute('data-loading') || item.hasAttribute('data-disabled'),
+			).toBe(false),
+		untilLoaded,
+	);
+	await userEvent.click(item);
 };
 
 export type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
@@ -306,11 +322,18 @@ export const listedRules = (
 	).data.rules;
 };
 
-export const hasRowMenu = (args: AlertRulesArgs): boolean =>
-	listedRules(args).length > 0 &&
-	componentPermission.action.includes(
-		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+/** Whether the first row's `action` is enabled: granted, or the check failed open. */
+export const canRunRowAction = (
+	args: AlertRulesArgs,
+	action: RuleAction,
+): boolean => {
+	const [first] = listedRules(args);
+	return (
+		!!first &&
+		(args.authzState === 'error' ||
+			grantsAll(args, ...getRuleActionChecks(first.id)[action]))
 	);
+};
 
 export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
 	args.view === DEFAULT_RULE_VIEW &&
