@@ -23,7 +23,7 @@ func TestProviderStartStop(t *testing.T) {
 
 	expectedModel := `module base 
 	type user`
-	provider, err := NewOpenfgaServer(context.Background(), providerSettings, authz.Config{}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}}, openfgaDataStore)
+	provider, err := NewOpenfgaServer(context.Background(), providerSettings, authz.Config{OpenFGA: authz.OpenFGAConfig{MaxTuplesPerWrite: 100, MaxChecksPerBatchCheck: 50}}, sqlstore, []transformer.ModuleFile{{Name: "test.fga", Contents: expectedModel}}, openfgaDataStore)
 	require.NoError(t, err)
 
 	storeRows := sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}).AddRow("01K3V0NTN47MPTMEV1PD5ST6ZC", "signoz", time.Now(), time.Now())

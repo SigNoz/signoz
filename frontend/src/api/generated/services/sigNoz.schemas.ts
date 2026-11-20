@@ -3765,6 +3765,16 @@ export interface AuthtypesPostableRotateTokenDTO {
 	refreshToken?: string;
 }
 
+export interface AuthtypesTransactionDTO {
+	object: CoretypesObjectDTO;
+	relation: AuthtypesRelationDTO;
+}
+
+/**
+ * @maxItems 100
+ */
+export type AuthtypesPostableTransactionsDTO = AuthtypesTransactionDTO[];
+
 export interface AuthtypesPostableUserDTO {
 	/**
 	 * @type string
@@ -3838,11 +3848,6 @@ export interface AuthtypesSessionContextDTO {
 	 * @type array,null
 	 */
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
-}
-
-export interface AuthtypesTransactionDTO {
-	object: CoretypesObjectDTO;
-	relation: AuthtypesRelationDTO;
 }
 
 export interface AuthtypesUpdatableAuthDomainDTO {

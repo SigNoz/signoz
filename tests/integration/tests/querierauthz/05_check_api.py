@@ -48,3 +48,34 @@ def test_check_ladders_to_key_wildcard_grant(
     )
     assert response.status_code == HTTPStatus.OK, response.text
     assert response.json()["data"][0]["authorized"] is authorized
+
+
+def test_check_chunks_transactions_beyond_one_batch_check(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+) -> None:
+    selectors = [f"builder_query/signoz.workspace.key.id/key-{index}" if index % 2 == 0 else "promql/*" for index in range(60)]
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/authz/check"),
+        json=[{"relation": "read", "object": {"resource": {"type": "telemetryresource", "kind": "logs"}, "selector": selector}} for selector in selectors],
+        headers={"Authorization": f"Bearer {get_token(keywild_email, user_password)}"},
+        timeout=30,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    data = response.json()["data"]
+    assert [transaction["object"]["selector"] for transaction in data] == selectors
+    assert [transaction["authorized"] for transaction in data] == [index % 2 == 0 for index in range(60)]
+
+
+def test_check_rejects_more_than_max_transactions(
+    signoz: types.SigNoz,
+    get_token: Callable[[str, str], str],
+) -> None:
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/authz/check"),
+        json=[{"relation": "read", "object": {"resource": {"type": "telemetryresource", "kind": "logs"}, "selector": f"builder_query/signoz.workspace.key.id/key-{index}"}} for index in range(101)],
+        headers={"Authorization": f"Bearer {get_token(keywild_email, user_password)}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json()["error"]["code"] == "authz_too_many_transactions"

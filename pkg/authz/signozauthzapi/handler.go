@@ -163,8 +163,13 @@ func (handler *handler) Check(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	transactions := make([]*authtypes.Transaction, 0)
+	transactions := make(authtypes.PostableTransactions, 0)
 	if err := binding.JSON.BindBody(r.Body, &transactions); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := transactions.Validate(); err != nil {
 		render.Error(rw, err)
 		return
 	}
