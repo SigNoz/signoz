@@ -54,14 +54,15 @@ func TestExpandTemplates(t *testing.T) {
 	at, ctx := testSetup(t)
 
 	tests := []struct {
-		name              string
-		alerts            []*types.Alert
-		input             alertmanagertypes.ExpandRequest
-		wantTitle         string
-		wantBody          []string
-		wantMissingVars   []string
-		errorContains     string
-		wantIsDefaultBody bool
+		name               string
+		alerts             []*types.Alert
+		input              alertmanagertypes.ExpandRequest
+		wantTitle          string
+		wantBody           []string
+		wantMissingVars    []string
+		errorContains      string
+		wantIsDefaultTitle bool
+		wantIsDefaultBody  bool
 	}{
 		{
 			// High request throughput on a service — service is a custom label.
@@ -155,7 +156,8 @@ Description: Request rate exceeded 10k/s`},
 				"        • *severity:* critical\n" +
 				"       \n" +
 				"     "},
-			wantIsDefaultBody: true,
+			wantIsDefaultTitle: true,
+			wantIsDefaultBody:  true,
 		},
 		{
 			// Pod crash loop on multiple pods — body is expanded once per alert
@@ -238,9 +240,10 @@ Description: Request rate exceeded 10k/s`},
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
 				DefaultBodyTemplate:  `{{ range .Alerts }}{{ template "signoz.relatedLinks.slack" . }}{{ end }}`,
 			},
-			wantTitle:         "HighLatency",
-			wantBody:          []string{"<https://signoz.example/traces?q=2|View Related Traces>"},
-			wantIsDefaultBody: true,
+			wantTitle:          "HighLatency",
+			wantBody:           []string{"<https://signoz.example/traces?q=2|View Related Traces>"},
+			wantIsDefaultTitle: true,
+			wantIsDefaultBody:  true,
 		},
 		{
 			// $environment is not a known AlertData or NotificationTemplateData field,
@@ -266,8 +269,9 @@ Description: Request rate exceeded 10k/s`},
 			input: alertmanagertypes.ExpandRequest{
 				BodyTemplate: "$rule.name: see runbook at $runbook_url",
 			},
-			wantBody:        []string{"PodOOMKilled: see runbook at <no value>"},
-			wantMissingVars: []string{"runbook_url"},
+			wantBody:           []string{"PodOOMKilled: see runbook at <no value>"},
+			wantMissingVars:    []string{"runbook_url"},
+			wantIsDefaultTitle: true,
 		},
 		{
 			// Both title and body use unknown variables; MissingVars is the union of both.
@@ -295,17 +299,68 @@ Description: Request rate exceeded 10k/s`},
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})",
 				DefaultBodyTemplate:  "Runbook: https://runbook.example.com",
 			},
-			wantTitle:         "HighCPU (RESOLVED)",
-			wantBody:          []string{"Runbook: https://runbook.example.com"},
-			wantIsDefaultBody: true,
+			wantTitle:          "HighCPU (RESOLVED)",
+			wantBody:           []string{"Runbook: https://runbook.example.com"},
+			wantIsDefaultTitle: true,
+			wantIsDefaultBody:  true,
 		},
 		{
-			name: "using non-existing function in template",
+			// A custom template that does not render must not cost the
+			// notification; the channel default stands in for that half.
+			name: "fallback: custom title using non-existing function falls back to default",
 			alerts: []*types.Alert{
 				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
 			},
 			input: alertmanagertypes.ExpandRequest{
-				TitleTemplate: "$rule.name ({{$severity | toUpperAndTrim}}) for $alertname",
+				TitleTemplate:        "$rule.name ({{$severity | toUpperAndTrim}}) for $alertname",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} ({{ .Status | toUpper }})",
+				DefaultBodyTemplate:  "Runbook: https://runbook.example.com",
+			},
+			wantTitle:          "HighCPU (FIRING)",
+			wantBody:           []string{"Runbook: https://runbook.example.com"},
+			wantIsDefaultTitle: true,
+			wantIsDefaultBody:  true,
+		},
+		{
+			// A title copied from a channel template reads .CommonLabels, which
+			// the rule data model does not carry.
+			name: "fallback: channel-style custom title falls back to default",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "Rule title: {{ .CommonLabels.alertname }}",
+				BodyTemplate:         "$rule.name is $alert.status",
+				DefaultTitleTemplate: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  "Runbook: https://runbook.example.com",
+			},
+			wantTitle:          "[FIRING] HighCPU",
+			wantBody:           []string{"HighCPU is firing"},
+			wantIsDefaultTitle: true,
+		},
+		{
+			name: "fallback: channel-style custom body falls back to default",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, map[string]string{"summary": "CPU above 90%"}, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "$rule.name",
+				BodyTemplate:         "{{ .Labels.alertname }}: {{ .Annotations.summary }}",
+				DefaultTitleTemplate: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.alertname }}: {{ .Annotations.summary }}{{ end }}",
+			},
+			wantTitle:         "HighCPU",
+			wantBody:          []string{"HighCPU: CPU above 90%"},
+			wantIsDefaultBody: true,
+		},
+		{
+			// The channel's own template has no fallback left.
+			name: "default title template using non-existing function fails",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname | toUpperAndTrim }}",
 			},
 			errorContains: "function \"toUpperAndTrim\" not defined",
 		},
@@ -326,6 +381,7 @@ Description: Request rate exceeded 10k/s`},
 			if tc.wantBody != nil {
 				require.Equal(t, tc.wantBody, got.Body)
 			}
+			require.Equal(t, tc.wantIsDefaultTitle, got.IsDefaultTitle)
 			require.Equal(t, tc.wantIsDefaultBody, got.IsDefaultBody)
 
 			if len(tc.wantMissingVars) == 0 {

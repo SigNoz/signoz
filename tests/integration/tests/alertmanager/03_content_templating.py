@@ -72,6 +72,50 @@ CONTENT_TEMPLATING_TEST = [
         ),
     ),
     types.AlertManagerNotificationTestCase(
+        # The rule's templates slice 40 characters off a pod label that is 24 long.
+        name="msteams_metrics_rule_templates_failing_on_data_fall_back_to_channel",
+        rule_path="alertmanager/content_templating/metrics_rule_fallback.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="alertmanager/content_templating/metrics_data.jsonl",
+            ),
+        ],
+        channel_config=msteams_default_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=120,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/msteams/webhook_url",
+                        "json_body": {
+                            "type": "message",
+                            "attachments": [
+                                {
+                                    "contentType": "application/vnd.microsoft.card.adaptive",
+                                    "content": {
+                                        "type": "AdaptiveCard",
+                                        "body": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": re.compile(
+                                                    r'\[FIRING:1\] content_templating_data_dependent for  \(alertname="content_templating_data_dependent", container="checkout", namespace="production", node="ip-10-0-1-23", pod="checkout-7d9c8b5f4-x2k9p", ruleSource="http://localhost:8080/alerts/overview\?ruleId=[0-9a-f-]+", severity="critical", threshold\.name="critical"\)'
+                                                ),
+                                            },
+                                            {"type": "TextBlock", "text": "Alerts"},
+                                        ],
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
         name="opsgenie_metrics_default_templating",
         rule_path="alertmanager/content_templating/metrics_rule.json",
         alert_data=[
