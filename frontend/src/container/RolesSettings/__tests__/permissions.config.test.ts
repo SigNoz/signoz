@@ -12,21 +12,24 @@ describe('ingestion permissions in the roles editor', () => {
 		expect(getResourcePanel('ingestion-limit').label).toBe('Ingestion Limits');
 	});
 
-	it('offers only the PRD verbs for ingestion-key', () => {
+	it('offers every metaresource verb for ingestion-key', () => {
 		expect([...getResourceVerbs('ingestion-key')].sort()).toStrictEqual([
 			'attach',
 			'create',
 			'delete',
 			'detach',
 			'list',
+			'read',
 			'update',
 		]);
 	});
 
-	it('offers only the PRD verbs for ingestion-limit', () => {
+	it('offers no attach or detach for ingestion-limit', () => {
 		expect([...getResourceVerbs('ingestion-limit')].sort()).toStrictEqual([
 			'create',
 			'delete',
+			'list',
+			'read',
 			'update',
 		]);
 	});

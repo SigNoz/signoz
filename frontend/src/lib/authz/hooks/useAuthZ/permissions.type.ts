@@ -21,12 +21,20 @@ export default {
 			{
 				kind: 'ingestion-key',
 				type: 'metaresource',
-				allowedVerbs: ['attach', 'create', 'delete', 'detach', 'list', 'update'],
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
 			},
 			{
 				kind: 'ingestion-limit',
 				type: 'metaresource',
-				allowedVerbs: ['create', 'delete', 'update'],
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
 				kind: 'license',
