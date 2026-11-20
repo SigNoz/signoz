@@ -1,23 +1,22 @@
 import { Form } from 'antd';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import type {
+	AlertmanagertypesPlannedMaintenanceDTO,
+	AuthtypesTransactionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { updateDowntimeScheduleByID } from 'api/generated/services/downtimeschedules';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
 	AUTHZ_CHECK_URL,
+	authzMockResponse,
 	setupAuthzAdmin,
 	setupAuthzAllow,
 	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
 import {
+	buildPlannedMaintenanceAttachPermission,
 	buildPlannedMaintenanceDetachPermission,
-	buildPlannedMaintenanceReadPermission,
 	buildPlannedMaintenanceUpdatePermission,
 	PlannedMaintenanceAttachPermission,
 	PlannedMaintenanceCreatePermission,
@@ -47,17 +46,19 @@ function FormHarness({
 	initialValues,
 	isEditMode = true,
 	alertOptions = ALERT_OPTIONS,
+	isError = false,
 }: {
 	initialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO>;
 	isEditMode?: boolean;
 	alertOptions?: typeof ALERT_OPTIONS;
+	isError?: boolean;
 }): JSX.Element {
 	const [form] = Form.useForm();
 	return (
 		<PlannedDowntimeForm
 			initialValues={initialValues}
 			alertOptions={alertOptions}
-			isError={false}
+			isError={isError}
 			isLoading={false}
 			isOpen
 			setIsOpen={jest.fn()}
@@ -140,10 +141,7 @@ describe('PlannedDowntimeForm alert rule scope', () => {
 describe('PlannedDowntimeForm authz', () => {
 	const ID = 'd1';
 	const SAVE = 'downtime-save';
-	const EDIT = [
-		buildPlannedMaintenanceReadPermission(ID),
-		buildPlannedMaintenanceUpdatePermission(ID),
-	];
+	const UPDATE = buildPlannedMaintenanceUpdatePermission(ID);
 	const scoped = createMockDowntime({
 		id: ID,
 		name: 'Nightly',
@@ -155,11 +153,31 @@ describe('PlannedDowntimeForm authz', () => {
 		server.resetHandlers();
 	});
 
+	type User = ReturnType<typeof userEvent.setup>;
+	const setupUser = (): User => userEvent.setup({ pointerEventsCheck: 0 });
+
 	const deniedOnSave = (): string | null =>
 		screen.getByTestId(SAVE).getAttribute('data-denied-permissions');
 
+	const openRulePicker = async (user: User): Promise<void> => {
+		// antd's search input is the only markup of the picker that opens it
+		await user.click(
+			within(await screen.findByTestId('downtime-alert-rules')).getByRole(
+				'combobox',
+			),
+		);
+	};
+
+	const findRuleOption = async (
+		user: User,
+		ruleId: string,
+	): Promise<HTMLElement> => {
+		await openRulePicker(user);
+		return screen.findByTestId(`downtime-rule-option-${ruleId}`);
+	};
+
 	it('opens read-only with Save disabled without update', async () => {
-		server.use(setupAuthzAllow(buildPlannedMaintenanceReadPermission(ID)));
+		server.use(setupAuthzDeny(UPDATE));
 		render(<FormHarness initialValues={scoped} />);
 
 		await waitFor(() =>
@@ -168,38 +186,35 @@ describe('PlannedDowntimeForm authz', () => {
 		expect(screen.getByTestId(SAVE)).toBeDisabled();
 	});
 
-	it('saves an unchanged scoped schedule with read and update alone', async () => {
-		server.use(setupAuthzAllow(...EDIT));
+	it('saves an unchanged scoped schedule with update alone', async () => {
+		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={scoped} />);
 
 		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
 		expect(screen.getByDisplayValue('Nightly')).toBeEnabled();
 	});
 
-	it('needs detach on every rule to re-save an all-rules schedule', async () => {
-		server.use(setupAuthzAllow(...EDIT));
+	it('re-saves an all-rules schedule with update alone', async () => {
+		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={allRules} />);
 
-		await waitFor(() =>
-			expect(deniedOnSave()).toBe(
-				[
-					buildPlannedMaintenanceDetachPermission(ID),
-					buildRuleDetachPermission('*'),
-				].join(','),
-			),
-		);
+		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		expect(deniedOnSave()).toBeNull();
 	});
 
-	it('needs detach on the old rules when widening to all rules', async () => {
-		server.use(setupAuthzAllow(...EDIT));
+	it('needs attach on every rule and detach on the old ones when widening to all', async () => {
+		const user = setupUser();
+		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={scoped} />);
-		await userEvent.click(
+		await user.click(
 			await screen.findByRole('radio', { name: 'All alert rules' }),
 		);
 
 		await waitFor(() =>
 			expect(deniedOnSave()).toBe(
 				[
+					buildPlannedMaintenanceAttachPermission(ID),
+					buildRuleAttachPermission('*'),
 					buildPlannedMaintenanceDetachPermission(ID),
 					buildRuleDetachPermission('rule-1'),
 				].join(','),
@@ -208,6 +223,7 @@ describe('PlannedDowntimeForm authz', () => {
 	});
 
 	it('needs attach on every rule to create one for all rules', async () => {
+		const user = setupUser();
 		server.use(
 			setupAuthzAllow(
 				PlannedMaintenanceCreatePermission,
@@ -215,7 +231,7 @@ describe('PlannedDowntimeForm authz', () => {
 			),
 		);
 		render(<FormHarness initialValues={{ alertIds: [] }} isEditMode={false} />);
-		await userEvent.click(
+		await user.click(
 			await screen.findByRole('radio', { name: 'All alert rules' }),
 		);
 
@@ -224,71 +240,147 @@ describe('PlannedDowntimeForm authz', () => {
 		);
 	});
 
+	it('checks unsilenced rules only once the picker opens', async () => {
+		const requested: AuthtypesTransactionDTO[] = [];
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
+				requested.push(...payload);
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
+		);
+		const isRule2Attach = (txn: AuthtypesTransactionDTO): boolean =>
+			txn.relation === 'attach' &&
+			txn.object.resource.kind === 'rule' &&
+			txn.object.selector === 'rule-2';
+		const user = setupUser();
+		render(<FormHarness initialValues={scoped} />);
+		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+
+		expect(requested.some(isRule2Attach)).toBe(false);
+
+		const option = await findRuleOption(user, 'rule-2');
+		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
+		expect(requested.some(isRule2Attach)).toBe(true);
+	});
+
 	it('disables a rule the user cannot attach, naming the permission', async () => {
+		const user = setupUser();
 		server.use(setupAuthzDeny(buildRuleAttachPermission('rule-2')));
 		render(<FormHarness initialValues={scoped} />);
 		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
 
-		const picker = screen.getByTestId('downtime-alert-rules');
-		fireEvent.mouseDown(picker.querySelector('.ant-select-selector') ?? picker);
-		const option = (await screen.findAllByText('Disk full'))
-			.map((el) => el.closest<HTMLElement>('.ant-select-item-option'))
-			.find(Boolean);
-
+		const option = await findRuleOption(user, 'rule-2');
 		await waitFor(() =>
-			expect(option).toHaveClass('ant-select-item-option-disabled'),
+			expect(option).toHaveAttribute(
+				'title',
+				expect.stringContaining('attach:rule:rule-2'),
+			),
 		);
-		expect(option?.getAttribute('title')).toContain('attach:rule:rule-2');
+		expect(option).toHaveAttribute('aria-disabled', 'true');
 	});
 
-	it('locks a linked rule the user cannot detach', async () => {
+	it('keeps a rule disabled while its check is pending', async () => {
+		const user = setupUser();
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+		);
+		render(<FormHarness initialValues={{ alertIds: [] }} isEditMode={false} />);
+
+		const option = await findRuleOption(user, 'rule-2');
+		expect(option).toHaveAttribute('aria-disabled', 'true');
+		expect(option).toHaveAttribute('title', 'Checking permissions');
+	});
+
+	it('locks a silenced rule the user cannot detach, naming the permission', async () => {
+		const user = setupUser();
 		server.use(setupAuthzDeny(buildRuleDetachPermission('rule-1')));
 		render(<FormHarness initialValues={scoped} />);
 
+		await user.hover(await screen.findByTestId('alert-rule-tag-locked-rule-1'));
 		await expect(
-			screen.findByTestId('alert-rule-tag-locked-rule-1'),
+			screen.findByText(/detach:rule:rule-1/),
 		).resolves.toBeInTheDocument();
 	});
 
+	it('keeps a silenced rule removable with detach', async () => {
+		server.use(setupAuthzAdmin());
+		render(<FormHarness initialValues={scoped} />);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByTestId('alert-rule-tag-locked-rule-1'),
+			).not.toBeInTheDocument(),
+		);
+		expect(screen.getByText('High CPU')).toBeInTheDocument();
+	});
+
 	it('leaves rules pickable when the check fails', async () => {
+		const user = setupUser();
 		server.use(
 			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
 		);
 		render(<FormHarness initialValues={{ alertIds: [] }} isEditMode={false} />);
 
-		const picker = await screen.findByTestId('downtime-alert-rules');
-		fireEvent.mouseDown(picker.querySelector('.ant-select-selector') ?? picker);
-		const option = (await screen.findAllByText('Disk full'))
-			.map((el) => el.closest<HTMLElement>('.ant-select-item-option'))
-			.find(Boolean);
-		await new Promise((resolve) => setTimeout(resolve, 100));
-		expect(option).not.toHaveClass('ant-select-item-option-disabled');
+		const option = await findRuleOption(user, 'rule-2');
+		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
 	});
 
 	it('explains an empty picker without rule:list', async () => {
+		const user = setupUser();
 		server.use(setupAuthzDeny(RuleListPermission));
 		render(
 			<FormHarness
 				initialValues={{ alertIds: [] }}
 				isEditMode={false}
 				alertOptions={[]}
+				isError
 			/>,
 		);
-		const picker = await screen.findByTestId('downtime-alert-rules');
-		fireEvent.mouseDown(picker.querySelector('.ant-select-selector') ?? picker);
+		await openRulePicker(user);
 
 		await expect(
 			screen.findByTestId('downtime-rules-denied'),
 		).resolves.toHaveTextContent('list:rule:*');
 	});
 
-	it('keeps a linked rule removable with detach', async () => {
-		server.use(setupAuthzAdmin());
-		render(<FormHarness initialValues={scoped} />);
+	it('keeps the silenced rules when the rule list did not load', async () => {
+		const user = setupUser();
+		server.use(setupAuthzDeny(RuleListPermission));
+		render(
+			<FormHarness
+				initialValues={createMockDowntime({
+					id: ID,
+					name: 'Nightly',
+					alertIds: ['rule-1'],
+					schedule: {
+						timezone: 'UTC',
+						startTime: '2024-01-01',
+						endTime: '2024-01-02',
+					},
+				})}
+				alertOptions={[]}
+				isError
+			/>,
+		);
 
+		await expect(screen.findByText('rule-1')).resolves.toBeInTheDocument();
 		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
-		expect(
-			screen.queryByTestId('alert-rule-tag-locked-rule-1'),
-		).not.toBeInTheDocument();
+		await user.click(screen.getByTestId(SAVE));
+
+		await waitFor(() =>
+			expect(jest.mocked(updateDowntimeScheduleByID)).toHaveBeenCalledWith(
+				{ id: ID },
+				expect.objectContaining({ alertIds: ['rule-1'] }),
+			),
+		);
 	});
 });

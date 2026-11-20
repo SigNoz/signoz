@@ -76,15 +76,18 @@ const openFirstSchedule = async (canvasElement: HTMLElement): Promise<void> => {
 };
 
 const openRulePicker = async (): Promise<void> => {
-	const picker = await screen.findByTestId('downtime-alert-rules');
-	await userEvent.click(picker.querySelector('.ant-select-selector') ?? picker);
+	await userEvent.click(
+		within(await screen.findByTestId('downtime-alert-rules')).getByRole(
+			'combobox',
+		),
+	);
 };
 
 const ruleOption = async (name: string): Promise<HTMLElement> => {
 	await openRulePicker();
-	const option = (await screen.findAllByText(name))
-		.map((element) => element.closest<HTMLElement>('.ant-select-item-option'))
-		.find(Boolean);
+	const option = (
+		await screen.findAllByTestId(/^downtime-rule-option-/, undefined, untilLoaded)
+	).find((element) => element.textContent === name);
 	if (!option) {
 		throw new Error(`No picker option for ${name}`);
 	}
@@ -221,22 +224,38 @@ export const expectRuleAttachLocked = async ({
 	await openFirstSchedule(canvasElement);
 	await expectLocked(await saveButton(), false);
 	const option = await ruleOption(UNLINKED_RULE);
-	await waitFor(
-		() => expect(option).toHaveClass('ant-select-item-option-disabled'),
-		untilLoaded,
-	);
+	// A pending option is disabled too, so the denial is read from its title.
+	await waitFor(() => expect(option.title).toMatch(/attach:rule:/), untilLoaded);
+	await expect(option).toHaveAttribute('aria-disabled', 'true');
 };
 
 export const expectRuleDetachLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openFirstSchedule(canvasElement);
-	await expect(
-		screen.findByTestId(
+	// A pending tag is locked too, so the denial is read from its tooltip.
+	await userEvent.hover(
+		await screen.findByTestId(
 			`alert-rule-tag-locked-${LINKED_RULE_ID}`,
 			undefined,
 			untilLoaded,
 		),
+	);
+	await expect(
+		screen.findAllByText(
+			new RegExp(`detach:rule:${LINKED_RULE_ID}`),
+			undefined,
+			untilLoaded,
+		),
+	).resolves.not.toHaveLength(0);
+};
+
+export const expectRulesKeptWithoutList = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openFirstSchedule(canvasElement);
+	await expect(
+		screen.findByText(LINKED_RULE_ID, undefined, untilLoaded),
 	).resolves.toBeInTheDocument();
 };
 

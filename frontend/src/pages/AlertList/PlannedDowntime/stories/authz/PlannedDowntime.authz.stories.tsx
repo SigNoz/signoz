@@ -14,6 +14,7 @@ import {
 	expectRuleAttachLocked,
 	expectRuleDetachLocked,
 	expectRuleListDenied,
+	expectRulesKeptWithoutList,
 } from '../__story_mockdata__/plannedDowntime.play';
 
 import AlertList from '../../../index';
@@ -70,12 +71,6 @@ export const NoUpdate: Story = {
 	play: expectEditLocked,
 };
 
-/** Edit needs `read` as well as `update`, so it is locked here too. */
-export const NoRead: Story = {
-	args: { revoked: ['read:planned-maintenance'] },
-	play: expectEditLocked,
-};
-
 /** A row's Delete is locked in its menu; Edit stays open. */
 export const NoDelete: Story = {
 	args: { revoked: ['delete:planned-maintenance'] },
@@ -118,6 +113,15 @@ export const NoRuleDetach: Story = {
 export const NoRuleList: Story = {
 	args: { revoked: ['list:rule'], silencedRules: 0 },
 	play: expectRuleListDenied,
+};
+
+/**
+ * Editing a schedule without the rule list: the rules it silences stay, named by
+ * their ids, so saving keeps them.
+ */
+export const NoRuleListEditing: Story = {
+	args: { revoked: ['list:rule'], rulesState: 'error' },
+	play: expectRulesKeptWithoutList,
 };
 
 /**

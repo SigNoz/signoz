@@ -10,7 +10,8 @@ import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { Form, Skeleton } from 'antd';
+import { Form } from 'antd';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import {
 	useDeleteDowntimeScheduleByID,
 	useListDowntimeSchedules,
