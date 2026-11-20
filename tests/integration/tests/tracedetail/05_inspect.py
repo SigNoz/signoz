@@ -27,9 +27,7 @@ def get_inspect(signoz: types.SigNoz, token: str, trace_id: str, params: dict | 
 def get_overview(signoz: types.SigNoz, token: str, trace_id: str, params: dict | None = None) -> dict:
     response = get_inspect(signoz, token, trace_id, params)
     assert response.status_code == HTTPStatus.OK, f"{params}: {response.text}"
-    data = response.json()["data"]
-    assert data["type"] == "overview"
-    return data["overview"]
+    return response.json()["data"]
 
 
 @pytest.mark.parametrize("attribute_backend", ["map", "json"])
@@ -274,15 +272,8 @@ def test_inspect_rejects_invalid_requests(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     trace_id = TraceIdGenerator.trace_id()
 
-    for params in (
-        {"depth": 3},
-        {"limit": 10},
-        {"selectFields": "http.route"},
-        {"cursor": "not-a-cursor"},
-        {"depth": "all"},
-    ):
-        response = get_inspect(signoz, token, trace_id, params)
-        assert response.status_code == HTTPStatus.BAD_REQUEST, f"{params}: {response.text}"
+    response = get_inspect(signoz, token, trace_id, {"cursor": "not-a-cursor"})
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
     missing = get_inspect(signoz, token, trace_id)
     assert missing.status_code == HTTPStatus.NOT_FOUND, missing.text

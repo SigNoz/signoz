@@ -399,7 +399,7 @@ func nextListCursor(list string, offset, total int) string {
 	if offset+inspectListSize >= total {
 		return ""
 	}
-	return inspectCursor{List: list, Offset: offset + inspectListSize}.encode()
+	return encodeCursor(overviewCursor{List: list, Offset: offset + inspectListSize})
 }
 
 func pageOf[T any](items []T, offset, limit int) []T {

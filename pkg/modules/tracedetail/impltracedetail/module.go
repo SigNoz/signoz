@@ -294,15 +294,7 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, start, end, true), nil
 }
 
-func (m *module) InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error) {
-	overview, err := m.getTraceOverview(ctx, orgID, traceID, query)
-	if err != nil {
-		return nil, err
-	}
-	return &spantypes.GettableTraceInspection{Type: query.Type, Overview: overview}, nil
-}
-
-func (m *module) getTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceOverview, error) {
+func (m *module) GetTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceOverviewQuery) (*spantypes.TraceOverview, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err

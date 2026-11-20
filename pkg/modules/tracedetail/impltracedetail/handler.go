@@ -3,6 +3,7 @@ package impltracedetail
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -141,17 +142,26 @@ func (h *handler) InspectTrace(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query, err := spantypes.NewInspectQuery(params)
+	query, err := spantypes.NewTraceOverviewQuery(params)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	result, err := h.module.InspectTrace(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	result, err := h.module.GetTraceOverview(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	render.Success(rw, http.StatusOK, result)
+}
+
+// The span routes are registered for their place in the API spec; the implementation follows.
+func (h *handler) InspectTraceSpan(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span inspect is not implemented yet"))
+}
+
+func (h *handler) InspectTraceSpans(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span search is not implemented yet"))
 }

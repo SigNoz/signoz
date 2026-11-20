@@ -21,7 +21,7 @@ func summaryIDs(summaries []SpanSummary) []string {
 // nextOffset reads the offset out of a list's nextCursor, as a request carrying it would.
 func nextOffset(t *testing.T, list, cursor string) int {
 	t.Helper()
-	query, err := NewInspectQuery(&InspectTraceParams{Cursor: cursor})
+	query, err := NewTraceOverviewQuery(&InspectTraceParams{Cursor: cursor})
 	require.NoError(t, err)
 	require.Equal(t, list, query.List)
 	return query.Offset
