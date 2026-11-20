@@ -34,7 +34,7 @@ import styles from './AIAssistantModal.module.scss';
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
-	const { pathname } = useAppLocation();
+	const { pathname, search } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
@@ -96,12 +96,12 @@ export default function AIAssistantModal(): JSX.Element | null {
 		closeModal();
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the modal, so this is a surface
-		// switch, not a new open.
+		// switch, not a new open. `returnTo` is where its minimize button comes back to.
 		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ state: { fromInApp: true } },
+			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
-	}, [activeConversationId, closeModal]);
+	}, [activeConversationId, closeModal, pathname, search]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
@@ -8,6 +9,7 @@ import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -38,6 +40,7 @@ const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
+	const { isCloudUser } = useGetTenantLicense();
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,
@@ -199,7 +202,6 @@ function ListAlertRules(): JSX.Element {
 							states={filter.states}
 							creatorOptions={creatorOptions}
 							source={source}
-							error={queryError}
 							onQueryChange={submitQuery}
 							onStatesChange={changeStates}
 						/>
@@ -209,14 +211,16 @@ function ListAlertRules(): JSX.Element {
 				<div ref={containerRef} className={styles.tableContainer}>
 					{isError ? (
 						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+					) : isEmptyDueToFilters && queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="alert-rules"
+						/>
 					) : isEmptyDueToFilters ? (
 						<NoResultsEmptyState
 							title="No matching alert rules"
-							subtitle={
-								queryError
-									? 'The filter query is invalid. Fix it or clear the search.'
-									: 'No alert rules match your search. Try adjusting your search criteria.'
-							}
+							subtitle="No alert rules match your search. Try adjusting your search criteria."
 							onClear={handleClearFilters}
 							clearButtonText="Clear Search"
 						/>

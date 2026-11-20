@@ -64,7 +64,7 @@ export const NoMatchingRules: Story = {
 	},
 };
 
-/** The query the list was asked for does not parse: the server's message sits under the search box. */
+/** The query the list was asked for does not parse: the Invalid query state, with the server's message, replaces the list. */
 export const InvalidQuery: Story = {
 	args: { invalidQuery: 'rule_list_filter_invalid' },
 	parameters: {

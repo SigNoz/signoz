@@ -13,6 +13,7 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	type TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
 import { STORAGE_VERSION } from 'lib/recentQueries/constants';
@@ -24,8 +25,15 @@ import type { AppState } from 'store/reducers';
 import type { Warning } from 'types/api';
 import type { ILogBody } from 'types/api/logs/log';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	BaseBuilderQuery,
 	MetricRangePayloadV5,
+	QueryRangeRequestV5,
 	TelemetryFieldKey,
 	TimeSeries,
 } from 'types/api/v5/queryRange';
@@ -100,6 +108,39 @@ const SERVICES = ['frontend', 'checkout', 'payments', 'cart', 'auth'];
 
 const PODS = ['checkout-7b9f4d', 'payments-5c8a12', 'frontend-9d3e77'];
 
+const NODES = ['ip-10-0-1-14.ec2.internal', 'ip-10-0-2-31.ec2.internal'];
+
+/**
+ * The resource the log detail's Metrics tab charts: a pod opens on the pod's
+ * charts, a node opens on the node's with the pod one toggle away, and none
+ * leaves the tab empty.
+ */
+export const INFRA_RESOURCES = ['pod', 'node', 'none'] as const;
+
+export type InfraResource = (typeof INFRA_RESOURCES)[number];
+
+const infraResourceAttributes = (
+	infraResource: InfraResource,
+	index: number,
+): Record<string, string> => {
+	if (infraResource === 'none') {
+		return {};
+	}
+
+	const pod = { 'k8s.pod.name': PODS[index % PODS.length] };
+
+	if (infraResource === 'pod') {
+		return pod;
+	}
+
+	return {
+		...pod,
+		'k8s.cluster.name': 'us-east-1',
+		'k8s.node.name': NODES[index % NODES.length],
+		'host.name': NODES[index % NODES.length],
+	};
+};
+
 interface LogRowData {
 	id: string;
 	body: string | ILogBody;
@@ -154,6 +195,7 @@ const jsonBodyAt = (
 export interface LogsResponseOptions {
 	/** `use_json_body`: the body arrives as an object instead of a line. */
 	jsonBody?: boolean;
+	infraResource?: InfraResource;
 	warning?: Warning;
 }
 
@@ -171,6 +213,7 @@ export const logRows = (
 	severities: readonly LogSeverity[],
 	endMilli: number,
 	jsonBody: boolean,
+	infraResource: InfraResource = 'pod',
 ): LogRow[] =>
 	Array.from({ length: severities.length ? count : 0 }, (_unused, index) => {
 		const severity = severities[index % severities.length];
@@ -198,7 +241,7 @@ export const logRows = (
 				resources_string: {
 					'service.name': service,
 					'deployment.environment': 'production',
-					'k8s.pod.name': PODS[index % PODS.length],
+					...infraResourceAttributes(infraResource, index),
 				},
 				scope_string: {},
 			},
@@ -209,10 +252,10 @@ export const logRowsResponse = (
 	count: number,
 	severities: readonly LogSeverity[],
 	endMilli: number,
-	{ jsonBody = false, warning }: LogsResponseOptions = {},
+	{ jsonBody = false, infraResource, warning }: LogsResponseOptions = {},
 ): MetricRangePayloadV5 =>
 	queryRangeV5RawResponse<LogRowData>(
-		logRows(count, severities, endMilli, jsonBody),
+		logRows(count, severities, endMilli, jsonBody, infraResource),
 		{ warning },
 	);
 
@@ -237,22 +280,99 @@ export const logHistogramResponse = (
 	});
 };
 
-/** The timeseries view aggregates without a group by, so it draws one line. */
+/**
+ * The timeseries view aggregates without a group by, so it draws one line, or
+ * none when no log matches.
+ */
 export const logTimeseriesResponse = (
 	window: { start: number; end: number },
-	{ warning }: Pick<LogsResponseOptions, 'warning'> = {},
+	{
+		warning,
+		empty = false,
+	}: Pick<LogsResponseOptions, 'warning'> & {
+		empty?: boolean;
+	} = {},
 ): MetricRangePayloadV5 =>
 	queryRangeV5TimeSeriesResponse(
 		[
 			{
 				queryName: 'A',
-				series: [
-					{ values: timeSeriesPoints({ ...window, base: 420, amplitude: 90 }) },
-				],
+				series: empty
+					? []
+					: [{ values: timeSeriesPoints({ ...window, base: 420, amplitude: 90 }) }],
 			},
 		],
 		{ warning },
 	);
+
+/**
+ * The log detail's infra charts: one line per query and formula, named the way
+ * the request names them, since each chart reads its own.
+ */
+export const infraMetricsResponse = (
+	body: QueryRangeRequestV5,
+): MetricRangePayloadV5 =>
+	queryRangeV5TimeSeriesResponse(
+		(body.compositeQuery?.queries ?? []).map((query, index) => ({
+			queryName: (query.spec as BaseBuilderQuery).name ?? 'A',
+			series: [
+				{
+					values: timeSeriesPoints({
+						start: body.start,
+						end: body.end,
+						base: 40 + index * 15,
+						amplitude: 12,
+						seed: index * 2,
+					}),
+				},
+			],
+		})),
+	);
+
+/**
+ * A filter the explorer opens on from a link rather than the search box, such as
+ * a saved view or a span's "View logs", which is the only way it arrives as
+ * filter items.
+ */
+export const URL_FILTERS = ['none', 'service', 'trace'] as const;
+
+export type UrlFilter = (typeof URL_FILTERS)[number];
+
+const URL_FILTER_ITEMS: Record<Exclude<UrlFilter, 'none'>, TagFilterItem> = {
+	service: {
+		id: 'service-name-filter',
+		key: { key: 'service.name', dataType: DataTypes.String, type: 'resource' },
+		op: '=',
+		value: 'checkout',
+	},
+	trace: {
+		id: 'trace-id-filter',
+		key: { key: 'trace_id', dataType: DataTypes.String, type: '' },
+		op: '=',
+		value: hex(1, 32),
+	},
+};
+
+export const urlFilterQuery = (filter: UrlFilter): Query | undefined => {
+	if (filter === 'none') {
+		return undefined;
+	}
+
+	const { builder } = initialQueriesMap.logs;
+
+	return {
+		...initialQueriesMap.logs,
+		builder: {
+			...builder,
+			queryData: [
+				{
+					...builder.queryData[0],
+					filters: { items: [URL_FILTER_ITEMS[filter]], op: 'AND' },
+				},
+			],
+		},
+	};
+};
 
 export const logCountResponse = (
 	severities: readonly LogSeverity[],
