@@ -82,3 +82,47 @@ func TestNewTraceSpanQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestNewTraceSpanListQuery(t *testing.T) {
+	afterCursor := encodeCursor(spanListCursor{After: &ThreadCursor{TimeUnixNano: 42, SpanID: "abc"}})
+	offsetCursor := encodeCursor(spanListCursor{Offset: 400})
+
+	validCases := []struct {
+		name     string
+		params   InspectTraceSpansParams
+		expected TraceSpanListQuery
+	}{
+		{name: "NoParams_EverySpanWithDefaultLimit", params: InspectTraceSpansParams{}, expected: TraceSpanListQuery{Limit: inspectAllSpansLimit}},
+		{name: "Search_DefaultLimit", params: InspectTraceSpansParams{Search: "worldpay"}, expected: TraceSpanListQuery{Search: "worldpay", Limit: inspectSearchLimit}},
+		{name: "BlankSearch_EverySpan", params: InspectTraceSpansParams{Search: "  "}, expected: TraceSpanListQuery{Limit: inspectAllSpansLimit}},
+		{name: "SearchLimitCursor_NextPageOfMatches", params: InspectTraceSpansParams{Search: "worldpay", Limit: 5, Cursor: afterCursor}, expected: TraceSpanListQuery{Search: "worldpay", Limit: 5, After: &ThreadCursor{TimeUnixNano: 42, SpanID: "abc"}}},
+		{name: "UnderLimitCursor_NextPageBelowThatSpan", params: InspectTraceSpansParams{Under: "abc", Limit: 50, Cursor: offsetCursor}, expected: TraceSpanListQuery{Under: "abc", Limit: 50, Offset: 400}},
+	}
+	for _, testCase := range validCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			query, err := NewTraceSpanListQuery(&testCase.params)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, *query)
+		})
+	}
+
+	invalidCases := []struct {
+		name   string
+		params InspectTraceSpansParams
+	}{
+		{name: "SearchWithUnder", params: InspectTraceSpansParams{Search: "worldpay", Under: "abc"}},
+		{name: "Limit_Negative", params: InspectTraceSpansParams{Search: "worldpay", Limit: -1}},
+		{name: "Limit_OverMaximum", params: InspectTraceSpansParams{Limit: 1001}},
+		{name: "SearchCursor_FromEverySpan", params: InspectTraceSpansParams{Search: "worldpay", Cursor: offsetCursor}},
+		{name: "EverySpanCursor_FromASearch", params: InspectTraceSpansParams{Cursor: afterCursor}},
+		{name: "Cursor_FromAnOverviewList", params: InspectTraceSpansParams{Cursor: encodeCursor(overviewCursor{List: OverviewListErrors, Offset: 10})}},
+		{name: "Cursor_OffsetBeyondAnyTrace", params: InspectTraceSpansParams{Cursor: encodeCursor(spanListCursor{Offset: math.MaxInt})}},
+	}
+	for _, testCase := range invalidCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := NewTraceSpanListQuery(&testCase.params)
+			require.Error(t, err)
+			assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+		})
+	}
+}

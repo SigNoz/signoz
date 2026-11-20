@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 	"strings"
 	"unicode/utf8"
 )
@@ -16,6 +17,8 @@ const (
 	spanRecordSelectChars  = 40_000
 	// spanRecordSelectMaxChars leaves room in the response for the span's summary and ancestors.
 	spanRecordSelectMaxChars = 44_000
+	spanMatchSnippetRadius   = 40
+	spanMatchLimit           = 3
 	truncationMark           = "…"
 )
 
@@ -212,4 +215,84 @@ func cutString(value string, limit int) (string, int, bool) {
 		cut++
 	}
 	return value, 0, false
+}
+
+// findWords returns up to three places in the span where one of the words occurs, ignoring case.
+func findWords(item *StorableSpan, words []string) []SpanTextMatch {
+	found := make([]SpanTextMatch, 0)
+	if len(words) == 0 {
+		return found
+	}
+	// check notes the first of texts that holds a word, and reports whether enough places were found.
+	check := func(field string, texts ...string) bool {
+		for _, text := range texts {
+			for _, word := range words {
+				if snippet, ok := snippetAround(text, word); ok {
+					found = append(found, SpanTextMatch{Field: field, Snippet: snippet})
+					return len(found) == spanMatchLimit
+				}
+			}
+		}
+		return false
+	}
+
+	if check("name", item.Name) || check("statusMessage", item.StatusMessage) {
+		return found
+	}
+	attributes := item.Attributes()
+	keys := make([]string, 0, len(attributes))
+	for key := range attributes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if check("attributes."+key, fmt.Sprintf("%v", attributes[key]), key) {
+			return found
+		}
+	}
+	keys = keys[:0]
+	for key := range item.ResourcesString {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if check("resource."+key, item.ResourcesString[key], key) {
+			return found
+		}
+	}
+	for idx, event := range item.Events {
+		if check(fmt.Sprintf("events[%d]", idx), event) {
+			return found
+		}
+	}
+	return found
+}
+
+// snippetAround returns the text around the first place word occurs in value, ignoring case.
+func snippetAround(value, word string) (string, bool) {
+	// Lowering can change the byte length of some characters; positions then no longer map back.
+	lowered := strings.ToLower(value)
+	if len(lowered) != len(value) {
+		lowered = value
+	}
+	pos := strings.Index(lowered, strings.ToLower(word))
+	if pos < 0 {
+		return "", false
+	}
+	start := max(pos-spanMatchSnippetRadius, 0)
+	end := min(pos+len(word)+spanMatchSnippetRadius, len(value))
+	for start > 0 && !utf8.RuneStart(value[start]) {
+		start--
+	}
+	for end < len(value) && !utf8.RuneStart(value[end]) {
+		end++
+	}
+	snippet := value[start:end]
+	if start > 0 {
+		snippet = truncationMark + snippet
+	}
+	if end < len(value) {
+		snippet += truncationMark
+	}
+	return snippet, true
 }

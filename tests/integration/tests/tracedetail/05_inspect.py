@@ -370,6 +370,149 @@ def test_inspect_span(
     assert unknown.status_code == HTTPStatus.NOT_FOUND, unknown.text
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
+def test_inspect_find(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
+) -> None:
+    """Attributes are written to one layout only, so a read from the wrong column finds nothing."""
+    now = get_attribute_backend_now(signoz, attribute_backend).replace(second=0, microsecond=0)
+    write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
+    trace_id = TraceIdGenerator.trace_id()
+    resources = {"service.name": f"td-inspect-find-{attribute_backend}"}
+    names = ("root", "by_name", "by_status", "by_attribute", "by_event", "unrelated")
+    ids = {name: TraceIdGenerator.span_id() for name in names}
+    start = now - timedelta(seconds=10)
+
+    def span(key: str, parent: str, name: str, offset_ms: int, **kwargs) -> Traces:
+        return Traces(timestamp=start + timedelta(milliseconds=offset_ms), duration=timedelta(milliseconds=5), trace_id=trace_id, span_id=ids[key], parent_span_id=ids[parent] if parent else "", name=name, resources=resources, attribute_write_mode=write_mode, **kwargs)
+
+    insert_traces(
+        [
+            span("root", "", "POST /checkout", 0, kind=TracesKind.SPAN_KIND_SERVER),
+            span("by_name", "root", "call worldpay", 10),
+            span("by_status", "root", "charge_card", 20, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="Worldpay declined the card"),
+            span("by_attribute", "by_status", "POST /v1/payments", 30, attributes={"payment.provider": "worldpay", "http.response.status_code": 402}),
+            span("by_event", "root", "notify", 40, events=[TracesEvent("retry", start, {"reason": "worldpay timeout"})]),
+            span("unrelated", "root", "render_receipt", 50, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="template missing"),
+        ]
+    )
+    spans_url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect/spans")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+
+    # a plain word, in start time order, wherever it occurs
+    response = requests.get(spans_url, params={"search": "worldpay"}, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    found = response.json()["data"]
+    assert found["total"] == 4
+    assert "nextCursor" not in found
+    assert [item["span"]["spanId"] for item in found["items"]] == [ids[name] for name in ("by_name", "by_status", "by_attribute", "by_event")]
+    where = {item["span"]["spanId"]: [match["field"] for match in item["matches"]] for item in found["items"]}
+    assert where[ids["by_name"]] == ["name"]
+    assert where[ids["by_status"]] == ["statusMessage"]
+    assert where[ids["by_attribute"]] == ["attributes.payment.provider"]
+    assert where[ids["by_event"]] == ["events[0]"]
+    assert found["items"][1]["matches"][0]["snippet"] == "Worldpay declined the card"
+    assert [item["parent"]["spanId"] for item in found["items"]] == [ids["root"], ids["root"], ids["by_status"], ids["root"]]
+
+    # a filter alone has no words to show
+    errors = requests.get(spans_url, params={"search": "has_error = true"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["spanId"] for item in errors["items"]] == [ids["by_status"], ids["unrelated"]]
+    assert all(item["matches"] == [] for item in errors["items"])
+
+    both = requests.get(spans_url, params={"search": "worldpay AND has_error = true"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["spanId"] for item in both["items"]] == [ids["by_status"]]
+
+    by_attribute = requests.get(spans_url, params={"search": "payment.provider = 'worldpay'"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["spanId"] for item in by_attribute["items"]] == [ids["by_attribute"]]
+
+    nothing = requests.get(spans_url, params={"search": "stripe"}, headers=headers, timeout=10).json()["data"]
+    assert (nothing["total"], nothing["items"]) == (0, [])
+
+    # a word is also found in an attribute's name and in a resource attribute
+    by_key = requests.get(spans_url, params={"search": "payment.provider"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["spanId"], item["matches"][0]["field"]) for item in by_key["items"]] == [(ids["by_attribute"], "attributes.payment.provider")]
+    by_resource = requests.get(spans_url, params={"search": "td-inspect-find"}, headers=headers, timeout=10).json()["data"]
+    assert by_resource["total"] == 6
+    assert {item["matches"][0]["field"] for item in by_resource["items"]} == {"resource.service.name"}
+
+    unknown_key = requests.get(spans_url, params={"search": "no.such.key = 'x'"}, headers=headers, timeout=10).json()["data"]
+    assert unknown_key["total"] == 0
+    assert "no.such.key" in unknown_key["warnings"][0]
+
+    # limit sets the page size; the same search with the cursor returns the next page
+    first = requests.get(spans_url, params={"search": "worldpay", "limit": 3}, headers=headers, timeout=10).json()["data"]
+    assert first["total"] == 4
+    assert [item["span"]["spanId"] for item in first["items"]] == [ids[name] for name in ("by_name", "by_status", "by_attribute")]
+    second = requests.get(spans_url, params={"search": "worldpay", "limit": 3, "cursor": first["nextCursor"]}, headers=headers, timeout=10).json()["data"]
+    assert second["total"] == 4
+    assert [item["span"]["spanId"] for item in second["items"]] == [ids["by_event"]]
+    assert "nextCursor" not in second
+
+    broken = requests.get(spans_url, params={"search": "has_error ="}, headers=headers, timeout=10)
+    assert broken.status_code == HTTPStatus.BAD_REQUEST, broken.text
+
+
+def test_inspect_all_spans(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    trace_id = TraceIdGenerator.trace_id()
+    resources = {"service.name": "td-inspect-all-spans"}
+    start = now - timedelta(seconds=10)
+    root_id = TraceIdGenerator.span_id()
+    spans = [Traces(timestamp=start, duration=timedelta(seconds=1), trace_id=trace_id, span_id=root_id, name="POST /batch", kind=TracesKind.SPAN_KIND_SERVER, resources=resources)]
+    tree_order = [root_id]
+    branches: list[list[str]] = []
+    for branch in range(3):
+        branch_id = TraceIdGenerator.span_id()
+        spans.append(Traces(timestamp=start + timedelta(milliseconds=100 * branch + 10), duration=timedelta(milliseconds=80), trace_id=trace_id, span_id=branch_id, parent_span_id=root_id, name=f"batch-{branch}", resources=resources))
+        below = [branch_id]
+        for leaf in range(2):
+            leaf_id = TraceIdGenerator.span_id()
+            spans.append(Traces(timestamp=start + timedelta(milliseconds=100 * branch + 20 + 10 * leaf), duration=timedelta(milliseconds=5), trace_id=trace_id, span_id=leaf_id, parent_span_id=branch_id, name="write_item", resources=resources))
+            below.append(leaf_id)
+        branches.append(below)
+        tree_order += below
+    insert_traces(spans)
+    spans_url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect/spans")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+
+    response = requests.get(spans_url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    everything = response.json()["data"]
+    assert everything["total"] == 10
+    assert "nextCursor" not in everything
+    assert [item["span"]["spanId"] for item in everything["items"]] == tree_order
+    assert [item["span"]["level"] for item in everything["items"]] == [0, 1, 2, 2, 1, 2, 2, 1, 2, 2]
+    # a line of this list has no parent of its own: its parent is earlier in the same list
+    assert all("parent" not in item and item["matches"] == [] for item in everything["items"])
+
+    seen, cursor = [], None
+    for _ in range(4):
+        params = {"limit": 4} | ({"cursor": cursor} if cursor else {})
+        page = requests.get(spans_url, params=params, headers=headers, timeout=10).json()["data"]
+        assert page["total"] == 10
+        seen += [item["span"]["spanId"] for item in page["items"]]
+        cursor = page.get("nextCursor")
+        if not cursor:
+            break
+    assert seen == tree_order
+
+    below = requests.get(spans_url, params={"under": branches[1][0]}, headers=headers, timeout=10).json()["data"]
+    assert below["total"] == 3
+    assert [item["span"]["spanId"] for item in below["items"]] == branches[1]
+
+    unknown = requests.get(spans_url, params={"under": TraceIdGenerator.span_id()}, headers=headers, timeout=10)
+    assert unknown.status_code == HTTPStatus.NOT_FOUND, unknown.text
+
+
 def test_inspect_rejects_invalid_requests(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -383,6 +526,9 @@ def test_inspect_rejects_invalid_requests(
     for depth in (11, "all"):
         response = requests.get(f"{url}/spans/0000000000000001", params={"depth": depth}, headers=headers, timeout=10)
         assert response.status_code == HTTPStatus.BAD_REQUEST, f"depth {depth}: {response.text}"
+    for params in ({"search": "worldpay", "under": "0000000000000001"}, {"limit": 1001}, {"cursor": "not-a-cursor"}):
+        response = requests.get(f"{url}/spans", params=params, headers=headers, timeout=10)
+        assert response.status_code == HTTPStatus.BAD_REQUEST, f"{params}: {response.text}"
 
     response = requests.get(url, headers=headers, timeout=10)
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text

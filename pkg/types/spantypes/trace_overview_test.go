@@ -471,6 +471,151 @@ func TestSpanDetail(t *testing.T) {
 	})
 }
 
+func TestSpanPage(t *testing.T) {
+	t.Run("EverySpan_PagesInTreeOrderByCursor", func(t *testing.T) {
+		specs := []skeletonSpec{{id: "root", startMs: 0, durationMs: 1000}}
+		for i := range 24 {
+			specs = append(specs, skeletonSpec{id: fmt.Sprintf("s-%02d", i), parent: "root", startMs: int64(i), durationMs: 1})
+		}
+		skeleton := buildSkeleton(specs...)
+
+		seen := make([]string, 0, 25)
+		cursor := ""
+		for range 4 {
+			query, err := NewTraceSpanListQuery(&InspectTraceSpansParams{Limit: 10, Cursor: cursor})
+			require.NoError(t, err)
+			page := skeleton.SpanPage(nil, query.Offset, query.Limit)
+			assert.Equal(t, uint64(25), page.Total)
+			for _, item := range page.Items {
+				assert.Nil(t, item.Parent)
+				assert.Empty(t, item.Matches)
+				seen = append(seen, item.Span.SpanID)
+			}
+			cursor = page.NextCursor
+			if cursor == "" {
+				break
+			}
+		}
+
+		require.Len(t, seen, 25)
+		assert.Equal(t, "root", seen[0])
+		assert.Equal(t, "s-00", seen[1])
+		assert.Equal(t, "s-23", seen[24])
+	})
+
+	t.Run("PageOverSizeLimit_EndsEarlyAndTheCursorContinuesThere", func(t *testing.T) {
+		specs := []skeletonSpec{{id: "root", startMs: 0, durationMs: 1000}}
+		for i := range 999 {
+			specs = append(specs, skeletonSpec{id: fmt.Sprintf("span-with-a-long-identifier-%04d", i), parent: "root", name: "an operation name of ordinary length", service: "checkout-service", startMs: int64(i), durationMs: 1})
+		}
+		skeleton := buildSkeleton(specs...)
+
+		page := skeleton.SpanPage(nil, 0, inspectMaxLimit)
+
+		assert.Less(t, len(page.Items), 1000)
+		assert.LessOrEqual(t, jsonChars(page.Items), inspectMaxResponseChars)
+		query, err := NewTraceSpanListQuery(&InspectTraceSpansParams{Cursor: page.NextCursor})
+		require.NoError(t, err)
+		assert.Equal(t, len(page.Items), query.Offset)
+	})
+
+	t.Run("WithRoot_ListsThatSpanAndTheSpansBelowIt", func(t *testing.T) {
+		skeleton := buildSkeleton(
+			skeletonSpec{id: "root", startMs: 0, durationMs: 100},
+			skeletonSpec{id: "before", parent: "root", startMs: 1, durationMs: 1},
+			skeletonSpec{id: "branch", parent: "root", startMs: 2, durationMs: 50},
+			skeletonSpec{id: "leaf-a", parent: "branch", startMs: 3, durationMs: 1},
+			skeletonSpec{id: "leaf-b", parent: "branch", startMs: 4, durationMs: 1},
+			skeletonSpec{id: "after", parent: "root", startMs: 60, durationMs: 1},
+		)
+		branch, ok := skeleton.Index("branch")
+		require.True(t, ok)
+
+		page := skeleton.SpanPage(&branch, 0, 2)
+		query, err := NewTraceSpanListQuery(&InspectTraceSpansParams{Under: "branch", Limit: 2, Cursor: page.NextCursor})
+		require.NoError(t, err)
+		rest := skeleton.SpanPage(&branch, query.Offset, query.Limit)
+
+		assert.Equal(t, uint64(3), page.Total)
+		assert.Equal(t, []string{"branch", "leaf-a"}, []string{page.Items[0].Span.SpanID, page.Items[1].Span.SpanID})
+		require.Len(t, rest.Items, 1)
+		assert.Equal(t, "leaf-b", rest.Items[0].Span.SpanID)
+		assert.Empty(t, rest.NextCursor)
+	})
+}
+
+func TestNewTraceSpanList(t *testing.T) {
+	skeleton := buildSkeleton(
+		skeletonSpec{id: "root", name: "POST /checkout", service: "gateway", startMs: 0, durationMs: 100},
+		skeletonSpec{id: "orders", parent: "root", name: "POST /orders", service: "orders", startMs: 1, durationMs: 90},
+		skeletonSpec{id: "charge", parent: "orders", name: "POST /charge", service: "payments", startMs: 3, durationMs: 70, hasError: true},
+		skeletonSpec{id: "refund", parent: "orders", name: "POST /refund", service: "payments", startMs: 80, durationMs: 5},
+	)
+	charge := recordSpan("charge", map[string]string{"payment.provider": "Worldpay", "payment.note": strings.Repeat("padding ", 20) + "sent to worldpay gateway" + strings.Repeat(" padding", 20)})
+	refund := recordSpan("refund", map[string]string{"payment.provider": "worldpay"})
+
+	t.Run("Matches_CarryTheSpanItsParentAndWhereTheWordsWereFound", func(t *testing.T) {
+		search := &TraceSpanSearch{
+			// The second hit has no record and the third is not in the tree; both are left out.
+			Hits:    []ThreadCursor{{TimeUnixNano: 3, SpanID: "charge"}, {TimeUnixNano: 8, SpanID: "orders"}, {TimeUnixNano: 9, SpanID: "not-in-tree"}, {TimeUnixNano: 80, SpanID: "refund"}},
+			Total:   57,
+			Words:   []string{"worldpay"},
+			HasMore: true,
+		}
+
+		list := NewTraceSpanList(skeleton, search, []StorableSpan{refund, recordSpan("not-in-tree", nil), charge})
+
+		assert.Equal(t, uint64(57), list.Total)
+		require.Len(t, list.Items, 2)
+		first := list.Items[0]
+		assert.Equal(t, "charge", first.Span.SpanID)
+		assert.Equal(t, uint32(2), first.Span.Level)
+		require.NotNil(t, first.Parent)
+		assert.Equal(t, "orders", first.Parent.SpanID)
+		require.Len(t, first.Matches, 3)
+		assert.Equal(t, SpanTextMatch{Field: "statusMessage", Snippet: "worldpay declined the card"}, first.Matches[0])
+		assert.Equal(t, "attributes.payment.note", first.Matches[1].Field)
+		assert.True(t, strings.HasPrefix(first.Matches[1].Snippet, truncationMark))
+		assert.Contains(t, first.Matches[1].Snippet, "sent to worldpay gateway")
+		assert.Equal(t, SpanTextMatch{Field: "attributes.payment.provider", Snippet: "Worldpay"}, first.Matches[2])
+		assert.Equal(t, "refund", list.Items[1].Span.SpanID)
+
+		// The cursor continues after the last span shown.
+		query, err := NewTraceSpanListQuery(&InspectTraceSpansParams{Search: "worldpay", Cursor: list.NextCursor})
+		require.NoError(t, err)
+		assert.Equal(t, &ThreadCursor{TimeUnixNano: 80, SpanID: "refund"}, query.After)
+	})
+
+	t.Run("WordInAnAttributeNameOrAResourceAttribute_IsFound", func(t *testing.T) {
+		search := &TraceSpanSearch{Hits: []ThreadCursor{{TimeUnixNano: 80, SpanID: "refund"}}, Total: 1, Words: []string{"provider", "payments"}, Warnings: []string{"key `x` not found"}}
+
+		list := NewTraceSpanList(skeleton, search, []StorableSpan{refund})
+
+		require.Len(t, list.Items, 1)
+		assert.Equal(t, []SpanTextMatch{{Field: "attributes.payment.provider", Snippet: "payment.provider"}, {Field: "resource.service.name", Snippet: "payments"}}, list.Items[0].Matches)
+		assert.Equal(t, []string{"key `x` not found"}, list.Warnings)
+	})
+
+	t.Run("LastPage_HasNoCursor", func(t *testing.T) {
+		search := &TraceSpanSearch{Hits: []ThreadCursor{{TimeUnixNano: 3, SpanID: "charge"}}, Total: 1, Words: []string{"worldpay"}}
+
+		list := NewTraceSpanList(skeleton, search, []StorableSpan{charge})
+
+		assert.Len(t, list.Items, 1)
+		assert.Empty(t, list.NextCursor)
+	})
+
+	t.Run("FilterWithoutWords_HasNoMatchSnippets", func(t *testing.T) {
+		search := &TraceSpanSearch{Hits: []ThreadCursor{{TimeUnixNano: 3, SpanID: "charge"}}, Total: 1, Words: []string{}}
+
+		list := NewTraceSpanList(skeleton, search, []StorableSpan{charge})
+
+		require.Len(t, list.Items, 1)
+		assert.Empty(t, list.Items[0].Matches)
+		assert.NotNil(t, list.Items[0].Matches)
+	})
+}
+
 func TestFitSpan(t *testing.T) {
 	summary := SpanSummary{SpanID: "span", Name: strings.Repeat("operation ", 40)}
 	level := func(n uint32) TraceSpanLevel {

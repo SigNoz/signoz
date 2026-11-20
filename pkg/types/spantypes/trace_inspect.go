@@ -19,6 +19,10 @@ const (
 	inspectLevelSize    = 20
 	inspectDefaultDepth = 2
 	inspectMaxDepth     = 10
+	// Page sizes of a search and of the list of every span.
+	inspectSearchLimit   = 20
+	inspectAllSpansLimit = 400
+	inspectMaxLimit      = 1000
 	// inspectNameChars cuts a span name in a summary; a statement used as a name can run to kilobytes.
 	inspectNameChars = 200
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
@@ -31,6 +35,8 @@ const (
 var (
 	ErrCodeInspectInvalidCursor = errors.MustNewCode("trace_inspect_invalid_cursor")
 	ErrCodeInspectInvalidDepth  = errors.MustNewCode("trace_inspect_invalid_depth")
+	ErrCodeInspectInvalidLimit  = errors.MustNewCode("trace_inspect_invalid_limit")
+	ErrCodeInspectInvalidParams = errors.MustNewCode("trace_inspect_invalid_params")
 	ErrCodeInspectSpanNotFound  = errors.MustNewCode("trace_inspect_span_not_found")
 )
 
@@ -284,6 +290,34 @@ type TraceSpanQuery struct {
 	SelectFields []string
 }
 
+// TraceSpanListQuery is a validated request for the spans of a trace: those matching Search, or
+// without one every span, or Under and the spans below it.
+type TraceSpanListQuery struct {
+	Search string
+	Under  string
+	Limit  int
+	// A search is paged by After, the list of every span by Offset.
+	Offset int
+	After  *ThreadCursor
+}
+
+// SpansQuery is one page of a search inside a trace.
+type SpansQuery struct {
+	Search string
+	Limit  int
+	After  *ThreadCursor
+}
+
+// TraceSpanSearch is one page of the spans matching a search, in start time order.
+type TraceSpanSearch struct {
+	Hits  []ThreadCursor
+	Total uint64
+	// Words holds the free-text terms of the search.
+	Words    []string
+	Warnings []string
+	HasMore  bool
+}
+
 func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, error) {
 	query := new(TraceOverviewQuery)
 	if params.Cursor == "" {
@@ -314,10 +348,55 @@ func NewTraceSpanQuery(spanID string, params *InspectTraceSpanParams) (*TraceSpa
 	return query, nil
 }
 
+func NewTraceSpanListQuery(params *InspectTraceSpansParams) (*TraceSpanListQuery, error) {
+	query := &TraceSpanListQuery{Search: strings.TrimSpace(params.Search), Under: params.Under, Limit: params.Limit}
+	switch {
+	case query.Search != "" && query.Under != "":
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "search and under cannot be combined")
+	case params.Limit < 0 || params.Limit > inspectMaxLimit:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit must be between 1 and %d, got %d", inspectMaxLimit, params.Limit)
+	case params.Limit == 0 && query.Search == "":
+		query.Limit = inspectAllSpansLimit
+	case params.Limit == 0:
+		query.Limit = inspectSearchLimit
+	}
+	if params.Cursor == "" {
+		return query, nil
+	}
+
+	cursor := new(spanListCursor)
+	if err := decodeCursor(params.Cursor, cursor); err != nil {
+		return nil, err
+	}
+	switch {
+	case query.Search == "" && cursor.After == nil && cursor.Offset > 0 && cursor.Offset <= math.MaxInt32:
+		query.Offset = cursor.Offset
+	case query.Search != "" && cursor.Offset == 0 && cursor.After != nil && cursor.After.SpanID != "":
+		query.After = cursor.After
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	return query, nil
+}
+
+func (search *TraceSpanSearch) SpanIDs() []string {
+	spanIDs := make([]string, len(search.Hits))
+	for i := range search.Hits {
+		spanIDs[i] = search.Hits[i].SpanID
+	}
+	return spanIDs
+}
+
 // overviewCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
 type overviewCursor struct {
 	List   string `json:"list"`
 	Offset int    `json:"offset"`
+}
+
+// spanListCursor is an offset into every span, or the last span of a page of matches.
+type spanListCursor struct {
+	Offset int           `json:"offset,omitempty"`
+	After  *ThreadCursor `json:"after,omitempty"`
 }
 
 // decodeCursor rejects a field the cursor does not have, so a cursor of another route is not accepted.

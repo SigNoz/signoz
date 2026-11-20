@@ -348,6 +348,55 @@ func (m *module) GetTraceSpan(ctx context.Context, orgID valuer.UUID, traceID st
 	return detail, nil
 }
 
+// ListTraceSpans returns a page of the spans matching a search, or without one of every span.
+func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanListQuery) (*spantypes.TraceSpanList, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	if query.Search == "" {
+		skeleton, err := m.loadSkeleton(ctx, orgID, traceID, bounds, false, false)
+		if err != nil {
+			return nil, err
+		}
+		if query.Under == "" {
+			return skeleton.SpanPage(nil, query.Offset, query.Limit), nil
+		}
+		root, ok := skeleton.Index(query.Under)
+		if !ok {
+			return nil, errors.NewNotFoundf(spantypes.ErrCodeInspectSpanNotFound, "span %s not found in trace %s", query.Under, traceID)
+		}
+		return skeleton.SpanPage(&root, query.Offset, query.Limit), nil
+	}
+
+	// The tree gives each match its place; the search and the matched spans' own data load beside it.
+	var (
+		skeleton *spantypes.TraceSkeleton
+		search   *spantypes.TraceSpanSearch
+		spans    []spantypes.StorableSpan
+	)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		var err error
+		skeleton, err = m.loadSkeleton(groupCtx, orgID, traceID, bounds, false, false)
+		return err
+	})
+	group.Go(func() error {
+		var err error
+		search, err = m.store.SearchTraceSpans(groupCtx, orgID, traceID, bounds, &spantypes.SpansQuery{Search: query.Search, Limit: query.Limit, After: query.After})
+		if err != nil {
+			return err
+		}
+		spans, err = m.store.GetTraceSpansByIDs(groupCtx, traceID, bounds.Start, bounds.End, search.SpanIDs())
+		return err
+	})
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	return spantypes.NewTraceSpanList(skeleton, search, spans), nil
+}
+
 // getSpanPercentile places the span among those of the same name and service that started in the
 // hour before it. It reads across traces, so it is cut short and left out when slow or failing.
 func (m *module) getSpanPercentile(ctx context.Context, orgID valuer.UUID, span *spantypes.StorableSpan) *spantypes.TraceSpanPercentile {
