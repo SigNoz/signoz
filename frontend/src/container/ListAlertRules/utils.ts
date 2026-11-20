@@ -41,7 +41,7 @@ export const alertActionLogEvent = (
 const COLUMN_TO_SORT: Record<string, RuletypesListSortDTO> = {
 	state: RuletypesListSortDTO.state,
 	name: RuletypesListSortDTO.name,
-	severity: RuletypesListSortDTO.severity,
+	thresholds: RuletypesListSortDTO.thresholds,
 	createdAt: RuletypesListSortDTO.created_at,
 	updatedAt: RuletypesListSortDTO.updated_at,
 };

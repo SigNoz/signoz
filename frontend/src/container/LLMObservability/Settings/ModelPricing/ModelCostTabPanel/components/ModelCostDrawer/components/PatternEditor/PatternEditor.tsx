@@ -13,7 +13,7 @@ interface PatternEditorProps {
 	onChange: (patterns: string[]) => void;
 }
 
-// Model-name prefix patterns as removable chips + an add input.
+// Model-name patterns as removable chips + an add input.
 function PatternEditor({
 	patterns,
 	isReadOnly,
@@ -37,12 +37,7 @@ function PatternEditor({
 
 	return (
 		<div className={styles.drawerSection}>
-			<span className={styles.fieldLabel}>
-				Model name patterns{' '}
-				<Typography.Text as="span" color="muted">
-					(prefix match)
-				</Typography.Text>
-			</span>
+			<span className={styles.fieldLabel}>Model name patterns</span>
 			<div className={styles.patternBox}>
 				{patterns.length > 0 && (
 					<div className={styles.patternChips}>
@@ -53,7 +48,7 @@ function PatternEditor({
 								color="secondary"
 								variant="outlined"
 							>
-								{pattern}*
+								{pattern}
 								{!isReadOnly && (
 									<button
 										type="button"
@@ -95,8 +90,9 @@ function PatternEditor({
 				)}
 			</div>
 			<Typography.Text as="p" size="small" color="muted">
-				Each pattern uses <strong>prefix matching</strong> against{' '}
-				<code>gen_ai.request.model</code>.
+				A pattern matches <code>gen_ai.request.model</code> exactly, plus its dated
+				or platform variants such as <code>-20260921</code>, <code>-latest</code> or{' '}
+				<code>@20260921</code>. End it with <code>*</code> to match any suffix.
 			</Typography.Text>
 		</div>
 	);

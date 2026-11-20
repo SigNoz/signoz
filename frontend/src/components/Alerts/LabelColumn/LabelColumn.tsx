@@ -15,12 +15,14 @@ export interface LabelColumnProps {
 	labels: string[];
 	color?: BadgeColorType;
 	value?: { [key: string]: string };
+	testId?: string;
 }
 
 function LabelColumn({
 	labels,
 	value,
 	color = 'primary',
+	testId = 'label-column',
 }: LabelColumnProps): JSX.Element {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const [visibleCount, setVisibleCount] = useState(labels.length);
@@ -56,11 +58,7 @@ function LabelColumn({
 	const remainingLabels = labels.slice(visibleCount);
 
 	return (
-		<div
-			ref={containerRef}
-			className={styles.labelColumn}
-			data-testid="label-column"
-		>
+		<div ref={containerRef} className={styles.labelColumn} data-testid={testId}>
 			{labels.map((label, index) => (
 				<LabelTag
 					key={label}

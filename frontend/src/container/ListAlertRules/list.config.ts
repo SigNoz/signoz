@@ -13,8 +13,8 @@ import type { AlertRule, RuleListFilter, RuleViewCtx } from './types';
 export const RULES_DSL_GRAMMAR = {
 	fields: [
 		{ key: 'name', type: 'string' },
-		// Aliases labels.severity, so it takes the label operators.
-		{ key: 'severity', type: 'dynamic' },
+		// Matches the rule's threshold names; a same-named label is `labels.thresholds`.
+		{ key: 'thresholds', type: 'string' },
 		{
 			key: 'alert_type',
 			type: 'enum',

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import UnAuthorized from 'assets/UnAuthorized';
 import { Container } from 'components/NotFound/styles';

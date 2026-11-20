@@ -1,8 +1,46 @@
+@use '../_selection' as *;
+
 .conversation {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	overflow: hidden;
+	@include selection;
+
+	// The full page sits the thread in a faint pane whose bottom edge runs behind the input.
+	&.fullPage {
+		position: relative;
+		// Lets the pane sit behind the thread without dropping under the page.
+		isolation: isolate;
+		container-type: inline-size;
+		// Shared by the thread and the input: 768px on laptops, wider on big screens.
+		--noz-page-column: clamp(768px, 70cqi, 1040px);
+		padding: calc(var(--spacing-6) + 1px) calc(var(--spacing-6) + 1px) 0 1px;
+
+		&::before {
+			content: '';
+			position: absolute;
+			z-index: -1;
+			inset: var(--spacing-6) var(--spacing-6) var(--spacing-16) 0;
+			border: 1px solid var(--l2-border);
+			border-radius: var(--radius-3);
+			background: var(--l2-background-60);
+			opacity: 0.4;
+			pointer-events: none;
+		}
+
+		// Fades the pane's foot into the page on either side of the input.
+		&::after {
+			content: '';
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			left: 0;
+			height: calc(var(--spacing-20) + var(--spacing-3));
+			background: linear-gradient(to bottom, transparent, var(--l1-background));
+			pointer-events: none;
+		}
+	}
 }
 
 .loading {
@@ -37,6 +75,15 @@
 		padding: 0;
 		// Same colour as the panel's outline.
 		border-top-color: var(--l2-border);
+	}
+
+	&.fullPage {
+		position: relative;
+		z-index: 1;
+		width: min(var(--noz-page-column), 100%);
+		margin: 0 auto;
+		padding: 0 0 var(--spacing-6);
+		border-top: none;
 	}
 }
 

@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
-import { Select, Space } from 'antd';
+import { Select } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';

@@ -17,12 +17,14 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import {
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	attributeKeysFor,
-	attributeKeysResponse,
 	attributeValuesFor,
-	attributeValuesResponse,
 	dependencyGraphResponse,
 	MAX_DEPENDENCIES,
 	RESOURCE_FILTERS,
@@ -88,7 +90,7 @@ export const serviceMapMocks = defineStoryMocks({
 		resourceAttributes: toggleControl('Resource attributes ingested', {
 			group: FILTERS,
 			description:
-				'Off answers both autocomplete endpoints with nothing, which is what the filter reports as no resource attributes available.',
+				'Off answers both fields endpoints with nothing, which is what the filter reports as no resource attributes available.',
 			value: true,
 		}),
 	},
@@ -107,9 +109,9 @@ export const serviceMapMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_keys',
+			'http://localhost/api/v1/fields/keys',
 			response.json((req) =>
-				attributeKeysResponse(
+				fieldKeysResponse(
 					values.resourceAttributes
 						? attributeKeysFor(req.url.searchParams.get('searchText'))
 						: [],
@@ -118,12 +120,12 @@ export const serviceMapMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
+			'http://localhost/api/v1/fields/values',
 			response.json((req) =>
-				attributeValuesResponse(
+				fieldValuesResponse(
 					values.resourceAttributes
 						? attributeValuesFor(
-								req.url.searchParams.get('attributeKey'),
+								req.url.searchParams.get('name'),
 								values.environments,
 							)
 						: [],
