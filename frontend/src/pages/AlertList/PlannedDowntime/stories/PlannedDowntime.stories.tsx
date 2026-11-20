@@ -55,15 +55,7 @@ export const NoDowntimes: Story = {
  * downtime is locked, and a row's Edit and Delete are locked in its menu.
  */
 export const Viewer: Story = {
-	args: {
-		access: 'viewer',
-		permissions: [
-			'list:planned-maintenance',
-			'read:planned-maintenance',
-			'list:rule',
-			'read:rule',
-		],
-	},
+	args: { access: 'viewer' },
 };
 
 /** A downtime opened from its row: the form prefilled with its window and rules. */

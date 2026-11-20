@@ -8,7 +8,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	type AlertRulesArgs,
-	hasRowMenu,
+	canRunRowAction,
 	listedRules,
 	listsSavedViews,
 	runRowAction,
@@ -96,7 +96,7 @@ export const openRowActions = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!hasRowMenu(args)) {
+	if (listedRules(args).length === 0) {
 		return;
 	}
 
@@ -114,7 +114,7 @@ export const openDisabledRuleActions = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!hasRowMenu(args)) {
+	if (listedRules(args).length === 0) {
 		return;
 	}
 
@@ -178,11 +178,11 @@ export const toggleAlert = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!hasRowMenu(args)) {
+	if (!canRunRowAction(args, 'toggle')) {
 		return;
 	}
 
-	await runRowAction(canvasElement, /^(enable|disable)$/i);
+	await runRowAction(canvasElement, 'toggle');
 	if (args.toggleState === 'success') {
 		await expect(
 			await screen.findByText(/alert (enabled|disabled)/i),
@@ -194,11 +194,11 @@ export const cloneAlert = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!hasRowMenu(args)) {
+	if (!canRunRowAction(args, 'clone')) {
 		return;
 	}
 
-	await runRowAction(canvasElement, /^clone$/i);
+	await runRowAction(canvasElement, 'clone');
 	if (args.cloneState === 'success') {
 		await expect(
 			await screen.findByText(/alert cloned successfully/i),
@@ -210,11 +210,11 @@ export const deleteAlert = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!hasRowMenu(args)) {
+	if (!canRunRowAction(args, 'delete')) {
 		return;
 	}
 
-	await runRowAction(canvasElement, /^delete$/i);
+	await runRowAction(canvasElement, 'delete');
 	if (args.deleteState === 'success') {
 		await expect(
 			await screen.findByText(/alert deleted successfully/i),

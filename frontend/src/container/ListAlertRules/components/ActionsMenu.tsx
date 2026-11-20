@@ -4,12 +4,6 @@ import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
-import {
-	buildRuleDeletePermission,
-	buildRuleReadPermission,
-	buildRuleUpdatePermission,
-	RuleCreatePermission,
-} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -26,6 +20,7 @@ import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';
 import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
+import { getRuleActionChecks } from './ruleActionChecks';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
@@ -34,18 +29,7 @@ interface ActionsMenuProps {
 
 function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const queryClient = useQueryClient();
-	const { updatePermission, deletePermission, editChecks, cloneChecks } =
-		useMemo(() => {
-			const id = rule.id;
-			const read = buildRuleReadPermission(id);
-			const update = buildRuleUpdatePermission(id);
-			return {
-				updatePermission: update,
-				deletePermission: buildRuleDeletePermission(id),
-				editChecks: [read, update],
-				cloneChecks: [read, RuleCreatePermission],
-			};
-		}, [rule.id]);
+	const checks = useMemo(() => getRuleActionChecks(rule.id), [rule.id]);
 
 	const handleToggle = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
@@ -136,28 +120,28 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 				type: 'item',
 				value: 'toggle',
 				label: rule.disabled ? 'Enable' : 'Disable',
-				checks: [updatePermission],
+				checks: checks.toggle,
 				onClick: handleToggle,
 			},
 			{
 				type: 'item',
 				value: 'edit',
 				label: 'Edit',
-				checks: editChecks,
+				checks: checks.edit,
 				onClick: handleEdit,
 			},
 			{
 				type: 'item',
 				value: 'edit-new-tab',
 				label: 'Edit in New Tab',
-				checks: editChecks,
+				checks: checks.edit,
 				onClick: handleEditNewTab,
 			},
 			{
 				type: 'item',
 				value: 'clone',
 				label: 'Clone',
-				checks: cloneChecks,
+				checks: checks.clone,
 				onClick: handleClone,
 			},
 			{ type: 'separator', value: 'before-delete' },
@@ -165,17 +149,14 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 				type: 'item',
 				value: 'delete',
 				label: 'Delete',
-				checks: [deletePermission],
+				checks: checks.delete,
 				danger: true,
 				onClick: handleDelete,
 			},
 		],
 		[
 			rule.disabled,
-			updatePermission,
-			deletePermission,
-			editChecks,
-			cloneChecks,
+			checks,
 			handleToggle,
 			handleEdit,
 			handleEditNewTab,
