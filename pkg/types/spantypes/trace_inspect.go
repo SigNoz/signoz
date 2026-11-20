@@ -10,12 +10,6 @@ var (
 	UnmarkedFailureExceptionEvent = UnmarkedFailureReason{valuer.NewString("exception_event")}
 )
 
-var (
-	InspectTypeOverview = InspectType{valuer.NewString("overview")}
-	InspectTypeSpan     = InspectType{valuer.NewString("span")}
-	InspectTypeFind     = InspectType{valuer.NewString("find")}
-)
-
 // UnmarkedFailureReason says why a span without the error flag is listed as a failure.
 type UnmarkedFailureReason struct{ valuer.String }
 
@@ -23,21 +17,20 @@ func (UnmarkedFailureReason) Enum() []any {
 	return []any{UnmarkedFailureHTTP4xx, UnmarkedFailureGRPCStatus, UnmarkedFailureExceptionEvent}
 }
 
-// InspectType names the part of an inspect response that is filled.
-type InspectType struct{ valuer.String }
-
-func (InspectType) Enum() []any {
-	return []any{InspectTypeOverview, InspectTypeSpan, InspectTypeFind}
+type InspectTraceParams struct {
+	Cursor string `query:"cursor" description:"The nextCursor of one list of the overview; returns the next page of that list and nothing else."`
 }
 
-type InspectTraceParams struct {
-	SpanID       string   `query:"spanId" description:"Returns this span in full with the spans around it. Cannot be combined with search."`
-	Search       string   `query:"search" description:"Returns the spans that match, earliest first: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attribute values and events, ignoring case."`
-	Depth        int      `query:"depth" description:"With spanId, the number of levels of ancestors and of descendants returned, 1 to 10; 2 when not given. The root span is always returned."`
-	AllSpans     bool     `query:"allSpans" description:"Returns a different response: every span of the trace as a short line, in tree order, or with spanId that span and every span below it. Cannot be combined with search or depth."`
-	SelectFields []string `query:"selectFields" description:"With spanId, attribute names returned without the 500 character cut; the record then holds only these attributes."`
-	Limit        int      `query:"limit" description:"Page size for search and for allSpans, at most 1000; when not given, 20 with search and 400 with allSpans. A page holds fewer spans when it would pass the 50,000 character limit."`
-	Cursor       string   `query:"cursor" description:"The nextCursor of an earlier response to the same request; returns the next page."`
+type InspectTraceSpanParams struct {
+	Depth        int      `query:"depth" description:"The number of levels of ancestors and of descendants returned, 1 to 10; 2 when not given. The root span is always returned."`
+	SelectFields []string `query:"selectFields" description:"Attribute names returned without the 500 character cut; the record then holds only these attributes."`
+}
+
+type InspectTraceSpansParams struct {
+	Search string `query:"search" description:"Returns the spans that match, earliest first: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attributes, resource attributes and events, ignoring case. Without it every span is returned, in tree order."`
+	Under  string `query:"under" description:"A span ID; returns that span and every span below it. Cannot be combined with search."`
+	Limit  int    `query:"limit" description:"Page size, at most 1000; when not given, 20 with search and 400 without. A page holds fewer spans when it would pass the response size limit."`
+	Cursor string `query:"cursor" description:"The nextCursor of an earlier response to the same request; returns the next page."`
 }
 
 // SpanSummary is the short form of a span: enough to place it in the trace and decide whether to open it.
@@ -227,17 +220,11 @@ type TraceSpanMatch struct {
 	Matches []SpanTextMatch `json:"matches" required:"true" nullable:"false"`
 }
 
+// TraceSpanList holds the spans matching a search, or every span when there is none.
 type TraceSpanList struct {
 	Total      uint64           `json:"total" required:"true"`
 	Items      []TraceSpanMatch `json:"items" required:"true" nullable:"false"`
 	NextCursor string           `json:"nextCursor,omitempty"`
-}
-
-// GettableTraceInspection holds one part, named by Type.
-type GettableTraceInspection struct {
-	Type     InspectType      `json:"type" required:"true"`
-	Overview *TraceOverview   `json:"overview,omitempty"`
-	Span     *TraceSpanDetail `json:"span,omitempty"`
-	// Find holds the spans matching search, or every span for allSpans.
-	Find *TraceSpanList `json:"find,omitempty"`
+	// Warnings says why a search may have matched less than expected, such as a key that is not known.
+	Warnings []string `json:"warnings,omitempty" nullable:"false"`
 }
