@@ -35,13 +35,15 @@ function dispatch(
 }
 
 /**
- * Moves the pointer across the map until a tooltip opens, and returns where.
- * The map is a canvas, so there is no element to hover by test id. Each move
- * waits a frame for React to render; this must not run inside `waitFor`, whose
- * callback re-runs on every DOM change the moves themselves cause.
+ * Moves the pointer across the map until `done` accepts an open tooltip, and
+ * returns where. The map is a canvas, so there is no element to hover by test
+ * id. Each move waits a frame for React to render; this must not run inside
+ * `waitFor`, whose callback re-runs on every DOM change the moves themselves
+ * cause.
  */
-export async function hoverUntilTooltip(
+export async function hoverUntil(
 	canvasElement: HTMLElement,
+	done: (tooltip: HTMLElement) => boolean,
 ): Promise<[number, number]> {
 	await waitFor(() =>
 		expect(canvasElement.querySelector('.ol-viewport canvas')).not.toBeNull(),
@@ -56,13 +58,19 @@ export async function hoverUntilTooltip(
 			];
 			dispatch(viewport, 'pointermove', ...point);
 			await nextFrame();
-			if (screen.queryByTestId('geo-map-tooltip')) {
+			const tooltip = screen.queryByTestId('geo-map-tooltip');
+			if (tooltip && done(tooltip)) {
 				return point;
 			}
 		}
 	}
-	throw new Error('no shape with data under the pointer');
+	throw new Error('no shape under the pointer satisfied the check');
 }
+
+/** Moves the pointer across the map until a tooltip opens, and returns where. */
+export const hoverUntilTooltip = (
+	canvasElement: HTMLElement,
+): Promise<[number, number]> => hoverUntil(canvasElement, () => true);
 
 /**
  * A press and release without movement, which OpenLayers reports as a click,

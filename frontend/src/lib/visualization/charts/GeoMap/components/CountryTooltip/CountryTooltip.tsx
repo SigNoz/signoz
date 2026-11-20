@@ -36,6 +36,7 @@ export default function CountryTooltip({
 					<span className={styles.place}>
 						<span
 							className={styles.marker}
+							data-testid="geo-map-tooltip-marker"
 							style={{
 								borderColor: color ?? undefined,
 								background: color ?? undefined,
@@ -45,7 +46,11 @@ export default function CountryTooltip({
 							{name}
 						</span>
 					</span>
-					{!place && <span className={styles.code}>{datum.code}</span>}
+					{!place && (
+						<span className={styles.code} data-testid="geo-map-tooltip-code">
+							{datum.code}
+						</span>
+					)}
 				</div>
 				{place && <span className={styles.subtitle}>{place}</span>}
 			</div>
