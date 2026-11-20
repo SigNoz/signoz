@@ -395,6 +395,62 @@ def test_no_warnings_for_meter_query(
     assert "warning" not in response.json()["data"]
 
 
+@pytest.mark.parametrize("meter_first", [False, True], ids=["logs_then_meter", "meter_then_logs"])
+def test_meter_query_keeps_step_warnings_of_other_queries(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_meter_samples: Callable[[list[MeterSample]], None],
+    meter_first: bool,
+) -> None:
+    now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
+    metric_name = "signoz.meter.log.size"
+    insert_meter_samples(
+        make_meter_samples(
+            metric_name,
+            {"service": "test-service"},
+            now,
+            count=60,
+            temporality="Delta",
+            type_="Sum",
+            is_monotonic=True,
+        )
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    logs_query = BuilderQuery(
+        name="A",
+        signal="logs",
+        step_interval=1,
+        aggregations=[Aggregation(expression="count()")],
+    ).to_dict()
+    meter_query = BuilderQuery(
+        name="B",
+        signal="metrics",
+        source="meter",
+        step_interval=600,
+        aggregations=[MetricAggregation(metric_name=metric_name, time_aggregation="sum", space_aggregation="sum")],
+    ).to_dict()
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(minutes=20)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type=RequestType.TIME_SERIES,
+        queries=[meter_query, logs_query] if meter_first else [logs_query, meter_query],
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+    warning = response.json()["data"].get("warning", None)
+    assert warning is not None
+    assert warning["warnings"] == [
+        {"message": "Query A is requesting aggregation interval 1 seconds, which is smaller than the minimum allowed interval of 5 seconds for selected time range. Using the minimum instead"},
+    ]
+
+
 @pytest.mark.parametrize(
     "request_type,query_args,expected_warnings",
     [
