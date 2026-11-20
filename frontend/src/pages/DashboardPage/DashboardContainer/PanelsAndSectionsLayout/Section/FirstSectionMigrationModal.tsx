@@ -29,11 +29,18 @@ function FirstSectionMigrationModal({
 			okButtonProps={{ disabled: isSaving, 'data-testid': 'confirm-migration' }}
 			destroyOnClose
 		>
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				This dashboard&apos;s panels are currently free-flowing. Adding a section
 				will move the existing panels into their own section, and a new empty
 				section will be added below. You can rename sections afterwards.
-			</Typography.Text>
+			</Typography>
 		</Modal>
 	);
 }

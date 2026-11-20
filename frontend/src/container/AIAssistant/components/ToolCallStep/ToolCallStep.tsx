@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import cx from 'classnames';
-import { ChevronDown, ChevronRight, LoaderCircle } from '@signozhq/icons';
 
 import { StreamingToolCall } from '../../types';
+import ActivityStep from '../ActivityStep/ActivityStep';
 
 import styles from './ToolCallStep.module.scss';
 
 interface ToolCallStepProps {
 	toolCall: StreamingToolCall;
+	/** Still the newest step of a running reply, even once its own call is done. */
+	isLive?: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ export function getToolDisplayLabel(toolCall: StreamingToolCall): string {
 		.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Body of a tool-call step — extracted so ActivityGroup can render it directly. */
+/** The input and output of a tool call. */
 export function ToolCallContent({
 	toolCall,
 }: {
@@ -55,30 +56,21 @@ export function ToolCallContent({
 	);
 }
 
-/** Collapsible tool-call row — chevron + label, in/out detail in the body. */
+/** A tool call on the activity timeline; its input and output open from the title. */
 export default function ToolCallStep({
 	toolCall,
+	isLive = false,
 }: ToolCallStepProps): JSX.Element {
 	const [expanded, setExpanded] = useState(false);
-	const { done } = toolCall;
-	const label = getToolDisplayLabel(toolCall);
-
-	const toggle = (): void => setExpanded((v) => !v);
 
 	return (
-		<div className={cx(styles.row, { [styles.running]: !done })}>
-			<div className={styles.header} onClick={toggle}>
-				{!done ? (
-					<LoaderCircle size={12} className={cx(styles.chevron, styles.spin)} />
-				) : expanded ? (
-					<ChevronDown size={12} className={styles.chevron} />
-				) : (
-					<ChevronRight size={12} className={styles.chevron} />
-				)}
-				<span className={styles.label}>{label}</span>
-			</div>
-
+		<ActivityStep
+			title={getToolDisplayLabel(toolCall)}
+			isLive={isLive || !toolCall.done}
+			expanded={expanded}
+			onToggle={(): void => setExpanded((v) => !v)}
+		>
 			{expanded && <ToolCallContent toolCall={toolCall} />}
-		</div>
+		</ActivityStep>
 	);
 }

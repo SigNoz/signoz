@@ -345,7 +345,7 @@ export function apmDriver(page: Page): Apm {
 		topLevelOpsTable: () => page.getByTestId('top-level-operations-table'),
 
 		servicesBreadcrumb: () =>
-			page.locator('.top-level-operations-header').getByRole('link', {
+			page.getByRole('heading', { level: 5 }).getByRole('link', {
 				name: 'services',
 			}),
 

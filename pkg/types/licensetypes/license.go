@@ -119,21 +119,25 @@ func GetActiveLicenseFromStorableLicenses(storableLicenses []*StorableLicense, o
 
 		if activeLicense == nil &&
 			(license.ValidFrom != 0) &&
-			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			!license.IsExpired() {
 			activeLicense = license
 		}
 		if activeLicense != nil &&
 			license.ValidFrom > activeLicense.ValidFrom &&
-			(license.ValidUntil == -1 || license.ValidUntil > time.Now().Unix()) {
+			!license.IsExpired() {
 			activeLicense = license
 		}
 	}
 
 	if activeLicense == nil {
-		return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no active license found for the organization %s", organizationID.StringValue())
+		return nil, ErrActiveLicenseNotFound(organizationID)
 	}
 
 	return activeLicense, nil
+}
+
+func ErrActiveLicenseNotFound(organizationID valuer.UUID) error {
+	return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "no active license found for the organization %s", organizationID.StringValue())
 }
 
 func NewLicense(zeusLicense *zeustypes.License, organizationID valuer.UUID) (*License, error) {
@@ -241,6 +245,11 @@ func NewStatsFromLicense(license *License) map[string]any {
 		"license.state.name":      strings.ToUpper(license.State.StringValue()),
 		"license.free_until.time": license.FreeUntil.UTC(),
 	}
+}
+
+// IsExpired reports whether the license's validity has ended. A ValidUntil of -1 means the license never expires.
+func (license *License) IsExpired() bool {
+	return license.ValidUntil != -1 && license.ValidUntil <= time.Now().Unix()
 }
 
 func (license *License) UpdateFeatures(features []*Feature) {

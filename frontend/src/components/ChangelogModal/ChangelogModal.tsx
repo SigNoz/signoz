@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
-import { Button, Flex, Modal } from 'antd';
+import { Button, Modal } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
@@ -97,6 +98,10 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 		}
 	};
 
+	// TODO: antd stacks at 1000, under `@signozhq/ui` dialogs (1001). It opens on
+	// its own a second after load, so a dialog opened from a deep link
+	// (`?add-key`, `?invite=true`) covers it. Moving to the `@signozhq/ui` Dialog
+	// fixes it.
 	return (
 		<Modal
 			className={cx('changelog-modal')}

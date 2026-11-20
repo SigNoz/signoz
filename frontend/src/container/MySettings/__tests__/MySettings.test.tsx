@@ -16,7 +16,7 @@ import {
 	within,
 } from 'tests/test-utils';
 import APIError from 'types/api/error';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 jest.mock('hooks/useActiveLicenseKey/useActiveLicenseKey');
 const mockUseActiveLicenseKey = useActiveLicenseKey as jest.MockedFunction<
@@ -29,11 +29,11 @@ const editUserFn = jest.fn();
 const updateMyPasswordFn = jest.fn();
 const showErrorModalFn = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -166,6 +166,13 @@ describe('MySettings Flows', () => {
 
 			expect(nameTextbox).toBeInTheDocument();
 			expect(modalUpdateNameButton).toBeInTheDocument();
+		});
+
+		it('Should show the email and not the role', () => {
+			expect(screen.getByTestId('user-info-email')).toHaveTextContent(
+				'does-not-matter@signoz.io',
+			);
+			expect(screen.queryByText('admin')).not.toBeInTheDocument();
 		});
 
 		it('Should update the name on clicking Update button', async () => {
@@ -462,5 +469,36 @@ describe('MySettings Flows', () => {
 				});
 			});
 		});
+	});
+});
+
+describe('MySettings name update and app context', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		editUserFn.mockResolvedValue({});
+		mockUseActiveLicenseKey.mockReturnValue({
+			licenseKey: 'test-key',
+			isLoading: false,
+		});
+	});
+
+	it('updates the user in the app context with the new name', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const updateUser = jest.fn();
+		render(<MySettingsContainer />, undefined, {
+			appContextOverrides: { updateUser },
+		});
+
+		await user.click(screen.getByTestId('update-name-open-btn'));
+		const nameInput = screen.getByTestId('update-name-input');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+		await user.click(screen.getByTestId(UPDATE_NAME_BUTTON_TEST_ID));
+
+		await waitFor(() =>
+			expect(updateUser).toHaveBeenCalledWith(
+				expect.objectContaining({ displayName: 'New Name' }),
+			),
+		);
 	});
 });

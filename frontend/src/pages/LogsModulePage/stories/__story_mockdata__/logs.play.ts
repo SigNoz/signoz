@@ -11,6 +11,11 @@ import {
 	typeFilter,
 	typeFilterWithCaretBack,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
+import {
+	nodeWidgetInfo,
+	podWidgetInfo,
+} from 'container/LogDetailedView/InfraMetrics/constants';
+import { FontSize } from 'container/OptionsMenu/types';
 import { QuickFilterManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
@@ -32,12 +37,28 @@ const VALUE_SUGGESTIONS = {
 	error: 'Error loading suggestions',
 } satisfies Record<LogsArgs['filterValues'], string>;
 
+/** Each row takes a severity, so no severity means no row. */
+const hasLogRows = (args: LogsArgs, count = 1): boolean =>
+	args.view === 'list' &&
+	args.dataState === 'loaded' &&
+	args.logs >= count &&
+	args.severities.length > 0;
+
 /** The rows a play opens exist only in the list view's table format. */
 const listsLogRows = (args: LogsArgs, count = 1): boolean =>
-	args.view === 'list' &&
-	args.format === 'table' &&
-	args.dataState === 'loaded' &&
-	args.logs >= count;
+	args.format === 'table' && hasLogRows(args, count);
+
+/** The chart the Metrics tab opens on: a log naming a node opens on the node's. */
+const infraChartTitle = (args: LogsArgs): string | undefined => {
+	switch (args.infraResource) {
+		case 'pod':
+			return podWidgetInfo[0].title;
+		case 'node':
+			return nodeWidgetInfo[0].title;
+		default:
+			return undefined;
+	}
+};
 
 /** The settings control stays enabled when the check itself fails. */
 const canManageQuickFilters = (args: LogsArgs): boolean =>
@@ -45,11 +66,14 @@ const canManageQuickFilters = (args: LogsArgs): boolean =>
 	(args.authzState === 'error' ||
 		grantsAll(args, ...QuickFilterManagePermissions));
 
-/** Runs `drive` once the filter has its keys, which come with the page's data. */
+/**
+ * Runs `drive` once the filter has its keys, which come with the page's data. A
+ * linked filter pre-fills the editor, so typed text would land after it.
+ */
 const onFilter =
 	(drive: (canvasElement: HTMLElement, args: LogsArgs) => Promise<void>) =>
 	async ({ canvasElement, args }: PlayContext): Promise<void> => {
-		if (args.dataState === 'loaded') {
+		if (args.dataState === 'loaded' && args.urlFilter === 'none') {
 			await drive(canvasElement, args);
 		}
 	};
@@ -120,6 +144,158 @@ export const openLogDetailsMenu = async ({
 	await openFirstLog(canvasElement);
 	await userEvent.click(await screen.findByTestId('log-details-header-menu'));
 	await screen.findByText('Copy link to log');
+};
+
+/** The format options sit in the list view's toolbar. */
+export const openFormatMenu = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.view !== 'list') {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'periscope-btn-format-options',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByTestId('max-lines-per-row-field', undefined, untilLoaded);
+};
+
+export const openFormatFontSize = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (context.args.view !== 'list') {
+		return;
+	}
+
+	await openFormatMenu(context);
+	await userEvent.click(await screen.findByTestId('font-size-select'));
+	await screen.findByTestId(`font-size-option-${FontSize.LARGE}`);
+};
+
+/** Edit columns is offered only for the table format, the one with columns. */
+export const openEditColumns = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.view !== 'list' || args.format !== 'table') {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'periscope-btn-format-options',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await userEvent.click(await screen.findByTestId('periscope-btn-edit-columns'));
+	await screen.findByPlaceholderText(
+		'Search for a field...',
+		undefined,
+		untilLoaded,
+	);
+};
+
+/**
+ * The list exports from the backend and offers rows and columns; the table and
+ * timeseries export the response they already hold, so they offer only a format.
+ */
+export const openDownloadMenu = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.dataState !== 'loaded') {
+		return;
+	}
+
+	if (args.view === 'list') {
+		await userEvent.click(
+			await within(canvasElement).findByTestId(
+				'periscope-btn-download-logs',
+				undefined,
+				untilLoaded,
+			),
+		);
+		await screen.findByText('Number of Rows');
+		return;
+	}
+
+	if (args.logs === 0) {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByTestId(
+			'export-menu-logs',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await screen.findByText('FORMAT');
+};
+
+export const openLogContextFilters = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!listsLogRows(context.args)) {
+		return;
+	}
+
+	await openLogContext(context);
+	await userEvent.click(
+		await screen.findByRole('button', { name: 'Show Filters' }),
+	);
+	await waitFor(() => {
+		if (!document.querySelector('.log-detail-drawer-query-container')) {
+			throw new Error('Context filters did not open');
+		}
+	}, untilLoaded);
+};
+
+export const openLogMetrics = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsLogRows(args)) {
+		return;
+	}
+
+	await openFirstLog(canvasElement);
+	const drawer = within(await screen.findByTestId('log-detail-drawer'));
+	await userEvent.click(await drawer.findByText('Metrics'));
+
+	const chartTitle = infraChartTitle(args);
+
+	if (chartTitle) {
+		await screen.findByText(chartTitle, undefined, untilLoaded);
+		return;
+	}
+
+	await screen.findByText(/No data available/, undefined, untilLoaded);
+};
+
+/** The cancel control only exists while the query is in flight. */
+export const cancelQuery = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.dataState !== 'loading') {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByRole(
+			'button',
+			{ name: /cancel/i },
+			untilLoaded,
+		),
+	);
+	await screen.findByText(/query cancelled/i, undefined, untilLoaded);
 };
 
 export const openQuickFiltersSettings = async ({
@@ -264,22 +440,31 @@ export const suggestRecentSearches = onFilter(async (canvasElement, args) => {
 	);
 });
 
+/** Row actions render on hover, in every format. */
+const ROW_TEST_IDS: Record<LogsArgs['format'], RegExp> = {
+	table: /^logs-table-row-/,
+	list: /^logs-list-row-/,
+	raw: /^logs-raw-row-/,
+};
+
 export const copyLogLinkFromRow = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!listsLogRows(args)) {
+	if (!hasLogRows(args)) {
 		return;
 	}
 
 	const [row] = await within(canvasElement).findAllByTestId(
-		/^logs-table-row-/,
+		ROW_TEST_IDS[args.format],
 		undefined,
 		untilLoaded,
 	);
-	const [, timestamp] = within(row).getAllByRole('cell');
+	// The table hangs its hover off the cells; the list off the row itself.
+	const target =
+		args.format === 'table' ? within(row).getAllByRole('cell')[1] : row;
 
-	await userEvent.hover(timestamp);
+	await userEvent.hover(target);
 	await userEvent.click(
 		await waitFor(() => {
 			const button = canvasElement.querySelector<HTMLElement>('.copy-log-btn');

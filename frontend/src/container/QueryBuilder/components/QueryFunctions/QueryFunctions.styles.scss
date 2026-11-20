@@ -29,7 +29,7 @@
 
 		background-color: var(
 			--query-builder-v2-background-color,
-			var(--l2-background)
+			var(--input-background)
 		) !important;
 		margin-left: -1px;
 
@@ -90,7 +90,10 @@
 
 			.ant-select-selector {
 				border: 1px solid var(--query-builder-v2-border-color, none);
-				background: var(--query-builder-v2-background-color, var(--l3-background));
+				background: var(
+					--query-builder-v2-background-color,
+					var(--input-background)
+				);
 			}
 
 			&.showInput {
@@ -104,7 +107,10 @@
 		.query-function-value {
 			width: 70px;
 			border-left: 0;
-			background: var(--query-builder-v2-background-color, var(--l2-background));
+			background: var(
+				--query-builder-v2-background-color,
+				var(--input-background)
+			);
 			border-radius: 0;
 			border: 1px solid transparent;
 			border-top: 1px solid var(--query-builder-v2-border-color, var(--l2-border));

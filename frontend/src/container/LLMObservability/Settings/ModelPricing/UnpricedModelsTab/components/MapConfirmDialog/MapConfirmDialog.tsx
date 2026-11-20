@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight, Check, Link2, X } from '@signozhq/icons';
 import { startCase } from 'lodash-es';
@@ -50,7 +50,7 @@ function MapConfirmDialog({
 	];
 
 	const footer = (
-		<div className={styles.footer}>
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -74,53 +74,85 @@ function MapConfirmDialog({
 			>
 				Map model
 			</Button>
-		</div>
+		</>
 	);
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onCancel();
-				}
-			}}
+			onClose={onCancel}
 			width="base"
 			title="Map to billing model"
 			titleIcon={<Link2 size={16} />}
-			footer={footer}
+			footerSuffix={footer}
 			testId="unpriced-map-confirm-dialog"
 		>
 			<div className={styles.body}>
-				<Typography.Text as="p" size="small" color="muted">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					display="inline"
+					textOverflow="wrap"
+				>
 					Spans from this model will be priced using the selected billing model.
-				</Typography.Text>
+				</Typography>
 
 				<div className={styles.mapping}>
-					<Typography.Text
-						weight="semibold"
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
 						testId={`unpriced-map-confirm-item-${model.modelName}`}
 					>
 						{model.modelName}
-					</Typography.Text>
+					</Typography>
 					<ArrowRight size={14} className={styles.arrow} />
-					<Typography.Text weight="semibold">{getCanonicalId(rule)}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{getCanonicalId(rule)}
+					</Typography>
 				</div>
 
 				<div className={styles.pricing}>
 					{pricingRows.map((row) => (
 						<div className={styles.pricingRow} key={row.key}>
-							<Typography.Text as="span" size="small" color="muted">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{row.label}
-							</Typography.Text>
-							<Typography.Text as="span" size="small" weight="semibold">
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatPricePerMillion(row.value)}
-							</Typography.Text>
+							</Typography>
 						</div>
 					))}
 				</div>
 			</div>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

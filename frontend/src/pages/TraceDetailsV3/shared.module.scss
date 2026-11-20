@@ -1,12 +1,11 @@
 .tooltipBody {
 	display: flex;
 	flex-direction: column;
-	letter-spacing: var(--paragraph-small-400-letter-spacing);
 	color: var(--l1-foreground-hover);
 }
 
 .tooltipTitle {
-	font-family: 'SF Mono', 'Geist Mono', monospace;
+	font-family: var(--code-base-400-font-family);
 	word-break: break-all;
 }
 

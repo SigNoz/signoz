@@ -14,15 +14,9 @@ import type {
 	GetQuickFilters200,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	type BaseAutocompleteData,
-	DataTypes,
-	type IQueryAutocompleteResponse,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { Exception, Order, OrderBy } from 'types/api/errors/getAll';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 
-import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 export interface ExceptionShape {
@@ -299,43 +293,43 @@ export const exceptionAttributeValuesResponse = (
 	};
 };
 
-const ATTRIBUTE_KEYS: BaseAutocompleteData[] = [
-	...QUICK_FILTERS.map(({ name, fieldDataType, fieldContext }) => ({
-		key: name,
-		dataType: fieldDataType === bool ? DataTypes.bool : DataTypes.String,
-		type: fieldContext === attribute ? 'tag' : String(fieldContext),
-	})),
-	{ key: 'service.namespace', dataType: DataTypes.String, type: 'resource' },
-	{ key: 'k8s.pod.name', dataType: DataTypes.String, type: 'resource' },
-	{ key: 'k8s.cluster.name', dataType: DataTypes.String, type: 'resource' },
-	{ key: 'cloud.region', dataType: DataTypes.String, type: 'resource' },
+const ATTRIBUTE_KEYS: TelemetrytypesTelemetryFieldKeyDTO[] = [
+	...QUICK_FILTERS,
+	{
+		name: 'service.namespace',
+		fieldDataType: stringType,
+		fieldContext: resource,
+	},
+	{ name: 'k8s.pod.name', fieldDataType: stringType, fieldContext: resource },
+	{
+		name: 'k8s.cluster.name',
+		fieldDataType: stringType,
+		fieldContext: resource,
+	},
+	{ name: 'cloud.region', fieldDataType: stringType, fieldContext: resource },
 ];
 
-export const exceptionAttributeKeysResponse = (
-	searchText: string | null,
-): { status: string; data: IQueryAutocompleteResponse } => {
-	const search = (searchText ?? '').toLowerCase();
-
-	return {
-		status: 'success',
-		data: {
-			attributeKeys: ATTRIBUTE_KEYS.filter(({ key }) =>
-				key.toLowerCase().includes(search),
-			),
-		},
-	};
-};
-
-/** The quick filter settings panel lists its "other filters" from `/fields/keys`. */
+/**
+ * The resource filter and the quick filter settings panel both list keys from
+ * `/fields/keys`; each key keeps its own context and data type.
+ */
 export const exceptionFieldKeysResponse = (
 	searchText: string | null,
 ): GetFieldsKeys200 => {
 	const search = (searchText ?? '').toLowerCase();
 
-	return fieldKeysResponse(
-		ATTRIBUTE_KEYS.map(({ key }) => key).filter((key) =>
-			key.toLowerCase().includes(search),
-		),
-		{ signal: TelemetrytypesSignalDTO.logs, fieldContext: resource },
-	);
+	return {
+		status: 'success',
+		data: {
+			complete: true,
+			keys: Object.fromEntries(
+				ATTRIBUTE_KEYS.filter(({ name }) =>
+					name.toLowerCase().includes(search),
+				).map((key) => [
+					key.name,
+					[{ ...key, signal: TelemetrytypesSignalDTO.traces }],
+				]),
+			),
+		},
+	};
 };

@@ -260,7 +260,16 @@ function StatusCodeBarCharts({
 		<div>
 			<Card bordered className="endpoint-details-card">
 				<div className="header">
-					<Typography.Text>Call response status</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Call response status
+					</Typography>
 					<Button.Group className="views-tabs">
 						<Button
 							value={0}

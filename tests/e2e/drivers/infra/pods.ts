@@ -18,6 +18,12 @@ const POD_MEMORY_METRIC = 'k8s.pod.memory.usage';
 
 const NAMESPACES = ['default', 'kube-system', 'signoz'];
 const PODS_PER_NAMESPACE = 2;
+
+/** One of the pods `seedPodMetricsViaSeeder` writes. */
+export const SAMPLE_POD = {
+	name: `${NAMESPACES[0]}-pod-0`,
+	namespace: NAMESPACES[0],
+};
 const POINTS_PER_POD = 4;
 const POINT_INTERVAL_MS = 60_000;
 

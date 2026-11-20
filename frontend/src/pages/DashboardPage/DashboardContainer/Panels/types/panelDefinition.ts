@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import type { StoreApi } from 'zustand';
 import {
 	type DashboardtypesPanelDTO,
 	type DashboardtypesPanelSpecDTO,
@@ -13,7 +14,7 @@ import type { SyncedQueryBuilderField } from 'components/QueryBuilderV2/queryBui
 import type {
 	PanelQueryCapabilities,
 	QueryBuilderFieldsConfig,
-	SupportedQueryModesKindMap,
+	SupportedQueryTypesKindMap,
 } from './panelCapabilities';
 import type {
 	BaseRendererProps,
@@ -99,8 +100,6 @@ export interface QueryEditorPaneProps {
 	panelDefinition: RenderableQueryPanelDefinition;
 	signal: TelemetrytypesSignalDTO;
 	isLoadingQueries: boolean;
-	/** Switch authoring tab (Query Builder / AI / ClickHouse / PromQL), owned by the host. */
-	onChangeQueryMode: (key: string) => void;
 	onStageRunQuery: () => void;
 	onCancelQuery: () => void;
 	/** Pin the tabs row to the pane top; the View modal opts out. */
@@ -108,6 +107,11 @@ export interface QueryEditorPaneProps {
 	spec: DashboardtypesPanelSpecDTO;
 	onChangeSpec: (spec: DashboardtypesPanelSpecDTO) => void;
 }
+
+export type WarningSourceStore = Pick<
+	StoreApi<unknown>,
+	'getState' | 'getInitialState' | 'subscribe'
+>;
 
 /**
  * A kind that renders from a query. Declares its whole query surface here, so a
@@ -122,7 +126,7 @@ export interface QueryPanelDefinition<
 	/** Lower editor pane — the shared query-builder pane, or a kind wrapper of it. */
 	EditorPane: ComponentType<QueryEditorPaneProps>;
 	/** Authoring modes (Query Builder / ClickHouse / PromQL / AI) and the signals each accepts. */
-	supportedQueryModesKindMap: SupportedQueryModesKindMap;
+	supportedQueryTypesKindMap: SupportedQueryTypesKindMap;
 	queryBuilderFields: QueryBuilderFieldsConfig;
 	/** How this kind's query-range request is shaped (request type, paging, result formatting). */
 	queryCapabilities: PanelQueryCapabilities;
@@ -133,6 +137,8 @@ export interface QueryPanelDefinition<
 		panel: PanelOfKind<K>,
 		data: PanelQueryData,
 	) => PanelStatusDetail | null;
+	/** State outside the panel that `getDataWarning` reads; the warning recomputes when it changes. */
+	dataWarningSource?: WarningSourceStore;
 	/** Reconciles the kind's options with the queries a save carries. */
 	reconcileWithQueries?: (
 		spec: DashboardtypesPanelSpecDTO,

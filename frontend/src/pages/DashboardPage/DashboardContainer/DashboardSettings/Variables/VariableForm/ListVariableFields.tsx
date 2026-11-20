@@ -41,14 +41,31 @@ function ListVariableFields({
 	return (
 		<>
 			<div className={cx(styles.row, styles.previewSection)}>
-				<Typography.Text className={styles.previewLabel}>
-					Preview of Values
-				</Typography.Text>
+				<span className={styles.previewLabel}>
+					<Typography
+						variant="code"
+						size="base"
+						weight="regular"
+						color="primary"
+						as="span"
+						display="block"
+						textOverflow="wrap"
+					>
+						Preview of Values
+					</Typography>
+				</span>
 				<div className={styles.previewValues}>
 					{previewError ? (
-						<Typography.Text className={styles.previewError}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="warning"
+							as="span"
+							textOverflow="wrap"
+						>
 							{previewError}
-						</Typography.Text>
+						</Typography>
 					) : (
 						previewValues.map((value, idx) => (
 							<Badge
@@ -67,7 +84,16 @@ function ListVariableFields({
 
 			<div className={cx(styles.row, styles.sortSection)}>
 				<div className={styles.labelContainer}>
-					<Typography.Text className={styles.label}>Sort Values</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						textOverflow="wrap"
+					>
+						Sort Values
+					</Typography>
 				</div>
 				<Select
 					className={styles.sortSelect}
@@ -83,9 +109,18 @@ function ListVariableFields({
 			</div>
 
 			<div className={cx(styles.row, styles.multiSection)}>
-				<Typography.Text className={styles.rowLabel}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					width={339}
+					textOverflow="wrap"
+				>
 					Enable multiple values to be checked
-				</Typography.Text>
+				</Typography>
 				<Switch
 					color="primary"
 					textPlacement="right"
@@ -102,9 +137,18 @@ function ListVariableFields({
 
 			{model.multiSelect && showAllOptionField ? (
 				<div className={cx(styles.row, styles.allOptionSection)}>
-					<Typography.Text className={styles.rowLabel}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						width={339}
+						textOverflow="wrap"
+					>
 						Include an option for ALL values
-					</Typography.Text>
+					</Typography>
 					<Switch
 						color="primary"
 						textPlacement="right"
@@ -117,12 +161,29 @@ function ListVariableFields({
 
 			<div className={cx(styles.row, styles.defaultValueSection)}>
 				<div className={styles.labelContainer}>
-					<Typography.Text className={styles.label}>Default Value</Typography.Text>
-					<Typography.Text className={styles.defaultValueDesc}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						marginBottom={1}
+						textOverflow="wrap"
+					>
+						Default Value
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{model.type === 'QUERY'
 							? 'Click Test Run Query to see the values or add custom value'
 							: 'Select a value from the preview values or add custom value'}
-					</Typography.Text>
+					</Typography>
 				</div>
 				<CustomSelect
 					className={styles.searchSelect}

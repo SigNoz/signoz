@@ -6,7 +6,6 @@ import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { navigate } from 'lib/router/navigation';
 import heatmapPlugin from 'lib/uPlotLib/plugins/heatmapPlugin';
 import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
@@ -15,6 +14,7 @@ import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
 import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 import uPlot, { AlignedData } from 'uplot';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import { ALERT_STATUS, TIMELINE_OPTIONS } from './constants';
 
@@ -49,7 +49,6 @@ function HorizontalTimelineGraph({
 		return [timestamps, states];
 	}, [data]);
 
-	const urlQuery = useUrlQuery();
 	const dispatch = useDispatch();
 	const { timezone } = useTimezone();
 
@@ -89,6 +88,7 @@ function HorizontalTimelineGraph({
 							const diff = endTime - startTime;
 
 							if (diff > 0) {
+								const urlQuery = getUnstableCurrentSearchParams();
 								if (urlQuery.has(QueryParams.relativeTime)) {
 									urlQuery.delete(QueryParams.relativeTime);
 								}
@@ -125,14 +125,7 @@ function HorizontalTimelineGraph({
 			tzDate: (timestamp: number): Date =>
 				uPlot.tzDate(new Date(timestamp * 1e3), timezone.value),
 		}),
-		[
-			width,
-			isDarkMode,
-			transformedData.length,
-			urlQuery,
-			dispatch,
-			timezone.value,
-		],
+		[width, isDarkMode, transformedData.length, dispatch, timezone.value],
 	);
 	return <Uplot data={transformedData} options={options} />;
 }

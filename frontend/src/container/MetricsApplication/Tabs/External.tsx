@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppParams } from 'lib/router/useAppParams';
-import { Col } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
@@ -273,7 +273,7 @@ function External(): JSX.Element {
 									);
 								}}
 								onDragSelect={onDragSelect}
-								version={ENTITY_VERSION_V4}
+								version={ENTITY_VERSION_V5}
 								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
@@ -317,7 +317,7 @@ function External(): JSX.Element {
 									);
 								}}
 								onDragSelect={onDragSelect}
-								version={ENTITY_VERSION_V4}
+								version={ENTITY_VERSION_V5}
 								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
@@ -362,7 +362,7 @@ function External(): JSX.Element {
 									)
 								}
 								onDragSelect={onDragSelect}
-								version={ENTITY_VERSION_V4}
+								version={ENTITY_VERSION_V5}
 								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>
@@ -406,7 +406,7 @@ function External(): JSX.Element {
 									);
 								}}
 								onDragSelect={onDragSelect}
-								version={ENTITY_VERSION_V4}
+								version={ENTITY_VERSION_V5}
 								enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 							/>
 						</GraphContainer>

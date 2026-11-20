@@ -43,7 +43,17 @@ export const alertRulesPage = (
 	return {
 		status: 'success',
 		data: {
-			rules: rules.slice(offset, offset + limit),
+			// distinct lowercased threshold names; the API's rank order is not mirrored
+			rules: rules.slice(offset, offset + limit).map((rule) => ({
+				...rule,
+				thresholds: [
+					...new Set(
+						(rule.condition.thresholds?.spec ?? []).map((threshold) =>
+							threshold.name.toLowerCase(),
+						),
+					),
+				],
+			})),
 			total: rules.length,
 			labels: [...labels.values()],
 			reservedKeywords: [...RESERVED_RULE_KEYWORDS],
@@ -59,7 +69,7 @@ const RESERVED_RULE_KEYWORDS = [
 	'labels.<key>',
 	'name',
 	'rule_type',
-	'severity',
+	'thresholds',
 	'updated_at',
 	'updated_by',
 ] as const;
@@ -94,7 +104,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 		name: 'Critical prod alerts',
 		data: {
 			version: 'v1',
-			query: "env = 'prod' AND severity = 'critical'",
+			query: "env = 'prod' AND thresholds = 'critical'",
 			states: [RuletypesAlertStateDTO.firing, RuletypesAlertStateDTO.pending],
 			sort: RuletypesListSortDTO.updated_at,
 			order: RuletypesListOrderDTO.desc,
@@ -116,7 +126,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 			version: 'v1',
 			query: '',
 			states: [RuletypesAlertStateDTO.firing],
-			sort: RuletypesListSortDTO.severity,
+			sort: RuletypesListSortDTO.thresholds,
 			order: RuletypesListOrderDTO.desc,
 		},
 	},
@@ -135,7 +145,7 @@ const VIEW_SEEDS: Pick<RuletypesRuleViewDTO, 'name' | 'data'>[] = [
 			'Payments on-call, everything that pages the payments rotation overnight',
 		data: {
 			version: 'v1',
-			query: "team = 'payments' AND severity IN ('critical', 'error')",
+			query: "team = 'payments' AND thresholds IN ('critical', 'error')",
 			states: [],
 			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.asc,

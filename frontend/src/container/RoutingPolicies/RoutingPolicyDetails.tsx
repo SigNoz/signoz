@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { Button, Flex, Form, Input, Modal, Select } from 'antd';
+import { Button, Form, Input, Modal, Select } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
-import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
@@ -61,9 +61,25 @@ function RoutingPolicyDetails({
 	const notificationChannelsNotFoundContent = (
 		<Flex justify="space-between">
 			<Flex gap={4} align="center">
-				<Typography.Text>No channels yet.</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No channels yet.
+				</Typography>
 				{user?.role === USER_ROLES.ADMIN ? (
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Create one
 						<Button
 							style={{ padding: '0 4px' }}
@@ -74,9 +90,18 @@ function RoutingPolicyDetails({
 						>
 							here.
 						</Button>
-					</Typography.Text>
+					</Typography>
 				) : (
-					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Please ask your admin to create one.
+					</Typography>
 				)}
 			</Flex>
 			<Button type="text" onClick={refreshChannels}>
@@ -87,7 +112,19 @@ function RoutingPolicyDetails({
 
 	return (
 		<Modal
-			title={<ModalTitle level={4}>{modalTitle}</ModalTitle>}
+			title={
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					marginY={4}
+					textOverflow="wrap"
+				>
+					{modalTitle}
+				</Typography>
+			}
 			centered
 			open
 			className="create-policy-modal"
@@ -103,7 +140,16 @@ function RoutingPolicyDetails({
 			>
 				<div className="create-policy-container">
 					<div className="input-group">
-						<Typography.Text>Routing Policy Name</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Routing Policy Name
+						</Typography>
 						<Form.Item
 							name="name"
 							rules={[
@@ -117,7 +163,16 @@ function RoutingPolicyDetails({
 						</Form.Item>
 					</div>
 					<div className="input-group">
-						<Typography.Text>Description</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Description
+						</Typography>
 						<Form.Item
 							name="description"
 							rules={[
@@ -134,7 +189,16 @@ function RoutingPolicyDetails({
 						</Form.Item>
 					</div>
 					<div className="input-group">
-						<Typography.Text>Expression</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Expression
+						</Typography>
 						<Form.Item
 							name="expression"
 							rules={[
@@ -152,7 +216,16 @@ function RoutingPolicyDetails({
 						</Form.Item>
 					</div>
 					<div className="input-group">
-						<Typography.Text>Notification Channels</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Notification Channels
+						</Typography>
 						<Form.Item
 							name="channels"
 							rules={[

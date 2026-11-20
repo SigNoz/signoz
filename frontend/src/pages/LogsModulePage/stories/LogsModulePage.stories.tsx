@@ -4,14 +4,21 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 
 import { type LogsArgs, logsMocks } from './LogsModulePage.stories.mocks';
 import {
+	cancelQuery,
 	completeFilter,
 	copyLog,
 	copyLogDetailsLink,
 	copyLogLinkFromRow,
 	dirtyQuickFiltersSettings,
+	openDownloadMenu,
+	openEditColumns,
+	openFormatFontSize,
+	openFormatMenu,
 	openLogContext,
+	openLogContextFilters,
 	openLogDetails,
 	openLogDetailsMenu,
+	openLogMetrics,
 	openQuickFiltersSettings,
 	showFilterSyntaxError,
 	stepToNextLog,
@@ -62,6 +69,27 @@ export const NoLogs: Story = {
 	args: { logs: 0 },
 };
 
+/**
+ * A filter the explorer opened on from a link, with nothing matching it: the
+ * list says the search came up empty rather than offering to send logs.
+ */
+export const NoMatchingLogs: Story = {
+	args: { logs: 0, urlFilter: 'service' },
+};
+
+/**
+ * A span's "View logs" with no log carrying its trace: why the logs may be
+ * missing, and a way to drop the filter.
+ */
+export const NoLogsForTrace: Story = {
+	args: { logs: 0, urlFilter: 'trace' },
+};
+
+/** The timeseries view over a linked filter that matches nothing. */
+export const TimeseriesNoMatchingLogs: Story = {
+	args: { view: 'timeseries', logs: 0, urlFilter: 'service' },
+};
+
 /** One aggregated line over the selected range instead of the log lines. */
 export const TimeseriesView: Story = {
 	args: { view: 'timeseries' },
@@ -80,6 +108,33 @@ export const ListFormat: Story = {
 /** The raw log-body format with its line clipping. */
 export const RawFormat: Story = {
 	args: { format: 'raw' },
+};
+
+/** The format popover: radios, the max-lines stepper, and the font-size control. */
+export const FormatMenuOpen: Story = {
+	args: { format: 'raw' },
+	play: openFormatMenu,
+};
+
+/** The format popover switched to its font sizes. */
+export const FormatMenuFontSize: Story = {
+	play: openFormatFontSize,
+};
+
+/** The column picker the table format's Edit columns opens. */
+export const EditColumns: Story = {
+	play: openEditColumns,
+};
+
+/** The list's download options: format, how many rows, and which columns. */
+export const DownloadMenuOpen: Story = {
+	play: openDownloadMenu,
+};
+
+/** The table's download options, which export the aggregated rows it shows. */
+export const ExportMenuOpen: Story = {
+	args: { view: 'table' },
+	play: openDownloadMenu,
 };
 
 /** An explorer with no configured quick filters. */
@@ -132,6 +187,28 @@ export const LogDetailsContext: Story = {
 	play: openLogContext,
 };
 
+/** The context tab with its filter open, to narrow the logs either side. */
+export const LogDetailsContextFilters: Story = {
+	play: openLogContextFilters,
+};
+
+/** The pod's CPU, memory, filesystem and network around the log's timestamp. */
+export const LogDetailsPodMetrics: Story = {
+	play: openLogMetrics,
+};
+
+/** A log from a node: the node's charts, with its pod's one toggle away. */
+export const LogDetailsNodeMetrics: Story = {
+	args: { infraResource: 'node' },
+	play: openLogMetrics,
+};
+
+/** A log with no pod, node or host to chart. */
+export const LogDetailsNoMetrics: Story = {
+	args: { infraResource: 'none' },
+	play: openLogMetrics,
+};
+
 /** The log detail drawer with its header actions menu open. */
 export const LogDetailsMenuOpen: Story = {
 	play: openLogDetailsMenu,
@@ -145,6 +222,12 @@ export const QueryWarning: Story = {
 /** The table waiting on its query. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
+};
+
+/** A query cancelled while in flight, waiting for the next run. */
+export const QueryCancelled: Story = {
+	args: { dataState: 'loading' },
+	play: cancelQuery,
 };
 
 /** A failed logs query. */
@@ -161,17 +244,6 @@ export const QuickFiltersSettings: Story = {
 
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
 
@@ -273,6 +345,12 @@ export const FilterRecentSearches: Story = {
 
 /** Row actions render on hover, so the first row is hovered before the copy link is pressed. */
 export const LogLinkCopiedToast: Story = {
+	play: copyLogLinkFromRow,
+};
+
+/** The same copy link on a line in the list format. */
+export const LogLinkCopiedToastListFormat: Story = {
+	args: { format: 'list' },
 	play: copyLogLinkFromRow,
 };
 

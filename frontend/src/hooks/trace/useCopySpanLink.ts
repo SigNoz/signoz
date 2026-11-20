@@ -1,7 +1,7 @@
 import { MouseEventHandler, useCallback } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 

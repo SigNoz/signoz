@@ -54,8 +54,6 @@
 .message {
 	margin: 0;
 	color: var(--l2-foreground);
-	font-size: 13px;
-	line-height: 18px;
 	word-break: break-word;
 }
 
@@ -129,9 +127,8 @@
 	position: relative;
 	padding-left: 14px;
 	color: var(--l2-foreground);
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
-	line-height: 18px;
 	word-break: break-word;
 }
 

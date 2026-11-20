@@ -41,11 +41,12 @@ export const labelThresholds = (
 
 export const comparisonThresholds = (
 	on: boolean,
+	value = NUMBER_THRESHOLD_VALUE,
 ): DashboardtypesComparisonThresholdDTO[] =>
 	on
 		? [
 				{
-					value: NUMBER_THRESHOLD_VALUE,
+					value,
 					operator: ComparisonOperator.above,
 					color: THRESHOLD_COLOR,
 					format: ThresholdFormat.background,
@@ -91,6 +92,7 @@ interface MetricQueryOptions {
 	heatmap?: boolean;
 	name?: string;
 	metricName?: string;
+	spaceAggregation?: SpaceAggregation;
 }
 
 export const metricQuery = (
@@ -100,6 +102,7 @@ export const metricQuery = (
 		heatmap,
 		name = QUERY_NAME,
 		metricName = 'signoz_latency',
+		spaceAggregation = SpaceAggregation.p99,
 	}: MetricQueryOptions,
 ): DashboardtypesQueryDTO => {
 	const spec: MetricBuilderQuery = {
@@ -108,7 +111,7 @@ export const metricQuery = (
 		aggregations: [
 			{
 				metricName: heatmap ? `${metricName}_bucket` : metricName,
-				spaceAggregation: heatmap ? undefined : SpaceAggregation.p99,
+				spaceAggregation: heatmap ? undefined : spaceAggregation,
 				timeAggregation: heatmap ? TimeAggregation.increase : TimeAggregation.avg,
 			},
 		],

@@ -14,13 +14,18 @@ function TokenUsageTooltip({ tokens }: TokenUsageTooltipProps): JSX.Element {
 
 	return (
 		<div className={styles.tokenTooltip}>
-			<Typography.Text
-				size="small"
-				weight="normal"
-				className={styles.tokenTooltipTitle}
-			>
-				Usage Breakdown
-			</Typography.Text>
+			<div className={styles.tokenTooltipTitle}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="p"
+					textOverflow="wrap"
+				>
+					Usage Breakdown
+				</Typography>
+			</div>
 			<TokenBreakdown
 				input={input}
 				output={output}

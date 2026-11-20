@@ -1,5 +1,10 @@
 import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas';
-import { getPaletteStops } from 'lib/uPlotV2/plugins/HeatmapPlugin/palettes';
+import {
+	DEFAULT_COLOR_RAMP_OPTIONS,
+	getRampBottom,
+	resolveColorDomain,
+} from 'lib/visualization/colorRamp/colorScale';
+import { getPaletteStops } from 'lib/visualization/colorRamp/palettes';
 import { HEATMAP_PALETTE_MAP } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/enumMaps';
 import { expect, waitFor, within } from 'storybook/test';
 import type uPlot from 'uplot';
@@ -8,7 +13,7 @@ import {
 	HEATMAP_BUCKETS,
 	HEATMAP_FIXED_COUNTS,
 } from '../__story_mockdata__/constants';
-import { heatmapMaxCount } from '../__story_mockdata__/panelResponses';
+import { heatmapCellCounts } from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
 import { findPlot, toRgb, waitForPlot } from './plot';
@@ -54,15 +59,19 @@ export const expectHeatmap = async (
 	const bar = await within(root).findByTestId('color-bar', {}, PANEL_LOAD);
 	await expect(bar).toHaveTextContent(/count/i);
 
-	const range =
+	const domain = resolveColorDomain(
 		args.heatmapCounts === 'fixed'
 			? HEATMAP_FIXED_COUNTS
-			: { min: 0, max: heatmapMaxCount(args.series) };
+			: { min: null, max: null },
+		heatmapCellCounts(args.series),
+	);
+	// The panel sets no colour scale, so the ramp is log, which starts at its floor.
+	const bottom = getRampBottom(domain, DEFAULT_COLOR_RAMP_OPTIONS.scale);
 	await waitFor(
 		() =>
 			expect(colorBarLabels(bar)).toEqual([
-				range.min.toLocaleString(),
-				range.max.toLocaleString(),
+				bottom.toLocaleString(),
+				domain.max.toLocaleString(),
 			]),
 		PANEL_LOAD,
 	);

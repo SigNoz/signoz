@@ -70,7 +70,7 @@ var (
 	ResourceMetaResourcePlannedMaintenance               = NewResourceMetaResource(KindPlannedMaintenance)
 	ResourceMetaResourceSavedView                        = NewResourceMetaResource(KindSavedView, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceTraceFunnel                      = NewResourceMetaResource(KindTraceFunnel)
-	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword)
+	ResourceMetaResourceFactorPassword                   = NewResourceMetaResource(KindFactorPassword, VerbCreate, VerbList, VerbRead)
 	ResourceMetaResourceFactorAPIKey                     = NewResourceMetaResource(KindFactorAPIKey, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceLicense                          = NewResourceMetaResource(KindLicense, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourceSubscription                     = NewResourceMetaResource(KindSubscription, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)

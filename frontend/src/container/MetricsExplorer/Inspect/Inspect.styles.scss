@@ -182,14 +182,14 @@
 								flex-grow: 1;
 							}
 
-							.no-arrows-input input[type='number']::-webkit-inner-spin-button,
-							.no-arrows-input input[type='number']::-webkit-outer-spin-button {
+							input[type='number']::-webkit-inner-spin-button,
+							input[type='number']::-webkit-outer-spin-button {
 								-webkit-appearance: none;
 								margin: 0;
 							}
 
 							/* Hide number input arrows (Firefox) */
-							.no-arrows-input input[type='number'] {
+							input[type='number'] {
 								appearance: none;
 								-moz-appearance: textfield;
 							}
@@ -373,10 +373,6 @@
 			align-items: center;
 			gap: 12px;
 
-			.graph-popover-row-label {
-				width: 100px;
-			}
-
 			.graph-popover-inner-row {
 				display: flex;
 				align-items: center;
@@ -396,15 +392,6 @@
 					text-overflow: ellipsis;
 				}
 			}
-		}
-
-		.graph-popover-header-text {
-			color: var(--l2-foreground);
-		}
-
-		.graph-popover-row-label {
-			color: var(--muted-foreground);
-			width: 10%;
 		}
 
 		.graph-popover-cell {
@@ -499,13 +486,13 @@
 		.labels-key {
 			color: var(--l2-foreground);
 			background-color: var(--l3-background);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 		}
 
 		.labels-value {
 			background-color: var(--l3-background);
 			opacity: 80%;
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 
 			.field-renderer-container {
 				.label {

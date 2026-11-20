@@ -103,9 +103,16 @@ function VolumeControlTab(): JSX.Element {
 					sorter: true,
 					sortOrder: sortOrderFor(OrderBy.metric),
 					render: (metricName: string): JSX.Element => (
-						<Typography.Text size="small" className={styles.metricNameCell}>
+						<Typography
+							variant="code"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="visible"
+						>
 							{metricName}
-						</Typography.Text>
+						</Typography>
 					),
 				},
 				{
@@ -125,34 +132,52 @@ function VolumeControlTab(): JSX.Element {
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<Typography.Text size="small">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="visible"
+						>
 							{getMatchTypeLabel(rule.matchType)}
-						</Typography.Text>
+						</Typography>
 					),
 				},
 				{
 					title: 'ATTRIBUTES',
 					key: 'attributes',
+					className: styles.attributesCell,
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
-						<Typography.Text
+						<Typography
+							variant="code"
 							size="small"
-							color="muted"
-							className={styles.attributesCell}
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
 						>
-							{getLabelVerb(rule.matchType)} {(rule.labels ?? []).join(', ') || '—'}
-						</Typography.Text>
+							{`${getLabelVerb(rule.matchType)} ${(rule.labels ?? []).join(', ') || '—'}`}
+						</Typography>
 					),
 				},
 				{
 					title: (
 						<>
 							INGESTED{' '}
-							<Typography.Text size="small" color="muted">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								(1h)
-							</Typography.Text>
+							</Typography>
 						</>
 					),
 					key: OrderBy.ingested_volume,
@@ -164,15 +189,36 @@ function VolumeControlTab(): JSX.Element {
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
 						<div className={styles.volumeCell}>
-							<Typography.Text size="small">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatCompact(rule.ingestedSeries)}{' '}
-								<Typography.Text size="small" color="muted">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									series
-								</Typography.Text>
-							</Typography.Text>
-							<Typography.Text size="small" color="muted">
+								</Typography>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatCompact(rule.ingestedSamples)} samples
-							</Typography.Text>
+							</Typography>
 						</div>
 					),
 				},
@@ -180,9 +226,16 @@ function VolumeControlTab(): JSX.Element {
 					title: (
 						<>
 							RETAINED{' '}
-							<Typography.Text size="small" color="muted">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								(1h)
-							</Typography.Text>
+							</Typography>
 						</>
 					),
 					key: OrderBy.reduced_volume,
@@ -194,15 +247,36 @@ function VolumeControlTab(): JSX.Element {
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
 					): JSX.Element => (
 						<div className={styles.volumeCell}>
-							<Typography.Text size="small">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatCompact(rule.retainedSeries)}{' '}
-								<Typography.Text size="small" color="muted">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									series
-								</Typography.Text>
-							</Typography.Text>
-							<Typography.Text size="small" color="muted">
+								</Typography>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatCompact(rule.retainedSamples)} samples
-							</Typography.Text>
+							</Typography>
 						</div>
 					),
 				},
@@ -221,25 +295,56 @@ function VolumeControlTab(): JSX.Element {
 							rule.ingestedSamples > 0
 								? (1 - rule.retainedSamples / rule.ingestedSamples) * 100
 								: 0;
+						const seriesLabel =
+							seriesReduction > 0 ? `−${Math.round(seriesReduction)}%` : '0%';
+						const samplesLabel =
+							samplesReduction > 0 ? `−${Math.round(samplesReduction)}%` : '0%';
 						if (seriesReduction <= 0 && samplesReduction <= 0) {
 							return (
-								<Typography.Text size="small" color="muted">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									—
-								</Typography.Text>
+								</Typography>
 							);
 						}
 						return (
 							<div className={styles.volumeCell}>
-								<Typography.Text size="small" weight="semibold" color="success">
-									{seriesReduction > 0 ? `−${Math.round(seriesReduction)}%` : '0%'}{' '}
-									<Typography.Text size="small" color="muted">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="bold"
+									color="success"
+									as="span"
+									textOverflow="wrap"
+								>
+									<span className="translate-safe">{seriesLabel}</span>{' '}
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="secondary"
+										as="span"
+										textOverflow="wrap"
+									>
 										series
-									</Typography.Text>
-								</Typography.Text>
-								<Typography.Text size="small" color="muted">
-									{samplesReduction > 0 ? `−${Math.round(samplesReduction)}%` : '0%'}{' '}
-									samples
-								</Typography.Text>
+									</Typography>
+								</Typography>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
+									{`${samplesLabel} samples`}
+								</Typography>
 							</div>
 						);
 					},
@@ -253,12 +358,22 @@ function VolumeControlTab(): JSX.Element {
 					render: (
 						_value: unknown,
 						rule: MetricreductionruletypesGettableReductionRuleDTO,
-					): JSX.Element => (
-						<Typography.Text size="small" color="muted">
-							{dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A')}
-							{rule.updatedBy ? ` · ${rule.updatedBy}` : ''}
-						</Typography.Text>
-					),
+					): JSX.Element => {
+						const updatedAt = dayjs(rule.updatedAt).format('MMM D, YYYY · h:mm A');
+						const updatedBy = rule.updatedBy ? ` · ${rule.updatedBy}` : '';
+						return (
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
+								{`${updatedAt}${updatedBy}`}
+							</Typography>
+						);
+					},
 				},
 				...(canManageVolumeControl
 					? ([
@@ -307,9 +422,16 @@ function VolumeControlTab(): JSX.Element {
 	if (!isVolumeControlEnabled) {
 		return (
 			<div className={styles.unavailable} data-testid="volume-control-unavailable">
-				<Typography.Text color="muted">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Volume control is available on enterprise and cloud plans.
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}
@@ -348,16 +470,30 @@ function VolumeControlTab(): JSX.Element {
 				locale={{
 					emptyText: isListError ? (
 						<div className={styles.empty} data-testid="volume-control-tab-error">
-							<Typography.Text color="danger">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="danger"
+								as="span"
+								textOverflow="wrap"
+							>
 								Failed to load volume control rules. Please try again.
-							</Typography.Text>
+							</Typography>
 						</div>
 					) : (
 						<div className={styles.empty} data-testid="volume-control-tab-empty">
-							<Typography.Text color="muted">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								No volume control rules yet. Open a metric and set one up to start
 								reducing its series volume.
-							</Typography.Text>
+							</Typography>
 						</div>
 					),
 				}}

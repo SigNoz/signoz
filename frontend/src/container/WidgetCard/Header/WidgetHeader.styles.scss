@@ -6,8 +6,6 @@
 	width: 100%;
 	padding: 0.5rem;
 	box-sizing: border-box;
-	font-size: 14px;
-	font-weight: 600;
 
 	cursor: move;
 
@@ -27,11 +25,6 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	flex: 1;
-	min-width: 0;
-}
-
-.widget-header-title {
-	max-width: 80%;
 	min-width: 0;
 }
 

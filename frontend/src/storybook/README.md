@@ -24,6 +24,7 @@ pnpm storybook:build    # static build into storybook-static/
 | `decorators/`     | `withProviders` (global) and `withCanvas` (opt-in per component)        |
 | `docs/`           | The `Docs/*` pages, the docs page template, and the sidebar order       |
 | `foundations/`    | Cross-cutting stories with no single owning component, and their fixtures |
+| `play/`           | Queries shared by `play` functions                                      |
 
 A page's own mocks live with the page, not here. See [Adding a page
 story](#adding-a-page-story).
@@ -116,10 +117,6 @@ Storybook fills the seams with:
   because elapsed-time code reads it — `lodash.debounce` compares two readings
   to decide its trailing call is due, and a frozen one leaves every debounced
   input in the app filtering nothing. `?storyClock=live` opts out.
-- A speech recognizer in place of the browser's, also in
-  `.storybook/preview-head.html`, because Storybook has no microphone. It
-  starts listening on `start()` and hears only what a `play` passes to
-  `webkitSpeechRecognition.listening.hear(text)`.
 - Theme from the toolbar (dark/light). `applyThemeBodyClass` puts `<body>` in the
   state the app gets from `index.html` plus `AppLayout`: `data-theme="default"`
   (every `@signozhq/design-tokens` semantic token is scoped to it, and without it
@@ -352,7 +349,6 @@ rather than a story that fails at render:
 
 | Module                | Replacement                        | Why                                        |
 | --------------------- | ---------------------------------- | ------------------------------------------ |
-| `lib/history`         | `navigation/history.alias.ts`      | keeps a story on its page, see below       |
 | `store`               | `mocks/store.mock.ts`              | the singleton answers from the story's store |
 | `api/common/logEvent` | `mocks/logEvent.mock.ts`           | analytics never leave the iframe           |
 | `constants/env`       | `mocks/env.mock.ts`                | pins the API origin the handlers answer on |
@@ -415,17 +411,17 @@ story turns the control that lengthens it rather than a story-only prop.
 ## Navigation
 
 A story renders one page, so leaving that page would unmount it.
-`navigation/pageScope.ts` holds the rule, `navigation/containment.ts` is what the
-app sees in place of `lib/history`, and the two tell a navigation apart by
-pathname:
+`navigation/pageScope.ts` holds the rule, `navigation/containment.ts` creates the
+story's memory data router and guards its `navigate`, which every navigation in
+the app reaches, and the two tell a navigation apart by pathname:
 
 - **Same page**: a query-param or hash change, which is how tabs, filters,
   pagination and time ranges are driven. It is applied, and the page re-renders
   the way it does in the app. Anchors are covered too: an in-page `<a href="?tab=x">`
-  or `<Link to="/home?tab=x">` is intercepted and pushed onto the story's history
+  or `<Link to="/home?tab=x">` is intercepted and pushed onto the story's router
   rather than followed, which would navigate the iframe out of the story.
 - **Another page**: a different pathname, an off-site href, `window.open` (what
-  `useSafeNavigate({ newTab })` calls) or a relative `go`/`goBack`, which carries
+  `useSafeNavigate({ newTab })` calls) or a relative `navigate(-1)`, which carries
   no target to compare against. It is swallowed and reported to
   `NavigationBlockedOverlay`, which lists what was attempted. Nothing is silently
   dropped.
@@ -508,6 +504,11 @@ component state, is a story with a `play` function rather than a control. Use
 `userEvent` and the queries from `storybook/test`, take the first of a repeated
 row action, and wait on the state's own text. The page fetches before it renders
 a row, so the finder needs a timeout past the 1s default.
+
+Wait on a `danger` toast with `findToastText` (or `getToastText` inside
+`waitFor`) from `play/toastText`, never a bare `findByText`. The toast is
+announced through a visually hidden copy of its text, so a bare query finds two
+elements.
 
 The play is a named function in `stories/__story_mockdata__/<page>.play.ts`,
 collapsed for review with the other AI-owned files, and the story file only names
