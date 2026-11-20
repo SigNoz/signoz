@@ -161,7 +161,7 @@ export const Paginated: Story = {
  * locked, and a row's actions are locked in its menu.
  */
 export const Viewer: Story = {
-	args: { access: 'viewer', permissions: ['list:rule', 'read:rule'] },
+	args: { access: 'viewer' },
 };
 
 /** The per-rule actions: enable or disable, edit, clone and delete. */
