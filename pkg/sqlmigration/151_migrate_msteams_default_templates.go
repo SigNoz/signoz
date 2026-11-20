@@ -552,7 +552,7 @@ func convertMSTeamsSlackSeed(text string) string {
 	last := 0
 	for _, match := range findMSTeamsSlackBold(masked) {
 		bolded.WriteString(masked[last:match[0]])
-		bolded.WriteString(fmt.Sprintf("**%s**", masked[match[2]:match[3]]))
+		fmt.Fprintf(&bolded, "**%s**", masked[match[2]:match[3]])
 		last = match[1]
 	}
 	bolded.WriteString(masked[last:])
@@ -688,7 +688,7 @@ func writeNormalizedMSTeamsNode(builder *strings.Builder, node parse.Node) {
 }
 
 func writeNormalizedMSTeamsBranch(builder *strings.Builder, keyword string, branch *parse.BranchNode) {
-	builder.WriteString(fmt.Sprintf("{{%s %s}}", keyword, branch.Pipe.String()))
+	fmt.Fprintf(builder, "{{%s %s}}", keyword, branch.Pipe.String())
 	writeNormalizedMSTeamsNode(builder, branch.List)
 	if branch.ElseList != nil {
 		builder.WriteString("{{else}}")
