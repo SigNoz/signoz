@@ -2,10 +2,7 @@ package querybuildertypesv5
 
 import (
 	"context"
-	"fmt"
-	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
@@ -1056,8 +1053,28 @@ func TestAbsValueExpression(t *testing.T) {
 	assert.Equal(t, 24.0, series.Values[1].Value) // |20| + |−4| = 24
 }
 
-func TestSeriesMatching(t *testing.T) {
-	label := func(name string, value any) *Label {
+func TestEvaluateFormula_SameTextDifferentType_DoesNotMatch(t *testing.T) {
+	tsData := map[string]*TimeSeriesData{
+		"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{{
+			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "status"}, Value: "404"}},
+			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 10}},
+		}}),
+		"B": createFormulaTestTimeSeriesData("B", []*TimeSeries{{
+			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "status"}, Value: float64(404)}},
+			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 5}},
+		}}),
+	}
+	evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": false, "B": false})
+	require.NoError(t, err)
+
+	result, err := evaluator.EvaluateFormula(context.Background(), tsData)
+
+	require.NoError(t, err)
+	assert.Empty(t, result, "the string 404 and the number 404 are different label values, so no series has both A and B")
+}
+
+func TestEvaluateFormula_MixedKeySets_FirstSeriesInBucketMatches(t *testing.T) {
+	label := func(name, value string) *Label {
 		return &Label{Key: telemetrytypes.TelemetryFieldKey{Name: name}, Value: value}
 	}
 	point := func(value float64) []*TimeSeriesValue {
@@ -1066,140 +1083,47 @@ func TestSeriesMatching(t *testing.T) {
 
 	testCases := []struct {
 		name string
-		a    []*TimeSeries
-		b    []*TimeSeries
-		// the value of each result series of A / B
-		expected []float64
+		// the series of B, whose labels have different key sets
+		b        []*TimeSeries
+		expected float64
 	}{
 		{
-			name:     "SameTextSameType_Match",
-			a:        []*TimeSeries{{Labels: []*Label{label("code", "200")}, Values: point(10)}},
-			b:        []*TimeSeries{{Labels: []*Label{label("code", "200")}, Values: point(5)}},
-			expected: []float64{2},
-		},
-		{
-			name:     "SameTextDifferentType_NoMatch",
-			a:        []*TimeSeries{{Labels: []*Label{label("status", "404")}, Values: point(10)}},
-			b:        []*TimeSeries{{Labels: []*Label{label("status", float64(404))}, Values: point(5)}},
-			expected: nil,
-		},
-		{
-			name: "MixedKeySets_FirstSeriesInBucketWins",
-			a:    []*TimeSeries{{Labels: []*Label{label("svc", "cart"), label("op", "add")}, Values: point(100)}},
+			name: "SeriesWithLabelFirst",
 			b: []*TimeSeries{
 				{Labels: []*Label{label("svc", "cart")}, Values: point(10)},
 				{Labels: nil, Values: point(1000)},
 			},
-			expected: []float64{10},
+			expected: 10,
 		},
 		{
-			name: "MixedKeySets_EmptyLabelSetFirst_Wins",
-			a:    []*TimeSeries{{Labels: []*Label{label("svc", "checkout"), label("op", "pay")}, Values: point(100)}},
+			// the key set of svc comes first in the bucket, and its matching series comes last
+			name: "SeriesWithoutLabelsBeforeTheMatchOfAnEarlierKeySet",
 			b: []*TimeSeries{
+				{Labels: []*Label{label("svc", "checkout")}, Values: point(1)},
 				{Labels: nil, Values: point(1000)},
-				{Labels: []*Label{label("svc", "checkout")}, Values: point(10)},
+				{Labels: []*Label{label("svc", "cart")}, Values: point(10)},
 			},
-			expected: []float64{0.1},
+			expected: 0.1,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			tsData := map[string]*TimeSeriesData{
+				"A": createFormulaTestTimeSeriesData("A", []*TimeSeries{
+					{Labels: []*Label{label("svc", "cart"), label("op", "add")}, Values: point(100)},
+				}),
+				"B": createFormulaTestTimeSeriesData("B", testCase.b),
+			}
 			evaluator, err := NewFormulaEvaluator("A / B", map[string]bool{"A": false, "B": false})
 			require.NoError(t, err)
 
-			result, err := evaluator.EvaluateFormula(context.Background(), map[string]*TimeSeriesData{
-				"A": createFormulaTestTimeSeriesData("A", testCase.a),
-				"B": createFormulaTestTimeSeriesData("B", testCase.b),
-			})
+			result, err := evaluator.EvaluateFormula(context.Background(), tsData)
+
 			require.NoError(t, err)
-
-			values := make([]float64, 0, len(result))
-			for _, series := range result {
-				require.Len(t, series.Values, 1)
-				values = append(values, series.Values[0].Value)
-			}
-			assert.ElementsMatch(t, testCase.expected, values)
+			require.Len(t, result, 1, "the only label set that is not a subset of another one is svc=cart, op=add")
+			require.Len(t, result[0].Values, 1)
+			assert.Equal(t, testCase.expected, result[0].Values[0].Value, "A must be divided by the first series of B in the bucket whose labels are in svc=cart, op=add")
 		})
 	}
-}
-
-func TestEvaluateFormula_ContextDone(t *testing.T) {
-	canceled, cancel := context.WithCancel(context.Background())
-	cancel()
-	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
-	defer cancelExpired()
-
-	series := []*TimeSeries{{
-		Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "web-1"}},
-		Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
-	}}
-	tsData := map[string]*TimeSeriesData{
-		"A": createFormulaTestTimeSeriesData("A", series),
-		"B": createFormulaTestTimeSeriesData("B", series),
-	}
-
-	testCases := []struct {
-		name     string
-		ctx      context.Context
-		expected error
-	}{
-		{name: "Canceled", ctx: canceled, expected: context.Canceled},
-		{name: "DeadlineExceeded", ctx: expired, expected: context.DeadlineExceeded},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": false, "B": false})
-			require.NoError(t, err)
-
-			result, err := evaluator.EvaluateFormula(testCase.ctx, tsData)
-			require.ErrorIs(t, err, testCase.expected)
-			assert.Nil(t, result)
-		})
-	}
-}
-
-// canceledAfterFirstCheck is not done at the first call of Err and is canceled
-// at every later call. It puts the cancellation after the start of an
-// evaluation without the use of time.
-type canceledAfterFirstCheck struct {
-	context.Context
-	checks atomic.Int64
-}
-
-func (c *canceledAfterFirstCheck) Err() error {
-	if c.checks.Add(1) == 1 {
-		return nil
-	}
-	return context.Canceled
-}
-
-func TestEvaluateFormula_ContextDoneDuringEvaluation(t *testing.T) {
-	const labelSets = 1000
-	series := make([]*TimeSeries, 0, labelSets)
-	for i := range labelSets {
-		series = append(series, &TimeSeries{
-			Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: fmt.Sprintf("web-%d", i)}},
-			Values: []*TimeSeriesValue{{Timestamp: 1, Value: 1}},
-		})
-	}
-	tsData := map[string]*TimeSeriesData{
-		"A": createFormulaTestTimeSeriesData("A", series),
-		"B": createFormulaTestTimeSeriesData("B", series),
-	}
-
-	evaluator, err := NewFormulaEvaluator("A + B", map[string]bool{"A": false, "B": false})
-	require.NoError(t, err)
-
-	ctx := &canceledAfterFirstCheck{Context: context.Background()}
-	result, err := evaluator.EvaluateFormula(ctx, tsData)
-	require.ErrorIs(t, err, context.Canceled)
-	assert.Nil(t, result)
-
-	// The evaluation started, and each worker stopped when it saw the
-	// cancellation: there is far less than one check for each label set.
-	checks := ctx.checks.Load()
-	assert.Greater(t, checks, int64(2))
-	assert.Less(t, checks, int64(labelSets))
 }

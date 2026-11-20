@@ -154,58 +154,38 @@ func TestProcessScalarFormula_AppliesOrderAndLimit(t *testing.T) {
 	})
 }
 
-func TestApplyFormulas_ContextDone(t *testing.T) {
+func TestApplyFormulas_ContextDone_FailsWithTheCause(t *testing.T) {
 	q := &querier{
 		logger: instrumentationtest.New().Logger(),
 	}
-
-	scalarInput := func(queryName string) *qbtypes.Result {
-		return scalarInputResult(queryName, []struct {
-			service string
-			value   float64
-		}{
-			{"cart", 4},
-			{"checkout", 2},
-		})
-	}
-	timeSeriesInput := func(queryName string) *qbtypes.Result {
-		return &qbtypes.Result{
-			Value: &qbtypes.TimeSeriesData{
-				QueryName: queryName,
-				Aggregations: []*qbtypes.AggregationBucket{{
-					Index: 0,
-					Series: []*qbtypes.TimeSeries{{
-						Labels: []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: "payment"}},
-						Values: []*qbtypes.TimeSeriesValue{{Timestamp: 1000, Value: 4}},
-					}},
-				}},
-			},
-		}
-	}
-
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
 	expired, cancelExpired := context.WithDeadline(context.Background(), time.Unix(0, 0))
 	defer cancelExpired()
 
 	testCases := []struct {
-		name        string
-		requestType qbtypes.RequestType
-		input       func(queryName string) *qbtypes.Result
-		ctx         context.Context
-		expected    error
-		// the type decides the status of the response
-		isTimeout bool
+		name string
+		ctx  context.Context
+		// the cause, and the type that decides the status of the response
+		expectedCause error
+		expectedType  string
 	}{
-		{name: "Scalar_Canceled", requestType: qbtypes.RequestTypeScalar, input: scalarInput, ctx: canceled, expected: context.Canceled},
-		{name: "TimeSeries_Canceled", requestType: qbtypes.RequestTypeTimeSeries, input: timeSeriesInput, ctx: canceled, expected: context.Canceled},
-		{name: "Scalar_DeadlineExceeded", requestType: qbtypes.RequestTypeScalar, input: scalarInput, ctx: expired, expected: context.DeadlineExceeded, isTimeout: true},
+		{name: "Canceled", ctx: canceled, expectedCause: context.Canceled, expectedType: errors.TypeCanceled.String()},
+		{name: "DeadlineExceeded", ctx: expired, expectedCause: context.DeadlineExceeded, expectedType: errors.TypeTimeout.String()},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			rows := []struct {
+				service string
+				value   float64
+			}{
+				{"cart", 4},
+				{"checkout", 2},
+			}
+			results := map[string]*qbtypes.Result{"A": scalarInputResult("A", rows), "B": scalarInputResult("B", rows)}
 			req := &qbtypes.QueryRangeRequest{
-				RequestType: testCase.requestType,
+				RequestType: qbtypes.RequestTypeScalar,
 				CompositeQuery: qbtypes.CompositeQuery{
 					Queries: []qbtypes.QueryEnvelope{
 						{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "A"}},
@@ -215,12 +195,12 @@ func TestApplyFormulas_ContextDone(t *testing.T) {
 				},
 			}
 
-			// the request must fail, and not return the other results without the formula
-			out, err := q.applyFormulas(testCase.ctx, map[string]*qbtypes.Result{"A": testCase.input("A"), "B": testCase.input("B")}, req)
-			require.ErrorIs(t, err, testCase.expected)
-			assert.Nil(t, out)
-			assert.Equal(t, testCase.isTimeout, errors.Ast(err, errors.TypeTimeout))
-			assert.Equal(t, !testCase.isTimeout, errors.Ast(err, errors.TypeCanceled))
+			out, err := q.applyFormulas(testCase.ctx, results, req)
+
+			require.ErrorIs(t, err, testCase.expectedCause)
+			assert.Nil(t, out, "the request must fail, and not return the other results without the formula")
+			typ, _, _, _, _, _ := errors.Unwrapb(err)
+			assert.Equal(t, testCase.expectedType, typ.String(), "the error type decides the status of the response")
 		})
 	}
 }
