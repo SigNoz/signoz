@@ -13,24 +13,6 @@
 	max-width: 836px;
 }
 
-.title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: 28px;
-	letter-spacing: -0.09px;
-}
-
-.subtitle {
-	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}
-
 .emptyAlertInfoContainer {
 	display: flex;
 	padding: 71px 193.5px;
