@@ -392,6 +392,40 @@ describe('useAuthZ', () => {
 		});
 	});
 
+	it('should split a single flight into requests the backend accepts', async () => {
+		const permissions = Array.from({ length: 120 }, (_, i) =>
+			buildPermission('read', `role:${i}`),
+		);
+		const payloadSizes: number[] = [];
+
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				payloadSizes.push(payload.length);
+				if (payload.length > 50) {
+					return res(ctx.status(400));
+				}
+				return res(
+					ctx.status(200),
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
+		);
+
+		const { result } = renderHook(() => useAuthZ(permissions), { wrapper });
+
+		await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+		expect(result.current.error).toBeNull();
+		expect(result.current.allowed).toBe(true);
+		expect(payloadSizes.sort((a, b) => b - a)).toStrictEqual([50, 50, 20]);
+	});
+
 	it('should create separate batches for calls after single flight window', async () => {
 		const permission1 = buildPermission('read', 'role:*');
 		const permission2 = buildPermission('update', 'role:123');
