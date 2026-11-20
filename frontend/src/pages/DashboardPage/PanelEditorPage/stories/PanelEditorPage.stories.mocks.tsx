@@ -11,6 +11,7 @@ import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import { choiceControl, toggleControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
@@ -50,6 +51,7 @@ import {
 	EDITOR_METRICS,
 	NEW_PANEL_KINDS,
 	newPanelKindOf,
+	numericFieldKeysResponse,
 	type NewPanelKind,
 } from './__story_mockdata__/panelEditor';
 
@@ -186,7 +188,11 @@ export const panelEditorMocks = defineStoryMocks({
 
 			rest.get(
 				'http://localhost/api/v1/fields/keys',
-				response.json(() => fieldKeysResponse(EDITOR_FIELD_KEYS)),
+				response.json((req) =>
+					req.url.searchParams.get('fieldDataType') === 'number'
+						? numericFieldKeysResponse()
+						: fieldKeysResponse(EDITOR_FIELD_KEYS),
+				),
 			),
 
 			rest.get(
@@ -212,6 +218,8 @@ export const panelEditorMocks = defineStoryMocks({
 		});
 	},
 });
+
+export type PanelEditorArgs = PageStoryArgs<typeof panelEditorMocks>;
 
 export const savePanel = async (): Promise<void> => {
 	const save = await screen.findByTestId(

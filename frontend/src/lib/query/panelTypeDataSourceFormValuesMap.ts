@@ -122,12 +122,10 @@ const RAW_ROWS_METRICS: readonly BuilderField[] = omit(
 // `functions` and `having` are dropped rather than carried: the heatmap request
 // rejects both. Logs and traces keep the metrics aggregations too, because the map is
 // keyed by the query's own signal, which a switch can still be holding.
-const HEATMAP: readonly BuilderField[] = omit(
-	SERIES_METRICS,
-	'functions',
-	'having',
-);
-const HEATMAP_METRICS: readonly BuilderField[] = [...HEATMAP, 'bucketOptions'];
+const HEATMAP: readonly BuilderField[] = [
+	...omit(SERIES_METRICS, 'functions', 'having'),
+	'bucketOptions',
+];
 
 /** Each cell gets its own copy; a shared instance would let cells contaminate
  * each other. */
@@ -150,7 +148,7 @@ export const panelTypeDataSourceFormValuesMap: Record<
 	[PANEL_TYPES.AREA]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.BAR]: bySource(SERIES, SERIES_METRICS),
 	[PANEL_TYPES.HISTOGRAM]: bySource(SERIES, SERIES_METRICS),
-	[PANEL_TYPES.HEATMAP]: bySource(HEATMAP, HEATMAP_METRICS),
+	[PANEL_TYPES.HEATMAP]: bySource(HEATMAP, HEATMAP),
 	[PANEL_TYPES.TABLE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.PIE]: bySource(SERIES, SCALAR_METRICS),
 	[PANEL_TYPES.SCATTER]: bySource(SERIES, SCALAR_METRICS),

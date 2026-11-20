@@ -19,6 +19,7 @@ import {
 	Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType,
 } from 'api/generated/services/sigNoz.schemas';
 import { isLoneBuilderQuery } from 'lib/query/builderEnvelope';
+import { aggregatesBareField } from 'lib/query/heatmapField';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -106,8 +107,10 @@ function QueryAddOns({
 
 		if (
 			panelType === PANEL_TYPES.HEATMAP &&
-			query.dataSource === DataSource.METRICS &&
-			!HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
+			!(
+				query.dataSource === DataSource.METRICS &&
+				HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
+			)
 		) {
 			addOns = [...addOns, BUCKET_OPTIONS];
 		}
@@ -436,6 +439,7 @@ function QueryAddOns({
 											onChange={handleChangeOrderByKeys}
 											isRawQuery={isRawQuery}
 											isNewQueryV2
+											isBareField={aggregatesBareField(panelType, query.dataSource)}
 											placeholder={placeholderOf(QueryBuilderField.OrderBy)}
 										/>
 									</div>

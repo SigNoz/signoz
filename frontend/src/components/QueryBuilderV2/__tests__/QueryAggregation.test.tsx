@@ -69,3 +69,13 @@ describe('QueryAggregationOptions step interval', () => {
 		expect(screen.getByText('every')).toBeInTheDocument();
 	});
 });
+
+describe('QueryAggregationOptions on a heatmap', () => {
+	it.each([
+		[PANEL_TYPES.HEATMAP, true],
+		[PANEL_TYPES.TIME_SERIES, false],
+	])('%s renders the field picker: %s', (panelType, picker) => {
+		renderFor(panelType, DataSource.TRACES);
+		expect(!!screen.queryByTestId('heatmap-field-select')).toBe(picker);
+	});
+});

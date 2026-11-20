@@ -13,6 +13,7 @@ import {
 	openAddColumn,
 	openAIQueryBuilder,
 	openPanelTypeSwitcher,
+	pickHeatmapTracesField,
 	saveAndExpectToast,
 } from './__story_mockdata__/panelEditor.play';
 
@@ -174,6 +175,15 @@ export const ConfigHistogram: Story = {
 export const ConfigHeatmap: Story = {
 	args: { panel: 'new', newPanelKind: 'heatmap' },
 	play: expandConfigSections,
+};
+
+/**
+ * A new heatmap switched to traces: the aggregation becomes a picker of the
+ * signal's numeric fields.
+ */
+export const HeatmapTracesField: Story = {
+	args: { panel: 'new', newPanelKind: 'heatmap' },
+	play: pickHeatmapTracesField,
 };
 
 /** A new list panel's config pane, every section expanded. */

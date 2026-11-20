@@ -175,7 +175,9 @@ export function rebuildBuilderForPanelType(
 		}),
 		queryFormulas: withHeatmapBucketOptions(builder.queryFormulas, newPanelType),
 		queryTraceOperator:
-			newPanelType === PANEL_TYPES.LIST || newPanelType === PANEL_TYPES.SCATTER
+			newPanelType === PANEL_TYPES.LIST ||
+			newPanelType === PANEL_TYPES.SCATTER ||
+			newPanelType === PANEL_TYPES.HEATMAP
 				? []
 				: builder.queryTraceOperator,
 	};

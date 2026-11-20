@@ -10,6 +10,8 @@ export type OrderByFilterProps = {
 	entityVersion?: string;
 	isNewQueryV2?: boolean;
 	placeholder?: string;
+	/** The aggregation is a bare field (a logs or traces heatmap), which Order by then offers. */
+	isBareField?: boolean;
 };
 
 export type OrderByFilterValue = {

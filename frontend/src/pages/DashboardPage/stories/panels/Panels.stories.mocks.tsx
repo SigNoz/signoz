@@ -31,6 +31,7 @@ import {
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_FIXED_COUNTS,
 	HEATMAP_PALETTES,
+	HEATMAP_SOURCES,
 	HEATMAP_Y_SCALES,
 	LEGEND_POSITIONS,
 	LINE_STYLES,
@@ -61,6 +62,7 @@ import type {
 	BucketWidth,
 	Gaps,
 	HeatmapCountRange,
+	HeatmapSource,
 	PanelArgs,
 	PanelKind,
 	PanelResult,
@@ -134,6 +136,13 @@ export const panelsMocks = defineStoryMocks({
 			description: `The colour bar's bounds: from 0 to the busiest cell, or fixed at ${HEATMAP_FIXED_COUNTS.min}–${HEATMAP_FIXED_COUNTS.max}.`,
 			options: HEATMAP_COUNT_RANGES,
 			value: 'auto',
+		}),
+		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
+			group: PANEL,
+			description:
+				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
+			options: HEATMAP_SOURCES,
+			value: 'metrics',
 		}),
 		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {
 			group: PANEL,

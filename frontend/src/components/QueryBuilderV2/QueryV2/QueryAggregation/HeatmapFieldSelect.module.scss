@@ -1,0 +1,35 @@
+// Matches the query builder's other inputs: the filter and Group By boxes.
+.select {
+	flex: 1;
+	min-width: 400px;
+	font-family: 'Space Mono', monospace;
+	font-size: 12px;
+
+	:global(.ant-select-selector) {
+		height: 36px !important;
+		align-items: center;
+		border-radius: 2px;
+		border: 1px solid var(--query-builder-v2-border-color, var(--l2-border)) !important;
+		background-color: var(
+			--query-builder-v2-background-color,
+			var(--l2-background)
+		) !important;
+	}
+
+	:global(.ant-select-selection-item) {
+		color: var(--query-builder-v2-color, var(--l1-foreground));
+	}
+
+	:global(.ant-select-selection-placeholder) {
+		color: var(--query-builder-v2-placeholder-color, var(--l3-foreground));
+	}
+
+	:global(.ant-select-arrow) {
+		color: var(--l2-foreground);
+	}
+}
+
+.popup {
+	font-family: 'Space Mono', monospace;
+	font-size: 12px;
+}
