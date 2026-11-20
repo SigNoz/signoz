@@ -274,6 +274,26 @@ func TestFormatValueForContains_LargeNumberScientificNotation(t *testing.T) {
 	assert.NotEqual(t, "5.2150919831e+11", result)
 }
 
+func TestContainsPattern(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    any
+		expected string
+	}{
+		{name: "PlainText", value: "timeout", expected: "%timeout%"},
+		{name: "Underscore", value: "user_id", expected: `%user\_id%`},
+		{name: "Percent", value: "100%", expected: `%100\%%`},
+		{name: "Backslash", value: `C:\temp`, expected: `%C:\\temp%`},
+		{name: "Number", value: float64(521509198310), expected: "%521509198310%"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, ContainsPattern(testCase.value))
+		})
+	}
+}
+
 func TestFormatFullTextSearch(t *testing.T) {
 	tests := []struct {
 		input    string
