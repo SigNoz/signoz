@@ -9,6 +9,7 @@ import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -16,6 +17,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { CategoryIcon } from './Base/categoryIcons';
 import { DefaultQueryRedirect } from './Base/DefaultQueryRedirect';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import { carryOverListFilters } from './Base/relations';
 import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
@@ -186,6 +188,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
+			const carriedExpression = carryOverListFilters(
+				currentQuery.builder.queryData[0]?.filter?.expression || '',
+				key as InfraMonitoringEntity,
+			);
+
 			// Navigate first: a navigation drops the nuqs writes still queued.
 			redirectWithQueryBuilderData({
 				...currentQuery,
@@ -194,8 +201,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					queryData: [
 						{
 							...(currentQuery.builder.queryData[0] || {}),
-							filter: { expression: '' },
-							filters: { items: [], op: 'AND' as const },
+							filter: { expression: carriedExpression },
+							filters: {
+								items: convertExpressionToFilters(carriedExpression),
+								op: 'AND' as const,
+							},
 						},
 					],
 				},

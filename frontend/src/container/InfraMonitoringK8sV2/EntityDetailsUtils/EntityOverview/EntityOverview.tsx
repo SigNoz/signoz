@@ -198,7 +198,7 @@ function EntityOverviewContent({
 			</div>
 
 			<div className={styles.filterRow}>
-				<ScopeChip clauses={lockedClauses} expression={lockedExpression} />
+				<ScopeChip clauses={lockedClauses} />
 
 				<div className={styles.filterInput}>
 					<QuerySearch
