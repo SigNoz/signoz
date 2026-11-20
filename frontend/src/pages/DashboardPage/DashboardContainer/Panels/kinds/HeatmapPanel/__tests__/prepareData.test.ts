@@ -12,6 +12,7 @@ import {
 	FALLBACK_STEP_SECONDS,
 	prepareHeatmapData,
 	resolveHeatmapStep,
+	resolveBucketLabel,
 	resolveRequestedBucketKind,
 } from '../prepareData';
 
@@ -156,14 +157,12 @@ describe('resolveHeatmapStep', () => {
 	});
 });
 
-describe('resolveRequestedBucketKind', () => {
-	const request = (
-		queries: unknown[],
-	): Querybuildertypesv5QueryRangeRequestDTO =>
-		({
-			compositeQuery: { queries },
-		}) as Querybuildertypesv5QueryRangeRequestDTO;
+const request = (queries: unknown[]): Querybuildertypesv5QueryRangeRequestDTO =>
+	({
+		compositeQuery: { queries },
+	}) as Querybuildertypesv5QueryRangeRequestDTO;
 
+describe('resolveRequestedBucketKind', () => {
 	it('reads the kind off the query that carries a bucket axis', () => {
 		expect(
 			resolveRequestedBucketKind(
@@ -203,5 +202,51 @@ describe('resolveRequestedBucketKind', () => {
 	it('leaves the choice to the server when no query asked for an axis', () => {
 		expect(resolveRequestedBucketKind(request([{ spec: {} }]))).toBeUndefined();
 		expect(resolveRequestedBucketKind(undefined)).toBeUndefined();
+	});
+});
+
+describe('resolveBucketLabel', () => {
+	it.each([
+		[
+			'a metric',
+			[
+				{
+					spec: {
+						signal: 'metrics',
+						aggregations: [{ metricName: 'http_latency' }],
+					},
+				},
+			],
+			'Metrics · http_latency',
+		],
+		[
+			'a traces field',
+			[
+				{
+					spec: {
+						signal: 'traces',
+						aggregations: [{ expression: 'duration_nano' }],
+					},
+				},
+			],
+			'Traces · duration_nano',
+		],
+		[
+			'the enabled query, past a disabled one',
+			[
+				{
+					spec: {
+						signal: 'logs',
+						disabled: true,
+						aggregations: [{ expression: 'code.lineno' }],
+					},
+				},
+				{ spec: { signal: 'logs', aggregations: [{ expression: 'quantity' }] } },
+			],
+			'Logs · quantity',
+		],
+		['nothing for ClickHouse', [{ spec: { query: 'SELECT 1' } }], undefined],
+	])('names %s', (_label, queries, expected) => {
+		expect(resolveBucketLabel(request(queries))).toBe(expected);
 	});
 });

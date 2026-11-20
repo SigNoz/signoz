@@ -83,6 +83,32 @@ export function resolveRequestedBucketKind(
 }
 
 /**
+ * What the grid buckets, named for the tooltip: `<Signal> · <metric or field>`, off
+ * the first enabled builder query. `undefined` for ClickHouse and PromQL, which name
+ * neither.
+ */
+export function resolveBucketLabel(
+	request: Querybuildertypesv5QueryRangeRequestDTO | undefined,
+): string | undefined {
+	for (const envelope of request?.compositeQuery?.queries ?? []) {
+		const spec = envelope.spec as
+			| {
+					signal?: string;
+					disabled?: boolean;
+					aggregations?: { metricName?: string; expression?: string }[];
+			  }
+			| undefined;
+		const [aggregation] = spec?.aggregations ?? [];
+		const bucketed = aggregation?.metricName || aggregation?.expression;
+		if (spec?.signal && !spec.disabled && bucketed) {
+			const signal = spec.signal.charAt(0).toUpperCase() + spec.signal.slice(1);
+			return `${signal} · ${bucketed}`;
+		}
+	}
+	return undefined;
+}
+
+/**
  * Column width in seconds. The server's effective step is authoritative — the
  * last column has no successor to infer a width from — so the timestamp delta is
  * only a fallback for a response that reports no step.
