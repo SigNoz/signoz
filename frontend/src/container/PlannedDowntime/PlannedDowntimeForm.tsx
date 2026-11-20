@@ -192,7 +192,7 @@ export function PlannedDowntimeForm(
 
 	const requiredFieldRule = [{ required: true }];
 
-	const datePickerFooter = (mode: any): any =>
+	const datePickerFooter = (mode: string): JSX.Element | null =>
 		mode === 'time' ? (
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
@@ -645,7 +645,9 @@ export function PlannedDowntimeForm(
 							>
 								<Flex align="center" gap={4}>
 									<Check size={16} />
-									{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+									<span className="translate-safe">
+										{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+									</span>
 								</Flex>
 							</Button>
 						</AuthZTooltip>

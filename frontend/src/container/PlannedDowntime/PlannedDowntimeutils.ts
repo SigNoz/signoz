@@ -151,7 +151,7 @@ export const deleteDowntimeHandler = ({
 		console.error('Unable to delete, please provide correct deleteId');
 		notifications.error({ message: 'Something went wrong' });
 	} else {
-		deleteDowntimeScheduleAsync(
+		void deleteDowntimeScheduleAsync(
 			{ pathParams: { id: String(deleteId) } },
 			{
 				onSuccess: () => {
