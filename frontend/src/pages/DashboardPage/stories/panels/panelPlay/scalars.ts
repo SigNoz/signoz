@@ -1,9 +1,15 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
+import { hoverUntil } from 'lib/visualization/charts/GeoMap/stories/play/olPointer';
+import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 import { expect, waitFor, within } from 'storybook/test';
 
 import {
+	COUNTRIES,
 	NUMBER_VALUE,
+	QUERY_NAME,
 	TABLE_THRESHOLD_VALUE,
+	THRESHOLD_COLOR,
+	VALUE_NAMES,
 } from '../__story_mockdata__/constants';
 import {
 	PIE_VALUES,
@@ -12,6 +18,7 @@ import {
 } from '../__story_mockdata__/panelResponses';
 
 import { PANEL_LOAD, type PanelPlayArgs } from './args';
+import { waitForPlot } from './plot';
 
 // `long-tail` draws 14 slices and folds the other 10 into Other.
 const LONG_TAIL_KEPT = 14;
@@ -115,4 +122,100 @@ export const expectTable = async (
 	}
 
 	await expectTableThresholds(rows, args);
+};
+
+/** No colour-by set, so every service is its own series of one dot. */
+export const expectScatterPlot = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	await within(root).findByTestId('scatter-plot-chart', {}, PANEL_LOAD);
+	const plot = await waitForPlot(root, args.series);
+	await expect(
+		plot.data
+			.slice(1)
+			.map((facets) => (facets as unknown as number[][])[0].length),
+	).toEqual(Array.from({ length: args.series }, () => 1));
+};
+
+/** Zoom controls render only once the outlines have loaded and drawn. */
+export const expectGeoMap = async (
+	root: HTMLElement,
+	args: PanelPlayArgs,
+): Promise<void> => {
+	await within(root).findByTestId('geo-map-zoom-controls', {}, PANEL_LOAD);
+	const legend = within(root).getByTestId('geo-map-legend');
+	if (args.valueNames) {
+		// A name the user wrote reads bare, without the query-name prefix.
+		const name = VALUE_NAMES[QUERY_NAME];
+		await expect(legend).toHaveTextContent(name);
+		await expect(legend).not.toHaveTextContent(`${QUERY_NAME}.${name}`);
+	}
+	await expect(
+		within(root).queryByTestId('geo-map-empty-message'),
+	).not.toBeInTheDocument();
+
+	// A unitless threshold reads in the color column's unit, like the color bar.
+	const keys = within(root).queryAllByTestId('geo-map-color-key');
+	await expect(keys.map((key) => key.textContent)).toEqual(
+		args.thresholds
+			? [
+					`> ${formatPanelValue(
+						TABLE_THRESHOLD_VALUE,
+						args.unit === 'none' ? undefined : args.unit,
+					)}`,
+				]
+			: [],
+	);
+
+	if (args.thresholds) {
+		await expectGeoMapThresholdFills(root, args.series);
+	}
+};
+
+/** CSS normalises colours to `rgb()`, so compare through a style. */
+const cssColor = (color: string): string => {
+	const probe = document.createElement('span');
+	probe.style.backgroundColor = color;
+	return probe.style.backgroundColor;
+};
+
+/**
+ * Hovers countries until it has seen one above the threshold and one below
+ * (when the data has both): only those above take its colour.
+ */
+const expectGeoMapThresholdFills = async (
+	root: HTMLElement,
+	series: number,
+): Promise<void> => {
+	const above = new Map<string, boolean>(
+		TABLE_VALUES(series).map((value, index) => [
+			COUNTRIES[index % COUNTRIES.length],
+			value > TABLE_THRESHOLD_VALUE,
+		]),
+	);
+	const wanted = new Set(above.values());
+	const seen = new Set<boolean>();
+	const fills: { code: string; isAbove: boolean; fill: string }[] = [];
+
+	await hoverUntil(root, (tooltip) => {
+		const code = within(tooltip).getByTestId('geo-map-tooltip-code').textContent;
+		const isAbove = above.get(code ?? '');
+		if (isAbove === undefined) {
+			return false;
+		}
+		fills.push({
+			code: code ?? '',
+			isAbove,
+			fill: within(tooltip).getByTestId('geo-map-tooltip-marker').style
+				.backgroundColor,
+		});
+		seen.add(isAbove);
+		return seen.size === wanted.size;
+	});
+
+	const threshold = cssColor(THRESHOLD_COLOR);
+	await expect(
+		fills.map(({ code, isAbove, fill }) => [code, isAbove, fill === threshold]),
+	).toEqual(fills.map(({ code, isAbove }) => [code, isAbove, isAbove]));
 };
