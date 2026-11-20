@@ -1,13 +1,30 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { where } from 'container/ServiceAccountsSettings/list.config';
 import ROUTES from 'constants/routes';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	accountCreatedToast,
+	accountDeletedToast,
+	accountUpdatedToast,
+	assignRoles,
+	editKeyThenRevokeConfirm,
+	keyCopiedToast,
+	keyCreated,
+	keyRevokedFromEditToast,
+	keyRevokedToast,
+	keysSecondPage,
+	keyUpdatedToast,
+	openSearchSuggestions,
+	openStatusChip,
+	saveFailed,
+} from './__story_mockdata__/serviceAccounts.play';
+import {
 	accountsLoadError,
 	keysLoadingForever,
+	queryRejected,
 	serviceAccountsMocks,
 } from './ServiceAccounts.stories.mocks';
 
@@ -19,8 +36,9 @@ const pageStory = storyMocks(serviceAccountsMocks, { layout: 'app' });
 
 /**
  * Service accounts, the roles they hold and the API keys they carry, with the
- * drawer that creates and revokes keys. Every action is gated on an authz
- * permission.
+ * drawer that creates and revokes keys. The list is one page from the API at a
+ * time, narrowed by the status filter and the search. Every action is gated on
+ * an authz permission.
  *
  * Route: `/settings/service-accounts`.
  */
@@ -36,9 +54,6 @@ export default meta;
 
 type Story = StoryObj<ServiceAccountsArgs>;
 
-/** The table fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
 /**
  * The page keeps the drawer, the tab, the modals and the list filters in the
  * query string, so a story reaches any of them by starting there.
@@ -51,14 +66,20 @@ const ACCOUNT = 'service-account-0';
 const KEYS_TAB = `account=${ACCOUNT}&tab=keys`;
 
 /**
- * The non-human identities the workspace has issued: what each one is called,
- * whether it is still live, and when it was created.
+ * The non-human identities the workspace has issued that are still live: what
+ * each one is called and when it was created. The list opens on the active
+ * ones.
  */
 export const Default: Story = {};
 
 /** A workspace that has not issued one yet. */
 export const NoAccounts: Story = {
 	args: { accounts: 0, deleted: 0 },
+};
+
+/** Every account the workspace has issued, deleted ones included. */
+export const AllAccounts: Story = {
+	parameters: at('search='),
 };
 
 /** Enough accounts to paginate, read from the second page. */
@@ -69,7 +90,9 @@ export const SecondPage: Story = {
 
 /** The list narrowed to the accounts that have been deleted. */
 export const DeletedOnly: Story = {
-	parameters: at('filter=deleted'),
+	parameters: at(
+		`search=${encodeURIComponent(where('status', '=', 'deleted'))}`,
+	),
 };
 
 /** The list narrowed by a search on the name and email column. */
@@ -77,34 +100,35 @@ export const Searched: Story = {
 	parameters: at('search=terraform'),
 };
 
-/** Interaction: the status menu is open with its active and deleted counts. */
-export const FilterMenuOpen: Story = {
-	play: async (): Promise<void> => {
-		// The trigger is disabled until the list and its permission check answer, so
-		// waiting on the text alone lands on a button that drops the click.
-		const trigger = await waitFor(() => {
-			const button = screen.getByRole('button', { name: /all accounts/i });
+/** Interaction: the filter box open with the keys the API accepts suggested. */
+export const SearchSuggestions: Story = {
+	play: openSearchSuggestions,
+};
 
-			if (
-				button.getAttribute('aria-busy') === 'true' ||
-				button.getAttribute('aria-disabled') === 'true'
-			) {
-				throw new Error('the filter trigger is still disabled');
-			}
+/** The suggestions still open on a workspace with no accounts to list. */
+export const SearchSuggestionsNoAccounts: Story = {
+	args: { accounts: 0, deleted: 0 },
+	play: openSearchSuggestions,
+};
 
-			return button;
-		}, untilLoaded);
-
-		await userEvent.click(trigger);
-		// Every active row carries an ACTIVE badge, so the menu option is matched on
-		// its own count suffix.
-		await screen.findByText(/^active ⎯/i, undefined, untilLoaded);
-	},
+/** Interaction: the status chip is open with its three choices. */
+export const StatusChipOpen: Story = {
+	play: openStatusChip,
 };
 
 /** Empty: a search that matches no account keeps the list shell and empty state. */
 export const SearchNoResults: Story = {
 	parameters: at('search=no-such-service-account'),
+};
+
+/** A query the API rejects: the list shows the Invalid query state with the reason. */
+export const QueryRejected: Story = {
+	// The deliberate 400 is the state under test.
+	parameters: {
+		...at(`search=${encodeURIComponent("owner = 'ci'")}`),
+		msw: { handlers: [queryRejected] },
+		allowConsoleErrors: true,
+	},
 };
 
 /** Error: the list request failed while the rest of the settings shell stays usable. */
@@ -136,12 +160,7 @@ export const DeletedAccount: Story = {
  */
 export const AssignRoles: Story = {
 	parameters: at(`account=${ACCOUNT}`),
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByRole('combobox', undefined, untilLoaded),
-		);
-		await screen.findByText('oncall-responder', undefined, untilLoaded);
-	},
+	play: assignRoles,
 };
 
 /**
@@ -152,14 +171,7 @@ export const SaveFailed: Story = {
 	args: { saveOutcome: 'fails' },
 	// The deliberate 500 is the state under test.
 	parameters: { ...at(`account=${ACCOUNT}`), allowConsoleErrors: true },
-	play: async (): Promise<void> => {
-		await userEvent.type(
-			await screen.findByDisplayValue('ci-pipeline', undefined, untilLoaded),
-			'-v2',
-		);
-		await userEvent.click(await screen.findByText(/save changes/i));
-		await screen.findByText(/name update/i, undefined, untilLoaded);
-	},
+	play: saveFailed,
 };
 
 /** The dialog a new account is named in. */
@@ -200,18 +212,7 @@ export const NoKeys: Story = {
 export const KeysSecondPage: Story = {
 	args: { keys: 20 },
 	parameters: at(KEYS_TAB),
-	play: async (): Promise<void> => {
-		const pagination = await waitFor(() => {
-			const rendered = document.querySelector('.sa-drawer__keys-pagination');
-			if (!rendered) {
-				throw new Error('the keys pagination has not rendered yet');
-			}
-			return rendered as HTMLElement;
-		}, untilLoaded);
-
-		await userEvent.click(within(pagination).getByTitle('2'));
-		await screen.findByText('archive-exporter', undefined, untilLoaded);
-	},
+	play: keysSecondPage,
 };
 
 /** The form a key is named and given an expiry in. */
@@ -225,22 +226,7 @@ export const AddKey: Story = {
  */
 export const KeyCreated: Story = {
 	parameters: at(`${KEYS_TAB}&add-key=true`),
-	play: async (): Promise<void> => {
-		await userEvent.type(
-			await screen.findByPlaceholderText(
-				/enter key name/i,
-				undefined,
-				untilLoaded,
-			),
-			'release-signer',
-		);
-		await userEvent.click(await screen.findByText(/create key/i));
-		await screen.findByText(
-			/only time it will be displayed/i,
-			undefined,
-			untilLoaded,
-		);
-	},
+	play: keyCreated,
 };
 
 /** One key opened up: what can still be changed about it, and what cannot. */
@@ -251,24 +237,7 @@ export const EditKey: Story = {
 /** Interaction: revocation can be reached from the real key-edit dialog. */
 export const EditKeyThenRevokeConfirm: Story = {
 	parameters: at(`${KEYS_TAB}&edit-key=factor-api-key-0`),
-	play: async (): Promise<void> => {
-		// The control is rendered disabled until its permission check answers, and a
-		// click on a disabled button is dropped without an error.
-		const revoke = await waitFor(() => {
-			const button = screen.getByRole('button', { name: 'Revoke Key' });
-
-			expect(button).not.toHaveAttribute('aria-disabled', 'true');
-
-			return button;
-		}, untilLoaded);
-
-		await userEvent.click(revoke);
-		await screen.findByRole(
-			'dialog',
-			{ name: /revoke production-writer/i },
-			untilLoaded,
-		);
-	},
+	play: editKeyThenRevokeConfirm,
 };
 
 /** The confirmation a key is revoked behind, straight from its row. */
@@ -290,20 +259,7 @@ export const Viewer: Story = {
  */
 export const AccountUpdatedToast: Story = {
 	parameters: at(`account=${ACCOUNT}`),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.type(
-			await screen.findByDisplayValue('ci-pipeline', undefined, untilLoaded),
-			'-v2',
-		);
-		await userEvent.click(await screen.findByText(/save changes/i));
-		if (args.saveOutcome === 'succeeds') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/service account updated successfully/i),
-				).toBeVisible(),
-			);
-		}
-	},
+	play: accountUpdatedToast,
 };
 
 /**
@@ -312,29 +268,7 @@ export const AccountUpdatedToast: Story = {
  */
 export const AccountCreatedToast: Story = {
 	parameters: at('create-sa=true'),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.type(
-			await screen.findByTestId('create-sa-name-input', undefined, untilLoaded),
-			'release-signer',
-		);
-		await userEvent.click(
-			await waitFor(() => {
-				const button = screen.getByTestId('create-sa-submit-btn');
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		if (args.accountCreate === 'success') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/service account created successfully/i),
-				).toBeVisible(),
-			);
-		}
-	},
+	play: accountCreatedToast,
 };
 
 /**
@@ -343,23 +277,7 @@ export const AccountCreatedToast: Story = {
  */
 export const AccountDeletedToast: Story = {
 	parameters: at(`account=${ACCOUNT}&delete-sa=true`),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.click(
-			await waitFor(() => {
-				const button = screen.getByTestId('confirm-delete-btn');
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		if (args.accountDelete === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/service account deleted/i)).toBeVisible(),
-			);
-		}
-	},
+	play: accountDeletedToast,
 };
 
 /**
@@ -368,34 +286,7 @@ export const AccountDeletedToast: Story = {
  */
 export const KeyUpdatedToast: Story = {
 	parameters: at(`${KEYS_TAB}&edit-key=factor-api-key-0`),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.type(
-			await screen.findByPlaceholderText(
-				/enter key name/i,
-				undefined,
-				untilLoaded,
-			),
-			'-rotated',
-		);
-		await userEvent.click(
-			await waitFor(() => {
-				const button = within(screen.getByTestId('edit-key-modal')).getByRole(
-					'button',
-					{ name: 'Save Changes' },
-				);
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		if (args.keyUpdate === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/key updated successfully/i)).toBeVisible(),
-			);
-		}
-	},
+	play: keyUpdatedToast,
 };
 
 /**
@@ -404,41 +295,7 @@ export const KeyUpdatedToast: Story = {
  */
 export const KeyRevokedFromEditToast: Story = {
 	parameters: at(`${KEYS_TAB}&edit-key=factor-api-key-0`),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.click(
-			await waitFor(() => {
-				const button = screen.getByRole('button', { name: 'Revoke Key' });
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		const dialog = await screen.findByRole(
-			'dialog',
-			{ name: /revoke production-writer/i },
-			untilLoaded,
-		);
-
-		await userEvent.click(
-			await waitFor(() => {
-				const button = within(dialog).getByRole('button', {
-					name: 'Revoke Key',
-				});
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		if (args.keyRevoke === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/key revoked successfully/i)).toBeVisible(),
-			);
-		}
-	},
+	play: keyRevokedFromEditToast,
 };
 
 /**
@@ -447,44 +304,11 @@ export const KeyRevokedFromEditToast: Story = {
  */
 export const KeyRevokedToast: Story = {
 	parameters: at(`${KEYS_TAB}&revoke-key=factor-api-key-0`),
-	play: async ({ args }): Promise<void> => {
-		await userEvent.click(
-			await waitFor(() => {
-				const button = screen.getByRole('button', { name: 'Revoke Key' });
-
-				expect(button).not.toHaveAttribute('aria-disabled', 'true');
-				expect(button).toBeEnabled();
-
-				return button;
-			}, untilLoaded),
-		);
-		if (args.keyRevoke === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/key revoked successfully/i)).toBeVisible(),
-			);
-		}
-	},
+	play: keyRevokedToast,
 };
 
 /** The new key's secret copied from the creation dialog: the toast confirming it. */
 export const KeyCopiedToast: Story = {
 	parameters: at(`${KEYS_TAB}&add-key=true`),
-	play: async (): Promise<void> => {
-		await userEvent.type(
-			await screen.findByPlaceholderText(
-				/enter key name/i,
-				undefined,
-				untilLoaded,
-			),
-			'release-signer',
-		);
-		await userEvent.click(await screen.findByText(/create key/i));
-		// The copy button is the one beside the new key, which may have no name.
-		const key = await screen.findByText(/^sk-/, undefined, untilLoaded);
-
-		await userEvent.click(
-			within(key.parentElement as HTMLElement).getByRole('button'),
-		);
-		await screen.findByText(/key copied to clipboard/i);
-	},
+	play: keyCopiedToast,
 };

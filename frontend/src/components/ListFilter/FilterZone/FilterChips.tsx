@@ -8,36 +8,40 @@ import MultiSelectFilter from './MultiSelectFilter';
 
 import styles from './FilterZone.module.scss';
 
-interface Props {
-	createdBy: string[];
+// The Created-by chip and everything that drives it exist together or not at all.
+export type CreatedByProps =
+	| {
+			creatorOptions: CreatorOption[];
+			createdBy: string[];
+			onCreatedByChange: (emails: string[]) => void;
+			// Clear all Created-by selections and run immediately.
+			onClearCreatedBy: () => void;
+	  }
+	| {
+			creatorOptions?: undefined;
+			createdBy?: undefined;
+			onCreatedByChange?: undefined;
+			onClearCreatedBy?: undefined;
+	  };
+
+type Props = CreatedByProps & {
 	updated: UpdatedWindow;
-	creatorOptions: CreatorOption[];
-	onCreatedByChange: (emails: string[]) => void;
 	onUpdatedChange: (window: UpdatedWindow) => void;
 	// Run the staged draft — fired when a dropdown closes.
 	onApply: () => void;
-	// Clear all Created-by selections and run immediately.
-	onClearCreatedBy: () => void;
 	// Ids: `${testIdPrefix}-filter-created-by`, `-filter-updated`.
 	testIdPrefix: string;
 	disabled?: boolean;
-}
+};
 
-function FilterChips({
-	createdBy,
-	updated,
-	creatorOptions,
-	onCreatedByChange,
-	onUpdatedChange,
-	onApply,
-	onClearCreatedBy,
-	testIdPrefix,
-	disabled = false,
-}: Props): JSX.Element {
-	const creatorOptionsData = creatorOptions.map((o) => ({
-		value: o.email,
-		label: o.label,
-	}));
+function FilterChips(props: Props): JSX.Element {
+	const {
+		updated,
+		onUpdatedChange,
+		onApply,
+		testIdPrefix,
+		disabled = false,
+	} = props;
 
 	const runOnClose = (open: boolean): void => {
 		if (!open) {
@@ -47,16 +51,21 @@ function FilterChips({
 
 	return (
 		<div className={styles.chips}>
-			<MultiSelectFilter
-				value={createdBy}
-				options={creatorOptionsData}
-				placeholder="Created by"
-				testId={`${testIdPrefix}-filter-created-by`}
-				disabled={disabled}
-				onClear={onClearCreatedBy}
-				onChange={onCreatedByChange}
-				onDropdownVisibleChange={runOnClose}
-			/>
+			{props.creatorOptions && (
+				<MultiSelectFilter
+					value={props.createdBy}
+					options={props.creatorOptions.map((o) => ({
+						value: o.email,
+						label: o.label,
+					}))}
+					placeholder="Created by"
+					testId={`${testIdPrefix}-filter-created-by`}
+					disabled={disabled}
+					onClear={props.onClearCreatedBy}
+					onChange={props.onCreatedByChange}
+					onDropdownVisibleChange={runOnClose}
+				/>
+			)}
 			<Select
 				showSearch
 				className={cx(styles.select, styles.selectNarrow)}

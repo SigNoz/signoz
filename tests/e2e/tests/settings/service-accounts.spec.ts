@@ -66,8 +66,9 @@ test.describe('settings — service accounts', () => {
 		await settings.serviceAccounts.openAccount(serviceAccount.id);
 		await settings.serviceAccounts.delete();
 
-		await settings.serviceAccounts.filter('Deleted');
-		await settings.serviceAccounts.search(serviceAccount.name);
+		await settings.serviceAccounts.search(
+			`status = 'deleted' AND name = '${serviceAccount.name}'`,
+		);
 		await expect(settings.serviceAccounts.row(serviceAccount.name)).toBeVisible();
 	});
 });
