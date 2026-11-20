@@ -1,17 +1,3 @@
-import {
-	RuletypesAlertStateDTO,
-	RuletypesAlertTypeDTO,
-	RuletypesCompareOperatorDTO,
-	RuletypesEvaluationRollingDTOKind,
-	RuletypesListOrderDTO,
-	RuletypesListSortDTO,
-	RuletypesMatchTypeDTO,
-	RuletypesPanelTypeDTO,
-	RuletypesQueryTypeDTO,
-	RuletypesRuleDTOSchemaVersion,
-	RuletypesRuleTypeDTO,
-	RuletypesThresholdBasicDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
 import type {
 	ListRulesV3200,
 	RuletypesRuleConditionDTO,
@@ -19,83 +5,86 @@ import type {
 	RuletypesRuleViewDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-const baseCondition: RuletypesRuleConditionDTO = {
+import type { Literal } from './literal';
+
+type Rule = Literal<RuletypesRuleDTO>;
+type RuleCondition = Literal<RuletypesRuleConditionDTO>;
+
+const baseCondition: RuleCondition = {
 	compositeQuery: {
-		queryType: RuletypesQueryTypeDTO.builder,
-		panelType: RuletypesPanelTypeDTO.graph,
+		queryType: 'builder',
+		panelType: 'graph',
 		queries: null,
 	},
-} as unknown as RuletypesRuleConditionDTO;
+} as unknown as RuleCondition;
 
 // The v3 list reports these names as the rule's thresholds.
-const withThresholds = (...names: string[]): RuletypesRuleConditionDTO => ({
+const withThresholds = (...names: string[]): RuleCondition => ({
 	...baseCondition,
 	thresholds: {
-		kind: RuletypesThresholdBasicDTOKind.basic,
+		kind: 'basic',
 		spec: names.map((name) => ({
 			name,
-			matchType: RuletypesMatchTypeDTO.at_least_once,
-			op: RuletypesCompareOperatorDTO.above,
+			matchType: 'at_least_once',
+			op: 'above',
 			target: 0,
 		})),
 	},
 });
 
-const make = (
-	id: string,
-	overrides: Partial<RuletypesRuleDTO>,
-): RuletypesRuleDTO => ({
-	id,
-	alert: `Alert ${id}`,
-	alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
-	condition: baseCondition,
-	createdAt: '2023-10-15T10:00:00Z',
-	updatedAt: '2023-10-19T10:00:00Z',
-	createdBy: 'alice@signoz.io',
-	updatedBy: 'alice@signoz.io',
-	disabled: false,
-	state: RuletypesAlertStateDTO.inactive,
-	labels: { severity: 'info' },
-	annotations: {},
-	ruleType: RuletypesRuleTypeDTO.threshold_rule,
-	schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
-	evaluation: {
-		kind: RuletypesEvaluationRollingDTOKind.rolling,
-		spec: { evalWindow: '5m0s', frequency: '1m0s' },
-	},
-	notificationSettings: { usePolicy: false, renotify: { enabled: false } },
-	...overrides,
-});
+const make = (id: string, overrides: Partial<Rule>): RuletypesRuleDTO =>
+	({
+		id,
+		alert: `Alert ${id}`,
+		alertType: 'METRIC_BASED_ALERT',
+		condition: baseCondition,
+		createdAt: '2023-10-15T10:00:00Z',
+		updatedAt: '2023-10-19T10:00:00Z',
+		createdBy: 'alice@signoz.io',
+		updatedBy: 'alice@signoz.io',
+		disabled: false,
+		state: 'inactive',
+		labels: { severity: 'info' },
+		annotations: {},
+		ruleType: 'threshold_rule',
+		schemaVersion: 'v2alpha1',
+		evaluation: {
+			kind: 'rolling',
+			spec: { evalWindow: '5m0s', frequency: '1m0s' },
+		},
+		notificationSettings: { usePolicy: false, renotify: { enabled: false } },
+		...overrides,
+	}) satisfies Rule as RuletypesRuleDTO;
 
 export const alertRulesFixture: RuletypesRuleDTO[] = [
 	make('rule-1', {
 		condition: withThresholds('critical', 'warning'),
 		alert: 'High CPU Alert',
-		state: RuletypesAlertStateDTO.firing,
+		state: 'firing',
 		labels: { severity: 'critical', team: 'infra' },
 	}),
 	make('rule-2', {
 		condition: withThresholds('warning'),
 		alert: 'Memory Pending Alert',
-		state: RuletypesAlertStateDTO.pending,
+		state: 'pending',
 		labels: { severity: 'warning', team: 'backend' },
 	}),
 	make('rule-3', {
 		condition: withThresholds('info'),
 		alert: 'Healthy Alert',
-		state: RuletypesAlertStateDTO.inactive,
+		state: 'inactive',
 		labels: { severity: 'info', team: 'infra' },
 	}),
 	make('rule-4', {
 		condition: withThresholds('critical'),
 		alert: 'Disabled Alert',
-		state: RuletypesAlertStateDTO.disabled,
+		state: 'disabled',
 		disabled: true,
 		labels: { severity: 'critical', team: 'frontend' },
 	}),
 	make('rule-5', {
 		alert: 'No Labels Alert',
-		state: RuletypesAlertStateDTO.inactive,
+		state: 'inactive',
 		labels: {},
 	}),
 ];
@@ -105,10 +94,7 @@ export const alertRulesPaginationFixture: RuletypesRuleDTO[] = Array.from(
 	(_, i) =>
 		make(`rule-pag-${i}`, {
 			alert: `Pag Rule ${i}`,
-			state:
-				i % 2 === 0
-					? RuletypesAlertStateDTO.firing
-					: RuletypesAlertStateDTO.inactive,
+			state: i % 2 === 0 ? 'firing' : 'inactive',
 			condition: withThresholds(i % 2 === 0 ? 'critical' : 'warning'),
 			labels: { severity: i % 2 === 0 ? 'critical' : 'warning' },
 			createdAt: `2023-10-${String(i + 1).padStart(2, '0')}T10:00:00Z`,
@@ -171,7 +157,7 @@ export const listRulesV3Response = (
 	};
 };
 
-export const ruleViewsFixture: RuletypesRuleViewDTO[] = [
+export const ruleViewsFixture = [
 	{
 		id: 'view-1',
 		name: 'Critical firing',
@@ -181,9 +167,9 @@ export const ruleViewsFixture: RuletypesRuleViewDTO[] = [
 		data: {
 			version: 'v1',
 			query: "thresholds = 'critical'",
-			states: [RuletypesAlertStateDTO.firing],
-			sort: RuletypesListSortDTO.name,
-			order: RuletypesListOrderDTO.asc,
+			states: ['firing'],
+			sort: 'name',
+			order: 'asc',
 		},
 	},
 	{
@@ -196,8 +182,8 @@ export const ruleViewsFixture: RuletypesRuleViewDTO[] = [
 			version: 'v1',
 			query: "team = 'infra'",
 			states: [],
-			sort: RuletypesListSortDTO.updated_at,
-			order: RuletypesListOrderDTO.desc,
+			sort: 'updated_at',
+			order: 'desc',
 		},
 	},
-];
+] satisfies Literal<RuletypesRuleViewDTO>[] as RuletypesRuleViewDTO[];

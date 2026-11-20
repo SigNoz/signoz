@@ -1,8 +1,8 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import { EQueryType } from 'types/common/dashboard';
+import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
-export const queryRangeSuccessResponse: QueryRangePayload = {
+import type { Literal } from './literal';
+
+export const queryRangeSuccessResponse = {
 	status: 'success',
 	data: {
 		resultType: '',
@@ -70,13 +70,13 @@ export const queryRangeSuccessResponse: QueryRangePayload = {
 		builderQueries: undefined,
 		chQueries: undefined,
 		promQueries: undefined,
-		queryType: EQueryType.QUERY_BUILDER,
-		panelType: PANEL_TYPES.TIME_SERIES,
+		queryType: 'builder',
+		panelType: 'graph',
 	},
 	end: 0,
 	start: 0,
 	step: 0,
-};
+} satisfies Literal<QueryRangePayload> as QueryRangePayload;
 
 export const queryRangeForTimeSeries = {
 	status: 'success',
