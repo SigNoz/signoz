@@ -2,6 +2,7 @@ import { type ReactElement, useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Plus } from '@signozhq/icons';
 import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -10,6 +11,7 @@ import CreateServiceAccountModal from 'components/CreateServiceAccountModal/Crea
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import FilterZone from 'components/ListFilter/FilterZone/FilterZone';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
 import { useRecoverFromEmptyPage } from 'components/TanStackTableView';
@@ -38,6 +40,7 @@ import './ServiceAccountsSettings.styles.scss';
 
 function ServiceAccountsSettings(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { isCloudUser } = useGetTenantLicense();
 	const { permissions: authzPermissions, isLoading: isAuthZLoading } = useAuthZ([
 		SAListPermission,
 	]);
@@ -160,7 +163,6 @@ function ServiceAccountsSettings(): JSX.Element {
 					disabled={controlsDisabled}
 					wrapControl={wrapControl}
 					onQueryChange={handleQueryChange}
-					error={queryError ?? undefined}
 					extraFilters={({ draft, applyDraft, setDraft }): JSX.Element => (
 						<ServiceAccountStatusFilter
 							draft={draft}
@@ -194,12 +196,17 @@ function ServiceAccountsSettings(): JSX.Element {
 								'An unexpected error occurred while fetching service accounts.',
 							)}
 						/>
+					) : queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="sa"
+						/>
 					) : (
 						<ServiceAccountsTable
 							data={accounts}
 							total={total}
 							loading={isFetching}
-							queryError={queryError}
 							onClearSearch={handleClearSearch}
 							onRowClick={handleRowClick}
 						/>

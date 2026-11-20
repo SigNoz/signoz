@@ -313,19 +313,17 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await user.click(screen.getByTestId('sa-list-search-submit'));
 
 		await expect(
-			screen.findByTestId('sa-query-error'),
-		).resolves.toHaveTextContent('invalid filter query: unknown key "owner"');
+			screen.findByTestId('sa-invalid-query-detail'),
+		).resolves.toHaveTextContent('unknown key "owner"');
 		expect(
 			screen.queryByText(/An unexpected error occurred while fetching/i),
 		).not.toBeInTheDocument();
-		expect(
-			screen.getByText('The filter query is invalid. Fix it or clear the search.'),
-		).toBeInTheDocument();
+		expect(screen.queryByTestId('sa-row-sa-1')).not.toBeInTheDocument();
 
-		await user.click(screen.getByTestId('no-results-clear-button'));
+		await user.click(screen.getByTestId('sa-filter-clear'));
 
 		await expect(screen.findByText('CI Bot')).resolves.toBeInTheDocument();
-		expect(screen.queryByTestId('sa-query-error')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-invalid-query')).not.toBeInTheDocument();
 	});
 
 	it('pages on the server: the footer shows the total and page 2 asks for an offset', async () => {
@@ -421,7 +419,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await expect(screen.findByTestId('sa-row-sa-1')).resolves.toHaveTextContent(
 			'CI Bot',
 		);
-		expect(screen.queryByTestId('sa-query-error')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('sa-invalid-query')).not.toBeInTheDocument();
 		expect(onRequest).not.toHaveBeenCalledWith(
 			expect.stringContaining('offset=-'),
 		);

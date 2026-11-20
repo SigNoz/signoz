@@ -124,23 +124,4 @@ describe('ServiceAccountsTable', () => {
 
 		expect(defaultProps.onClearSearch).toHaveBeenCalledTimes(1);
 	});
-
-	it('says the filter is invalid when the API rejected the query', () => {
-		render(
-			<NuqsTestingAdapter searchParams={{ search: "owner = 'ci'" }}>
-				<ServiceAccountsTable
-					{...defaultProps}
-					data={[]}
-					queryError='unknown key "owner"'
-				/>
-			</NuqsTestingAdapter>,
-		);
-
-		expect(
-			screen.getByText('The filter query is invalid. Fix it or clear the search.'),
-		).toBeInTheDocument();
-		expect(screen.getByTestId('no-results-clear-button')).toHaveTextContent(
-			'Clear Search',
-		);
-	});
 });

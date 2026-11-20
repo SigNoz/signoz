@@ -21,7 +21,6 @@ interface ServiceAccountsTableProps {
 	data: ServiceAccountRow[];
 	total: number;
 	loading: boolean;
-	queryError?: string | null;
 	onClearSearch: () => void;
 	onRowClick?: (row: ServiceAccountRow) => void;
 }
@@ -30,7 +29,6 @@ function ServiceAccountsTable({
 	data,
 	total,
 	loading,
-	queryError,
 	onClearSearch,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
@@ -70,14 +68,10 @@ function ServiceAccountsTable({
 				showSorterTooltip={false}
 				locale={{
 					emptyText:
-						queryError || searchQuery !== SERVICE_ACCOUNTS_DEFAULT_QUERY ? (
+						searchQuery !== SERVICE_ACCOUNTS_DEFAULT_QUERY ? (
 							<NoResultsEmptyState
 								title="No matching service accounts"
-								subtitle={
-									queryError
-										? 'The filter query is invalid. Fix it or clear the search.'
-										: 'No service accounts match your search. Try adjusting your search criteria.'
-								}
+								subtitle="No service accounts match your search. Try adjusting your search criteria."
 								onClear={onClearSearch}
 								clearButtonText="Clear Search"
 							/>

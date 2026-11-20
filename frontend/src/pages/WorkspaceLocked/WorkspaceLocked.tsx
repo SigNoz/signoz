@@ -3,18 +3,12 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
-import {
-	Button,
-	Col,
-	Collapse,
-	Flex,
-	List,
-	Modal,
-	Row,
-	Skeleton,
-	Space,
-	Tabs,
-} from 'antd';
+import { Button, Collapse, Modal, Skeleton, Tabs } from 'antd';
+import List from 'periscope/components/List/List';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
@@ -173,11 +167,16 @@ export default function WorkspaceBlocked(): JSX.Element {
 										<Typography>{t('observabilityDescription')}</Typography>
 									</Flex>
 									<List
+										className="workspace-locked__list"
 										itemLayout="horizontal"
 										dataSource={enterpriseGradeValuesData}
 										renderItem={(item, index): React.ReactNode => (
-											<List.Item key={index}>
-												<List.Item.Meta avatar={<CircleArrowRight />} title={item.title} />
+											<List.Item key={index} className="workspace-locked__list-item">
+												<List.Item.Meta
+													className="workspace-locked__list-meta"
+													avatar={<CircleArrowRight />}
+													title={item.title}
+												/>
 											</List.Item>
 										)}
 									/>
