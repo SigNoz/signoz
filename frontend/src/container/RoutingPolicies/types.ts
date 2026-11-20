@@ -32,7 +32,6 @@ export interface RoutingPolicyListProps {
 	isFetching: boolean;
 	isError: boolean;
 	refetch: () => void;
-	canEdit: boolean;
 	onEdit: (routingPolicy: RoutingPolicy) => void;
 	onDelete: HandleDeleteModalOpen;
 	onCreate: () => void;

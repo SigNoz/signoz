@@ -5,8 +5,9 @@ import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
-import { USER_ROLES } from 'types/roles';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
@@ -14,6 +15,9 @@ import {
 	RoutingPolicyDetailsFormState,
 	RoutingPolicyDetailsProps,
 } from './types';
+import { useRoutingPolicyFormPermissions } from './useRoutingPolicyFormPermissions';
+
+const CHANNEL_CREATE_CHECKS = [NotificationChannelCreatePermission];
 
 function RoutingPolicyDetails({
 	closeModal,
@@ -27,7 +31,10 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { user } = useAppContext();
+	const { isReadOnly, saveChecks, getChannelAccess, onPickerOpen } =
+		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
+	const { isGranted } = useAuthZ(CHANNEL_CREATE_CHECKS);
+	const canCreateChannel = isGranted(NotificationChannelCreatePermission);
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -63,7 +70,7 @@ function RoutingPolicyDetails({
 		<Flex justify="space-between">
 			<Flex gap={4} align="center">
 				<Typography.Text>No channels yet.</Typography.Text>
-				{user?.role === USER_ROLES.ADMIN ? (
+				{canCreateChannel ? (
 					<Typography.Text>
 						Create one
 						<Button
@@ -100,6 +107,7 @@ function RoutingPolicyDetails({
 			<Form<RoutingPolicyDetailsFormState>
 				form={form}
 				initialValues={initialFormState}
+				disabled={isReadOnly}
 				onFinish={handleSave}
 			>
 				<div className="create-policy-container">
@@ -164,10 +172,23 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Select
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-								}))}
+								options={channels.map((channel) => {
+									const { disabled, reason } = getChannelAccess(channel);
+									return {
+										value: channel.name,
+										label: channel.name,
+										disabled,
+										title: reason,
+										'aria-disabled': disabled,
+										'data-testid': `routing-policy-channel-option-${channel.id}`,
+									};
+								})}
+								data-testid="routing-policy-channels"
+								onDropdownVisibleChange={(open): void => {
+									if (open) {
+										onPickerOpen();
+									}
+								}}
 								mode="multiple"
 								placeholder="Select notification channels"
 								showSearch
@@ -194,15 +215,18 @@ function RoutingPolicyDetails({
 					>
 						Cancel
 					</Button>
-					<Button
-						icon={saveButtonIcon}
-						type="primary"
-						htmlType="submit"
-						loading={isPolicyDetailsModalActionLoading}
-						disabled={isPolicyDetailsModalActionLoading}
-					>
-						Save Routing Policy
-					</Button>
+					<AuthZTooltip checks={saveChecks}>
+						<Button
+							icon={saveButtonIcon}
+							type="primary"
+							htmlType="submit"
+							loading={isPolicyDetailsModalActionLoading}
+							disabled={isPolicyDetailsModalActionLoading}
+							data-testid="routing-policy-save"
+						>
+							Save Routing Policy
+						</Button>
+					</AuthZTooltip>
 				</Flex>
 			</Form>
 		</Modal>

@@ -60,7 +60,7 @@ test.describe('Routing policies as a viewer', () => {
 
 		await expect(alerts.routing.newButton()).toBeDisabled();
 		await expect(await alerts.routing.newButtonTooltip()).toHaveText(
-			'You need edit permissions to create a routing policy',
+			/is not authorized to perform create:route-policy:\*, attach:route-policy:\*/,
 		);
 	});
 });

@@ -11,6 +11,7 @@ import {
 	ListFilter,
 	Logs,
 	Receipt,
+	Route,
 	Shield,
 	TowerControl,
 } from '@signozhq/icons';
@@ -123,6 +124,15 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type alert rule ID, separate multiple with comma or space',
 		docsAnchor: 'rule',
+	},
+	'route-policy': {
+		label: 'Routing Policies',
+		description:
+			'Policies that send alerts matching an expression to notification channels.',
+		icon: Route,
+		selectorPlaceholder:
+			'Type routing policy ID, separate multiple with comma or space',
+		docsAnchor: 'route-policy',
 	},
 	logs: {
 		label: 'Logs',

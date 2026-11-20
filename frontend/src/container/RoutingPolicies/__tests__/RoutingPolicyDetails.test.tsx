@@ -1,15 +1,39 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import * as appHooks from 'providers/App/App';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+	setupAuthzAdmin,
+	setupAuthzAllow,
+	setupAuthzDeny,
+} from 'lib/authz/utils/authz-test-utils';
+import {
+	buildNotificationChannelAttachPermission,
+	buildNotificationChannelDetachPermission,
+	NotificationChannelCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import {
+	buildRoutePolicyAttachPermission,
+	buildRoutePolicyUpdatePermission,
+	RoutePolicyAttachPermission,
+	RoutePolicyCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
-	getAppContextMockState,
 	MOCK_CHANNEL_1,
 	MOCK_CHANNEL_2,
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
-
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const mockHandlePolicyDetailsModalAction = jest.fn();
 const mockCloseModal = jest.fn();
@@ -22,8 +46,54 @@ const NEW_EXPRESSION = 'New Expression';
 const NEW_DESCRIPTION = 'New Description';
 const SAVE_BUTTON_TEXT = 'Save Routing Policy';
 const NO_CHANNELS_FOUND_TEXT = 'No channels yet.';
+const SAVE_TEST_ID = 'routing-policy-save';
+
+async function waitForSaveEnabled(): Promise<void> {
+	await waitFor(() => expect(screen.getByTestId(SAVE_TEST_ID)).toBeEnabled());
+}
+
+function renderDetails(mode: 'create' | 'edit', channels = mockChannels): void {
+	render(
+		<RoutingPolicyDetails
+			routingPolicy={mockRoutingPolicy}
+			closeModal={mockCloseModal}
+			mode={mode}
+			channels={channels}
+			handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+			isPolicyDetailsModalActionLoading={false}
+			isErrorChannels={false}
+			isLoadingChannels={false}
+			refreshChannels={mockRefreshChannels}
+		/>,
+	);
+}
+
+type User = ReturnType<typeof userEvent.setup>;
+
+async function openChannelPicker(user: User): Promise<void> {
+	// antd's search input is the only markup of the picker that opens it
+	await user.click(
+		within(screen.getByTestId('routing-policy-channels')).getByRole('combobox'),
+	);
+}
+
+async function findChannelOption(
+	user: User,
+	channelId: string,
+): Promise<HTMLElement> {
+	await openChannelPicker(user);
+	return screen.findByTestId(`routing-policy-channel-option-${channelId}`);
+}
 
 describe('RoutingPolicyDetails', () => {
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
 	it('renders base create layout with header, 3 inputs and footer', () => {
 		render(
 			<RoutingPolicyDetails
@@ -135,16 +205,17 @@ describe('RoutingPolicyDetails', () => {
 		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
 		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
-		const channelOptions = await screen.findAllByText('Channel 1');
-		fireEvent.click(channelOptions[1]);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const option = await findChannelOption(user, MOCK_CHANNEL_1.id);
+		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
+		await user.click(option);
 
 		// Wait for the form to be valid before submitting
 		await waitFor(() => {
 			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
 		});
 
+		await waitForSaveEnabled();
 		const saveButton = screen.getByRole('button', {
 			name: 'Save Routing Policy',
 		});
@@ -200,6 +271,7 @@ describe('RoutingPolicyDetails', () => {
 			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
 		});
 
+		await waitForSaveEnabled();
 		const saveButton = screen.getByRole('button', {
 			name: SAVE_BUTTON_TEXT,
 		});
@@ -350,55 +422,209 @@ describe('RoutingPolicyDetails', () => {
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 	});
 
-	it('should show create channel button for admin users in empty state', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('offers to create a channel with notification-channel:create', async () => {
+		renderDetails('create', []);
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
+		fireEvent.mouseDown(screen.getByRole('combobox'));
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		expect(screen.getByText('Create one')).toBeInTheDocument();
+		await expect(screen.findByText('Create one')).resolves.toBeInTheDocument();
 	});
 
-	it('should show admin message for non-admin users in empty state', () => {
-		jest
-			.spyOn(appHooks, 'useAppContext')
-			.mockReturnValue(getAppContextMockState({ role: 'VIEWER' }));
+	it('asks for an admin without notification-channel:create', async () => {
+		server.use(setupAuthzDeny(NotificationChannelCreatePermission));
+		renderDetails('create', []);
 
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		fireEvent.mouseDown(screen.getByRole('combobox'));
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
-
-		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		expect(
-			screen.getByText('Please ask your admin to create one.'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByText('Please ask your admin to create one.'),
+		).resolves.toBeInTheDocument();
 		expect(screen.queryByText('Create one')).not.toBeInTheDocument();
+	});
+
+	describe('authz', () => {
+		const POLICY_ID = mockRoutingPolicy.id;
+		const LINKED = MOCK_CHANNEL_1;
+		const UNLINKED = MOCK_CHANNEL_2;
+
+		it('opens read-only with Save disabled without update', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
+			renderDetails('edit');
+
+			await waitFor(() =>
+				expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeDisabled(),
+			);
+			expect(screen.getByTestId(SAVE_TEST_ID)).toBeDisabled();
+		});
+
+		it('names update when Save is denied on edit', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
+			renderDetails('edit');
+
+			await waitFor(() =>
+				expect(screen.getByTestId(SAVE_TEST_ID)).toHaveAttribute(
+					'data-denied-permissions',
+					buildRoutePolicyUpdatePermission(POLICY_ID),
+				),
+			);
+		});
+
+		it('disables Save on create without attach on routing policies', async () => {
+			server.use(setupAuthzDeny(RoutePolicyAttachPermission));
+			renderDetails('create');
+
+			await waitFor(() =>
+				expect(screen.getByTestId(SAVE_TEST_ID)).toHaveAttribute(
+					'data-denied-permissions',
+					RoutePolicyAttachPermission,
+				),
+			);
+			expect(screen.getByTestId(SAVE_TEST_ID)).toBeDisabled();
+		});
+
+		it('enables Save on create with create and attach', async () => {
+			server.use(
+				setupAuthzAllow(RoutePolicyCreatePermission, RoutePolicyAttachPermission),
+			);
+			renderDetails('create');
+
+			await waitForSaveEnabled();
+			expect(screen.getByTestId(SAVE_TEST_ID)).not.toHaveAttribute(
+				'data-denied-permissions',
+			);
+		});
+
+		it('checks unlinked channels only once the picker opens', async () => {
+			const requested: AuthtypesTransactionDTO[] = [];
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+					const payload = (await req.json()) as AuthtypesTransactionDTO[];
+					requested.push(...payload);
+					return res(
+						ctx.status(200),
+						ctx.json(
+							authzMockResponse(
+								payload,
+								payload.map(() => true),
+							),
+						),
+					);
+				}),
+			);
+			const isUnlinkedAttach = (txn: AuthtypesTransactionDTO): boolean =>
+				txn.relation === 'attach' &&
+				txn.object.resource.kind === 'notification-channel' &&
+				txn.object.selector === UNLINKED.id;
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+			await waitForSaveEnabled();
+
+			expect(requested.some(isUnlinkedAttach)).toBe(false);
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
+			expect(requested.some(isUnlinkedAttach)).toBe(true);
+		});
+
+		it('disables a channel the user cannot attach, naming the permission', async () => {
+			server.use(
+				setupAuthzDeny(buildNotificationChannelAttachPermission(UNLINKED.id)),
+			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+			await waitForSaveEnabled();
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute(
+					'title',
+					expect.stringContaining(`attach:notification-channel:${UNLINKED.id}`),
+				),
+			);
+			expect(option).toHaveAttribute('aria-disabled', 'true');
+		});
+
+		it('locks a linked channel the user cannot detach', async () => {
+			server.use(
+				setupAuthzDeny(buildNotificationChannelDetachPermission(LINKED.id)),
+			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+			await waitForSaveEnabled();
+
+			const linked = await findChannelOption(user, LINKED.id);
+			await waitFor(() =>
+				expect(linked).toHaveAttribute(
+					'title',
+					expect.stringContaining(`detach:notification-channel:${LINKED.id}`),
+				),
+			);
+			expect(linked).toHaveAttribute('aria-disabled', 'true');
+			const unlinked = screen.getByTestId(
+				`routing-policy-channel-option-${UNLINKED.id}`,
+			);
+			await waitFor(() =>
+				expect(unlinked).toHaveAttribute('aria-disabled', 'false'),
+			);
+		});
+
+		it('blocks adding channels without attach on the policy', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyAttachPermission(POLICY_ID)));
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+			await waitForSaveEnabled();
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute(
+					'title',
+					expect.stringContaining(`attach:route-policy:${POLICY_ID}`),
+				),
+			);
+			expect(option).toHaveAttribute('aria-disabled', 'true');
+		});
+
+		it('keeps a channel disabled while its check is pending', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('create');
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			expect(option).toHaveAttribute('aria-disabled', 'true');
+			expect(option).toHaveAttribute('title', 'Checking permissions');
+		});
+
+		it('leaves channels pickable on create when the check fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('create');
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
+		});
+
+		it('falls open when the check fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
+			expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeEnabled();
+		});
 	});
 
 	it('should call refreshChannels when refresh button is clicked in empty state', () => {
