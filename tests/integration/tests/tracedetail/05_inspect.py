@@ -432,6 +432,17 @@ def test_inspect_find(
     nothing = requests.get(spans_url, params={"search": "stripe"}, headers=headers, timeout=10).json()["data"]
     assert (nothing["total"], nothing["items"]) == (0, [])
 
+    # a word is also found in an attribute's name and in a resource attribute
+    by_key = requests.get(spans_url, params={"search": "payment.provider"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["spanId"], item["matches"][0]["field"]) for item in by_key["items"]] == [(ids["by_attribute"], "attributes.payment.provider")]
+    by_resource = requests.get(spans_url, params={"search": "td-inspect-find"}, headers=headers, timeout=10).json()["data"]
+    assert by_resource["total"] == 6
+    assert {item["matches"][0]["field"] for item in by_resource["items"]} == {"resource.service.name"}
+
+    unknown_key = requests.get(spans_url, params={"search": "no.such.key = 'x'"}, headers=headers, timeout=10).json()["data"]
+    assert unknown_key["total"] == 0
+    assert "no.such.key" in unknown_key["warnings"][0]
+
     # limit sets the page size; the same search with the cursor returns the next page
     first = requests.get(spans_url, params={"search": "worldpay", "limit": 3}, headers=headers, timeout=10).json()["data"]
     assert first["total"] == 4

@@ -223,14 +223,17 @@ func findWords(item *StorableSpan, words []string) []SpanTextMatch {
 	if len(words) == 0 {
 		return found
 	}
-	check := func(field, value string) bool {
-		for _, word := range words {
-			if snippet, ok := snippetAround(value, word); ok {
-				found = append(found, SpanTextMatch{Field: field, Snippet: snippet})
-				break
+	// check notes the first of texts that holds a word, and reports whether enough places were found.
+	check := func(field string, texts ...string) bool {
+		for _, text := range texts {
+			for _, word := range words {
+				if snippet, ok := snippetAround(text, word); ok {
+					found = append(found, SpanTextMatch{Field: field, Snippet: snippet})
+					return len(found) == spanMatchLimit
+				}
 			}
 		}
-		return len(found) == spanMatchLimit
+		return false
 	}
 
 	if check("name", item.Name) || check("statusMessage", item.StatusMessage) {
@@ -243,7 +246,17 @@ func findWords(item *StorableSpan, words []string) []SpanTextMatch {
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		if check("attributes."+key, fmt.Sprintf("%v", attributes[key])) {
+		if check("attributes."+key, fmt.Sprintf("%v", attributes[key]), key) {
+			return found
+		}
+	}
+	keys = keys[:0]
+	for key := range item.ResourcesString {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if check("resource."+key, item.ResourcesString[key], key) {
 			return found
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -77,6 +78,12 @@ type spanStatusMessageRow struct {
 type spanLinksRow struct {
 	SpanID string `ch:"span_id"`
 	Links  string `ch:"links"`
+}
+
+type spanSearchRow struct {
+	SpanID       string `ch:"span_id"`
+	TimeUnixNano int64  `ch:"time_unix_nano"`
+	Total        uint64 `ch:"total"`
 }
 
 type traceStore struct {
@@ -694,12 +701,6 @@ func (s *traceStore) GetSpanStatusMessages(ctx context.Context, traceID string, 
 	return messages, nil
 }
 
-type spanSearchRow struct {
-	SpanID       string `ch:"span_id"`
-	TimeUnixNano int64  `ch:"time_unix_nano"`
-	Total        uint64 `ch:"total"`
-}
-
 // SearchTraceSpans returns one page of the spans of a trace matching a search: plain words, a
 // filter expression, or both.
 func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, query *spantypes.SpansQuery) (*spantypes.TraceSpanSearch, error) {
@@ -742,6 +743,7 @@ func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, tr
 	if !prepared.IsEmpty() {
 		matches.AddWhereClause(prepared.WhereClause)
 	}
+	search.Warnings = prepared.Warnings
 
 	// The total counts every match, so the page cursor applies outside the counted set.
 	counted := sqlbuilder.NewSelectBuilder()
@@ -777,18 +779,27 @@ func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, tr
 	return search, nil
 }
 
-// spanTextCondition matches text, ignoring case, in the span name, status message, attributes and
-// events. Like the waterfall, a span's JSON attributes are read when filled, the legacy maps otherwise.
+// spanTextCondition matches text, ignoring case, in the span name, status message, attributes,
+// resource attributes and events. A span's JSON attributes are read when filled, the legacy maps otherwise.
 func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 	needle := sb.Var(text)
-	return fmt.Sprintf(
-		"(positionCaseInsensitiveUTF8(name, %[1]s) > 0"+
-			" OR positionCaseInsensitiveUTF8(status_message, %[1]s) > 0"+
-			" OR if(notEmpty(attributes),"+
-			" positionCaseInsensitiveUTF8(toJSONString(attributes), %[1]s) > 0,"+
-			" arrayExists(v -> positionCaseInsensitiveUTF8(v, %[1]s) > 0, mapValues(attributes_string))"+
-			" OR arrayExists(v -> positionCaseInsensitiveUTF8(toString(v), %[1]s) > 0, mapValues(attributes_number)))"+
-			" OR arrayExists(e -> positionCaseInsensitiveUTF8(e, %[1]s) > 0, events))",
-		needle,
-	)
+	in := func(haystack string) string {
+		return fmt.Sprintf("positionCaseInsensitiveUTF8(%s, %s) > 0", haystack, needle)
+	}
+	anyOf := func(array, element string) string {
+		return fmt.Sprintf("arrayExists(x -> %s, %s)", in(element), array)
+	}
+	maps := []string{
+		anyOf("mapKeys(attributes_string)", "x"), anyOf("mapValues(attributes_string)", "x"),
+		anyOf("mapKeys(attributes_number)", "x"), anyOf("mapValues(attributes_number)", "toString(x)"),
+		anyOf("mapKeys(attributes_bool)", "x"), anyOf("mapValues(attributes_bool)", "toString(x)"),
+	}
+	return "(" + strings.Join([]string{
+		in("name"),
+		in("status_message"),
+		// The JSON column nests a dotted name, so names are matched as paths and values in the text.
+		fmt.Sprintf("if(notEmpty(attributes), %s OR %s, %s)", anyOf("JSONAllPaths(attributes)", "x"), in("toJSONString(attributes)"), strings.Join(maps, " OR ")),
+		anyOf("mapKeys(resources_string)", "x"), anyOf("mapValues(resources_string)", "x"),
+		anyOf("events", "x"),
+	}, " OR ") + ")"
 }

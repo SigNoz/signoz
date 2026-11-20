@@ -313,8 +313,9 @@ type TraceSpanSearch struct {
 	Hits  []ThreadCursor
 	Total uint64
 	// Words holds the free-text terms of the search.
-	Words   []string
-	HasMore bool
+	Words    []string
+	Warnings []string
+	HasMore  bool
 }
 
 func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, error) {

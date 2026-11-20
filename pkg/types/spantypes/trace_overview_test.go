@@ -586,6 +586,16 @@ func TestNewTraceSpanList(t *testing.T) {
 		assert.Equal(t, &ThreadCursor{TimeUnixNano: 80, SpanID: "refund"}, query.After)
 	})
 
+	t.Run("WordInAnAttributeNameOrAResourceAttribute_IsFound", func(t *testing.T) {
+		search := &TraceSpanSearch{Hits: []ThreadCursor{{TimeUnixNano: 80, SpanID: "refund"}}, Total: 1, Words: []string{"provider", "payments"}, Warnings: []string{"key `x` not found"}}
+
+		list := NewTraceSpanList(skeleton, search, []StorableSpan{refund})
+
+		require.Len(t, list.Items, 1)
+		assert.Equal(t, []SpanTextMatch{{Field: "attributes.payment.provider", Snippet: "payment.provider"}, {Field: "resource.service.name", Snippet: "payments"}}, list.Items[0].Matches)
+		assert.Equal(t, []string{"key `x` not found"}, list.Warnings)
+	})
+
 	t.Run("LastPage_HasNoCursor", func(t *testing.T) {
 		search := &TraceSpanSearch{Hits: []ThreadCursor{{TimeUnixNano: 3, SpanID: "charge"}}, Total: 1, Words: []string{"worldpay"}}
 

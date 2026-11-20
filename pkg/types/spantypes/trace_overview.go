@@ -362,13 +362,14 @@ func NewTraceSpanList(skeleton *TraceSkeleton, search *TraceSpanSearch, spans []
 	for i := range spans {
 		byID[spans[i].SpanID] = &spans[i]
 	}
-	list := &TraceSpanList{Total: search.Total, Items: []TraceSpanMatch{}}
+	list := &TraceSpanList{Total: search.Total, Items: []TraceSpanMatch{}, Warnings: search.Warnings}
 	chars, hasMore := 0, search.HasMore
 	var last *ThreadCursor
 	for i := range search.Hits {
 		span, hasRecord := byID[search.Hits[i].SpanID]
 		idx, inTree := skeleton.Index(search.Hits[i].SpanID)
 		if !hasRecord || !inTree {
+			last = &search.Hits[i]
 			continue
 		}
 		item := TraceSpanMatch{Span: skeleton.Summary(idx), Parent: skeleton.parentSummary(idx), Matches: findWords(span, search.Words)}
