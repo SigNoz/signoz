@@ -6,9 +6,10 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { Maximize2, X } from '@signozhq/icons';
+import { Maximize2, Minus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { useAIAssistantOpenConversationsStore } from '../store/useAIAssistantOpenConversationsStore';
 import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
@@ -46,8 +47,22 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
+	const activeThreadId = useAIAssistantStore((s) =>
+		s.activeConversationId
+			? s.conversations[s.activeConversationId]?.threadId
+			: undefined,
+	);
 	const closeDrawer = useAIAssistantStore((s) => s.closeDrawer);
+	const closeChatTab = useAIAssistantOpenConversationsStore((s) => s.close);
 	const chatTitle = useActiveChatTitle();
+
+	// Minimize keeps the chat as a strip tab; close drops it until its next reply.
+	const handleClose = useCallback((): void => {
+		if (activeThreadId) {
+			closeChatTab(activeThreadId);
+		}
+		closeDrawer();
+	}, [activeThreadId, closeChatTab, closeDrawer]);
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
@@ -97,6 +112,20 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 
 					<div className={styles.actions}>
+						<Tooltip title="Minimize">
+							<Button
+								variant="ghost"
+								size="sm"
+								icon
+								color="secondary"
+								testId="ai-assistant-panel-minimize"
+								onClick={closeDrawer}
+								aria-label="Minimize panel"
+							>
+								<Minus size={14} />
+							</Button>
+						</Tooltip>
+
 						<Tooltip title="Open full screen">
 							<Button
 								disabledTooltip="Start a conversation first"
@@ -119,7 +148,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								icon
 								color="secondary"
 								testId="ai-assistant-panel-close"
-								onClick={closeDrawer}
+								onClick={handleClose}
 								aria-label="Close panel"
 							>
 								<X size={14} />

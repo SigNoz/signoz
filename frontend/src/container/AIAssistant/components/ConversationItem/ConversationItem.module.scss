@@ -41,6 +41,10 @@
 	&.isReplying {
 		background: var(--accent-amber);
 	}
+
+	&.hasUnreadReply {
+		background: var(--accent-primary);
+	}
 }
 
 .body {

@@ -13,7 +13,7 @@ const config: Config.InitialOptions = {
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
 	modulePathIgnorePatterns: ['dist'],
 	moduleNameMapper: {
-		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
+		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff|wav)$':
 			'<rootDir>/__mocks__/fileMock.ts',
 		// The icon glob module uses `import.meta.glob` (Vite-only); jest can't parse
 		// it, so redirect any import of it to a stub.
