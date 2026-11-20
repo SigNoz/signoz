@@ -1,5 +1,6 @@
 import {
 	expect,
+	metricsQuery,
 	PanelAction,
 	PanelKind,
 	QueryRange,
@@ -8,8 +9,10 @@ import {
 	test,
 } from '../../../drivers/panels';
 
+const COUNTRY_KEY = 'geo.country.iso_code';
+
 const COUNTRIES = QueryRange.scalar({
-	groupColumns: ['geo.country.iso_code'],
+	groupColumns: [COUNTRY_KEY],
 	aggregationColumns: ['A'],
 	rows: [
 		['US', 40],
@@ -30,7 +33,10 @@ test.describe('Dashboards — Geo Map panel', () => {
 		test.beforeEach(async ({ dashboards, queryRange, panels }) => {
 			await queryRange.respond(COUNTRIES);
 			await dashboards.seedAndOpen(
-				singlePanelDashboard({ kind: PanelKind.GeoMap }),
+				singlePanelDashboard({
+					kind: PanelKind.GeoMap,
+					query: { ...metricsQuery({ groupBy: [COUNTRY_KEY] }), kind: 'scalar' },
+				}),
 			);
 			const target = panels.panel(SINGLE_PANEL_ID);
 			await target.waitRendered(PanelKind.GeoMap);
@@ -53,6 +59,12 @@ test.describe('Dashboards — Geo Map panel', () => {
 			await expect(panels.drilldown.menu()).toBeVisible();
 			await expect(panels.drilldown.item('drilldown-view-logs')).toBeVisible();
 			await expect(panels.drilldown.item('drilldown-breakout')).toBeVisible();
+
+			// The clicked country reaches drilldown as a filter.
+			await panels.drilldown.item('drilldown-dashboard-variables').click();
+			await expect(panels.drilldown.item('drilldown-var-create')).toContainText(
+				`$${COUNTRY_KEY}`,
+			);
 		});
 	});
 
