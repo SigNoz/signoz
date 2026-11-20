@@ -3,9 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
 import {
 	choiceControl,
@@ -14,10 +14,11 @@ import {
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { queryRangeV5ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
-	attributeValuesResponse,
-	queryRangeV3ForRequest,
+	attributeValues,
+	LABEL_VALUES,
 	timeRangeState,
 } from '../../stories/__story_mockdata__/messagingQueues';
 import {
@@ -60,50 +61,51 @@ export const queueOverviewMocks = defineStoryMocks({
 			max: 6,
 		}),
 	},
-	handlers: (values, response) => {
-		const queryRange = response.json(async (req) => {
-			const body = (await req.json()) as QueryRangePayload;
+	handlers: (values, response) => [
+		rest.post(
+			'http://localhost/api/v1/messaging-queues/queue-overview',
+			response.json(async (req) => {
+				const body = (await req.json()) as { end: number };
 
-			return (
-				overviewValueResponse(body, values.failing) ??
-				queryRangeV3ForRequest(body, values.series)
-			);
-		});
+				return {
+					status: 'success',
+					data: queueOverviewResponse(
+						values.queues,
+						values.system,
+						values.failing,
+						body.end / 1e6,
+					),
+				};
+			}),
+		),
 
-		return [
-			rest.post(
-				'http://localhost/api/v1/messaging-queues/queue-overview',
-				response.json(async (req) => {
-					const body = (await req.json()) as { end: number };
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) => {
+				const body = (await req.json()) as Querybuildertypesv5QueryRangeRequestDTO;
 
-					return {
-						status: 'success',
-						data: queueOverviewResponse(
-							values.queues,
-							values.system,
-							values.failing,
-							body.end / 1e6,
-						),
-					};
-				}),
-			),
+				return (
+					overviewValueResponse(body, values.failing) ??
+					queryRangeV5ForRequest(body, {
+						count: values.series,
+						labelValues: LABEL_VALUES,
+					})
+				);
+			}),
+		),
 
-			rest.post('http://localhost/api/v3/query_range', queryRange),
-			rest.post('http://localhost/api/v4/query_range', queryRange),
-
-			rest.get(
-				'http://localhost/api/v1/fields/values',
-				response.json((req) =>
-					fieldValuesResponse(
-						attributeValuesResponse(
-							req.url.searchParams.get('name') ?? '',
-							req.url.searchParams.get('searchText') ?? '',
-						).data.stringAttributeValues ?? [],
+		rest.get(
+			'http://localhost/api/v1/fields/values',
+			response.json((req) =>
+				fieldValuesResponse(
+					attributeValues(
+						req.url.searchParams.get('name') ?? '',
+						req.url.searchParams.get('searchText') ?? '',
 					),
 				),
 			),
-		];
-	},
+		),
+	],
 	config: () => ({
 		route: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		reduxState: timeRangeState(),

@@ -70,22 +70,6 @@ test.describe('Messaging queues, kafka', () => {
 		);
 	});
 
-	test('TC-05 drop rate evaluates the seeded producer to consumer pair', async ({
-		mq,
-		mqSeed,
-	}) => {
-		test.skip(
-			true,
-			'stack limitation: /kafka/span/evaluation answers 400 "span evaluation feature is disabled" until the stack starts with SIGNOZ_FLAGGER_CONFIG_BOOLEAN_KAFKA__SPAN__EVAL=true',
-		);
-		await mq.gotoKafkaDetail('dropRate');
-		await mq.waitForTableRow(mq.dropRateTable(), mqSeed.producer);
-
-		await expect(mq.tableRow(mq.dropRateTable(), mqSeed.producer)).toContainText(
-			mqSeed.consumer,
-		);
-	});
-
 	test('TC-06 consumer lag draws the seeded gauge and its point details', async ({
 		mq,
 		mqSeed,
