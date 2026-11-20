@@ -693,3 +693,102 @@ func (s *traceStore) GetSpanStatusMessages(ctx context.Context, traceID string, 
 	}
 	return messages, nil
 }
+
+type spanSearchRow struct {
+	SpanID       string `ch:"span_id"`
+	TimeUnixNano int64  `ch:"time_unix_nano"`
+	Total        uint64 `ch:"total"`
+}
+
+// SearchTraceSpans returns one page of the spans of a trace matching a search: plain words, a
+// filter expression, or both.
+func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, query *spantypes.SpansQuery) (*spantypes.TraceSpanSearch, error) {
+	selectors := querybuilder.QueryStringToKeysSelectors(query.Search)
+	for _, selector := range selectors {
+		selector.Signal = telemetrytypes.SignalTraces
+		selector.SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+	}
+	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error fetching search field keys")
+	}
+
+	search := &spantypes.TraceSpanSearch{Hits: []spantypes.ThreadCursor{}, Words: []string{}}
+	matches := sqlbuilder.NewSelectBuilder()
+	matches.Select("DISTINCT ON (span_id) span_id", "toUnixTimestamp64Nano(timestamp) AS time_unix_nano")
+	matches.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	matches.Where(
+		matches.E("trace_id", traceID),
+		matches.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		matches.LE("ts_bucket_start", bounds.End.Unix()),
+	)
+	q := querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano()))
+	// As in GetAISpanUsage: the JSON attributes are read without waiting for the feature flag.
+	q.TraceAttrsJSONOn = true
+	prepared, err := querybuilder.PrepareWhereClause(query.Search, querybuilder.FilterExprVisitorOpts{
+		Context:   ctx,
+		Query:     q,
+		Storage:   s.storage,
+		FieldKeys: keys,
+		Builder:   matches,
+		FullTextCondition: func(sb *sqlbuilder.SelectBuilder, text string) string {
+			search.Words = append(search.Words, text)
+			return spanTextCondition(sb, text)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !prepared.IsEmpty() {
+		matches.AddWhereClause(prepared.WhereClause)
+	}
+
+	// The total counts every match, so the page cursor applies outside the counted set.
+	counted := sqlbuilder.NewSelectBuilder()
+	counted.Select("span_id", "time_unix_nano", "count() OVER () AS total")
+	counted.From(counted.BuilderAs(matches, "matches"))
+
+	page := sqlbuilder.NewSelectBuilder()
+	page.Select("span_id", "time_unix_nano", "total")
+	page.From(page.BuilderAs(counted, "counted"))
+	if query.After != nil {
+		page.Where(page.GT("(time_unix_nano, span_id)", sqlbuilder.Tuple(int64(query.After.TimeUnixNano), query.After.SpanID)))
+	}
+	page.OrderByAsc("time_unix_nano")
+	page.OrderByAsc("span_id")
+	// One extra row tells whether another page follows.
+	page.Limit(query.Limit + 1)
+	stmt, args := page.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var rows []spanSearchRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, stmt, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error searching trace spans")
+	}
+	if len(rows) > 0 {
+		search.Total = rows[0].Total
+	}
+	if len(rows) > query.Limit {
+		rows = rows[:query.Limit]
+		search.HasMore = true
+	}
+	for _, row := range rows {
+		search.Hits = append(search.Hits, spantypes.ThreadCursor{TimeUnixNano: uint64(row.TimeUnixNano), SpanID: row.SpanID})
+	}
+	return search, nil
+}
+
+// spanTextCondition matches text, ignoring case, in the span name, status message, attributes and
+// events. Like the waterfall, a span's JSON attributes are read when filled, the legacy maps otherwise.
+func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
+	needle := sb.Var(text)
+	return fmt.Sprintf(
+		"(positionCaseInsensitiveUTF8(name, %[1]s) > 0"+
+			" OR positionCaseInsensitiveUTF8(status_message, %[1]s) > 0"+
+			" OR if(notEmpty(attributes),"+
+			" positionCaseInsensitiveUTF8(toJSONString(attributes), %[1]s) > 0,"+
+			" arrayExists(v -> positionCaseInsensitiveUTF8(v, %[1]s) > 0, mapValues(attributes_string))"+
+			" OR arrayExists(v -> positionCaseInsensitiveUTF8(toString(v), %[1]s) > 0, mapValues(attributes_number)))"+
+			" OR arrayExists(e -> positionCaseInsensitiveUTF8(e, %[1]s) > 0, events))",
+		needle,
+	)
+}

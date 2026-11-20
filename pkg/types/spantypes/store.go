@@ -45,6 +45,7 @@ type TraceStore interface {
 	// GetLinkedSpans returns the spans of the trace that link to other spans.
 	GetLinkedSpans(ctx context.Context, traceID string, bounds *TraceBounds) ([]LinkedSpan, error)
 	GetSpanStatusMessages(ctx context.Context, traceID string, bounds *TraceBounds, spanIDs []string) (map[string]string, error)
+	SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, query *SpansQuery) (*TraceSpanSearch, error)
 
 	GetSpanCountByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
 	GetSpanDurationByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)

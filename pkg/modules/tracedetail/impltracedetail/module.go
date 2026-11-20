@@ -308,9 +308,12 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 func (m *module) InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error) {
 	inspection := &spantypes.GettableTraceInspection{Type: query.Type}
 	var err error
-	if query.Type == spantypes.InspectTypeSpan {
+	switch query.Type {
+	case spantypes.InspectTypeSpan:
 		inspection.Span, err = m.getTraceSpan(ctx, orgID, traceID, query)
-	} else {
+	case spantypes.InspectTypeFind:
+		inspection.Find, err = m.findTraceSpans(ctx, orgID, traceID, query)
+	default:
 		inspection.Overview, err = m.getTraceOverview(ctx, orgID, traceID, query)
 	}
 	if err != nil {
@@ -360,6 +363,55 @@ func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID st
 	detail.Percentile = percentile
 	spantypes.FitSpan(detail)
 	return detail, nil
+}
+
+// findTraceSpans returns a page of every span of the trace, or of the spans matching a search.
+func (m *module) findTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceSpanList, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	if query.AllSpans {
+		skeleton, err := m.loadSkeleton(ctx, orgID, traceID, bounds, false, false)
+		if err != nil {
+			return nil, err
+		}
+		if query.SpanID == "" {
+			return skeleton.SpanPage(nil, query.Offset, query.Limit), nil
+		}
+		root, ok := skeleton.Index(query.SpanID)
+		if !ok {
+			return nil, errors.NewNotFoundf(spantypes.ErrCodeInspectSpanNotFound, "span %s not found in trace %s", query.SpanID, traceID)
+		}
+		return skeleton.SpanPage(&root, query.Offset, query.Limit), nil
+	}
+
+	// The tree gives each match its place; the search and the matched spans' own data load beside it.
+	var (
+		skeleton *spantypes.TraceSkeleton
+		search   *spantypes.TraceSpanSearch
+		spans    []spantypes.StorableSpan
+	)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		var err error
+		skeleton, err = m.loadSkeleton(groupCtx, orgID, traceID, bounds, false, false)
+		return err
+	})
+	group.Go(func() error {
+		var err error
+		search, err = m.store.SearchTraceSpans(groupCtx, orgID, traceID, bounds, &spantypes.SpansQuery{Search: query.Search, Limit: query.Limit, After: query.After})
+		if err != nil {
+			return err
+		}
+		spans, err = m.store.GetTraceSpansByIDs(groupCtx, traceID, bounds.Start, bounds.End, search.SpanIDs())
+		return err
+	})
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	return spantypes.NewTraceSpanList(skeleton, search, spans), nil
 }
 
 // getSpanPercentile places the span among those of the same name and service that started in the

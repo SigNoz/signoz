@@ -35,6 +35,7 @@ type filterExpressionVisitor struct {
 	mainErrorURL       string
 	builder            *sqlbuilder.SelectBuilder
 	fullTextColumn     *telemetrytypes.TelemetryFieldKey
+	fullTextCondition  func(sb *sqlbuilder.SelectBuilder, text string) string
 	skipResourceFilter bool
 	skipFullTextFilter bool
 	variables          map[string]qbtypes.VariableItem
@@ -48,12 +49,14 @@ type FilterExprVisitorOpts struct {
 	Context context.Context
 	// Query is the request's context with the query-path flags evaluated
 	// one time. Storage answers the signal's part of every term.
-	Query              qbtypes.QueryInfo
-	Storage            qbtypes.Storage
-	Logger             *slog.Logger
-	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
-	Builder            *sqlbuilder.SelectBuilder
-	FullTextColumn     *telemetrytypes.TelemetryFieldKey
+	Query          qbtypes.QueryInfo
+	Storage        qbtypes.Storage
+	Logger         *slog.Logger
+	FieldKeys      map[string][]*telemetrytypes.TelemetryFieldKey
+	Builder        *sqlbuilder.SelectBuilder
+	FullTextColumn *telemetrytypes.TelemetryFieldKey
+	// FullTextCondition compiles a free-text term for a signal without a full-text column.
+	FullTextCondition  func(sb *sqlbuilder.SelectBuilder, text string) string
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	Variables          map[string]qbtypes.VariableItem
@@ -68,6 +71,7 @@ func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVis
 		fieldKeys:          opts.FieldKeys,
 		builder:            opts.Builder,
 		fullTextColumn:     opts.FullTextColumn,
+		fullTextCondition:  opts.FullTextCondition,
 		skipResourceFilter: opts.SkipResourceFilter,
 		skipFullTextFilter: opts.SkipFullTextFilter,
 		variables:          opts.Variables,
@@ -330,7 +334,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return SkipConditionLiteral
 		}
 
-		if v.fullTextColumn == nil {
+		if v.fullTextColumn == nil && v.fullTextCondition == nil {
 			v.errors = append(v.errors, "full text search is not supported")
 			return ErrorConditionLiteral
 		}
@@ -352,6 +356,9 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ErrorConditionLiteral
 			}
+		}
+		if v.fullTextColumn == nil {
+			return v.fullTextCondition(v.builder, searchText)
 		}
 		conds, ok := v.compile(storageKey(v.fullTextColumn), qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText))
 		if !ok {
@@ -664,6 +671,9 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	}
 
 	if v.fullTextColumn == nil {
+		if v.fullTextCondition != nil {
+			return v.fullTextCondition(v.builder, text)
+		}
 		v.errors = append(v.errors, "full text search is not supported")
 		return ErrorConditionLiteral
 	}

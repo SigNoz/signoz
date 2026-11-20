@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"sort"
 	"strings"
 	"unicode/utf8"
 )
@@ -14,6 +15,8 @@ const (
 	spanRecordShrunkChars  = 100
 	spanRecordMinimumChars = 20
 	spanRecordSelectChars  = 40_000
+	spanMatchSnippetRadius = 40
+	spanMatchLimit         = 3
 	truncationMark         = "…"
 )
 
@@ -206,4 +209,71 @@ func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
 // IsSmallTrace reports whether a trace has few enough spans to try returning their records.
 func IsSmallTrace(spanCount int) bool {
 	return spanCount <= inspectTreeSpans
+}
+
+// findWords returns up to three places in the span where one of the words occurs, ignoring case.
+func findWords(item *StorableSpan, words []string) []SpanTextMatch {
+	found := make([]SpanTextMatch, 0)
+	if len(words) == 0 {
+		return found
+	}
+	check := func(field, value string) bool {
+		for _, word := range words {
+			if snippet, ok := snippetAround(value, word); ok {
+				found = append(found, SpanTextMatch{Field: field, Snippet: snippet})
+				break
+			}
+		}
+		return len(found) == spanMatchLimit
+	}
+
+	if check("name", item.Name) || check("statusMessage", item.StatusMessage) {
+		return found
+	}
+	attributes := item.Attributes()
+	keys := make([]string, 0, len(attributes))
+	for key := range attributes {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if check("attributes."+key, fmt.Sprintf("%v", attributes[key])) {
+			return found
+		}
+	}
+	for idx, event := range item.Events {
+		if check(fmt.Sprintf("events[%d]", idx), event) {
+			return found
+		}
+	}
+	return found
+}
+
+// snippetAround returns the text around the first place word occurs in value, ignoring case.
+func snippetAround(value, word string) (string, bool) {
+	// Lowering can change the byte length of some characters; positions then no longer map back.
+	lowered := strings.ToLower(value)
+	if len(lowered) != len(value) {
+		lowered = value
+	}
+	pos := strings.Index(lowered, strings.ToLower(word))
+	if pos < 0 {
+		return "", false
+	}
+	start := max(pos-spanMatchSnippetRadius, 0)
+	end := min(pos+len(word)+spanMatchSnippetRadius, len(value))
+	for start > 0 && !utf8.RuneStart(value[start]) {
+		start--
+	}
+	for end < len(value) && !utf8.RuneStart(value[end]) {
+		end++
+	}
+	snippet := value[start:end]
+	if start > 0 {
+		snippet = truncationMark + snippet
+	}
+	if end < len(value) {
+		snippet += truncationMark
+	}
+	return snippet, true
 }

@@ -16,6 +16,10 @@ const (
 	inspectLevelSize    = 20
 	inspectDefaultDepth = 2
 	inspectMaxDepth     = 10
+	// Page sizes of a search and of the list of every span.
+	inspectSearchLimit   = 20
+	inspectAllSpansLimit = 400
+	inspectMaxLimit      = 1000
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
 	inspectTreeSpans       = 50
 	inspectSmallTraceChars = 20_000
@@ -291,20 +295,57 @@ type InspectQuery struct {
 	SpanID       string
 	Depth        int
 	SelectFields []string
+
+	// Search and AllSpans apply to a find request. A search is paged by After, the list of every
+	// span by Offset; with AllSpans, SpanID limits the list to that span and the spans below it.
+	Search   string
+	AllSpans bool
+	Limit    int
+	After    *ThreadCursor
 }
 
-// inspectCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
+// SpansQuery is one page of a search inside a trace.
+type SpansQuery struct {
+	Search string
+	Limit  int
+	After  *ThreadCursor
+}
+
+// TraceSpanSearch is one page of the spans matching a search, in start time order.
+type TraceSpanSearch struct {
+	Hits  []ThreadCursor
+	Total uint64
+	// Words holds the free-text terms of the search.
+	Words   []string
+	HasMore bool
+}
+
+func (search *TraceSpanSearch) SpanIDs() []string {
+	spanIDs := make([]string, len(search.Hits))
+	for i := range search.Hits {
+		spanIDs[i] = search.Hits[i].SpanID
+	}
+	return spanIDs
+}
+
+// inspectCursor is the content of a nextCursor: for a list of the overview its name and offset,
+// for the list of every span an offset, for a search the last span of the page.
 type inspectCursor struct {
-	List   string `json:"list,omitempty"`
-	Offset int    `json:"offset,omitempty"`
+	List   string        `json:"list,omitempty"`
+	Offset int           `json:"offset,omitempty"`
+	After  *ThreadCursor `json:"after,omitempty"`
 }
 
-// NewInspectQuery picks the part to return: a span for spanId, the overview otherwise. A
-// parameter that does not apply to that part is an error.
+// NewInspectQuery picks the part to return: matches for search, every span for allSpans, a span
+// for spanId, the overview otherwise. A parameter that does not apply to that part is an error.
 func NewInspectQuery(params *InspectTraceParams) (*InspectQuery, error) {
 	switch {
+	case params.Search != "" && params.SpanID != "":
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "spanId and search cannot be combined")
+	case params.Search != "" && params.AllSpans:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "search and allSpans cannot be combined")
 	case params.Search != "" || params.AllSpans:
-		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "search and allSpans are not implemented yet")
+		return newFindQuery(params)
 	case params.SpanID != "":
 		return newSpanQuery(params)
 	}
@@ -346,6 +387,42 @@ func newSpanQuery(params *InspectTraceParams) (*InspectQuery, error) {
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth must be between 1 and %d, got %d", inspectMaxDepth, params.Depth)
 	case params.Depth != 0:
 		query.Depth = params.Depth
+	}
+	return query, nil
+}
+
+func newFindQuery(params *InspectTraceParams) (*InspectQuery, error) {
+	query := &InspectQuery{Type: InspectTypeFind, SpanID: params.SpanID, Search: params.Search, AllSpans: params.AllSpans, Limit: params.Limit}
+	switch {
+	case params.Depth != 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth cannot be combined with search or allSpans")
+	case len(params.SelectFields) > 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "selectFields cannot be combined with search or allSpans")
+	case params.Limit < 0 || params.Limit > inspectMaxLimit:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit must be between 1 and %d, got %d", inspectMaxLimit, params.Limit)
+	case params.Limit == 0 && params.AllSpans:
+		query.Limit = inspectAllSpansLimit
+	case params.Limit == 0:
+		query.Limit = inspectSearchLimit
+	}
+	if params.Cursor == "" {
+		return query, nil
+	}
+
+	// A cursor continues the request it came from: an offset for every span, a last span for a search.
+	cursor, err := decodeInspectCursor(params.Cursor)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case cursor.List != "":
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
+	case params.AllSpans && cursor.Offset > 0 && cursor.After == nil:
+		query.Offset = cursor.Offset
+	case !params.AllSpans && cursor.Offset == 0 && cursor.After != nil && cursor.After.SpanID != "":
+		query.After = cursor.After
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
 	}
 	return query, nil
 }

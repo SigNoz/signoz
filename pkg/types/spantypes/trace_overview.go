@@ -421,6 +421,62 @@ func (s *TraceSkeleton) SpanDetail(i int32, depth int) *TraceSpanDetail {
 	return detail
 }
 
+// SpanPage returns one page of every span in tree order, ended early when the response would pass
+// its size limit. With a root it covers that span and the spans below it. Every span of the list
+// is followed by the spans below it, so an item carries no parent.
+func (s *TraceSkeleton) SpanPage(root *int32, offset, limit int) *TraceSpanList {
+	order := s.preorder
+	if root != nil {
+		first := slices.Index(s.preorder, *root)
+		order = s.preorder[first : first+1+int(s.subtree[*root])]
+	}
+	list := &TraceSpanList{Total: uint64(len(order)), Items: []TraceSpanMatch{}}
+	chars := 0
+	for _, i := range pageOf(order, offset, limit) {
+		item := TraceSpanMatch{Span: s.Summary(i), Matches: []SpanTextMatch{}}
+		chars += jsonChars(item)
+		if chars > inspectMaxResponseChars && len(list.Items) > 0 {
+			break
+		}
+		list.Items = append(list.Items, item)
+	}
+	if next := offset + len(list.Items); next < len(order) {
+		list.NextCursor = inspectCursor{Offset: next}.encode()
+	}
+	return list
+}
+
+// NewTraceSpanList turns a page of search hits into matches: the span, its parent and where the
+// words were found. It ends early when the response would pass its size limit.
+func NewTraceSpanList(skeleton *TraceSkeleton, search *TraceSpanSearch, spans []StorableSpan) *TraceSpanList {
+	byID := make(map[string]*StorableSpan, len(spans))
+	for i := range spans {
+		byID[spans[i].SpanID] = &spans[i]
+	}
+	list := &TraceSpanList{Total: search.Total, Items: []TraceSpanMatch{}}
+	chars, hasMore := 0, search.HasMore
+	var last *ThreadCursor
+	for i := range search.Hits {
+		span, hasRecord := byID[search.Hits[i].SpanID]
+		idx, inTree := skeleton.Index(search.Hits[i].SpanID)
+		if !hasRecord || !inTree {
+			continue
+		}
+		item := TraceSpanMatch{Span: skeleton.Summary(idx), Parent: skeleton.parentSummary(idx), Matches: findWords(span, search.Words)}
+		chars += jsonChars(item)
+		if chars > inspectMaxResponseChars && len(list.Items) > 0 {
+			hasMore = true
+			break
+		}
+		list.Items = append(list.Items, item)
+		last = &search.Hits[i]
+	}
+	if hasMore && last != nil {
+		list.NextCursor = inspectCursor{After: last}.encode()
+	}
+	return list
+}
+
 // FitSpan drops the deepest levels below the span until the response fits its size limit.
 func FitSpan(detail *TraceSpanDetail) {
 	for len(detail.Descendants) > 0 && jsonChars(detail) > inspectMaxResponseChars {
