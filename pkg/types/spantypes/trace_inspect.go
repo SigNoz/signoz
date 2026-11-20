@@ -1,9 +1,12 @@
 package spantypes
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"math"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -20,6 +23,8 @@ const (
 	inspectSearchLimit   = 20
 	inspectAllSpansLimit = 400
 	inspectMaxLimit      = 1000
+	// inspectNameChars cuts a span name in a summary; a statement used as a name can run to kilobytes.
+	inspectNameChars = 200
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
 	inspectTreeSpans       = 50
 	inspectSmallTraceChars = 20_000
@@ -52,12 +57,6 @@ var (
 	UnmarkedFailureExceptionEvent = UnmarkedFailureReason{valuer.NewString("exception_event")}
 )
 
-var (
-	InspectTypeOverview = InspectType{valuer.NewString("overview")}
-	InspectTypeSpan     = InspectType{valuer.NewString("span")}
-	InspectTypeFind     = InspectType{valuer.NewString("find")}
-)
-
 // UnmarkedFailureReason says why a span without the error flag is listed as a failure.
 type UnmarkedFailureReason struct{ valuer.String }
 
@@ -65,21 +64,20 @@ func (UnmarkedFailureReason) Enum() []any {
 	return []any{UnmarkedFailureHTTP4xx, UnmarkedFailureGRPCStatus, UnmarkedFailureExceptionEvent}
 }
 
-// InspectType names the part of an inspect response that is filled.
-type InspectType struct{ valuer.String }
-
-func (InspectType) Enum() []any {
-	return []any{InspectTypeOverview, InspectTypeSpan, InspectTypeFind}
+type InspectTraceParams struct {
+	Cursor string `query:"cursor" description:"The nextCursor of one list of the overview; returns the next page of that list and nothing else."`
 }
 
-type InspectTraceParams struct {
-	SpanID       string   `query:"spanId" description:"Returns this span in full with the spans around it. Cannot be combined with search."`
-	Search       string   `query:"search" description:"Returns the spans that match, earliest first: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attribute values and events, ignoring case."`
-	Depth        int      `query:"depth" description:"With spanId, the number of levels of ancestors and of descendants returned, 1 to 10; 2 when not given. The root span is always returned."`
-	AllSpans     bool     `query:"allSpans" description:"Returns a different response: every span of the trace as a short line, in tree order, or with spanId that span and every span below it. Cannot be combined with search or depth."`
-	SelectFields []string `query:"selectFields" description:"With spanId, attribute names returned without the 500 character cut; the record then holds only these attributes."`
-	Limit        int      `query:"limit" description:"Page size for search and for allSpans, at most 1000; when not given, 20 with search and 400 with allSpans. A page holds fewer spans when it would pass the 50,000 character limit."`
-	Cursor       string   `query:"cursor" description:"The nextCursor of an earlier response to the same request; returns the next page."`
+type InspectTraceSpanParams struct {
+	Depth        int      `query:"depth" description:"The number of levels of ancestors and of descendants returned, 1 to 10; 2 when not given. The root span is always returned."`
+	SelectFields []string `query:"selectFields" description:"Attribute names returned without the 500 character cut; the record then holds only these attributes."`
+}
+
+type InspectTraceSpansParams struct {
+	Search string `query:"search" description:"Returns the spans that match, earliest first: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attributes, resource attributes and events, ignoring case. Without it every span is returned, in tree order."`
+	Under  string `query:"under" description:"A span ID; returns that span and every span below it. Cannot be combined with search."`
+	Limit  int    `query:"limit" description:"Page size, at most 1000; when not given, 20 with search and 400 without. A page holds fewer spans when it would pass the response size limit."`
+	Cursor string `query:"cursor" description:"The nextCursor of an earlier response to the same request; returns the next page."`
 }
 
 // SpanSummary is the short form of a span: enough to place it in the trace and decide whether to open it.
@@ -269,39 +267,38 @@ type TraceSpanMatch struct {
 	Matches []SpanTextMatch `json:"matches" required:"true" nullable:"false"`
 }
 
+// TraceSpanList holds the spans matching a search, or every span when there is none.
 type TraceSpanList struct {
 	Total      uint64           `json:"total" required:"true"`
 	Items      []TraceSpanMatch `json:"items" required:"true" nullable:"false"`
 	NextCursor string           `json:"nextCursor,omitempty"`
+	// Warnings says why a search may have matched less than expected, such as a key that is not known.
+	Warnings []string `json:"warnings,omitempty" nullable:"false"`
 }
 
-// GettableTraceInspection holds one part, named by Type.
-type GettableTraceInspection struct {
-	Type     InspectType      `json:"type" required:"true"`
-	Overview *TraceOverview   `json:"overview,omitempty"`
-	Span     *TraceSpanDetail `json:"span,omitempty"`
-	// Find holds the spans matching search, or every span for allSpans.
-	Find *TraceSpanList `json:"find,omitempty"`
-}
-
-// InspectQuery is a validated inspect request.
-type InspectQuery struct {
-	Type InspectType
+// TraceOverviewQuery is a validated overview request.
+type TraceOverviewQuery struct {
 	// List and Offset page one list of the overview; List is empty on a first call.
 	List   string
 	Offset int
+}
 
-	// SpanID, Depth and SelectFields apply to a span request.
+// TraceSpanQuery is a validated request for one span.
+type TraceSpanQuery struct {
 	SpanID       string
 	Depth        int
 	SelectFields []string
+}
 
-	// Search and AllSpans apply to a find request. A search is paged by After, the list of every
-	// span by Offset; with AllSpans, SpanID limits the list to that span and the spans below it.
-	Search   string
-	AllSpans bool
-	Limit    int
-	After    *ThreadCursor
+// TraceSpanListQuery is a validated request for the spans of a trace: those matching Search, or
+// without one every span, or Under and the spans below it.
+type TraceSpanListQuery struct {
+	Search string
+	Under  string
+	Limit  int
+	// A search is paged by After, the list of every span by Offset.
+	Offset int
+	After  *ThreadCursor
 }
 
 // SpansQuery is one page of a search inside a trace.
@@ -320,69 +317,28 @@ type TraceSpanSearch struct {
 	HasMore bool
 }
 
-func (search *TraceSpanSearch) SpanIDs() []string {
-	spanIDs := make([]string, len(search.Hits))
-	for i := range search.Hits {
-		spanIDs[i] = search.Hits[i].SpanID
-	}
-	return spanIDs
-}
-
-// inspectCursor is the content of a nextCursor: for a list of the overview its name and offset,
-// for the list of every span an offset, for a search the last span of the page.
-type inspectCursor struct {
-	List   string        `json:"list,omitempty"`
-	Offset int           `json:"offset,omitempty"`
-	After  *ThreadCursor `json:"after,omitempty"`
-}
-
-// NewInspectQuery picks the part to return: matches for search, every span for allSpans, a span
-// for spanId, the overview otherwise. A parameter that does not apply to that part is an error.
-func NewInspectQuery(params *InspectTraceParams) (*InspectQuery, error) {
-	switch {
-	case params.Search != "" && params.SpanID != "":
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "spanId and search cannot be combined")
-	case params.Search != "" && params.AllSpans:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "search and allSpans cannot be combined")
-	case params.Search != "" || params.AllSpans:
-		return newFindQuery(params)
-	case params.SpanID != "":
-		return newSpanQuery(params)
-	}
-	return newOverviewQuery(params)
-}
-
-func newOverviewQuery(params *InspectTraceParams) (*InspectQuery, error) {
-	query := &InspectQuery{Type: InspectTypeOverview}
-	switch {
-	case params.Depth != 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth needs spanId")
-	case len(params.SelectFields) > 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "selectFields needs spanId")
-	case params.Limit != 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit needs search or allSpans")
-	case params.Cursor == "":
+func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, error) {
+	query := new(TraceOverviewQuery)
+	if params.Cursor == "" {
 		return query, nil
 	}
 
-	cursor, err := decodeInspectCursor(params.Cursor)
-	if err != nil {
+	cursor := new(overviewCursor)
+	if err := decodeCursor(params.Cursor, cursor); err != nil {
 		return nil, err
 	}
-	if !slices.Contains(overviewLists, cursor.List) || cursor.Offset <= 0 {
+	if !slices.Contains(overviewLists, cursor.List) || cursor.Offset <= 0 || cursor.Offset > math.MaxInt32 {
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
 	}
 	query.List, query.Offset = cursor.List, cursor.Offset
 	return query, nil
 }
 
-func newSpanQuery(params *InspectTraceParams) (*InspectQuery, error) {
-	query := &InspectQuery{Type: InspectTypeSpan, SpanID: params.SpanID, Depth: inspectDefaultDepth, SelectFields: params.SelectFields}
+func NewTraceSpanQuery(spanID string, params *InspectTraceSpanParams) (*TraceSpanQuery, error) {
+	// A blank name selects nothing; a selection of only blanks is no selection.
+	selectFields := slices.DeleteFunc(slices.Clone(params.SelectFields), func(field string) bool { return strings.TrimSpace(field) == "" })
+	query := &TraceSpanQuery{SpanID: spanID, Depth: inspectDefaultDepth, SelectFields: selectFields}
 	switch {
-	case params.Limit != 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit needs search or allSpans")
-	case params.Cursor != "":
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "a span has no pages")
 	case params.Depth < 0 || params.Depth > inspectMaxDepth:
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth must be between 1 and %d, got %d", inspectMaxDepth, params.Depth)
 	case params.Depth != 0:
@@ -391,16 +347,14 @@ func newSpanQuery(params *InspectTraceParams) (*InspectQuery, error) {
 	return query, nil
 }
 
-func newFindQuery(params *InspectTraceParams) (*InspectQuery, error) {
-	query := &InspectQuery{Type: InspectTypeFind, SpanID: params.SpanID, Search: params.Search, AllSpans: params.AllSpans, Limit: params.Limit}
+func NewTraceSpanListQuery(params *InspectTraceSpansParams) (*TraceSpanListQuery, error) {
+	query := &TraceSpanListQuery{Search: strings.TrimSpace(params.Search), Under: params.Under, Limit: params.Limit}
 	switch {
-	case params.Depth != 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth cannot be combined with search or allSpans")
-	case len(params.SelectFields) > 0:
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "selectFields cannot be combined with search or allSpans")
+	case query.Search != "" && query.Under != "":
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidParams, "search and under cannot be combined")
 	case params.Limit < 0 || params.Limit > inspectMaxLimit:
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit must be between 1 and %d, got %d", inspectMaxLimit, params.Limit)
-	case params.Limit == 0 && params.AllSpans:
+	case params.Limit == 0 && query.Search == "":
 		query.Limit = inspectAllSpansLimit
 	case params.Limit == 0:
 		query.Limit = inspectSearchLimit
@@ -409,17 +363,14 @@ func newFindQuery(params *InspectTraceParams) (*InspectQuery, error) {
 		return query, nil
 	}
 
-	// A cursor continues the request it came from: an offset for every span, a last span for a search.
-	cursor, err := decodeInspectCursor(params.Cursor)
-	if err != nil {
+	cursor := new(spanListCursor)
+	if err := decodeCursor(params.Cursor, cursor); err != nil {
 		return nil, err
 	}
 	switch {
-	case cursor.List != "":
-		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
-	case params.AllSpans && cursor.Offset > 0 && cursor.After == nil:
+	case query.Search == "" && cursor.After == nil && cursor.Offset > 0 && cursor.Offset <= math.MaxInt32:
 		query.Offset = cursor.Offset
-	case !params.AllSpans && cursor.Offset == 0 && cursor.After != nil && cursor.After.SpanID != "":
+	case query.Search != "" && cursor.Offset == 0 && cursor.After != nil && cursor.After.SpanID != "":
 		query.After = cursor.After
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
@@ -427,19 +378,41 @@ func newFindQuery(params *InspectTraceParams) (*InspectQuery, error) {
 	return query, nil
 }
 
-func decodeInspectCursor(encoded string) (*inspectCursor, error) {
-	data, err := base64.RawURLEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+func (search *TraceSpanSearch) SpanIDs() []string {
+	spanIDs := make([]string, len(search.Hits))
+	for i := range search.Hits {
+		spanIDs[i] = search.Hits[i].SpanID
 	}
-	cursor := new(inspectCursor)
-	if err := json.Unmarshal(data, cursor); err != nil {
-		return nil, errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
-	}
-	return cursor, nil
+	return spanIDs
 }
 
-func (c inspectCursor) encode() string {
-	data, _ := json.Marshal(c)
+// overviewCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
+type overviewCursor struct {
+	List   string `json:"list"`
+	Offset int    `json:"offset"`
+}
+
+// spanListCursor is an offset into every span, or the last span of a page of matches.
+type spanListCursor struct {
+	Offset int           `json:"offset,omitempty"`
+	After  *ThreadCursor `json:"after,omitempty"`
+}
+
+// decodeCursor rejects a field the cursor does not have, so a cursor of another route is not accepted.
+func decodeCursor(encoded string, cursor any) error {
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(cursor); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	return nil
+}
+
+func encodeCursor(cursor any) string {
+	data, _ := json.Marshal(cursor)
 	return base64.RawURLEncoding.EncodeToString(data)
 }

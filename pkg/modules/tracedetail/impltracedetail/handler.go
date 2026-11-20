@@ -141,13 +141,69 @@ func (h *handler) InspectTrace(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query, err := spantypes.NewInspectQuery(params)
+	query, err := spantypes.NewTraceOverviewQuery(params)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	result, err := h.module.InspectTrace(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	result, err := h.module.GetTraceOverview(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
+func (h *handler) InspectTraceSpan(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	params := new(spantypes.InspectTraceSpanParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewTraceSpanQuery(mux.Vars(r)["spanID"], params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.GetTraceSpan(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
+func (h *handler) InspectTraceSpans(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	params := new(spantypes.InspectTraceSpansParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewTraceSpanListQuery(params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.ListTraceSpans(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
 	if err != nil {
 		render.Error(rw, err)
 		return

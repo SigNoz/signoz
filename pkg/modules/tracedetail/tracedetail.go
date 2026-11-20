@@ -17,6 +17,8 @@ type Handler interface {
 	GetFlamegraph(http.ResponseWriter, *http.Request)
 	GetThread(http.ResponseWriter, *http.Request)
 	InspectTrace(http.ResponseWriter, *http.Request)
+	InspectTraceSpan(http.ResponseWriter, *http.Request)
+	InspectTraceSpans(http.ResponseWriter, *http.Request)
 }
 
 // Module defines the business logic for trace detail operations.
@@ -26,5 +28,7 @@ type Module interface {
 	GetTraceAggregations(ctx context.Context, traceID string, req *spantypes.PostableTraceAggregations) (*spantypes.GettableTraceAggregations, error)
 	GetFlamegraph(ctx context.Context, traceID string, selectedSpanID string, selectFields []telemetrytypes.TelemetryFieldKey) (*spantypes.GettableFlamegraphTrace, error)
 	GetThread(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.ThreadQuery) (*spantypes.GettableTraceThread, error)
-	InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error)
+	GetTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceOverviewQuery) (*spantypes.TraceOverview, error)
+	GetTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanQuery) (*spantypes.TraceSpanDetail, error)
+	ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanListQuery) (*spantypes.TraceSpanList, error)
 }

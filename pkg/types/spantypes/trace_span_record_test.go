@@ -52,15 +52,6 @@ func TestNewSpanRecord(t *testing.T) {
 		assert.Empty(t, record.Events)
 	})
 
-	t.Run("SelectFields_OnlyBlankNames_ReturnsTheUsualRecord", func(t *testing.T) {
-		span := recordSpan("span-e", map[string]string{"http.route": "/charge"})
-
-		record := NewSpanRecord(&span, []string{"", " "})
-
-		assert.Equal(t, "/charge", record.Attributes["http.route"])
-		assert.Len(t, record.Events, 1)
-	})
-
 	t.Run("SelectFields_EventAttribute_KeepsThatEventWithOnlyThatAttribute", func(t *testing.T) {
 		span := recordSpan("span-f", map[string]string{"http.route": "/charge"})
 
@@ -83,6 +74,15 @@ func TestNewSpanRecord(t *testing.T) {
 		assert.Len(t, []rune(record.Attributes["prompt"].(string)), share+1)
 		assert.Len(t, []rune(record.Attributes["completion"].(string)), share+1)
 		assert.Equal(t, []TruncatedField{{Field: "attributes.completion", Length: 100_000}, {Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
+	})
+
+	t.Run("SelectFields_MultiByteValue_FitsTheResponse", func(t *testing.T) {
+		span := recordSpan("span-h", map[string]string{"prompt": strings.Repeat("プロンプト", 20_000)})
+
+		record := NewSpanRecord(&span, []string{"prompt"})
+
+		assert.LessOrEqual(t, jsonChars(record), spanRecordSelectMaxChars)
+		assert.Equal(t, []TruncatedField{{Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
 	})
 
 	t.Run("MultiByteValue_IsCutOnACharacterBoundary", func(t *testing.T) {

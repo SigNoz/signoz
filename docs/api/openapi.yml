@@ -12805,19 +12805,6 @@ components:
       required:
       - aggregations
       type: object
-    SpantypesGettableTraceInspection:
-      properties:
-        find:
-          $ref: '#/components/schemas/SpantypesTraceSpanList'
-        overview:
-          $ref: '#/components/schemas/SpantypesTraceOverview'
-        span:
-          $ref: '#/components/schemas/SpantypesTraceSpanDetail'
-        type:
-          $ref: '#/components/schemas/SpantypesInspectType'
-      required:
-      - type
-      type: object
     SpantypesGettableTraceSummary:
       properties:
         ai:
@@ -12898,12 +12885,6 @@ components:
           nullable: true
           type: array
       type: object
-    SpantypesInspectType:
-      enum:
-      - overview
-      - span
-      - find
-      type: string
     SpantypesLink:
       properties:
         spanId:
@@ -13679,6 +13660,10 @@ components:
         total:
           minimum: 0
           type: integer
+        warnings:
+          items:
+            type: string
+          type: array
       required:
       - total
       - items
@@ -19810,87 +19795,21 @@ paths:
   /api/v1/traces/{traceID}/inspect:
     get:
       deprecated: false
-      description: 'Returns one of three parts of a trace of any size, named by type,
-        each within 50,000 characters. Without spanId or search it returns the overview:
-        the trace''s identity with per-service totals, the spans where each error
-        started, the failures not marked as errors (a 4xx response, a gRPC status
-        other than OK, an exception event), the slowest spans by own time with same-name
-        spans under one parent taken together, the most expensive gen_ai spans, and
-        the span tree. The tree holds the first 50 spans of the trace: level by level
-        from the root, and in time order on the level that does not fit. A trace of
-        up to 50 spans also returns each span''s full record when they fit in 20,000
-        characters. With spanId it returns that span''s summary and full record, its
-        ancestors, and the spans below it level by level, at most 20 per level; values
-        over 500 characters are cut and listed in truncated. With search it returns
-        the matching spans, each with where the words were found; allSpans returns
-        every span instead. Every list carries its total, and every list item the
-        span''s direct parent. Pass a nextCursor as cursor with the same parameters
-        to get the next page.'
+      description: 'Returns the overview of a trace of any size: its identity with
+        per-service totals, the spans where each error started, the failures not marked
+        as errors, the slowest spans by own time, the most expensive gen_ai spans,
+        the spans that link to other spans, and the top of the span tree. A small
+        trace also returns each span''s full record. Every list carries its total
+        and a nextCursor when more items follow.'
       operationId: InspectTrace
       parameters:
-      - description: Returns this span in full with the spans around it. Cannot be
-          combined with search.
-        in: query
-        name: spanId
-        schema:
-          description: Returns this span in full with the spans around it. Cannot
-            be combined with search.
-          type: string
-      - description: 'Returns the spans that match, earliest first: words, a filter
-          expression, or both, such as worldpay AND has_error = true. Words match
-          the span name, status message, attribute values and events, ignoring case.'
-        in: query
-        name: search
-        schema:
-          description: 'Returns the spans that match, earliest first: words, a filter
-            expression, or both, such as worldpay AND has_error = true. Words match
-            the span name, status message, attribute values and events, ignoring case.'
-          type: string
-      - description: With spanId, the number of levels of ancestors and of descendants
-          returned, 1 to 10; 2 when not given. The root span is always returned.
-        in: query
-        name: depth
-        schema:
-          description: With spanId, the number of levels of ancestors and of descendants
-            returned, 1 to 10; 2 when not given. The root span is always returned.
-          type: integer
-      - description: 'Returns a different response: every span of the trace as a short
-          line, in tree order, or with spanId that span and every span below it. Cannot
-          be combined with search or depth.'
-        in: query
-        name: allSpans
-        schema:
-          description: 'Returns a different response: every span of the trace as a
-            short line, in tree order, or with spanId that span and every span below
-            it. Cannot be combined with search or depth.'
-          type: boolean
-      - description: With spanId, attribute names returned without the 500 character
-          cut; the record then holds only these attributes.
-        in: query
-        name: selectFields
-        schema:
-          description: With spanId, attribute names returned without the 500 character
-            cut; the record then holds only these attributes.
-          items:
-            type: string
-          type: array
-      - description: Page size for search and for allSpans, at most 1000; when not
-          given, 20 with search and 400 with allSpans. A page holds fewer spans when
-          it would pass the 50,000 character limit.
-        in: query
-        name: limit
-        schema:
-          description: Page size for search and for allSpans, at most 1000; when not
-            given, 20 with search and 400 with allSpans. A page holds fewer spans
-            when it would pass the 50,000 character limit.
-          type: integer
-      - description: The nextCursor of an earlier response to the same request; returns
-          the next page.
+      - description: The nextCursor of one list of the overview; returns the next
+          page of that list and nothing else.
         in: query
         name: cursor
         schema:
-          description: The nextCursor of an earlier response to the same request;
-            returns the next page.
+          description: The nextCursor of one list of the overview; returns the next
+            page of that list and nothing else.
           type: string
       - in: path
         name: traceID
@@ -19904,7 +19823,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesGettableTraceInspection'
+                    $ref: '#/components/schemas/SpantypesTraceOverview'
                   status:
                     type: string
                 required:
@@ -19948,6 +19867,202 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Inspect a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/inspect/spans:
+    get:
+      deprecated: false
+      description: Returns the spans of a trace that match a search, each with its
+        direct parent and where the words were found. Without a search it returns
+        every span in tree order, or with under one span and the spans below it.
+      operationId: InspectTraceSpans
+      parameters:
+      - description: 'Returns the spans that match, earliest first: words, a filter
+          expression, or both, such as worldpay AND has_error = true. Words match
+          the span name, status message, attributes, resource attributes and events,
+          ignoring case. Without it every span is returned, in tree order.'
+        in: query
+        name: search
+        schema:
+          description: 'Returns the spans that match, earliest first: words, a filter
+            expression, or both, such as worldpay AND has_error = true. Words match
+            the span name, status message, attributes, resource attributes and events,
+            ignoring case. Without it every span is returned, in tree order.'
+          type: string
+      - description: A span ID; returns that span and every span below it. Cannot
+          be combined with search.
+        in: query
+        name: under
+        schema:
+          description: A span ID; returns that span and every span below it. Cannot
+            be combined with search.
+          type: string
+      - description: Page size, at most 1000; when not given, 20 with search and 400
+          without. A page holds fewer spans when it would pass the response size limit.
+        in: query
+        name: limit
+        schema:
+          description: Page size, at most 1000; when not given, 20 with search and
+            400 without. A page holds fewer spans when it would pass the response
+            size limit.
+          type: integer
+      - description: The nextCursor of an earlier response to the same request; returns
+          the next page.
+        in: query
+        name: cursor
+        schema:
+          description: The nextCursor of an earlier response to the same request;
+            returns the next page.
+          type: string
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesTraceSpanList'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Search or list the spans of a trace
+      tags:
+      - tracedetail
+      x-signoz-stability: alpha
+  /api/v1/traces/{traceID}/inspect/spans/{spanID}:
+    get:
+      deprecated: false
+      description: 'Returns one span in full: its summary and record, its nearest
+        ancestors with the root, the spans below it level by level, and where its
+        duration sits among recent spans of the same name and service. Long values
+        are cut and listed in truncated; selectFields returns named attributes without
+        the cut.'
+      operationId: InspectTraceSpan
+      parameters:
+      - description: The number of levels of ancestors and of descendants returned,
+          1 to 10; 2 when not given. The root span is always returned.
+        in: query
+        name: depth
+        schema:
+          description: The number of levels of ancestors and of descendants returned,
+            1 to 10; 2 when not given. The root span is always returned.
+          type: integer
+      - description: Attribute names returned without the 500 character cut; the record
+          then holds only these attributes.
+        in: query
+        name: selectFields
+        schema:
+          description: Attribute names returned without the 500 character cut; the
+            record then holds only these attributes.
+          items:
+            type: string
+          type: array
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: spanID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesTraceSpanDetail'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Inspect a span of a trace
       tags:
       - tracedetail
       x-signoz-stability: alpha

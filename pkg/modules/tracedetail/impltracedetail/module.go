@@ -305,26 +305,8 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, start, end, true), nil
 }
 
-func (m *module) InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error) {
-	inspection := &spantypes.GettableTraceInspection{Type: query.Type}
-	var err error
-	switch query.Type {
-	case spantypes.InspectTypeSpan:
-		inspection.Span, err = m.getTraceSpan(ctx, orgID, traceID, query)
-	case spantypes.InspectTypeFind:
-		inspection.Find, err = m.findTraceSpans(ctx, orgID, traceID, query)
-	default:
-		inspection.Overview, err = m.getTraceOverview(ctx, orgID, traceID, query)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return inspection, nil
-}
-
-// getTraceSpan returns one span in full with the spans around it. The tree and the span's own
-// data are loaded side by side.
-func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceSpanDetail, error) {
+// The tree and the span's own data are loaded side by side.
+func (m *module) GetTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanQuery) (*spantypes.TraceSpanDetail, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -344,7 +326,8 @@ func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID st
 	group.Go(func() error {
 		var err error
 		spans, err = m.store.GetTraceSpansByIDs(groupCtx, traceID, bounds.Start, bounds.End, []string{query.SpanID})
-		if err != nil || len(spans) == 0 {
+		// A call with selectFields reads more of a span that was already opened with its percentile.
+		if err != nil || len(spans) == 0 || len(query.SelectFields) > 0 {
 			return err
 		}
 		percentile = m.getSpanPercentile(groupCtx, orgID, &spans[0])
@@ -365,24 +348,24 @@ func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID st
 	return detail, nil
 }
 
-// findTraceSpans returns a page of every span of the trace, or of the spans matching a search.
-func (m *module) findTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceSpanList, error) {
+// ListTraceSpans returns a page of the spans matching a search, or without one of every span.
+func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanListQuery) (*spantypes.TraceSpanList, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
 	}
 
-	if query.AllSpans {
+	if query.Search == "" {
 		skeleton, err := m.loadSkeleton(ctx, orgID, traceID, bounds, false, false)
 		if err != nil {
 			return nil, err
 		}
-		if query.SpanID == "" {
+		if query.Under == "" {
 			return skeleton.SpanPage(nil, query.Offset, query.Limit), nil
 		}
-		root, ok := skeleton.Index(query.SpanID)
+		root, ok := skeleton.Index(query.Under)
 		if !ok {
-			return nil, errors.NewNotFoundf(spantypes.ErrCodeInspectSpanNotFound, "span %s not found in trace %s", query.SpanID, traceID)
+			return nil, errors.NewNotFoundf(spantypes.ErrCodeInspectSpanNotFound, "span %s not found in trace %s", query.Under, traceID)
 		}
 		return skeleton.SpanPage(&root, query.Offset, query.Limit), nil
 	}
@@ -446,7 +429,7 @@ func (m *module) getSpanPercentile(ctx context.Context, orgID valuer.UUID, span 
 	}
 }
 
-func (m *module) getTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceOverview, error) {
+func (m *module) GetTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceOverviewQuery) (*spantypes.TraceOverview, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
