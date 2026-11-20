@@ -17,7 +17,6 @@
 	width: 54px;
 	border-right: 1px solid var(--l2-border);
 	background: var(--surface-1);
-	box-shadow: var(--shadow-sidebar);
 
 	padding-bottom: 48px;
 	transition:
@@ -632,6 +631,7 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
+		box-shadow: var(--shadow-sidebar);
 
 		.brand-container {
 			padding: 8px 15px;
