@@ -69,6 +69,27 @@ func NewSpanRecord(item *StorableSpan) SpanRecord {
 	return record
 }
 
+// SmallTraceRecords returns the full record of every span when the trace is small enough for all
+// of them to fit in the response; ok is false otherwise.
+func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
+	records := make([]SpanRecord, 0, len(spans))
+	chars := 0
+	for i := range spans {
+		record := NewSpanRecord(&spans[i])
+		chars += jsonChars(record)
+		if chars > inspectSmallTraceChars {
+			return nil, false
+		}
+		records = append(records, record)
+	}
+	return records, true
+}
+
+// IsSmallTrace reports whether a trace has few enough spans to try returning their records.
+func IsSmallTrace(spanCount int) bool {
+	return spanCount <= inspectTreeSpans
+}
+
 // cut shortens every string value longer than limit and records its full length once.
 func (r *SpanRecord) cut(limit int) {
 	noted := make(map[string]struct{}, len(r.Truncated))
@@ -129,25 +150,4 @@ func cutString(value string, limit int) (string, int, bool) {
 		cut++
 	}
 	return value, 0, false
-}
-
-// SmallTraceRecords returns the full record of every span when the trace is small enough for all
-// of them to fit in the response; ok is false otherwise.
-func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
-	records := make([]SpanRecord, 0, len(spans))
-	chars := 0
-	for i := range spans {
-		record := NewSpanRecord(&spans[i])
-		chars += jsonChars(record)
-		if chars > inspectSmallTraceChars {
-			return nil, false
-		}
-		records = append(records, record)
-	}
-	return records, true
-}
-
-// IsSmallTrace reports whether a trace has few enough spans to try returning their records.
-func IsSmallTrace(spanCount int) bool {
-	return spanCount <= inspectTreeSpans
 }

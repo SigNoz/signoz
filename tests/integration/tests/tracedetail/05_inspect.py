@@ -1,4 +1,3 @@
-import json
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
@@ -15,21 +14,6 @@ OVERVIEW_LISTS = ("errors", "unmarkedFailures", "slowest", "expensive", "links")
 LIST_SIZE = 10
 
 
-def get_inspect(signoz: types.SigNoz, token: str, trace_id: str, params: dict | None = None) -> requests.Response:
-    return requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect"),
-        params=params,
-        headers={"authorization": f"Bearer {token}"},
-        timeout=10,
-    )
-
-
-def get_overview(signoz: types.SigNoz, token: str, trace_id: str, params: dict | None = None) -> dict:
-    response = get_inspect(signoz, token, trace_id, params)
-    assert response.status_code == HTTPStatus.OK, f"{params}: {response.text}"
-    return response.json()["data"]
-
-
 @pytest.mark.parametrize("attribute_backend", ["map", "json"])
 def test_inspect_overview(
     signoz: types.SigNoz,
@@ -38,10 +22,7 @@ def test_inspect_overview(
     insert_traces: Callable[[list[Traces]], None],
     attribute_backend: str,
 ) -> None:
-    """The overview of a small trace: identity with per-service totals and gen_ai usage, where the
-    error started, the failures not marked as errors, span links, the most expensive gen_ai spans and
-    the whole tree with every span's record. Attributes are written to one layout only, so a read
-    from the wrong column loses the tokens, the cost and the record's attributes."""
+    """Attributes are written to one layout only, so a read from the wrong column loses them."""
     now = get_attribute_backend_now(signoz, attribute_backend).replace(second=0, microsecond=0)
     write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
     trace_id = TraceIdGenerator.trace_id()
@@ -63,10 +44,6 @@ def test_inspect_overview(
             **kwargs,
         )
 
-    render = span("render", "root", "render_receipt", gateway, 700, 50, events=[TracesEvent("exception", now, {"exception.message": "template missing, fell back"})])
-    # The collector marks an exception event with isError; the fixture does not write it.
-    render._events_db = [json.dumps({"name": "exception", "timeUnixNano": 1, "attributeMap": {"exception.message": "template missing, fell back"}, "isError": True}, separators=(",", ":"))]  # pylint: disable=protected-access
-
     insert_traces(
         [
             span("root", "", "POST /checkout", gateway, 0, 1000, kind=TracesKind.SPAN_KIND_SERVER, status_code=TracesStatusCode.STATUS_CODE_ERROR, attributes={"http.response.status_code": 500}),
@@ -76,7 +53,7 @@ def test_inspect_overview(
             # three failures that do not carry the error flag
             span("inventory_http", "place_order", "GET /inventory", orders, 330, 40, kind=TracesKind.SPAN_KIND_CLIENT, attributes={"http.response.status_code": 404}),
             span("inventory_grpc", "place_order", "inventory.Check", orders, 380, 40, kind=TracesKind.SPAN_KIND_CLIENT, attributes={"rpc.grpc.status_code": 5}),
-            render,
+            span("render", "root", "render_receipt", gateway, 700, 50, events=[TracesEvent("exception", now, {"exception.message": "template missing, fell back"}, is_error=True)]),
             # a link out to another trace
             span("consume", "root", "consume order.created", orders, 760, 20, kind=TracesKind.SPAN_KIND_CONSUMER, links=[TracesLink(trace_id=other_trace_id, span_id="aaaaaaaaaaaaaaaa", ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM)]),
             span("model", "root", "chat gpt-4o-mini", agent, 800, 100, kind=TracesKind.SPAN_KIND_CLIENT, attributes={"gen_ai.request.model": "gpt-4o-mini", "gen_ai.usage.input_tokens": 100, "gen_ai.usage.output_tokens": 20, "signoz.gen_ai.usage.tokens.cost": 0.01}),
@@ -84,8 +61,11 @@ def test_inspect_overview(
         ]
     )
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    overview = get_overview(signoz, token, trace_id)
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+    response = requests.get(url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    overview = response.json()["data"]
 
     identity = overview["identity"]
     assert identity["traceId"] == trace_id
@@ -167,8 +147,6 @@ def test_inspect_pages_every_list(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Every list of the overview returns 10 items and a cursor. The cursor alone returns the
-    rest of that list, and nothing else of the overview."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
@@ -193,8 +171,11 @@ def test_inspect_pages_every_list(
     expected["slowest"] = [span.span_id for span in by_duration]
     expected["expensive"].reverse()
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    overview = get_overview(signoz, token, trace_id)
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+    response = requests.get(url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    overview = response.json()["data"]
     assert overview["identity"]["spanCount"] == 49
 
     for name in OVERVIEW_LISTS:
@@ -204,7 +185,9 @@ def test_inspect_pages_every_list(
         seen = [item["span"]["spanId"] for item in first["items"]]
         cursor = first["nextCursor"]
         for _ in range(10):
-            page = get_overview(signoz, token, trace_id, {"cursor": cursor})
+            response = requests.get(url, params={"cursor": cursor}, headers=headers, timeout=10)
+            assert response.status_code == HTTPStatus.OK, response.text
+            page = response.json()["data"]
             assert list(page) == [name], f"{name}: a page returned {list(page)}"
             assert page[name]["total"] == first["total"]
             seen += [item["span"]["spanId"] for item in page[name]["items"]]
@@ -222,8 +205,8 @@ def test_inspect_pages_every_list(
             assert first["total"] == 12
 
     # the second page of errors carries the status messages of its own spans
-    second = get_overview(signoz, token, trace_id, {"cursor": overview["errors"]["nextCursor"]})
-    assert [item["statusMessage"] for item in second["errors"]["items"]] == ["failure 10", "failure 11"]
+    response = requests.get(url, params={"cursor": overview["errors"]["nextCursor"]}, headers=headers, timeout=10)
+    assert [item["statusMessage"] for item in response.json()["data"]["errors"]["items"]] == ["failure 10", "failure 11"]
 
 
 def test_inspect_large_trace_shows_the_top_of_the_tree(
@@ -232,8 +215,6 @@ def test_inspect_large_trace_shows_the_top_of_the_tree(
     get_token: Callable[[str, str], str],
     insert_traces: Callable[[list[Traces]], None],
 ) -> None:
-    """Over 50 spans the tree holds the first 50 in time order, the records are left out, and
-    same-name spans under one parent are one entry of the slowest list."""
     now = datetime.now(tz=UTC).replace(second=0, microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
     root_id = TraceIdGenerator.span_id()
@@ -244,8 +225,11 @@ def test_inspect_large_trace_shows_the_top_of_the_tree(
     insert_traces(spans)
     in_time_order = [span.span_id for span in spans]
 
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    overview = get_overview(signoz, token, trace_id)
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+    response = requests.get(url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    overview = response.json()["data"]
 
     assert overview["identity"]["spanCount"] == 151
     tree = overview["tree"]
@@ -269,11 +253,11 @@ def test_inspect_rejects_invalid_requests(
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    trace_id = TraceIdGenerator.trace_id()
+    url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{TraceIdGenerator.trace_id()}/inspect")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
 
-    response = get_inspect(signoz, token, trace_id, {"cursor": "not-a-cursor"})
+    response = requests.get(url, params={"cursor": "not-a-cursor"}, headers=headers, timeout=10)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
-    missing = get_inspect(signoz, token, trace_id)
-    assert missing.status_code == HTTPStatus.NOT_FOUND, missing.text
+    response = requests.get(url, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.NOT_FOUND, response.text

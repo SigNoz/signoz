@@ -7,27 +7,6 @@ import (
 	"strconv"
 )
 
-// errorOrigins lists the error spans with no error span among their children, in start time order.
-func (s *TraceSkeleton) errorOrigins() []int32 {
-	origins := make([]int32, 0)
-	for i := range int32(s.Len()) {
-		if !s.HasError(i) {
-			continue
-		}
-		hasErrorChild := false
-		for _, child := range s.Children(i) {
-			if s.HasError(child) {
-				hasErrorChild = true
-				break
-			}
-		}
-		if !hasErrorChild {
-			origins = append(origins, i)
-		}
-	}
-	return origins
-}
-
 // ErrorPage returns one page of error origins and the ids of its spans, for their status messages.
 func (s *TraceSkeleton) ErrorPage(offset int) (*TraceErrorList, []string) {
 	origins := s.errorOrigins()
@@ -78,22 +57,6 @@ func (s *TraceSkeleton) UnmarkedFailurePage(offset int) *TraceUnmarkedFailureLis
 	return list
 }
 
-// unmarkedFailureReason reads the response status column, which holds an HTTP status or a gRPC status.
-func unmarkedFailureReason(responseStatusCode string, hasExceptionEvent bool) (UnmarkedFailureReason, bool) {
-	if code, err := strconv.Atoi(responseStatusCode); err == nil {
-		switch {
-		case code >= 400 && code < 500:
-			return UnmarkedFailureHTTP4xx, true
-		case code >= 1 && code <= 16:
-			return UnmarkedFailureGRPCStatus, true
-		}
-	}
-	if hasExceptionEvent {
-		return UnmarkedFailureExceptionEvent, true
-	}
-	return UnmarkedFailureReason{}, false
-}
-
 // LinkPage returns one page of the spans that link to other spans, in start time order.
 func (s *TraceSkeleton) LinkPage(offset int) *TraceLinkList {
 	list := &TraceLinkList{Total: uint64(len(s.LinkedSpans)), Items: []TraceLinkItem{}, NextCursor: nextListCursor(OverviewListLinks, offset, len(s.LinkedSpans))}
@@ -110,37 +73,6 @@ func (s *TraceSkeleton) LinkPage(offset int) *TraceLinkList {
 		})
 	}
 	return list
-}
-
-// slowestEntry is one span, or the same-name spans under one parent taken together.
-type slowestEntry struct {
-	longest   int32
-	spanCount uint64
-	ownTime   uint64
-	errCount  uint64
-}
-
-// ranksBefore orders entries by own time, the largest first, and by span order between equals,
-// so that every page cuts the same ranking.
-func (e slowestEntry) ranksBefore(other slowestEntry) bool {
-	if e.ownTime != other.ownTime {
-		return e.ownTime > other.ownTime
-	}
-	return e.longest < other.longest
-}
-
-// slowestHeap holds the best-ranked entries seen so far, the last of them on top.
-type slowestHeap []slowestEntry
-
-func (h slowestHeap) Len() int           { return len(h) }
-func (h slowestHeap) Less(i, j int) bool { return h[j].ranksBefore(h[i]) }
-func (h slowestHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
-func (h *slowestHeap) Push(x any)        { *h = append(*h, x.(slowestEntry)) }
-func (h *slowestHeap) Pop() any {
-	old := *h
-	last := old[len(old)-1]
-	*h = old[:len(old)-1]
-	return last
 }
 
 // SlowestPage returns one page of the ranking by own time, same-name spans under one parent
@@ -346,29 +278,6 @@ func (s *TraceSkeleton) Tree() *TraceTree {
 	return s.tree(inspectTreeSpans)
 }
 
-func (s *TraceSkeleton) tree(limit int) *TraceTree {
-	tree := &TraceTree{Total: uint64(s.Len()), Complete: s.Len() <= limit}
-	shown := make(map[int32]struct{}, min(limit, s.Len()))
-	for level := s.roots; len(level) > 0 && len(shown) < limit; {
-		level = level[:min(len(level), limit-len(shown))]
-		next := make([]int32, 0)
-		for _, i := range level {
-			shown[i] = struct{}{}
-			next = append(next, s.Children(i)...)
-		}
-		level = next
-	}
-
-	// The shown spans are returned in tree order: a span is followed by the spans below it.
-	tree.Spans = make([]SpanSummary, 0, len(shown))
-	for _, i := range s.preorder {
-		if _, ok := shown[i]; ok {
-			tree.Spans = append(tree.Spans, s.Summary(i))
-		}
-	}
-	return tree
-}
-
 // FitOverview drops the span records and then shrinks the tree until the overview fits the
 // response size limit.
 func (s *TraceSkeleton) FitOverview(overview *TraceOverview) {
@@ -382,6 +291,100 @@ func (s *TraceSkeleton) FitOverview(overview *TraceOverview) {
 		limit = max(limit-over/perSpan-1, 0)
 		overview.Tree = s.tree(limit)
 	}
+}
+
+// slowestEntry is one span, or the same-name spans under one parent taken together.
+type slowestEntry struct {
+	longest   int32
+	spanCount uint64
+	ownTime   uint64
+	errCount  uint64
+}
+
+// ranksBefore orders entries by own time, the largest first, and by span order between equals,
+// so that every page cuts the same ranking.
+func (e slowestEntry) ranksBefore(other slowestEntry) bool {
+	if e.ownTime != other.ownTime {
+		return e.ownTime > other.ownTime
+	}
+	return e.longest < other.longest
+}
+
+// slowestHeap holds the best-ranked entries seen so far, the last of them on top.
+type slowestHeap []slowestEntry
+
+func (h slowestHeap) Len() int           { return len(h) }
+func (h slowestHeap) Less(i, j int) bool { return h[j].ranksBefore(h[i]) }
+func (h slowestHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *slowestHeap) Push(x any)        { *h = append(*h, x.(slowestEntry)) }
+
+func (h *slowestHeap) Pop() any {
+	old := *h
+	last := old[len(old)-1]
+	*h = old[:len(old)-1]
+	return last
+}
+
+// errorOrigins lists the error spans with no error span among their children, in start time order.
+func (s *TraceSkeleton) errorOrigins() []int32 {
+	origins := make([]int32, 0)
+	for i := range int32(s.Len()) {
+		if !s.HasError(i) {
+			continue
+		}
+		hasErrorChild := false
+		for _, child := range s.Children(i) {
+			if s.HasError(child) {
+				hasErrorChild = true
+				break
+			}
+		}
+		if !hasErrorChild {
+			origins = append(origins, i)
+		}
+	}
+	return origins
+}
+
+// unmarkedFailureReason reads the response status column, which holds an HTTP status or a gRPC status.
+func unmarkedFailureReason(responseStatusCode string, hasExceptionEvent bool) (UnmarkedFailureReason, bool) {
+	if code, err := strconv.Atoi(responseStatusCode); err == nil {
+		switch {
+		case code >= 400 && code < 500:
+			return UnmarkedFailureHTTP4xx, true
+		case code >= 1 && code <= 16:
+			return UnmarkedFailureGRPCStatus, true
+		}
+	}
+	if hasExceptionEvent {
+		return UnmarkedFailureExceptionEvent, true
+	}
+	return UnmarkedFailureReason{}, false
+}
+
+func (s *TraceSkeleton) tree(limit int) *TraceTree {
+	tree := &TraceTree{Total: uint64(s.Len()), Complete: s.Len() <= limit}
+	shown := make(map[int32]struct{}, min(limit, s.Len()))
+	for level := s.roots; len(level) > 0 && len(shown) < limit; {
+		level = level[:min(len(level), limit-len(shown))]
+		next := make([]int32, 0)
+		for _, i := range level {
+			shown[i] = struct{}{}
+			next = append(next, s.Children(i)...)
+		}
+		// Positions are in start time order; sorting puts the children of different parents in time order.
+		slices.Sort(next)
+		level = next
+	}
+
+	// The shown spans are returned in tree order: a span is followed by the spans below it.
+	tree.Spans = make([]SpanSummary, 0, len(shown))
+	for _, i := range s.preorder {
+		if _, ok := shown[i]; ok {
+			tree.Spans = append(tree.Spans, s.Summary(i))
+		}
+	}
+	return tree
 }
 
 // parentSummary returns the short form of span i's direct parent; nil for a root or a missing parent.

@@ -24,6 +24,9 @@ import (
 
 const colServiceName = `resource_string_service$$$$name` // $ gets escaped so $$$$ converts to $$.
 
+// The collector marks an exception event with isError when it writes the span.
+const colHasExceptionEvent = `(NOT has_error AND arrayExists(e -> position(e, '"isError":true') > 0, events)) AS has_exception_event`
+
 var genAIUsageValues = []struct{ key, alias string }{
 	{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
 	{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
@@ -64,6 +67,16 @@ type spanCountRow struct {
 type spanDurationRow struct {
 	FieldValue string `ch:"field_value"`
 	TotalNs    uint64 `ch:"total_ns"`
+}
+
+type spanStatusMessageRow struct {
+	SpanID        string `ch:"span_id"`
+	StatusMessage string `ch:"status_message"`
+}
+
+type spanLinksRow struct {
+	SpanID string `ch:"span_id"`
+	Links  string `ch:"links"`
 }
 
 type traceStore struct {
@@ -535,19 +548,6 @@ func (s *traceStore) anyExistsCondition(ctx context.Context, q qbtypes.QueryInfo
 		conds = append(conds, keyConds...)
 	}
 	return sb.Or(conds...), nil
-}
-
-// The collector marks an exception event with isError when it writes the span.
-const colHasExceptionEvent = `(NOT has_error AND arrayExists(e -> position(e, '"isError":true') > 0, events)) AS has_exception_event`
-
-type spanStatusMessageRow struct {
-	SpanID        string `ch:"span_id"`
-	StatusMessage string `ch:"status_message"`
-}
-
-type spanLinksRow struct {
-	SpanID string `ch:"span_id"`
-	Links  string `ch:"links"`
 }
 
 func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bounds *spantypes.TraceBounds) (*spantypes.TraceSkeleton, error) {

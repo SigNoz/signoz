@@ -48,22 +48,6 @@ type LinkedSpan struct {
 	Links  []Link
 }
 
-// NewLinkedSpan reads the links out of a span's stored references; ok is false when it has none.
-func NewLinkedSpan(spanID, references string) (LinkedSpan, bool) {
-	refs := []OtelSpanRef{}
-	if err := json.Unmarshal([]byte(references), &refs); err != nil {
-		return LinkedSpan{}, false
-	}
-	linked := LinkedSpan{SpanID: spanID, Links: make([]Link, 0, len(refs))}
-	for _, ref := range refs {
-		// The parent is stored as a CHILD_OF reference beside the links.
-		if ref.RefType != "CHILD_OF" {
-			linked.Links = append(linked.Links, Link{TraceID: ref.TraceId, SpanID: ref.SpanId})
-		}
-	}
-	return linked, len(linked.Links) > 0
-}
-
 // TraceSkeleton holds the tree of a trace as parallel arrays indexed by span position, in start
 // time order. It is read-only once built.
 type TraceSkeleton struct {
@@ -111,6 +95,22 @@ type TraceSkeletonBuilder struct {
 	ids       []byte
 	parentIDs []string
 	interned  map[string]uint32
+}
+
+// NewLinkedSpan reads the links out of a span's stored references; ok is false when it has none.
+func NewLinkedSpan(spanID, references string) (LinkedSpan, bool) {
+	refs := []OtelSpanRef{}
+	if err := json.Unmarshal([]byte(references), &refs); err != nil {
+		return LinkedSpan{}, false
+	}
+	linked := LinkedSpan{SpanID: spanID, Links: make([]Link, 0, len(refs))}
+	for _, ref := range refs {
+		// The parent is stored as a CHILD_OF reference beside the links.
+		if ref.RefType != "CHILD_OF" {
+			linked.Links = append(linked.Links, Link{TraceID: ref.TraceId, SpanID: ref.SpanId})
+		}
+	}
+	return linked, len(linked.Links) > 0
 }
 
 func NewTraceSkeletonBuilder(traceID string, sizeHint int) *TraceSkeletonBuilder {
@@ -184,16 +184,6 @@ func (b *TraceSkeletonBuilder) Build() *TraceSkeleton {
 	return s
 }
 
-func (b *TraceSkeletonBuilder) intern(value string) uint32 {
-	if idx, ok := b.interned[value]; ok {
-		return idx
-	}
-	idx := uint32(len(b.skeleton.Strings))
-	b.skeleton.Strings = append(b.skeleton.Strings, value)
-	b.interned[value] = idx
-	return idx
-}
-
 func (s *TraceSkeleton) Len() int {
 	return len(s.Parents)
 }
@@ -265,9 +255,13 @@ func (s *TraceSkeleton) PrimaryRoot() (int32, bool) {
 
 // Summary returns the short form of span i.
 func (s *TraceSkeleton) Summary(i int32) SpanSummary {
+	name := s.Strings[s.Names[i]]
+	if cut, _, ok := cutString(name, inspectNameChars); ok {
+		name = cut
+	}
 	summary := SpanSummary{
 		SpanID:             s.SpanID(i),
-		Name:               s.Strings[s.Names[i]],
+		Name:               name,
 		ServiceName:        s.Strings[s.Services[i]],
 		Kind:               s.Strings[s.Kinds[i]],
 		StartOffsetNano:    uint64(s.StartNano[i] - s.startNs),
@@ -315,6 +309,16 @@ func (s *TraceSkeleton) WithLinkedSpans(linkedSpans []LinkedSpan) *TraceSkeleton
 		cp.LinkedSpans = append(cp.LinkedSpans, item.linked)
 	}
 	return &cp
+}
+
+func (b *TraceSkeletonBuilder) intern(value string) uint32 {
+	if idx, ok := b.interned[value]; ok {
+		return idx
+	}
+	idx := uint32(len(b.skeleton.Strings))
+	b.skeleton.Strings = append(b.skeleton.Strings, value)
+	b.interned[value] = idx
+	return idx
 }
 
 func (s *TraceSkeleton) buildIDOrder() {

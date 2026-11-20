@@ -15,6 +15,8 @@ const (
 	inspectListSize     = 10
 	inspectServiceLimit = 20
 	inspectLinkTargets  = 5
+	// inspectNameChars cuts a span name in a summary; a statement used as a name can run to kilobytes.
+	inspectNameChars = 200
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
 	inspectTreeSpans       = 50
 	inspectSmallTraceChars = 20_000
