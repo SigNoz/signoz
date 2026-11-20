@@ -394,6 +394,104 @@ func TestFitOverview(t *testing.T) {
 	})
 }
 
+func TestSpanDetail(t *testing.T) {
+	specs := []skeletonSpec{
+		{id: "root", startMs: 0, durationMs: 1000},
+		{id: "l1", parent: "root", startMs: 1, durationMs: 900},
+		{id: "l2", parent: "l1", startMs: 2, durationMs: 800},
+		{id: "l3", parent: "l2", startMs: 3, durationMs: 700},
+		{id: "target", parent: "l3", startMs: 4, durationMs: 600},
+	}
+	for i := range 30 {
+		specs = append(specs, skeletonSpec{id: fmt.Sprintf("child-%02d", i), parent: "target", startMs: int64(5 + i), durationMs: 2})
+		specs = append(specs, skeletonSpec{id: fmt.Sprintf("grandchild-%02d", i), parent: fmt.Sprintf("child-%02d", i), startMs: int64(5 + i), durationMs: 1})
+	}
+	specs = append(specs, skeletonSpec{id: "great-grandchild", parent: "grandchild-00", startMs: 5, durationMs: 1})
+	skeleton := buildSkeleton(specs...)
+	position := func(spanID string) int32 {
+		idx, ok := skeleton.Index(spanID)
+		require.True(t, ok, spanID)
+		return idx
+	}
+
+	t.Run("DeepSpan_ReturnsNearestAncestorsThenRootAndTheLevelsBelow", func(t *testing.T) {
+		detail := skeleton.SpanDetail(position("target"), 2)
+
+		assert.Equal(t, "target", detail.Summary.SpanID)
+		assert.Equal(t, []string{"l3", "l2", "root"}, summaryIDs(detail.Ancestors))
+		assert.Equal(t, uint64(4), detail.AncestorCount)
+		require.Len(t, detail.Descendants, 2)
+		assert.Equal(t, uint32(1), detail.Descendants[0].Level)
+		assert.Equal(t, uint64(30), detail.Descendants[0].Total)
+		// A level shows its first 20 spans in time order.
+		require.Len(t, detail.Descendants[0].Spans, inspectLevelSize)
+		assert.Equal(t, "child-00", detail.Descendants[0].Spans[0].SpanID)
+		assert.Equal(t, "child-19", detail.Descendants[0].Spans[19].SpanID)
+		assert.Equal(t, uint64(30), detail.Descendants[1].Total)
+		assert.Equal(t, "grandchild-00", detail.Descendants[1].Spans[0].SpanID)
+	})
+
+	t.Run("DepthCoversEveryAncestor_ListsThemOnce", func(t *testing.T) {
+		detail := skeleton.SpanDetail(position("target"), 4)
+
+		assert.Equal(t, []string{"l3", "l2", "l1", "root"}, summaryIDs(detail.Ancestors))
+		require.Len(t, detail.Descendants, 3)
+		assert.Equal(t, uint64(1), detail.Descendants[2].Total)
+	})
+
+	t.Run("RootSpan_HasNoAncestors", func(t *testing.T) {
+		detail := skeleton.SpanDetail(position("root"), 1)
+
+		assert.Empty(t, detail.Ancestors)
+		assert.Equal(t, uint64(0), detail.AncestorCount)
+		require.Len(t, detail.Descendants, 1)
+		assert.Equal(t, []string{"l1"}, summaryIDs(detail.Descendants[0].Spans))
+	})
+
+	t.Run("LeafSpan_HasNoLevelsBelow", func(t *testing.T) {
+		detail := skeleton.SpanDetail(position("great-grandchild"), 2)
+
+		assert.Empty(t, detail.Descendants)
+		assert.Equal(t, uint64(7), detail.AncestorCount)
+	})
+
+	t.Run("LevelBelowAcrossParents_IsInTimeOrder", func(t *testing.T) {
+		twoBranches := buildSkeleton(
+			skeletonSpec{id: "top", startMs: 0, durationMs: 1000},
+			skeletonSpec{id: "first", parent: "top", startMs: 1, durationMs: 900},
+			skeletonSpec{id: "second", parent: "top", startMs: 2, durationMs: 900},
+			skeletonSpec{id: "second-early", parent: "second", startMs: 10, durationMs: 1},
+			skeletonSpec{id: "first-late", parent: "first", startMs: 500, durationMs: 1},
+		)
+
+		detail := twoBranches.SpanDetail(0, 2)
+
+		require.Len(t, detail.Descendants, 2)
+		assert.Equal(t, []string{"second-early", "first-late"}, summaryIDs(detail.Descendants[1].Spans))
+	})
+}
+
+func TestFitSpan(t *testing.T) {
+	summary := SpanSummary{SpanID: "span", Name: strings.Repeat("operation ", 40)}
+	level := func(n uint32) TraceSpanLevel {
+		spans := make([]SpanSummary, inspectLevelSize)
+		for i := range spans {
+			spans[i] = summary
+		}
+		return TraceSpanLevel{Level: n, Total: inspectLevelSize, Spans: spans}
+	}
+	detail := &TraceSpanDetail{Summary: summary, Descendants: []TraceSpanLevel{level(1), level(2), level(3), level(4), level(5), level(6), level(7), level(8)}}
+	require.Greater(t, jsonChars(detail), inspectMaxResponseChars)
+
+	FitSpan(detail)
+
+	// The deepest levels go first, and no more of them than needed.
+	assert.LessOrEqual(t, jsonChars(detail), inspectMaxResponseChars)
+	assert.Greater(t, jsonChars(detail)+jsonChars(level(9)), inspectMaxResponseChars)
+	require.NotEmpty(t, detail.Descendants)
+	assert.Equal(t, uint32(1), detail.Descendants[0].Level)
+}
+
 func TestIdentity(t *testing.T) {
 	inputTokens, outputTokens, cost := 1200.0, 300.0, 0.02
 	skeleton := buildSkeleton(

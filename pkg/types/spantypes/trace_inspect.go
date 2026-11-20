@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"math"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -15,6 +16,9 @@ const (
 	inspectListSize     = 10
 	inspectServiceLimit = 20
 	inspectLinkTargets  = 5
+	inspectLevelSize    = 20
+	inspectDefaultDepth = 2
+	inspectMaxDepth     = 10
 	// inspectNameChars cuts a span name in a summary; a statement used as a name can run to kilobytes.
 	inspectNameChars = 200
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
@@ -24,7 +28,11 @@ const (
 	inspectMaxResponseChars = 48_000
 )
 
-var ErrCodeInspectInvalidCursor = errors.MustNewCode("trace_inspect_invalid_cursor")
+var (
+	ErrCodeInspectInvalidCursor = errors.MustNewCode("trace_inspect_invalid_cursor")
+	ErrCodeInspectInvalidDepth  = errors.MustNewCode("trace_inspect_invalid_depth")
+	ErrCodeInspectSpanNotFound  = errors.MustNewCode("trace_inspect_span_not_found")
+)
 
 // The lists of the overview, as a cursor names them.
 const (
@@ -269,6 +277,13 @@ type TraceOverviewQuery struct {
 	Offset int
 }
 
+// TraceSpanQuery is a validated request for one span.
+type TraceSpanQuery struct {
+	SpanID       string
+	Depth        int
+	SelectFields []string
+}
+
 func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, error) {
 	query := new(TraceOverviewQuery)
 	if params.Cursor == "" {
@@ -283,6 +298,19 @@ func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, err
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
 	}
 	query.List, query.Offset = cursor.List, cursor.Offset
+	return query, nil
+}
+
+func NewTraceSpanQuery(spanID string, params *InspectTraceSpanParams) (*TraceSpanQuery, error) {
+	// A blank name selects nothing; a selection of only blanks is no selection.
+	selectFields := slices.DeleteFunc(slices.Clone(params.SelectFields), func(field string) bool { return strings.TrimSpace(field) == "" })
+	query := &TraceSpanQuery{SpanID: spanID, Depth: inspectDefaultDepth, SelectFields: selectFields}
+	switch {
+	case params.Depth < 0 || params.Depth > inspectMaxDepth:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth must be between 1 and %d, got %d", inspectMaxDepth, params.Depth)
+	case params.Depth != 0:
+		query.Depth = params.Depth
+	}
 	return query, nil
 }
 

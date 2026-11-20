@@ -248,6 +248,128 @@ def test_inspect_large_trace_shows_the_top_of_the_tree(
     assert "expensive" not in overview
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
+def test_inspect_span(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
+) -> None:
+    """Attributes are written to one layout only, so a read from the wrong column loses them."""
+    now = get_attribute_backend_now(signoz, attribute_backend).replace(second=0, microsecond=0)
+    write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
+    trace_id = TraceIdGenerator.trace_id()
+    other_trace_id = TraceIdGenerator.trace_id()
+    resources = {"service.name": f"td-inspect-span-{attribute_backend}"}
+    root_id, handler_id, middle_id, target_id = (TraceIdGenerator.span_id() for _ in range(4))
+    long_statement = "SELECT * FROM orders WHERE id IN (" + ", ".join(str(i) for i in range(400)) + ")"
+    start = now - timedelta(seconds=10)
+
+    def span(span_id: str, parent_id: str, name: str, offset_ms: int, duration_ms: int, **kwargs) -> Traces:
+        return Traces(timestamp=start + timedelta(milliseconds=offset_ms), duration=timedelta(milliseconds=duration_ms), trace_id=trace_id, span_id=span_id, parent_span_id=parent_id, name=name, resources=resources, attribute_write_mode=write_mode, **kwargs)
+
+    spans = [
+        span(root_id, "", "POST /orders", 0, 2000, kind=TracesKind.SPAN_KIND_SERVER),
+        span(handler_id, root_id, "handle_order", 10, 1900),
+        span(middle_id, handler_id, "load_order", 20, 1800),
+        span(
+            target_id,
+            middle_id,
+            "query_orders",
+            30,
+            1000,
+            kind=TracesKind.SPAN_KIND_CLIENT,
+            status_code=TracesStatusCode.STATUS_CODE_ERROR,
+            status_message="deadlock detected",
+            attributes={"db.system": "postgresql", "db.statement": long_statement, "db.rows": 42},
+            events=[TracesEvent("retry", start, {"attempt": "2"})],
+            links=[TracesLink(trace_id=other_trace_id, span_id="bbbbbbbbbbbbbbbb", ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM)],
+        ),
+    ]
+    child_ids, grandchild_ids = [], []
+    for i in range(25):
+        child_id, grandchild_id = TraceIdGenerator.span_id(), TraceIdGenerator.span_id()
+        child_ids.append(child_id)
+        grandchild_ids.append(grandchild_id)
+        spans.append(span(child_id, target_id, "fetch_page", 40 + i * 10, 8))
+        spans.append(span(grandchild_id, child_id, "decode_row", 41 + i * 10, 2))
+    # the same operation in nine other traces of the hour before, 100 ms to 900 ms long
+    for i in range(1, 10):
+        spans.append(Traces(timestamp=start - timedelta(minutes=5 * i), duration=timedelta(milliseconds=100 * i), trace_id=TraceIdGenerator.trace_id(), span_id=TraceIdGenerator.span_id(), name="query_orders", kind=TracesKind.SPAN_KIND_CLIENT, resources=resources, attribute_write_mode=write_mode))
+    insert_traces(spans)
+
+    spans_url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/inspect/spans")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+    response = requests.get(f"{spans_url}/{target_id}", headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    detail = response.json()["data"]
+
+    summary = detail["summary"]
+    assert summary["spanId"] == target_id
+    assert summary["parentSpanId"] == middle_id
+    assert summary["name"] == "query_orders"
+    assert (summary["level"], summary["childCount"], summary["subtreeSpanCount"]) == (3, 25, 50)
+    assert summary["hasError"] is True
+    assert summary["durationNano"] == 1_000_000_000
+
+    record = detail["record"]
+    assert record["spanId"] == target_id
+    assert record["statusMessage"] == "deadlock detected"
+    assert record["attributes"]["db.system"] == "postgresql"
+    assert record["attributes"]["db.rows"] == 42
+    assert record["resource"]["service.name"] == resources["service.name"]
+    assert record["events"][0]["name"] == "retry"
+    assert record["links"] == [{"traceId": other_trace_id, "spanId": "bbbbbbbbbbbbbbbb"}]
+    # a value over 500 characters is cut and listed with its full length
+    assert len(record["attributes"]["db.statement"]) == 501
+    assert record["truncated"] == [{"field": "attributes.db.statement", "length": len(long_statement)}]
+
+    # two levels up, the parent first, then the root
+    assert [line["spanId"] for line in detail["ancestors"]] == [middle_id, handler_id, root_id]
+    assert detail["ancestorCount"] == 3
+    # two levels down, each with its total and its first 20 spans in time order
+    levels = detail["descendants"]
+    assert [(level["level"], level["total"], len(level["spans"])) for level in levels] == [(1, 25, 20), (2, 25, 20)]
+    assert [line["spanId"] for line in levels[0]["spans"]] == child_ids[:20]
+    assert [line["spanId"] for line in levels[1]["spans"]] == grandchild_ids[:20]
+
+    # ten spans of this name and service started in the hour up to this one, and this is the longest
+    percentile = detail["percentile"]
+    assert percentile["windowMinutes"] == 60
+    assert percentile["position"] == pytest.approx(100)
+    assert 400_000_000 <= percentile["p50Nano"] <= 700_000_000
+    assert percentile["p50Nano"] <= percentile["p90Nano"] <= percentile["p99Nano"] <= 1_000_000_000
+
+    one_level = requests.get(f"{spans_url}/{target_id}", params={"depth": 1}, headers=headers, timeout=10).json()["data"]
+    assert [line["spanId"] for line in one_level["ancestors"]] == [middle_id, root_id]
+    assert [level["level"] for level in one_level["descendants"]] == [1]
+
+    selected = requests.get(f"{spans_url}/{target_id}", params={"selectFields": "db.statement"}, headers=headers, timeout=10).json()["data"]
+    # a call for named fields reads more of an opened span, so the percentile is not computed again
+    assert "percentile" not in selected
+    selected = selected["record"]
+    assert selected["attributes"] == {"db.statement": long_statement}
+    assert selected["truncated"] == []
+
+    # a selected name also picks the attribute of an event, and keeps only the events that have it
+    event_selected = requests.get(f"{spans_url}/{target_id}", params={"selectFields": ["attempt", "db.system"]}, headers=headers, timeout=10).json()["data"]["record"]
+    assert event_selected["attributes"] == {"db.system": "postgresql"}
+    assert [(event["name"], event["attributes"]) for event in event_selected["events"]] == [("retry", {"attempt": "2"})]
+
+    # a blank name selects nothing, so the usual record comes back
+    blank = requests.get(f"{spans_url}/{target_id}", params={"selectFields": ""}, headers=headers, timeout=10).json()["data"]["record"]
+    assert blank["attributes"]["db.system"] == "postgresql"
+    assert len(blank["attributes"]["db.statement"]) == 501
+
+    root = requests.get(f"{spans_url}/{root_id}", headers=headers, timeout=10).json()["data"]
+    assert root["ancestors"] == []
+    assert [level["total"] for level in root["descendants"]] == [1, 1]
+
+    unknown = requests.get(f"{spans_url}/{TraceIdGenerator.span_id()}", headers=headers, timeout=10)
+    assert unknown.status_code == HTTPStatus.NOT_FOUND, unknown.text
+
+
 def test_inspect_rejects_invalid_requests(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -258,6 +380,9 @@ def test_inspect_rejects_invalid_requests(
 
     response = requests.get(url, params={"cursor": "not-a-cursor"}, headers=headers, timeout=10)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    for depth in (11, "all"):
+        response = requests.get(f"{url}/spans/0000000000000001", params={"depth": depth}, headers=headers, timeout=10)
+        assert response.status_code == HTTPStatus.BAD_REQUEST, f"depth {depth}: {response.text}"
 
     response = requests.get(url, headers=headers, timeout=10)
     assert response.status_code == HTTPStatus.NOT_FOUND, response.text

@@ -2,6 +2,7 @@ package spantypes
 
 import (
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -12,7 +13,10 @@ const (
 	spanRecordChars        = 20_000
 	spanRecordShrunkChars  = 100
 	spanRecordMinimumChars = 20
-	truncationMark         = "…"
+	spanRecordSelectChars  = 40_000
+	// spanRecordSelectMaxChars leaves room in the response for the span's summary and ancestors.
+	spanRecordSelectMaxChars = 44_000
+	truncationMark           = "…"
 )
 
 // TruncatedField names a value of a span record that was cut, with its full length in characters.
@@ -35,7 +39,8 @@ type SpanRecord struct {
 }
 
 // NewSpanRecord cuts values over 500 characters, and shorter still while the record is over its size limit.
-func NewSpanRecord(item *StorableSpan) SpanRecord {
+// With selectFields the record holds only those attributes, in full as far as the response allows.
+func NewSpanRecord(item *StorableSpan, selectFields []string) SpanRecord {
 	record := SpanRecord{
 		SpanID:        item.SpanID,
 		StatusCode:    item.StatusCodeString,
@@ -58,12 +63,16 @@ func NewSpanRecord(item *StorableSpan) SpanRecord {
 		}
 	}
 
-	record.cut(spanRecordValueChars)
-	for _, limit := range []int{spanRecordShrunkChars, spanRecordMinimumChars} {
-		if jsonChars(record) <= spanRecordChars {
-			break
+	if len(selectFields) > 0 {
+		record.selectOnly(selectFields)
+	} else {
+		record.cut(spanRecordValueChars)
+		for _, limit := range []int{spanRecordShrunkChars, spanRecordMinimumChars} {
+			if jsonChars(record) <= spanRecordChars {
+				break
+			}
+			record.cut(limit)
 		}
-		record.cut(limit)
 	}
 	slices.SortFunc(record.Truncated, func(a, b TruncatedField) int { return strings.Compare(a.Field, b.Field) })
 	return record
@@ -75,7 +84,7 @@ func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
 	records := make([]SpanRecord, 0, len(spans))
 	chars := 0
 	for i := range spans {
-		record := NewSpanRecord(&spans[i])
+		record := NewSpanRecord(&spans[i], nil)
 		chars += jsonChars(record)
 		if chars > inspectSmallTraceChars {
 			return nil, false
@@ -88,6 +97,59 @@ func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
 // IsSmallTrace reports whether a trace has few enough spans to try returning their records.
 func IsSmallTrace(spanCount int) bool {
 	return spanCount <= inspectTreeSpans
+}
+
+// selectOnly keeps the named attributes of the span and of its events, and the events that have
+// one. The status message and the resource follow the usual 500 character cut.
+func (r *SpanRecord) selectOnly(fields []string) {
+	attributes, events := r.Attributes, r.Events
+	r.Attributes, r.Events = map[string]any{}, []EventV2{}
+	r.cut(spanRecordValueChars)
+
+	lengths := make([]int, 0)
+	keep := func(source map[string]any) map[string]any {
+		kept := make(map[string]any)
+		for _, field := range fields {
+			value, ok := source[field]
+			if !ok {
+				continue
+			}
+			kept[field] = value
+			if str, isString := value.(string); isString {
+				lengths = append(lengths, utf8.RuneCountInString(str))
+			}
+		}
+		return kept
+	}
+	r.Attributes = keep(attributes)
+	for _, event := range events {
+		if kept := keep(event.Attributes); len(kept) > 0 {
+			event.Attributes = kept
+			r.Events = append(r.Events, event)
+		}
+	}
+
+	limit := min(selectLimit(lengths, spanRecordSelectChars), spanRecordSelectChars)
+	r.cut(limit)
+	// The budget counts characters; escaped and multi-byte text takes more room than that in the response.
+	for limit > spanRecordValueChars && jsonChars(r) > spanRecordSelectMaxChars {
+		limit /= 2
+		r.cut(limit)
+	}
+}
+
+// selectLimit returns the length each selected value may keep for all of them to fit the budget:
+// short values keep their length and the long ones share what is left.
+func selectLimit(lengths []int, budget int) int {
+	slices.Sort(lengths)
+	for i, length := range lengths {
+		share := budget / (len(lengths) - i)
+		if length > share {
+			return share
+		}
+		budget -= length
+	}
+	return math.MaxInt
 }
 
 // cut shortens every string value longer than limit and records its full length once.

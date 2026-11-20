@@ -48,3 +48,37 @@ func TestNewTraceOverviewQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestNewTraceSpanQuery(t *testing.T) {
+	validCases := []struct {
+		name     string
+		params   InspectTraceSpanParams
+		expected TraceSpanQuery
+	}{
+		{name: "NoParams_DefaultDepth", params: InspectTraceSpanParams{}, expected: TraceSpanQuery{SpanID: "abc", Depth: inspectDefaultDepth}},
+		{name: "DepthAndFields", params: InspectTraceSpanParams{Depth: 4, SelectFields: []string{"db.statement"}}, expected: TraceSpanQuery{SpanID: "abc", Depth: 4, SelectFields: []string{"db.statement"}}},
+		{name: "BlankFields_SelectNothing", params: InspectTraceSpanParams{SelectFields: []string{"", " "}}, expected: TraceSpanQuery{SpanID: "abc", Depth: inspectDefaultDepth, SelectFields: []string{}}},
+	}
+	for _, testCase := range validCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			query, err := NewTraceSpanQuery("abc", &testCase.params)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, *query)
+		})
+	}
+
+	invalidCases := []struct {
+		name  string
+		depth int
+	}{
+		{name: "Depth_Negative", depth: -1},
+		{name: "Depth_OverMaximum", depth: 11},
+	}
+	for _, testCase := range invalidCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := NewTraceSpanQuery("abc", &InspectTraceSpanParams{Depth: testCase.depth})
+			require.Error(t, err)
+			assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+		})
+	}
+}

@@ -30,7 +30,7 @@ func TestNewSpanRecord(t *testing.T) {
 	t.Run("LongValue_IsCutAndListed", func(t *testing.T) {
 		span := recordSpan("span-a", map[string]string{"db.statement": longStatement, "http.route": "/charge"})
 
-		record := NewSpanRecord(&span)
+		record := NewSpanRecord(&span, nil)
 
 		assert.Equal(t, "Error", record.StatusCode)
 		assert.Equal(t, "/charge", record.Attributes["http.route"])
@@ -42,10 +42,53 @@ func TestNewSpanRecord(t *testing.T) {
 		assert.Equal(t, []Link{{TraceID: "other-trace", SpanID: "producer"}}, record.Links)
 	})
 
+	t.Run("SelectFields_ReturnsOnlyThoseInFull", func(t *testing.T) {
+		span := recordSpan("span-b", map[string]string{"db.statement": longStatement, "http.route": "/charge"})
+
+		record := NewSpanRecord(&span, []string{"db.statement", "not.present"})
+
+		assert.Equal(t, map[string]any{"db.statement": longStatement}, record.Attributes)
+		assert.Empty(t, record.Truncated)
+		assert.Empty(t, record.Events)
+	})
+
+	t.Run("SelectFields_EventAttribute_KeepsThatEventWithOnlyThatAttribute", func(t *testing.T) {
+		span := recordSpan("span-f", map[string]string{"http.route": "/charge"})
+
+		record := NewSpanRecord(&span, []string{"exception.message"})
+
+		assert.Empty(t, record.Attributes)
+		require.Len(t, record.Events, 1)
+		assert.Equal(t, "exception", record.Events[0].Name)
+		assert.Equal(t, map[string]any{"exception.message": "card declined"}, record.Events[0].Attributes)
+	})
+
+	t.Run("SelectFields_OverBudget_ShortValueStaysWholeAndLongOnesShareTheRest", func(t *testing.T) {
+		long := strings.Repeat("x", 100_000)
+		span := recordSpan("span-g", map[string]string{"prompt": long, "completion": long, "http.route": "/charge"})
+
+		record := NewSpanRecord(&span, []string{"prompt", "completion", "http.route", "not.present"})
+
+		assert.Equal(t, "/charge", record.Attributes["http.route"])
+		share := (spanRecordSelectChars - len("/charge")) / 2
+		assert.Len(t, []rune(record.Attributes["prompt"].(string)), share+1)
+		assert.Len(t, []rune(record.Attributes["completion"].(string)), share+1)
+		assert.Equal(t, []TruncatedField{{Field: "attributes.completion", Length: 100_000}, {Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
+	})
+
+	t.Run("SelectFields_MultiByteValue_FitsTheResponse", func(t *testing.T) {
+		span := recordSpan("span-h", map[string]string{"prompt": strings.Repeat("プロンプト", 20_000)})
+
+		record := NewSpanRecord(&span, []string{"prompt"})
+
+		assert.LessOrEqual(t, jsonChars(record), spanRecordSelectMaxChars)
+		assert.Equal(t, []TruncatedField{{Field: "attributes.prompt", Length: 100_000}}, record.Truncated)
+	})
+
 	t.Run("MultiByteValue_IsCutOnACharacterBoundary", func(t *testing.T) {
 		span := recordSpan("span-c", map[string]string{"note": strings.Repeat("é", 600)})
 
-		record := NewSpanRecord(&span)
+		record := NewSpanRecord(&span, nil)
 
 		assert.Equal(t, strings.Repeat("é", spanRecordValueChars)+truncationMark, record.Attributes["note"])
 		assert.Equal(t, uint64(600), record.Truncated[0].Length)
@@ -58,7 +101,7 @@ func TestNewSpanRecord(t *testing.T) {
 		}
 		span := recordSpan("span-d", attributes)
 
-		record := NewSpanRecord(&span)
+		record := NewSpanRecord(&span, nil)
 
 		assert.LessOrEqual(t, jsonChars(record), spanRecordChars)
 		assert.Len(t, record.Truncated, 80)
