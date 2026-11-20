@@ -9,7 +9,7 @@ void i18n.init({ lng: 'en', initImmediate: false, resources: {} });
 const { t } = i18n;
 
 const routeKeys = (role: ROLES, isWorkspaceBlocked: boolean): string[] =>
-	getRoutes(role, false, isWorkspaceBlocked, true, false, t).map(
+	getRoutes(role, false, false, isWorkspaceBlocked, true, false, t).map(
 		(route) => route.key,
 	);
 
@@ -44,6 +44,7 @@ describe('getRoutes Ingestion tab', () => {
 		(_name, role, isCloudUser, isEnterpriseSelfHostedUser) => {
 			const keys = getRoutes(
 				role as ROLES,
+				false,
 				false,
 				false,
 				isCloudUser,

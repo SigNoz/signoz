@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import logEvent from 'api/common/logEvent';
 import RouteTab from 'components/RouteTab';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
@@ -25,7 +26,8 @@ import './Settings.styles.scss';
 function SettingsPage(): JSX.Element {
 	const { pathname, search } = useAppLocation();
 
-	const { user, trialInfo, isFetchingActiveLicense } = useAppContext();
+	const { user, featureFlags, trialInfo, isFetchingActiveLicense } =
+		useAppContext();
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [settingsMenuItems, setSettingsMenuItems] = useState<SidebarItem[]>(
@@ -43,6 +45,10 @@ function SettingsPage(): JSX.Element {
 		user.role,
 	);
 	const { t } = useTranslation(['routes']);
+
+	const isGatewayEnabled =
+		featureFlags?.find((feature) => feature.name === FeatureKeys.GATEWAY)
+			?.active || false;
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
@@ -214,6 +220,7 @@ function SettingsPage(): JSX.Element {
 			getRoutes(
 				user.role,
 				isCurrentOrgSettings,
+				isGatewayEnabled,
 				isWorkspaceBlocked,
 				isCloudUser,
 				isEnterpriseSelfHostedUser,
@@ -222,6 +229,7 @@ function SettingsPage(): JSX.Element {
 		[
 			user.role,
 			isCurrentOrgSettings,
+			isGatewayEnabled,
 			isWorkspaceBlocked,
 			isCloudUser,
 			isEnterpriseSelfHostedUser,

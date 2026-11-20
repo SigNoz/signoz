@@ -5,6 +5,7 @@ import { ROLES, USER_ROLES } from 'types/roles';
 import {
 	billingSettings,
 	generalSettings,
+	ingestionSettings,
 	keyboardShortcuts,
 	mcpServerSettings,
 	membersSettings,
@@ -21,6 +22,7 @@ import {
 export const getRoutes = (
 	userRole: ROLES | null,
 	isCurrentOrgSettings: boolean,
+	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
 	isCloudUser: boolean,
 	isEnterpriseSelfHostedUser: boolean,
@@ -56,9 +58,19 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
+	let shouldUseMultiIngestionFlow = true;
+
+	if (isCloudUser && !isGatewayEnabled) {
+		settings.push(...ingestionSettings(t));
+		shouldUseMultiIngestionFlow = false;
+	}
+
+	if (shouldUseMultiIngestionFlow) {
+		settings.push(...multiIngestionSettings(t));
+	}
+
 	// Visible to all authenticated users
 	settings.push(
-		...multiIngestionSettings(t),
 		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),

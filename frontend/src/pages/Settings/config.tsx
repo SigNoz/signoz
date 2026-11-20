@@ -3,6 +3,7 @@ import ROUTES from 'constants/routes';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
+import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
 import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
 import MySettings from 'container/MySettings';
@@ -37,6 +38,19 @@ export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ORG_SETTINGS,
 		key: ROUTES.ORG_SETTINGS,
+	},
+];
+
+export const ingestionSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: IngestionSettings,
+		name: (
+			<div className="periscope-tab">
+				<Cpu size={16} /> {t('routes:ingestion_settings').toString()}
+			</div>
+		),
+		route: ROUTES.INGESTION_SETTINGS,
+		key: ROUTES.INGESTION_SETTINGS,
 	},
 ];
 

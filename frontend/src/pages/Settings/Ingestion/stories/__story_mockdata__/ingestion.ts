@@ -9,6 +9,7 @@ import type {
 	GetIngestionKeys200,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { IngestionInfo } from 'types/api/settings/ingestion';
 
 /** `per_page` the page asks for, so a longer page is a body the gateway never sends. */
 export const KEYS_PER_PAGE = 10;
@@ -132,3 +133,22 @@ export const ingestionKeyCreateError = (): RenderErrorResponseDTO => ({
 		suggestions: [],
 	},
 });
+
+/**
+ * The pre-gateway endpoint, which answers with one record and no limits: the tab
+ * falls back to it when the gateway feature is off.
+ *
+ * The body is the bare array. `IngestionResponseProps` says the records sit
+ * under a `payload` key, but `getIngestionData` already puts the whole body
+ * there and the tab indexes into it, so a wrapped body renders three blank rows.
+ */
+export const legacyIngestionResponse = (): IngestionInfo[] => [
+	{
+		keyId: 'ingestion-key-0',
+		name: KEY_NAMES[0],
+		createdAt: new Date(CREATED_AT).toISOString(),
+		ingestionKey: 'sk_0xxxxxxxxxxxxxxxxxxxxxxxxxxx09',
+		ingestionURL: 'https://ingest.us.signoz.cloud:443',
+		dataRegion: 'us-east-1',
+	},
+];

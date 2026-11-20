@@ -62,6 +62,14 @@ export const NoLimits: Story = {
 	args: { limits: [] },
 };
 
+/**
+ * The same tab on a workspace without the gateway: the ingestion URL, key and
+ * region it was handed, and nothing to manage.
+ */
+export const WithoutGateway: Story = {
+	args: { gateway: false },
+};
+
 /** A key opened up: the caps per signal, and the usage against each. */
 export const KeyLimits: Story = {
 	play: showKeyLimits,
