@@ -6,11 +6,29 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
+// The text is the markdown subset an Adaptive Card TextBlock renders: bold, lists and links, with paragraphs split by a blank line.
+const (
+	DefaultMSTeamsTitleTemplate = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
+
+	DefaultMSTeamsTextTemplate = `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }} - {{ .Status }}
+
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
+
+{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
+
+{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ with (.Labels.Remove (stringSlice "alertname" "severity" "ruleId" "ruleSource")).SortedPairs }}**Details:**
+
+{{ range . }}- **{{ .Name }}:** {{ .Value }}
+{{ end }}
+{{ end }}{{ end }}`
+)
+
 type ChannelMSTeamsConfig struct {
 	SendResolved *bool                        `json:"sendResolved,omitempty" description:"Also notify when the alert resolves. Defaults to true."`
 	WebhookURL   string                       `json:"webhookUrl" required:"true" format:"password" description:"The Teams incoming webhook URL. A secret; returned by create, update and fetch by ID, never by list."`
-	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the card title; defaults to the Alertmanager Teams default."`
-	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the card body; defaults to the Alertmanager Teams default."`
+	Title        valuer.UnsetOrNonEmptyString `json:"title,omitzero" description:"Alertmanager template for the card title; defaults to the SigNoz Teams default."`
+	Text         valuer.UnsetOrNonEmptyString `json:"text,omitzero" description:"Alertmanager template for the card body, rendered as Teams markdown; defaults to the SigNoz Teams default."`
 }
 
 func (c *ChannelMSTeamsConfig) UnmarshalJSON(data []byte) error {
