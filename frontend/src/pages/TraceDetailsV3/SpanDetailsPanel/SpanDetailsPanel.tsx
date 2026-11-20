@@ -1,8 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Tabs, type TabsItemProps } from '@signozhq/ui/tabs';
 import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
-import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
 import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
@@ -50,6 +49,7 @@ import OpenInLogsExplorer from './SpanLogs/OpenInLogsExplorer';
 import SpanLogs from './SpanLogs/SpanLogs';
 import { useSpanContextLogs } from './SpanLogs/useSpanContextLogs';
 import SpanAIMessages from './SpanAIMessages/SpanAIMessages';
+import SpanDetailsSkeleton from './SpanDetailsSkeleton';
 import SpanDrawerHeader from './SpanDrawerHeader';
 import SpanSummary from './SpanSummary';
 
@@ -66,6 +66,12 @@ interface SpanDetailsPanelProps {
 	traceEndTime?: number;
 	/** The trace bounds are still being fetched; logs wait for them. */
 	isTraceBoundsLoading?: boolean;
+	/** Rendered under the span summary. */
+	traceSection?: ReactNode;
+	/** Rendered between the header and the scrolling details. */
+	tracePane?: ReactNode;
+	/** `selectedSpan` is the previous span, kept dimmed while the next one loads. */
+	isStale?: boolean;
 }
 
 // At/above this panel width the summary moves inside the Overview tab (bottom
@@ -80,11 +86,13 @@ function SpanDetailsContent({
 	traceStartTime,
 	traceEndTime,
 	isTraceBoundsLoading = false,
+	traceSection,
 }: {
 	selectedSpan: SpanV3;
 	traceStartTime?: number;
 	traceEndTime?: number;
 	isTraceBoundsLoading?: boolean;
+	traceSection?: ReactNode;
 }): JSX.Element {
 	const [bodyRef, { width: bodyWidth }] = useMeasure<HTMLDivElement>();
 	const spanAttributeActions = useSpanAttributeActions();
@@ -326,6 +334,7 @@ function SpanDetailsContent({
 			children: (
 				<>
 					{isWide && summary}
+					{isWide && <div className={styles.tabAiMessages}>{traceSection}</div>}
 					{isWide && <div className={styles.tabAiMessages}>{aiMessages}</div>}
 					<DataViewer
 						data={spanDisplayData}
@@ -398,6 +407,7 @@ function SpanDetailsContent({
 		<>
 			<div className={styles.panelBody} ref={bodyRef}>
 				{!isWide && <div className={styles.detailsSection}>{summary}</div>}
+				{!isWide && traceSection}
 				{!isWide && aiMessages}
 
 				<div className={styles.tabsSection}>
@@ -437,6 +447,9 @@ function SpanDetailsPanel({
 	traceStartTime,
 	traceEndTime,
 	isTraceBoundsLoading,
+	traceSection,
+	tracePane,
+	isStale = false,
 }: SpanDetailsPanelProps): JSX.Element {
 	const headerActions = useMemo((): HeaderAction[] => {
 		const actions: HeaderAction[] = [
@@ -495,17 +508,22 @@ function SpanDetailsPanel({
 					}
 				/>
 			)}
+			{tracePane}
 			{selectedSpan ? (
-				<SpanDetailsContent
-					selectedSpan={selectedSpan}
-					traceStartTime={traceStartTime}
-					traceEndTime={traceEndTime}
-					isTraceBoundsLoading={isTraceBoundsLoading}
-				/>
-			) : (
-				<div className={styles.panelBody}>
-					<Skeleton active paragraph={{ rows: 6 }} title={{ width: '60%' }} />
+				<div className={styles.contentFrame} aria-busy={isStale}>
+					{isStale && <div className={styles.loadingBar} />}
+					<div className={cx(styles.contentFrame, { [styles.stale]: isStale })}>
+						<SpanDetailsContent
+							selectedSpan={selectedSpan}
+							traceStartTime={traceStartTime}
+							traceEndTime={traceEndTime}
+							isTraceBoundsLoading={isTraceBoundsLoading}
+							traceSection={traceSection}
+						/>
+					</div>
 				</div>
+			) : (
+				<SpanDetailsSkeleton />
 			)}
 		</>
 	);

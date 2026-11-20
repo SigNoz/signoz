@@ -1,10 +1,9 @@
 import React from 'react';
+import { getCurrentLocation } from 'lib/router/navigation';
+import { useTraceDetailsTab } from 'pages/TraceDetailsV3/hooks/useTraceDetailsTab';
+import { TraceDetailsTab } from 'pages/TraceDetailsV3/constants';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
-import {
-	__resetSearchParamsGetter,
-	__setSearchParamsGetterForTest,
-} from 'utils/getUnstableCurrentSearchParams';
 
 // Local identity-proxy mock for this module so `styles.foo` resolves to
 // `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as
@@ -27,19 +26,8 @@ import successStyles from '../Success.module.scss';
 const renderWithTraceProvider: typeof render = (ui, options, customOptions) =>
 	render(ui, options, customOptions);
 
-// Mock the required hooks with proper typing
-const mockSafeNavigate = jest.fn() as jest.MockedFunction<
-	(params: { search: string }) => void
->;
-const mockUrlQuery = new URLSearchParams();
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: typeof mockSafeNavigate } => ({
-		safeNavigate: mockSafeNavigate,
-	}),
-}));
-
-jest.mock('hooks/useUrlQuery', () => (): URLSearchParams => mockUrlQuery);
+const getSearchParam = (key: string): string | null =>
+	new URLSearchParams(getCurrentLocation().search).get(key);
 
 // App provider is already handled by test-utils
 
@@ -228,13 +216,6 @@ describe('Span Click User Flows', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		// Clear all URL parameters
-		Array.from(mockUrlQuery.keys()).forEach((key) => mockUrlQuery.delete(key));
-		__setSearchParamsGetterForTest(() => new URLSearchParams(mockUrlQuery));
-	});
-
-	afterEach(() => {
-		__resetSearchParamsGetter();
 	});
 
 	it('clicking span updates URL with spanId parameter', async () => {
@@ -260,7 +241,7 @@ describe('Span Click User Flows', () => {
 		);
 
 		// Initially URL should not have spanId
-		expect(mockUrlQuery.get('spanId')).toBeNull();
+		expect(getSearchParam('spanId')).toBeNull();
 
 		// Click on the actual span element (not the wrapper)
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
@@ -269,12 +250,7 @@ describe('Span Click User Flows', () => {
 		) as HTMLElement;
 		await user.click(spanElement);
 
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			{
-				search: expect.stringContaining('spanId=span-1'),
-			},
-			{ replace: true },
-		);
+		await waitFor(() => expect(getSearchParam('spanId')).toBe('span-1'));
 	});
 
 	it('clicking span duration visually selects the span', async () => {
@@ -406,10 +382,6 @@ describe('Span Click User Flows', () => {
 	it('preserves existing URL parameters when selecting spans', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		// Pre-populate URL with existing parameters
-		mockUrlQuery.set('existingParam', 'existingValue');
-		mockUrlQuery.set('anotherParam', 'anotherValue');
-
 		renderWithTraceProvider(
 			<Success
 				spans={mockSpans}
@@ -426,7 +398,10 @@ describe('Span Click User Flows', () => {
 				isFilterActive={false}
 			/>,
 			undefined,
-			{ initialRoute: '/trace' },
+			{
+				initialRoute:
+					'/trace?existingParam=existingValue&anotherParam=anotherValue',
+			},
 		);
 
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
@@ -435,41 +410,52 @@ describe('Span Click User Flows', () => {
 		) as HTMLElement;
 		await user.click(spanElement);
 
-		// Verify existing parameters are preserved and spanId is added
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			{
-				search: expect.stringMatching(
-					/existingParam=existingValue.*anotherParam=anotherValue.*spanId=span-1/,
-				),
-			},
-			{ replace: true },
-		);
+		await waitFor(() => expect(getSearchParam('spanId')).toBe('span-1'));
+		expect(getSearchParam('existingParam')).toBe('existingValue');
+		expect(getSearchParam('anotherParam')).toBe('anotherValue');
 	});
 
 	it('keeps a tab param the router has not seen when selecting spans', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		// nuqs wrote ?tab=thread to the real URL; react-router's copy is stale.
-		__setSearchParamsGetterForTest(() => new URLSearchParams('tab=thread'));
+		// Writes `tab` the way the page does: a shallow nuqs write the router doesn't see.
+		function SelectThreadTab(): JSX.Element {
+			const [, setTab] = useTraceDetailsTab();
+			return (
+				<button
+					type="button"
+					data-testid="select-thread-tab"
+					onClick={(): void => {
+						void setTab(TraceDetailsTab.Thread);
+					}}
+				/>
+			);
+		}
 
 		renderWithTraceProvider(
-			<Success
-				spans={mockSpans}
-				traceMetadata={mockTraceMetadata}
-				interestedSpanId={{ spanId: '', isUncollapsed: false }}
-				uncollapsedNodes={mockSpans.map((s) => s.span_id)}
-				isFullDataLoaded={false}
-				localUncollapsedNodes={new Set()}
-				setLocalUncollapsedNodes={jest.fn()}
-				setInterestedSpanId={jest.fn()}
-				selectedSpan={undefined}
-				setSelectedSpan={jest.fn()}
-				filteredSpanIds={[]}
-				isFilterActive={false}
-			/>,
+			<>
+				<SelectThreadTab />
+				<Success
+					spans={mockSpans}
+					traceMetadata={mockTraceMetadata}
+					interestedSpanId={{ spanId: '', isUncollapsed: false }}
+					uncollapsedNodes={mockSpans.map((s) => s.span_id)}
+					isFullDataLoaded={false}
+					localUncollapsedNodes={new Set()}
+					setLocalUncollapsedNodes={jest.fn()}
+					setInterestedSpanId={jest.fn()}
+					selectedSpan={undefined}
+					setSelectedSpan={jest.fn()}
+					filteredSpanIds={[]}
+					isFilterActive={false}
+				/>
+			</>,
 			undefined,
 			{ initialRoute: '/trace' },
 		);
+
+		await user.click(screen.getByTestId('select-thread-tab'));
+		expect(getSearchParam('tab')).toBeNull();
 
 		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
 		const spanElement = spanOverview.querySelector(
@@ -477,9 +463,7 @@ describe('Span Click User Flows', () => {
 		) as HTMLElement;
 		await user.click(spanElement);
 
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			{ search: expect.stringMatching(/tab=thread.*spanId=span-1/) },
-			{ replace: true },
-		);
+		await waitFor(() => expect(getSearchParam('spanId')).toBe('span-1'));
+		expect(getSearchParam('tab')).toBe(TraceDetailsTab.Thread);
 	});
 });

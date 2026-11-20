@@ -1,12 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	MutableRefObject,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { MutableRefObject, useCallback, useEffect, useState } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import {
 	ChartNoAxesGantt,
@@ -20,23 +13,18 @@ import { Collapse } from 'antd';
 import { useDetailsPanel } from 'components/DetailsPanel';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useGetTraceV4 from 'hooks/trace/useGetTraceV4';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useSpanDetailsOpenedEvent } from '../hooks/useSpanDetailsOpenedEvent';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
+import { useTraceWaterfallData } from '../hooks/useTraceWaterfallData';
 import NoData from '../NoData/NoData';
-import {
-	setTraceStoreAvailableColorByFields,
-	useTraceStore,
-} from '../stores/traceStore';
+import { useTraceStore } from '../stores/traceStore';
 import {
 	SPAN_DETAILS_PANEL_MIN_WIDTH,
 	SpanDetailVariant,
@@ -45,9 +33,6 @@ import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../TraceFlamegraph/constants';
 import TraceFlamegraph from '../TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from '../TraceWaterfall/TraceWaterfall';
-import { IInterestedSpan } from '../TraceWaterfall/types';
-import { getAncestorSpanIds } from '../TraceWaterfall/utils';
-import { getAvailableColorByFieldNames } from '../utils';
 
 import cx from 'classnames';
 
@@ -77,20 +62,22 @@ function TraceDetailsOverview({
 	dataLoadedFiredForRef,
 }: TraceDetailsOverviewProps): JSX.Element {
 	const { id: traceId } = useAppParams<'id'>();
-	const urlQuery = useUrlQuery();
-	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
-		() => ({
-			spanId: urlQuery.get('spanId') || '',
-			isUncollapsed: urlQuery.get('spanId') !== '',
-		}),
-	);
-	const [uncollapsedNodes, setUncollapsedNodes] = useState<string[]>([]);
-	const [localUncollapsedNodes, setLocalUncollapsedNodes] = useState<
-		Set<string>
-	>(new Set());
-	const [selectedSpan, setSelectedSpan] = useState<SpanV3>();
-
-	const selectedSpanId = urlQuery.get('spanId') || undefined;
+	const {
+		traceData,
+		isFetchingTraceData,
+		errorFetchingTraceData,
+		allSpans,
+		totalSpansCount,
+		isFullDataLoaded,
+		interestedSpanId,
+		setInterestedSpanId,
+		uncollapsedNodes,
+		localUncollapsedNodes,
+		setLocalUncollapsedNodes,
+		selectedSpan,
+		setSelectedSpan,
+		selectedSpanId,
+	} = useTraceWaterfallData(traceId || '');
 	const { safeNavigate } = useSafeNavigate();
 
 	const logTraceEvent = useTraceDetailLogEvent('v3', traceId || '');
@@ -114,83 +101,6 @@ function TraceDetailsOverview({
 		detailsTab: TraceDetailsTab.Overview,
 		logTraceEvent,
 	});
-
-	const allSpansRef = useRef<SpanV3[]>([]);
-	const deepLinkResolvedRef = useRef(false);
-
-	// Refetch only when the URL target isn't already loaded. Keeps row clicks
-	// and other in-window URL navigation from triggering a backend window slide.
-	useEffect(() => {
-		const spanId = urlQuery.get('spanId') || '';
-		if (!spanId) {
-			return;
-		}
-		const idx = allSpansRef.current.findIndex((s) => s.span_id === spanId);
-		if (idx !== -1) {
-			setSelectedSpan(allSpansRef.current[idx]);
-			return;
-		}
-		setInterestedSpanId({ spanId, isUncollapsed: true });
-	}, [urlQuery]);
-
-	// Once all spans are loaded (frontend mode), freeze query params so
-	// subsequent interestedSpanId changes don't trigger unnecessary refetches.
-	const fullDataLoadedRef = useRef(false);
-	const frozenParamsRef = useRef({
-		selectedSpanId: interestedSpanId.spanId,
-		isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
-		uncollapsedSpans: uncollapsedNodes,
-	});
-
-	const queryParams = fullDataLoadedRef.current
-		? frozenParamsRef.current
-		: {
-				selectedSpanId: interestedSpanId.spanId,
-				isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
-				uncollapsedSpans: uncollapsedNodes,
-			};
-
-	const {
-		data: traceData,
-		isFetching: isFetchingTraceData,
-		error: errorFetchingTraceData,
-	} = useGetTraceV4({
-		traceId: traceId || '',
-		uncollapsedSpans: queryParams.uncollapsedSpans,
-		selectedSpanId: queryParams.selectedSpanId,
-		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
-	});
-
-	const allSpans = traceData?.payload?.spans || [];
-	const totalSpansCount = traceData?.payload?.totalSpansCount || 0;
-
-	const isFullDataLoaded =
-		totalSpansCount > 0 && totalSpansCount <= allSpans.length;
-
-	// Color-by options, gated on fields in loaded spans. Resource attrs are
-	// trace-wide, so any window has the full set — no need to accumulate.
-	const availableColorByFields = useMemo(() => {
-		const spans = traceData?.payload?.spans;
-		return spans?.length ? getAvailableColorByFieldNames(spans) : undefined;
-	}, [traceData?.payload?.spans]);
-
-	useEffect(() => {
-		setTraceStoreAvailableColorByFields(availableColorByFields);
-	}, [availableColorByFields]);
-
-	// Lock the ref once we confirm all data is loaded
-	if (isFullDataLoaded && !fullDataLoadedRef.current) {
-		fullDataLoadedRef.current = true;
-		frozenParamsRef.current = {
-			selectedSpanId: interestedSpanId.spanId,
-			isSelectedSpanIDUnCollapsed: interestedSpanId.isUncollapsed,
-			uncollapsedSpans: uncollapsedNodes,
-		};
-	}
-
-	useEffect(() => {
-		allSpansRef.current = allSpans;
-	}, [allSpans]);
 
 	useEffect(() => {
 		if (
@@ -231,82 +141,6 @@ function TraceDetailsOverview({
 		logTraceEvent,
 		dataLoadedFiredForRef,
 	]);
-
-	// Frontend mode: expand all parents by default when full data arrives
-	useEffect(() => {
-		if (isFullDataLoaded && allSpans.length > 0) {
-			const parentIds = new Set(
-				allSpans.filter((s) => s.has_children).map((s) => s.span_id),
-			);
-			setLocalUncollapsedNodes(parentIds);
-		}
-	}, [isFullDataLoaded, allSpans]);
-
-	// Backend mode: sync uncollapsed state from API response
-	useEffect(() => {
-		if (
-			!isFullDataLoaded &&
-			traceData &&
-			traceData.payload &&
-			traceData.payload.uncollapsedSpans
-		) {
-			setUncollapsedNodes(traceData.payload.uncollapsedSpans);
-		}
-	}, [traceData, isFullDataLoaded]);
-
-	// Tracks whether we've already done the initial URL→selectedSpan handoff
-	//Lets `interestedSpanId` stay purely as the refetch trigger in frontend mode.
-	useEffect(() => {
-		if (deepLinkResolvedRef.current) {
-			return;
-		}
-		if (allSpans.length === 0) {
-			return;
-		}
-		if (selectedSpanId) {
-			const span = allSpans.find((s) => s.span_id === selectedSpanId);
-			if (!span) {
-				// Span not in the current window — wait for more data (backend
-				// pagination) before marking resolved.
-				return;
-			}
-			setSelectedSpan(span);
-		} else {
-			setSelectedSpan((prev) => prev ?? allSpans[0]);
-		}
-		deepLinkResolvedRef.current = true;
-	}, [selectedSpanId, allSpans]);
-
-	// Frontend mode: auto-expand ancestors of the URL-targeted span so it's
-	// visible. Keyed on URL `spanId`(selectedSpanId).
-	useEffect(() => {
-		if (!isFullDataLoaded || !selectedSpanId || allSpans.length === 0) {
-			return;
-		}
-		const ancestors = getAncestorSpanIds(allSpans, selectedSpanId);
-		if (ancestors.size === 0) {
-			return;
-		}
-		setLocalUncollapsedNodes((prev) => {
-			// Check if all ancestors are already expanded — avoid unnecessary state update
-			let allPresent = true;
-			for (const id of ancestors) {
-				if (!prev.has(id)) {
-					allPresent = false;
-					break;
-				}
-			}
-			if (allPresent) {
-				return prev;
-			}
-
-			const next = new Set(prev);
-			for (const id of ancestors) {
-				next.add(id);
-			}
-			return next;
-		});
-	}, [isFullDataLoaded, selectedSpanId, allSpans]);
 
 	const [activeKeys, setActiveKeys] = useState<string[]>(['flame', 'waterfall']);
 

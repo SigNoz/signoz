@@ -24,8 +24,7 @@ import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
+import { useSelectedSpanId } from 'pages/TraceDetailsV3/hooks/useSelectedSpanId';
 import { colorToRgb } from 'lib/uPlotLib/utils/generateColor';
 import {
 	ChevronDown,
@@ -677,19 +676,16 @@ function Success(props: ISuccessProps): JSX.Element {
 		setSelectedSpanToAddToFunnel(span);
 	}, []);
 
-	const { safeNavigate } = useSafeNavigate();
+	const [, setSelectedSpanId] = useSelectedSpanId();
 
 	const handleSpanClick = useCallback(
 		(span: SpanV3): void => {
 			setSelectedSpan(span);
-			const params = getUnstableCurrentSearchParams();
 			if (span?.span_id) {
-				params.set('spanId', span?.span_id);
+				setSelectedSpanId(span.span_id);
 			}
-
-			safeNavigate({ search: params.toString() }, { replace: true });
 		},
-		[setSelectedSpan, safeNavigate],
+		[setSelectedSpan, setSelectedSpanId],
 	);
 
 	// Left side columns using TanStack React Table (extensible for future columns)
@@ -848,7 +844,6 @@ function Success(props: ISuccessProps): JSX.Element {
 						className={styles.sidebarHeader}
 						style={{ width: sidebarWidth, flexShrink: 0 }}
 					/>
-					<div className={styles.resizeHandleHeader} />
 					<div className={styles.statusHeader} />
 					<div className={styles.timelineHeader}>
 						<TimelineV3

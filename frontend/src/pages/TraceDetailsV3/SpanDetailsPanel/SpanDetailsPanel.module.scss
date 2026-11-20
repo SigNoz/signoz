@@ -9,6 +9,58 @@
 	}
 }
 
+.contentFrame {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.stale {
+	opacity: 0.5;
+	pointer-events: none;
+	transition: opacity 0.15s ease-in;
+}
+
+@keyframes spanLoading {
+	0% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: left;
+	}
+	50% {
+		opacity: 1;
+		transform: scaleX(1);
+		transform-origin: left;
+	}
+	100% {
+		opacity: 0.3;
+		transform: scaleX(0.3);
+		transform-origin: right;
+	}
+}
+
+.loadingBar {
+	height: 2px;
+	flex-shrink: 0;
+	background: var(--primary);
+	animation: spanLoading 1.5s ease-in-out infinite;
+}
+
+.skeletonPills {
+	--skeleton-input-min-width-small: 0;
+
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--spacing-2);
+}
+
+// Same height as the trace section headers.
+.skeletonSection {
+	--skeleton-input-height: 40px;
+}
+
 .panelBody {
 	padding: 12px;
 	display: flex;
@@ -112,6 +164,12 @@
 }
 
 .drawerPanel {
+	// Wider than the widest drawer preset (extra-wide, 51.25rem) to fit the
+	// flamegraph and waterfall; the doubled class outranks the preset rule.
+	&.panel[data-width] {
+		max-width: min(75vw, 72rem);
+	}
+
 	.panelBody,
 	.logsFooter,
 	:global(.pretty-view__search-wrapper) {

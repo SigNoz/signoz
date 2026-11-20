@@ -7,6 +7,8 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
+import { TRACE_QUERY_STALE_TIME_MS } from './constants';
+
 export interface GetTraceFlamegraphV3Props {
 	traceId: string;
 	selectedSpanId?: string;
@@ -37,6 +39,7 @@ const useGetTraceFlamegraphV3 = (
 		enabled: props.enabled,
 		keepPreviousData: true,
 		refetchOnWindowFocus: false,
+		staleTime: TRACE_QUERY_STALE_TIME_MS,
 	});
 
 export default useGetTraceFlamegraphV3;

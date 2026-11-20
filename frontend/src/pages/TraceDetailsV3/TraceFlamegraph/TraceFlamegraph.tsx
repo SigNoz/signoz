@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { navigate } from 'lib/router/navigation';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import { Skeleton } from 'antd';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
-import useUrlQuery from 'hooks/useUrlQuery';
-import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
+import { useSelectedSpanId } from '../hooks/useSelectedSpanId';
 import { useTraceStore } from '../stores/traceStore';
 import Error from '../TraceWaterfall/TraceWaterfallStates/Error/Error';
 import { mergeTelemetryFieldKeys } from '../utils/previewFields';
@@ -20,6 +18,10 @@ interface TraceFlamegraphProps {
 	isFilterActive: boolean;
 	selectedSpan: SpanV3 | undefined;
 	totalSpansCount: number;
+	/** Defaults to the trace in the route. */
+	traceId?: string;
+	/** Replaces the loading skeleton. */
+	loadingFallback?: ReactNode;
 }
 
 function TraceFlamegraph({
@@ -27,26 +29,29 @@ function TraceFlamegraph({
 	isFilterActive,
 	selectedSpan,
 	totalSpansCount,
+	traceId: traceIdProp,
+	loadingFallback,
 }: TraceFlamegraphProps): JSX.Element {
-	const { id: traceId } = useAppParams<'id'>();
-	const urlQuery = useUrlQuery();
+	const { id: routeTraceId } = useAppParams<'id'>();
+	const traceId = traceIdProp ?? routeTraceId;
+	const [selectedSpanId, setSelectedSpanId] = useSelectedSpanId();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
-		urlQuery.get('spanId') || '',
+		selectedSpanId || '',
 	);
 
 	useEffect(() => {
-		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
-	}, [urlQuery]);
+		setFirstSpanAtFetchLevel(selectedSpanId || '');
+	}, [selectedSpanId]);
 
-	const handleSpanClick = useCallback((spanId: string): void => {
-		setFirstSpanAtFetchLevel(spanId);
-		const searchParams = getUnstableCurrentSearchParams();
-		//tood: use from query params constants
-		if (searchParams.get('spanId') !== spanId) {
-			searchParams.set('spanId', spanId);
-			navigate({ search: searchParams.toString() }, { replace: true });
-		}
-	}, []);
+	const handleSpanClick = useCallback(
+		(spanId: string): void => {
+			setFirstSpanAtFetchLevel(spanId);
+			if (selectedSpanId !== spanId) {
+				setSelectedSpanId(spanId);
+			}
+		},
+		[selectedSpanId, setSelectedSpanId],
+	);
 
 	const previewFields = useTraceStore((s) => s.previewFields);
 	// Gate the fetch until prefs load, else selectFields (in the query key)
@@ -103,6 +108,9 @@ function TraceFlamegraph({
 					/>
 				);
 			}
+			if (loadingFallback) {
+				return loadingFallback;
+			}
 			return (
 				<div style={{ width: '100%', height: '100%', padding: '8px 12px' }}>
 					<Skeleton
@@ -149,6 +157,7 @@ function TraceFlamegraph({
 		isFilterActive,
 		isFetching,
 		layout,
+		loadingFallback,
 		traceId,
 		workerError,
 	]);
