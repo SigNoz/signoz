@@ -11882,7 +11882,7 @@ components:
       - created_at
       - name
       - state
-      - severity
+      - thresholds
       type: string
     RuletypesListableRule:
       properties:
@@ -11922,6 +11922,13 @@ components:
           - $ref: '#/components/schemas/RuletypesAlertState'
           description: 'The current evaluation state: inactive, pending, recovering,
             firing, nodata or disabled.'
+        thresholds:
+          description: The rule's threshold names in lowercase, deduplicated and ordered
+            critical, error, warning, info, then other names. An alert carries the
+            name of the threshold that fired as its severity. Read-only.
+          items:
+            type: string
+          type: array
         updatedAt:
           format: date-time
           type: string
@@ -11933,6 +11940,7 @@ components:
       - alert
       - alertType
       - ruleType
+      - thresholds
       type: object
     RuletypesListableRuleViews:
       properties:
@@ -12299,7 +12307,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
         states:
           description: 'Only return rules in these states: firing, pending, recovering,
             inactive, nodata or disabled. Empty means every state.'
@@ -32196,7 +32205,7 @@ paths:
       deprecated: false
       description: Returns a page of alert rules with their current evaluation state,
         trimmed to the fields the list page renders. Supports a filter DSL (`query`),
-        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`),
+        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`thresholds`),
         order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the
         filter DSL, a non-reserved key is matched as a rule label directly (`team
         = infra`); a key that collides with a reserved keyword matches either interpretation
@@ -32224,14 +32233,16 @@ paths:
             type: string
           type: array
       - description: 'The field to sort by: updated_at (the default), created_at,
-          name, state or severity.'
+          name, state or thresholds. Sorting by thresholds ranks each rule by its
+          first threshold name.'
         in: query
         name: sort
         schema:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
       - description: 'The sort direction: asc or desc (the default).'
         in: query
         name: order
