@@ -156,7 +156,7 @@ func TestBucketCache_Put_And_Get(t *testing.T) {
 	}
 
 	// Store in cache
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: query.startMs, To: query.endMs}: result.Stats})
 
 	// Wait a bit for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -189,7 +189,7 @@ func TestBucketCache_PartialHit(t *testing.T) {
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 1000, 3000, 1000),
 	}
-	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1)
+	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1, nil)
 
 	// Wait for cache write
 	time.Sleep(10 * time.Millisecond)
@@ -225,7 +225,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 	bc.Put(context.Background(), valuer.UUID{}, query1, qbtypes.Step{Duration: 100 * time.Millisecond}, &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 1000, 2000, 100),
-	})
+	}, nil)
 
 	query2 := &mockQuery{
 		fingerprint: "test-query",
@@ -235,7 +235,7 @@ func TestBucketCache_MultipleBuckets(t *testing.T) {
 	bc.Put(context.Background(), valuer.UUID{}, query2, qbtypes.Step{Duration: 100 * time.Millisecond}, &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 3000, 4000, 100),
-	})
+	}, nil)
 
 	// Wait for cache writes
 	time.Sleep(10 * time.Millisecond)
@@ -280,7 +280,7 @@ func TestBucketCache_FluxInterval(t *testing.T) {
 	}
 
 	// This should not be cached due to flux interval
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 
 	// Wait a bit
 	time.Sleep(10 * time.Millisecond)
@@ -358,7 +358,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 				{Series: []*qbtypes.TimeSeries{series1}},
 			},
 		},
-	})
+	}, nil)
 
 	// Cache second part
 	query2 := &mockQuery{
@@ -374,7 +374,7 @@ func TestBucketCache_MergeTimeSeriesResults(t *testing.T) {
 				{Series: []*qbtypes.TimeSeries{series2}},
 			},
 		},
-	})
+	}, nil)
 
 	// Wait for cache writes
 	time.Sleep(10 * time.Millisecond)
@@ -441,7 +441,7 @@ func TestBucketCache_RawData(t *testing.T) {
 		Value: rawData,
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
@@ -481,7 +481,7 @@ func TestBucketCache_ScalarData(t *testing.T) {
 		Value: scalarData,
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	cached, missing := bc.GetMissRanges(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
@@ -509,7 +509,7 @@ func TestBucketCache_EmptyFingerprint(t *testing.T) {
 		Value: createTestTimeSeries("A", 1000, 5000, 1000),
 	}
 
-	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	// Should still be able to retrieve
@@ -564,7 +564,7 @@ func TestBucketCache_ConcurrentAccess(t *testing.T) {
 				Type:  qbtypes.RequestTypeTimeSeries,
 				Value: createTestTimeSeries(fmt.Sprintf("Q%d", id), query.startMs, query.endMs, 100),
 			}
-			bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 100 * time.Microsecond}, result)
+			bc.Put(context.Background(), valuer.UUID{}, query, qbtypes.Step{Duration: 100 * time.Microsecond}, result, nil)
 			done <- true
 		}(i)
 	}
@@ -624,7 +624,7 @@ func TestBucketCache_GetMissRanges_FluxInterval(t *testing.T) {
 		},
 	}
 
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, cachedResult)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, cachedResult, nil)
 
 	// Get miss ranges
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
@@ -686,7 +686,7 @@ func TestBucketCache_Put_FluxIntervalTrimming(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: query.startMs, To: query.endMs}: result.Stats})
 
 	// Retrieve cached data
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
@@ -756,7 +756,7 @@ func TestBucketCache_Put_EntireRangeInFluxInterval(t *testing.T) {
 	}
 
 	// Put the result - should not cache anything
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 
 	// Try to get cached data - should have no cached data
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond})
@@ -862,7 +862,7 @@ func TestBucketCache_EmptyDataHandling(t *testing.T) {
 			}
 
 			// Put the result
-			bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, tt.result)
+			bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, tt.result, nil)
 
 			// Wait a bit for cache to be written
 			time.Sleep(10 * time.Millisecond)
@@ -927,7 +927,7 @@ func TestBucketCache_PartialValues(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: query.startMs, To: query.endMs}: result.Stats})
 
 	// Wait for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -997,7 +997,7 @@ func TestBucketCache_AllPartialValues(t *testing.T) {
 	}
 
 	// Put the result
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 
 	// Wait for cache to be written
 	time.Sleep(10 * time.Millisecond)
@@ -1058,7 +1058,7 @@ func TestBucketCache_FilteredCachedResults(t *testing.T) {
 	}
 
 	// Cache the wide range
-	bc.Put(ctx, orgID, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1)
+	bc.Put(ctx, orgID, query1, qbtypes.Step{Duration: 1000 * time.Millisecond}, result1, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	// Now query for a smaller range (2000-3500ms)
@@ -1125,7 +1125,7 @@ func TestBucketCache_PromQLKeepsTheValueAtTheWindowEnd(t *testing.T) {
 				}},
 			}},
 		},
-	})
+	}, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	cached, missing := bc.GetMissRanges(ctx, orgID, query, step)
@@ -1291,7 +1291,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1345,7 +1345,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1397,7 +1397,7 @@ func TestBucketCache_PartialValueDetection(t *testing.T) {
 		}
 
 		// Put the result
-		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+		bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 		time.Sleep(10 * time.Millisecond)
 
 		// Get cached data
@@ -1454,7 +1454,7 @@ func TestBucketCache_NoCache(t *testing.T) {
 	}
 
 	// Put the result in cache
-	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result)
+	bc.Put(ctx, orgID, query, qbtypes.Step{Duration: 1000 * time.Millisecond}, result, nil)
 	time.Sleep(10 * time.Millisecond)
 
 	// Verify data is cached
@@ -1475,11 +1475,12 @@ func TestBucketCachePutSlicesAtCellBoundaries(t *testing.T) {
 
 	// a 1s step gives 60s cells, so 30s to 150s spans three of them
 	query := &mockQuery{fingerprint: "sliced-query", startMs: 30000, endMs: 150000}
-	bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+	result := &qbtypes.Result{
 		Type:  qbtypes.RequestTypeTimeSeries,
 		Value: createTestTimeSeries("A", 30000, 150000, 1000),
 		Stats: qbtypes.ExecStats{RowsScanned: 120, BytesScanned: 1200, DurationMS: 12},
-	})
+	}
+	bc.Put(ctx, orgID, query, step, result, map[qbtypes.TimeRange]qbtypes.ExecStats{{From: 30000, To: 150000}: result.Stats})
 
 	type bucketShape struct {
 		cell, startMs, endMs, rowsScanned uint64
@@ -1539,7 +1540,7 @@ func TestBucketCachePutAbsorbsWritesWithinACell(t *testing.T) {
 			name:                  "OverlappingWrites_BecomeOne",
 			firstWindow:           qbtypes.TimeRange{From: 1000, To: 4000},
 			secondWindow:          qbtypes.TimeRange{From: 3000, To: 6000},
-			expectedBuckets:       []bucketShape{{1000, 6000, 6}},
+			expectedBuckets:       []bucketShape{{1000, 6000, 5}},
 			expectedMissingRanges: []*qbtypes.TimeRange{},
 			expectedValueCount:    5,
 		},
@@ -1570,12 +1571,13 @@ func TestBucketCachePutAbsorbsWritesWithinACell(t *testing.T) {
 
 			for _, window := range []qbtypes.TimeRange{testCase.firstWindow, testCase.secondWindow} {
 				query := &mockQuery{fingerprint: "absorb-query", startMs: window.From, endMs: window.To}
-				bc.Put(ctx, orgID, query, step, &qbtypes.Result{
+				result := &qbtypes.Result{
 					Type:  qbtypes.RequestTypeTimeSeries,
 					Value: createTestTimeSeries("A", window.From, window.To, 1000),
-					// one row per second, so a bucket's stats read as the seconds it was scanned for
+					// one row per second, so a bucket's stats read as the seconds of data it holds
 					Stats: qbtypes.ExecStats{RowsScanned: (window.To - window.From) / 1000},
-				})
+				}
+				bc.Put(ctx, orgID, query, step, result, map[qbtypes.TimeRange]qbtypes.ExecStats{window: result.Stats})
 			}
 
 			query := &mockQuery{
@@ -1609,7 +1611,7 @@ func TestBucketCachePutLeavesAnUnchangedCellAlone(t *testing.T) {
 		Type:     qbtypes.RequestTypeTimeSeries,
 		Value:    createTestTimeSeries("A", 1000, 10000, 1000),
 		Warnings: []string{"from the wide write"},
-	})
+	}, nil)
 
 	// a write already covered by the cell's bucket must not rewrite the entry,
 	// which shows as its warnings never arriving
@@ -1618,7 +1620,7 @@ func TestBucketCachePutLeavesAnUnchangedCellAlone(t *testing.T) {
 		Type:     qbtypes.RequestTypeTimeSeries,
 		Value:    createTestTimeSeries("A", 3000, 5000, 1000),
 		Warnings: []string{"from the inside write"},
-	})
+	}, nil)
 
 	var cellEntry qbtypes.CachedData
 	require.NoError(t, bc.cache.Get(ctx, orgID, bc.generateCacheKey(wide, 0), &cellEntry))

@@ -43,6 +43,23 @@ func (c *CachedBucket) Touches(other *CachedBucket) bool {
 	return c.StartMs <= other.EndMs && other.StartMs <= c.EndMs
 }
 
+// ProrateStatsToWindow returns the share of the stats for the part of the
+// bucket inside [startMs, endMs).
+func (c *CachedBucket) ProrateStatsToWindow(startMs, endMs uint64) ExecStats {
+	return c.Stats.prorate(overlapMs(c.StartMs, c.EndMs, startMs, endMs), c.EndMs-c.StartMs)
+}
+
+// ProrateStatsToUnqueried returns the share of the stats for the part of the
+// bucket no queried range covers.
+func (c *CachedBucket) ProrateStatsToUnqueried(execStatsForQueriedTimeRanges map[TimeRange]ExecStats) ExecStats {
+	widthMs := c.EndMs - c.StartMs
+	queriedMs := uint64(0)
+	for queried := range execStatsForQueriedTimeRanges {
+		queriedMs += overlapMs(c.StartMs, c.EndMs, queried.From, queried.To)
+	}
+	return c.Stats.prorate(widthMs-min(queriedMs, widthMs), widthMs)
+}
+
 // CachedData represents the full cached data for a query.
 type CachedData struct {
 	Buckets  []*CachedBucket `json:"buckets"`
@@ -88,7 +105,7 @@ func (c *CachedData) Cost() int64 {
 	return size
 }
 
-func (r *Result) SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs uint64) ([]*CachedBucket, error) {
+func (r *Result) SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs uint64, execStatsForQueriedTimeRanges map[TimeRange]ExecStats) ([]*CachedBucket, error) {
 	tsData, ok := r.Value.(*TimeSeriesData)
 	if !ok || tsData == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "result of type %s cannot be bucketed", r.Type.StringValue())
@@ -111,16 +128,37 @@ func (r *Result) SplitIntoCacheCellBuckets(startMs, endMs, cellWidthMs uint64) (
 		if err != nil {
 			return nil, err
 		}
+		// A slice costs what was queried inside it; the rest of the result came
+		// out of the cache and is costed there already
+		sliceStats := ExecStats{StepIntervals: maps.Clone(r.Stats.StepIntervals)}
+		for queried, stats := range execStatsForQueriedTimeRanges {
+			queriedMs := overlapMs(from, to, queried.From, queried.To)
+			if queriedMs == 0 {
+				continue
+			}
+			share := stats.prorate(queriedMs, queried.To-queried.From)
+			sliceStats.RowsScanned += share.RowsScanned
+			sliceStats.BytesScanned += share.BytesScanned
+			sliceStats.DurationMS += share.DurationMS
+		}
 		cellBuckets = append(cellBuckets, &CachedBucket{
 			StartMs: from,
 			EndMs:   to,
 			Type:    r.Type,
 			Value:   value,
-			Stats:   r.Stats.prorate(to-from, endMs-startMs),
+			Stats:   sliceStats,
 		})
 		from = to
 	}
 	return cellBuckets, nil
+}
+
+// overlapMs is the length of [aFromMs, aToMs) ∩ [bFromMs, bToMs).
+func overlapMs(aFromMs, aToMs, bFromMs, bToMs uint64) uint64 {
+	if fromMs, toMs := max(aFromMs, bFromMs), min(aToMs, bToMs); fromMs < toMs {
+		return toMs - fromMs
+	}
+	return 0
 }
 
 // prorate returns the share of the stats that partMs out of wholeMs of the
