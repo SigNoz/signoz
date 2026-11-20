@@ -279,6 +279,10 @@ export function createAggregation(
 				reduceTo: haveReduceTo
 					? queryData?.aggregations?.[0]?.reduceTo || queryData?.reduceTo
 					: undefined,
+				...(queryData?.aggregations?.[0]?.comparisonSpaceAggregationParam && {
+					comparisonSpaceAggregationParam:
+						queryData.aggregations[0].comparisonSpaceAggregationParam,
+				}),
 			},
 		];
 	}

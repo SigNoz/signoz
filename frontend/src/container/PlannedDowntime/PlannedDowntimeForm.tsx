@@ -3,7 +3,6 @@ import { Check, Info } from '@signozhq/icons';
 import {
 	Button,
 	DatePicker,
-	Flex,
 	Form,
 	FormInstance,
 	Input,
@@ -13,6 +12,7 @@ import {
 	Spin,
 	Tooltip,
 } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';

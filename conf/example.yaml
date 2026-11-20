@@ -261,8 +261,8 @@ alertmanager:
     nflog:
       # Interval between garbage collection and snapshotting of the notification logs. The snapshot will be stored in the state store.
       maintenance_interval: 15m
-      # Retention of the notification logs.
-      retention: 120h
+      # Retention of the notification logs. Must be at least twice the longest repeat interval, which is 8760h for rules with re-notify off.
+      retention: 17520h
 
 ##################### Emailing #####################
 emailing:

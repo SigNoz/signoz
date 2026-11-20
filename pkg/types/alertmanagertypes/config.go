@@ -22,6 +22,9 @@ const (
 	DefaultReceiverName string = "default-receiver"
 	DefaultGroupBy      string = "ruleId"
 	DefaultGroupByAll   string = "__all__"
+
+	// Repeat interval used for rules with re-notify off.
+	NoRenotifyInterval time.Duration = 8760 * time.Hour
 )
 
 var (
