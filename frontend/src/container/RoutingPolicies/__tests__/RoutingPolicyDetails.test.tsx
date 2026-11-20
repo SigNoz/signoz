@@ -1,8 +1,17 @@
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AUTHZ_CHECK_URL,
+	authzMockResponse,
 	setupAuthzAdmin,
 	setupAuthzAllow,
 	setupAuthzDeny,
@@ -14,7 +23,6 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import {
 	buildRoutePolicyAttachPermission,
-	buildRoutePolicyReadPermission,
 	buildRoutePolicyUpdatePermission,
 	RoutePolicyAttachPermission,
 	RoutePolicyCreatePermission,
@@ -60,17 +68,21 @@ function renderDetails(mode: 'create' | 'edit', channels = mockChannels): void {
 	);
 }
 
-/** The picker's option row for a channel; antd renders it outside our markup. */
-async function findChannelOption(name: string): Promise<HTMLElement> {
-	fireEvent.mouseDown(screen.getByRole('combobox'));
-	const matches = await screen.findAllByText(name);
-	const option = matches
-		.map((el) => el.closest<HTMLElement>('.ant-select-item-option'))
-		.find(Boolean);
-	if (!option) {
-		throw new Error(`No picker option for ${name}`);
-	}
-	return option;
+type User = ReturnType<typeof userEvent.setup>;
+
+async function openChannelPicker(user: User): Promise<void> {
+	// antd's search input is the only markup of the picker that opens it
+	await user.click(
+		within(screen.getByTestId('routing-policy-channels')).getByRole('combobox'),
+	);
+}
+
+async function findChannelOption(
+	user: User,
+	channelId: string,
+): Promise<HTMLElement> {
+	await openChannelPicker(user);
+	return screen.findByTestId(`routing-policy-channel-option-${channelId}`);
 }
 
 describe('RoutingPolicyDetails', () => {
@@ -193,10 +205,10 @@ describe('RoutingPolicyDetails', () => {
 		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
 		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
-		const channelOptions = await screen.findAllByText('Channel 1');
-		fireEvent.click(channelOptions[1]);
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const option = await findChannelOption(user, MOCK_CHANNEL_1.id);
+		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
+		await user.click(option);
 
 		// Wait for the form to be valid before submitting
 		await waitFor(() => {
@@ -437,7 +449,7 @@ describe('RoutingPolicyDetails', () => {
 		const UNLINKED = MOCK_CHANNEL_2;
 
 		it('opens read-only with Save disabled without update', async () => {
-			server.use(setupAuthzAllow(buildRoutePolicyReadPermission(POLICY_ID)));
+			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
 			renderDetails('edit');
 
 			await waitFor(() =>
@@ -483,75 +495,134 @@ describe('RoutingPolicyDetails', () => {
 			);
 		});
 
+		it('checks unlinked channels only once the picker opens', async () => {
+			const requested: AuthtypesTransactionDTO[] = [];
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+					const payload = (await req.json()) as AuthtypesTransactionDTO[];
+					requested.push(...payload);
+					return res(
+						ctx.status(200),
+						ctx.json(
+							authzMockResponse(
+								payload,
+								payload.map(() => true),
+							),
+						),
+					);
+				}),
+			);
+			const isUnlinkedAttach = (txn: AuthtypesTransactionDTO): boolean =>
+				txn.relation === 'attach' &&
+				txn.object.resource.kind === 'notification-channel' &&
+				txn.object.selector === UNLINKED.id;
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('edit');
+			await waitForSaveEnabled();
+
+			expect(requested.some(isUnlinkedAttach)).toBe(false);
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
+			expect(requested.some(isUnlinkedAttach)).toBe(true);
+		});
+
 		it('disables a channel the user cannot attach, naming the permission', async () => {
 			server.use(
 				setupAuthzDeny(buildNotificationChannelAttachPermission(UNLINKED.id)),
 			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDetails('edit');
 			await waitForSaveEnabled();
 
-			const option = await findChannelOption(UNLINKED.name);
+			const option = await findChannelOption(user, UNLINKED.id);
 			await waitFor(() =>
-				expect(option).toHaveClass('ant-select-item-option-disabled'),
+				expect(option).toHaveAttribute(
+					'title',
+					expect.stringContaining(`attach:notification-channel:${UNLINKED.id}`),
+				),
 			);
-			expect(option.getAttribute('title')).toContain(
-				`attach:notification-channel:${UNLINKED.id}`,
-			);
+			expect(option).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('locks a linked channel the user cannot detach', async () => {
 			server.use(
 				setupAuthzDeny(buildNotificationChannelDetachPermission(LINKED.id)),
 			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDetails('edit');
 			await waitForSaveEnabled();
 
-			const linked = await findChannelOption(LINKED.name);
+			const linked = await findChannelOption(user, LINKED.id);
 			await waitFor(() =>
-				expect(linked).toHaveClass('ant-select-item-option-disabled'),
+				expect(linked).toHaveAttribute(
+					'title',
+					expect.stringContaining(`detach:notification-channel:${LINKED.id}`),
+				),
 			);
-			expect(linked.getAttribute('title')).toContain(
-				`detach:notification-channel:${LINKED.id}`,
+			expect(linked).toHaveAttribute('aria-disabled', 'true');
+			const unlinked = screen.getByTestId(
+				`routing-policy-channel-option-${UNLINKED.id}`,
 			);
-			await expect(findChannelOption(UNLINKED.name)).resolves.not.toHaveClass(
-				'ant-select-item-option-disabled',
+			await waitFor(() =>
+				expect(unlinked).toHaveAttribute('aria-disabled', 'false'),
 			);
 		});
 
 		it('blocks adding channels without attach on the policy', async () => {
 			server.use(setupAuthzDeny(buildRoutePolicyAttachPermission(POLICY_ID)));
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDetails('edit');
 			await waitForSaveEnabled();
 
-			const option = await findChannelOption(UNLINKED.name);
+			const option = await findChannelOption(user, UNLINKED.id);
 			await waitFor(() =>
-				expect(option).toHaveClass('ant-select-item-option-disabled'),
+				expect(option).toHaveAttribute(
+					'title',
+					expect.stringContaining(`attach:route-policy:${POLICY_ID}`),
+				),
 			);
-			expect(option.getAttribute('title')).toContain(
-				`attach:route-policy:${POLICY_ID}`,
+			expect(option).toHaveAttribute('aria-disabled', 'true');
+		});
+
+		it('keeps a channel disabled while its check is pending', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
 			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDetails('create');
+
+			const option = await findChannelOption(user, UNLINKED.id);
+			expect(option).toHaveAttribute('aria-disabled', 'true');
+			expect(option).toHaveAttribute('title', 'Checking permissions');
 		});
 
 		it('leaves channels pickable on create when the check fails', async () => {
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
 			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDetails('create');
 
-			const option = await findChannelOption(UNLINKED.name);
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			expect(option).not.toHaveClass('ant-select-item-option-disabled');
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
 		});
 
 		it('falls open when the check fails', async () => {
 			server.use(
 				rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
 			);
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			renderDetails('edit');
 
-			const option = await findChannelOption(UNLINKED.name);
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			expect(option).not.toHaveClass('ant-select-item-option-disabled');
+			const option = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(option).toHaveAttribute('aria-disabled', 'false'),
+			);
 			expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeEnabled();
 		});
 	});

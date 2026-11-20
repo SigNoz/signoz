@@ -5,7 +5,6 @@ import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import {
 	buildRoutePolicyDeletePermission,
-	buildRoutePolicyReadPermission,
 	buildRoutePolicyUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 
@@ -31,10 +30,7 @@ function RoutingPolicyActionsMenu({
 				label: 'Edit',
 				testId: `routing-policy-edit-${routingPolicy.id}`,
 				prefix: <PenLine size={14} />,
-				checks: [
-					buildRoutePolicyReadPermission(routingPolicy.id),
-					buildRoutePolicyUpdatePermission(routingPolicy.id),
-				],
+				checks: [buildRoutePolicyUpdatePermission(routingPolicy.id)],
 				onClick: (): void => onEdit(routingPolicy),
 			},
 			{ type: 'separator', value: 'before-delete' },

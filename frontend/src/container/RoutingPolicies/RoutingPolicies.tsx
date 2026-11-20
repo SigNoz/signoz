@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
-import { Skeleton } from 'antd';
+import { Skeleton } from '@signozhq/ui/skeleton';
 import {
 	RoutePolicyCreateChecks,
 	RoutePolicyListPermission,
