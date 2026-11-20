@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Loader } from '@signozhq/icons';
-import { Empty, Spin } from 'antd';
+import { Spin } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import {
 	BarController,
 	BarElement,

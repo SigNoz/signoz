@@ -29,26 +29,6 @@ jest.mock('hooks/useQueryService', () => ({
 	}),
 }));
 
-// Irrelevant to the prefill flow and otherwise require browser APIs / extra
-// context providers, so stub them out.
-jest.mock('../../../hooks/useSpeechRecognition', () => ({
-	useSpeechRecognition: (): unknown => ({
-		isListening: false,
-		isSupported: false,
-		permission: 'prompt',
-		start: jest.fn(),
-		discard: jest.fn(),
-	}),
-}));
-
-jest.mock('../../../hooks/useAIAssistantAnalyticsContext', () => ({
-	useAIAssistantAnalyticsContext: (): unknown => ({
-		threadId: undefined,
-		page: '/',
-		mode: 'sidepane',
-	}),
-}));
-
 // eslint-disable-next-line import/first
 // eslint-disable-next-line import/first
 import ChatInput from '../ChatInput';
@@ -58,7 +38,7 @@ function renderChatInput(): void {
 }
 
 function getComposer(): HTMLTextAreaElement {
-	return screen.getByPlaceholderText(/Ask anything/i) as HTMLTextAreaElement;
+	return screen.getByTestId<HTMLTextAreaElement>('ai-chat-input-textarea');
 }
 
 describe('ChatInput — empty-state CTA prefill flow', () => {
@@ -69,11 +49,8 @@ describe('ChatInput — empty-state CTA prefill flow', () => {
 		await userEvent.type(getComposer(), 'show me something');
 
 		// Open the picker and search for an entity that does not exist.
-		await userEvent.click(screen.getByRole('button', { name: /add context/i }));
-		await userEvent.type(
-			await screen.findByPlaceholderText(/search dashboards/i),
-			'chk',
-		);
+		await userEvent.click(screen.getByTestId('ai-chat-input-add-context'));
+		await userEvent.type(await screen.findByTestId('ai-context-search'), 'chk');
 
 		const cta = await screen.findByTestId('ai-context-empty-cta-Dashboards');
 		expect(cta).toHaveTextContent('Create a dashboard for "chk"');
@@ -96,7 +73,7 @@ describe('ChatInput — empty-state CTA prefill flow', () => {
 	it('seeds only the prefix (with trailing space) in the onboarding case', async () => {
 		renderChatInput();
 
-		await userEvent.click(screen.getByRole('button', { name: /add context/i }));
+		await userEvent.click(screen.getByTestId('ai-chat-input-add-context'));
 
 		const cta = await screen.findByTestId('ai-context-empty-cta-Dashboards');
 		expect(cta).toHaveTextContent('Ask me to create one');

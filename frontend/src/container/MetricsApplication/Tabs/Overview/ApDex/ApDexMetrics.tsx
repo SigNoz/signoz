@@ -1,6 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import TextToolTip from 'components/TextToolTip';
 import {
@@ -8,7 +8,7 @@ import {
 	apDexToolTipUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
 import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
@@ -95,7 +95,7 @@ function ApDexMetrics({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
-			version={ENTITY_VERSION_V4}
+			version={ENTITY_VERSION_V5}
 			enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 		/>
 	);

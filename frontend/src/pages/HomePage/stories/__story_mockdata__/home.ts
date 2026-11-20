@@ -23,12 +23,15 @@ import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
-import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type { ServicesList } from 'types/api/metrics/getService';
 import type { UserPreference } from 'types/api/preferences/preference';
+import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import { baseUserPreferences } from '@/storybook/msw/__story_mockdata__/appShell';
-import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import {
+	queryRangeV5ScalarResponse,
+	queryRangeV5ScalarTableResponse,
+} from '@/storybook/msw/__story_mockdata__/queryRange';
 
 export { queryRangeV5ScalarResponse };
 
@@ -328,33 +331,11 @@ export const topLevelOperationsResponse = (count: number): ServiceDataProps =>
 	);
 
 /**
- * Span-metrics latency, error rate and ops per second come off a table panel.
- * The page reads them from `newResult`, which the table branch of
- * `GetMetricQueryRange` never adds, so the columns render as zero however
- * complete this body is. That is the app's gap, not the mock's.
+ * The span-metrics card sends one table query per service; `A` is p99 (ms), `D`
+ * ops per second and `F1` the error rate.
  */
-export const spanMetricsResponse = (): {
-	status: string;
-	data: MetricRangePayloadV3['data'];
-} => ({
-	status: 'success',
-	data: {
-		resultType: 'table',
-		result: [
-			{
-				queryName: '',
-				legend: '',
-				series: null,
-				list: null,
-				table: {
-					columns: [
-						{ name: 'A', queryName: 'A', isValueColumn: true },
-						{ name: 'D', queryName: 'D', isValueColumn: true },
-						{ name: 'F1', queryName: 'F1', isValueColumn: true },
-					],
-					rows: [{ data: { A: 148_000_000, D: 12.4, F1: 1.8 } }],
-				},
-			},
-		],
-	},
-});
+export const spanMetricsResponse = (): MetricRangePayloadV5 =>
+	queryRangeV5ScalarTableResponse({
+		aggregations: ['A', 'D', 'F1'],
+		rows: [[148, 12.4, 1.8]],
+	});

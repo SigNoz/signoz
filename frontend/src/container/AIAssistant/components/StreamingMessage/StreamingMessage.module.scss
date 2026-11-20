@@ -1,9 +1,13 @@
-.streamingStatus {
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	font-size: 12px;
-	font-style: italic;
-	color: var(--l3-foreground);
-	margin-bottom: 6px;
+// Sits where the run's first steps will land.
+.statusStep {
+	padding: var(--spacing-2) 0;
+}
+
+// Spans the reply column, so an approval or clarification card is as wide as the widest reply.
+.body {
+	width: 100%;
+}
+
+.bubble {
+	align-self: stretch;
 }

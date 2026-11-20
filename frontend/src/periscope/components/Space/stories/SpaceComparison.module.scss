@@ -1,0 +1,45 @@
+.comparison {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-12);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	min-width: 0;
+}
+
+.label {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l2-foreground);
+}
+
+.frame {
+	min-height: 160px;
+	border: 1px dashed var(--l3-border);
+}
+
+.item {
+	font-size: var(--periscope-font-size-small);
+	color: var(--l2-foreground);
+	background: var(--l3-background);
+	border: 1px solid var(--l2-border);
+}
+
+.itemSmall {
+	width: var(--spacing-24);
+	height: var(--spacing-12);
+}
+
+.itemMedium {
+	width: var(--spacing-32);
+	height: var(--spacing-20);
+	padding-top: var(--spacing-4);
+}
+
+.itemLarge {
+	width: var(--spacing-40);
+	height: var(--spacing-24);
+}

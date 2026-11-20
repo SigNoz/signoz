@@ -110,8 +110,8 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 	} else {
-		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
-		noDataRenotifyInterval = 8760 * time.Hour
+		renotifyInterval = alertmanagertypes.NoRenotifyInterval //1 year for no renotify substitute
+		noDataRenotifyInterval = alertmanagertypes.NoRenotifyInterval
 	}
 	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }

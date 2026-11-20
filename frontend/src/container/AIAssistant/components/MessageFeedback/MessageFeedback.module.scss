@@ -1,7 +1,7 @@
 .feedback {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--spacing-4);
 	padding: 4px 2px 0;
 	// Driven by MessageBubble's --feedback-opacity (0 normally, 1 on hover/visible).
 	opacity: var(--feedback-opacity, 0);
@@ -10,6 +10,11 @@
 	&.visible {
 		--feedback-opacity: 1;
 		opacity: 1;
+	}
+
+	// Lines the icons up with the full page's indented reply text.
+	&.fullPage {
+		padding-left: var(--spacing-4);
 	}
 }
 

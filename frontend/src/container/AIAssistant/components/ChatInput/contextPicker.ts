@@ -1,4 +1,13 @@
-import { Bell, LayoutDashboard, ShieldCheck } from '@signozhq/icons';
+import {
+	BarChart,
+	Bell,
+	DraftingCompass,
+	LayoutDashboard,
+	Package,
+	ScrollText,
+} from '@signozhq/icons';
+
+import { MessageContext } from '../../../../api/ai-assistant/chat';
 
 /** Ordered category tabs shown in the @-mention context picker. */
 export const CONTEXT_CATEGORIES = ['Dashboards', 'Alerts', 'Services'] as const;
@@ -12,8 +21,40 @@ export type ContextCategory = (typeof CONTEXT_CATEGORIES)[number];
 export const CONTEXT_CATEGORY_ICONS = {
 	Dashboards: LayoutDashboard,
 	Alerts: Bell,
-	Services: ShieldCheck,
+	Services: Package,
 } satisfies Record<ContextCategory, unknown>;
+
+/** What one item of each category is called, e.g. on its context pill. */
+export const CONTEXT_CATEGORY_SINGULAR: Record<ContextCategory, string> = {
+	Dashboards: 'Dashboard',
+	Alerts: 'Alert',
+	Services: 'Service',
+};
+
+/** What one item of each context type is called. */
+export const CONTEXT_TYPE_LABELS: Record<MessageContext['type'], string> = {
+	dashboard: 'Dashboard',
+	alert: 'Alert',
+	service: 'Service',
+	logs_explorer: 'Logs',
+	traces_explorer: 'Traces',
+	metrics_explorer: 'Metrics',
+	saved_view: 'Saved view',
+};
+
+/** Icon per page context: the picker's for the categories it shares, the side nav's for explorers. */
+export const AUTO_CONTEXT_ICONS: Record<
+	MessageContext['type'],
+	typeof Package
+> = {
+	dashboard: CONTEXT_CATEGORY_ICONS.Dashboards,
+	alert: CONTEXT_CATEGORY_ICONS.Alerts,
+	service: CONTEXT_CATEGORY_ICONS.Services,
+	logs_explorer: ScrollText,
+	traces_explorer: DraftingCompass,
+	metrics_explorer: BarChart,
+	saved_view: Package,
+};
 
 /**
  * Resolved copy + composer prefill for one render of the context picker's empty
