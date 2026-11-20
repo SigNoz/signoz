@@ -21,12 +21,26 @@ function EmptyState({ createDropdown }: Props): JSX.Element {
 		<div className={styles.wrapper}>
 			<img src={dashboardsUrl} alt="dashboards" className={styles.image} />
 			<section className={styles.copy}>
-				<Typography.Text className={styles.noDashboard}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					No dashboards yet.{' '}
-				</Typography.Text>
-				<Typography.Text className={styles.info}>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Create a dashboard to start visualizing your data
-				</Typography.Text>
+				</Typography>
 			</section>
 
 			{createDropdown ? (

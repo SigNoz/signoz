@@ -22,8 +22,8 @@ import {
 	openEditTagsDialog,
 	openFirstRowActions,
 	openRenameDialog,
-	openRenameViewPopover,
-	openSaveViewPopover,
+	openRenameViewDialog,
+	openSaveViewDialog,
 	openTemplateTab,
 	pinDashboard,
 	renameDashboard,
@@ -139,14 +139,14 @@ export const EditTagsDialog: Story = {
 	play: openEditTagsDialog,
 };
 
-/** The popover that names the current filters as a new saved view. */
+/** The dialog that names the current filters as a new saved view. */
 export const SaveView: Story = {
-	play: openSaveViewPopover,
+	play: openSaveViewDialog,
 };
 
-/** A saved view's rename popover, opened from its row. */
+/** A saved view's rename dialog, opened from its row. */
 export const RenameView: Story = {
-	play: openRenameViewPopover,
+	play: openRenameViewDialog,
 };
 
 /** The renamed toast, raised once the PATCH answers. */

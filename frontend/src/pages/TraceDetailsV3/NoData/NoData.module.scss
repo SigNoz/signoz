@@ -20,16 +20,6 @@
 	width: 32px;
 }
 
-.notFoundText1 {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
-}
-
 .notFoundText2 {
 	color: var(--l1-foreground);
 }
@@ -54,30 +44,10 @@
 	width: 16px;
 }
 
-.reasonText {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
-}
-
 .noneOfAbove {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-6);
-}
-
-.noneText {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
-	letter-spacing: -0.07px;
 }
 
 .actionBtns {

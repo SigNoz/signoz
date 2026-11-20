@@ -25,6 +25,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { findToastText } from '@/storybook/play/toastText';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
@@ -535,7 +536,7 @@ export const clickSectionAction = async (
 };
 
 export const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
-	screen.findByText(text, undefined, PAGE_LOAD);
+	findToastText(text, PAGE_LOAD);
 
 export const openJsonEditor = async (
 	canvasElement: HTMLElement,
@@ -673,12 +674,10 @@ export const openVariableEditor = async (
  */
 export const findPreviewValue = async (value: string): Promise<HTMLElement> => {
 	const label = await screen.findByText('Preview of Values');
+	// The label text sits in a wrapper beside the values, so the row is two levels up.
+	const section = label.parentElement?.parentElement as HTMLElement;
 
-	return within(label.parentElement as HTMLElement).findByText(
-		value,
-		undefined,
-		PAGE_LOAD,
-	);
+	return within(section).findByText(value, undefined, PAGE_LOAD);
 };
 
 export const pickVariableType = async (type: VariableType): Promise<void> => {
@@ -686,7 +685,7 @@ export const pickVariableType = async (type: VariableType): Promise<void> => {
 };
 
 export const typeVariableName = async (name: string): Promise<void> => {
-	const input = await screen.findByTestId('variable-name');
+	const input = await screen.findByTestId('variable-name-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, name);

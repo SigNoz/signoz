@@ -51,7 +51,7 @@ export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 		const webhookUrl = await canvas.findByTestId(
-			'webhook-url-textbox',
+			'webhook-url-textbox-field',
 			undefined,
 			untilLoaded,
 		);
@@ -102,7 +102,11 @@ export const SaveFailure: Story = {
 		// Save is off until the form is edited, so the failure is reached through
 		// a real change rather than an empty submit.
 		await userEvent.type(
-			await canvas.findByTestId('slack-channel-textbox', undefined, untilLoaded),
+			await canvas.findByTestId(
+				'slack-channel-textbox-field',
+				undefined,
+				untilLoaded,
+			),
 			'-edited',
 		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));

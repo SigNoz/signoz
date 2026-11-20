@@ -191,34 +191,30 @@ You can read the ./node_modules/@signozhq/design-tokens/dist/style.css to find c
 
 ### Typography
 
+Text styles are tokens named `--{variant}-{size}-{weight}-{property}`:
+
+- Variant: `label` (line height 1), `paragraph` (line height 18, 20 or 26px), `uppercase` (11 and 13px) or `code` (SF Mono, 11 and 13px).
+- Size: `small` (11px), `base` (13px), `medium` (16px) or `large` (18px). Paragraph has no `large`; uppercase and code have only `small` and `base`.
+- Weight: `400`, `500` or `600`.
+- Property: `font-family`, `font-size`, `font-weight`, `line-height`, `letter-spacing` or `text-transform`.
+
 ```scss
-// Font sizes (preferred)
 .title {
-  font-size: var(--periscope-font-size-large);   // 18px
-  font-size: var(--periscope-font-size-medium);  // 16px
-  font-size: var(--periscope-font-size-base);    // 13px
-  font-size: var(--periscope-font-size-small);   // 11px
+  font-family: var(--label-large-500-font-family);
+  font-size: var(--label-large-500-font-size);
+  font-weight: var(--label-large-500-font-weight);
+  line-height: var(--label-large-500-line-height);
+  letter-spacing: var(--label-large-500-letter-spacing);
 }
 
-// Alternative scale (rem-based)
-.heading {
-  font-size: var(--font-size-xl);  // 1.25rem
-  font-size: var(--font-size-lg);  // 1.125rem
-  font-size: var(--font-size-base); // 1rem
-  font-size: var(--font-size-sm);  // 0.875rem
+.hint {
+  font-size: var(--paragraph-small-400-font-size);   // 11px
+  line-height: var(--paragraph-small-400-line-height); // 18px
 }
 
-// Font weights
-.bold {
-  font-weight: var(--font-weight-semibold); // 600
-  font-weight: var(--font-weight-medium);   // 500
-  font-weight: var(--font-weight-normal);   // 400
-}
-
-// Line heights
-.text {
-  line-height: var(--line-height-20); // 20px
-  line-height: var(--line-height-24); // 24px
+.id {
+  font-family: var(--code-base-400-font-family);
+  font-size: var(--code-base-400-font-size);          // 13px
 }
 ```
 
@@ -312,7 +308,7 @@ Each component exposes `--<component>-<property>` variables:
   --button-background: var(--success-background);
   --button-border-radius: var(--radius-2);
   --button-padding: var(--spacing-4) var(--spacing-8);
-  --button-font-size: var(--periscope-font-size-base);
+  --button-font-size: var(--label-base-400-font-size);
 }
 
 // Override Input
@@ -342,7 +338,7 @@ Components use data attributes for variants/states. Target them for state-specif
 
 // Target size
 .wrapper :global([data-size="sm"]) {
-  --button-font-size: var(--periscope-font-size-small);
+  --button-font-size: var(--label-small-400-font-size);
 }
 
 // Target color

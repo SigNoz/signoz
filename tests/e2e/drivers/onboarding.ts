@@ -6,10 +6,12 @@ import {
 	type Route,
 } from '@playwright/test';
 
-import { antdDriver } from './antd';
 import { apiDriver } from './api';
 import { ADMIN } from './auth';
+import { comboboxAt } from './combobox';
+import { inputFieldsStartingWith } from './input';
 import { driver, kit, type Layer } from './kit';
+import { toastByText } from './toast';
 
 /**
  * Org onboarding: the four-step questionnaire at `/onboarding` and the
@@ -250,7 +252,6 @@ async function stubFirstRun(
 }
 
 export function onboardingDriver(page: Page): Onboarding {
-	const antd = antdDriver(page);
 	const api = apiDriver(page);
 	const questionnaireRoot = (): Locator =>
 		page.locator('.onboarding-questionaire-container');
@@ -261,16 +262,15 @@ export function onboardingDriver(page: Page): Onboarding {
 		rows: { email: string; role: string }[],
 	): Promise<void> => {
 		for (const [index, { email, role }] of rows.entries()) {
-			const emails = scope.locator('[data-testid^="invite-email-"]');
+			const emails = inputFieldsStartingWith(scope, 'invite-email-');
 			if (index >= (await emails.count())) {
 				await scope.getByTestId('invite-add-row').click();
 			}
 			await emails.nth(index).fill(email);
-			const select = scope
-				.locator('.ant-select')
-				.filter({ has: page.locator('input[id^="invite-role-"]') })
-				.nth(index);
-			await antd.pickByName(select, role);
+			await comboboxAt(
+				page,
+				scope.locator('[id^="invite-role-"]').nth(index),
+			).pick(role);
 		}
 	};
 
@@ -392,8 +392,7 @@ export function onboardingDriver(page: Page): Onboarding {
 
 		homePage: () => page.locator('.home-container'),
 		servicesPage: () => page.getByRole('columnheader', { name: 'Application' }),
-		toast: (text) =>
-			page.locator('[data-sonner-toast]').filter({ hasText: text }),
+		toast: (text) => toastByText(page, text),
 
 		users: {
 			byEmail: async (email) => {

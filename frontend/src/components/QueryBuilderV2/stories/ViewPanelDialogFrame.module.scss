@@ -1,6 +1,7 @@
-.dialog[data-width] {
-	max-width: 85%;
-	width: 85%;
+@use '../../../styles/query-builder' as *;
+
+.surface {
+	@include query-builder-on-surface-2;
 }
 
 .content {

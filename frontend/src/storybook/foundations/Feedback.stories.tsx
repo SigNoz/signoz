@@ -68,7 +68,7 @@ export const InfoToast: Story = {
 	play: showsInfoToast,
 };
 
-/** An error toast with a description and a Dismiss action, bottom-right. */
+/** A danger toast with a description and a Dismiss action, bottom-right. */
 export const DangerWithDescription: Story = {
 	args: { state: 'danger-description-toast' },
 	play: showsDangerWithDescription,

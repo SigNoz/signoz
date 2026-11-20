@@ -6,6 +6,7 @@
 import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { isCloudShell } from '@/storybook/globals/appShellMocks';
+import { findToastText } from '@/storybook/play/toastText';
 
 import {
 	canCreate,
@@ -148,7 +149,7 @@ export const openEditTagsDialog = async ({
 	await screen.findByRole('dialog', { name: /^(Edit|Add) tags$/ });
 };
 
-export const openSaveViewPopover = async ({
+export const openSaveViewDialog = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
@@ -166,7 +167,7 @@ export const openSaveViewPopover = async ({
 	await screen.findByText('Save as view');
 };
 
-export const openRenameViewPopover = async ({
+export const openRenameViewDialog = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
@@ -182,9 +183,7 @@ export const openRenameViewPopover = async ({
 
 	// The actions only take pointer events while the row is hovered by CSS.
 	await userEvent.click(rename, { pointerEventsCheck: 0 });
-	await screen.findByTestId('rename-view-name', undefined, {
-		timeout: TOAST_TIMEOUT,
-	});
+	await screen.findByRole('dialog', { name: 'Rename view' });
 };
 
 export const renameDashboard = async ({
@@ -197,7 +196,7 @@ export const renameDashboard = async ({
 
 	await openRowActions(canvasElement, 1);
 	await pickRowAction('Rename');
-	const input = await screen.findByTestId('rename-dashboard-input');
+	const input = await screen.findByTestId('rename-dashboard-input-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, 'API latency overview');
@@ -319,18 +318,12 @@ export const pinDashboard = async ({
 		),
 	);
 	if (args.pinWrite === 'limit') {
-		await screen.findByText(
-			/You can pin up to 10 dashboards/,
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText(/You can pin up to 10 dashboards/, {
+			timeout: TOAST_TIMEOUT,
+		});
 	}
 	if (args.pinWrite === 'error') {
-		await screen.findByText(
-			'Failed to pin dashboard.',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Failed to pin dashboard.', { timeout: TOAST_TIMEOUT });
 	}
 };
 
@@ -351,11 +344,7 @@ export const unpinDashboard = async ({
 		),
 	);
 	if (args.pinWrite === 'error') {
-		await screen.findByText(
-			'Failed to unpin dashboard.',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Failed to unpin dashboard.', { timeout: TOAST_TIMEOUT });
 	}
 };
 
@@ -392,11 +381,7 @@ export const migrateDashboard = async ({
 		);
 	}
 	if (args.migrationWrite === 'error') {
-		await screen.findByText(
-			'Something went wrong',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Something went wrong', { timeout: TOAST_TIMEOUT });
 	}
 };
 
@@ -433,11 +418,7 @@ export const importInvalidImage = async ({
 		image: 'https://example.com/logo.png',
 		spec: { display: { name: 'Imported' }, ...IMPORTED_SPEC },
 	});
-	await screen.findByText(
-		/Dashboard "image" must be/,
-		{},
-		{ timeout: TOAST_TIMEOUT },
-	);
+	await findToastText(/Dashboard "image" must be/, { timeout: TOAST_TIMEOUT });
 };
 
 export const importDashboard = async ({
@@ -471,11 +452,9 @@ export const submitTemplateRequest = async ({
 	}
 
 	await requestTemplate(canvasElement);
-	await screen.findByText(
-		TEMPLATE_REQUEST_TOASTS[args.templateRequest],
-		{},
-		{ timeout: TOAST_TIMEOUT },
-	);
+	await findToastText(TEMPLATE_REQUEST_TOASTS[args.templateRequest], {
+		timeout: TOAST_TIMEOUT,
+	});
 };
 
 export const saveView = async ({
@@ -493,14 +472,13 @@ export const saveView = async ({
 			{ timeout: TOAST_TIMEOUT },
 		),
 	);
-	await userEvent.type(await screen.findByTestId('save-view-name'), 'On-call');
+	await userEvent.type(
+		await screen.findByTestId('save-view-name-field'),
+		'On-call',
+	);
 	await userEvent.click(await screen.findByTestId('save-view-confirm'));
 	if (args.viewWrite === 'error') {
-		await screen.findByText(
-			'Failed to save view.',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Failed to save view.', { timeout: TOAST_TIMEOUT });
 	}
 };
 
@@ -523,17 +501,13 @@ export const renameView = async ({
 
 	// The actions only take pointer events while the row is hovered by CSS.
 	await userEvent.click(rename, { pointerEventsCheck: 0 });
-	const input = await screen.findByTestId('rename-view-name');
+	const input = await screen.findByTestId('rename-view-name-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, 'Renamed view');
 	await userEvent.click(await screen.findByTestId('rename-view-confirm'));
 	if (args.viewWrite === 'error') {
-		await screen.findByText(
-			'Failed to update view.',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Failed to update view.', { timeout: TOAST_TIMEOUT });
 	}
 };
 
@@ -558,10 +532,6 @@ export const deleteView = async ({
 		await within(dialog).findByRole('button', { name: 'Delete' }),
 	);
 	if (args.viewWrite === 'error') {
-		await screen.findByText(
-			'Failed to delete view.',
-			{},
-			{ timeout: TOAST_TIMEOUT },
-		);
+		await findToastText('Failed to delete view.', { timeout: TOAST_TIMEOUT });
 	}
 };

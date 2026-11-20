@@ -125,7 +125,18 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginRight={1}
+					textOverflow="wrap"
+				>
+					Filters
+				</Typography>
 				{wrapControl(
 					<div
 						className={styles.filterControls}

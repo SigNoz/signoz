@@ -32,15 +32,6 @@ export const wideConditionGroup = rest.get(
 		res(ctx.status(200), ctx.json(wideConditionGroupsResponse())),
 );
 
-export const groupMappers = rest.get(
-	'http://localhost/api/v1/span_mapper_groups/:groupId/span_mappers',
-	(req, res, ctx) =>
-		res(
-			ctx.status(200),
-			ctx.json(spanMappersResponse(String(req.params.groupId))),
-		),
-);
-
 export const attributeMappingMocks = defineStoryMocks({
 	controls: {
 		groups: countControl('Mapping groups', {
@@ -81,6 +72,14 @@ export const attributeMappingMocks = defineStoryMocks({
 
 					return res(ctx.status(204));
 				},
+			),
+			rest.get(
+				'http://localhost/api/v1/span_mapper_groups/:groupId/span_mappers',
+				(req, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json(spanMappersResponse(String(req.params.groupId))),
+					),
 			),
 			rest.get('http://localhost/api/v1/span_mapper_groups', (_req, res, ctx) =>
 				values.groupsSave === 'refreshFailed' && groupsSaved

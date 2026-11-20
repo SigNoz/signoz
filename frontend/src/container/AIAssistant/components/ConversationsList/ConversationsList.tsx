@@ -166,14 +166,15 @@ export default function ConversationsList({
 	return (
 		<div className={cx(styles.conversationsList, variantClass)}>
 			<div className={styles.searchBar}>
-				<Input
-					type="text"
-					value={searchQuery}
-					onChange={(e): void => setSearchQuery(e.target.value)}
-					placeholder="Search…"
-					aria-label="Search conversations"
-					className={styles.search}
-				/>
+				<div className={styles.search}>
+					<Input
+						type="text"
+						value={searchQuery}
+						onChange={(e): void => setSearchQuery(e.target.value)}
+						placeholder="Search…"
+						aria-label="Search conversations"
+					/>
+				</div>
 				{isLoadingThreads && <LoadingDots />}
 			</div>
 

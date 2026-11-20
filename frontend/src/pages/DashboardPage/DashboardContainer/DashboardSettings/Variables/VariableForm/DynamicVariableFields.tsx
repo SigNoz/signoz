@@ -102,7 +102,16 @@ function DynamicVariableFields({
 					showRetryButton={error ? isRetryableError(error) : true}
 					data-testid="variable-field-select"
 				/>
-				<Typography.Text className={styles.fromText}>from</Typography.Text>
+				<Typography
+					variant="code"
+					size="base"
+					weight="medium"
+					color="inherit"
+					as="span"
+					textOverflow="visible"
+				>
+					from
+				</Typography>
 				<TextToolTip
 					text="By default, this searches across logs, traces, and metrics, which can be slow. Selecting a single source improves performance. Many fields share the same values across different signals (for example, `k8s.pod.name` is identical in logs, traces and metrics) making one source enough. Only use `All telemetry` when you need fields that have different values in different signal types."
 					useFilledIcon={false}
@@ -125,9 +134,16 @@ function DynamicVariableFields({
 				/>
 			</div>
 			{attributeError ? (
-				<Typography.Text className={styles.errorText}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="warning"
+					as="span"
+					textOverflow="wrap"
+				>
 					{attributeError}
-				</Typography.Text>
+				</Typography>
 			) : null}
 		</>
 	);

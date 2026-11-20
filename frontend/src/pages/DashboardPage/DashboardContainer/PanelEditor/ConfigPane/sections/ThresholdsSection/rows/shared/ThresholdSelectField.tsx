@@ -29,7 +29,16 @@ function ThresholdSelectField({
 }: ThresholdSelectFieldProps): JSX.Element {
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>{label}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				{label}
+			</Typography>
 			<ConfigSelect
 				testId={testId}
 				placeholder={placeholder}

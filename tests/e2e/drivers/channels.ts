@@ -5,7 +5,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { authToken } from './api';
-
+import { inputField } from './input';
 import { driver, kit, seeded } from './kit';
 import { wheelTo } from './scroll';
 
@@ -203,6 +203,7 @@ interface ChannelList {
 interface ChannelForm {
 	gotoNew(): Promise<void>;
 	name(): Locator;
+	field(testId: string): Locator;
 	pickType(label: string): Promise<void>;
 	fillField(testId: string, value: string): Promise<void>;
 	/** Saves and returns the id the API assigned, so the test can clean up. */
@@ -278,7 +279,7 @@ function channelsDriver(page: Page): Channels {
 			await page.goto(`${url.pathname}${url.search}`);
 			await expect(list.search()).toBeVisible();
 		},
-		search: () => page.getByTestId('channels-search'),
+		search: () => inputField(page, 'channels-search'),
 		rows,
 		row: (name) => rows().filter({ hasText: name }),
 		async openRowMenu(name) {
@@ -311,14 +312,15 @@ function channelsDriver(page: Page): Channels {
 			await page.goto(PATH.new);
 			await expect(form.name()).toBeVisible();
 		},
-		name: () => page.getByTestId('channel-name-textbox'),
+		name: () => inputField(page, 'channel-name-textbox'),
+		field: (testId) => inputField(page, testId),
 		async pickType(label) {
 			await page.getByTestId('channel-type-select').click();
 			await page.getByRole('option', { name: label, exact: true }).click();
 		},
 		async fillField(testId, value) {
-			await wheelTo(page.getByTestId(testId));
-			await page.getByTestId(testId).fill(value);
+			await wheelTo(form.field(testId));
+			await form.field(testId).fill(value);
 		},
 		async saveAndReturnId() {
 			const [response] = await Promise.all([
@@ -342,7 +344,7 @@ function channelsDriver(page: Page): Channels {
 		},
 		actions: () => page.getByTestId('discard-channel-button').locator('..'),
 		async wheelToEnd() {
-			await form.name().hover();
+			await page.getByTestId('channel-name-textbox').hover();
 			await page.mouse.wheel(0, 10_000);
 		},
 	};

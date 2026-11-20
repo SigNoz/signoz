@@ -68,7 +68,17 @@ export default function DownloadOptionsMenu({
 				aria-modal="true"
 			>
 				<div className="export-format">
-					<Typography.Text className="title">FORMAT</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="main"
+						as="p"
+						marginBottom={4}
+						textOverflow="wrap"
+					>
+						FORMAT
+					</Typography>
 					<RadioGroup
 						color="primary"
 						value={exportFormat}
@@ -83,7 +93,17 @@ export default function DownloadOptionsMenu({
 				<div className="horizontal-line" />
 
 				<div className="row-limit">
-					<Typography.Text className="title">Number of Rows</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="main"
+						as="p"
+						marginBottom={4}
+						textOverflow="wrap"
+					>
+						Number of Rows
+					</Typography>
 					<RadioGroup
 						color="primary"
 						value={String(rowLimit)}
@@ -101,7 +121,17 @@ export default function DownloadOptionsMenu({
 						<div className="horizontal-line" />
 
 						<div className="columns-scope">
-							<Typography.Text className="title">Columns</Typography.Text>
+							<Typography
+								variant="uppercase"
+								size="small"
+								weight="medium"
+								color="main"
+								as="p"
+								marginBottom={4}
+								textOverflow="wrap"
+							>
+								Columns
+							</Typography>
 							<RadioGroup
 								color="primary"
 								value={columnsScope}

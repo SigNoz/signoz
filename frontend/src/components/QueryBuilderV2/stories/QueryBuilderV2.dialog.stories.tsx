@@ -51,19 +51,6 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-/** `story`, its play looking in the body, where the dialog portals. */
-const inBody = (story: Story): Story => {
-	const { play } = story;
-
-	return play
-		? {
-				...story,
-				play: (context): void | Promise<void> =>
-					play({ ...context, canvasElement: document.body }),
-			}
-		: story;
-};
-
 /** The panel editor's builder, as the dialog mounts it, starting from `query`. */
 const panelEditor = (query: DataSource): Story => ({
 	args: PANEL_EDITOR_ARGS,
@@ -72,42 +59,42 @@ const panelEditor = (query: DataSource): Story => ({
 	},
 });
 
-export const LogsExplorer: Story = inBody(Hosts.LogsExplorer);
-export const TracesExplorer: Story = inBody(Hosts.TracesExplorer);
-export const MetricsExplorer: Story = inBody(Hosts.MetricsExplorer);
-export const MeterExplorer: Story = inBody(Hosts.MeterExplorer);
-export const PanelEditor: Story = inBody(Hosts.PanelEditor);
-export const LogsAlert: Story = inBody(Hosts.LogsAlert);
+export const LogsExplorer: Story = { ...Hosts.LogsExplorer };
+export const TracesExplorer: Story = { ...Hosts.TracesExplorer };
+export const MetricsExplorer: Story = { ...Hosts.MetricsExplorer };
+export const MeterExplorer: Story = { ...Hosts.MeterExplorer };
+export const PanelEditor: Story = { ...Hosts.PanelEditor };
+export const LogsAlert: Story = { ...Hosts.LogsAlert };
 
-export const AddOnsFewValues: Story = inBody({
+export const AddOnsFewValues: Story = {
 	...AddOns.FewValues,
 	args: { ...PANEL_EDITOR_ARGS, ...AddOns.FewValues.args },
-});
-export const AddOnsManyValues: Story = inBody({
+};
+export const AddOnsManyValues: Story = {
 	...AddOns.ManyValues,
 	args: { ...PANEL_EDITOR_ARGS, ...AddOns.ManyValues.args },
-});
-export const MetricsFewGroupBy: Story = inBody({
+};
+export const MetricsFewGroupBy: Story = {
 	...AddOns.MetricsFewGroupBy,
 	args: { ...PANEL_EDITOR_ARGS, ...AddOns.MetricsFewGroupBy.args },
-});
-export const MetricsManyGroupBy: Story = inBody({
+};
+export const MetricsManyGroupBy: Story = {
 	...AddOns.MetricsManyGroupBy,
 	args: { ...PANEL_EDITOR_ARGS, ...AddOns.MetricsManyGroupBy.args },
-});
+};
 
-export const LogsOnValuePanel: Story = inBody(Behaviour.LogsOnValuePanel);
-export const MetricsOnTablePanel: Story = inBody(Behaviour.MetricsOnTablePanel);
-export const TracesOnTimeSeriesPanel: Story = inBody(
-	Behaviour.TracesOnTimeSeriesPanel,
-);
-export const GaugeMetricDefaults: Story = inBody(Behaviour.GaugeMetricDefaults);
-export const HistogramMetricDefaults: Story = inBody(
-	Behaviour.HistogramMetricDefaults,
-);
-export const ValuePanelTakesOneAggregation: Story = inBody(
-	Behaviour.ValuePanelTakesOneAggregation,
-);
+export const LogsOnValuePanel: Story = { ...Behaviour.LogsOnValuePanel };
+export const MetricsOnTablePanel: Story = { ...Behaviour.MetricsOnTablePanel };
+export const TracesOnTimeSeriesPanel: Story = {
+	...Behaviour.TracesOnTimeSeriesPanel,
+};
+export const GaugeMetricDefaults: Story = { ...Behaviour.GaugeMetricDefaults };
+export const HistogramMetricDefaults: Story = {
+	...Behaviour.HistogramMetricDefaults,
+};
+export const ValuePanelTakesOneAggregation: Story = {
+	...Behaviour.ValuePanelTakesOneAggregation,
+};
 
 /** Two traces queries and a formula, with trace matching offered. */
 export const QueriesAndFormula: Story = {

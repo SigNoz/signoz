@@ -56,14 +56,15 @@ function PanelTypeBrowser({
 	return (
 		<div className={styles.browser}>
 			<div className={styles.controls}>
-				<Input
-					value={query}
-					onChange={(e): void => setQuery(e.target.value)}
-					placeholder="Search panel types"
-					prefix={<Search size={14} />}
-					testId="panel-type-search"
-					containerClassName={styles.search}
-				/>
+				<div className={styles.search}>
+					<Input
+						value={query}
+						onChange={(e): void => setQuery(e.target.value)}
+						placeholder="Search panel types"
+						prefix={<Search size={14} />}
+						testId="panel-type-search"
+					/>
+				</div>
 				<div className={styles.categories}>
 					{categories.map(({ id, label, count }) => (
 						<button

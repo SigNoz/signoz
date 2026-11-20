@@ -62,6 +62,7 @@ function QuickFiltersSettings({
 			<section className="search">
 				<Input
 					type="text"
+					size="lg"
 					value={inputValue}
 					placeholder="Search for a filter..."
 					onChange={handleInputChange}

@@ -201,7 +201,7 @@ export const expectJiraAdvancedFields = async (
 	// expanded before they can be read
 	await expect(
 		await within(canvasElement).findByTestId(
-			'jira-reopen-duration-textbox',
+			'jira-reopen-duration-textbox-field',
 			undefined,
 			{ timeout: 15_000 },
 		),
@@ -223,7 +223,7 @@ export const expectJiraConnectionFields = async (
 
 	if (args.jiraDeployment === 'selfhosted') {
 		await expect(
-			await canvas.findByTestId('jira-pat-textbox', undefined, {
+			await canvas.findByTestId('jira-pat-textbox-field', undefined, {
 				timeout: 15_000,
 			}),
 		).toHaveValue('story-jira-pat');

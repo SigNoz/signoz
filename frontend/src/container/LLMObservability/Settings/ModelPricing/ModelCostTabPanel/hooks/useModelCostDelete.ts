@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useQueryClient } from 'react-query';
 import logEvent from 'api/common/logEvent';
 import {
@@ -57,7 +57,7 @@ export function useModelCostDelete(): UseModelCostDeleteResult {
 			toast.success(TOAST_MODEL_COST_DELETED);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'Delete failed';
-			toast.error(message);
+			toast.danger(message, { action: { label: 'Dismiss' } });
 		}
 	}, [deleteRuleApi, pendingDelete, queryClient]);
 

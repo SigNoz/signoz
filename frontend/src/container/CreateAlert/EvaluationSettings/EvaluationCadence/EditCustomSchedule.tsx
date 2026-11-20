@@ -15,44 +15,153 @@ function EditCustomSchedule({
 	const displayText = useMemo(() => {
 		if (advancedOptions.evaluationCadence.mode === 'custom') {
 			return (
-				<Typography.Text>
-					<Typography.Text>Every</Typography.Text>
-					<Typography.Text className="highlight">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Every
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						marginX={2}
+						paddingX={4}
+						textOverflow="wrap"
+					>
 						{advancedOptions.evaluationCadence.custom.repeatEvery
 							.charAt(0)
 							.toUpperCase() +
 							advancedOptions.evaluationCadence.custom.repeatEvery.slice(1)}
-					</Typography.Text>
+					</Typography>
 					{advancedOptions.evaluationCadence.custom.repeatEvery !== 'day' && (
 						<>
-							<Typography.Text>on</Typography.Text>
-							<Typography.Text className="highlight">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								on
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="medium"
+								color="secondary"
+								as="span"
+								display="inline-block"
+								marginX={2}
+								paddingX={4}
+								textOverflow="wrap"
+							>
 								{advancedOptions.evaluationCadence.custom.occurence
 									.map(
 										(occurence) => occurence.charAt(0).toUpperCase() + occurence.slice(1),
 									)
 									.join(', ')}
-							</Typography.Text>
+							</Typography>
 						</>
 					)}
-					<Typography.Text>at</Typography.Text>
-					<Typography.Text className="highlight">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						at
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						marginX={2}
+						paddingX={4}
+						textOverflow="wrap"
+					>
 						{advancedOptions.evaluationCadence.custom.startAt}
-					</Typography.Text>
-				</Typography.Text>
+					</Typography>
+				</Typography>
 			);
 		}
 		return (
-			<Typography.Text>
-				<Typography.Text>Starting on</Typography.Text>
-				<Typography.Text className="highlight">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Starting on
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginX={2}
+					paddingX={4}
+					textOverflow="wrap"
+				>
 					{advancedOptions.evaluationCadence.rrule.date?.format('DD/MM/YYYY')}
-				</Typography.Text>
-				<Typography.Text>at</Typography.Text>
-				<Typography.Text className="highlight">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					at
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginX={2}
+					paddingX={4}
+					textOverflow="wrap"
+				>
 					{advancedOptions.evaluationCadence.rrule.startAt}
-				</Typography.Text>
-			</Typography.Text>
+				</Typography>
+			</Typography>
 		);
 	}, [advancedOptions.evaluationCadence]);
 
@@ -83,11 +192,29 @@ function EditCustomSchedule({
 				<Button.Group>
 					<Button type="default" onClick={handleEdit}>
 						<Pencil size={12} />
-						<Typography.Text>Edit custom schedule</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Edit custom schedule
+						</Typography>
 					</Button>
 					<Button type="default" onClick={handlePreview}>
 						<Calendar1 size={12} />
-						<Typography.Text>Preview</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Preview
+						</Typography>
 					</Button>
 					<Button
 						data-testid="discard-button"

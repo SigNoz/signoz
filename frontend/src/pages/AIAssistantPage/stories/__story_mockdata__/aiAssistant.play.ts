@@ -12,6 +12,7 @@ import {
 	listsConversations,
 	showsThread,
 } from '../AIAssistantPage.stories.mocks';
+import { THREAD_TITLE } from './aiAssistant';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -351,5 +352,5 @@ export const renameConversation = async ({
 		return actions;
 	}, /^Rename$/);
 	await userEvent.click(screen.getByText('Rename'));
-	await within(canvasElement).findByDisplayValue(/checkout p99 regression/i);
+	await within(canvasElement).findByDisplayValue(THREAD_TITLE);
 };

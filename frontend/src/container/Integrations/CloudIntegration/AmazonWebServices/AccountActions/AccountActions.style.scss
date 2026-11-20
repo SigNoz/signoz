@@ -31,7 +31,6 @@
 				.account-selector-label {
 					color: var(--l2-foreground);
 					font-size: 12px;
-					font-weight: 400;
 					line-height: 16px;
 					padding: 8px 16px;
 				}
@@ -74,12 +73,8 @@
 	}
 
 	&__action-button {
-		font-family: 'Inter';
 		border-radius: 2px;
 		cursor: pointer;
-		font-size: 12px;
-		font-weight: 500;
-		line-height: 16px;
 		padding: 8px 17px;
 
 		&.primary {
@@ -129,9 +124,6 @@
 	}
 	.ant-select-selection-item {
 		color: var(--l1-foreground);
-		font-size: 12px;
-		font-weight: 400;
-		line-height: 16px;
 		padding-inline-end: 24px !important;
 	}
 	&:hover {

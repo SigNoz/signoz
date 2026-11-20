@@ -24,7 +24,7 @@ interface UseDeleteRoleModalResult {
 	deleteError: APIError | null;
 	handleOpenDeleteModal: () => void;
 	handleCloseDeleteModal: () => void;
-	handleConfirmDelete: () => Promise<boolean>;
+	handleConfirmDelete: () => Promise<void>;
 }
 
 export function useDeleteRoleModal(
@@ -50,9 +50,9 @@ export function useDeleteRoleModal(
 		setDeleteError(null);
 	}, []);
 
-	const handleConfirmDelete = useCallback(async (): Promise<boolean> => {
+	const handleConfirmDelete = useCallback(async (): Promise<void> => {
 		if (!deleteTargetRoleId) {
-			return false;
+			return;
 		}
 
 		setIsDeleting(true);
@@ -64,13 +64,11 @@ export function useDeleteRoleModal(
 			await invalidateGetRole(queryClient, { id: deleteTargetRoleId });
 			setDeleteTargetRoleId(null);
 			onDeleteSuccess?.();
-			return true;
 		} catch (error) {
 			const apiError = convertToApiError(
 				error as AxiosError<RenderErrorResponseDTO>,
 			);
 			setDeleteError(apiError ?? null);
-			return false;
 		} finally {
 			setIsDeleting(false);
 		}

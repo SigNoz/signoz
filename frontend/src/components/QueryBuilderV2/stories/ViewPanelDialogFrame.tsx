@@ -1,11 +1,5 @@
-import { type ReactNode, useRef } from 'react';
-import {
-	Dialog,
-	DialogCloseButton,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from '@signozhq/ui/dialog';
+import { type ReactNode, useRef, useState } from 'react';
+import { Dialog } from '@signozhq/ui/dialog';
 import { ConfigProvider } from 'antd';
 
 import styles from './ViewPanelDialogFrame.module.scss';
@@ -15,34 +9,38 @@ interface ViewPanelDialogFrameProps {
 }
 
 /**
- * The view panel dialog around the builder: same size, same popup container.
- * It portals into the body, so plays find it with `screen`.
+ * The view panel dialog around the builder: same surface, same popup container.
+ * It portals into the canvas, so plays still find it with `within(canvasElement)`.
  */
 function ViewPanelDialogFrame({
 	children,
 }: ViewPanelDialogFrameProps): JSX.Element {
-	const contentRef = useRef<HTMLDivElement>(null);
+	const [container, setContainer] = useState<HTMLDivElement | null>(null);
+	const surfaceRef = useRef<HTMLDivElement>(null);
 
 	return (
-		<Dialog open>
-			<DialogContent
-				ref={contentRef}
-				position="center"
-				width="extra-wide"
-				className={styles.dialog}
-				testId="view-panel-dialog-frame"
-			>
-				<DialogHeader>
-					<DialogTitle>Request rate - (View mode)</DialogTitle>
-				</DialogHeader>
-				<DialogCloseButton />
-				<ConfigProvider
-					getPopupContainer={(): HTMLElement => contentRef.current ?? document.body}
+		<div ref={setContainer}>
+			{container && (
+				<Dialog
+					open
+					onClose={(): void => {}}
+					container={container}
+					title="Request rate - (View mode)"
+					width="full"
+					testId="view-panel-dialog-frame"
 				>
-					<div className={styles.content}>{children}</div>
-				</ConfigProvider>
-			</DialogContent>
-		</Dialog>
+					<div ref={surfaceRef} className={styles.surface}>
+						<ConfigProvider
+							getPopupContainer={(): HTMLElement =>
+								surfaceRef.current ?? document.body
+							}
+						>
+							<div className={styles.content}>{children}</div>
+						</ConfigProvider>
+					</div>
+				</Dialog>
+			)}
+		</div>
 	);
 }
 

@@ -22,21 +22,6 @@
 		height: 32px;
 		width: 32px;
 	}
-
-	.welcome {
-		color: var(--l1-foreground);
-		font-size: 16px;
-		font-weight: 500;
-		line-height: 24px;
-		letter-spacing: -0.08px;
-	}
-
-	.welcomeInfo {
-		color: var(--l3-foreground);
-		font-size: 13px;
-		font-weight: 400;
-		line-height: 18px;
-	}
 }
 
 .steps {
@@ -72,18 +57,4 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
-}
-
-.stepTitle {
-	color: var(--l1-foreground);
-	font-size: 14px;
-	font-weight: 500;
-	line-height: 20px;
-}
-
-.stepInfo {
-	color: var(--l3-foreground);
-	font-size: 13px;
-	font-weight: 400;
-	line-height: 18px;
 }

@@ -53,9 +53,13 @@ export const openSearchSuggestions = async (): Promise<void> => {
 
 export const assignRoles = async (): Promise<void> => {
 	await userEvent.click(
-		await screen.findByRole('combobox', undefined, untilLoaded),
+		await screen.findByTestId('sa-roles-select', undefined, untilLoaded),
 	);
-	await screen.findByText('oncall-responder', undefined, untilLoaded);
+	await screen.findByTestId(
+		'sa-roles-select-item-role-oncall-responder',
+		undefined,
+		untilLoaded,
+	);
 };
 
 export const saveFailed = async (): Promise<void> => {
@@ -133,7 +137,11 @@ export const accountCreatedToast = async ({
 	args,
 }: PlayContext): Promise<void> => {
 	await userEvent.type(
-		await screen.findByTestId('create-sa-name-input', undefined, untilLoaded),
+		await screen.findByTestId(
+			'create-sa-name-input-field',
+			undefined,
+			untilLoaded,
+		),
 		'release-signer',
 	);
 	await userEvent.click(

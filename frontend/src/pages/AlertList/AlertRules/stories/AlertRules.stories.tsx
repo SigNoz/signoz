@@ -14,9 +14,9 @@ import {
 	openDeleteViewConfirm,
 	openDisabledRuleActions,
 	openQuerySuggestions,
-	openRenameViewPopover,
+	openRenameViewDialog,
 	openRowActions,
-	openSaveViewPopover,
+	openSaveViewDialog,
 	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
@@ -120,14 +120,14 @@ export const RailCollapsed: Story = {
 	args: { railCollapsed: true },
 };
 
-/** The popover that names the current filters as a new saved view. */
+/** The dialog that names the current filters as a new saved view. */
 export const SaveView: Story = {
-	play: openSaveViewPopover,
+	play: openSaveViewDialog,
 };
 
-/** A saved view's rename popover, opened from its row. */
+/** A saved view's rename dialog, opened from its row. */
 export const RenameView: Story = {
-	play: openRenameViewPopover,
+	play: openRenameViewDialog,
 };
 
 /** Deleting a saved view asks first, because every teammate loses it too. */

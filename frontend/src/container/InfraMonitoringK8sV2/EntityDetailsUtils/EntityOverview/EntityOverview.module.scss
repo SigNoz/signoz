@@ -29,20 +29,6 @@
 	flex: 0 0 auto;
 }
 
-.resourceTrigger {
-	--select-trigger-width: 240px;
-	--select-trigger-height: 2rem;
-}
-
-.resourceOptions {
-	// The drawer is a dialog at z-index 50 and select content ships without one,
-	// so without this the dropdown paints behind the drawer.
-	z-index: 60;
-
-	// Radix measures the trigger for us; without this the list is narrower than it
-	min-width: var(--radix-select-trigger-width);
-}
-
 .filterRow {
 	display: flex;
 	align-items: center;
@@ -51,7 +37,7 @@
 	min-width: 0;
 	border: 1px solid var(--l2-border);
 	border-radius: 2px;
-	background: var(--l1-background);
+	background: var(--input-background);
 
 	// The row draws the field outline, so the editor inside it draws none
 	--query-builder-v2-border-color: transparent;
@@ -105,7 +91,7 @@
 }
 
 .scopeExpression {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-base-400-font-family);
 	overflow-wrap: anywhere;
 }
 

@@ -58,7 +58,7 @@ export const searchTable = async (
 		),
 	);
 	await userEvent.type(
-		await within(root).findByTestId('panel-header-search-input'),
+		await within(root).findByTestId('panel-header-search-input-field'),
 		SEARCH_TERM,
 	);
 	await waitFor(async () => {

@@ -22,23 +22,19 @@
 
 .title {
 	margin: 0;
-	font-size: var(--label-base-500-font-size);
 	font-weight: var(--label-base-500-font-weight);
-	line-height: var(--line-height-18);
+	line-height: var(--label-base-500-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l1-foreground);
 }
 
 .subtitle {
 	margin: 0;
-	font-size: var(--label-base-400-font-size);
-	font-weight: var(--label-base-400-font-weight);
-	line-height: var(--line-height-18);
+	line-height: var(--paragraph-small-400-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 }
 
 .permission {
-	font-family: monospace;
 	color: var(--l2-foreground);
 }

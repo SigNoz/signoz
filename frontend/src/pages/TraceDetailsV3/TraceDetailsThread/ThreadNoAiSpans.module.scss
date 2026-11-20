@@ -15,14 +15,14 @@
 }
 
 .title {
-	font-size: var(--periscope-font-size-medium);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-medium-500-font-size);
+	font-weight: var(--label-medium-500-font-weight);
 	color: var(--l1-foreground);
 }
 
 .description {
 	max-width: 420px;
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 	color: var(--l2-foreground);
 }
 

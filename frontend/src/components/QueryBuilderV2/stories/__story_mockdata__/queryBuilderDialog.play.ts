@@ -8,16 +8,22 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { selectMetric } from '../QueryBuilderV2.stories.mocks';
 
+interface PlayContext {
+	canvasElement: HTMLElement;
+}
+
 const OPEN_SELECT_DROPDOWN =
 	'.ant-select-dropdown:not(.ant-select-dropdown-hidden)';
 
 /**
  * Query `name`, once the dialog has taken its opening focus: a click before
- * that loses focus to the dialog and closes what it opened. The dialog portals
- * into the body, so everything is found from there.
+ * that loses focus to the dialog and closes what it opened.
  */
-const findQuery = async (name: string): Promise<HTMLElement> => {
-	const query = await screen.findByTestId(
+const findQuery = async (
+	canvasElement: HTMLElement,
+	name: string,
+): Promise<HTMLElement> => {
+	const query = await within(canvasElement).findByTestId(
 		`query-${name}`,
 		{},
 		{ timeout: 10000 },
@@ -30,13 +36,10 @@ const findQuery = async (name: string): Promise<HTMLElement> => {
 	return query;
 };
 
-/**
- * Clicks `target` and moves the pointer onto the dialog, so its hover tooltip
- * closes. The body takes no pointer while the dialog is open.
- */
+/** Clicks `target` and moves the pointer off it, so its hover tooltip closes. */
 const press = async (target: Element): Promise<void> => {
 	await userEvent.click(target);
-	await userEvent.hover(screen.getByRole('dialog'));
+	await userEvent.unhover(target);
 };
 
 const openSelect = async (field: HTMLElement): Promise<void> => {
@@ -88,25 +91,32 @@ const openSuggestions = async (
 	);
 };
 
-export const addQueryAndFormula = async (): Promise<void> => {
-	await findQuery('A');
-	await press(screen.getByTestId('add-new-query-button'));
-	await findQuery('B');
-	await press(screen.getByTestId('add-formula-button'));
-	await screen.findByTestId('formula-F1');
+export const addQueryAndFormula = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await findQuery(canvasElement, 'A');
+	const canvas = within(canvasElement);
+	await press(canvas.getByTestId('add-new-query-button'));
+	await findQuery(canvasElement, 'B');
+	await press(canvas.getByTestId('add-formula-button'));
+	await canvas.findByTestId('formula-F1');
 };
 
-export const collapseAndHideQueries = async (): Promise<void> => {
-	await findQuery('A');
-	await press(screen.getByTestId('add-new-query-button'));
-	const queryB = await findQuery('B');
+export const collapseAndHideQueries = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await findQuery(canvasElement, 'A');
+	await press(within(canvasElement).getByTestId('add-new-query-button'));
+	const queryB = await findQuery(canvasElement, 'B');
 	await press(within(queryB).getByTestId('qb-entity-collapse'));
-	const queryA = await findQuery('A');
+	const queryA = await findQuery(canvasElement, 'A');
 	await press(within(queryA).getByTestId('qb-entity-visibility'));
 };
 
-export const addFunction = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const addFunction = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	const button = query.querySelector<HTMLElement>('.function-btn');
 	if (!button) {
 		throw new Error('no function button');
@@ -119,21 +129,29 @@ export const addFunction = async (): Promise<void> => {
 	);
 };
 
-export const openDataSourceSelect = async (): Promise<void> => {
-	await findQuery('A');
-	await openSelect(screen.getByTestId('query-data-source-selector-0'));
+export const openDataSourceSelect = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await findQuery(canvasElement, 'A');
+	await openSelect(
+		within(canvasElement).getByTestId('query-data-source-selector-0'),
+	);
 };
 
-export const openWhereClauseSuggestions = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const openWhereClauseSuggestions = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	await openSuggestions(
 		within(query).getByTestId('query-where-clause-editor'),
 		'serv',
 	);
 };
 
-export const typeInvalidWhereClause = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const typeInvalidWhereClause = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	const editor = within(query).getByTestId('query-where-clause-editor');
 	const view = editorIn(editor);
 	view.dispatch({
@@ -148,27 +166,37 @@ export const typeInvalidWhereClause = async (): Promise<void> => {
 	);
 };
 
-export const openAggregationSuggestions = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const openAggregationSuggestions = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	await openSuggestions(within(query).getByTestId('query-aggregation-editor'));
 };
 
-export const openTimeAggregationSelect = async (): Promise<void> => {
-	await findQuery('A');
-	await selectMetric(document.body, 'signoz_calls_total');
-	await openSelect(screen.getByTestId('metrics-time-aggregation'));
+export const openTimeAggregationSelect = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await findQuery(canvasElement, 'A');
+	await selectMetric(canvasElement, 'signoz_calls_total');
+	await openSelect(
+		within(canvasElement).getByTestId('metrics-time-aggregation'),
+	);
 };
 
-export const openGroupBySelect = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const openGroupBySelect = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	if (!within(query).queryByTestId('group-by-content')) {
 		await userEvent.click(within(query).getByTestId('query-add-on-group_by'));
 	}
 	await openSelect(await within(query).findByTestId('group-by-content'));
 };
 
-export const openQueryActions = async (): Promise<void> => {
-	const query = await findQuery('A');
+export const openQueryActions = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	const query = await findQuery(canvasElement, 'A');
 	await userEvent.click(within(query).getByTestId('query-actions'));
 	await screen.findByRole('menu');
 };
