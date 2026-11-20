@@ -104,16 +104,19 @@ export function getAggregationOptionsForOrderBy(query: {
  * Enhanced function that uses createAggregation to parse aggregations first
  * then converts them to BaseAutocompleteData format for OrderByFilter
  */
-export function getParsedAggregationOptionsForOrderBy(query: {
-	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
-	dataSource: DataSource;
-	aggregateAttribute?: { key: string };
-	spaceAggregation?: string;
-	timeAggregation?: string;
-	temporality?: string;
-}): BaseAutocompleteData[] {
+export function getParsedAggregationOptionsForOrderBy(
+	query: {
+		aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
+		dataSource: DataSource;
+		aggregateAttribute?: { key: string };
+		spaceAggregation?: string;
+		timeAggregation?: string;
+		temporality?: string;
+	},
+	isBareField?: boolean,
+): BaseAutocompleteData[] {
 	// First, use createAggregation to parse the aggregations
-	const parsedAggregations = createAggregation(query);
+	const parsedAggregations = createAggregation(query, undefined, isBareField);
 
 	// Then convert the parsed aggregations to BaseAutocompleteData format
 	return convertAggregationsToBaseAutocompleteData(
