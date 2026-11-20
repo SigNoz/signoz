@@ -6,13 +6,13 @@
 import { EQueryType } from 'types/common/dashboard';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { savePanel } from '../PanelEditorPage.stories.mocks';
+import { openConfigSelect, savePanel } from '../PanelEditorPage.stories.mocks';
 
 const EDITOR_LOAD = { timeout: 10_000 };
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: { panelSave?: string };
+	args: { panelSave?: string; dataState?: string };
 }
 
 export const expandConfigSections = async ({
@@ -103,5 +103,18 @@ export const openAIQueryBuilder = async ({
 				canvas.queryByTestId('metric-name-selector-0'),
 			).not.toBeInTheDocument(),
 		);
+	}
+};
+
+/** Switches a new heatmap to traces and opens its field picker. */
+export const pickHeatmapTracesField = async ({
+	args,
+}: Pick<PlayContext, 'args'>): Promise<void> => {
+	await openConfigSelect('query-data-source-selector-0');
+	await userEvent.click(await screen.findByTitle('Traces'));
+
+	await openConfigSelect('heatmap-field-select');
+	if (args.dataState === 'loaded') {
+		await screen.findByTitle('attribute.retry.count', undefined, EDITOR_LOAD);
 	}
 };
