@@ -173,6 +173,52 @@ NOTIFIERS_TEST = [
         ),
     ),
     types.AlertManagerNotificationTestCase(
+        name="msteams_notifier_rule_body_template",
+        rule_path="alertmanager/rule_body_template_rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="ruler/test_scenarios/threshold_above_at_least_once/alert_data.jsonl",
+            ),
+        ],
+        channel_config=msteams_custom_text_config,
+        notification_expectation=types.AMNotificationExpectation(
+            should_notify=True,
+            wait_time_seconds=120,
+            notification_validations=[
+                types.NotificationValidation(
+                    destination_type="webhook",
+                    validation_data={
+                        "path": "/msteams/custom_text_webhook_url",
+                        "json_body": {
+                            "type": "message",
+                            "attachments": [
+                                {
+                                    "contentType": "application/vnd.microsoft.card.adaptive",
+                                    "content": {
+                                        "type": "AdaptiveCard",
+                                        "body": [
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Teams custom title: rule_body_template",
+                                            },
+                                            {
+                                                "type": "TextBlock",
+                                                "text": "Rule body for rule_body_template at severity critical",
+                                                "wrap": True,
+                                                "color": "Attention",
+                                            },
+                                        ],
+                                    },
+                                }
+                            ],
+                        },
+                    },
+                ),
+            ],
+        ),
+    ),
+    types.AlertManagerNotificationTestCase(
         name="pagerduty_notifier_default_templating",
         rule_path="ruler/test_scenarios/threshold_above_at_least_once/rule.json",
         alert_data=[
