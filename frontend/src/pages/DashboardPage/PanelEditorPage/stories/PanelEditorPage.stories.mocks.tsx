@@ -4,11 +4,14 @@
  */
 
 import { rest } from 'msw';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
+import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, toggleControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
@@ -19,6 +22,7 @@ import {
 	listMetricsResponse,
 	metricMetadataResponse,
 } from '@/storybook/msw/__story_mockdata__/metrics';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	NEW_PANEL_ID,
@@ -32,6 +36,8 @@ import {
 import {
 	currentDashboardDocument,
 	PANEL_IDS,
+	type PanelId,
+	panelQueryShape,
 	patchDashboardDocument,
 	seedDashboardDocument,
 	STORY_DASHBOARD_ID,
@@ -212,6 +218,79 @@ export const panelEditorMocks = defineStoryMocks({
 		});
 	},
 });
+
+export type PanelEditorArgs = PageStoryArgs<typeof panelEditorMocks>;
+
+const SAVED_TIME_SERIES: readonly PanelId[] = ['request-rate', 'error-rate'];
+
+const NEW_PANEL_KINDS_WITHOUT_CLICKHOUSE: readonly NewPanelKind[] = [
+	'list',
+	'text',
+];
+
+const PANELS_WITHOUT_PROMQL: readonly PanelId[] = [
+	'top-endpoints',
+	'traffic-share',
+	'recent-logs',
+];
+
+const NEW_PANEL_KINDS_WITHOUT_PROMQL: readonly NewPanelKind[] = [
+	'table',
+	'pie-chart',
+	'list',
+	'text',
+];
+
+const NEW_PANEL_KINDS_WITH_SPAN_GAPS: readonly NewPanelKind[] = [
+	'time-series',
+	'area-chart',
+];
+
+/**
+ * The page mounts on `read`. A check that fails rather than denies still
+ * renders it.
+ */
+export const showsEditor = (args: PanelEditorArgs): boolean =>
+	args.authzState === 'error' ||
+	grantsAll(args, buildDashboardReadPermission(STORY_DASHBOARD_ID));
+
+/** The list and text kinds offer no ClickHouse query mode. */
+export const hasClickHouseTab = (args: PanelEditorArgs): boolean => {
+	if (!showsEditor(args)) {
+		return false;
+	}
+
+	if (args.panel === NEW_PANEL_ID) {
+		return !NEW_PANEL_KINDS_WITHOUT_CLICKHOUSE.includes(args.newPanelKind);
+	}
+
+	return (
+		panelQueryShape(args.panel).requestType !==
+		Querybuildertypesv5RequestTypeDTO.raw
+	);
+};
+
+/** Table, pie, list and text panels offer no PromQL query mode. */
+export const hasPromQLTab = (args: PanelEditorArgs): boolean => {
+	if (!showsEditor(args)) {
+		return false;
+	}
+
+	return args.panel === NEW_PANEL_ID
+		? !NEW_PANEL_KINDS_WITHOUT_PROMQL.includes(args.newPanelKind)
+		: !PANELS_WITHOUT_PROMQL.includes(args.panel);
+};
+
+/** Only the time series and area kinds offer "When data is missing". */
+export const hasDisconnectValues = (args: PanelEditorArgs): boolean => {
+	if (!showsEditor(args)) {
+		return false;
+	}
+
+	return args.panel === NEW_PANEL_ID
+		? NEW_PANEL_KINDS_WITH_SPAN_GAPS.includes(args.newPanelKind)
+		: SAVED_TIME_SERIES.includes(args.panel);
+};
 
 export const savePanel = async (): Promise<void> => {
 	const save = await screen.findByTestId(

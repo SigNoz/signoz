@@ -5,6 +5,8 @@
 
 import { expect, screen, userEvent, within } from 'storybook/test';
 
+import { isCloudShell } from '@/storybook/globals/appShellMocks';
+
 import {
 	canCreate,
 	canDelete,
@@ -13,7 +15,6 @@ import {
 	canUpdate,
 	clickRowAction,
 	type DashboardsListArgs,
-	isCloudTenant,
 	listedDashboards,
 	openLegacyDialog,
 	openRowActions,
@@ -163,6 +164,27 @@ export const openSaveViewPopover = async ({
 		),
 	);
 	await screen.findByText('Save as view');
+};
+
+export const openRenameViewPopover = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsSavedViews(args)) {
+		return;
+	}
+
+	const [rename] = await within(canvasElement).findAllByRole(
+		'button',
+		{ name: 'Rename view' },
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	// The actions only take pointer events while the row is hovered by CSS.
+	await userEvent.click(rename, { pointerEventsCheck: 0 });
+	await screen.findByTestId('rename-view-name', undefined, {
+		timeout: TOAST_TIMEOUT,
+	});
 };
 
 export const renameDashboard = async ({
@@ -444,7 +466,7 @@ export const submitTemplateRequest = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!canCreate(args) || !isCloudTenant(args)) {
+	if (!canCreate(args) || !isCloudShell(args)) {
 		return;
 	}
 

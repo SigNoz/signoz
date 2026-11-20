@@ -4,11 +4,14 @@
  */
 
 import ROUTES from 'constants/routes';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	ACTIVE_MEMBER_MAX,
@@ -177,6 +180,17 @@ export const membersMocks = defineStoryMocks({
 	config: () => ({ route: ROUTES.MEMBERS_SETTINGS }),
 });
 
+export type MembersArgs = PageStoryArgs<typeof membersMocks>;
+
+/** `AuthZButton` leaves Invite member enabled when the check itself fails. */
+export const canInvite = (args: MembersArgs): boolean =>
+	args.authzState === 'error' || grantsAll(args, UserCreatePermission);
+
+/** The roles dropdown lists what the roles endpoint answers, which State holds back or fails. */
+export const offersRole = (args: MembersArgs, role: string): boolean =>
+	args.dataState === 'loaded' &&
+	rolesListResponse(args.roles).data.some((listed) => listed.name === role);
+
 /** The table fetches before it renders a row, which outlasts the 1s default. */
 export const MEMBERS_PAGE_SIZE = 20;
 
@@ -210,30 +224,8 @@ export const openMember = async (
 	await userEvent.click(cell.closest('tr') as HTMLElement);
 };
 
-/**
- * Selects `viewer` in the roles dropdown at `index`. The option's content ignores
- * pointer events, so the click goes to the option around it. A click on the
- * label closes the dropdown, where Escape would close the dialog too.
- */
-const pickRole = async (index: number): Promise<void> => {
-	const comboboxes = await screen.findAllByRole(
-		'combobox',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(comboboxes[index]);
-	const options = await screen.findAllByText('viewer', undefined, untilLoaded);
-
-	await userEvent.click(
-		options[options.length - 1].closest('.ant-select-item-option') as HTMLElement,
-	);
-	await userEvent.click(await screen.findByText('Email address'));
-};
-
-export const sendInvites = async (
+export const openInviteForm = async (
 	canvasElement: HTMLElement,
-	emails: string[],
 ): Promise<void> => {
 	await clickWhenEnabled(
 		await within(canvasElement).findByText(
@@ -242,6 +234,49 @@ export const sendInvites = async (
 			untilLoaded,
 		),
 	);
+	// The form opens with a row per seat, each carrying its own email field.
+	await screen.findAllByTestId(/^invite-email-/, undefined, untilLoaded);
+};
+
+/** A click on the label closes the dropdown, where Escape would close the dialog too. */
+export const closeRoles = async (): Promise<void> => {
+	await userEvent.click(await screen.findByText('Email address'));
+};
+
+/**
+ * Picks `role` in the open roles dropdown. The option's content ignores pointer
+ * events, so the click goes to the option around it.
+ */
+export const pickOpenRole = async (role: string): Promise<void> => {
+	const options = await screen.findAllByText(role, undefined, untilLoaded);
+
+	await userEvent.click(
+		options[options.length - 1].closest('.ant-select-item-option') as HTMLElement,
+	);
+};
+
+/** Opens the roles dropdown of the invite row at `index`. */
+export const openInviteRoleDropdown = async (index: number): Promise<void> => {
+	const comboboxes = await screen.findAllByRole(
+		'combobox',
+		undefined,
+		untilLoaded,
+	);
+
+	await userEvent.click(comboboxes[index]);
+};
+
+const pickRole = async (index: number): Promise<void> => {
+	await openInviteRoleDropdown(index);
+	await pickOpenRole('viewer');
+	await closeRoles();
+};
+
+export const sendInvites = async (
+	canvasElement: HTMLElement,
+	emails: string[],
+): Promise<void> => {
+	await openInviteForm(canvasElement);
 	const fields = await screen.findAllByTestId(
 		/^invite-email-/,
 		undefined,

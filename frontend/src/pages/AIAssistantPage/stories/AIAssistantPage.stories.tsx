@@ -16,11 +16,13 @@ import {
 	expandActivity,
 	expandSingleStep,
 	openApprovalDiff,
+	openClarificationSelect,
 	openContextPicker,
 	openConversationActions,
 	openLiveSteps,
 	openNegativeFeedback,
 	pickContexts,
+	renameConversation,
 	scrollToTop,
 	typeDraft,
 } from './__story_mockdata__/aiAssistant.play';
@@ -140,6 +142,12 @@ export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
 
+/** The severity select open, including the free-text option the form's Select renders. */
+export const ClarificationSelectOpen: Story = {
+	args: { agent: 'awaiting-clarification', contents: BRIEF },
+	play: openClarificationSelect,
+};
+
 /** Reopening the page on a thread that has not come back yet. */
 export const LoadingThread: Story = {
 	args: { dataState: 'loading' },
@@ -168,6 +176,11 @@ export const ApprovalDiff: Story = {
 /** The comment box a thumbs down opens, which a thumbs up does not. */
 export const NegativeFeedback: Story = {
 	play: openNegativeFeedback,
+};
+
+/** Renaming a thread: the title input the row swaps in. */
+export const ConversationRename: Story = {
+	play: renameConversation,
 };
 
 /** What a conversation row offers: rename, a link to it, and archiving. */

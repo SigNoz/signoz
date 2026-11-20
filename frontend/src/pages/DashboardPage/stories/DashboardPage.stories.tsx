@@ -22,7 +22,17 @@ import {
 	tooltipRoute,
 	warnedPanelQueryHandler,
 } from './DashboardPage.stories.mocks';
-import { hoverJsonValidation } from './__story_mockdata__/dashboard.play';
+import {
+	expandPanelSearch,
+	hoverJsonValidation,
+	openAIQueryBuilderViewPanel,
+	openClickHouseViewPanel,
+	openDeleteDashboardDialog,
+	openPromQLViewPanel,
+	openRecentLogsViewPanel,
+	openRenameSectionDialog,
+	openRequestRateViewPanel,
+} from './__story_mockdata__/dashboard.play';
 import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
 
 import DashboardPage from '../DashboardPage';
@@ -200,6 +210,40 @@ export const TooltipsInViewPanelModal: Story = {
 	},
 };
 
+/** A metrics time series panel expanded into view mode, its query builder on the dialog surface. */
+export const ViewPanelModal: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openRequestRateViewPanel,
+};
+
+/** A logs list panel expanded into view mode, its query builder on the dialog surface. */
+export const ViewPanelModalLogs: Story = {
+	play: openRecentLogsViewPanel,
+};
+
+/** The view mode editor on its ClickHouse tab. */
+export const ViewPanelModalClickHouse: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openClickHouseViewPanel,
+};
+
+/** The view mode editor on its PromQL tab. */
+export const ViewPanelModalPromQL: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openPromQLViewPanel,
+};
+
+/** The view mode editor on its AI query builder tab. */
+export const ViewPanelModalAIQueryBuilder: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openAIQueryBuilderViewPanel,
+};
+
+/** A list or table panel's search field, expanded and filled. */
+export const PanelSearchExpanded: Story = {
+	play: expandPanelSearch,
+};
+
 /**
  * The dashboard's own Actions menu, open: rename, clone, lock, full screen and
  * delete, the menu the toolbar's Actions button carries.
@@ -250,6 +294,16 @@ export const SectionActionsMenu: Story = {
 		await userEvent.click(firstSection);
 		await screen.findByRole('menu');
 	},
+};
+
+/** Delete dashboard, the confirm dialog the Actions menu opens. */
+export const DeleteDashboardDialog: Story = {
+	play: openDeleteDashboardDialog,
+};
+
+/** Rename section, the title dialog a section menu opens. */
+export const RenameSectionDialog: Story = {
+	play: openRenameSectionDialog,
 };
 
 const openNewPanelPicker = async (

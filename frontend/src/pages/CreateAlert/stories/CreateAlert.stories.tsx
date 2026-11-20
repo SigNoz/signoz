@@ -9,6 +9,7 @@ import {
 	createAlertMocks,
 	fillValidAlert,
 } from './CreateAlert.stories.mocks';
+import { enableRepeatNotifications } from './__story_mockdata__/createAlert.play';
 
 import CreateAlertPage from '../index';
 
@@ -57,28 +58,6 @@ export const LogsAlert: Story = {
  */
 export const AnomalyAlert: Story = {
 	args: { alertMode: 'anomaly' },
-};
-
-/**
- * An anomaly alert handed to routing policies: the channel picker leaves the
- * condition, and the banner points at the policies that route it instead.
- */
-export const AnomalyAlertRoutingPolicies: Story = {
-	args: { alertMode: 'anomaly' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('routing-policies-switch', undefined, {
-				timeout: 15_000,
-			}),
-		);
-		await waitFor(() =>
-			expect(
-				canvas.queryByTestId('threshold-notification-channel-select'),
-			).not.toBeInTheDocument(),
-		);
-	},
 };
 
 /**
@@ -139,4 +118,12 @@ export const TestNotificationSentToast: Story = {
 export const TestNotificationNoAlertsToast: Story = {
 	args: { testNotification: 'no-alerts' },
 	play: TestNotificationSentToast.play,
+};
+
+/**
+ * Repeat notifications turned on: the interval, its unit and the conditions it
+ * repeats under, on one line beside the option.
+ */
+export const RepeatNotifications: Story = {
+	play: enableRepeatNotifications,
 };

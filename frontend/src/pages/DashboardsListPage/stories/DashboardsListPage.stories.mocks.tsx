@@ -30,7 +30,6 @@ import {
 	waitFor,
 	within,
 } from 'storybook/test';
-import { LicensePlatform } from 'types/api/licensesV3/getActive';
 
 import { grantsAll } from '@/storybook/access/access';
 import {
@@ -40,7 +39,6 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import { appShellMocks } from '@/storybook/globals/appShellMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
@@ -610,10 +608,6 @@ export const showsWorkspaceEmpty = (args: DashboardsListArgs): boolean =>
 	!args.invalidQuery &&
 	canList(args) &&
 	args.dashboards === 0;
-
-export const isCloudTenant = (args: DashboardsListArgs): boolean =>
-	appShellMocks.config?.(appShellMocks.read(args)).appContext?.activeLicense
-		?.platform === LicensePlatform.CLOUD;
 
 /** Opens the actions menu of the row at `index`. */
 export const openRowActions = async (

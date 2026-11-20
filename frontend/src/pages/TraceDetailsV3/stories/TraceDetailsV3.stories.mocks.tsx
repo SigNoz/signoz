@@ -33,6 +33,7 @@ import {
 	timeSeriesPoints,
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+import { traceFunnelsResponse } from '../../TracesModulePage/stories/__story_mockdata__/traces';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import {
 	focusSpanIndex,
@@ -268,6 +269,11 @@ export const traceDetailsMocks = defineStoryMocks({
 				}),
 			),
 
+			rest.get(
+				'http://localhost/api/v1/trace-funnels/list',
+				response.json(() => traceFunnelsResponse(3)),
+			),
+
 			rest.post(
 				'http://localhost/api/v1/span_percentile',
 				response.json(spanPercentilesResponse),
@@ -378,8 +384,17 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 });
 
+export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
+
 /** The waterfall renders once the trace resolves, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
+
+/** The header actions and the span rows exist once a trace loads. */
+export const showsTrace = ({
+	spans,
+	dataState,
+}: Pick<TraceDetailsArgs, 'spans' | 'dataState'>): boolean =>
+	spans > 0 && dataState === 'loaded';
 
 /** Opens the pretty view's action menu on the first row that offers `item`. */
 export const openRowMenu = async (
@@ -430,15 +445,6 @@ export const startDownload = async (
 	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
 	await userEvent.click(await screen.findByTestId('download-trace-csv'));
 };
-
-export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
-
-/** The header actions and the span rows exist once a trace loads. */
-export const showsTrace = ({
-	spans,
-	dataState,
-}: Pick<TraceDetailsArgs, 'spans' | 'dataState'>): boolean =>
-	spans > 0 && dataState === 'loaded';
 
 /** The span panel opens on the focus span when the control asks for it. */
 export const showsSpanPanel = (args: TraceDetailsArgs): boolean =>

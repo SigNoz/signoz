@@ -60,3 +60,11 @@ type Story = StoryObj<DrawerArgs>;
 export const Default: Story = {
 	args: { ...podEntityConfig.details } as Partial<DrawerArgs> as DrawerArgs,
 };
+
+/** A pod opened from the list, so the header shows the close control in place of back. */
+export const OpenedFromTheList: Story = {
+	args: {
+		...podEntityConfig.details,
+		openedFromANode: false,
+	} as Partial<DrawerArgs> as DrawerArgs,
+};

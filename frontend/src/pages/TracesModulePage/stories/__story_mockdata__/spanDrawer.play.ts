@@ -52,6 +52,7 @@ const openLogsTab = async (): Promise<HTMLElement> => {
 	return drawer;
 };
 
+/** Mounts, then opens the Logs tab, unless the list has no span to open it on. */
 const mountOnLogsTab = async (
 	mount: MountContext['mount'],
 	args: TracesArgs,

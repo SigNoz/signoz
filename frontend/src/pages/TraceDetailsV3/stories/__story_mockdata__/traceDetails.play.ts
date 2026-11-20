@@ -499,3 +499,40 @@ export const showsAnalyticsState = async (
 		await screen.findAllByText(text, undefined, untilLoaded);
 	}
 };
+
+const openFunnelPicker = async (canvasElement: HTMLElement): Promise<void> => {
+	const [button] = await within(canvasElement).findAllByTestId(
+		'span-add-to-funnel-btn',
+		undefined,
+		untilLoaded,
+	);
+
+	await fireEvent.click(button);
+	await screen.findByText('Add span to funnel', undefined, untilLoaded);
+};
+
+export const openAddSpanToFunnel = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+};
+
+export const openCreateFunnelStep = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /create new funnel/i }),
+	);
+	await screen.findByTestId('create-funnel-name-input');
+};

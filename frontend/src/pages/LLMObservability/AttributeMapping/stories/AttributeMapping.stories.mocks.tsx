@@ -4,16 +4,20 @@
  */
 
 import ROUTES from 'constants/routes';
+import { IsAdminPermission } from 'lib/authz/hooks/useAuthZ/legacy';
 import { rest } from 'msw';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	GROUP_SAVES,
 	type GroupSave,
 	MAPPING_GROUP_MAX,
 	spanMapperGroupsResponse,
+	spanMappersResponse,
 	wideConditionGroupsResponse,
 } from './__story_mockdata__/attributeMapping';
 
@@ -26,6 +30,15 @@ export const wideConditionGroup = rest.get(
 	'http://localhost/api/v1/span_mapper_groups',
 	(_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(wideConditionGroupsResponse())),
+);
+
+export const groupMappers = rest.get(
+	'http://localhost/api/v1/span_mapper_groups/:groupId/span_mappers',
+	(req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(spanMappersResponse(String(req.params.groupId))),
+		),
 );
 
 export const attributeMappingMocks = defineStoryMocks({
@@ -78,3 +91,9 @@ export const attributeMappingMocks = defineStoryMocks({
 	},
 	config: () => ({ route: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING }),
 });
+
+export type AttributeMappingArgs = PageStoryArgs<typeof attributeMappingMocks>;
+
+/** Adding a mapping needs a group to open, and the admin grant the page gates managing on. */
+export const canAddMapping = (args: AttributeMappingArgs): boolean =>
+	args.groups > 0 && grantsAll(args, IsAdminPermission);

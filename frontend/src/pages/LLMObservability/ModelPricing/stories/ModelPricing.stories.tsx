@@ -6,6 +6,10 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import LLMObservabilityPage from '../../index';
 import { modelPricingMocks } from './ModelPricing.stories.mocks';
+import {
+	openModelCostDrawerCreate,
+	openUnpricedModels,
+} from './__story_mockdata__/modelPricing.play';
 
 type ModelPricingArgs = PageStoryArgs<typeof modelPricingMocks>;
 
@@ -37,6 +41,16 @@ export const Default: Story = {};
 /** Nothing priced yet, with every model the workspace calls still unmatched. */
 export const NothingPriced: Story = {
 	args: { rules: 0 },
+};
+
+/** Models seen in spans that no rule prices yet. */
+export const UnpricedModels: Story = {
+	play: openUnpricedModels,
+};
+
+/** Creating a rule: the blank drawer, with the provider select enabled. */
+export const ModelCostDrawerCreate: Story = {
+	play: openModelCostDrawerCreate,
 };
 
 /**

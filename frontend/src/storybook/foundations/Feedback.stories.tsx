@@ -1,7 +1,18 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { withCanvas } from '../decorators/withCanvas';
+import {
+	closesConfirmationOnEscape,
+	showsActionableErrorToast,
+	showsDangerWithDescription,
+	showsInfoToast,
+	showsLongMultilineToast,
+	showsPromiseErrorToast,
+	showsPromiseLoadingToast,
+	showsSuccessToast,
+	showsToastOverConfirmation,
+	showsWarningToast,
+} from './__story_mockdata__/feedback.play';
 import FeedbackFixture from './FeedbackFixture';
 
 const meta = {
@@ -18,50 +29,49 @@ type Story = StoryObj<typeof meta>;
 /** Mutation: persistent success feedback from the application toaster. */
 export const SuccessToast: Story = {
 	args: { state: 'success-toast' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			within(canvasElement).getByTestId('show-feedback-toast'),
-		);
-		await screen.findByText('Retention policy updated successfully');
-		await waitFor(() =>
-			expect(
-				screen.getByText('Retention policy updated successfully'),
-			).toBeVisible(),
-		);
-	},
+	play: showsSuccessToast,
 };
 
 /** Mutation: an actionable error notification that exposes its retry control. */
 export const ActionableErrorToast: Story = {
 	args: { state: 'actionable-error-toast' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			within(canvasElement).getByTestId('show-feedback-toast'),
-		);
-		await screen.findByText('Failed to save the notification channel');
-		await waitFor(() =>
-			expect(
-				screen.getByText('Failed to save the notification channel'),
-			).toBeVisible(),
-		);
-		await screen.findByRole('button', { name: 'Retry' });
-		await waitFor(() =>
-			expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible(),
-		);
-	},
+	play: showsActionableErrorToast,
 };
 
 /** Density: a long notification validates wrapping and multi-line toast sizing. */
 export const LongMultilineToast: Story = {
 	args: { state: 'long-toast' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			within(canvasElement).getByTestId('show-feedback-toast'),
-		);
-		await expect(
-			await screen.findByText(/could not apply the retention policy/i),
-		).toBeVisible();
-	},
+	play: showsLongMultilineToast,
+};
+
+/** A request still in flight: the loading toast stays until the promise settles. */
+export const PromiseLoadingToast: Story = {
+	args: { state: 'promise-loading-toast' },
+	play: showsPromiseLoadingToast,
+};
+
+/** A failed request: the rejected toast keeps a Dismiss action, stacked top-center. */
+export const PromiseErrorToast: Story = {
+	args: { state: 'promise-error-toast' },
+	play: showsPromiseErrorToast,
+};
+
+/** A warning that stays up, matching invites that only partly succeed. */
+export const WarningToast: Story = {
+	args: { state: 'warning-toast' },
+	play: showsWarningToast,
+};
+
+/** An info toast pinned to the bottom-right stack, as export cancellation does. */
+export const InfoToast: Story = {
+	args: { state: 'info-toast' },
+	play: showsInfoToast,
+};
+
+/** An error toast with a description and a Dismiss action, bottom-right. */
+export const DangerWithDescription: Story = {
+	args: { state: 'danger-description-toast' },
+	play: showsDangerWithDescription,
 };
 
 /** Mutation: the inline application alert preserves its action affordance. */
@@ -76,38 +86,11 @@ export const InlineAlert: Story = {
  */
 export const Confirmation: Story = {
 	args: { state: 'confirmation' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const trigger = within(canvasElement).getByTestId(
-			'open-feedback-confirmation',
-		);
-
-		await userEvent.click(trigger);
-		await screen.findByRole('dialog', { name: 'Delete environment' });
-
-		await userEvent.keyboard('{Escape}');
-		// Escape can close the dialog before the assertion runs, which
-		// `waitForElementToBeRemoved` treats as an error rather than a pass.
-		await waitFor(() =>
-			expect(
-				screen.queryByRole('dialog', { name: 'Delete environment' }),
-			).not.toBeInTheDocument(),
-		);
-	},
+	play: closesConfirmationOnEscape,
 };
 
 /** Interaction: an error toast remains visible above an open destructive confirmation. */
 export const ToastOverConfirmation: Story = {
 	args: { state: 'toast-over-confirmation' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			within(canvasElement).getByTestId('open-feedback-confirmation'),
-		);
-		await screen.findByRole('dialog', { name: 'Delete environment' });
-		await userEvent.click(
-			await screen.findByRole('button', { name: 'Show error notification' }),
-		);
-		await expect(
-			await screen.findByText(/could not apply the retention policy/i),
-		).toBeVisible();
-	},
+	play: showsToastOverConfirmation,
 };
