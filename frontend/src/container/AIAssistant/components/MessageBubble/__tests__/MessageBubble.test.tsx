@@ -83,3 +83,33 @@ describe('MessageBubble — error rendering', () => {
 		expect(retryButton()).not.toBeInTheDocument();
 	});
 });
+
+describe('MessageBubble — added contexts', () => {
+	it('shows the resources a question was @-picked with, not the page it came from', () => {
+		render(
+			<MessageBubble
+				message={{
+					id: 'q-1',
+					role: 'user',
+					content: 'Why is checkout slow?',
+					contexts: [
+						{
+							source: 'mention',
+							type: 'dashboard',
+							resourceId: 'dash-1',
+							resourceName: 'Checkout latency',
+						},
+						{ source: 'auto', type: 'logs_explorer' },
+					],
+					createdAt: 0,
+				}}
+			/>,
+		);
+
+		const added = screen.getByTestId('ai-added-contexts');
+		expect(added).toHaveTextContent(
+			'Dashboard :Checkout latencyadded to context',
+		);
+		expect(added).not.toHaveTextContent('Logs');
+	});
+});

@@ -13,7 +13,7 @@ import { FontSize, type LogViewMode } from 'container/OptionsMenu/types';
 import { rest } from 'msw';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 import type {
-	BaseBuilderQuery,
+	BuilderQuery,
 	QueryRangeRequestV5,
 } from 'types/api/v5/queryRange';
 
@@ -24,11 +24,13 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { logsSavedViewsResponse } from '../../stories/__story_mockdata__/savedViews';
 import {
 	attributeValuesResponse,
 	dashboardsResponse,
+	infraMetricsResponse,
 	logFieldKeysResponse,
 	logFieldValuesResponse,
 	logHistogramResponse,
@@ -152,6 +154,13 @@ export const liveLogsMocks = defineStoryMocks({
 			response.json(async (req) => {
 				const body = (await req.json()) as QueryRangeRequestV5;
 				const timeWindow = { start: body.start, end: body.end };
+				const spec = body.compositeQuery?.queries?.[0]?.spec as
+					| BuilderQuery
+					| undefined;
+
+				if (spec?.signal === 'metrics') {
+					return infraMetricsResponse(body);
+				}
 
 				if (body.requestType === 'raw') {
 					return logRowsResponse(values.liveLogs, values.severities, body.end, {
@@ -159,9 +168,6 @@ export const liveLogsMocks = defineStoryMocks({
 					});
 				}
 
-				const spec = body.compositeQuery?.queries?.[0]?.spec as
-					| BaseBuilderQuery
-					| undefined;
 				const bySeverity = (spec?.groupBy ?? []).some(
 					(key) => key.name === 'severity_text',
 				);
@@ -242,3 +248,5 @@ export const liveLogsMocks = defineStoryMocks({
 		);
 	},
 });
+
+export type LiveLogsArgs = PageStoryArgs<typeof liveLogsMocks>;

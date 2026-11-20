@@ -1,0 +1,49 @@
+.wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 320px;
+	margin-top: 16px;
+	padding: 105px 141px;
+	gap: 4px;
+	justify-content: center;
+	align-items: flex-start;
+	border-radius: 6px;
+	border: 1px dashed var(--l1-border);
+}
+
+.img {
+	max-width: 100%;
+}
+
+.text {
+	font-family: Inter;
+	font-size: var(--font-size-sm);
+	font-style: normal;
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+.title {
+	composes: text;
+	color: var(--l1-foreground);
+	font-weight: var(--font-weight-medium);
+}
+
+.detail {
+	composes: text;
+	color: var(--l2-foreground);
+	font-weight: var(--font-weight-normal);
+}
+
+.actionButtons {
+	display: flex;
+	gap: 24px;
+	align-items: center;
+	margin-top: 20px;
+}
+
+.learnMoreArrow {
+	margin-left: -20px;
+	color: var(--bg-robin-400);
+	cursor: pointer;
+}

@@ -108,6 +108,15 @@ const SPANS: SpanShape[] = [
 	},
 ];
 
+export const ORDERS_OPERATION = 'POST /api/orders';
+
+/** Rows the list needs before the span the drawer stories open is on it. */
+export const ORDERS_SPAN_ROWS =
+	SPANS.findIndex(({ operation }) => operation === ORDERS_OPERATION) + 1;
+
+export const spanOperationAt = (index: number): string =>
+	SPANS[index % SPANS.length].operation;
+
 const TRACE_SERVICE_NAMES = SPANS.map(({ service }) => service);
 
 const hex = (prefix: string, index: number): string =>

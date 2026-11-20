@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button, Flex, Select } from 'antd';
+import { Button, Select } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import cx from 'classnames';
 import OverflowInputToolTip from 'components/OverflowInputToolTip';
 import {

@@ -1,0 +1,28 @@
+.dotGrid {
+	position: relative;
+}
+
+.canvas {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	// Read by the snake as its colour on the light page.
+	color: var(--l1-foreground);
+}
+
+// The Snake score line, faint in the grid's bottom-left corner.
+.label {
+	position: absolute;
+	left: var(--spacing-6);
+	bottom: var(--spacing-1);
+	font-family: var(--font-mono, monospace);
+	font-size: var(--periscope-font-size-small);
+	letter-spacing: 0.34em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--l3-foreground);
+	pointer-events: none;
+	user-select: none;
+}

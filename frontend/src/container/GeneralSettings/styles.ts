@@ -1,4 +1,5 @@
-import { Col, Input as InputComponent } from 'antd';
+import { Input as InputComponent } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
