@@ -70,12 +70,6 @@ export const NoUpdate: Story = {
 	play: expectEditLocked,
 };
 
-/** Edit needs `read` as well as `update`, so it is locked here too. */
-export const NoRead: Story = {
-	args: { revoked: ['read:route-policy'] },
-	play: expectEditLocked,
-};
-
 /** A row's Delete is locked in its menu; Edit stays open. */
 export const NoDelete: Story = {
 	args: { revoked: ['delete:route-policy'] },

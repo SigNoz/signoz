@@ -24,8 +24,9 @@ interface PlayContext {
 
 /** Links only `ops-slack`, so the picker holds linked and unlinked channels. */
 const SINGLE_CHANNEL_POLICY = 'Payments team ownership';
-const LINKED_CHANNEL = 'ops-slack';
-const UNLINKED_CHANNEL = 'oncall-pagerduty';
+/** `ops-slack` and `oncall-pagerduty`, by the ids the channel builder gives them. */
+const LINKED_CHANNEL_ID = '1';
+const UNLINKED_CHANNEL_ID = '2';
 
 const openPolicy = async (
 	canvasElement: HTMLElement,
@@ -49,27 +50,27 @@ const openRowMenu = async (canvasElement: HTMLElement): Promise<void> => {
 const rowAction = (label: string): Promise<HTMLElement> =>
 	screen.findByRole('menuitem', { name: label }, untilLoaded);
 
-/** The picker row for a channel; antd renders it outside the page's markup. */
-const channelOption = async (name: string): Promise<HTMLElement> => {
-	await userEvent.click(await screen.findByRole('combobox'));
-	const option = (await screen.findAllByText(name))
-		.map((element) => element.closest<HTMLElement>('.ant-select-item-option'))
-		.find(Boolean);
-	if (!option) {
-		throw new Error(`No picker option for ${name}`);
-	}
-	return option;
+const channelOption = async (channelId: string): Promise<HTMLElement> => {
+	await userEvent.click(
+		within(await screen.findByTestId('routing-policy-channels')).getByRole(
+			'combobox',
+		),
+	);
+	return screen.findByTestId(`routing-policy-channel-option-${channelId}`);
 };
 
-const expectOptionDisabled = (
-	option: HTMLElement,
-	disabled = true,
-): Promise<void> =>
+/** A pending option is disabled too, so a denial is read only once its title names it. */
+const expectOptionLocked = async (option: HTMLElement): Promise<void> => {
+	await waitFor(
+		() => expect(option.title).toMatch(/is not authorized/),
+		untilLoaded,
+	);
+	await expect(option).toHaveAttribute('aria-disabled', 'true');
+};
+
+const expectOptionOpen = (option: HTMLElement): Promise<void> =>
 	waitFor(
-		() =>
-			expect(option.classList.contains('ant-select-item-option-disabled')).toBe(
-				disabled,
-			),
+		() => expect(option).toHaveAttribute('aria-disabled', 'false'),
 		untilLoaded,
 	);
 
@@ -241,16 +242,16 @@ export const expectChannelAttachLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openPolicy(canvasElement, SINGLE_CHANNEL_POLICY);
-	await expectOptionDisabled(await channelOption(UNLINKED_CHANNEL));
-	await expectOptionDisabled(await channelOption(LINKED_CHANNEL), false);
+	await expectOptionLocked(await channelOption(UNLINKED_CHANNEL_ID));
+	await expectOptionOpen(await channelOption(LINKED_CHANNEL_ID));
 };
 
 export const expectChannelDetachLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openPolicy(canvasElement, SINGLE_CHANNEL_POLICY);
-	await expectOptionDisabled(await channelOption(LINKED_CHANNEL));
-	await expectOptionDisabled(await channelOption(UNLINKED_CHANNEL), false);
+	await expectOptionLocked(await channelOption(LINKED_CHANNEL_ID));
+	await expectOptionOpen(await channelOption(UNLINKED_CHANNEL_ID));
 };
 
 export const expectNoChannelCreateLink = async (
@@ -259,7 +260,11 @@ export const expectNoChannelCreateLink = async (
 	await openNewPolicy(context);
 	// The channel check answers with Save's; until then the picker reads as denied.
 	await expectLocked(await screen.findByTestId('routing-policy-save'), false);
-	await userEvent.click(await screen.findByRole('combobox'));
+	await userEvent.click(
+		within(await screen.findByTestId('routing-policy-channels')).getByRole(
+			'combobox',
+		),
+	);
 	await screen.findByText(
 		'Please ask your admin to create one.',
 		undefined,

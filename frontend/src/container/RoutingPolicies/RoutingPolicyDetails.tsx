@@ -4,8 +4,9 @@ import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { Check, Loader, X } from '@signozhq/icons';
-import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
@@ -14,6 +15,8 @@ import {
 	RoutingPolicyDetailsProps,
 } from './types';
 import { useRoutingPolicyFormPermissions } from './useRoutingPolicyFormPermissions';
+
+const CHANNEL_CREATE_CHECKS = [NotificationChannelCreatePermission];
 
 function RoutingPolicyDetails({
 	closeModal,
@@ -27,10 +30,10 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { isReadOnly, saveChecks, getChannelDenial } =
+	const { isReadOnly, saveChecks, getChannelAccess, onPickerOpen } =
 		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
-	const { canCreate: canCreateChannel } =
-		useNotificationChannelCollectionPermissions();
+	const { isGranted } = useAuthZ(CHANNEL_CREATE_CHECKS);
+	const canCreateChannel = isGranted(NotificationChannelCreatePermission);
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -247,14 +250,21 @@ function RoutingPolicyDetails({
 						>
 							<Select
 								options={channels.map((channel) => {
-									const denial = getChannelDenial(channel);
+									const { disabled, reason } = getChannelAccess(channel);
 									return {
 										value: channel.name,
 										label: channel.name,
-										disabled: !!denial,
-										title: denial,
+										disabled,
+										title: reason,
+										'aria-disabled': disabled,
+										'data-testid': `routing-policy-channel-option-${channel.id}`,
 									};
 								})}
+								onDropdownVisibleChange={(open): void => {
+									if (open) {
+										onPickerOpen();
+									}
+								}}
 								mode="multiple"
 								placeholder="Select notification channels"
 								aria-label="Notification Channels"
