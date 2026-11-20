@@ -751,12 +751,12 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
-	 * @description Alertmanager template for the card body; defaults to the Alertmanager Teams default.
+	 * @description Alertmanager template for the card body, rendered as Teams markdown; defaults to the SigNoz Teams default.
 	 */
 	text?: string;
 	/**
 	 * @type string
-	 * @description Alertmanager template for the card title; defaults to the Alertmanager Teams default.
+	 * @description Alertmanager template for the card title; defaults to the SigNoz Teams default.
 	 */
 	title?: string;
 	/**
