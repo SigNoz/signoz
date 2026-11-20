@@ -144,6 +144,39 @@ window.getComputedStyle = function (
 	}
 };
 
+// jsdom has no layout, and Floating UI's getComputedStyle walk over every
+// popover ancestor costs up to ~1 s per open.
+jest.mock('@floating-ui/dom', () => ({
+	...jest.requireActual('@floating-ui/dom'),
+	autoUpdate: (): (() => void) => (): void => {},
+	computePosition: (
+		_reference: unknown,
+		_floating: unknown,
+		{ placement = 'bottom', strategy = 'absolute' } = {},
+	): Promise<unknown> =>
+		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
+}));
+
+jest.mock('@testing-library/user-event', () =>
+	jest.requireActual('tests/userEventWithDefaults'),
+);
+
+// antd popups walk getComputedStyle up every ancestor to find scroll
+// containers on each open. pnpm keeps the package under antd, not at the root.
+jest.mock(
+	require.resolve('@rc-component/trigger/lib/util', {
+		paths: [require.resolve('antd')],
+	}),
+	() => ({
+		...jest.requireActual(
+			require.resolve('@rc-component/trigger/lib/util', {
+				paths: [require.resolve('antd')],
+			}),
+		),
+		collectScroller: (): HTMLElement[] => [],
+	}),
+);
+
 beforeAll(() => server.listen());
 
 afterEach(() => server.resetHandlers());
