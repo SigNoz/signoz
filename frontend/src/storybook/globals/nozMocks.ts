@@ -1,9 +1,12 @@
 import { rest } from 'msw';
 import { AI_API_PATH } from 'api/AIAPIInstance';
-import type { ThreadListResponse } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import type { ConversationStreamState } from 'container/AIAssistant/types';
-import { chipsResponse } from 'pages/AIAssistantPage/stories/__story_mockdata__/aiAssistant';
+import {
+	chipsResponse,
+	threadDetailResponse,
+	threadListResponse,
+} from 'pages/AIAssistantPage/stories/__story_mockdata__/aiAssistant';
 
 import { countControl, toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
@@ -15,8 +18,6 @@ const NOZ = 'Noz';
 
 /** The streams this module seeds, so it only ever removes its own. */
 const AWAITING_PREFIX = 'storybook-awaiting-';
-
-const noThreads: ThreadListResponse = { threads: [], hasMore: false };
 
 const awaitingStream = (): ConversationStreamState => ({
 	isStreaming: false,
@@ -49,15 +50,49 @@ export const nozMocks = defineStoryMocks({
 			value: 0,
 			max: 3,
 		}),
+		nozThreads: countControl('Conversations', {
+			group: NOZ,
+			description:
+				'Saved conversations the thread list returns, which the history icon in the strip lists.',
+			value: 0,
+			max: 6,
+		}),
 	},
-	handlers: ({ noz }) =>
+	handlers: ({ noz, nozThreads }) =>
 		noz
 			? [
 					nozGlobalConfigHandler,
-					// The drawer loads the thread list on mount, while it is still closed.
+					// The shell loads the thread list on every page, with Noz still closed.
 					rest.get(
 						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/threads`,
-						(_req, res, ctx) => res(ctx.status(200), ctx.json(noThreads)),
+						(req, res, ctx) =>
+							res(
+								ctx.status(200),
+								ctx.json(
+									threadListResponse(
+										req.url.searchParams.get('archived') === 'true' ? 0 : nozThreads,
+										false,
+									),
+								),
+							),
+					),
+					// A chat picked from the history opens in the panel.
+					rest.get(
+						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/threads/:threadId`,
+						(req, res, ctx) => {
+							const threadId = String(req.params.threadId);
+							const listed = threadListResponse(nozThreads, false).threads.find(
+								(thread) => thread.threadId === threadId,
+							);
+							return res(
+								ctx.status(200),
+								ctx.json({
+									...threadDetailResponse(['prose'], 'idle'),
+									threadId,
+									title: listed?.title,
+								}),
+							);
+						},
 					),
 					rest.get(
 						`${nozGlobalConfigResponse.data.ai_assistant_url}${AI_API_PATH}/empty-state/chips`,
@@ -79,8 +114,9 @@ export const nozMocks = defineStoryMocks({
 				state.streams[`${AWAITING_PREFIX}${index}`] = awaitingStream();
 			}
 
-			// Persisted, so a panel one story opened would still be open in the next.
+			// The store outlives a story, so a panel or history list it opened would still be open in the next.
 			state.isDrawerOpen = false;
+			state.isHistoryOpen = false;
 		});
 	},
 });

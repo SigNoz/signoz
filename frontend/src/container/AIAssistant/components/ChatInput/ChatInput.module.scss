@@ -1,5 +1,6 @@
 @use '../../_scrollbar' as *;
 @use '../../_bareInput' as *;
+@use '../../_pickerRow' as *;
 
 .input {
 	display: flex;
@@ -124,34 +125,6 @@
 	background: color-mix(in srgb, var(--accent-sienna), transparent 90%);
 	border: 1px solid color-mix(in srgb, var(--accent-sienna), transparent 65%);
 	border-radius: var(--radius-2);
-}
-
-// One 34px row: 13/20 text, a full-width band on hover.
-@mixin picker-row($padding-inline) {
-	--button-height: 34px;
-	// A long list scrolls; without this the rows squash to fit it.
-	--button-flex-shrink: 0;
-	--button-padding: 7px #{$padding-inline};
-	--button-border-radius: 0;
-	--button-justify-content: flex-start;
-	--button-font-size: var(--periscope-font-size-base);
-	--button-font-weight: var(--font-weight-normal);
-	--button-variant-ghost-color: var(--l2-foreground);
-	--button-variant-ghost-hover-color: var(--l1-foreground);
-	--button-variant-ghost-hover-background-color: var(--l3-background);
-	--button-focus-visible-outline: none;
-
-	// Buttons don't inherit the page font.
-	> [data-slot='button'] {
-		font-family: inherit;
-		letter-spacing: -0.005em;
-	}
-
-	// Keyboard focus shows as the hover band rather than a ring.
-	> [data-slot='button']:focus-visible {
-		--button-variant-ghost-background-color: var(--l3-background);
-		--button-variant-ghost-color: var(--l1-foreground);
-	}
 }
 
 .contextPopover {

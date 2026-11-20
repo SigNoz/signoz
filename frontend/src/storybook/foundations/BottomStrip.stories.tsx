@@ -1,23 +1,24 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { toast } from '@signozhq/ui/sonner';
-import { screen, userEvent } from 'storybook/test';
 
 import type { GlobalMockArgs } from '../globals';
+import {
+	openAddCardModal,
+	openNozHistory,
+	openNozPanel,
+	raiseToast,
+} from './__story_mockdata__/bottomStrip.play';
 
 /** A page that puts nothing in the strip, so the shell is all there is. */
 function EmptyPage(): JSX.Element {
 	return <div />;
 }
 
-/** The shell renders its entry points after the global config and the license settle. */
-const untilLoaded = { timeout: 10_000 };
-
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
- * build version when it puts nothing, and the shell's own Ask Noz and Support
- * on the right. Support follows the chat support the workspace has, the way
- * the floating bubble it replaces did.
+ * build version when it puts nothing, and the shell's own Ask Noz, Noz history
+ * and Support on the right. Support follows the chat support the workspace has,
+ * the way the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -54,14 +55,7 @@ export const AddCard: Story = {
 /** The Add Credit Card modal, opened from the strip's Support. */
 export const AddCardModal: Story = {
 	args: { noz: true, support: 'add-card' },
-	play: async (): Promise<void> => {
-		await userEvent.click(
-			await screen.findByTestId('bottom-strip-support', undefined, untilLoaded),
-		);
-		await screen.findByRole('dialog', {
-			name: /Add Credit Card for Chat Support/i,
-		});
-	},
+	play: openAddCardModal,
 };
 
 /**
@@ -75,31 +69,21 @@ export const NozAwaitingYou: Story = {
 /** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
 export const NozPanel: Story = {
 	args: { noz: true, support: 'pylon' },
-	play: async ({ args }): Promise<void> => {
-		// Ask Noz is not rendered with Noz off, so there is no panel to open.
-		if (!args.noz) {
-			return;
-		}
-		await userEvent.click(
-			await screen.findByTestId(
-				'bottom-strip-ask-noz-button',
-				undefined,
-				untilLoaded,
-			),
-		);
-		await screen.findByTestId('ai-assistant-panel-close');
-	},
+	play: openNozPanel,
+};
+
+/**
+ * Recent conversations, opened from the history icon beside Ask Noz. Picking
+ * one opens it in the Noz panel; with no saved conversation the icon is gone.
+ */
+export const NozHistory: Story = {
+	args: { noz: true, nozThreads: 6, support: 'pylon' },
+	play: openNozHistory,
 };
 
 /** Every tooltip the strip carries, held open. */
 export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
-};
-
-/** Raises a toast and waits for it, so the shot is taken with it on screen. */
-const raiseToast: NonNullable<Story['play']> = async () => {
-	toast.success('Service account deleted');
-	await screen.findByText('Service account deleted', undefined, untilLoaded);
 };
 
 /**

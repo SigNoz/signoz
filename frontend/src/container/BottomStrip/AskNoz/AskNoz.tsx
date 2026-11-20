@@ -8,10 +8,13 @@ import {
 	AIAssistantEvents,
 	AIAssistantOpenSource,
 } from 'container/AIAssistant/events';
-import { normalizePage } from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
+import {
+	normalizePage,
+	useAIAssistantAnalyticsContext,
+} from 'container/AIAssistant/hooks/useAIAssistantAnalyticsContext';
 import { selectPendingUserInputStreamCount } from 'container/AIAssistant/store/pendingInputSelectors';
 import {
-	openAIAssistant,
+	openNewAIAssistantChat,
 	useAIAssistantStore,
 } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
@@ -22,9 +25,9 @@ import { Dot } from '@signozhq/icons';
 import styles from './AskNoz.module.scss';
 
 /**
- * Opens the Noz drawer, matching the header entry it replaces. Cmd+K opens the
- * modal instead; this is deliberately the drawer. It stays while the drawer is
- * open, where it closes the drawer and keeps the chat for the next open.
+ * Opens the Noz drawer on a new chat, matching the header entry it replaces.
+ * Cmd+K opens the modal instead; this is deliberately the drawer. It stays while
+ * the drawer is open, where it is the way to start another chat.
  *
  * Carries the header's pending badge: when Noz is blocked on the user
  * (`awaiting_approval` / `awaiting_clarification`) a dot pulses. Without it,
@@ -39,8 +42,6 @@ function AskNoz(): JSX.Element | null {
 		selectPendingUserInputStreamCount,
 	);
 
-	const closeDrawer = useAIAssistantStore((state) => state.closeDrawer);
-
 	// Noz is already on screen in the drawer or modal, so the "needs you" dot would be noise.
 	const showPendingBadge =
 		pendingUserInputCount > 0 && !isDrawerOpen && !isModalOpen;
@@ -48,17 +49,24 @@ function AskNoz(): JSX.Element | null {
 	// The drawer does not render on the Noz full page, so the button would be inert.
 	const isAIAssistantPage = pathname.startsWith(ROUTES.AI_ASSISTANT_BASE);
 
-	const handleClick = useCallback((): void => {
+	const analyticsCtx = useAIAssistantAnalyticsContext();
+
+	const handleOpen = useCallback((): void => {
 		if (isDrawerOpen) {
-			closeDrawer();
-			return;
+			void logEvent(AIAssistantEvents.NewChatClicked, {
+				...analyticsCtx,
+				// Outside the panel's VariantContext the hook reports 'page'; the chat opens in the drawer.
+				mode: 'sidepane',
+				source: AIAssistantOpenSource.BottomStrip,
+			});
+		} else {
+			void logEvent(AIAssistantEvents.Opened, {
+				source: AIAssistantOpenSource.BottomStrip,
+				currentPage: normalizePage(pathname),
+			});
 		}
-		void logEvent(AIAssistantEvents.Opened, {
-			source: AIAssistantOpenSource.BottomStrip,
-			currentPage: normalizePage(pathname),
-		});
-		openAIAssistant();
-	}, [closeDrawer, isDrawerOpen, pathname]);
+		openNewAIAssistantChat();
+	}, [analyticsCtx, isDrawerOpen, pathname]);
 
 	if (!isAIAssistantEnabled || isAIAssistantPage) {
 		return null;
@@ -81,8 +89,7 @@ function AskNoz(): JSX.Element | null {
 						size="sm"
 						prefix={<Noz size={16} />}
 						testId="bottom-strip-ask-noz-button"
-						onClick={handleClick}
-						aria-pressed={isDrawerOpen}
+						onClick={handleOpen}
 						aria-label={
 							showPendingBadge
 								? `Ask Noz, ${pendingUserInputCount} ${
