@@ -1,11 +1,11 @@
-import { Dispatch, SetStateAction } from 'react';
 import {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { Format } from 'constants/formats/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Format } from 'constants/formats/types';
+import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -54,6 +54,7 @@ export const QUERY_SOURCE_TO_FIELD_SOURCE: Record<
 	BuilderQuerySource,
 	TelemetrytypesSourceDTO | undefined
 > = {
+	audit: TelemetrytypesSourceDTO.audit,
 	meter: TelemetrytypesSourceDTO.meter,
 	'': undefined,
 };

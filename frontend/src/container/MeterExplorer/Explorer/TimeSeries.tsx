@@ -109,7 +109,12 @@ function TimeSeries({
 
 	return (
 		<div className={styles.meterTimeSeriesContainer}>
-			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
+			<BuilderUnitsFilter
+				onChange={onUnitChange}
+				yAxisUnit={yAxisUnit}
+				className={styles.unitsFilter}
+				labelClassName={styles.unitsFilterLabel}
+			/>
 			<div className={styles.timeSeriesContainer} ref={graphRef}>
 				{!hasMetricSelected && <EmptyMeterSearch />}
 				{isCancelled && hasMetricSelected && (

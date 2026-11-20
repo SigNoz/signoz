@@ -157,6 +157,7 @@ function RawLogView({
 
 	return (
 		<RawLogViewContainer
+			className="raw-log-row"
 			data-testid={`logs-raw-row-${data.id}`}
 			onClick={handleClickExpand}
 			wrap={false}

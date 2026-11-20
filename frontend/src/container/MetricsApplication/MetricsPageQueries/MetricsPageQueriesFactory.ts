@@ -1,3 +1,4 @@
+import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	alphabet,
 	initialFormulaBuilderFormValues,
@@ -6,7 +7,9 @@ import {
 import getStep from 'lib/getStep';
 import store from 'store';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import {
+	DataSource,
 	MetricAggregateOperator,
 	QueryBuilderData,
 	ReduceOperators,
@@ -17,6 +20,38 @@ import {
 	BuilderQueriesProps,
 	BuilderQuerieswithFormulaProps,
 } from '../Tabs/types';
+
+// The query spreads in default `aggregations` (avg / sum, or count() for traces),
+// and v5 reads those before the top-level time / space fields, so set them here.
+const getAggregations = ({
+	dataSource,
+	key,
+	aggregateOperator,
+	timeAggregation,
+	spaceAggregation,
+	comparisonSpaceAggregationParam,
+}: {
+	dataSource: DataSource;
+	key: string;
+	aggregateOperator: string;
+	timeAggregation: MetricAggregateOperator;
+	spaceAggregation: MetricAggregateOperator;
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
+}): IBuilderQuery['aggregations'] =>
+	dataSource === DataSource.TRACES
+		? [{ expression: `${aggregateOperator}(${key})` }]
+		: [
+				{
+					metricName: key,
+					temporality: '',
+					timeAggregation: timeAggregation as TimeAggregation,
+					spaceAggregation: spaceAggregation as SpaceAggregation,
+					reduceTo: ReduceOperators.AVG,
+					...(comparisonSpaceAggregationParam && {
+						comparisonSpaceAggregationParam,
+					}),
+				},
+			];
 
 export const getQueryBuilderQueries = ({
 	autocompleteData,
@@ -31,23 +66,33 @@ export const getQueryBuilderQueries = ({
 }: BuilderQueriesProps): QueryBuilderData => ({
 	queryFormulas: [],
 	queryData: autocompleteData.map((item, index) => {
+		const operator = aggregateOperator
+			? aggregateOperator[index]
+			: MetricAggregateOperator.SUM_RATE;
 		const newQueryData: IBuilderQuery = {
 			...initialQueryBuilderFormValuesMap.metrics,
-			aggregateOperator: ((): string => {
-				if (aggregateOperator) {
-					return aggregateOperator[index];
-				}
-				return MetricAggregateOperator.SUM_RATE;
-			})(),
+			aggregateOperator: operator,
+			aggregations: getAggregations({
+				dataSource,
+				key: item.key,
+				aggregateOperator: operator,
+				timeAggregation: timeAggregateOperators[index],
+				spaceAggregation: spaceAggregateOperators[index],
+			}),
 			disabled: false,
 			groupBy,
 			aggregateAttribute: item,
 			legend: legends[index],
-			stepInterval: getStep({
-				end: store.getState().globalTime.maxTime,
-				inputFormat: 'ns',
-				start: store.getState().globalTime.minTime,
-			}),
+			// v5 sets the metrics step (multiples of 300s from 1 day up); its traces
+			// default is ~300 points, far denser than these cards
+			stepInterval:
+				dataSource === DataSource.METRICS
+					? null
+					: getStep({
+							end: store.getState().globalTime.maxTime,
+							inputFormat: 'ns',
+							start: store.getState().globalTime.minTime,
+						}),
 			filters: {
 				items: filterItems[index],
 				op: 'AND',
@@ -78,6 +123,8 @@ export const getQueryBuilderQuerieswithFormula = ({
 	legendFormulas,
 	timeAggregateOperators,
 	spaceAggregateOperators,
+	comparisonSpaceAggregationParams = [],
+	stepInterval,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -87,6 +134,14 @@ export const getQueryBuilderQuerieswithFormula = ({
 	})),
 	queryData: autocompleteData.map((_, index) => ({
 		...initialQueryBuilderFormValuesMap.metrics,
+		aggregations: getAggregations({
+			dataSource,
+			key: autocompleteData[index].key,
+			aggregateOperator: timeAggregateOperators[index],
+			timeAggregation: timeAggregateOperators[index],
+			spaceAggregation: spaceAggregateOperators[index],
+			comparisonSpaceAggregationParam: comparisonSpaceAggregationParams[index],
+		}),
 		timeAggregation: timeAggregateOperators[index],
 		spaceAggregation: spaceAggregateOperators[index],
 		temporality: Temporality.Delta,
@@ -101,11 +156,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			items: additionalItems[index],
 			op: 'AND',
 		},
-		stepInterval: getStep({
-			end: store.getState().globalTime.maxTime,
-			inputFormat: 'ns',
-			start: store.getState().globalTime.minTime,
-		}),
+		stepInterval: stepInterval ?? null,
 		dataSource,
 	})),
 	queryTraceOperator: [],

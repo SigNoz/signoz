@@ -36,6 +36,8 @@ const config: Config.InitialOptions = {
 		'^test-mocks/(.*)$': '<rootDir>/__mocks__/$1',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
+		// `antd` resolves to lib/ here; es/ deep imports must share its module instances (contexts).
+		'^antd/es/(.*)$': '<rootDir>/node_modules/antd/lib/$1',
 		'^@signozhq/(?!ui(?:/|$))([^/]+)$':
 			'<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},

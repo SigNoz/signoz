@@ -15,7 +15,7 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
 import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';

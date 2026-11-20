@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { CloudDownload } from '@signozhq/icons';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { Button, Flex } from 'antd';
+import { Button } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
