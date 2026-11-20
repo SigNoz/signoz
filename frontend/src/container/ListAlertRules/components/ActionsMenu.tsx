@@ -36,7 +36,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const queryClient = useQueryClient();
 	const { updatePermission, deletePermission, editChecks, cloneChecks } =
 		useMemo(() => {
-			const id = rule.id ?? '';
+			const id = rule.id;
 			const read = buildRuleReadPermission(id);
 			const update = buildRuleUpdatePermission(id);
 			return {
@@ -51,7 +51,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
 		const newDisabled = !rule.disabled;
 		toast.promise(
-			patchRuleByID({ id: rule.id ?? '' }, {
+			patchRuleByID({ id: rule.id }, {
 				disabled: newDisabled,
 			} as RuletypesPostableRuleDTO).then(() =>
 				invalidateListRulesV3(queryClient),
@@ -110,7 +110,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleDelete = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
 		toast.promise(
-			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
+			deleteRuleByID({ id: rule.id }).then(() =>
 				invalidateListRulesV3(queryClient),
 			),
 			{

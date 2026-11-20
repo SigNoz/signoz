@@ -48,7 +48,6 @@ function UrlAdapter({
 }
 
 interface RenderOptions {
-	role?: string;
 	initialRoute?: string;
 	/** Answers the permission checks; grants everything by default. */
 	authz?: RestHandler;
@@ -57,7 +56,7 @@ interface RenderOptions {
 export function renderListAlertRules(
 	options: RenderOptions = {},
 ): RenderResult {
-	const { role = 'ADMIN', initialRoute = '/', authz } = options;
+	const { initialRoute = '/', authz } = options;
 	server.use(authz ?? setupAuthzAdmin());
 
 	const initialSearch = initialRoute.includes('?')
@@ -76,7 +75,7 @@ export function renderListAlertRules(
 		<TestRouter initialRoute={initialRoute}>
 			<UrlAdapter searchParams={initialSearch}>
 				<QueryClientProvider client={queryClient}>
-					<AppContext.Provider value={getAppContextMock(role)}>
+					<AppContext.Provider value={getAppContextMock('ADMIN')}>
 						<TimezoneProvider>
 							<VirtuosoMockContext.Provider
 								value={{ viewportHeight: 800, itemHeight: 46 }}
