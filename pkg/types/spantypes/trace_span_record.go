@@ -36,9 +36,8 @@ type SpanRecord struct {
 	Truncated []TruncatedField `json:"truncated" required:"true" nullable:"false"`
 }
 
-// NewSpanRecord cuts values over 500 characters, and shorter still while the record is over its
-// size limit. With selectFields the record holds only those attributes, of the span and of its
-// events, in full as far as the response allows.
+// NewSpanRecord cuts values over 500 characters, and shorter still while the record is over its size limit.
+// With selectFields the record holds only those attributes, in full as far as the response allows.
 func NewSpanRecord(item *StorableSpan, selectFields []string) SpanRecord {
 	record := SpanRecord{
 		SpanID:        item.SpanID,
@@ -62,8 +61,6 @@ func NewSpanRecord(item *StorableSpan, selectFields []string) SpanRecord {
 		}
 	}
 
-	// A blank name selects nothing; a selection of only blanks is no selection.
-	selectFields = slices.DeleteFunc(slices.Clone(selectFields), func(field string) bool { return strings.TrimSpace(field) == "" })
 	if len(selectFields) > 0 {
 		record.selectOnly(selectFields)
 	} else {
@@ -77,6 +74,27 @@ func NewSpanRecord(item *StorableSpan, selectFields []string) SpanRecord {
 	}
 	slices.SortFunc(record.Truncated, func(a, b TruncatedField) int { return strings.Compare(a.Field, b.Field) })
 	return record
+}
+
+// SmallTraceRecords returns the full record of every span when the trace is small enough for all
+// of them to fit in the response; ok is false otherwise.
+func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
+	records := make([]SpanRecord, 0, len(spans))
+	chars := 0
+	for i := range spans {
+		record := NewSpanRecord(&spans[i], nil)
+		chars += jsonChars(record)
+		if chars > inspectSmallTraceChars {
+			return nil, false
+		}
+		records = append(records, record)
+	}
+	return records, true
+}
+
+// IsSmallTrace reports whether a trace has few enough spans to try returning their records.
+func IsSmallTrace(spanCount int) bool {
+	return spanCount <= inspectTreeSpans
 }
 
 // selectOnly keeps the named attributes of the span and of its events, and the events that have
@@ -108,6 +126,7 @@ func (r *SpanRecord) selectOnly(fields []string) {
 			r.Events = append(r.Events, event)
 		}
 	}
+
 	r.cut(selectLimit(lengths, spanRecordSelectChars))
 }
 
@@ -185,25 +204,4 @@ func cutString(value string, limit int) (string, int, bool) {
 		cut++
 	}
 	return value, 0, false
-}
-
-// SmallTraceRecords returns the full record of every span when the trace is small enough for all
-// of them to fit in the response; ok is false otherwise.
-func SmallTraceRecords(spans []StorableSpan) ([]SpanRecord, bool) {
-	records := make([]SpanRecord, 0, len(spans))
-	chars := 0
-	for i := range spans {
-		record := NewSpanRecord(&spans[i], nil)
-		chars += jsonChars(record)
-		if chars > inspectSmallTraceChars {
-			return nil, false
-		}
-		records = append(records, record)
-	}
-	return records, true
-}
-
-// IsSmallTrace reports whether a trace has few enough spans to try returning their records.
-func IsSmallTrace(spanCount int) bool {
-	return spanCount <= inspectTreeSpans
 }

@@ -305,23 +305,8 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, start, end, true), nil
 }
 
-func (m *module) InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error) {
-	inspection := &spantypes.GettableTraceInspection{Type: query.Type}
-	var err error
-	if query.Type == spantypes.InspectTypeSpan {
-		inspection.Span, err = m.getTraceSpan(ctx, orgID, traceID, query)
-	} else {
-		inspection.Overview, err = m.getTraceOverview(ctx, orgID, traceID, query)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return inspection, nil
-}
-
-// getTraceSpan returns one span in full with the spans around it. The tree and the span's own
-// data are loaded side by side.
-func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceSpanDetail, error) {
+// The tree and the span's own data are loaded side by side.
+func (m *module) GetTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceSpanQuery) (*spantypes.TraceSpanDetail, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err
@@ -394,7 +379,7 @@ func (m *module) getSpanPercentile(ctx context.Context, orgID valuer.UUID, span 
 	}
 }
 
-func (m *module) getTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceOverview, error) {
+func (m *module) GetTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceOverviewQuery) (*spantypes.TraceOverview, error) {
 	bounds, err := m.store.GetTraceBounds(ctx, traceID)
 	if err != nil {
 		return nil, err

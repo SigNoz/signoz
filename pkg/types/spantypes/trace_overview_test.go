@@ -21,7 +21,7 @@ func summaryIDs(summaries []SpanSummary) []string {
 // nextOffset reads the offset out of a list's nextCursor, as a request carrying it would.
 func nextOffset(t *testing.T, list, cursor string) int {
 	t.Helper()
-	query, err := NewInspectQuery(&InspectTraceParams{Cursor: cursor})
+	query, err := NewTraceOverviewQuery(&InspectTraceParams{Cursor: cursor})
 	require.NoError(t, err)
 	require.Equal(t, list, query.List)
 	return query.Offset
@@ -332,14 +332,29 @@ func TestTree(t *testing.T) {
 		assert.False(t, tree.Complete)
 		assert.Equal(t, []string{"root", "a", "a-1", "a-2", "b"}, summaryIDs(tree.Spans))
 	})
+
+	t.Run("LevelCutAcrossParents_TakesItsEarliestSpans", func(t *testing.T) {
+		skeleton := buildSkeleton(
+			skeletonSpec{id: "root", startMs: 0, durationMs: 1000},
+			skeletonSpec{id: "first", parent: "root", startMs: 1, durationMs: 900},
+			skeletonSpec{id: "second", parent: "root", startMs: 2, durationMs: 900},
+			skeletonSpec{id: "second-early", parent: "second", startMs: 10, durationMs: 1},
+			skeletonSpec{id: "second-next", parent: "second", startMs: 20, durationMs: 1},
+			skeletonSpec{id: "first-late", parent: "first", startMs: 500, durationMs: 1},
+		)
+
+		tree := skeleton.tree(5)
+
+		assert.Equal(t, []string{"root", "first", "second", "second-early", "second-next"}, summaryIDs(tree.Spans))
+	})
 }
 
 func TestFitOverview(t *testing.T) {
-	// A root with 99 children that each fail with a 404; long names make every line large.
-	traceWith := func(name string) *TraceSkeleton {
-		specs := []skeletonSpec{{id: "root", name: "root", service: "checkout-service", startMs: 0, durationMs: 1000}}
+	// A root with 99 children that each fail with a 404; a long service name makes every line large.
+	traceWith := func(service string) *TraceSkeleton {
+		specs := []skeletonSpec{{id: "root", name: "root", service: service, startMs: 0, durationMs: 1000}}
 		for i := range 99 {
-			specs = append(specs, skeletonSpec{id: fmt.Sprintf("span-%03d", i), parent: "root", name: fmt.Sprintf("%s %03d", name, i), service: "checkout-service", startMs: int64(i), durationMs: 1, statusCode: "404"})
+			specs = append(specs, skeletonSpec{id: fmt.Sprintf("span-%03d", i), parent: "root", name: fmt.Sprintf("operation %03d", i), service: service, startMs: int64(i), durationMs: 1, statusCode: "404"})
 		}
 		return buildSkeleton(specs...)
 	}
@@ -350,7 +365,7 @@ func TestFitOverview(t *testing.T) {
 	}
 
 	t.Run("OverviewOverSizeLimit_DropsRecordsThenShortensTheTree", func(t *testing.T) {
-		skeleton := traceWith(strings.Repeat("operation ", 40))
+		skeleton := traceWith(strings.Repeat("checkout-", 40))
 		overview := newOverview(skeleton)
 		require.Greater(t, jsonChars(overview), inspectMaxResponseChars)
 
@@ -368,7 +383,7 @@ func TestFitOverview(t *testing.T) {
 	})
 
 	t.Run("OverviewWithinSizeLimit_IsLeftAsItIs", func(t *testing.T) {
-		skeleton := traceWith("op")
+		skeleton := traceWith("checkout")
 		overview := newOverview(skeleton)
 		require.LessOrEqual(t, jsonChars(overview), inspectMaxResponseChars)
 

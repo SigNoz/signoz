@@ -1,6 +1,7 @@
 package spantypes
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -144,6 +145,15 @@ func TestTraceSkeletonTree(t *testing.T) {
 
 	_, ok = skeleton.Index("gone")
 	assert.False(t, ok)
+}
+
+func TestTraceSkeletonSummary_CutsALongName(t *testing.T) {
+	statement := strings.Repeat("SELECT id FROM orders WHERE region = ? AND ", 20)
+	skeleton := buildSkeleton(skeletonSpec{id: "query", name: statement, service: "db", startMs: 0, durationMs: 5})
+
+	summary := skeleton.Summary(0)
+
+	assert.Equal(t, statement[:inspectNameChars]+truncationMark, summary.Name)
 }
 
 func TestTraceSkeletonPrimaryRoot(t *testing.T) {
