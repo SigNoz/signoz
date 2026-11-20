@@ -35,7 +35,7 @@ jobs:
             exit 0
           fi
 
-          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select((startswith("tests/integration/") or startswith("frontend/src/api/generated/")) | not)')
+          CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select((((startswith("tests/integration/") and (startswith("tests/integration/testdata/inframonitoring/") | not)) or startswith("frontend/src/api/generated/")) | not))')
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
 
           if printf '%s\n' "$CHANGED_FILES" | grep -qE "$PATTERN"; then
@@ -67,15 +67,52 @@ jobs:
       - name: lint
         run: |
           cd tests/e2e && pnpm lint
+  # Picks the specs a PR can affect; the merge queue and safe-to-e2e run all of them.
+  select:
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      specs: ${{ steps.select.outputs.specs }}
+      shards: ${{ steps.select.outputs.shards }}
+      shard-total: ${{ steps.select.outputs.shard-total }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          # The PR merge commit and its base parent: HEAD^1..HEAD is the PR's diff.
+          fetch-depth: 2
+      - name: node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: install
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
+      - name: select
+        id: select
+        env:
+          FULL: ${{ github.event_name == 'merge_group' || contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          cd tests/e2e
+          if [ "$FULL" = "true" ]; then
+            pnpm select-specs --all --github-output
+          else
+            pnpm select-specs --base HEAD^1 --github-output
+          fi
   test:
     strategy:
       fail-fast: false
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+        shard: ${{ fromJSON(needs.select.outputs.shards) }}
+    needs: select
+    if: needs.select.outputs.shard-total != '0'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -166,9 +203,11 @@ jobs:
       - name: wait-playwright-browsers
         wait: playwright-browsers
       - name: playwright-test
+        env:
+          SPECS: ${{ needs.select.outputs.specs }}
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/10
+            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/${{ needs.select.outputs.shard-total }} $SPECS
       - name: teardown-stack
         if: always()
         run: |
@@ -189,7 +228,7 @@ jobs:
     # Runs for other labels must not report as e2e, or their pass would hide the real result.
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && 'ignored-label' || 'e2e' }}
     if: always()
-    needs: [changes, fmtlint, test]
+    needs: [changes, fmtlint, select, test]
     runs-on: ubuntu-latest
     steps:
       - name: verdict
