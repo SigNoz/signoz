@@ -142,6 +142,33 @@ describe('carryOverListFilters', () => {
 		).toBe("k8s.namespace.name = 'shop'");
 	});
 
+	it('keeps the closing bracket of a multi-value clause', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.cluster.name in ['cluster-a', 'cluster-b']",
+				InfraMonitoringEntity.CONTAINERS,
+			),
+		).toBe("k8s.cluster.name in ['cluster-a', 'cluster-b']");
+	});
+
+	it('keeps a negated clause whole', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.namespace.name NOT IN ['kube-system']",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe("k8s.namespace.name NOT IN ['kube-system']");
+	});
+
+	it('leaves out a dropped clause that comes before a kept one', () => {
+		expect(
+			carryOverListFilters(
+				"k8s.node.condition_ready = true AND k8s.namespace.name = 'shop'",
+				InfraMonitoringEntity.PODS,
+			),
+		).toBe("k8s.namespace.name = 'shop'");
+	});
+
 	it('drops a filter written against the source entity only', () => {
 		expect(
 			carryOverListFilters('k8s.node.cpu.usage > 0.5', InfraMonitoringEntity.PODS),
