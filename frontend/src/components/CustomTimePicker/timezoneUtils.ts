@@ -110,7 +110,7 @@ const filterAndSortTimezones = (
 ): Timezone[] =>
 	allTimezones
 		.filter((tz) => {
-			const isNotBrowserTz = tz !== browserTzName;
+			const isNotBrowserTz = normalizeTimezoneName(tz) !== browserTzName;
 			const isNotEtcTz = includeEtcTimezones || !tz.startsWith('Etc/');
 			return isNotBrowserTz && isNotEtcTz;
 		})
