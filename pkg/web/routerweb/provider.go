@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -85,6 +86,11 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
+			if strings.HasPrefix(req.URL.Path, "/api/") {
+				provider.serveNotFound(rw)
+				return
+			}
+
 			provider.serveIndex(rw)
 			return
 		}
@@ -97,6 +103,11 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fi.IsDir() {
 		// path is a directory, serve index.html
+		if strings.HasPrefix(req.URL.Path, "/api/") {
+			provider.serveNotFound(rw)
+			return
+		}
+
 		provider.serveIndex(rw)
 		return
 	}
@@ -108,4 +119,10 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 func (provider *provider) serveIndex(rw http.ResponseWriter) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = rw.Write(provider.indexContents)
+}
+
+func (provider *provider) serveNotFound(rw http.ResponseWriter) {
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusNotFound)
+	_, _ = rw.Write([]byte(`{"status":"error","error":"route not found"}`))
 }

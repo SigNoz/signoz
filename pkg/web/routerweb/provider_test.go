@@ -175,6 +175,22 @@ func TestServeTemplatedIndex(t *testing.T) {
 	}
 }
 
+func TestServeUnknownAPIRoute(t *testing.T) {
+	t.Parallel()
+
+	base := startServer(t, web.Config{Index: "valid_template.html", Directory: "testdata"}, global.Config{})
+	res, err := http.DefaultClient.Get(base + "/api/v1/does-not-exist")
+	require.NoError(t, err)
+	defer func() { _ = res.Body.Close() }()
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
+	assert.JSONEq(t, `{"status":"error","error":"route not found"}`, string(body))
+}
+
 func TestServeNoTemplateIndex(t *testing.T) {
 	t.Parallel()
 
