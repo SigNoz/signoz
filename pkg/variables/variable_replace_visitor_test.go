@@ -280,6 +280,34 @@ func TestReplaceVariablesInExpression(t *testing.T) {
 			expected: "hasToken(tags, 'test')",
 		},
 		{
+			name:       "PatternFunction_KeptAsIs",
+			expression: "service.name = $service AND pattern('User <*> logged in from <IP>', \"can't connect\")",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "auth",
+				},
+			},
+			expected: "service.name = 'auth' AND pattern('User <*> logged in from <IP>', \"can't connect\")",
+		},
+		{
+			name:       "PatternFunction_VariableNotReplaced",
+			expression: "service.name = 'api' AND pattern('$patterns', $patterns)",
+			variables: map[string]qbtypes.VariableItem{
+				"patterns": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "__all__",
+				},
+			},
+			expected: "service.name = 'api' AND pattern('$patterns', $patterns)",
+		},
+		{
+			name:       "PatternFunction_SpacingKept",
+			expression: "pattern ( 'a <*>' ,  'b' )",
+			variables:  map[string]qbtypes.VariableItem{},
+			expected:   "pattern ( 'a <*>' ,  'b' )",
+		},
+		{
 			name:       "empty array variable",
 			expression: "service.name IN $services",
 			variables: map[string]qbtypes.VariableItem{
