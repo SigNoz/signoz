@@ -86,9 +86,14 @@ jobs:
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      shards: ${{ steps.select-stories.outputs.shards }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
+        with:
+          # The pull_request merge commit and its first parent, the base branch.
+          fetch-depth: 2
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -102,15 +107,38 @@ jobs:
       - name: install-frontend
         run: cd frontend && pnpm install
       - name: build-storybook
-        run: cd frontend && pnpm storybook:build --quiet
+        run: |
+          cd frontend
+          mkdir -p storybook-stats
+          pnpm storybook:build --quiet --stats-json storybook-stats
+      - name: select-stories
+        id: select-stories
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          cd frontend
+          if [ "$EVENT_NAME" = pull_request ]; then
+            git diff --name-only HEAD^1 HEAD | node scripts/select-stories.mjs storybook-stats/preview-stats.json > storybook-stories.txt
+          else
+            node scripts/select-stories.mjs --all storybook-stats/preview-stats.json > storybook-stories.txt
+          fi
+          count=$(grep -c . storybook-stories.txt || true)
+          shard_count=$(( count > 80 ? 4 : (count + 19) / 20 ))
+          echo "Testing $count story files on $shard_count shards"
+          cat storybook-stories.txt
+          echo "shards=[$(seq -s, 1 "$shard_count")]" >> "$GITHUB_OUTPUT"
       - name: upload-storybook
+        if: steps.select-stories.outputs.shards != '[]'
         uses: actions/upload-artifact@v4
         with:
           name: storybook-static
           retention-days: 1
-          path: frontend/storybook-static
+          path: |
+            frontend/storybook-static
+            frontend/storybook-stories.txt
   storybook:
     needs: storybook-build
+    if: needs.storybook-build.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -118,7 +146,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: ${{ fromJSON(needs.storybook-build.outputs.shards) }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
@@ -138,11 +166,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: storybook-static
-          path: frontend/storybook-static
+          path: frontend
       - name: test-storybook
+        shell: bash
         env:
           STORYBOOK_STATIC_DIR: storybook-static
-        run: cd frontend && pnpm test:storybook --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        run: |
+          cd frontend
+          mapfile -t stories < storybook-stories.txt
+          pnpm test:storybook --shard=${{ matrix.shard }}/${{ strategy.job-total }} "${stories[@]}"
   web-settings:
     if: |
       github.event_name == 'merge_group' ||
