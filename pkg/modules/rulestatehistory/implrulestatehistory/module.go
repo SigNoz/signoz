@@ -136,70 +136,10 @@ func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rule
 	}, nil
 }
 
-func (m *module) RecordRuleStateHistory(ctx context.Context, ruleID string, handledRestart bool, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
-	revisedItemsToAdd := map[uint64]rulestatehistorytypes.RuleStateHistory{}
-
-	// the stored state is only read to reconcile the first record after a restart
-	var lastSavedState []rulestatehistorytypes.RuleStateHistory
-	if !handledRestart {
-		var err error
-		lastSavedState, err = m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !handledRestart && len(lastSavedState) > 0 {
-		currentItemsByFingerprint := make(map[uint64]rulestatehistorytypes.RuleStateHistory, len(itemsToAdd))
-		for _, item := range itemsToAdd {
-			currentItemsByFingerprint[item.Fingerprint] = item
-		}
-
-		shouldSkip := map[uint64]bool{}
-		for _, item := range lastSavedState {
-			currentState, ok := currentItemsByFingerprint[item.Fingerprint]
-			if !ok {
-				if item.State == ruletypes.StateFiring || item.State == ruletypes.StateNoData {
-					item.State = ruletypes.StateInactive
-					item.StateChanged = true
-					item.UnixMilli = time.Now().UnixMilli()
-					revisedItemsToAdd[item.Fingerprint] = item
-				}
-			} else if item.State != currentState.State {
-				item.State = currentState.State
-				item.StateChanged = true
-				item.UnixMilli = time.Now().UnixMilli()
-				revisedItemsToAdd[item.Fingerprint] = item
-			}
-
-			shouldSkip[item.Fingerprint] = true
-		}
-
-		for _, item := range itemsToAdd {
-			if _, ok := revisedItemsToAdd[item.Fingerprint]; !ok && !shouldSkip[item.Fingerprint] {
-				revisedItemsToAdd[item.Fingerprint] = item
-			}
-		}
-
-		newState := ruletypes.StateInactive
-		for _, item := range revisedItemsToAdd {
-			if item.State == ruletypes.StateFiring || item.State == ruletypes.StateNoData {
-				newState = ruletypes.StateFiring
-				break
-			}
-		}
-
-		if lastSavedState[0].OverallState != newState {
-			for fingerprint, item := range revisedItemsToAdd {
-				item.OverallState = newState
-				item.OverallStateChanged = true
-				revisedItemsToAdd[fingerprint] = item
-			}
-		}
-	} else {
-		for _, item := range itemsToAdd {
-			revisedItemsToAdd[item.Fingerprint] = item
-		}
+func (m *module) RecordRuleStateHistory(ctx context.Context, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
+	revisedItemsToAdd := make(map[uint64]rulestatehistorytypes.RuleStateHistory, len(itemsToAdd))
+	for _, item := range itemsToAdd {
+		revisedItemsToAdd[item.Fingerprint] = item
 	}
 
 	if len(revisedItemsToAdd) == 0 {

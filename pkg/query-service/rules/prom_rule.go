@@ -48,6 +48,7 @@ func NewPromRule(
 		BaseRule:   baseRule,
 		prometheus: prometheus,
 	}
+	p.SetLoadLastSeenSeries(p.loadSelectedSeries)
 
 	query, err := p.getPqlQuery(context.Background())
 	if err != nil {
@@ -86,6 +87,19 @@ func (r *PromRule) matrixToCommonSeries(res promql.Matrix) []*qbtypes.TimeSeries
 		seriesSlice = append(seriesSlice, commonSeries)
 	}
 	return seriesSlice
+}
+
+func (r *PromRule) loadSelectedSeries(ctx context.Context, ts time.Time, lookback time.Duration) ([]*qbtypes.TimeSeries, error) {
+	q, err := r.getPqlQuery(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, end := r.Timestamps(ts)
+	res, err := r.RunAlertQuery(ctx, q, end.Add(-lookback), end, 60*time.Second)
+	if err != nil {
+		return nil, err
+	}
+	return r.matrixToCommonSeries(res), nil
 }
 
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
@@ -241,26 +255,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 	r.logger.InfoContext(ctx, "number of alerts found", slog.Int("alert.count", len(alerts)))
 	// alerts[h] is ready, add or update active list now
-	for h, a := range alerts {
-		// Check whether we already have alerting state for the identifying label set.
-		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.Active[h]; ok && alert.State != ruletypes.StateInactive {
-			alert.Value = a.Value
-			alert.Annotations = a.Annotations
-			// Update the recovering and missing state of existing alert
-			alert.IsRecovering = a.IsRecovering
-			alert.Missing = a.Missing
-			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
-				alert.Receivers = ruleReceiverMap[v]
-			}
-			continue
-		}
-
-		r.Active[h] = a
-
-	}
-
-	itemsToAdd := []rulestatehistorytypes.RuleStateHistory{}
+	itemsToAdd := r.MergeAlerts(ts, alerts, ruleReceiverMap)
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.Active {

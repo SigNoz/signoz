@@ -51,10 +51,12 @@ func NewThresholdRule(
 		return nil, err
 	}
 
-	return &ThresholdRule{
+	rule := &ThresholdRule{
 		BaseRule: baseRule,
 		querier:  querier,
-	}, nil
+	}
+	rule.SetLoadLastSeenSeries(rule.loadSelectedSeries)
+	return rule, nil
 }
 
 func (r *ThresholdRule) Type() ruletypes.RuleType {
@@ -124,6 +126,24 @@ func (r *ThresholdRule) prepareParamsForTraces(ctx context.Context, ts time.Time
 	}
 
 	return contextlinks.PrepareParamsForTracesV5(start, end, whereClause, r.typ.BuilderQueryType())
+}
+
+func (r *ThresholdRule) loadSelectedSeries(ctx context.Context, ts time.Time, lookback time.Duration) ([]*qbtypes.TimeSeries, error) {
+	params, err := r.prepareQueryRange(ctx, ts)
+	if err != nil {
+		return nil, err
+	}
+	params.Start = params.End - uint64(lookback.Milliseconds())
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "loadSelectedSeries",
+	})
+	result, err := r.querier.QueryRange(ctx, r.orgID, params)
+	if err != nil {
+		return nil, err
+	}
+	return result.FindSeries(r.SelectedQuery(ctx)), nil
 }
 
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
@@ -339,26 +359,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	r.logger.InfoContext(ctx, "number of alerts found", slog.Int("alert.count", len(alerts)))
 
 	// alerts[h] is ready, add or update active list now
-	for h, a := range alerts {
-		// Check whether we already have alerting state for the identifying label set.
-		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.Active[h]; ok && alert.State != ruletypes.StateInactive {
-
-			alert.Value = a.Value
-			alert.Annotations = a.Annotations
-			// Update the recovering and missing state of existing alert
-			alert.IsRecovering = a.IsRecovering
-			alert.Missing = a.Missing
-			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
-				alert.Receivers = ruleReceiverMap[v]
-			}
-			continue
-		}
-
-		r.Active[h] = a
-	}
-
-	itemsToAdd := []rulestatehistorytypes.RuleStateHistory{}
+	itemsToAdd := r.MergeAlerts(ts, alerts, ruleReceiverMap)
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.Active {

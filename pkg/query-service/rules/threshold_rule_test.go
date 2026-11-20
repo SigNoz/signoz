@@ -15,15 +15,192 @@ import (
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
+	"github.com/SigNoz/signoz/pkg/querier/queriertest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+func TestThresholdRuleRestoreSeedsLastSeen(t *testing.T) {
+	evaluatedAt := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
+	target := 1.0
+
+	testCases := []struct {
+		name             string
+		alertOnAbsent    bool
+		expectedLookback time.Duration
+		expectedLastSeen time.Time
+	}{
+		{name: "NodataOn_SeedsLatestPointOverAbsentFor", alertOnAbsent: true, expectedLookback: 10 * time.Minute, expectedLastSeen: evaluatedAt.Add(-3 * time.Minute)},
+		{name: "NodataOff_NoQuery", alertOnAbsent: false},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			postableRule := ruletypes.PostableRule{
+				AlertName: valuer.NewDisplayName("restore seeds last seen"),
+				AlertType: ruletypes.AlertTypeMetric,
+				RuleType:  ruletypes.RuleTypeThreshold,
+				Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+					EvalWindow: valuer.MustParseTextDuration("5m"),
+					Frequency:  valuer.MustParseTextDuration("1m"),
+				}},
+				RuleCondition: &ruletypes.RuleCondition{
+					SelectedQuery: "A",
+					AlertOnAbsent: testCase.alertOnAbsent,
+					AbsentFor:     10,
+					CompositeQuery: &ruletypes.AlertCompositeQuery{
+						QueryType: ruletypes.QueryTypeBuilder,
+						Queries: []qbtypes.QueryEnvelope{{
+							Type: qbtypes.QueryTypeBuilder,
+							Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+								Name:         "A",
+								StepInterval: qbtypes.Step{Duration: time.Minute},
+								Aggregations: []qbtypes.MetricAggregation{{MetricName: "probe_success", TimeAggregation: metrictypes.TimeAggregationLatest, SpaceAggregation: metrictypes.SpaceAggregationSum}},
+								Signal:       telemetrytypes.SignalMetrics,
+							},
+						}},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{{Name: "critical", TargetValue: &target, MatchType: ruletypes.AtleastOnce, CompareOperator: ruletypes.ValueIsAbove}},
+					},
+				},
+			}
+
+			var queried *qbtypes.QueryRangeRequest
+			mockQuerier := queriertest.NewMockQuerier()
+			mockQuerier.QueryRangeFunc = func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+				queried = req
+				return &qbtypes.QueryRangeResponse{Data: qbtypes.QueryData{Results: []any{&qbtypes.TimeSeriesData{
+					QueryName: "A",
+					Aggregations: []*qbtypes.AggregationBucket{{Series: []*qbtypes.TimeSeries{
+						{Values: []*qbtypes.TimeSeriesValue{{Timestamp: evaluatedAt.Add(-30 * time.Minute).UnixMilli()}}},
+						{Values: []*qbtypes.TimeSeriesValue{{Timestamp: evaluatedAt.Add(-3 * time.Minute).UnixMilli()}}},
+					}}},
+				}}}}, nil
+			}
+
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, mockQuerier, instrumentationtest.New().Logger(), mustParseURL(t, "http://localhost:8080"))
+			require.NoError(t, err)
+
+			require.NoError(t, rule.Restore(context.Background(), evaluatedAt))
+
+			if testCase.expectedLookback == 0 {
+				assert.Nil(t, queried)
+			} else {
+				require.NotNil(t, queried)
+				assert.Equal(t, uint64(testCase.expectedLookback.Milliseconds()), queried.End-queried.Start)
+			}
+			assert.Equal(t, testCase.expectedLastSeen.UnixMilli(), rule.lastTimestampWithDatapoints.UnixMilli())
+		})
+	}
+}
+
+func TestThresholdRuleEvalResumesAlerts(t *testing.T) {
+	evaluatedAt := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
+	firedBeforeRestartAt := evaluatedAt.Add(-30 * time.Minute)
+	target := 1.0
+
+	testCases := []struct {
+		name            string
+		restoredState   ruletypes.AlertState
+		expectedFiredAt time.Time
+	}{
+		{name: "FiringRow_KeepsFiredAt", restoredState: ruletypes.StateFiring, expectedFiredAt: firedBeforeRestartAt},
+		{name: "NoDataRow_KeepsFiredAt", restoredState: ruletypes.StateNoData, expectedFiredAt: firedBeforeRestartAt},
+		{name: "RecoveringRow_KeepsFiredAt", restoredState: ruletypes.StateRecovering, expectedFiredAt: firedBeforeRestartAt},
+		{name: "NoRow_FiresNow", expectedFiredAt: evaluatedAt},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			postableRule := ruletypes.PostableRule{
+				AlertName: valuer.NewDisplayName("adopts restored alerts"),
+				AlertType: ruletypes.AlertTypeMetric,
+				RuleType:  ruletypes.RuleTypeThreshold,
+				Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
+					EvalWindow: valuer.MustParseTextDuration("5m"),
+					Frequency:  valuer.MustParseTextDuration("1m"),
+				}},
+				RuleCondition: &ruletypes.RuleCondition{
+					SelectedQuery: "A",
+					CompositeQuery: &ruletypes.AlertCompositeQuery{
+						QueryType: ruletypes.QueryTypeBuilder,
+						Queries: []qbtypes.QueryEnvelope{{
+							Type: qbtypes.QueryTypeBuilder,
+							Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+								Name:         "A",
+								StepInterval: qbtypes.Step{Duration: time.Minute},
+								Aggregations: []qbtypes.MetricAggregation{{MetricName: "probe_success", TimeAggregation: metrictypes.TimeAggregationLatest, SpaceAggregation: metrictypes.SpaceAggregationSum}},
+								GroupBy:      []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "host"}}},
+								Signal:       telemetrytypes.SignalMetrics,
+							},
+						}},
+					},
+					Thresholds: &ruletypes.RuleThresholdData{
+						Kind: ruletypes.BasicThresholdKind,
+						Spec: ruletypes.BasicRuleThresholds{{Name: "critical", TargetValue: &target, MatchType: ruletypes.AtleastOnce, CompareOperator: ruletypes.ValueIsAbove}},
+					},
+				},
+			}
+
+			hostLabels := []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "a"}}
+			mockQuerier := queriertest.NewMockQuerier()
+			mockQuerier.QueryRangeFunc = func(ctx context.Context, orgID valuer.UUID, req *qbtypes.QueryRangeRequest) (*qbtypes.QueryRangeResponse, error) {
+				return &qbtypes.QueryRangeResponse{Data: qbtypes.QueryData{Results: []any{&qbtypes.TimeSeriesData{
+					QueryName:    "A",
+					Aggregations: []*qbtypes.AggregationBucket{{Series: []*qbtypes.TimeSeries{{Labels: hostLabels, Values: []*qbtypes.TimeSeriesValue{{Timestamp: evaluatedAt.Add(-time.Minute).UnixMilli(), Value: 5}}}}}},
+				}}}}, nil
+			}
+
+			rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, mockQuerier, instrumentationtest.New().Logger(), mustParseURL(t, "http://localhost:8080"))
+			require.NoError(t, err)
+
+			if testCase.restoredState.StringValue() != "" {
+				fingerprint := ruletypes.PrepareSampleLabelsForRule(hostLabels, "critical").Hash()
+				rule.restoredHistory = map[uint64]rulestatehistorytypes.RuleStateHistory{
+					fingerprint: {RuleID: "69", State: testCase.restoredState, Fingerprint: fingerprint, UnixMilli: firedBeforeRestartAt.UnixMilli()},
+				}
+			}
+
+			activeCount, err := rule.Eval(context.Background(), evaluatedAt)
+			require.NoError(t, err)
+			require.Equal(t, 1, activeCount)
+
+			for _, alert := range rule.Active {
+				assert.Equal(t, ruletypes.StateFiring, alert.State)
+				assert.Equal(t, testCase.expectedFiredAt.UnixMilli(), alert.FiredAt.UnixMilli())
+			}
+			assert.Nil(t, rule.restoredHistory)
+		})
+	}
+}
+
+func TestBaseRuleMergeAlertsResolvesUnpickedHistory(t *testing.T) {
+	resolvedAt := time.Date(2026, time.January, 1, 12, 0, 0, 0, time.UTC)
+	rule := &BaseRule{Active: map[uint64]*ruletypes.Alert{}, restoredHistory: map[uint64]rulestatehistorytypes.RuleStateHistory{
+		1: {RuleID: "69", State: ruletypes.StateFiring, Fingerprint: 1, UnixMilli: resolvedAt.Add(-time.Hour).UnixMilli()},
+		2: {RuleID: "69", State: ruletypes.StateNoData, Fingerprint: 2, UnixMilli: resolvedAt.Add(-time.Hour).UnixMilli()},
+	}}
+
+	items := rule.MergeAlerts(resolvedAt, map[uint64]*ruletypes.Alert{}, nil)
+
+	require.Len(t, items, 2)
+	for _, item := range items {
+		assert.Equal(t, ruletypes.StateInactive, item.State)
+		assert.True(t, item.StateChanged)
+		assert.Equal(t, resolvedAt.UnixMilli(), item.UnixMilli)
+	}
+	assert.Nil(t, rule.restoredHistory)
+	assert.Empty(t, rule.MergeAlerts(resolvedAt, map[uint64]*ruletypes.Alert{}, nil))
+}
 
 func TestThresholdRuleEvalWithoutRecoveryTarget(t *testing.T) {
 	postableRule := ruletypes.PostableRule{

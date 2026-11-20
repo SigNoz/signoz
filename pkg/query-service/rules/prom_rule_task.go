@@ -23,6 +23,7 @@ type PromRuleTask struct {
 	file                 string
 	frequency            time.Duration
 	rules                []Rule
+	unrestored           []Rule
 	seriesInPreviousEval []map[string]plabels.Labels // One per Rule.
 	staleSeries          []plabels.Labels
 	opts                 *ManagerOptions
@@ -55,12 +56,13 @@ func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, o
 		pause:                false,
 		frequency:            frequency,
 		rules:                rules,
+		unrestored:           rules,
 		opts:                 opts,
 		seriesInPreviousEval: make([]map[string]plabels.Labels, len(rules)),
 		done:                 make(chan struct{}),
 		terminated:           make(chan struct{}),
-		notify: notify,
-		logger: opts.Logger,
+		notify:               notify,
+		logger:               opts.Logger,
 	}
 }
 
@@ -104,7 +106,7 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 	})
 
 	iter := func() {
-
+		g.restore(ctx, evalTimestamp)
 		start := time.Now()
 		g.Eval(ctx, evalTimestamp)
 		timeSinceStart := time.Since(start)
@@ -155,6 +157,19 @@ func (g *PromRuleTask) Run(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// restore gives each rule its pre-restart state back. ClickHouse may still be starting
+// alongside this process, so a rule whose restore fails is retried on the next tick.
+func (g *PromRuleTask) restore(ctx context.Context, ts time.Time) {
+	var failed []Rule
+	for _, rule := range g.unrestored {
+		if err := rule.Restore(ctx, ts); err != nil {
+			g.logger.ErrorContext(ctx, "failed to restore rule state", slog.String("rule.id", rule.ID()), errors.Attr(err))
+			failed = append(failed, rule)
+		}
+	}
+	g.unrestored = failed
 }
 
 func (g *PromRuleTask) Stop() {
