@@ -384,6 +384,50 @@ func (s *TraceSkeleton) FitOverview(overview *TraceOverview) {
 	}
 }
 
+// SpanDetail places span i in the trace: depth levels of ancestors, the parent first and then the
+// root when it is further up, and depth levels of the spans below it, the first 20 of each level.
+// The record and the percentile are filled by the caller.
+func (s *TraceSkeleton) SpanDetail(i int32, depth int) *TraceSpanDetail {
+	ancestors := s.Ancestors(i)
+	detail := &TraceSpanDetail{
+		Summary:       s.Summary(i),
+		Ancestors:     make([]SpanSummary, 0, depth+1),
+		AncestorCount: uint64(len(ancestors)),
+		Descendants:   make([]TraceSpanLevel, 0, depth),
+	}
+	for _, ancestor := range ancestors[:min(len(ancestors), depth)] {
+		detail.Ancestors = append(detail.Ancestors, s.Summary(ancestor))
+	}
+	if len(ancestors) > depth {
+		detail.Ancestors = append(detail.Ancestors, s.Summary(ancestors[len(ancestors)-1]))
+	}
+
+	spans := []int32{i}
+	for level := 1; level <= depth; level++ {
+		next := make([]int32, 0)
+		for _, parent := range spans {
+			next = append(next, s.Children(parent)...)
+		}
+		if len(next) == 0 {
+			break
+		}
+		shown := make([]SpanSummary, 0, min(len(next), inspectLevelSize))
+		for _, child := range next[:min(len(next), inspectLevelSize)] {
+			shown = append(shown, s.Summary(child))
+		}
+		detail.Descendants = append(detail.Descendants, TraceSpanLevel{Level: uint32(level), Total: uint64(len(next)), Spans: shown})
+		spans = next
+	}
+	return detail
+}
+
+// FitSpan drops the deepest levels below the span until the response fits its size limit.
+func FitSpan(detail *TraceSpanDetail) {
+	for len(detail.Descendants) > 0 && jsonChars(detail) > inspectMaxResponseChars {
+		detail.Descendants = detail.Descendants[:len(detail.Descendants)-1]
+	}
+}
+
 // parentSummary returns the short form of span i's direct parent; nil for a root or a missing parent.
 func (s *TraceSkeleton) parentSummary(i int32) *SpanSummary {
 	parent := s.Parents[i]

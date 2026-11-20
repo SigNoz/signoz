@@ -263,6 +263,15 @@ func (s *TraceSkeleton) PrimaryRoot() (int32, bool) {
 	return s.roots[0], true
 }
 
+// Ancestors lists the positions above span i, the parent first.
+func (s *TraceSkeleton) Ancestors(i int32) []int32 {
+	ancestors := make([]int32, 0, s.level[i])
+	for p := s.Parents[i]; p != noParent; p = s.Parents[p] {
+		ancestors = append(ancestors, p)
+	}
+	return ancestors
+}
+
 // Summary returns the short form of span i.
 func (s *TraceSkeleton) Summary(i int32) SpanSummary {
 	summary := SpanSummary{

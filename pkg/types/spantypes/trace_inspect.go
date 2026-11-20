@@ -13,6 +13,9 @@ const (
 	inspectListSize     = 10
 	inspectServiceLimit = 20
 	inspectLinkTargets  = 5
+	inspectLevelSize    = 20
+	inspectDefaultDepth = 2
+	inspectMaxDepth     = 10
 	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
 	inspectTreeSpans       = 50
 	inspectSmallTraceChars = 20_000
@@ -25,6 +28,7 @@ var (
 	ErrCodeInspectInvalidDepth  = errors.MustNewCode("trace_inspect_invalid_depth")
 	ErrCodeInspectInvalidLimit  = errors.MustNewCode("trace_inspect_invalid_limit")
 	ErrCodeInspectInvalidParams = errors.MustNewCode("trace_inspect_invalid_params")
+	ErrCodeInspectSpanNotFound  = errors.MustNewCode("trace_inspect_span_not_found")
 )
 
 // The lists of the overview, as a cursor names them.
@@ -282,6 +286,11 @@ type InspectQuery struct {
 	// List and Offset page one list of the overview; List is empty on a first call.
 	List   string
 	Offset int
+
+	// SpanID, Depth and SelectFields apply to a span request.
+	SpanID       string
+	Depth        int
+	SelectFields []string
 }
 
 // inspectCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
@@ -290,13 +299,21 @@ type inspectCursor struct {
 	Offset int    `json:"offset,omitempty"`
 }
 
-// NewInspectQuery validates the parameters of an overview request. A parameter that does not
-// apply to the overview is an error.
+// NewInspectQuery picks the part to return: a span for spanId, the overview otherwise. A
+// parameter that does not apply to that part is an error.
 func NewInspectQuery(params *InspectTraceParams) (*InspectQuery, error) {
+	switch {
+	case params.Search != "" || params.AllSpans:
+		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "search and allSpans are not implemented yet")
+	case params.SpanID != "":
+		return newSpanQuery(params)
+	}
+	return newOverviewQuery(params)
+}
+
+func newOverviewQuery(params *InspectTraceParams) (*InspectQuery, error) {
 	query := &InspectQuery{Type: InspectTypeOverview}
 	switch {
-	case params.SpanID != "" || params.Search != "" || params.AllSpans:
-		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "spanId, search and allSpans are not implemented yet")
 	case params.Depth != 0:
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth needs spanId")
 	case len(params.SelectFields) > 0:
@@ -315,6 +332,21 @@ func NewInspectQuery(params *InspectTraceParams) (*InspectQuery, error) {
 		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
 	}
 	query.List, query.Offset = cursor.List, cursor.Offset
+	return query, nil
+}
+
+func newSpanQuery(params *InspectTraceParams) (*InspectQuery, error) {
+	query := &InspectQuery{Type: InspectTypeSpan, SpanID: params.SpanID, Depth: inspectDefaultDepth, SelectFields: params.SelectFields}
+	switch {
+	case params.Limit != 0:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidLimit, "limit needs search or allSpans")
+	case params.Cursor != "":
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "a span has no pages")
+	case params.Depth < 0 || params.Depth > inspectMaxDepth:
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidDepth, "depth must be between 1 and %d, got %d", inspectMaxDepth, params.Depth)
+	case params.Depth != 0:
+		query.Depth = params.Depth
+	}
 	return query, nil
 }
 

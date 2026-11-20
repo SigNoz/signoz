@@ -135,6 +135,7 @@ func NewModules(
 	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter, onDeleteUser)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	authDomainModule := implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs, authz)
+	spanPercentile := implspanpercentile.NewModule(querier, providerSettings)
 
 	return Modules{
 		OrgGetter:            orgGetter,
@@ -151,7 +152,7 @@ func NewModules(
 		RawDataExport:        implrawdataexport.NewModule(querier),
 		AuthDomain:           authDomainModule,
 		Session:              implsession.NewModule(providerSettings, authNs, userSetter, userGetter, authDomainModule, tokenizer, orgGetter, authz, config.Global),
-		SpanPercentile:       implspanpercentile.NewModule(querier, providerSettings),
+		SpanPercentile:       spanPercentile,
 		Services:             implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:      implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, fl, providerSettings, config.MetricsExplorer),
 		MetricReductionRule:  metricReductionRule,
@@ -162,7 +163,7 @@ func NewModules(
 		LogsPipeline:         impllogspipeline.NewModule(sqlstore),
 		RuleStateHistory:     implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger), ruleStore, providerSettings.Logger),
 		CloudIntegration:     cloudIntegrationModule,
-		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore, telemetryMetadataStore, schemaMetadataStore, fl), providerSettings, config.TraceDetail),
+		TraceDetail:          impltracedetail.NewModule(impltracedetail.NewTraceStore(telemetryStore, telemetryMetadataStore, schemaMetadataStore, fl), spanPercentile, providerSettings, config.TraceDetail),
 		SpanMapper:           spanMapper,
 		LLMPricingRule:       impllmpricingrule.NewModule(impllmpricingrule.NewStore(sqlstore), querier, telemetryMetadataStore, providerSettings),
 		Tag:                  tagModule,

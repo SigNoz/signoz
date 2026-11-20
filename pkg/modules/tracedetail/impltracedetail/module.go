@@ -5,8 +5,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
+	"github.com/SigNoz/signoz/pkg/types/spanpercentiletypes"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -14,18 +17,25 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// The span percentile compares a span with those of the hour before it, and gives up after 2 seconds.
+const (
+	spanPercentileWindow  = time.Hour
+	spanPercentileTimeout = 2 * time.Second
+)
+
 // formattedSpansLogThreshold is the number of formatted gen_ai spans in one waterfall response above which
 // the response is logged, to size the memory the formatted copies of the messages take.
 const formattedSpansLogThreshold = 200
 
 type module struct {
-	store    spantypes.TraceStore
-	settings factory.ScopedProviderSettings
-	config   tracedetail.Config
-	metrics  *moduleMetrics
+	store          spantypes.TraceStore
+	spanPercentile spanpercentile.Module
+	settings       factory.ScopedProviderSettings
+	config         tracedetail.Config
+	metrics        *moduleMetrics
 }
 
-func NewModule(traceStore spantypes.TraceStore, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
+func NewModule(traceStore spantypes.TraceStore, spanPercentile spanpercentile.Module, providerSettings factory.ProviderSettings, cfg tracedetail.Config) *module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/tracedetail/impltracedetail")
 
 	metrics, err := newModuleMetrics(scopedProviderSettings.Meter())
@@ -34,10 +44,11 @@ func NewModule(traceStore spantypes.TraceStore, providerSettings factory.Provide
 	}
 
 	m := &module{
-		config:   cfg,
-		store:    traceStore,
-		settings: scopedProviderSettings,
-		metrics:  metrics,
+		config:         cfg,
+		store:          traceStore,
+		spanPercentile: spanPercentile,
+		settings:       scopedProviderSettings,
+		metrics:        metrics,
 	}
 
 	m.metrics.waterfallSpanLimit.Record(context.Background(), int64(cfg.Waterfall.MaxLimitToSelectAllSpans), metric.WithAttributes(attrResponseType.String(attrResponseTypeWindowed)))
@@ -295,11 +306,92 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 }
 
 func (m *module) InspectTrace(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.GettableTraceInspection, error) {
-	overview, err := m.getTraceOverview(ctx, orgID, traceID, query)
+	inspection := &spantypes.GettableTraceInspection{Type: query.Type}
+	var err error
+	if query.Type == spantypes.InspectTypeSpan {
+		inspection.Span, err = m.getTraceSpan(ctx, orgID, traceID, query)
+	} else {
+		inspection.Overview, err = m.getTraceOverview(ctx, orgID, traceID, query)
+	}
 	if err != nil {
 		return nil, err
 	}
-	return &spantypes.GettableTraceInspection{Type: query.Type, Overview: overview}, nil
+	return inspection, nil
+}
+
+// getTraceSpan returns one span in full with the spans around it. The tree and the span's own
+// data are loaded side by side.
+func (m *module) getTraceSpan(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceSpanDetail, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		skeleton   *spantypes.TraceSkeleton
+		spans      []spantypes.StorableSpan
+		percentile *spantypes.TraceSpanPercentile
+	)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		var err error
+		skeleton, err = m.loadSkeleton(groupCtx, orgID, traceID, bounds, false, false)
+		return err
+	})
+	group.Go(func() error {
+		var err error
+		spans, err = m.store.GetTraceSpansByIDs(groupCtx, traceID, bounds.Start, bounds.End, []string{query.SpanID})
+		if err != nil || len(spans) == 0 {
+			return err
+		}
+		percentile = m.getSpanPercentile(groupCtx, orgID, &spans[0])
+		return nil
+	})
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	idx, ok := skeleton.Index(query.SpanID)
+	if !ok || len(spans) == 0 {
+		return nil, errors.NewNotFoundf(spantypes.ErrCodeInspectSpanNotFound, "span %s not found in trace %s", query.SpanID, traceID)
+	}
+
+	detail := skeleton.SpanDetail(idx, query.Depth)
+	detail.Record = spantypes.NewSpanRecord(&spans[0], query.SelectFields)
+	detail.Percentile = percentile
+	spantypes.FitSpan(detail)
+	return detail, nil
+}
+
+// getSpanPercentile places the span among those of the same name and service that started in the
+// hour before it. It reads across traces, so it is cut short and left out when slow or failing.
+func (m *module) getSpanPercentile(ctx context.Context, orgID valuer.UUID, span *spantypes.StorableSpan) *spantypes.TraceSpanPercentile {
+	if span.Name == "" || span.ServiceName == "" || span.DurationNano == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, spanPercentileTimeout)
+	defer cancel()
+
+	startMillis := uint64(span.StartTime.UnixMilli())
+	response, err := m.spanPercentile.GetSpanPercentile(ctx, orgID, &spanpercentiletypes.SpanPercentileRequest{
+		DurationNano: int64(span.DurationNano),
+		Name:         span.Name,
+		ServiceName:  span.ServiceName,
+		Start:        startMillis - uint64(spanPercentileWindow.Milliseconds()),
+		End:          startMillis + 1,
+	})
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			m.settings.Logger().WarnContext(ctx, "span percentile left out of trace inspect", errors.Attr(err), slog.String("span_name", span.Name), slog.String("service_name", span.ServiceName))
+		}
+		return nil
+	}
+	return &spantypes.TraceSpanPercentile{
+		P50Nano:       uint64(response.Percentiles.P50),
+		P90Nano:       uint64(response.Percentiles.P90),
+		P99Nano:       uint64(response.Percentiles.P99),
+		Position:      response.Position.Percentile,
+		WindowMinutes: uint64(spanPercentileWindow.Minutes()),
+	}
 }
 
 func (m *module) getTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.InspectQuery) (*spantypes.TraceOverview, error) {
