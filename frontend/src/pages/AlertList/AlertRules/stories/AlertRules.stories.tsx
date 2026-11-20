@@ -48,7 +48,7 @@ type Story = StoryObj<AlertRulesArgs>;
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
- * on its last run and the thresholds it fires at.
+ * on its last run and the thresholds it fires at, firing rules first.
  */
 export const Default: Story = {};
 
@@ -81,6 +81,27 @@ export const InvalidQuery: Story = {
  */
 export const QuerySuggestions: Story = {
 	play: openQuerySuggestions,
+};
+
+/** The Enabled view: every rule that is not disabled, whatever it evaluated to. */
+export const EnabledView: Story = {
+	args: { view: 'enabled' },
+};
+
+/**
+ * Recently viewed: the rules this browser opened from the list, in the order they
+ * were opened, whatever the sort.
+ */
+export const RecentlyViewed: Story = {
+	args: { view: 'recent' },
+};
+
+/**
+ * Recently viewed before any rule was opened: the search stays, and the view says
+ * how it fills instead of offering the first-rule page.
+ */
+export const NoRecentlyViewed: Story = {
+	args: { view: 'recent', recentRules: 0 },
 };
 
 /** A workspace with no saved view yet, where the rail says how to make one. */
@@ -180,7 +201,7 @@ export const ColumnPicker: Story = {
 	play: openColumnPicker,
 };
 
-/** The State dropdown, open with a state picked. */
+/** The Status dropdown, open with a status picked. */
 export const StateFilterOpen: Story = {
 	play: openStatesFilter,
 };

@@ -8,6 +8,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { isModifierKeyPressed } from 'utils/app';
 
 import type { AlertRule } from './types';
+import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
 
 interface UseAlertRulesHandlersReturn {
 	handleEdit: (
@@ -24,6 +25,16 @@ export function useAlertRulesHandlers(
 ): UseAlertRulesHandlersReturn {
 	const { safeNavigate } = useSafeNavigate();
 	const params = useUrlQuery();
+	const markViewed = useAlertRuleViewsStore((s) => s.markViewed);
+
+	const markRuleViewed = useCallback(
+		(rule: Pick<AlertRule, 'id'>): void => {
+			if (rule.id) {
+				markViewed(rule.id);
+			}
+		},
+		[markViewed],
+	);
 
 	const getEditUrl = useCallback(
 		(rule: Pick<AlertRule, 'id'>): string => {
@@ -36,9 +47,10 @@ export function useAlertRulesHandlers(
 
 	const handleEdit = useCallback(
 		(rule: Pick<AlertRule, 'id'>, options?: { newTab?: boolean }): void => {
+			markRuleViewed(rule);
 			safeNavigate(getEditUrl(rule), options);
 		},
-		[getEditUrl, safeNavigate],
+		[getEditUrl, safeNavigate, markRuleViewed],
 	);
 
 	const handleNewAlert = useCallback(
@@ -57,6 +69,7 @@ export function useAlertRulesHandlers(
 	const { handleRowClick, handleRowClickNewTab } = useTableRowClick<AlertRule>({
 		getUrl: getEditUrl,
 		onNavigate: safeNavigate,
+		onBeforeNavigate: markRuleViewed,
 	});
 
 	return {

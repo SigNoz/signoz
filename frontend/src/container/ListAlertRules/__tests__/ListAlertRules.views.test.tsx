@@ -131,7 +131,7 @@ describe('ListAlertRules — saved views rail', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
 		localStorage.removeItem(LOCALSTORAGE.ALERT_RULES_LIST_VIEWS);
-		useAlertRuleViewsStore.setState({ railCollapsed: false });
+		useAlertRuleViewsStore.setState({ railCollapsed: false, recent: [] });
 	});
 
 	describe('builtin views', () => {
@@ -141,7 +141,9 @@ describe('ListAlertRules — saved views rail', () => {
 			await screen.findByText('High CPU Alert');
 			expect(viewItem('mine')).toHaveTextContent('My alert rules');
 			expect(viewItem('all')).toHaveTextContent('All alert rules');
+			expect(viewItem('recent')).toHaveTextContent('Recently viewed');
 			expect(viewItem('firing')).toHaveTextContent('Firing');
+			expect(viewItem('enabled')).toHaveTextContent('Enabled');
 			expect(viewItem('disabled')).toHaveTextContent('Disabled');
 			expect(activeHeading()).toHaveTextContent('All alert rules');
 			expect(
@@ -171,6 +173,66 @@ describe('ListAlertRules — saved views rail', () => {
 			expect(activeHeading()).toHaveTextContent(label);
 			expect(
 				screen.queryByTestId('alert-rules-view-save-as-new'),
+			).not.toBeInTheDocument();
+		});
+
+		it('Enabled sends every state except disabled', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const requests = captureRulesRequests();
+			renderListAlertRules();
+			await screen.findByTestId('alert-row-rule-1-name');
+
+			await selectView(user, 'enabled');
+
+			const enabled = ['inactive', 'pending', 'recovering', 'firing', 'nodata'];
+			await waitFor(() => {
+				expect(lastRequest(requests).getAll('states')).toStrictEqual(enabled);
+			});
+			expect(lastRequest(requests).has('query')).toBe(false);
+			expect(activeHeading()).toHaveTextContent('Enabled');
+		});
+
+		it('Recently viewed lists the opened rules in visit order from one large page', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const requests = captureRulesRequests();
+			useAlertRuleViewsStore.setState({ recent: ['rule-3', 'rule-1'] });
+			renderListAlertRules();
+			await screen.findByTestId('alert-row-rule-2-name');
+
+			await selectView(user, 'recent');
+
+			await waitFor(() => {
+				expect(lastRequest(requests).get('limit')).toBe('200');
+			});
+			expect(lastRequest(requests).get('offset')).toBe('0');
+			await waitFor(() => {
+				expect(
+					screen.queryByTestId('alert-row-rule-2-name'),
+				).not.toBeInTheDocument();
+			});
+			const names = screen
+				.getAllByTestId(/^alert-row-.+-name$/)
+				.map((cell) => cell.textContent);
+			expect(names).toStrictEqual(['Healthy Alert', 'High CPU Alert']);
+			expect(activeHeading()).toHaveTextContent('Recently viewed');
+		});
+
+		it('an empty Recently viewed keeps the search and says how it fills', async () => {
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			renderListAlertRules();
+			await screen.findByTestId('alert-row-rule-1-name');
+
+			await selectView(user, 'recent');
+
+			await expect(
+				screen.findByTestId('no-results-title'),
+			).resolves.toHaveTextContent('No recently viewed alert rules');
+			expect(screen.getByTestId('no-results-subtitle')).toHaveTextContent(
+				'Alert rules you open will appear here.',
+			);
+			expect(screen.getByTestId('alert-rules-list-search')).toBeInTheDocument();
+			expect(
+				screen.queryByTestId('no-results-clear-button'),
 			).not.toBeInTheDocument();
 		});
 
@@ -217,7 +279,7 @@ describe('ListAlertRules — saved views rail', () => {
 					version: 'v1',
 					query: 'foo',
 					states: [],
-					sort: 'updated_at',
+					sort: 'state',
 					order: 'desc',
 				},
 			});
@@ -490,6 +552,37 @@ describe('ListAlertRules — saved views rail', () => {
 
 			await waitFor(() => expect(urlParam('query')).toBe(''));
 			expect(urlParam('view')).toBe('view-2');
+		});
+
+		it('marks the empty query when a sort changes on a view without one', async () => {
+			server.use(
+				rest.get('http://localhost/api/v2/rule_views', (_, res, ctx) =>
+					res(
+						ctx.status(200),
+						ctx.json({
+							data: {
+								views: [
+									{
+										...ruleViewsFixture[0],
+										data: { ...ruleViewsFixture[0].data, query: '', states: [] },
+									},
+								],
+							},
+							status: 'success',
+						}),
+					),
+				),
+			);
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			renderListAlertRules();
+			await selectView(user, 'view-1');
+			await waitFor(() => expect(urlParam('orderBy')).toBe(VIEW_1_ORDER_BY));
+			expect(urlParam('query')).toBeNull();
+
+			await user.click(screen.getByTitle('Alert Name'));
+
+			await waitFor(() => expect(urlParam('query')).toBe(''));
+			expect(urlParam('view')).toBe('view-1');
 		});
 
 		it('keeps a cleared view filter cleared on reload', async () => {

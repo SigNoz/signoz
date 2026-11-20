@@ -27,13 +27,22 @@ import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 import { useAlertRulesListFilter } from './useAlertRulesListFilter';
 import { useAlertRuleViews } from './useAlertRuleViews';
 import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
-import { DEFAULT_RULE_VIEW, RULE_BUILTIN_VIEWS } from './list.config';
+import {
+	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
+	RULE_BUILTIN_VIEWS,
+} from './list.config';
+import { useRuleViewCtx } from './useRuleViewCtx';
+import { ruleListEmptyState } from './utils';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',
 	page: 'page',
 	limit: 'limit',
 } as const;
+
+// Client-filtered views (Recently viewed) narrow one page of the API's max size.
+const CLIENT_VIEW_LIMIT = 200;
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -63,7 +72,7 @@ function ListAlertRules(): JSX.Element {
 		},
 	);
 
-	const { filter, applyFilter, submitQuery, changeStates } =
+	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
 	const ruleViews = useAlertRuleViews({ filter, applyFilter });
@@ -74,21 +83,25 @@ function ListAlertRules(): JSX.Element {
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
 
+	const viewCtx = useRuleViewCtx();
+	const clientFilter = findRuleBuiltinView(ruleViews.activeViewId)?.clientFilter;
+	const clientView = !!clientFilter;
+
 	const listParams = useMemo(
 		() => ({
 			query: filter.query || undefined,
 			states: filter.states.length ? filter.states : undefined,
 			sort: filter.sort,
 			order: filter.order,
-			limit,
-			offset: (page - 1) * limit,
+			limit: clientView ? CLIENT_VIEW_LIMIT : limit,
+			offset: clientView ? 0 : (page - 1) * limit,
 		}),
-		[filter, limit, page],
+		[filter, limit, page, clientView],
 	);
 
 	const {
-		rules,
-		total,
+		rules: fetchedRules,
+		total: fetchedTotal,
 		labels,
 		reservedKeywords,
 		isFetching,
@@ -96,6 +109,19 @@ function ListAlertRules(): JSX.Element {
 		queryError,
 		refetch,
 	} = useAlertRulesData(listParams);
+
+	const clientRules = useMemo(
+		() => (clientFilter ? clientFilter(fetchedRules, viewCtx) : null),
+		[clientFilter, fetchedRules, viewCtx],
+	);
+	const rules = useMemo(
+		() =>
+			clientRules
+				? clientRules.slice((page - 1) * limit, page * limit)
+				: fetchedRules,
+		[clientRules, fetchedRules, page, limit],
+	);
+	const total = clientRules ? clientRules.length : fetchedTotal;
 
 	const { creatorOptions, source } = useAlertRulesFilterSource({
 		rules,
@@ -150,10 +176,16 @@ function ListAlertRules(): JSX.Element {
 	}, [action, columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
-	const isEmptyDueToFilters =
-		!isFetching && total === 0 && (hasActiveFilters || !!queryError);
-	const isEmptyNoRules =
-		!isFetching && !isError && !queryError && !hasActiveFilters && total === 0;
+	const { isEmptyDueToFilters, isEmptyNoRules, noResults, onClear } =
+		ruleListEmptyState({
+			isFetching,
+			isError,
+			queryError,
+			hasActiveFilters,
+			total,
+			viewEmptyState: findRuleBuiltinView(ruleViews.activeViewId)?.emptyState,
+			onClear: handleClearFilters,
+		});
 
 	const activeLabel =
 		ruleViews.activeView?.name ??
@@ -219,9 +251,9 @@ function ListAlertRules(): JSX.Element {
 						/>
 					) : isEmptyDueToFilters ? (
 						<NoResultsEmptyState
-							title="No matching alert rules"
-							subtitle="No alert rules match your search. Try adjusting your search criteria."
-							onClear={handleClearFilters}
+							title={noResults.title}
+							subtitle={noResults.description}
+							onClear={onClear}
 							clearButtonText="Clear Search"
 						/>
 					) : isEmptyNoRules ? (
@@ -235,6 +267,7 @@ function ListAlertRules(): JSX.Element {
 							getItemKey={(row): string => row.id ?? ''}
 							columnStorageKey="alert-rules-columns"
 							enableQueryParams={QUERY_PARAMS_CONFIG}
+							onSort={changeSort}
 							onRowClick={handleRowClick}
 							onRowClickNewTab={handleRowClickNewTab}
 							pagination={{

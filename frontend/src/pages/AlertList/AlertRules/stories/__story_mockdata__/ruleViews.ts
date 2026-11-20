@@ -18,9 +18,20 @@ import {
 	type RuleShape,
 } from '../../../stories/__story_mockdata__/alerts';
 
+/** `AlertState.DisplayRank()` in pkg/types/ruletypes/alert_state.go. */
+const STATE_DISPLAY_RANK: Record<string, number> = {
+	[RuletypesAlertStateDTO.firing]: 5,
+	[RuletypesAlertStateDTO.nodata]: 4,
+	[RuletypesAlertStateDTO.pending]: 3,
+	[RuletypesAlertStateDTO.recovering]: 2,
+	[RuletypesAlertStateDTO.inactive]: 1,
+	[RuletypesAlertStateDTO.disabled]: 0,
+};
+
 /**
- * The v3 list as the API answers it: `states` and paging are applied on the
- * server. The `query` DSL is not evaluated, so a query narrows nothing here.
+ * The v3 list as the API answers it: `states`, the `state` sort and paging are
+ * applied on the server. The `query` DSL is not evaluated, so a query narrows
+ * nothing here, and other sorts keep the builder's order.
  */
 export const alertRulesPage = (
 	count: number,
@@ -31,6 +42,15 @@ export const alertRulesPage = (
 	const rules = alertRulesResponse(count, shape).data.filter(
 		(rule) => states.length === 0 || states.includes(rule.state),
 	);
+	if (searchParams.get('sort') === RuletypesListSortDTO.state) {
+		const direction =
+			searchParams.get('order') === RuletypesListOrderDTO.asc ? 1 : -1;
+		rules.sort(
+			(a, b) =>
+				direction *
+				((STATE_DISPLAY_RANK[a.state] ?? 0) - (STATE_DISPLAY_RANK[b.state] ?? 0)),
+		);
+	}
 	const labels = new Map<string, { key: string; value: string }>();
 	rules.forEach((rule) =>
 		Object.entries(rule.labels ?? {}).forEach(([key, value]) =>
