@@ -1,0 +1,40 @@
+// Mark labels sit below the track, so the value aligns to the track, not the centre.
+.pill {
+	position: fixed;
+	top: 50%;
+	left: var(--spacing-6);
+	transform: translateY(-50%);
+	z-index: 900;
+
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-10);
+
+	padding: var(--spacing-10) var(--spacing-16) var(--spacing-4);
+
+	background: var(--l1-background);
+	border: 1px solid var(--l2-border);
+	border-radius: var(--radius-round);
+	box-shadow: var(--shadow-dropdown);
+}
+
+.slider {
+	--slider-thumb-width: 22px;
+	--slider-thumb-height: 22px;
+	--slider-track-height: 8px;
+	--slider-marks-font-size: 12px;
+	--slider-marks-top: calc(50% + 18px);
+	--slider-root-with-marks-margin-bottom: 32px;
+	// The library's own `width: var(--slider-root-width, 100%)` wins over a plain width.
+	--slider-root-width: 720px;
+
+	flex-shrink: 0;
+}
+
+.value {
+	min-width: 6ch;
+	font-size: 15px;
+	line-height: 22px;
+	font-variant-numeric: tabular-nums;
+	color: var(--l1-foreground);
+}

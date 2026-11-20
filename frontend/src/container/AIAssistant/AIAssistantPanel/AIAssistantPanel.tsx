@@ -8,7 +8,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
-import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { useBottomStripStore } from 'container/BottomStrip/store/useBottomStripStore';
 import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
@@ -46,6 +46,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
+	const stripHeight = useBottomStripStore((s) => s.height);
 	const isFullScreenPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
 		exact: true,
 	});
@@ -98,7 +99,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 
 	const availableHeight = Math.max(
 		0,
-		window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
+		window.innerHeight - stripHeight - 2 * PANEL_MARGIN,
 	);
 	const panelHeight = Math.min(PANEL_HEIGHT, availableHeight);
 
