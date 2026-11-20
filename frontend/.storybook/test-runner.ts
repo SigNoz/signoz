@@ -1,6 +1,6 @@
 import { getStoryContext } from '@storybook/test-runner';
 import type { TestRunnerConfig } from '@storybook/test-runner';
-import type { Page } from 'playwright';
+import type { Page, Request } from 'playwright';
 
 const IGNORED_MESSAGES = [
 	// `preview-head.html` swaps a local stylesheet in for Google Fonts, but the
@@ -41,6 +41,31 @@ const PREPARE_TIMEOUT_MS = 180_000;
 
 const messagesByPage = new WeakMap<Page, CapturedMessage[]>();
 
+const SETTLE_TIMEOUT_MS = 1_000;
+
+const requestsByPage = new WeakMap<Page, Set<Request>>();
+
+/**
+ * The runner opens the next story in this page as soon as the previous one has
+ * rendered, so what that one still has in flight answers into state both share:
+ * the Noz store holds a single thread id. Requests held open on purpose never
+ * end, so the wait gives up and forgets them.
+ */
+const settleRequests = async (page: Page): Promise<void> => {
+	const pending = requestsByPage.get(page);
+	if (!pending) {
+		return;
+	}
+
+	const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+	while (pending.size > 0 && Date.now() < deadline) {
+		await new Promise((resolve) => {
+			setTimeout(resolve, 25);
+		});
+	}
+	pending.clear();
+};
+
 /**
  * When the story under test started rendering, stamped by the preview's
  * `beforeEach`. Messages captured before it belong to the previous story: the
@@ -71,6 +96,8 @@ const config: TestRunnerConfig = {
 		});
 	},
 	async preVisit(page): Promise<void> {
+		await settleRequests(page);
+
 		const existing = messagesByPage.get(page);
 		if (existing) {
 			existing.length = 0;
@@ -79,6 +106,11 @@ const config: TestRunnerConfig = {
 
 		const messages: CapturedMessage[] = [];
 		messagesByPage.set(page, messages);
+		const pending = new Set<Request>();
+		requestsByPage.set(page, pending);
+		page.on('request', (request) => pending.add(request));
+		page.on('requestfinished', (request) => pending.delete(request));
+		page.on('requestfailed', (request) => pending.delete(request));
 		page.on('console', (message) => {
 			if (
 				message.type() === 'error' &&

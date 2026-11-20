@@ -510,6 +510,11 @@ Wait on a `danger` toast with `findToastText` (or `getToastText` inside
 announced through a visually hidden copy of its text, so a bare query finds two
 elements.
 
+Hover a label that only shows a tooltip when it is cut off with `hoverTruncated`
+from `play/hoverTruncated`, never a bare `userEvent.hover`. The tooltip is
+switched on by the hover that measures it, and the static build, which has no
+`act`, opens nothing during that first hover.
+
 The play is a named function in `stories/__story_mockdata__/<page>.play.ts`,
 collapsed for review with the other AI-owned files, and the story file only names
 it. Branch each check on the args it reads, so every control value the page

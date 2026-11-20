@@ -3,6 +3,7 @@ import { screen, userEvent } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 import type { GlobalMockArgs } from '@/storybook/globals';
+import { hoverTruncated } from '@/storybook/play/hoverTruncated';
 
 import { CustomMultiSelect, CustomSelect } from '../index';
 
@@ -142,7 +143,7 @@ export const TruncatedOption: Story = {
 		await userEvent.click(
 			await screen.findByRole('combobox', { name: 'Service' }),
 		);
-		await userEvent.hover(
+		await hoverTruncated(
 			await screen.findByRole('option', { name: LONG_LABEL_OPTION.label }),
 		);
 		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
@@ -156,7 +157,7 @@ export const TruncatedValue: Story = {
 		value: LONG_LABEL_OPTION.value,
 	},
 	play: async (): Promise<void> => {
-		await userEvent.hover(await screen.findByText(LONG_LABEL_OPTION.label));
+		await hoverTruncated(await screen.findByText(LONG_LABEL_OPTION.label));
 		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
 	},
 };
@@ -173,7 +174,7 @@ export const MultiTruncatedOption: Story = {
 		await userEvent.click(
 			await screen.findByRole('combobox', { name: 'Services' }),
 		);
-		await userEvent.hover(
+		await hoverTruncated(
 			await screen.findByRole('option', { name: LONG_LABEL_OPTION.label }),
 		);
 		await screen.findByRole('tooltip', { name: LONG_LABEL_OPTION.label });
