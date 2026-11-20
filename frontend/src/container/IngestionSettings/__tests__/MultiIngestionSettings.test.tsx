@@ -1,5 +1,6 @@
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -45,6 +46,7 @@ const GLOBAL_CONFIG_RESPONSE = {
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
 		mockNavigate.mockClear();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {

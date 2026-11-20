@@ -196,6 +196,7 @@ const preview: Preview = {
 							['Overview', 'Authz'],
 							'Service Accounts',
 							'Ingestion',
+							['Overview', 'Authz'],
 							'Single Sign-on',
 							'Keyboard Shortcuts',
 						],

@@ -26,13 +26,13 @@ import type { NotificationInstance } from 'antd/es/notification/interface';
 import type { CollapseProps } from 'antd/lib';
 import {
 	useCreateIngestionKey,
-	useCreateIngestionKeyLimit,
+	useCreateIngestionLimit,
 	useDeleteIngestionKey,
-	useDeleteIngestionKeyLimit,
+	useDeleteIngestionLimit,
 	useGetIngestionKeys,
 	useSearchIngestionKeys,
 	useUpdateIngestionKey,
-	useUpdateIngestionKeyLimit,
+	useUpdateIngestionLimit,
 } from 'api/generated/services/gateway';
 import {
 	GatewaytypesIngestionKeyDTO,
@@ -71,6 +71,21 @@ import {
 	TriangleAlert,
 	X,
 } from '@signozhq/icons';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import {
+	buildIngestionKeyAttachPermission,
+	buildIngestionKeyDeletePermission,
+	buildIngestionKeyDetachPermission,
+	buildIngestionKeyUpdatePermission,
+	buildIngestionLimitDeletePermission,
+	buildIngestionLimitUpdatePermission,
+	IngestionKeyCreatePermission,
+	IngestionKeyListPermission,
+	IngestionLimitCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/ingestion.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -209,6 +224,13 @@ function MultiIngestionSettings(): JSX.Element {
 
 	const [totalIngestionKeys, setTotalIngestionKeys] = useState(0);
 
+	const { permissions: authzPermissions } = useAuthZ([
+		IngestionKeyListPermission,
+	]);
+
+	const canListIngestionKeys =
+		authzPermissions?.[IngestionKeyListPermission].isGranted ?? false;
+
 	const [
 		hasCreateLimitForIngestionKeyError,
 		setHasCreateLimitForIngestionKeyError,
@@ -313,7 +335,7 @@ function MultiIngestionSettings(): JSX.Element {
 		},
 		{
 			query: {
-				enabled: !isSearching,
+				enabled: !isSearching && canListIngestionKeys,
 			},
 		},
 	);
@@ -333,7 +355,7 @@ function MultiIngestionSettings(): JSX.Element {
 		},
 		{
 			query: {
-				enabled: isSearching,
+				enabled: isSearching && canListIngestionKeys,
 			},
 		},
 	);
@@ -344,7 +366,14 @@ function MultiIngestionSettings(): JSX.Element {
 		: ingestionKeysData;
 	const isLoading = isSearching ? isLoadingSearch : isLoadingGet;
 	const isRefetching = isSearching ? isRefetchingSearch : isRefetchingGet;
-	const refetchAPIKeys = isSearching ? refetchSearchAPIKeys : refetchGetAPIKeys;
+	const refetchKeysQuery = isSearching
+		? refetchSearchAPIKeys
+		: refetchGetAPIKeys;
+	const refetchAPIKeys = async (): Promise<void> => {
+		if (canListIngestionKeys) {
+			await refetchKeysQuery();
+		}
+	};
 	const error = isSearching ? searchError : getError;
 	const isError = isSearching ? isSearchError : isGetError;
 
@@ -392,15 +421,15 @@ function MultiIngestionSettings(): JSX.Element {
 		useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: createLimitForIngestionKey, isLoading: isLoadingLimitForKey } =
-		useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+		useCreateIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const {
 		mutate: updateLimitForIngestionKey,
 		isLoading: isLoadingUpdatedLimitForKey,
-	} = useUpdateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	} = useUpdateIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const { mutate: deleteLimitForKey, isLoading: isDeletingLimit } =
-		useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+		useDeleteIngestionLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const onDeleteHandler = (): void => {
 		clearSearch();
@@ -637,8 +666,8 @@ function MultiIngestionSettings(): JSX.Element {
 
 		createLimitForIngestionKey(
 			{
-				pathParams: { keyId: payload.keyID },
 				data: {
+					keyId: payload.keyID,
 					signal: payload.signal,
 					config: payload.config,
 				},
@@ -1010,12 +1039,14 @@ function MultiIngestionSettings(): JSX.Element {
 										icon
 										color="secondary"
 										aria-label="Edit ingestion key"
+										testId={`ingestion-key-edit-btn-${APIKey.id}`}
 										onClick={onEditKey}
 									>
 										<PenLine size={14} />
 									</Button>
 									<Button
 										aria-label="Delete ingestion key"
+										testId={`ingestion-key-delete-open-btn-${APIKey.id}`}
 										variant="ghost"
 										size="sm"
 										icon
@@ -1116,8 +1147,19 @@ function MultiIngestionSettings(): JSX.Element {
 													});
 												};
 
+												const isAddingNewLimit = !hasLimits(signalName);
+
+												const ingestionLimitPermissions = APIKey?.id
+													? isAddingNewLimit
+														? [
+																IngestionLimitCreatePermission,
+																buildIngestionKeyAttachPermission(APIKey.id),
+															]
+														: [buildIngestionLimitUpdatePermission(limit.id)]
+													: [];
+
 												const onSaveSignalLimit = (): void => {
-													if (!hasLimits(signalName)) {
+													if (isAddingNewLimit) {
 														handleAddLimit(APIKey, signalName);
 													} else {
 														handleUpdateLimit(APIKey, limitsDict[signalName]);
@@ -1141,6 +1183,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="secondary"
 																			aria-label={`Edit ${signalName} limit`}
+																			testId={`ingestion-limit-edit-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1155,6 +1198,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="danger"
 																			aria-label={`Delete ${signalName} limit`}
+																			testId={`ingestion-limit-delete-open-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1172,6 +1216,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		prefix={<Plus size={12} />}
 																		disabled={!!(activeAPIKey?.id === APIKey?.id && activeSignal)}
 																		onClick={onAddSignalLimit}
+																		testId={`ingestion-limit-add-btn-${signalName}`}
 																	>
 																		Limits
 																	</Button>
@@ -1403,7 +1448,7 @@ function MultiIngestionSettings(): JSX.Element {
 																		isEditAddLimitOpen && (
 																			<div className="signal-limit-save-discard">
 																				<div className="signal-limit-save-discard-actions">
-																					<Button
+																					<AuthZButton
 																						color="primary"
 																						variant="solid"
 																						size="sm"
@@ -1411,9 +1456,11 @@ function MultiIngestionSettings(): JSX.Element {
 																							isLoadingLimitForKey || isLoadingUpdatedLimitForKey
 																						}
 																						onClick={onSaveSignalLimit}
+																						testId="ingestion-limit-save-btn"
+																						checks={ingestionLimitPermissions}
 																					>
 																						Save
-																					</Button>
+																					</AuthZButton>
 																					<Button
 																						disabledTooltip="Wait for the limit to save"
 																						variant="outlined"
@@ -1691,14 +1738,19 @@ function MultiIngestionSettings(): JSX.Element {
 				)}
 
 				<div className="ingestion-keys-search-add-new">
-					<Input
-						placeholder="Search for ingestion key..."
-						prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
-						value={searchValue}
-						onChange={handleSearch}
-					/>
+					<AuthZTooltip
+						triggerClassName="ingestion-keys-search-auth-trigger"
+						checks={[IngestionKeyListPermission]}
+					>
+						<Input
+							placeholder="Search for ingestion key..."
+							prefix={<Search size={12} color={Color.BG_VANILLA_400} />}
+							value={searchValue}
+							onChange={handleSearch}
+						/>
+					</AuthZTooltip>
 
-					<Button
+					<AuthZButton
 						size="md"
 						color="primary"
 						variant="solid"
@@ -1706,26 +1758,29 @@ function MultiIngestionSettings(): JSX.Element {
 						onClick={showAddModal}
 						width="200px"
 						testId="ingestion-key-add-btn"
+						checks={[IngestionKeyCreatePermission]}
 					>
 						New Ingestion key
-					</Button>
+					</AuthZButton>
 				</div>
 
-				<Table
-					columns={columns}
-					dataSource={dataSource}
-					loading={isLoading || isRefetching}
-					showHeader={false}
-					onChange={handleTableChange}
-					pagination={{
-						pageSize: isSearching ? SEARCH_PAGE_SIZE : paginationParams?.per_page,
-						hideOnSinglePage: true,
-						showTotal: (total: number, range: number[]): string =>
-							`${range[0]}-${range[1]} of ${total} Ingestion keys`,
-						total: totalIngestionKeys,
-					}}
-					className="ingestion-keys-table"
-				/>
+				<AuthZGuardContent checks={[IngestionKeyListPermission]}>
+					<Table
+						columns={columns}
+						dataSource={dataSource}
+						loading={isLoading || isRefetching}
+						showHeader={false}
+						onChange={handleTableChange}
+						pagination={{
+							pageSize: isSearching ? SEARCH_PAGE_SIZE : paginationParams?.per_page,
+							hideOnSinglePage: true,
+							showTotal: (total: number, range: number[]): string =>
+								`${range[0]}-${range[1]} of ${total} Ingestion keys`,
+							total: totalIngestionKeys,
+						}}
+						className="ingestion-keys-table"
+					/>
+				</AuthZGuardContent>
 			</div>
 
 			{/* Delete Key Modal */}
@@ -1748,7 +1803,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						key="submit"
 						variant="solid"
@@ -1756,9 +1811,15 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeleteingAPIKey}
 						onClick={onDeleteHandler}
+						testId="ingestion-key-delete-btn"
+						checks={
+							isDeleteModalOpen && activeAPIKey?.id
+								? [buildIngestionKeyDeletePermission(activeAPIKey.id)]
+								: []
+						}
 					>
 						Delete Ingestion Key
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Typography.Text className="delete-text">
@@ -1788,7 +1849,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						key="submit"
 						variant="solid"
@@ -1796,9 +1857,18 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Trash2 size={16} />}
 						loading={isDeletingLimit}
 						onClick={onDeleteLimitHandler}
+						testId="ingestion-limit-delete-btn"
+						checks={
+							isDeleteLimitModalOpen && activeSignal?.id && activeAPIKey?.id
+								? [
+										buildIngestionLimitDeletePermission(activeSignal.id),
+										buildIngestionKeyDetachPermission(activeAPIKey.id),
+									]
+								: []
+						}
 					>
 						Delete Limit
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Typography.Text className="delete-text">
@@ -1831,7 +1901,7 @@ function MultiIngestionSettings(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						color="primary"
 						key="submit"
@@ -1839,9 +1909,15 @@ function MultiIngestionSettings(): JSX.Element {
 						prefix={<Check size={14} />}
 						loading={isLoadingUpdateAPIKey}
 						onClick={onUpdateApiKey}
+						testId="ingestion-key-update-btn"
+						checks={
+							isEditModalOpen && activeAPIKey?.id
+								? [buildIngestionKeyUpdatePermission(activeAPIKey.id)]
+								: []
+						}
 					>
 						Update Ingestion Key
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<Form
