@@ -79,38 +79,11 @@ jobs:
         run: |
           cd frontend && pnpm generate:api
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)
-  storybook-build:
+  storybook:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: self-checkout
-        uses: actions/checkout@v4
-      - name: install-pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 10
-      - name: node-install
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - name: install-frontend
-        run: cd frontend && pnpm install
-      - name: build-storybook
-        run: cd frontend && pnpm storybook:build --quiet
-      - name: upload-storybook
-        uses: actions/upload-artifact@v4
-        with:
-          name: storybook-static
-          retention-days: 1
-          path: frontend/storybook-static
-  storybook:
-    needs: storybook-build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -134,14 +107,7 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - name: install-frontend
         run: cd frontend && pnpm install
-      - name: download-storybook
-        uses: actions/download-artifact@v4
-        with:
-          name: storybook-static
-          path: frontend/storybook-static
       - name: test-storybook
-        env:
-          STORYBOOK_STATIC_DIR: storybook-static
         run: cd frontend && pnpm test:storybook --shard=${{ matrix.shard }}/${{ strategy.job-total }}
   web-settings:
     if: |
