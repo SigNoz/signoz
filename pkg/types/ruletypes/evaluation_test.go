@@ -668,6 +668,81 @@ func TestCumulativeWindow_NextWindowFor(t *testing.T) {
 			wantEnd:   time.Date(2023, 2, 15, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			name: "boundary - day 31 on March 31st before scheduled time (February fallback)",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(31),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 3, 31, 10, 0, 0, 0, time.UTC), // March 31st, before 12:00
+			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC), // February 28th (fallback from 31st)
+			wantEnd:   time.Date(2025, 3, 31, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "boundary - day 30 on March 30th before scheduled time (February fallback)",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(30),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 3, 30, 10, 0, 0, 0, time.UTC), // March 30th, before 12:00
+			wantStart: time.Date(2025, 2, 28, 12, 0, 0, 0, time.UTC), // February 28th (fallback from 30th)
+			wantEnd:   time.Date(2025, 3, 30, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "boundary - day 29 on March 29th before scheduled time in a leap year",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(29),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2024, 3, 29, 10, 0, 0, 0, time.UTC), // March 29th, before 12:00
+			wantStart: time.Date(2024, 2, 29, 12, 0, 0, 0, time.UTC), // February 29th (exists in a leap year)
+			wantEnd:   time.Date(2024, 3, 29, 10, 0, 0, 0, time.UTC),
+		},
+		{
+			name: "boundary - day 31 on May 31st before scheduled time (April fallback)",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(31),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "Asia/Kolkata",
+			},
+			current:   time.Date(2025, 5, 31, 4, 30, 0, 0, time.UTC), // May 31st 10:00 IST, before 12:00 IST
+			wantStart: time.Date(2025, 4, 30, 6, 30, 0, 0, time.UTC), // April 30th 12:00 IST (fallback from 31st)
+			wantEnd:   time.Date(2025, 5, 31, 4, 30, 0, 0, time.UTC),
+		},
+		{
+			name: "boundary - day 31 on January 31st before scheduled time (December of previous year)",
+			window: CumulativeWindow{
+				Schedule: CumulativeSchedule{
+					Type:   ScheduleTypeMonthly,
+					Day:    intPtr(31),
+					Hour:   intPtr(12),
+					Minute: intPtr(0),
+				},
+				Timezone: "UTC",
+			},
+			current:   time.Date(2025, 1, 31, 10, 0, 0, 0, time.UTC),  // January 31st, before 12:00
+			wantStart: time.Date(2024, 12, 31, 12, 0, 0, 0, time.UTC), // December 31st of the previous year
+			wantEnd:   time.Date(2025, 1, 31, 10, 0, 0, 0, time.UTC),
+		},
+		{
 			name: "boundary - extreme timezone offset (+14 hours)",
 			window: CumulativeWindow{
 				Schedule: CumulativeSchedule{
