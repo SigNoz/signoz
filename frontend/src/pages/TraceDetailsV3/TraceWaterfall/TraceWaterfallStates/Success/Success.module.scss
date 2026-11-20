@@ -33,6 +33,14 @@
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
+
+	// Hosts without antd's reset (the explorer span drawer) default to content-box,
+	// which widens the padded rows and bars past the ruler.
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
 }
 
 .splitPanel {
@@ -61,11 +69,6 @@
 	// Matches the body `.sidebar` border-right so the span-name / timeline
 	// divider is continuous from the top of the container through the ruler.
 	border-right: 1px solid var(--l2-border);
-}
-
-.resizeHandleHeader {
-	width: 4px;
-	flex-shrink: 0;
 }
 
 .statusHeader {

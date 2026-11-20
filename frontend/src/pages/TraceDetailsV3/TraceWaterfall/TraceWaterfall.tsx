@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, ReactNode, SetStateAction, useMemo } from 'react';
 import { Skeleton } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
@@ -33,6 +33,8 @@ interface ITraceWaterfallProps {
 	setSelectedSpan: Dispatch<SetStateAction<SpanV3 | undefined>>;
 	filteredSpanIds: string[];
 	isFilterActive: boolean;
+	/** Replaces the loading skeleton. */
+	loadingFallback?: ReactNode;
 }
 
 function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
@@ -51,6 +53,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		selectedSpan,
 		filteredSpanIds,
 		isFilterActive,
+		loadingFallback,
 	} = props;
 	// get the current state of trace waterfall based on the API lifecycle
 	const traceWaterfallState = useMemo(() => {
@@ -99,6 +102,9 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	const getContent = useMemo(() => {
 		switch (traceWaterfallState) {
 			case TraceWaterfallStates.LOADING:
+				if (loadingFallback) {
+					return loadingFallback;
+				}
 				return (
 					<div className={styles.loadingSkeleton}>
 						<Skeleton active paragraph={{ rows: 6 }} />
@@ -144,6 +150,7 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 		interestedSpanId,
 		isFilterActive,
 		isFullDataLoaded,
+		loadingFallback,
 		localUncollapsedNodes,
 		setLocalUncollapsedNodes,
 		selectedSpan,

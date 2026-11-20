@@ -38,6 +38,7 @@ export type TracesTableProps = {
 	/** Replaces the default row click, which opens the trace detail page. */
 	onRowClick?: (row: TracesTableRow) => void;
 	isRowActive?: (row: TracesTableRow) => boolean;
+	onRowHover?: (row: TracesTableRow) => void;
 	activeRowIndex?: number;
 	isLoading: boolean;
 	isFetching: boolean;
@@ -61,6 +62,7 @@ function TracesTable({
 	getRowHref,
 	onRowClick,
 	isRowActive,
+	onRowHover,
 	activeRowIndex,
 	isLoading,
 	isFetching,
@@ -149,6 +151,7 @@ function TracesTable({
 						onRowClick={handleRowClick}
 						onRowClickNewTab={handleRowClickNewTab}
 						isRowActive={isRowActive}
+						onRowHover={onRowHover}
 						activeRowIndex={activeRowIndex}
 						getRowKey={getRowKey}
 						getRowTestId={(row): string => `traces-table-row-${row.id}`}
@@ -175,6 +178,7 @@ TracesTable.defaultProps = {
 	respectColumnOrder: false,
 	onRowClick: undefined,
 	isRowActive: undefined,
+	onRowHover: undefined,
 	activeRowIndex: undefined,
 	onColumnOrderChange: undefined,
 	onColumnRemove: undefined,

@@ -35,10 +35,12 @@ function TanStackCustomTableRow<TData, TItemKey = string>({
 	const setHovered = useSetRowHovered(rowId);
 	const clearHovered = useClearRowHovered(rowId);
 
+	const onRowHover = context?.onRowHover;
 	const handleMouseEnter = useCallback((): void => {
 		chromePerformanceTanstackTableBeginHover(rowId);
 		setHovered();
-	}, [rowId, setHovered]);
+		onRowHover?.(rowData);
+	}, [rowId, setHovered, onRowHover, rowData]);
 
 	useLayoutEffect(() => {
 		chromePerformanceMeasureTanstackTable('Row render', renderStart, {
@@ -139,6 +141,10 @@ function areTableRowPropsEqual<TData, TItemKey = string>(
 		prev.context?.enableAlternatingRowColors !==
 		next.context?.enableAlternatingRowColors
 	) {
+		return false;
+	}
+
+	if (prev.context?.onRowHover !== next.context?.onRowHover) {
 		return false;
 	}
 

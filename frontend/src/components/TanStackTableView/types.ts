@@ -96,6 +96,8 @@ export type TableRowContext<TData, TItemKey = string> = {
 	onRowClick?: (row: TData, itemKey: TItemKey, context: RowClickContext) => void;
 	/** Called when ctrl+click or cmd+click on a row */
 	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
+	/** Called when the pointer enters a row. */
+	onRowHover?: (row: TData) => void;
 	renderExpandedRow?: (
 		row: TData,
 		rowKey: string,
@@ -190,6 +192,8 @@ export type TanStackTableProps<TData, TItemKey = string> = {
 	onRowClick?: (row: TData, itemKey: TItemKey, context: RowClickContext) => void;
 	/** Called when ctrl+click or cmd+click on a row */
 	onRowClickNewTab?: (row: TData, itemKey: TItemKey) => void;
+	/** Called when the pointer enters a row. */
+	onRowHover?: (row: TData) => void;
 	activeRowIndex?: number;
 	renderExpandedRow?: (
 		row: TData,

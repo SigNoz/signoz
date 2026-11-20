@@ -137,7 +137,7 @@ function ListView({
 	}, [isLoading, isFetching, setIsLoadingQueries]);
 
 	const { tableProps, openTraceColumn, drawerProps, onPressInside } =
-		useSpanDrawer(rows);
+		useSpanDrawer(rows, isLoading);
 
 	const columns = useMemo<TableColumnDef<TracesTableRow>[]>(() => {
 		const fields = [
