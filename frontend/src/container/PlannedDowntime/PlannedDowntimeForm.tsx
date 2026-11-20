@@ -36,6 +36,11 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
+import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAppContext } from 'providers/App/App';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -54,6 +59,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { usePlannedDowntimeFormPermissions } from './usePlannedDowntimeFormPermissions';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 
 dayjs.locale('en');
@@ -73,6 +79,9 @@ const TZ_OPTIONS: DefaultOptionType[] = ALL_TIME_ZONES.map(
 );
 
 type AlertRuleScope = 'all' | 'specific';
+
+// Module-level so the useQueries identity stays stable across renders.
+const RULE_LIST_CHECKS = [RuleListPermission];
 
 interface PlannedDowntimeFormData {
 	name: string;
@@ -142,9 +151,48 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
+	const { isReadOnly, saveChecks, getRuleAccess, onPickerOpen } =
+		usePlannedDowntimeFormPermissions({
+			initialValues,
+			isEditMode,
+			alertOptions,
+			isAllRules: alertRuleScope === 'all',
+			selectedRules: selectedTags,
+		});
+
+	const { user } = useAppContext();
+	const ruleList = useAuthZ(RULE_LIST_CHECKS);
+	const isRuleListDenied =
+		!ruleList.isLoading &&
+		!ruleList.error &&
+		!ruleList.isGranted(RuleListPermission);
+
+	const gatedAlertOptions = useMemo(
+		() =>
+			alertOptions.map((option) => {
+				const { disabled, reason } = getRuleAccess(String(option.value));
+				return {
+					...option,
+					disabled,
+					title: reason,
+					'aria-disabled': disabled,
+					'data-testid': `downtime-rule-option-${option.value}`,
+				};
+			}),
+		[alertOptions, getRuleAccess],
+	);
+
+	const getRuleLockReason = useCallback(
+		(ruleId: string): string | undefined => {
+			const { disabled, reason } = getRuleAccess(ruleId);
+			return disabled ? reason : undefined;
+		},
+		[getRuleAccess],
+	);
+
 	const requiredFieldRule = [{ required: true }];
 
-	const datePickerFooter = (mode: any): any =>
+	const datePickerFooter = (mode: string): JSX.Element | null =>
 		mode === 'time' ? (
 			<span style={{ color: 'gray' }}>Please select the time</span>
 		) : null;
@@ -278,7 +326,7 @@ export function PlannedDowntimeForm(
 			name: defaultTo(initialValues.name, ''),
 			alertRuleScope:
 				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
-			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
+			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions, isError),
 			startTime: schedule?.startTime
 				? dayjs(schedule.startTime).tz(schedule.timezone)
 				: null,
@@ -295,7 +343,7 @@ export function PlannedDowntimeForm(
 			timezone: schedule?.timezone as string,
 			scope: initialValues.scope || '',
 		};
-	}, [initialValues, isEditMode, alertOptions]);
+	}, [initialValues, isEditMode, alertOptions, isError]);
 
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
@@ -359,6 +407,7 @@ export function PlannedDowntimeForm(
 				form={form}
 				layout="vertical"
 				className="createForm"
+				disabled={isReadOnly}
 				onFinish={onFinish}
 				onValuesChange={(): void => {
 					setRecurrenceType(form.getFieldValue('recurrence')?.repeatType as string);
@@ -480,9 +529,10 @@ export function PlannedDowntimeForm(
 						<>
 							<Form.Item noStyle shouldUpdate>
 								<AlertRuleTags
-									closable
+									closable={!isReadOnly}
 									selectedTags={selectedTags}
 									handleClose={handleClose}
+									getLockReason={getRuleLockReason}
 								/>
 							</Form.Item>
 							<Form.Item
@@ -510,14 +560,24 @@ export function PlannedDowntimeForm(
 									tagRender={noTagRenderer}
 									onChange={handleAlertRulesChange}
 									showSearch
-									options={alertOptions}
+									options={gatedAlertOptions}
+									data-testid="downtime-alert-rules"
+									onDropdownVisibleChange={(open): void => {
+										if (open) {
+											onPickerOpen();
+										}
+									}}
 									filterOption={(input, option): boolean =>
 										(option?.label as string)
 											?.toLowerCase()
 											?.includes(input.toLowerCase())
 									}
 									notFoundContent={
-										isLoading ? (
+										isRuleListDenied ? (
+											<span data-testid="downtime-rules-denied">
+												{formatDeniedMessage([RuleListPermission], user.id)}
+											</span>
+										) : isLoading ? (
 											<span>
 												<Spin size="small" /> Loading...
 											</span>
@@ -526,8 +586,13 @@ export function PlannedDowntimeForm(
 										)
 									}
 								>
-									{alertOptions?.map((option) => (
-										<Select.Option key={option.value} value={option.value}>
+									{gatedAlertOptions.map((option) => (
+										<Select.Option
+											key={option.value}
+											value={option.value}
+											disabled={option.disabled}
+											title={option.title}
+										>
 											{option.label}
 										</Select.Option>
 									))}
@@ -568,19 +633,24 @@ export function PlannedDowntimeForm(
 				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
-						<Button
-							key="submit"
-							type="primary"
-							htmlType="submit"
-							onClick={handleOk}
-							loading={saveLoading || isLoading}
-							className="downtime-schedule-btn"
-						>
-							<Flex align="center" gap={4}>
-								<Check size={16} />
-								{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
-							</Flex>
-						</Button>
+						<AuthZTooltip checks={saveChecks}>
+							<Button
+								key="submit"
+								type="primary"
+								htmlType="submit"
+								onClick={handleOk}
+								loading={saveLoading || isLoading}
+								className="downtime-schedule-btn"
+								data-testid="downtime-save"
+							>
+								<Flex align="center" gap={4}>
+									<Check size={16} />
+									<span className="translate-safe">
+										{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+									</span>
+								</Flex>
+							</Button>
+						</AuthZTooltip>
 					</ModalButtonWrapper>
 				</Form.Item>
 			</Form>

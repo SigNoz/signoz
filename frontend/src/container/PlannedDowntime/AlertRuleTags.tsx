@@ -9,16 +9,37 @@ interface AlertRuleTagsProps {
 	selectedTags: DowntimeAlertOption[];
 	closable: boolean;
 	handleClose?: (removedTag: DowntimeAlertOption['value']) => void;
+	/** Why a closable tag must stay, which keeps it without its close button. */
+	getLockReason?: (value: string) => string | undefined;
 	classname?: string;
 }
 export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {
-	const { closable, selectedTags, handleClose, classname } = props;
+	const { closable, selectedTags, handleClose, getLockReason, classname } =
+		props;
 	return (
 		<div
 			style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}
 			className={cx('alert-rule-tags', classname)}
 		>
 			{selectedTags?.map((tag: DowntimeAlertOption, index: number) => {
+				const lockReason = closable
+					? getLockReason?.(String(tag.value))
+					: undefined;
+				if (lockReason) {
+					return (
+						<Tooltip title={lockReason} key={tag.value}>
+							<Pill.Closeable
+								maxWidth={200}
+								disabled
+								onClose={(): void => {}}
+								testId={`alert-rule-tag-locked-${tag.value}`}
+							>
+								{tag.label}
+							</Pill.Closeable>
+						</Tooltip>
+					);
+				}
+
 				if (closable) {
 					return (
 						<Pill.Closeable
