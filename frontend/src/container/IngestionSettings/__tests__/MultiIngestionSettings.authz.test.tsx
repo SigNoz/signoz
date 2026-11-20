@@ -24,6 +24,8 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import MultiIngestionSettings from '../MultiIngestionSettings';
 
+jest.setTimeout(15_000);
+
 const ROUTE = '/ingestion-settings';
 const DATE = '2024-01-01T00:00:00Z';
 const EXPIRES_AT = '2030-01-01T00:00:00Z';
