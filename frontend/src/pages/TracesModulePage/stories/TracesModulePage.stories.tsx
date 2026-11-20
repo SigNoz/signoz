@@ -5,9 +5,14 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 
 import { type TracesArgs, tracesMocks } from './TracesModulePage.stories.mocks';
 import {
+	cancelQuery,
 	dirtyQuickFiltersSettings,
 	loadNextListPage,
+	openAddToDashboard,
+	openColumnHeaderMenu,
+	openPageSize,
 	openQuickFiltersSettings,
+	showCreateFunnelNameError,
 	showRootSpansNextPage,
 	suggestBooleanValues,
 	suggestFilterKeys,
@@ -67,6 +72,22 @@ export const ListNextPage: Story = {
 	play: loadNextListPage,
 };
 
+/** The Trace view's page size menu, open over the rows a page can show. */
+export const PageSizeOpen: Story = {
+	args: { view: ExplorerViews.TRACE },
+	play: openPageSize,
+};
+
+/** A spans list column's header menu, open on its Remove column action. */
+export const ColumnHeaderMenu: Story = {
+	play: openColumnHeaderMenu,
+};
+
+/** The dashboard picker the toolbar's Add to dashboard action opens. */
+export const AddToDashboardDialog: Story = {
+	play: openAddToDashboard,
+};
+
 /** The charted view of the same trace query. */
 export const Timeseries: Story = {
 	args: { view: ExplorerViews.TIMESERIES },
@@ -82,6 +103,19 @@ export const Funnels: Story = {
 	args: { tab: 'funnels' },
 };
 
+/** The Funnels tab with none saved: the empty state and its New funnel action. */
+export const FunnelsEmpty: Story = {
+	args: { tab: 'funnels', funnels: 0 },
+};
+
+/** The create dialog after the backend turned down a name already on the list. */
+export const CreateFunnelNameError: Story = {
+	args: { tab: 'funnels' },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: showCreateFunnelNameError,
+};
+
 /**
  * A fresh workspace: nothing ingested in the window and no quick filters
  * configured yet, so the table and the filter panel both show their empty
@@ -94,6 +128,12 @@ export const NoTraces: Story = {
 /** The list mid-query, with the cancel action the toolbar offers while it runs. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
+};
+
+/** The running query cancelled from the toolbar, which swaps the list for the cancelled notice. */
+export const QueryCancelled: Story = {
+	args: { dataState: 'loading' },
+	play: cancelQuery,
 };
 
 /** A query response carrying the backend's warning details. */

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';

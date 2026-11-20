@@ -1,23 +1,29 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
-import { screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import AIAssistantPage from '../AIAssistantPage';
 import {
+	type AIAssistantArgs,
 	aiAssistantMocks,
-	failVoiceInput,
-	forgetVoiceFailure,
 	longActionTooltipHandlers,
-	speak,
-	startVoiceInput,
 } from './AIAssistantPage.stories.mocks';
 import type { ThreadPart } from './__story_mockdata__/aiAssistant';
-
-type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
+import {
+	copyConversationLink,
+	expandActivity,
+	expandSingleStep,
+	openApprovalDiff,
+	openContextPicker,
+	openConversationActions,
+	openLiveSteps,
+	openNegativeFeedback,
+	pickContexts,
+	scrollToTop,
+	typeDraft,
+} from './__story_mockdata__/aiAssistant.play';
 
 const pageStory = storyMocks(aiAssistantMocks, { layout: 'app' });
 
@@ -40,39 +46,11 @@ const meta = {
 	),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
-	beforeEach: forgetVoiceFailure,
 } satisfies Meta<AIAssistantArgs>;
 
 export default meta;
 
 type Story = StoryObj<AIAssistantArgs>;
-
-/** The thread list resolves before the thread does, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-/** How long what a click opened has to stay on screen to count as open. */
-const HOLD_MS = 1_000;
-
-/**
- * Click something, and keep clicking until what it opens is on screen. The
- * message list remounts its items while it measures a freshly loaded thread, so
- * a single click can land on a row that is about to be replaced, taking the
- * state it just set with it. The replacement can land after that state has
- * rendered, so it has to still be there `HOLD_MS` later.
- */
-const clickUntil = async (
-	find: () => Promise<HTMLElement>,
-	opens: RegExp,
-): Promise<void> => {
-	await waitFor(async () => {
-		await userEvent.click(await find());
-		await screen.findByText(opens, undefined, { timeout: 1_000 });
-		await new Promise((resolve) => {
-			setTimeout(resolve, HOLD_MS);
-		});
-		screen.getByText(opens);
-	}, untilLoaded);
-};
 
 /** The blocks the agent renders as cards the user answers in place. */
 const INTERACTIVE: ThreadPart[] = [
@@ -121,12 +99,35 @@ export const AnsweredBlocks: Story = {
 	args: { contents: INTERACTIVE, answered: true },
 };
 
+/** Just sent, with nothing back yet: the reply is one live Thinking… step. */
+export const Thinking: Story = {
+	args: { agent: 'thinking', contents: BRIEF },
+};
+
 /**
- * Mid-answer: a step already done, the text so far, and a step still running
- * with the elapsed clock on it. The composer waits its turn.
+ * Mid-answer: steps already done, the text so far, and the running step named
+ * on a shimmering row. The input takes a draft; sending waits for the reply.
  */
 export const Streaming: Story = {
 	args: { agent: 'streaming', contents: BRIEF },
+};
+
+/** The running reply's steps opened: a timeline whose newest step shimmers. */
+export const StreamingSteps: Story = {
+	args: { agent: 'streaming', contents: BRIEF },
+	play: openLiveSteps,
+};
+
+/** The next question drafted while Noz still replies, with Stop in place of Send. */
+export const DraftWhileStreaming: Story = {
+	args: { agent: 'streaming', contents: BRIEF },
+	play: typeDraft,
+};
+
+/** Scrolled up while Noz replies: a shimmering Latest pill leads back to the end. */
+export const ScrolledUp: Story = {
+	args: { agent: 'streaming' },
+	play: scrollToTop,
 };
 
 /** A change the agent will not make until the user reads the diff and approves. */
@@ -149,33 +150,13 @@ export const LoadingThread: Story = {
  * with what went in and what came back.
  */
 export const ActivityExpanded: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await clickUntil(
-			() => canvas.findByText(/worked through/i, undefined, untilLoaded),
-			/compared checkout p99/i,
-		);
-		await clickUntil(
-			() => canvas.findByText(/compared checkout p99/i, undefined, untilLoaded),
-			/^Output$/,
-		);
-	},
+	play: expandActivity,
 };
 
-/** Opens the approval card's diff dialog. */
-const openApprovalDiff: NonNullable<Story['play']> = async ({
-	canvasElement,
-}) => {
-	await clickUntil(
-		() =>
-			within(canvasElement).findByLabelText(
-				/expand diff/i,
-				undefined,
-				untilLoaded,
-			),
-		/approval diff/i,
-	);
+/** An answer that took one step: its row names the step and opens to its input and output, with no timeline. */
+export const SingleStep: Story = {
+	args: { contents: ['one-step'] },
+	play: expandSingleStep,
 };
 
 /** The approval diff at full size, before against after. */
@@ -184,66 +165,14 @@ export const ApprovalDiff: Story = {
 	play: openApprovalDiff,
 };
 
-/**
- * Dictating a question: the mic listening, the words heard so far in the
- * composer, and the controls to discard them or stop and send.
- */
-export const VoiceRecording: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await startVoiceInput(canvasElement);
-		speak('why did checkout p99 jump after the 14:00 deploy');
-		await within(canvasElement).findByDisplayValue(/checkout p99 jump/);
-	},
-};
-
-/** The recognizer reporting it cannot reach the speech service. */
-export const VoiceInputUnavailableToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await startVoiceInput(canvasElement);
-		failVoiceInput('network');
-		await screen.findByText(/voice input unavailable in this browser/i);
-	},
-};
-
-/** The browser refusing the microphone. */
-export const MicrophoneDeniedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await startVoiceInput(canvasElement);
-		failVoiceInput('not-allowed');
-		await screen.findByText(/microphone access denied/i);
-	},
-};
-
 /** The comment box a thumbs down opens, which a thumbs up does not. */
 export const NegativeFeedback: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickUntil(async () => {
-			// Every assistant message carries the bar; only the last one shows it
-			// without a hover.
-			const bars = await within(canvasElement).findAllByLabelText(
-				/bad response/i,
-				undefined,
-				untilLoaded,
-			);
-
-			return bars[bars.length - 1];
-		}, /what went wrong/i);
-	},
+	play: openNegativeFeedback,
 };
 
 /** What a conversation row offers: rename, a link to it, and archiving. */
 export const ConversationActions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickUntil(async () => {
-			const [actions] = await within(canvasElement).findAllByLabelText(
-				/conversation actions/i,
-				undefined,
-				untilLoaded,
-			);
-
-			return actions;
-		}, /copy link/i);
-	},
+	play: openConversationActions,
 };
 
 /**
@@ -251,39 +180,27 @@ export const ConversationActions: Story = {
  * can be pinned to.
  */
 export const AddContext: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickUntil(
-			() =>
-				within(canvasElement).findByRole(
-					'button',
-					{ name: /add context/i },
-					untilLoaded,
-				),
-			/checkout overview/i,
-		);
-	},
+	play: openContextPicker,
+};
+
+/** A dashboard and a service picked, as pills over the input; focus shows a pill's remove. */
+export const PickedContexts: Story = {
+	play: pickContexts,
+};
+
+/** A question sent with picked contexts, which sit under it as added to context. */
+export const SentContexts: Story = {
+	args: { contents: ['contexts'] },
 };
 
 /** "Copy link" on a conversation row, which toasts once the link is copied. */
 export const ConversationLinkCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickUntil(async () => {
-			const [actions] = await within(canvasElement).findAllByLabelText(
-				/conversation actions/i,
-				undefined,
-				untilLoaded,
-			);
-
-			return actions;
-		}, /copy link/i);
-		await userEvent.click(await screen.findByText(/copy link/i));
-		await screen.findByText(/conversation link copied to clipboard/i);
-	},
+	play: copyConversationLink,
 };
 
 /**
- * Every tooltip the thread carries, held open at once: the composer's voice and
- * send buttons, the sidebar's new conversation, the copy chip under each user
+ * Every tooltip the thread carries, held open at once: the composer's add context
+ * and send buttons, the sidebar's new conversation, the copy chip under each user
  * message, the copy, rate and regenerate bar under each answer, the code block's
  * copy, and the action chip's own description.
  */
@@ -300,14 +217,4 @@ export const Tooltips: Story = {
 export const TooltipsInApprovalDiff: Story = {
 	args: { tooltipsOpen: true, agent: 'awaiting-approval', contents: BRIEF },
 	play: openApprovalDiff,
-};
-
-/**
- * The recording controls' tooltips, held open: discard, stop and send, and the
- * send button beside them, which waits for words.
- */
-export const TooltipsInVoiceRecording: Story = {
-	args: { tooltipsOpen: true, contents: BRIEF },
-	play: async ({ canvasElement }): Promise<void> =>
-		startVoiceInput(canvasElement),
 };

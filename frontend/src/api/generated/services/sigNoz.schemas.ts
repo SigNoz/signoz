@@ -5284,6 +5284,7 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 }
 
 export enum TelemetrytypesSourceDTO {
+	audit = 'audit',
 	meter = 'meter',
 	'' = '',
 }

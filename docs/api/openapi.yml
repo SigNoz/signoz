@@ -13655,6 +13655,7 @@ components:
       type: string
     TelemetrytypesSource:
       enum:
+      - audit
       - meter
       - ""
       type: string

@@ -1,5 +1,5 @@
 import { CircleX } from '@signozhq/icons';
-import { Row } from 'antd';
+import Row from 'periscope/components/Row/Row';
 import styled from 'styled-components';
 
 export const StyledDeleteEntity = styled(CircleX)`

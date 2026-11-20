@@ -31,19 +31,7 @@ import { QueryParams } from 'constants/query';
 import { UpdateTimeInterval } from 'store/actions';
 import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
-import {
-	ArchiveRestore,
-	BookOpen,
-	Check,
-	ExternalLink,
-	Eye,
-	Filter,
-	MessageCircle,
-	RotateCcw,
-	Sparkles,
-	TriangleAlert,
-	Undo,
-} from '@signozhq/icons';
+import { Check, TriangleAlert } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
 
@@ -117,34 +105,6 @@ type ChipState = 'idle' | 'loading' | 'success' | 'error';
 interface ChipResult {
 	state: ChipState;
 	error?: string;
-}
-
-/** Maps each MessageActionKindDTO to its display icon. */
-function ActionIcon({
-	kind,
-	size = 12,
-}: {
-	kind: MessageActionDTO['kind'];
-	size?: number;
-}): JSX.Element {
-	switch (kind) {
-		case MessageActionKindDTO.undo:
-			return <Undo size={size} />;
-		case MessageActionKindDTO.revert:
-			return <RotateCcw size={size} />;
-		case MessageActionKindDTO.restore:
-			return <ArchiveRestore size={size} />;
-		case MessageActionKindDTO.follow_up:
-			return <MessageCircle size={size} />;
-		case MessageActionKindDTO.open_resource:
-			return <Eye size={size} />;
-		case MessageActionKindDTO.open_docs:
-			return <BookOpen size={size} />;
-		case MessageActionKindDTO.apply_filter:
-			return <Filter size={size} />;
-		default:
-			return <ExternalLink size={size} />;
-	}
 }
 
 /**
@@ -619,10 +579,7 @@ export default function ActionsSection({
 
 	return (
 		<div className={styles.section}>
-			<div className={styles.heading}>
-				<Sparkles size={12} className={styles.headingIcon} />
-				<span className={styles.headingText}>Suggested actions</span>
-			</div>
+			<div className={styles.heading}>Suggested actions</div>
 
 			<div className={styles.list}>
 				{actions.map((action, i) => {
@@ -648,13 +605,11 @@ export default function ActionsSection({
 						openTarget !== null &&
 						isOnResourcePage(openTarget.path, { pathname, search });
 
-					let icon: JSX.Element;
+					let icon: JSX.Element | undefined;
 					if (isSuccess) {
-						icon = <Check size={12} />;
+						icon = <Check size={14} />;
 					} else if (isError) {
-						icon = <TriangleAlert size={12} />;
-					} else {
-						icon = <ActionIcon kind={action.kind} />;
+						icon = <TriangleAlert size={14} />;
 					}
 
 					const chip = (
