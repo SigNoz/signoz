@@ -68,6 +68,17 @@ const CONVERTED = [{ id: 'converted' }] as unknown as NonNullable<
 >;
 const SWITCHED_SPEC = { switched: true } as unknown;
 
+const tracesBuilder = (expression: string): Query['builder'] => ({
+	...initialQueriesMap.traces.builder,
+	queryData: [
+		{
+			...initialQueriesMap.traces.builder.queryData[0],
+			aggregations: [{ expression }],
+		},
+	],
+	queryFormulas: [],
+});
+
 function makeSpec(
 	kind: string,
 	pluginSpec: unknown,
@@ -288,6 +299,50 @@ describe('usePanelKindChange', () => {
 			'A',
 		]);
 		expect(persisted.builder.queryFormulas).toStrictEqual([]);
+	});
+
+	it('keeps the field of a traces function aggregation when switching to a Heatmap panel', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('ts-current', 'builder')),
+		);
+		mockRebuildBuilder.mockReturnValue(tracesBuilder('p99(duration_nano)'));
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/HeatmapPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData[0].aggregations).toMatchObject([
+			{ expression: 'duration_nano' },
+		]);
+	});
+
+	it('wraps a traces heatmap field in a function when switching to a TimeSeries panel', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('heatmap-current', 'builder')),
+		);
+		mockRebuildBuilder.mockReturnValue(tracesBuilder('duration_nano'));
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/HeatmapPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.HEATMAP,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/TimeSeriesPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData[0].aggregations).toMatchObject([
+			{ expression: 'p90(duration_nano)' },
+		]);
 	});
 
 	it('swaps a percentile spatial aggregation for count when switching to a Heatmap panel', () => {
