@@ -160,7 +160,7 @@ type msteamsMigrationCounts struct {
 
 func NewMigrateMSTeamsDefaultTemplatesFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("migrate_msteams_default_templates"),
+		factory.MustNewName("migrate_msteams_templates"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
 			return &migrateMSTeamsDefaultTemplates{logger: ps.Logger}, nil
 		},
