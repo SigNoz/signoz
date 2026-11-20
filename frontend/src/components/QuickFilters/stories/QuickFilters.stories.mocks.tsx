@@ -17,6 +17,7 @@ import {
 } from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../FilterRenderers/Checkbox/constants';
 import { FiltersType, QuickFilterCheckboxUseFieldApis } from '../types';
 
 const customFilters = [
@@ -137,3 +138,9 @@ export const selectedServiceQueryBuilder = {
 		},
 	},
 };
+
+/** More values than the checkbox filter shows before Show More. */
+export const MANY_FILTER_VALUES = Array.from(
+	{ length: 2 * DEFAULT_VISIBLE_ITEMS_COUNT + 5 },
+	(_, index) => `service-${String(index + 1).padStart(2, '0')}`,
+);

@@ -35,7 +35,7 @@ exports[`PipelinePage container test should render CreatePipelineButton section 
       type="button"
     >
       <div
-        class="ant-flex css-dev-only-do-not-override-2i2tap ant-flex-align-center"
+        class=""
         style="gap: 4px;"
       >
         <svg />

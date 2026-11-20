@@ -121,7 +121,7 @@ export default function ClarificationForm({
 	return (
 		<div className={styles.clarification}>
 			<div className={styles.header}>
-				<CircleHelp size={13} className={styles.headerIcon} />
+				<CircleHelp size={16} className={styles.headerIcon} />
 				<span className={styles.headerLabel}>A few details needed</span>
 			</div>
 
@@ -146,6 +146,7 @@ export default function ClarificationForm({
 							: 'Fill in the required fields first'
 					}
 					size="md"
+					width="100%"
 					variant="solid"
 					color="primary"
 					onClick={handleSubmit}
@@ -157,6 +158,7 @@ export default function ClarificationForm({
 				<Button
 					disabledTooltip="Wait for the response to finish"
 					size="md"
+					width="100%"
 					variant="outlined"
 					color="secondary"
 					onClick={handleCancel}

@@ -21,6 +21,7 @@ import type {
 	MessageActionKindDTO,
 	RetryActionDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageContext } from 'api/ai-assistant/chat';
 
 /** Client-only file attachment — no API equivalent (uploads happen via data URLs). */
 export interface MessageAttachment {
@@ -82,6 +83,8 @@ export interface Message {
 	role: MessageRole;
 	content: string;
 	attachments?: MessageAttachment[];
+	/** What a user message was sent with: its @-picked resources and the page it came from. */
+	contexts?: MessageContext[];
 	/** Ordered content blocks for structured rendering of assistant replies. */
 	blocks?: MessageBlock[];
 	/** Suggested follow-up actions returned by the assistant (final message only). */
@@ -183,4 +186,6 @@ export interface ConversationStreamState {
 	streamingActions: MessageActionDTO[] | null;
 	pendingApproval: ApprovalEventDTO | null;
 	pendingClarification: ClarificationEventDTO | null;
+	/** When the reply began; null when nothing is streaming. */
+	startedAt: number | null;
 }

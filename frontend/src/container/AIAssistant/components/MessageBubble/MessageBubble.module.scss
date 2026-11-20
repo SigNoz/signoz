@@ -37,6 +37,11 @@
 	.assistant & {
 		align-items: flex-start;
 	}
+
+	// The full page's column is already narrow, so replies use all of it.
+	.assistant &.fullPage {
+		max-width: 100%;
+	}
 }
 
 .bubble {
@@ -47,12 +52,15 @@
 	font-weight: 400;
 	line-height: 20px; /* 153.846% */
 	letter-spacing: -0.065px;
+	font-feature-settings: 'zero' on;
 	max-width: 100%;
 
 	.user & {
-		background: var(--accent-primary);
-		color: var(--primary-foreground);
-		border-bottom-right-radius: var(--radius-2);
+		padding: var(--spacing-4) var(--spacing-6);
+		border-radius: var(--radius-3);
+		background: var(--l3-background-60);
+		color: var(--l1-foreground);
+		font-size: var(--periscope-font-size-base);
 	}
 
 	.assistant & {
@@ -65,7 +73,14 @@
 		align-items: flex-start;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
+		font-size: var(--periscope-font-size-base);
 		border-bottom-left-radius: var(--radius-2);
+	}
+
+	// The full page shows replies as plain text on the pane; errors keep their callout.
+	.assistant .fullPage &:not(.error) {
+		padding: 0 0 0 var(--spacing-5);
+		background: transparent;
 	}
 }
 
@@ -208,17 +223,6 @@
 		font-style: italic;
 	}
 
-	a {
-		color: var(--accent-primary);
-		text-decoration: underline;
-		text-underline-offset: 2px;
-		text-decoration-thickness: 1px;
-
-		&:hover {
-			opacity: 0.8;
-		}
-	}
-
 	blockquote {
 		border-left: 3px solid var(--l2-border);
 		padding: 0.1em 0 0.1em 0.8em;
@@ -266,31 +270,43 @@
 		white-space: pre;
 	}
 
+	// No cell borders, alternate rows shaded, the label column brightest; the panel is MarkdownTable's.
 	table {
+		// As wide as its content, at least the panel: rows stay on one line and a wide table scrolls.
+		width: max-content;
+		min-width: 100%;
 		border-collapse: collapse;
-		font-size: 12px;
-		margin: 0 0 0.65em;
-		width: 100%;
-
-		&:last-child {
-			margin-bottom: 0;
-		}
+		font-size: var(--periscope-font-size-base);
+		font-variant-numeric: tabular-nums;
+		word-break: normal;
 
 		th,
 		td {
-			padding: 5px 10px;
-			border: 1px solid var(--l2-border);
+			padding: var(--spacing-4) var(--spacing-6);
 			text-align: left;
 		}
 
 		th {
-			background: var(--l2-background);
-			color: var(--l1-foreground);
-			font-weight: 600;
+			padding-block: 13px;
+			font-size: var(--periscope-font-size-small);
+			font-weight: var(--font-weight-medium);
+			line-height: 1;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			color: var(--l2-foreground);
 		}
 
 		td {
-			color: var(--l1-foreground);
+			line-height: var(--line-height-20);
+			color: var(--l2-foreground);
+
+			&:first-child {
+				color: var(--l1-foreground);
+			}
+		}
+
+		tbody tr:nth-child(odd) td {
+			background: var(--l1-background-hover);
 		}
 	}
 }

@@ -3,7 +3,7 @@
 exports[`PipelinePage container test should render TableExpandIcon section 1`] = `
 <DocumentFragment>
   <div
-    class="ant-flex css-dev-only-do-not-override-2i2tap ant-flex-align-center ant-flex-justify-center"
+    class=""
     data-testid="pipeline-row-collapse"
   >
     <svg />
