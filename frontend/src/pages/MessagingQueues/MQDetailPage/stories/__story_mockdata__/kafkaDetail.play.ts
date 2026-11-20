@@ -4,7 +4,7 @@
  */
 
 import { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import type { KafkaDetailArgs } from '../MQDetailPage.stories.mocks';
 
@@ -60,25 +60,6 @@ export const showConsumers = async ({
 	// Byte Rate is the column only the producer table has.
 	await waitFor(
 		() => expect(canvas.queryByText('Byte Rate')).not.toBeInTheDocument(),
-		untilLoaded,
-	);
-};
-
-/** Only the drop rate view carries the evaluation interval selector. */
-export const openCustomInterval = async ({
-	canvasElement,
-	args,
-}: PlayContext): Promise<void> => {
-	if (args.view !== MessagingQueuesViewTypeOptions.DropRate) {
-		return;
-	}
-
-	await userEvent.click(
-		await within(canvasElement).findByText('10ms', undefined, untilLoaded),
-	);
-	await screen.findByPlaceholderText(
-		'Enter custom time (ms)',
-		undefined,
 		untilLoaded,
 	);
 };
