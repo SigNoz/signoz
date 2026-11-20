@@ -52,12 +52,13 @@ export const fillAgentForm = async (
 	user: ReturnType<typeof userEvent.setup>,
 ): Promise<void> => {
 	await waitFor(() => {
-		expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
+		expect(screen.getByTestId('gcp-generate-command-btn')).not.toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
-	await user.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
-		DEPLOYMENT_PROJECT_ID,
-	);
+	await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+	await user.paste(DEPLOYMENT_PROJECT_ID);
 	await user.click(screen.getByTestId('gcp-deployment-region-select'));
 	await user.click(await screen.findByText('Mumbai (asia-south1)'));
 };

@@ -26,8 +26,6 @@ window.ResizeObserver =
 	}));
 
 describe('BillingContainer', () => {
-	jest.setTimeout(30000);
-
 	beforeEach(() => {
 		server.use(setupAuthzAdmin());
 	});
@@ -39,40 +37,47 @@ describe('BillingContainer', () => {
 	it('Component should render', async () => {
 		render(<BillingContainer />);
 
-		const dataInjection = await screen.findByRole('columnheader', {
-			name: /data ingested/i,
-		});
-		expect(dataInjection).toBeInTheDocument();
-		const pricePerUnit = await screen.findByRole('columnheader', {
-			name: /price per unit/i,
-		});
-		expect(pricePerUnit).toBeInTheDocument();
-		const cost = await screen.findByRole('columnheader', {
-			name: /cost/i,
-		});
-		expect(cost).toBeInTheDocument();
-
 		const dayRemainingInBillingPeriod = await screen.findByText(
 			/Please upgrade plan now to retain your data./i,
-			{},
-			{ timeout: 5000 },
 		);
 		expect(dayRemainingInBillingPeriod).toBeInTheDocument();
+
+		expect(
+			screen.getByText('Data Ingested', { selector: 'th' }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText('Price per Unit', { selector: 'th' }),
+		).toBeInTheDocument();
+		expect(screen.getByText('Cost', { selector: 'th' })).toBeInTheDocument();
 
 		const upgradePlanButton = screen.getByTestId('upgrade-plan-button');
 		expect(upgradePlanButton).toBeInTheDocument();
 
-		const dollar = await screen.findByText(/\$1,278.3/i, {}, { timeout: 5000 });
-		expect(dollar).toBeInTheDocument();
-
-		const currentBill = await screen.findByText('billing');
-		expect(currentBill).toBeInTheDocument();
+		expect(screen.getByText(/\$1,278.3/i)).toBeInTheDocument();
+		expect(screen.getByText('billing')).toBeInTheDocument();
 	});
 
 	describe('Trial scenarios', () => {
 		beforeEach(() => {
-			jest.useFakeTimers();
-			jest.setSystemTime(new Date('2023-10-20'));
+			jest.useFakeTimers({
+				now: new Date('2023-10-20'),
+				doNotFake: [
+					'hrtime',
+					'nextTick',
+					'performance',
+					'queueMicrotask',
+					'requestAnimationFrame',
+					'cancelAnimationFrame',
+					'requestIdleCallback',
+					'cancelIdleCallback',
+					'setImmediate',
+					'clearImmediate',
+					'setInterval',
+					'clearInterval',
+					'setTimeout',
+					'clearTimeout',
+				],
+			});
 		});
 
 		afterEach(() => {
@@ -88,14 +93,9 @@ describe('BillingContainer', () => {
 				{ appContextOverrides: { trialInfo: licensesSuccessResponse.data } },
 			);
 
-			// If the component schedules any setTimeout on mount, flush them:
-			jest.runOnlyPendingTimers();
-
 			await expect(screen.findByText('Free Trial')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('billing')).resolves.toBeInTheDocument();
-			await expect(
-				screen.findByText(/\$0/i, {}, { timeout: 5000 }),
-			).resolves.toBeInTheDocument();
+			await expect(screen.findByText(/\$0/i)).resolves.toBeInTheDocument();
 
 			await expect(
 				screen.findByText(
@@ -107,18 +107,20 @@ describe('BillingContainer', () => {
 				screen.findByText(/1 days_remaining/i),
 			).resolves.toBeInTheDocument();
 
-			const upgradeButtons = await screen.findAllByRole('button', {
-				name: /upgrade_plan/i,
-			});
-			expect(upgradeButtons).toHaveLength(2);
-			expect(upgradeButtons[1]).toBeInTheDocument();
+			expect(screen.getByTestId('header-billing-button')).toHaveTextContent(
+				'upgrade_plan',
+			);
+			expect(screen.getByTestId('upgrade-plan-button')).toHaveTextContent(
+				'upgrade_plan',
+			);
 
 			await expect(
 				screen.findByText(/checkout_plans/i),
 			).resolves.toBeInTheDocument();
-			await expect(
-				screen.findByRole('link', { name: /here/i }),
-			).resolves.toBeInTheDocument();
+			expect(screen.getByText('here', { selector: 'a' })).toHaveAttribute(
+				'href',
+				'https://signoz.io/pricing/',
+			);
 
 			await expect(
 				screen.findByText('Cancel your subscription', { selector: 'span' }),
@@ -141,7 +143,7 @@ describe('BillingContainer', () => {
 			const currentBill = await screen.findByText('billing');
 			expect(currentBill).toBeInTheDocument();
 
-			const dollar0 = await screen.findByText(/\$0/i, {}, { timeout: 5000 });
+			const dollar0 = await screen.findByText(/\$0/i);
 			expect(dollar0).toBeInTheDocument();
 
 			const onTrail = await screen.findByText(
@@ -154,10 +156,9 @@ describe('BillingContainer', () => {
 			);
 			expect(receivedCardDetails).toBeInTheDocument();
 
-			const manageBillingButton = await screen.findByRole('button', {
-				name: /manage_billing/i,
-			});
-			expect(manageBillingButton).toBeInTheDocument();
+			expect(screen.getByTestId('header-billing-button')).toHaveTextContent(
+				'manage_billing',
+			);
 
 			const dayRemainingInBillingPeriod =
 				await screen.findByText(/1 days_remaining/i);
@@ -259,27 +260,26 @@ describe('BillingContainer', () => {
 			billingSuccessResponse.data.billingPeriodStart,
 		)} to ${getFormattedDate(billingSuccessResponse.data.billingPeriodEnd)}`;
 
-		const billingPeriod = await findByText(
-			billingPeriodText,
-			{},
-			{ timeout: 5000 },
-		);
+		const billingPeriod = await findByText(billingPeriodText);
 		expect(billingPeriod).toBeInTheDocument();
 
-		const currentBill = await screen.findByText('billing');
-		expect(currentBill).toBeInTheDocument();
+		expect(screen.getByText('billing')).toBeInTheDocument();
+		expect(screen.getByText(/\$1,278.3/i)).toBeInTheDocument();
 
-		const dollar0 = await screen.findByText(/\$1,278.3/i);
-		expect(dollar0).toBeInTheDocument();
+		const cellTexts = (rowName: string): string[] =>
+			Array.from(
+				screen
+					.getByText(rowName, { selector: 'td > div' })
+					.closest('tr')
+					?.querySelectorAll('td') ?? [],
+			).map((cell) => cell.textContent ?? '');
 
-		const metricsRow = await screen.findByRole('row', {
-			name: /metrics 4012 Million 0.1 \$ 401.2/i,
-		});
-		expect(metricsRow).toBeInTheDocument();
-
-		const logRow = await screen.findByRole('row', {
-			name: /Logs 497 GB 0.4 \$ 198.8/i,
-		});
-		expect(logRow).toBeInTheDocument();
+		expect(cellTexts('Metrics')).toStrictEqual([
+			'Metrics',
+			'4012 Million',
+			'0.1',
+			'$ 401.2',
+		]);
+		expect(cellTexts('Logs')).toStrictEqual(['Logs', '497 GB', '0.4', '$ 198.8']);
 	});
 });

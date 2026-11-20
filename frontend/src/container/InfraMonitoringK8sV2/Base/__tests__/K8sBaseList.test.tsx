@@ -426,7 +426,7 @@ describe('K8sBaseList', () => {
 			});
 
 			// Find pagination navigation and page 2 button
-			const nav = screen.getByRole('navigation');
+			const nav = document.querySelector('nav') as HTMLElement;
 			const page2Button = Array.from(nav.querySelectorAll('button')).find(
 				(btn) => btn.textContent?.trim() === '2',
 			);
@@ -446,13 +446,16 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should open row in new tab when ctrl+click on row', async () => {
+			const user = userEvent.setup();
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
 			const firstRow = screen.getByText(`PodId:${itemId}`);
 			// Ctrl+click to open in new tab
-			fireEvent.click(firstRow, { ctrlKey: true });
+			await user.keyboard('{Control>}');
+			await user.click(firstRow);
+			await user.keyboard('{/Control}');
 
 			await waitFor(() => {
 				expect(openInNewTabMock).toHaveBeenCalledTimes(1);
@@ -463,13 +466,16 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should open row in new tab when meta+click (cmd on Mac) on row', async () => {
+			const user = userEvent.setup();
 			await waitFor(() => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
 			const firstRow = screen.getByText(`PodId:${itemId}`);
 			// Meta+click (cmd on Mac) to open in new tab
-			fireEvent.click(firstRow, { metaKey: true });
+			await user.keyboard('{Meta>}');
+			await user.click(firstRow);
+			await user.keyboard('{/Meta}');
 
 			await waitFor(() => {
 				expect(openInNewTabMock).toHaveBeenCalledTimes(1);
@@ -536,7 +542,7 @@ describe('K8sBaseList', () => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
-			const expandButtons = screen.getAllByRole('button');
+			const expandButtons = document.querySelectorAll('button');
 			expect(expandButtons.length).toBeGreaterThan(0);
 		});
 
@@ -604,7 +610,7 @@ describe('K8sBaseList', () => {
 				expect(screen.getByText('namespace-default')).toBeInTheDocument();
 			});
 
-			const expandButtons = screen.getAllByRole('button');
+			const expandButtons = document.querySelectorAll('button');
 			expect(expandButtons.length).toBeGreaterThan(0);
 		});
 
@@ -940,12 +946,8 @@ describe('K8sBaseList', () => {
 			});
 
 			// All columns should be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole('columnheader', { name: /name/i }),
-			).toBeInTheDocument();
+			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
+			expect(screen.getByTitle('Name').closest('th')).toBeInTheDocument();
 		});
 	});
 
@@ -988,9 +990,7 @@ describe('K8sBaseList', () => {
 			});
 
 			// Columns should be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
-			).toBeInTheDocument();
+			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
 		});
 
 		it('should show columns when grouped', async () => {
@@ -1014,9 +1014,7 @@ describe('K8sBaseList', () => {
 			});
 
 			// Id should be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
-			).toBeInTheDocument();
+			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
 		});
 	});
 
@@ -1096,12 +1094,8 @@ describe('K8sBaseList', () => {
 			});
 
 			// All columns should be visible
-			expect(
-				screen.getByRole('columnheader', { name: /id/i }),
-			).toBeInTheDocument();
-			expect(
-				screen.getByRole('columnheader', { name: /^name$/i }),
-			).toBeInTheDocument();
+			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
+			expect(screen.getByTitle('Name').closest('th')).toBeInTheDocument();
 		});
 
 		it('should render data in cells correctly', async () => {
@@ -1211,6 +1205,7 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should include cluster and namespace params in new tab URL on ctrl+click', async () => {
+			const user = userEvent.setup();
 			renderComponent<TestItemWithTitle, SelectedItemParams>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
@@ -1225,7 +1220,9 @@ describe('K8sBaseList', () => {
 			});
 
 			const firstRow = await screen.findByText(`PodId:${itemId}`);
-			fireEvent.click(firstRow, { ctrlKey: true });
+			await user.keyboard('{Control>}');
+			await user.click(firstRow);
+			await user.keyboard('{/Control}');
 
 			await waitFor(() => {
 				expect(openInNewTabMock).toHaveBeenCalledTimes(1);
@@ -1237,6 +1234,7 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should omit null cluster/namespace params in new tab URL', async () => {
+			const user = userEvent.setup();
 			renderComponent<TestItemWithTitle, SelectedItemParams>({
 				onUrlUpdate: onUrlUpdateMock,
 				entity: InfraMonitoringEntity.PODS,
@@ -1251,7 +1249,9 @@ describe('K8sBaseList', () => {
 			});
 
 			const firstRow = await screen.findByText(`PodId:${itemId}`);
-			fireEvent.click(firstRow, { ctrlKey: true });
+			await user.keyboard('{Control>}');
+			await user.click(firstRow);
+			await user.keyboard('{/Control}');
 
 			await waitFor(() => {
 				expect(openInNewTabMock).toHaveBeenCalledTimes(1);

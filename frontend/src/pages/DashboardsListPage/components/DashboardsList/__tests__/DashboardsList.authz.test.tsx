@@ -1,8 +1,7 @@
 import { server } from 'mocks-server/server';
-import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor, within } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -94,8 +93,7 @@ describe('DashboardsList - AuthZ', () => {
 	});
 
 	describe('list permission', () => {
-		it('blocks the table and never fires the list request when list is denied', async () => {
-			const onList = jest.fn();
+		const denyList = (onList = jest.fn()): void => {
 			server.use(
 				// Create is still granted — the CTA must stay usable (authz guide list pattern).
 				setupAuthzAllow(DashboardCreatePermission),
@@ -110,26 +108,48 @@ describe('DashboardsList - AuthZ', () => {
 					);
 				}),
 			);
+		};
+
+		it('blocks the table and never fires the list request when list is denied', async () => {
+			const onList = jest.fn();
+			denyList(onList);
 
 			renderList();
 
-			await waitFor(() => {
-				expect(
-					screen.getAllByText(/is not authorized to perform/).length,
-				).toBeGreaterThan(0);
-			});
+			expect(
+				(await screen.findAllByText(/is not authorized to perform/)).length,
+			).toBeGreaterThan(0);
 			expect(screen.getAllByText('list:dashboard:*').length).toBeGreaterThan(0);
 			expect(onList).not.toHaveBeenCalled();
 
 			const cta = screen.getByTestId('new-dashboard-cta');
 			expect(cta).not.toHaveAttribute('aria-disabled', 'true');
+		});
+
+		it('turns off the search box and filters when list is denied', async () => {
+			denyList();
+
+			renderList();
 
 			// The box and filters edit a query only the list API can run, so they are
 			// inert and say why; the rail carries its own denial.
-			expect(
-				within(screen.getByTestId('dashboards-filter-created-by')).getByRole(
-					'combobox',
+			await expect(
+				screen.findByTestId('views-rail-denied'),
+			).resolves.toBeInTheDocument();
+			await waitFor(() =>
+				expect(screen.getByTestId('dashboards-search-zone')).toHaveAttribute(
+					'data-denied-permissions',
+					DashboardListPermission,
 				),
+			);
+			expect(screen.getByTestId('dashboards-filter-zone')).toHaveAttribute(
+				'data-denied-permissions',
+				DashboardListPermission,
+			);
+			expect(
+				screen
+					.getByTestId('dashboards-filter-created-by')
+					.querySelector('input[role="combobox"]'),
 			).toBeDisabled();
 			expect(screen.getByLabelText('Run search')).toHaveAttribute(
 				'aria-disabled',
@@ -138,22 +158,27 @@ describe('DashboardsList - AuthZ', () => {
 			expect(
 				screen.getByTestId('dashboards-list-search').querySelector('.cm-content'),
 			).toHaveAttribute('contenteditable', 'false');
-			expect(screen.getByTestId('views-rail-denied')).toBeInTheDocument();
+		});
 
-			expect(screen.getByTestId('dashboards-search-zone')).toHaveAttribute(
-				'data-denied-permissions',
-				DashboardListPermission,
-			);
-			expect(screen.getByTestId('dashboards-filter-zone')).toHaveAttribute(
-				'data-denied-permissions',
-				DashboardListPermission,
+		it('explains the list denial in a tooltip on the search box', async () => {
+			const user = userEvent.setup();
+			denyList();
+
+			renderList();
+			await waitFor(() =>
+				expect(screen.getByTestId('dashboards-search-zone')).toHaveAttribute(
+					'data-denied-permissions',
+					DashboardListPermission,
+				),
 			);
 
 			// Radix's content has no testid, and the table's callout carries the same
 			// words, so the reason is read off the tooltip role.
-			await userEvent.hover(screen.getByTestId('dashboards-search-zone'));
-			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
-				'is not authorized to perform list:dashboard:*',
+			await user.hover(screen.getByTestId('dashboards-search-zone'));
+			await waitFor(() =>
+				expect(document.querySelector('[role="tooltip"]')).toHaveTextContent(
+					'is not authorized to perform list:dashboard:*',
+				),
 			);
 		});
 
@@ -208,11 +233,9 @@ describe('DashboardsList - AuthZ', () => {
 
 			renderList();
 
-			await waitFor(() => {
-				expect(
-					screen.getAllByText(/is not authorized to perform/).length,
-				).toBeGreaterThan(0);
-			});
+			expect(
+				(await screen.findAllByText(/is not authorized to perform/)).length,
+			).toBeGreaterThan(0);
 			expect(onViews).not.toHaveBeenCalled();
 		});
 	});
@@ -238,11 +261,9 @@ describe('DashboardsList - AuthZ', () => {
 
 			renderList();
 
-			await waitFor(() => {
-				expect(
-					screen.getAllByText(/is not authorized to perform/).length,
-				).toBeGreaterThan(0);
-			});
+			expect(
+				(await screen.findAllByText(/is not authorized to perform/)).length,
+			).toBeGreaterThan(0);
 			expect(onList).not.toHaveBeenCalled();
 		});
 	});

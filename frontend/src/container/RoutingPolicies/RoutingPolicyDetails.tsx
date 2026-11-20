@@ -114,7 +114,10 @@ function RoutingPolicyDetails({
 								},
 							]}
 						>
-							<Input placeholder="e.g. Base routing policy..." />
+							<Input
+								placeholder="e.g. Base routing policy..."
+								data-testid="routing-policy-name-input"
+							/>
 						</Form.Item>
 					</div>
 					<div className="input-group">
@@ -129,6 +132,7 @@ function RoutingPolicyDetails({
 						>
 							<Input.TextArea
 								placeholder="e.g. This is a routing policy that..."
+								data-testid="routing-policy-description-input"
 								autoSize={{ minRows: 1, maxRows: 6 }}
 								style={{ resize: 'none' }}
 							/>
@@ -147,6 +151,7 @@ function RoutingPolicyDetails({
 						>
 							<Input.TextArea
 								placeholder='e.g. service.name == "payment" && threshold.name == "critical"'
+								data-testid="routing-policy-expression-input"
 								autoSize={{ minRows: 1, maxRows: 6 }}
 								style={{ resize: 'none' }}
 							/>
@@ -182,6 +187,7 @@ function RoutingPolicyDetails({
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isLoadingChannels}
 								notFoundContent={notificationChannelsNotFoundContent}
+								data-testid="routing-policy-channels-select"
 							/>
 						</Form.Item>
 					</div>
@@ -191,6 +197,7 @@ function RoutingPolicyDetails({
 						icon={<X size={16} />}
 						onClick={closeModal}
 						disabled={isPolicyDetailsModalActionLoading}
+						data-testid="routing-policy-cancel"
 					>
 						Cancel
 					</Button>
@@ -200,6 +207,7 @@ function RoutingPolicyDetails({
 						htmlType="submit"
 						loading={isPolicyDetailsModalActionLoading}
 						disabled={isPolicyDetailsModalActionLoading}
+						data-testid="routing-policy-save"
 					>
 						Save Routing Policy
 					</Button>

@@ -9,6 +9,8 @@ import {
 	createRolesHandler,
 	createSuccessHandler,
 	createTrackingHandler,
+	enterInviteEmail,
+	pickInviteRole,
 	VALID_EMAIL,
 } from './testUtils';
 
@@ -23,7 +25,7 @@ describe('InviteMembers - Submission', () => {
 
 	describe('API calls', () => {
 		it('calls createUser API for each touched row', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const { handler, calls } = createTrackingHandler();
 			server.use(handler);
 
@@ -38,10 +40,8 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, 'alice@signoz.io');
+			await pickInviteRole(user, 'Viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -55,7 +55,7 @@ describe('InviteMembers - Submission', () => {
 		});
 
 		it('calls createUser API for multiple touched rows', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const { handler, calls } = createTrackingHandler();
 			server.use(handler);
 
@@ -70,21 +70,12 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-
-			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
-
-			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const editorOptions = await screen.findAllByTitle('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
-
-			await user.type(emailInputs[2], 'charlie@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const adminOptions = await screen.findAllByTitle('Admin');
-			await user.click(adminOptions[adminOptions.length - 1]);
+			await enterInviteEmail(user, 0, 'alice@signoz.io');
+			await pickInviteRole(user, 'Viewer');
+			await enterInviteEmail(user, 1, 'bob@signoz.io');
+			await pickInviteRole(user, 'Editor');
+			await enterInviteEmail(user, 2, 'charlie@signoz.io');
+			await pickInviteRole(user, 'Admin');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -109,7 +100,7 @@ describe('InviteMembers - Submission', () => {
 
 	describe('callbacks', () => {
 		it('calls onSuccess when all invites succeed', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const onSuccess = jest.fn();
 
 			render(
@@ -123,10 +114,8 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickInviteRole(user, 'Viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -136,7 +125,7 @@ describe('InviteMembers - Submission', () => {
 		});
 
 		it('calls onAllFailed when all invites fail', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const onAllFailed = jest.fn();
 
 			server.use(createErrorHandler('already_exists', 'User already exists'));
@@ -152,10 +141,8 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickInviteRole(user, 'Viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -173,7 +160,7 @@ describe('InviteMembers - Submission', () => {
 		});
 
 		it('calls onPartialSuccess when some invites succeed and some fail', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const onPartialSuccess = jest.fn();
 			const onSuccess = jest.fn();
 			const onAllFailed = jest.fn();
@@ -215,16 +202,10 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-
-			await user.type(emailInputs[0], 'alice@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
-
-			await user.type(emailInputs[1], 'bob@signoz.io');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			const editorOptions = await screen.findAllByTitle('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
+			await enterInviteEmail(user, 0, 'alice@signoz.io');
+			await pickInviteRole(user, 'Viewer');
+			await enterInviteEmail(user, 1, 'bob@signoz.io');
+			await pickInviteRole(user, 'Editor');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -262,7 +243,7 @@ describe('InviteMembers - Submission', () => {
 
 	describe('result display', () => {
 		it('shows success callout when all invites succeed', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -274,10 +255,8 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickInviteRole(user, 'Viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -287,7 +266,7 @@ describe('InviteMembers - Submission', () => {
 		});
 
 		it('shows error callout with failed emails when API fails', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(createErrorHandler('already_exists', 'User already exists'));
 
@@ -301,10 +280,8 @@ describe('InviteMembers - Submission', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickInviteRole(user, 'Viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 
@@ -317,7 +294,7 @@ describe('InviteMembers - Submission', () => {
 
 	describe('footer props', () => {
 		it('provides correct canSubmit state', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -331,14 +308,13 @@ describe('InviteMembers - Submission', () => {
 
 			expect(screen.getByTestId('submit-btn')).toBeDisabled();
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
+			await enterInviteEmail(user, 0, VALID_EMAIL);
 
 			expect(screen.getByTestId('submit-btn')).not.toBeDisabled();
 		});
 
 		it('provides touchedCount', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -351,12 +327,11 @@ describe('InviteMembers - Submission', () => {
 
 			expect(screen.getByTestId('touched-count')).toHaveTextContent('0');
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], 'a@b.com');
+			await enterInviteEmail(user, 0, 'a@b.com');
 
 			expect(screen.getByTestId('touched-count')).toHaveTextContent('1');
 
-			await user.type(emailInputs[1], 'c@d.com');
+			await enterInviteEmail(user, 1, 'c@d.com');
 
 			expect(screen.getByTestId('touched-count')).toHaveTextContent('2');
 		});

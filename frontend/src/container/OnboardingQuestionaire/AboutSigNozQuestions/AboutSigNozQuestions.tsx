@@ -141,6 +141,7 @@ export function AboutSigNozQuestions({
 
 						<AntdInput.TextArea
 							className="discover-signoz-input"
+							data-testid="discover-signoz-input"
 							placeholder="e.g., I asked ChatGPT for Datadog alternatives, searched Google for “OpenTelemetry tools,” saw a Reddit or LinkedIn post, or heard about it from a colleague."
 							value={discoverSignoz}
 							autoFocus
@@ -157,6 +158,7 @@ export function AboutSigNozQuestions({
 									<Checkbox
 										color="primary"
 										id={`checkbox-${option}`}
+										testId={`interest-${option}`}
 										value={interestInSignoz.includes(option)}
 										onChange={createInterestChangeHandler(option)}
 									>
@@ -169,6 +171,7 @@ export function AboutSigNozQuestions({
 								<Checkbox
 									color="primary"
 									id="others-checkbox"
+									testId="interest-Others"
 									value={interestInSignoz.includes('Others')}
 									onChange={createInterestChangeHandler('Others')}
 								>
@@ -179,6 +182,7 @@ export function AboutSigNozQuestions({
 										type="text"
 										className="onboarding-questionaire-other-input"
 										placeholder="What got you interested in SigNoz?"
+										testId="other-interest-input"
 										value={otherInterestInSignoz}
 										autoFocus
 										onChange={(e): void => setOtherInterestInSignoz(e.target.value)}
@@ -199,6 +203,7 @@ export function AboutSigNozQuestions({
 						disabled={isNextDisabled}
 						disabledTooltip={getNextDisabledReason()}
 						suffix={<ArrowRight size={12} />}
+						testId="about-signoz-next"
 					>
 						Next
 					</Button>

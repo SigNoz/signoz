@@ -1,17 +1,19 @@
-import { screen, within } from '@testing-library/react';
+import { Form } from 'antd';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import {
 	findByText,
-	fireEvent,
 	render,
+	screen,
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { PipelineData } from 'types/api/pipeline/def';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
+import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 import PipelineListsView from '../PipelineListsView';
 
 // Mock useUrlQuery hook
@@ -83,6 +85,21 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	}),
 }));
 
+function EditPipelineForm(): JSX.Element {
+	const [form] = Form.useForm<PipelineData>();
+	return (
+		<AddNewPipeline
+			form={form}
+			isActionType="edit-pipeline"
+			setActionType={jest.fn()}
+			selectedPipelineData={pipelineApiResponseMockData.pipelines[0]}
+			setShowSaveButton={jest.fn()}
+			setCurrPipelineData={jest.fn()}
+			currPipelineData={pipelineApiResponseMockData.pipelines}
+		/>
+	);
+}
+
 const BASE_URL = ENVIRONMENT.baseURL;
 const fieldKeysURL = `${BASE_URL}/api/v1/fields/keys`;
 
@@ -127,6 +144,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it('should render expanded content and edit mode correctly', async () => {
+		const user = userEvent.setup();
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -152,7 +170,7 @@ describe('PipelinePage container test', () => {
 		);
 		expect(expandIcon).toHaveLength(2);
 
-		await fireEvent.click(expandIcon[0]);
+		await user.click(expandIcon[0]);
 
 		// assert expanded view
 		expect(
@@ -164,6 +182,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it('should be able to perform actions and edit on expanded view content', async () => {
+		const user = userEvent.setup();
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -187,14 +206,14 @@ describe('PipelinePage container test', () => {
 			'[data-testid="pipeline-row-expand"]',
 		);
 		expect(expandIcon).toHaveLength(2);
-		await fireEvent.click(expandIcon[0]);
+		await user.click(expandIcon[0]);
 
 		const switchToggle = document.querySelector(
 			'.ant-table-expanded-row [role="switch"]',
 		);
 
 		expect(switchToggle).toBeChecked();
-		await fireEvent.click(switchToggle as HTMLElement);
+		await user.click(switchToggle as HTMLElement);
 		expect(switchToggle).not.toBeChecked();
 
 		const deleteBtns = document.querySelectorAll(
@@ -204,7 +223,7 @@ describe('PipelinePage container test', () => {
 		expect(deleteBtns).toHaveLength(3);
 
 		// delete pipeline
-		await fireEvent.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0] as HTMLElement);
 
 		let deleteConfirmationModal;
 
@@ -213,7 +232,7 @@ describe('PipelinePage container test', () => {
 			expect(deleteConfirmationModal).toBeInTheDocument();
 		});
 
-		await fireEvent.click(
+		await user.click(
 			(deleteConfirmationModal as unknown as HTMLElement)?.querySelector(
 				'.ant-modal-confirm-btns .ant-btn-primary',
 			) as HTMLElement,
@@ -227,6 +246,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it('should be able to toggle and delete pipeline', async () => {
+		const user = userEvent.setup();
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -246,14 +266,14 @@ describe('PipelinePage container test', () => {
 		const switchToggle = document.querySelectorAll('[role="switch"]');
 
 		expect(switchToggle[0]).not.toBeChecked();
-		await fireEvent.click(switchToggle[0] as HTMLElement);
+		await user.click(switchToggle[0] as HTMLElement);
 		expect(switchToggle[0]).toBeChecked();
 
 		// view pipeline
 		const viewBtn = document.querySelectorAll(
 			'[data-testid="pipeline-preview-action"]',
 		);
-		await fireEvent.click(viewBtn[0] as HTMLElement);
+		await user.click(viewBtn[0] as HTMLElement);
 
 		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
 		expect(viewPipelineModal).toBeInTheDocument();
@@ -265,7 +285,7 @@ describe('PipelinePage container test', () => {
 			),
 		).resolves.toBeInTheDocument();
 
-		await fireEvent.click(
+		await user.click(
 			viewPipelineModal?.querySelector(
 				'button[class*="ant-modal-close"]',
 			) as HTMLElement,
@@ -276,7 +296,7 @@ describe('PipelinePage container test', () => {
 		);
 
 		// delete pipeline
-		await fireEvent.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0] as HTMLElement);
 
 		await waitFor(() =>
 			expect(document.querySelector('.delete-pipeline')).toBeInTheDocument(),
@@ -288,7 +308,7 @@ describe('PipelinePage container test', () => {
 			).toBeInTheDocument(),
 		);
 
-		await fireEvent.click(
+		await user.click(
 			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
 		);
 
@@ -298,11 +318,11 @@ describe('PipelinePage container test', () => {
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
-		await fireEvent.click(saveBtn);
+		await user.click(saveBtn);
 	});
 
 	it('should have populated form fields when edit pipeline is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -316,27 +336,17 @@ describe('PipelinePage container test', () => {
 			</PreferenceContextProvider>,
 		);
 
-		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
-
-		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
-		expect(expandIcon).toHaveLength(2);
-		await fireEvent.click(expandIcon[0]);
-
-		const editBtn = document.querySelectorAll(
-			'[data-testid="pipeline-edit-action"]',
-		);
+		const editBtn = screen.getAllByTestId('pipeline-edit-action');
+		expect(editBtn).toHaveLength(2);
 		// click on edit btn
-		await fireEvent.click(editBtn[0] as HTMLElement);
+		await user.click(editBtn[0]);
 
 		// to have length 2
 		expect(screen.queryAllByText('source = nginx')).toHaveLength(2);
+	});
 
+	it('should suggest attribute keys in the filter of the pipeline form', async () => {
+		const user = userEvent.setup();
 		server.use(
 			rest.get(fieldKeysURL, (_req, res, ctx) =>
 				res(
@@ -378,17 +388,15 @@ describe('PipelinePage container test', () => {
 				),
 			),
 		);
+		render(<EditPipelineForm />);
 
-		// Open Filter input and type to trigger suggestions
+		// Open Filter input to trigger suggestions
 		const filterSelect = screen.getByTestId('qb-search-select');
-		const input = within(filterSelect).getByRole('combobox') as HTMLInputElement;
+		await user.click(filterSelect.querySelector('input') as HTMLInputElement);
 
-		await user.click(input);
-		await waitFor(() =>
-			expect(screen.getByText('otelServiceName')).toBeInTheDocument(),
-		);
-
-		const serviceNameOccurences = await screen.findAllByText('service.name');
-		expect(serviceNameOccurences.length).toBeGreaterThanOrEqual(2);
+		await expect(
+			screen.findByText('otelServiceName'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getAllByText('service.name').length).toBeGreaterThanOrEqual(2);
 	});
 });

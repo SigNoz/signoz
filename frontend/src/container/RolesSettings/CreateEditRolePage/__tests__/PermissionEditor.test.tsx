@@ -4,7 +4,34 @@ import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import { expandResourceCard, renderCreateRolePage } from './testUtils';
 
-jest.setTimeout(15_000);
+type User = ReturnType<typeof userEvent.setup>;
+
+const getScopeButton = (scope: 'none' | 'all' | 'only_selected'): HTMLElement =>
+	screen.getByTestId(`action-toggle-scope-factor-api-key-read-button-${scope}`);
+
+async function chooseOnlySelected(user: User): Promise<void> {
+	await renderCreateRolePage();
+	await expandResourceCard('factor-api-key');
+	await user.click(getScopeButton('only_selected'));
+}
+
+async function addItems(user: User, text: string): Promise<void> {
+	await user.click(
+		screen.getByTestId('item-input-selector-input-factor-api-key-read'),
+	);
+	await user.paste(text);
+	await user.keyboard('{enter}');
+}
+
+function getBadgeCloseButton(index: number): HTMLElement {
+	const closeButton = screen
+		.getByTestId(`item-badge-factor-api-key-read-${index}`)
+		.querySelector<HTMLElement>('[data-slot="pill-close"]');
+	if (!closeButton) {
+		throw new Error(`badge ${index} has no close button`);
+	}
+	return closeButton;
+}
 
 beforeEach(() => {
 	server.use(setupAuthzAdmin());
@@ -146,17 +173,8 @@ describe('PermissionEditor', () => {
 			await renderCreateRolePage();
 			await expandResourceCard('factor-api-key');
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			const scopeToggle = within(createToggle).getByTestId(
-				'action-toggle-scope-factor-api-key-read',
-			);
-			expect(
-				within(scopeToggle).getByRole('button', { name: 'None' }),
-			).toHaveAttribute('aria-pressed', 'true');
+			expect(getScopeButton('none')).toHaveTextContent('None');
+			expect(getScopeButton('none')).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('changes scope to All when clicked', async () => {
@@ -164,20 +182,10 @@ describe('PermissionEditor', () => {
 			await renderCreateRolePage();
 			await expandResourceCard('factor-api-key');
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
+			await user.click(getScopeButton('all'));
 
-			const allBtn = await within(createToggle).findByText('All');
-			await user.click(allBtn);
-
-			const scopeToggle = within(createToggle).getByTestId(
-				'action-toggle-scope-factor-api-key-read',
-			);
-			expect(
-				within(scopeToggle).getByRole('button', { name: 'All' }),
-			).toHaveAttribute('aria-pressed', 'true');
+			expect(getScopeButton('all')).toHaveTextContent('All');
+			expect(getScopeButton('all')).toHaveAttribute('aria-pressed', 'true');
 		});
 
 		it('updates granted count when scope changed', async () => {
@@ -186,11 +194,7 @@ describe('PermissionEditor', () => {
 			await expandResourceCard('factor-api-key');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('All'));
+			await user.click(getScopeButton('all'));
 
 			await expect(
 				within(apiKeyCard).findByText(/1 \/ \d+ granted/),
@@ -201,17 +205,7 @@ describe('PermissionEditor', () => {
 	describe('Only Selected scope', () => {
 		it('shows item input selector when Only Selected is chosen', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
-
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			const onlySelectedBtn =
-				await within(createToggle).findByText('Only selected');
-			await user.click(onlySelectedBtn);
+			await chooseOnlySelected(user);
 
 			expect(
 				screen.getByTestId('item-input-selector-factor-api-key-read'),
@@ -220,40 +214,21 @@ describe('PermissionEditor', () => {
 
 		it('adds item when typed and Enter pressed', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'api-key-001{enter}');
+			await addItems(user, 'api-key-001');
 
 			await expect(screen.findByText('api-key-001')).resolves.toBeInTheDocument();
 		});
 
 		it('adds item when Add button clicked', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
+			await user.click(
+				screen.getByTestId('item-input-selector-input-factor-api-key-read'),
 			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'api-key-002');
+			await user.paste('api-key-002');
 
 			const addBtn = screen.getByTestId(
 				'item-input-selector-add-btn-factor-api-key-read',
@@ -265,20 +240,9 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by comma', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'key-a, key-b, key-c{enter}');
+			await addItems(user, 'key-a, key-b, key-c');
 
 			await expect(screen.findByText('key-a')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('key-b')).resolves.toBeInTheDocument();
@@ -287,20 +251,9 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by space', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'key-x key-y key-z{enter}');
+			await addItems(user, 'key-x key-y key-z');
 
 			await expect(screen.findByText('key-x')).resolves.toBeInTheDocument();
 			await expect(screen.findByText('key-y')).resolves.toBeInTheDocument();
@@ -309,21 +262,10 @@ describe('PermissionEditor', () => {
 
 		it('does not add duplicate items', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'same-key{enter}');
-			await user.type(input, 'same-key{enter}');
+			await addItems(user, 'same-key');
+			await addItems(user, 'same-key');
 
 			const badges = screen.getAllByText('same-key');
 			expect(badges).toHaveLength(1);
@@ -331,25 +273,13 @@ describe('PermissionEditor', () => {
 
 		it('removes item when X clicked', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
+			await addItems(user, 'removable-key');
 
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'removable-key{enter}');
-
-			const badge = await screen.findByTestId('item-badge-factor-api-key-read-0');
-			const removeBtn = within(badge).getByRole('button', {
-				name: 'Remove removable-key',
-			});
+			await screen.findByTestId('item-badge-factor-api-key-read-0');
+			const removeBtn = getBadgeCloseButton(0);
+			expect(removeBtn).toHaveAttribute('aria-label', 'Remove removable-key');
 			await user.click(removeBtn);
 
 			expect(screen.queryByText('removable-key')).not.toBeInTheDocument();
@@ -357,48 +287,27 @@ describe('PermissionEditor', () => {
 
 		it('names each badge close button after the item it removes', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
+			await addItems(user, 'key-one key-two');
+
+			await screen.findByTestId('item-badge-factor-api-key-read-1');
+
+			expect(getBadgeCloseButton(0)).toHaveAttribute(
+				'aria-label',
+				'Remove key-one',
 			);
-			await user.click(await within(readToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
+			expect(getBadgeCloseButton(1)).toHaveAttribute(
+				'aria-label',
+				'Remove key-two',
 			);
-			await user.type(input, 'key-one key-two{enter}');
-
-			const firstBadge = await screen.findByTestId(
-				'item-badge-factor-api-key-read-0',
-			);
-			const secondBadge = screen.getByTestId('item-badge-factor-api-key-read-1');
-
-			expect(
-				within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
-			).toBeInTheDocument();
-			expect(
-				within(secondBadge).getByRole('button', { name: 'Remove key-two' }),
-			).toBeInTheDocument();
 		});
 
 		it('exposes the full item value as a title so truncated badges stay readable', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			await user.click(await within(readToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'a-very-long-api-key-identifier-000001{enter}');
+			await addItems(user, 'a-very-long-api-key-identifier-000001');
 
 			const badge = await screen.findByTestId('item-badge-factor-api-key-read-0');
 			expect(
@@ -408,79 +317,47 @@ describe('PermissionEditor', () => {
 
 		it('moves focus to the previous badge when closed with the keyboard', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			await user.click(await within(readToggle).findByText('Only selected'));
+			await addItems(user, 'key-one key-two');
 
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'key-one key-two{enter}');
-
-			const secondBadge = await screen.findByTestId(
-				'item-badge-factor-api-key-read-1',
-			);
-			within(secondBadge).getByRole('button', { name: 'Remove key-two' }).focus();
+			await screen.findByTestId('item-badge-factor-api-key-read-1');
+			getBadgeCloseButton(1).focus();
 
 			await user.keyboard('{Enter}');
 
 			await waitFor(() => {
-				const firstBadge = screen.getByTestId('item-badge-factor-api-key-read-0');
-				expect(
-					within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
-				).toHaveFocus();
+				expect(getBadgeCloseButton(0)).toHaveFocus();
 			});
+			expect(getBadgeCloseButton(0)).toHaveAttribute(
+				'aria-label',
+				'Remove key-one',
+			);
 		});
 
 		it('does not steal focus when a badge is closed with the mouse', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			await user.click(await within(readToggle).findByText('Only selected'));
+			await addItems(user, 'key-one key-two');
 
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'key-one key-two{enter}');
-
-			const secondBadge = await screen.findByTestId(
-				'item-badge-factor-api-key-read-1',
-			);
-			await user.click(
-				within(secondBadge).getByRole('button', { name: 'Remove key-two' }),
-			);
+			await screen.findByTestId('item-badge-factor-api-key-read-1');
+			await user.click(getBadgeCloseButton(1));
 
 			await waitFor(() => {
 				expect(screen.queryByText('key-two')).not.toBeInTheDocument();
 			});
 
-			const firstBadge = screen.getByTestId('item-badge-factor-api-key-read-0');
-			expect(
-				within(firstBadge).getByRole('button', { name: 'Remove key-one' }),
-			).not.toHaveFocus();
+			expect(getBadgeCloseButton(0)).toHaveAttribute(
+				'aria-label',
+				'Remove key-one',
+			);
+			expect(getBadgeCloseButton(0)).not.toHaveFocus();
 		});
 
 		it('shows Add button disabled when input is empty', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
-
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
+			await chooseOnlySelected(user);
 
 			const addBtn = screen.getByTestId(
 				'item-input-selector-add-btn-factor-api-key-read',
@@ -492,22 +369,11 @@ describe('PermissionEditor', () => {
 	describe('scope change confirmation dialog', () => {
 		it('shows confirm dialog when leaving Only Selected with items', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
+			await addItems(user, 'will-be-cleared');
 
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'will-be-cleared{enter}');
-
-			await user.click(await within(createToggle).findByText('All'));
+			await user.click(getScopeButton('all'));
 
 			await expect(
 				screen.findByText('Change permission scope?'),
@@ -516,27 +382,16 @@ describe('PermissionEditor', () => {
 
 		it('clears items when confirmed', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
+			await addItems(user, 'to-be-cleared');
+
+			await user.click(getScopeButton('all'));
+
+			const dialog = await screen.findByTestId(
+				'action-toggle-scope-dialog-factor-api-key-read',
 			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'to-be-cleared{enter}');
-
-			await user.click(await within(createToggle).findByText('All'));
-
-			const dialog = await screen.findByRole('dialog');
-			await user.click(
-				within(dialog).getByRole('button', { name: /change scope/i }),
-			);
+			await user.click(within(dialog).getByText('Change scope'));
 
 			await waitFor(() => {
 				expect(screen.queryByText('to-be-cleared')).not.toBeInTheDocument();
@@ -545,25 +400,16 @@ describe('PermissionEditor', () => {
 
 		it('keeps items when cancelled', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
+			await chooseOnlySelected(user);
 
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
+			await addItems(user, 'preserved-key');
+
+			await user.click(getScopeButton('none'));
+
+			const dialog = await screen.findByTestId(
+				'action-toggle-scope-dialog-factor-api-key-read',
 			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-
-			const input = screen.getByTestId(
-				'item-input-selector-input-factor-api-key-read',
-			);
-			await user.type(input, 'preserved-key{enter}');
-
-			await user.click(await within(createToggle).findByText('None'));
-
-			const dialog = await screen.findByRole('dialog');
-			await user.click(within(dialog).getByRole('button', { name: /cancel/i }));
+			await user.click(within(dialog).getByText('Cancel'));
 
 			await expect(
 				screen.findByText('preserved-key'),
@@ -576,16 +422,8 @@ describe('PermissionEditor', () => {
 
 		it('does not show dialog when leaving Only Selected with no items', async () => {
 			const user = userEvent.setup();
-			await renderCreateRolePage();
-			await expandResourceCard('factor-api-key');
-
-			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
-			const createToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-
-			await user.click(await within(createToggle).findByText('Only selected'));
-			await user.click(await within(createToggle).findByText('All'));
+			await chooseOnlySelected(user);
+			await user.click(getScopeButton('all'));
 
 			expect(
 				screen.queryByText('Change permission scope?'),
@@ -643,8 +481,8 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
-			await user.type(nameInput, 'valid-role');
+			await user.click(screen.getByTestId('role-name-input'));
+			await user.paste('valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -652,11 +490,7 @@ describe('PermissionEditor', () => {
 			);
 			await user.click(header);
 
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
-			await user.click(onlySelectedBtn);
+			await user.click(getScopeButton('only_selected'));
 
 			await user.click(header);
 
@@ -673,8 +507,8 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
-			await user.type(nameInput, 'valid-role');
+			await user.click(screen.getByTestId('role-name-input'));
+			await user.paste('valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -682,11 +516,7 @@ describe('PermissionEditor', () => {
 			);
 			await user.click(header);
 
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
-			await user.click(onlySelectedBtn);
+			await user.click(getScopeButton('only_selected'));
 
 			await user.click(header);
 
@@ -710,8 +540,8 @@ describe('PermissionEditor', () => {
 			const user = userEvent.setup();
 			await renderCreateRolePage();
 
-			const nameInput = screen.getByTestId('role-name-input');
-			await user.type(nameInput, 'valid-role');
+			await user.click(screen.getByTestId('role-name-input'));
+			await user.paste('valid-role');
 
 			const apiKeyCard = screen.getByTestId('resource-card-factor-api-key');
 			const header = within(apiKeyCard).getByTestId(
@@ -719,11 +549,7 @@ describe('PermissionEditor', () => {
 			);
 			await user.click(header);
 
-			const readToggle = within(apiKeyCard).getByTestId(
-				'action-toggle-factor-api-key-read',
-			);
-			const onlySelectedBtn = await within(readToggle).findByText('Only selected');
-			await user.click(onlySelectedBtn);
+			await user.click(getScopeButton('only_selected'));
 
 			await user.click(header);
 

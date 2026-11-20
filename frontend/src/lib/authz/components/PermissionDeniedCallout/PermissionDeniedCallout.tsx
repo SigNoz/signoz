@@ -35,6 +35,7 @@ function PermissionDeniedCallout({
 			showIcon
 			size="small"
 			className={cx(styles.callout, className)}
+			testId="permission-denied-callout"
 		>
 			<Typography.Text className={styles.permission}>
 				<code className={styles.permissionCode}>user/{user.id}</code> is not

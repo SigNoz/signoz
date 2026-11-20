@@ -88,7 +88,8 @@ describe('Exceptions page - run query', () => {
 		const user = userEvent.setup({ delay: null });
 		await renderWithFilter();
 
-		await user.click(screen.getByRole('button', { name: /run query/i }));
+		// The button reads Cancel while the list is still fetching.
+		await user.click(await screen.findByTestId('explorer-run-query-btn'));
 
 		await waitFor(() =>
 			expect(lastNavigatedFilterItems()).toStrictEqual(KEPT_FILTER_ITEMS),
@@ -99,9 +100,9 @@ describe('Exceptions page - run query', () => {
 		const user = userEvent.setup({ delay: null });
 		await renderWithFilter();
 
-		await user.click(
-			within(screen.getByTestId('qb-search-select')).getByRole('combobox'),
-		);
+		within(screen.getByTestId('qb-search-select'))
+			.getByRole('combobox', { hidden: true })
+			.focus();
 		await user.keyboard('{Control>}{Enter}{/Control}');
 
 		await waitFor(() =>

@@ -102,6 +102,7 @@ function OtherFilters({
 				<Button
 					className="add-filter-btn periscope-btn"
 					size="small"
+					data-testid={`quick-filters-add-${filter.key}`}
 					onClick={(): void => handleAddFilter(filter)}
 				>
 					Add
@@ -111,7 +112,7 @@ function OtherFilters({
 	};
 
 	return (
-		<div className="qf-filters other-filters">
+		<div className="qf-filters other-filters" data-testid="quick-filters-other">
 			<div className="qf-filters-header">OTHER FILTERS</div>
 			<div className="qf-other-filters-list">
 				<OverlayScrollbar>

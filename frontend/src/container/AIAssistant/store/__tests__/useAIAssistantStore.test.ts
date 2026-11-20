@@ -73,6 +73,10 @@ describe('useAIAssistantStore — streaming error handling', () => {
 		});
 	});
 
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('commits a manually-retryable error bubble with friendly copy and metadata', async () => {
 		chat.createThread.mockResolvedValue('thread-1');
 		chat.sendMessage.mockResolvedValue('exec-1');
@@ -142,6 +146,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 	});
 
 	it('silently retries auto-flagged errors, then downgrades to manual once spent', async () => {
+		jest.useFakeTimers();
 		chat.createThread.mockResolvedValue('thread-2');
 		chat.sendMessage.mockResolvedValue('exec');
 		// Always auto-retryable: 1 initial attempt + MAX_AUTO_RETRIES (2) = 3 sends.
@@ -152,7 +157,9 @@ describe('useAIAssistantStore — streaming error handling', () => {
 		);
 
 		useAIAssistantStore.getState().startNewConversation();
-		await useAIAssistantStore.getState().sendMessage('hi');
+		const sending = useAIAssistantStore.getState().sendMessage('hi');
+		await jest.runAllTimersAsync();
+		await sending;
 
 		expect(chat.sendMessage).toHaveBeenCalledTimes(3);
 		expect(lastMessage('thread-2')).toMatchObject({
@@ -161,7 +168,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			// Auto budget exhausted → presented as manual so a Retry button shows.
 			retryAction: RetryActionDTO.manual,
 		});
-	}, 10000);
+	});
 
 	it('marks rate-limit errors and offers no retry', async () => {
 		chat.createThread.mockResolvedValue('thread-3');
@@ -191,6 +198,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 	});
 
 	it('recovers silently when an auto-flagged error succeeds on retry', async () => {
+		jest.useFakeTimers();
 		chat.createThread.mockResolvedValue('thread-4');
 		chat.sendMessage.mockResolvedValue('exec');
 		chat.streamEvents
@@ -212,7 +220,9 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			);
 
 		useAIAssistantStore.getState().startNewConversation();
-		await useAIAssistantStore.getState().sendMessage('hi');
+		const sending = useAIAssistantStore.getState().sendMessage('hi');
+		await jest.runAllTimersAsync();
+		await sending;
 
 		// 1 initial attempt + 1 silent auto retry, then success — no error bubble.
 		expect(chat.sendMessage).toHaveBeenCalledTimes(2);
@@ -224,7 +234,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			content: 'Recovered',
 		});
 		expect(conv.messages.some((m) => m.isError)).toBe(false);
-	}, 10000);
+	});
 
 	it('replays the originating action on retry for a non-send error (approve)', async () => {
 		chat.approveExecution.mockResolvedValue('exec-a');

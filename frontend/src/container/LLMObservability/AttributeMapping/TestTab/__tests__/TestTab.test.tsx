@@ -5,7 +5,7 @@ import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 jest.mock('@monaco-editor/react', () => ({
 	__esModule: true,
@@ -28,8 +28,10 @@ jest.mock('@monaco-editor/react', () => ({
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
 
-import LLMObservabilityAttributeMapping from '../../LLMObservabilityAttributeMapping';
+import { useAttributeMappingEditor } from '../../hooks/useAttributeMappingEditor';
 import { SAMPLE_SPAN_JSON } from '../spanInputStorage';
+import TestTab from '../TestTab';
+import { useTestSpanMapper } from '../useTestSpanMapper';
 import {
 	GROUPS_ENDPOINT,
 	makeGroupsResponse,
@@ -85,6 +87,12 @@ const EXTRA_KEY_RESULT_SPAN = {
 
 const SPAN_INPUT_KEY = LOCALSTORAGE.LLM_ATTRIBUTE_MAPPING_TEST_SPAN;
 
+function TestTabWithEditor(): JSX.Element {
+	const editor = useAttributeMappingEditor();
+	const spanTest = useTestSpanMapper(editor.snapshot, editor.groups);
+	return <TestTab spanTest={spanTest} />;
+}
+
 describe('TestTab — sample-span flow', () => {
 	beforeEach(() => {
 		window.history.pushState(null, '', '/');
@@ -97,17 +105,20 @@ describe('TestTab — sample-span flow', () => {
 		mockedUseAuthZ.mockImplementation(mockUseAuthZGrantAll);
 	});
 
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('runs the sample span through the mappers and renders the populated result', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(
 			rest.post(TEST_ENDPOINT, (_req, res, ctx) =>
 				res(ctx.status(200), ctx.json(makeTestResponse([RESULT_SPAN]))),
 			),
 		);
 
-		render(<LLMObservabilityAttributeMapping />);
+		render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		const runBtn = await screen.findByTestId('run-test-button');
 		expect(screen.getByTestId('test-results-placeholder')).toBeInTheDocument();
 
@@ -125,7 +136,7 @@ describe('TestTab — sample-span flow', () => {
 	});
 
 	it('trims extra top-level keys and sends only the envelope', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let body: { spans?: { attributes?: Record<string, unknown> }[] } | undefined;
 		server.use(
 			rest.post(TEST_ENDPOINT, async (req, res, ctx) => {
@@ -137,9 +148,8 @@ describe('TestTab — sample-span flow', () => {
 			}),
 		);
 
-		render(<LLMObservabilityAttributeMapping />);
+		render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		const runBtn = await screen.findByTestId('run-test-button');
 
 		await user.clear(screen.getByTestId('monaco'));
@@ -166,7 +176,7 @@ describe('TestTab — sample-span flow', () => {
 	});
 
 	it('surfaces a backend error and renders no results', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(
 			rest.post(TEST_ENDPOINT, (_req, res, ctx) =>
 				res(
@@ -176,9 +186,8 @@ describe('TestTab — sample-span flow', () => {
 			),
 		);
 
-		render(<LLMObservabilityAttributeMapping />);
+		render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		await user.click(await screen.findByTestId('run-test-button'));
 
 		await expect(screen.findByTestId('test-error')).resolves.toHaveTextContent(
@@ -188,37 +197,38 @@ describe('TestTab — sample-span flow', () => {
 	});
 
 	it('persists an edited span to local storage and restores it on remount', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const { unmount } = render(<LLMObservabilityAttributeMapping />);
+		jest.useFakeTimers();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+		});
+		const { unmount } = render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
-		await screen.findByTestId('run-test-button');
-
-		const editor = screen.getByTestId('monaco');
+		const editor = await screen.findByTestId('monaco');
 		expect(editor).toHaveValue(SAMPLE_SPAN_JSON);
 
 		await user.clear(editor);
 		await user.paste(EDITED_SPAN_JSON);
+		expect(get(SPAN_INPUT_KEY)).toBeFalsy();
 
-		await waitFor(() => expect(get(SPAN_INPUT_KEY)).toBe(EDITED_SPAN_JSON), {
-			timeout: 2000,
+		act(() => {
+			jest.advanceTimersByTime(500);
 		});
+		expect(get(SPAN_INPUT_KEY)).toBe(EDITED_SPAN_JSON);
 
 		unmount();
-		render(<LLMObservabilityAttributeMapping />);
+		render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
-		await screen.findByTestId('run-test-button');
-		expect(screen.getByTestId('monaco')).toHaveValue(EDITED_SPAN_JSON);
+		await expect(screen.findByTestId('monaco')).resolves.toHaveValue(
+			EDITED_SPAN_JSON,
+		);
 	});
 
 	it('resets to the sample span and clears the persisted input', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		set(SPAN_INPUT_KEY, EDITED_SPAN_JSON);
 
-		render(<LLMObservabilityAttributeMapping />);
+		render(<TestTabWithEditor />);
 
-		await user.click(screen.getByRole('tab', { name: 'Test' }));
 		const resetBtn = await screen.findByTestId('reset-template-button');
 
 		expect(screen.getByTestId('monaco')).toHaveValue(EDITED_SPAN_JSON);
