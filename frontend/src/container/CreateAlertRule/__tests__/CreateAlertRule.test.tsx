@@ -1,17 +1,20 @@
-import { fireEvent, screen } from '@testing-library/react';
 import {
 	LicensePlatform,
 	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as useCompositeQueryParamHooks from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import * as navigateHooks from 'hooks/useSafeNavigate';
 import * as useUrlQueryHooks from 'hooks/useUrlQuery';
 import * as appHooks from 'providers/App/App';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import CreateAlertRule from '../index';
@@ -136,6 +139,21 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(AlertTypes.LOGS_BASED_ALERT)).toBeInTheDocument();
 	});
 
+	it('should open an AI traces alert for an AI query when no alertType is in the URL', () => {
+		mockGetUrlQuery.mockReturnValue(null);
+		useCompositeQueryParamSpy.mockReturnValue({
+			...initialQueriesMap.traces,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: { ...initialQueriesMap.traces.builder, queryData: [] },
+			builder_ai_query: initialQueryAIWithType.builder_ai_query,
+		});
+		render(<CreateAlertRule />);
+		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
+		expect(
+			screen.getByText(AlertTypes.AI_TRACES_BASED_ALERT),
+		).toBeInTheDocument();
+	});
+
 	it('should use alertType from URL over compositeQuery dataSource', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.alertType) {
@@ -207,6 +225,24 @@ describe('CreateAlertRule', () => {
 			expect(mockSetUrlQuery).toHaveBeenCalledWith(
 				QueryParams.alertType,
 				AlertTypes.TRACES_BASED_ALERT,
+			);
+			expect(mockSafeNavigate).toHaveBeenCalled();
+		});
+
+		it('should navigate with threshold alert params for AI traces alert', async () => {
+			const user = userEvent.setup();
+			render(<CreateAlertRule />);
+			await user.click(
+				screen.getByTestId(`alert-type-card-${AlertTypes.AI_TRACES_BASED_ALERT}`),
+			);
+
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.ruleType,
+				'threshold_rule',
+			);
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.alertType,
+				AlertTypes.AI_TRACES_BASED_ALERT,
 			);
 			expect(mockSafeNavigate).toHaveBeenCalled();
 		});

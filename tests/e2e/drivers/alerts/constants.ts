@@ -67,6 +67,7 @@ export const AlertType = {
 	TRACES: 'TRACES_BASED_ALERT',
 	EXCEPTIONS: 'EXCEPTIONS_BASED_ALERT',
 	ANOMALY: 'ANOMALY_BASED_ALERT',
+	AI_TRACES: 'AI_TRACES_BASED_ALERT',
 } as const;
 
 export type AlertTypeValue = (typeof AlertType)[keyof typeof AlertType];
@@ -124,8 +125,8 @@ export const AlertListTab = {
 } as const;
 
 /**
- * The four cards a stock stack shows, in render order
- * (`CreateAlertRule/SelectAlertType/config.ts:10-31`). Anomaly is `unshift`ed to
+ * The five cards a stock stack shows, in render order
+ * (`CreateAlertRule/SelectAlertType/config.ts:10-38`). Anomaly is `unshift`ed to
  * the **front** of this list when anomaly detection is available (cloud or enterprise license),
  * so both the count and the order change when it is.
  */
@@ -133,6 +134,7 @@ export const STOCK_ALERT_TYPE_CARDS: AlertTypeValue[] = [
 	AlertType.METRICS,
 	AlertType.LOGS,
 	AlertType.TRACES,
+	AlertType.AI_TRACES,
 	AlertType.EXCEPTIONS,
 ];
 

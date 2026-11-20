@@ -69,6 +69,7 @@ function TimelineTableContent(): JSX.Element {
 					labels: labelsArrayToObject(item.labels),
 					relatedLogsLink: item.relatedLogsLink,
 					relatedTracesLink: item.relatedTracesLink,
+					relatedAITracesLink: item.relatedAITracesLink,
 				};
 			});
 

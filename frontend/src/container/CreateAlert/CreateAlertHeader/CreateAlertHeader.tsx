@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
+import { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';
@@ -17,8 +18,12 @@ function CreateAlertHeader(): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
 
 	const groupByLabels = useMemo(() => {
+		const queryData =
+			currentQuery.queryType === EQueryType.AI_QUERY_BUILDER
+				? currentQuery.builder_ai_query?.queryData
+				: currentQuery.builder.queryData;
 		const labels = new Array<string>();
-		currentQuery.builder.queryData.forEach((query) => {
+		queryData?.forEach((query) => {
 			query.groupBy.forEach((groupBy) => {
 				labels.push(groupBy.key);
 			});

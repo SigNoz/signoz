@@ -32,6 +32,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div>
 						<AlertLabels labels={labels} />
@@ -48,6 +49,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<Progress
 						percent={(count / totalCurrentTriggers) * 100}
@@ -67,6 +69,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div
 						className="total-contribution"

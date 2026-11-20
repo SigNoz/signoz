@@ -3,7 +3,7 @@ import { AlertTypes } from 'types/api/alerts/alertTypes';
 // since we don't have a card in alert creation for anomaly based alert
 
 export const ALERT_TYPE_URL_MAP: Record<
-	AlertTypes,
+	Exclude<AlertTypes, AlertTypes.AI_TRACES_BASED_ALERT>,
 	{ selection: string; creation: string }
 > = {
 	[AlertTypes.METRICS_BASED_ALERT]: {
@@ -43,4 +43,5 @@ export const ALERT_TYPE_TO_TITLE: Record<AlertTypes, string> = {
 	[AlertTypes.TRACES_BASED_ALERT]: 'traces_based_alert',
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: 'exceptions_based_alert',
 	[AlertTypes.ANOMALY_BASED_ALERT]: 'anomaly_based_alert',
+	[AlertTypes.AI_TRACES_BASED_ALERT]: 'ai_traces_based_alert',
 };

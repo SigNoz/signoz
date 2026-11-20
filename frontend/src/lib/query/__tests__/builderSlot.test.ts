@@ -8,6 +8,7 @@ import {
 	isAIQueryType,
 	isBuilderQueryType,
 	foldAISlot,
+	toAISlotQuery,
 	toSlotQuery,
 } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -127,5 +128,40 @@ describe('toSlotQuery', () => {
 		expect(restored.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
 		expect(restored.builder).toBe(baseQuery.builder);
 		expect(restored.builder_ai_query).toBe(refined.builder);
+	});
+});
+
+describe('toAISlotQuery', () => {
+	const wireQuery = foldAISlot({
+		...baseQuery,
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder_ai_query: aiBuilder,
+	});
+
+	it('moves a builder query into the AI slot under the AI type, tags dropped', () => {
+		const result = toAISlotQuery(wireQuery);
+
+		expect(result.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(result.builder.queryData).toHaveLength(0);
+		expect(result.builder_ai_query?.queryData[0].queryName).toBe('A');
+		expect(
+			result.builder_ai_query?.queryData[0].builderQueryType,
+		).toBeUndefined();
+	});
+
+	it('round-trips with foldAISlot', () => {
+		expect(foldAISlot(toAISlotQuery(wireQuery))).toStrictEqual(wireQuery);
+	});
+
+	it('leaves ClickHouse, PromQL and AI-typed queries untouched', () => {
+		const promql: Query = { ...baseQuery, queryType: EQueryType.PROM };
+		const aiTyped: Query = {
+			...baseQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: aiBuilder,
+		};
+
+		expect(toAISlotQuery(promql)).toBe(promql);
+		expect(toAISlotQuery(aiTyped)).toBe(aiTyped);
 	});
 });
