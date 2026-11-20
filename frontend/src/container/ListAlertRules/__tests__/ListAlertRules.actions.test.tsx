@@ -3,7 +3,8 @@ import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { ActionsMenu } from 'container/ListAlertRules/components';
 import type { AlertRule } from 'container/ListAlertRules/types';
 import { useAlertRulesHandlers } from 'container/ListAlertRules/useAlertRulesHandlers';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { alertRulesFixture } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
@@ -27,26 +28,12 @@ async function openActionsMenu(
 	await screen.findByTestId('alert-actions-item-edit');
 }
 
-async function clickMenuItem(
-	user: ReturnType<typeof userEvent.setup>,
-	testId: string,
-): Promise<void> {
-	const item = screen.getByTestId(testId);
-	// A gated row stays inert until its permission check answers.
-	await waitFor(() => {
-		expect(item).not.toHaveAttribute('data-loading');
-		expect(item).not.toHaveAttribute('data-disabled');
-	});
-	await user.click(item);
-}
-
-// Rendering the list, opening a row menu and waiting on its permission check
-// outlasts the 5s default when the full suite runs in parallel.
-jest.setTimeout(15_000);
+// Gating is covered in ListAlertRules.permissions.test.tsx.
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
 describe('ListAlertRules — actions menu', () => {
 	beforeEach(() => {
-		server.use(setupAuthzAdmin());
+		jest.mocked(useAuthZ).mockImplementation(mockUseAuthZGrantAll);
 	});
 
 	it('renders Enable/Disable/Edit/Edit in New Tab/Clone/Delete items after opening the menu', async () => {
@@ -98,7 +85,7 @@ describe('ListAlertRules — actions menu', () => {
 
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-toggle');
+		await user.click(screen.getByTestId('alert-actions-item-toggle'));
 
 		await waitFor(() => {
 			expect(capturedBody).toStrictEqual(
@@ -116,7 +103,7 @@ describe('ListAlertRules — actions menu', () => {
 	it('edit action: clicking Edit navigates via safeNavigate and logs event', async () => {
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-edit');
+		await user.click(screen.getByTestId('alert-actions-item-edit'));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -132,7 +119,7 @@ describe('ListAlertRules — actions menu', () => {
 	it('edit in new tab action: clicking opens with newTab:true', async () => {
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-edit-new-tab');
+		await user.click(screen.getByTestId('alert-actions-item-edit-new-tab'));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -166,7 +153,7 @@ describe('ListAlertRules — actions menu', () => {
 
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-clone');
+		await user.click(screen.getByTestId('alert-actions-item-clone'));
 
 		await waitFor(() => {
 			expect(capturedRuleId).toBe('rule-1');
@@ -198,7 +185,7 @@ describe('ListAlertRules — actions menu', () => {
 
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-delete');
+		await user.click(screen.getByTestId('alert-actions-item-delete'));
 
 		await waitFor(() => {
 			expect(deletedId).toBe('rule-1');
@@ -221,7 +208,7 @@ describe('ListAlertRules — actions menu', () => {
 
 		const user = userEvent.setup();
 		await openActionsMenu(user);
-		await clickMenuItem(user, 'alert-actions-item-toggle');
+		await user.click(screen.getByTestId('alert-actions-item-toggle'));
 
 		await waitFor(() => {
 			expect(patchAttempted).toBe(true);

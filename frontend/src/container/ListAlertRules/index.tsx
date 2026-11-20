@@ -10,6 +10,9 @@ import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -17,7 +20,6 @@ import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import { ActionsMenu } from './components';
 import AlertRulesFilterZone from './components/AlertRulesFilterZone';
 import AlertRulesHeaderActions from './components/AlertRulesHeaderActions';
-import AlertRulesListGate from './components/AlertRulesListGate';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
 import type { AlertRule } from './types';
@@ -47,6 +49,7 @@ const CLIENT_VIEW_LIMIT = 200;
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
+const RULE_LIST_CHECKS = [RuleListPermission];
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
@@ -184,6 +187,47 @@ function ListAlertRules(): JSX.Element {
 		RULE_BUILTIN_VIEWS.find((v) => v.id === ruleViews.activeViewId)?.label ??
 		'Alert rules';
 
+	const listContent = isError ? (
+		<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+	) : isEmptyDueToFilters && queryError ? (
+		<InvalidQueryState
+			errorMessage={queryError}
+			isCloudUser={!!isCloudUser}
+			testIdPrefix="alert-rules"
+		/>
+	) : isEmptyDueToFilters ? (
+		<NoResultsEmptyState
+			title={noResults.title}
+			subtitle={noResults.description}
+			onClear={onClear}
+			clearButtonText="Clear Search"
+		/>
+	) : isEmptyNoRules ? (
+		<AlertsEmptyState onRefresh={refetch} />
+	) : (
+		<TanStackTable<AlertRule>
+			data={rules}
+			columns={columnsWithActions}
+			isLoading={isFetching}
+			getRowKey={(row): string => row.id ?? ''}
+			getRowTestId={(row): string => `alert-row-${row.id ?? ''}`}
+			getItemKey={(row): string => row.id ?? ''}
+			columnStorageKey="alert-rules-columns"
+			enableQueryParams={QUERY_PARAMS_CONFIG}
+			onSort={changeSort}
+			onRowClick={handleRowClick}
+			onRowClickNewTab={handleRowClickNewTab}
+			pagination={{
+				total,
+				calculatedPageSize,
+				onLimitChange: setLimit,
+				showTotalCount: true,
+			}}
+			paginationClassname={styles.paginationContainer}
+			plainTextCellLineClamp={2}
+		/>
+	);
+
 	return (
 		<div className={styles.layout}>
 			<ViewsRail
@@ -233,48 +277,20 @@ function ListAlertRules(): JSX.Element {
 				</ListHeaderZone>
 
 				<div ref={containerRef} className={styles.tableContainer}>
-					<AlertRulesListGate className={styles.guardInset}>
-						{isError ? (
-							<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
-						) : isEmptyDueToFilters && queryError ? (
-							<InvalidQueryState
-								errorMessage={queryError}
-								isCloudUser={!!isCloudUser}
-								testIdPrefix="alert-rules"
-							/>
-						) : isEmptyDueToFilters ? (
-							<NoResultsEmptyState
-								title={noResults.title}
-								subtitle={noResults.description}
-								onClear={onClear}
-								clearButtonText="Clear Search"
-							/>
-						) : isEmptyNoRules ? (
-							<AlertsEmptyState onRefresh={refetch} />
-						) : (
-							<TanStackTable<AlertRule>
-								data={rules}
-								columns={columnsWithActions}
-								isLoading={isFetching}
-								getRowKey={(row): string => row.id ?? ''}
-								getRowTestId={(row): string => `alert-row-${row.id ?? ''}`}
-								getItemKey={(row): string => row.id ?? ''}
-								columnStorageKey="alert-rules-columns"
-								enableQueryParams={QUERY_PARAMS_CONFIG}
-								onSort={changeSort}
-								onRowClick={handleRowClick}
-								onRowClickNewTab={handleRowClickNewTab}
-								pagination={{
-									total,
-									calculatedPageSize,
-									onLimitChange: setLimit,
-									showTotalCount: true,
-								}}
-								paginationClassname={styles.paginationContainer}
-								plainTextCellLineClamp={2}
+					<AuthZGuardContent
+						checks={RULE_LIST_CHECKS}
+						fallback={({ deniedPermissions }): JSX.Element => (
+							<PermissionDeniedCallout
+								deniedPermissions={deniedPermissions}
+								className={styles.guardInset}
 							/>
 						)}
-					</AlertRulesListGate>
+						// The list renders while the check is pending, so the table mounts
+						// with the page and its URL state settles as before.
+						fallbackOnLoading={listContent}
+					>
+						{listContent}
+					</AuthZGuardContent>
 				</div>
 				<ListStatusBar
 					collapsed={railCollapsed}
