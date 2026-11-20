@@ -32,6 +32,8 @@ e2e/test-plan/user-preferences/
 
 # Storybook
 /storybook-static/
+/storybook-stats/
+/storybook-stories.txt
 debug-storybook.log
 
 # Storybook screenshots (sbshot)
