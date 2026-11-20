@@ -819,7 +819,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 
 	// If entire range is missing, execute normally
 	if cachedResult == nil && len(missingRanges) == 1 {
-		startMs, endMs := query.Window()
+		startMs, endMs := cacheWindow(query, uint64(step.Milliseconds()))
 		if missingRanges[0].From == startMs && missingRanges[0].To == endMs {
 			sem <- struct{}{}
 			result, err := query.Execute(ctx)
@@ -903,6 +903,11 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 
 	// Merge cached and fresh results
 	mergedResult := q.mergeResults(cachedResult, freshResults)
+	// A gap statement at the start of the cache window reads its own lookback
+	// step before it, which the request's statement would not read.
+	if cacheStartMs, _ := cacheWindow(query, uint64(step.Milliseconds())); lookbackSteps(query) > 0 {
+		dropValuesBefore(mergedResult, cacheStartMs)
+	}
 	mergedResult.Stats.RowsScanned += totalStats.RowsScanned
 	mergedResult.Stats.BytesScanned += totalStats.BytesScanned
 	mergedResult.Stats.DurationMS += totalStats.DurationMS
@@ -911,6 +916,18 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	q.bucketCache.Put(ctx, orgID, query, step, mergedResult)
 
 	return mergedResult, nil
+}
+
+func dropValuesBefore(result *qbtypes.Result, fromMs uint64) {
+	data, ok := result.Value.(*qbtypes.TimeSeriesData)
+	if !ok || data == nil {
+		return
+	}
+	for _, aggBucket := range data.Aggregations {
+		for _, series := range aggBucket.Series {
+			series.Values = slices.DeleteFunc(series.Values, func(value *qbtypes.TimeSeriesValue) bool { return uint64(value.Timestamp) < fromMs })
+		}
+	}
 }
 
 // createRangedQuery creates a copy of the query with a different time range.
