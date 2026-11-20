@@ -13018,7 +13018,7 @@ export enum RuletypesListSortDTO {
 	created_at = 'created_at',
 	name = 'name',
 	state = 'state',
-	severity = 'severity',
+	thresholds = 'thresholds',
 }
 /**
  * The labels attached to alerts the rule fires.
@@ -13078,6 +13078,11 @@ export interface RuletypesListableRuleDTO {
 	 */
 	state: RuletypesAlertStateDTO;
 	/**
+	 * @type array
+	 * @description The rule's threshold names in lowercase, deduplicated and ordered critical, error, warning, info, then other names. An alert carries the name of the threshold that fired as its severity. Read-only.
+	 */
+	thresholds: string[];
+	/**
 	 * @type string
 	 * @format date-time
 	 */
@@ -13099,7 +13104,7 @@ export interface RuletypesRuleViewDataDTO {
 	 */
 	query?: string;
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**
@@ -17585,7 +17590,7 @@ export type ListRulesV3Params = {
 	 */
 	states?: string[];
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**

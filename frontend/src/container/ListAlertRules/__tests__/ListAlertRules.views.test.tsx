@@ -34,7 +34,7 @@ jest.mock('@floating-ui/dom', () => ({
 jest.setTimeout(15_000);
 
 const VIEW_1_ORDER_BY = JSON.stringify({ columnName: 'name', order: 'asc' });
-const VIEW_1_QUERY = "severity = 'critical'";
+const VIEW_1_QUERY = "thresholds = 'critical'";
 
 type Body = Record<string, unknown>;
 type User = ReturnType<typeof userEvent.setup>;

@@ -131,9 +131,12 @@ const compositeQuery = (
  * forecast, so its targets are signed deviations (`-3`). The `anomaly` function
  * on the query is what makes the preview draw the forecast band.
  */
-const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
+const anomalyCondition = (
+	seed: RuleSeed,
+	severities: readonly AlertSeverity[],
+): RuletypesRuleConditionDTO => {
 	return {
-		...condition(seed),
+		...condition(seed, severities),
 		compositeQuery: compositeQuery(seed, [
 			{
 				name: Querybuildertypesv5FunctionNameDTO.anomaly,
@@ -146,45 +149,36 @@ const anomalyCondition = (seed: RuleSeed): RuletypesRuleConditionDTO => {
 		seasonality: RuletypesSeasonalityDTO.daily,
 		thresholds: {
 			kind: RuletypesThresholdBasicDTOKind.basic,
-			spec: [
-				{
-					name: 'critical',
-					matchType: RuletypesMatchTypeDTO.all_the_times,
-					op: RuletypesCompareOperatorDTO.below,
-					target: -3,
-					targetUnit: '',
-					channels: ['ops-slack'],
-				},
-				{
-					name: 'warning',
-					matchType: RuletypesMatchTypeDTO.all_the_times,
-					op: RuletypesCompareOperatorDTO.below,
-					target: -2,
-					targetUnit: '',
-					channels: ['ops-slack'],
-				},
-			],
+			spec: severities.map((name, index) => ({
+				name,
+				matchType: RuletypesMatchTypeDTO.all_the_times,
+				op: RuletypesCompareOperatorDTO.below,
+				target: index - 3,
+				targetUnit: '',
+				channels: ['ops-slack'],
+			})),
 		},
 	};
 };
 
-const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
+const condition = (
+	seed: RuleSeed,
+	severities: readonly AlertSeverity[],
+): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
 	selectedQueryName: 'A',
 	alertOnAbsent: false,
 	requireMinPoints: false,
 	thresholds: {
 		kind: RuletypesThresholdBasicDTOKind.basic,
-		spec: [
-			{
-				name: 'critical',
-				matchType: RuletypesMatchTypeDTO.at_least_once,
-				op: RuletypesCompareOperatorDTO.above,
-				target: seed.target,
-				targetUnit: seed.unit,
-				channels: ['ops-slack'],
-			},
-		],
+		spec: severities.map((name, index) => ({
+			name,
+			matchType: RuletypesMatchTypeDTO.at_least_once,
+			op: RuletypesCompareOperatorDTO.above,
+			target: Math.round(seed.target * (1 - index * 0.2)),
+			targetUnit: seed.unit,
+			channels: ['ops-slack'],
+		})),
 	},
 });
 
@@ -192,7 +186,8 @@ interface RuleSeed {
 	alert: string;
 	alertType: RuletypesAlertTypeDTO;
 	state: RuletypesAlertStateDTO;
-	severity: AlertSeverity;
+	// Threshold names, highest first; each fires below the one before it.
+	severities: readonly AlertSeverity[];
 	labels: Record<string, string>;
 	metric: string;
 	unit: string;
@@ -204,7 +199,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Node CPU saturation',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'critical',
+		severities: ['critical', 'warning'],
 		labels: { team: 'platform', env: 'prod' },
 		metric: 'system_cpu_utilization',
 		unit: 'percent',
@@ -214,7 +209,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Checkout API latency above 2s',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'critical',
+		severities: ['critical'],
 		labels: { team: 'checkout', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: 'ms',
@@ -224,8 +219,8 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Payment service error rate',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'critical',
-		labels: { team: 'payments', env: 'prod' },
+		severities: ['critical'],
+		labels: { severity: 'critical', team: 'payments', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: 'percent',
 		target: 5,
@@ -234,7 +229,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Kafka consumer lag',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'platform', component: 'kafka' },
 		metric: 'kafka_consumer_lag',
 		unit: '',
@@ -244,7 +239,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Postgres connections near limit',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'warning',
+		severities: ['warning', 'info'],
 		labels: { team: 'platform', component: 'database' },
 		metric: 'postgresql_backends',
 		unit: '',
@@ -254,7 +249,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Auth service 5xx spike',
 		alertType: RuletypesAlertTypeDTO.LOGS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'identity', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: '',
@@ -264,7 +259,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Unhandled exceptions in web',
 		alertType: RuletypesAlertTypeDTO.EXCEPTIONS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'web', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: '',
@@ -274,7 +269,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Ingest pipeline dropped logs',
 		alertType: RuletypesAlertTypeDTO.LOGS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.nodata,
-		severity: 'warning',
+		severities: ['warning'],
 		labels: { team: 'platform', component: 'collector' },
 		metric: 'system_memory_usage',
 		unit: '',
@@ -284,7 +279,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Nightly batch job overran',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.disabled,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'data' },
 		metric: 'http_server_duration',
 		unit: 's',
@@ -294,7 +289,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Search p99 above budget',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'search', env: 'staging' },
 		metric: 'http_server_duration',
 		unit: 'ms',
@@ -304,7 +299,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Cache hit ratio dropped',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'platform', component: 'redis' },
 		metric: 'system_memory_usage',
 		unit: 'percent',
@@ -314,7 +309,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Disk usage on ingesters',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'critical',
+		severities: ['critical', 'warning'],
 		labels: { team: 'platform', env: 'prod' },
 		metric: 'system_memory_usage',
 		unit: 'percent',
@@ -345,7 +340,8 @@ export interface RuleShape {
 
 const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 	const seed = seedAt(index);
-	const severity = shape.severity === 'mixed' ? seed.severity : shape.severity;
+	const severities =
+		shape.severity === 'mixed' ? seed.severities : [shape.severity];
 	const state =
 		shape.state === 'mixed'
 			? seed.state
@@ -363,8 +359,10 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 			: RuletypesRuleTypeDTO.threshold_rule,
 		state,
 		disabled: state === RuletypesAlertStateDTO.disabled,
-		condition: isAnomaly ? anomalyCondition(seed) : condition(seed),
-		labels: { severity, ...seed.labels },
+		condition: isAnomaly
+			? anomalyCondition(seed, severities)
+			: condition(seed, severities),
+		labels: seed.labels,
 		annotations: {
 			summary: `${seed.alert} crossed its threshold of ${seed.target}`,
 			description:
