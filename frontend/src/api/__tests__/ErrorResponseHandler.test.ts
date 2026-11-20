@@ -21,4 +21,19 @@ describe('ErrorResponseHandler', () => {
 
 		consoleError.mockRestore();
 	});
+
+	it('flattens a v2 error envelope on a 4xx to its message', () => {
+		const error = new AxiosError('Request failed', '400', undefined, undefined, {
+			status: 400,
+			statusText: 'Bad Request',
+			headers: {},
+			config: {} as never,
+			data: {
+				status: 'error',
+				error: { code: 'invalid_input', message: 'Syntax error: bad query' },
+			},
+		});
+
+		expect(ErrorResponseHandler(error).error).toBe('Syntax error: bad query');
+	});
 });
