@@ -67,6 +67,9 @@ jobs:
       - name: lint
         run: |
           cd tests/e2e && pnpm lint
+      - name: spec-pages
+        run: |
+          cd tests/e2e && pnpm select-specs --check
   # Picks the specs a PR can affect; the merge queue and safe-to-e2e run all of them.
   select:
     needs: changes
