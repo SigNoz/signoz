@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -252,4 +253,34 @@ func TestGetThreadSpans(t *testing.T) {
 			assert.NoError(t, s.Mock().ExpectationsWereMet())
 		})
 	}
+}
+
+func TestGetLinkedSpans(t *testing.T) {
+	columns := []cmock.ColumnType{{Name: "span_id", Type: "String"}, {Name: "links", Type: "String"}}
+	rows := [][]any{
+		{"consumer", `[{"traceId":"trace-abc123","spanId":"parent","refType":"CHILD_OF"},{"traceId":"producer-trace","spanId":"producer","refType":"FOLLOWS_FROM"}]`},
+		{"parent-named-follows-from", `[{"traceId":"trace-abc123","spanId":"FOLLOWS_FROM","refType":"CHILD_OF"}]`},
+		{"malformed", `not json`},
+	}
+	s := newTestStore(sqlmock.QueryMatcherEqual)
+	s.Mock().ExpectSelect("SELECT DISTINCT ON (span_id) span_id, links FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND position(links, 'FOLLOWS_FROM') > 0").
+		WillReturnRows(cmock.NewRows(columns, rows))
+
+	linkedSpans, err := s.Store().GetLinkedSpans(context.Background(), testTraceID, testBounds)
+
+	require.NoError(t, err)
+	assert.Equal(t, []spantypes.LinkedSpan{{SpanID: "consumer", Links: []spantypes.Link{{TraceID: "producer-trace", SpanID: "producer"}}}}, linkedSpans)
+	assert.NoError(t, s.Mock().ExpectationsWereMet())
+}
+
+// The JSON attributes are read as soon as that column is registered, with no feature flag set.
+func TestGetAISpanUsageReadsJSONAttributesWithoutFlag(t *testing.T) {
+	jsonInsideTrace := testStart.Add(500 * time.Second)
+	s := newTestStoreWithMetadata(sqlmock.QueryMatcherRegexp, genAIMetadataStore(&jsonInsideTrace), nil)
+	s.Mock().ExpectSelect("attributes\\.`gen_ai\\.request\\.model` IS NOT NULL").WillReturnRows(cmock.NewRows(nil, nil))
+
+	_, err := s.Store().GetAISpanUsage(context.Background(), valuer.GenerateUUID(), testTraceID, testBounds)
+
+	require.NoError(t, err)
+	assert.NoError(t, s.Mock().ExpectationsWereMet())
 }

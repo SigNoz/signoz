@@ -129,11 +129,35 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, result)
 }
 
-// The inspect routes are registered for their place in the API spec; the implementation follows.
-func (h *handler) InspectTrace(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace inspect is not implemented yet"))
+func (h *handler) InspectTrace(rw http.ResponseWriter, r *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(r.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	params := new(spantypes.InspectTraceParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewTraceOverviewQuery(params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.GetTraceOverview(r.Context(), valuer.MustNewUUID(claims.OrgID), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
 }
 
+// The span routes are registered for their place in the API spec; the implementation follows.
 func (h *handler) InspectTraceSpan(rw http.ResponseWriter, _ *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span inspect is not implemented yet"))
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/otel/metric"
+	"golang.org/x/sync/errgroup"
 )
 
 // formattedSpansLogThreshold is the number of formatted gen_ai spans in one waterfall response above which
@@ -291,4 +292,106 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 
 	enrichedSpans := flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans, selectFields)
 	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, start, end, true), nil
+}
+
+func (m *module) GetTraceOverview(ctx context.Context, orgID valuer.UUID, traceID string, query *spantypes.TraceOverviewQuery) (*spantypes.TraceOverview, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	// A page of one list loads only what that list is built from.
+	withAISpans := query.List == "" || query.List == spantypes.OverviewListExpensive
+	withLinkedSpans := query.List == "" || query.List == spantypes.OverviewListLinks
+	skeleton, err := m.loadSkeleton(ctx, orgID, traceID, bounds, withAISpans, withLinkedSpans)
+	if err != nil {
+		return nil, err
+	}
+
+	switch query.List {
+	case spantypes.OverviewListErrors:
+		errorList, err := m.errorPage(ctx, traceID, bounds, skeleton, query.Offset)
+		if err != nil {
+			return nil, err
+		}
+		return &spantypes.TraceOverview{Errors: errorList}, nil
+	case spantypes.OverviewListUnmarkedFailures:
+		return &spantypes.TraceOverview{UnmarkedFailures: skeleton.UnmarkedFailurePage(query.Offset)}, nil
+	case spantypes.OverviewListSlowest:
+		return &spantypes.TraceOverview{Slowest: skeleton.SlowestPage(query.Offset)}, nil
+	case spantypes.OverviewListExpensive:
+		return &spantypes.TraceOverview{Expensive: skeleton.ExpensivePage(query.Offset)}, nil
+	case spantypes.OverviewListLinks:
+		return &spantypes.TraceOverview{Links: skeleton.LinkPage(query.Offset)}, nil
+	}
+
+	errorList, err := m.errorPage(ctx, traceID, bounds, skeleton, 0)
+	if err != nil {
+		return nil, err
+	}
+	overview := &spantypes.TraceOverview{
+		Identity:         skeleton.Identity(),
+		Errors:           errorList,
+		UnmarkedFailures: skeleton.UnmarkedFailurePage(0),
+		Slowest:          skeleton.SlowestPage(0),
+		Expensive:        skeleton.ExpensivePage(0),
+		Links:            skeleton.LinkPage(0),
+		Tree:             skeleton.Tree(),
+	}
+	if spantypes.IsSmallTrace(skeleton.Len()) {
+		spans, err := m.store.GetTraceSpans(ctx, traceID, bounds)
+		if err != nil {
+			return nil, err
+		}
+		if records, ok := spantypes.SmallTraceRecords(spans); ok {
+			overview.Tree.Records = records
+		}
+	}
+	skeleton.FitOverview(overview)
+	return overview, nil
+}
+
+func (m *module) errorPage(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, skeleton *spantypes.TraceSkeleton, offset int) (*spantypes.TraceErrorList, error) {
+	errorList, spanIDs := skeleton.ErrorPage(offset)
+	messages, err := m.store.GetSpanStatusMessages(ctx, traceID, bounds, spanIDs)
+	if err != nil {
+		return nil, err
+	}
+	errorList.SetStatusMessages(messages)
+	return errorList, nil
+}
+
+// loadSkeleton builds the span tree of the trace, with the gen_ai usage and the span links when asked for.
+func (m *module) loadSkeleton(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, withAISpans, withLinkedSpans bool) (*spantypes.TraceSkeleton, error) {
+	var (
+		skeleton    *spantypes.TraceSkeleton
+		aiSpans     []spantypes.AISpanUsage
+		linkedSpans []spantypes.LinkedSpan
+	)
+	group, groupCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		var err error
+		skeleton, err = m.store.GetTraceSkeleton(groupCtx, traceID, bounds)
+		return err
+	})
+	if withAISpans {
+		group.Go(func() error {
+			var err error
+			aiSpans, err = m.store.GetAISpanUsage(groupCtx, orgID, traceID, bounds)
+			return err
+		})
+	}
+	if withLinkedSpans {
+		group.Go(func() error {
+			var err error
+			linkedSpans, err = m.store.GetLinkedSpans(groupCtx, traceID, bounds)
+			return err
+		})
+	}
+	if err := group.Wait(); err != nil {
+		return nil, err
+	}
+	if skeleton.Len() == 0 {
+		return nil, spantypes.ErrTraceNotFound
+	}
+	return skeleton.WithAISpans(aiSpans).WithLinkedSpans(linkedSpans), nil
 }

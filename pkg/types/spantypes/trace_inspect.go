@@ -1,8 +1,41 @@
 package spantypes
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"math"
+	"slices"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
+
+const (
+	inspectListSize     = 10
+	inspectServiceLimit = 20
+	inspectLinkTargets  = 5
+	// inspectNameChars cuts a span name in a summary; a statement used as a name can run to kilobytes.
+	inspectNameChars = 200
+	// inspectTreeSpans is the number of spans the tree shows, and the largest trace returned with its records.
+	inspectTreeSpans       = 50
+	inspectSmallTraceChars = 20_000
+	// inspectMaxResponseChars keeps a response under 50,000 characters with its envelope.
+	inspectMaxResponseChars = 48_000
+)
+
+var ErrCodeInspectInvalidCursor = errors.MustNewCode("trace_inspect_invalid_cursor")
+
+// The lists of the overview, as a cursor names them.
+const (
+	OverviewListErrors           = "errors"
+	OverviewListUnmarkedFailures = "unmarkedFailures"
+	OverviewListSlowest          = "slowest"
+	OverviewListExpensive        = "expensive"
+	OverviewListLinks            = "links"
+)
+
+var overviewLists = []string{OverviewListErrors, OverviewListUnmarkedFailures, OverviewListSlowest, OverviewListExpensive, OverviewListLinks}
 
 var (
 	UnmarkedFailureHTTP4xx        = UnmarkedFailureReason{valuer.NewString("http_4xx")}
@@ -227,4 +260,53 @@ type TraceSpanList struct {
 	NextCursor string           `json:"nextCursor,omitempty"`
 	// Warnings says why a search may have matched less than expected, such as a key that is not known.
 	Warnings []string `json:"warnings,omitempty" nullable:"false"`
+}
+
+// TraceOverviewQuery is a validated overview request.
+type TraceOverviewQuery struct {
+	// List and Offset page one list of the overview; List is empty on a first call.
+	List   string
+	Offset int
+}
+
+func NewTraceOverviewQuery(params *InspectTraceParams) (*TraceOverviewQuery, error) {
+	query := new(TraceOverviewQuery)
+	if params.Cursor == "" {
+		return query, nil
+	}
+
+	cursor := new(overviewCursor)
+	if err := decodeCursor(params.Cursor, cursor); err != nil {
+		return nil, err
+	}
+	if !slices.Contains(overviewLists, cursor.List) || cursor.Offset <= 0 || cursor.Offset > math.MaxInt32 {
+		return nil, errors.NewInvalidInputf(ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	query.List, query.Offset = cursor.List, cursor.Offset
+	return query, nil
+}
+
+// overviewCursor is the content of a nextCursor: the list it belongs to and where its next page starts.
+type overviewCursor struct {
+	List   string `json:"list"`
+	Offset int    `json:"offset"`
+}
+
+// decodeCursor rejects a field the cursor does not have, so a cursor of another route is not accepted.
+func decodeCursor(encoded string, cursor any) error {
+	data, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(cursor); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeInspectInvalidCursor, "invalid cursor")
+	}
+	return nil
+}
+
+func encodeCursor(cursor any) string {
+	data, _ := json.Marshal(cursor)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
