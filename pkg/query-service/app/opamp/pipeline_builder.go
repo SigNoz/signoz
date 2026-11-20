@@ -90,7 +90,13 @@ func checkDuplicates(pipeline []interface{}) bool {
 	exists := make(map[string]bool, len(pipeline))
 	slog.Debug("checking duplicate processors in the pipeline", "pipeline", pipeline)
 	for _, processor := range pipeline {
-		name := processor.(string)
+		// A pipeline entry is a processor name, but this list comes from the
+		// agent's own config, so an entry can be any YAML value. Anything that
+		// is not a name cannot collide with one.
+		name, ok := processor.(string)
+		if !ok {
+			continue
+		}
 		if _, ok := exists[name]; ok {
 			return true
 		}
@@ -120,7 +126,10 @@ func buildPipeline(signal Signal, current []interface{}) ([]interface{}, error) 
 	// create a reverse map of existing config processors and their position
 	existing := map[string]int{}
 	for i, p := range current {
-		name := p.(string)
+		name, ok := p.(string)
+		if !ok {
+			continue
+		}
 		existing[name] = i
 	}
 
