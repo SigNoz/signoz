@@ -13823,6 +13823,28 @@ export interface SpantypesEventDTO {
 	timeUnixNano?: number;
 }
 
+export type SpantypesEventV2DTOAttributes = { [key: string]: unknown };
+
+export interface SpantypesEventV2DTO {
+	/**
+	 * @type object
+	 */
+	attributes?: SpantypesEventV2DTOAttributes;
+	/**
+	 * @type boolean
+	 */
+	isError?: boolean;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	timeUnixNano?: number;
+}
+
 export enum SpantypesFieldContextDTO {
 	attribute = 'attribute',
 	resource = 'resource',
@@ -14513,6 +14535,17 @@ export interface SpantypesGettableWaterfallTraceDTO {
 	uncollapsedSpans?: string[] | null;
 }
 
+export interface SpantypesLinkDTO {
+	/**
+	 * @type string
+	 */
+	spanId?: string;
+	/**
+	 * @type string
+	 */
+	traceId?: string;
+}
+
 export interface SpantypesPostableFlamegraphDTO {
 	/**
 	 * @type array
@@ -14597,6 +14630,497 @@ export interface SpantypesPostableWaterfallDTO {
 	 * @type array,null
 	 */
 	uncollapsedSpans?: string[] | null;
+}
+
+export type SpantypesSpanRecordDTOAttributes = { [key: string]: unknown };
+
+export type SpantypesSpanRecordDTOResource = { [key: string]: string };
+
+export interface SpantypesTruncatedFieldDTO {
+	/**
+	 * @type string
+	 */
+	field: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	length: number;
+}
+
+export interface SpantypesSpanRecordDTO {
+	/**
+	 * @type object
+	 */
+	attributes: SpantypesSpanRecordDTOAttributes;
+	/**
+	 * @type array
+	 */
+	events: SpantypesEventV2DTO[];
+	/**
+	 * @type array
+	 */
+	links: SpantypesLinkDTO[];
+	/**
+	 * @type object
+	 */
+	resource: SpantypesSpanRecordDTOResource;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type string
+	 */
+	statusCode: string;
+	/**
+	 * @type string
+	 */
+	statusMessage: string;
+	/**
+	 * @type array
+	 */
+	truncated: SpantypesTruncatedFieldDTO[];
+}
+
+export interface SpantypesSpanSummaryDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	childCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	durationNano: number;
+	/**
+	 * @type boolean
+	 */
+	hasError: boolean;
+	/**
+	 * @type string
+	 */
+	kind: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ownTimeNano: number;
+	/**
+	 * @type string
+	 */
+	parentSpanId?: string;
+	/**
+	 * @type string
+	 */
+	responseStatusCode?: string;
+	/**
+	 * @type string
+	 */
+	serviceName: string;
+	/**
+	 * @type string
+	 */
+	spanId: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startOffsetNano: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	subtreeSpanCount: number;
+}
+
+export interface SpantypesSpanTextMatchDTO {
+	/**
+	 * @type string
+	 */
+	field: string;
+	/**
+	 * @type string
+	 */
+	snippet: string;
+}
+
+export interface SpantypesTraceAIIdentityDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	modelCallCount: number;
+	tokens: SpantypesTraceAITokensDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	toolCallCount: number;
+	/**
+	 * @type number
+	 */
+	totalCost?: number;
+}
+
+export interface SpantypesTraceErrorItemDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	errorAncestorCount: number;
+	parent?: SpantypesSpanSummaryDTO;
+	span: SpantypesSpanSummaryDTO;
+	/**
+	 * @type string
+	 */
+	statusMessage: string;
+}
+
+export interface SpantypesTraceErrorListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceErrorItemDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceExpensiveItemDTO {
+	/**
+	 * @type number
+	 */
+	cost?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	inputTokens: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	outputTokens: number;
+	parent?: SpantypesSpanSummaryDTO;
+	span: SpantypesSpanSummaryDTO;
+}
+
+export interface SpantypesTraceExpensiveListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceExpensiveItemDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceServiceStatsDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	errorSpanCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ownTimeNano: number;
+	/**
+	 * @type string
+	 */
+	serviceName: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+}
+
+export interface SpantypesTraceIdentityDTO {
+	ai?: SpantypesTraceAIIdentityDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	durationNano: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	errorSpanCount: number;
+	/**
+	 * @type boolean
+	 */
+	hasMissingSpans: boolean;
+	root?: SpantypesSpanSummaryDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	rootCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	serviceCount: number;
+	/**
+	 * @type array
+	 */
+	services: SpantypesTraceServiceStatsDTO[];
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	startTimestampMillis: number;
+	/**
+	 * @type string
+	 */
+	traceId: string;
+}
+
+export interface SpantypesTraceLinkItemDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	linkCount: number;
+	/**
+	 * @type array
+	 */
+	links: SpantypesLinkDTO[];
+	parent?: SpantypesSpanSummaryDTO;
+	span: SpantypesSpanSummaryDTO;
+}
+
+export interface SpantypesTraceLinkListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceLinkItemDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceSlowestItemDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	errorSpanCount: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ownTimeNano: number;
+	parent?: SpantypesSpanSummaryDTO;
+	span: SpantypesSpanSummaryDTO;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	spanCount: number;
+}
+
+export interface SpantypesTraceSlowestListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceSlowestItemDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceTreeDTO {
+	/**
+	 * @type boolean
+	 */
+	complete: boolean;
+	/**
+	 * @type array
+	 */
+	records?: SpantypesSpanRecordDTO[];
+	/**
+	 * @type array
+	 */
+	spans: SpantypesSpanSummaryDTO[];
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export enum SpantypesUnmarkedFailureReasonDTO {
+	http_4xx = 'http_4xx',
+	grpc_status = 'grpc_status',
+	exception_event = 'exception_event',
+}
+export interface SpantypesTraceUnmarkedFailureItemDTO {
+	parent?: SpantypesSpanSummaryDTO;
+	reason: SpantypesUnmarkedFailureReasonDTO;
+	span: SpantypesSpanSummaryDTO;
+}
+
+export interface SpantypesTraceUnmarkedFailureListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceUnmarkedFailureItemDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceOverviewDTO {
+	errors?: SpantypesTraceErrorListDTO;
+	expensive?: SpantypesTraceExpensiveListDTO;
+	identity?: SpantypesTraceIdentityDTO;
+	links?: SpantypesTraceLinkListDTO;
+	slowest?: SpantypesTraceSlowestListDTO;
+	tree?: SpantypesTraceTreeDTO;
+	unmarkedFailures?: SpantypesTraceUnmarkedFailureListDTO;
+}
+
+export interface SpantypesTraceSpanLevelDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	level: number;
+	/**
+	 * @type array
+	 */
+	spans: SpantypesSpanSummaryDTO[];
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+}
+
+export interface SpantypesTraceSpanPercentileDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	p50Nano: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	p90Nano: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	p99Nano: number;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	position: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	windowMinutes: number;
+}
+
+export interface SpantypesTraceSpanDetailDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	ancestorCount: number;
+	/**
+	 * @type array
+	 */
+	ancestors: SpantypesSpanSummaryDTO[];
+	/**
+	 * @type array
+	 */
+	descendants: SpantypesTraceSpanLevelDTO[];
+	percentile?: SpantypesTraceSpanPercentileDTO;
+	record: SpantypesSpanRecordDTO;
+	summary: SpantypesSpanSummaryDTO;
+}
+
+export interface SpantypesTraceSpanMatchDTO {
+	/**
+	 * @type array
+	 */
+	matches: SpantypesSpanTextMatchDTO[];
+	parent?: SpantypesSpanSummaryDTO;
+	span: SpantypesSpanSummaryDTO;
+}
+
+export interface SpantypesTraceSpanListDTO {
+	/**
+	 * @type array
+	 */
+	items: SpantypesTraceSpanMatchDTO[];
+	/**
+	 * @type string
+	 */
+	nextCursor?: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	total: number;
+	/**
+	 * @type array
+	 */
+	warnings?: string[];
 }
 
 export interface SpantypesUpdatableSpanMapperDTO {
@@ -16035,6 +16559,84 @@ export type GetTraceAggregationsPathParameters = {
 };
 export type GetTraceAggregations200 = {
 	data: SpantypesGettableTraceAggregationsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type InspectTracePathParameters = {
+	traceID: string;
+};
+export type InspectTraceParams = {
+	/**
+	 * @type string
+	 * @description The nextCursor of one list of the overview; returns the next page of that list and nothing else.
+	 */
+	cursor?: string;
+};
+
+export type InspectTrace200 = {
+	data: SpantypesTraceOverviewDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type InspectTraceSpansPathParameters = {
+	traceID: string;
+};
+export type InspectTraceSpansParams = {
+	/**
+	 * @type string
+	 * @description Returns the spans that match, earliest first: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attributes, resource attributes and events, ignoring case. Without it every span is returned, in tree order.
+	 */
+	search?: string;
+	/**
+	 * @type string
+	 * @description A span ID; returns that span and every span below it. Cannot be combined with search.
+	 */
+	under?: string;
+	/**
+	 * @type integer
+	 * @description Page size, at most 1000; when not given, 20 with search and 400 without. A page holds fewer spans when it would pass the response size limit.
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description The nextCursor of an earlier response to the same request; returns the next page.
+	 */
+	cursor?: string;
+};
+
+export type InspectTraceSpans200 = {
+	data: SpantypesTraceSpanListDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type InspectTraceSpanPathParameters = {
+	traceID: string;
+	spanID: string;
+};
+export type InspectTraceSpanParams = {
+	/**
+	 * @type integer
+	 * @description The number of levels of ancestors and of descendants returned, 1 to 10; 2 when not given. The root span is always returned.
+	 */
+	depth?: number;
+	/**
+	 * @type array
+	 * @description Attribute names returned without the 500 character cut; the record then holds only these attributes.
+	 */
+	selectFields?: string[];
+};
+
+export type InspectTraceSpan200 = {
+	data: SpantypesTraceSpanDetailDTO;
 	/**
 	 * @type string
 	 */

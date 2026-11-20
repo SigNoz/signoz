@@ -16,6 +16,9 @@ type Handler interface {
 	GetTraceAggregations(http.ResponseWriter, *http.Request)
 	GetFlamegraph(http.ResponseWriter, *http.Request)
 	GetThread(http.ResponseWriter, *http.Request)
+	InspectTrace(http.ResponseWriter, *http.Request)
+	InspectTraceSpan(http.ResponseWriter, *http.Request)
+	InspectTraceSpans(http.ResponseWriter, *http.Request)
 }
 
 // Module defines the business logic for trace detail operations.
