@@ -5,7 +5,6 @@ import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import {
 	buildPlannedMaintenanceDeletePermission,
-	buildPlannedMaintenanceReadPermission,
 	buildPlannedMaintenanceUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
 
@@ -31,10 +30,7 @@ function PlannedDowntimeActionsMenu({
 				label: 'Edit',
 				testId: `downtime-edit-${downtime.id}`,
 				prefix: <PenLine size={14} />,
-				checks: [
-					buildPlannedMaintenanceReadPermission(downtime.id),
-					buildPlannedMaintenanceUpdatePermission(downtime.id),
-				],
+				checks: [buildPlannedMaintenanceUpdatePermission(downtime.id)],
 				onClick: (): void => onEdit(downtime),
 			},
 			{ type: 'separator', value: 'before-delete' },

@@ -148,7 +148,7 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
-	const { isReadOnly, saveChecks, getRuleDenial } =
+	const { isReadOnly, saveChecks, getRuleAccess, onPickerOpen } =
 		usePlannedDowntimeFormPermissions({
 			initialValues,
 			isEditMode,
@@ -167,10 +167,24 @@ export function PlannedDowntimeForm(
 	const gatedAlertOptions = useMemo(
 		() =>
 			alertOptions.map((option) => {
-				const denial = getRuleDenial(String(option.value));
-				return { ...option, disabled: !!denial, title: denial };
+				const { disabled, reason } = getRuleAccess(String(option.value));
+				return {
+					...option,
+					disabled,
+					title: reason,
+					'aria-disabled': disabled,
+					'data-testid': `downtime-rule-option-${option.value}`,
+				};
 			}),
-		[alertOptions, getRuleDenial],
+		[alertOptions, getRuleAccess],
+	);
+
+	const getRuleLockReason = useCallback(
+		(ruleId: string): string | undefined => {
+			const { disabled, reason } = getRuleAccess(ruleId);
+			return disabled ? reason : undefined;
+		},
+		[getRuleAccess],
 	);
 
 	const requiredFieldRule = [{ required: true }];
@@ -309,7 +323,7 @@ export function PlannedDowntimeForm(
 			name: defaultTo(initialValues.name, ''),
 			alertRuleScope:
 				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
-			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions),
+			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions, isError),
 			startTime: schedule?.startTime
 				? dayjs(schedule.startTime).tz(schedule.timezone)
 				: null,
@@ -326,7 +340,7 @@ export function PlannedDowntimeForm(
 			timezone: schedule?.timezone as string,
 			scope: initialValues.scope || '',
 		};
-	}, [initialValues, isEditMode, alertOptions]);
+	}, [initialValues, isEditMode, alertOptions, isError]);
 
 	useEffect(() => {
 		setSelectedTags(formattedInitialValues.alertRules);
@@ -533,7 +547,7 @@ export function PlannedDowntimeForm(
 									closable={!isReadOnly}
 									selectedTags={selectedTags}
 									handleClose={handleClose}
-									getLockReason={getRuleDenial}
+									getLockReason={getRuleLockReason}
 								/>
 							</Form.Item>
 							<Form.Item
@@ -563,6 +577,11 @@ export function PlannedDowntimeForm(
 									showSearch
 									options={gatedAlertOptions}
 									data-testid="downtime-alert-rules"
+									onDropdownVisibleChange={(open): void => {
+										if (open) {
+											onPickerOpen();
+										}
+									}}
 									filterOption={(input, option): boolean =>
 										(option?.label as string)
 											?.toLowerCase()

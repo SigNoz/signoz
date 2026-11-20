@@ -1,7 +1,6 @@
 import {
 	buildPlannedMaintenanceAttachPermission,
 	buildPlannedMaintenanceDetachPermission,
-	buildPlannedMaintenanceReadPermission,
 	buildPlannedMaintenanceUpdatePermission,
 	PlannedMaintenanceAttachPermission,
 	PlannedMaintenanceCreatePermission,
@@ -14,10 +13,7 @@ import {
 import { getDowntimeSaveChecks } from '../downtimeSaveChecks';
 
 const ID = 'schedule-1';
-const EDIT = [
-	buildPlannedMaintenanceReadPermission(ID),
-	buildPlannedMaintenanceUpdatePermission(ID),
-];
+const EDIT = [buildPlannedMaintenanceUpdatePermission(ID)];
 const ATTACH = buildPlannedMaintenanceAttachPermission(ID);
 const DETACH = buildPlannedMaintenanceDetachPermission(ID);
 
@@ -49,7 +45,7 @@ describe('getDowntimeSaveChecks', () => {
 	});
 
 	describe('edit', () => {
-		it('needs only read and update when the rules are unchanged', () => {
+		it('needs only update when the rules are unchanged', () => {
 			expect(
 				getDowntimeSaveChecks({
 					scheduleId: ID,
@@ -75,14 +71,14 @@ describe('getDowntimeSaveChecks', () => {
 			]);
 		});
 
-		it('detaches every rule when an all-rules schedule is re-saved', () => {
+		it('needs only update to re-save an all-rules schedule', () => {
 			expect(
 				getDowntimeSaveChecks({
 					scheduleId: ID,
 					storedAlertIds: [],
 					incomingAlertIds: [],
 				}),
-			).toStrictEqual([...EDIT, DETACH, buildRuleDetachPermission('*')]);
+			).toStrictEqual(EDIT);
 		});
 
 		it('detaches every rule and attaches the picks when narrowing from all', () => {
@@ -101,7 +97,7 @@ describe('getDowntimeSaveChecks', () => {
 			]);
 		});
 
-		it('only detaches the old rules when widening to all', () => {
+		it('attaches every rule and detaches the old ones when widening to all', () => {
 			expect(
 				getDowntimeSaveChecks({
 					scheduleId: ID,
@@ -110,6 +106,8 @@ describe('getDowntimeSaveChecks', () => {
 				}),
 			).toStrictEqual([
 				...EDIT,
+				ATTACH,
+				buildRuleAttachPermission('*'),
 				DETACH,
 				buildRuleDetachPermission('a'),
 				buildRuleDetachPermission('b'),

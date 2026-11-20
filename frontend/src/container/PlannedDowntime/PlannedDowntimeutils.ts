@@ -55,16 +55,34 @@ export const formatDateTime = (
 	return dt.format(DATE_TIME_FORMATS.MONTH_DATETIME);
 };
 
+/**
+ * With `keepUnknownIds`, an id the options lack stays selected under its own
+ * id, so a form opened without the rule list saves the rules it was given. A
+ * loaded list lacking an id means the rule is gone, so it is dropped.
+ */
 export const getAlertOptionsFromIds = (
 	alertIds: string[],
 	alertOptions: DowntimeAlertOption[],
-): DowntimeAlertOption[] =>
-	alertOptions.filter(
+	keepUnknownIds = false,
+): DowntimeAlertOption[] => {
+	const known = alertOptions.filter(
 		(alert) =>
 			alert !== undefined &&
 			alert.value &&
 			alertIds?.includes(alert.value as string),
 	);
+	if (!keepUnknownIds) {
+		return known;
+	}
+
+	const knownIds = new Set(known.map((alert) => alert.value));
+	return [
+		...known,
+		...alertIds
+			.filter((id) => !knownIds.has(id))
+			.map((id) => ({ label: id, value: id })),
+	];
+};
 
 export const recurrenceInfo = (
 	schedule?: AlertmanagertypesScheduleDTO | null,

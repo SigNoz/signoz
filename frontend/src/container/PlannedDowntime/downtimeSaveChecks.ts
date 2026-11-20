@@ -1,7 +1,6 @@
 import {
 	buildPlannedMaintenanceAttachPermission,
 	buildPlannedMaintenanceDetachPermission,
-	buildPlannedMaintenanceReadPermission,
 	buildPlannedMaintenanceUpdatePermission,
 	PlannedMaintenanceAttachPermission,
 	PlannedMaintenanceCreatePermission,
@@ -33,9 +32,9 @@ interface DowntimeSaveChecksInput {
 /**
  * What saving a schedule needs, as the downtime routes check it. Create links
  * every picked rule, or every rule when none are. An edit diffs the incoming
- * list against the stored one, where only the stored side reads empty as every
- * rule: re-saving an all-rules schedule detaches `*`, and switching to all
- * rules detaches the old ones without attaching `*`.
+ * list against the stored one, both reading empty as every rule: re-saving an
+ * all-rules schedule links nothing new, and switching to all rules attaches
+ * `*` and detaches the old ones.
  */
 export function getDowntimeSaveChecks({
 	scheduleId,
@@ -51,13 +50,11 @@ export function getDowntimeSaveChecks({
 	}
 
 	const stored = withAllRulesIfEmpty(storedAlertIds);
-	const attached = difference(incomingAlertIds, stored);
-	const detached = difference(stored, incomingAlertIds);
+	const incoming = withAllRulesIfEmpty(incomingAlertIds);
+	const attached = difference(incoming, stored);
+	const detached = difference(stored, incoming);
 
-	const checks = [
-		buildPlannedMaintenanceReadPermission(scheduleId),
-		buildPlannedMaintenanceUpdatePermission(scheduleId),
-	];
+	const checks = [buildPlannedMaintenanceUpdatePermission(scheduleId)];
 	if (attached.length > 0) {
 		checks.push(
 			buildPlannedMaintenanceAttachPermission(scheduleId),
