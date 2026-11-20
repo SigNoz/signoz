@@ -32,6 +32,12 @@ import type {
 	InspectTrace200,
 	InspectTraceParams,
 	InspectTracePathParameters,
+	InspectTraceSpan200,
+	InspectTraceSpanParams,
+	InspectTraceSpanPathParameters,
+	InspectTraceSpans200,
+	InspectTraceSpansParams,
+	InspectTraceSpansPathParameters,
 	RenderErrorResponseDTO,
 	SpantypesPostableFlamegraphDTO,
 	SpantypesPostableTraceAggregationsDTO,
@@ -162,7 +168,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns one of three parts of a trace of any size, named by type, each within 50,000 characters. Without spanId or search it returns the overview: the trace's identity with per-service totals, the spans where each error started, the failures not marked as errors (a 4xx response, a gRPC status other than OK, an exception event), the slowest spans by own time with same-name spans under one parent taken together, the most expensive gen_ai spans, and the span tree. The tree holds the first 50 spans of the trace: level by level from the root, and in time order on the level that does not fit. A trace of up to 50 spans also returns each span's full record when they fit in 20,000 characters. With spanId it returns that span's summary and full record, its ancestors, and the spans below it level by level, at most 20 per level; values over 500 characters are cut and listed in truncated. With search it returns the matching spans, each with where the words were found; allSpans returns every span instead. Every list carries its total, and every list item the span's direct parent. Pass a nextCursor as cursor with the same parameters to get the next page.
+ * Returns the overview of a trace of any size: its identity with per-service totals, the spans where each error started, the failures not marked as errors, the slowest spans by own time, the most expensive gen_ai spans, the spans that link to other spans, and the top of the span tree. A small trace also returns each span's full record. Every list carries its total and a nextCursor when more items follow.
  * @summary Inspect a trace
  */
 export const inspectTrace = (
@@ -266,6 +272,241 @@ export const invalidateInspectTrace = async (
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
 		{ queryKey: getInspectTraceQueryKey({ traceID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns the spans of a trace that match a search, each with its direct parent and where the words were found. Without a search it returns every span in tree order, or with under one span and the spans below it.
+ * @summary Search or list the spans of a trace
+ */
+export const inspectTraceSpans = (
+	{ traceID }: InspectTraceSpansPathParameters,
+	params?: InspectTraceSpansParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<InspectTraceSpans200>({
+		url: `/api/v1/traces/${traceID}/inspect/spans`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getInspectTraceSpansQueryKey = (
+	{ traceID }: InspectTraceSpansPathParameters,
+	params?: InspectTraceSpansParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/inspect/spans`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getInspectTraceSpansQueryOptions = <
+	TData = Awaited<ReturnType<typeof inspectTraceSpans>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: InspectTraceSpansPathParameters,
+	params?: InspectTraceSpansParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTraceSpans>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getInspectTraceSpansQueryKey({ traceID }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof inspectTraceSpans>>
+	> = ({ signal }) => inspectTraceSpans({ traceID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: traceID !== null && traceID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof inspectTraceSpans>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type InspectTraceSpansQueryResult = NonNullable<
+	Awaited<ReturnType<typeof inspectTraceSpans>>
+>;
+export type InspectTraceSpansQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Search or list the spans of a trace
+ */
+
+export function useInspectTraceSpans<
+	TData = Awaited<ReturnType<typeof inspectTraceSpans>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID }: InspectTraceSpansPathParameters,
+	params?: InspectTraceSpansParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTraceSpans>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getInspectTraceSpansQueryOptions(
+		{ traceID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Search or list the spans of a trace
+ */
+export const invalidateInspectTraceSpans = async (
+	queryClient: QueryClient,
+	{ traceID }: InspectTraceSpansPathParameters,
+	params?: InspectTraceSpansParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getInspectTraceSpansQueryKey({ traceID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns one span in full: its summary and record, its nearest ancestors with the root, the spans below it level by level, and where its duration sits among recent spans of the same name and service. Long values are cut and listed in truncated; selectFields returns named attributes without the cut.
+ * @summary Inspect a span of a trace
+ */
+export const inspectTraceSpan = (
+	{ traceID, spanID }: InspectTraceSpanPathParameters,
+	params?: InspectTraceSpanParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<InspectTraceSpan200>({
+		url: `/api/v1/traces/${traceID}/inspect/spans/${spanID}`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getInspectTraceSpanQueryKey = (
+	{ traceID, spanID }: InspectTraceSpanPathParameters,
+	params?: InspectTraceSpanParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/inspect/spans/${spanID}`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getInspectTraceSpanQueryOptions = <
+	TData = Awaited<ReturnType<typeof inspectTraceSpan>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: InspectTraceSpanPathParameters,
+	params?: InspectTraceSpanParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTraceSpan>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getInspectTraceSpanQueryKey({ traceID, spanID }, params);
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof inspectTraceSpan>>> = ({
+		signal,
+	}) => inspectTraceSpan({ traceID, spanID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			traceID !== null &&
+			traceID !== undefined &&
+			spanID !== null &&
+			spanID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof inspectTraceSpan>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type InspectTraceSpanQueryResult = NonNullable<
+	Awaited<ReturnType<typeof inspectTraceSpan>>
+>;
+export type InspectTraceSpanQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Inspect a span of a trace
+ */
+
+export function useInspectTraceSpan<
+	TData = Awaited<ReturnType<typeof inspectTraceSpan>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: InspectTraceSpanPathParameters,
+	params?: InspectTraceSpanParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof inspectTraceSpan>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getInspectTraceSpanQueryOptions(
+		{ traceID, spanID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary Inspect a span of a trace
+ */
+export const invalidateInspectTraceSpan = async (
+	queryClient: QueryClient,
+	{ traceID, spanID }: InspectTraceSpanPathParameters,
+	params?: InspectTraceSpanParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getInspectTraceSpanQueryKey({ traceID, spanID }, params) },
 		options,
 	);
 
