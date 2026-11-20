@@ -366,7 +366,14 @@ function MultiIngestionSettings(): JSX.Element {
 		: ingestionKeysData;
 	const isLoading = isSearching ? isLoadingSearch : isLoadingGet;
 	const isRefetching = isSearching ? isRefetchingSearch : isRefetchingGet;
-	const refetchAPIKeys = isSearching ? refetchSearchAPIKeys : refetchGetAPIKeys;
+	const refetchKeysQuery = isSearching
+		? refetchSearchAPIKeys
+		: refetchGetAPIKeys;
+	const refetchAPIKeys = async (): Promise<void> => {
+		if (canListIngestionKeys) {
+			await refetchKeysQuery();
+		}
+	};
 	const error = isSearching ? searchError : getError;
 	const isError = isSearching ? isSearchError : isGetError;
 

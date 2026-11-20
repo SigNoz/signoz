@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import type {
 	AuthtypesTransactionDTO,
 	GatewaytypesIngestionKeyDTO,
@@ -187,6 +188,40 @@ describe('MultiIngestionSettings authz', () => {
 			await user.click(screen.getByTestId('ingestion-key-add-btn'));
 
 			await screen.findByTestId('create-new-key');
+		});
+	});
+
+	describe('creating a key without list access', () => {
+		it('sends no list request after the key is created', async () => {
+			const onList = mockKeys([KEY_ONE]);
+			const onCreate = jest.fn();
+			server.use(
+				setupAuthzDeny(IngestionKeyListPermission),
+				rest.post('*/api/v2/gateway/ingestion_keys', (_req, res, ctx) => {
+					onCreate();
+					return res(
+						ctx.status(200),
+						ctx.json({ status: 'success', data: { id: 'k9', value: 'v' } }),
+					);
+				}),
+			);
+
+			const user = renderPage();
+
+			await expect(
+				settledButton('ingestion-key-add-btn'),
+			).resolves.not.toHaveAttribute('aria-disabled', 'true');
+			await user.click(screen.getByTestId('ingestion-key-add-btn'));
+			await user.type(await screen.findByLabelText('Name'), 'new-key');
+			await user.click(screen.getByLabelText('Expiration'));
+			await user.click(
+				await screen.findByTitle(dayjs().add(1, 'day').format('YYYY-MM-DD')),
+			);
+			await user.click(screen.getByTestId('create-new-key'));
+
+			await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
+			await screen.findByText(DENIED_TEXT);
+			expect(onList).not.toHaveBeenCalled();
 		});
 	});
 
