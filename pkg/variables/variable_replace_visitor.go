@@ -428,15 +428,10 @@ func (v *variableReplacementVisitor) VisitSearchCall(ctx *grammar.SearchCallCont
 }
 
 func (visitor *variableReplacementVisitor) VisitPatternCall(ctx *grammar.PatternCallContext) any {
-	if ctx.ValueList() == nil {
-		return "pattern()"
-	}
-	// VisitValueList already parenthesizes the args and propagates the __all__ marker.
-	result := visitor.Visit(ctx.ValueList()).(string)
-	if result == specialSkipMarker {
-		return specialSkipMarker
-	}
-	return "pattern" + result
+	// Keep pattern(...) as written: pattern texts are not variable slots, so a
+	// variable set to __all__ must not drop the call.
+	start, stop := ctx.GetStart(), ctx.GetStop()
+	return start.GetInputStream().GetText(start.GetStart(), stop.GetStop())
 }
 
 func (v *variableReplacementVisitor) VisitFunctionParamList(ctx *grammar.FunctionParamListContext) any {
