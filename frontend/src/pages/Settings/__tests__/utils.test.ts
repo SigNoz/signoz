@@ -2,6 +2,7 @@ import ROUTES from 'constants/routes';
 import { createInstance } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
+import { ingestionSettings, multiIngestionSettings } from '../config';
 import { getRoutes } from '../utils';
 
 const i18n = createInstance();
@@ -32,27 +33,52 @@ describe('getRoutes for a blocked workspace', () => {
 	});
 });
 
-describe('getRoutes Ingestion tab', () => {
-	it.each([
-		['a cloud viewer', USER_ROLES.VIEWER, true, false],
-		['an enterprise self-hosted viewer', USER_ROLES.VIEWER, false, true],
-		['a community viewer', USER_ROLES.VIEWER, false, false],
-		['an editor', USER_ROLES.EDITOR, true, false],
-		['an admin', USER_ROLES.ADMIN, true, false],
-	])(
-		'is shown to %s',
-		(_name, role, isCloudUser, isEnterpriseSelfHostedUser) => {
-			const keys = getRoutes(
-				role as ROLES,
-				false,
-				false,
-				false,
-				isCloudUser,
-				isEnterpriseSelfHostedUser,
-				t,
-			).map((route) => route.key);
+const ingestionComponents = (
+	role: ROLES,
+	isGatewayEnabled: boolean,
+	isCloudUser: boolean,
+	isEnterpriseSelfHostedUser: boolean,
+): unknown[] =>
+	getRoutes(
+		role,
+		false,
+		isGatewayEnabled,
+		false,
+		isCloudUser,
+		isEnterpriseSelfHostedUser,
+		t,
+	)
+		.filter((route) => route.key === ROUTES.INGESTION_SETTINGS)
+		.map((route) => route.Component);
 
-			expect(keys).toContain(ROUTES.INGESTION_SETTINGS);
+describe('getRoutes Ingestion tab', () => {
+	const multi = multiIngestionSettings(t)[0].Component;
+	const legacy = ingestionSettings(t)[0].Component;
+
+	it.each([USER_ROLES.VIEWER, USER_ROLES.EDITOR, USER_ROLES.ADMIN])(
+		'shows the multi key page to a %s when the gateway is on',
+		(role) => {
+			expect(ingestionComponents(role as ROLES, true, true, false)).toStrictEqual([
+				multi,
+			]);
+		},
+	);
+
+	it('shows the legacy page to cloud users without the gateway', () => {
+		expect(
+			ingestionComponents(USER_ROLES.VIEWER as ROLES, false, true, false),
+		).toStrictEqual([legacy]);
+	});
+
+	it.each([
+		['enterprise self-hosted', false, true],
+		['community', false, false],
+	])(
+		'shows no Ingestion tab to %s users without the gateway',
+		(_n, cloud, ent) => {
+			expect(
+				ingestionComponents(USER_ROLES.ADMIN as ROLES, false, cloud, ent),
+			).toStrictEqual([]);
 		},
 	);
 

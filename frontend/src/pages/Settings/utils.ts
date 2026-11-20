@@ -58,15 +58,12 @@ export const getRoutes = (
 		settings.push(...organizationSettings(t));
 	}
 
-	let shouldUseMultiIngestionFlow = true;
+	if (isGatewayEnabled) {
+		settings.push(...multiIngestionSettings(t));
+	}
 
 	if (isCloudUser && !isGatewayEnabled) {
 		settings.push(...ingestionSettings(t));
-		shouldUseMultiIngestionFlow = false;
-	}
-
-	if (shouldUseMultiIngestionFlow) {
-		settings.push(...multiIngestionSettings(t));
 	}
 
 	// Visible to all authenticated users
