@@ -1,9 +1,9 @@
 import React from 'react';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
@@ -11,6 +11,7 @@ import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { TestRouter } from 'tests/router';
+import { userEvent } from 'tests/test-utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -36,14 +37,6 @@ jest.mock('lib/navigation', () => ({
 	getNavigationReferrer: (): string => 'direct',
 }));
 
-const mockSafeNavigate = jest.fn();
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
-		safeNavigate: mockSafeNavigate,
-	}),
-}));
-
 function buildCompositeQueryParam(expression: string): string {
 	const defaultQuery = initialQueriesMap[DataSource.METRICS];
 
@@ -61,7 +54,9 @@ function buildCompositeQueryParam(expression: string): string {
 	);
 }
 
-function getNavigatedQueryData(url: string): IBuilderQuery {
+function getNavigatedQueryData(): IBuilderQuery {
+	const [to] = safeNavigateMock.mock.calls.at(-1) ?? [];
+	const url = typeof to === 'string' ? to : (to?.search ?? '');
 	const param = new URL(url, 'http://localhost').searchParams.get(
 		'compositeQuery',
 	);
@@ -100,8 +95,6 @@ function renderPage(
 describe('InfraMonitoringK8s', () => {
 	describe('when the category changes with a list filter applied', () => {
 		beforeEach(async () => {
-			mockSafeNavigate.mockClear();
-
 			renderPage(
 				{ category: K8sCategories.NODES },
 				jest.fn(),
@@ -117,12 +110,10 @@ describe('InfraMonitoringK8s', () => {
 			await userEvent.click(screen.getByTestId(`category-${K8sCategories.PODS}`));
 
 			await waitFor(() => {
-				expect(mockSafeNavigate).toHaveBeenCalled();
+				expect(safeNavigateMock).toHaveBeenCalled();
 			});
 
-			const queryData = getNavigatedQueryData(
-				mockSafeNavigate.mock.calls.at(-1)?.[0],
-			);
+			const queryData = getNavigatedQueryData();
 
 			expect(queryData.filter?.expression).toBe(
 				"k8s.node.name in ['node-1', 'node-2']",
