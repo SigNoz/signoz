@@ -117,5 +117,5 @@ def pytest_addoption(parser: pytest.Parser):
         "--schema-migrator-version",
         action="store",
         default="v0.144.15",
-        help="schema migrator version",
+        help="signoz-otel-collector version that runs the schema migrations",
     )

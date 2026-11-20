@@ -28,43 +28,26 @@ def create_migrator(  # pylint: disable=too-many-arguments,too-many-positional-a
 
         environment = dict(env_overrides) if env_overrides else {}
 
-        container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
-            command=f"sync --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
-            detach=True,
-            auto_remove=False,
-            network=network.id,
-            environment=environment,
-        )
+        dsn = clickhouse.env["SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN"]
+        for step in ("bootstrap", "sync up", "async up"):
+            container = client.containers.run(
+                image=f"signoz/signoz-otel-collector:{migrator_version}",
+                command=f"migrate {step} --clickhouse-dsn={dsn} --clickhouse-cluster=cluster --clickhouse-replication=true --timeout=10m",
+                detach=True,
+                auto_remove=False,
+                network=network.id,
+                environment=environment,
+            )
 
-        result = container.wait()
+            result = container.wait()
 
-        if result["StatusCode"] != 0:
-            logs = container.logs().decode(encoding="utf-8")
+            if result["StatusCode"] != 0:
+                logs = container.logs().decode(encoding="utf-8")
+                container.remove()
+                print(logs)
+                raise RuntimeError(f"failed to run migrate {step} on clickhouse")
+
             container.remove()
-            print(logs)
-            raise RuntimeError("failed to run migrations on clickhouse")
-
-        container.remove()
-
-        container = client.containers.run(
-            image=f"signoz/signoz-schema-migrator:{migrator_version}",
-            command=f"async --replication=true --cluster-name=cluster --up= --dsn={clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_DSN']}",
-            detach=True,
-            auto_remove=False,
-            network=network.id,
-            environment=environment,
-        )
-
-        result = container.wait()
-
-        if result["StatusCode"] != 0:
-            logs = container.logs().decode(encoding="utf-8")
-            container.remove()
-            print(logs)
-            raise RuntimeError("failed to run migrations on clickhouse")
-
-        container.remove()
 
         return types.Operation(name=cache_key)
 
