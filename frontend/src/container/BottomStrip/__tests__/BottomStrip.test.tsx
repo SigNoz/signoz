@@ -4,10 +4,10 @@ import { render } from 'tests/test-utils';
 import { Info } from 'types/api/v1/version/get';
 
 import BottomStrip, {
-	BOTTOM_STRIP_HEIGHT,
 	BOTTOM_STRIP_HEIGHT_VAR,
 	BOTTOM_STRIP_ON_CLASS,
 } from '..';
+import { BOTTOM_STRIP_HEIGHT } from '../constants';
 import { useBottomStripStore } from '../store/useBottomStripStore';
 import { useBottomStrip } from '../useBottomStrip';
 import { StripItemKind } from '../types';
