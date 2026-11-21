@@ -15,13 +15,13 @@ from fixtures.traces import Traces
 
 # Related values (/api/v1/fields/values with existingQuery) are served from the
 # shared signoz_metadata.attributes_metadata table, scoped by data_source =
-# signal. One dataset (queriercommon/related_values.jsonl) drives every scenario:
+# signal. One dataset (quickfilter/related_values.jsonl) drives every scenario:
 #   - Filter attributes (namespace/statefulset/cluster) are identical across
 #     data_sources, so the same existingQuery matches under any signal.
 #   - Target values (k8s.pod.name / host.name) are suffixed per data_source, so
 #     the returned set differs by signal -> every scenario also proves the
 #     data_source scoping (no cross-signal leakage).
-DATASET = "queriercommon/related_values.jsonl"
+DATASET = "quickfilter/related_values.jsonl"
 
 
 @pytest.fixture(name="seed_related_values", scope="function")
