@@ -29,7 +29,6 @@ import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import AppToaster from 'components/AppToaster/AppToaster';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -99,6 +98,10 @@ const AIAssistantModal = lazy(
 );
 const AIAssistantPanel = lazy(
 	() => import('container/AIAssistant/AIAssistantPanel'),
+);
+
+const ChangelogModal = lazy(
+	() => import('components/ChangelogModal/ChangelogModal'),
 );
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -849,7 +852,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 				</Flex>
 
 				{showChangelogModal && changelog && (
-					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+					<Suspense fallback={null}>
+						<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+					</Suspense>
 				)}
 
 				<AppToaster />
