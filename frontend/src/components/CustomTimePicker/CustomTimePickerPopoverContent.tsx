@@ -26,6 +26,7 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainerFallback from './CalendarContainerFallback';
@@ -35,7 +36,9 @@ import { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
 
-const CalendarContainer = lazy(() => import('./CalendarContainer'));
+const CalendarContainer = lazy(() =>
+	lazyRetry(() => import('./CalendarContainer')),
+);
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
