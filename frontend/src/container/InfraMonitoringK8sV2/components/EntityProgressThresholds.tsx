@@ -1,9 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import {
-	EntityProgressBarType,
-	THRESHOLDS_BY_TYPE,
-} from './EntityProgressBar.utils';
+import type { EntityProgressBarType } from './EntityProgressBar.utils';
+import { THRESHOLDS_BY_TYPE } from './EntityProgressBar.utils';
 import styles from './EntityProgressThresholds.module.scss';
 
 interface EntityProgressThresholdsProps {

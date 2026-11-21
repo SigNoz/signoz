@@ -4,10 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { render, RenderResult, screen } from 'tests/test-utils';
-import uPlot from 'uplot';
+import type { RenderResult } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
+import type uPlot from 'uplot';
 
-import { IRenderTooltipFooterArgs, TooltipContentItem } from '../../types';
+import type { IRenderTooltipFooterArgs, TooltipContentItem } from '../../types';
 import Tooltip from '../Tooltip';
 
 type MockVirtuosoProps = {

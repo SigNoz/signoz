@@ -1,8 +1,8 @@
-import { UseQueryResult } from 'react-query';
-import { ThresholdProps } from 'types/api/widgets/threshold';
-import { ContextLinksData, Widgets } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import uPlot from 'uplot';
+import type { UseQueryResult } from 'react-query';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ContextLinksData, Widgets } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type uPlot from 'uplot';
 
 export type GridValueComponentProps = {
 	data: uPlot.AlignedData;

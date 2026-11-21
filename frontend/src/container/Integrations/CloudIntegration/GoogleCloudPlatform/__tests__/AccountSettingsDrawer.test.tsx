@@ -1,8 +1,8 @@
-import { ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { toast } from '@signozhq/ui/toast';
 import { rest, server } from 'mocks-server/server';
-import { RestRequest } from 'msw';
+import type { RestRequest } from 'msw';
 
 import AccountSettingsDrawer from '../EditAccount/AccountSettingsDrawer';
 import {

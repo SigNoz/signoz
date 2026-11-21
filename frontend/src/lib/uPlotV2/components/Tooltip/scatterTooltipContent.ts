@@ -1,4 +1,4 @@
-import { PrecisionOption } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import type uPlot from 'uplot';
 

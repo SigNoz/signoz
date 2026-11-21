@@ -5,7 +5,7 @@ import { Button } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { unparse } from 'papaparse';
 
-import { DownloadProps } from './Download.types';
+import type { DownloadProps } from './Download.types';
 
 import './Download.styles.scss';
 

@@ -1,4 +1,5 @@
-import { parseAsStringEnum, useQueryState, UseQueryStateReturn } from 'nuqs';
+import type { UseQueryStateReturn } from 'nuqs';
+import { parseAsStringEnum, useQueryState } from 'nuqs';
 
 import { TraceDetailsTab } from '../constants';
 

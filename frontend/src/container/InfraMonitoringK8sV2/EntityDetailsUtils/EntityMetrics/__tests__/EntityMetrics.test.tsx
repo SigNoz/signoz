@@ -3,7 +3,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants'
 import * as appContextHooks from 'providers/App/App';
 import { TestRouter } from 'tests/router';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import EntityMetrics from '../EntityMetrics';
 import { useEntityMetrics } from '../hooks';

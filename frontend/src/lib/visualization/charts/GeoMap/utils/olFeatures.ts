@@ -7,11 +7,11 @@ import type { Extent } from 'ol/extent';
 import type VectorSource from 'ol/source/Vector';
 import { fromLonLat, transformExtent } from 'ol/proj';
 
-import { GeoMapShapes } from '../geo/shapes';
+import type { GeoMapShapes } from '../geo/shapes';
 import { getViewBox } from '../geo/views';
 import { BUBBLE_ALPHA, MIN_OUTLINED_POINT_RADIUS, withAlpha } from './olStyles';
 import { toOlProjection } from './olProjections';
-import {
+import type {
 	GeoMapDatum,
 	GeoMapPoint,
 	GeoMapProjection,

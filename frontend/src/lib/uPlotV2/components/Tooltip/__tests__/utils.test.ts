@@ -1,8 +1,9 @@
-import { PrecisionOption } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import uPlot, { AlignedData, Series } from 'uplot';
+import type { AlignedData, Series } from 'uplot';
+import type uPlot from 'uplot';
 
-import { TooltipContentItem } from '../../types';
+import type { TooltipContentItem } from '../../types';
 import {
 	buildTooltipContent,
 	FALLBACK_SERIES_COLOR,

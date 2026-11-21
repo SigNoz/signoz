@@ -1,6 +1,6 @@
 import { getWaterfallV4 } from 'api/generated/services/tracedetail';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	GetTraceV4PayloadProps,
 	GetTraceV4SuccessResponse,
 	SpanV3,

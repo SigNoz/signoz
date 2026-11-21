@@ -9,7 +9,7 @@ import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { TooltipContentItem } from '../../../types';
+import type { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
 import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';

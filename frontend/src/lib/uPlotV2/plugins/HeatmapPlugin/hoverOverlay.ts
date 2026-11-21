@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { HeatmapYAxis } from './types';
+import type { HeatmapYAxis } from './types';
 
 const HIGHLIGHT_BORDER_WIDTH = 1;
 /** ~55% alpha. */

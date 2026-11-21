@@ -1,7 +1,8 @@
-import { SubdivisionCountry } from '../../types';
+import type { SubdivisionCountry } from '../../types';
 import { normalizeSubdivision } from '../normalizeSubdivision';
 import { getSubdivisionShapes } from '../shapes';
-import { loadSubdivisions, SubdivisionSet } from '../subdivisions';
+import type { SubdivisionSet } from '../subdivisions';
+import { loadSubdivisions } from '../subdivisions';
 
 describe('normalizeSubdivision across countries', () => {
 	let us: SubdivisionSet;

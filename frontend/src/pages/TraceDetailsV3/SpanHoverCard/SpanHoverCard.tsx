@@ -4,10 +4,11 @@ import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
 import { getSpanAttribute, resolveSpanColor } from 'pages/TraceDetailsV3/utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
-import { getAIUsageDetails, SpanAiDetails } from '../utils/aiTraceUtils';
+import type { SpanAiDetails } from '../utils/aiTraceUtils';
+import { getAIUsageDetails } from '../utils/aiTraceUtils';
 import SpanUsageBreakdown from './SpanUsageBreakdown';
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';

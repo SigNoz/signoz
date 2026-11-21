@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import type { ThreadMessage } from '../../AIThreadMessage/types';
-import { ThreadSpan, ThreadView } from '../../TraceDetailsThread/types';
+import type { ThreadSpan } from '../../TraceDetailsThread/types';
+import { ThreadView } from '../../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../../utils/aiTraceUtils';
 import SpanMessages from '../SpanMessages';
 import { clickShowMore } from './__story_mockdata__/spanMessages.play';

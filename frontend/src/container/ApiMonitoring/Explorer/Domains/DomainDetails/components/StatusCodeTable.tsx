@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import {
 	endPointStatusCodeColumns,
 	getFormattedEndPointStatusCodeData,
 } from 'container/ApiMonitoring/utils';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 

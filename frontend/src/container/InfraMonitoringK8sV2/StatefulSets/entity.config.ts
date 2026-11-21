@@ -1,18 +1,20 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listStatefulSets } from 'api/generated/services/inframonitoring';
-import {
-	InframonitoringtypesResponseTypeDTO,
+import type {
 	InframonitoringtypesStatefulSetRecordDTO,
-	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import {
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 import { createPodMetricsTab } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/createPodMetricsTab';
 
-import { K8sEntityConfig } from '../Base/entity.config.types';
-import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
+import type { K8sEntityConfig } from '../Base/entity.config.types';
+import type { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import {
 	getStatefulSetMetricsQueryPayload,
 	getStatefulSetPodMetricsQueryPayload,

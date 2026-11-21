@@ -10,8 +10,8 @@ import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { SuccessResponse } from 'types/api';
-import { Pipeline } from 'types/api/pipeline/def';
+import type { SuccessResponse } from 'types/api';
+import type { Pipeline } from 'types/api/pipeline/def';
 
 import './Pipelines.styles.scss';
 

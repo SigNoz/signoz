@@ -1,6 +1,6 @@
 import { Trash2, X } from '@signozhq/icons';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
-import { MemberRow } from 'components/MembersTable/MembersTable';
+import type { MemberRow } from 'components/MembersTable/MembersTable';
 
 interface DeleteMemberDialogProps {
 	open: boolean;

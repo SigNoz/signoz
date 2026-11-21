@@ -8,7 +8,7 @@ import logEvent from 'api/common/logEvent';
 
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
-import { Conversation } from '../../types';
+import type { Conversation } from '../../types';
 import { useVariant } from '../../VariantContext';
 import ConversationItem from '../ConversationItem';
 

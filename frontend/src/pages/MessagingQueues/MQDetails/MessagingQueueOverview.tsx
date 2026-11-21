@@ -1,18 +1,19 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
-import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import type { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
+import type { MessagingQueuesViewTypeOptions } from '../MessagingQueuesUtils';
 import {
 	MessagingQueuesViewType,
-	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
 	setConfigDetail,
 } from '../MessagingQueuesUtils';

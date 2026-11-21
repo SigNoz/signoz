@@ -7,7 +7,7 @@ import {
 	getSpanMessages,
 	hasFormattedMessages,
 } from '../../utils/spanMessages';
-import { ThreadSpan } from '../../TraceDetailsThread/types';
+import type { ThreadSpan } from '../../TraceDetailsThread/types';
 import { buildToolCallIndex } from '../../TraceDetailsThread/utils';
 import MessagesAccordion from './MessagesAccordion';
 

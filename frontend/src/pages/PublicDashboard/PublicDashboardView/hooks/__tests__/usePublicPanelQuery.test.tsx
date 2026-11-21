@@ -4,7 +4,7 @@ import {
 	type DashboardtypesPanelDTO,
 	Querybuildertypesv5RequestTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import { usePublicPanelQuery } from '../usePublicPanelQuery';

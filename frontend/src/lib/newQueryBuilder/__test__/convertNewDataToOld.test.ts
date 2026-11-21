@@ -1,4 +1,4 @@
-import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 
 import { convertNewDataToOld } from '../convertNewDataToOld';
 

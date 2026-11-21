@@ -1,13 +1,14 @@
 import update from 'react-addons-update';
-import { TableColumnType as ColumnType } from 'antd';
+import type { TableColumnType as ColumnType } from 'antd';
 import { DEPRECATED_OPERATORS } from 'constants/antlrQueryConstants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { cloneDeep } from 'lodash-es';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { ProcessorData } from 'types/api/pipeline/def';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { ProcessorData } from 'types/api/pipeline/def';
 
-import TableComponents, { Record } from './TableComponents';
+import type { Record } from './TableComponents';
+import TableComponents from './TableComponents';
 
 function toCanonicalFilterOperator(op: string): string {
 	const normalized = op.trim();

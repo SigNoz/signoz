@@ -22,7 +22,7 @@ import {
 	SaveButton,
 } from '../styles';
 import { onSaveApDexSettings } from '../utils';
-import { ApDexSettingsProps } from './types';
+import type { ApDexSettingsProps } from './types';
 
 function ApDexSettings({
 	servicename,

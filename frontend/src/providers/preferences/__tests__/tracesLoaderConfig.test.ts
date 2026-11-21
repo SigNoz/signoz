@@ -1,10 +1,8 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
 

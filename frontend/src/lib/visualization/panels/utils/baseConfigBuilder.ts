@@ -1,16 +1,15 @@
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ThresholdProps } from 'types/api/widgets/threshold';
-import onClickPlugin, {
-	OnClickPluginOpts,
-} from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import onClickPlugin from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
 	DistributionType,
 	SelectionPreferencesSource,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import { PanelMode } from 'lib/visualization/panels/types';

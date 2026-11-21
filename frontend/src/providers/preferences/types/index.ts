@@ -1,8 +1,8 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 
-import { PREFERENCE_SOURCE_PAGES } from '../constants';
+import type { PREFERENCE_SOURCE_PAGES } from '../constants';
 
 export enum PreferenceMode {
 	SAVED_VIEW = 'savedView',

@@ -4,7 +4,7 @@ import {
 	removeKeysFromExpression,
 } from 'components/QueryBuilderV2/utils';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
-import { IQueryPair } from 'types/antlrQueryTypes';
+import type { IQueryPair } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';

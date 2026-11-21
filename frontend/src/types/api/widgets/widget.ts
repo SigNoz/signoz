@@ -1,19 +1,19 @@
-import { ReactNode } from 'react';
-import { PrecisionOption } from 'components/Graph/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'constants/timePreference';
-import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import {
+import type { ReactNode } from 'react';
+import type { PrecisionOption } from 'components/Graph/types';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { timePreferenceType } from 'constants/timePreference';
+import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import type {
 	FillMode,
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { ColumnUnit } from 'types/api/widgets/columnUnit';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ColumnUnit } from 'types/api/widgets/columnUnit';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 
-import { IField } from '../logs/fields';
-import { TelemetryFieldKey } from '../v5/queryRange';
+import type { IField } from '../logs/fields';
+import type { TelemetryFieldKey } from '../v5/queryRange';
 
 export enum LegendPosition {
 	BOTTOM = 'bottom',

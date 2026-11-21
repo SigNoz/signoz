@@ -1,19 +1,16 @@
 import { useMemo } from 'react';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
-import { ThresholdProps } from 'types/api/widgets/threshold';
-import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import uPlot from 'uplot';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
+import type { LegendPosition } from 'lib/uPlotV2/components/types';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type uPlot from 'uplot';
 
-import {
-	AlertChartPanelType,
-	buildAlertChartConfig,
-	buildChartId,
-} from './utils';
+import type { AlertChartPanelType } from './utils';
+import { buildAlertChartConfig, buildChartId } from './utils';
 
 // Panel types that render through the UPlotConfigBuilder pipeline.
 // To support a new modern-chart panel type, add an entry here and extend

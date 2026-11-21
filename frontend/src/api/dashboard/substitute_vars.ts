@@ -1,9 +1,9 @@
 import { ApiV5Instance } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { QueryRangePayloadV5 } from 'api/v5/v5';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type { QueryRangePayloadV5 } from 'api/v5/v5';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
 interface ISubstituteVars {
 	compositeQuery: ICompositeMetricQuery;

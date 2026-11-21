@@ -1,8 +1,9 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
-import { Button, Table, TableProps } from 'antd';
+import type { TableProps } from 'antd';
+import { Button, Table } from 'antd';
 import { themeColors } from 'constants/theme';
-import { StyledCSS } from 'types/styledComponents';
+import type { StyledCSS } from 'types/styledComponents';
 import styled from 'styled-components';
 
 export const FooterButton = styled(Button)`

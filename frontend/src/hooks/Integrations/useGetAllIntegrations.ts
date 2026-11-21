@@ -1,7 +1,8 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { getAllIntegrations } from 'api/Integrations/getAllIntegrations';
-import { AxiosError, AxiosResponse } from 'axios';
-import { AllIntegrationsProps } from 'types/api/integrations/types';
+import type { AxiosError, AxiosResponse } from 'axios';
+import type { AllIntegrationsProps } from 'types/api/integrations/types';
 
 export const useGetAllIntegrations = (): UseQueryResult<
 	AxiosResponse<AllIntegrationsProps>,

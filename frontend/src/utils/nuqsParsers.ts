@@ -1,4 +1,5 @@
-import { createParser, SingleParserBuilder } from 'nuqs';
+import type { SingleParserBuilder } from 'nuqs';
+import { createParser } from 'nuqs';
 
 export function parseAsJsonNoValidate<T = unknown>(): SingleParserBuilder<T> {
 	return createParser<T>({

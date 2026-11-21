@@ -1,8 +1,11 @@
 import { server } from 'mocks-server/server';
 import { render, screen } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { BaseBuilderQuery, QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	BaseBuilderQuery,
+	QueryRangePayloadV5,
+} from 'types/api/v5/queryRange';
 
 import { queryRangeV5Handler } from '../../__tests__/fixtures';
 import LogsFilterPreview from '../index';

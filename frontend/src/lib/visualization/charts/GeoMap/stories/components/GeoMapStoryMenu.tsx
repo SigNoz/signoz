@@ -1,7 +1,7 @@
 import { Braces, ChartBar, DraftingCompass, ScrollText } from '@signozhq/icons';
 import ContextMenu from 'periscope/components/ContextMenu';
 
-import { GeoMapSelection } from '../../types';
+import type { GeoMapSelection } from '../../types';
 
 import styles from './GeoMapStory.module.scss';
 

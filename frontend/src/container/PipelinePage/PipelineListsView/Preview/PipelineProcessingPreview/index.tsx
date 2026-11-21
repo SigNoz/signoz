@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 import PreviewIntervalSelector from '../components/PreviewIntervalSelector';
 import SampleLogsResponseDisplay from '../components/SampleLogs/SampleLogsResponseDisplay';

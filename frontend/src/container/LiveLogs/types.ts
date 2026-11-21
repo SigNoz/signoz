@@ -1,4 +1,4 @@
-import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export type QueryHistoryState = {
 	graphQueryPayload: QueryData[];

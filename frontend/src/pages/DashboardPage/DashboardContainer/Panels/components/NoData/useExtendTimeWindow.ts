@@ -2,10 +2,11 @@
 import { useSelector } from 'react-redux';
 import { useZoomOut } from 'hooks/useZoomOut';
 import { getNextZoomOutRange } from 'lib/zoomOutUtils';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { buildExtendWindow, ExtendTimeWindow } from './extendWindow';
+import type { ExtendTimeWindow } from './extendWindow';
+import { buildExtendWindow } from './extendWindow';
 import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 /**

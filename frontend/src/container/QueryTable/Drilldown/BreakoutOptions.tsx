@@ -6,12 +6,12 @@ import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useDebounce from 'hooks/useDebounce';
 import { ContextMenu } from 'periscope/components/ContextMenu';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
-import { BreakoutOptionsProps } from './contextConfig';
-import { BreakoutAttributeType } from './types';
+import type { BreakoutOptionsProps } from './contextConfig';
+import type { BreakoutAttributeType } from './types';
 
 import './Breakoutoptions.styles.scss';
 

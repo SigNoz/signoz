@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { Lock } from '@signozhq/icons';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 
-import { RelatedFilterClause } from '../../Base/relations';
+import type { RelatedFilterClause } from '../../Base/relations';
 
 import styles from './EntityOverview.module.scss';
 

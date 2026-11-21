@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 import { useNotifications } from './useNotifications';
 

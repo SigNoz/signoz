@@ -1,25 +1,25 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
+import type { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import getLabelName from 'lib/getLabelName';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { GraphClickProps } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
-import { NavigateToExplorerPagesProps } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
-import { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
+import type { GraphClickProps } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
+import type { NavigateToExplorerPagesProps } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
+import type { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
 import {
 	showAllDataSet,
 	showAllDataSetFromApiResponse,
 } from 'container/WidgetCard/Card/FullView/utils';
-import {
+import type {
 	GetGraphVisibilityStateOnLegendClickProps,
 	GraphVisibilityLegendEntryProps,
 	ToggleGraphsVisibilityInChartProps,

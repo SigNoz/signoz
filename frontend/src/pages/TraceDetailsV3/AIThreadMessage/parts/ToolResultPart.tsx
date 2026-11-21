@@ -1,4 +1,5 @@
-import { MouseEvent, useMemo } from 'react';
+import type { MouseEvent } from 'react';
+import { useMemo } from 'react';
 import { CornerUpRight } from '@signozhq/icons';
 
 import PartChip from '../PartChip';

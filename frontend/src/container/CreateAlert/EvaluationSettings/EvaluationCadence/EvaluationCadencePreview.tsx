@@ -5,7 +5,10 @@ import { Calendar, Info } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../../context';
 import { TIMEZONE_DATA } from '../constants';
-import { IEvaluationCadencePreviewProps, IScheduleListProps } from '../types';
+import type {
+	IEvaluationCadencePreviewProps,
+	IScheduleListProps,
+} from '../types';
 import {
 	buildAlertScheduleFromCustomSchedule,
 	buildAlertScheduleFromRRule,

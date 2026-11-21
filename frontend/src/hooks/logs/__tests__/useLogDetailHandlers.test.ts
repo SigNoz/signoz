@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsTextSelected } from 'hooks/useIsTextSelected';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import useLogDetailHandlers from '../useLogDetailHandlers';
 

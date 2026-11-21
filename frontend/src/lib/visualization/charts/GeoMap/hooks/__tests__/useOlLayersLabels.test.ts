@@ -2,7 +2,8 @@ import type Feature from 'ol/Feature';
 import type { StyleFunction } from 'ol/style/Style';
 import type Style from 'ol/style/Style';
 
-import { setup, SetupHandle } from './olLayersSetup';
+import type { SetupHandle } from './olLayersSetup';
+import { setup } from './olLayersSetup';
 
 const labelOf = (handle: SetupHandle, code: string): Feature =>
 	handle.layers.labels

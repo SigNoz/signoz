@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { EventListener, EventSourceEventMap } from 'event-source-polyfill';
+import type { EventListener, EventSourceEventMap } from 'event-source-polyfill';
 import { useEventSource } from 'providers/EventSource';
 
 type EventMap = {

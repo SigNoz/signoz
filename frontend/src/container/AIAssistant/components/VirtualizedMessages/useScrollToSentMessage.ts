@@ -1,7 +1,8 @@
-import { RefObject, useEffect, useRef } from 'react';
-import { VirtuosoHandle } from 'react-virtuoso';
+import type { RefObject } from 'react';
+import { useEffect, useRef } from 'react';
+import type { VirtuosoHandle } from 'react-virtuoso';
 
-import { Message } from '../../types';
+import type { Message } from '../../types';
 
 /** Brings the end of the thread into view when the user sends a message, and at no other time. */
 export function useScrollToSentMessage(

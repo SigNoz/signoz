@@ -1,4 +1,4 @@
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 /**
  * Computes the visible spans from a complete span list based on collapse state.

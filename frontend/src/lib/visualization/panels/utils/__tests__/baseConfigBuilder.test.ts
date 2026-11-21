@@ -1,14 +1,12 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 import { STEP_INTERVAL_MULTIPLIER } from 'lib/uPlotV2/constants';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import uPlot from 'uplot';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type uPlot from 'uplot';
 
 import { PanelMode } from 'lib/visualization/panels/types';
-import {
-	BaseConfigBuilderProps,
-	buildBaseConfig,
-} from 'lib/visualization/panels/utils/baseConfigBuilder';
+import type { BaseConfigBuilderProps } from 'lib/visualization/panels/utils/baseConfigBuilder';
+import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 
 jest.mock('lib/visualization/panels/utils/legendVisibilityUtils', () => ({
 	getStoredSeriesVisibility: jest.fn(),

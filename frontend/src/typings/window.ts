@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-restricted-imports
-import { compose, Store } from 'redux';
+import type { compose, Store } from 'redux';
 import type { WebSettings } from 'types/generated/webSettings';
 
 declare global {
@@ -11,5 +11,3 @@ declare global {
 		signozBootData?: { settings: WebSettings | null };
 	}
 }
-
-export {};

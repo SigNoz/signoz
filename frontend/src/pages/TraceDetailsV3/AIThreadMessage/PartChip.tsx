@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import cx from 'classnames';
 
-import { MessageTone } from './utils';
+import type { MessageTone } from './utils';
 
 import styles from './AIThreadMessage.module.scss';
 

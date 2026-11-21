@@ -4,7 +4,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import { getEntityLogsQueryPayload } from './utils';
 

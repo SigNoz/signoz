@@ -1,7 +1,7 @@
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 import { v4 } from 'uuid';
 
-import { GetWidgetQueryBuilderProps } from './types';
+import type { GetWidgetQueryBuilderProps } from './types';
 
 export const getWidgetQueryBuilder = ({
 	query,

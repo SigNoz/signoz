@@ -1,14 +1,14 @@
-import {
+import type {
 	Dispatch,
 	MutableRefObject,
 	RefObject,
 	SetStateAction,
-	useEffect,
 } from 'react';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import { useEffect } from 'react';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
 import { MIN_VISIBLE_SPAN_MS } from '../constants';
-import { ITraceMetadata } from '../types';
+import type { ITraceMetadata } from '../types';
 import { clamp, findSpanById, getFlamegraphRowMetrics } from '../utils';
 
 interface UseScrollToSpanArgs {

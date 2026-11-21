@@ -4,7 +4,7 @@ import ROUTES from 'constants/routes';
 import circusTentUrl from '@/assets/Icons/circus-tent.svg';
 import eightBallUrl from '@/assets/Icons/eight-ball.svg';
 
-import { ChecklistItem } from './HomeChecklist/HomeChecklist';
+import type { ChecklistItem } from './HomeChecklist/HomeChecklist';
 
 const ITEM_ICONS = [circusTentUrl, eightBallUrl];
 

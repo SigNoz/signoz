@@ -1,4 +1,4 @@
-import { MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { Collapse } from 'antd';
 import cx from 'classnames';

@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import styles from './PlannedDowntime.module.scss';
-import { DowntimeSchedulesTableData } from './types';
+import type { DowntimeSchedulesTableData } from './types';
 
 interface PlannedDowntimeActionsMenuProps {
 	downtime: DowntimeSchedulesTableData;

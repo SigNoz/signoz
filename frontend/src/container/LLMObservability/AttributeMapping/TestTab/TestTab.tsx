@@ -12,7 +12,7 @@ import {
 	SIGNOZ_JSON_THEME_DARK,
 	SIGNOZ_JSON_THEME_LIGHT,
 } from './jsonEditorTheme';
-import { UseTestSpanMapper } from './useTestSpanMapper';
+import type { UseTestSpanMapper } from './useTestSpanMapper';
 
 interface TestTabProps {
 	spanTest: UseTestSpanMapper;

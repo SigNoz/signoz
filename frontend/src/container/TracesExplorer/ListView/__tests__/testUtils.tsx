@@ -4,7 +4,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import ListView from '../index';
 

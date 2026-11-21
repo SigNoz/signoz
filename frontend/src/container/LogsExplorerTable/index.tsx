@@ -4,9 +4,9 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { QueryTable } from 'container/QueryTable';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
-import { LogsExplorerTableProps } from './LogsExplorerTable.interfaces';
+import type { LogsExplorerTableProps } from './LogsExplorerTable.interfaces';
 
 import './LogsExplorerTable.styles.scss';
 

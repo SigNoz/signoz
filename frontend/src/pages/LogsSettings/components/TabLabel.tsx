@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import { TableLabel } from '../types';
+import type { TableLabel } from '../types';
 
 function TabLabel({ label }: TableLabel): JSX.Element {
 	return (

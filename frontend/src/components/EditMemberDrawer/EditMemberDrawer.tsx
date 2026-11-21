@@ -17,21 +17,19 @@ import {
 	useUpdateMyUserV2,
 	useUpdateUser,
 } from 'api/generated/services/users';
-import { AxiosError } from 'axios';
-import { MemberRow } from 'components/MembersTable/MembersTable';
+import type { AxiosError } from 'axios';
+import type { MemberRow } from 'components/MembersTable/MembersTable';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
 import SaveErrorItem from 'components/ServiceAccountDrawer/SaveErrorItem';
 import type { SaveError } from 'components/ServiceAccountDrawer/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
-import {
-	MemberRoleUpdateFailure,
-	useMemberRoleManager,
-} from 'hooks/member/useMemberRoleManager';
+import type { MemberRoleUpdateFailure } from 'hooks/member/useMemberRoleManager';
+import { useMemberRoleManager } from 'hooks/member/useMemberRoleManager';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
 

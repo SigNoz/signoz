@@ -1,4 +1,4 @@
-import { TagFilter } from '../queryBuilder/queryBuilderData';
+import type { TagFilter } from '../queryBuilder/queryBuilderData';
 
 export interface ProcessorData {
 	type: string;

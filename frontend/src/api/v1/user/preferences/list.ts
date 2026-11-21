@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps } from 'types/api/preferences/list';
-import { UserPreference } from 'types/api/preferences/preference';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { PayloadProps } from 'types/api/preferences/list';
+import type { UserPreference } from 'types/api/preferences/preference';
 
 /**
  * @deprecated Use the generated `useListUserPreferences` hook (or `listUserPreferences` fetcher) from

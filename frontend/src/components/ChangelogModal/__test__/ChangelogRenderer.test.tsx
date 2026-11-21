@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { render, screen } from '@testing-library/react';
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { DeploymentType } from 'types/api/changelog/getChangelogByVersion';
 
 import ChangelogRenderer from '../components/ChangelogRenderer';
 

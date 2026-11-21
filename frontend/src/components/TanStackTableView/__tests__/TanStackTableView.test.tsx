@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { UrlUpdateEvent } from 'nuqs/adapters/testing';
+import type { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
 import TanStackTable from '../index';
 import type { TableColumnDef } from '../types';

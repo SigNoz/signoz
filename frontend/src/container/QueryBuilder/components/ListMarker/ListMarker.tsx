@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import { EyeClosed, EyeOpen } from '@signozhq/icons';
-import { ButtonProps } from 'antd';
+import type { ButtonProps } from 'antd';
 
 // ** Types
-import { ListMarkerProps } from './ListMarker.interfaces';
+import type { ListMarkerProps } from './ListMarker.interfaces';
 // ** Styles
 import { StyledButton } from './ListMarker.styled';
 

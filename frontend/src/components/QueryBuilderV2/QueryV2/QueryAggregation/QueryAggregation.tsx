@@ -2,16 +2,14 @@ import { useMemo } from 'react';
 import { Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import {
+import type {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import {
-	QueryBuilderField,
-	QueryBuilderFieldsConfig,
-} from '../../queryBuilderFields.types';
+import type { QueryBuilderFieldsConfig } from '../../queryBuilderFields.types';
+import { QueryBuilderField } from '../../queryBuilderFields.types';
 import {
 	resolveQueryBuilderField,
 	type ResolvedQueryBuilderField,

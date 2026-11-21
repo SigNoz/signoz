@@ -11,9 +11,10 @@ import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import '../blocks';
 
 import { useVariant } from '../../VariantContext';
-import { Message, MessageBlock } from '../../types';
+import type { Message, MessageBlock } from '../../types';
 import ActionsSection from '../ActionsSection';
-import ActivityGroup, { ActivityItem } from '../ActivityGroup';
+import type { ActivityItem } from '../ActivityGroup';
+import ActivityGroup from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
 import MarkdownExternalLink from '../MarkdownExternalLink/MarkdownExternalLink';
 import MarkdownTable from '../MarkdownTable/MarkdownTable';

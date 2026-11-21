@@ -1,11 +1,11 @@
-import { GeoMapDatum, ShapeFeature } from '../../types';
+import type { GeoMapDatum, ShapeFeature } from '../../types';
 import { getOutsideView } from '../classify';
 import { getCountryShapes, getSubdivisionShapes } from '../shapes';
+import type { SubdivisionSet } from '../subdivisions';
 import {
 	isSubdivisionCountry,
 	loadSubdivisions,
 	SUBDIVISION_COUNTRIES,
-	SubdivisionSet,
 } from '../subdivisions';
 
 const datum = (code: string): GeoMapDatum => ({ code, value: 1, raw: code });

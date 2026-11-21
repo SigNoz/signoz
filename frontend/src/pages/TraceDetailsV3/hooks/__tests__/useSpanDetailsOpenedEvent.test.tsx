@@ -3,7 +3,7 @@ import { renderHook } from 'tests/test-utils';
 import { TraceDetailsTab } from '../../constants';
 import { TraceDetailEvents } from '../../events';
 import { useSpanDetailsOpenedEvent } from '../useSpanDetailsOpenedEvent';
-import { TraceDetailLogEvent } from '../useTraceDetailLogEvent';
+import type { TraceDetailLogEvent } from '../useTraceDetailLogEvent';
 
 interface PanelProps {
 	isOpen: boolean;

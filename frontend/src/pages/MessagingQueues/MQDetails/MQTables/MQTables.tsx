@@ -4,13 +4,13 @@ import { Skeleton, Table } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import {
+import type {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
 import axios from 'axios';
 import cx from 'classnames';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
+import type { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
 import { navigate } from 'lib/router/navigation';
@@ -18,18 +18,20 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
+import type {
+	MessagingQueueServiceDetailType,
+	MessagingQueuesViewTypeOptions,
+	RowData,
+	SelectedTimelineQuery,
+} from 'pages/MessagingQueues/MessagingQueuesUtils';
 import {
 	ConsumerLagDetailTitle,
 	convertToTitleCase,
-	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
-	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
-	RowData,
-	SelectedTimelineQuery,
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 import { formatNumericValue } from 'utils/numericUtils';

@@ -2,7 +2,7 @@ import { getAIObservabilityFieldsKeys } from 'api/generated/services/ai-observab
 import { getFieldsKeys } from 'api/generated/services/fields';
 import type { BuilderQueryType } from 'types/api/v5/queryRange';
 
-import { FieldKeysConfig, FieldKeysResponse } from './types';
+import type { FieldKeysConfig, FieldKeysResponse } from './types';
 
 export const getFieldKeySuggestions = (
 	fieldKeysConfig: FieldKeysConfig,

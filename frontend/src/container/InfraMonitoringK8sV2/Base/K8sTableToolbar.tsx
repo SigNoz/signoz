@@ -4,10 +4,8 @@ import { Select } from 'antd';
 import { Download, SlidersVertical } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 
-import {
-	INFRA_MONITORING_ATTR_KEYS,
-	InfraMonitoringEntity,
-} from '../constants';
+import type { InfraMonitoringEntity } from '../constants';
+import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 import {
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,

@@ -1,4 +1,4 @@
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
 import ExplorerPage from 'container/MeterExplorer/Explorer';

@@ -5,10 +5,8 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { ChevronUp, Info } from '@signozhq/icons';
-import {
-	Querybuildertypesv5BucketOptionsDTO,
-	Querybuildertypesv5BucketsKindDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	BUCKET_KIND_HINTS,

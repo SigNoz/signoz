@@ -14,7 +14,7 @@ import {
 } from 'providers/preferences/utils';
 import { toAPIError } from 'utils/errorUtils';
 
-import { UseActiveSavedViewResult } from '../types';
+import type { UseActiveSavedViewResult } from '../types';
 import { hasUnsavedViewChanges } from '../utils/hasUnsavedViewChanges';
 
 export function useActiveSavedView(

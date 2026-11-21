@@ -13,7 +13,7 @@ import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPrefer
 import { navigate } from 'lib/router/navigation';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 interface UseDeleteDashboardActionArgs {
 	dashboardId: string;

@@ -1,4 +1,4 @@
-import { RoutingPolicyDetailsFormState } from './types';
+import type { RoutingPolicyDetailsFormState } from './types';
 
 export const INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE: RoutingPolicyDetailsFormState =
 	{

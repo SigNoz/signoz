@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
 	PointerSensor,
 	useSensor,
 	useSensors,
@@ -18,7 +18,7 @@ import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './FieldsSelector.module.scss';

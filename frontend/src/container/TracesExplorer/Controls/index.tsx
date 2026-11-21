@@ -4,7 +4,7 @@ import { SlidersVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import FieldsSelector from 'components/FieldsSelector';
-import { OptionsMenuConfig } from 'container/OptionsMenu/types';
+import type { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import { DataSource } from 'types/common/queryBuilder';
 
 function TraceExplorerControls({

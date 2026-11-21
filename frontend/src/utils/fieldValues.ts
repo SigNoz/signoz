@@ -1,4 +1,4 @@
-import { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 // Numbers and bools stay raw so tags keep their value type.

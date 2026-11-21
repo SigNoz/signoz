@@ -1,10 +1,5 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/ui/input';
 import logEvent from 'api/common/logEvent';
@@ -14,7 +9,8 @@ import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { Check, Search } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
-import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
+import type { Timezone } from './timezoneUtils';
+import { TIMEZONE_DATA } from './timezoneUtils';
 
 import './TimezonePicker.styles.scss';
 

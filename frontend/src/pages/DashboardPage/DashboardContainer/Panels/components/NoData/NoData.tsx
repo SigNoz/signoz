@@ -10,7 +10,8 @@ import {
 } from '../../../store/useViewPanelStore';
 import { toPanelType } from '../../types/panelKind';
 import PanelLoader from '../PanelLoader/PanelLoader';
-import PanelMessage, { PanelMessageAction } from '../PanelMessage/PanelMessage';
+import type { PanelMessageAction } from '../PanelMessage/PanelMessage';
+import PanelMessage from '../PanelMessage/PanelMessage';
 import { useExtendTimeWindow } from './useExtendTimeWindow';
 
 interface NoDataProps {

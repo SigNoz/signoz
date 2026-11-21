@@ -1,5 +1,5 @@
-import APIError from 'types/api/error';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type APIError from 'types/api/error';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export type LogsExplorerTableProps = {
 	data: QueryDataV3[];

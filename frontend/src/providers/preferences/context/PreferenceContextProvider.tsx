@@ -7,10 +7,8 @@ import React, {
 } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import useUrlQuery from 'hooks/useUrlQuery';
-import {
-	PreferenceContextValue,
-	PreferenceMode,
-} from 'providers/preferences/types';
+import type { PreferenceContextValue } from 'providers/preferences/types';
+import { PreferenceMode } from 'providers/preferences/types';
 
 import { useAiObservabilityPreferenceSync } from '../sync/useAiObservabilityPreferenceSync';
 import { usePreferenceSync } from '../sync/usePreferenceSync';

@@ -14,13 +14,13 @@ import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useAppContext } from 'providers/App/App';
-import { AppState } from 'store/reducers';
-import { ServicesList } from 'types/api/metrics/getService';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { ServicesList } from 'types/api/metrics/getService';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
-import { ServiceMetricsTableProps } from '../types';
+import type { ServiceMetricsTableProps } from '../types';
 import { useServicesStripInfo } from '../useServicesStripInfo';
 import { getServiceListFromQuery } from '../utils';
 

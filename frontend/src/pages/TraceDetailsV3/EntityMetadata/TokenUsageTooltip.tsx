@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 
 import TokenBreakdown from '../TokenBreakdown/TokenBreakdown';
-import { AiTokenCounts } from '../utils/aiTraceUtils';
+import type { AiTokenCounts } from '../utils/aiTraceUtils';
 
 import styles from './EntityMetadataRow.module.scss';
 

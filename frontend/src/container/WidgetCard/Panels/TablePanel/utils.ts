@@ -1,12 +1,12 @@
-import { TableColumnType as ColumnType } from 'antd';
+import type { TableColumnType as ColumnType } from 'antd';
 import { convertUnit } from 'constants/formats/dataFormatCategories';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
-import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEmpty, isNaN } from 'lodash-es';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 // Custom column type that extends ColumnType to include isValueColumn

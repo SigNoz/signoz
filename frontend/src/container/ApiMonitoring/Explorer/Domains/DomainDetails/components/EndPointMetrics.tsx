@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { Skeleton, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
@@ -7,7 +7,7 @@ import {
 	getDisplayValue,
 	getFormattedEndPointMetricsData,
 } from 'container/ApiMonitoring/utils';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 
 import ErrorState from './ErrorState';
 

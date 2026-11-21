@@ -1,6 +1,8 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useState } from 'react';
 import { DatePicker, Modal } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 
 export type DateTimeRangeType = [Dayjs | null, Dayjs | null] | null;
 

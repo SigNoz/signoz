@@ -1,15 +1,12 @@
-import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
-import {
-	act,
-	renderHook,
-	RenderHookResult,
-	waitFor,
-} from '@testing-library/react';
-import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
+import type { UseQueryResult } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import type { RenderHookResult } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { TestRouter } from 'tests/router';
-import { SuccessResponseV2 } from 'types/api';
+import type { SuccessResponseV2 } from 'types/api';
 
-import { UseRoutingPoliciesReturn } from '../types';
+import type { UseRoutingPoliciesReturn } from '../types';
 import useRoutingPolicies from '../useRoutingPolicies';
 import {
 	convertRoutingPolicyToApiResponse,

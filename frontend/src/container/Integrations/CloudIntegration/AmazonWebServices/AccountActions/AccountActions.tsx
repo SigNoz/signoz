@@ -1,17 +1,16 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Select, Skeleton } from 'antd';
-import { SelectProps } from 'antd/lib';
+import type { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useListAccounts } from 'api/generated/services/cloudintegration';
 import cx from 'classnames';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
-import {
-	CloudAccount as IntegrationCloudAccount,
-	IntegrationType,
-} from 'container/Integrations/types';
+import type { CloudAccount as IntegrationCloudAccount } from 'container/Integrations/types';
+import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ChevronDown, Dot, PencilLine, Plug, Plus } from '@signozhq/icons';
 
@@ -26,7 +25,7 @@ import {
 } from '../../mapCloudAccountFromDto';
 import AwsCloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
 import AwsAccountSettingsModal from '../EditAccount/AccountSettingsModal';
-import { CloudAccount as AwsCloudAccount } from '../types';
+import type { CloudAccount as AwsCloudAccount } from '../types';
 
 import './AccountActions.style.scss';
 

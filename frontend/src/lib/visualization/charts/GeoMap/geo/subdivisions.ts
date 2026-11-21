@@ -1,7 +1,11 @@
 import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
-import { ShapeFeature, ShapeProperties, SubdivisionCountry } from '../types';
+import type {
+	ShapeFeature,
+	ShapeProperties,
+	SubdivisionCountry,
+} from '../types';
 import { rememberSubdivisions } from './subdivisionCache';
 import { SUBDIVISION_COUNTRY_CODES } from './subdivisionCountries';
 

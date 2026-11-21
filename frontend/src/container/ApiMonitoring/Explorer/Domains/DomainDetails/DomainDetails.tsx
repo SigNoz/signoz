@@ -8,15 +8,15 @@ import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import GetMinMax from 'lib/getMinMax';
 import { ArrowDown, ArrowUp, X } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	ALL_ENDPOINTS_EXPRESSION_KEY,

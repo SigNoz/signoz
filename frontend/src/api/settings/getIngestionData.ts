@@ -1,8 +1,8 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { IngestionResponseProps } from 'types/api/settings/ingestion';
+import type { AxiosError } from 'axios';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { IngestionResponseProps } from 'types/api/settings/ingestion';
 
 const getIngestionData = async (): Promise<
 	SuccessResponse<IngestionResponseProps> | ErrorResponse

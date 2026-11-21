@@ -13,8 +13,9 @@ import {
 	useUpdateSpanMapperGroup,
 } from 'api/generated/services/spanmapper';
 
-import { persistDraft, SaveMutations } from '../saveDraft';
-import {
+import type { SaveMutations } from '../saveDraft';
+import { persistDraft } from '../saveDraft';
+import type {
 	DraftGroup,
 	GroupDraft,
 	Mapper,

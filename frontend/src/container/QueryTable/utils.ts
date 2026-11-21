@@ -1,4 +1,4 @@
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 
 export function createDownloadableData(
 	inputData: RowData[],

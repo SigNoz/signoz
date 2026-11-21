@@ -1,15 +1,16 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import type { QueryClient } from 'react-query';
+import { QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
-import { Store } from 'redux';
+import type { Store } from 'redux';
 import { GlobalTimeStoreAdapter } from 'components/GlobalTimeStoreAdapter/GlobalTimeStoreAdapter';
 import { ThemeProvider } from 'hooks/useDarkMode';
 import TimezoneProvider from 'providers/Timezone';
 
-import { AppLayer } from './types';
+import type { AppLayer } from './types';
 
 export interface AppProvidersProps {
 	children: ReactNode;

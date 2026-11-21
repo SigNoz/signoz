@@ -12,7 +12,7 @@ import TanStackTable, { ColumnSelector } from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import TextToolTip from 'components/TextToolTip';
-import { ChannelKind } from 'container/CreateAlertChannels/types';
+import type { ChannelKind } from 'container/CreateAlertChannels/types';
 import { useUrlSearchState } from 'hooks/useUrlSearchState';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { useNotificationChannelCollectionPermissions } from 'hooks/notificationChannels/useNotificationChannelCollectionPermissions';

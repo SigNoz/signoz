@@ -7,7 +7,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input as AntdInput } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 import RowEntry from './RowEntry';

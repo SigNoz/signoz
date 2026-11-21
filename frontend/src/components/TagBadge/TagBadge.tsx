@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge, type BadgeProps } from '@signozhq/ui/badge';
 
 interface TagBadgeProps {

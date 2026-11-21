@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Form, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import {
-	ActionMode,
+import type {
 	ActionType,
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { ActionMode } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import { ModalButtonWrapper } from '../styles';

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient } from 'react-query';
 import AppProviders from 'app/AppProviders';

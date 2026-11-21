@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen } from 'tests/test-utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FieldsSelector from '../FieldsSelector';

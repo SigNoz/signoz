@@ -3,12 +3,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getActiveBuilder } from 'lib/query/builderSlot';
+import type {
+	CompletionContext,
+	CompletionResult,
+} from '@codemirror/autocomplete';
 import {
 	autocompletion,
 	closeCompletion,
-	CompletionContext,
 	completionKeymap,
-	CompletionResult,
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
@@ -25,8 +27,8 @@ import {
 } from 'constants/antlrQueryConstants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
-import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
+import type { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
+import type { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateTraceOperatorQuery } from 'utils/queryValidationUtils';
 

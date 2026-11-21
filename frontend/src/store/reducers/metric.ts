@@ -1,3 +1,4 @@
+import type { MetricsActions } from 'types/actions/metrics';
 import {
 	GET_INITIAL_APPLICATION_ERROR,
 	GET_INITIAL_APPLICATION_LOADING,
@@ -5,10 +6,9 @@ import {
 	GET_SERVICE_LIST_ERROR,
 	GET_SERVICE_LIST_LOADING_START,
 	GET_SERVICE_LIST_SUCCESS,
-	MetricsActions,
 	RESET_INITIAL_APPLICATION_DATA,
 } from 'types/actions/metrics';
-import InitialValueTypes from 'types/reducer/metrics';
+import type InitialValueTypes from 'types/reducer/metrics';
 
 export const InitialValue: InitialValueTypes = {
 	error: false,

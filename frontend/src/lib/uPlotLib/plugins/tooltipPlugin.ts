@@ -1,4 +1,4 @@
-import { PrecisionOption } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { themeColors } from 'constants/theme';
@@ -7,8 +7,8 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { get } from 'lodash-es';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { placement } from '../placement';
 import { generateColor } from '../utils/generateColor';

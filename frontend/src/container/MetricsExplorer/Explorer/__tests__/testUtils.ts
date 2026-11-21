@@ -1,5 +1,5 @@
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	MetricsexplorertypesMetricMetadataDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';

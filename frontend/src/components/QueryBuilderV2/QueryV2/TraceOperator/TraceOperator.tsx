@@ -5,13 +5,13 @@ import cx from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Trash2 } from '@signozhq/icons';
-import {
+import type {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { QueryBuilderFieldsConfig } from '../../queryBuilderFields.types';
+import type { QueryBuilderFieldsConfig } from '../../queryBuilderFields.types';
 import QueryAddOns from '../QueryAddOns/QueryAddOns';
 import QueryAggregation from '../QueryAggregation/QueryAggregation';
 import TraceOperatorEditor from './TraceOperatorEditor';

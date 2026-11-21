@@ -1,14 +1,10 @@
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
-	act,
-	AllTheProviders,
-	renderHook,
-	RenderHookResult,
-} from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { RenderHookResult } from 'tests/test-utils';
+import { act, AllTheProviders, renderHook } from 'tests/test-utils';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,

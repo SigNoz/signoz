@@ -4,10 +4,8 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { parseAsString, useQueryState } from 'nuqs';
 
 import { carryOverListFilters } from '../../Base/relations';
-import {
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	InfraMonitoringEntity,
-} from '../../constants';
+import type { InfraMonitoringEntity } from '../../constants';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../../constants';
 
 /**
  * Seeds the editable half of the filter with whatever the list page was

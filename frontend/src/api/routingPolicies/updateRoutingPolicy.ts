@@ -1,7 +1,11 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorResponseV2, ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { AxiosError } from 'axios';
+import type {
+	ErrorResponseV2,
+	ErrorV2Resp,
+	SuccessResponseV2,
+} from 'types/api';
 
 export interface UpdateRoutingPolicyBody {
 	name: string;

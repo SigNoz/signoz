@@ -8,16 +8,14 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	panelTypeDataSourceFormValuesMap,
-	PartialPanelTypes,
-} from 'lib/query/panelTypeDataSourceFormValuesMap';
+import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
+import { panelTypeDataSourceFormValuesMap } from 'lib/query/panelTypeDataSourceFormValuesMap';
 
 // Asks "would saving the current panel change the persisted widget spec?".
 //

@@ -13,12 +13,12 @@ import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import KeyCreatedPhase from './KeyCreatedPhase';
 import KeyFormPhase, { KeyFormFooter } from './KeyFormPhase';

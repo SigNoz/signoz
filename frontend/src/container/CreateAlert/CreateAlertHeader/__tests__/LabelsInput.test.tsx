@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import LabelsInput from '../LabelsInput';
-import { LabelsInputProps } from '../types';
+import type { LabelsInputProps } from '../types';
 
 const mockOnLabelsChange = jest.fn();
 const mockValidateLabelsKey = jest.fn().mockReturnValue(null);

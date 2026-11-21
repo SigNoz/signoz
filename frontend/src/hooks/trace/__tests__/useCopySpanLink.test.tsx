@@ -1,4 +1,4 @@
-import { MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { TestRouter } from 'tests/router';
 import {

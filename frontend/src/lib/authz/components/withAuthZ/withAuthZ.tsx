@@ -1,7 +1,8 @@
-import { ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import { AuthZGuard } from 'lib/authz/components/AuthZGuard/AuthZGuard';
 
-import { createAuthZHOC, WithAuthZOptions } from './withAuthZ.utils';
+import type { WithAuthZOptions } from './withAuthZ.utils';
+import { createAuthZHOC } from './withAuthZ.utils';
 
 export type { RouterContext, WithAuthZOptions } from './withAuthZ.utils';
 

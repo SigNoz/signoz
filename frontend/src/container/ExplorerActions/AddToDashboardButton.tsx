@@ -3,14 +3,14 @@ import { Grid2X2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import type { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { DataSource } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import {

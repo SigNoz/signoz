@@ -1,4 +1,4 @@
-import { FeatureKeys } from 'constants/features';
+import type { FeatureKeys } from 'constants/features';
 
 export interface FeatureFlagProps {
 	name: FeatureKeys;

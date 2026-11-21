@@ -1,5 +1,6 @@
 import { normalizeSubdivision } from '../normalizeSubdivision';
-import { loadSubdivisions, SubdivisionSet } from '../subdivisions';
+import type { SubdivisionSet } from '../subdivisions';
+import { loadSubdivisions } from '../subdivisions';
 
 describe('normalizeSubdivision', () => {
 	let us: SubdivisionSet;

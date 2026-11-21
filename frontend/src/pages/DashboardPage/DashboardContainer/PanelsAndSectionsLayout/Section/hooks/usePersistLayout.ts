@@ -4,7 +4,7 @@ import type { Layout } from 'react-grid-layout';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { compactGridItems } from '../../../layoutCompaction';

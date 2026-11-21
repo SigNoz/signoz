@@ -1,4 +1,4 @@
-import { SeriesItem } from 'types/api/widgets/getQuery';
+import type { SeriesItem } from 'types/api/widgets/getQuery';
 
 const getLabelName = (
 	metric: SeriesItem['labels'],

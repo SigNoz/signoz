@@ -1,8 +1,9 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
-import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
+import type { FlattenSimpleInterpolation } from 'styled-components';
+import styled, { css } from 'styled-components';
 
-import { GraphContainerProps } from 'container/WidgetCard/Card/FullView/types';
+import type { GraphContainerProps } from 'container/WidgetCard/Card/FullView/types';
 
 interface Props {
 	$panelType: PANEL_TYPES;

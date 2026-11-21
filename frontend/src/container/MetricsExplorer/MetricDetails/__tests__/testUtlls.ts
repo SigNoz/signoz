@@ -1,10 +1,12 @@
-import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import {
+import type * as metricsExplorerHooks from 'api/generated/services/metrics';
+import type {
 	GetMetricAlerts200,
 	GetMetricAttributes200,
 	GetMetricDashboardsV2200,
 	GetMetricHighlights200,
 	GetMetricMetadata200,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';

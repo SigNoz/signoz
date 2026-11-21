@@ -1,4 +1,5 @@
-import useSampleLogs, { SampleLogsRequest } from '../../hooks/useSampleLogs';
+import type { SampleLogsRequest } from '../../hooks/useSampleLogs';
+import useSampleLogs from '../../hooks/useSampleLogs';
 import LogsResponseDisplay from './SampleLogsResponseDisplay';
 
 function SampleLogs(props: SampleLogsRequest): JSX.Element {

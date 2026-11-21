@@ -1,4 +1,4 @@
-import { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
 
 import { StackMode } from 'lib/uPlotV2/config/types';
 

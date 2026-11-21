@@ -1,4 +1,4 @@
-import { Axis } from 'uplot';
+import type { Axis } from 'uplot';
 
 /**
  * Calculate text width for longest value

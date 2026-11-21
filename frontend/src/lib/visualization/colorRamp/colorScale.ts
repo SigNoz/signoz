@@ -2,7 +2,8 @@ import { Color as DesignToken } from '@signozhq/design-tokens';
 import Color from 'color';
 
 import { DEFAULT_COLOR_RAMP_PALETTE, getPaletteStops } from './palettes';
-import { ColorRampMode, ColorRampOptions, ColorRampScale } from './types';
+import type { ColorRampOptions } from './types';
+import { ColorRampMode, ColorRampScale } from './types';
 
 export const MIN_COLOR_STEPS = 2;
 export const MAX_COLOR_STEPS = 128;

@@ -1,19 +1,24 @@
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
-import { UseQueryResult } from 'react-query';
-import { ToggleGraphProps } from 'components/Graph/types';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/widgets/widget';
-import {
+import type {
+	Dispatch,
+	MutableRefObject,
+	ReactNode,
+	SetStateAction,
+} from 'react';
+import type { UseQueryResult } from 'react-query';
+import type { ToggleGraphProps } from 'components/Graph/types';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Widgets } from 'types/api/widgets/widget';
+import type {
 	MetricQueryRangeSuccessResponse,
 	MetricRangePayloadProps,
 } from 'types/api/metrics/getQueryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
-import uPlot from 'uplot';
+import type { QueryData } from 'types/api/widgets/getQuery';
+import type uPlot from 'uplot';
 
-import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
-import { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
+import type { MenuItemKeys } from 'container/WidgetCard/Header/contants';
+import type { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
 
 export interface GraphVisibilityLegendEntryProps {
 	graphVisibilityStates: boolean[];

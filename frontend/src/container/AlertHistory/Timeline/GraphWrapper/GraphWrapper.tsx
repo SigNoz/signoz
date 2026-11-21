@@ -4,7 +4,7 @@ import {
 	useGetAlertRuleDetailsTimelineGraphData,
 } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
-import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
+import type { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
 
 import Graph from '../Graph/Graph';
 

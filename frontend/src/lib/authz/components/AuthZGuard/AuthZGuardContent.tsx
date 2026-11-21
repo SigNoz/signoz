@@ -1,7 +1,8 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 
-import { AuthZGuard, AuthZGuardProps } from './AuthZGuard';
+import type { AuthZGuardProps } from './AuthZGuard';
+import { AuthZGuard } from './AuthZGuard';
 
 export function AuthZGuardContent({
 	fallback,

@@ -1,7 +1,7 @@
-import { IAppContext } from 'providers/App/types';
+import type { IAppContext } from 'providers/App/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import { CreateAlertProvider } from '../../context';
 import AlertCondition from '../AlertCondition';

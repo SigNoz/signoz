@@ -2,7 +2,8 @@ import { memo, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Select } from 'antd';
-import { DEFAULT_PER_PAGE_OPTIONS, Pagination } from 'hooks/queryPagination';
+import type { Pagination } from 'hooks/queryPagination';
+import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { defaultSelectStyle } from './config';

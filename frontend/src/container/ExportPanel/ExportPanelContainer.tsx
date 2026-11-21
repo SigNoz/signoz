@@ -5,11 +5,9 @@ import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateExportDashboard } from 'hooks/dashboard/useCreateExportDashboard';
-import {
-	ExportDashboard,
-	useExportDashboards,
-} from 'hooks/dashboard/useExportDashboards';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import { useExportDashboards } from 'hooks/dashboard/useExportDashboards';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import ExportDashboardSelect from './ExportDashboardSelect';
 import styles from './ExportPanel.module.scss';

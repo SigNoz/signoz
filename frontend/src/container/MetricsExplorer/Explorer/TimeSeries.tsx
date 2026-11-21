@@ -26,15 +26,15 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { TriangleAlert } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
+import type { AppState } from 'store/reducers';
+import type { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import EmptyMetricsSearch from './EmptyMetricsSearch';
-import { TimeSeriesProps } from './types';
+import type { TimeSeriesProps } from './types';
 import {
 	buildUpdateMetricYAxisUnitPayload,
 	splitQueryIntoOneChartPerQuery,

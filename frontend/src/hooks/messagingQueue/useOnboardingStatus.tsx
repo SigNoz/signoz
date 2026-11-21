@@ -1,8 +1,8 @@
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import getOnboardingStatus, {
-	OnboardingStatusResponse,
-} from 'api/messagingQueues/onboarding/getOnboardingStatus';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
+import getOnboardingStatus from 'api/messagingQueues/onboarding/getOnboardingStatus';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 
 type UseOnboardingStatus = (
 	options?: UseQueryOptions<

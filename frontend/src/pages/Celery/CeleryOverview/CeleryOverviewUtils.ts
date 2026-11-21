@@ -1,10 +1,10 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Widgets } from 'types/api/widgets/widget';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuidv4 } from 'uuid';
 
 export const getQueryPayloadFromWidgetsData = ({

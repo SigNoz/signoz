@@ -1,6 +1,6 @@
 import type { ColumnsType, ColumnType } from 'antd/es/table';
 import { generatorResizeTableColumns } from 'components/TableRenderer/utils';
-import { ServicesList } from 'types/api/metrics/getService';
+import type { ServicesList } from 'types/api/metrics/getService';
 
 import { baseColumnOptions } from './BaseColumnOptions';
 import { ColumnKey, ColumnTitle } from './ColumnContants';

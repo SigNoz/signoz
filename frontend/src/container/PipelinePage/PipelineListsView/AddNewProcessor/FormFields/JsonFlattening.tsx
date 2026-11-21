@@ -5,7 +5,7 @@ import { Switch } from '@signozhq/ui/switch';
 import { Form, Tooltip } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
-import { ProcessorData } from 'types/api/pipeline/def';
+import type { ProcessorData } from 'types/api/pipeline/def';
 
 import { PREDEFINED_MAPPING } from '../config';
 import KeyValueList from './KeyValueList';

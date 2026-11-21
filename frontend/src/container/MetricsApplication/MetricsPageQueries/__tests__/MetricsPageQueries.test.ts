@@ -1,7 +1,7 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { QueryBuilderData } from 'types/common/queryBuilder';
-import { QueryEnvelope } from 'types/api/v5/queryRange';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
+import type { QueryEnvelope } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
 import {

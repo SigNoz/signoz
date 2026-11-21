@@ -1,5 +1,5 @@
+import type { AiTokenCounts } from '../utils/aiTraceUtils';
 import {
-	AiTokenCounts,
 	formatTokens,
 	getTokenLabel,
 	getTotalInputTokens,

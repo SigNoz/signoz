@@ -2,7 +2,7 @@ import { mockQueryRangeV5WithEventsResponse } from '__tests__/query_range_v5.uti
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { act, render, screen, waitFor } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityEvents from '../EntityEvents';
 import { K8S_ENTITY_EVENTS_EXPRESSION_KEY } from '../hooks';

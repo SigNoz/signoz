@@ -1,4 +1,4 @@
-import { MutableRefObject } from 'react';
+import type { MutableRefObject } from 'react';
 import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { back, hasInAppHistory } from 'lib/router/navigation';

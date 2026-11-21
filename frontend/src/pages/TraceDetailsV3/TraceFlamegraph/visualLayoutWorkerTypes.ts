@@ -1,6 +1,6 @@
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
-import { VisualLayout } from './computeVisualLayout';
+import type { VisualLayout } from './computeVisualLayout';
 
 export interface LayoutWorkerRequest {
 	type: 'compute';

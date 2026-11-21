@@ -1,13 +1,9 @@
-import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { toChannelConfig, toPostableChannel } from './channelConfig';
 import { toChannelFormState } from './channelFormValues';
-import {
-	ChannelFormValues,
-	ChannelKind,
-	JiraDeployment,
-	WebhookAuth,
-} from './types';
+import type { ChannelFormValues } from './types';
+import { ChannelKind, JiraDeployment, WebhookAuth } from './types';
 
 const slackValues: ChannelFormValues = {
 	name: 'prod alerts',

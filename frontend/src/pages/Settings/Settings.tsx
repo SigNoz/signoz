@@ -8,7 +8,7 @@ import { routeConfig } from 'container/SideNav/config';
 import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
 import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
-import { SidebarItem } from 'container/SideNav/sideNav.types';
+import type { SidebarItem } from 'container/SideNav/sideNav.types';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppLocation } from 'lib/router/useAppLocation';

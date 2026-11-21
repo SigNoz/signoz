@@ -1,4 +1,4 @@
-import { FlattenSimpleInterpolation } from 'styled-components';
+import type { FlattenSimpleInterpolation } from 'styled-components';
 
 export interface IStyledClass {
 	styledclass?: FlattenSimpleInterpolation[];

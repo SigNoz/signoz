@@ -4,7 +4,7 @@ import {
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { fieldContextToSuggestionContext } from 'container/AlertHistory/Timeline/Table/utils';
 
 export interface AlertHistoryFilterSuggestions {

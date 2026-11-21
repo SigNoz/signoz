@@ -16,12 +16,12 @@ import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
+import type { AppState } from 'store/reducers';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	applyCeleryFilterOnWidgetData,

@@ -1,5 +1,5 @@
-import { AggregateData } from 'container/QueryTable/Drilldown/useAggregateDrilldown';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { AggregateData } from 'container/QueryTable/Drilldown/useAggregateDrilldown';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 export const getDataLinks = (

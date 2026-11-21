@@ -1,4 +1,5 @@
-import { screen, userEvent } from 'tests/test-utils';
+import type { userEvent } from 'tests/test-utils';
+import { screen } from 'tests/test-utils';
 
 /** Opens the project IDs input and adds each ID the way a user does: type, then Enter. */
 export const addProjectIds = async (

@@ -1,4 +1,4 @@
-import { GcpSetupFormValues } from './types';
+import type { GcpSetupFormValues } from './types';
 
 export const DEFAULT_SETUP_FORM_VALUES: GcpSetupFormValues = {
 	accountName: '',

@@ -1,9 +1,5 @@
-import {
-	PointerEvent as ReactPointerEvent,
-	useCallback,
-	useEffect,
-	useRef,
-} from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 /**
  * Calls `onClose` on any press outside the elements given the returned handler as

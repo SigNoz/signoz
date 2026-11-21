@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { BarTooltipProps, TooltipContentItem } from '../types';
+import type { BarTooltipProps, TooltipContentItem } from '../types';
 import Tooltip from './Tooltip';
 import { buildTooltipContent } from './utils';
 

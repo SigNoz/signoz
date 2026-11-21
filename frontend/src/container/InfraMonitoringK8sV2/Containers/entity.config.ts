@@ -1,17 +1,19 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listContainers } from 'api/generated/services/inframonitoring';
-import {
+import type {
 	InframonitoringtypesContainerRecordDTO,
-	InframonitoringtypesResponseTypeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import {
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 
-import { K8sEntityConfig } from '../Base/entity.config.types';
-import { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
+import type { K8sEntityConfig } from '../Base/entity.config.types';
+import type { K8sBaseFilters, K8sDetailsFilters } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import {
 	containerWidgetInfo,
 	k8sContainerDetailsMetadataConfig,

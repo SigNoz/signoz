@@ -1,5 +1,5 @@
 import { toast } from '@signozhq/ui/toast';
-import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';

@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { StackMode } from 'lib/uPlotV2/config/types';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import { useChartStacking } from 'lib/visualization/charts/ChartWrapper/useChartStacking';
 

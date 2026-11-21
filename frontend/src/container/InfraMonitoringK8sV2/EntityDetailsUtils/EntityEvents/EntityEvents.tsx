@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Table, TableColumnsType } from 'antd';
+import type { TableColumnsType } from 'antd';
+import { Table } from 'antd';
 import {
 	QuerySearchV2Provider,
 	useExpression,
@@ -16,7 +17,7 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import Controls from 'container/Controls';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import LoadingContainer from 'container/InfraMonitoringK8sV2/LoadingContainer';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';

@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { ResizeTable } from 'components/ResizeTable';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 import { toast } from '@signozhq/ui/toast';
 
 import { getChartManagerColumns } from 'lib/visualization/components/ChartManager/getChartMangerColumns';
-import {
-	ExtendedChartDataset,
-	getDefaultTableDataSet,
-} from 'lib/visualization/components/ChartManager/utils';
+import type { ExtendedChartDataset } from 'lib/visualization/components/ChartManager/utils';
+import { getDefaultTableDataSet } from 'lib/visualization/components/ChartManager/utils';
 
 import 'lib/visualization/components/ChartManager/ChartManager.styles.scss';
 

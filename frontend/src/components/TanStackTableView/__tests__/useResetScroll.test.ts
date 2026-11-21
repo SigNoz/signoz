@@ -1,4 +1,4 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 import { renderHook } from '@testing-library/react';
 import type { TableVirtuosoHandle } from 'react-virtuoso';
 

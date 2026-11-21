@@ -7,15 +7,15 @@ import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useNotifications } from 'hooks/useNotifications';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { ContextLinksData } from 'types/api/widgets/widget';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ContextLinksData } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { openInNewTab } from 'utils/navigation';
 
-import { ContextMenuItem } from './contextConfig';
+import type { ContextMenuItem } from './contextConfig';
 import { getDataLinks } from './dataLinksUtils';
 import { getAggregateColumnHeader } from './drilldownUtils';
 import { getBaseContextConfig } from './menuOptions';
-import { AggregateData } from './useAggregateDrilldown';
+import type { AggregateData } from './useAggregateDrilldown';
 import useBaseDrilldownNavigate from './useBaseDrilldownNavigate';
 
 interface UseBaseAggregateOptionsProps {

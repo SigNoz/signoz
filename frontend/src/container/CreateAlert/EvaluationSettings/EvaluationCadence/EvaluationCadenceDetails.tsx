@@ -3,7 +3,7 @@ import { Button, DatePicker, Input, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import classNames from 'classnames';
 import { useCreateAlertState } from 'container/CreateAlert/context';
-import { AdvancedOptionsState } from 'container/CreateAlert/context/types';
+import type { AdvancedOptionsState } from 'container/CreateAlert/context/types';
 import dayjs from 'dayjs';
 import { Code, PencilLine } from '@signozhq/icons';
 
@@ -14,7 +14,7 @@ import {
 	TIMEZONE_DATA,
 } from '../constants';
 import TimeInput from '../TimeInput';
-import { IEvaluationCadenceDetailsProps } from '../types';
+import type { IEvaluationCadenceDetailsProps } from '../types';
 import {
 	buildAlertScheduleFromCustomSchedule,
 	buildAlertScheduleFromRRule,

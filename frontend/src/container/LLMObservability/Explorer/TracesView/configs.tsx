@@ -1,6 +1,7 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
-import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
+import type { TracesTableRow } from '../TracesTable/getFieldColumn';
+import { getFieldColumn } from '../TracesTable/getFieldColumn';
 import { DEFAULT_PER_PAGE_OPTIONS } from 'hooks/queryPagination';
 
 import { TRACE_ID_COLUMN_ID } from '../constants';

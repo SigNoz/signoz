@@ -1,8 +1,8 @@
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import store from 'store';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 export const getTimeRangeFromQueryRangeRequest = (
 	widgetParams?: QueryRangeRequestV5,

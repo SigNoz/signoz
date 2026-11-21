@@ -1,14 +1,5 @@
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
@@ -23,7 +14,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import LogsExplorerList from 'container/LogsExplorerList';
@@ -44,15 +35,15 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
-import APIError from 'types/api/error';
-import { ILog } from 'types/api/logs/log';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
-import { Filter } from 'types/api/v5/queryRange';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
+import type APIError from 'types/api/error';
+import type { ILog } from 'types/api/logs/log';
+import type { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { Filter } from 'types/api/v5/queryRange';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
 import LogsActionsContainer from './LogsActionsContainer';

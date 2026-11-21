@@ -4,11 +4,9 @@
  * factories thin so they only need to declare ids, descriptions, and schemas.
  */
 
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderQuery,
 	Query,
 	TagFilterItem,

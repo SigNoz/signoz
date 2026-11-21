@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DetailsPanelState } from 'components/DetailsPanel/types';
+import type { DetailsPanelState } from 'components/DetailsPanel/types';
 import { useAppParams } from 'lib/router/useAppParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
 
@@ -9,7 +9,7 @@ import {
 	SpanDetailVariant,
 } from '../SpanDetailsPanel/constants';
 import { useTraceSummary } from '../TraceDetailsHeader/useTraceSummary';
-import { ThreadSpan } from './types';
+import type { ThreadSpan } from './types';
 
 import styles from './TraceDetailsThread.module.scss';
 

@@ -1,8 +1,8 @@
 import { extractOnlyMessageBody } from 'lib/logs/logBody';
 import { cloneDeep, isEmpty } from 'lodash-es';
-import { SuccessResponse, Warning } from 'types/api';
-import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
-import {
+import type { SuccessResponse, Warning } from 'types/api';
+import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
+import type {
 	BuilderQuery,
 	DistributionData,
 	MetricRangePayloadV5,
@@ -12,7 +12,7 @@ import {
 	ScalarData,
 	TimeSeriesData,
 } from 'types/api/v5/queryRange';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 const isBuilderQueryEnvelope = (
 	envelope: QueryEnvelope,

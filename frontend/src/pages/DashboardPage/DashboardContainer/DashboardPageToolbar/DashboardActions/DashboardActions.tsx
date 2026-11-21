@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
+import type { FullScreenHandle } from 'react-full-screen';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
 	Braces,
@@ -23,7 +23,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';

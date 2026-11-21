@@ -1,9 +1,9 @@
-import { CreateRoutingPolicyBody } from 'api/routingPolicies/createRoutingPolicy';
-import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
-import { UpdateRoutingPolicyBody } from 'api/routingPolicies/updateRoutingPolicy';
-import { SuccessResponseV2 } from 'types/api';
+import type { CreateRoutingPolicyBody } from 'api/routingPolicies/createRoutingPolicy';
+import type { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
+import type { UpdateRoutingPolicyBody } from 'api/routingPolicies/updateRoutingPolicy';
+import type { SuccessResponseV2 } from 'types/api';
 
-import { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types';
 
 export function mapApiResponseToRoutingPolicies(
 	response: SuccessResponseV2<GetRoutingPoliciesResponse>,

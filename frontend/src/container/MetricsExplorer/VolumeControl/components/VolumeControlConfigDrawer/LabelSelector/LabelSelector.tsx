@@ -2,7 +2,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Select } from 'antd';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { RuleMode } from '../../../types';
+import type { RuleMode } from '../../../types';
 import styles from './LabelSelector.module.scss';
 
 interface LabelSelectorProps {

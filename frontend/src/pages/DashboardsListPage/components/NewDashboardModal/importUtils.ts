@@ -1,4 +1,4 @@
-import {
+import type {
 	DashboardtypesDashboardSpecDTO,
 	DashboardtypesPostableDashboardV2DTO,
 	TagtypesPostableTagDTO,

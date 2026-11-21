@@ -1,13 +1,16 @@
-import { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 
 import {
 	buildEventsExpression,
 	buildLogsTracesExpression,
 } from '../Base/utils';
-import { K8sDetailsMetadataConfig, K8sDetailsWidgetInfo } from '../Base/types';
+import type {
+	K8sDetailsMetadataConfig,
+	K8sDetailsWidgetInfo,
+} from '../Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import {
 	CONTAINERS_DOC_PATH,
 	getContainerImageWithTag,

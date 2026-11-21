@@ -1,4 +1,4 @@
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 

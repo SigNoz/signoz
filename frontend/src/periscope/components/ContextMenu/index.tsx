@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Popover } from 'antd';
 
-import { Coordinates, PopoverPosition } from './types';
+import type { Coordinates, PopoverPosition } from './types';
 import { useCoordinates } from './useCoordinates';
 
 import './styles.scss';

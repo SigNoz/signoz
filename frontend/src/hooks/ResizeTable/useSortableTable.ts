@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { TableProps } from 'antd';
+import type { TableProps } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 
 const useSortableTable = <T>(

@@ -1,9 +1,10 @@
-import { MutableRefObject, useEffect } from 'react';
+import type { MutableRefObject } from 'react';
+import { useEffect } from 'react';
 import { useGetTraceSummary } from 'api/generated/services/tracedetail';
 
 import { TraceDetailEvents } from '../../events';
-import { TraceDetailLogEvent } from '../../hooks/useTraceDetailLogEvent';
-import { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
+import type { TraceDetailLogEvent } from '../../hooks/useTraceDetailLogEvent';
+import type { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
 import {
 	getThreadDataLoadedEventAttributes,
 	getThreadEmptyWithAiEventAttributes,

@@ -1,5 +1,5 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -9,7 +9,7 @@ import {
 } from 'container/LLMObservability/Explorer/constants';
 import { defaultSelectedColumns as LIST_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/ListView/configs';
 
-import { PanelColumns } from '../types';
+import type { PanelColumns } from '../types';
 import { isAiObservabilityExplorerRoute } from '../utils';
 
 /**

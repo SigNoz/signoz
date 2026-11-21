@@ -2,11 +2,12 @@
 import { Provider } from 'react-redux';
 import { act, render, renderHook } from '@testing-library/react';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
-import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
+import type { MockStoreEnhanced } from 'redux-mock-store';
+import configureStore from 'redux-mock-store';
 import { useGlobalTimeStore } from 'store/globalTime/globalTimeStore';
 import { createCustomTimeRange } from 'store/globalTime/utils';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { GlobalTimeStoreAdapter } from '../GlobalTimeStoreAdapter';
 

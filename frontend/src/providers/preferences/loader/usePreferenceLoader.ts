@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { ensureAiRequiredColumns } from 'container/LLMObservability/Explorer/constants';
 import { ensureLogsRequiredColumns } from 'container/OptionsMenu/constants';
 import { has } from 'lodash-es';
@@ -9,7 +9,11 @@ import { has } from 'lodash-es';
 import getAiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import tracesLoaderConfig from '../configs/tracesLoaderConfig';
-import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
+import type {
+	FormattingOptions,
+	Preferences,
+	PreferenceSourcePage,
+} from '../types';
 
 const migrateColumns = (columns: any): any =>
 	columns.map((column: any) => {

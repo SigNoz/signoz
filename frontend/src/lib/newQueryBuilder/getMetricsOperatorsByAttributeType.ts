@@ -1,7 +1,7 @@
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	ATTRIBUTE_TYPES,
 	metricsOperatorsByType,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import {
 	metricsEmptyTimeAggregateOperatorOptions,
@@ -9,7 +9,7 @@ import {
 } from 'constants/queryBuilderOperators';
 import { isEmpty } from 'lodash-es';
 import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 
 type GetQueryOperatorsParams = {
 	dataSource: DataSource;

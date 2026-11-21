@@ -1,4 +1,5 @@
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import type { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import {
 	getListRulesV3QueryKey,
 	listRulesV3,

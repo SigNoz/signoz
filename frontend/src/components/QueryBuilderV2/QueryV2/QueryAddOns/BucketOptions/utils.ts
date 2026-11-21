@@ -1,8 +1,10 @@
-import {
+import type {
 	Querybuildertypesv5BucketOptionsDTO,
 	Querybuildertypesv5BucketOptionsLinearDTO,
-	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	Querybuildertypesv5BucketOptionsLogDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	Querybuildertypesv5BucketOptionsLogDTOKind,
 	Querybuildertypesv5BucketsKindDTO,
 } from 'api/generated/services/sigNoz.schemas';

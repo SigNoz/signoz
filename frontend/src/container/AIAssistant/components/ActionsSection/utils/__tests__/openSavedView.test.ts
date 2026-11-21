@@ -7,11 +7,13 @@ import {
 	getSavedView,
 	listSavedViews,
 } from 'api/generated/services/saved-view';
-import {
+import type {
 	GetSavedView200,
 	ListSavedViews200,
-	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSavedViewDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';

@@ -1,8 +1,9 @@
-import { ReactNode, useCallback, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import ThreadPageLoader from './ThreadPageLoader';
-import { ThreadSpan } from './types';
+import type { ThreadSpan } from './types';
 
 import styles from './ThreadSpanList.module.scss';
 

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Card, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -22,8 +22,8 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { useTimezone } from 'providers/Timezone';
-import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
+import type { SuccessResponse } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
 
 import ErrorState from './ErrorState';
 import {

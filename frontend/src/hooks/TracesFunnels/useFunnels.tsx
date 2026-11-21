@@ -1,13 +1,7 @@
-import {
-	useMutation,
-	UseMutationResult,
-	useQuery,
-	UseQueryResult,
-} from 'react-query';
+import type { UseMutationResult, UseQueryResult } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import {
-	createFunnel,
-	deleteFunnel,
+import type {
 	ErrorTraceData,
 	FunnelOverviewPayload,
 	FunnelOverviewResponse,
@@ -15,6 +9,14 @@ import {
 	FunnelStepsOverviewResponse,
 	FunnelStepsPayload,
 	FunnelStepsResponse,
+	RenameFunnelPayload,
+	SlowTraceData,
+	UpdateFunnelStepsPayload,
+	ValidateFunnelResponse,
+} from 'api/traceFunnels';
+import {
+	createFunnel,
+	deleteFunnel,
 	getFunnelById,
 	getFunnelErrorTraces,
 	getFunnelOverview,
@@ -23,18 +25,14 @@ import {
 	getFunnelSteps,
 	getFunnelStepsOverview,
 	renameFunnel,
-	RenameFunnelPayload,
 	saveFunnelDescription,
-	SlowTraceData,
 	updateFunnelSteps,
-	UpdateFunnelStepsPayload,
-	ValidateFunnelResponse,
 	validateFunnelSteps,
 } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	CreateFunnelPayload,
 	CreateFunnelResponse,
 	FunnelData,

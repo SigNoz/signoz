@@ -1,4 +1,5 @@
-import { HTMLAttributes, useCallback, useMemo } from 'react';
+import type { HTMLAttributes } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Button, Skeleton, Table } from 'antd';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
@@ -20,7 +21,7 @@ import {
 } from 'pages/AlertDetails/hooks';
 import { labelsArrayToObject } from 'container/AlertHistory/utils/labelAdapters';
 import { useTimezone } from 'providers/Timezone';
-import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import type { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useAlertHistoryFilterSuggestions } from './useAlertHistoryFilterSuggestions';

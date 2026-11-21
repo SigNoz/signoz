@@ -1,4 +1,5 @@
-import { ComponentType, ReactElement, createElement, useMemo } from 'react';
+import type { ComponentType, ReactElement } from 'react';
+import { createElement, useMemo } from 'react';
 import type { AuthZGuardProps } from 'lib/authz/components/AuthZGuard/AuthZGuard';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';

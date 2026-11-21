@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { useGetAlertRuleDetailsTopContributors } from 'pages/AlertDetails/hooks';
 import { labelsArrayToObject } from 'container/AlertHistory/utils/labelAdapters';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
-import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
+import type {
+	AlertRuleStats,
+	AlertRuleTopContributors,
+} from 'types/api/alerts/def';
 
 import TopContributorsCard from '../TopContributorsCard/TopContributorsCard';
 

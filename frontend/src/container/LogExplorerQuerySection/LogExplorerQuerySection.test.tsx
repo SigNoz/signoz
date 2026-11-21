@@ -4,13 +4,13 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { cleanup, render, screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, QueryState } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Query,
+	QueryState,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import {
-	DataSource,
-	QueryBuilderContextType,
-	ReduceOperators,
-} from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
 import LogExplorerQuerySection from './index';

@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useMemo } from 'react';
 import { regions } from 'utils/regions';
 
 interface UseRegionSelectionProps {

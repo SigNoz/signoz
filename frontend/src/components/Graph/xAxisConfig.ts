@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Chart, TimeUnit } from 'chart.js';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { Chart, TimeUnit } from 'chart.js';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { IAxisTimeConfig, IAxisTimeUintConfig, ITimeRange } from './types';
+import type { IAxisTimeConfig, IAxisTimeUintConfig, ITimeRange } from './types';
 
 export const TIME_UNITS: Record<TimeUnit, TimeUnit> = {
 	millisecond: 'millisecond',

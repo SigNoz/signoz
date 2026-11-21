@@ -2,7 +2,8 @@ import { type ReactNode, useLayoutEffect } from 'react';
 
 import { chromePerformanceTanstackTableEndHover } from './perfDevtools';
 import { useIsRowHovered } from './TanStackTableStateContext';
-import { Tooltip, TooltipProps } from '@signozhq/ui/tooltip';
+import type { TooltipProps } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 export type HoverTooltipProps = Omit<TooltipProps, 'open'> & {
 	rowId: string;

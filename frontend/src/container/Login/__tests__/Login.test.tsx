@@ -2,10 +2,10 @@ import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { ErrorV2 } from 'types/api';
-import { Info } from 'types/api/v1/version/get';
-import { SessionsContext } from 'types/api/v2/sessions/context/get';
-import { Token } from 'types/api/v2/sessions/email_password/post';
+import type { ErrorV2 } from 'types/api';
+import type { Info } from 'types/api/v1/version/get';
+import type { SessionsContext } from 'types/api/v2/sessions/context/get';
+import type { Token } from 'types/api/v2/sessions/email_password/post';
 
 import Login from '../index';
 

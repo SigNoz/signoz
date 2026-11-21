@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import TimeSeriesTooltip from 'lib/uPlotV2/components/Tooltip/TimeSeriesTooltip';
-import {
+import type {
 	TimeSeriesTooltipProps,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
 import { StackMode } from 'lib/uPlotV2/config/types';
 
-import { TimeSeriesChartProps } from 'lib/visualization/charts/types';
+import type { TimeSeriesChartProps } from 'lib/visualization/charts/types';
 
 export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
 	const { children, customTooltip, stack = StackMode.None, ...rest } = props;

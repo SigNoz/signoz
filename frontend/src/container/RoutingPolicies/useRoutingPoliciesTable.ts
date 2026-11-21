@@ -1,9 +1,10 @@
-import { RefObject, useMemo } from 'react';
+import type { RefObject } from 'react';
+import { useMemo } from 'react';
 import { sortByColumn } from 'components/Alerts/utils';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 
-import { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types';
 
 export const ROUTING_POLICIES_QUERY_PARAMS = {
 	orderBy: 'orderBy',

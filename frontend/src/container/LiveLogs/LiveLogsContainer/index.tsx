@@ -7,7 +7,7 @@ import FieldsSelector from 'components/FieldsSelector';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import { MAX_LOGS_LIST_SIZE } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { LOGS_REQUIRED_COLUMNS } from 'container/OptionsMenu/constants';
@@ -20,9 +20,9 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import LiveLogsList from '../LiveLogsList';
-import { ILiveLogsLog } from '../LiveLogsList/types';
+import type { ILiveLogsLog } from '../LiveLogsList/types';
 import LiveLogsListChart from '../LiveLogsListChart';
-import { QueryHistoryState } from '../types';
+import type { QueryHistoryState } from '../types';
 
 import './LiveLogsContainer.styles.scss';
 

@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { TestRouter } from 'tests/router';

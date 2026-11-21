@@ -1,5 +1,5 @@
+import type { DashboardtypesAreaFillModeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	DashboardtypesAreaFillModeDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,

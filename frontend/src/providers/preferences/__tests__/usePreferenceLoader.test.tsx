@@ -1,9 +1,9 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { renderHook, waitFor } from 'tests/test-utils';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';

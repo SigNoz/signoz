@@ -1,4 +1,5 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { IntegrationType } from 'container/Integrations/types';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 

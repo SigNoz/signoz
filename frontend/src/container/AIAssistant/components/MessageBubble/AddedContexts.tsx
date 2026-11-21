@@ -1,7 +1,7 @@
 import cx from 'classnames';
 import { Package } from '@signozhq/icons';
 
-import { MessageContext } from 'api/ai-assistant/chat';
+import type { MessageContext } from 'api/ai-assistant/chat';
 
 import { useVariant } from '../../VariantContext';
 import {

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Button, Tooltip } from 'antd';
 import classNames from 'classnames';
 import { Activity, ChartLine } from '@signozhq/icons';

@@ -3,7 +3,7 @@ import {
 	MetricAggregateOperator,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 
 export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	{

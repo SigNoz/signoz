@@ -9,24 +9,27 @@ import {
 } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'constants/timePreference';
-import {
+import type { timePreferenceType } from 'constants/timePreference';
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { Pagination } from 'hooks/queryPagination';
+import type { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
-import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
-import { SuccessResponseV2, Warning } from 'types/api';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import type { SuccessResponseV2, Warning } from 'types/api';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
+import type {
 	ExecStats,
 	MetricRangePayloadV5,
 	QueryRangeResponseV5,
 } from 'types/api/v5/queryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { DataSource } from 'types/common/queryBuilder';
 

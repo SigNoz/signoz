@@ -9,7 +9,10 @@ import {
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	OrderByPayload,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { getParsedAggregationOptionsForOrderBy } from './aggregationConverter';
 

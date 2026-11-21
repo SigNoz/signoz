@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { TraceDetailsTab } from 'pages/TraceDetailsV3/constants';
 import { formUrlParams } from 'utils/traceUtils';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export const getTraceLink = (record: Record<string, unknown>): string => {
 	function readId(value: unknown): string {

@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
-import ForgotPasswordContainer, {
-	ForgotPasswordRouteState,
-} from 'container/ForgotPassword';
+import type { ForgotPasswordRouteState } from 'container/ForgotPassword';
+import ForgotPasswordContainer from 'container/ForgotPassword';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 

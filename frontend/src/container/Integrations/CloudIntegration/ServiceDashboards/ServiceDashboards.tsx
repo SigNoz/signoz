@@ -1,4 +1,4 @@
-import {
+import type {
 	CloudintegrationtypesServiceDashboardDTO,
 	CloudintegrationtypesServiceDTO,
 } from 'api/generated/services/sigNoz.schemas';

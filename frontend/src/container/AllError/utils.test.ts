@@ -1,4 +1,4 @@
-import { Order, OrderBy } from 'types/api/errors/getAll';
+import type { Order, OrderBy } from 'types/api/errors/getAll';
 
 import {
 	getDefaultOrder,

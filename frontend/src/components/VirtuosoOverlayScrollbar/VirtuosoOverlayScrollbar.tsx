@@ -1,6 +1,7 @@
-import React, { CSSProperties, ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
+import React from 'react';
 import useInitializeOverlayScrollbar from 'hooks/useInitializeOverlayScrollbar/useInitializeOverlayScrollbar';
-import { PartialOptions } from 'overlayscrollbars';
+import type { PartialOptions } from 'overlayscrollbars';
 
 import './virtuosoOverlayScrollbar.scss';
 

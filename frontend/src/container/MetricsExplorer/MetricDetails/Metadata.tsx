@@ -10,18 +10,18 @@ import {
 	invalidateListMetrics,
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
-	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
-import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
+import type { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Save, X } from '@signozhq/icons';
 
@@ -34,7 +34,8 @@ import {
 	METRIC_METADATA_UPDATE_ERROR_MESSAGE,
 } from './constants';
 import MetricDetailsErrorState from './MetricDetailsErrorState';
-import { MetadataProps, MetricMetadataFormState, TableFields } from './types';
+import type { MetadataProps, MetricMetadataFormState } from './types';
+import { TableFields } from './types';
 import { transformUpdateMetricMetadataRequest } from './utils';
 
 function Metadata({

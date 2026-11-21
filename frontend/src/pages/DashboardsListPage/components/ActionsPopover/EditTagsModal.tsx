@@ -13,7 +13,7 @@ import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { keyValueStringsToTags } from '../../utils/helpers';
 

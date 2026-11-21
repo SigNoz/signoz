@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { ReactNode } from 'react';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { DataViewer } from 'periscope/components/DataViewer';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import { useLogAttributeActions } from './hooks/useLogAttributeActions';
 import {

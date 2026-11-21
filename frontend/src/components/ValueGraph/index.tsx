@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
 import { CircleAlert } from '@signozhq/icons';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 
 import { getBackgroundColorAndThresholdCheck } from './utils';
 

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Form, Input } from 'antd';
 
-import { ProcessorFormField } from '../../AddNewProcessor/config';
+import type { ProcessorFormField } from '../../AddNewProcessor/config';
 
 function DescriptionTextArea({
 	fieldData,

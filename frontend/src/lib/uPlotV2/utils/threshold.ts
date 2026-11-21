@@ -1,6 +1,6 @@
 import { convertValue } from 'lib/getConvertedValue';
 
-import { Threshold } from '../hooks/types';
+import type { Threshold } from '../hooks/types';
 
 /**
  * Find min and max threshold values after converting to the target unit

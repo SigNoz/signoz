@@ -1,16 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowLeft } from '@signozhq/icons';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import BreakoutOptions from './BreakoutOptions';
 import { getQueryData } from './drilldownUtils';
 import { getBreakoutPanelType, getBreakoutQuery } from './tableDrilldownUtils';
-import { BreakoutAttributeType } from './types';
-import { AggregateData } from './useAggregateDrilldown';
+import type { BreakoutAttributeType } from './types';
+import type { AggregateData } from './useAggregateDrilldown';
 
 interface UseBreakoutProps {
 	query: Query;

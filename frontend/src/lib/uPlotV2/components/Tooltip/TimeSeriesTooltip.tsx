@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { TimeSeriesTooltipProps, TooltipContentItem } from '../types';
+import type { TimeSeriesTooltipProps, TooltipContentItem } from '../types';
 import Tooltip from './Tooltip';
 import { buildTooltipContent } from './utils';
 

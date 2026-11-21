@@ -1,11 +1,12 @@
 import { Box } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
+import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	InframonitoringtypesContainerReadyDTO,
-	InframonitoringtypesContainerRecordDTO,
 	InframonitoringtypesContainerStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
@@ -25,7 +26,7 @@ import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import {
 	CONTAINER_READY_COLORS,
 	CONTAINER_READY_LABELS,

@@ -1,9 +1,13 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
-import { Props } from 'types/api/user/signup';
-import { SignupResponse } from 'types/api/v1/register/post';
+import type { AxiosError } from 'axios';
+import type {
+	ErrorV2Resp,
+	RawSuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
+import type { Props } from 'types/api/user/signup';
+import type { SignupResponse } from 'types/api/v1/register/post';
 
 const post = async (
 	props: Props,

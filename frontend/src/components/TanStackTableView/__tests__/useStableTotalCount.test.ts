@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import {
-	useStableTotalCount,
-	UseStableTotalCountParams,
-} from '../useStableTotalCount';
+import type { UseStableTotalCountParams } from '../useStableTotalCount';
+import { useStableTotalCount } from '../useStableTotalCount';
 
 function renderStableTotalCount(initial: UseStableTotalCountParams): {
 	result: { current: number };

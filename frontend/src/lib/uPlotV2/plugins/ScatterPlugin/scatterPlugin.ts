@@ -1,21 +1,24 @@
-import uPlot, { Series } from 'uplot';
+import type { Series } from 'uplot';
+import uPlot from 'uplot';
 
 import { DEFAULT_FOCUS_PROXIMITY_VALUE } from '../../constants';
 import { PlotMode } from '../../config/types';
 import type { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import { Quadtree } from '../../utils/quadtree';
+import type { SizeDomain } from './geometry';
 import {
 	resolveHit,
 	resolvePointDiameter,
 	resolveSizeDomain,
-	SizeDomain,
 } from './geometry';
-import {
-	DEFAULT_HOVER_TOLERANCE_PX,
-	DEFAULT_SCATTER_POINT_SIZE,
+import type {
 	ScatterHit,
 	ScatterPluginOptions,
 	ScatterSeriesData,
+} from './types';
+import {
+	DEFAULT_HOVER_TOLERANCE_PX,
+	DEFAULT_SCATTER_POINT_SIZE,
 } from './types';
 
 export const SCATTER_FACETS: Series.Facet[] = [

@@ -1,12 +1,10 @@
-import {
+import type {
 	Dispatch,
 	MutableRefObject,
 	RefObject,
 	SetStateAction,
-	useCallback,
-	useEffect,
-	useRef,
 } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import {
 	DEFAULT_ROW_HEIGHT,
@@ -18,7 +16,7 @@ import {
 	SCROLL_ZOOM_INTENSITY_H,
 	SCROLL_ZOOM_INTENSITY_V,
 } from '../constants';
-import { ITraceMetadata } from '../types';
+import type { ITraceMetadata } from '../types';
 import { clamp } from '../utils';
 
 interface UseFlamegraphZoomArgs {

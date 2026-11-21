@@ -1,6 +1,6 @@
-import { IQueryBuilderState } from 'constants/queryBuilder';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IQueryBuilderState } from 'constants/queryBuilder';
+import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface InitialStateI {
 	search: string;

@@ -15,7 +15,7 @@ import { isQueryTypeAvailable } from './TelemetrySelectorWizard.utils';
 import useTelemetrySelectorWizard from './useTelemetrySelectorWizard';
 
 import styles from './TelemetrySelectorWizard.module.scss';
-import { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
+import type { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
 
 interface TelemetrySelectorWizardProps {
 	onAdd: (selector: string) => void;

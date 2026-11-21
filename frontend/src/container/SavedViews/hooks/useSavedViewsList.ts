@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useListSavedViews } from 'api/generated/services/saved-view';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { useAppContext } from 'providers/App/App';
 
-import { UseSavedViewsListResult } from '../types';
+import type { UseSavedViewsListResult } from '../types';
 
 export function useSavedViewsList(
 	source: SavedviewtypesSourceDTO,

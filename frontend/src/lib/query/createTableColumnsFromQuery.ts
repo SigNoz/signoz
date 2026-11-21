@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import {
+import type { ReactNode } from 'react';
+import type {
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
 } from 'antd';
@@ -11,19 +11,23 @@ import {
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
-import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { ListItem, QueryDataV3, SeriesItem } from 'types/api/widgets/getQuery';
+import type {
+	ListItem,
+	QueryDataV3,
+	SeriesItem,
+} from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 type CreateTableDataFromQueryParams = Pick<

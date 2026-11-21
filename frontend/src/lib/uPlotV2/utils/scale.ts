@@ -4,12 +4,14 @@
  * log-scale snapping, and threshold-aware soft limits.
  */
 
-import uPlot, { Range, Scale } from 'uplot';
+import type { Range, Scale } from 'uplot';
+import uPlot from 'uplot';
 
-import { DistributionType, ScaleProps } from '../config/types';
-import { Threshold } from '../hooks/types';
+import type { ScaleProps } from '../config/types';
+import { DistributionType } from '../config/types';
+import type { Threshold } from '../hooks/types';
 import { findMinMaxThresholdValues } from './threshold';
-import { LogScaleLimits, RangeFunctionParams } from './types';
+import type { LogScaleLimits, RangeFunctionParams } from './types';
 
 /**
  * Snaps min/max/softMin/softMax to valid log-scale values (powers of logBase).

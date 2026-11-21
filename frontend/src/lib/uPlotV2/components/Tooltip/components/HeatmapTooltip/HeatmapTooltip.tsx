@@ -6,7 +6,7 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { useTimezone } from 'providers/Timezone';
 
-import { HeatmapTooltipProps } from '../../../types';
+import type { HeatmapTooltipProps } from '../../../types';
 import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 import HeatmapBucketList from './HeatmapBucketList';
 import HeatmapContributionList from './HeatmapContributionList';

@@ -2,7 +2,7 @@ import { CharStreams, CommonTokenStream } from 'antlr4';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
-import { IQueryPair, IToken } from 'types/antlrQueryTypes';
+import type { IQueryPair, IToken } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 
 import {

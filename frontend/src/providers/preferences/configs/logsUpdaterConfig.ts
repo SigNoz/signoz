@@ -1,15 +1,16 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {
 	defaultOptionsQuery,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
+import type { FontSize, OptionsQuery } from 'container/OptionsMenu/types';
 
-import { FormattingOptions, PreferenceMode, Preferences } from '../types';
+import type { FormattingOptions, Preferences } from '../types';
+import { PreferenceMode } from '../types';
 
 // --- LOGS preferences updater config ---
 const getLogsUpdaterConfig = (

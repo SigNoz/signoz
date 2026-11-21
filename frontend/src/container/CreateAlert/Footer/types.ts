@@ -1,7 +1,7 @@
-import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import {
+import type {
 	AdvancedOptionsState,
 	AlertState,
 	AlertThresholdState,

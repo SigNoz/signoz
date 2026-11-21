@@ -9,8 +9,8 @@ import logEvent from 'api/common/logEvent';
 import Uplot from 'components/Uplot';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
@@ -18,7 +18,7 @@ import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
 import HoverPopover from './HoverPopover';
 import TableView from './TableView';
-import { GraphPopoverOptions, GraphViewProps } from './types';
+import type { GraphPopoverOptions, GraphViewProps } from './types';
 import { onGraphClick, onGraphHover } from './utils';
 
 function GraphView({

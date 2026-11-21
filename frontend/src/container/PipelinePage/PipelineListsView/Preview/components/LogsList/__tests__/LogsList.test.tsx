@@ -1,5 +1,5 @@
 import { render, screen, userEvent } from 'tests/test-utils';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import LogsList from '..';
 

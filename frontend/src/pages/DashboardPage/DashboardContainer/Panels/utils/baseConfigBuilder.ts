@@ -2,15 +2,14 @@ import type {
 	DashboardtypesPanelFormattingDTO,
 	DashboardtypesThresholdWithLabelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PanelMode } from 'lib/visualization/panels/types';
-import onClickPlugin, {
-	OnClickPluginOpts,
-} from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { PanelMode } from 'lib/visualization/panels/types';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import onClickPlugin from 'lib/uPlotLib/plugins/onClickPlugin';
 import { DistributionType } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import {

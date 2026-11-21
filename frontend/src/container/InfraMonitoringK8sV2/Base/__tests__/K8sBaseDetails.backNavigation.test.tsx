@@ -9,10 +9,8 @@ import {
 	InfraMonitoringEntity,
 } from '../../constants';
 import K8sBaseDetails from '../K8sBaseDetails';
-import {
-	DrawerHistoryEntry,
-	useDrawerHistoryStore,
-} from '../useDrawerHistoryStore';
+import type { DrawerHistoryEntry } from '../useDrawerHistoryStore';
+import { useDrawerHistoryStore } from '../useDrawerHistoryStore';
 
 jest.mock('container/TopNav/DateTimeSelectionV2/index.tsx', () => ({
 	__esModule: true,

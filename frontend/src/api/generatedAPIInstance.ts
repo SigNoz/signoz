@@ -6,7 +6,8 @@ import {
 } from 'api';
 import { ENVIRONMENT } from 'constants/env';
 
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 
 // generated API Instance
 const generatedAPIAxiosInstance = axios.create({

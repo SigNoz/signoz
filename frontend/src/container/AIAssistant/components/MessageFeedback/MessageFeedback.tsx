@@ -14,7 +14,7 @@ import { FeedbackRatingDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
-import { FeedbackRating, Message } from '../../types';
+import type { FeedbackRating, Message } from '../../types';
 import { useVariant } from '../../VariantContext';
 
 import styles from './MessageFeedback.module.scss';

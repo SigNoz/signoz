@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { EvaluationWindowState } from 'container/CreateAlert/context/types';
+import type { EvaluationWindowState } from 'container/CreateAlert/context/types';
 
 import {
 	EVALUATION_WINDOW_TIMEFRAME,

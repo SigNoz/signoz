@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';

@@ -1,5 +1,5 @@
-import ROUTES from 'constants/routes';
-import { ROLES } from 'types/roles';
+import type ROUTES from 'constants/routes';
+import type { ROLES } from 'types/roles';
 
 export type ComponentTypes =
 	| 'current_org_settings'

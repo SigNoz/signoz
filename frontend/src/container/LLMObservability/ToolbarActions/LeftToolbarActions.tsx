@@ -1,7 +1,7 @@
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
-import { ExplorerViews } from 'pages/LogsExplorer/utils';
+import type { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import { TOOLBAR_VIEW_CONFIG } from './toolbarViewsConfig';
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import ReactMarkdown from 'react-markdown';
-import { CodeProps } from 'react-markdown/lib/ast-to-react';
+import type { CodeProps } from 'react-markdown/lib/ast-to-react';
 import logEvent from 'api/common/logEvent';
 import { isEmpty } from 'lodash-es';
 import rehypeRaw from 'rehype-raw';

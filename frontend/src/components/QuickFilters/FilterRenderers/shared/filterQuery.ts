@@ -4,7 +4,7 @@ import {
 	getBuilderSlotKeyForQueryType,
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getKeySpellings, isKeyMatch } from '../Checkbox/utils';
 

@@ -7,7 +7,7 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 
-import { MessageContext } from '../../../../api/ai-assistant/chat';
+import type { MessageContext } from '../../../../api/ai-assistant/chat';
 
 /** Ordered category tabs shown in the @-mention context picker. */
 export const CONTEXT_CATEGORIES = ['Dashboards', 'Alerts', 'Services'] as const;

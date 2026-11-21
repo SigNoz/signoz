@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { themeColors } from 'constants/theme';
 import { limit } from 'lib/getChartData';
 

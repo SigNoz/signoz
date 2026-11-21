@@ -5,8 +5,8 @@ import { useSelector } from 'react-redux';
 import { Button, Form } from 'antd';
 import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import type { AppState } from 'store/reducers';
+import type AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
 
 import { githubReleaseURL } from './constant';

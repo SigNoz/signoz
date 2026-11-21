@@ -4,8 +4,8 @@ import { themeColors } from 'constants/theme';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { isUndefined } from 'lodash-es';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 import { drawStyles, lineInterpolations } from './constants';
 import { generateColor } from './generateColor';

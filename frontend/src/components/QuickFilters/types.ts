@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export enum FiltersType {
 	SLIDER = 'SLIDER',

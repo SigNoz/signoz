@@ -9,14 +9,14 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
-import {
+import type {
 	GraphPopoverData,
-	InspectionStep,
 	InspectMetricsSeries,
 	MetricInspectionAction,
 	MetricInspectionState,
 	UseInspectMetricsReturnData,
 } from './types';
+import { InspectionStep } from './types';
 import {
 	applySpaceAggregation,
 	applyTimeAggregation,

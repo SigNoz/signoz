@@ -8,7 +8,10 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';

@@ -2,9 +2,9 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { TestRouter } from 'tests/router';
 
+import type { IDashboardsListQueryParams } from '../useDashboardsListQueryParams';
 import useDashboardsListQueryParams, {
 	DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
-	IDashboardsListQueryParams,
 } from '../useDashboardsListQueryParams';
 
 const mockSafeNavigate = jest.fn();

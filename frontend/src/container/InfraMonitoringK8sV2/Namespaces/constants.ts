@@ -1,18 +1,21 @@
-import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
-import { K8sDetailsCountConfig, K8sDetailsMetadataConfig } from '../Base/types';
+import type {
+	K8sDetailsCountConfig,
+	K8sDetailsMetadataConfig,
+} from '../Base/types';
 import {
 	getPodUtilizationByPodQueryPayloads,
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import {
 	buildEventsExpression,

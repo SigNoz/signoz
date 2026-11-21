@@ -1,17 +1,12 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import { FORMULA, MetricsType, WidgetKeys } from '../constant';
-import { DatabaseCallProps, DatabaseCallsRPSProps } from '../types';
+import type { DatabaseCallProps, DatabaseCallsRPSProps } from '../types';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,

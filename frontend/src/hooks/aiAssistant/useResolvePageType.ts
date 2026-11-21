@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useAppLocation } from 'lib/router/useAppLocation';
 
-import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { resolvePageType } from 'container/AIAssistant/resolvePageType';
 import { useVariant } from 'container/AIAssistant/VariantContext';
 

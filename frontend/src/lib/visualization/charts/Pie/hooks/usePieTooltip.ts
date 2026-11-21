@@ -8,8 +8,8 @@ import {
 } from 'react';
 import { useTooltip } from '@visx/tooltip';
 
-import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
-import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
+import type { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
+import type { PieTooltipData } from 'lib/visualization/charts/Pie/types';
 import { getSliceDisplayLabel } from 'lib/visualization/charts/Pie/utils/slices';
 
 // Keeps the cursor off the tooltip so it never steals the hover.

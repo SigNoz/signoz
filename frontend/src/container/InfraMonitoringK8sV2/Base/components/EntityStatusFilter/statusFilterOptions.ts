@@ -1,10 +1,10 @@
 import type { BadgeColorType } from '@signozhq/ui/badge';
-import {
+import type {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesNodeConditionDTO,
 	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { OptionData } from 'components/NewSelect/types';
+import type { OptionData } from 'components/NewSelect/types';
 
 import {
 	FILTERABLE_CONTAINER_STATUSES,

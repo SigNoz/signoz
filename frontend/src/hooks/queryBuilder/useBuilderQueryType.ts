@@ -1,7 +1,7 @@
 import { useIsInQueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2Context';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { BuilderQueryType } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { BuilderQueryType } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 
 /**

@@ -3,7 +3,7 @@ import { Button, type VariantColorType } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 
-import { SavedViewsIconButtonProps } from './types';
+import type { SavedViewsIconButtonProps } from './types';
 
 // Ghost buttons only come in secondary, so the warning tone is a link button.
 const VARIANT_COLORS: Record<

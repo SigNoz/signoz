@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useDetailsPanel } from 'components/DetailsPanel';
-import { DetailsPanelState } from 'components/DetailsPanel/types';
+import type { DetailsPanelState } from 'components/DetailsPanel/types';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
-import { ThreadSpan } from '../types';
+import type { ThreadSpan } from '../types';
 
 const SPAN_ID_PARAM = 'spanId';
 

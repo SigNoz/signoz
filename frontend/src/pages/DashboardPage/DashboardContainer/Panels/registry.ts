@@ -17,7 +17,7 @@ import type {
 	PanelRegistry,
 	RenderablePanelDefinition,
 } from './types/panelDefinition';
-import { PanelKind } from './types/panelKind';
+import type { PanelKind } from './types/panelKind';
 
 // Each kind owns its PanelDefinition; registering a new panel is one entry here.
 // Declaration order is the order kinds are offered in the UI.

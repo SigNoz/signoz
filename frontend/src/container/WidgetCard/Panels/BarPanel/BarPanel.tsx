@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
+import type { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import {
-	IRenderTooltipFooterArgs,
-	LegendPosition,
-} from 'lib/uPlotV2/components/types';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';

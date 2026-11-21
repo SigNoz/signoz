@@ -1,16 +1,16 @@
-import { ExecStats } from 'api/v5/v5';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { ExecStats } from 'api/v5/v5';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import { v4 } from 'uuid';
 
 const DEFAULT_STEP_INTERVAL_SECONDS = 60;

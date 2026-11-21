@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { toast } from '@signozhq/ui/toast';
-import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
+import type { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
 import { useDeleteRoutingPolicy } from 'hooks/routingPolicies/useDeleteRoutingPolicy';
@@ -12,9 +12,9 @@ import { useGetRoutingPolicies } from 'hooks/routingPolicies/useGetRoutingPolici
 import { useUpdateRoutingPolicy } from 'hooks/routingPolicies/useUpdateRoutingPolicy';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { SuccessResponseV2 } from 'types/api';
+import type { SuccessResponseV2 } from 'types/api';
 
-import {
+import type {
 	PolicyDetailsModalMode,
 	PolicyDetailsModalState,
 	RoutingPolicy,

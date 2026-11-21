@@ -1,8 +1,9 @@
-import { createStore, StoreApi, useStore } from 'zustand';
+import type { StoreApi } from 'zustand';
+import { createStore, useStore } from 'zustand';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
-import {
+import type {
 	GlobalTimeSelectedTime,
 	GlobalTimeState,
 	GlobalTimeStoreApiRef,

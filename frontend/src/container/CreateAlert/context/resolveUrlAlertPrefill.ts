@@ -1,7 +1,7 @@
 import { QueryParams } from 'constants/query';
 
 import { normalizeMatchType, normalizeOperator } from './conditionNormalizers';
-import {
+import type {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 	Threshold,

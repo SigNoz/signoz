@@ -1,10 +1,10 @@
-import { MutableRefObject } from 'react';
+import type { MutableRefObject } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
 import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';

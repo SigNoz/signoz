@@ -1,6 +1,6 @@
 import { ApiV4Instance } from 'api';
-import { AxiosResponse } from 'axios';
-import { MetricMetaProps } from 'types/api/metrics/getApDex';
+import type { AxiosResponse } from 'axios';
+import type { MetricMetaProps } from 'types/api/metrics/getApDex';
 
 export const getMetricMeta = (
 	metricName: string,

@@ -41,7 +41,7 @@ import { emptyGraph } from './Plugin/EmptyGraph';
 import { createIntersectionCursorPlugin } from './Plugin/IntersectionCursor';
 import { TooltipPosition as TooltipPositionHandler } from './Plugin/Tooltip';
 import { LegendsContainer } from './styles';
-import { CustomChartOptions, GraphProps, ToggleGraphProps } from './types';
+import type { CustomChartOptions, GraphProps, ToggleGraphProps } from './types';
 import { getGraphOptions, toggleGraph } from './utils';
 import { useXAxisTimeUnit } from './xAxisConfig';
 

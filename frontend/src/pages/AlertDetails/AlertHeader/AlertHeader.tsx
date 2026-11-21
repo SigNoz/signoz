@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import CreateAlertHeader from 'container/CreateAlert/CreateAlertHeader';
 import { useAlertRule } from 'providers/Alert';
-import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
 
 import AlertActionButtons from './ActionButtons/ActionButtons';
 

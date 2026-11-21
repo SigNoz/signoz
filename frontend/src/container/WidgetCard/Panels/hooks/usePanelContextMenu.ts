@@ -1,18 +1,16 @@
 import { useCallback } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import {
 	getTimeRangeFromStepInterval,
 	isApmMetric,
 } from 'container/WidgetCard/Panels/utils';
 import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
-import {
-	PopoverPosition,
-	useCoordinates,
-} from 'periscope/components/ContextMenu';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { PopoverPosition } from 'periscope/components/ContextMenu';
+import { useCoordinates } from 'periscope/components/ContextMenu';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 interface UseTimeSeriesContextMenuParams {

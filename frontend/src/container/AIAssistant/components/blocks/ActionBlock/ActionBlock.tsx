@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Check, LoaderCircle, TriangleAlert, X, Zap } from '@signozhq/icons';
 
 import { PageActionRegistry } from '../../../pageActions/PageActionRegistry';
-import { AIActionBlock } from '../../../pageActions/types';
+import type { AIActionBlock } from '../../../pageActions/types';
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';
 import { useMessageContext } from '../../MessageContext';
 

@@ -4,7 +4,8 @@ import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { TIME_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep, MetricTimeAggregationProps } from './types';
+import type { MetricTimeAggregationProps } from './types';
+import { InspectionStep } from './types';
 import { getDefaultTimeAggregationInterval } from './utils';
 
 function MetricTimeAggregation({

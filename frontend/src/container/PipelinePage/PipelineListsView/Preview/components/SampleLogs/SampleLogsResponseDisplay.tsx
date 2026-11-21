@@ -1,4 +1,4 @@
-import { SampleLogsResponse } from '../../hooks/useSampleLogs';
+import type { SampleLogsResponse } from '../../hooks/useSampleLogs';
 import LogsList from '../LogsList';
 
 function SampleLogsResponseDisplay({

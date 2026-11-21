@@ -1,10 +1,10 @@
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
-import { SerializedTable } from './types';
+import type { SerializedTable } from './types';
 import { withUnit } from './withUnit';
 
 interface ExportTimeseriesDataArgs {

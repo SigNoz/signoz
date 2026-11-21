@@ -1,7 +1,7 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	TagFilter,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';

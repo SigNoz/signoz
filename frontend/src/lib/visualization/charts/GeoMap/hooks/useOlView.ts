@@ -3,7 +3,7 @@ import View from 'ol/View';
 import type { Coordinate } from 'ol/coordinate';
 import type { Extent } from 'ol/extent';
 
-import {
+import type {
 	GeoMapDatum,
 	GeoMapPoint,
 	GeoMapProjection,
@@ -13,7 +13,7 @@ import {
 import { MAX_ZOOM, ZOOM_STEP } from '../utils/zoom';
 import { getViewExtent } from '../utils/olFeatures';
 import { toOlProjection } from '../utils/olProjections';
-import { OlMapHandle } from './useOlMap';
+import type { OlMapHandle } from './useOlMap';
 
 const PADDING = [8, 8, 8, 8];
 const ZOOM_LEVELS = Math.log2(ZOOM_STEP);

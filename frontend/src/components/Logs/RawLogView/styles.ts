@@ -11,7 +11,7 @@ import {
 	getCustomHighlightBackground,
 } from 'utils/logs';
 
-import { RawLogContentProps } from './types';
+import type { RawLogContentProps } from './types';
 
 export const RawLogViewContainer = styled(Row)<{
 	$isDarkMode: boolean;

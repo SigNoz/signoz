@@ -1,7 +1,7 @@
 import { ApiV2Instance as axios } from 'api';
 import { omit } from 'lodash-es';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	GetTraceFlamegraphPayloadProps,
 	GetTraceFlamegraphSuccessResponse,
 } from 'types/api/trace/getTraceFlamegraph';

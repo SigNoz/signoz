@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
-import {
+import type {
 	K8sEntityData,
 	K8sEntityListConfig,
 } from '../../Base/entity.config.types';
-import { SelectedItemParams } from '../../hooks';
+import type { SelectedItemParams } from '../../hooks';
 
 type FetchRelatedEntities = K8sEntityListConfig<
 	K8sEntityData,

@@ -1,6 +1,6 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'constants/timePreference';
-import {
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { timePreferenceType } from 'constants/timePreference';
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';

@@ -15,8 +15,8 @@ import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ILog } from 'types/api/logs/log';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { ILog } from 'types/api/logs/log';
+import type { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';
 import { withBasePath } from 'utils/basePath';
 

@@ -7,7 +7,7 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormTraceOperatorValues,
 } from 'constants/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 const [tracesQuery] = initialQueriesMap.traces.builder.queryData;
 

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
-import { BadgeConfig, deriveItems, SectionType } from './itemRules';
-import { CheckedState } from '../../../types';
+import type { BadgeConfig } from './itemRules';
+import { deriveItems, SectionType } from './itemRules';
+import type { CheckedState } from '../../../types';
 
 interface SectionedValuesInput {
 	relatedValues: string[];

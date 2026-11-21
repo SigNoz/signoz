@@ -1,10 +1,8 @@
-import {
-	CloudintegrationtypesAccountDTO,
-	CloudintegrationtypesGCPConnectionMethodDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 
-import { useAgentConnectionPolling } from '../useAgentConnectionPolling';
+import type { useAgentConnectionPolling } from '../useAgentConnectionPolling';
 
 type PollingProps = Parameters<typeof useAgentConnectionPolling>[0];
 

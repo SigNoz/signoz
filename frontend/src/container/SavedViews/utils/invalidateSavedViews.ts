@@ -1,9 +1,9 @@
-import { QueryClient } from 'react-query';
+import type { QueryClient } from 'react-query';
 import {
 	invalidateGetSavedView,
 	invalidateListSavedViews,
 } from 'api/generated/services/saved-view';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 export async function invalidateSavedViews(
 	queryClient: QueryClient,

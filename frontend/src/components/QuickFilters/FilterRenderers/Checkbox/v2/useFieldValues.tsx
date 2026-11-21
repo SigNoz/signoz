@@ -1,13 +1,11 @@
 import { useMemo } from 'react';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { FieldValuesConfig } from 'api/querySuggestions/types';
+import type { FieldValuesConfig } from 'api/querySuggestions/types';
 import { QUICK_FILTER_SOURCE_TO_SIGNAL } from 'components/QuickFilters/constants';
-import {
-	IQuickFiltersConfig,
-	QuickFiltersSource,
-} from 'components/QuickFilters/types';
+import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';
-import { BuilderQueryType } from 'types/api/v5/queryRange';
+import type { BuilderQueryType } from 'types/api/v5/queryRange';
 
 interface UseFieldValuesProps {
 	filter: IQuickFiltersConfig;

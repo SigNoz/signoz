@@ -1,9 +1,9 @@
-import { Widgets } from 'types/api/widgets/widget';
-import {
+import type { Widgets } from 'types/api/widgets/widget';
+import type {
 	MetricRangePayloadProps,
 	MetricRangePayloadV3,
 } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import type { ExtendedSeries } from 'lib/uPlotV2/config/types';
 import { PanelMode } from 'lib/visualization/panels/types';

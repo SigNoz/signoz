@@ -1,8 +1,8 @@
 import { Color } from '@signozhq/design-tokens';
 import uPlot from 'uplot';
 
-import { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
-import { HeatmapYAxis } from './types';
+import type { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
+import type { HeatmapYAxis } from './types';
 
 /** Cells at least this wide/tall keep a hairline separator. */
 const MIN_CELL_SIZE_FOR_GAP = 4;

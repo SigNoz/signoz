@@ -17,8 +17,9 @@ import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
 import { TestRouter } from 'tests/router';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import Explorer from '../Explorer';
 import * as useGetMetricsHooks from '../utils';

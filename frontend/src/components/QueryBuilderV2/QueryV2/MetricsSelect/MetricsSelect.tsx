@@ -8,9 +8,9 @@ import {
 import { MetricNameSelector } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 
 import {
 	getPreviousQueryFromKey,

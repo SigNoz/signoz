@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
+import type { LOCALSTORAGE } from 'constants/localStorage';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 
 import { COLUMNS } from './configs';
-import { UseDragColumns } from './types';
+import type { UseDragColumns } from './types';
 
 const useDragColumns = <T>(storageKey: LOCALSTORAGE): UseDragColumns<T> => {
 	const {

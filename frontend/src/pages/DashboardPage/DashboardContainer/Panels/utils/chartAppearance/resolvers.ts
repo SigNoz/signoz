@@ -1,8 +1,8 @@
 import { rangeUtil } from '@grafana/data';
 import {
+	type DashboardtypesHeatmapYScaleDTO,
+	type DashboardtypesLegendPositionDTO,
 	type DashboardtypesAreaFillModeDTO,
-	DashboardtypesHeatmapYScaleDTO,
-	DashboardtypesLegendPositionDTO,
 	DashboardtypesPrecisionOptionDTO,
 	Querybuildertypesv5BucketOptionsLinearDTOKind,
 	type DashboardtypesHeatmapColorsDTO,
@@ -10,7 +10,8 @@ import {
 	type DashboardtypesStackModeDTO,
 	type Querybuildertypesv5BucketOptionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
 import { clampColorSteps } from 'lib/visualization/colorRamp/colorScale';

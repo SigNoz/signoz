@@ -1,19 +1,16 @@
-import { PrecisionOption } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { formatRowLabel } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import {
+import type {
 	HeatmapSeries,
 	HeatmapYAxis,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import 'utils/timeUtils';
 
-import {
-	HeatmapBucketRow,
-	HeatmapContributionRow,
-	HeatmapTooltipBody,
-} from './types';
+import type { HeatmapBucketRow, HeatmapContributionRow } from './types';
+import { HeatmapTooltipBody } from './types';
 
 /** Rows shown either side of the hovered one. */
 const NEIGHBOUR_SPAN = 2;

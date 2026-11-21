@@ -1,7 +1,9 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, RenderResult } from '@testing-library/react';
-import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import type { RenderResult } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import type { OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 import TanStackTable from '../index';
 import type { TableColumnDef, TanStackTableProps } from '../types';

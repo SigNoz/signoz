@@ -1,9 +1,9 @@
-import { MouseEventHandler } from 'react';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
-import { IField } from 'types/api/logs/fields';
-import { ILog } from 'types/api/logs/log';
+import type { MouseEventHandler } from 'react';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { IField } from 'types/api/logs/fields';
+import type { ILog } from 'types/api/logs/log';
 
-import { VIEWS } from './constants';
+import type { VIEWS } from './constants';
 
 export type LogDetailProps = {
 	log: ILog | null;

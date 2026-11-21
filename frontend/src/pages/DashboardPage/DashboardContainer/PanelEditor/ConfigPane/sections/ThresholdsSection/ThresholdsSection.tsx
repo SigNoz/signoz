@@ -9,8 +9,8 @@ import {
 	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { AnyThreshold } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import {
-	AnyThreshold,
 	SECTION_METADATA,
 	SectionKind,
 	ThresholdVariant,

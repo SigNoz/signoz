@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
-import { MessageContext } from 'api/ai-assistant/chat';
+import type { MessageContext } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { TestRouter } from 'tests/router';

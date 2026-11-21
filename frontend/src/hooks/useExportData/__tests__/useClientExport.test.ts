@@ -4,8 +4,8 @@ import {
 	getTimestampedFileName,
 } from 'lib/exportData/downloadFile';
 import { ExportFormat } from 'lib/exportData/types';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useClientExport } from '../useClientExport';
 

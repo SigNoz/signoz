@@ -1,4 +1,7 @@
-import { Having, IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Having,
+	IBuilderQuery,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 export type HavingFilterProps = {
 	entityVersion: string;

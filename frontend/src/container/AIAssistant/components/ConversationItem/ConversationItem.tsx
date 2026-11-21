@@ -1,4 +1,5 @@
-import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
@@ -17,7 +18,7 @@ import {
 } from '@signozhq/icons';
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
-import { Conversation } from '../../types';
+import type { Conversation } from '../../types';
 
 import styles from './ConversationItem.module.scss';
 

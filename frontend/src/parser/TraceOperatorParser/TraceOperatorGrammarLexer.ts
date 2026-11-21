@@ -1,10 +1,11 @@
 // Generated from ./TraceOperatorGrammar.g4 by ANTLR 4.13.1
 // noinspection ES6UnusedImports,JSUnusedGlobalSymbols,JSUnusedLocalSymbols
-import {
+import type {
 	ATN,
-	ATNDeserializer,
 	CharStream,
-	DecisionState, DFA,
+	DecisionState} from "antlr4";
+import {
+	ATNDeserializer, DFA,
 	Lexer,
 	LexerATNSimulator,
 	RuleContext,

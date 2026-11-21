@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-restricted-imports -- React Context required for scoped store pattern
 import { createContext, useCallback, useContext } from 'react';
-import { StoreApi, useStore } from 'zustand';
+import type { StoreApi } from 'zustand';
+import { useStore } from 'zustand';
 
 import {
 	combineInitialAndUserExpression,

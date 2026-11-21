@@ -1,4 +1,4 @@
-import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 
 export const getInvolvedQueriesInTraceOperator = (
 	traceOperators: IBuilderTraceOperator[],

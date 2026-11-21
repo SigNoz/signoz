@@ -3,7 +3,7 @@ import { getFieldsValues } from 'api/generated/services/fields';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { getFieldValueSuggestions } from '../getFieldValueSuggestions';
-import { FieldValuesResponse } from '../types';
+import type { FieldValuesResponse } from '../types';
 
 jest.mock('api/generated/services/ai-observability', () => ({
 	getAIObservabilityFieldsValues: jest.fn(),

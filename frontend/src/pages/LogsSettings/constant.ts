@@ -1,4 +1,4 @@
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 
 export const TABS_KEY = {
 	LOGS_INDEX_FIELDS: 'LOGS_INDEX_FIELDS',

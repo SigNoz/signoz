@@ -1,4 +1,4 @@
-import AppReducer from 'types/reducer/app';
+import type AppReducer from 'types/reducer/app';
 
 export const UPDATE_CURRENT_VERSION = 'UPDATE_CURRENT_VERSION';
 export const UPDATE_LATEST_VERSION = 'UPDATE_LATEST_VERSION';

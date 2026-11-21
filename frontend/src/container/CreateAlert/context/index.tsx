@@ -32,16 +32,16 @@ import {
 	pickAlertPrefillParams,
 	resolveUrlAlertPrefill,
 } from './resolveUrlAlertPrefill';
-import {
+import type {
 	AdvancedOptionsAction,
 	AlertThresholdAction,
 	CreateAlertAction,
-	CreateAlertSlice,
 	EvaluationWindowAction,
 	ICreateAlertContextProps,
 	ICreateAlertProviderProps,
 	NotificationSettingsAction,
 } from './types';
+import { CreateAlertSlice } from './types';
 import {
 	buildInitialAlertDef,
 	createAlertReducer,

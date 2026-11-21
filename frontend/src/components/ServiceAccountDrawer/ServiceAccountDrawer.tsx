@@ -20,19 +20,17 @@ import {
 	useUpdateServiceAccount,
 } from 'api/generated/services/serviceaccount';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import {
-	ServiceAccountRow,
 	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
-import {
-	RoleUpdateFailure,
-	useServiceAccountRoleManager,
-} from 'hooks/serviceAccount/useServiceAccountRoleManager';
+import type { RoleUpdateFailure } from 'hooks/serviceAccount/useServiceAccountRoleManager';
+import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import {
 	APIKeyCreatePermission,
@@ -48,7 +46,7 @@ import {
 	parseAsStringEnum,
 	useQueryState,
 } from 'nuqs';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';

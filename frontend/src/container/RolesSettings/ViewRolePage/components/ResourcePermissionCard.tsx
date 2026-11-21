@@ -3,7 +3,8 @@ import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
 import { getResourcePanel } from '../../permissions.config';
 import { useRoleGrantedCount } from '../../hooks/useRoleGrantedCount';
-import { PermissionScope, ResourcePermissions } from '../../types';
+import type { ResourcePermissions } from '../../types';
+import { PermissionScope } from '../../types';
 
 import ActionRow from './ActionRow';
 import { getActionLabel } from './permissionDisplay.utils';

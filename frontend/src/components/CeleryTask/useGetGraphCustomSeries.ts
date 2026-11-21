@@ -1,9 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
-import { drawStyles } from 'lib/uPlotLib/utils/constants';
+import type { drawStyles } from 'lib/uPlotLib/utils/constants';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 import { paths } from './CeleryUtils';
 

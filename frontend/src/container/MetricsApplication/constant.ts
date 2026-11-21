@@ -1,4 +1,4 @@
-import { DownloadOptions } from 'container/Download/Download.types';
+import type { DownloadOptions } from 'container/Download/Download.types';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import {
 	MetricAggregateOperator,

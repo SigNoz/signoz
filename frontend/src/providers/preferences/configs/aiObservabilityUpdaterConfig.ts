@@ -1,12 +1,13 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
-import { OptionsQuery } from 'container/OptionsMenu/types';
+import type { OptionsQuery } from 'container/OptionsMenu/types';
 
-import { PreferenceMode, Preferences } from '../types';
+import type { Preferences } from '../types';
+import { PreferenceMode } from '../types';
 import { readStoredPanels } from './aiObservabilityLoaderConfig';
 
 // --- AI OBSERVABILITY preferences updater config ---

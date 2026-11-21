@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useMemo } from 'react';
-import { JSONTree, KeyPath } from 'react-json-tree';
+import type { KeyPath } from 'react-json-tree';
+import { JSONTree } from 'react-json-tree';
 import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';

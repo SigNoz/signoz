@@ -1,16 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
-import { IOption } from 'hooks/useResourceAttribute/types';
+import type { IOption } from 'hooks/useResourceAttribute/types';
 import { isEqual, uniqWith } from 'lodash-es';
 import { parse } from 'papaparse';
-import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
+import type { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getRemoveOrderFromValue } from '../QueryBuilderSearchV2/utils';
 import { getUniqueOrderByValues, getValidOrderByResult } from '../utils';
 import { ORDERBY_FILTERS } from './config';
 import { SIGNOZ_VALUE } from './constants';
-import { OrderByFilterProps } from './OrderByFilter.interfaces';
+import type { OrderByFilterProps } from './OrderByFilter.interfaces';
 import {
 	getLabelFromValue,
 	mapLabelValuePairs,

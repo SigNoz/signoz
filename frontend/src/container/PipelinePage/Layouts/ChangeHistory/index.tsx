@@ -1,5 +1,5 @@
 import { Table } from 'antd';
-import { Pipeline } from 'types/api/pipeline/def';
+import type { Pipeline } from 'types/api/pipeline/def';
 
 import { changeHistoryColumns } from '../../PipelineListsView/config';
 import { HistoryTableWrapper } from '../../styles';

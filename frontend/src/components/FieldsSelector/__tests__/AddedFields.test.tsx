@@ -1,5 +1,5 @@
 import { render, screen } from 'tests/test-utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import AddedFields from '../AddedFields';
 

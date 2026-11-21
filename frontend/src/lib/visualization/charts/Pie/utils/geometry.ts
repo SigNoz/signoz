@@ -1,6 +1,6 @@
 /** Donut, label and font sizing for the Pie chart. */
 
-import {
+import type {
 	ArcGeometry,
 	DonutGeometry,
 	ScaledFontSizeArgs,

@@ -4,8 +4,8 @@ import { Checkbox } from '@signozhq/ui/checkbox';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import { BadgeConfig } from './itemRules';
-import { CheckedState } from '../../../types';
+import type { BadgeConfig } from './itemRules';
+import type { CheckedState } from '../../../types';
 import styles from './CheckboxFilterV2ValueRow.module.scss';
 
 interface ValueRowProps {

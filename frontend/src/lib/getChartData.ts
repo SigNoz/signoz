@@ -1,6 +1,6 @@
-import { ChartData, ChartDataset } from 'chart.js';
+import type { ChartData, ChartDataset } from 'chart.js';
 import getLabelName from 'lib/getLabelName';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 import convertIntoEpoc from './covertIntoEpoc';
 import { colors } from './getRandomColor';

@@ -9,7 +9,7 @@ import {
 	getCumulativeWindowDescription,
 	getRollingWindowDescription,
 } from '../constants';
-import {
+import type {
 	CumulativeWindowTimeframes,
 	IEvaluationWindowPopoverProps,
 	RollingWindowTimeframes,

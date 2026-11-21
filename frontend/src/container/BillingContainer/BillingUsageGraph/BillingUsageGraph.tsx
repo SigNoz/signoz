@@ -7,10 +7,8 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { StackMode } from 'lib/uPlotV2/config/types';
-import {
-	LegendPosition,
-	TooltipRenderArgs,
-} from 'lib/uPlotV2/components/types';
+import type { TooltipRenderArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type uPlot from 'uplot';
 import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';

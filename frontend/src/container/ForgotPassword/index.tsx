@@ -8,8 +8,8 @@ import { useForgotPassword } from 'api/generated/services/users';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
-import APIError from 'types/api/error';
-import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
+import type APIError from 'types/api/error';
+import type { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 import { getBaseUrl } from 'utils/basePath';
 
 import tvUrl from '@/assets/svgs/tv.svg';

@@ -7,10 +7,13 @@ import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
-import { AppState } from 'store/reducers';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { AppState } from 'store/reducers';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { withBasePath } from 'utils/basePath';
 
 export interface NavigateToExplorerProps {

@@ -2,7 +2,7 @@ import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 
 import countriesTopology from '../assets/countries-50m.json';
-import { CountryFeature, CountryProperties } from '../types';
+import type { CountryFeature, CountryProperties } from '../types';
 
 const topology = countriesTopology as unknown as Topology<{
 	countries: GeometryCollection<CountryProperties>;

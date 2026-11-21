@@ -9,7 +9,7 @@ import {
 } from '../../../constants';
 import styles from './ModelCostsTable.module.scss';
 import { getModelCostsColumns } from './TableConfig';
-import { type LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 interface ModelCostsTableProps {
 	rules: LlmpricingruletypesLLMPricingRuleDTO[];

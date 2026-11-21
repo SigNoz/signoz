@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';

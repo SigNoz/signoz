@@ -4,7 +4,7 @@ import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { ArrowDownLeft, ArrowUpRight, Calendar } from '@signozhq/icons';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
-import { AlertRuleStats } from 'types/api/alerts/def';
+import type { AlertRuleStats } from 'types/api/alerts/def';
 import { calculateChange } from 'utils/calculateChange';
 
 import StatsGraph from './StatsGraph/StatsGraph';

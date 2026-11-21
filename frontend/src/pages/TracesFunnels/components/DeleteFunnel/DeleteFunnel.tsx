@@ -9,7 +9,7 @@ import { useDeleteFunnel } from 'hooks/TracesFunnels/useFunnels';
 import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { Trash2, X } from '@signozhq/icons';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
 
 import '../RenameFunnel/RenameFunnel.styles.scss';
 import './DeleteFunnel.styles.scss';

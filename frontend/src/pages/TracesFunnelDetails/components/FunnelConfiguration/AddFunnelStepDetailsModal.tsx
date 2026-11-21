@@ -6,7 +6,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Check, X } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 
-import { FunnelStepPopoverProps } from './FunnelStepPopover';
+import type { FunnelStepPopoverProps } from './FunnelStepPopover';
 
 import './AddFunnelStepDetailsModal.styles.scss';
 

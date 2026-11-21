@@ -1,4 +1,5 @@
-import { Select, SelectProps } from 'antd';
+import type { SelectProps } from 'antd';
+import { Select } from 'antd';
 import cx from 'classnames';
 import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
@@ -8,7 +9,7 @@ import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { categoryToSupport } from './config';
 import { selectStyles } from './styles';
-import { IBuilderUnitsFilterProps } from './types';
+import type { IBuilderUnitsFilterProps } from './types';
 import { filterOption } from './utils';
 
 function BuilderUnitsFilter({

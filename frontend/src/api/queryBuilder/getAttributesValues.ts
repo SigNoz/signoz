@@ -1,9 +1,9 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import createQueryParams from 'lib/createQueryParams';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	IAttributeValuesResponse,
 	IGetAttributeValuesPayload,
 } from 'types/api/queryBuilder/getAttributesValues';

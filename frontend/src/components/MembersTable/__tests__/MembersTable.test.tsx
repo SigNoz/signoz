@@ -1,7 +1,8 @@
 import { MemberStatus } from 'container/MembersSettings/utils';
 import { render, screen, userEvent } from 'tests/test-utils';
 
-import MembersTable, { MemberRow } from '../MembersTable';
+import type { MemberRow } from '../MembersTable';
+import MembersTable from '../MembersTable';
 
 const mockActiveMembers: MemberRow[] = [
 	{

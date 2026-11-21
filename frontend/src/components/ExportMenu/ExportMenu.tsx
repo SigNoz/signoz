@@ -4,14 +4,12 @@ import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import {
-	ClientExportData,
-	useClientExport,
-} from 'hooks/useExportData/useClientExport';
+import type { ClientExportData } from 'hooks/useExportData/useClientExport';
+import { useClientExport } from 'hooks/useExportData/useClientExport';
 import { ExportFormat } from 'lib/exportData/types';
 import { useCallback, useState } from 'react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { DataSource } from 'types/common/queryBuilder';
 
 import './ExportMenu.styles.scss';
 

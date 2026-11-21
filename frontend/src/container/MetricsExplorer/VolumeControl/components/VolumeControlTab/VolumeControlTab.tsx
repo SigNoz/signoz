@@ -6,9 +6,11 @@ import {
 	useGetMetricReductionRuleStats,
 	useListMetricReductionRules,
 } from 'api/generated/services/metrics';
-import {
+import type {
 	ListMetricReductionRulesParams,
 	MetricreductionruletypesGettableReductionRuleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	MetricreductionruletypesOrderDTO,
 	MetricreductionruletypesReductionRuleOrderByDTO,
 } from 'api/generated/services/sigNoz.schemas';

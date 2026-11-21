@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import { QuickFilterCheckboxUseFieldApis } from 'components/QuickFilters/types';
+import type { QuickFilterCheckboxUseFieldApis } from 'components/QuickFilters/types';
 
 interface UseExistingQueryParams {
 	useFieldApis: QuickFilterCheckboxUseFieldApis;

@@ -8,15 +8,16 @@ import {
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getActiveBuilder } from 'lib/query/builderSlot';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import type { QueryBuilderData } from 'types/common/queryBuilder';
 import { v5 as uuidv5 } from 'uuid';
 
-import {
-	ExplorerQueryRules,
-	getExplorerQueryRules,
-} from './explorerQueryRules';
+import type { ExplorerQueryRules } from './explorerQueryRules';
+import { getExplorerQueryRules } from './explorerQueryRules';
 
 const COMPOSITE_QUERY_ID_NAMESPACE = '2f1c6a4e-9b3d-4c57-8e21-7a0d5f6b9c13';
 

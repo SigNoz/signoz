@@ -1,5 +1,5 @@
 import { useFunnelErrorTraces } from 'hooks/TracesFunnels/useFunnels';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelTopTracesTable from './FunnelTopTracesTable';
 

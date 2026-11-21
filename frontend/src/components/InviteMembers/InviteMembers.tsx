@@ -7,7 +7,7 @@ import cx from 'classnames';
 import RolesSelect from 'components/RolesSelect/RolesSelect';
 
 import styles from './InviteMembers.module.scss';
-import { InviteMembersProps } from './types';
+import type { InviteMembersProps } from './types';
 import { useInviteMembers } from './useInviteMembers';
 
 function InviteMembers({

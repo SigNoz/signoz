@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 
-import {
-	GeoMapShapes,
-	getCountryShapes,
-	getSubdivisionShapes,
-} from '../geo/shapes';
-import { GeoMapView, SubdivisionCountry } from '../types';
-import { SubdivisionStatus, useSubdivisionSet } from './useSubdivisionSet';
+import type { GeoMapShapes } from '../geo/shapes';
+import { getCountryShapes, getSubdivisionShapes } from '../geo/shapes';
+import type { GeoMapView, SubdivisionCountry } from '../types';
+import type { SubdivisionStatus } from './useSubdivisionSet';
+import { useSubdivisionSet } from './useSubdivisionSet';
 
 export interface GeoMapShapesLoad {
 	/** `null` until the view's shapes are available. */
