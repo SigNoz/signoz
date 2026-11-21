@@ -80,6 +80,7 @@ import AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import {
 	getFormattedDate,
 	getFormattedDateWithMinutes,
@@ -93,15 +94,15 @@ import './AppLayout.styles.scss';
 
 // The assistant pulls in the dashboard panel registry and the query builder, so it
 // loads only for users who have it.
-const AIAssistantModal = lazy(
-	() => import('container/AIAssistant/AIAssistantModal'),
+const AIAssistantModal = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantModal')),
 );
-const AIAssistantPanel = lazy(
-	() => import('container/AIAssistant/AIAssistantPanel'),
+const AIAssistantPanel = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantPanel')),
 );
 
-const ChangelogModal = lazy(
-	() => import('components/ChangelogModal/ChangelogModal'),
+const ChangelogModal = lazy(() =>
+	lazyRetry(() => import('components/ChangelogModal/ChangelogModal')),
 );
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
