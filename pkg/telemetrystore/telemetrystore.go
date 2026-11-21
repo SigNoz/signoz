@@ -11,6 +11,10 @@ type TelemetryStore interface {
 	// ClickhouseDB returns the clickhouse connection, which can also EXPLAIN.
 	ClickhouseDB() clickhouse.Conn
 
+	// WithProfile returns a store that runs every query with the ClickHouse settings profile, or this store
+	// when the profile is not listed in the config.
+	WithProfile(profile string) TelemetryStore
+
 	// Cluster returns the cluster name.
 	Cluster() string
 
@@ -27,6 +31,12 @@ type TelemetryStore interface {
 type TelemetryStoreHook interface {
 	BeforeQuery(ctx context.Context, event *QueryEvent) context.Context
 	AfterQuery(ctx context.Context, event *QueryEvent)
+}
+
+// TelemetryStoreProfileHook is a hook that TelemetryStore.WithProfile replaces with a copy for the profile.
+type TelemetryStoreProfileHook interface {
+	TelemetryStoreHook
+	WithProfile(profile string) TelemetryStoreHook
 }
 
 func WrapBeforeQuery(hooks []TelemetryStoreHook, ctx context.Context, event *QueryEvent) context.Context {

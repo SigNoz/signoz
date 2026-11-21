@@ -26,6 +26,11 @@ var (
 	ErrCodeNotAnAggregate            = errors.MustNewCode("not_an_aggregate")
 	ErrCodeIllegalAggregation        = errors.MustNewCode("illegal_aggregation")
 	ErrCodeInvalidRegexp             = errors.MustNewCode("invalid_regexp")
+	ErrCodeSettingNotAllowed         = errors.MustNewCode("setting_not_allowed")
+	ErrCodeSettingsProfileNotFound   = errors.MustNewCode("settings_profile_not_found")
+	ErrCodeResultTooLarge            = errors.MustNewCode("result_too_large")
+	ErrCodeReadTooLarge              = errors.MustNewCode("read_too_large")
+	ErrCodeReadonlyMode              = errors.MustNewCode("readonly_mode")
 
 	ErrCodeQueryCanceled   = errors.MustNewCode("query_canceled")
 	ErrCodeQueryTimeout    = errors.MustNewCode("query_timeout")
@@ -111,11 +116,42 @@ var clickHouseExceptionWrappers = map[chproto.Error]func(cause error, ex *clickh
 		return errors.WrapInvalidInputf(cause, ErrCodeInvalidRegexp, "regular expression does not compile: %s", ex.Message).
 			WithSuggestions("write the pattern in RE2 syntax, which has no lookaround or backreferences, and escape a backslash that is meant literally")
 	},
+	chproto.ErrTooManyRowsOrBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeResultTooLarge, "query result too large: %s", ex.Message).
+			WithSuggestions("add a LIMIT, narrow the time range or select fewer columns")
+	},
+	chproto.ErrTooManyRows: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyPartitions: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	chproto.ErrTooManyBytes: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadTooLarge, "query read too much data: %s", ex.Message).
+			WithSuggestions("narrow the time range or add filters so the query reads less data")
+	},
+	// A write, or a change to the readonly setting, under a read-only settings profile.
+	chproto.ErrReadonly: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeReadonlyMode, "query not allowed in read-only mode: %s", ex.Message).
+			WithSuggestions("run only SELECT queries and remove readonly from the SETTINGS clause")
+	},
+	chproto.ErrThereIsNoProfile: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapNotFoundf(cause, ErrCodeSettingsProfileNotFound, "settings profile not found: %s", ex.Message)
+	},
+	// A SETTINGS clause went past a constraint of the query's settings profile.
+	chproto.ErrSettingConstraintViolation: func(cause error, ex *clickhouse.Exception) error {
+		return errors.WrapInvalidInputf(cause, ErrCodeSettingNotAllowed, "setting not allowed: %s", ex.Message).
+			WithSuggestions("remove the setting from the SETTINGS clause of the query")
+	},
 }
 
 type provider struct {
 	settings       factory.ScopedProviderSettings
 	clickHouseConn clickhouse.Conn
+	profile        string
+	profiles       map[string]telemetrystore.TelemetryStore
 	cluster        string
 	hooks          []telemetrystore.TelemetryStoreHook
 }
@@ -178,49 +214,81 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		cluster:        config.Clickhouse.Cluster,
 		hooks:          hooks,
 	}
+
+	p.withProfiles(config.Clickhouse.Profiles)
+
 	return p, nil
 }
 
-func (p *provider) ClickhouseDB() clickhouse.Conn {
-	return p
+// withProfiles gives every profile a copy of the provider that runs its queries with that profile over the
+// provider's pool.
+func (provider *provider) withProfiles(profiles []string) {
+	provider.profiles = make(map[string]telemetrystore.TelemetryStore, len(profiles))
+	for _, profile := range profiles {
+		profiled := *provider
+		profiled.profile = profile
+		profiled.hooks = make([]telemetrystore.TelemetryStoreHook, len(provider.hooks))
+		for i, hook := range provider.hooks {
+			if profileHook, ok := hook.(telemetrystore.TelemetryStoreProfileHook); ok {
+				hook = profileHook.WithProfile(profile)
+			}
+			profiled.hooks[i] = hook
+		}
+		provider.profiles[profile] = &profiled
+	}
 }
 
-func (p *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
-	return RunExplainEstimate(ctx, p, stmt, args...)
+func (provider *provider) WithProfile(profile string) telemetrystore.TelemetryStore {
+	if store, ok := provider.profiles[profile]; ok {
+		return store
+	}
+	return provider
 }
 
-func (p *provider) Plan(ctx context.Context, stmt string, args ...any) error {
-	return RunExplainPlan(ctx, p, stmt, args...)
+func (provider *provider) ClickhouseDB() clickhouse.Conn {
+	return provider
 }
 
-func (p *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
-	return RunExplainIndexes(ctx, p, stmt, args...)
+func (provider *provider) Estimate(ctx context.Context, stmt string, args ...any) ([]telemetrystoretypes.EstimateEntry, error) {
+	return RunExplainEstimate(ctx, provider, stmt, args...)
 }
 
-func (p *provider) Cluster() string {
-	return p.cluster
+func (provider *provider) Plan(ctx context.Context, stmt string, args ...any) error {
+	return RunExplainPlan(ctx, provider, stmt, args...)
 }
 
-func (p *provider) Close() error {
-	return p.clickHouseConn.Close()
+func (provider *provider) Indexes(ctx context.Context, stmt string, args ...any) (telemetrystoretypes.Granules, bool, error) {
+	return RunExplainIndexes(ctx, provider, stmt, args...)
 }
 
-func (p *provider) Ping(ctx context.Context) error {
-	return p.clickHouseConn.Ping(ctx)
+func (provider *provider) Cluster() string {
+	return provider.cluster
 }
 
-func (p *provider) Stats() driver.Stats {
-	return p.clickHouseConn.Stats()
+// Close leaves the pool open for a profile store, which shares it with the store it was made from.
+func (provider *provider) Close() error {
+	if provider.profile != "" {
+		return nil
+	}
+	return provider.clickHouseConn.Close()
 }
 
-func (p *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
+func (provider *provider) Ping(ctx context.Context) error {
+	return provider.clickHouseConn.Ping(ctx)
+}
+
+func (provider *provider) Stats() driver.Stats {
+	return provider.clickHouseConn.Stats()
+}
+
+func (provider *provider) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	rows, err := p.clickHouseConn.Query(ctx, query, args...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	rows, err := provider.clickHouseConn.Query(ctx, query, args...)
 	if err != nil {
 		event.Err = err
-		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 		return nil, castError(err)
 	}
 
@@ -228,71 +296,71 @@ func (p *provider) Query(ctx context.Context, query string, args ...interface{})
 		Rows:    telemetrystore.WrapRows(rows),
 		ctx:     ctx,
 		event:   event,
-		onClose: func() { telemetrystore.WrapAfterQuery(p.hooks, ctx, event) },
+		onClose: func() { telemetrystore.WrapAfterQuery(provider.hooks, ctx, event) },
 	}, nil
 }
 
-func (p *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
+func (provider *provider) QueryRow(ctx context.Context, query string, args ...interface{}) driver.Row {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	row := p.clickHouseConn.QueryRow(ctx, query, args...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	row := provider.clickHouseConn.QueryRow(ctx, query, args...)
 
 	if row == nil {
-		telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+		telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 		return nil
 	}
 
 	event.Err = row.Err()
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+	telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 
 	return &rowWithCastError{Row: row}
 }
 
-func (p *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (provider *provider) Select(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Select(ctx, dest, query, args...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	err := provider.clickHouseConn.Select(ctx, dest, query, args...)
 
 	event.Err = err
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+	telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 
 	return castError(err)
 }
 
-func (p *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
+func (provider *provider) Exec(ctx context.Context, query string, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Exec(ctx, query, args...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	err := provider.clickHouseConn.Exec(ctx, query, args...)
 
 	event.Err = err
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+	telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 
 	return castError(err)
 }
 
-func (p *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
+func (provider *provider) AsyncInsert(ctx context.Context, query string, wait bool, args ...interface{}) error {
 	event := telemetrystore.NewQueryEvent(query, args)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	err := p.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	err := provider.clickHouseConn.Exec(clickhouse.Context(ctx, clickhouse.WithAsync(wait)), query, args...)
 
 	event.Err = err
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+	telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 
 	return castError(err)
 }
 
-func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
+func (provider *provider) PrepareBatch(ctx context.Context, query string, opts ...driver.PrepareBatchOption) (driver.Batch, error) {
 	event := telemetrystore.NewQueryEvent(query, nil)
 
-	ctx = telemetrystore.WrapBeforeQuery(p.hooks, ctx, event)
-	batch, err := p.clickHouseConn.PrepareBatch(ctx, query, opts...)
+	ctx = telemetrystore.WrapBeforeQuery(provider.hooks, ctx, event)
+	batch, err := provider.clickHouseConn.PrepareBatch(ctx, query, opts...)
 
 	event.Err = err
-	telemetrystore.WrapAfterQuery(p.hooks, ctx, event)
+	telemetrystore.WrapAfterQuery(provider.hooks, ctx, event)
 
 	if batch == nil {
 		return nil, castError(err)
@@ -300,12 +368,12 @@ func (p *provider) PrepareBatch(ctx context.Context, query string, opts ...drive
 	return &batchWithCastError{Batch: batch}, castError(err)
 }
 
-func (p *provider) ServerVersion() (*driver.ServerVersion, error) {
-	return p.clickHouseConn.ServerVersion()
+func (provider *provider) ServerVersion() (*driver.ServerVersion, error) {
+	return provider.clickHouseConn.ServerVersion()
 }
 
-func (p *provider) Contributors() []string {
-	return p.clickHouseConn.Contributors()
+func (provider *provider) Contributors() []string {
+	return provider.clickHouseConn.Contributors()
 }
 
 func castError(err error) error {

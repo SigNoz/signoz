@@ -10,6 +10,10 @@ import (
 
 const DefaultMaxConcurrentQueries = 8
 
+// ClickHouseSQLProfile is the ClickHouse settings profile that user-written ClickHouse SQL queries run with,
+// once it is listed in telemetrystore.clickhouse.profiles.
+const ClickHouseSQLProfile = "clickhouse_query"
+
 // Config represents the configuration for the querier.
 type Config struct {
 	// CacheTTL is the TTL for cached query results

@@ -37,6 +37,10 @@ type ClickhouseConfig struct {
 
 	// QuerySettings is the query settings for clickhouse.
 	QuerySettings QuerySettings `mapstructure:"settings"`
+
+	// Profiles are the settings profiles TelemetryStore.WithProfile can run queries with. Each must exist in
+	// ClickHouse.
+	Profiles []string `mapstructure:"profiles"`
 }
 
 type QuerySettings struct {

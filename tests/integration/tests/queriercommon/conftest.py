@@ -1,0 +1,54 @@
+from collections.abc import Callable
+
+import pytest
+from testcontainers.core.container import Network
+
+from fixtures import types
+from fixtures.signoz import create_signoz
+
+
+@pytest.fixture(name="signoz_clickhouse_query_profile", scope="package")
+def signoz_clickhouse_query_profile(
+    network: Network,
+    migrator: types.Operation,  # pylint: disable=unused-argument
+    zeus: types.TestContainerDocker,
+    gateway: types.TestContainerDocker,
+    sqlstore: types.TestContainerSQL,
+    clickhouse: types.TestContainerClickhouse,
+    clickhouse_settings_profile: Callable[[str, str], None],
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.SigNoz:
+    """
+    SigNoz whose clickhouse_sql queries run with the clickhouse_query profile, which must exist in
+    ClickHouse before any query runs.
+    """
+    clickhouse_settings_profile(
+        "clickhouse_query",
+        "<readonly>2</readonly>"
+        "<max_result_rows>100</max_result_rows>"
+        "<max_result_bytes>100000</max_result_bytes>"
+        "<max_bytes_to_read>1000000</max_bytes_to_read>"
+        "<max_rows_to_read>200000</max_rows_to_read>"
+        "<max_partitions_to_read>2</max_partitions_to_read>"
+        "<constraints>"
+        "<max_result_rows><min>1</min><max>100</max></max_result_rows>"
+        "<max_result_bytes><min>1</min><max>100000</max></max_result_bytes>"
+        "<max_bytes_to_read><min>1</min><max>1000000</max></max_bytes_to_read>"
+        "<max_rows_to_read><min>1</min><max>200000</max></max_rows_to_read>"
+        "<max_partitions_to_read><min>1</min><max>2</max></max_partitions_to_read>"
+        "</constraints>",
+    )
+    return create_signoz(
+        network=network,
+        zeus=zeus,
+        gateway=gateway,
+        sqlstore=sqlstore,
+        clickhouse=clickhouse,
+        request=request,
+        pytestconfig=pytestconfig,
+        cache_key="signoz-clickhouse-query-profile",
+        env_overrides={
+            "SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_PROFILES": "clickhouse_query",
+        },
+    )
