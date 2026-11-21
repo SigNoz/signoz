@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useMutation } from 'react-query';
 import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
-import { Button, Modal } from 'antd';
-import Flex from 'periscope/components/Flex/Flex';
+import { Button } from '@signozhq/ui/button';
+import { Dialog } from '@signozhq/ui/dialog';
+import { Typography } from '@signozhq/ui/typography';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
-import cx from 'classnames';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -13,8 +13,9 @@ import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { UserPreference } from 'types/api/preferences/preference';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
+import { useChangelogScroll } from './useChangelogScroll';
 
-import './ChangelogModal.styles.scss';
+import styles from './ChangelogModal.module.scss';
 
 interface Props {
 	changelog: ChangelogSchema;
@@ -22,8 +23,7 @@ interface Props {
 }
 
 function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
-	const [hasScroll, setHasScroll] = useState(false);
-	const changelogContentSectionRef = useRef<HTMLDivElement>(null);
+	const { contentRef, hasScroll, scrollForMore } = useChangelogScroll();
 	const { userPreferences, updateUserPreferenceInContext } = useAppContext();
 
 	const formattedReleaseDate = dayjs(changelog?.release_date).format(
@@ -57,30 +57,6 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 		updateUserPreferenceInContext,
 	]);
 
-	const checkScroll = useCallback((): void => {
-		if (changelogContentSectionRef.current) {
-			const { scrollHeight, clientHeight, scrollTop } =
-				changelogContentSectionRef.current;
-			const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
-			setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
-		}
-	}, []);
-
-	useEffect(() => {
-		checkScroll();
-		const changelogContentSection = changelogContentSectionRef.current;
-
-		if (changelogContentSection) {
-			changelogContentSection.addEventListener('scroll', checkScroll);
-		}
-
-		return (): void => {
-			if (changelogContentSection) {
-				changelogContentSection.removeEventListener('scroll', checkScroll);
-			}
-		};
-	}, [checkScroll]);
-
 	const onClickUpdateWorkspace = (): void => {
 		window.open(
 			'https://signoz.io/upgrade-path',
@@ -89,75 +65,67 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 		);
 	};
 
-	const onClickScrollForMore = (): void => {
-		if (changelogContentSectionRef.current) {
-			changelogContentSectionRef.current.scrollTo({
-				top: changelogContentSectionRef.current.scrollTop + 600, // Scroll 600px from the current position
-				behavior: 'smooth',
-			});
-		}
-	};
-
-	// TODO: antd stacks at 1000, under `@signozhq/ui` dialogs (1001). It opens on
-	// its own a second after load, so a dialog opened from a deep link
-	// (`?add-key`, `?invite=true`) covers it. Moving to the `@signozhq/ui` Dialog
-	// fixes it.
 	return (
-		<Modal
-			className={cx('changelog-modal')}
-			title={
-				<div className="changelog-modal-title">
-					<ScrollText size={16} />
-					What’s New ⎯ Changelog : {formattedReleaseDate}
-				</div>
-			}
-			width={820}
+		<Dialog
 			open
-			onCancel={onClose}
-			footer={
-				<div
-					className={cx('changelog-modal-footer', hasScroll && 'scroll-available')}
-				>
-					{!isCloudUser && (
-						<div className="changelog-modal-footer-ctas">
-							<Button type="default" onClick={onClose}>
-								<Flex align="center" gap="4px">
-									<X size="md" />
-									Skip for now
-								</Flex>
-							</Button>
-							<Button type="primary" onClick={onClickUpdateWorkspace}>
-								<Flex align="center" gap="4px">
-									<Check size="md" />
-									Update my workspace
-								</Flex>
-							</Button>
-						</div>
-					)}
-					{changelog && (
-						<div className="scroll-btn-container">
-							<button
-								data-testid="scroll-more-btn"
-								type="button"
-								className="scroll-btn"
-								onClick={onClickScrollForMore}
-							>
-								<ChevronsDown size={14} />
-								<span>Scroll for more</span>
-							</button>
-						</div>
-					)}
-				</div>
+			onClose={onClose}
+			title={`What’s New ⎯ Changelog : ${formattedReleaseDate}`}
+			titleIcon={<ScrollText size={16} />}
+			width="extra-wide"
+			testId="changelog-dialog"
+			footerSuffix={
+				isCloudUser ? undefined : (
+					<>
+						<Button
+							variant="outlined"
+							color="secondary"
+							size="md"
+							prefix={<X size={12} />}
+							onClick={onClose}
+							testId="changelog-skip-btn"
+						>
+							Skip for now
+						</Button>
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							prefix={<Check size={12} />}
+							onClick={onClickUpdateWorkspace}
+							testId="changelog-update-btn"
+						>
+							Update my workspace
+						</Button>
+					</>
+				)
 			}
 		>
-			<div
-				className="changelog-modal-content"
-				data-testid="changelog-content"
-				ref={changelogContentSectionRef}
-			>
-				{changelog && <ChangelogRenderer changelog={changelog} />}
+			<div data-testid="changelog-content" ref={contentRef}>
+				<ChangelogRenderer changelog={changelog} />
 			</div>
-		</Modal>
+			{hasScroll && (
+				<div className={styles.scrollHint}>
+					<button
+						data-testid="scroll-more-btn"
+						type="button"
+						className={styles.scrollButton}
+						onClick={scrollForMore}
+					>
+						<ChevronsDown size={14} className={styles.scrollIcon} />
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							Scroll for more
+						</Typography>
+					</button>
+				</div>
+			)}
+		</Dialog>
 	);
 }
 
