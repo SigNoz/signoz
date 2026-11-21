@@ -187,6 +187,15 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			rolldownOptions: {
+				output: {
+					// Without this group Rolldown splits the entry's static graph into ~300
+					// chunks, 324 requests on first load.
+					codeSplitting: {
+						groups: [{ name: 'initial', tags: ['$initial'] }],
+					},
+				},
+			},
 		},
 		server: {
 			open: true,
