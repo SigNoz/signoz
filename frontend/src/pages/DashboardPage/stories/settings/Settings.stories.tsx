@@ -52,6 +52,15 @@ export const Overview: Story = {
 	},
 };
 
+/**
+ * A dashboard whose image is a logo: the picker keeps it as the selected first
+ * option, ahead of the icons it offers.
+ */
+export const OverviewLogo: Story = {
+	...Overview,
+	args: { image: '/assets/Logos/rails' },
+};
+
 /** Two fields edited, so the footer counts them and offers to save or discard. */
 export const OverviewUnsavedChanges: Story = {
 	play: async ({ canvasElement }) => {
