@@ -3,16 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	type GetFieldsKeys200,
-	type GetFieldsValues200,
-	type GetQuickFilters200,
-	type ListDashboardsForUserV2200,
-	QuickfiltertypesSourceDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getFieldsKeys200';
+import type { GetFieldsValues200 } from 'api/generated/services/sigNoz.schemas/getFieldsValues200';
+import type { GetQuickFilters200 } from 'api/generated/services/sigNoz.schemas/getQuickFilters200';
+import type { ListDashboardsForUserV2200 } from 'api/generated/services/sigNoz.schemas/listDashboardsForUserV2200';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';

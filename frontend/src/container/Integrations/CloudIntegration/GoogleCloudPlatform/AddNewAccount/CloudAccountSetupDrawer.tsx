@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import type { IntegrationModalProps } from 'container/Integrations/HeroSection/types';
 
 import CloseSetupConfirm from '../../CloseSetupConfirm/CloseSetupConfirm';

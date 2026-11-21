@@ -17,15 +17,19 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	PrometheusErrorResponseSchemaDTO,
-	PrometheusQueryParams,
-	PrometheusQueryPostParams,
-	PrometheusQueryRangeParams,
-	PrometheusQueryRangePostParams,
-	PrometheusSuccessResponseSchemaDTO,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { PrometheusErrorResponseSchemaDTO } from '../sigNoz.schemas/prometheusErrorResponseSchemaDTO';
+
+import type { PrometheusQueryParams } from '../sigNoz.schemas/prometheusQueryParams';
+
+import type { PrometheusQueryPostParams } from '../sigNoz.schemas/prometheusQueryPostParams';
+
+import type { PrometheusQueryRangeParams } from '../sigNoz.schemas/prometheusQueryRangeParams';
+
+import type { PrometheusQueryRangePostParams } from '../sigNoz.schemas/prometheusQueryRangePostParams';
+
+import type { PrometheusSuccessResponseSchemaDTO } from '../sigNoz.schemas/prometheusSuccessResponseSchemaDTO';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -132,7 +136,7 @@ export function usePrometheusQuery<
 }
 
 /**
- * @summary Prometheus instant query
+ * @summary Invalidates the {@link usePrometheusQuery} query
  */
 export const invalidatePrometheusQuery = async (
 	queryClient: QueryClient,
@@ -163,6 +167,9 @@ export const prometheusQueryPost = (
 	});
 };
 
+export const getPrometheusQueryPostMutationKey = () =>
+	['prometheusQueryPost'] as const;
+
 export const getPrometheusQueryPostMutationOptions = <
 	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -170,16 +177,16 @@ export const getPrometheusQueryPostMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof prometheusQueryPost>>,
 		TError,
-		{ params: PrometheusQueryPostParams },
+		PrometheusQueryPostMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof prometheusQueryPost>>,
 	TError,
-	{ params: PrometheusQueryPostParams },
+	PrometheusQueryPostMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['prometheusQueryPost'];
+	const mutationKey = getPrometheusQueryPostMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -190,7 +197,7 @@ export const getPrometheusQueryPostMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof prometheusQueryPost>>,
-		{ params: PrometheusQueryPostParams }
+		PrometheusQueryPostMutationVariables
 	> = (props) => {
 		const { params } = props ?? {};
 
@@ -207,6 +214,9 @@ export type PrometheusQueryPostMutationResult = NonNullable<
 export type PrometheusQueryPostMutationError = ErrorType<
 	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
 >;
+export type PrometheusQueryPostMutationVariables = {
+	params: PrometheusQueryPostParams;
+};
 
 /**
  * @summary Prometheus instant query
@@ -218,13 +228,13 @@ export const usePrometheusQueryPost = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof prometheusQueryPost>>,
 		TError,
-		{ params: PrometheusQueryPostParams },
+		PrometheusQueryPostMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof prometheusQueryPost>>,
 	TError,
-	{ params: PrometheusQueryPostParams },
+	PrometheusQueryPostMutationVariables,
 	TContext
 > => {
 	return useMutation(getPrometheusQueryPostMutationOptions(options));
@@ -317,7 +327,7 @@ export function usePrometheusQueryRange<
 }
 
 /**
- * @summary Prometheus range query
+ * @summary Invalidates the {@link usePrometheusQueryRange} query
  */
 export const invalidatePrometheusQueryRange = async (
 	queryClient: QueryClient,
@@ -348,6 +358,9 @@ export const prometheusQueryRangePost = (
 	});
 };
 
+export const getPrometheusQueryRangePostMutationKey = () =>
+	['prometheusQueryRangePost'] as const;
+
 export const getPrometheusQueryRangePostMutationOptions = <
 	TError = ErrorType<PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -355,16 +368,16 @@ export const getPrometheusQueryRangePostMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof prometheusQueryRangePost>>,
 		TError,
-		{ params: PrometheusQueryRangePostParams },
+		PrometheusQueryRangePostMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof prometheusQueryRangePost>>,
 	TError,
-	{ params: PrometheusQueryRangePostParams },
+	PrometheusQueryRangePostMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['prometheusQueryRangePost'];
+	const mutationKey = getPrometheusQueryRangePostMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -375,7 +388,7 @@ export const getPrometheusQueryRangePostMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof prometheusQueryRangePost>>,
-		{ params: PrometheusQueryRangePostParams }
+		PrometheusQueryRangePostMutationVariables
 	> = (props) => {
 		const { params } = props ?? {};
 
@@ -392,6 +405,9 @@ export type PrometheusQueryRangePostMutationResult = NonNullable<
 export type PrometheusQueryRangePostMutationError = ErrorType<
 	PrometheusErrorResponseSchemaDTO | RenderErrorResponseDTO
 >;
+export type PrometheusQueryRangePostMutationVariables = {
+	params: PrometheusQueryRangePostParams;
+};
 
 /**
  * @summary Prometheus range query
@@ -403,13 +419,13 @@ export const usePrometheusQueryRangePost = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof prometheusQueryRangePost>>,
 		TError,
-		{ params: PrometheusQueryRangePostParams },
+		PrometheusQueryRangePostMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof prometheusQueryRangePost>>,
 	TError,
-	{ params: PrometheusQueryRangePostParams },
+	PrometheusQueryRangePostMutationVariables,
 	TContext
 > => {
 	return useMutation(getPrometheusQueryRangePostMutationOptions(options));

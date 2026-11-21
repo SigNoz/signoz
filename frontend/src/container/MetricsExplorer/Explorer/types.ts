@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricMetadataDTO';
 import type { Warning } from 'types/api';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 

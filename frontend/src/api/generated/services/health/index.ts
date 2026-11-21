@@ -14,14 +14,17 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	Healthz200,
-	Healthz503,
-	Livez200,
-	Readyz200,
-	Readyz503,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { Healthz200 } from '../sigNoz.schemas/healthz200';
+
+import type { Healthz503 } from '../sigNoz.schemas/healthz503';
+
+import type { Livez200 } from '../sigNoz.schemas/livez200';
+
+import type { Readyz200 } from '../sigNoz.schemas/readyz200';
+
+import type { Readyz503 } from '../sigNoz.schemas/readyz503';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -107,7 +110,7 @@ export function useHealthz<
 }
 
 /**
- * @summary Health check
+ * @summary Invalidates the {@link useHealthz} query
  */
 export const invalidateHealthz = async (
 	queryClient: QueryClient,
@@ -180,7 +183,7 @@ export function useLivez<
 }
 
 /**
- * @summary Liveness check
+ * @summary Invalidates the {@link useLivez} query
  */
 export const invalidateLivez = async (
 	queryClient: QueryClient,
@@ -250,7 +253,7 @@ export function useReadyz<
 }
 
 /**
- * @summary Readiness check
+ * @summary Invalidates the {@link useReadyz} query
  */
 export const invalidateReadyz = async (
 	queryClient: QueryClient,

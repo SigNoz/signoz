@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 import { Tooltip } from 'antd';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import LogStateIndicator from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';

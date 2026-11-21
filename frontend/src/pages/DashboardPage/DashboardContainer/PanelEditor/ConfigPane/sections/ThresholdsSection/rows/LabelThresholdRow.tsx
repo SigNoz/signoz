@@ -1,10 +1,8 @@
 import { useCallback } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import {
-	type DashboardtypesScatterPlotThresholdDTO,
-	DashboardtypesThresholdAxisDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotThresholdDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
 import ThresholdAmountField from './shared/ThresholdAmountField';

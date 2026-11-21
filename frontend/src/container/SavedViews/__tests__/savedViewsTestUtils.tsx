@@ -6,14 +6,10 @@ import { Provider } from 'react-redux';
 import type { RenderResult } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
-import type {
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSavedViewSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SavedviewtypesSchemaVersionDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewSpecDTO';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';

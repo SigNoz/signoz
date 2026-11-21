@@ -1,4 +1,4 @@
-import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPrecisionOptionDTO';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 

@@ -1,0 +1,17 @@
+/**
+ * ! Do not edit manually
+ * * The file has been auto-generated using Orval for SigNoz
+ * * regenerate with 'pnpm generate:api'
+ * SigNoz
+ */
+
+export interface TypesPostableResetPasswordDTO {
+	/**
+	 * @type string
+	 */
+	password?: string;
+	/**
+	 * @type string
+	 */
+	token?: string;
+}

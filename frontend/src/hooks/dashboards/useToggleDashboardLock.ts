@@ -5,7 +5,7 @@ import {
 	lockDashboardV2,
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
-import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 import type APIError from 'types/api/error';
 
 interface Args {

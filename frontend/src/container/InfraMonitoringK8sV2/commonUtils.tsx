@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import type { BadgeColorType } from '@signozhq/ui/badge';
-import type { InframonitoringtypesPodCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas';
-import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesPodCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodCountsByStatusDTO';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodStatusDTO';
 
 import type { StatusCountItem } from './components/GroupedStatusCounts';
 

@@ -1,7 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
-import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/spantypesFieldContextDTO';
 import cx from 'classnames';
 import { motion } from 'motion/react';
 

@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react';
-import {
-	type DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

@@ -3,10 +3,8 @@ import { Select, Skeleton, Table } from 'antd';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
-import {
-	type DashboardtypesListPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListPanelSpecDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import LogDetail from 'components/LogDetail';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useTimezone } from 'providers/Timezone';

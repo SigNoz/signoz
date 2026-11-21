@@ -1,9 +1,7 @@
-import type {
-	Querybuildertypesv5BucketOptionsDTO,
-	Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5TimeSeriesDataDTO,
-	Querybuildertypesv5TimeSeriesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5TimeSeriesDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDataDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
 import getLabelName from 'lib/getLabelName';
 import type {
 	HeatmapSeries,

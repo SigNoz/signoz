@@ -3,7 +3,7 @@ import { useMutation, useQuery } from 'react-query';
 import { toast } from '@signozhq/ui/toast';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import { usePutProfile } from 'api/generated/services/zeus';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';

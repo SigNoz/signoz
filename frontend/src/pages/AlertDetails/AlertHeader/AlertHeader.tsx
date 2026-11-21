@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
 import CreateAlertHeader from 'container/CreateAlert/CreateAlertHeader';
 import { useAlertRule } from 'providers/Alert';
 import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';

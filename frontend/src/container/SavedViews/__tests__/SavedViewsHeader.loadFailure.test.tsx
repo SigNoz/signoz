@@ -1,5 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import ROUTES from 'constants/routes';
 
 import SavedViewsHeader from '../SavedViewsHeader';

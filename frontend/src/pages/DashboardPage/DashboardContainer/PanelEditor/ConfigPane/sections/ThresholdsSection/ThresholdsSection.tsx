@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import {
-	DashboardtypesComparisonOperatorDTO,
-	type DashboardtypesComparisonThresholdDTO,
-	type DashboardtypesScatterPlotThresholdDTO,
-	type DashboardtypesTableThresholdDTO,
-	DashboardtypesThresholdAxisDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonThresholdDTO';
+import type { DashboardtypesScatterPlotThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotThresholdDTO';
+import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTableThresholdDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
 import type { AnyThreshold } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import {
 	SECTION_METADATA,

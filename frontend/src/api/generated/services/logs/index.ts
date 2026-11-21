@@ -11,11 +11,11 @@ import type {
 	UseMutationResult,
 } from 'react-query';
 
-import type {
-	HandleExportRawDataPOSTParams,
-	Querybuildertypesv5QueryRangeRequestDTO,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { HandleExportRawDataPOSTParams } from '../sigNoz.schemas/handleExportRawDataPOSTParams';
+
+import type { Querybuildertypesv5QueryRangeRequestDTO } from '../sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -39,6 +39,9 @@ export const handleExportRawDataPOST = (
 	});
 };
 
+export const getHandleExportRawDataPOSTMutationKey = () =>
+	['handleExportRawDataPOST'] as const;
+
 export const getHandleExportRawDataPOSTMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -46,22 +49,16 @@ export const getHandleExportRawDataPOSTMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 		TError,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: HandleExportRawDataPOSTParams;
-		},
+		HandleExportRawDataPOSTMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 	TError,
-	{
-		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-		params?: HandleExportRawDataPOSTParams;
-	},
+	HandleExportRawDataPOSTMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['handleExportRawDataPOST'];
+	const mutationKey = getHandleExportRawDataPOSTMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -72,10 +69,7 @@ export const getHandleExportRawDataPOSTMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: HandleExportRawDataPOSTParams;
-		}
+		HandleExportRawDataPOSTMutationVariables
 	> = (props) => {
 		const { data, params } = props ?? {};
 
@@ -93,6 +87,10 @@ export type HandleExportRawDataPOSTMutationBody =
 	| undefined;
 export type HandleExportRawDataPOSTMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type HandleExportRawDataPOSTMutationVariables = {
+	data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+	params?: HandleExportRawDataPOSTParams;
+};
 
 /**
  * @summary Export raw data
@@ -104,19 +102,13 @@ export const useHandleExportRawDataPOST = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 		TError,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: HandleExportRawDataPOSTParams;
-		},
+		HandleExportRawDataPOSTMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
 	TError,
-	{
-		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-		params?: HandleExportRawDataPOSTParams;
-	},
+	HandleExportRawDataPOSTMutationVariables,
 	TContext
 > => {
 	return useMutation(getHandleExportRawDataPOSTMutationOptions(options));

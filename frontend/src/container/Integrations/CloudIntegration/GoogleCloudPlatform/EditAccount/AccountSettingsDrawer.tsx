@@ -6,7 +6,7 @@ import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import type { CloudAccount } from 'container/Integrations/types';
 import { useAccountSettingsDrawer } from 'hooks/integration/gcp/useAccountSettingsDrawer';

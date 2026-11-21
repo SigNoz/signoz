@@ -7,7 +7,7 @@ import {
 	PenLine,
 	Trash2,
 } from '@signozhq/icons';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import {
 	type ConfirmableAction,
 	useConfirmableAction,

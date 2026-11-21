@@ -1,8 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import type {
-	AuthtypesGettableRoleDTO,
-	AuthtypesUserRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
+import type { AuthtypesUserRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesUserRoleDTO';
 import {
 	useCreateUserRole,
 	useDeleteUserRole,

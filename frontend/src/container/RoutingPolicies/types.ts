@@ -1,4 +1,4 @@
-import type { AlertmanagertypesGettableRoutePolicyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesGettableRoutePolicyDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesGettableRoutePolicyDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 

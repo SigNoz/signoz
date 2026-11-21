@@ -14,13 +14,15 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetFieldsKeys200,
-	GetFieldsKeysParams,
-	GetFieldsValues200,
-	GetFieldsValuesParams,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { GetFieldsKeys200 } from '../sigNoz.schemas/getFieldsKeys200';
+
+import type { GetFieldsKeysParams } from '../sigNoz.schemas/getFieldsKeysParams';
+
+import type { GetFieldsValues200 } from '../sigNoz.schemas/getFieldsValues200';
+
+import type { GetFieldsValuesParams } from '../sigNoz.schemas/getFieldsValuesParams';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -125,7 +127,7 @@ export function useGetFieldsKeys<
 }
 
 /**
- * @summary Get field keys
+ * @summary Invalidates the {@link useGetFieldsKeys} query
  */
 export const invalidateGetFieldsKeys = async (
 	queryClient: QueryClient,
@@ -220,7 +222,7 @@ export function useGetFieldsValues<
 }
 
 /**
- * @summary Get field values
+ * @summary Invalidates the {@link useGetFieldsValues} query
  */
 export const invalidateGetFieldsValues = async (
 	queryClient: QueryClient,

@@ -1,14 +1,10 @@
-import type {
-	SpantypesSpanMapperDTO,
-	SpantypesSpanMapperGroupConditionKeyDTO,
-	SpantypesSpanMapperGroupDTO,
-	SpantypesSpanMapperSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SpantypesFieldContextDTO,
-	SpantypesSpanMapperOperationDTO,
-	SpantypesSpanMapperOriginDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperDTO';
+import type { SpantypesSpanMapperGroupConditionKeyDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupConditionKeyDTO';
+import type { SpantypesSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupDTO';
+import type { SpantypesSpanMapperSourceDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperSourceDTO';
+import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/spantypesFieldContextDTO';
+import { SpantypesSpanMapperOperationDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOperationDTO';
+import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOriginDTO';
 
 export type MapperGroup = SpantypesSpanMapperGroupDTO;
 export type Mapper = SpantypesSpanMapperDTO;

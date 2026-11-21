@@ -18,12 +18,10 @@ import Row from 'periscope/components/Row/Row';
 import Flex from 'periscope/components/Flex/Flex';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
-import type {
-	CreateSubscription201,
-	GetSubscription200,
-	SubscriptiontypesGettableSubscriptionUsageDTO,
-	SubscriptiontypesSubscriptionUsageBreakdownDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas/createSubscription201';
+import type { GetSubscription200 } from 'api/generated/services/sigNoz.schemas/getSubscription200';
+import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesGettableSubscriptionUsageDTO';
+import type { SubscriptiontypesSubscriptionUsageBreakdownDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesSubscriptionUsageBreakdownDTO';
 import {
 	createSubscription,
 	updateSubscription,

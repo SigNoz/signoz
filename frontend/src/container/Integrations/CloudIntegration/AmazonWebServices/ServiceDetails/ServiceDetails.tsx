@@ -15,11 +15,9 @@ import {
 	useGetService,
 	useUpdateService,
 } from 'api/generated/services/cloudintegration';
-import type {
-	CloudintegrationtypesServiceConfigDTO,
-	CloudintegrationtypesServiceDTO,
-	ListAccountServicesMetadata200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesServiceConfigDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceConfigDTO';
+import type { CloudintegrationtypesServiceDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceDTO';
+import type { ListAccountServicesMetadata200 } from 'api/generated/services/sigNoz.schemas/listAccountServicesMetadata200';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';

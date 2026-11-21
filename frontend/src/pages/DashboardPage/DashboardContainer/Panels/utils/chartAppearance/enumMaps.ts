@@ -1,15 +1,13 @@
-import type { DashboardtypesAreaFillModeDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	DashboardtypesFillModeDTO,
-	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapColorScaleDTO,
-	DashboardtypesHeatmapPaletteDTO,
-	DashboardtypesHeatmapYScaleDTO,
-	DashboardtypesLegendPositionDTO,
-	DashboardtypesLineInterpolationDTO,
-	DashboardtypesLineStyleDTO,
-	DashboardtypesStackModeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesAreaFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAreaFillModeDTO';
+import { DashboardtypesFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillModeDTO';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import { DashboardtypesHeatmapColorScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorScaleDTO';
+import { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import { DashboardtypesLineInterpolationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineInterpolationDTO';
+import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import omit from 'lodash-es/omit';
 import {

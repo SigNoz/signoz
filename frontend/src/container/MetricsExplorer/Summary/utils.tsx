@@ -1,11 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import type { TableColumnType as ColumnType } from 'antd';
-import type {
-	MetricsexplorertypesStatDTO,
-	MetricsexplorertypesTreemapEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesStatDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesStatDTO';
+import type { MetricsexplorertypesTreemapEntryDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapEntryDTO';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
 import type { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 

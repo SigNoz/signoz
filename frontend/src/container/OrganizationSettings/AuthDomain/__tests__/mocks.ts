@@ -1,9 +1,7 @@
-import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
+import { AuthtypesAuthDomainConfigGoogleDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigGoogleDTOKind';
+import { AuthtypesAuthDomainConfigOIDCDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigOIDCDTOKind';
+import { AuthtypesAuthDomainConfigSAMLDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigSAMLDTOKind';
 
 // API Endpoints
 export const AUTH_DOMAINS_LIST_ENDPOINT = '*/api/v2/auth_domains';

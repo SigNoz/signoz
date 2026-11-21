@@ -1,4 +1,4 @@
-import type { DashboardtypesDashboardSpecDTOPanels } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTOPanels } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTOPanels';
 
 import { getPanelIdsReferencingVariable } from '../utils/applyVariableToPanelsPatch';
 

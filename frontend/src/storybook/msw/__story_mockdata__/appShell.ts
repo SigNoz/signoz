@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { GetLicense200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetLicense200 } from 'api/generated/services/sigNoz.schemas/getLicense200';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { UserPreference } from 'types/api/preferences/preference';
 

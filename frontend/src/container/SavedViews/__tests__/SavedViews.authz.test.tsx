@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';

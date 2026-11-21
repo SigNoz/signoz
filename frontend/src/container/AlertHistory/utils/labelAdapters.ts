@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5LabelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5LabelDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5LabelDTO';
 import type { Labels } from 'types/api/alerts/def';
 
 export function labelsArrayToObject(

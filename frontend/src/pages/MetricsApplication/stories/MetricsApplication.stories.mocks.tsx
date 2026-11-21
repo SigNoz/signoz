@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { rest } from 'msw';

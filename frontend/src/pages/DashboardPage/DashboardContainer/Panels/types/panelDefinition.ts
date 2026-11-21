@@ -1,10 +1,8 @@
 import type { ComponentType } from 'react';
 import type { StoreApi } from 'zustand';
-import type {
-	TelemetrytypesSignalDTO,
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import type { ChartLine } from '@signozhq/icons';
 
 import type { SectionConfig } from './sections';

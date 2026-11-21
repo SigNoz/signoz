@@ -1,6 +1,6 @@
 import * as ReactGridLayout from 'react-grid-layout';
 import type { Layout } from 'react-grid-layout';
-import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
 import { GRID_COLS } from './patchOps';
 import type { GridItem } from './utils';

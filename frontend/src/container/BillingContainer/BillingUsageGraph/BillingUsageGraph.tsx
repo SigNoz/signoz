@@ -11,7 +11,7 @@ import type { TooltipRenderArgs } from 'lib/uPlotV2/components/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import type uPlot from 'uplot';
-import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SubscriptiontypesGettableSubscriptionUsageDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesGettableSubscriptionUsageDTO';
 
 import { BillingBarChartTooltip } from './BillingBarChartTooltip';
 import { prepareBillingBarConfig } from './prepareBillingBarConfig';

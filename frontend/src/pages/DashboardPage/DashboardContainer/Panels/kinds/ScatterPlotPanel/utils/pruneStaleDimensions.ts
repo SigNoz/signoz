@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesScatterPlotPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPanelSpecDTO';
 
 import { getQueryColumnKeys } from '../../../utils/getQueryColumnKeys';
 

@@ -1,4 +1,4 @@
-import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
 import { compactGridItems, compactSpecLayouts } from '../layoutCompaction';
 import type { GridItem } from '../utils';

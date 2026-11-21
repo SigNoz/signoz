@@ -1,7 +1,5 @@
-import {
-	DashboardtypesDynamicVariableSignalDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDynamicVariableSignalDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 /**

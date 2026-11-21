@@ -1,5 +1,5 @@
 import type { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
-import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricMetadataDTO';
 import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

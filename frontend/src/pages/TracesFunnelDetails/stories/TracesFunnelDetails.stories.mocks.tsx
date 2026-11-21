@@ -3,10 +3,8 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 

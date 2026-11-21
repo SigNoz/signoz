@@ -14,13 +14,15 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetAIObservabilityFieldsKeys200,
-	GetAIObservabilityFieldsKeysParams,
-	GetAIObservabilityFieldsValues200,
-	GetAIObservabilityFieldsValuesParams,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { GetAIObservabilityFieldsKeys200 } from '../sigNoz.schemas/getAIObservabilityFieldsKeys200';
+
+import type { GetAIObservabilityFieldsKeysParams } from '../sigNoz.schemas/getAIObservabilityFieldsKeysParams';
+
+import type { GetAIObservabilityFieldsValues200 } from '../sigNoz.schemas/getAIObservabilityFieldsValues200';
+
+import type { GetAIObservabilityFieldsValuesParams } from '../sigNoz.schemas/getAIObservabilityFieldsValuesParams';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -135,7 +137,7 @@ export function useGetAIObservabilityFieldsKeys<
 }
 
 /**
- * @summary Get AI observability field keys
+ * @summary Invalidates the {@link useGetAIObservabilityFieldsKeys} query
  */
 export const invalidateGetAIObservabilityFieldsKeys = async (
 	queryClient: QueryClient,
@@ -240,7 +242,7 @@ export function useGetAIObservabilityFieldsValues<
 }
 
 /**
- * @summary Get AI observability field values
+ * @summary Invalidates the {@link useGetAIObservabilityFieldsValues} query
  */
 export const invalidateGetAIObservabilityFieldsValues = async (
 	queryClient: QueryClient,

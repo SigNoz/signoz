@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';

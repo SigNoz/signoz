@@ -5,7 +5,7 @@ import {
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import { useAgentAccountSetup } from 'hooks/integration/gcp/useAgentAccountSetup';
 import { useForm } from 'react-hook-form';

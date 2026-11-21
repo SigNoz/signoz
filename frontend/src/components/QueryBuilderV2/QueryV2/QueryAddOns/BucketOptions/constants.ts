@@ -1,4 +1,4 @@
-import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketsKindDTO';
 
 /**
  * Mirrors the limits `querybuildertypesv5` validates `bucketOptions` against. The

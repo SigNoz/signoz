@@ -1,13 +1,9 @@
-import type {
-	GetAIObservabilityFieldsKeys200,
-	GetFieldsKeys200,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetAIObservabilityFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getAIObservabilityFieldsKeys200';
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getFieldsKeys200';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';

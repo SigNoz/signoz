@@ -1,13 +1,11 @@
-import {
-	DashboardtypesAreaFillModeDTO,
-	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapColorScaleDTO,
-	DashboardtypesHeatmapPaletteDTO,
-	DashboardtypesHeatmapYScaleDTO,
-	DashboardtypesStackModeDTO,
-	Querybuildertypesv5BucketOptionsLinearDTOKind,
-	Querybuildertypesv5BucketOptionsLogDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAreaFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAreaFillModeDTO';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import { DashboardtypesHeatmapColorScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorScaleDTO';
+import { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import { Querybuildertypesv5BucketOptionsLinearDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLinearDTOKind';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTOKind';
 import { FillMode, StackMode } from 'lib/uPlotV2/config/types';
 import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import {

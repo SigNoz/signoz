@@ -6,7 +6,7 @@ import { Virtuoso } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';

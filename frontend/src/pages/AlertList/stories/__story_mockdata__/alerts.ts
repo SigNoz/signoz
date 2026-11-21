@@ -3,37 +3,35 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	MetrictypesSpaceAggregationDTO,
-	MetrictypesTemporalityDTO,
-	MetrictypesTimeAggregationDTO,
-	Querybuildertypesv5FunctionNameDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5ReduceToDTO,
-	RuletypesAlertStateDTO,
-	RuletypesAlertTypeDTO,
-	RuletypesCompareOperatorDTO,
-	RuletypesEvaluationRollingDTOKind,
-	RuletypesMatchTypeDTO,
-	RuletypesPanelTypeDTO,
-	RuletypesQueryTypeDTO,
-	RuletypesRuleDTOSchemaVersion,
-	RuletypesRuleTypeDTO,
-	RuletypesSeasonalityDTO,
-	RuletypesThresholdBasicDTOKind,
-	type AlertmanagertypesDeprecatedGettableAlertDTO,
-	type GetAlerts200,
-	type GetRuleByID200,
-	type RenderErrorResponseDTO,
-	type Querybuildertypesv5FunctionDTO,
-	type RuletypesAlertCompositeQueryDTO,
-	type RuletypesRuleConditionDTO,
-	type RuletypesRuleDTO,
-	type AlertmanagertypesChannelConfigDTO,
-	type AlertmanagertypesGettableNotificationChannelDTO,
-	type AlertmanagertypesListedNotificationChannelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesSpaceAggregationDTO } from 'api/generated/services/sigNoz.schemas/metrictypesSpaceAggregationDTO';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTimeAggregationDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTimeAggregationDTO';
+import { Querybuildertypesv5FunctionNameDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5FunctionNameDTO';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5ReduceToDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ReduceToDTO';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertTypeDTO';
+import { RuletypesCompareOperatorDTO } from 'api/generated/services/sigNoz.schemas/ruletypesCompareOperatorDTO';
+import { RuletypesEvaluationRollingDTOKind } from 'api/generated/services/sigNoz.schemas/ruletypesEvaluationRollingDTOKind';
+import { RuletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesMatchTypeDTO';
+import { RuletypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPanelTypeDTO';
+import { RuletypesQueryTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesQueryTypeDTO';
+import { RuletypesRuleDTOSchemaVersion } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTOSchemaVersion';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
+import { RuletypesSeasonalityDTO } from 'api/generated/services/sigNoz.schemas/ruletypesSeasonalityDTO';
+import { RuletypesThresholdBasicDTOKind } from 'api/generated/services/sigNoz.schemas/ruletypesThresholdBasicDTOKind';
+import type { AlertmanagertypesDeprecatedGettableAlertDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesDeprecatedGettableAlertDTO';
+import type { GetAlerts200 } from 'api/generated/services/sigNoz.schemas/getAlerts200';
+import type { GetRuleByID200 } from 'api/generated/services/sigNoz.schemas/getRuleByID200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { Querybuildertypesv5FunctionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5FunctionDTO';
+import type { RuletypesAlertCompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertCompositeQueryDTO';
+import type { RuletypesRuleConditionDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleConditionDTO';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
+import type { AlertmanagertypesChannelConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelConfigDTO';
+import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesGettableNotificationChannelDTO';
+import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesListedNotificationChannelDTO';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;

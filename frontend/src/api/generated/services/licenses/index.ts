@@ -17,17 +17,23 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	ActivateLicense201,
-	DeleteLicensePathParameters,
-	GetActiveLicense200,
-	GetLicense200,
-	GetLicensePathParameters,
-	LicensetypesPostableLicenseDTO,
-	ListLicenses200,
-	RefreshLicensePathParameters,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { ActivateLicense201 } from '../sigNoz.schemas/activateLicense201';
+
+import type { DeleteLicensePathParameters } from '../sigNoz.schemas/deleteLicensePathParameters';
+
+import type { GetActiveLicense200 } from '../sigNoz.schemas/getActiveLicense200';
+
+import type { GetLicense200 } from '../sigNoz.schemas/getLicense200';
+
+import type { GetLicensePathParameters } from '../sigNoz.schemas/getLicensePathParameters';
+
+import type { LicensetypesPostableLicenseDTO } from '../sigNoz.schemas/licensetypesPostableLicenseDTO';
+
+import type { ListLicenses200 } from '../sigNoz.schemas/listLicenses200';
+
+import type { RefreshLicensePathParameters } from '../sigNoz.schemas/refreshLicensePathParameters';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -70,6 +76,9 @@ export const activateLicenseDeprecated = (
 	});
 };
 
+export const getActivateLicenseDeprecatedMutationKey = () =>
+	['activateLicenseDeprecated'] as const;
+
 export const getActivateLicenseDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -77,16 +86,16 @@ export const getActivateLicenseDeprecatedMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
 		TError,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		ActivateLicenseDeprecatedMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof activateLicenseDeprecated>>,
 	TError,
-	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	ActivateLicenseDeprecatedMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['activateLicenseDeprecated'];
+	const mutationKey = getActivateLicenseDeprecatedMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -97,7 +106,7 @@ export const getActivateLicenseDeprecatedMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> }
+		ActivateLicenseDeprecatedMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -115,6 +124,9 @@ export type ActivateLicenseDeprecatedMutationBody =
 	| undefined;
 export type ActivateLicenseDeprecatedMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type ActivateLicenseDeprecatedMutationVariables = {
+	data?: BodyType<LicensetypesPostableLicenseDTO>;
+};
 
 /**
  * @deprecated
@@ -127,13 +139,13 @@ export const useActivateLicenseDeprecated = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof activateLicenseDeprecated>>,
 		TError,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		ActivateLicenseDeprecatedMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof activateLicenseDeprecated>>,
 	TError,
-	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	ActivateLicenseDeprecatedMutationVariables,
 	TContext
 > => {
 	return useMutation(getActivateLicenseDeprecatedMutationOptions(options));
@@ -151,6 +163,9 @@ export const refreshLicenseDeprecated = (signal?: AbortSignal) => {
 	});
 };
 
+export const getRefreshLicenseDeprecatedMutationKey = () =>
+	['refreshLicenseDeprecated'] as const;
+
 export const getRefreshLicenseDeprecatedMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -167,7 +182,7 @@ export const getRefreshLicenseDeprecatedMutationOptions = <
 	void,
 	TContext
 > => {
-	const mutationKey = ['refreshLicenseDeprecated'];
+	const mutationKey = getRefreshLicenseDeprecatedMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -285,7 +300,7 @@ export function useListLicenses<
 }
 
 /**
- * @summary List licenses.
+ * @summary Invalidates the {@link useListLicenses} query
  */
 export const invalidateListLicenses = async (
 	queryClient: QueryClient,
@@ -316,6 +331,8 @@ export const activateLicense = (
 	});
 };
 
+export const getActivateLicenseMutationKey = () => ['activateLicense'] as const;
+
 export const getActivateLicenseMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -323,16 +340,16 @@ export const getActivateLicenseMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof activateLicense>>,
 		TError,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		ActivateLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof activateLicense>>,
 	TError,
-	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	ActivateLicenseMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['activateLicense'];
+	const mutationKey = getActivateLicenseMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -343,7 +360,7 @@ export const getActivateLicenseMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof activateLicense>>,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> }
+		ActivateLicenseMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -360,6 +377,9 @@ export type ActivateLicenseMutationBody =
 	| BodyType<LicensetypesPostableLicenseDTO>
 	| undefined;
 export type ActivateLicenseMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ActivateLicenseMutationVariables = {
+	data?: BodyType<LicensetypesPostableLicenseDTO>;
+};
 
 /**
  * @summary Activate a license.
@@ -371,13 +391,13 @@ export const useActivateLicense = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof activateLicense>>,
 		TError,
-		{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+		ActivateLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof activateLicense>>,
 	TError,
-	{ data?: BodyType<LicensetypesPostableLicenseDTO> },
+	ActivateLicenseMutationVariables,
 	TContext
 > => {
 	return useMutation(getActivateLicenseMutationOptions(options));
@@ -397,6 +417,8 @@ export const deleteLicense = (
 	});
 };
 
+export const getDeleteLicenseMutationKey = () => ['deleteLicense'] as const;
+
 export const getDeleteLicenseMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -404,16 +426,16 @@ export const getDeleteLicenseMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLicense>>,
 		TError,
-		{ pathParams: DeleteLicensePathParameters },
+		DeleteLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteLicense>>,
 	TError,
-	{ pathParams: DeleteLicensePathParameters },
+	DeleteLicenseMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteLicense'];
+	const mutationKey = getDeleteLicenseMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -424,7 +446,7 @@ export const getDeleteLicenseMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteLicense>>,
-		{ pathParams: DeleteLicensePathParameters }
+		DeleteLicenseMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -439,6 +461,9 @@ export type DeleteLicenseMutationResult = NonNullable<
 >;
 
 export type DeleteLicenseMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteLicenseMutationVariables = {
+	pathParams: DeleteLicensePathParameters;
+};
 
 /**
  * @summary Delete a license.
@@ -450,13 +475,13 @@ export const useDeleteLicense = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLicense>>,
 		TError,
-		{ pathParams: DeleteLicensePathParameters },
+		DeleteLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteLicense>>,
 	TError,
-	{ pathParams: DeleteLicensePathParameters },
+	DeleteLicenseMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteLicenseMutationOptions(options));
@@ -543,7 +568,7 @@ export function useGetLicense<
 }
 
 /**
- * @summary Get a license.
+ * @summary Invalidates the {@link useGetLicense} query
  */
 export const invalidateGetLicense = async (
 	queryClient: QueryClient,
@@ -573,6 +598,8 @@ export const refreshLicense = (
 	});
 };
 
+export const getRefreshLicenseMutationKey = () => ['refreshLicense'] as const;
+
 export const getRefreshLicenseMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -580,16 +607,16 @@ export const getRefreshLicenseMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof refreshLicense>>,
 		TError,
-		{ pathParams: RefreshLicensePathParameters },
+		RefreshLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof refreshLicense>>,
 	TError,
-	{ pathParams: RefreshLicensePathParameters },
+	RefreshLicenseMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['refreshLicense'];
+	const mutationKey = getRefreshLicenseMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -600,7 +627,7 @@ export const getRefreshLicenseMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof refreshLicense>>,
-		{ pathParams: RefreshLicensePathParameters }
+		RefreshLicenseMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -615,6 +642,9 @@ export type RefreshLicenseMutationResult = NonNullable<
 >;
 
 export type RefreshLicenseMutationError = ErrorType<RenderErrorResponseDTO>;
+export type RefreshLicenseMutationVariables = {
+	pathParams: RefreshLicensePathParameters;
+};
 
 /**
  * @summary Refresh a license.
@@ -626,13 +656,13 @@ export const useRefreshLicense = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof refreshLicense>>,
 		TError,
-		{ pathParams: RefreshLicensePathParameters },
+		RefreshLicenseMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof refreshLicense>>,
 	TError,
-	{ pathParams: RefreshLicensePathParameters },
+	RefreshLicenseMutationVariables,
 	TContext
 > => {
 	return useMutation(getRefreshLicenseMutationOptions(options));
@@ -707,7 +737,7 @@ export function useGetActiveLicense<
 }
 
 /**
- * @summary Get the active license.
+ * @summary Invalidates the {@link useGetActiveLicense} query
  */
 export const invalidateGetActiveLicense = async (
 	queryClient: QueryClient,

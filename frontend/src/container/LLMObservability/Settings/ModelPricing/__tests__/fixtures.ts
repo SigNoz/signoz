@@ -1,9 +1,7 @@
-import {
-	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
-	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
-	type ListLLMPricingRules200,
-	type ListUnmappedLLMModels200,
-} from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleCacheModeDTO';
+import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleUnitDTO';
+import type { ListLLMPricingRules200 } from 'api/generated/services/sigNoz.schemas/listLLMPricingRules200';
+import type { ListUnmappedLLMModels200 } from 'api/generated/services/sigNoz.schemas/listUnmappedLLMModels200';
 
 import type { PricingRule, UnpricedModel } from '../types';
 

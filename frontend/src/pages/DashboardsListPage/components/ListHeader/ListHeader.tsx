@@ -6,10 +6,8 @@ import { Typography } from '@signozhq/ui/typography';
 import { ArrowDown, ArrowUp, Check, Columns3 } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 
 import {

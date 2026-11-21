@@ -1,18 +1,14 @@
-import type {
-	DashboardtypesAIBuilderQuerySpecDTO,
-	DashboardtypesBuilderQuerySpecDTO,
-	DashboardtypesQueryDTO,
-	Querybuildertypesv5CompositeQueryDTO,
-	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind as AIBuilderQueryPluginKind,
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind,
-	DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-	Querybuildertypesv5QueryEnvelopePromQLDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesAIBuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAIBuilderQuerySpecDTO';
+import type { DashboardtypesBuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesBuilderQuerySpecDTO';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import { DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind as AIBuilderQueryPluginKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAIBuilderQuerySpecDTOKind';
+import { DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind as BuilderQueryPluginKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBuilderQuerySpecDTOKind';
+import { DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind as CompositeQueryPluginKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5CompositeQueryDTOKind';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
+import { Querybuildertypesv5QueryEnvelopePromQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopePromQLDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';

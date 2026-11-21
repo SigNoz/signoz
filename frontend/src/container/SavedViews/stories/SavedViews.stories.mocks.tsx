@@ -12,12 +12,10 @@ import {
 } from 'msw';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import remove from 'api/browser/localstorage/remove';
-import {
-	type AuthtypesTransactionDTO,
-	type SavedviewtypesSavedViewDTO,
-	SavedviewtypesSourceDTO,
-	type SavedviewtypesUpdatableSavedViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
+import type { SavedviewtypesUpdatableSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesUpdatableSavedViewDTO';
 import { SIDEBAR_TOOLTIP_DELAY_MS } from 'components/QuickFilters/QuickFiltersLayout/constants';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import {

@@ -1,9 +1,7 @@
 import { act, render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	type DashboardtypesPanelDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { DrilldownContext } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';
 import { EQueryType } from 'types/common/dashboard';

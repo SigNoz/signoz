@@ -1,6 +1,6 @@
 import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import cx from 'classnames';
 
 import styles from './ConnectionMethodSelector.module.scss';

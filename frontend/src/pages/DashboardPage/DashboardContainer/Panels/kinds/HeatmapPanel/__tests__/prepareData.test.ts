@@ -1,12 +1,8 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5TimeSeriesDataDTO,
-	Querybuildertypesv5TimeSeriesDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5BucketOptionsLinearDTOKind,
-	Querybuildertypesv5BucketOptionsLogDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5TimeSeriesDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDataDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
+import { Querybuildertypesv5BucketOptionsLinearDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLinearDTOKind';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTOKind';
 
 import {
 	FALLBACK_STEP_SECONDS,

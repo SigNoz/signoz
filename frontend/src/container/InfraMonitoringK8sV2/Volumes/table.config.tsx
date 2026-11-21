@@ -1,6 +1,6 @@
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
-import type { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesVolumeRecordDTO';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';

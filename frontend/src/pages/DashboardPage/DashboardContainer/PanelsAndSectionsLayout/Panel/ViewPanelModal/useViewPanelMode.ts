@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { QueryParams } from 'constants/query';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { usePanelEditSession } from 'pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelEditSession';

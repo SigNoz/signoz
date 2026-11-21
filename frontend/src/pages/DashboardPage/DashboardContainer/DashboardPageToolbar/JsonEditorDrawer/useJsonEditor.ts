@@ -3,10 +3,8 @@ import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import type {
-	DashboardtypesDashboardSpecDTO,
-	DashboardtypesGettableDashboardV2DTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTO';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toAPIError } from 'utils/errorUtils';
 

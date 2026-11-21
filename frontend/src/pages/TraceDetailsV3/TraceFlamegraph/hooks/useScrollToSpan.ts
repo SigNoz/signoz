@@ -5,7 +5,7 @@ import type {
 	SetStateAction,
 } from 'react';
 import { useEffect } from 'react';
-import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas/spantypesFlamegraphSpanDTO';
 
 import { MIN_VISIBLE_SPAN_MS } from '../constants';
 import type { ITraceMetadata } from '../types';

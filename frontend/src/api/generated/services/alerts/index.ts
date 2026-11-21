@@ -14,7 +14,9 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type { GetAlerts200, RenderErrorResponseDTO } from '../sigNoz.schemas';
+import type { GetAlerts200 } from '../sigNoz.schemas/getAlerts200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -101,7 +103,7 @@ export function useGetAlerts<
 }
 
 /**
- * @summary Get alerts
+ * @summary Invalidates the {@link useGetAlerts} query
  */
 export const invalidateGetAlerts = async (
 	queryClient: QueryClient,

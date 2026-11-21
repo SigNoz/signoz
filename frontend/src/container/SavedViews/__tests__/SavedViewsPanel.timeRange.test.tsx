@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import configureStore from 'redux-mock-store';

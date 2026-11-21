@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import type { PanelFormattingSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 // `spec.plugin.spec` is a discriminated union over panel kinds; these helpers narrow

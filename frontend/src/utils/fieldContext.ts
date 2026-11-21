@@ -1,4 +1,4 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 const FIELD_CONTEXT_TO_ATTRIBUTE_TYPE: Record<string, string> = {

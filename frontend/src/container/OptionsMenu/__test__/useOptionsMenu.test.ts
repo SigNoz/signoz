@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';

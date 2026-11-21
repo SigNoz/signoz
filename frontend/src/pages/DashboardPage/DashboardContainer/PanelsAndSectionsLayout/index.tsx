@@ -1,10 +1,8 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
-import type {
-	DashboardtypesLayoutDTO,
-	DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 
 import { layoutsToSections } from '../utils';
 import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';

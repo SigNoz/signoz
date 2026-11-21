@@ -1,4 +1,4 @@
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import ROUTES from 'constants/routes';
 import { EQueryType } from 'types/common/dashboard';
 import type { BuilderQuerySource } from 'types/common/queryBuilder';

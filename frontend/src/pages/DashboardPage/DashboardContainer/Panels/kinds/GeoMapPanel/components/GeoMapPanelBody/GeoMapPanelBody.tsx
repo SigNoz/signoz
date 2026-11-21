@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { Earth } from '@signozhq/icons';
-import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { noop } from 'lodash-es';
 import GeoMap from 'lib/visualization/charts/GeoMap/GeoMap';

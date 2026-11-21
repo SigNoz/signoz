@@ -3,15 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	ListLLMPricingRules200,
-	ListUnmappedLLMModels200,
-	LlmpricingruletypesLLMPricingRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	LlmpricingruletypesLLMPricingRuleCacheModeDTO,
-	LlmpricingruletypesLLMPricingRuleUnitDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListLLMPricingRules200 } from 'api/generated/services/sigNoz.schemas/listLLMPricingRules200';
+import type { ListUnmappedLLMModels200 } from 'api/generated/services/sigNoz.schemas/listUnmappedLLMModels200';
+import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleDTO';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleCacheModeDTO';
+import { LlmpricingruletypesLLMPricingRuleUnitDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleUnitDTO';
 
 const ORG_ID = 'org-signoz';
 

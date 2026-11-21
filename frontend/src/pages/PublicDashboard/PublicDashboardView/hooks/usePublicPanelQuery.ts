@@ -1,8 +1,6 @@
 import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
-import type {
-	DashboardtypesPanelDTO,
-	GetPublicDashboardPanelQueryRangeV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { GetPublicDashboardPanelQueryRangeV2200 } from 'api/generated/services/sigNoz.schemas/getPublicDashboardPanelQueryRangeV2200';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { retryUnlessClientError } from 'pages/DashboardPage/DashboardContainer/hooks/useGetQueryRangeV5';
 import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';

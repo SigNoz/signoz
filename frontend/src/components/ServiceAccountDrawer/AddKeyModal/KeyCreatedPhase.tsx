@@ -2,7 +2,7 @@ import { Check, Copy, SolidInfoCircle } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
-import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesGettableFactorAPIKeyWithKeyDTO';
 
 export interface KeyCreatedPhaseProps {
 	createdKey: ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO;

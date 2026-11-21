@@ -1,8 +1,6 @@
 import type { EQueryType } from 'types/common/dashboard';
-import {
-	Querybuildertypesv5RequestTypeDTO,
-	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 export type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
 

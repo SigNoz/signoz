@@ -1,7 +1,5 @@
-import {
-	DashboardtypesLineStyleDTO as LineStyle,
-	DashboardtypesStackModeDTO as StackMode,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesLineStyleDTO as LineStyle } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import { DashboardtypesStackModeDTO as StackMode } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
 import { expect, waitFor, within } from 'storybook/test';
 import type uPlot from 'uplot';
 

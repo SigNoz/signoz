@@ -8,7 +8,7 @@ import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import {
 	useCreateResetPasswordToken,
 	useDeleteUser,

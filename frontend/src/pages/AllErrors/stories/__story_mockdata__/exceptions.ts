@@ -3,17 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	QuickfiltertypesSourceDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type {
-	GetFieldsKeys200,
-	GetQuickFilters200,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getFieldsKeys200';
+import type { GetQuickFilters200 } from 'api/generated/services/sigNoz.schemas/getQuickFilters200';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import type { Exception, Order, OrderBy } from 'types/api/errors/getAll';
 import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 

@@ -13,7 +13,7 @@ import {
 } from '@signozhq/icons';
 import { useCopyToClipboard } from 'react-use';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermissions';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';

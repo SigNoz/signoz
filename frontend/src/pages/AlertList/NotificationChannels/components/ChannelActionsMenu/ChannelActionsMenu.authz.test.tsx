@@ -1,4 +1,4 @@
-import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesListedNotificationChannelDTO';
 import { buildNotificationChannelDeletePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import {
 	AUTHZ_CHECK_URL,

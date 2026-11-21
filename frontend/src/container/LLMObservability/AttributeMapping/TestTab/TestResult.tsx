@@ -1,5 +1,5 @@
 import { Badge } from '@signozhq/ui/badge';
-import type { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperTestSpanDTO';
 import { useMemo } from 'react';
 
 import type { AttrChangeStatus, AttrDiffEntry } from './testPayload';

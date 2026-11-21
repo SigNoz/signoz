@@ -1,4 +1,4 @@
-import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxisScaleDTO';
 import type {
 	PanelTable,
 	PanelTableColumn,

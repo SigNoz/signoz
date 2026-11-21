@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryParams } from 'constants/query';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';

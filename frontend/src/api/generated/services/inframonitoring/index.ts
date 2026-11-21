@@ -17,33 +17,55 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetChecks200,
-	GetChecksParams,
-	InframonitoringtypesPostableClustersDTO,
-	InframonitoringtypesPostableContainersDTO,
-	InframonitoringtypesPostableDaemonSetsDTO,
-	InframonitoringtypesPostableDeploymentsDTO,
-	InframonitoringtypesPostableHostsDTO,
-	InframonitoringtypesPostableJobsDTO,
-	InframonitoringtypesPostableNamespacesDTO,
-	InframonitoringtypesPostableNodesDTO,
-	InframonitoringtypesPostablePodsDTO,
-	InframonitoringtypesPostableStatefulSetsDTO,
-	InframonitoringtypesPostableVolumesDTO,
-	ListClusters200,
-	ListContainers200,
-	ListDaemonSets200,
-	ListDeployments200,
-	ListHosts200,
-	ListJobs200,
-	ListNamespaces200,
-	ListNodes200,
-	ListPods200,
-	ListStatefulSets200,
-	ListVolumes200,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { GetChecks200 } from '../sigNoz.schemas/getChecks200';
+
+import type { GetChecksParams } from '../sigNoz.schemas/getChecksParams';
+
+import type { InframonitoringtypesPostableClustersDTO } from '../sigNoz.schemas/inframonitoringtypesPostableClustersDTO';
+
+import type { InframonitoringtypesPostableContainersDTO } from '../sigNoz.schemas/inframonitoringtypesPostableContainersDTO';
+
+import type { InframonitoringtypesPostableDaemonSetsDTO } from '../sigNoz.schemas/inframonitoringtypesPostableDaemonSetsDTO';
+
+import type { InframonitoringtypesPostableDeploymentsDTO } from '../sigNoz.schemas/inframonitoringtypesPostableDeploymentsDTO';
+
+import type { InframonitoringtypesPostableHostsDTO } from '../sigNoz.schemas/inframonitoringtypesPostableHostsDTO';
+
+import type { InframonitoringtypesPostableJobsDTO } from '../sigNoz.schemas/inframonitoringtypesPostableJobsDTO';
+
+import type { InframonitoringtypesPostableNamespacesDTO } from '../sigNoz.schemas/inframonitoringtypesPostableNamespacesDTO';
+
+import type { InframonitoringtypesPostableNodesDTO } from '../sigNoz.schemas/inframonitoringtypesPostableNodesDTO';
+
+import type { InframonitoringtypesPostablePodsDTO } from '../sigNoz.schemas/inframonitoringtypesPostablePodsDTO';
+
+import type { InframonitoringtypesPostableStatefulSetsDTO } from '../sigNoz.schemas/inframonitoringtypesPostableStatefulSetsDTO';
+
+import type { InframonitoringtypesPostableVolumesDTO } from '../sigNoz.schemas/inframonitoringtypesPostableVolumesDTO';
+
+import type { ListClusters200 } from '../sigNoz.schemas/listClusters200';
+
+import type { ListContainers200 } from '../sigNoz.schemas/listContainers200';
+
+import type { ListDaemonSets200 } from '../sigNoz.schemas/listDaemonSets200';
+
+import type { ListDeployments200 } from '../sigNoz.schemas/listDeployments200';
+
+import type { ListHosts200 } from '../sigNoz.schemas/listHosts200';
+
+import type { ListJobs200 } from '../sigNoz.schemas/listJobs200';
+
+import type { ListNamespaces200 } from '../sigNoz.schemas/listNamespaces200';
+
+import type { ListNodes200 } from '../sigNoz.schemas/listNodes200';
+
+import type { ListPods200 } from '../sigNoz.schemas/listPods200';
+
+import type { ListStatefulSets200 } from '../sigNoz.schemas/listStatefulSets200';
+
+import type { ListVolumes200 } from '../sigNoz.schemas/listVolumes200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -140,7 +162,7 @@ export function useGetChecks<
 }
 
 /**
- * @summary Run Infra Monitoring Setup Checks
+ * @summary Invalidates the {@link useGetChecks} query
  */
 export const invalidateGetChecks = async (
 	queryClient: QueryClient,
@@ -172,6 +194,8 @@ export const listClusters = (
 	});
 };
 
+export const getListClustersMutationKey = () => ['listClusters'] as const;
+
 export const getListClustersMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -179,16 +203,16 @@ export const getListClustersMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listClusters>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableClustersDTO> },
+		ListClustersMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listClusters>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableClustersDTO> },
+	ListClustersMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listClusters'];
+	const mutationKey = getListClustersMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -199,7 +223,7 @@ export const getListClustersMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listClusters>>,
-		{ data?: BodyType<InframonitoringtypesPostableClustersDTO> }
+		ListClustersMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -216,6 +240,9 @@ export type ListClustersMutationBody =
 	| BodyType<InframonitoringtypesPostableClustersDTO>
 	| undefined;
 export type ListClustersMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListClustersMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableClustersDTO>;
+};
 
 /**
  * @summary List Clusters for Infra Monitoring
@@ -227,13 +254,13 @@ export const useListClusters = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listClusters>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableClustersDTO> },
+		ListClustersMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listClusters>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableClustersDTO> },
+	ListClustersMutationVariables,
 	TContext
 > => {
 	return useMutation(getListClustersMutationOptions(options));
@@ -255,6 +282,8 @@ export const listDaemonSets = (
 	});
 };
 
+export const getListDaemonSetsMutationKey = () => ['listDaemonSets'] as const;
+
 export const getListDaemonSetsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -262,16 +291,16 @@ export const getListDaemonSetsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDaemonSets>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+		ListDaemonSetsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listDaemonSets>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+	ListDaemonSetsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listDaemonSets'];
+	const mutationKey = getListDaemonSetsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -282,7 +311,7 @@ export const getListDaemonSetsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listDaemonSets>>,
-		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> }
+		ListDaemonSetsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -299,6 +328,9 @@ export type ListDaemonSetsMutationBody =
 	| BodyType<InframonitoringtypesPostableDaemonSetsDTO>
 	| undefined;
 export type ListDaemonSetsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListDaemonSetsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO>;
+};
 
 /**
  * @summary List DaemonSets for Infra Monitoring
@@ -310,13 +342,13 @@ export const useListDaemonSets = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDaemonSets>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+		ListDaemonSetsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listDaemonSets>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableDaemonSetsDTO> },
+	ListDaemonSetsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListDaemonSetsMutationOptions(options));
@@ -338,6 +370,8 @@ export const listDeployments = (
 	});
 };
 
+export const getListDeploymentsMutationKey = () => ['listDeployments'] as const;
+
 export const getListDeploymentsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -345,16 +379,16 @@ export const getListDeploymentsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDeployments>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableDeploymentsDTO> },
+		ListDeploymentsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listDeployments>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableDeploymentsDTO> },
+	ListDeploymentsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listDeployments'];
+	const mutationKey = getListDeploymentsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -365,7 +399,7 @@ export const getListDeploymentsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listDeployments>>,
-		{ data?: BodyType<InframonitoringtypesPostableDeploymentsDTO> }
+		ListDeploymentsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -382,6 +416,9 @@ export type ListDeploymentsMutationBody =
 	| BodyType<InframonitoringtypesPostableDeploymentsDTO>
 	| undefined;
 export type ListDeploymentsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListDeploymentsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableDeploymentsDTO>;
+};
 
 /**
  * @summary List Deployments for Infra Monitoring
@@ -393,13 +430,13 @@ export const useListDeployments = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listDeployments>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableDeploymentsDTO> },
+		ListDeploymentsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listDeployments>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableDeploymentsDTO> },
+	ListDeploymentsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListDeploymentsMutationOptions(options));
@@ -421,6 +458,8 @@ export const listHosts = (
 	});
 };
 
+export const getListHostsMutationKey = () => ['listHosts'] as const;
+
 export const getListHostsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -428,16 +467,16 @@ export const getListHostsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableHostsDTO> },
+		ListHostsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listHosts>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableHostsDTO> },
+	ListHostsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listHosts'];
+	const mutationKey = getListHostsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -448,7 +487,7 @@ export const getListHostsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listHosts>>,
-		{ data?: BodyType<InframonitoringtypesPostableHostsDTO> }
+		ListHostsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -465,6 +504,9 @@ export type ListHostsMutationBody =
 	| BodyType<InframonitoringtypesPostableHostsDTO>
 	| undefined;
 export type ListHostsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListHostsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableHostsDTO>;
+};
 
 /**
  * @summary List Hosts for Infra Monitoring
@@ -476,13 +518,13 @@ export const useListHosts = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listHosts>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableHostsDTO> },
+		ListHostsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listHosts>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableHostsDTO> },
+	ListHostsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListHostsMutationOptions(options));
@@ -504,6 +546,8 @@ export const listJobs = (
 	});
 };
 
+export const getListJobsMutationKey = () => ['listJobs'] as const;
+
 export const getListJobsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -511,16 +555,16 @@ export const getListJobsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listJobs>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableJobsDTO> },
+		ListJobsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listJobs>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableJobsDTO> },
+	ListJobsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listJobs'];
+	const mutationKey = getListJobsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -531,7 +575,7 @@ export const getListJobsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listJobs>>,
-		{ data?: BodyType<InframonitoringtypesPostableJobsDTO> }
+		ListJobsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -548,6 +592,9 @@ export type ListJobsMutationBody =
 	| BodyType<InframonitoringtypesPostableJobsDTO>
 	| undefined;
 export type ListJobsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListJobsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableJobsDTO>;
+};
 
 /**
  * @summary List Jobs for Infra Monitoring
@@ -559,13 +606,13 @@ export const useListJobs = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listJobs>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableJobsDTO> },
+		ListJobsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listJobs>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableJobsDTO> },
+	ListJobsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListJobsMutationOptions(options));
@@ -587,6 +634,8 @@ export const listContainers = (
 	});
 };
 
+export const getListContainersMutationKey = () => ['listContainers'] as const;
+
 export const getListContainersMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -594,16 +643,16 @@ export const getListContainersMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listContainers>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+		ListContainersMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listContainers>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+	ListContainersMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listContainers'];
+	const mutationKey = getListContainersMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -614,7 +663,7 @@ export const getListContainersMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listContainers>>,
-		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> }
+		ListContainersMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -631,6 +680,9 @@ export type ListContainersMutationBody =
 	| BodyType<InframonitoringtypesPostableContainersDTO>
 	| undefined;
 export type ListContainersMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListContainersMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableContainersDTO>;
+};
 
 /**
  * @summary List Kubernetes Containers for Infra Monitoring
@@ -642,13 +694,13 @@ export const useListContainers = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listContainers>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+		ListContainersMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listContainers>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableContainersDTO> },
+	ListContainersMutationVariables,
 	TContext
 > => {
 	return useMutation(getListContainersMutationOptions(options));
@@ -670,6 +722,8 @@ export const listNamespaces = (
 	});
 };
 
+export const getListNamespacesMutationKey = () => ['listNamespaces'] as const;
+
 export const getListNamespacesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -677,16 +731,16 @@ export const getListNamespacesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listNamespaces>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		ListNamespacesMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listNamespaces>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	ListNamespacesMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listNamespaces'];
+	const mutationKey = getListNamespacesMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -697,7 +751,7 @@ export const getListNamespacesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listNamespaces>>,
-		{ data?: BodyType<InframonitoringtypesPostableNamespacesDTO> }
+		ListNamespacesMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -714,6 +768,9 @@ export type ListNamespacesMutationBody =
 	| BodyType<InframonitoringtypesPostableNamespacesDTO>
 	| undefined;
 export type ListNamespacesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListNamespacesMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableNamespacesDTO>;
+};
 
 /**
  * @summary List Namespaces for Infra Monitoring
@@ -725,13 +782,13 @@ export const useListNamespaces = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listNamespaces>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+		ListNamespacesMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listNamespaces>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableNamespacesDTO> },
+	ListNamespacesMutationVariables,
 	TContext
 > => {
 	return useMutation(getListNamespacesMutationOptions(options));
@@ -753,6 +810,8 @@ export const listNodes = (
 	});
 };
 
+export const getListNodesMutationKey = () => ['listNodes'] as const;
+
 export const getListNodesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -760,16 +819,16 @@ export const getListNodesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listNodes>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableNodesDTO> },
+		ListNodesMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listNodes>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableNodesDTO> },
+	ListNodesMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listNodes'];
+	const mutationKey = getListNodesMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -780,7 +839,7 @@ export const getListNodesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listNodes>>,
-		{ data?: BodyType<InframonitoringtypesPostableNodesDTO> }
+		ListNodesMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -797,6 +856,9 @@ export type ListNodesMutationBody =
 	| BodyType<InframonitoringtypesPostableNodesDTO>
 	| undefined;
 export type ListNodesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListNodesMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableNodesDTO>;
+};
 
 /**
  * @summary List Nodes for Infra Monitoring
@@ -808,13 +870,13 @@ export const useListNodes = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listNodes>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableNodesDTO> },
+		ListNodesMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listNodes>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableNodesDTO> },
+	ListNodesMutationVariables,
 	TContext
 > => {
 	return useMutation(getListNodesMutationOptions(options));
@@ -836,6 +898,8 @@ export const listPods = (
 	});
 };
 
+export const getListPodsMutationKey = () => ['listPods'] as const;
+
 export const getListPodsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -843,16 +907,16 @@ export const getListPodsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostablePodsDTO> },
+		ListPodsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listPods>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostablePodsDTO> },
+	ListPodsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listPods'];
+	const mutationKey = getListPodsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -863,7 +927,7 @@ export const getListPodsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listPods>>,
-		{ data?: BodyType<InframonitoringtypesPostablePodsDTO> }
+		ListPodsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -880,6 +944,9 @@ export type ListPodsMutationBody =
 	| BodyType<InframonitoringtypesPostablePodsDTO>
 	| undefined;
 export type ListPodsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListPodsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostablePodsDTO>;
+};
 
 /**
  * @summary List Pods for Infra Monitoring
@@ -891,13 +958,13 @@ export const useListPods = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listPods>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostablePodsDTO> },
+		ListPodsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listPods>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostablePodsDTO> },
+	ListPodsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListPodsMutationOptions(options));
@@ -919,6 +986,8 @@ export const listVolumes = (
 	});
 };
 
+export const getListVolumesMutationKey = () => ['listVolumes'] as const;
+
 export const getListVolumesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -926,16 +995,16 @@ export const getListVolumesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listVolumes>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		ListVolumesMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listVolumes>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	ListVolumesMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listVolumes'];
+	const mutationKey = getListVolumesMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -946,7 +1015,7 @@ export const getListVolumesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listVolumes>>,
-		{ data?: BodyType<InframonitoringtypesPostableVolumesDTO> }
+		ListVolumesMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -963,6 +1032,9 @@ export type ListVolumesMutationBody =
 	| BodyType<InframonitoringtypesPostableVolumesDTO>
 	| undefined;
 export type ListVolumesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListVolumesMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableVolumesDTO>;
+};
 
 /**
  * @summary List Volumes for Infra Monitoring
@@ -974,13 +1046,13 @@ export const useListVolumes = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listVolumes>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableVolumesDTO> },
+		ListVolumesMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listVolumes>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableVolumesDTO> },
+	ListVolumesMutationVariables,
 	TContext
 > => {
 	return useMutation(getListVolumesMutationOptions(options));
@@ -1002,6 +1074,9 @@ export const listStatefulSets = (
 	});
 };
 
+export const getListStatefulSetsMutationKey = () =>
+	['listStatefulSets'] as const;
+
 export const getListStatefulSetsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1009,16 +1084,16 @@ export const getListStatefulSetsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listStatefulSets>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+		ListStatefulSetsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof listStatefulSets>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+	ListStatefulSetsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['listStatefulSets'];
+	const mutationKey = getListStatefulSetsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1029,7 +1104,7 @@ export const getListStatefulSetsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof listStatefulSets>>,
-		{ data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO> }
+		ListStatefulSetsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1046,6 +1121,9 @@ export type ListStatefulSetsMutationBody =
 	| BodyType<InframonitoringtypesPostableStatefulSetsDTO>
 	| undefined;
 export type ListStatefulSetsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ListStatefulSetsMutationVariables = {
+	data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO>;
+};
 
 /**
  * @summary List StatefulSets for Infra Monitoring
@@ -1057,13 +1135,13 @@ export const useListStatefulSets = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof listStatefulSets>>,
 		TError,
-		{ data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+		ListStatefulSetsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof listStatefulSets>>,
 	TError,
-	{ data?: BodyType<InframonitoringtypesPostableStatefulSetsDTO> },
+	ListStatefulSetsMutationVariables,
 	TContext
 > => {
 	return useMutation(getListStatefulSetsMutationOptions(options));

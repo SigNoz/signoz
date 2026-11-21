@@ -17,7 +17,7 @@ import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';

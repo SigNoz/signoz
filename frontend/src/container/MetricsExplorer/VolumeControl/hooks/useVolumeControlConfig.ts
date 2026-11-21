@@ -7,10 +7,8 @@ import {
 	usePreviewMetricReductionRule,
 	useUpdateMetricReductionRuleByID,
 } from 'api/generated/services/metrics';
-import type {
-	MetricreductionruletypesGettableReductionRuleDTO,
-	MetricreductionruletypesGettableReductionRulePreviewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRuleDTO';
+import type { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRulePreviewDTO';
 import { useNotifications } from 'hooks/useNotifications';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';

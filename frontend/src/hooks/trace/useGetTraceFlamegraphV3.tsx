@@ -1,8 +1,6 @@
 import { getFlamegraph } from 'api/generated/services/tracedetail';
-import type {
-	SpantypesGettableFlamegraphTraceDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesGettableFlamegraphTraceDTO } from 'api/generated/services/sigNoz.schemas/spantypesGettableFlamegraphTraceDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import type { UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';

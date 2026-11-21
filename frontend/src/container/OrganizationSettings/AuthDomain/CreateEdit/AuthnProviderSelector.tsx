@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthNProviderDTO';
 
 import './CreateEdit.styles.scss';
 import { Key, SolidGoogle } from '@signozhq/icons';

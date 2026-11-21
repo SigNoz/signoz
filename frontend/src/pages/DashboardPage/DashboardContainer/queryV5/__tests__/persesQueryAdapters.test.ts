@@ -1,9 +1,7 @@
-import type {
-	DashboardtypesQueryDTO,
-	Querybuildertypesv5CompositeQueryDTO,
-	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTOKind';
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,

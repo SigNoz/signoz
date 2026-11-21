@@ -3,14 +3,12 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
-	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
-	DashboardtypesLegendPositionDTO as LegendPosition,
-	DashboardtypesLineStyleDTO as LineStyle,
-	DashboardtypesStackModeDTO as StackMode,
-	DashboardtypesTextAlignDTO as TextAlign,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeatmapPaletteDTO as HeatmapPalette } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
+import type { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import type { DashboardtypesLegendPositionDTO as LegendPosition } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import type { DashboardtypesLineStyleDTO as LineStyle } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import type { DashboardtypesStackModeDTO as StackMode } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import type { DashboardtypesTextAlignDTO as TextAlign } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
 
 import type { PanelWindow } from '../../__story_mockdata__/panelData';
 

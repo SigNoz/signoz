@@ -10,11 +10,9 @@ import {
 	invalidateListMetrics,
 	useUpdateMetricMetadata,
 } from 'api/generated/services/metrics';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import type { AxiosError } from 'axios';
 import { ResizeTable } from 'components/ResizeTable';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';

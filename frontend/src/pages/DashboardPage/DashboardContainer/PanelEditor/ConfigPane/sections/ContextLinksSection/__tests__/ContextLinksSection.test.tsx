@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLinkDTO';
 
 import ContextLinksSection from '../ContextLinksSection';
 

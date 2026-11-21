@@ -1,9 +1,7 @@
 import type { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
-import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import type { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap, toAttributeType } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

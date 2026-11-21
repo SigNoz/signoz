@@ -1,6 +1,6 @@
 import { Badge } from '@signozhq/ui/badge';
 import { Skeleton } from '@signozhq/ui/skeleton';
-import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesMaintenanceStatusDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import OverflowBadges from 'components/OverflowBadges/OverflowBadges';
 import TanStackTable from 'components/TanStackTableView';

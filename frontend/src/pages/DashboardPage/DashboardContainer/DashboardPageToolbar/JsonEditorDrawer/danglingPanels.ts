@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesDashboardSpecDTO,
-	DashboardtypesLayoutDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTO';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
 import { extractPanelIdFromRef } from '../../utils';
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
 import type {
 	SectionControls,

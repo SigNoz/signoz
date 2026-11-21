@@ -1,8 +1,6 @@
 import { Table } from 'antd';
-import type {
-	CloudintegrationtypesCollectedLogAttributeDTO,
-	CloudintegrationtypesCollectedMetricDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCollectedLogAttributeDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCollectedLogAttributeDTO';
+import type { CloudintegrationtypesCollectedMetricDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCollectedMetricDTO';
 import { BarChart, Info, ScrollText } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 

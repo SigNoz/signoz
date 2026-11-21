@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 /**
  * Local draft state for the panel being edited, kept as a perses `DashboardtypesPanelDTO`

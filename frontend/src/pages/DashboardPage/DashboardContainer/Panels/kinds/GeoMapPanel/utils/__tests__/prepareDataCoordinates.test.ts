@@ -1,7 +1,5 @@
-import {
-	DashboardtypesGeoMapLayerDTO,
-	DashboardtypesGeoMapLocationModeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
 
 import { LocationKind } from '../../types';
 import {

@@ -1,4 +1,4 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 
 const fieldContextToSuggestionMap: Record<

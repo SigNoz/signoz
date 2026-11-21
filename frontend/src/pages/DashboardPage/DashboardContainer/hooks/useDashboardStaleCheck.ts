@@ -1,5 +1,5 @@
 import { getDashboardV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { isEqual } from 'lodash-es';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMutating } from 'react-query';

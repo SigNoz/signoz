@@ -9,10 +9,8 @@ import {
 	invalidateListServiceAccountKeys,
 	useCreateServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
-import type {
-	RenderErrorResponseDTO,
-	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesGettableFactorAPIKeyWithKeyDTO';
 import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';

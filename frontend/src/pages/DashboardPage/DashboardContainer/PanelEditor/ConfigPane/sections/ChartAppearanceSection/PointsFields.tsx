@@ -1,4 +1,4 @@
-import type { DashboardtypesScatterPlotPointsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotPointsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPointsDTO';
 import {
 	POINT_OPACITY_BOUNDS,
 	POINT_SIZE_BOUNDS,

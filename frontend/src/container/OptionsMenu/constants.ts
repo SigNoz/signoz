@@ -1,4 +1,4 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { PREFERENCE_SOURCE_PAGES } from 'providers/preferences/constants';
 import { DataSource } from 'types/common/queryBuilder';

@@ -1,8 +1,6 @@
-import {
-	type Querybuildertypesv5RawDataDTO,
-	TelemetrytypesSignalDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5RawDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RawDataDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 
 import { prepareRawTable } from '../prepareRawTable';
 

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas/spantypesFlamegraphSpanDTO';
 
 export interface ConnectorLine {
 	parentRow: number;

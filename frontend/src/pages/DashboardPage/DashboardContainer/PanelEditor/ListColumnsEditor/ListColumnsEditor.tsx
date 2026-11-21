@@ -15,11 +15,9 @@ import {
 	sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { Typography } from '@signozhq/ui/typography';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 
 import AddColumnDropdown from './components/AddColumnDropdown/AddColumnDropdown';
 import SortableColumnChip from './components/SortableColumnChip/SortableColumnChip';

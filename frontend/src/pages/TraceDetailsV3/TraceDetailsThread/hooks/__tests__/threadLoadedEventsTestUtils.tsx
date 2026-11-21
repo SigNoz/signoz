@@ -1,9 +1,7 @@
 import type { MutableRefObject, ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import type {
-	GetTraceSummary200,
-	SpantypesGettableTraceSummaryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetTraceSummary200 } from 'api/generated/services/sigNoz.schemas/getTraceSummary200';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas/spantypesGettableTraceSummaryDTO';
 import { getGetTraceSummaryQueryKey } from 'api/generated/services/tracedetail';
 import { rest, server } from 'mocks-server/server';
 import { renderHook, waitFor } from 'tests/test-utils';

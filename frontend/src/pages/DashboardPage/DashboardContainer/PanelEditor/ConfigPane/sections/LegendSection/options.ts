@@ -1,4 +1,4 @@
-import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesBarChartPanelSpecDTO';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';

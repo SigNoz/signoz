@@ -1,15 +1,13 @@
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
-	Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
-	type Querybuildertypesv5BuilderQuerySpecDTO,
-	type Querybuildertypesv5QueryBuilderFormulaDTO,
-	type Querybuildertypesv5QueryBuilderTraceOperatorDTO,
-	type Querybuildertypesv5QueryEnvelopeDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeBuilderAIDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderAIDTOType';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeFormulaDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTOType';
+import { Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeTraceOperatorDTOType';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import type { Querybuildertypesv5BuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BuilderQuerySpecDTO';
+import type { Querybuildertypesv5QueryBuilderFormulaDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderFormulaDTO';
+import type { Querybuildertypesv5QueryBuilderTraceOperatorDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderTraceOperatorDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
 
 export type SortDirection = 'asc' | 'desc';
 

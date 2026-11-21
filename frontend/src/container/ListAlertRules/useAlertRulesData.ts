@@ -2,11 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRulesV3 } from 'api/generated/services/rules';
-import type {
-	ListRulesV3Params,
-	RenderErrorResponseDTO,
-	RuletypesLabelPairDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListRulesV3Params } from 'api/generated/services/sigNoz.schemas/listRulesV3Params';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesLabelPairDTO } from 'api/generated/services/sigNoz.schemas/ruletypesLabelPairDTO';
 import type { AxiosError } from 'axios';
 import { isUndefined } from 'lodash-es';
 

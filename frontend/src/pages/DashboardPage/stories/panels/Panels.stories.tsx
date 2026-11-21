@@ -1,11 +1,9 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
-	DashboardtypesLegendPositionDTO as LegendPosition,
-	DashboardtypesLineStyleDTO as LineStyleDTO,
-	DashboardtypesStackModeDTO as StackMode,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesLegendPositionDTO as LegendPosition } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import { DashboardtypesLineStyleDTO as LineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import { DashboardtypesStackModeDTO as StackMode } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
 import ROUTES from 'constants/routes';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';

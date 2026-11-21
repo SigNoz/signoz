@@ -14,7 +14,9 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type { GetStats200, RenderErrorResponseDTO } from '../sigNoz.schemas';
+import type { GetStats200 } from '../sigNoz.schemas/getStats200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -101,7 +103,7 @@ export function useGetStats<
 }
 
 /**
- * @summary Get stats
+ * @summary Invalidates the {@link useGetStats} query
  */
 export const invalidateGetStats = async (
 	queryClient: QueryClient,

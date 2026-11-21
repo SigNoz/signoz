@@ -1,4 +1,4 @@
-import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
 
 export function findSavedView(
 	views: SavedviewtypesSavedViewDTO[] | null | undefined,

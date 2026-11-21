@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Select, Spin } from 'antd';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import Row from 'periscope/components/Row/Row';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';

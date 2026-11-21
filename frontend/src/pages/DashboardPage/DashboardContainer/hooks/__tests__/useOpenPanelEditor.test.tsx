@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
 import { EQueryType } from 'types/common/dashboard';
 

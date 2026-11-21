@@ -1,5 +1,5 @@
 import type { BadgeColorType } from '@signozhq/ui/badge';
-import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeConditionDTO';
 
 export const NODE_CONDITION_COLORS: Record<
 	InframonitoringtypesNodeConditionDTO,

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import AutoRefreshTicker from 'container/TopNav/AutoRefreshV2/AutoRefreshTicker';
 
 import DashboardPageToolbar from './DashboardPageToolbar';

@@ -7,16 +7,12 @@ import {
 	getSavedView,
 	listSavedViews,
 } from 'api/generated/services/saved-view';
-import type {
-	GetSavedView200,
-	ListSavedViews200,
-	SavedviewtypesSavedViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSchemaVersionDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetSavedView200 } from 'api/generated/services/sigNoz.schemas/getSavedView200';
+import type { ListSavedViews200 } from 'api/generated/services/sigNoz.schemas/listSavedViews200';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { QueryParams } from 'constants/query';

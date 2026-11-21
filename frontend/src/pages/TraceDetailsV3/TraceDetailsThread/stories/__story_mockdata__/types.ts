@@ -3,11 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	AiobservabilitytypesChatMessageDTO,
-	AiobservabilitytypesOutputMessageDTO,
-	AiobservabilitytypesPartDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AiobservabilitytypesChatMessageDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesChatMessageDTO';
+import type { AiobservabilitytypesOutputMessageDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesOutputMessageDTO';
+import type { AiobservabilitytypesPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesPartDTO';
 
 import type { THREAD_PAGINGS, THREAD_SCENARIOS } from './traceThread';
 

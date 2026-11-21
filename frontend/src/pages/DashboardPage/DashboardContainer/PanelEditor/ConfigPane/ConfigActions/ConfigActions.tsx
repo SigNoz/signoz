@@ -1,5 +1,5 @@
 import { Flame } from '@signozhq/icons';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isAIQueryType } from 'lib/query/builderSlot';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';

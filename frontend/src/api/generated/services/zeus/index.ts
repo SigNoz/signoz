@@ -17,12 +17,13 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetHosts200,
-	RenderErrorResponseDTO,
-	ZeustypesPostableHostDTO,
-	ZeustypesPostableProfileDTO,
-} from '../sigNoz.schemas';
+import type { GetHosts200 } from '../sigNoz.schemas/getHosts200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { ZeustypesPostableHostDTO } from '../sigNoz.schemas/zeustypesPostableHostDTO';
+
+import type { ZeustypesPostableProfileDTO } from '../sigNoz.schemas/zeustypesPostableProfileDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -109,7 +110,7 @@ export function useGetHosts<
 }
 
 /**
- * @summary Get host info from Zeus.
+ * @summary Invalidates the {@link useGetHosts} query
  */
 export const invalidateGetHosts = async (
 	queryClient: QueryClient,
@@ -140,6 +141,8 @@ export const putHost = (
 	});
 };
 
+export const getPutHostMutationKey = () => ['putHost'] as const;
+
 export const getPutHostMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -147,16 +150,16 @@ export const getPutHostMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
 		TError,
-		{ data?: BodyType<ZeustypesPostableHostDTO> },
+		PutHostMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putHost>>,
 	TError,
-	{ data?: BodyType<ZeustypesPostableHostDTO> },
+	PutHostMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['putHost'];
+	const mutationKey = getPutHostMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -167,7 +170,7 @@ export const getPutHostMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putHost>>,
-		{ data?: BodyType<ZeustypesPostableHostDTO> }
+		PutHostMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -184,6 +187,9 @@ export type PutHostMutationBody =
 	| BodyType<ZeustypesPostableHostDTO>
 	| undefined;
 export type PutHostMutationError = ErrorType<RenderErrorResponseDTO>;
+export type PutHostMutationVariables = {
+	data?: BodyType<ZeustypesPostableHostDTO>;
+};
 
 /**
  * @summary Put host in Zeus for a deployment.
@@ -195,13 +201,13 @@ export const usePutHost = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
 		TError,
-		{ data?: BodyType<ZeustypesPostableHostDTO> },
+		PutHostMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof putHost>>,
 	TError,
-	{ data?: BodyType<ZeustypesPostableHostDTO> },
+	PutHostMutationVariables,
 	TContext
 > => {
 	return useMutation(getPutHostMutationOptions(options));
@@ -223,6 +229,8 @@ export const putProfile = (
 	});
 };
 
+export const getPutProfileMutationKey = () => ['putProfile'] as const;
+
 export const getPutProfileMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -230,16 +238,16 @@ export const getPutProfileMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,
 		TError,
-		{ data?: BodyType<ZeustypesPostableProfileDTO> },
+		PutProfileMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof putProfile>>,
 	TError,
-	{ data?: BodyType<ZeustypesPostableProfileDTO> },
+	PutProfileMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['putProfile'];
+	const mutationKey = getPutProfileMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -250,7 +258,7 @@ export const getPutProfileMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof putProfile>>,
-		{ data?: BodyType<ZeustypesPostableProfileDTO> }
+		PutProfileMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -267,6 +275,9 @@ export type PutProfileMutationBody =
 	| BodyType<ZeustypesPostableProfileDTO>
 	| undefined;
 export type PutProfileMutationError = ErrorType<RenderErrorResponseDTO>;
+export type PutProfileMutationVariables = {
+	data?: BodyType<ZeustypesPostableProfileDTO>;
+};
 
 /**
  * @summary Put profile in Zeus for a deployment.
@@ -278,13 +289,13 @@ export const usePutProfile = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,
 		TError,
-		{ data?: BodyType<ZeustypesPostableProfileDTO> },
+		PutProfileMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof putProfile>>,
 	TError,
-	{ data?: BodyType<ZeustypesPostableProfileDTO> },
+	PutProfileMutationVariables,
 	TContext
 > => {
 	return useMutation(getPutProfileMutationOptions(options));

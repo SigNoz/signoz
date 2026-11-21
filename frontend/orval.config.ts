@@ -20,9 +20,11 @@ export default defineConfig({
 		},
 		output: {
 			target: './src/api/generated/services',
+			schemas: './src/api/generated/services/sigNoz.schemas',
 			client: 'react-query',
 			httpClient: 'axios',
 			mode: 'tags-split',
+			indexFiles: false,
 			prettier: true,
 			headers: true,
 			clean: true,

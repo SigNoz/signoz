@@ -1,5 +1,5 @@
-import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRuleDTO';
+import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesMatchTypeDTO';
 
 import type { RuleMode } from './types';
 

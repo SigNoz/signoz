@@ -1,9 +1,7 @@
 import React from 'react';
-import type {
-	MetricsexplorertypesTreemapModeDTO,
-	MetricsexplorertypesTreemapResponseDTO,
-	Querybuildertypesv5OrderByDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
+import type { MetricsexplorertypesTreemapResponseDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapResponseDTO';
+import type { Querybuildertypesv5OrderByDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderByDTO';
 import type { Filter } from 'api/v5/v5';
 import type APIError from 'types/api/error';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';

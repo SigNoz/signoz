@@ -1,4 +1,4 @@
-import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTableThresholdDTO';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports -- global time still lives in redux
 import { useSelector } from 'react-redux';
 import { useReplaceVariables } from 'api/generated/services/querier';
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
 import { foldAISlot } from 'lib/query/builderSlot';
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';

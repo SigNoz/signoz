@@ -1,7 +1,5 @@
-import {
-	DashboardtypesAxisScaleDTO,
-	type DashboardtypesScatterPlotAxisDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxisScaleDTO';
+import type { DashboardtypesScatterPlotAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxisDTO';
 import type { ScatterSeries } from 'lib/visualization/charts/Scatter/types';
 import type { ScatterPointLabel } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 import type {

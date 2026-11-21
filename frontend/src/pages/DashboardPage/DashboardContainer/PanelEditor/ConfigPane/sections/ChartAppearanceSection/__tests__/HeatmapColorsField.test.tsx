@@ -1,9 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
-import {
-	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapColorScaleDTO,
-	DashboardtypesHeatmapPaletteDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import { DashboardtypesHeatmapColorScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorScaleDTO';
+import { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
 import { DEFAULT_COLOR_STEPS } from 'lib/visualization/colorRamp/colorScale';
 import { render, screen, userEvent } from 'tests/test-utils';
 

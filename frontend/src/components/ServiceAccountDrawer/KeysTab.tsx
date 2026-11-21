@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { KeyRound, X } from '@signozhq/icons';
 import { Pagination, Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesGettableFactorAPIKeyDTO';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import {

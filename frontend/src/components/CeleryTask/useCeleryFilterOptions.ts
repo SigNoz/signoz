@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DefaultOptionType } from 'antd/es/select';
-import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 
 import { useGetAllFilters } from './CeleryTaskConfigOptions/useGetCeleryFilters';

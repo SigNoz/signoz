@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import cx from 'classnames';
 import { PanelMode } from 'lib/visualization/panels/types';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';

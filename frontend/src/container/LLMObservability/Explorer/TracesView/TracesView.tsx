@@ -5,7 +5,7 @@ import type { QueryKey } from 'react-query';
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';

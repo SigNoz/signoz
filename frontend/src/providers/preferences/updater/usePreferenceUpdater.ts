@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {

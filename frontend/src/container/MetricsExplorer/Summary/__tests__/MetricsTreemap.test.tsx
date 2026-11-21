@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
 import store from 'store';
 import { TestRouter } from 'tests/router';
 

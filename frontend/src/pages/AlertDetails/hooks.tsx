@@ -15,17 +15,15 @@ import {
 	useGetRuleHistoryStats,
 	useGetRuleHistoryTopContributors,
 } from 'api/generated/services/rules';
-import {
-	Querybuildertypesv5OrderDirectionDTO,
-	RuletypesAlertStateDTO,
-	type GetRuleByID200,
-	type GetRuleHistoryOverallStatus200,
-	type GetRuleHistoryStats200,
-	type GetRuleHistoryTimeline200,
-	type GetRuleHistoryTopContributors200,
-	type RenderErrorResponseDTO,
-	type RuletypesPostableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import type { GetRuleByID200 } from 'api/generated/services/sigNoz.schemas/getRuleByID200';
+import type { GetRuleHistoryOverallStatus200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryOverallStatus200';
+import type { GetRuleHistoryStats200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryStats200';
+import type { GetRuleHistoryTimeline200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryTimeline200';
+import type { GetRuleHistoryTopContributors200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryTopContributors200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesPostableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPostableRuleDTO';
 import type { AxiosError } from 'axios';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

@@ -1,7 +1,5 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5ScalarDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5ScalarDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ScalarDataDTO';
 
 import {
 	extractAggregationsPerQuery,

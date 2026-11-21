@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import type { TableProps } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'utils/timeUtils';
 import type {

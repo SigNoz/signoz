@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import type { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesStatefulSetRecordDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';

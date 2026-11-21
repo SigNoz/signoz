@@ -1,7 +1,5 @@
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
 import {
 	parseAsInteger,
 	parseAsString,

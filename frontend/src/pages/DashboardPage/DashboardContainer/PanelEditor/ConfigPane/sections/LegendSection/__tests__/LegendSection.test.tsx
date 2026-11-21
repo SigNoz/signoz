@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
 
 import LegendSection from '../LegendSection';
 

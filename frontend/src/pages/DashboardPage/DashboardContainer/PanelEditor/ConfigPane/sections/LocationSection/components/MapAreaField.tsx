@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import {
-	type DashboardtypesGeoMapSettingsDTO,
-	DashboardtypesGeoMapViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
 import type { GeoMapPlacementSlice } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';

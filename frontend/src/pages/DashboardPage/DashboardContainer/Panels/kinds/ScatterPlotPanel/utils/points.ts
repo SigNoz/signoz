@@ -1,4 +1,4 @@
-import type { DashboardtypesScatterPlotPointsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotPointsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPointsDTO';
 import {
 	DEFAULT_SCATTER_POINT_SIZE,
 	type ScatterPointSize,

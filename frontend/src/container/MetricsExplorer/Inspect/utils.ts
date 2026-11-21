@@ -1,4 +1,4 @@
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import type {

@@ -10,7 +10,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import {
 	useCreateRule,

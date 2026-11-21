@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 
 import { dtoToFormModel } from '../DashboardSettings/Variables/variableAdapters';
 import { buildVariablesPayload } from '../queryV5/buildVariablesPayload';

@@ -1,8 +1,6 @@
-import {
-	DashboardtypesFillModeDTO,
-	DashboardtypesLineInterpolationDTO,
-	DashboardtypesLineStyleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillModeDTO';
+import { DashboardtypesLineInterpolationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineInterpolationDTO';
+import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';

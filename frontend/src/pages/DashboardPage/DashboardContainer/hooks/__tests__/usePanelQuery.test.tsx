@@ -1,10 +1,8 @@
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { act, renderHook } from '@testing-library/react';
-import {
-	type DashboardtypesPanelDTO,
-	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import type { PanelQueryCapabilities } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import {
 	DASHBOARD_CACHE_TIME,

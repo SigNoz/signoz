@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas/metrictypesComparisonSpaceAggregationParamDTO';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';

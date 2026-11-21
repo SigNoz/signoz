@@ -1,20 +1,18 @@
-import type {
-	AlertmanagertypesChannelConfigDTO,
-	AlertmanagertypesChannelEmailConfigDTO,
-	AlertmanagertypesChannelGoogleChatConfigDTO,
-	AlertmanagertypesChannelIncidentIOConfigDTO,
-	AlertmanagertypesChannelJiraConfigDTO,
-	AlertmanagertypesChannelJSMOpsConfigDTO,
-	AlertmanagertypesChannelMSTeamsConfigDTO,
-	AlertmanagertypesChannelOpsgenieConfigDTO,
-	AlertmanagertypesChannelPagerdutyConfigDTO,
-	AlertmanagertypesChannelSlackConfigDTO,
-	AlertmanagertypesChannelTelegramConfigDTO,
-	AlertmanagertypesChannelWebhookConfigDTO,
-	AlertmanagertypesPostableNotificationChannelDTO,
-	AlertmanagertypesTestableNotificationChannelDTO,
-	AlertmanagertypesUpdatableNotificationChannelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesChannelConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelConfigDTO';
+import type { AlertmanagertypesChannelEmailConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelEmailConfigDTO';
+import type { AlertmanagertypesChannelGoogleChatConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelGoogleChatConfigDTO';
+import type { AlertmanagertypesChannelIncidentIOConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelIncidentIOConfigDTO';
+import type { AlertmanagertypesChannelJiraConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelJiraConfigDTO';
+import type { AlertmanagertypesChannelJSMOpsConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelJSMOpsConfigDTO';
+import type { AlertmanagertypesChannelMSTeamsConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelMSTeamsConfigDTO';
+import type { AlertmanagertypesChannelOpsgenieConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelOpsgenieConfigDTO';
+import type { AlertmanagertypesChannelPagerdutyConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelPagerdutyConfigDTO';
+import type { AlertmanagertypesChannelSlackConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelSlackConfigDTO';
+import type { AlertmanagertypesChannelTelegramConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelTelegramConfigDTO';
+import type { AlertmanagertypesChannelWebhookConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelWebhookConfigDTO';
+import type { AlertmanagertypesPostableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPostableNotificationChannelDTO';
+import type { AlertmanagertypesTestableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesTestableNotificationChannelDTO';
+import type { AlertmanagertypesUpdatableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesUpdatableNotificationChannelDTO';
 import { omit, pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 

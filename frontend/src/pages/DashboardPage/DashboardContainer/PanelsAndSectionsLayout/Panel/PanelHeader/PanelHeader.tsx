@@ -1,10 +1,8 @@
 import { Fragment, useMemo } from 'react';
 import { Info, Loader } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import type {
-	DashboardtypesPanelDTO,
-	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryWarnDataDTO';
 import cx from 'classnames';
 import { createStore, useStore } from 'zustand';
 import type { PanelTimePreferenceLabel } from 'pages/DashboardPage/DashboardContainer/hooks/resolvePanelTimeWindow';

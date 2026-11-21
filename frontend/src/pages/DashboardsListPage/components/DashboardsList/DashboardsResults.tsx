@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import type { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
 
 import type { DashboardListItem } from '../../utils/helpers';
 import { noResultsCopy } from '../../utils/views';

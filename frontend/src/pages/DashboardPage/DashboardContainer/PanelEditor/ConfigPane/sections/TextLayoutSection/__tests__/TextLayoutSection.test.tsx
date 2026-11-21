@@ -6,10 +6,8 @@ import {
 	within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	DashboardtypesTextAlignDTO,
-	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTextAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
+import { DashboardtypesVerticalAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVerticalAlignDTO';
 import {
 	TEXT_BACKGROUND_PAIRS,
 	TRANSPARENT_BACKGROUND,

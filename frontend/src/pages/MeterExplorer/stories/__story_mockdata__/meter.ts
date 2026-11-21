@@ -3,26 +3,22 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetQuickFilters200,
-	ListMetrics200,
-	ListSavedViews200,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-	QuickfiltertypesSourceDTO,
-	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSchemaVersionDTO,
-	SavedviewtypesSourceDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetQuickFilters200 } from 'api/generated/services/sigNoz.schemas/getQuickFilters200';
+import type { ListMetrics200 } from 'api/generated/services/sigNoz.schemas/listMetrics200';
+import type { ListSavedViews200 } from 'api/generated/services/sigNoz.schemas/listSavedViews200';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import {
 	getLogCountWidgetData,

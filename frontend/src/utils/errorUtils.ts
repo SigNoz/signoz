@@ -1,5 +1,5 @@
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';

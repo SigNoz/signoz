@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 import { rgbaFromHex } from '../../kinds/TextPanel/background/contrast';
 import {

@@ -1,14 +1,12 @@
 import { useMutation, useQueryClient } from 'react-query';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import type {
-	AuthtypesPostableRoleDTO,
-	AuthtypesRoleDTO,
-	AuthtypesTransactionGroupDTO,
-	AuthtypesUpdatableRoleDTO,
-	AuthtypesRelationDTO,
-	CoretypesKindDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesPostableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesPostableRoleDTO';
+import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesRoleDTO';
+import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionGroupDTO';
+import type { AuthtypesUpdatableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesUpdatableRoleDTO';
+import type { AuthtypesRelationDTO } from 'api/generated/services/sigNoz.schemas/authtypesRelationDTO';
+import type { CoretypesKindDTO } from 'api/generated/services/sigNoz.schemas/coretypesKindDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import {
 	invalidateGetRole,
 	invalidateListRoles,

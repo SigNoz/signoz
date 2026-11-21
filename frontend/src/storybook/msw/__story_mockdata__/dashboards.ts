@@ -3,8 +3,8 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { ListDashboardsForUserV2200 } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ListDashboardsForUserV2200 } from 'api/generated/services/sigNoz.schemas/listDashboardsForUserV2200';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 
 /**
  * The dashboards every explorer offers to export a panel into. Only the name

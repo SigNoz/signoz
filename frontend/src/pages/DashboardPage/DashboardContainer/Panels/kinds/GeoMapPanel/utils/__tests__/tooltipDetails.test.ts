@@ -1,8 +1,6 @@
-import {
-	DashboardtypesGeoMapLayerDTO,
-	DashboardtypesGeoMapProjectionDTO,
-	DashboardtypesGeoMapViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import { DashboardtypesGeoMapProjectionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapProjectionDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import type {
 	PanelTable,

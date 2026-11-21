@@ -1,5 +1,5 @@
-import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import type {
 	CloudAccount,
 	GCPCloudAccountConfig,

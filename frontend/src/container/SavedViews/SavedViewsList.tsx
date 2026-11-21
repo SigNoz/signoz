@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
-import type {
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 
 import { SAVED_VIEWS_LIST_LOADING_ROWS } from './constants';

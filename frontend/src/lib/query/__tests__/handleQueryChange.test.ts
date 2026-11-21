@@ -1,4 +1,4 @@
-import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTOKind';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type {
 	IBuilderFormula,

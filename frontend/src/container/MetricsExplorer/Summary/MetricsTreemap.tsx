@@ -5,7 +5,7 @@ import { Treemap } from '@visx/hierarchy';
 import { Select, Skeleton, Tooltip } from 'antd';
 import Empty from 'periscope/components/Empty/Empty';
 import { Typography } from '@signozhq/ui/typography';
-import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import type { HierarchyNode } from 'd3-hierarchy';
 import { stratify, treemapBinary } from 'd3-hierarchy';

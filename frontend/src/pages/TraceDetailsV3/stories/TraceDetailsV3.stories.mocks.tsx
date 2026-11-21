@@ -5,11 +5,9 @@
 
 import { rest } from 'msw';
 import set from 'api/browser/localstorage/set';
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableTraceAggregationsDTO';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { screen, userEvent, within } from 'storybook/test';

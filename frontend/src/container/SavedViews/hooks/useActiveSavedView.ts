@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';

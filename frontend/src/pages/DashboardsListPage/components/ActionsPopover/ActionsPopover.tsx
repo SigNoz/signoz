@@ -6,7 +6,7 @@ import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import EditTagsModal from './EditTagsModal';
 import RenameDashboardModal from './RenameDashboardModal';
 import { useDashboardActionItems } from './useDashboardActionItems';
-import type { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 
 interface Props {
 	link: string;

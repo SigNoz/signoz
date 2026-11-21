@@ -1,7 +1,7 @@
 import { Pencil, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLinkDTO';
 
 import styles from './ContextLinksSection.module.scss';
 

@@ -5,10 +5,8 @@ import {
 	// eslint-disable-next-line no-restricted-imports -- this hook is the one sanctioned caller of patchDashboardV2; everything else goes through patchAsync.
 	patchDashboardV2,
 } from 'api/generated/services/dashboard';
-import type {
-	DashboardtypesJSONPatchOperationDTO,
-	GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 import type APIError from 'types/api/error';
 
 import { applyJsonPatch } from '../optimistic/applyJsonPatch';

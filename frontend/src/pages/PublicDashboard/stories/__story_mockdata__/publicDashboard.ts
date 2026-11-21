@@ -3,10 +3,8 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	GetPublicDashboardDataV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { GetPublicDashboardDataV2200 } from 'api/generated/services/sigNoz.schemas/getPublicDashboardDataV2200';
 
 /** The two shapes a published link can resolve to. */
 export const PUBLIC_SCHEMAS = ['v2', 'v1'] as const;

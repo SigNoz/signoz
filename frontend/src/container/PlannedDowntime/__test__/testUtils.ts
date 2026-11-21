@@ -1,11 +1,7 @@
-import type {
-	AlertmanagertypesScheduleDTO,
-	AlertmanagertypesPlannedMaintenanceDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AlertmanagertypesMaintenanceKindDTO,
-	AlertmanagertypesMaintenanceStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesScheduleDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesScheduleDTO';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
+import { AlertmanagertypesMaintenanceKindDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesMaintenanceKindDTO';
+import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesMaintenanceStatusDTO';
 
 export const buildSchedule = (
 	schedule: Partial<AlertmanagertypesScheduleDTO>,

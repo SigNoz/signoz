@@ -1,21 +1,17 @@
-import type {
-	AlertmanagertypesChannelEmailConfigDTO,
-	AlertmanagertypesChannelGoogleChatConfigDTO,
-	AlertmanagertypesChannelIncidentIOConfigDTO,
-	AlertmanagertypesChannelJiraAuthDTO,
-	AlertmanagertypesChannelJiraConfigDTO,
-	AlertmanagertypesChannelJSMOpsConfigDTO,
-	AlertmanagertypesChannelMSTeamsConfigDTO,
-	AlertmanagertypesChannelOpsgenieConfigDTO,
-	AlertmanagertypesChannelPagerdutyConfigDTO,
-	AlertmanagertypesChannelSlackConfigDTO,
-	AlertmanagertypesChannelTelegramConfigDTO,
-	AlertmanagertypesChannelWebhookConfigDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AlertmanagertypesChannelKindDTO,
-	AlertmanagertypesJiraDeploymentDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesChannelEmailConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelEmailConfigDTO';
+import type { AlertmanagertypesChannelGoogleChatConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelGoogleChatConfigDTO';
+import type { AlertmanagertypesChannelIncidentIOConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelIncidentIOConfigDTO';
+import type { AlertmanagertypesChannelJiraAuthDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelJiraAuthDTO';
+import type { AlertmanagertypesChannelJiraConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelJiraConfigDTO';
+import type { AlertmanagertypesChannelJSMOpsConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelJSMOpsConfigDTO';
+import type { AlertmanagertypesChannelMSTeamsConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelMSTeamsConfigDTO';
+import type { AlertmanagertypesChannelOpsgenieConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelOpsgenieConfigDTO';
+import type { AlertmanagertypesChannelPagerdutyConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelPagerdutyConfigDTO';
+import type { AlertmanagertypesChannelSlackConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelSlackConfigDTO';
+import type { AlertmanagertypesChannelTelegramConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelTelegramConfigDTO';
+import type { AlertmanagertypesChannelWebhookConfigDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelWebhookConfigDTO';
+import { AlertmanagertypesChannelKindDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelKindDTO';
+import { AlertmanagertypesJiraDeploymentDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesJiraDeploymentDTO';
 
 export const ChannelKind = AlertmanagertypesChannelKindDTO;
 export type ChannelKind = AlertmanagertypesChannelKindDTO;

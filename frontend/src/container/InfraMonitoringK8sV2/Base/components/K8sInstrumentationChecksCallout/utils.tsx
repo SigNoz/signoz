@@ -1,6 +1,6 @@
 import getLocalStorage from 'api/browser/localstorage/get';
-import type { InframonitoringtypesChecksDTO } from 'api/generated/services/sigNoz.schemas';
-import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesChecksDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesChecksDTO';
+import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesCheckTypeDTO';
 import { InfraMonitoringEntity } from '../../../constants';
 
 export const ENTITY_TO_CHECK_TYPE: Record<

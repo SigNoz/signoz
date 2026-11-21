@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesHeaderOptionsDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeaderOptionsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeaderOptionsDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 /**
  * Whether the panel opted out of its header strip (`headerOptions.hide`) —

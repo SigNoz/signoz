@@ -17,35 +17,59 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	AuthtypesPostableUserDTO,
-	AuthtypesPostableUserRoleDTO,
-	CreateResetPasswordToken201,
-	CreateResetPasswordTokenPathParameters,
-	CreateUser201,
-	CreateUserRole201,
-	DeleteUserPathParameters,
-	DeleteUserRolePathParameters,
-	GetMyUser200,
-	GetResetPasswordToken200,
-	GetResetPasswordTokenPathParameters,
-	GetRolesByUserID200,
-	GetRolesByUserIDPathParameters,
-	GetUser200,
-	GetUserPathParameters,
-	GetUserRole200,
-	GetUserRolePathParameters,
-	GetUsersByRoleID200,
-	GetUsersByRoleIDPathParameters,
-	ListUsers200,
-	RenderErrorResponseDTO,
-	TypesChangePasswordRequestDTO,
-	TypesPostableForgotPasswordDTO,
-	TypesPostableResetPasswordDTO,
-	TypesPostableVerifyResetPasswordTokenDTO,
-	TypesUpdatableUserDTO,
-	UpdateUserPathParameters,
-} from '../sigNoz.schemas';
+import type { AuthtypesPostableUserDTO } from '../sigNoz.schemas/authtypesPostableUserDTO';
+
+import type { AuthtypesPostableUserRoleDTO } from '../sigNoz.schemas/authtypesPostableUserRoleDTO';
+
+import type { CreateResetPasswordToken201 } from '../sigNoz.schemas/createResetPasswordToken201';
+
+import type { CreateResetPasswordTokenPathParameters } from '../sigNoz.schemas/createResetPasswordTokenPathParameters';
+
+import type { CreateUser201 } from '../sigNoz.schemas/createUser201';
+
+import type { CreateUserRole201 } from '../sigNoz.schemas/createUserRole201';
+
+import type { DeleteUserPathParameters } from '../sigNoz.schemas/deleteUserPathParameters';
+
+import type { DeleteUserRolePathParameters } from '../sigNoz.schemas/deleteUserRolePathParameters';
+
+import type { GetMyUser200 } from '../sigNoz.schemas/getMyUser200';
+
+import type { GetResetPasswordToken200 } from '../sigNoz.schemas/getResetPasswordToken200';
+
+import type { GetResetPasswordTokenPathParameters } from '../sigNoz.schemas/getResetPasswordTokenPathParameters';
+
+import type { GetRolesByUserID200 } from '../sigNoz.schemas/getRolesByUserID200';
+
+import type { GetRolesByUserIDPathParameters } from '../sigNoz.schemas/getRolesByUserIDPathParameters';
+
+import type { GetUser200 } from '../sigNoz.schemas/getUser200';
+
+import type { GetUserPathParameters } from '../sigNoz.schemas/getUserPathParameters';
+
+import type { GetUserRole200 } from '../sigNoz.schemas/getUserRole200';
+
+import type { GetUserRolePathParameters } from '../sigNoz.schemas/getUserRolePathParameters';
+
+import type { GetUsersByRoleID200 } from '../sigNoz.schemas/getUsersByRoleID200';
+
+import type { GetUsersByRoleIDPathParameters } from '../sigNoz.schemas/getUsersByRoleIDPathParameters';
+
+import type { ListUsers200 } from '../sigNoz.schemas/listUsers200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { TypesChangePasswordRequestDTO } from '../sigNoz.schemas/typesChangePasswordRequestDTO';
+
+import type { TypesPostableForgotPasswordDTO } from '../sigNoz.schemas/typesPostableForgotPasswordDTO';
+
+import type { TypesPostableResetPasswordDTO } from '../sigNoz.schemas/typesPostableResetPasswordDTO';
+
+import type { TypesPostableVerifyResetPasswordTokenDTO } from '../sigNoz.schemas/typesPostableVerifyResetPasswordTokenDTO';
+
+import type { TypesUpdatableUserDTO } from '../sigNoz.schemas/typesUpdatableUserDTO';
+
+import type { UpdateUserPathParameters } from '../sigNoz.schemas/updateUserPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -143,7 +167,7 @@ export function useGetMyUserDeprecated<
 
 /**
  * @deprecated
- * @summary Get my user
+ * @summary Invalidates the {@link useGetMyUserDeprecated} query
  */
 export const invalidateGetMyUserDeprecated = async (
 	queryClient: QueryClient,
@@ -174,6 +198,8 @@ export const forgotPassword = (
 	});
 };
 
+export const getForgotPasswordMutationKey = () => ['forgotPassword'] as const;
+
 export const getForgotPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -181,16 +207,16 @@ export const getForgotPasswordMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data?: BodyType<TypesPostableForgotPasswordDTO> },
+		ForgotPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data?: BodyType<TypesPostableForgotPasswordDTO> },
+	ForgotPasswordMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['forgotPassword'];
+	const mutationKey = getForgotPasswordMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -201,7 +227,7 @@ export const getForgotPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof forgotPassword>>,
-		{ data?: BodyType<TypesPostableForgotPasswordDTO> }
+		ForgotPasswordMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -218,6 +244,9 @@ export type ForgotPasswordMutationBody =
 	| BodyType<TypesPostableForgotPasswordDTO>
 	| undefined;
 export type ForgotPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ForgotPasswordMutationVariables = {
+	data?: BodyType<TypesPostableForgotPasswordDTO>;
+};
 
 /**
  * @summary Forgot password
@@ -229,13 +258,13 @@ export const useForgotPassword = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
 		TError,
-		{ data?: BodyType<TypesPostableForgotPasswordDTO> },
+		ForgotPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof forgotPassword>>,
 	TError,
-	{ data?: BodyType<TypesPostableForgotPasswordDTO> },
+	ForgotPasswordMutationVariables,
 	TContext
 > => {
 	return useMutation(getForgotPasswordMutationOptions(options));
@@ -257,6 +286,8 @@ export const resetPassword = (
 	});
 };
 
+export const getResetPasswordMutationKey = () => ['resetPassword'] as const;
+
 export const getResetPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -264,16 +295,16 @@ export const getResetPasswordMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		ResetPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	ResetPasswordMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['resetPassword'];
+	const mutationKey = getResetPasswordMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -284,7 +315,7 @@ export const getResetPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof resetPassword>>,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> }
+		ResetPasswordMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -301,6 +332,9 @@ export type ResetPasswordMutationBody =
 	| BodyType<TypesPostableResetPasswordDTO>
 	| undefined;
 export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ResetPasswordMutationVariables = {
+	data?: BodyType<TypesPostableResetPasswordDTO>;
+};
 
 /**
  * @summary Reset password
@@ -312,13 +346,13 @@ export const useResetPassword = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
 		TError,
-		{ data?: BodyType<TypesPostableResetPasswordDTO> },
+		ResetPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof resetPassword>>,
 	TError,
-	{ data?: BodyType<TypesPostableResetPasswordDTO> },
+	ResetPasswordMutationVariables,
 	TContext
 > => {
 	return useMutation(getResetPasswordMutationOptions(options));
@@ -340,6 +374,9 @@ export const verifyResetPasswordToken = (
 	});
 };
 
+export const getVerifyResetPasswordTokenMutationKey = () =>
+	['verifyResetPasswordToken'] as const;
+
 export const getVerifyResetPasswordTokenMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -347,16 +384,16 @@ export const getVerifyResetPasswordTokenMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
 		TError,
-		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		VerifyResetPasswordTokenMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
 	TError,
-	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	VerifyResetPasswordTokenMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['verifyResetPasswordToken'];
+	const mutationKey = getVerifyResetPasswordTokenMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -367,7 +404,7 @@ export const getVerifyResetPasswordTokenMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
-		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> }
+		VerifyResetPasswordTokenMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -385,6 +422,9 @@ export type VerifyResetPasswordTokenMutationBody =
 	| undefined;
 export type VerifyResetPasswordTokenMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type VerifyResetPasswordTokenMutationVariables = {
+	data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO>;
+};
 
 /**
  * @summary Verify a reset password token
@@ -396,13 +436,13 @@ export const useVerifyResetPasswordToken = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof verifyResetPasswordToken>>,
 		TError,
-		{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+		VerifyResetPasswordTokenMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof verifyResetPasswordToken>>,
 	TError,
-	{ data?: BodyType<TypesPostableVerifyResetPasswordTokenDTO> },
+	VerifyResetPasswordTokenMutationVariables,
 	TContext
 > => {
 	return useMutation(getVerifyResetPasswordTokenMutationOptions(options));
@@ -493,7 +533,7 @@ export function useGetUsersByRoleID<
 }
 
 /**
- * @summary Get users by role id
+ * @summary Invalidates the {@link useGetUsersByRoleID} query
  */
 export const invalidateGetUsersByRoleID = async (
 	queryClient: QueryClient,
@@ -525,6 +565,8 @@ export const createUserRole = (
 	});
 };
 
+export const getCreateUserRoleMutationKey = () => ['createUserRole'] as const;
+
 export const getCreateUserRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -532,16 +574,16 @@ export const getCreateUserRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createUserRole>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+		CreateUserRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createUserRole>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+	CreateUserRoleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createUserRole'];
+	const mutationKey = getCreateUserRoleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -552,7 +594,7 @@ export const getCreateUserRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createUserRole>>,
-		{ data?: BodyType<AuthtypesPostableUserRoleDTO> }
+		CreateUserRoleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -569,6 +611,9 @@ export type CreateUserRoleMutationBody =
 	| BodyType<AuthtypesPostableUserRoleDTO>
 	| undefined;
 export type CreateUserRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateUserRoleMutationVariables = {
+	data?: BodyType<AuthtypesPostableUserRoleDTO>;
+};
 
 /**
  * @summary Create user role
@@ -580,13 +625,13 @@ export const useCreateUserRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createUserRole>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+		CreateUserRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createUserRole>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableUserRoleDTO> },
+	CreateUserRoleMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateUserRoleMutationOptions(options));
@@ -606,6 +651,8 @@ export const deleteUserRole = (
 	});
 };
 
+export const getDeleteUserRoleMutationKey = () => ['deleteUserRole'] as const;
+
 export const getDeleteUserRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -613,16 +660,16 @@ export const getDeleteUserRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUserRole>>,
 		TError,
-		{ pathParams: DeleteUserRolePathParameters },
+		DeleteUserRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteUserRole>>,
 	TError,
-	{ pathParams: DeleteUserRolePathParameters },
+	DeleteUserRoleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteUserRole'];
+	const mutationKey = getDeleteUserRoleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -633,7 +680,7 @@ export const getDeleteUserRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteUserRole>>,
-		{ pathParams: DeleteUserRolePathParameters }
+		DeleteUserRoleMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -648,6 +695,9 @@ export type DeleteUserRoleMutationResult = NonNullable<
 >;
 
 export type DeleteUserRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteUserRoleMutationVariables = {
+	pathParams: DeleteUserRolePathParameters;
+};
 
 /**
  * @summary Delete user role
@@ -659,13 +709,13 @@ export const useDeleteUserRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUserRole>>,
 		TError,
-		{ pathParams: DeleteUserRolePathParameters },
+		DeleteUserRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteUserRole>>,
 	TError,
-	{ pathParams: DeleteUserRolePathParameters },
+	DeleteUserRoleMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteUserRoleMutationOptions(options));
@@ -754,7 +804,7 @@ export function useGetUserRole<
 }
 
 /**
- * @summary Get user role
+ * @summary Invalidates the {@link useGetUserRole} query
  */
 export const invalidateGetUserRole = async (
 	queryClient: QueryClient,
@@ -831,7 +881,7 @@ export function useListUsers<
 }
 
 /**
- * @summary List users v2
+ * @summary Invalidates the {@link useListUsers} query
  */
 export const invalidateListUsers = async (
 	queryClient: QueryClient,
@@ -862,6 +912,8 @@ export const createUser = (
 	});
 };
 
+export const getCreateUserMutationKey = () => ['createUser'] as const;
+
 export const getCreateUserMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -869,16 +921,16 @@ export const getCreateUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createUser>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		CreateUserMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createUser>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	CreateUserMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createUser'];
+	const mutationKey = getCreateUserMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -889,7 +941,7 @@ export const getCreateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createUser>>,
-		{ data?: BodyType<AuthtypesPostableUserDTO> }
+		CreateUserMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -906,6 +958,9 @@ export type CreateUserMutationBody =
 	| BodyType<AuthtypesPostableUserDTO>
 	| undefined;
 export type CreateUserMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateUserMutationVariables = {
+	data?: BodyType<AuthtypesPostableUserDTO>;
+};
 
 /**
  * @summary Create user
@@ -917,13 +972,13 @@ export const useCreateUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createUser>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableUserDTO> },
+		CreateUserMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createUser>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableUserDTO> },
+	CreateUserMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateUserMutationOptions(options));
@@ -943,6 +998,8 @@ export const deleteUser = (
 	});
 };
 
+export const getDeleteUserMutationKey = () => ['deleteUser'] as const;
+
 export const getDeleteUserMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -950,16 +1007,16 @@ export const getDeleteUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUser>>,
 		TError,
-		{ pathParams: DeleteUserPathParameters },
+		DeleteUserMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteUser>>,
 	TError,
-	{ pathParams: DeleteUserPathParameters },
+	DeleteUserMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteUser'];
+	const mutationKey = getDeleteUserMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -970,7 +1027,7 @@ export const getDeleteUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteUser>>,
-		{ pathParams: DeleteUserPathParameters }
+		DeleteUserMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -985,6 +1042,9 @@ export type DeleteUserMutationResult = NonNullable<
 >;
 
 export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteUserMutationVariables = {
+	pathParams: DeleteUserPathParameters;
+};
 
 /**
  * @summary Delete user
@@ -996,13 +1056,13 @@ export const useDeleteUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUser>>,
 		TError,
-		{ pathParams: DeleteUserPathParameters },
+		DeleteUserMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteUser>>,
 	TError,
-	{ pathParams: DeleteUserPathParameters },
+	DeleteUserMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteUserMutationOptions(options));
@@ -1081,7 +1141,7 @@ export function useGetUser<
 }
 
 /**
- * @summary Get user by user id
+ * @summary Invalidates the {@link useGetUser} query
  */
 export const invalidateGetUser = async (
 	queryClient: QueryClient,
@@ -1114,6 +1174,8 @@ export const updateUser = (
 	});
 };
 
+export const getUpdateUserMutationKey = () => ['updateUser'] as const;
+
 export const getUpdateUserMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1121,22 +1183,16 @@ export const getUpdateUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{
-			pathParams: UpdateUserPathParameters;
-			data?: BodyType<TypesUpdatableUserDTO>;
-		},
+		UpdateUserMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{
-		pathParams: UpdateUserPathParameters;
-		data?: BodyType<TypesUpdatableUserDTO>;
-	},
+	UpdateUserMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateUser'];
+	const mutationKey = getUpdateUserMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1147,10 +1203,7 @@ export const getUpdateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateUser>>,
-		{
-			pathParams: UpdateUserPathParameters;
-			data?: BodyType<TypesUpdatableUserDTO>;
-		}
+		UpdateUserMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1167,6 +1220,10 @@ export type UpdateUserMutationBody =
 	| BodyType<TypesUpdatableUserDTO>
 	| undefined;
 export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateUserMutationVariables = {
+	pathParams: UpdateUserPathParameters;
+	data?: BodyType<TypesUpdatableUserDTO>;
+};
 
 /**
  * @summary Update user v2
@@ -1178,19 +1235,13 @@ export const useUpdateUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{
-			pathParams: UpdateUserPathParameters;
-			data?: BodyType<TypesUpdatableUserDTO>;
-		},
+		UpdateUserMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{
-		pathParams: UpdateUserPathParameters;
-		data?: BodyType<TypesUpdatableUserDTO>;
-	},
+	UpdateUserMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateUserMutationOptions(options));
@@ -1282,7 +1333,7 @@ export function useGetResetPasswordToken<
 }
 
 /**
- * @summary Get reset password token for a user
+ * @summary Invalidates the {@link useGetResetPasswordToken} query
  */
 export const invalidateGetResetPasswordToken = async (
 	queryClient: QueryClient,
@@ -1312,6 +1363,9 @@ export const createResetPasswordToken = (
 	});
 };
 
+export const getCreateResetPasswordTokenMutationKey = () =>
+	['createResetPasswordToken'] as const;
+
 export const getCreateResetPasswordTokenMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1319,16 +1373,16 @@ export const getCreateResetPasswordTokenMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createResetPasswordToken>>,
 		TError,
-		{ pathParams: CreateResetPasswordTokenPathParameters },
+		CreateResetPasswordTokenMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createResetPasswordToken>>,
 	TError,
-	{ pathParams: CreateResetPasswordTokenPathParameters },
+	CreateResetPasswordTokenMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createResetPasswordToken'];
+	const mutationKey = getCreateResetPasswordTokenMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1339,7 +1393,7 @@ export const getCreateResetPasswordTokenMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createResetPasswordToken>>,
-		{ pathParams: CreateResetPasswordTokenPathParameters }
+		CreateResetPasswordTokenMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1355,6 +1409,9 @@ export type CreateResetPasswordTokenMutationResult = NonNullable<
 
 export type CreateResetPasswordTokenMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type CreateResetPasswordTokenMutationVariables = {
+	pathParams: CreateResetPasswordTokenPathParameters;
+};
 
 /**
  * @summary Create or regenerate reset password token for a user
@@ -1366,13 +1423,13 @@ export const useCreateResetPasswordToken = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createResetPasswordToken>>,
 		TError,
-		{ pathParams: CreateResetPasswordTokenPathParameters },
+		CreateResetPasswordTokenMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createResetPasswordToken>>,
 	TError,
-	{ pathParams: CreateResetPasswordTokenPathParameters },
+	CreateResetPasswordTokenMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateResetPasswordTokenMutationOptions(options));
@@ -1463,7 +1520,7 @@ export function useGetRolesByUserID<
 }
 
 /**
- * @summary Get user roles
+ * @summary Invalidates the {@link useGetRolesByUserID} query
  */
 export const invalidateGetRolesByUserID = async (
 	queryClient: QueryClient,
@@ -1540,7 +1597,7 @@ export function useGetMyUser<
 }
 
 /**
- * @summary Get my user v2
+ * @summary Invalidates the {@link useGetMyUser} query
  */
 export const invalidateGetMyUser = async (
 	queryClient: QueryClient,
@@ -1571,6 +1628,8 @@ export const updateMyUserV2 = (
 	});
 };
 
+export const getUpdateMyUserV2MutationKey = () => ['updateMyUserV2'] as const;
+
 export const getUpdateMyUserV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1578,16 +1637,16 @@ export const getUpdateMyUserV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
 		TError,
-		{ data?: BodyType<TypesUpdatableUserDTO> },
+		UpdateMyUserV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMyUserV2>>,
 	TError,
-	{ data?: BodyType<TypesUpdatableUserDTO> },
+	UpdateMyUserV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateMyUserV2'];
+	const mutationKey = getUpdateMyUserV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1598,7 +1657,7 @@ export const getUpdateMyUserV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
-		{ data?: BodyType<TypesUpdatableUserDTO> }
+		UpdateMyUserV2MutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1615,6 +1674,9 @@ export type UpdateMyUserV2MutationBody =
 	| BodyType<TypesUpdatableUserDTO>
 	| undefined;
 export type UpdateMyUserV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyUserV2MutationVariables = {
+	data?: BodyType<TypesUpdatableUserDTO>;
+};
 
 /**
  * @summary Update my user v2
@@ -1626,13 +1688,13 @@ export const useUpdateMyUserV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
 		TError,
-		{ data?: BodyType<TypesUpdatableUserDTO> },
+		UpdateMyUserV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMyUserV2>>,
 	TError,
-	{ data?: BodyType<TypesUpdatableUserDTO> },
+	UpdateMyUserV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateMyUserV2MutationOptions(options));
@@ -1654,6 +1716,9 @@ export const updateMyPassword = (
 	});
 };
 
+export const getUpdateMyPasswordMutationKey = () =>
+	['updateMyPassword'] as const;
+
 export const getUpdateMyPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1661,16 +1726,16 @@ export const getUpdateMyPasswordMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyPassword>>,
 		TError,
-		{ data?: BodyType<TypesChangePasswordRequestDTO> },
+		UpdateMyPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMyPassword>>,
 	TError,
-	{ data?: BodyType<TypesChangePasswordRequestDTO> },
+	UpdateMyPasswordMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateMyPassword'];
+	const mutationKey = getUpdateMyPasswordMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1681,7 +1746,7 @@ export const getUpdateMyPasswordMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMyPassword>>,
-		{ data?: BodyType<TypesChangePasswordRequestDTO> }
+		UpdateMyPasswordMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1698,6 +1763,9 @@ export type UpdateMyPasswordMutationBody =
 	| BodyType<TypesChangePasswordRequestDTO>
 	| undefined;
 export type UpdateMyPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyPasswordMutationVariables = {
+	data?: BodyType<TypesChangePasswordRequestDTO>;
+};
 
 /**
  * @summary Updates my password
@@ -1709,13 +1777,13 @@ export const useUpdateMyPassword = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyPassword>>,
 		TError,
-		{ data?: BodyType<TypesChangePasswordRequestDTO> },
+		UpdateMyPasswordMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMyPassword>>,
 	TError,
-	{ data?: BodyType<TypesChangePasswordRequestDTO> },
+	UpdateMyPasswordMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateMyPasswordMutationOptions(options));

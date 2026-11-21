@@ -1,7 +1,5 @@
-import {
-	Querybuildertypesv5RequestTypeDTO,
-	SavedviewtypesPanelTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';

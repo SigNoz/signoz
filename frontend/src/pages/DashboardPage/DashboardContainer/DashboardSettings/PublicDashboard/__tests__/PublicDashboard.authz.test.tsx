@@ -1,4 +1,4 @@
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';

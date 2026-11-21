@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Select } from 'antd';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { DataSource } from 'types/common/queryBuilder';
 import type { SelectOption } from 'types/common/select';
 // ** Helpers

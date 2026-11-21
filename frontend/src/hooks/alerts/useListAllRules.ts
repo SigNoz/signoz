@@ -4,7 +4,7 @@ import {
 	getListRulesV3QueryKey,
 	listRulesV3,
 } from 'api/generated/services/rules';
-import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
 import { range } from 'lodash-es';
 
 // The list API clamps any larger limit to 200.

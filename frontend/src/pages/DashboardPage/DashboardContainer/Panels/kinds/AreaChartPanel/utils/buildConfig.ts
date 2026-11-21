@@ -1,4 +1,4 @@
-import type { DashboardtypesAreaChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesAreaChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAreaChartPanelSpecDTO';
 import {
 	buildBaseConfig,
 	minStepInterval,

@@ -6,7 +6,7 @@ import {
 	useDeleteRole,
 } from 'api/generated/services/role';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import type APIError from 'types/api/error';
 

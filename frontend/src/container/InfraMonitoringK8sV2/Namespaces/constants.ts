@@ -1,4 +1,4 @@
-import type { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNamespaceRecordDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

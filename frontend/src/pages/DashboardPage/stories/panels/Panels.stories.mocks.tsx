@@ -6,14 +6,12 @@
 import { rest } from 'msw';
 import ROUTES from 'constants/routes';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
-import {
-	DashboardtypesHeatmapPaletteDTO as HeatmapPalette,
-	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
-	DashboardtypesLegendPositionDTO as LegendPosition,
-	DashboardtypesLineStyleDTO as LineStyle,
-	DashboardtypesStackModeDTO as StackMode,
-	DashboardtypesTextAlignDTO as TextAlign,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapPaletteDTO as HeatmapPalette } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
+import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesLegendPositionDTO as LegendPosition } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import { DashboardtypesLineStyleDTO as LineStyle } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import { DashboardtypesStackModeDTO as StackMode } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import { DashboardtypesTextAlignDTO as TextAlign } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 
 import {

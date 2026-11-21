@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import cx from 'classnames';
 
 import settingsStyles from '../DashboardSettings.module.scss';

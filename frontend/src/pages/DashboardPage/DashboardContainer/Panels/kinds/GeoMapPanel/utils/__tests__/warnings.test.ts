@@ -1,8 +1,6 @@
-import {
-	DashboardtypesGeoMapLocationModeDTO,
-	type DashboardtypesPanelDTO,
-	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { rememberSubdivisions } from 'lib/visualization/charts/GeoMap/geo/subdivisionCache';
 import type {
 	PanelQueryData,

@@ -1,15 +1,11 @@
 import type { UseQueryResult } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, screen } from '@testing-library/react';
-import type {
-	ListDowntimeSchedules200,
-	RenderErrorResponseDTO,
-	RuletypesListableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AlertmanagertypesRepeatOnDTO,
-	AlertmanagertypesRepeatTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListDowntimeSchedules200 } from 'api/generated/services/sigNoz.schemas/listDowntimeSchedules200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
+import { AlertmanagertypesRepeatOnDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesRepeatOnDTO';
+import { AlertmanagertypesRepeatTypeDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesRepeatTypeDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { render, userEvent } from 'tests/test-utils';

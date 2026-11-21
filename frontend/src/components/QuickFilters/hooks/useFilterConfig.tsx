@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useGetQuickFilters } from 'api/generated/services/quick-filter';
-import type { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import type { IQuickFiltersConfig } from '../types';

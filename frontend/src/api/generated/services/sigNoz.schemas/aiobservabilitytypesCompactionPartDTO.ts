@@ -1,0 +1,23 @@
+/**
+ * ! Do not edit manually
+ * * The file has been auto-generated using Orval for SigNoz
+ * * regenerate with 'pnpm generate:api'
+ * SigNoz
+ */
+import type { AiobservabilitytypesCompactionPartDTOType } from './aiobservabilitytypesCompactionPartDTOType';
+
+export interface AiobservabilitytypesCompactionPartDTO {
+	/**
+	 * @type string,null
+	 */
+	content?: string | null;
+	/**
+	 * @type string,null
+	 */
+	id?: string | null;
+	/**
+	 * @type string
+	 * @enum compaction
+	 */
+	type: AiobservabilitytypesCompactionPartDTOType;
+}

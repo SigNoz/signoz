@@ -1,36 +1,34 @@
-import type {
-	DashboardtypesLinkDTO,
-	DashboardtypesAxesDTO,
-	DashboardtypesComparisonThresholdDTO,
-	DashboardtypesFillModeDTO,
-	DashboardtypesFillOpacityDTO,
-	DashboardtypesGeoMapBubblesDTO,
-	DashboardtypesGeoMapColorsDTO,
-	DashboardtypesGeoMapPanelSpecDTO,
-	DashboardtypesGeoMapThresholdDTO,
-	DashboardtypesHeatmapAxesDTO,
-	DashboardtypesHeatmapColorsDTO,
-	DashboardtypesHeaderOptionsDTO,
-	DashboardtypesHistogramBucketsDTO,
-	DashboardtypesLegendDTO,
-	DashboardtypesLineInterpolationDTO,
-	DashboardtypesLineStyleDTO,
-	DashboardtypesPanelFormattingDTO,
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesScatterPlotAxesDTO,
-	DashboardtypesScatterPlotDimensionsDTO,
-	DashboardtypesScatterPlotPointsDTO,
-	DashboardtypesScatterPlotThresholdDTO,
-	DashboardtypesSpanGapsDTO,
-	DashboardtypesStackModeDTO,
-	DashboardtypesTableFormattingDTO,
-	DashboardtypesTableThresholdDTO,
-	DashboardtypesTextPresentationDTO,
-	DashboardtypesThresholdWithLabelDTO,
-	DashboardtypesTimePreferenceDTO,
-	DashboardtypesTopListAppearanceDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLinkDTO';
+import type { DashboardtypesAxesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxesDTO';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonThresholdDTO';
+import type { DashboardtypesFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillModeDTO';
+import type { DashboardtypesFillOpacityDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillOpacityDTO';
+import type { DashboardtypesGeoMapBubblesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapBubblesDTO';
+import type { DashboardtypesGeoMapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapColorsDTO';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
+import type { DashboardtypesGeoMapThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapThresholdDTO';
+import type { DashboardtypesHeatmapAxesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapAxesDTO';
+import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorsDTO';
+import type { DashboardtypesHeaderOptionsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeaderOptionsDTO';
+import type { DashboardtypesHistogramBucketsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHistogramBucketsDTO';
+import type { DashboardtypesLegendDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendDTO';
+import type { DashboardtypesLineInterpolationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineInterpolationDTO';
+import type { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import type { DashboardtypesPanelFormattingDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelFormattingDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { DashboardtypesScatterPlotAxesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxesDTO';
+import type { DashboardtypesScatterPlotDimensionsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotDimensionsDTO';
+import type { DashboardtypesScatterPlotPointsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPointsDTO';
+import type { DashboardtypesScatterPlotThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotThresholdDTO';
+import type { DashboardtypesSpanGapsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSpanGapsDTO';
+import type { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import type { DashboardtypesTableFormattingDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTableFormattingDTO';
+import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTableThresholdDTO';
+import type { DashboardtypesTextPresentationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextPresentationDTO';
+import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdWithLabelDTO';
+import type { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
+import type { DashboardtypesTopListAppearanceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTopListAppearanceDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
 import type { Hash } from '@signozhq/icons';
 import {

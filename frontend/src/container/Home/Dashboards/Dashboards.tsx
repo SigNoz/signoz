@@ -4,10 +4,8 @@ import { AppLink } from 'lib/router/AppLink';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';

@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Button, Card } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetRuleByID } from 'api/generated/services/rules';
-import type {
-	RenderErrorResponseDTO,
-	RuletypesRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
 import type { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';

@@ -10,12 +10,10 @@ import {
 	useListRuleViews,
 	useUpdateRuleView,
 } from 'api/generated/services/rules';
-import type {
-	ListRuleViews200,
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleViewDTO,
-	RuletypesRuleViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListRuleViews200 } from 'api/generated/services/sigNoz.schemas/listRuleViews200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesPostableRuleViewDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPostableRuleViewDTO';
+import type { RuletypesRuleViewDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleViewDTO';
 import type { AxiosError } from 'axios';
 import type { SavedListViewsApi } from 'components/ListViews/types';
 

@@ -1,9 +1,7 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
-import type {
-	AuthtypesAuthDomainConfigGoogleDTO,
-	AuthtypesGettableAuthDomainDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesAuthDomainConfigGoogleDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigGoogleDTO';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import {

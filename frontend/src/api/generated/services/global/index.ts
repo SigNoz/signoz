@@ -14,10 +14,9 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetGlobalConfig200,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { GetGlobalConfig200 } from '../sigNoz.schemas/getGlobalConfig200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -112,7 +111,7 @@ export function useGetGlobalConfig<
 }
 
 /**
- * @summary Get global config
+ * @summary Invalidates the {@link useGetGlobalConfig} query
  */
 export const invalidateGetGlobalConfig = async (
 	queryClient: QueryClient,

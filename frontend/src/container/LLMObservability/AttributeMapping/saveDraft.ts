@@ -1,10 +1,8 @@
 import { isEqual } from 'lodash-es';
-import type {
-	SpantypesPostableSpanMapperDTO,
-	SpantypesPostableSpanMapperGroupDTO,
-	SpantypesUpdatableSpanMapperDTO,
-	SpantypesUpdatableSpanMapperGroupDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesPostableSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperDTO';
+import type { SpantypesPostableSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperGroupDTO';
+import type { SpantypesUpdatableSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesUpdatableSpanMapperDTO';
+import type { SpantypesUpdatableSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesUpdatableSpanMapperGroupDTO';
 
 import type { DraftGroup, DraftMapper, SourceConfig } from './types';
 import {

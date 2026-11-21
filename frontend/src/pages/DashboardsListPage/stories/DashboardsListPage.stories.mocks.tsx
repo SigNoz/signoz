@@ -10,11 +10,9 @@ import {
 	type RestRequest,
 } from 'msw';
 import logEvent from 'api/common/logEvent';
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 import ROUTES from 'constants/routes';
 import {
 	buildDashboardDeletePermission,

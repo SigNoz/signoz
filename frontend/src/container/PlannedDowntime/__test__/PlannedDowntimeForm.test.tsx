@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import { PlannedDowntimeForm } from '../PlannedDowntimeForm';

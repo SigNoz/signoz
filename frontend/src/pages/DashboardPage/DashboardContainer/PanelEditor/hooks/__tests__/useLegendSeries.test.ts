@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/PieChartPanel/prepareData';

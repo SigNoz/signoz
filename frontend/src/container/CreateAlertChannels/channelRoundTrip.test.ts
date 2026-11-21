@@ -1,4 +1,4 @@
-import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesGettableNotificationChannelDTO';
 
 import { toChannelConfig, toUpdatableChannel } from './channelConfig';
 import { toChannelFormState } from './channelFormValues';

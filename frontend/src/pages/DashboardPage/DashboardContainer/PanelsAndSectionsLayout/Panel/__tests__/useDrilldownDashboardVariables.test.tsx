@@ -1,6 +1,6 @@
 import { render, renderHook, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDynamicVariableSignalDTO';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 
 import DrilldownDashboardVariablesMenu from '../DrilldownMenu/DrilldownDashboardVariablesMenu';

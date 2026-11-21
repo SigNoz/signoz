@@ -1,9 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import {
-	DashboardtypesGeoMapProjectionDTO,
-	type DashboardtypesGeoMapLocationDTO,
-	type DashboardtypesGeoMapSettingsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapProjectionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapProjectionDTO';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
 import {
 	detectLocationColumns,
 	findCoordinateColumns,

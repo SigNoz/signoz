@@ -1,4 +1,4 @@
-import type { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodRecordDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

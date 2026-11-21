@@ -1,7 +1,5 @@
-import type {
-	CloudintegrationtypesServiceDashboardDTO,
-	CloudintegrationtypesServiceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesServiceDashboardDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceDashboardDTO';
+import type { CloudintegrationtypesServiceDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceDTO';
 
 import DashboardCard from './DashboardCard';
 import './ServiceDashboards.styles.scss';

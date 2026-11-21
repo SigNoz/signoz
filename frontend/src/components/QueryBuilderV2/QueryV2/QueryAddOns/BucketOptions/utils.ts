@@ -1,13 +1,9 @@
-import type {
-	Querybuildertypesv5BucketOptionsDTO,
-	Querybuildertypesv5BucketOptionsLinearDTO,
-	Querybuildertypesv5BucketOptionsLogDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5BucketOptionsLinearDTOKind,
-	Querybuildertypesv5BucketOptionsLogDTOKind,
-	Querybuildertypesv5BucketsKindDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
+import type { Querybuildertypesv5BucketOptionsLinearDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLinearDTO';
+import type { Querybuildertypesv5BucketOptionsLogDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTO';
+import { Querybuildertypesv5BucketOptionsLinearDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLinearDTOKind';
+import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLogDTOKind';
+import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketsKindDTO';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
 import {

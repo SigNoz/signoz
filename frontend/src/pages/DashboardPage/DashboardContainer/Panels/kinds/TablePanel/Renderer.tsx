@@ -7,7 +7,7 @@ import {
 	type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { Table } from 'antd';
-import type { DashboardtypesTablePanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTablePanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTablePanelSpecDTO';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';

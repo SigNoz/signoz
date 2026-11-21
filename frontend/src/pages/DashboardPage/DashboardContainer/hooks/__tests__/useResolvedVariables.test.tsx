@@ -1,8 +1,6 @@
 import { renderHook } from '@testing-library/react';
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesVariableDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVariableDTO';
 
 import { selectResolvedVariables } from '../../store/slices/variableSelectionSlice';
 import { useDashboardStore } from '../../store/useDashboardStore';

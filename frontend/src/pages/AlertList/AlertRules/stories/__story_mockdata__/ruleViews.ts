@@ -3,15 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	type ListRuleViews200,
-	type ListRulesV3200,
-	type RenderErrorResponseDTO,
-	RuletypesAlertStateDTO,
-	RuletypesListOrderDTO,
-	RuletypesListSortDTO,
-	type RuletypesRuleViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListRuleViews200 } from 'api/generated/services/sigNoz.schemas/listRuleViews200';
+import type { ListRulesV3200 } from 'api/generated/services/sigNoz.schemas/listRulesV3200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import { RuletypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListOrderDTO';
+import { RuletypesListSortDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListSortDTO';
+import type { RuletypesRuleViewDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleViewDTO';
 
 import {
 	alertRulesResponse,

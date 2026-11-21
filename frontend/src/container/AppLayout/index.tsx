@@ -14,7 +14,7 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
 import logEvent from 'api/common/logEvent';
 import { updateSubscription } from 'api/generated/services/subscriptions';
-import type { UpdateSubscription200 } from 'api/generated/services/sigNoz.schemas';
+import type { UpdateSubscription200 } from 'api/generated/services/sigNoz.schemas/updateSubscription200';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';

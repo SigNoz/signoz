@@ -1,5 +1,5 @@
 import type { SelectItemType } from '@signozhq/ui/select';
-import { AlertmanagertypesChannelKindDTO } from 'api/generated/services/sigNoz.schemas';
+import { AlertmanagertypesChannelKindDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelKindDTO';
 
 export const SEARCH_KEY = 'search';
 export const KIND_KEY = 'kind';

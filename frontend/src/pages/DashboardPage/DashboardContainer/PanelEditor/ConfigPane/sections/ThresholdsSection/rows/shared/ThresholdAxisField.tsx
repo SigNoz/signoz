@@ -1,5 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
-import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
 
 import ConfigTiles, {
 	type ConfigTileItem,

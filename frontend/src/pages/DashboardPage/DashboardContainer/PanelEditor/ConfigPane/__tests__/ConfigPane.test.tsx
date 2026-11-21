@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { EQueryType } from 'types/common/dashboard';
 

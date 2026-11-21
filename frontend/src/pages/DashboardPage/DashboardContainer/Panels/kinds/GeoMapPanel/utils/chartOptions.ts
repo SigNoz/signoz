@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesGeoMapChartAppearanceDTO,
-	DashboardtypesGeoMapColorsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapChartAppearanceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapChartAppearanceDTO';
+import type { DashboardtypesGeoMapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapColorsDTO';
 import type {
 	GeoMapColorKey,
 	GeoMapColors,

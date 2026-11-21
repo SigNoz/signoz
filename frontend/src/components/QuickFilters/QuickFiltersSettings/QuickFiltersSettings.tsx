@@ -2,7 +2,7 @@ import { Button as SignozButton } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
-import type { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import AddedFilters from './AddedFilters';

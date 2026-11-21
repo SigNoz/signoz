@@ -1,7 +1,7 @@
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ActionsPopover from './ActionsPopover';
-import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 
 const baseProps = {
 	link: '/dashboard/abc',

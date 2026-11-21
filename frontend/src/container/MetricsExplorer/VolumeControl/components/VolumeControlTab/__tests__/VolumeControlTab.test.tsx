@@ -2,8 +2,8 @@ import {
 	useGetMetricReductionRuleStats,
 	useListMetricReductionRules,
 } from 'api/generated/services/metrics';
-import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
-import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRuleDTO';
+import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesMatchTypeDTO';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { render, screen } from 'tests/test-utils';
 

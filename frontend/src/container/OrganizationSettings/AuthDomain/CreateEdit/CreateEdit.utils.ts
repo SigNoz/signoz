@@ -1,17 +1,13 @@
-import type {
-	AuthtypesAuthDomainConfigDTO,
-	AuthtypesGettableAuthDomainDTO,
-	AuthtypesGoogleConfigDTO,
-	AuthtypesOIDCConfigDTO,
-	AuthtypesRoleMappingDTO,
-	AuthtypesSamlConfigDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
-	AuthtypesAuthNProviderDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesAuthDomainConfigDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigDTO';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
+import type { AuthtypesGoogleConfigDTO } from 'api/generated/services/sigNoz.schemas/authtypesGoogleConfigDTO';
+import type { AuthtypesOIDCConfigDTO } from 'api/generated/services/sigNoz.schemas/authtypesOIDCConfigDTO';
+import type { AuthtypesRoleMappingDTO } from 'api/generated/services/sigNoz.schemas/authtypesRoleMappingDTO';
+import type { AuthtypesSamlConfigDTO } from 'api/generated/services/sigNoz.schemas/authtypesSamlConfigDTO';
+import { AuthtypesAuthDomainConfigGoogleDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigGoogleDTOKind';
+import { AuthtypesAuthDomainConfigOIDCDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigOIDCDTOKind';
+import { AuthtypesAuthDomainConfigSAMLDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigSAMLDTOKind';
+import { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthNProviderDTO';
 
 /**
  * Maps the config envelope's per-variant kind to the provider enum driving the

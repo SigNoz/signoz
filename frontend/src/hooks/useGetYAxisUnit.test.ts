@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricMetadataDTO';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { useGetMetrics } from 'container/MetricsExplorer/Explorer/utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

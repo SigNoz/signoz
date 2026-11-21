@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
