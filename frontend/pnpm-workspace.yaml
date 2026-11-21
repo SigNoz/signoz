@@ -40,9 +40,9 @@ overrides:
  # remove: blocked. The direct dep is already on 3.4.17, but @grafana/data
  #         (latest 13.1.0) and monaco-editor (latest 0.55.1) still pin vulnerable versions
  dompurify@<=3.4.16: '>=3.4.17 <4'
- # via: rolldown-vite@7.3.1 (esbuild ^0.27.0); ts-jest@29.4.9 (~0.27.4)
- # remove: blocked on rolldown-vite (7.3.1 is latest, still ^0.27.0);
- #         orval >=8.20.0 and ts-jest >=29.4.11 already fixed on their side
+ # via: ts-jest@29.4.9 (~0.27.4)
+ # remove: blocked on ts-jest; orval >=8.20.0 and ts-jest >=29.4.11 already
+ #         fixed on their side
  esbuild@>=0.27.3 <0.28.1: '>=0.28.1 <0.29.0'
  # via: @commitlint/cli > @commitlint/config-validator > ajv@8 (fast-uri ^3.0.1)
  # remove: blocked — ajv@8 caps fast-uri at ^3, and only 3.1.9 carries the fix
