@@ -1,5 +1,5 @@
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ThresholdProps } from 'types/api/widgets/threshold';
 import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import onClickPlugin from 'lib/uPlotLib/plugins/onClickPlugin';

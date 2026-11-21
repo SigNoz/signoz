@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 

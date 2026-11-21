@@ -12,7 +12,7 @@ import { Compass, Crosshair, X } from '@signozhq/icons';
 import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { PANEL_TYPES } from '../../../constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';

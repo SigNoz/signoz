@@ -1,4 +1,5 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
 import { cloneDeep, set } from 'lodash-es';
 import type {

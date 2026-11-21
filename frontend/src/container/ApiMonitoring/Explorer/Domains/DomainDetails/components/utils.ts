@@ -1,6 +1,6 @@
 import type { ExecStats } from 'api/v5/v5';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';

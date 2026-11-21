@@ -1,8 +1,8 @@
 import {
 	initialQueryBuilderFormValues,
 	OPERATORS,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {

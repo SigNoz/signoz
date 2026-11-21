@@ -1,6 +1,6 @@
 import { fetchExportData } from 'api/v1/download/downloadExportData';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	downloadFile,
 	getTimestampedFileName,

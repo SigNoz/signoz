@@ -2,8 +2,8 @@ import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/t
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,
-	type PANEL_TYPES,
 } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';

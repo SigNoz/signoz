@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import { CornerUpRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useIsRowHovered } from 'components/TanStackTableView/TanStackTableStateContext';
 import {
 	logOpenTraceClicked,

@@ -4,7 +4,7 @@ import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ChevronDown, ChevronUp, CornerUpRight } from '@signozhq/icons';
 import { useGetTraceSummary } from 'api/generated/services/tracedetail';
 import type { HeaderAction } from 'components/DetailsPanel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { UseRowNavigationResult } from 'components/TanStackTableView/useRowNavigation';
 import {
 	logOpenTraceClicked,

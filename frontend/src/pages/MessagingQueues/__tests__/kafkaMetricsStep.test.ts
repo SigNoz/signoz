@@ -1,5 +1,5 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { Widgets } from 'types/api/widgets/widget';
 

@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { buildExplorerNavigationUrl } from '../buildExplorerNavigationUrl';

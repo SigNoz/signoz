@@ -1,5 +1,5 @@
 import type { TelemetryFieldKey } from 'api/v5/v5';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 
 import type { PREFERENCE_SOURCE_PAGES } from '../constants';

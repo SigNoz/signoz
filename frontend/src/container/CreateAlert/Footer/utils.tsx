@@ -1,6 +1,6 @@
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import type {
 	BasicThreshold,

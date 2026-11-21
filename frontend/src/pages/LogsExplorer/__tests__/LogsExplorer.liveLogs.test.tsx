@@ -1,5 +1,5 @@
 import * as panelTypesQueryParamHooks from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { fireEvent, render, screen } from 'tests/test-utils';

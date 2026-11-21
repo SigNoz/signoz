@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilderFields.types';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { DataSource } from 'types/common/queryBuilder';
 
 export type QueryBuilderConfig =

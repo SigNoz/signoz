@@ -8,7 +8,7 @@ import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import Uplot from 'components/Uplot';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import { getLocalStorageGraphVisibilityState } from 'container/WidgetCard/Card/utils';

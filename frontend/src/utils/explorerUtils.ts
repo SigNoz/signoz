@@ -1,5 +1,5 @@
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { SIGNOZ_VALUE } from 'container/QueryBuilder/filters/OrderByFilter/constants';
 import {

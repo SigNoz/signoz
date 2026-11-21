@@ -4,8 +4,8 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/s
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

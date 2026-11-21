@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { UseQueryResult } from 'react-query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { isBuilderQueryType } from 'lib/query/builderSlot';
 import type { ContextLinksData } from 'types/api/widgets/widget';

@@ -1,5 +1,5 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 // Source pages that keep column and formatting preferences.
 export const PREFERENCE_SOURCE_PAGES = [

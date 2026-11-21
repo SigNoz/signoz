@@ -3,7 +3,7 @@ import { Grid2X2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ExportPanelContainer from 'container/ExportPanel/ExportPanelContainer';
 import type { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 import { useGetExportToDashboardLink } from 'hooks/dashboard/useGetExportToDashboardLink';

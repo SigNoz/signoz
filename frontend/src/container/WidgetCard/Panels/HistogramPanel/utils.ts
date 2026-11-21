@@ -1,5 +1,5 @@
 import { histogramBucketSizes } from '@grafana/data';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DEFAULT_BUCKET_COUNT } from 'lib/visualization/constants';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';

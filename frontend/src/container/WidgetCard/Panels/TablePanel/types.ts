@@ -1,6 +1,6 @@
 import type { TableProps } from 'antd';
 import type { PrecisionOption } from 'components/Graph/types';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
 import type {
 	ThresholdOperators,

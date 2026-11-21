@@ -3,7 +3,8 @@ import { useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';

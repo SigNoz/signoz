@@ -8,11 +8,8 @@ import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import {
-	initialFilters,
-	initialQueriesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialFilters, initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import GoToTop from 'container/GoToTop';

@@ -5,11 +5,8 @@ import { Typography } from '@signozhq/ui/typography';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
-import {
-	initialQueriesMap,
-	OPERATORS,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueriesMap, OPERATORS } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import LogsError from 'container/LogsError/LogsError';

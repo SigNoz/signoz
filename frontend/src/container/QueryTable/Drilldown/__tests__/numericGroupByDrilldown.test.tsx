@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
 import type { Querybuildertypesv5BuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BuilderQuerySpecDTO';
 import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	fromPerses,
 	toPerses,

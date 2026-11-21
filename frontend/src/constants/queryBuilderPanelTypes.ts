@@ -1,0 +1,17 @@
+export enum PANEL_TYPES {
+	TIME_SERIES = 'graph',
+	VALUE = 'value',
+	TABLE = 'table',
+	LIST = 'list',
+	TRACE = 'trace',
+	BAR = 'bar',
+	AREA = 'area',
+	SCATTER = 'scatter',
+	PIE = 'pie',
+	HISTOGRAM = 'histogram',
+	HEATMAP = 'heatmap',
+	GEO_MAP = 'geo_map',
+	TOP_LIST = 'top_list',
+	TEXT = 'text',
+	EMPTY_WIDGET = 'EMPTY_WIDGET',
+}

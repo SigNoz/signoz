@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Loader } from '@signozhq/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 import { processContextLinks } from 'utils/contextLinks/utils';
 import useContextVariables from 'hooks/dashboard/useContextVariables';

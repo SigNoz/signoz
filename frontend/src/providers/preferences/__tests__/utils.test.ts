@@ -1,5 +1,5 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import { hasPreferences, isPreferenceSourcePage } from '../utils';
 

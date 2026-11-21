@@ -1,5 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ColumnUnit } from 'types/api/widgets/columnUnit';
 
 export type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';

@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { DataSource } from 'types/common/queryBuilder';
 

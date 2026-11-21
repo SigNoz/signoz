@@ -4,7 +4,7 @@ import { Drawer } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { X } from '@signozhq/icons';

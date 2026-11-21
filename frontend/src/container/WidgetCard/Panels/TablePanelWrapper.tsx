@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import GridTableComponent from 'container/WidgetCard/Panels/TablePanel';
 import { GRID_TABLE_CONFIG } from 'container/WidgetCard/Panels/TablePanel/config';
 

@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { themeColors } from 'constants/theme';
 import type { FlattenSimpleInterpolation } from 'styled-components';
 import styled, { css } from 'styled-components';

@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 /**
  * Whether the panel type plots time on X. Graph and bar do; the rest drawn through

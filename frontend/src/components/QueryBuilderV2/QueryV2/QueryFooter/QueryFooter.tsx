@@ -3,7 +3,7 @@ import { getActiveBuilder } from 'lib/query/builderSlot';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DraftingCompass, Plus, Sigma } from '@signozhq/icons';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';

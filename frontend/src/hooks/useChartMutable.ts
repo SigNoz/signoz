@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { PanelTypeAndGraphManagerVisibilityProps } from 'container/WidgetCard/Card/FullView/types';
 import type { PanelTypeKeys } from 'types/common/queryBuilder';
 

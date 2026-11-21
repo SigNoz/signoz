@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 /** Panels that reduce each query to one value per group over the whole window. */
 const SCALAR_PANEL_TYPES: ReadonlySet<string> = new Set<string>([

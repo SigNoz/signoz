@@ -48,6 +48,7 @@ import {
 	metricsSumSpaceAggregateOperatorOptions,
 	tracesAggregateOperatorOptions,
 } from './queryBuilderOperators';
+export { PANEL_TYPES } from './queryBuilderPanelTypes';
 
 export const MAX_FORMULAS = 20;
 export const MAX_QUERIES = 26;
@@ -321,24 +322,6 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	number: Object.values(NumberOperators),
 	bool: Object.values(BoolOperators),
 };
-
-export enum PANEL_TYPES {
-	TIME_SERIES = 'graph',
-	VALUE = 'value',
-	TABLE = 'table',
-	LIST = 'list',
-	TRACE = 'trace',
-	BAR = 'bar',
-	AREA = 'area',
-	SCATTER = 'scatter',
-	PIE = 'pie',
-	HISTOGRAM = 'histogram',
-	HEATMAP = 'heatmap',
-	GEO_MAP = 'geo_map',
-	TOP_LIST = 'top_list',
-	TEXT = 'text',
-	EMPTY_WIDGET = 'EMPTY_WIDGET',
-}
 
 export enum PANEL_GROUP_TYPES {
 	ROW = 'row',

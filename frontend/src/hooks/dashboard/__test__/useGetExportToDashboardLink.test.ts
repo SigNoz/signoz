@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useGetExportToDashboardLink } from '../useGetExportToDashboardLink';

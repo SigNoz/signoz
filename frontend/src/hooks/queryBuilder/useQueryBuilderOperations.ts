@@ -15,8 +15,8 @@ import {
 	initialQueryBuilderFormValuesMap,
 	listViewInitialLogQuery,
 	listViewInitialTraceQuery,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	metricsGaugeSpaceAggregateOperatorOptions,
 	metricsHeatmapHistogramSpaceAggregateOperatorOptions,

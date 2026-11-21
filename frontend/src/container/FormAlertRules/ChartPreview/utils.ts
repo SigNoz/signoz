@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import type { ExecStats } from 'api/v5/v5';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Threshold } from 'container/CreateAlert/context/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';

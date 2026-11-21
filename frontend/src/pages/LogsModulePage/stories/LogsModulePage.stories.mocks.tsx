@@ -7,7 +7,7 @@ import setLocalStorage from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { FontSize, type LogViewMode } from 'container/OptionsMenu/types';
 import { rest } from 'msw';

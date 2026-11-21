@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import type { GlobalTimeStoreApi } from 'store/globalTime';

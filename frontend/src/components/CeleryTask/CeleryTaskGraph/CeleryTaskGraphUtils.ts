@@ -5,7 +5,7 @@ import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/se
 import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
 import { Querybuildertypesv5ReduceToDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ReduceToDTO';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getFiltersFromKeyValue } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';

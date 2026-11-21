@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { render, screen, userEvent } from 'tests/test-utils';
 import type { IBuilderFormula } from 'types/api/queryBuilder/queryBuilderData';
 

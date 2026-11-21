@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

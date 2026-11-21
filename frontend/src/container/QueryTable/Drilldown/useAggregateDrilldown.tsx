@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { UseQueryResult } from 'react-query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ContextLinksData } from 'types/api/widgets/widget';
 import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

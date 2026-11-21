@@ -1,5 +1,5 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { celeryOverviewErrorRateGraphData } from 'pages/Celery/CeleryOverview/CeleryOverviewGraphUtils';
 import type { Widgets } from 'types/api/widgets/widget';
 

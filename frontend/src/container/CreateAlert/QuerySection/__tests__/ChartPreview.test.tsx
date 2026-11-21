@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	INITIAL_ALERT_STATE,
 	INITIAL_ALERT_THRESHOLD_STATE,

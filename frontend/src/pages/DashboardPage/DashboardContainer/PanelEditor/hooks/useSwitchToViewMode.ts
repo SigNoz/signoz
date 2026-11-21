@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';

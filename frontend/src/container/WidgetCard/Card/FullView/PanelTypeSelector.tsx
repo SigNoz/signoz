@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { PanelTypesWithData } from 'container/WidgetCard/panelTypeItems';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

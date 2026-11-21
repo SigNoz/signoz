@@ -1,4 +1,5 @@
-import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
+import { OPERATORS } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import cloneDeep from 'lodash-es/cloneDeep';
 import type {
 	IBuilderQuery,

@@ -1,7 +1,8 @@
 import React from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { ENVIRONMENT } from 'constants/env';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { noop } from 'lodash-es';
 import { PAGE_SIZE } from 'mocks-server/__mockdata__/logs_query_range';

@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
 import type { IAppContext } from 'providers/App/types';

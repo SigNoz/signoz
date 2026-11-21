@@ -1,4 +1,4 @@
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { EQueryType } from 'types/common/dashboard';
 
 import type { SuccessResponse, Warning } from '..';

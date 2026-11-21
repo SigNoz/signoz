@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 

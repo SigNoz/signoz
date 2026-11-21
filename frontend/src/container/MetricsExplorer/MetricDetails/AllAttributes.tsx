@@ -15,7 +15,7 @@ import {
 	SquareArrowOutUpRight,
 } from '@signozhq/icons';
 
-import { PANEL_TYPES } from '../../../constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';

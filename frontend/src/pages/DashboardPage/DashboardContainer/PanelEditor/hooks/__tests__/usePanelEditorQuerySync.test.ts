@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getIsQueryModified } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';

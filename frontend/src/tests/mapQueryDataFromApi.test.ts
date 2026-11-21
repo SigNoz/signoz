@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {

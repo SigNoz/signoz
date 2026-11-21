@@ -3,7 +3,7 @@ import {
 	type MessageActionDTOQuery,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 export function getPanelTypeForRequestType(
 	requestType: unknown,

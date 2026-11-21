@@ -25,9 +25,9 @@ import {
 	initialSingleQueryMap,
 	MAX_FORMULAS,
 	MAX_QUERIES,
-	PANEL_TYPES,
 	TRACE_OPERATOR_QUERY_NAME,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { panelTypeDataSourceFormValuesMap } from 'lib/query/panelTypeDataSourceFormValuesMap';

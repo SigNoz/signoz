@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
 /**

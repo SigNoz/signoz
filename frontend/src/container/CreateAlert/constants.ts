@@ -1,8 +1,8 @@
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
 import {
 	AlertTypes,

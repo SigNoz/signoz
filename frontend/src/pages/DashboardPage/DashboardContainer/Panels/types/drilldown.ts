@@ -1,5 +1,5 @@
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 

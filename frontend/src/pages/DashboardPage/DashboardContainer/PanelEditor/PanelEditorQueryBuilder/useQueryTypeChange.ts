@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { EQueryType } from 'types/common/dashboard';
 

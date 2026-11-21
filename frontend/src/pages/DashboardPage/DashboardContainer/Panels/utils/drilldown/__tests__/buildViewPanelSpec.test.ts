@@ -1,5 +1,5 @@
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getSwitchedPluginSpec } from 'pages/DashboardPage/DashboardContainer/PanelEditor/getSwitchedPluginSpec';
 import { PANEL_TYPE_TO_PANEL_KIND } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import { toPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';

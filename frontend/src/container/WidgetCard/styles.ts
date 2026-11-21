@@ -1,7 +1,7 @@
 import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button as ButtonComponent, Card as CardComponent } from 'antd';
 import Space from 'periscope/components/Space/Space';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { StyledCSS } from 'types/styledComponents';
 import styled, { css } from 'styled-components';
 

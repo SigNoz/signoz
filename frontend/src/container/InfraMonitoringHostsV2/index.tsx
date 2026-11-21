@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';

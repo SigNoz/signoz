@@ -1,5 +1,5 @@
 import type { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { getFieldColumn } from 'container/TracesExplorer/TracesTable/getFieldColumn';

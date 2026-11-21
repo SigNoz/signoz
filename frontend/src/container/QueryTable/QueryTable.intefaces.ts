@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { TableColumnsType as ColumnsType, TableProps } from 'antd';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { DownloadOptions } from 'container/Download/Download.types';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import type { ContextLinksData } from 'types/api/widgets/widget';

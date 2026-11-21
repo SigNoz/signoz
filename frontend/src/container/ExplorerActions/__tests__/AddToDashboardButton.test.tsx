@@ -1,5 +1,6 @@
 import logEvent from 'api/common/logEvent';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	getExportQueryData as getLogsExportQuery,
 	getQueryByPanelType as getLogsQueryByPanelType,

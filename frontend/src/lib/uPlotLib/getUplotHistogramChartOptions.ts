@@ -1,6 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import type { Dispatch, SetStateAction } from 'react';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
 import type { Dimensions } from 'hooks/useDimensions';

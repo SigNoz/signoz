@@ -3,8 +3,8 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';

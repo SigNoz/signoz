@@ -3,7 +3,7 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';

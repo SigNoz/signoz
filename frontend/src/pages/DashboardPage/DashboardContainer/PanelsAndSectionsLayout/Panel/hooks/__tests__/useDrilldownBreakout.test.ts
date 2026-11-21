@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { AggregateData } from 'container/QueryTable/Drilldown/useAggregateDrilldown';
 import { renderHook } from 'tests/test-utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

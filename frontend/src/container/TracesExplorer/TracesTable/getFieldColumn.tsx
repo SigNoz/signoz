@@ -2,7 +2,7 @@ import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import { TIMESTAMP_FIELD_NAMES } from './constants';
 import FieldCell from './FieldCell';

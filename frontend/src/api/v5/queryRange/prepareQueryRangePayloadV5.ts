@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable sonarjs/no-identical-functions */
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
