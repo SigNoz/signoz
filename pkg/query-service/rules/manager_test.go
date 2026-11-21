@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,6 +29,57 @@ import (
 
 	cmock "github.com/SigNoz/clickhouse-go-mock"
 )
+
+// The task and rule maps are written under the write lock by addTask,
+// editTask and deleteTask. Every reader must take the read lock: a
+// concurrent map read and map write is an unrecoverable Go fatal error,
+// so one unsynchronised read takes the whole query-service process down
+// and alert evaluation with it.
+func TestManager_ConcurrentMapAccess(t *testing.T) {
+	m, err := NewManager(&ManagerOptions{})
+	require.NoError(t, err)
+
+	const iterations = 500
+
+	// syncRuleStateWithTask reads m.tasks to decide whether a rule already
+	// has a task. A disabled rule whose task is absent takes the read and
+	// returns, so this exercises the read on its own.
+	readTasks := func() {
+		rule := &ruletypes.PostableRule{Disabled: true}
+		for i := 0; i < iterations; i++ {
+			require.NoError(t, m.syncRuleStateWithTask(
+				context.Background(), valuer.GenerateUUID(), "absent-task", rule,
+			))
+		}
+	}
+
+	// GetRule and PatchRule read m.rules through ruleByID to report a
+	// stored rule's in-memory state.
+	readRules := func() {
+		for i := 0; i < iterations; i++ {
+			m.ruleByID("absent-rule")
+		}
+	}
+
+	// addTask and deleteTask write both maps under m.mtx.Lock().
+	writeBoth := func() {
+		for i := 0; i < iterations; i++ {
+			m.mtx.Lock()
+			m.tasks["written-task"] = nil
+			m.rules["written-rule"] = nil
+			delete(m.tasks, "written-task")
+			delete(m.rules, "written-rule")
+			m.mtx.Unlock()
+		}
+	}
+
+	var wg sync.WaitGroup
+	for _, fn := range []func(){readTasks, readRules, writeBoth, readTasks, readRules, writeBoth} {
+		wg.Add(1)
+		go func(f func()) { defer wg.Done(); f() }(fn)
+	}
+	wg.Wait()
+}
 
 func TestManager_ListRules_ValidatesParams(t *testing.T) {
 	m, err := NewManager(&ManagerOptions{})
