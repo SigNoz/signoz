@@ -351,18 +351,24 @@ func (q *querier) applyFunctions(result *qbtypes.Result, functions []qbtypes.Fun
 // applyFormulas processes formula queries in the composite query.
 func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes.Result, req *qbtypes.QueryRangeRequest) map[string]*qbtypes.Result {
 	// Collect formula queries
+	var formulaOrder []string
 	formulaQueries := make(map[string]qbtypes.QueryBuilderFormula)
 
 	for _, query := range req.CompositeQuery.Queries {
 		if query.Type == qbtypes.QueryTypeFormula {
 			if formula, ok := query.Spec.(qbtypes.QueryBuilderFormula); ok {
+				if _, exists := formulaQueries[formula.Name]; !exists {
+					formulaOrder = append(formulaOrder, formula.Name)
+				}
 				formulaQueries[formula.Name] = formula
 			}
 		}
 	}
 
-	// Process each formula
-	for name, formula := range formulaQueries {
+	// Process each formula in topological dependency order so that referenced formulas
+	// are always evaluated before dependent formulas.
+	for _, formula := range sortFormulasByDependency(formulaQueries, formulaOrder) {
+		name := formula.Name
 
 		for idx := range formula.Order {
 			if formula.Order[idx].Key.Name == formula.Name || formula.Order[idx].Key.Name == formula.Expression {
@@ -399,6 +405,108 @@ func (q *querier) applyFormulas(ctx context.Context, results map[string]*qbtypes
 	}
 
 	return results
+}
+
+// sortFormulasByDependency returns formulas in topological dependency order so that
+// any formula referenced by another formula is evaluated first. Within the same
+// dependency level, declaration order is preserved. Cycles are broken gracefully
+// using declaration order.
+func sortFormulasByDependency(
+	formulas map[string]qbtypes.QueryBuilderFormula,
+	formulaOrder []string,
+) []qbtypes.QueryBuilderFormula {
+	if len(formulas) <= 1 {
+		result := make([]qbtypes.QueryBuilderFormula, 0, len(formulas))
+		for _, name := range formulaOrder {
+			if f, ok := formulas[name]; ok {
+				result = append(result, f)
+			}
+		}
+		return result
+	}
+
+	declOrder := make(map[string]int, len(formulaOrder))
+	for i, name := range formulaOrder {
+		declOrder[name] = i
+	}
+
+	// Build dependency graph: name -> list of formula names that `name` depends on
+	deps := make(map[string][]string, len(formulas))
+	for name, f := range formulas {
+		expr, err := govaluate.NewEvaluableExpression(f.Expression)
+		if err != nil {
+			deps[name] = nil
+			continue
+		}
+		seen := make(map[string]bool)
+		var formulaDeps []string
+		for _, v := range expr.Vars() {
+			base := strings.SplitN(v, ".", 2)[0]
+			if _, isFormula := formulas[base]; isFormula && base != name && !seen[base] {
+				seen[base] = true
+				formulaDeps = append(formulaDeps, base)
+			}
+		}
+		deps[name] = formulaDeps
+	}
+
+	// inDegree tracks how many formulas this formula directly depends on
+	inDegree := make(map[string]int, len(formulas))
+	// revDeps tracks which formulas depend on this formula: dep -> dependents
+	revDeps := make(map[string][]string, len(formulas))
+	for name := range formulas {
+		inDegree[name] = len(deps[name])
+		for _, dep := range deps[name] {
+			revDeps[dep] = append(revDeps[dep], name)
+		}
+	}
+
+	var ready []string
+	for name := range formulas {
+		if inDegree[name] == 0 {
+			ready = append(ready, name)
+		}
+	}
+	slices.SortFunc(ready, func(a, b string) int {
+		return declOrder[a] - declOrder[b]
+	})
+
+	result := make([]qbtypes.QueryBuilderFormula, 0, len(formulas))
+	visited := make(map[string]bool, len(formulas))
+
+	for len(ready) > 0 {
+		name := ready[0]
+		ready = ready[1:]
+		if visited[name] {
+			continue
+		}
+		visited[name] = true
+		result = append(result, formulas[name])
+
+		for _, dependent := range revDeps[name] {
+			inDegree[dependent]--
+			if inDegree[dependent] == 0 {
+				ready = append(ready, dependent)
+			}
+		}
+		slices.SortFunc(ready, func(a, b string) int {
+			return declOrder[a] - declOrder[b]
+		})
+	}
+
+	// Fallback for cycles or any remaining formulas: append in declaration order
+	if len(result) < len(formulas) {
+		for _, name := range formulaOrder {
+			if !visited[name] {
+				if f, ok := formulas[name]; ok {
+					visited[name] = true
+					result = append(result, f)
+				}
+			}
+		}
+	}
+
+	return result
 }
 
 // processTimeSeriesFormula handles formula evaluation for time series data.
