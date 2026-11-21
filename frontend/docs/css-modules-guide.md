@@ -10,8 +10,8 @@
 - [ ] No hardcoded colors - use `--l1/l2/l3-*` semantic tokens (not `--bg-*` primitives)
 - [ ] No magic numbers - use `--spacing-*` tokens
 - [ ] Typography uses `--{variant}-{size}-{weight}-*` text style tokens (see Typography)
-- [ ] @signozhq/ui overrides use CSS variables, not direct class overrides
-- [ ] Global escapes only for third-party overrides
+- [ ] No overrides of `@signozhq/ui` components (see below)
+- [ ] Global escapes only for third-party overrides (`@signozhq/ui` is not third-party)
 - [ ] No ID selectors
 - [ ] No bare element selectors
 - [ ] Keyframes are declared in the module with plain `@keyframes name` (already local)
@@ -289,82 +289,31 @@ Use L1/L2/L3 semantic tokens - they handle light/dark theme automatically.
 - L2 = elevated surfaces (cards, panels)
 - L3 = nested/inset elements
 
-## Overriding @signozhq/ui Components
+## @signozhq/ui Components
 
-Components expose CSS variables for customization.
+Don't override them. That covers setting a component's `--<component>-*` CSS variables, targeting its classes or `data-*` attributes through `:global(...)`, and restyling it with `className` or `style`. An override keeps working until the component changes, then breaks with no type error or lint warning, and the screen drifts from every other one using that component.
 
-You can ensure they exist by looking at ./node_modules/@signozhq/ui/dist.
-Never write a override without confirm it exists.
-
-Override via:
-
-### Method 1: CSS Variables (Preferred)
-
-Each component exposes `--<component>-<property>` variables:
+- Use the component's props (`variant`, `color`, `size`, ...) for how it looks.
+- Put layout (position, margin, width inside a flex or grid parent) on a wrapper element you own.
+- If the component can't do what the design needs, file a [UI suggestion](https://github.com/SigNoz/uforge-pod/issues/new?template=ui-suggestion.yml) in `SigNoz/uforge-pod` and ship with the component as it renders until the suggestion is decided. Link the issue in the PR.
 
 ```scss
-// Override Button
-.customButton {
+// BAD: Restyling the component
+.saveButton {
   --button-primary-background-color: var(--success-background);
-  --button-border-radius: var(--radius-2);
-  --button-padding: var(--spacing-4) var(--spacing-8);
-  --button-font-size: var(--label-base-400-font-size);
 }
 
-// Override Input
-.customInput {
-  --input-md-height: 2.5rem;
-  --input-border-color: var(--l2-border);
-  --input-padding: var(--spacing-2) var(--spacing-6);
-  --input-placeholder-color: var(--l3-foreground);
-}
-```
-
-### Method 2: Data Attributes
-
-Components use data attributes for variants/states. Target them for state-specific overrides:
-
-```scss
-// Target variant
-.wrapper :global([data-variant="outlined"]) {
+.toolbar :global([data-variant="outlined"]) {
   --button-variant-outlined-border: 1px solid var(--accent-primary);
 }
 
-// Target size
-.wrapper :global([data-size="sm"]) {
-  --button-font-size: var(--label-small-400-font-size);
-}
-
-// Target color
-.wrapper :global([data-color="danger"]) {
-  --button-danger-background-color: var(--danger-background);
-}
-
-// Target state (Radix patterns)
-.popover :global([data-state="open"]) {
-  opacity: 1;
-}
-
-.tooltip :global([data-side="top"]) {
-  margin-bottom: var(--spacing-2);
+// GOOD: Layout on your own wrapper, looks from props
+.toolbarActions {
+  display: flex;
+  gap: var(--spacing-4);
+  margin-left: auto;
 }
 ```
-
-### Common Component CSS Variables
-
-**Button:**
-- `--button-<color>-background-color`, `--button-border-radius`, `--button-padding`
-- `--button-font-size`, `--button-height`, `--button-gap`
-- `--button-<color>-hover-background-color`, `--button-disabled-opacity`
-
-**Input:**
-- `--input-sm-height`, `--input-md-height`, `--input-lg-height`
-- `--input-border-color`, `--input-background`
-- `--input-padding`, `--input-font-size`, `--input-placeholder-color`
-- `--input-focus-ring-color`, `--input-hover-border-color`
-- `--input-adornment-*` for prefix and suffix adornments
-
-**General pattern:** `--<component>-<property>` or `--<component>-<state>-<property>`
 
 ## Good Patterns
 
