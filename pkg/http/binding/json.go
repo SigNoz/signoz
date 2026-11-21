@@ -1,6 +1,7 @@
 package binding
 
 import (
+	"bufio"
 	"encoding/json"
 	"io"
 	"strings"
@@ -83,7 +84,27 @@ func (b *jsonBinding) BindBody(body io.Reader, obj any, opts ...BindBodyOption) 
 		return err
 	}
 
-	return nil
+	// A request body is one JSON document, not a stream of values. Include
+	// bytes already buffered by the decoder, and stop at the first non-space
+	// byte instead of allocating another potentially large JSON value.
+	remainder := bufio.NewReader(io.MultiReader(decoder.Buffered(), body))
+	for {
+		c, err := remainder.ReadByte()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		switch c {
+		case ' ', '\t', '\r', '\n':
+			continue
+		default:
+			return errors.
+				New(errors.TypeInvalidInput, ErrCodeInvalidRequestBody, ErrMessageInvalidJSON).
+				WithAdditional("request body must contain a single JSON value")
+		}
+	}
 }
 
 // extractUnknownField pulls fieldname out of a `json: unknown field "fieldname"`

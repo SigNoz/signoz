@@ -3,8 +3,11 @@ package binding
 import (
 	"encoding/json"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -143,4 +146,72 @@ func TestJSONBinding_BindBody_PassesThroughStructuredUnknownField(t *testing.T) 
 	assert.Equal(t, errors.CodeInvalidInput, c)
 	assert.Equal(t, `unknown field "foo" in inner spec`, m)
 	assert.Equal(t, []string{"did you mean: `bar`"}, errors.AsJSON(err).Suggestions)
+}
+
+func TestJSONBindingRejectsTrailingData(t *testing.T) {
+	for _, suffix := range []string{
+		`{"a": 20}`, `null`, `[]`, `true`, `42`, `"extra"`,
+		`garbage`, `{"incomplete":`, `]`, "\u00a0", "\u2003",
+	} {
+		t.Run(suffix, func(t *testing.T) {
+			var target struct {
+				A int `json:"a"`
+			}
+			err := JSON.BindBody(strings.NewReader(`{"a":11} `+suffix), &target)
+			if !assert.Error(t, err) {
+				return
+			}
+			typ, code, message, _, _, _ := errors.Unwrapb(err)
+			assert.Equal(t, errors.TypeInvalidInput, typ)
+			assert.Equal(t, ErrCodeInvalidRequestBody, code)
+			assert.Equal(t, ErrMessageInvalidJSON, message)
+		})
+	}
+}
+
+func TestJSONBindingAllowsTrailingWhitespace(t *testing.T) {
+	for _, suffix := range []string{"", " ", "\r\n\t "} {
+		t.Run(suffix, func(t *testing.T) {
+			var target s
+			err := JSON.BindBody(strings.NewReader(`{"a":11}`+suffix), &target)
+			assert.NoError(t, err)
+			assert.Equal(t, 11, target.A)
+		})
+	}
+}
+
+func TestJSONBindingTrailingDataAcrossReads(t *testing.T) {
+	for _, suffix := range []string{"", " \n\t", strings.Repeat(" ", 8192), " {}", " junk"} {
+		t.Run(suffix[:min(len(suffix), 20)], func(t *testing.T) {
+			var target map[string]json.Number
+			body := iotest.OneByteReader(strings.NewReader(`{"a":9007199254740993}` + suffix))
+			err := JSON.BindBody(body, &target, WithUseNumber(true), WithDisallowUnknownFields(true))
+			if strings.Contains(suffix, "{") || strings.Contains(suffix, "junk") {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, json.Number("9007199254740993"), target["a"])
+			}
+		})
+	}
+}
+
+func TestJSONBindingTrailingReadError(t *testing.T) {
+	var target struct{}
+	body := io.MultiReader(strings.NewReader("{} \r\n\t"), &failingJSONReader{})
+	assert.ErrorIs(t, JSON.BindBody(body, &target), io.ErrClosedPipe)
+}
+
+type failingJSONReader struct{}
+
+func (*failingJSONReader) Read([]byte) (int, error) {
+	return 0, io.ErrClosedPipe
+}
+
+func TestJSONBindingTrailingWhitespaceRespectsBodyLimit(t *testing.T) {
+	var target struct{}
+	body := http.MaxBytesReader(httptest.NewRecorder(), io.NopCloser(strings.NewReader(`{}`+strings.Repeat(" ", 100))), 32)
+	defer body.Close()
+	var limitError *http.MaxBytesError
+	assert.ErrorAs(t, JSON.BindBody(body, &target), &limitError)
 }
