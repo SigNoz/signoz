@@ -83,6 +83,7 @@ type nonFlushingResponseCapture struct {
 	forceCaptureBody bool
 	bodyBytesLeft    int
 	statusCode       int
+	wroteHeader      bool
 	writeError       error
 }
 
@@ -103,12 +104,19 @@ func (writer *nonFlushingResponseCapture) Header() http.Header {
 
 // WriteHeader writes the HTTP response header.
 func (writer *nonFlushingResponseCapture) WriteHeader(statusCode int) {
-	writer.statusCode = statusCode
-	if statusCode >= 400 || writer.forceCaptureBody {
-		writer.captureBody = true
+	if writer.wroteHeader {
+		return
+	}
+
+	// Informational responses do not commit the final response, except for
+	// Switching Protocols, which takes over the connection.
+	if statusCode >= 100 && statusCode < 200 && statusCode != http.StatusSwitchingProtocols {
+		writer.rw.WriteHeader(statusCode)
+		return
 	}
 
 	writer.rw.WriteHeader(statusCode)
+	writer.recordFinalStatus(statusCode)
 }
 
 func (writer *nonFlushingResponseCapture) EnableBodyCapture() {
@@ -117,8 +125,10 @@ func (writer *nonFlushingResponseCapture) EnableBodyCapture() {
 
 // Write writes HTTP response data.
 func (writer *nonFlushingResponseCapture) Write(data []byte) (int, error) {
-	if writer.statusCode == 0 {
-		writer.WriteHeader(http.StatusOK)
+	if !writer.wroteHeader {
+		// Let the underlying Write send its implicit header so content-type
+		// sniffing and other ResponseWriter behavior stay unchanged.
+		writer.recordFinalStatus(http.StatusOK)
 	}
 
 	if writer.statusCode == 204 {
@@ -160,7 +170,16 @@ func (writer *nonFlushingResponseCapture) BodyBytes() []byte {
 }
 
 func (writer *flushingResponseCapture) Flush() {
+	if !writer.wroteHeader {
+		writer.recordFinalStatus(http.StatusOK)
+	}
 	writer.f.Flush()
+}
+
+func (writer *nonFlushingResponseCapture) recordFinalStatus(statusCode int) {
+	writer.wroteHeader = true
+	writer.statusCode = statusCode
+	writer.captureBody = statusCode >= 400 || writer.forceCaptureBody
 }
 
 func (writer *nonFlushingResponseCapture) captureResponseBody(data []byte) {
