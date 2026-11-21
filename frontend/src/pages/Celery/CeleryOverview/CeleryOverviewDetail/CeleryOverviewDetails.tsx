@@ -12,6 +12,7 @@ import { getFiltersFromKeyValue } from '../CeleryOverviewUtils';
 import OverviewRightPanelGraph from './OverviewRightPanelGraph';
 import ValueInfo from './ValueInfo';
 
+import 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail.style.scss';
 import './CeleryOverviewDetails.styles.scss';
 
 export default function CeleryOverviewDetails({
