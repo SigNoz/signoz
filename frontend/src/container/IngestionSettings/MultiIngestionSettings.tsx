@@ -83,6 +83,7 @@ import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
+import 'components/LearnMore/LearnMore.styles.scss';
 import './IngestionSettings.styles.scss';
 
 const { Option } = Select;
