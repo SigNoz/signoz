@@ -295,7 +295,9 @@ function CustomTimePickerPopoverContent({
 					)}
 				>
 					{customDateTimeVisible ? (
-						<Suspense fallback={<CalendarContainerFallback />}>
+						<Suspense
+							fallback={<CalendarContainerFallback month={dateRange?.from} />}
+						>
 							<CalendarContainer
 								dateRange={dateRange}
 								onSelectDateRange={handleSelectDateRange}

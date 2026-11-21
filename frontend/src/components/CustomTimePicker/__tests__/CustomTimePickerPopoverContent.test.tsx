@@ -67,7 +67,11 @@ describe('CustomTimePickerPopoverContent calendar', () => {
 	it('holds the calendar slot with a fallback until the calendar loads', async () => {
 		renderPopoverContent({ customDateTimeVisible: true });
 
-		expect(screen.getByTestId('calendar-container-fallback')).toBeInTheDocument();
+		expect(
+			screen
+				.getByTestId('calendar-container-fallback')
+				.style.getPropertyValue('--calendar-week-count'),
+		).toBe('5');
 
 		await expect(
 			screen.findByTestId('calendar-container'),
