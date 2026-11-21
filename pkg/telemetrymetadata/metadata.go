@@ -1564,6 +1564,26 @@ func tagKeyCondition(sb *sqlbuilder.SelectBuilder, name string, names []string) 
 	return sb.E("tag_key", name)
 }
 
+// tagKeyTypeCondition matches the requested key under the selector's context.
+// A context can be part of a stored name, so the context-prefixed spelling
+// (log.file.path for file.path under log) matches under any context.
+func tagKeyTypeCondition(sb *sqlbuilder.SelectBuilder, selector *telemetrytypes.FieldValueSelector, names []string) string {
+	keyCondition := tagKeyCondition(sb, selector.Name, names)
+	if selector.FieldContext == telemetrytypes.FieldContextUnspecified {
+		return keyCondition
+	}
+
+	prefix := selector.FieldContext.StringValue() + "."
+	prefixedNames := make([]string, len(names))
+	for i, name := range names {
+		prefixedNames[i] = prefix + name
+	}
+	return sb.Or(
+		sb.And(keyCondition, sb.E("tag_type", selector.FieldContext.TagType())),
+		tagKeyCondition(sb, prefix+selector.Name, prefixedNames),
+	)
+}
+
 // tagTableSinceDay restricts rows to the tag table's day partitions from the
 // start's day on. Partitions are toDate(unix_milli / 1000) in the server's
 // timezone, and a value's surviving row within a day carries whichever hour
@@ -1579,11 +1599,8 @@ func tagTableSinceDay(sb *sqlbuilder.SelectBuilder, startUnixMilli int64) {
 // the values true and false.
 func (t *telemetryMetaStore) tagTableHasBoolRows(ctx context.Context, table string, selector *telemetrytypes.FieldValueSelector, names []string) (bool, error) {
 	sb := sqlbuilder.Select("1").From(table)
-	sb.Where(tagKeyCondition(sb, selector.Name, names))
+	sb.Where(tagKeyTypeCondition(sb, selector, names))
 	sb.Where(sb.E("tag_data_type", telemetrytypes.FieldDataTypeBool.TagDataType()))
-	if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.Where(sb.E("tag_type", selector.FieldContext.TagType()))
-	}
 	tagTableSinceDay(sb, selector.StartUnixMilli)
 	sb.Limit(1)
 
@@ -1624,15 +1641,13 @@ func (t *telemetryMetaStore) getTagTableValues(ctx context.Context, table string
 	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(table)
 
 	if fieldValueSelector.Name != "" {
-		sb.Where(tagKeyCondition(sb, fieldValueSelector.Name, names))
+		sb.Where(tagKeyTypeCondition(sb, fieldValueSelector, names))
+	} else if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		sb.Where(sb.E("tag_type", fieldValueSelector.FieldContext.TagType()))
 	}
 	sb.Where(sb.NE("tag_data_type", telemetrytypes.FieldDataTypeBool.TagDataType()))
 
 	tagTableSinceDay(sb, fieldValueSelector.StartUnixMilli)
-
-	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
-		sb.Where(sb.E("tag_type", fieldValueSelector.FieldContext.TagType()))
-	}
 
 	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
 		sb.Where(sb.E("tag_data_type", fieldValueSelector.FieldDataType.TagDataType()))
