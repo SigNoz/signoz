@@ -845,17 +845,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
-						<Suspense fallback={null}>
-							<AIAssistantPanel />
-							<AIAssistantModal />
-						</Suspense>
+						<Sentry.ErrorBoundary>
+							<Suspense fallback={null}>
+								<AIAssistantPanel />
+								<AIAssistantModal />
+							</Suspense>
+						</Sentry.ErrorBoundary>
 					)}
 				</Flex>
 
 				{showChangelogModal && changelog && (
-					<Suspense fallback={null}>
-						<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
-					</Suspense>
+					<Sentry.ErrorBoundary>
+						<Suspense fallback={null}>
+							<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+						</Suspense>
+					</Sentry.ErrorBoundary>
 				)}
 
 				<AppToaster />
