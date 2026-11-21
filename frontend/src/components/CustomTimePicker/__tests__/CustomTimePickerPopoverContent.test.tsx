@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import CustomTimePickerPopoverContent from '../CustomTimePickerPopoverContent';
 import { CustomTimePickerInputStatus } from '../CustomTimePicker';
@@ -110,5 +110,25 @@ describe('CustomTimePickerPopoverContent calendar', () => {
 		const [[from, to]] = onCustomDateHandler.mock.calls[0];
 		expect(to.diff(from, 'hour')).toBe(71);
 		expect(setIsOpen).toHaveBeenCalledWith(false);
+	});
+
+	it('applies a range picked on the calendar', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const onCustomDateHandler = jest.fn();
+		renderPopoverContent({ customDateTimeVisible: true, onCustomDateHandler });
+
+		const calendar = await screen.findByTestId('calendar-container');
+		await user.click(
+			within(calendar).getByRole('button', { name: /January 12th, 2024/ }),
+		);
+		await user.click(
+			within(calendar).getByRole('button', { name: /January 10th, 2024/ }),
+		);
+		await user.click(screen.getByTestId('calendar-apply-btn'));
+
+		expect(onCustomDateHandler).toHaveBeenCalledTimes(1);
+		const [[from, to]] = onCustomDateHandler.mock.calls[0];
+		expect(from.format('YYYY-MM-DD HH:mm')).toBe('2024-01-10 00:00');
+		expect(to.format('YYYY-MM-DD HH:mm')).toBe('2024-01-12 23:59');
 	});
 });
