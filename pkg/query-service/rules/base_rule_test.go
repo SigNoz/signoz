@@ -821,6 +821,95 @@ func TestBaseRule_GeneratorURL(t *testing.T) {
 	}
 }
 
+func TestBaseRule_HandleMissingDataAlert(t *testing.T) {
+	evalTime := time.Unix(1700000000, 0)
+
+	tests := []struct {
+		name          string
+		alertOnAbsent bool
+		absentFor     uint64
+		hasData       bool
+		// lastSeenOffset is subtracted from evalTime to seed lastTimestampWithDatapoints
+		// before the no-data evaluation. A zero value leaves it unset.
+		lastSeenOffset time.Duration
+		wantMissing    bool
+	}{
+		{
+			name:          "data present with absentFor 0 does not raise missing data alert",
+			alertOnAbsent: true,
+			absentFor:     0,
+			hasData:       true,
+			wantMissing:   false,
+		},
+		{
+			name:          "data present with absentFor grace period does not raise missing data alert",
+			alertOnAbsent: true,
+			absentFor:     5,
+			hasData:       true,
+			wantMissing:   false,
+		},
+		{
+			name:          "no data with absentFor 0 raises missing data alert immediately",
+			alertOnAbsent: true,
+			absentFor:     0,
+			hasData:       false,
+			wantMissing:   true,
+		},
+		{
+			name:           "no data within absentFor grace period stays silent",
+			alertOnAbsent:  true,
+			absentFor:      5,
+			hasData:        false,
+			lastSeenOffset: time.Minute,
+			wantMissing:    false,
+		},
+		{
+			name:           "no data after absentFor grace period raises missing data alert",
+			alertOnAbsent:  true,
+			absentFor:      5,
+			hasData:        false,
+			lastSeenOffset: 10 * time.Minute,
+			wantMissing:    true,
+		},
+		{
+			name:          "alertOnAbsent disabled never raises missing data alert",
+			alertOnAbsent: false,
+			absentFor:     0,
+			hasData:       false,
+			wantMissing:   false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			postableRule := createPostableRule(&ruletypes.AlertCompositeQuery{QueryType: ruletypes.QueryTypeBuilder})
+			postableRule.RuleCondition.AlertOnAbsent = tc.alertOnAbsent
+			postableRule.RuleCondition.AbsentFor = tc.absentFor
+
+			rule, err := NewBaseRule(
+				"r",
+				valuer.GenerateUUID(),
+				&postableRule,
+				mustParseURL(t, "http://localhost:8080"),
+				WithLogger(instrumentationtest.New().Logger()),
+			)
+			require.NoError(t, err)
+
+			if tc.lastSeenOffset != 0 {
+				rule.lastTimestampWithDatapoints = evalTime.Add(-tc.lastSeenOffset)
+			}
+
+			sample := rule.HandleMissingDataAlert(context.Background(), evalTime, tc.hasData)
+			if tc.wantMissing {
+				require.NotNil(t, sample)
+				require.True(t, sample.IsMissing)
+			} else {
+				require.Nil(t, sample)
+			}
+		})
+	}
+}
+
 // labelsKey creates a deterministic string key from a labels map
 // This is used to group series by their unique label combinations
 func labelsKey(lbls []*qbtypes.Label) string {
