@@ -11,7 +11,7 @@ const config: Config.InitialOptions = {
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
 	collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
-	modulePathIgnorePatterns: ['dist'],
+	modulePathIgnorePatterns: ['<rootDir>/dist/'],
 	moduleNameMapper: {
 		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
 			'<rootDir>/__mocks__/fileMock.ts',
