@@ -2,6 +2,9 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import dayjs from 'dayjs';
 import { screen, userEvent } from 'storybook/test';
+import removeLocalStorageKey from 'api/browser/localstorage/remove';
+import setLocalStorageKey from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 
@@ -65,5 +68,47 @@ export const TimezoneMenuOpen: Story = {
 			await screen.findByRole('button', { name: 'Change Timezone' }),
 		);
 		await screen.findByPlaceholderText('Search timezones...');
+	},
+};
+
+const seedTimeRanges = (): (() => void) => {
+	setLocalStorageKey(
+		LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
+		JSON.stringify([
+			{
+				from: '2025-01-14T09:00:00.000Z',
+				to: '2025-01-14T10:00:00.000Z',
+				timestamp: 2,
+			},
+			{
+				from: '2025-01-13T09:00:00.000Z',
+				to: '2025-01-13T10:00:00.000Z',
+				timestamp: 1,
+			},
+		]),
+	);
+	setLocalStorageKey(
+		LOCALSTORAGE.SAVED_CUSTOM_TIME_RANGES,
+		JSON.stringify([
+			{
+				name: 'Successful test',
+				from: '2025-01-13T09:00:00.000Z',
+				to: '2025-01-13T10:00:00.000Z',
+			},
+		]),
+	);
+
+	return (): void => {
+		removeLocalStorageKey(LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES);
+		removeLocalStorageKey(LOCALSTORAGE.SAVED_CUSTOM_TIME_RANGES);
+	};
+};
+
+/** Interaction: saved time ranges are listed above the recently used ones. */
+export const SavedTimeRanges: Story = {
+	beforeEach: seedTimeRanges,
+	play: async (): Promise<void> => {
+		await userEvent.click(await screen.findByRole('textbox'));
+		await screen.findByText('Successful test');
 	},
 };
