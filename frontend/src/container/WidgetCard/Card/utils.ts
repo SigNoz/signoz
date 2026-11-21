@@ -3,7 +3,7 @@ import type { NotificationInstance } from 'antd/es/notification/interface';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import type { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import getLabelName from 'lib/getLabelName';
 import type { Widgets } from 'types/api/widgets/widget';
 import APIError from 'types/api/error';

@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useAppParams } from 'lib/router/useAppParams';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { topOperationQueries } from 'container/MetricsApplication/MetricsPageQueries/TopOperationQueries';

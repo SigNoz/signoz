@@ -1,5 +1,5 @@
 import { FloatButton } from 'antd';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 // hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useScrollToTop from 'hooks/useScrollToTop';

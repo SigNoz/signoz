@@ -8,7 +8,7 @@ import {
 	prepareQueryRangePayloadV5,
 } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { timePreferenceType } from 'constants/timePreference';
 import type {
 	CustomTimeType,

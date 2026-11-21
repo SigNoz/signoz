@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { themeColors } from 'constants/theme';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';

@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';

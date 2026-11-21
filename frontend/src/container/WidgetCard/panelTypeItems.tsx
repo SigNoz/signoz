@@ -1,5 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
-import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
+import { PanelDisplay } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	BarChart,
 	ChartLine,

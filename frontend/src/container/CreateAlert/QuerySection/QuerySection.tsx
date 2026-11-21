@@ -4,7 +4,7 @@ import { Button } from 'antd';
 import classNames from 'classnames';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import QuerySectionComponent from 'container/FormAlertRules/QuerySection';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

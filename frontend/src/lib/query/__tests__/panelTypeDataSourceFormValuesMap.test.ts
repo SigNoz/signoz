@@ -5,7 +5,7 @@ import {
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { isStaticPanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { PANEL_KIND_TO_PANEL_TYPE } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DataSource } from 'types/common/queryBuilder';
 
 /**

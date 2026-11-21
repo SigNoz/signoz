@@ -3,10 +3,8 @@
  * builder: the panel-type switch and the dirty-check used to decide whether a
  * panel has unsaved query edits.
  */
-import {
-	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
 import type {
 	IBuilderFormula,

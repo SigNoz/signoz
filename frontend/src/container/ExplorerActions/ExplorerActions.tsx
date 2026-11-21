@@ -1,4 +1,4 @@
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { DataSource } from 'types/common/queryBuilder';
 

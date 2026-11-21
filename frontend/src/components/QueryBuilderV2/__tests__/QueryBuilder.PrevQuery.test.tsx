@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render, screen, userEvent } from 'tests/test-utils';
 import type {

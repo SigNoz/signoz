@@ -4,7 +4,8 @@ import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import { TRACE_VIEW_DEFAULT_COLUMNS } from '../../constants';
 import type { TracesTableProps } from '../../TracesTable/TracesTable';

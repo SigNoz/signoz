@@ -1,4 +1,5 @@
-import { mapOfOperators, PANEL_TYPES } from 'constants/queryBuilder';
+import { mapOfOperators } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	DataSource,
 	MetricAggregateOperator,

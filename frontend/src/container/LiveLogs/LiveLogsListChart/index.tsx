@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { LIVE_TAIL_GRAPH_INTERVAL } from 'constants/liveTail';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import LogsExplorerChart from 'container/LogsExplorerChart';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

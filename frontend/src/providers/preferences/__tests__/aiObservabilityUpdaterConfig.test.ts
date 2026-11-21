@@ -1,5 +1,5 @@
 import type { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import getAiObservabilityUpdaterConfig from '../configs/aiObservabilityUpdaterConfig';
 import { PreferenceMode } from '../types';

@@ -6,7 +6,7 @@ import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas/rul
 import { RuletypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPanelTypeDTO';
 import { RuletypesQueryTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesQueryTypeDTO';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { EQueryType } from 'types/common/dashboard';
 
 import type { PostableAlertRuleV2 } from './alertTypes';

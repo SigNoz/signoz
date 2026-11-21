@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import type { ThresholdProps } from 'types/api/widgets/threshold';

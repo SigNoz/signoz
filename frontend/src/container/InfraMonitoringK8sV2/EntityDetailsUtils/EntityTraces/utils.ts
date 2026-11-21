@@ -1,7 +1,5 @@
-import {
-	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

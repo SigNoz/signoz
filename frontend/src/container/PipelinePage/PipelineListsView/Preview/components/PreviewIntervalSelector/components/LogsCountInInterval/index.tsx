@@ -1,10 +1,7 @@
 import { useMemo } from 'react';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import {
-	initialFilters,
-	initialQueriesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialFilters, initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import cloneDeep from 'lodash-es/cloneDeep';

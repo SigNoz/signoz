@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { Spline } from '@signozhq/icons';
 import type { EQueryType } from 'types/common/dashboard';
 

@@ -7,7 +7,7 @@ import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLate
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
 import type { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
 import { navigate } from 'lib/router/navigation';
 import type { AppLocation } from 'lib/router/types';

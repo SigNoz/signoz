@@ -2,7 +2,7 @@
  * Builder fields carried across a panel-type switch, per panel type and data source.
  * Each shape is cut from the widest one by omission.
  */
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 

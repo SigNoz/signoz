@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import type { ClickedData } from 'periscope/components/ContextMenu/types';
 import type { ContextLinksData } from 'types/api/widgets/widget';

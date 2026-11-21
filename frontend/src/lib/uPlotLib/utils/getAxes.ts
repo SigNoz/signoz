@@ -1,7 +1,7 @@
 // @ts-nocheck
 import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import { uPlotXAxisValuesFormat } from './constants';
 import getGridColor from './getGridColor';

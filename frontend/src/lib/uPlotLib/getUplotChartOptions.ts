@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
 import type { ThresholdProps } from 'types/api/widgets/threshold';

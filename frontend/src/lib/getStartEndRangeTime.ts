@@ -1,4 +1,4 @@
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { timePreferenceType } from 'constants/timePreference';
 import type {
 	CustomTimeType,

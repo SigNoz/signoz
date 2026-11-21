@@ -4,7 +4,7 @@ import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';

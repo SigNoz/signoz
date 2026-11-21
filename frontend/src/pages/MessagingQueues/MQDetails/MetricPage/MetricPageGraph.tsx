@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { ViewMenuAction } from 'container/WidgetCard/config';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';

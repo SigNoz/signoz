@@ -1,5 +1,6 @@
 import { ENVIRONMENT } from 'constants/env';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render } from 'tests/test-utils';
 

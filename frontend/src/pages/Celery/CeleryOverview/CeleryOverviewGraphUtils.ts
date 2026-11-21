@@ -1,5 +1,5 @@
 import { getStepInterval } from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphUtils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import type { Widgets } from 'types/api/widgets/widget';

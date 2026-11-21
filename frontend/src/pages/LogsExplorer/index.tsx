@@ -10,7 +10,7 @@ import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalField
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';

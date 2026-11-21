@@ -1,5 +1,5 @@
 import logEvent from 'api/common/logEvent';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 export enum TracesExplorerEvents {
 	OpenTraceClicked = 'Traces Explorer: Open trace clicked',

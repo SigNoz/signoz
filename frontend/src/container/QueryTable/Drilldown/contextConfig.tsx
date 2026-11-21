@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ClickedData } from 'periscope/components/ContextMenu';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type {

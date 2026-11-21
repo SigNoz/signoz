@@ -7,7 +7,7 @@ import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';

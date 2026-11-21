@@ -1,5 +1,5 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import getAiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
 import type { Preferences } from '../types';

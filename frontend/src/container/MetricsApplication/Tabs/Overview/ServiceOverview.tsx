@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import Graph from 'container/WidgetCard/Card';
 import {
 	GraphTitle,

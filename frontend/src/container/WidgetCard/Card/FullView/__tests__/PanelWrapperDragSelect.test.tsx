@@ -1,5 +1,5 @@
 import type { MutableRefObject } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { PanelMode } from 'lib/visualization/panels/types';
 import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';

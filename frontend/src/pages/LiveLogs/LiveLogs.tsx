@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { liveLogsCompositeQuery } from 'container/LiveLogs/constants';
 import LiveLogsContainer from 'container/LiveLogs/LiveLogsContainer';

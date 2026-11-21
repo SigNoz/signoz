@@ -322,6 +322,11 @@
       {
         "paths": [
           {
+            "name": "constants/queryBuilder",
+            "importNames": ["PANEL_TYPES"],
+            "message": "Import PANEL_TYPES from constants/queryBuilderPanelTypes so a change to the query builder constants does not rerun every panel test."
+          },
+          {
             "name": "api/generated/services/sigNoz.schemas",
             "message": "Import each schema from its own file (api/generated/services/sigNoz.schemas/<name>) so a schema change only reruns the tests that use it."
           },

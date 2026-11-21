@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	addFilterToQuery,
 	getBaseMeta,

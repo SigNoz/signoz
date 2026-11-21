@@ -7,7 +7,7 @@ import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
 import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';

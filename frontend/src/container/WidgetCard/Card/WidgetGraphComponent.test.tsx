@@ -2,7 +2,7 @@
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';

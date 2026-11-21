@@ -4,7 +4,8 @@ import type { UseQueryOptions, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import type { AppState } from 'store/reducers';

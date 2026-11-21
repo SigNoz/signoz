@@ -7,7 +7,7 @@ import Col from 'periscope/components/Col/Col';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import Graph from 'container/WidgetCard/Card';
 import {
 	databaseCallsAvgDuration,

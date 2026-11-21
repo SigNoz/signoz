@@ -2,7 +2,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Typography } from '@signozhq/ui/typography';
 import { Spin } from 'antd';
 import { useGetMetricReductionRuleTimeseries } from 'api/generated/services/metrics';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import BarChart from 'lib/visualization/charts/BarChart/BarChart';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';

@@ -7,7 +7,8 @@ import {
 } from '@testing-library/react';
 import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import {
 	AUTHZ_CHECK_URL,

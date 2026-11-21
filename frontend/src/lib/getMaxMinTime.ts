@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GlobalTime } from 'types/actions/globalTime';
 import type { Widgets } from 'types/api/widgets/widget';
 

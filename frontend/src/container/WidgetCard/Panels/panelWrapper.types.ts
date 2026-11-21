@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { UseQueryResult } from 'react-query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { PanelMode } from 'lib/visualization/panels/types';
 import type { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import type { RowData } from 'lib/query/createTableColumnsFromQuery';

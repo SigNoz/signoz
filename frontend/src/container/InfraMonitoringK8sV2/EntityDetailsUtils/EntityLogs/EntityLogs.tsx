@@ -41,7 +41,8 @@ import { getEntityLogsQueryPayload } from './utils';
 
 import styles from './EntityLogs.module.scss';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import createQueryParams from 'lib/createQueryParams';
 import { isModifierKeyPressed } from 'utils/app';

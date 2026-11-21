@@ -8,7 +8,7 @@ import type { MetricsexplorertypesInspectMetricsRequestDTO } from 'api/generated
 import type { MetricsexplorertypesStatsRequestDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesStatsRequestDTO';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { getMetricDetailsQuery } from 'container/MetricsExplorer/MetricDetails/utils';
 import {

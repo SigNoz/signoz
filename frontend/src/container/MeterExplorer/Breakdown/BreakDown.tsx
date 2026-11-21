@@ -9,7 +9,7 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import GridCard from 'container/WidgetCard/Card';
 import { Card, CardContainer } from 'container/WidgetCard/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
