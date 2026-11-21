@@ -317,6 +317,11 @@
             "message": "[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
           {
+            "name": "@signozhq/design-tokens",
+            "importNames": ["Style"],
+            "message": "[bundle] Style is a large object of CSS variable strings and is not tree-shaken. Write the CSS variable directly, for example 'var(--l3-foreground)'."
+          },
+          {
             "name": "react-redux",
             "message": "[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
