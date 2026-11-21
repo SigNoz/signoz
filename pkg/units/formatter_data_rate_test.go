@@ -1,6 +1,7 @@
 package units
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -145,6 +146,36 @@ func TestDataRateFormatterComprehensive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := dataRateFormatter.Format(tt.value, tt.unit)
 			assert.Equal(t, tt.expected, got)
+			if tt.value > 0 {
+				t.Run("negative", func(t *testing.T) {
+					got := dataRateFormatter.Format(-tt.value, tt.unit)
+					assert.Equal(t, "-"+tt.expected, got)
+				})
+			}
+		})
+	}
+}
+
+func TestDataRateFormatterNegativeEdges(t *testing.T) {
+	formatter := NewDataRateFormatter()
+	tests := []struct {
+		name     string
+		value    float64
+		unit     string
+		expected string
+	}{
+		{name: "fractional byte", value: -0.5, unit: "binBps", expected: "-0 B/s"},
+		{name: "fractional bit", value: -0.5, unit: "binbps", expected: "-0.5 b/s"},
+		{name: "whole byte in bits", value: -8, unit: "binbps", expected: "-1 B/s"},
+		{name: "negative zero bytes", value: math.Copysign(0, -1), unit: "binBps", expected: "0 B/s"},
+		{name: "negative zero bits", value: math.Copysign(0, -1), unit: "binbps", expected: "-0 b/s"},
+		{name: "unknown unit", value: -1.25, unit: "unknown", expected: "-1.25"},
+		{name: "negative infinity bits", value: math.Inf(-1), unit: "binbps", expected: "-Inf b/s"},
+		{name: "negative infinity unknown unit", value: math.Inf(-1), unit: "unknown", expected: "-Inf"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, formatter.Format(test.value, test.unit))
 		})
 	}
 }
