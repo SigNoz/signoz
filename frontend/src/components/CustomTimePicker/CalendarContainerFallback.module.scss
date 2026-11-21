@@ -1,0 +1,6 @@
+.calendarContainerFallback {
+	justify-content: center;
+	// Header, caption, weekday row and actions take 160px; each week row 40px.
+	min-height: calc(160px + var(--calendar-week-count) * 40px);
+	color: var(--l2-foreground);
+}
