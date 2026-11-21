@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,

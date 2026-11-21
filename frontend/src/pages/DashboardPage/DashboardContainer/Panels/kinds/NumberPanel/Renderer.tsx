@@ -4,7 +4,7 @@ import {
 	type KeyboardEvent as ReactKeyboardEvent,
 	type MouseEvent as ReactMouseEvent,
 } from 'react';
-import type { DashboardtypesNumberPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesNumberPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesNumberPanelSpecDTO';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
 import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 

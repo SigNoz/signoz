@@ -17,53 +17,95 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	CloneDashboardV2201,
-	CloneDashboardV2PathParameters,
-	CreateDashboardV2201,
-	CreateDashboardView201,
-	CreatePublicDashboard201,
-	CreatePublicDashboardPathParameters,
-	DashboardtypesPatchableDashboardV2DTO,
-	DashboardtypesPostableDashboardV2DTO,
-	DashboardtypesPostableDashboardViewDTO,
-	DashboardtypesPostablePublicDashboardDTO,
-	DashboardtypesUpdatableDashboardV2DTO,
-	DashboardtypesUpdatablePublicDashboardDTO,
-	DeleteDashboardV2PathParameters,
-	DeleteDashboardViewPathParameters,
-	DeletePublicDashboardPathParameters,
-	GetDashboardV2200,
-	GetDashboardV2PathParameters,
-	GetPublicDashboard200,
-	GetPublicDashboardDataV2200,
-	GetPublicDashboardDataV2PathParameters,
-	GetPublicDashboardPanelQueryRangeV2200,
-	GetPublicDashboardPanelQueryRangeV2Params,
-	GetPublicDashboardPanelQueryRangeV2PathParameters,
-	GetPublicDashboardPathParameters,
-	GetSystemDashboard200,
-	GetSystemDashboardPathParameters,
-	ListDashboardViews200,
-	ListDashboardsForUserV2200,
-	ListDashboardsForUserV2Params,
-	ListDashboardsV2200,
-	ListDashboardsV2Params,
-	LockDashboardV2PathParameters,
-	MigrateDashboardV2200,
-	MigrateDashboardV2PathParameters,
-	PatchDashboardV2200,
-	PatchDashboardV2PathParameters,
-	PinDashboardV2PathParameters,
-	RenderErrorResponseDTO,
-	UnlockDashboardV2PathParameters,
-	UnpinDashboardV2PathParameters,
-	UpdateDashboardV2200,
-	UpdateDashboardV2PathParameters,
-	UpdateDashboardView200,
-	UpdateDashboardViewPathParameters,
-	UpdatePublicDashboardPathParameters,
-} from '../sigNoz.schemas';
+import type { CloneDashboardV2201 } from '../sigNoz.schemas/cloneDashboardV2201';
+
+import type { CloneDashboardV2PathParameters } from '../sigNoz.schemas/cloneDashboardV2PathParameters';
+
+import type { CreateDashboardV2201 } from '../sigNoz.schemas/createDashboardV2201';
+
+import type { CreateDashboardView201 } from '../sigNoz.schemas/createDashboardView201';
+
+import type { CreatePublicDashboard201 } from '../sigNoz.schemas/createPublicDashboard201';
+
+import type { CreatePublicDashboardPathParameters } from '../sigNoz.schemas/createPublicDashboardPathParameters';
+
+import type { DashboardtypesPatchableDashboardV2DTO } from '../sigNoz.schemas/dashboardtypesPatchableDashboardV2DTO';
+
+import type { DashboardtypesPostableDashboardV2DTO } from '../sigNoz.schemas/dashboardtypesPostableDashboardV2DTO';
+
+import type { DashboardtypesPostableDashboardViewDTO } from '../sigNoz.schemas/dashboardtypesPostableDashboardViewDTO';
+
+import type { DashboardtypesPostablePublicDashboardDTO } from '../sigNoz.schemas/dashboardtypesPostablePublicDashboardDTO';
+
+import type { DashboardtypesUpdatableDashboardV2DTO } from '../sigNoz.schemas/dashboardtypesUpdatableDashboardV2DTO';
+
+import type { DashboardtypesUpdatablePublicDashboardDTO } from '../sigNoz.schemas/dashboardtypesUpdatablePublicDashboardDTO';
+
+import type { DeleteDashboardV2PathParameters } from '../sigNoz.schemas/deleteDashboardV2PathParameters';
+
+import type { DeleteDashboardViewPathParameters } from '../sigNoz.schemas/deleteDashboardViewPathParameters';
+
+import type { DeletePublicDashboardPathParameters } from '../sigNoz.schemas/deletePublicDashboardPathParameters';
+
+import type { GetDashboardV2200 } from '../sigNoz.schemas/getDashboardV2200';
+
+import type { GetDashboardV2PathParameters } from '../sigNoz.schemas/getDashboardV2PathParameters';
+
+import type { GetPublicDashboard200 } from '../sigNoz.schemas/getPublicDashboard200';
+
+import type { GetPublicDashboardDataV2200 } from '../sigNoz.schemas/getPublicDashboardDataV2200';
+
+import type { GetPublicDashboardDataV2PathParameters } from '../sigNoz.schemas/getPublicDashboardDataV2PathParameters';
+
+import type { GetPublicDashboardPanelQueryRangeV2200 } from '../sigNoz.schemas/getPublicDashboardPanelQueryRangeV2200';
+
+import type { GetPublicDashboardPanelQueryRangeV2Params } from '../sigNoz.schemas/getPublicDashboardPanelQueryRangeV2Params';
+
+import type { GetPublicDashboardPanelQueryRangeV2PathParameters } from '../sigNoz.schemas/getPublicDashboardPanelQueryRangeV2PathParameters';
+
+import type { GetPublicDashboardPathParameters } from '../sigNoz.schemas/getPublicDashboardPathParameters';
+
+import type { GetSystemDashboard200 } from '../sigNoz.schemas/getSystemDashboard200';
+
+import type { GetSystemDashboardPathParameters } from '../sigNoz.schemas/getSystemDashboardPathParameters';
+
+import type { ListDashboardViews200 } from '../sigNoz.schemas/listDashboardViews200';
+
+import type { ListDashboardsForUserV2200 } from '../sigNoz.schemas/listDashboardsForUserV2200';
+
+import type { ListDashboardsForUserV2Params } from '../sigNoz.schemas/listDashboardsForUserV2Params';
+
+import type { ListDashboardsV2200 } from '../sigNoz.schemas/listDashboardsV2200';
+
+import type { ListDashboardsV2Params } from '../sigNoz.schemas/listDashboardsV2Params';
+
+import type { LockDashboardV2PathParameters } from '../sigNoz.schemas/lockDashboardV2PathParameters';
+
+import type { MigrateDashboardV2200 } from '../sigNoz.schemas/migrateDashboardV2200';
+
+import type { MigrateDashboardV2PathParameters } from '../sigNoz.schemas/migrateDashboardV2PathParameters';
+
+import type { PatchDashboardV2200 } from '../sigNoz.schemas/patchDashboardV2200';
+
+import type { PatchDashboardV2PathParameters } from '../sigNoz.schemas/patchDashboardV2PathParameters';
+
+import type { PinDashboardV2PathParameters } from '../sigNoz.schemas/pinDashboardV2PathParameters';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UnlockDashboardV2PathParameters } from '../sigNoz.schemas/unlockDashboardV2PathParameters';
+
+import type { UnpinDashboardV2PathParameters } from '../sigNoz.schemas/unpinDashboardV2PathParameters';
+
+import type { UpdateDashboardV2200 } from '../sigNoz.schemas/updateDashboardV2200';
+
+import type { UpdateDashboardV2PathParameters } from '../sigNoz.schemas/updateDashboardV2PathParameters';
+
+import type { UpdateDashboardView200 } from '../sigNoz.schemas/updateDashboardView200';
+
+import type { UpdateDashboardViewPathParameters } from '../sigNoz.schemas/updateDashboardViewPathParameters';
+
+import type { UpdatePublicDashboardPathParameters } from '../sigNoz.schemas/updatePublicDashboardPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -103,6 +145,9 @@ export const deletePublicDashboard = (
 	});
 };
 
+export const getDeletePublicDashboardMutationKey = () =>
+	['deletePublicDashboard'] as const;
+
 export const getDeletePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -110,16 +155,16 @@ export const getDeletePublicDashboardMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deletePublicDashboard>>,
 		TError,
-		{ pathParams: DeletePublicDashboardPathParameters },
+		DeletePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deletePublicDashboard>>,
 	TError,
-	{ pathParams: DeletePublicDashboardPathParameters },
+	DeletePublicDashboardMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deletePublicDashboard'];
+	const mutationKey = getDeletePublicDashboardMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -130,7 +175,7 @@ export const getDeletePublicDashboardMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deletePublicDashboard>>,
-		{ pathParams: DeletePublicDashboardPathParameters }
+		DeletePublicDashboardMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -146,6 +191,9 @@ export type DeletePublicDashboardMutationResult = NonNullable<
 
 export type DeletePublicDashboardMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type DeletePublicDashboardMutationVariables = {
+	pathParams: DeletePublicDashboardPathParameters;
+};
 
 /**
  * @summary Delete public dashboard
@@ -157,13 +205,13 @@ export const useDeletePublicDashboard = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deletePublicDashboard>>,
 		TError,
-		{ pathParams: DeletePublicDashboardPathParameters },
+		DeletePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deletePublicDashboard>>,
 	TError,
-	{ pathParams: DeletePublicDashboardPathParameters },
+	DeletePublicDashboardMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeletePublicDashboardMutationOptions(options));
@@ -255,7 +303,7 @@ export function useGetPublicDashboard<
 }
 
 /**
- * @summary Get public dashboard
+ * @summary Invalidates the {@link useGetPublicDashboard} query
  */
 export const invalidateGetPublicDashboard = async (
 	queryClient: QueryClient,
@@ -288,6 +336,9 @@ export const createPublicDashboard = (
 	});
 };
 
+export const getCreatePublicDashboardMutationKey = () =>
+	['createPublicDashboard'] as const;
+
 export const getCreatePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -295,22 +346,16 @@ export const getCreatePublicDashboardMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createPublicDashboard>>,
 		TError,
-		{
-			pathParams: CreatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
-		},
+		CreatePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createPublicDashboard>>,
 	TError,
-	{
-		pathParams: CreatePublicDashboardPathParameters;
-		data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
-	},
+	CreatePublicDashboardMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createPublicDashboard'];
+	const mutationKey = getCreatePublicDashboardMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -321,10 +366,7 @@ export const getCreatePublicDashboardMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createPublicDashboard>>,
-		{
-			pathParams: CreatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
-		}
+		CreatePublicDashboardMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -342,6 +384,10 @@ export type CreatePublicDashboardMutationBody =
 	| undefined;
 export type CreatePublicDashboardMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type CreatePublicDashboardMutationVariables = {
+	pathParams: CreatePublicDashboardPathParameters;
+	data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
+};
 
 /**
  * @summary Create public dashboard
@@ -353,19 +399,13 @@ export const useCreatePublicDashboard = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createPublicDashboard>>,
 		TError,
-		{
-			pathParams: CreatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
-		},
+		CreatePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createPublicDashboard>>,
 	TError,
-	{
-		pathParams: CreatePublicDashboardPathParameters;
-		data?: BodyType<DashboardtypesPostablePublicDashboardDTO>;
-	},
+	CreatePublicDashboardMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreatePublicDashboardMutationOptions(options));
@@ -388,6 +428,9 @@ export const updatePublicDashboard = (
 	});
 };
 
+export const getUpdatePublicDashboardMutationKey = () =>
+	['updatePublicDashboard'] as const;
+
 export const getUpdatePublicDashboardMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -395,22 +438,16 @@ export const getUpdatePublicDashboardMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
 		TError,
-		{
-			pathParams: UpdatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-		},
+		UpdatePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updatePublicDashboard>>,
 	TError,
-	{
-		pathParams: UpdatePublicDashboardPathParameters;
-		data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-	},
+	UpdatePublicDashboardMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updatePublicDashboard'];
+	const mutationKey = getUpdatePublicDashboardMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -421,10 +458,7 @@ export const getUpdatePublicDashboardMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
-		{
-			pathParams: UpdatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-		}
+		UpdatePublicDashboardMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -442,6 +476,10 @@ export type UpdatePublicDashboardMutationBody =
 	| undefined;
 export type UpdatePublicDashboardMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type UpdatePublicDashboardMutationVariables = {
+	pathParams: UpdatePublicDashboardPathParameters;
+	data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
+};
 
 /**
  * @summary Update public dashboard
@@ -453,19 +491,13 @@ export const useUpdatePublicDashboard = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updatePublicDashboard>>,
 		TError,
-		{
-			pathParams: UpdatePublicDashboardPathParameters;
-			data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-		},
+		UpdatePublicDashboardMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updatePublicDashboard>>,
 	TError,
-	{
-		pathParams: UpdatePublicDashboardPathParameters;
-		data?: BodyType<DashboardtypesUpdatablePublicDashboardDTO>;
-	},
+	UpdatePublicDashboardMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdatePublicDashboardMutationOptions(options));
@@ -540,7 +572,7 @@ export function useListDashboardViews<
 }
 
 /**
- * @summary List dashboard saved views
+ * @summary Invalidates the {@link useListDashboardViews} query
  */
 export const invalidateListDashboardViews = async (
 	queryClient: QueryClient,
@@ -571,6 +603,9 @@ export const createDashboardView = (
 	});
 };
 
+export const getCreateDashboardViewMutationKey = () =>
+	['createDashboardView'] as const;
+
 export const getCreateDashboardViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -578,16 +613,16 @@ export const getCreateDashboardViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardView>>,
 		TError,
-		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+		CreateDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createDashboardView>>,
 	TError,
-	{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+	CreateDashboardViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createDashboardView'];
+	const mutationKey = getCreateDashboardViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -598,7 +633,7 @@ export const getCreateDashboardViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createDashboardView>>,
-		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> }
+		CreateDashboardViewMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -616,6 +651,9 @@ export type CreateDashboardViewMutationBody =
 	| undefined;
 export type CreateDashboardViewMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type CreateDashboardViewMutationVariables = {
+	data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+};
 
 /**
  * @summary Create dashboard saved view
@@ -627,13 +665,13 @@ export const useCreateDashboardView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardView>>,
 		TError,
-		{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+		CreateDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createDashboardView>>,
 	TError,
-	{ data?: BodyType<DashboardtypesPostableDashboardViewDTO> },
+	CreateDashboardViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateDashboardViewMutationOptions(options));
@@ -653,6 +691,9 @@ export const deleteDashboardView = (
 	});
 };
 
+export const getDeleteDashboardViewMutationKey = () =>
+	['deleteDashboardView'] as const;
+
 export const getDeleteDashboardViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -660,16 +701,16 @@ export const getDeleteDashboardViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDashboardView>>,
 		TError,
-		{ pathParams: DeleteDashboardViewPathParameters },
+		DeleteDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteDashboardView>>,
 	TError,
-	{ pathParams: DeleteDashboardViewPathParameters },
+	DeleteDashboardViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteDashboardView'];
+	const mutationKey = getDeleteDashboardViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -680,7 +721,7 @@ export const getDeleteDashboardViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteDashboardView>>,
-		{ pathParams: DeleteDashboardViewPathParameters }
+		DeleteDashboardViewMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -696,6 +737,9 @@ export type DeleteDashboardViewMutationResult = NonNullable<
 
 export type DeleteDashboardViewMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type DeleteDashboardViewMutationVariables = {
+	pathParams: DeleteDashboardViewPathParameters;
+};
 
 /**
  * @summary Delete dashboard saved view
@@ -707,13 +751,13 @@ export const useDeleteDashboardView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDashboardView>>,
 		TError,
-		{ pathParams: DeleteDashboardViewPathParameters },
+		DeleteDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteDashboardView>>,
 	TError,
-	{ pathParams: DeleteDashboardViewPathParameters },
+	DeleteDashboardViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteDashboardViewMutationOptions(options));
@@ -736,6 +780,9 @@ export const updateDashboardView = (
 	});
 };
 
+export const getUpdateDashboardViewMutationKey = () =>
+	['updateDashboardView'] as const;
+
 export const getUpdateDashboardViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -743,22 +790,16 @@ export const getUpdateDashboardViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDashboardView>>,
 		TError,
-		{
-			pathParams: UpdateDashboardViewPathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
-		},
+		UpdateDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateDashboardView>>,
 	TError,
-	{
-		pathParams: UpdateDashboardViewPathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
-	},
+	UpdateDashboardViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateDashboardView'];
+	const mutationKey = getUpdateDashboardViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -769,10 +810,7 @@ export const getUpdateDashboardViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateDashboardView>>,
-		{
-			pathParams: UpdateDashboardViewPathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
-		}
+		UpdateDashboardViewMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -790,6 +828,10 @@ export type UpdateDashboardViewMutationBody =
 	| undefined;
 export type UpdateDashboardViewMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type UpdateDashboardViewMutationVariables = {
+	pathParams: UpdateDashboardViewPathParameters;
+	data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
+};
 
 /**
  * @summary Update dashboard saved view
@@ -801,19 +843,13 @@ export const useUpdateDashboardView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDashboardView>>,
 		TError,
-		{
-			pathParams: UpdateDashboardViewPathParameters;
-			data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
-		},
+		UpdateDashboardViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateDashboardView>>,
 	TError,
-	{
-		pathParams: UpdateDashboardViewPathParameters;
-		data?: BodyType<DashboardtypesPostableDashboardViewDTO>;
-	},
+	UpdateDashboardViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateDashboardViewMutationOptions(options));
@@ -900,7 +936,7 @@ export function useListDashboardsV2<
 }
 
 /**
- * @summary List dashboards (v2)
+ * @summary Invalidates the {@link useListDashboardsV2} query
  */
 export const invalidateListDashboardsV2 = async (
 	queryClient: QueryClient,
@@ -932,6 +968,9 @@ export const createDashboardV2 = (
 	});
 };
 
+export const getCreateDashboardV2MutationKey = () =>
+	['createDashboardV2'] as const;
+
 export const getCreateDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -939,16 +978,16 @@ export const getCreateDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		CreateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	CreateDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createDashboardV2'];
+	const mutationKey = getCreateDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -959,7 +998,7 @@ export const getCreateDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createDashboardV2>>,
-		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> }
+		CreateDashboardV2MutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -976,6 +1015,9 @@ export type CreateDashboardV2MutationBody =
 	| BodyType<DashboardtypesPostableDashboardV2DTO>
 	| undefined;
 export type CreateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateDashboardV2MutationVariables = {
+	data?: BodyType<DashboardtypesPostableDashboardV2DTO>;
+};
 
 /**
  * @summary Create dashboard (v2)
@@ -987,13 +1029,13 @@ export const useCreateDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createDashboardV2>>,
 		TError,
-		{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+		CreateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createDashboardV2>>,
 	TError,
-	{ data?: BodyType<DashboardtypesPostableDashboardV2DTO> },
+	CreateDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateDashboardV2MutationOptions(options));
@@ -1013,6 +1055,9 @@ export const deleteDashboardV2 = (
 	});
 };
 
+export const getDeleteDashboardV2MutationKey = () =>
+	['deleteDashboardV2'] as const;
+
 export const getDeleteDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1020,16 +1065,16 @@ export const getDeleteDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDashboardV2>>,
 		TError,
-		{ pathParams: DeleteDashboardV2PathParameters },
+		DeleteDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteDashboardV2>>,
 	TError,
-	{ pathParams: DeleteDashboardV2PathParameters },
+	DeleteDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteDashboardV2'];
+	const mutationKey = getDeleteDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1040,7 +1085,7 @@ export const getDeleteDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteDashboardV2>>,
-		{ pathParams: DeleteDashboardV2PathParameters }
+		DeleteDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1055,6 +1100,9 @@ export type DeleteDashboardV2MutationResult = NonNullable<
 >;
 
 export type DeleteDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteDashboardV2MutationVariables = {
+	pathParams: DeleteDashboardV2PathParameters;
+};
 
 /**
  * @summary Delete dashboard (v2)
@@ -1066,13 +1114,13 @@ export const useDeleteDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteDashboardV2>>,
 		TError,
-		{ pathParams: DeleteDashboardV2PathParameters },
+		DeleteDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteDashboardV2>>,
 	TError,
-	{ pathParams: DeleteDashboardV2PathParameters },
+	DeleteDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteDashboardV2MutationOptions(options));
@@ -1163,7 +1211,7 @@ export function useGetDashboardV2<
 }
 
 /**
- * @summary Get dashboard (v2)
+ * @summary Invalidates the {@link useGetDashboardV2} query
  */
 export const invalidateGetDashboardV2 = async (
 	queryClient: QueryClient,
@@ -1196,6 +1244,9 @@ export const patchDashboardV2 = (
 	});
 };
 
+export const getPatchDashboardV2MutationKey = () =>
+	['patchDashboardV2'] as const;
+
 export const getPatchDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1203,22 +1254,16 @@ export const getPatchDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchDashboardV2>>,
 		TError,
-		{
-			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
-		},
+		PatchDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof patchDashboardV2>>,
 	TError,
-	{
-		pathParams: PatchDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
-	},
+	PatchDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['patchDashboardV2'];
+	const mutationKey = getPatchDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1229,10 +1274,7 @@ export const getPatchDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof patchDashboardV2>>,
-		{
-			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
-		}
+		PatchDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1249,6 +1291,10 @@ export type PatchDashboardV2MutationBody =
 	| BodyType<DashboardtypesPatchableDashboardV2DTO | null>
 	| undefined;
 export type PatchDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type PatchDashboardV2MutationVariables = {
+	pathParams: PatchDashboardV2PathParameters;
+	data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
+};
 
 /**
  * @summary Patch dashboard (v2)
@@ -1260,19 +1306,13 @@ export const usePatchDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchDashboardV2>>,
 		TError,
-		{
-			pathParams: PatchDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
-		},
+		PatchDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof patchDashboardV2>>,
 	TError,
-	{
-		pathParams: PatchDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesPatchableDashboardV2DTO | null>;
-	},
+	PatchDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getPatchDashboardV2MutationOptions(options));
@@ -1295,6 +1335,9 @@ export const updateDashboardV2 = (
 	});
 };
 
+export const getUpdateDashboardV2MutationKey = () =>
+	['updateDashboardV2'] as const;
+
 export const getUpdateDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1302,22 +1345,16 @@ export const getUpdateDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDashboardV2>>,
 		TError,
-		{
-			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		},
+		UpdateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateDashboardV2>>,
 	TError,
-	{
-		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-	},
+	UpdateDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateDashboardV2'];
+	const mutationKey = getUpdateDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1328,10 +1365,7 @@ export const getUpdateDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateDashboardV2>>,
-		{
-			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		}
+		UpdateDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1348,6 +1382,10 @@ export type UpdateDashboardV2MutationBody =
 	| BodyType<DashboardtypesUpdatableDashboardV2DTO>
 	| undefined;
 export type UpdateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateDashboardV2MutationVariables = {
+	pathParams: UpdateDashboardV2PathParameters;
+	data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
+};
 
 /**
  * @summary Update dashboard (v2)
@@ -1359,19 +1397,13 @@ export const useUpdateDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateDashboardV2>>,
 		TError,
-		{
-			pathParams: UpdateDashboardV2PathParameters;
-			data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-		},
+		UpdateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateDashboardV2>>,
 	TError,
-	{
-		pathParams: UpdateDashboardV2PathParameters;
-		data?: BodyType<DashboardtypesUpdatableDashboardV2DTO>;
-	},
+	UpdateDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateDashboardV2MutationOptions(options));
@@ -1391,6 +1423,9 @@ export const cloneDashboardV2 = (
 	});
 };
 
+export const getCloneDashboardV2MutationKey = () =>
+	['cloneDashboardV2'] as const;
+
 export const getCloneDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1398,16 +1433,16 @@ export const getCloneDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof cloneDashboardV2>>,
 		TError,
-		{ pathParams: CloneDashboardV2PathParameters },
+		CloneDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof cloneDashboardV2>>,
 	TError,
-	{ pathParams: CloneDashboardV2PathParameters },
+	CloneDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['cloneDashboardV2'];
+	const mutationKey = getCloneDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1418,7 +1453,7 @@ export const getCloneDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof cloneDashboardV2>>,
-		{ pathParams: CloneDashboardV2PathParameters }
+		CloneDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1433,6 +1468,9 @@ export type CloneDashboardV2MutationResult = NonNullable<
 >;
 
 export type CloneDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type CloneDashboardV2MutationVariables = {
+	pathParams: CloneDashboardV2PathParameters;
+};
 
 /**
  * @summary Clone dashboard (v2)
@@ -1444,13 +1482,13 @@ export const useCloneDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof cloneDashboardV2>>,
 		TError,
-		{ pathParams: CloneDashboardV2PathParameters },
+		CloneDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof cloneDashboardV2>>,
 	TError,
-	{ pathParams: CloneDashboardV2PathParameters },
+	CloneDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getCloneDashboardV2MutationOptions(options));
@@ -1470,6 +1508,9 @@ export const unlockDashboardV2 = (
 	});
 };
 
+export const getUnlockDashboardV2MutationKey = () =>
+	['unlockDashboardV2'] as const;
+
 export const getUnlockDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1477,16 +1518,16 @@ export const getUnlockDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof unlockDashboardV2>>,
 		TError,
-		{ pathParams: UnlockDashboardV2PathParameters },
+		UnlockDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof unlockDashboardV2>>,
 	TError,
-	{ pathParams: UnlockDashboardV2PathParameters },
+	UnlockDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['unlockDashboardV2'];
+	const mutationKey = getUnlockDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1497,7 +1538,7 @@ export const getUnlockDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof unlockDashboardV2>>,
-		{ pathParams: UnlockDashboardV2PathParameters }
+		UnlockDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1512,6 +1553,9 @@ export type UnlockDashboardV2MutationResult = NonNullable<
 >;
 
 export type UnlockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type UnlockDashboardV2MutationVariables = {
+	pathParams: UnlockDashboardV2PathParameters;
+};
 
 /**
  * @summary Unlock dashboard (v2)
@@ -1523,13 +1567,13 @@ export const useUnlockDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof unlockDashboardV2>>,
 		TError,
-		{ pathParams: UnlockDashboardV2PathParameters },
+		UnlockDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof unlockDashboardV2>>,
 	TError,
-	{ pathParams: UnlockDashboardV2PathParameters },
+	UnlockDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getUnlockDashboardV2MutationOptions(options));
@@ -1549,6 +1593,8 @@ export const lockDashboardV2 = (
 	});
 };
 
+export const getLockDashboardV2MutationKey = () => ['lockDashboardV2'] as const;
+
 export const getLockDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1556,16 +1602,16 @@ export const getLockDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof lockDashboardV2>>,
 		TError,
-		{ pathParams: LockDashboardV2PathParameters },
+		LockDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof lockDashboardV2>>,
 	TError,
-	{ pathParams: LockDashboardV2PathParameters },
+	LockDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['lockDashboardV2'];
+	const mutationKey = getLockDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1576,7 +1622,7 @@ export const getLockDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof lockDashboardV2>>,
-		{ pathParams: LockDashboardV2PathParameters }
+		LockDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1591,6 +1637,9 @@ export type LockDashboardV2MutationResult = NonNullable<
 >;
 
 export type LockDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type LockDashboardV2MutationVariables = {
+	pathParams: LockDashboardV2PathParameters;
+};
 
 /**
  * @summary Lock dashboard (v2)
@@ -1602,13 +1651,13 @@ export const useLockDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof lockDashboardV2>>,
 		TError,
-		{ pathParams: LockDashboardV2PathParameters },
+		LockDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof lockDashboardV2>>,
 	TError,
-	{ pathParams: LockDashboardV2PathParameters },
+	LockDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getLockDashboardV2MutationOptions(options));
@@ -1628,6 +1677,9 @@ export const migrateDashboardV2 = (
 	});
 };
 
+export const getMigrateDashboardV2MutationKey = () =>
+	['migrateDashboardV2'] as const;
+
 export const getMigrateDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1635,16 +1687,16 @@ export const getMigrateDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof migrateDashboardV2>>,
 		TError,
-		{ pathParams: MigrateDashboardV2PathParameters },
+		MigrateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof migrateDashboardV2>>,
 	TError,
-	{ pathParams: MigrateDashboardV2PathParameters },
+	MigrateDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['migrateDashboardV2'];
+	const mutationKey = getMigrateDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1655,7 +1707,7 @@ export const getMigrateDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof migrateDashboardV2>>,
-		{ pathParams: MigrateDashboardV2PathParameters }
+		MigrateDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -1670,6 +1722,9 @@ export type MigrateDashboardV2MutationResult = NonNullable<
 >;
 
 export type MigrateDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type MigrateDashboardV2MutationVariables = {
+	pathParams: MigrateDashboardV2PathParameters;
+};
 
 /**
  * @summary Migrate dashboard to v2
@@ -1681,13 +1736,13 @@ export const useMigrateDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof migrateDashboardV2>>,
 		TError,
-		{ pathParams: MigrateDashboardV2PathParameters },
+		MigrateDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof migrateDashboardV2>>,
 	TError,
-	{ pathParams: MigrateDashboardV2PathParameters },
+	MigrateDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getMigrateDashboardV2MutationOptions(options));
@@ -1779,7 +1834,7 @@ export function useGetSystemDashboard<
 }
 
 /**
- * @summary Get system dashboard
+ * @summary Invalidates the {@link useGetSystemDashboard} query
  */
 export const invalidateGetSystemDashboard = async (
 	queryClient: QueryClient,
@@ -1882,7 +1937,7 @@ export function useGetPublicDashboardDataV2<
 }
 
 /**
- * @summary Get public dashboard data (v2)
+ * @summary Invalidates the {@link useGetPublicDashboardDataV2} query
  */
 export const invalidateGetPublicDashboardDataV2 = async (
 	queryClient: QueryClient,
@@ -1999,7 +2054,7 @@ export function useGetPublicDashboardPanelQueryRangeV2<
 }
 
 /**
- * @summary Get query range result (v2)
+ * @summary Invalidates the {@link useGetPublicDashboardPanelQueryRangeV2} query
  */
 export const invalidateGetPublicDashboardPanelQueryRangeV2 = async (
 	queryClient: QueryClient,
@@ -2104,7 +2159,7 @@ export function useListDashboardsForUserV2<
 }
 
 /**
- * @summary List dashboards for the current user (v2)
+ * @summary Invalidates the {@link useListDashboardsForUserV2} query
  */
 export const invalidateListDashboardsForUserV2 = async (
 	queryClient: QueryClient,
@@ -2134,6 +2189,9 @@ export const unpinDashboardV2 = (
 	});
 };
 
+export const getUnpinDashboardV2MutationKey = () =>
+	['unpinDashboardV2'] as const;
+
 export const getUnpinDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -2141,16 +2199,16 @@ export const getUnpinDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof unpinDashboardV2>>,
 		TError,
-		{ pathParams: UnpinDashboardV2PathParameters },
+		UnpinDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof unpinDashboardV2>>,
 	TError,
-	{ pathParams: UnpinDashboardV2PathParameters },
+	UnpinDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['unpinDashboardV2'];
+	const mutationKey = getUnpinDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -2161,7 +2219,7 @@ export const getUnpinDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof unpinDashboardV2>>,
-		{ pathParams: UnpinDashboardV2PathParameters }
+		UnpinDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -2176,6 +2234,9 @@ export type UnpinDashboardV2MutationResult = NonNullable<
 >;
 
 export type UnpinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type UnpinDashboardV2MutationVariables = {
+	pathParams: UnpinDashboardV2PathParameters;
+};
 
 /**
  * @summary Unpin a dashboard for the current user (v2)
@@ -2187,13 +2248,13 @@ export const useUnpinDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof unpinDashboardV2>>,
 		TError,
-		{ pathParams: UnpinDashboardV2PathParameters },
+		UnpinDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof unpinDashboardV2>>,
 	TError,
-	{ pathParams: UnpinDashboardV2PathParameters },
+	UnpinDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getUnpinDashboardV2MutationOptions(options));
@@ -2213,6 +2274,8 @@ export const pinDashboardV2 = (
 	});
 };
 
+export const getPinDashboardV2MutationKey = () => ['pinDashboardV2'] as const;
+
 export const getPinDashboardV2MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -2220,16 +2283,16 @@ export const getPinDashboardV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof pinDashboardV2>>,
 		TError,
-		{ pathParams: PinDashboardV2PathParameters },
+		PinDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof pinDashboardV2>>,
 	TError,
-	{ pathParams: PinDashboardV2PathParameters },
+	PinDashboardV2MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['pinDashboardV2'];
+	const mutationKey = getPinDashboardV2MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -2240,7 +2303,7 @@ export const getPinDashboardV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof pinDashboardV2>>,
-		{ pathParams: PinDashboardV2PathParameters }
+		PinDashboardV2MutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -2255,6 +2318,9 @@ export type PinDashboardV2MutationResult = NonNullable<
 >;
 
 export type PinDashboardV2MutationError = ErrorType<RenderErrorResponseDTO>;
+export type PinDashboardV2MutationVariables = {
+	pathParams: PinDashboardV2PathParameters;
+};
 
 /**
  * @summary Pin a dashboard for the current user (v2)
@@ -2266,13 +2332,13 @@ export const usePinDashboardV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof pinDashboardV2>>,
 		TError,
-		{ pathParams: PinDashboardV2PathParameters },
+		PinDashboardV2MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof pinDashboardV2>>,
 	TError,
-	{ pathParams: PinDashboardV2PathParameters },
+	PinDashboardV2MutationVariables,
 	TContext
 > => {
 	return useMutation(getPinDashboardV2MutationOptions(options));

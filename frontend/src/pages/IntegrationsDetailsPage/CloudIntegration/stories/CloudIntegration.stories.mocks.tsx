@@ -4,11 +4,9 @@
  */
 
 import { rest } from 'msw';
-import {
-	CloudintegrationtypesGCPConnectionMethodDTO,
-	type CloudintegrationtypesPostableAccountDTO,
-	type CloudintegrationtypesUpdatableServiceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
+import type { CloudintegrationtypesPostableAccountDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesPostableAccountDTO';
+import type { CloudintegrationtypesUpdatableServiceDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesUpdatableServiceDTO';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';

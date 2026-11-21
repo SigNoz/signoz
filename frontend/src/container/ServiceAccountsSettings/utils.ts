@@ -1,4 +1,4 @@
-import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountDTO';
 import {
 	reflectedValues,
 	spliceClause,

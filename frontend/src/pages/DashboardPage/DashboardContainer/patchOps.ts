@@ -1,15 +1,11 @@
-import type {
-	DashboardGridItemDTO,
-	DashboardtypesJSONPatchOperationDTO,
-	DashboardtypesLayoutDTO,
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelPluginDTO,
-	DashboardtypesQueryDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	DashboardtypesPanelKindDTO,
-	DashboardtypesPatchOpDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardGridItemDTO } from 'api/generated/services/sigNoz.schemas/dashboardGridItemDTO';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginDTO';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import { DashboardtypesPanelKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelKindDTO';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPatchOpDTO';
 
 import type { PanelKind } from './Panels/types/panelKind';
 import type { SeededPluginSpec } from './Panels/utils/buildPluginSpec';

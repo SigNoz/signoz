@@ -1,4 +1,4 @@
-import type { LicensetypesGettableActiveLicenseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { LicensetypesGettableActiveLicenseDTO } from 'api/generated/services/sigNoz.schemas/licensetypesGettableActiveLicenseDTO';
 import type {
 	LicenseEvent,
 	LicensePlatform,

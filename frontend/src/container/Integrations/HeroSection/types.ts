@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { FormInstance } from 'antd';
-import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
 
 export enum ActiveViewEnum {
 	SELECT_REGIONS = 'select-regions',

@@ -6,7 +6,7 @@ import { getCurrentLocation } from 'lib/router/navigation';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
-import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
+import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas/createSubscription201';
 import { FeatureKeys } from 'constants/features';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';

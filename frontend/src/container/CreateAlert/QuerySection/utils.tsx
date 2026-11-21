@@ -1,4 +1,4 @@
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { AlertDef } from 'types/api/alerts/def';
 

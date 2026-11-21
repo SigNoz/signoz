@@ -1,13 +1,11 @@
-import type {
-	Querybuildertypesv5AggregationBucketDTO,
-	Querybuildertypesv5ExecStatsDTO,
-	Querybuildertypesv5RawDataDTO,
-	Querybuildertypesv5RequestTypeDTO,
-	Querybuildertypesv5ScalarDataDTO,
-	Querybuildertypesv5TimeSeriesDataDTO,
-	Querybuildertypesv5TimeSeriesDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5AggregationBucketDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5AggregationBucketDTO';
+import type { Querybuildertypesv5ExecStatsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ExecStatsDTO';
+import type { Querybuildertypesv5RawDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RawDataDTO';
+import type { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { Querybuildertypesv5ScalarDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ScalarDataDTO';
+import type { Querybuildertypesv5TimeSeriesDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDataDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { isEmpty } from 'lodash-es';
 
 import type { PanelSeries, PanelSeriesKind } from './types';

@@ -1,5 +1,5 @@
 import type { SelectItemType } from '@signozhq/ui/select';
-import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas/tagtypesPostableTagDTO';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import { toPickerRelativeTime } from '../../utils/dashboardDuration';

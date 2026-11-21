@@ -1,5 +1,5 @@
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
-import type { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas/coretypesTypeDTO';
 
 export enum PermissionScope {
 	ALL = 'all',

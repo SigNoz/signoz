@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTOVariables';
 
 // The four syntaxes a dashboard body may carry. Group 1 covers `{{name}}` and
 // `{{.name}}`, group 2 `[[name]]`, group 3 `$name`. The `$` form takes dotted

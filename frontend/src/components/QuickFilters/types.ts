@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 

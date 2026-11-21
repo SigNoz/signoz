@@ -1,9 +1,7 @@
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
-	type Querybuildertypesv5QueryEnvelopeBuilderDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeFormulaDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTOType';
+import type { Querybuildertypesv5QueryEnvelopeBuilderDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
 import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 

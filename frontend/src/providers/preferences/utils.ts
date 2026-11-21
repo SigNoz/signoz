@@ -1,4 +1,4 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { withBasePath } from 'utils/basePath';

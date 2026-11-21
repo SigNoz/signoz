@@ -1,4 +1,4 @@
-import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryTypeDTO';
 import type {
 	Query,
 	QueryState,

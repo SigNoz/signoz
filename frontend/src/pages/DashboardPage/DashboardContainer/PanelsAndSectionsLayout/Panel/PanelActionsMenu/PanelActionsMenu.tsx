@@ -1,6 +1,6 @@
 import { EllipsisVertical } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 

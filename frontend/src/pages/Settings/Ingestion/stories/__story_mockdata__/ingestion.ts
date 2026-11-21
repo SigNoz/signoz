@@ -3,12 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GatewaytypesIngestionKeyDTO,
-	GatewaytypesLimitDTO,
-	GetIngestionKeys200,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas/gatewaytypesIngestionKeyDTO';
+import type { GatewaytypesLimitDTO } from 'api/generated/services/sigNoz.schemas/gatewaytypesLimitDTO';
+import type { GetIngestionKeys200 } from 'api/generated/services/sigNoz.schemas/getIngestionKeys200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { IngestionInfo } from 'types/api/settings/ingestion';
 
 /** `per_page` the page asks for, so a longer page is a body the gateway never sends. */

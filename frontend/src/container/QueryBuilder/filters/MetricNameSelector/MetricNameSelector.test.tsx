@@ -6,8 +6,8 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
-import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesListMetricDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';

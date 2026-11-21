@@ -1,9 +1,7 @@
-import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	AuthtypesRelationDTO,
-	CoretypesKindDTO,
-	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionGroupDTO';
+import { AuthtypesRelationDTO } from 'api/generated/services/sigNoz.schemas/authtypesRelationDTO';
+import { CoretypesKindDTO } from 'api/generated/services/sigNoz.schemas/coretypesKindDTO';
+import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas/coretypesTypeDTO';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
 import type { ActionConfig, ResourcePermissions } from '../../types';

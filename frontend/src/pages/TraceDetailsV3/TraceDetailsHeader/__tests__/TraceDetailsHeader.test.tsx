@@ -1,6 +1,6 @@
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import logEvent from 'api/common/logEvent';
-import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas/spantypesGettableTraceSummaryDTO';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { fireEvent, render, screen, userEvent } from 'tests/test-utils';

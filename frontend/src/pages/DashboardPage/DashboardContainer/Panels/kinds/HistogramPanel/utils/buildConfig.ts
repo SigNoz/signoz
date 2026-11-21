@@ -1,4 +1,4 @@
-import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHistogramPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHistogramPanelSpecDTO';
 import {
 	buildBaseConfig,
 	type PanelChromeArgs,

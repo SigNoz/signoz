@@ -13,10 +13,8 @@ import { Callout } from '@signozhq/ui/callout';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/toast';
 import { Skeleton } from 'antd';
-import type {
-	RenderErrorResponseDTO,
-	ZeustypesHostDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { ZeustypesHostDTO } from 'api/generated/services/sigNoz.schemas/zeustypesHostDTO';
 import { useGetHosts, usePutHost } from 'api/generated/services/zeus';
 import type { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';

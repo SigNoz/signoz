@@ -3,11 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesJSONPatchOperationDTO,
-	GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 
 import { applyJsonPatch } from '../../DashboardContainer/optimistic/applyJsonPatch';
 

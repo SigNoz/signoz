@@ -6,7 +6,7 @@
 import { EditorView } from '@codemirror/view';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

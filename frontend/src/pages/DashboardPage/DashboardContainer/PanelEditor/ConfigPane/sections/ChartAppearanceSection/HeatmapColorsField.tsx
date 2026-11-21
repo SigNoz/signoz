@@ -1,7 +1,5 @@
-import {
-	DashboardtypesHeatmapColorModeDTO,
-	type DashboardtypesHeatmapColorsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorsDTO';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../controls/ConfigTiles/ConfigTiles';

@@ -1,0 +1,15 @@
+/**
+ * ! Do not edit manually
+ * * The file has been auto-generated using Orval for SigNoz
+ * * regenerate with 'pnpm generate:api'
+ * SigNoz
+ */
+import type { AuthtypesTransactionGroupsDTO } from './authtypesTransactionGroupsDTO';
+
+export interface AuthtypesUpdatableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	transactionGroups: AuthtypesTransactionGroupsDTO;
+}

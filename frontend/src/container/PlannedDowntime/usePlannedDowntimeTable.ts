@@ -1,6 +1,6 @@
 import type { RefObject } from 'react';
 import { useMemo } from 'react';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
 import { sortByColumn } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';

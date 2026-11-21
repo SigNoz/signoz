@@ -1,9 +1,7 @@
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesJSONPatchOperationDTO,
-	DashboardtypesQueryDTO,
-	Querybuildertypesv5CompositeQueryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
 import { cloneDeep } from 'lodash-es';
 
 import { formModelToDto } from '../variableAdapters';

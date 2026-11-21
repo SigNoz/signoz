@@ -1,8 +1,6 @@
-import {
-	type DashboardtypesQueryDTO,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-	Querybuildertypesv5QueryEnvelopePromQLDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
+import { Querybuildertypesv5QueryEnvelopePromQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopePromQLDTOType';
 
 import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { getBuilderQueries } from './getBuilderQueries';

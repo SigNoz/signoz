@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource } from 'components/QuickFilters/types';

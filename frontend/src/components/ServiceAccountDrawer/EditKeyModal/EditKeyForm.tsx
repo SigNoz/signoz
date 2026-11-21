@@ -6,7 +6,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { DatePicker } from 'antd';
-import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesGettableFactorAPIKeyDTO';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import {

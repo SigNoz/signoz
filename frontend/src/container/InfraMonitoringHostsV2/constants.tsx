@@ -1,8 +1,8 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
-import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostRecordDTO';
+import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostStatusDTO';
 import type { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';

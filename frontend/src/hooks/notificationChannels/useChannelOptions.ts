@@ -1,11 +1,9 @@
 import type { UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';
 import { listNotificationChannels } from 'api/generated/services/channels';
-import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	AlertmanagertypesChannelListOrderDTO,
-	AlertmanagertypesChannelListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesListedNotificationChannelDTO';
+import { AlertmanagertypesChannelListOrderDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelListOrderDTO';
+import { AlertmanagertypesChannelListSortDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelListSortDTO';
 import { range } from 'lodash-es';
 
 const PAGE_SIZE = 100;

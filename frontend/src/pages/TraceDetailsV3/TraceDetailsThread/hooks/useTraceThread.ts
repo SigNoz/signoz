@@ -4,7 +4,7 @@ import {
 	getGetTraceThreadQueryKey,
 	getTraceThread,
 } from 'api/generated/services/tracedetail';
-import type { GetTraceThreadParams } from 'api/generated/services/sigNoz.schemas';
+import type { GetTraceThreadParams } from 'api/generated/services/sigNoz.schemas/getTraceThreadParams';
 
 import type { ThreadSpan } from '../types';
 import { isNotFoundError, toThreadSpan } from '../utils';

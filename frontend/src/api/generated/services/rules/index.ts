@@ -17,46 +17,81 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	CloneRuleByID201,
-	CloneRuleByIDPathParameters,
-	CreateRule201,
-	CreateRuleView201,
-	DeleteRuleByIDPathParameters,
-	DeleteRuleViewPathParameters,
-	GetRuleByID200,
-	GetRuleByIDPathParameters,
-	GetRuleHistoryFilterKeys200,
-	GetRuleHistoryFilterKeysParams,
-	GetRuleHistoryFilterKeysPathParameters,
-	GetRuleHistoryFilterValues200,
-	GetRuleHistoryFilterValuesParams,
-	GetRuleHistoryFilterValuesPathParameters,
-	GetRuleHistoryOverallStatus200,
-	GetRuleHistoryOverallStatusParams,
-	GetRuleHistoryOverallStatusPathParameters,
-	GetRuleHistoryStats200,
-	GetRuleHistoryStatsParams,
-	GetRuleHistoryStatsPathParameters,
-	GetRuleHistoryTimeline200,
-	GetRuleHistoryTimelineParams,
-	GetRuleHistoryTimelinePathParameters,
-	GetRuleHistoryTopContributors200,
-	GetRuleHistoryTopContributorsParams,
-	GetRuleHistoryTopContributorsPathParameters,
-	ListRuleViews200,
-	ListRulesV3200,
-	ListRulesV3Params,
-	PatchRuleByID200,
-	PatchRuleByIDPathParameters,
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
-	RuletypesPostableRuleViewDTO,
-	TestRule200,
-	UpdateRuleByIDPathParameters,
-	UpdateRuleView200,
-	UpdateRuleViewPathParameters,
-} from '../sigNoz.schemas';
+import type { CloneRuleByID201 } from '../sigNoz.schemas/cloneRuleByID201';
+
+import type { CloneRuleByIDPathParameters } from '../sigNoz.schemas/cloneRuleByIDPathParameters';
+
+import type { CreateRule201 } from '../sigNoz.schemas/createRule201';
+
+import type { CreateRuleView201 } from '../sigNoz.schemas/createRuleView201';
+
+import type { DeleteRuleByIDPathParameters } from '../sigNoz.schemas/deleteRuleByIDPathParameters';
+
+import type { DeleteRuleViewPathParameters } from '../sigNoz.schemas/deleteRuleViewPathParameters';
+
+import type { GetRuleByID200 } from '../sigNoz.schemas/getRuleByID200';
+
+import type { GetRuleByIDPathParameters } from '../sigNoz.schemas/getRuleByIDPathParameters';
+
+import type { GetRuleHistoryFilterKeys200 } from '../sigNoz.schemas/getRuleHistoryFilterKeys200';
+
+import type { GetRuleHistoryFilterKeysParams } from '../sigNoz.schemas/getRuleHistoryFilterKeysParams';
+
+import type { GetRuleHistoryFilterKeysPathParameters } from '../sigNoz.schemas/getRuleHistoryFilterKeysPathParameters';
+
+import type { GetRuleHistoryFilterValues200 } from '../sigNoz.schemas/getRuleHistoryFilterValues200';
+
+import type { GetRuleHistoryFilterValuesParams } from '../sigNoz.schemas/getRuleHistoryFilterValuesParams';
+
+import type { GetRuleHistoryFilterValuesPathParameters } from '../sigNoz.schemas/getRuleHistoryFilterValuesPathParameters';
+
+import type { GetRuleHistoryOverallStatus200 } from '../sigNoz.schemas/getRuleHistoryOverallStatus200';
+
+import type { GetRuleHistoryOverallStatusParams } from '../sigNoz.schemas/getRuleHistoryOverallStatusParams';
+
+import type { GetRuleHistoryOverallStatusPathParameters } from '../sigNoz.schemas/getRuleHistoryOverallStatusPathParameters';
+
+import type { GetRuleHistoryStats200 } from '../sigNoz.schemas/getRuleHistoryStats200';
+
+import type { GetRuleHistoryStatsParams } from '../sigNoz.schemas/getRuleHistoryStatsParams';
+
+import type { GetRuleHistoryStatsPathParameters } from '../sigNoz.schemas/getRuleHistoryStatsPathParameters';
+
+import type { GetRuleHistoryTimeline200 } from '../sigNoz.schemas/getRuleHistoryTimeline200';
+
+import type { GetRuleHistoryTimelineParams } from '../sigNoz.schemas/getRuleHistoryTimelineParams';
+
+import type { GetRuleHistoryTimelinePathParameters } from '../sigNoz.schemas/getRuleHistoryTimelinePathParameters';
+
+import type { GetRuleHistoryTopContributors200 } from '../sigNoz.schemas/getRuleHistoryTopContributors200';
+
+import type { GetRuleHistoryTopContributorsParams } from '../sigNoz.schemas/getRuleHistoryTopContributorsParams';
+
+import type { GetRuleHistoryTopContributorsPathParameters } from '../sigNoz.schemas/getRuleHistoryTopContributorsPathParameters';
+
+import type { ListRuleViews200 } from '../sigNoz.schemas/listRuleViews200';
+
+import type { ListRulesV3200 } from '../sigNoz.schemas/listRulesV3200';
+
+import type { ListRulesV3Params } from '../sigNoz.schemas/listRulesV3Params';
+
+import type { PatchRuleByID200 } from '../sigNoz.schemas/patchRuleByID200';
+
+import type { PatchRuleByIDPathParameters } from '../sigNoz.schemas/patchRuleByIDPathParameters';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { RuletypesPostableRuleDTO } from '../sigNoz.schemas/ruletypesPostableRuleDTO';
+
+import type { RuletypesPostableRuleViewDTO } from '../sigNoz.schemas/ruletypesPostableRuleViewDTO';
+
+import type { TestRule200 } from '../sigNoz.schemas/testRule200';
+
+import type { UpdateRuleByIDPathParameters } from '../sigNoz.schemas/updateRuleByIDPathParameters';
+
+import type { UpdateRuleView200 } from '../sigNoz.schemas/updateRuleView200';
+
+import type { UpdateRuleViewPathParameters } from '../sigNoz.schemas/updateRuleViewPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -151,7 +186,7 @@ export function useListRuleViews<
 }
 
 /**
- * @summary List rule saved views
+ * @summary Invalidates the {@link useListRuleViews} query
  */
 export const invalidateListRuleViews = async (
 	queryClient: QueryClient,
@@ -182,6 +217,8 @@ export const createRuleView = (
 	});
 };
 
+export const getCreateRuleViewMutationKey = () => ['createRuleView'] as const;
+
 export const getCreateRuleViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -189,16 +226,16 @@ export const getCreateRuleViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRuleView>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+		CreateRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRuleView>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+	CreateRuleViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createRuleView'];
+	const mutationKey = getCreateRuleViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -209,7 +246,7 @@ export const getCreateRuleViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRuleView>>,
-		{ data?: BodyType<RuletypesPostableRuleViewDTO> }
+		CreateRuleViewMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -226,6 +263,9 @@ export type CreateRuleViewMutationBody =
 	| BodyType<RuletypesPostableRuleViewDTO>
 	| undefined;
 export type CreateRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateRuleViewMutationVariables = {
+	data?: BodyType<RuletypesPostableRuleViewDTO>;
+};
 
 /**
  * @summary Create rule saved view
@@ -237,13 +277,13 @@ export const useCreateRuleView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRuleView>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+		CreateRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRuleView>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleViewDTO> },
+	CreateRuleViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateRuleViewMutationOptions(options));
@@ -263,6 +303,8 @@ export const deleteRuleView = (
 	});
 };
 
+export const getDeleteRuleViewMutationKey = () => ['deleteRuleView'] as const;
+
 export const getDeleteRuleViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -270,16 +312,16 @@ export const getDeleteRuleViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleView>>,
 		TError,
-		{ pathParams: DeleteRuleViewPathParameters },
+		DeleteRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteRuleView>>,
 	TError,
-	{ pathParams: DeleteRuleViewPathParameters },
+	DeleteRuleViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteRuleView'];
+	const mutationKey = getDeleteRuleViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -290,7 +332,7 @@ export const getDeleteRuleViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteRuleView>>,
-		{ pathParams: DeleteRuleViewPathParameters }
+		DeleteRuleViewMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -305,6 +347,9 @@ export type DeleteRuleViewMutationResult = NonNullable<
 >;
 
 export type DeleteRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteRuleViewMutationVariables = {
+	pathParams: DeleteRuleViewPathParameters;
+};
 
 /**
  * @summary Delete rule saved view
@@ -316,13 +361,13 @@ export const useDeleteRuleView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleView>>,
 		TError,
-		{ pathParams: DeleteRuleViewPathParameters },
+		DeleteRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteRuleView>>,
 	TError,
-	{ pathParams: DeleteRuleViewPathParameters },
+	DeleteRuleViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteRuleViewMutationOptions(options));
@@ -345,6 +390,8 @@ export const updateRuleView = (
 	});
 };
 
+export const getUpdateRuleViewMutationKey = () => ['updateRuleView'] as const;
+
 export const getUpdateRuleViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -352,22 +399,16 @@ export const getUpdateRuleViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleView>>,
 		TError,
-		{
-			pathParams: UpdateRuleViewPathParameters;
-			data?: BodyType<RuletypesPostableRuleViewDTO>;
-		},
+		UpdateRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateRuleView>>,
 	TError,
-	{
-		pathParams: UpdateRuleViewPathParameters;
-		data?: BodyType<RuletypesPostableRuleViewDTO>;
-	},
+	UpdateRuleViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateRuleView'];
+	const mutationKey = getUpdateRuleViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -378,10 +419,7 @@ export const getUpdateRuleViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateRuleView>>,
-		{
-			pathParams: UpdateRuleViewPathParameters;
-			data?: BodyType<RuletypesPostableRuleViewDTO>;
-		}
+		UpdateRuleViewMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -398,6 +436,10 @@ export type UpdateRuleViewMutationBody =
 	| BodyType<RuletypesPostableRuleViewDTO>
 	| undefined;
 export type UpdateRuleViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateRuleViewMutationVariables = {
+	pathParams: UpdateRuleViewPathParameters;
+	data?: BodyType<RuletypesPostableRuleViewDTO>;
+};
 
 /**
  * @summary Update rule saved view
@@ -409,19 +451,13 @@ export const useUpdateRuleView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleView>>,
 		TError,
-		{
-			pathParams: UpdateRuleViewPathParameters;
-			data?: BodyType<RuletypesPostableRuleViewDTO>;
-		},
+		UpdateRuleViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateRuleView>>,
 	TError,
-	{
-		pathParams: UpdateRuleViewPathParameters;
-		data?: BodyType<RuletypesPostableRuleViewDTO>;
-	},
+	UpdateRuleViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateRuleViewMutationOptions(options));
@@ -443,6 +479,8 @@ export const createRule = (
 	});
 };
 
+export const getCreateRuleMutationKey = () => ['createRule'] as const;
+
 export const getCreateRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -450,16 +488,16 @@ export const getCreateRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		CreateRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRule>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleDTO> },
+	CreateRuleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createRule'];
+	const mutationKey = getCreateRuleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -470,7 +508,7 @@ export const getCreateRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRule>>,
-		{ data?: BodyType<RuletypesPostableRuleDTO> }
+		CreateRuleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -487,6 +525,9 @@ export type CreateRuleMutationBody =
 	| BodyType<RuletypesPostableRuleDTO>
 	| undefined;
 export type CreateRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateRuleMutationVariables = {
+	data?: BodyType<RuletypesPostableRuleDTO>;
+};
 
 /**
  * @summary Create alert rule
@@ -498,13 +539,13 @@ export const useCreateRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRule>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		CreateRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRule>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleDTO> },
+	CreateRuleMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateRuleMutationOptions(options));
@@ -524,6 +565,8 @@ export const deleteRuleByID = (
 	});
 };
 
+export const getDeleteRuleByIDMutationKey = () => ['deleteRuleByID'] as const;
+
 export const getDeleteRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -531,16 +574,16 @@ export const getDeleteRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleByID>>,
 		TError,
-		{ pathParams: DeleteRuleByIDPathParameters },
+		DeleteRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteRuleByID>>,
 	TError,
-	{ pathParams: DeleteRuleByIDPathParameters },
+	DeleteRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteRuleByID'];
+	const mutationKey = getDeleteRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -551,7 +594,7 @@ export const getDeleteRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteRuleByID>>,
-		{ pathParams: DeleteRuleByIDPathParameters }
+		DeleteRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -566,6 +609,9 @@ export type DeleteRuleByIDMutationResult = NonNullable<
 >;
 
 export type DeleteRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteRuleByIDMutationVariables = {
+	pathParams: DeleteRuleByIDPathParameters;
+};
 
 /**
  * @summary Delete alert rule
@@ -577,13 +623,13 @@ export const useDeleteRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRuleByID>>,
 		TError,
-		{ pathParams: DeleteRuleByIDPathParameters },
+		DeleteRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteRuleByID>>,
 	TError,
-	{ pathParams: DeleteRuleByIDPathParameters },
+	DeleteRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteRuleByIDMutationOptions(options));
@@ -672,7 +718,7 @@ export function useGetRuleByID<
 }
 
 /**
- * @summary Get alert rule by ID
+ * @summary Invalidates the {@link useGetRuleByID} query
  */
 export const invalidateGetRuleByID = async (
 	queryClient: QueryClient,
@@ -705,6 +751,8 @@ export const patchRuleByID = (
 	});
 };
 
+export const getPatchRuleByIDMutationKey = () => ['patchRuleByID'] as const;
+
 export const getPatchRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -712,22 +760,16 @@ export const getPatchRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRuleByID>>,
 		TError,
-		{
-			pathParams: PatchRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		},
+		PatchRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof patchRuleByID>>,
 	TError,
-	{
-		pathParams: PatchRuleByIDPathParameters;
-		data?: BodyType<RuletypesPostableRuleDTO>;
-	},
+	PatchRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['patchRuleByID'];
+	const mutationKey = getPatchRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -738,10 +780,7 @@ export const getPatchRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof patchRuleByID>>,
-		{
-			pathParams: PatchRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		}
+		PatchRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -758,6 +797,10 @@ export type PatchRuleByIDMutationBody =
 	| BodyType<RuletypesPostableRuleDTO>
 	| undefined;
 export type PatchRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type PatchRuleByIDMutationVariables = {
+	pathParams: PatchRuleByIDPathParameters;
+	data?: BodyType<RuletypesPostableRuleDTO>;
+};
 
 /**
  * @summary Patch alert rule
@@ -769,19 +812,13 @@ export const usePatchRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRuleByID>>,
 		TError,
-		{
-			pathParams: PatchRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		},
+		PatchRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof patchRuleByID>>,
 	TError,
-	{
-		pathParams: PatchRuleByIDPathParameters;
-		data?: BodyType<RuletypesPostableRuleDTO>;
-	},
+	PatchRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getPatchRuleByIDMutationOptions(options));
@@ -804,6 +841,8 @@ export const updateRuleByID = (
 	});
 };
 
+export const getUpdateRuleByIDMutationKey = () => ['updateRuleByID'] as const;
+
 export const getUpdateRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -811,22 +850,16 @@ export const getUpdateRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleByID>>,
 		TError,
-		{
-			pathParams: UpdateRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		},
+		UpdateRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateRuleByID>>,
 	TError,
-	{
-		pathParams: UpdateRuleByIDPathParameters;
-		data?: BodyType<RuletypesPostableRuleDTO>;
-	},
+	UpdateRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateRuleByID'];
+	const mutationKey = getUpdateRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -837,10 +870,7 @@ export const getUpdateRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateRuleByID>>,
-		{
-			pathParams: UpdateRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		}
+		UpdateRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -857,6 +887,10 @@ export type UpdateRuleByIDMutationBody =
 	| BodyType<RuletypesPostableRuleDTO>
 	| undefined;
 export type UpdateRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateRuleByIDMutationVariables = {
+	pathParams: UpdateRuleByIDPathParameters;
+	data?: BodyType<RuletypesPostableRuleDTO>;
+};
 
 /**
  * @summary Update alert rule
@@ -868,19 +902,13 @@ export const useUpdateRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRuleByID>>,
 		TError,
-		{
-			pathParams: UpdateRuleByIDPathParameters;
-			data?: BodyType<RuletypesPostableRuleDTO>;
-		},
+		UpdateRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateRuleByID>>,
 	TError,
-	{
-		pathParams: UpdateRuleByIDPathParameters;
-		data?: BodyType<RuletypesPostableRuleDTO>;
-	},
+	UpdateRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateRuleByIDMutationOptions(options));
@@ -900,6 +928,8 @@ export const cloneRuleByID = (
 	});
 };
 
+export const getCloneRuleByIDMutationKey = () => ['cloneRuleByID'] as const;
+
 export const getCloneRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -907,16 +937,16 @@ export const getCloneRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof cloneRuleByID>>,
 		TError,
-		{ pathParams: CloneRuleByIDPathParameters },
+		CloneRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof cloneRuleByID>>,
 	TError,
-	{ pathParams: CloneRuleByIDPathParameters },
+	CloneRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['cloneRuleByID'];
+	const mutationKey = getCloneRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -927,7 +957,7 @@ export const getCloneRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof cloneRuleByID>>,
-		{ pathParams: CloneRuleByIDPathParameters }
+		CloneRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -942,6 +972,9 @@ export type CloneRuleByIDMutationResult = NonNullable<
 >;
 
 export type CloneRuleByIDMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CloneRuleByIDMutationVariables = {
+	pathParams: CloneRuleByIDPathParameters;
+};
 
 /**
  * @summary Clone alert rule
@@ -953,13 +986,13 @@ export const useCloneRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof cloneRuleByID>>,
 		TError,
-		{ pathParams: CloneRuleByIDPathParameters },
+		CloneRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof cloneRuleByID>>,
 	TError,
-	{ pathParams: CloneRuleByIDPathParameters },
+	CloneRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getCloneRuleByIDMutationOptions(options));
@@ -1064,7 +1097,7 @@ export function useGetRuleHistoryFilterKeys<
 }
 
 /**
- * @summary Get rule history filter keys
+ * @summary Invalidates the {@link useGetRuleHistoryFilterKeys} query
  */
 export const invalidateGetRuleHistoryFilterKeys = async (
 	queryClient: QueryClient,
@@ -1181,7 +1214,7 @@ export function useGetRuleHistoryFilterValues<
 }
 
 /**
- * @summary Get rule history filter values
+ * @summary Invalidates the {@link useGetRuleHistoryFilterValues} query
  */
 export const invalidateGetRuleHistoryFilterValues = async (
 	queryClient: QueryClient,
@@ -1298,7 +1331,7 @@ export function useGetRuleHistoryOverallStatus<
 }
 
 /**
- * @summary Get rule overall status timeline
+ * @summary Invalidates the {@link useGetRuleHistoryOverallStatus} query
  */
 export const invalidateGetRuleHistoryOverallStatus = async (
 	queryClient: QueryClient,
@@ -1413,7 +1446,7 @@ export function useGetRuleHistoryStats<
 }
 
 /**
- * @summary Get rule history stats
+ * @summary Invalidates the {@link useGetRuleHistoryStats} query
  */
 export const invalidateGetRuleHistoryStats = async (
 	queryClient: QueryClient,
@@ -1529,7 +1562,7 @@ export function useGetRuleHistoryTimeline<
 }
 
 /**
- * @summary Get rule history timeline
+ * @summary Invalidates the {@link useGetRuleHistoryTimeline} query
  */
 export const invalidateGetRuleHistoryTimeline = async (
 	queryClient: QueryClient,
@@ -1646,7 +1679,7 @@ export function useGetRuleHistoryTopContributors<
 }
 
 /**
- * @summary Get top contributors to rule firing
+ * @summary Invalidates the {@link useGetRuleHistoryTopContributors} query
  */
 export const invalidateGetRuleHistoryTopContributors = async (
 	queryClient: QueryClient,
@@ -1679,6 +1712,8 @@ export const testRule = (
 	});
 };
 
+export const getTestRuleMutationKey = () => ['testRule'] as const;
+
 export const getTestRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1686,16 +1721,16 @@ export const getTestRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		TestRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof testRule>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleDTO> },
+	TestRuleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['testRule'];
+	const mutationKey = getTestRuleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1706,7 +1741,7 @@ export const getTestRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof testRule>>,
-		{ data?: BodyType<RuletypesPostableRuleDTO> }
+		TestRuleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1723,6 +1758,9 @@ export type TestRuleMutationBody =
 	| BodyType<RuletypesPostableRuleDTO>
 	| undefined;
 export type TestRuleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type TestRuleMutationVariables = {
+	data?: BodyType<RuletypesPostableRuleDTO>;
+};
 
 /**
  * @summary Test alert rule
@@ -1734,13 +1772,13 @@ export const useTestRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof testRule>>,
 		TError,
-		{ data?: BodyType<RuletypesPostableRuleDTO> },
+		TestRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof testRule>>,
 	TError,
-	{ data?: BodyType<RuletypesPostableRuleDTO> },
+	TestRuleMutationVariables,
 	TContext
 > => {
 	return useMutation(getTestRuleMutationOptions(options));
@@ -1825,7 +1863,7 @@ export function useListRulesV3<
 }
 
 /**
- * @summary List alert rules (v3)
+ * @summary Invalidates the {@link useListRulesV3} query
  */
 export const invalidateListRulesV3 = async (
 	queryClient: QueryClient,

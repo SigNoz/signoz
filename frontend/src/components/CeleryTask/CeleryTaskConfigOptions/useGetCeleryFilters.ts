@@ -1,6 +1,6 @@
 import { useQuery } from 'react-query';
 import type { DefaultOptionType } from 'antd/es/select';
-import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

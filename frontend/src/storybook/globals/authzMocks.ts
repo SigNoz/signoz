@@ -1,5 +1,5 @@
 import { rest } from 'msw';
-import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
 import { clearAllAuthZDevOverrides } from 'lib/authz/devtools/useAuthZDevStore';
 import {
 	AUTHZ_CHECK_URL,

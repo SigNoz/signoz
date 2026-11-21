@@ -8,10 +8,8 @@ import { MAX_PLOTTED_GROUPS } from './utils/prepareData';
 import { sections } from './sections';
 import { getScatterPlotDataWarning } from './utils/warning';
 import { pruneStaleDimensions } from './utils/pruneStaleDimensions';
-import {
-	Querybuildertypesv5RequestTypeDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { EQueryType } from 'types/common/dashboard';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 

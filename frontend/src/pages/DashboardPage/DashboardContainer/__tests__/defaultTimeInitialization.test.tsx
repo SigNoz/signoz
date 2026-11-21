@@ -1,6 +1,6 @@
 import { StrictMode, type ReactNode } from 'react';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { getCurrentLocation, navigate } from 'lib/router/navigation';
 import { UpdateTimeInterval } from 'store/actions';

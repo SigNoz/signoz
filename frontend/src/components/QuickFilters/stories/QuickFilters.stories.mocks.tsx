@@ -3,11 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	QuickfiltertypesSourceDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
 import { rest, type RequestHandler } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

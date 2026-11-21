@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { Boxes } from '@signozhq/icons';
-import type { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesClusterRecordDTO';
+import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeConditionDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';

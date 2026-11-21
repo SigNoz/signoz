@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Braces, Globe, Table } from '@signozhq/icons';
 import type { TabsItemProps } from '@signozhq/ui/tabs';
 import { Tabs } from '@signozhq/ui/tabs';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 
 import Overview from './Overview';
 import PublicDashboardSettings from './PublicDashboard';

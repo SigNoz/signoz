@@ -1,5 +1,5 @@
 import type { SelectItemType } from '@signozhq/ui/select';
-import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleCacheModeDTO';
 
 import type { CacheBucketDef, DrawerDraft } from './types';
 

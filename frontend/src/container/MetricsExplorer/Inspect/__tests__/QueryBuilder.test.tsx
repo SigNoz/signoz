@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsService from 'api/generated/services/metrics';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 

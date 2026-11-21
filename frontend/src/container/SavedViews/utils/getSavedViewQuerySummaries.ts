@@ -1,4 +1,4 @@
-import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';

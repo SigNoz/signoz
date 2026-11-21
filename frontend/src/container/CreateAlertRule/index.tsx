@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import AlertBreadcrumb from 'components/AlertBreadcrumb';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';

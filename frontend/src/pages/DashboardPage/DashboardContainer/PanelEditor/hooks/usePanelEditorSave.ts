@@ -3,13 +3,11 @@ import { useQueryClient } from 'react-query';
 import { v4 as uuid } from 'uuid';
 import logEvent from 'api/common/logEvent';
 import { getGetDashboardV2QueryKey } from 'api/generated/services/dashboard';
-import {
-	type DashboardtypesJSONPatchOperationDTO,
-	type DashboardtypesPanelSpecDTO,
-	DashboardtypesPanelKindDTO,
-	DashboardtypesPatchOpDTO,
-	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import { DashboardtypesPanelKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelKindDTO';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPatchOpDTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';

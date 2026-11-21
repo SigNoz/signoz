@@ -1,7 +1,5 @@
-import type {
-	SpantypesGettableTraceSummaryDTO,
-	SpantypesThreadSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas/spantypesGettableTraceSummaryDTO';
+import type { SpantypesThreadSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesThreadSpanDTO';
 import { isAxiosError } from 'axios';
 
 import { collectToolCallKeys } from '../AIThreadMessage/utils';

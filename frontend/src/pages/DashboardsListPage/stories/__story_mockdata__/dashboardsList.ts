@@ -3,15 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-	DashboardtypesSourceDTO,
-	type DashboardtypesListedDashboardForUserV2DTO,
-	type ListDashboardViews200,
-	type ListDashboardsForUserV2200,
-	type TagtypesGettableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
+import type { DashboardtypesListedDashboardForUserV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListedDashboardForUserV2DTO';
+import type { ListDashboardViews200 } from 'api/generated/services/sigNoz.schemas/listDashboardViews200';
+import type { ListDashboardsForUserV2200 } from 'api/generated/services/sigNoz.schemas/listDashboardsForUserV2200';
+import type { TagtypesGettableTagDTO } from 'api/generated/services/sigNoz.schemas/tagtypesGettableTagDTO';
 
 import { STORY_USER_EMAIL, TEAMMATE_EMAILS } from './orgUsers';
 

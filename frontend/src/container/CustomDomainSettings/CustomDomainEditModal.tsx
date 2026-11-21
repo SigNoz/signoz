@@ -4,7 +4,7 @@ import { CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 

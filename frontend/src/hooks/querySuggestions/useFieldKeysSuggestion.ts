@@ -1,7 +1,7 @@
 import type { QueryKey, UseQueryOptions, UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

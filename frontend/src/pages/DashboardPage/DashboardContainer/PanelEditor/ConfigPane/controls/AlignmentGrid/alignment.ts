@@ -1,7 +1,5 @@
-import {
-	DashboardtypesTextAlignDTO,
-	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTextAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
+import { DashboardtypesVerticalAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVerticalAlignDTO';
 
 const VERTICAL_LABELS: Record<DashboardtypesVerticalAlignDTO, string> = {
 	[DashboardtypesVerticalAlignDTO.top]: 'Top',

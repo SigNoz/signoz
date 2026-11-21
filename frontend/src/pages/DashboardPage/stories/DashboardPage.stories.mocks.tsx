@@ -6,7 +6,7 @@
 import { rest } from 'msw';
 import ROUTES from 'constants/routes';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
-import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas/getPublicDashboard200';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
 import {
 	buildDashboardDeletePermission,

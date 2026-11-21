@@ -1,9 +1,7 @@
 // ===================== Base Types =====================
 
-import type {
-	MetrictypesComparisonSpaceAggregationParamDTO,
-	Querybuildertypesv5BucketOptionsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas/metrictypesComparisonSpaceAggregationParamDTO';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
 import type { ReduceOperators } from 'types/common/queryBuilder';
 
 import type { Warning } from '..';

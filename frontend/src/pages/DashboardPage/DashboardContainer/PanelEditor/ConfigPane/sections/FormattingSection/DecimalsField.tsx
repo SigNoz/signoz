@@ -1,4 +1,4 @@
-import type { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPrecisionOptionDTO';
 import { resolveDecimalPrecision } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 

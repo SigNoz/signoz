@@ -1,16 +1,14 @@
-import type {
-	AiobservabilitytypesBlobPartDTO,
-	AiobservabilitytypesCompactionPartDTO,
-	AiobservabilitytypesFilePartDTO,
-	AiobservabilitytypesOutputMessageDTO,
-	AiobservabilitytypesReasoningPartDTO,
-	AiobservabilitytypesServerToolCallPartDTO,
-	AiobservabilitytypesServerToolCallResponsePartDTO,
-	AiobservabilitytypesTextPartDTO,
-	AiobservabilitytypesToolCallRequestPartDTO,
-	AiobservabilitytypesToolCallResponsePartDTO,
-	AiobservabilitytypesUriPartDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AiobservabilitytypesBlobPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesBlobPartDTO';
+import type { AiobservabilitytypesCompactionPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesCompactionPartDTO';
+import type { AiobservabilitytypesFilePartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesFilePartDTO';
+import type { AiobservabilitytypesOutputMessageDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesOutputMessageDTO';
+import type { AiobservabilitytypesReasoningPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesReasoningPartDTO';
+import type { AiobservabilitytypesServerToolCallPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesServerToolCallPartDTO';
+import type { AiobservabilitytypesServerToolCallResponsePartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesServerToolCallResponsePartDTO';
+import type { AiobservabilitytypesTextPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesTextPartDTO';
+import type { AiobservabilitytypesToolCallRequestPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesToolCallRequestPartDTO';
+import type { AiobservabilitytypesToolCallResponsePartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesToolCallResponsePartDTO';
+import type { AiobservabilitytypesUriPartDTO } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesUriPartDTO';
 
 // Generated enum `type`s as string literals, so `part.type === 'text'` narrows.
 type Part<T extends { type: string }> = Omit<T, 'type'> & {

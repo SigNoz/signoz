@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { QuickFiltersSource } from '../../types';

@@ -1,8 +1,6 @@
-import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricMetadataDTO';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 
 export const MOCK_METRIC_METADATA: MetricsexplorertypesMetricMetadataDTO = {
 	type: MetrictypesTypeDTO.sum,

@@ -1,4 +1,4 @@
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
 import ROUTES from 'constants/routes';
 import { parseAsString, useQueryState } from 'nuqs';
 import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';

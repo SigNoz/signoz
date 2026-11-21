@@ -1,4 +1,4 @@
-import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesGettableNotificationChannelDTO';
 import { cloneDeep, get, set } from 'lodash-es';
 
 export const SECRET_PLACEHOLDER = '••••••••';

@@ -1,14 +1,12 @@
-import {
-	DashboardtypesGeoMapCountryFormatDTO,
-	DashboardtypesGeoMapLayerDTO,
-	type DashboardtypesGeoMapLocationDTO,
-	DashboardtypesGeoMapLocationModeDTO,
-	type DashboardtypesGeoMapPanelSpecDTO,
-	DashboardtypesGeoMapProjectionDTO,
-	type DashboardtypesGeoMapSettingsDTO,
-	DashboardtypesGeoMapViewDTO,
-	type DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapCountryFormatDTO';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
+import { DashboardtypesGeoMapProjectionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapProjectionDTO';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 import { pruneStaleBindings } from '../pruneStaleBindings';
 

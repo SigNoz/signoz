@@ -1,7 +1,7 @@
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Tooltip } from 'antd';
 import Col from 'periscope/components/Col/Col';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

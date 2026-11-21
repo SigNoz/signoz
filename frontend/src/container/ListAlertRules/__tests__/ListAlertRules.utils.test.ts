@@ -1,8 +1,6 @@
 import { logEventMock } from '__tests__/logEventMock';
-import {
-	RuletypesListOrderDTO,
-	RuletypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { RuletypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListOrderDTO';
+import { RuletypesListSortDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListSortDTO';
 import type { SortState } from 'components/TanStackTableView/types';
 
 import type { AlertRule, RuleListFilter } from '../types';

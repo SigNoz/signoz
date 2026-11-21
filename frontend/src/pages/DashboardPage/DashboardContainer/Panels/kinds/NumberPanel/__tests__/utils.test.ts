@@ -1,8 +1,6 @@
-import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonThresholdDTO';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
 
 import { mapNumberThresholds } from '../utils';
 

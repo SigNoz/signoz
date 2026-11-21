@@ -3,16 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	Querybuildertypesv5ColumnTypeDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-	type QueryRangeV5200,
-	type Querybuildertypesv5ColumnDescriptorDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-	type Querybuildertypesv5TimeSeriesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5ColumnTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnTypeDTO';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeFormulaDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
+import type { Querybuildertypesv5ColumnDescriptorDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnDescriptorDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
 import type { Warning } from 'types/api';
 import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type {

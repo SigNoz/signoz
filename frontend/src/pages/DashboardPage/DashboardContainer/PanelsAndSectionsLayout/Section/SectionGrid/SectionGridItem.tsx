@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 
 import Panel, { type PanelActionsConfig } from '../../Panel/Panel';

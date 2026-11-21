@@ -1,7 +1,5 @@
-import {
-	CoretypesKindDTO,
-	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { CoretypesKindDTO } from 'api/generated/services/sigNoz.schemas/coretypesKindDTO';
+import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas/coretypesTypeDTO';
 import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,

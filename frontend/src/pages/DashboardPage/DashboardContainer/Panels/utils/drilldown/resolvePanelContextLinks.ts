@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { resolveTexts } from 'hooks/dashboard/useContextVariables';
 
 import { resolveContextLinkUrl } from './resolveContextLinkUrl';

@@ -1,9 +1,7 @@
-import {
-	DashboardtypesAxisScaleDTO,
-	type DashboardtypesScatterPlotAxisDTO,
-	type DashboardtypesScatterPlotThresholdDTO,
-	DashboardtypesThresholdAxisDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxisScaleDTO';
+import type { DashboardtypesScatterPlotAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxisDTO';
+import type { DashboardtypesScatterPlotThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotThresholdDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
 import {
 	type ScatterAxisOptions,
 	ScatterAxisScale,

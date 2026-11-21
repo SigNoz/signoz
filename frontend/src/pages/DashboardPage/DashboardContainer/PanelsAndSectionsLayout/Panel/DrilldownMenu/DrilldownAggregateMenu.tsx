@@ -8,7 +8,7 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { getAggregateColumnHeader } from 'container/QueryTable/Drilldown/drilldownUtils';
 import ContextMenu from 'periscope/components/ContextMenu';
 import type { DrilldownContext } from 'pages/DashboardPage/DashboardContainer/Panels/types/drilldown';

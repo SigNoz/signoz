@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 // eslint-disable-next-line no-restricted-imports -- global time selector still on redux
 import { useSelector } from 'react-redux';
 import type { AppState } from 'store/reducers';

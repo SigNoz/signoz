@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Combobox, type ComboboxOptionItemType } from '@signozhq/ui/combobox';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
 import type APIError from 'types/api/error';
 
 import RolesSelectError from './RolesSelectError';

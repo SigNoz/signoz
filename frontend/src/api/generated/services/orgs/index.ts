@@ -17,11 +17,11 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetMyOrganization200,
-	RenderErrorResponseDTO,
-	TypesOrganizationDTO,
-} from '../sigNoz.schemas';
+import type { GetMyOrganization200 } from '../sigNoz.schemas/getMyOrganization200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { TypesOrganizationDTO } from '../sigNoz.schemas/typesOrganizationDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -116,7 +116,7 @@ export function useGetMyOrganization<
 }
 
 /**
- * @summary Get my organization
+ * @summary Invalidates the {@link useGetMyOrganization} query
  */
 export const invalidateGetMyOrganization = async (
 	queryClient: QueryClient,
@@ -147,6 +147,9 @@ export const updateMyOrganization = (
 	});
 };
 
+export const getUpdateMyOrganizationMutationKey = () =>
+	['updateMyOrganization'] as const;
+
 export const getUpdateMyOrganizationMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -154,16 +157,16 @@ export const getUpdateMyOrganizationMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
 		TError,
-		{ data?: BodyType<TypesOrganizationDTO> },
+		UpdateMyOrganizationMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMyOrganization>>,
 	TError,
-	{ data?: BodyType<TypesOrganizationDTO> },
+	UpdateMyOrganizationMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateMyOrganization'];
+	const mutationKey = getUpdateMyOrganizationMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -174,7 +177,7 @@ export const getUpdateMyOrganizationMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
-		{ data?: BodyType<TypesOrganizationDTO> }
+		UpdateMyOrganizationMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -192,6 +195,9 @@ export type UpdateMyOrganizationMutationBody =
 	| undefined;
 export type UpdateMyOrganizationMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyOrganizationMutationVariables = {
+	data?: BodyType<TypesOrganizationDTO>;
+};
 
 /**
  * @summary Update my organization
@@ -203,13 +209,13 @@ export const useUpdateMyOrganization = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
 		TError,
-		{ data?: BodyType<TypesOrganizationDTO> },
+		UpdateMyOrganizationMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMyOrganization>>,
 	TError,
-	{ data?: BodyType<TypesOrganizationDTO> },
+	UpdateMyOrganizationMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateMyOrganizationMutationOptions(options));

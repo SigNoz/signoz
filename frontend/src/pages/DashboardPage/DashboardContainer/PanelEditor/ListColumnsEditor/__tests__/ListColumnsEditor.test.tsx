@@ -1,10 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	TelemetrytypesSignalDTO,
-	type DashboardtypesPanelSpecDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 
 import ListColumnsEditor from '../ListColumnsEditor';
 import { readSelectFields } from '../selectFields';

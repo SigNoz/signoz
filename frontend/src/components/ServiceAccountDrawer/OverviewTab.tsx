@@ -4,7 +4,7 @@ import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { useCopyToClipboard } from 'react-use';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import RolesSelect from 'components/RolesSelect';

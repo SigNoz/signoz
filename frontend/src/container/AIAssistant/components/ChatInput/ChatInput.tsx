@@ -20,13 +20,11 @@ import {
 	getListRulesV3QueryKey,
 	useListRulesV3,
 } from 'api/generated/services/rules';
-import type {
-	DashboardtypesListedDashboardForUserV2DTO,
-	ListDashboardsForUserV2200,
-	ListDashboardsForUserV2Params,
-	ListRulesV3200,
-	ListRulesV3Params,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListedDashboardForUserV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListedDashboardForUserV2DTO';
+import type { ListDashboardsForUserV2200 } from 'api/generated/services/sigNoz.schemas/listDashboardsForUserV2200';
+import type { ListDashboardsForUserV2Params } from 'api/generated/services/sigNoz.schemas/listDashboardsForUserV2Params';
+import type { ListRulesV3200 } from 'api/generated/services/sigNoz.schemas/listRulesV3200';
+import type { ListRulesV3Params } from 'api/generated/services/sigNoz.schemas/listRulesV3Params';
 import { useQueryService } from 'hooks/useQueryService';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';

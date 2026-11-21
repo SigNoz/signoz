@@ -1,8 +1,6 @@
-import type {
-	DashboardtypesPanelDTO,
-	Querybuildertypesv5QueryWarnDataDTO as WarningDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { Querybuildertypesv5QueryWarnDataDTO as WarningDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryWarnDataDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 

@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-	DashboardtypesStackModeDTO,
-	DashboardtypesTimePreferenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
 
 import VisualizationSection from '../VisualizationSection';
 

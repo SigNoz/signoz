@@ -4,7 +4,7 @@ import {
 	getGetMetricMetadataQueryKey,
 	getMetricMetadata,
 } from 'api/generated/services/metrics';
-import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
 
 type QueryResult = UseQueryResult<GetMetricMetadata200, Error>;
 

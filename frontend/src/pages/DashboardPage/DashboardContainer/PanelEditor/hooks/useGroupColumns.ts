@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { getQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getJoinedScalarTable } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getJoinedScalarTable';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

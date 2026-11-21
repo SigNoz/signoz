@@ -1,4 +1,4 @@
-import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
 import type { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import type { PanelThreshold } from 'pages/DashboardPage/DashboardContainer/Panels/types/threshold';
 import type { SubdivisionSet } from 'lib/visualization/charts/GeoMap/geo/subdivisions';

@@ -1,16 +1,14 @@
 import type { ComponentType } from 'react';
-import {
-	type DashboardtypesGeoMapSettingsDTO,
-	type DashboardtypesLinkDTO,
-	type DashboardtypesHistogramBucketsDTO,
-	type DashboardtypesLegendDTO,
-	type DashboardtypesPanelSpecDTO,
-	type DashboardtypesScatterPlotAxesDTO,
-	type DashboardtypesScatterPlotDimensionsDTO,
-	type DashboardtypesGeoMapChartAppearanceDTO,
-	DashboardtypesGeoMapLayerDTO,
-	type DashboardtypesGeoMapLocationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
+import type { DashboardtypesLinkDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLinkDTO';
+import type { DashboardtypesHistogramBucketsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHistogramBucketsDTO';
+import type { DashboardtypesLegendDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { DashboardtypesScatterPlotAxesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxesDTO';
+import type { DashboardtypesScatterPlotDimensionsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotDimensionsDTO';
+import type { DashboardtypesGeoMapChartAppearanceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapChartAppearanceDTO';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
 import {
 	SectionKind,
 	type AnyThreshold,

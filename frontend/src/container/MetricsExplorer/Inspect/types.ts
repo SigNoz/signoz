@@ -1,4 +1,4 @@
-import type { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import type { AlignedData } from 'uplot';
 

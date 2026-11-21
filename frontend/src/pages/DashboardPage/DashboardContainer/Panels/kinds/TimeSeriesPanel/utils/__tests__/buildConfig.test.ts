@@ -1,4 +1,4 @@
-import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimeSeriesPanelSpecDTO';
 import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
 import type { ExtendedSeries } from 'lib/uPlotV2/config/types';
 import { PanelMode } from 'lib/visualization/panels/types';

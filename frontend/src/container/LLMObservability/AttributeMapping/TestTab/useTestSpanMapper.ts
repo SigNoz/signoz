@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import logEvent from 'api/common/logEvent';
-import type {
-	RenderErrorResponseDTO,
-	SpantypesSpanMapperTestSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperTestSpanDTO';
 import { useTestSpanMappers } from 'api/generated/services/spanmapper';
 import type { AxiosError } from 'axios';
 import { debounce } from 'lodash-es';

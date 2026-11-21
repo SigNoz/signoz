@@ -1,12 +1,10 @@
 import type { Dispatch } from 'react';
 import type { UseMutateFunction } from 'react-query';
-import type {
-	CreateRule201,
-	RenderErrorResponseDTO,
-	RuletypesPostableRuleDTO,
-	TestRule200,
-	UpdateRuleByIDPathParameters,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CreateRule201 } from 'api/generated/services/sigNoz.schemas/createRule201';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { RuletypesPostableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPostableRuleDTO';
+import type { TestRule200 } from 'api/generated/services/sigNoz.schemas/testRule200';
+import type { UpdateRuleByIDPathParameters } from 'api/generated/services/sigNoz.schemas/updateRuleByIDPathParameters';
 import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
 import type { Dayjs } from 'dayjs';
 import type { AlertTypes } from 'types/api/alerts/alertTypes';

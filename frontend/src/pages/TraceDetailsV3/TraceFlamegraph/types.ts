@@ -1,7 +1,5 @@
-import type {
-	SpantypesEventDTO as FlamegraphEvent,
-	SpantypesFlamegraphSpanDTO as FlamegraphSpan,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesEventDTO as FlamegraphEvent } from 'api/generated/services/sigNoz.schemas/spantypesEventDTO';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas/spantypesFlamegraphSpanDTO';
 import type { Dispatch, SetStateAction } from 'react';
 
 import type { VisualLayout } from './computeVisualLayout';

@@ -1,11 +1,7 @@
-import type {
-	GetFieldsKeys200,
-	GetFieldsValues200,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getFieldsKeys200';
+import type { GetFieldsValues200 } from 'api/generated/services/sigNoz.schemas/getFieldsValues200';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 export const metricFieldKeysResponse = (names: string[]): GetFieldsKeys200 => ({
 	status: 'success',

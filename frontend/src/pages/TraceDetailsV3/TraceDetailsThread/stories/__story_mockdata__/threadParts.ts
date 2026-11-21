@@ -3,12 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	AiobservabilitytypesReasoningPartDTOType,
-	AiobservabilitytypesTextPartDTOType,
-	AiobservabilitytypesToolCallRequestPartDTOType,
-	AiobservabilitytypesToolCallResponsePartDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import { AiobservabilitytypesReasoningPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesReasoningPartDTOType';
+import { AiobservabilitytypesTextPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesTextPartDTOType';
+import { AiobservabilitytypesToolCallRequestPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesToolCallRequestPartDTOType';
+import { AiobservabilitytypesToolCallResponsePartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesToolCallResponsePartDTOType';
 
 import type { InputMessage, OutputMessage, Part } from './types';
 

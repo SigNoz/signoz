@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render, screen } from 'tests/test-utils';

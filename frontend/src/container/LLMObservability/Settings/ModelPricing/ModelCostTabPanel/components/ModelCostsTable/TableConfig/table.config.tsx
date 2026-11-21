@@ -5,7 +5,7 @@ import { startCase } from 'lodash-es';
 
 import styles from './tableConfig.module.scss';
 import ModelCostActionsMenu from '../ModelCostActionsMenu';
-import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleDTO';
 
 import {
 	formatPricePerMillion,

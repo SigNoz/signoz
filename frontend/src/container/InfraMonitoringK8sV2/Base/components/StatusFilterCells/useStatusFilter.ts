@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
-import type {
-	InframonitoringtypesContainerStatusDTO,
-	InframonitoringtypesNodeConditionDTO,
-	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesContainerStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerStatusDTO';
+import type { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeConditionDTO';
+import type { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodStatusDTO';
 
 import {
 	useInfraMonitoringContainerStatusFilter,

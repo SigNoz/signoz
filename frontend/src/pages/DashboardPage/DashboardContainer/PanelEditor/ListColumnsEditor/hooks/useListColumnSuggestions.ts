@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
-import type {
-	TelemetrytypesSignalDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
 import useDebounce from 'hooks/useDebounce';
 

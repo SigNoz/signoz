@@ -6,14 +6,10 @@ import {
 	useGetMetricReductionRuleStats,
 	useListMetricReductionRules,
 } from 'api/generated/services/metrics';
-import type {
-	ListMetricReductionRulesParams,
-	MetricreductionruletypesGettableReductionRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	MetricreductionruletypesOrderDTO,
-	MetricreductionruletypesReductionRuleOrderByDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListMetricReductionRulesParams } from 'api/generated/services/sigNoz.schemas/listMetricReductionRulesParams';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRuleDTO';
+import { MetricreductionruletypesOrderDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesOrderDTO';
+import { MetricreductionruletypesReductionRuleOrderByDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesReductionRuleOrderByDTO';
 import dayjs from 'dayjs';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import useDebounce from 'hooks/useDebounce';

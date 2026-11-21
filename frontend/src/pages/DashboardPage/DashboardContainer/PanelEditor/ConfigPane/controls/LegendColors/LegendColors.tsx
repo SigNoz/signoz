@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { Input } from 'antd';
-import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendDTOCustomColors';
 import { Virtuoso } from 'react-virtuoso';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';

@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { AlertmanagertypesTestableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesTestableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesTestableNotificationChannelDTO';
 
 /** Every test send the form made since the story mounted, oldest first. */
 const testRequests: AlertmanagertypesTestableNotificationChannelDTO[] = [];

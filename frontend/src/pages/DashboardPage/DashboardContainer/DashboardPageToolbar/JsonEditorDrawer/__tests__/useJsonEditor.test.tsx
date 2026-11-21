@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { toast } from '@signozhq/ui/toast';
 
 import { useJsonEditor } from '../useJsonEditor';

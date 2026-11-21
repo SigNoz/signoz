@@ -1,4 +1,4 @@
-import type { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesStatefulSetRecordDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

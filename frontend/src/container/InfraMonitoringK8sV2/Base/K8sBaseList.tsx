@@ -11,7 +11,7 @@ import TanStackTable, {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryWarnDataDTO';
 import { openInNewTab } from 'utils/navigation';
 import type APIError from 'types/api/error';
 

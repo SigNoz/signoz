@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type RefSelectProps, Select, Spin } from 'antd';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { Pill } from '@signozhq/ui/pill';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import cx from 'classnames';
 import type { OperatorConfigKeys } from 'constants/queryBuilder';
 import {

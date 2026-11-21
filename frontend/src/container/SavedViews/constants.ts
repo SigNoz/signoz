@@ -1,5 +1,5 @@
 import { Copy, Link, PenLine, Trash2 } from '@signozhq/icons';
-import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import {

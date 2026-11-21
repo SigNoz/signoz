@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { BarChart, ChartBar, Diff, Gauge, Histogram } from '@signozhq/icons';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 
 import type { MetricInspectionState } from './types';
 import { SpaceAggregationOptions, TimeAggregationOptions } from './types';

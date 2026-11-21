@@ -1,9 +1,7 @@
-import type {
-	DashboardGridItemDTO,
-	DashboardtypesLayoutDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardGridItemDTO } from 'api/generated/services/sigNoz.schemas/dashboardGridItemDTO';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPatchOpDTO';
 
 import {
 	bottomRowSlot,

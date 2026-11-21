@@ -1,4 +1,4 @@
-import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
 
 import type { ConfigTileItem } from '../../controls/ConfigTiles/ConfigTiles';
 import { TILE_DRAWINGS } from '../../controls/drawings/tileDrawings';

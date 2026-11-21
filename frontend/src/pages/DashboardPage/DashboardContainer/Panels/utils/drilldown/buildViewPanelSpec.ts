@@ -1,8 +1,6 @@
-import type {
-	DashboardtypesPanelPluginDTO,
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { getSwitchedPluginSpec } from 'pages/DashboardPage/DashboardContainer/PanelEditor/getSwitchedPluginSpec';
 import {

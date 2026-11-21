@@ -1,4 +1,4 @@
-import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas/getHosts200';
 import { rest, server } from 'mocks-server/server';
 import { render, screen } from 'tests/test-utils';
 

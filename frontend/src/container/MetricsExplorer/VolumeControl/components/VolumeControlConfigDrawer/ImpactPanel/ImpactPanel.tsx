@@ -1,7 +1,7 @@
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { Spin, Tooltip } from 'antd';
-import type { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRulePreviewDTO';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { formatCompact } from '../../../configUtils';

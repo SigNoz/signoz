@@ -1,11 +1,9 @@
-import {
-	Querybuildertypesv5ColumnTypeDTO,
-	Querybuildertypesv5RequestTypeDTO,
-	type QueryRangeV5200,
-	type Querybuildertypesv5RawDataDTO,
-	type Querybuildertypesv5RawRowDTO,
-	type Querybuildertypesv5ScalarDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5ColumnTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnTypeDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
+import type { Querybuildertypesv5RawDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RawDataDTO';
+import type { Querybuildertypesv5RawRowDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RawRowDTO';
+import type { Querybuildertypesv5ScalarDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ScalarDataDTO';
 import type { RestHandler } from 'msw';
 import { rest } from 'msw';
 import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';

@@ -1,7 +1,5 @@
-import {
-	MetricsexplorertypesTreemapModeDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 
 export const METRICS_TABLE_PAGE_SIZE = 10;
 

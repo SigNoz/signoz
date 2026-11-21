@@ -1,8 +1,6 @@
-import type {
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSavedViewSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewSpecDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,

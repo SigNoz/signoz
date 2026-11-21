@@ -1,4 +1,4 @@
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';

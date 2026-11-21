@@ -5,7 +5,7 @@ import React, {
 	useContext,
 	useMemo,
 } from 'react';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import useUrlQuery from 'hooks/useUrlQuery';
 import type { PreferenceContextValue } from 'providers/preferences/types';
 import { PreferenceMode } from 'providers/preferences/types';

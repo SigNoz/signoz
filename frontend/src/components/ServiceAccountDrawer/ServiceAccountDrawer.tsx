@@ -19,7 +19,7 @@ import {
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
 } from 'api/generated/services/serviceaccount';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';

@@ -1,13 +1,9 @@
-import type {
-	SpantypesSpanMapperDTO as Mapper,
-	SpantypesSpanMapperGroupDTO as MapperGroup,
-	SpantypesSpanMapperTestSpanDTO as TestSpan,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SpantypesFieldContextDTO as FieldContext,
-	SpantypesSpanMapperOperationDTO as MapperOperation,
-	SpantypesSpanMapperOriginDTO as MapperOrigin,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesSpanMapperDTO as Mapper } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperDTO';
+import type { SpantypesSpanMapperGroupDTO as MapperGroup } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupDTO';
+import type { SpantypesSpanMapperTestSpanDTO as TestSpan } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperTestSpanDTO';
+import { SpantypesFieldContextDTO as FieldContext } from 'api/generated/services/sigNoz.schemas/spantypesFieldContextDTO';
+import { SpantypesSpanMapperOperationDTO as MapperOperation } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOperationDTO';
+import { SpantypesSpanMapperOriginDTO as MapperOrigin } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOriginDTO';
 
 // Endpoint globs used by MSW handlers. The generated client hits relative
 // `/api/v1/span_mapper_groups[...]`, so the `*` prefix matches regardless of

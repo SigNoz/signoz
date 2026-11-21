@@ -1,12 +1,10 @@
 import type { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import type {
-	DeleteDowntimeScheduleByIDPathParameters,
-	RenderErrorResponseDTO,
-	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesScheduleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DeleteDowntimeScheduleByIDPathParameters } from 'api/generated/services/sigNoz.schemas/deleteDowntimeScheduleByIDPathParameters';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
+import type { AlertmanagertypesScheduleDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesScheduleDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

@@ -9,10 +9,8 @@ import Renderer from './Renderer';
 import { DEFAULT_LIMIT } from './constants';
 import { sections } from './sections';
 import { getTopListDataWarning } from './utils/warnings';
-import {
-	Querybuildertypesv5RequestTypeDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { EQueryType } from 'types/common/dashboard';
 
 export const definition: PanelDefinition<'signoz/TopListPanel'> = {

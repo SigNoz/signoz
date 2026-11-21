@@ -2,7 +2,7 @@ import { ChevronLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { useInlineOverflowCount } from 'hooks/useInlineOverflowCount';
 
 import { selectVariablesExpanded } from '../store/slices/collapseSlice';

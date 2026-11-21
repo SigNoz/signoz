@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';

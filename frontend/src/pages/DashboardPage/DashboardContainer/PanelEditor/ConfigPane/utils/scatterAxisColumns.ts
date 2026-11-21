@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 import type { TableColumnOption } from '../../hooks/useTableColumns';
 

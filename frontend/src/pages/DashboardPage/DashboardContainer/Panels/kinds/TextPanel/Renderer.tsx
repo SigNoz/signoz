@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { Pencil } from '@signozhq/icons';
 import cx from 'classnames';
-import {
-	DashboardtypesTextAlignDTO,
-	DashboardtypesVerticalAlignDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTextAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
+import { DashboardtypesVerticalAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVerticalAlignDTO';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 

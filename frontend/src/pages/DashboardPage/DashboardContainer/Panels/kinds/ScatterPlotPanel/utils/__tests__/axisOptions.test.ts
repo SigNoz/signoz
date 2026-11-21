@@ -1,4 +1,4 @@
-import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
 
 import { getAxisThresholds, toScatterAxisOptions } from '../axisOptions';
 

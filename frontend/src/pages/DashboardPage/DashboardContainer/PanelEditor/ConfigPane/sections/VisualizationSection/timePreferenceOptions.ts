@@ -1,4 +1,4 @@
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
 
 import type { ConfigSelectItem } from '../../controls/ConfigSelect/ConfigSelect';
 

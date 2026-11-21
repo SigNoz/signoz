@@ -3,7 +3,7 @@ import {
 	invalidateGetSavedView,
 	invalidateListSavedViews,
 } from 'api/generated/services/saved-view';
-import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 
 export async function invalidateSavedViews(
 	queryClient: QueryClient,

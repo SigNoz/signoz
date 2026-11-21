@@ -15,7 +15,7 @@ import {
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 import ActionsPopover from './ActionsPopover';
-import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
 
 const DASHBOARD_ID = 'abc';
 

@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesTextPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { DashboardtypesTextPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextPanelSpecDTO';
 
 /**
  * The spec with a new authored body. Two localized casts: the plugin-spec union

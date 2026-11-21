@@ -322,6 +322,10 @@
       {
         "paths": [
           {
+            "name": "api/generated/services/sigNoz.schemas",
+            "message": "Import each schema from its own file (api/generated/services/sigNoz.schemas/<name>) so a schema change only reruns the tests that use it."
+          },
+          {
             "name": "redux",
             "message": "[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },

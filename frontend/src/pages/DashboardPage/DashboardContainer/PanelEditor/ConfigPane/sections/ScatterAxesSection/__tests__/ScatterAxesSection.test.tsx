@@ -1,4 +1,4 @@
-import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxisScaleDTO';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ScatterAxesSection from '../ScatterAxesSection';

@@ -26,7 +26,7 @@ import CodeMirror, {
 	ViewPlugin,
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
-import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
 import { tracesAggregateOperatorOptions } from 'constants/queryBuilderOperators';
 import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';

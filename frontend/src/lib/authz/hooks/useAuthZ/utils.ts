@@ -1,9 +1,7 @@
-import type {
-	AuthtypesTransactionDTO,
-	CoretypesTypeDTO,
-	AuthtypesRelationDTO,
-	CoretypesKindDTO,
-} from '../../../../api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from '../../../../api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
+import type { CoretypesTypeDTO } from '../../../../api/generated/services/sigNoz.schemas/coretypesTypeDTO';
+import type { AuthtypesRelationDTO } from '../../../../api/generated/services/sigNoz.schemas/authtypesRelationDTO';
+import type { CoretypesKindDTO } from '../../../../api/generated/services/sigNoz.schemas/coretypesKindDTO';
 import permissionsType from './permissions.type';
 import type {
 	AuthZObject,

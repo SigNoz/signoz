@@ -11,14 +11,17 @@ import type {
 	UseMutationResult,
 } from 'react-query';
 
-import type {
-	QueryRangePreviewV5200,
-	QueryRangePreviewV5Params,
-	QueryRangeV5200,
-	Querybuildertypesv5QueryRangeRequestDTO,
-	RenderErrorResponseDTO,
-	ReplaceVariables200,
-} from '../sigNoz.schemas';
+import type { QueryRangePreviewV5200 } from '../sigNoz.schemas/queryRangePreviewV5200';
+
+import type { QueryRangePreviewV5Params } from '../sigNoz.schemas/queryRangePreviewV5Params';
+
+import type { QueryRangeV5200 } from '../sigNoz.schemas/queryRangeV5200';
+
+import type { Querybuildertypesv5QueryRangeRequestDTO } from '../sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { ReplaceVariables200 } from '../sigNoz.schemas/replaceVariables200';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -40,6 +43,8 @@ export const queryRangeV5 = (
 	});
 };
 
+export const getQueryRangeV5MutationKey = () => ['queryRangeV5'] as const;
+
 export const getQueryRangeV5MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -47,16 +52,16 @@ export const getQueryRangeV5MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangeV5>>,
 		TError,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+		QueryRangeV5MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof queryRangeV5>>,
 	TError,
-	{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+	QueryRangeV5MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['queryRangeV5'];
+	const mutationKey = getQueryRangeV5MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -67,7 +72,7 @@ export const getQueryRangeV5MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof queryRangeV5>>,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> }
+		QueryRangeV5MutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -84,6 +89,9 @@ export type QueryRangeV5MutationBody =
 	| BodyType<Querybuildertypesv5QueryRangeRequestDTO>
 	| undefined;
 export type QueryRangeV5MutationError = ErrorType<RenderErrorResponseDTO>;
+export type QueryRangeV5MutationVariables = {
+	data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+};
 
 /**
  * @summary Query range
@@ -95,13 +103,13 @@ export const useQueryRangeV5 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangeV5>>,
 		TError,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+		QueryRangeV5MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof queryRangeV5>>,
 	TError,
-	{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+	QueryRangeV5MutationVariables,
 	TContext
 > => {
 	return useMutation(getQueryRangeV5MutationOptions(options));
@@ -125,6 +133,9 @@ export const queryRangePreviewV5 = (
 	});
 };
 
+export const getQueryRangePreviewV5MutationKey = () =>
+	['queryRangePreviewV5'] as const;
+
 export const getQueryRangePreviewV5MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -132,22 +143,16 @@ export const getQueryRangePreviewV5MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangePreviewV5>>,
 		TError,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: QueryRangePreviewV5Params;
-		},
+		QueryRangePreviewV5MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof queryRangePreviewV5>>,
 	TError,
-	{
-		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-		params?: QueryRangePreviewV5Params;
-	},
+	QueryRangePreviewV5MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['queryRangePreviewV5'];
+	const mutationKey = getQueryRangePreviewV5MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -158,10 +163,7 @@ export const getQueryRangePreviewV5MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof queryRangePreviewV5>>,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: QueryRangePreviewV5Params;
-		}
+		QueryRangePreviewV5MutationVariables
 	> = (props) => {
 		const { data, params } = props ?? {};
 
@@ -179,6 +181,10 @@ export type QueryRangePreviewV5MutationBody =
 	| undefined;
 export type QueryRangePreviewV5MutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type QueryRangePreviewV5MutationVariables = {
+	data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+	params?: QueryRangePreviewV5Params;
+};
 
 /**
  * @summary Query range preview
@@ -190,19 +196,13 @@ export const useQueryRangePreviewV5 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangePreviewV5>>,
 		TError,
-		{
-			data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-			params?: QueryRangePreviewV5Params;
-		},
+		QueryRangePreviewV5MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof queryRangePreviewV5>>,
 	TError,
-	{
-		data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
-		params?: QueryRangePreviewV5Params;
-	},
+	QueryRangePreviewV5MutationVariables,
 	TContext
 > => {
 	return useMutation(getQueryRangePreviewV5MutationOptions(options));
@@ -224,6 +224,9 @@ export const replaceVariables = (
 	});
 };
 
+export const getReplaceVariablesMutationKey = () =>
+	['replaceVariables'] as const;
+
 export const getReplaceVariablesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -231,16 +234,16 @@ export const getReplaceVariablesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof replaceVariables>>,
 		TError,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+		ReplaceVariablesMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof replaceVariables>>,
 	TError,
-	{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+	ReplaceVariablesMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['replaceVariables'];
+	const mutationKey = getReplaceVariablesMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -251,7 +254,7 @@ export const getReplaceVariablesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof replaceVariables>>,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> }
+		ReplaceVariablesMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -268,6 +271,9 @@ export type ReplaceVariablesMutationBody =
 	| BodyType<Querybuildertypesv5QueryRangeRequestDTO>
 	| undefined;
 export type ReplaceVariablesMutationError = ErrorType<RenderErrorResponseDTO>;
+export type ReplaceVariablesMutationVariables = {
+	data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+};
 
 /**
  * @summary Replace variables
@@ -279,13 +285,13 @@ export const useReplaceVariables = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof replaceVariables>>,
 		TError,
-		{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+		ReplaceVariablesMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof replaceVariables>>,
 	TError,
-	{ data?: BodyType<Querybuildertypesv5QueryRangeRequestDTO> },
+	ReplaceVariablesMutationVariables,
 	TContext
 > => {
 	return useMutation(getReplaceVariablesMutationOptions(options));

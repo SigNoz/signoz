@@ -1,8 +1,6 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTOVariables,
-	Querybuildertypesv5VariableItemDTOValue,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTOVariables';
+import type { Querybuildertypesv5VariableItemDTOValue } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5VariableItemDTOValue';
+import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5VariableTypeDTO';
 
 import type {
 	VariableFormModel,

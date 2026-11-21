@@ -1,9 +1,7 @@
 import { act, render, screen } from 'tests/test-utils';
 import userEvent from '@testing-library/user-event';
-import {
-	type DashboardtypesPanelDTO,
-	Querybuildertypesv5VariableTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5VariableTypeDTO';
 import { rememberSubdivisions } from 'lib/visualization/charts/GeoMap/geo/subdivisionCache';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';

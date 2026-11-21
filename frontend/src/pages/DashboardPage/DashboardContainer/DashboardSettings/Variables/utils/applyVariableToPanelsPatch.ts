@@ -1,10 +1,8 @@
-import type {
-	DashboardtypesDashboardSpecDTOPanels,
-	DashboardtypesQueryDTO,
-	Querybuildertypesv5BuilderQuerySpecDTO,
-	Querybuildertypesv5CompositeQueryDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTOPanels } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTOPanels';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { Querybuildertypesv5BuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BuilderQuerySpecDTO';
+import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
+import type { Querybuildertypesv5QueryEnvelopeBuilderDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTO';
 
 import {
 	isBuilderEnvelope,

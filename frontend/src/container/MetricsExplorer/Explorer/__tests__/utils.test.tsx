@@ -1,6 +1,6 @@
 import type { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
-import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';

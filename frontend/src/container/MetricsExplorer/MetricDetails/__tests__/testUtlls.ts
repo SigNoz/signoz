@@ -1,15 +1,11 @@
 import type * as metricsExplorerHooks from 'api/generated/services/metrics';
-import type {
-	GetMetricAlerts200,
-	GetMetricAttributes200,
-	GetMetricDashboardsV2200,
-	GetMetricHighlights200,
-	GetMetricMetadata200,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricAlerts200 } from 'api/generated/services/sigNoz.schemas/getMetricAlerts200';
+import type { GetMetricAttributes200 } from 'api/generated/services/sigNoz.schemas/getMetricAttributes200';
+import type { GetMetricDashboardsV2200 } from 'api/generated/services/sigNoz.schemas/getMetricDashboardsV2200';
+import type { GetMetricHighlights200 } from 'api/generated/services/sigNoz.schemas/getMetricHighlights200';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 
 export const MOCK_METRIC_NAME = 'test-metric';
 

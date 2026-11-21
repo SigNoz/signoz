@@ -9,10 +9,8 @@ import {
 	useRevokeServiceAccountKey,
 	useUpdateServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
-import type {
-	RenderErrorResponseDTO,
-	ServiceaccounttypesGettableFactorAPIKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesGettableFactorAPIKeyDTO';
 import type { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';

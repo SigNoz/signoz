@@ -1,4 +1,4 @@
-import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
 import { normalizeCountry } from 'lib/visualization/charts/GeoMap/geo/normalizeCountry';
 import { SUBDIVISION_COUNTRY_CODES } from 'lib/visualization/charts/GeoMap/geo/subdivisionCountries';
 import type { PanelTable } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

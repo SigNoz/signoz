@@ -7,10 +7,8 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { matchRoute } from 'lib/router/matchRoute';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import {
-	type DashboardtypesPanelDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';

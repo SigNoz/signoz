@@ -1,4 +1,4 @@
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 

@@ -6,7 +6,7 @@ import {
 	useListAccountServicesMetadata,
 	useListServicesMetadata,
 } from 'api/generated/services/cloudintegration';
-import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceMetadataDTO';
 import cx from 'classnames';
 import type { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';

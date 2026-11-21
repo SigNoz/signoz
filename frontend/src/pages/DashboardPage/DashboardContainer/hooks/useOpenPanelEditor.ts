@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

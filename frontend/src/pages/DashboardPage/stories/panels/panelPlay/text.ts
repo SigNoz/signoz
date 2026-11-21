@@ -1,4 +1,4 @@
-import { DashboardtypesTextAlignDTO as TextAlign } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTextAlignDTO as TextAlign } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
 import { expect, within } from 'storybook/test';
 
 import { PANEL_NAME } from '../__story_mockdata__/constants';

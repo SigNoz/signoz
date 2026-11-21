@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
 import MultiSelectFilter, {
 	type MultiSelectFilterOption,
 } from 'components/ListFilter/FilterZone/MultiSelectFilter';

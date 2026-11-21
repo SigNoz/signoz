@@ -1,6 +1,6 @@
 import { getAIObservabilityFieldsValues } from 'api/generated/services/ai-observability';
 import { getFieldsValues } from 'api/generated/services/fields';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 import { getFieldValueSuggestions } from '../getFieldValueSuggestions';
 import type { FieldValuesResponse } from '../types';

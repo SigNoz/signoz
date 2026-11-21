@@ -1,9 +1,7 @@
 import { useGetSavedView } from 'api/generated/services/saved-view';
-import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { TRACE_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/constants';
 import {

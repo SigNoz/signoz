@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesPanelFormattingDTO,
-	DashboardtypesThresholdWithLabelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelFormattingDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelFormattingDTO';
+import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdWithLabelDTO';
 import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import type { PanelMode } from 'lib/visualization/panels/types';
 import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';

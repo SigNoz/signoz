@@ -3,13 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
-	DashboardtypesTimePreferenceDTO as TimePreference,
-	type DashboardtypesDashboardSpecDTOPanels,
-	type DashboardtypesGettableDashboardV2DTO,
-	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind';
+import { DashboardtypesTimePreferenceDTO as TimePreference } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
+import type { DashboardtypesDashboardSpecDTOPanels } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTOPanels';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 
 import { dashboardResponse, PANEL_IDS, VARIABLE_KINDS } from './dashboard';
 

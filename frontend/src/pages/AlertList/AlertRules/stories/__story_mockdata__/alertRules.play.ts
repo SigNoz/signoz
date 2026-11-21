@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {

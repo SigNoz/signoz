@@ -3,18 +3,16 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	type GetFieldsKeys200,
-	type GetFieldsValues200,
-	type GetMetricMetadata200,
-	type ListMetrics200,
-	type MetricsexplorertypesListMetricDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import type { GetFieldsKeys200 } from 'api/generated/services/sigNoz.schemas/getFieldsKeys200';
+import type { GetFieldsValues200 } from 'api/generated/services/sigNoz.schemas/getFieldsValues200';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
+import type { ListMetrics200 } from 'api/generated/services/sigNoz.schemas/listMetrics200';
+import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesListMetricDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import type {
 	MetricRangePayloadV5,
 	QueryRangeRequestV5,

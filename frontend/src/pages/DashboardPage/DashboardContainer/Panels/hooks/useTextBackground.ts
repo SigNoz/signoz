@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { CSSProperties } from 'react';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { rgbaFromHex } from '../kinds/TextPanel/background/contrast';

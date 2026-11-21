@@ -1,9 +1,7 @@
-import type {
-	Querybuildertypesv5QueryRangeResponseDTO,
-	Querybuildertypesv5TimeSeriesDataDTO,
-	Querybuildertypesv5TimeSeriesDTO,
-	Querybuildertypesv5TimeSeriesValueDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeResponseDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeResponseDTO';
+import type { Querybuildertypesv5TimeSeriesDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDataDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
+import type { Querybuildertypesv5TimeSeriesValueDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesValueDTO';
 import type { SuccessResponse } from 'types/api';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 

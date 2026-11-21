@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronRight } from '@signozhq/icons';
-import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapCountryFormatDTO';
 
 import ChangedDot from '../../../controls/ChangedDot/ChangedDot';
 import ConfigTiles from '../../../controls/ConfigTiles/ConfigTiles';

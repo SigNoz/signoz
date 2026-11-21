@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import ContextMenu from 'periscope/components/ContextMenu';
 import { isPanelKindSupported } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';

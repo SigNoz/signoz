@@ -17,14 +17,17 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetQuickFilters200,
-	GetQuickFiltersPathParameters,
-	ListQuickFilters200,
-	QuickfiltertypesUpdatableQuickFiltersDTO,
-	RenderErrorResponseDTO,
-	UpdateQuickFiltersPathParameters,
-} from '../sigNoz.schemas';
+import type { GetQuickFilters200 } from '../sigNoz.schemas/getQuickFilters200';
+
+import type { GetQuickFiltersPathParameters } from '../sigNoz.schemas/getQuickFiltersPathParameters';
+
+import type { ListQuickFilters200 } from '../sigNoz.schemas/listQuickFilters200';
+
+import type { QuickfiltertypesUpdatableQuickFiltersDTO } from '../sigNoz.schemas/quickfiltertypesUpdatableQuickFiltersDTO';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UpdateQuickFiltersPathParameters } from '../sigNoz.schemas/updateQuickFiltersPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -119,7 +122,7 @@ export function useListQuickFilters<
 }
 
 /**
- * @summary List quick filters
+ * @summary Invalidates the {@link useListQuickFilters} query
  */
 export const invalidateListQuickFilters = async (
 	queryClient: QueryClient,
@@ -220,7 +223,7 @@ export function useGetQuickFilters<
 }
 
 /**
- * @summary Get a source's quick filters
+ * @summary Invalidates the {@link useGetQuickFilters} query
  */
 export const invalidateGetQuickFilters = async (
 	queryClient: QueryClient,
@@ -253,6 +256,9 @@ export const updateQuickFilters = (
 	});
 };
 
+export const getUpdateQuickFiltersMutationKey = () =>
+	['updateQuickFilters'] as const;
+
 export const getUpdateQuickFiltersMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -260,22 +266,16 @@ export const getUpdateQuickFiltersMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
 		TError,
-		{
-			pathParams: UpdateQuickFiltersPathParameters;
-			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
-		},
+		UpdateQuickFiltersMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateQuickFilters>>,
 	TError,
-	{
-		pathParams: UpdateQuickFiltersPathParameters;
-		data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
-	},
+	UpdateQuickFiltersMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateQuickFilters'];
+	const mutationKey = getUpdateQuickFiltersMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -286,10 +286,7 @@ export const getUpdateQuickFiltersMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
-		{
-			pathParams: UpdateQuickFiltersPathParameters;
-			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
-		}
+		UpdateQuickFiltersMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -306,6 +303,10 @@ export type UpdateQuickFiltersMutationBody =
 	| BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>
 	| undefined;
 export type UpdateQuickFiltersMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateQuickFiltersMutationVariables = {
+	pathParams: UpdateQuickFiltersPathParameters;
+	data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
+};
 
 /**
  * @summary Update quick filters
@@ -317,19 +318,13 @@ export const useUpdateQuickFilters = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateQuickFilters>>,
 		TError,
-		{
-			pathParams: UpdateQuickFiltersPathParameters;
-			data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
-		},
+		UpdateQuickFiltersMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateQuickFilters>>,
 	TError,
-	{
-		pathParams: UpdateQuickFiltersPathParameters;
-		data?: BodyType<QuickfiltertypesUpdatableQuickFiltersDTO>;
-	},
+	UpdateQuickFiltersMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateQuickFiltersMutationOptions(options));

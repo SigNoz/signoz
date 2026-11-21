@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 

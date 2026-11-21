@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesScatterPlotAxesDTO,
-	DashboardtypesScatterPlotDimensionsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotAxesDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxesDTO';
+import type { DashboardtypesScatterPlotDimensionsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotDimensionsDTO';
 import type { ScatterSeries } from 'lib/visualization/charts/Scatter/types';
 import type {
 	ScatterChannels,

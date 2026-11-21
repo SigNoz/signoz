@@ -1,5 +1,5 @@
 import type { TableProps } from 'antd';
-import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTableThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTableThresholdDTO';
 import type { PrecisionOption } from 'components/Graph/types';
 import type {
 	PanelTable,

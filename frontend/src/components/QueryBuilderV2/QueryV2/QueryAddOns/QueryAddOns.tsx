@@ -12,12 +12,10 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { ChevronUp } from '@signozhq/icons';
-import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
-	Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeFormulaDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTOType';
+import { Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeTraceOperatorDTOType';
 import { isLoneBuilderQuery } from 'lib/query/builderEnvelope';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import type { MetricAggregation } from 'types/api/v5/queryRange';

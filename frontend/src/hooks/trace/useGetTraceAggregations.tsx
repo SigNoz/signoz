@@ -1,9 +1,7 @@
 import type { UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';
-import type {
-	GetTraceAggregations200,
-	SpantypesSpanAggregationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetTraceAggregations200 } from 'api/generated/services/sigNoz.schemas/getTraceAggregations200';
+import type { SpantypesSpanAggregationDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanAggregationDTO';
 import { getTraceAggregations } from 'api/generated/services/tracedetail';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 

@@ -1,4 +1,4 @@
-import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettablePublicDashboardDataV2DTO';
 import { Typography } from '@signozhq/ui/typography';
 import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';

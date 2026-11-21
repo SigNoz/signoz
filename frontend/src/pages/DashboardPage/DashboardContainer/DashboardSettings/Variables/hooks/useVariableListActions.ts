@@ -7,10 +7,8 @@ import {
 } from 'react';
 import logEvent from 'api/common/logEvent';
 import { toast } from '@signozhq/ui/toast';
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesJSONPatchOperationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useDashboardStore } from '../../../store/useDashboardStore';

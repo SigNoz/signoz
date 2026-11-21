@@ -10,10 +10,8 @@ import {
 	useDeleteAuthDomain,
 	useListAuthDomains,
 } from 'api/generated/services/authdomains';
-import type {
-	AuthtypesGettableAuthDomainDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';

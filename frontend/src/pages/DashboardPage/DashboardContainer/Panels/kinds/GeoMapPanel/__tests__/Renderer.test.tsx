@@ -1,4 +1,4 @@
-import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
 import { screen } from 'tests/test-utils';
 
 import {

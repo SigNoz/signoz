@@ -17,43 +17,75 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	CreateMetricReductionRule201,
-	DeleteMetricReductionRuleByIDPathParameters,
-	GetMetricAlerts200,
-	GetMetricAlertsParams,
-	GetMetricAttributes200,
-	GetMetricAttributesParams,
-	GetMetricDashboardsV2200,
-	GetMetricDashboardsV2Params,
-	GetMetricHighlights200,
-	GetMetricHighlightsParams,
-	GetMetricMetadata200,
-	GetMetricMetadataParams,
-	GetMetricReductionRuleByID200,
-	GetMetricReductionRuleByIDPathParameters,
-	GetMetricReductionRuleStats200,
-	GetMetricReductionRuleTimeseries200,
-	GetMetricsOnboardingStatus200,
-	GetMetricsStats200,
-	GetMetricsTreemap200,
-	InspectMetrics200,
-	ListMetricReductionRules200,
-	ListMetricReductionRulesParams,
-	ListMetrics200,
-	ListMetricsParams,
-	MetricreductionruletypesPostableReductionRuleDTO,
-	MetricreductionruletypesPostableReductionRulePreviewDTO,
-	MetricreductionruletypesUpdatableReductionRuleDTO,
-	MetricsexplorertypesInspectMetricsRequestDTO,
-	MetricsexplorertypesStatsRequestDTO,
-	MetricsexplorertypesTreemapRequestDTO,
-	MetricsexplorertypesUpdateMetricMetadataRequestDTO,
-	PreviewMetricReductionRule200,
-	RenderErrorResponseDTO,
-	UpdateMetricReductionRuleByID200,
-	UpdateMetricReductionRuleByIDPathParameters,
-} from '../sigNoz.schemas';
+import type { CreateMetricReductionRule201 } from '../sigNoz.schemas/createMetricReductionRule201';
+
+import type { DeleteMetricReductionRuleByIDPathParameters } from '../sigNoz.schemas/deleteMetricReductionRuleByIDPathParameters';
+
+import type { GetMetricAlerts200 } from '../sigNoz.schemas/getMetricAlerts200';
+
+import type { GetMetricAlertsParams } from '../sigNoz.schemas/getMetricAlertsParams';
+
+import type { GetMetricAttributes200 } from '../sigNoz.schemas/getMetricAttributes200';
+
+import type { GetMetricAttributesParams } from '../sigNoz.schemas/getMetricAttributesParams';
+
+import type { GetMetricDashboardsV2200 } from '../sigNoz.schemas/getMetricDashboardsV2200';
+
+import type { GetMetricDashboardsV2Params } from '../sigNoz.schemas/getMetricDashboardsV2Params';
+
+import type { GetMetricHighlights200 } from '../sigNoz.schemas/getMetricHighlights200';
+
+import type { GetMetricHighlightsParams } from '../sigNoz.schemas/getMetricHighlightsParams';
+
+import type { GetMetricMetadata200 } from '../sigNoz.schemas/getMetricMetadata200';
+
+import type { GetMetricMetadataParams } from '../sigNoz.schemas/getMetricMetadataParams';
+
+import type { GetMetricReductionRuleByID200 } from '../sigNoz.schemas/getMetricReductionRuleByID200';
+
+import type { GetMetricReductionRuleByIDPathParameters } from '../sigNoz.schemas/getMetricReductionRuleByIDPathParameters';
+
+import type { GetMetricReductionRuleStats200 } from '../sigNoz.schemas/getMetricReductionRuleStats200';
+
+import type { GetMetricReductionRuleTimeseries200 } from '../sigNoz.schemas/getMetricReductionRuleTimeseries200';
+
+import type { GetMetricsOnboardingStatus200 } from '../sigNoz.schemas/getMetricsOnboardingStatus200';
+
+import type { GetMetricsStats200 } from '../sigNoz.schemas/getMetricsStats200';
+
+import type { GetMetricsTreemap200 } from '../sigNoz.schemas/getMetricsTreemap200';
+
+import type { InspectMetrics200 } from '../sigNoz.schemas/inspectMetrics200';
+
+import type { ListMetricReductionRules200 } from '../sigNoz.schemas/listMetricReductionRules200';
+
+import type { ListMetricReductionRulesParams } from '../sigNoz.schemas/listMetricReductionRulesParams';
+
+import type { ListMetrics200 } from '../sigNoz.schemas/listMetrics200';
+
+import type { ListMetricsParams } from '../sigNoz.schemas/listMetricsParams';
+
+import type { MetricreductionruletypesPostableReductionRuleDTO } from '../sigNoz.schemas/metricreductionruletypesPostableReductionRuleDTO';
+
+import type { MetricreductionruletypesPostableReductionRulePreviewDTO } from '../sigNoz.schemas/metricreductionruletypesPostableReductionRulePreviewDTO';
+
+import type { MetricreductionruletypesUpdatableReductionRuleDTO } from '../sigNoz.schemas/metricreductionruletypesUpdatableReductionRuleDTO';
+
+import type { MetricsexplorertypesInspectMetricsRequestDTO } from '../sigNoz.schemas/metricsexplorertypesInspectMetricsRequestDTO';
+
+import type { MetricsexplorertypesStatsRequestDTO } from '../sigNoz.schemas/metricsexplorertypesStatsRequestDTO';
+
+import type { MetricsexplorertypesTreemapRequestDTO } from '../sigNoz.schemas/metricsexplorertypesTreemapRequestDTO';
+
+import type { MetricsexplorertypesUpdateMetricMetadataRequestDTO } from '../sigNoz.schemas/metricsexplorertypesUpdateMetricMetadataRequestDTO';
+
+import type { PreviewMetricReductionRule200 } from '../sigNoz.schemas/previewMetricReductionRule200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UpdateMetricReductionRuleByID200 } from '../sigNoz.schemas/updateMetricReductionRuleByID200';
+
+import type { UpdateMetricReductionRuleByIDPathParameters } from '../sigNoz.schemas/updateMetricReductionRuleByIDPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -165,7 +197,7 @@ export function useListMetricReductionRules<
 }
 
 /**
- * @summary List metric reduction rules
+ * @summary Invalidates the {@link useListMetricReductionRules} query
  */
 export const invalidateListMetricReductionRules = async (
 	queryClient: QueryClient,
@@ -197,6 +229,9 @@ export const createMetricReductionRule = (
 	});
 };
 
+export const getCreateMetricReductionRuleMutationKey = () =>
+	['createMetricReductionRule'] as const;
+
 export const getCreateMetricReductionRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -204,16 +239,16 @@ export const getCreateMetricReductionRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMetricReductionRule>>,
 		TError,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+		CreateMetricReductionRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createMetricReductionRule>>,
 	TError,
-	{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+	CreateMetricReductionRuleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createMetricReductionRule'];
+	const mutationKey = getCreateMetricReductionRuleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -224,7 +259,7 @@ export const getCreateMetricReductionRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createMetricReductionRule>>,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> }
+		CreateMetricReductionRuleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -242,6 +277,9 @@ export type CreateMetricReductionRuleMutationBody =
 	| undefined;
 export type CreateMetricReductionRuleMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type CreateMetricReductionRuleMutationVariables = {
+	data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO>;
+};
 
 /**
  * @summary Create a metric reduction rule
@@ -253,13 +291,13 @@ export const useCreateMetricReductionRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createMetricReductionRule>>,
 		TError,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+		CreateMetricReductionRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createMetricReductionRule>>,
 	TError,
-	{ data?: BodyType<MetricreductionruletypesPostableReductionRuleDTO> },
+	CreateMetricReductionRuleMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateMetricReductionRuleMutationOptions(options));
@@ -279,6 +317,9 @@ export const deleteMetricReductionRuleByID = (
 	});
 };
 
+export const getDeleteMetricReductionRuleByIDMutationKey = () =>
+	['deleteMetricReductionRuleByID'] as const;
+
 export const getDeleteMetricReductionRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -286,16 +327,16 @@ export const getDeleteMetricReductionRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
 		TError,
-		{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+		DeleteMetricReductionRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
 	TError,
-	{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+	DeleteMetricReductionRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteMetricReductionRuleByID'];
+	const mutationKey = getDeleteMetricReductionRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -306,7 +347,7 @@ export const getDeleteMetricReductionRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
-		{ pathParams: DeleteMetricReductionRuleByIDPathParameters }
+		DeleteMetricReductionRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -322,6 +363,9 @@ export type DeleteMetricReductionRuleByIDMutationResult = NonNullable<
 
 export type DeleteMetricReductionRuleByIDMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type DeleteMetricReductionRuleByIDMutationVariables = {
+	pathParams: DeleteMetricReductionRuleByIDPathParameters;
+};
 
 /**
  * @summary Delete a metric reduction rule by id
@@ -333,13 +377,13 @@ export const useDeleteMetricReductionRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
 		TError,
-		{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+		DeleteMetricReductionRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteMetricReductionRuleByID>>,
 	TError,
-	{ pathParams: DeleteMetricReductionRuleByIDPathParameters },
+	DeleteMetricReductionRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteMetricReductionRuleByIDMutationOptions(options));
@@ -435,7 +479,7 @@ export function useGetMetricReductionRuleByID<
 }
 
 /**
- * @summary Get a metric reduction rule by id
+ * @summary Invalidates the {@link useGetMetricReductionRuleByID} query
  */
 export const invalidateGetMetricReductionRuleByID = async (
 	queryClient: QueryClient,
@@ -468,6 +512,9 @@ export const updateMetricReductionRuleByID = (
 	});
 };
 
+export const getUpdateMetricReductionRuleByIDMutationKey = () =>
+	['updateMetricReductionRuleByID'] as const;
+
 export const getUpdateMetricReductionRuleByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -475,22 +522,16 @@ export const getUpdateMetricReductionRuleByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
 		TError,
-		{
-			pathParams: UpdateMetricReductionRuleByIDPathParameters;
-			data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
-		},
+		UpdateMetricReductionRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
 	TError,
-	{
-		pathParams: UpdateMetricReductionRuleByIDPathParameters;
-		data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
-	},
+	UpdateMetricReductionRuleByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateMetricReductionRuleByID'];
+	const mutationKey = getUpdateMetricReductionRuleByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -501,10 +542,7 @@ export const getUpdateMetricReductionRuleByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
-		{
-			pathParams: UpdateMetricReductionRuleByIDPathParameters;
-			data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
-		}
+		UpdateMetricReductionRuleByIDMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -522,6 +560,10 @@ export type UpdateMetricReductionRuleByIDMutationBody =
 	| undefined;
 export type UpdateMetricReductionRuleByIDMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type UpdateMetricReductionRuleByIDMutationVariables = {
+	pathParams: UpdateMetricReductionRuleByIDPathParameters;
+	data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
+};
 
 /**
  * @summary Update a metric reduction rule by id
@@ -533,19 +575,13 @@ export const useUpdateMetricReductionRuleByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
 		TError,
-		{
-			pathParams: UpdateMetricReductionRuleByIDPathParameters;
-			data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
-		},
+		UpdateMetricReductionRuleByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMetricReductionRuleByID>>,
 	TError,
-	{
-		pathParams: UpdateMetricReductionRuleByIDPathParameters;
-		data?: BodyType<MetricreductionruletypesUpdatableReductionRuleDTO>;
-	},
+	UpdateMetricReductionRuleByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateMetricReductionRuleByIDMutationOptions(options));
@@ -567,6 +603,9 @@ export const previewMetricReductionRule = (
 	});
 };
 
+export const getPreviewMetricReductionRuleMutationKey = () =>
+	['previewMetricReductionRule'] as const;
+
 export const getPreviewMetricReductionRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -574,16 +613,16 @@ export const getPreviewMetricReductionRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof previewMetricReductionRule>>,
 		TError,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO> },
+		PreviewMetricReductionRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof previewMetricReductionRule>>,
 	TError,
-	{ data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO> },
+	PreviewMetricReductionRuleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['previewMetricReductionRule'];
+	const mutationKey = getPreviewMetricReductionRuleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -594,7 +633,7 @@ export const getPreviewMetricReductionRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof previewMetricReductionRule>>,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO> }
+		PreviewMetricReductionRuleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -612,6 +651,9 @@ export type PreviewMetricReductionRuleMutationBody =
 	| undefined;
 export type PreviewMetricReductionRuleMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type PreviewMetricReductionRuleMutationVariables = {
+	data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO>;
+};
 
 /**
  * @summary Preview a metric reduction rule
@@ -623,13 +665,13 @@ export const usePreviewMetricReductionRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof previewMetricReductionRule>>,
 		TError,
-		{ data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO> },
+		PreviewMetricReductionRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof previewMetricReductionRule>>,
 	TError,
-	{ data?: BodyType<MetricreductionruletypesPostableReductionRulePreviewDTO> },
+	PreviewMetricReductionRuleMutationVariables,
 	TContext
 > => {
 	return useMutation(getPreviewMetricReductionRuleMutationOptions(options));
@@ -706,7 +748,7 @@ export function useGetMetricReductionRuleStats<
 }
 
 /**
- * @summary Metric reduction stats
+ * @summary Invalidates the {@link useGetMetricReductionRuleStats} query
  */
 export const invalidateGetMetricReductionRuleStats = async (
 	queryClient: QueryClient,
@@ -792,7 +834,7 @@ export function useGetMetricReductionRuleTimeseries<
 }
 
 /**
- * @summary Metric reduction volume over time
+ * @summary Invalidates the {@link useGetMetricReductionRuleTimeseries} query
  */
 export const invalidateGetMetricReductionRuleTimeseries = async (
 	queryClient: QueryClient,
@@ -886,7 +928,7 @@ export function useListMetrics<
 }
 
 /**
- * @summary List metric names
+ * @summary Invalidates the {@link useListMetrics} query
  */
 export const invalidateListMetrics = async (
 	queryClient: QueryClient,
@@ -981,7 +1023,7 @@ export function useGetMetricAlerts<
 }
 
 /**
- * @summary Get metric alerts
+ * @summary Invalidates the {@link useGetMetricAlerts} query
  */
 export const invalidateGetMetricAlerts = async (
 	queryClient: QueryClient,
@@ -1079,7 +1121,7 @@ export function useGetMetricAttributes<
 }
 
 /**
- * @summary Get metric attributes
+ * @summary Invalidates the {@link useGetMetricAttributes} query
  */
 export const invalidateGetMetricAttributes = async (
 	queryClient: QueryClient,
@@ -1177,7 +1219,7 @@ export function useGetMetricHighlights<
 }
 
 /**
- * @summary Get metric highlights
+ * @summary Invalidates the {@link useGetMetricHighlights} query
  */
 export const invalidateGetMetricHighlights = async (
 	queryClient: QueryClient,
@@ -1209,6 +1251,8 @@ export const inspectMetrics = (
 	});
 };
 
+export const getInspectMetricsMutationKey = () => ['inspectMetrics'] as const;
+
 export const getInspectMetricsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1216,16 +1260,16 @@ export const getInspectMetricsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		InspectMetricsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	InspectMetricsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['inspectMetrics'];
+	const mutationKey = getInspectMetricsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1236,7 +1280,7 @@ export const getInspectMetricsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof inspectMetrics>>,
-		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
+		InspectMetricsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1253,6 +1297,9 @@ export type InspectMetricsMutationBody =
 	| BodyType<MetricsexplorertypesInspectMetricsRequestDTO>
 	| undefined;
 export type InspectMetricsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type InspectMetricsMutationVariables = {
+	data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>;
+};
 
 /**
  * @summary Inspect raw metric data points
@@ -1264,13 +1311,13 @@ export const useInspectMetrics = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof inspectMetrics>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		InspectMetricsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof inspectMetrics>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	InspectMetricsMutationVariables,
 	TContext
 > => {
 	return useMutation(getInspectMetricsMutationOptions(options));
@@ -1358,7 +1405,7 @@ export function useGetMetricMetadata<
 }
 
 /**
- * @summary Get metric metadata
+ * @summary Invalidates the {@link useGetMetricMetadata} query
  */
 export const invalidateGetMetricMetadata = async (
 	queryClient: QueryClient,
@@ -1390,6 +1437,9 @@ export const updateMetricMetadata = (
 	});
 };
 
+export const getUpdateMetricMetadataMutationKey = () =>
+	['updateMetricMetadata'] as const;
+
 export const getUpdateMetricMetadataMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1397,16 +1447,16 @@ export const getUpdateMetricMetadataMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO> },
+		UpdateMetricMetadataMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMetricMetadata>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO> },
+	UpdateMetricMetadataMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateMetricMetadata'];
+	const mutationKey = getUpdateMetricMetadataMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1417,7 +1467,7 @@ export const getUpdateMetricMetadataMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
-		{ data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO> }
+		UpdateMetricMetadataMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1435,6 +1485,9 @@ export type UpdateMetricMetadataMutationBody =
 	| undefined;
 export type UpdateMetricMetadataMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type UpdateMetricMetadataMutationVariables = {
+	data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO>;
+};
 
 /**
  * @summary Update metric metadata
@@ -1446,13 +1499,13 @@ export const useUpdateMetricMetadata = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMetricMetadata>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO> },
+		UpdateMetricMetadataMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMetricMetadata>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesUpdateMetricMetadataRequestDTO> },
+	UpdateMetricMetadataMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateMetricMetadataMutationOptions(options));
@@ -1529,7 +1582,7 @@ export function useGetMetricsOnboardingStatus<
 }
 
 /**
- * @summary Check if non-SigNoz metrics have been received
+ * @summary Invalidates the {@link useGetMetricsOnboardingStatus} query
  */
 export const invalidateGetMetricsOnboardingStatus = async (
 	queryClient: QueryClient,
@@ -1560,6 +1613,8 @@ export const getMetricsStats = (
 	});
 };
 
+export const getGetMetricsStatsMutationKey = () => ['getMetricsStats'] as const;
+
 export const getGetMetricsStatsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1567,16 +1622,16 @@ export const getGetMetricsStatsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		GetMetricsStatsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	GetMetricsStatsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['getMetricsStats'];
+	const mutationKey = getGetMetricsStatsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1587,7 +1642,7 @@ export const getGetMetricsStatsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsStats>>,
-		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> }
+		GetMetricsStatsMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1604,6 +1659,9 @@ export type GetMetricsStatsMutationBody =
 	| BodyType<MetricsexplorertypesStatsRequestDTO>
 	| undefined;
 export type GetMetricsStatsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricsStatsMutationVariables = {
+	data?: BodyType<MetricsexplorertypesStatsRequestDTO>;
+};
 
 /**
  * @summary Get metrics statistics
@@ -1615,13 +1673,13 @@ export const useGetMetricsStats = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsStats>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
+		GetMetricsStatsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsStats>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesStatsRequestDTO> },
+	GetMetricsStatsMutationVariables,
 	TContext
 > => {
 	return useMutation(getGetMetricsStatsMutationOptions(options));
@@ -1643,6 +1701,9 @@ export const getMetricsTreemap = (
 	});
 };
 
+export const getGetMetricsTreemapMutationKey = () =>
+	['getMetricsTreemap'] as const;
+
 export const getGetMetricsTreemapMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -1650,16 +1711,16 @@ export const getGetMetricsTreemapMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		GetMetricsTreemapMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	GetMetricsTreemapMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['getMetricsTreemap'];
+	const mutationKey = getGetMetricsTreemapMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -1670,7 +1731,7 @@ export const getGetMetricsTreemapMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
-		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> }
+		GetMetricsTreemapMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1687,6 +1748,9 @@ export type GetMetricsTreemapMutationBody =
 	| BodyType<MetricsexplorertypesTreemapRequestDTO>
 	| undefined;
 export type GetMetricsTreemapMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetMetricsTreemapMutationVariables = {
+	data?: BodyType<MetricsexplorertypesTreemapRequestDTO>;
+};
 
 /**
  * @summary Get metrics treemap
@@ -1698,13 +1762,13 @@ export const useGetMetricsTreemap = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getMetricsTreemap>>,
 		TError,
-		{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+		GetMetricsTreemapMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getMetricsTreemap>>,
 	TError,
-	{ data?: BodyType<MetricsexplorertypesTreemapRequestDTO> },
+	GetMetricsTreemapMutationVariables,
 	TContext
 > => {
 	return useMutation(getGetMetricsTreemapMutationOptions(options));
@@ -1792,7 +1856,7 @@ export function useGetMetricDashboardsV2<
 }
 
 /**
- * @summary Get metric dashboards (v2)
+ * @summary Invalidates the {@link useGetMetricDashboardsV2} query
  */
 export const invalidateGetMetricDashboardsV2 = async (
 	queryClient: QueryClient,

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { LlmpricingruletypesLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleDTO';
 
 interface ModelCostActionsMenuProps {
 	rule: LlmpricingruletypesLLMPricingRuleDTO;

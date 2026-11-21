@@ -7,12 +7,10 @@ import {
 	useCreateAccount,
 	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
-import type {
-	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesGCPPostableAccountConfigDTO,
-	CloudintegrationtypesGettableAccountWithConnectionArtifactDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
+import type { CloudintegrationtypesGCPPostableAccountConfigDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPPostableAccountConfigDTO';
+import type { CloudintegrationtypesGettableAccountWithConnectionArtifactDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGettableAccountWithConnectionArtifactDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import type { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';

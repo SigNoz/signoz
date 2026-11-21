@@ -1,11 +1,7 @@
-import type {
-	InframonitoringtypesContainerCountsByStatusDTO,
-	InframonitoringtypesPodCountsByStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	InframonitoringtypesContainerStatusDTO,
-	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesContainerCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerCountsByStatusDTO';
+import type { InframonitoringtypesPodCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodCountsByStatusDTO';
+import { InframonitoringtypesContainerStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerStatusDTO';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodStatusDTO';
 
 import { getPodStatusItems } from '../commonUtils';
 import { getContainerStatusItems } from '../Containers/utils';

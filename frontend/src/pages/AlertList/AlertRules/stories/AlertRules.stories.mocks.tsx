@@ -4,7 +4,7 @@
  */
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
-import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
 import { screen, userEvent, within } from 'storybook/test';
 
 import {

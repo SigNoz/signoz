@@ -1,4 +1,4 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { QueryParams } from 'constants/query';
 import { DEFAULT_PANEL_TYPE } from 'container/LLMObservability/Explorer/constants';
 import useUrlQuery from 'hooks/useUrlQuery';

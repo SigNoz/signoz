@@ -9,12 +9,10 @@ import {
 	useListDashboardViews,
 	useUpdateDashboardView,
 } from 'api/generated/services/dashboard';
-import {
-	type DashboardtypesDashboardViewDTO,
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-	type ListDashboardViews200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardViewDTO';
+import { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
+import type { ListDashboardViews200 } from 'api/generated/services/sigNoz.schemas/listDashboardViews200';
 
 import type {
 	SavedListView,

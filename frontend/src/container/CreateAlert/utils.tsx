@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Spin } from 'antd';
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';

@@ -1,9 +1,7 @@
-import {
-	Querybuildertypesv5ColumnTypeDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5RequestTypeDTO,
-	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5ColumnTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnTypeDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { rest, server } from 'mocks-server/server';
 import store from 'store';
 import { render, screen, waitFor } from 'tests/test-utils';

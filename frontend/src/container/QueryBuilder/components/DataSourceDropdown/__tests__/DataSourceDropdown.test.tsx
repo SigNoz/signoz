@@ -1,4 +1,4 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { render, screen, userEvent } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 

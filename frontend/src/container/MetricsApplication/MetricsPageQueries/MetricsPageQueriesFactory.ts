@@ -1,4 +1,4 @@
-import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas/metrictypesComparisonSpaceAggregationParamDTO';
 import {
 	alphabet,
 	initialFormulaBuilderFormValues,

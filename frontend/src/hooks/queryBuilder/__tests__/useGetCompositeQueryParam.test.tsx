@@ -1,4 +1,4 @@
-import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import { initialQueriesMap, initialQueryState } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';

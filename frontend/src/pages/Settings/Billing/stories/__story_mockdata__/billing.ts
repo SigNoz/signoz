@@ -3,13 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	CreateSubscription201,
-	GetSubscription200,
-	SubscriptiontypesSubscriptionUsageBreakdownDTO,
-	SubscriptiontypesSubscriptionUsageDayWiseDataDTO,
-	SubscriptiontypesSubscriptionUsageTierDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas/createSubscription201';
+import type { GetSubscription200 } from 'api/generated/services/sigNoz.schemas/getSubscription200';
+import type { SubscriptiontypesSubscriptionUsageBreakdownDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesSubscriptionUsageBreakdownDTO';
+import type { SubscriptiontypesSubscriptionUsageDayWiseDataDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesSubscriptionUsageDayWiseDataDTO';
+import type { SubscriptiontypesSubscriptionUsageTierDTO } from 'api/generated/services/sigNoz.schemas/subscriptiontypesSubscriptionUsageTierDTO';
 import type { TrialInfo } from 'types/api/licensesV3/getActive';
 
 export const SUBSCRIPTION_STATUSES = ['active', 'past_due'] as const;

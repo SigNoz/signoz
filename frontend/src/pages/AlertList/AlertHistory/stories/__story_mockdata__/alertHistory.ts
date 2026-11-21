@@ -3,20 +3,18 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	RuletypesAlertStateDTO,
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesSignalDTO,
-	type GetRuleHistoryFilterKeys200,
-	type GetRuleHistoryFilterValues200,
-	type GetRuleHistoryOverallStatus200,
-	type GetRuleHistoryStats200,
-	type GetRuleHistoryTimeline200,
-	type GetRuleHistoryTopContributors200,
-	type Querybuildertypesv5LabelDTO,
-	type Querybuildertypesv5TimeSeriesDTO,
-	type RulestatehistorytypesGettableRuleStateHistoryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { GetRuleHistoryFilterKeys200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryFilterKeys200';
+import type { GetRuleHistoryFilterValues200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryFilterValues200';
+import type { GetRuleHistoryOverallStatus200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryOverallStatus200';
+import type { GetRuleHistoryStats200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryStats200';
+import type { GetRuleHistoryTimeline200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryTimeline200';
+import type { GetRuleHistoryTopContributors200 } from 'api/generated/services/sigNoz.schemas/getRuleHistoryTopContributors200';
+import type { Querybuildertypesv5LabelDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5LabelDTO';
+import type { Querybuildertypesv5TimeSeriesDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TimeSeriesDTO';
+import type { RulestatehistorytypesGettableRuleStateHistoryDTO } from 'api/generated/services/sigNoz.schemas/rulestatehistorytypesGettableRuleStateHistoryDTO';
 
 const MINUTE = 60 * 1000;
 

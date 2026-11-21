@@ -1,8 +1,6 @@
 import { Input } from '@signozhq/ui/input';
-import {
-	DashboardtypesAxisScaleDTO,
-	type DashboardtypesScatterPlotAxisDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesAxisScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAxisScaleDTO';
+import type { DashboardtypesScatterPlotAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotAxisDTO';
 
 import ConfigInlineField from '../../controls/ConfigInlineField/ConfigInlineField';
 import AxisFields from '../AxesSection/AxisFields';

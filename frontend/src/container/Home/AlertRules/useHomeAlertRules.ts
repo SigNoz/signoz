@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import { useListRulesV3 } from 'api/generated/services/rules';
-import {
-	type ListRulesV3Params,
-	RuletypesAlertStateDTO,
-	type RuletypesListableRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListRulesV3Params } from 'api/generated/services/sigNoz.schemas/listRulesV3Params';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
 
 const HOME_ALERT_RULES_LIMIT = 5;
 

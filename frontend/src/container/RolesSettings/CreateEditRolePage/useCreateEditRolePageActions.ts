@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/toast';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';

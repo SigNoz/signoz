@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import type { DashboardtypesAreaChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesAreaChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAreaChartPanelSpecDTO';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';

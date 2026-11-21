@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelTypeSwitcher from '../PanelTypeSwitcher';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { EQueryType } from 'types/common/dashboard';
 
 const OPTIONS = [

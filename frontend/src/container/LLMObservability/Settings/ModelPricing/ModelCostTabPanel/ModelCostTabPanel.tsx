@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
 import { Plus, Search, X } from '@signozhq/icons';
 import { useListLLMPricingRules } from 'api/generated/services/llmpricingrules';
-import type { ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas';
+import type { ListLLMPricingRulesParams } from 'api/generated/services/sigNoz.schemas/listLLMPricingRulesParams';
 import { useTableParams } from 'components/TanStackTableView';
 import useComponentPermission from 'hooks/useComponentPermission';
 import useDebounce from 'hooks/useDebounce';

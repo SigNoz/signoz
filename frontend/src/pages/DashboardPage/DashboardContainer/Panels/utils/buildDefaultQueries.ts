@@ -1,4 +1,4 @@
-import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
 import { listViewInitialLogQuery } from 'constants/queryBuilder';
 
 import { toPerses } from '../../queryV5/persesQueryAdapters';

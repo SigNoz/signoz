@@ -1,23 +1,19 @@
-import {
-	RuletypesAlertStateDTO,
-	RuletypesAlertTypeDTO,
-	RuletypesCompareOperatorDTO,
-	RuletypesEvaluationRollingDTOKind,
-	RuletypesListOrderDTO,
-	RuletypesListSortDTO,
-	RuletypesMatchTypeDTO,
-	RuletypesPanelTypeDTO,
-	RuletypesQueryTypeDTO,
-	RuletypesRuleDTOSchemaVersion,
-	RuletypesRuleTypeDTO,
-	RuletypesThresholdBasicDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
-import type {
-	ListRulesV3200,
-	RuletypesRuleConditionDTO,
-	RuletypesRuleDTO,
-	RuletypesRuleViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertTypeDTO';
+import { RuletypesCompareOperatorDTO } from 'api/generated/services/sigNoz.schemas/ruletypesCompareOperatorDTO';
+import { RuletypesEvaluationRollingDTOKind } from 'api/generated/services/sigNoz.schemas/ruletypesEvaluationRollingDTOKind';
+import { RuletypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListOrderDTO';
+import { RuletypesListSortDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListSortDTO';
+import { RuletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesMatchTypeDTO';
+import { RuletypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPanelTypeDTO';
+import { RuletypesQueryTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesQueryTypeDTO';
+import { RuletypesRuleDTOSchemaVersion } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTOSchemaVersion';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
+import { RuletypesThresholdBasicDTOKind } from 'api/generated/services/sigNoz.schemas/ruletypesThresholdBasicDTOKind';
+import type { ListRulesV3200 } from 'api/generated/services/sigNoz.schemas/listRulesV3200';
+import type { RuletypesRuleConditionDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleConditionDTO';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
+import type { RuletypesRuleViewDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleViewDTO';
 
 const baseCondition: RuletypesRuleConditionDTO = {
 	compositeQuery: {

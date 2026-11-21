@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import {
 	INTEGRATION_TELEMETRY_EVENTS,

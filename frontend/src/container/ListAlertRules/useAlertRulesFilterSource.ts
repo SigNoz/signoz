@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { RuletypesLabelPairDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesLabelPairDTO } from 'api/generated/services/sigNoz.schemas/ruletypesLabelPairDTO';
 import type { SuggestionSource } from 'components/ListFilter/dsl/types';
 import type { CreatorOption } from 'components/ListFilter/types';
 import { useCreatorOptions } from 'components/ListFilter/useCreatorOptions';

@@ -1,8 +1,6 @@
 import { screen } from '@testing-library/react';
-import {
-	TelemetrytypesSignalDTO,
-	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import { rest, server } from 'mocks-server/server';
 import { render } from 'tests/test-utils';
 

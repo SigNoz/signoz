@@ -1,13 +1,9 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listPods } from 'api/generated/services/inframonitoring';
-import type {
-	InframonitoringtypesPodRecordDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	InframonitoringtypesResponseTypeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodRecordDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import { InframonitoringtypesResponseTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesResponseTypeDTO';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
 import type { AxiosError } from 'axios';
 
 import type { K8sEntityConfig } from '../Base/entity.config.types';

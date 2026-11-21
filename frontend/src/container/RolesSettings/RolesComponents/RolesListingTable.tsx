@@ -3,7 +3,7 @@ import cx from 'classnames';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
-import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { useRolesFeatureGate } from 'hooks/useRolesFeatureGate';

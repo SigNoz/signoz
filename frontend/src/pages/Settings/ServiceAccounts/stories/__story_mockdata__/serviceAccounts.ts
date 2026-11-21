@@ -3,20 +3,16 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	CreateServiceAccount201,
-	CreateServiceAccountKey201,
-	GetServiceAccount200,
-	ListServiceAccountKeys200,
-	ListServiceAccounts200,
-	RenderErrorResponseDTO,
-	ServiceaccounttypesServiceAccountDTO,
-	ServiceaccounttypesServiceAccountRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	ServiceaccounttypesDSLKeyDTO,
-	ServiceaccounttypesServiceAccountStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CreateServiceAccount201 } from 'api/generated/services/sigNoz.schemas/createServiceAccount201';
+import type { CreateServiceAccountKey201 } from 'api/generated/services/sigNoz.schemas/createServiceAccountKey201';
+import type { GetServiceAccount200 } from 'api/generated/services/sigNoz.schemas/getServiceAccount200';
+import type { ListServiceAccountKeys200 } from 'api/generated/services/sigNoz.schemas/listServiceAccountKeys200';
+import type { ListServiceAccounts200 } from 'api/generated/services/sigNoz.schemas/listServiceAccounts200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountDTO';
+import type { ServiceaccounttypesServiceAccountRoleDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountRoleDTO';
+import { ServiceaccounttypesDSLKeyDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesDSLKeyDTO';
+import { ServiceaccounttypesServiceAccountStatusDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountStatusDTO';
 import {
 	reflectedValues,
 	spliceClause,

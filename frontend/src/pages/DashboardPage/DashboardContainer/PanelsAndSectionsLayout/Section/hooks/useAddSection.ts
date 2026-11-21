@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import type APIError from 'types/api/error';

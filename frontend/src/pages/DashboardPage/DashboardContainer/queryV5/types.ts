@@ -1,7 +1,5 @@
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 
 // V5-native shapes the panel renderers consume, produced by the queryV5 prep utils from the raw
 // query-range response.

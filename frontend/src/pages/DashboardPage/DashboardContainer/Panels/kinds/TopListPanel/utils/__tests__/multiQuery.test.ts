@@ -1,10 +1,8 @@
-import {
-	MetrictypesSpaceAggregationDTO,
-	Querybuildertypesv5OrderDirectionDTO,
-	type Querybuildertypesv5MetricAggregationDTO,
-	type Querybuildertypesv5QueryEnvelopeDTO,
-	type Querybuildertypesv5TraceAggregationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesSpaceAggregationDTO } from 'api/generated/services/sigNoz.schemas/metrictypesSpaceAggregationDTO';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
+import type { Querybuildertypesv5MetricAggregationDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5MetricAggregationDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import type { Querybuildertypesv5TraceAggregationDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TraceAggregationDTO';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import {

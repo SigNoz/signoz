@@ -17,17 +17,23 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	AuthtypesPostableRoleDTO,
-	AuthtypesUpdatableRoleDTO,
-	CreateRole201,
-	DeleteRolePathParameters,
-	GetRole200,
-	GetRolePathParameters,
-	ListRoles200,
-	RenderErrorResponseDTO,
-	UpdateRolePathParameters,
-} from '../sigNoz.schemas';
+import type { AuthtypesPostableRoleDTO } from '../sigNoz.schemas/authtypesPostableRoleDTO';
+
+import type { AuthtypesUpdatableRoleDTO } from '../sigNoz.schemas/authtypesUpdatableRoleDTO';
+
+import type { CreateRole201 } from '../sigNoz.schemas/createRole201';
+
+import type { DeleteRolePathParameters } from '../sigNoz.schemas/deleteRolePathParameters';
+
+import type { GetRole200 } from '../sigNoz.schemas/getRole200';
+
+import type { GetRolePathParameters } from '../sigNoz.schemas/getRolePathParameters';
+
+import type { ListRoles200 } from '../sigNoz.schemas/listRoles200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UpdateRolePathParameters } from '../sigNoz.schemas/updateRolePathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -114,7 +120,7 @@ export function useListRoles<
 }
 
 /**
- * @summary List roles
+ * @summary Invalidates the {@link useListRoles} query
  */
 export const invalidateListRoles = async (
 	queryClient: QueryClient,
@@ -145,6 +151,8 @@ export const createRole = (
 	});
 };
 
+export const getCreateRoleMutationKey = () => ['createRole'] as const;
+
 export const getCreateRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -152,16 +160,16 @@ export const getCreateRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableRoleDTO> },
+		CreateRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableRoleDTO> },
+	CreateRoleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createRole'];
+	const mutationKey = getCreateRoleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -172,7 +180,7 @@ export const getCreateRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRole>>,
-		{ data?: BodyType<AuthtypesPostableRoleDTO> }
+		CreateRoleMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -189,6 +197,9 @@ export type CreateRoleMutationBody =
 	| BodyType<AuthtypesPostableRoleDTO>
 	| undefined;
 export type CreateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateRoleMutationVariables = {
+	data?: BodyType<AuthtypesPostableRoleDTO>;
+};
 
 /**
  * @summary Create role
@@ -200,13 +211,13 @@ export const useCreateRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableRoleDTO> },
+		CreateRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRole>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableRoleDTO> },
+	CreateRoleMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateRoleMutationOptions(options));
@@ -226,6 +237,8 @@ export const deleteRole = (
 	});
 };
 
+export const getDeleteRoleMutationKey = () => ['deleteRole'] as const;
+
 export const getDeleteRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -233,16 +246,16 @@ export const getDeleteRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
 		TError,
-		{ pathParams: DeleteRolePathParameters },
+		DeleteRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteRole>>,
 	TError,
-	{ pathParams: DeleteRolePathParameters },
+	DeleteRoleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteRole'];
+	const mutationKey = getDeleteRoleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -253,7 +266,7 @@ export const getDeleteRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteRole>>,
-		{ pathParams: DeleteRolePathParameters }
+		DeleteRoleMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -268,6 +281,9 @@ export type DeleteRoleMutationResult = NonNullable<
 >;
 
 export type DeleteRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteRoleMutationVariables = {
+	pathParams: DeleteRolePathParameters;
+};
 
 /**
  * @summary Delete role
@@ -279,13 +295,13 @@ export const useDeleteRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
 		TError,
-		{ pathParams: DeleteRolePathParameters },
+		DeleteRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteRole>>,
 	TError,
-	{ pathParams: DeleteRolePathParameters },
+	DeleteRoleMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteRoleMutationOptions(options));
@@ -364,7 +380,7 @@ export function useGetRole<
 }
 
 /**
- * @summary Get role
+ * @summary Invalidates the {@link useGetRole} query
  */
 export const invalidateGetRole = async (
 	queryClient: QueryClient,
@@ -397,6 +413,8 @@ export const updateRole = (
 	});
 };
 
+export const getUpdateRoleMutationKey = () => ['updateRole'] as const;
+
 export const getUpdateRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -404,22 +422,16 @@ export const getUpdateRoleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRole>>,
 		TError,
-		{
-			pathParams: UpdateRolePathParameters;
-			data?: BodyType<AuthtypesUpdatableRoleDTO>;
-		},
+		UpdateRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateRole>>,
 	TError,
-	{
-		pathParams: UpdateRolePathParameters;
-		data?: BodyType<AuthtypesUpdatableRoleDTO>;
-	},
+	UpdateRoleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateRole'];
+	const mutationKey = getUpdateRoleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -430,10 +442,7 @@ export const getUpdateRoleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateRole>>,
-		{
-			pathParams: UpdateRolePathParameters;
-			data?: BodyType<AuthtypesUpdatableRoleDTO>;
-		}
+		UpdateRoleMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -450,6 +459,10 @@ export type UpdateRoleMutationBody =
 	| BodyType<AuthtypesUpdatableRoleDTO>
 	| undefined;
 export type UpdateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateRoleMutationVariables = {
+	pathParams: UpdateRolePathParameters;
+	data?: BodyType<AuthtypesUpdatableRoleDTO>;
+};
 
 /**
  * @summary Update role
@@ -461,19 +474,13 @@ export const useUpdateRole = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRole>>,
 		TError,
-		{
-			pathParams: UpdateRolePathParameters;
-			data?: BodyType<AuthtypesUpdatableRoleDTO>;
-		},
+		UpdateRoleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateRole>>,
 	TError,
-	{
-		pathParams: UpdateRolePathParameters;
-		data?: BodyType<AuthtypesUpdatableRoleDTO>;
-	},
+	UpdateRoleMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateRoleMutationOptions(options));

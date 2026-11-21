@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

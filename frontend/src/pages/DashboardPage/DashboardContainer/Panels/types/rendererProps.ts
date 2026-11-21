@@ -1,8 +1,6 @@
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelPluginDTO,
-	DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import type {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,

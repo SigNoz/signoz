@@ -1,4 +1,4 @@
-import type { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertTypeDTO';
 import { dataSourceForAlertType } from 'constants/alerts';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

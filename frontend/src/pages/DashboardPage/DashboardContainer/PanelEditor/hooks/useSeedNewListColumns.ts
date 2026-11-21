@@ -1,8 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type {
-	DashboardtypesPanelSpecDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 import {
 	defaultColumnsForSignal,

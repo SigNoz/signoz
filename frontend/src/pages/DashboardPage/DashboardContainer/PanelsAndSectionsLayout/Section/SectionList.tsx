@@ -8,7 +8,7 @@ import {
 	SortableContext,
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
 import type { DashboardSection } from '../../utils';
 import { useSectionDragReorder } from './hooks/useSectionDragReorder';

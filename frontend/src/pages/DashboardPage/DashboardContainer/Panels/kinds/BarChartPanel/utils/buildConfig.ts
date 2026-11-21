@@ -1,4 +1,4 @@
-import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesBarChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesBarChartPanelSpecDTO';
 import {
 	buildBaseConfig,
 	type TimeAxisChromeArgs,

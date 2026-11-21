@@ -3,7 +3,7 @@ import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
-import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import type { Control } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
