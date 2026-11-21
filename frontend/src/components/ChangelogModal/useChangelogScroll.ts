@@ -7,7 +7,7 @@ interface UseChangelogScrollResult {
 }
 
 export function useChangelogScroll(): UseChangelogScrollResult {
-	const [content, setContent] = useState<HTMLDivElement | null>(null);
+	const [content, setContent] = useState<HTMLElement | null>(null);
 	const [hasScroll, setHasScroll] = useState(false);
 
 	const checkScroll = useCallback((): void => {
@@ -38,5 +38,10 @@ export function useChangelogScroll(): UseChangelogScrollResult {
 		});
 	}, [content]);
 
-	return { contentRef: setContent, hasScroll, scrollForMore };
+	// The dialog body owns the scroll; a second scroller inside it shows two scrollbars.
+	const contentRef = useCallback((node: HTMLDivElement | null): void => {
+		setContent(node?.closest<HTMLElement>('[data-slot="dialog-body"]') ?? node);
+	}, []);
+
+	return { contentRef, hasScroll, scrollForMore };
 }

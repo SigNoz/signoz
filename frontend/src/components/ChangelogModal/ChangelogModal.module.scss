@@ -1,10 +1,7 @@
-.contentWrapper {
-	position: relative;
-}
-
-.content {
-	max-height: calc(100vh - 300px);
-	overflow-y: auto;
+.scrollHint {
+	position: sticky;
+	bottom: 0;
+	height: 0;
 }
 
 .scrollButton {
