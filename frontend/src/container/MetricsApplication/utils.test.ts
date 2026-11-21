@@ -1,5 +1,5 @@
 import { getTopOperationList } from './__mocks__/getTopOperation';
-import { TopOperationList } from './TopOperationsTable';
+import type { TopOperationList } from './TopOperationsTable';
 import {
 	convertedTracesToDownloadData,
 	getErrorRate,

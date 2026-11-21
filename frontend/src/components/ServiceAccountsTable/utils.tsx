@@ -2,7 +2,7 @@ import { ScanSearch } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 
 export function NameEmailCell({
 	name,

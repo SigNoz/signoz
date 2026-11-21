@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 
 /**
  * Get field values for a given signal type and field name

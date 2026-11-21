@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import set from 'api/browser/localstorage/set';
 
-import { GlobalTimeStoreApi } from './globalTimeStore';
+import type { GlobalTimeStoreApi } from './globalTimeStore';
 
 /**
  * Used to keep the selected time persisted on localStorage

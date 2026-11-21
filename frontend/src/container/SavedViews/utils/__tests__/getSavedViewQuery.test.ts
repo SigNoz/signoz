@@ -1,6 +1,6 @@
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';

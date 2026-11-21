@@ -2,7 +2,7 @@ import awsDarkLogo from '@/assets/Logos/aws-dark.svg';
 import azureOpenaiLogo from '@/assets/Logos/azure-openai.svg';
 import gcpLogo from '@/assets/Logos/gcp.svg';
 
-import { AzureRegion, GCPRegion } from './types';
+import type { AzureRegion, GCPRegion } from './types';
 
 export const INTEGRATION_TELEMETRY_EVENTS = {
 	INTEGRATIONS_LIST_VISITED: 'Integrations Page: Visited the list page',

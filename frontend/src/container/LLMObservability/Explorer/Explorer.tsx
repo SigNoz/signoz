@@ -20,10 +20,8 @@ import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
-import {
-	ICurrentQueryData,
-	useHandleExplorerTabChange,
-} from 'hooks/useHandleExplorerTabChange';
+import type { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEmpty } from 'lodash-es';
@@ -35,8 +33,8 @@ import {
 	tracesRunQueryAction,
 	tracesSaveViewAction,
 } from './aiActions';
-import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Warning } from 'types/api';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import {
 	explorerViewToPanelType,

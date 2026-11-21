@@ -15,14 +15,14 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import ExpandedView from './ExpandedView';
 import GraphView from './GraphView';
 import QueryBuilder from './QueryBuilder';
 import Stepper from './Stepper';
-import {
+import type {
 	GraphPopoverOptions,
 	InspectProps,
 	MetricInspectionAction,

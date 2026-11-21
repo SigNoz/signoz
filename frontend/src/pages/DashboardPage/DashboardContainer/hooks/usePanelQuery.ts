@@ -8,8 +8,8 @@ import {
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	buildQueryRangeRequest,

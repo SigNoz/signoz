@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import BarChartTooltip from 'lib/uPlotV2/components/Tooltip/BarChartTooltip';
-import {
+import type {
 	BarTooltipProps,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
 import { StackMode } from 'lib/uPlotV2/config/types';
 
-import { BarChartProps } from 'lib/visualization/charts/types';
+import type { BarChartProps } from 'lib/visualization/charts/types';
 
 export default function BarChart(props: BarChartProps): JSX.Element {
 	const {

@@ -7,11 +7,11 @@ import getLabelName from 'lib/getLabelName';
 import { colors } from 'lib/getRandomColor';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { useTimezone } from 'providers/Timezone';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
-import uPlot from 'uplot';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { QueryData } from 'types/api/widgets/getQuery';
+import type uPlot from 'uplot';
 
 import { getColorsForSeverityLabels } from './utils';
 

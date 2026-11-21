@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Badge } from '@signozhq/ui/badge';
-import { IntegrationsProps } from 'types/api/integrations/types';
+import type { IntegrationsProps } from 'types/api/integrations/types';
 
 import awwSnapIconUrl from '@/assets/Icons/awwSnap.svg';
 import dottedDoubleLineUrl from '@/assets/svgs/dotted-double-line.svg';

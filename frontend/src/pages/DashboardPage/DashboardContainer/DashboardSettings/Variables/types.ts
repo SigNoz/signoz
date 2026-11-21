@@ -1,4 +1,4 @@
-import { VariableFormModel } from './variableFormModel';
+import type { VariableFormModel } from './variableFormModel';
 
 /** `null` index = adding a new variable; a number = editing that row. */
 export type EditingState =

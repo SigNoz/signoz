@@ -7,7 +7,8 @@ import Empty from 'periscope/components/Empty/Empty';
 import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
+import type { HierarchyNode } from 'd3-hierarchy';
+import { stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from '@signozhq/icons';
 
 import {
@@ -16,7 +17,7 @@ import {
 	TREEMAP_SQUARE_PADDING,
 	TREEMAP_VIEW_OPTIONS,
 } from './constants';
-import {
+import type {
 	MetricsTreemapInternalProps,
 	MetricsTreemapProps,
 	TreemapTile,

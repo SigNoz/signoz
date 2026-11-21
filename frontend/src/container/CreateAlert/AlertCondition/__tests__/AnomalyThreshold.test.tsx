@@ -1,6 +1,6 @@
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { render, screen, userEvent, within } from 'tests/test-utils';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
 import { AlertThresholdMatchType } from '../../context/types';

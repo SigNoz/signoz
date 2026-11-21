@@ -1,8 +1,6 @@
 import { ENVIRONMENT } from 'constants/env';
-import {
-	ApiMonitoringParams,
-	useApiMonitoringParams,
-} from 'container/ApiMonitoring/queryParams';
+import type { ApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
+import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	QuickFilterReadPermission,

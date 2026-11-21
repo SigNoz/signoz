@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { PipelineData } from 'types/api/pipeline/def';
 import Flex from 'periscope/components/Flex/Flex';
 
 function TableExpandIcon({

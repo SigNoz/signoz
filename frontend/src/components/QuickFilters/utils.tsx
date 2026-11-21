@@ -1,8 +1,9 @@
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { fieldContextToAttributeType } from 'utils/fieldContext';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
-import { FiltersType, IQuickFiltersConfig } from './types';
+import type { IQuickFiltersConfig } from './types';
+import { FiltersType } from './types';
 
 const FILTER_TITLE_MAP: Record<string, string> = {
 	duration_nano: 'Duration',

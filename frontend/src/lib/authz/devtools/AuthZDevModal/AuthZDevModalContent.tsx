@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import { BrandedPermission } from '../../hooks/useAuthZ/types';
-import { ObservedPermission, OverrideState } from '../types';
+import type { BrandedPermission } from '../../hooks/useAuthZ/types';
+import type { ObservedPermission, OverrideState } from '../types';
 
 import { PermissionRow } from './PermissionRow';
 

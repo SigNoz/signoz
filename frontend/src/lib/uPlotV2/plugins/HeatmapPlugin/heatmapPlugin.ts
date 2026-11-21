@@ -1,19 +1,16 @@
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
+import type { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
 import {
 	createColorRampResolver,
-	ColorRampResolver,
 	resolveColorDomain,
 } from 'lib/visualization/colorRamp/colorScale';
 import { resolveColumnIndex, resolveRowIndex } from './geometry';
-import {
-	createHoverOverlay,
-	HeatmapHoverOverlay,
-	showHoverOverlay,
-} from './hoverOverlay';
+import type { HeatmapHoverOverlay } from './hoverOverlay';
+import { createHoverOverlay, showHoverOverlay } from './hoverOverlay';
 import { createHatchPattern, drawCells, drawOverflowBoundary } from './paint';
-import { HeatmapCell, HeatmapYAxis } from './types';
-import { ColorRampOptions } from 'lib/visualization/colorRamp/types';
+import type { HeatmapCell, HeatmapYAxis } from './types';
+import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
 
 export interface HeatmapRenderOptions {
 	yAxis: HeatmapYAxis;

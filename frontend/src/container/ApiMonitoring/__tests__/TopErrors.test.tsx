@@ -1,4 +1,4 @@
-import { BuilderQuery } from 'api/v5/v5';
+import type { BuilderQuery } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { rest, server } from 'mocks-server/server';
 import {

@@ -1,7 +1,7 @@
 // V5 Query Range Constants
 
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import {
+import type {
 	FunctionName,
 	RequestType,
 	SignalType,

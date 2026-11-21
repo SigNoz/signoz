@@ -1,7 +1,7 @@
 import axios from 'api';
-import { AxiosResponse } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { AxiosResponse } from 'axios';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	CreateFunnelPayload,
 	CreateFunnelResponse,
 	FunnelData,

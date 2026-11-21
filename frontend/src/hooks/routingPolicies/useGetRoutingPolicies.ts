@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import {
-	getRoutingPolicies,
-	GetRoutingPoliciesResponse,
-} from 'api/routingPolicies/getRoutingPolicies';
+import type { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
+import { getRoutingPolicies } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
+import type { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
 
 type UseGetRoutingPolicies = (
 	options?: UseQueryOptions<

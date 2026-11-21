@@ -1,9 +1,11 @@
-import { useMutation, UseMutationResult } from 'react-query';
-import updateRoutingPolicy, {
+import type { UseMutationResult } from 'react-query';
+import { useMutation } from 'react-query';
+import type {
 	UpdateRoutingPolicyBody,
 	UpdateRoutingPolicyResponse,
 } from 'api/routingPolicies/updateRoutingPolicy';
-import { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
+import updateRoutingPolicy from 'api/routingPolicies/updateRoutingPolicy';
+import type { ErrorResponseV2, SuccessResponseV2 } from 'types/api';
 
 interface UseUpdateRoutingPolicyProps {
 	id: string;

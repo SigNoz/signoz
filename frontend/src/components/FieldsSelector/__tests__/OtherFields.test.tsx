@@ -1,8 +1,11 @@
 import { fireEvent, render, screen } from 'tests/test-utils';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import type { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type {
+	BuilderQueryType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import OtherFields from '../OtherFields';

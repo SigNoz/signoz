@@ -1,5 +1,5 @@
-import { InputNumberProps, RadioProps, SelectProps } from 'antd';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { InputNumberProps, RadioProps, SelectProps } from 'antd';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 
 export type LogViewMode = 'raw' | 'table' | 'list';
 

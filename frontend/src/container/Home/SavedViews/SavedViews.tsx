@@ -4,10 +4,8 @@ import { Button as SignozButton } from '@signozhq/ui/button';
 import { AppLink } from 'lib/router/AppLink';
 import logEvent from 'api/common/logEvent';
 import { useListSavedViews } from 'api/generated/services/saved-view';
-import {
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';

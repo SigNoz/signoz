@@ -1,5 +1,5 @@
 import RouteTab from 'components/RouteTab';
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ListMinus, Rows3 } from '@signozhq/icons';

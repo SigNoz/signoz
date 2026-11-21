@@ -1,5 +1,5 @@
 import { QueryParams } from 'constants/query';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 /**
  * Builds an explorer URL the same way `redirectWithQueryBuilderData` does —

@@ -1,4 +1,4 @@
-import { RestHandler } from 'msw';
+import type { RestHandler } from 'msw';
 import { rest } from 'mocks-server/server';
 
 export const CREATE_USER_ENDPOINT = '*/api/v2/users';

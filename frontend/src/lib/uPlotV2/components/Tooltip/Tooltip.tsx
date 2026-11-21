@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 
-import { TooltipProps } from '../types';
+import type { TooltipProps } from '../types';
 import TooltipHeader from './components/TooltipHeader/TooltipHeader';
 import TooltipList from './components/TooltipList/TooltipList';
 

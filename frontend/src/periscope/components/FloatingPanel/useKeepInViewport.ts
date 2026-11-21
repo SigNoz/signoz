@@ -1,4 +1,5 @@
-import { RefObject, useEffect, useState } from 'react';
+import type { RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import type { Rnd } from 'react-rnd';
 
 interface ViewportSize {

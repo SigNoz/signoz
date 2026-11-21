@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Save } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -7,7 +8,7 @@ import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { CloudAccount } from 'container/Integrations/types';
+import type { CloudAccount } from 'container/Integrations/types';
 import { useAccountSettingsDrawer } from 'hooks/integration/gcp/useAccountSettingsDrawer';
 
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';

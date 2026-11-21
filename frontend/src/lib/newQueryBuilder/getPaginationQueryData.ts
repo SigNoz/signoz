@@ -1,7 +1,7 @@
 import { OPERATORS } from 'constants/queryBuilder';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	IBuilderQuery,
 	OrderByPayload,
 	TagFilter,

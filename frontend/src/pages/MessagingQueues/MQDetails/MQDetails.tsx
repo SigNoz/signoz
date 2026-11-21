@@ -1,21 +1,24 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
+import type {
+	MessagingQueuesViewTypeOptions,
+	SelectedTimelineQuery,
+} from '../MessagingQueuesUtils';
 import {
 	ConsumerLagDetailTitle,
 	getMetaDataAndAPIPerView,
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewType,
-	MessagingQueuesViewTypeOptions,
 	ProducerLatencyOptions,
-	SelectedTimelineQuery,
 } from '../MessagingQueuesUtils';
 import MessagingQueuesTable from './MQTables/MQTables';
 

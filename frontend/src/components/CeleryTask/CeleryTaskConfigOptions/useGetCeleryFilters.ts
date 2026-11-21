@@ -5,7 +5,7 @@ import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSugg
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { toFieldValues } from 'hooks/querySuggestions/useFieldValuesSuggestion';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import { getValuesForDataType } from 'utils/fieldValues';
 

@@ -1,6 +1,7 @@
-import { useMutation, UseMutationResult } from 'react-query';
+import type { UseMutationResult } from 'react-query';
+import { useMutation } from 'react-query';
 import { setApDexSettings } from 'api/metrics/ApDex/apDexSettings';
-import {
+import type {
 	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,
 } from 'types/api/metrics/getApDex';

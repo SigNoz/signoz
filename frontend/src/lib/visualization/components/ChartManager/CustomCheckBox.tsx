@@ -1,7 +1,7 @@
 import { grey } from '@ant-design/colors';
 import { Checkbox } from '@signozhq/ui/checkbox';
-import { ExtendedChartDataset } from 'lib/visualization/charts/types';
-import { CSSProperties } from 'react';
+import type { ExtendedChartDataset } from 'lib/visualization/charts/types';
+import type { CSSProperties } from 'react';
 
 import styles from './CustomCheckBox.module.scss';
 

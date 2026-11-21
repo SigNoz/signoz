@@ -1,4 +1,4 @@
-import { ServiceData } from 'container/Integrations/types';
+import type { ServiceData } from 'container/Integrations/types';
 
 interface Service {
 	id: string;

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports -- global time still lives in redux
 import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import type { AppState } from 'store/reducers';
 import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { timeParamsFromGlobalTime } from 'utils/timeUrlParams';

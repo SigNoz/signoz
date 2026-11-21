@@ -1,17 +1,11 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { Widgets } from 'types/api/widgets/widget';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface DrilldownQueryProps {
 	widget: Widgets;

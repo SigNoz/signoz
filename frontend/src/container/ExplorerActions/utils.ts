@@ -7,7 +7,7 @@ import {
 	MetricsExplorerEvents,
 } from 'container/MetricsExplorer/events';
 import { cloneDeep } from 'lodash-es';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 export const EXPLORER_ACTION_EVENTS: Record<

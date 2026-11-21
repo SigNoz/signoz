@@ -2,7 +2,7 @@ import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { PrecisionOption } from 'components/Graph/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 
-import { PieSlice } from 'lib/visualization/charts/types';
+import type { PieSlice } from 'lib/visualization/charts/types';
 
 import { getArcGeometry } from 'lib/visualization/charts/Pie/utils/geometry';
 import { getSliceDisplayLabel } from 'lib/visualization/charts/Pie/utils/slices';

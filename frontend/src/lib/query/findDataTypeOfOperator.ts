@@ -1,5 +1,5 @@
 import { operatorsByTypes } from 'constants/queryBuilder';
-import { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { LocalDataType } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 export const findDataTypeOfOperator = (value: string): LocalDataType | null => {
 	const entries = Object.entries(operatorsByTypes) as [

@@ -1,4 +1,5 @@
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
 import {
@@ -14,8 +15,8 @@ import {
 	invalidateGetChecks,
 	useGetChecks,
 } from 'api/generated/services/inframonitoring';
-import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { InfraMonitoringEntity } from '../../../constants';
+import type { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InfraMonitoringEntity } from '../../../constants';
 
 import styles from './K8sInstrumentationChecksCallout.module.scss';
 import { MissingEntryRow } from './MissingEntryRow';

@@ -3,7 +3,7 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 
 import { COUNTRY_BY_ISO2 } from '../../geo/countries';
 import { getCountryShapes } from '../../geo/shapes';
-import { GeoMapDatum } from '../../types';
+import type { GeoMapDatum } from '../../types';
 import VectorSource from 'ol/source/Vector';
 
 import {

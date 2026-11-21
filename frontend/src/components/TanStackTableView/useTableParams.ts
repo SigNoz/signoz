@@ -3,7 +3,7 @@ import type { ExpandedState, Updater } from '@tanstack/react-table';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
-import { SortState, TanstackTableQueryParamsConfig } from './types';
+import type { SortState, TanstackTableQueryParamsConfig } from './types';
 import { usePreferredPageSize } from './usePreferredPageSize.store';
 
 const NUQS_OPTIONS = { history: 'push' as const };

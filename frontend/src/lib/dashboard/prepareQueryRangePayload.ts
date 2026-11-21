@@ -2,10 +2,10 @@ import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import store from 'store';
-import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
+import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
 
-import { GetQueryResultsProps } from './getQueryResults';
+import type { GetQueryResultsProps } from './getQueryResults';
 
 type PrepareQueryRangePayload = {
 	queryPayload: QueryRangePayload;

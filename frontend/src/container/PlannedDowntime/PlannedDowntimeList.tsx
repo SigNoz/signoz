@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 
 import styles from './PlannedDowntime.module.scss';
 import PlannedDowntimeActionsMenu from './PlannedDowntimeActionsMenu';
 import PlannedDowntimeEmptyState from './PlannedDowntimeEmptyState';
-import { DowntimeSchedulesTableData, PlannedDowntimeListProps } from './types';
+import type {
+	DowntimeSchedulesTableData,
+	PlannedDowntimeListProps,
+} from './types';
 import { PLANNED_DOWNTIME_QUERY_PARAMS } from './usePlannedDowntimeTable';
 
 function PlannedDowntimeList({

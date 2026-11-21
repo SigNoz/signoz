@@ -1,7 +1,5 @@
-import {
-	DynamicVariableSuggestion,
-	useDynamicVariableSuggestionsStore,
-} from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import type { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import { useDynamicVariableSuggestionsStore } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 
 /**
  * Dynamic variables published by the dashboard currently open, so the query

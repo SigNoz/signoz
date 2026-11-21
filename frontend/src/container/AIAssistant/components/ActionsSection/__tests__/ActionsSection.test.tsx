@@ -11,7 +11,7 @@ import ROUTES from 'constants/routes';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { UpdateTimeInterval } from 'store/actions';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import ActionsSection from '../ActionsSection';
 

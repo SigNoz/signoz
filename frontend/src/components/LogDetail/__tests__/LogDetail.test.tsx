@@ -1,11 +1,11 @@
 import { toast } from '@signozhq/ui/toast';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import LogDetail from '..';
 import { VIEW_TYPES } from '../constants';
-import { LogDetailProps } from '../LogDetail.interfaces';
+import type { LogDetailProps } from '../LogDetail.interfaces';
 
 jest.mock('@signozhq/ui/toast', () => ({
 	toast: { success: jest.fn(), danger: jest.fn() },

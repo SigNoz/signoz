@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useAppParams } from 'lib/router/useAppParams';
 import { Search } from '@signozhq/icons';
-import {
+import type {
 	InputRef,
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
@@ -17,10 +17,13 @@ import { filterDropdown } from 'container/ServiceApplication/Filter/FilterDropdo
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { AppState } from 'store/reducers';
+import type { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { useGetAPMToTracesQueries } from './Tabs/util';

@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { QuickFilterCheckboxUseFieldApis } from '../types';
+import type { QuickFilterCheckboxUseFieldApis } from '../types';
 
 export function useSignalFieldApis(): QuickFilterCheckboxUseFieldApis {
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(

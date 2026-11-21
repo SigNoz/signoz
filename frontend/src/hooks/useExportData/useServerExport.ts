@@ -3,12 +3,13 @@ import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { message } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
-import { prepareQueryRangePayloadV5, TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { AppState } from 'store/reducers';
-import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { DataSource } from 'types/common/queryBuilder';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 interface ExportOptions {
 	format: string;

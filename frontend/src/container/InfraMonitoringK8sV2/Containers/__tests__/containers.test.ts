@@ -1,4 +1,4 @@
-import { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	k8sContainerGetSelectedItemExpression,
 	k8sContainerInitialEventsExpression,

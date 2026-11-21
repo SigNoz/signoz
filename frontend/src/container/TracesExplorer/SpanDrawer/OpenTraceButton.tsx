@@ -1,4 +1,4 @@
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import { CornerUpRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -9,7 +9,7 @@ import {
 	OpenTraceSource,
 } from 'container/TracesExplorer/events';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { openInNewTab } from 'utils/navigation';
 
 import styles from './OpenTraceButton.module.scss';

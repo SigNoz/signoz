@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
 import { useCallback } from 'react';
 
-import { BrandedPermission } from '../../hooks/useAuthZ/types';
+import type { BrandedPermission } from '../../hooks/useAuthZ/types';
 
 import styles from './AuthZDevModal.module.css';
 

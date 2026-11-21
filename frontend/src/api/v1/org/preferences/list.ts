@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadProps } from 'types/api/preferences/list';
-import { OrgPreference } from 'types/api/preferences/preference';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { PayloadProps } from 'types/api/preferences/list';
+import type { OrgPreference } from 'types/api/preferences/preference';
 
 /**
  * @deprecated Use the generated `useListOrgPreferences` hook (or `listOrgPreferences` fetcher) from

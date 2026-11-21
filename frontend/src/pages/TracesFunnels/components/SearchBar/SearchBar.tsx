@@ -1,4 +1,4 @@
-import { ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from '@signozhq/ui/input';
 import { Button, Popover, Tooltip } from 'antd';

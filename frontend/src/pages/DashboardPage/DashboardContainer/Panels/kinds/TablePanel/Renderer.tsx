@@ -13,7 +13,7 @@ import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/quer
 import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
 import { enrichTableClick } from '../../utils/drilldown/enrichTableClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';

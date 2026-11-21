@@ -10,7 +10,7 @@ import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5
 
 import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import { formatPanelValue } from '../../utils/formatPanelValue';
 import { resolveDecimalPrecision } from '../../utils/chartAppearance/resolvers';
 import { enrichNumberClick } from '../../utils/drilldown/enrichNumberClick';

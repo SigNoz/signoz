@@ -5,7 +5,7 @@ import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Pan
 import type { PanelKind } from '../../Panels/types/panelKind';
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import type { TableColumnOption } from '../hooks/useTableColumns';
-import { EQueryType } from 'types/common/dashboard';
+import type { EQueryType } from 'types/common/dashboard';
 
 /**
  * Context `SectionSlot` forwards to every section editor (not spec-slice fields — those

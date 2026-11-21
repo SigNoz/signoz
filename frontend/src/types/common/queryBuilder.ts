@@ -2,11 +2,11 @@ import {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Format } from 'constants/formats/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
-import { Dispatch, SetStateAction } from 'react';
-import {
+import type { Format } from 'constants/formats/types';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type ROUTES from 'constants/routes';
+import type { Dispatch, SetStateAction } from 'react';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -16,7 +16,7 @@ import {
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { EQueryType } from './dashboard';
+import type { EQueryType } from './dashboard';
 
 export enum DataSource {
 	METRICS = 'metrics',

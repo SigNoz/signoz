@@ -1,5 +1,5 @@
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 
 // The wire shape these handlers can actually rely on. The generated

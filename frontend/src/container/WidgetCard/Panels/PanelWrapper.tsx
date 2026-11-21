@@ -1,9 +1,10 @@
-import { FC, useMemo } from 'react';
+import type { FC } from 'react';
+import { useMemo } from 'react';
 import Spinner from 'components/Spinner';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { PanelTypeVsPanelWrapper } from 'container/WidgetCard/Panels/constants';
-import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
+import type { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
 
 function PanelWrapper({
 	widget,

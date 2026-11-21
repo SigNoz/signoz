@@ -1,15 +1,15 @@
 import { renderHook } from '@testing-library/react';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import {
-	DataSource,
-	QueryBuilderContextType,
-	ReduceOperators,
-} from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import useInitialQuery from '../useInitialQuery';
 

@@ -1,4 +1,5 @@
-import { Quadtree, QuadtreeRect } from '../quadtree';
+import type { QuadtreeRect } from '../quadtree';
+import { Quadtree } from '../quadtree';
 
 interface Item extends QuadtreeRect {
 	id: number;

@@ -1,4 +1,4 @@
-import { GeoMapPoint, SubdivisionCountry } from '../../types';
+import type { GeoMapPoint, SubdivisionCountry } from '../../types';
 
 export type FixtureDataset =
 	| 'errorRate'

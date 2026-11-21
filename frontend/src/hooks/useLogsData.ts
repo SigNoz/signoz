@@ -9,16 +9,16 @@ import {
 } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
-import { AppState } from 'store/reducers';
-import { ILog } from 'types/api/logs/log';
-import {
+import type { AppState } from 'store/reducers';
+import type { ILog } from 'types/api/logs/log';
+import type {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useCopyLogLink } from './logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from './queryBuilder/useGetExplorerQueryRange';

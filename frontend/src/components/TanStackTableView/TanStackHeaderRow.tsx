@@ -15,10 +15,11 @@ import {
 } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
 import { Popover } from '@signozhq/ui/popover';
-import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
+import type { Header as TanStackHeader } from '@tanstack/react-table';
+import { flexRender } from '@tanstack/react-table';
 import cx from 'classnames';
 
-import { SortState, TableColumnDef } from './types';
+import type { SortState, TableColumnDef } from './types';
 
 import headerStyles from './TanStackHeaderRow.module.scss';
 import tableStyles from './TanStackTable.module.scss';

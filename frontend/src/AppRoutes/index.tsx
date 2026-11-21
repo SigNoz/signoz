@@ -1,11 +1,5 @@
-import {
-	ReactNode,
-	Suspense,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { ReactNode } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Outlet } from 'react-router';
 import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
@@ -32,16 +26,13 @@ import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
-import { IUser } from 'providers/App/types';
+import type { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
 import PrivateRoute from './Private';
-import defaultRoutes, {
-	AppRoutes,
-	LIST_LICENSES,
-	SUPPORT_ROUTE,
-} from './routes';
+import type { AppRoutes } from './routes';
+import defaultRoutes, { LIST_LICENSES, SUPPORT_ROUTE } from './routes';
 import type { EnabledRouteKeys } from './RouteGate';
 import {
 	isInjectedScriptError,

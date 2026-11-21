@@ -1,4 +1,4 @@
-import { IAppContext } from 'providers/App/types';
+import type { IAppContext } from 'providers/App/types';
 import { fn } from 'storybook/test';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
 

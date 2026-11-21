@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';

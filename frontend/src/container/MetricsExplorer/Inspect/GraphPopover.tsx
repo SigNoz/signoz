@@ -3,7 +3,7 @@ import { Button, Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { ArrowRight } from '@signozhq/icons';
 
-import { GraphPopoverProps } from './types';
+import type { GraphPopoverProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
 function GraphPopover({

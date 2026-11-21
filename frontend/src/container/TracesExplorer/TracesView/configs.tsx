@@ -1,10 +1,8 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
-import {
-	getFieldColumn,
-	TracesTableRow,
-} from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import { getFieldColumn } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 
 const TRACE_FIELDS = [
 	{ name: 'service.name', fieldContext: 'resource' },

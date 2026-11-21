@@ -14,20 +14,20 @@ import useDebounce from 'hooks/useDebounce';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { getAutocompleteValueAndType } from 'lib/newQueryBuilder/getAutocompleteValueAndType';
-import { SuccessResponse } from 'types/api';
-import {
+import type { SuccessResponse } from 'types/api';
+import type {
 	BaseAutocompleteData,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { ExtendedSelectOption } from 'types/common/select';
+import type { ExtendedSelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
 // ** Types
-import { AgregatorFilterProps } from './AggregatorFilter.intefaces';
+import type { AgregatorFilterProps } from './AggregatorFilter.intefaces';
 
 export const AggregatorFilter = memo(function AggregatorFilter({
 	query,

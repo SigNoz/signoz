@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 interface ErrorInPlaceProps {
 	/** The error object to display */

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
@@ -6,9 +6,9 @@ import {
 	QueryBuilderContext,
 	QueryBuilderProvider,
 } from 'providers/QueryBuilder';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
 
-import { AppLayer } from './types';
+import type { AppLayer } from './types';
 
 export interface AppPageProvidersProps {
 	children: ReactNode;

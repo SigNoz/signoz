@@ -1,10 +1,12 @@
-import {
+import type {
 	GetAIObservabilityFieldsKeys200,
 	GetFieldsKeys200,
+	TelemetrytypesTelemetryFieldKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';

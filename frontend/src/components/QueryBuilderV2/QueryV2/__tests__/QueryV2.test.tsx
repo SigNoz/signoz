@@ -8,19 +8,16 @@ import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent } from 'tests/test-utils';
-import {
+import type {
 	Having,
 	IBuilderQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryFunction } from 'types/api/v5/queryRange';
+import type { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { UseQueryOperations } from 'types/common/operations.types';
-import {
-	DataSource,
-	QueryBuilderContextType,
-	QueryFunctionsTypes,
-} from 'types/common/queryBuilder';
+import type { UseQueryOperations } from 'types/common/operations.types';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 
 import '@testing-library/jest-dom';
 

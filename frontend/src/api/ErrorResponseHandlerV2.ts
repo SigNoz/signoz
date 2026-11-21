@@ -1,5 +1,5 @@
-import { AxiosError } from 'axios';
-import { ErrorV2Resp } from 'types/api';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 
 function isErrorV2Resp(data: unknown): data is ErrorV2Resp {

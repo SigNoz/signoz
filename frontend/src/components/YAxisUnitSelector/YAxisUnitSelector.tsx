@@ -5,7 +5,7 @@ import type { DefaultOptionType } from 'antd/es/select';
 import cx from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';
-import { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
+import type { UniversalYAxisUnit, YAxisUnitSelectorProps } from './types';
 import {
 	getUniversalNameFromMetricUnit,
 	getYAxisCategories,

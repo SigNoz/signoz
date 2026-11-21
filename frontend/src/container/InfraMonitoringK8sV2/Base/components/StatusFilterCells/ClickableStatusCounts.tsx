@@ -1,9 +1,8 @@
-import {
-	GroupedStatusCounts,
-	StatusCountItem,
-} from 'container/InfraMonitoringK8sV2/components';
+import type { StatusCountItem } from 'container/InfraMonitoringK8sV2/components';
+import { GroupedStatusCounts } from 'container/InfraMonitoringK8sV2/components';
 
-import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
+import type { StatusFilterKind } from './useStatusFilter';
+import { useStatusFilter } from './useStatusFilter';
 
 interface ClickableStatusCountsProps {
 	items: StatusCountItem[];

@@ -7,7 +7,7 @@ import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSea
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { ArrowDownToDot, ArrowUpFromDot } from '@signozhq/icons';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 

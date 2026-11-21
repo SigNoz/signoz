@@ -1,13 +1,13 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import {
+import type {
 	FormattingOptions,
-	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
+import { PreferenceMode } from 'providers/preferences/types';
 import { act, renderHook } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 

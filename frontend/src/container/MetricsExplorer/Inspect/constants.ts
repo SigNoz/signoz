@@ -2,11 +2,8 @@ import { Color } from '@signozhq/design-tokens';
 import { BarChart, ChartBar, Diff, Gauge, Histogram } from '@signozhq/icons';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
-import {
-	MetricInspectionState,
-	SpaceAggregationOptions,
-	TimeAggregationOptions,
-} from './types';
+import type { MetricInspectionState } from './types';
+import { SpaceAggregationOptions, TimeAggregationOptions } from './types';
 
 export const INSPECT_FEATURE_FLAG_KEY = 'metrics-explorer-inspect-feature-flag';
 

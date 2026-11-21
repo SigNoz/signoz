@@ -1,4 +1,4 @@
-import { OptionData } from './types';
+import type { OptionData } from './types';
 
 export const SPACEKEY = ' ';
 

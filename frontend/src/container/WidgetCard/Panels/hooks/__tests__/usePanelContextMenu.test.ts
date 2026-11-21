@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react';
-import { UseQueryResult } from 'react-query';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { UseQueryResult } from 'react-query';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import { usePanelContextMenu } from 'container/WidgetCard/Panels/hooks/usePanelContextMenu';
 

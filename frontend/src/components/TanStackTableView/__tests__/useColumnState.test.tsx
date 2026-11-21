@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import { act, renderHook } from '@testing-library/react';
 
-import { TableColumnDef } from '../types';
+import type { TableColumnDef } from '../types';
 import { useColumnState } from '../useColumnState';
 import { useColumnStore } from '../useColumnStore';
 

@@ -1,4 +1,4 @@
-import { GeoMapDatum } from '../../types';
+import type { GeoMapDatum } from '../../types';
 import { COUNTRY_BY_ISO2 } from '../countries';
 import { getViewBox, isMember, VIEW_PRESETS } from '../views';
 

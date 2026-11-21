@@ -2,7 +2,7 @@ import ROUTES from 'constants/routes';
 import { getEmptyLogsListConfig } from 'container/LogsExplorerList/utils';
 import { server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import SpanLogs from '../SpanLogs';
 

@@ -4,13 +4,13 @@ import { DEFAULT_BUCKET_COUNT } from 'lib/visualization/constants';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { AlignedData } from 'uplot';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { AlignedData } from 'uplot';
 import { incrRoundDn, roundDecimals } from 'utils/round';
 
-import { PanelMode } from 'lib/visualization/panels/types';
+import type { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 import {
 	buildHistogramBuckets,

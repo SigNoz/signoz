@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-import { InfraMonitoringEntity } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { InfraMonitoringEntity } from '../constants';
+import type { SelectedItemParams } from '../hooks';
 
 export interface DrawerHistoryEntry {
 	params: SelectedItemParams;

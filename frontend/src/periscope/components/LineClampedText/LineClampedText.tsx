@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Tooltip, TooltipProps } from 'antd';
+import type { TooltipProps } from 'antd';
+import { Tooltip } from 'antd';
 import { isBoolean } from 'lodash-es';
 
 import './LineClampedText.styles.scss';

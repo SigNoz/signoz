@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
-import { UseQueryResult } from 'react-query';
-import { Table, TablePaginationConfig } from 'antd';
+import type { UseQueryResult } from 'react-query';
+import type { TablePaginationConfig } from 'antd';
+import { Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
+import type { DependentServicesData } from 'container/ApiMonitoring/utils';
 import {
 	dependentServicesColumns,
-	DependentServicesData,
 	getFormattedDependentServicesData,
 } from 'container/ApiMonitoring/utils';
 import { UnfoldVertical } from '@signozhq/icons';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 import { openInNewTab } from 'utils/navigation';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';

@@ -1,10 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
-import { createGlobalTimeStore, GlobalTimeStoreApi } from '../globalTimeStore';
+import type { GlobalTimeStoreApi } from '../globalTimeStore';
+import { createGlobalTimeStore } from '../globalTimeStore';
 import { useQueryCacheSync } from '../useQueryCacheSync';
 
 function createTestQueryClient(): QueryClient {

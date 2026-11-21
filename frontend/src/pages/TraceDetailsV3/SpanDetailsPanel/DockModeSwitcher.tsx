@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Dock, PanelBottom, PanelRight } from '@signozhq/icons';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 

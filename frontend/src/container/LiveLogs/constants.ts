@@ -3,11 +3,12 @@ import {
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 export const defaultLiveQueryDataConfig: Partial<IBuilderQuery> = {

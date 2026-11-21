@@ -9,7 +9,7 @@ import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';

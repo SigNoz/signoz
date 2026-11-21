@@ -5,7 +5,7 @@ import type {
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {
@@ -17,7 +17,8 @@ import { foldAISlot } from 'lib/query/builderSlot';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { deriveAlertPrefill, PanelAlertPrefill } from './deriveAlertPrefill';
+import type { PanelAlertPrefill } from './deriveAlertPrefill';
+import { deriveAlertPrefill } from './deriveAlertPrefill';
 
 /** The panel's configured y-axis unit, for the kinds that declare one. */
 export function readPanelUnit(

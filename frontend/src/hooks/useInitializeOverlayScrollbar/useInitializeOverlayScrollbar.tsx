@@ -1,12 +1,6 @@
-import {
-	Dispatch,
-	RefObject,
-	SetStateAction,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
-import { PartialOptions } from 'overlayscrollbars';
+import type { Dispatch, RefObject, SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { PartialOptions } from 'overlayscrollbars';
 import { useOverlayScrollbars } from 'overlayscrollbars-react';
 
 const useInitializeOverlayScrollbar = (

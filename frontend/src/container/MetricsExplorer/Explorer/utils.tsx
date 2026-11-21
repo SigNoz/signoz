@@ -1,8 +1,8 @@
-import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
-import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { mapMetricUnitToUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { useGetMultipleMetrics } from 'hooks/metricsExplorer/useGetMultipleMetrics';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { determineIsMonotonic } from '../MetricDetails/utils';

@@ -1,5 +1,5 @@
 import { normalizePlotValue } from 'lib/uPlotV2/utils/dataUtils';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 export function getXAxisTimestamps(seriesList: QueryData[]): number[] {
 	const timestamps = new Set<number>();

@@ -1,4 +1,4 @@
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 
 export const updateStepInterval = (
 	query: Widgets['query'],

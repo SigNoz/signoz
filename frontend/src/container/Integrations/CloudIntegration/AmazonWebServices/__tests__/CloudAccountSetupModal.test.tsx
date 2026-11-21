@@ -1,7 +1,7 @@
-import { ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
-import { RestRequest } from 'msw';
+import type { RestRequest } from 'msw';
 import type logEvent from '../../../../../api/common/logEvent';
 
 import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';

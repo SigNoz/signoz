@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Trash2, X } from '@signozhq/icons';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
 

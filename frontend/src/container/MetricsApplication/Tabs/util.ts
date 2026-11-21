@@ -1,4 +1,5 @@
-import React, { Dispatch, SetStateAction, useMemo, useRef } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -13,13 +14,14 @@ import { resourceAttributesToTracesFilterItems } from 'hooks/useResourceAttribut
 import createQueryParams from 'lib/createQueryParams';
 import { prepareQueryWithDefaultTimestamp } from 'pages/LogsExplorer/utils';
 import { traceFilterKeys } from 'constants/traceFilterKeys';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 import { isModifierKeyPressed } from 'utils/app';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';

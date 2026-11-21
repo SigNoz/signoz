@@ -18,14 +18,13 @@ import { useNotifications } from 'hooks/useNotifications';
 import { isEqual, isUndefined } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
-import {
-	ActionMode,
-	ActionType,
+import type APIError from 'types/api/error';
+import type {
 	Pipeline,
 	PipelineData,
 	ProcessorData,
 } from 'types/api/pipeline/def';
+import { ActionMode, ActionType } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import { tableComponents } from '../config';

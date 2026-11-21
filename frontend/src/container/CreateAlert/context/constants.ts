@@ -5,17 +5,19 @@ import dayjs from 'dayjs';
 import getRandomColor from 'lib/getRandomColor';
 import { v4 } from 'uuid';
 
-import {
+import type {
 	AdvancedOptionsState,
 	AlertState,
-	AlertThresholdMatchType,
-	AlertThresholdOperator,
 	AlertThresholdState,
-	Algorithm,
 	EvaluationWindowState,
 	NotificationSettingsState,
-	Seasonality,
 	Threshold,
+} from './types';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+	Algorithm,
+	Seasonality,
 } from './types';
 
 export const INITIAL_ALERT_STATE: AlertState = {

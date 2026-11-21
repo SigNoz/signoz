@@ -2,18 +2,18 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
-import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	BaseBuilderQuery,
 	FieldContext,
 	FieldDataType,

@@ -1,4 +1,4 @@
-import { SelectProps } from 'antd';
+import type { SelectProps } from 'antd';
 
 export interface OptionData {
 	label: string;

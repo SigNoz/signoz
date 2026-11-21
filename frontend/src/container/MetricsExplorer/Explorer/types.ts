@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction } from 'react';
-import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
-import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Dispatch, SetStateAction } from 'react';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Warning } from 'types/api';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface TimeSeriesProps {
 	onFetchingStateChange?: (isFetching: boolean) => void;

@@ -11,13 +11,13 @@ import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
-import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import type { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
 	applyCeleryFilterOnWidgetData,
 	getFiltersFromQueryParams,

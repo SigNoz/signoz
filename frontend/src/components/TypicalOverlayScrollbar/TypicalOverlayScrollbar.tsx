@@ -1,5 +1,5 @@
-import { CSSProperties, ReactElement } from 'react';
-import { PartialOptions } from 'overlayscrollbars';
+import type { CSSProperties, ReactElement } from 'react';
+import type { PartialOptions } from 'overlayscrollbars';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 
 import './typicalOverlayScrollbar.scss';

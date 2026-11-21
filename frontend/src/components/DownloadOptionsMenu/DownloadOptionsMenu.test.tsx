@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { message } from 'antd';
 import configureStore from 'redux-mock-store';
 import store from 'store';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 

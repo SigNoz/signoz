@@ -1,22 +1,24 @@
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listDeployments } from 'api/generated/services/inframonitoring';
-import {
+import type {
 	InframonitoringtypesDeploymentRecordDTO,
-	InframonitoringtypesResponseTypeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
-
-import { K8sEntityConfig } from '../Base/entity.config.types';
 import {
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+
+import type { K8sEntityConfig } from '../Base/entity.config.types';
+import type {
 	K8sBaseFilters,
 	K8sDetailsCustomTab,
 	K8sDetailsFilters,
 } from '../Base/types';
 import { InfraMonitoringEntity } from '../constants';
 import { createPodMetricsTab } from '../EntityDetailsUtils/createPodMetricsTab';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import {
 	deploymentWidgetInfo,
 	getDeploymentMetricsQueryPayload,

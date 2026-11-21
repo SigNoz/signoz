@@ -1,17 +1,17 @@
-import { ExecStats } from 'api/v5/v5';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { ExecStats } from 'api/v5/v5';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { PanelMode } from 'lib/visualization/panels/types';
+import type { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
 
 export function prepareBarPanelConfig({

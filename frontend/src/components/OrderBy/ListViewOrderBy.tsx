@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Select, Spin } from 'antd';
-import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import type { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import type {
+	BuilderQueryType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
+import type { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 
 import './ListViewOrderBy.styles.scss';
 

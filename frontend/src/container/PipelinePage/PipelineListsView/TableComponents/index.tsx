@@ -1,7 +1,7 @@
 import React from 'react';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
-import { PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import type { PipelineData, ProcessorData } from 'types/api/pipeline/def';
 
 import { PipelineIndexIcon } from '../AddNewProcessor/styles';
 import { ColumnDataStyle, ListDataStyle, ProcessorIndexIcon } from '../styles';

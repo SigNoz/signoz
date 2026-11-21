@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { getTraceThread } from 'api/generated/services/tracedetail';
 import { act, renderHook, waitFor } from 'tests/test-utils';

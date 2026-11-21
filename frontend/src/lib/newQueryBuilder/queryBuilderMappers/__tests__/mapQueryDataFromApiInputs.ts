@@ -1,5 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';

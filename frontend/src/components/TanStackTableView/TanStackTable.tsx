@@ -9,8 +9,8 @@ import {
 	useMemo,
 	useRef,
 } from 'react';
-import type { TableComponents } from 'react-virtuoso';
-import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
+import type { TableComponents, TableVirtuosoHandle } from 'react-virtuoso';
+import { TableVirtuoso } from 'react-virtuoso';
 import { Loader } from '@signozhq/icons';
 import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
@@ -19,13 +19,8 @@ import {
 } from '@dnd-kit/sortable';
 import { Combobox } from '@signozhq/ui/combobox';
 import { Pagination } from '@signozhq/ui/pagination';
-import type { Row } from '@tanstack/react-table';
-import {
-	ColumnDef,
-	ColumnPinningState,
-	getCoreRowModel,
-	useReactTable,
-} from '@tanstack/react-table';
+import type { Row, ColumnDef, ColumnPinningState } from '@tanstack/react-table';
+import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { Spin } from 'antd';
 import cx from 'classnames';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -37,7 +32,7 @@ import {
 	TableLoadingSync,
 	TanStackTableStateProvider,
 } from './TanStackTableStateContext';
-import {
+import type {
 	FlatItem,
 	SortState,
 	TableRowContext,

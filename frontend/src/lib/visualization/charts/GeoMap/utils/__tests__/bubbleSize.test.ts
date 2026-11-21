@@ -1,4 +1,4 @@
-import { GeoMapDatum } from '../../types';
+import type { GeoMapDatum } from '../../types';
 import { bubbleSizeOf, getSizeLegendSteps } from '../scales';
 
 describe('bubbleSizeOf', () => {

@@ -8,7 +8,7 @@ import {
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
-import { SaveChangesMenuProps } from './types';
+import type { SaveChangesMenuProps } from './types';
 
 function SaveChangesMenu({
 	viewId,

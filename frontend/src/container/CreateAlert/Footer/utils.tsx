@@ -2,22 +2,22 @@ import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
-import {
-	AlertTypes,
+import type {
 	BasicThreshold,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypes';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import { normalizeOperator } from '../context/conditionNormalizers';
-import {
+import type {
 	AdvancedOptionsState,
-	AlertThresholdOperator,
 	EvaluationWindowState,
 	NotificationSettingsState,
 } from '../context/types';
-import { BuildCreateAlertRulePayloadArgs } from './types';
+import { AlertThresholdOperator } from '../context/types';
+import type { BuildCreateAlertRulePayloadArgs } from './types';
 
 // Get formatted time/unit pairs for create alert api payload
 export function getFormattedTimeValue(timeValue: number, unit: string): string {

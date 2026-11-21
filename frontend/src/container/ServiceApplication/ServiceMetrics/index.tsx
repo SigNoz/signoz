@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
+import type { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import localStorageGet from 'api/browser/localstorage/get';
@@ -9,9 +9,9 @@ import { SKIP_ONBOARDING } from 'constants/onboarding';
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceMetricsApplication from './ServiceMetricsApplication';

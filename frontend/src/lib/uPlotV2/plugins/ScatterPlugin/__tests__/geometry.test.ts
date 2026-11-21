@@ -6,7 +6,7 @@ import {
 	resolvePointDiameter,
 	resolveSizeDomain,
 } from '../geometry';
-import { ScatterHit, ScatterPointSize } from '../types';
+import type { ScatterHit, ScatterPointSize } from '../types';
 
 const POINT_SIZE: ScatterPointSize = { fixed: 6, min: 4, max: 20 };
 

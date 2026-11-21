@@ -1,9 +1,10 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import list from 'api/v1/features/list';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
-import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
+import type { SuccessResponseV2 } from 'types/api';
+import type APIError from 'types/api/error';
+import type { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 
 export interface Props {
 	onSuccessHandler: (routes: FeatureFlagProps[]) => void;

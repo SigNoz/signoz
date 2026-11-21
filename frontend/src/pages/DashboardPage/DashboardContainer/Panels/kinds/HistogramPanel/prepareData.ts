@@ -7,7 +7,7 @@ import {
 	replaceUndefinedWithNullInAlignedData,
 } from 'lib/visualization/panels/utils/histogram';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
 import { incrRoundDn, roundDecimals } from 'utils/round';
 
 export interface PrepareHistogramDataArgs {

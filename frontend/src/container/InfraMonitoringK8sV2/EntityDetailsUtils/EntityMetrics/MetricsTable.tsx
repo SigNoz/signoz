@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
-import { SortState } from 'components/TanStackTableView/types';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
+import type { SortState } from 'components/TanStackTableView/types';
 
 import styles from './MetricsTable.module.scss';
-import { MetricsColumn } from './utils';
+import type { MetricsColumn } from './utils';
 
 interface MetricsTableProps {
 	rows: Record<string, string>[];

@@ -3,11 +3,12 @@ import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
-import axios, {
+import type {
 	AxiosError,
 	AxiosResponse,
 	InternalAxiosRequestConfig,
 } from 'axios';
+import axios from 'axios';
 import { ENVIRONMENT } from 'constants/env';
 import { Events } from 'constants/events';
 import { LOCALSTORAGE } from 'constants/localStorage';

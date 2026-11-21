@@ -1,4 +1,4 @@
-import { PayloadProps as Prop } from './getByErrorTypeAndService';
+import type { PayloadProps as Prop } from './getByErrorTypeAndService';
 
 export interface Props {
 	groupID: string;

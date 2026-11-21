@@ -1,4 +1,4 @@
-import { MouseEventHandler } from 'react';
+import type { MouseEventHandler } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Compass, Copy, Ellipsis, Link } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -6,7 +6,7 @@ import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { toast } from '@signozhq/ui/toast';
 import { aggregateAttributesResourcesToString } from 'container/LogDetailedView/utils';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 interface LogActionsProps {
 	log: ILog;

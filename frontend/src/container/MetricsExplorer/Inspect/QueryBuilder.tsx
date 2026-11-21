@@ -7,7 +7,7 @@ import MetricFilters from './MetricFilters';
 import MetricNameSearch from './MetricNameSearch';
 import MetricSpaceAggregation from './MetricSpaceAggregation';
 import MetricTimeAggregation from './MetricTimeAggregation';
-import { QueryBuilderProps } from './types';
+import type { QueryBuilderProps } from './types';
 
 function QueryBuilder({
 	currentMetricName,

@@ -1,11 +1,12 @@
 import * as Sentry from '@sentry/react';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { rrulestr } from 'rrule';
 
 import { ADVANCED_OPTIONS_TIME_UNIT_OPTIONS } from '../context/constants';
-import { EvaluationWindowState } from '../context/types';
+import type { EvaluationWindowState } from '../context/types';
 import { WEEKDAY_MAP } from './constants';
 import { CumulativeWindowTimeframes, RollingWindowTimeframes } from './types';
 

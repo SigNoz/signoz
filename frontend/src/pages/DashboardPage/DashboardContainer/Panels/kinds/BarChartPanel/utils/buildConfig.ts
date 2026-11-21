@@ -11,7 +11,7 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/queryV5/uplotData';
 import getLabelName from 'lib/getLabelName';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 export interface BuildBarChartConfigArgs extends TimeAxisChromeArgs {

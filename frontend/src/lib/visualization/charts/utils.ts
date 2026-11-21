@@ -10,7 +10,8 @@ import {
 	LEGEND_SCROLLER_PADDING_RIGHT,
 	MAX_LEGEND_WIDTH,
 } from 'lib/uPlotV2/components/Legend/constants';
-import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
+import type { LegendConfig } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 export interface ChartDimensions {
 	width: number;
 	height: number;

@@ -1,4 +1,5 @@
-import { RefObject, useEffect } from 'react';
+import type { RefObject } from 'react';
+import { useEffect } from 'react';
 
 // Noz has settled on the edge by now.
 const SETTLE_MS = 1900;

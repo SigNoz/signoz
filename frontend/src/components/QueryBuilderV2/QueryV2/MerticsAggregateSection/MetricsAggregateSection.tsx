@@ -6,8 +6,8 @@ import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import SpaceAggregationOptions from 'container/QueryBuilder/components/SpaceAggregationOptions/SpaceAggregationOptions';
 import { GroupByFilter, OperatorsSelect } from 'container/QueryBuilder/filters';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
 import {

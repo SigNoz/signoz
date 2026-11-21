@@ -7,8 +7,9 @@ import { isAxiosError } from 'axios';
 import { collectToolCallKeys } from '../AIThreadMessage/utils';
 import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys } from '../events';
-import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
-import { InterestedSpanStatus, ThreadSpan } from './types';
+import type { SpanDetailVariant } from '../SpanDetailsPanel/constants';
+import type { ThreadSpan } from './types';
+import { InterestedSpanStatus } from './types';
 
 /** Derives SpanV3's `timestamp` and `service.name`, as the waterfall does. */
 export function toThreadSpan(span: SpantypesThreadSpanDTO): ThreadSpan {

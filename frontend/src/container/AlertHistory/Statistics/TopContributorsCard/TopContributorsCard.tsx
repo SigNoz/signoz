@@ -8,7 +8,7 @@ import { ArrowRight } from '@signozhq/icons';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import TopContributorsContent from './TopContributorsContent';
-import { TopContributorsCardProps } from './types';
+import type { TopContributorsCardProps } from './types';
 import ViewAllDrawer from './ViewAllDrawer';
 
 import './TopContributorsCard.styles.scss';

@@ -1,19 +1,19 @@
-import {
+import type {
 	Querybuildertypesv5QueryEnvelopeDTO,
 	SavedviewtypesDisplayDTO,
-	SavedviewtypesPanelTypeDTO,
 	SavedviewtypesSavedViewSpecDTO,
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSignalDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { panelTypeToRequestType } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-import { ToSavedViewSpecArgs } from '../types';
+import type { ToSavedViewSpecArgs } from '../types';
 
 const SAVED_VIEW_PANEL_TYPES = new Set<string>(
 	Object.values(SavedviewtypesPanelTypeDTO),

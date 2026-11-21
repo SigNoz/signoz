@@ -1,23 +1,26 @@
-import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleAlert, Compass } from '@signozhq/icons';
-import { Tooltip, TableColumnType as ColumnType } from 'antd';
+import type { TableColumnType as ColumnType } from 'antd';
+import { Tooltip } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
-import { getColumnUnit, RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
 import { cloneDeep, get, isEmpty } from 'lodash-es';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import styled from 'styled-components';
 import { eventEmitter } from 'utils/getEventEmitter';
 
 import { WrapperStyled } from 'container/WidgetCard/Panels/TablePanel/styles';
-import { GridTableComponentProps } from 'container/WidgetCard/Panels/TablePanel/types';
+import type { GridTableComponentProps } from 'container/WidgetCard/Panels/TablePanel/types';
+import type { TableData } from 'container/WidgetCard/Panels/TablePanel/utils';
 import {
 	createColumnsAndDataSource,
 	findMatchingThreshold,
-	TableData,
 } from 'container/WidgetCard/Panels/TablePanel/utils';
 
 import 'container/WidgetCard/Panels/TablePanel/GridTableComponent.styles.scss';

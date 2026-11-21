@@ -1,4 +1,5 @@
-import { screen, userEvent } from 'tests/test-utils';
+import type { userEvent } from 'tests/test-utils';
+import { screen } from 'tests/test-utils';
 
 /** Types the label into the search and presses Enter: jsdom drops a click on a Combobox row. */
 export const selectRegion = async (

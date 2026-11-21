@@ -14,7 +14,7 @@ import {
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 

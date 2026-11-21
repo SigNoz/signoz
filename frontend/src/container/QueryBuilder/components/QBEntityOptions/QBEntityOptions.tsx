@@ -1,7 +1,7 @@
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Tooltip } from 'antd';
 import Col from 'periscope/components/Col/Col';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -15,8 +15,8 @@ import {
 	EyeOff,
 	Trash2,
 } from '@signozhq/icons';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryFunction } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { DataSourceDropdown } from '..';

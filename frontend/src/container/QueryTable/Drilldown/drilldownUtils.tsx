@@ -1,4 +1,4 @@
-import { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
+import type { PieArcDatum } from '@visx/shape/lib/shapes/Pie';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -14,16 +14,14 @@ import {
 	METRIC_TO_LOGS_TRACES_MAPPINGS,
 } from 'container/QueryTable/Drilldown/metricsCorrelationUtils';
 import cloneDeep from 'lodash-es/cloneDeep';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderQuery,
 	Query,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 export function getBaseMeta(

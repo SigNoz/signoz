@@ -22,6 +22,7 @@
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
+		"verbatimModuleSyntax": true,
 		"noEmit": true,
 		"incremental": true,
 		"tsBuildInfoFile": "./node_modules/.cache/ts/tsconfig.tsbuildinfo",

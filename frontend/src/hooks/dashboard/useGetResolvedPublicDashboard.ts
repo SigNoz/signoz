@@ -1,9 +1,11 @@
 import { getPublicDashboardDataV2 } from 'api/generated/services/dashboard';
-import { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError, isAxiosError } from 'axios';
+import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
-import { ErrorV2Resp } from 'types/api';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type { ErrorV2Resp } from 'types/api';
 
 export enum PublicDashboardSchema {
 	/** Stored data never migrated to v6 — there is no v2 spec to render. */

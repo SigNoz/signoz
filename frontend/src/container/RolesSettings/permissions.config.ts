@@ -15,12 +15,12 @@ import {
 } from '@signozhq/icons';
 
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
-import {
+import type {
 	AuthZResource,
 	AuthZVerb,
-	OBJECT_SCOPED_VERBS,
 	ObjectScopedVerb,
 } from 'lib/authz/hooks/useAuthZ/types';
+import { OBJECT_SCOPED_VERBS } from 'lib/authz/hooks/useAuthZ/types';
 import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
 /** Shared shape of the icon components exported by `@signozhq/icons`. */

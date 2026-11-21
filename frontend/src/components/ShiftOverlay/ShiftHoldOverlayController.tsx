@@ -1,6 +1,6 @@
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
-import { ROLES } from '../../types/roles';
+import type { ROLES } from '../../types/roles';
 import { ShiftOverlay } from './ShiftOverlay';
 import { useShiftHoldOverlay } from './useShiftHoldOverlay';
 

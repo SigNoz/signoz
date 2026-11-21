@@ -1,6 +1,6 @@
 import { Progress } from '@signozhq/ui/progress';
 
-import { ChecklistItem } from '../HomeChecklist/HomeChecklist';
+import type { ChecklistItem } from '../HomeChecklist/HomeChecklist';
 
 import './StepsProgress.styles.scss';
 

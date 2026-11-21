@@ -1,4 +1,4 @@
-import { IngestionInfo } from 'types/api/settings/ingestion';
+import type { IngestionInfo } from 'types/api/settings/ingestion';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
 

@@ -6,7 +6,7 @@ import {
 	unlockDashboardV2,
 } from 'api/generated/services/dashboard';
 import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 interface Args {
 	dashboardId: string;

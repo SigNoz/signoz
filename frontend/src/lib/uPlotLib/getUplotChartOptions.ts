@@ -1,26 +1,27 @@
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
 import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 import {
 	applyEnhancedLegendStyling,
 	calculateEnhancedLegendConfig,
 } from 'container/WidgetCard/Panels/enhancedLegend';
-import { Dimensions } from 'hooks/useDimensions';
+import type { Dimensions } from 'hooks/useDimensions';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import { convertValue } from 'lib/getConvertedValue';
 import getLabelName from 'lib/getLabelName';
 import { cloneDeep, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { LegendPosition } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
-import uPlot from 'uplot';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import type uPlot from 'uplot';
 
-import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
+import type { OnClickPluginOpts } from './plugins/onClickPlugin';
+import onClickPlugin from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import getAxes from './utils/getAxes';
 import getSeries from './utils/getSeriesData';

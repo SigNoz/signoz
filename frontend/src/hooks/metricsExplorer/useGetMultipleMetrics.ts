@@ -1,9 +1,10 @@
-import { useQueries, UseQueryOptions, UseQueryResult } from 'react-query';
+import type { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQueries } from 'react-query';
 import {
 	getGetMetricMetadataQueryKey,
 	getMetricMetadata,
 } from 'api/generated/services/metrics';
-import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 
 type QueryResult = UseQueryResult<GetMetricMetadata200, Error>;
 

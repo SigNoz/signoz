@@ -1,7 +1,11 @@
 import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
+import type { AxiosError } from 'axios';
+import type {
+	ErrorV2Resp,
+	RawSuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 
 /**
  * @deprecated Use the generated `useDeleteSession` hook (or `deleteSession` fetcher) from

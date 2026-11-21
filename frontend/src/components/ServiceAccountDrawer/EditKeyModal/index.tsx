@@ -13,7 +13,7 @@ import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesGettableFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
 import { buildAPIKeyUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
@@ -21,7 +21,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { RevokeKeyFooter } from '../RevokeKeyModal';
 import EditKeyForm, { EditKeyFooter, EditKeyFooterPrefix } from './EditKeyForm';

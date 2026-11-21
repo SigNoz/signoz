@@ -1,4 +1,4 @@
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';

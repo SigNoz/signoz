@@ -10,7 +10,7 @@ import {
 	TIMEZONE_DATA,
 } from '../constants';
 import TimeInput from '../TimeInput';
-import { IEvaluationWindowDetailsProps } from '../types';
+import type { IEvaluationWindowDetailsProps } from '../types';
 import { getCumulativeWindowTimeframeText } from '../utils';
 
 function EvaluationWindowDetails({

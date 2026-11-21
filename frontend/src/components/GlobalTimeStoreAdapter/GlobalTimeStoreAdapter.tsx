@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { refreshIntervalOptions } from 'container/TopNav/AutoRefreshV2/constants';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGlobalTimeStore } from 'store/globalTime/globalTimeStore';
 import { createCustomTimeRange } from 'store/globalTime/utils';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 /**
  * Adapter component that syncs Redux global time state to Zustand store.

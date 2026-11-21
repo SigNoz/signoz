@@ -3,7 +3,7 @@ import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import Graph from 'container/WidgetCard/Card';
-import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import type { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
 import { defaultFeatureFlags, render } from 'tests/test-utils';
 

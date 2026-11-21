@@ -1,5 +1,5 @@
 import TopContributorsRows from './TopContributorsRows';
-import { TopContributorsCardProps } from './types';
+import type { TopContributorsCardProps } from './types';
 
 function TopContributorsContent({
 	topContributorsData,

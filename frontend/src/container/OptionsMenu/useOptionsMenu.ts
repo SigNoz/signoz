@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { AxiosResponse } from 'axios';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { AxiosResponse } from 'axios';
 import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKeySuggestions';
 import useDebounce from 'hooks/useDebounce';
 import { useNotifications } from 'hooks/useNotifications';
@@ -12,12 +12,12 @@ import useUrlQueryData from 'hooks/useUrlQueryData';
 import { has } from 'lodash-es';
 import { AllTraceFilterKeyValue } from 'constants/traceFilterKeys';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { PreferenceSourcePage } from 'providers/preferences/types';
-import {
+import type { PreferenceSourcePage } from 'providers/preferences/types';
+import type {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
 } from 'types/api/querySuggestions/types';
-import {
+import type {
 	FieldContext,
 	FieldDataType,
 	SignalType,
@@ -31,7 +31,7 @@ import {
 	SOURCE_PAGE_SIGNAL,
 	URL_OPTIONS,
 } from './constants';
-import {
+import type {
 	FontSize,
 	InitialOptions,
 	LogViewMode,

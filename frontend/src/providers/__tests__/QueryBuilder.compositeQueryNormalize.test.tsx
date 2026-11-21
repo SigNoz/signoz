@@ -4,16 +4,12 @@ import {
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
-	act,
-	AllTheProviders,
-	renderHook,
-	RenderHookResult,
-	waitFor,
-} from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { RenderHookResult } from 'tests/test-utils';
+import { act, AllTheProviders, renderHook, waitFor } from 'tests/test-utils';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 jest.mock('hooks/useSafeNavigate', () => {
 	const { navigate } = jest.requireActual('lib/router/navigation');

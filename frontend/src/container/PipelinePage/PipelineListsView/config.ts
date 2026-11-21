@@ -1,8 +1,8 @@
-import {
+import type {
 	TableColumnGroupType as ColumnGroupType,
 	TableColumnType as ColumnType,
 } from 'antd/';
-import {
+import type {
 	HistoryData,
 	PipelineData,
 	ProcessorData,

@@ -1,11 +1,11 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	ClickHouseQuery,
 	LogAggregation,
 	LogBuilderQuery,

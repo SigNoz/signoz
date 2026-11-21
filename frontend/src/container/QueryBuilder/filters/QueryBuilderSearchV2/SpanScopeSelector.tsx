@@ -3,7 +3,7 @@ import { Select } from 'antd';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { cloneDeep } from 'lodash-es';
-import {
+import type {
 	IBuilderQuery,
 	TagFilter,
 	TagFilterItem,

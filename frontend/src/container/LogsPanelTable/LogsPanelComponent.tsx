@@ -1,12 +1,6 @@
-import {
-	Dispatch,
-	HTMLAttributes,
-	SetStateAction,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
+import type { Dispatch, HTMLAttributes, SetStateAction } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import type { UseQueryResult } from 'react-query';
 import LogDetail from 'components/LogDetail';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
@@ -17,13 +11,13 @@ import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { tableStyles } from 'container/TracesExplorer/ListView/styles';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import { useLogsData } from 'hooks/useLogsData';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { FlatLogData } from 'lib/logs/flatLogData';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { getLogPanelColumnsList } from './utils';
 

@@ -9,7 +9,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { X } from '@signozhq/icons';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
-import { ConnectionStates } from './TestConnection';
+import type { ConnectionStates } from './TestConnection';
 
 import './IntegrationDetailPage.styles.scss';
 

@@ -3,7 +3,8 @@ import type uPlot from 'uplot';
 import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
 import { resolveHeatmapYAxis } from '../geometry';
 import { createHeatmapHooks } from '../heatmapPlugin';
-import { HeatmapAxisScale, HeatmapCell } from '../types';
+import type { HeatmapCell } from '../types';
+import { HeatmapAxisScale } from '../types';
 
 const BOUNDS = [100, 1000];
 const Y_AXIS = resolveHeatmapYAxis(BOUNDS, HeatmapAxisScale.Linear);

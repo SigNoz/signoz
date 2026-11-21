@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 
-import { GlobalTimeStoreApi } from './globalTimeStore';
-import { GlobalTimeProviderOptions } from './types';
+import type { GlobalTimeStoreApi } from './globalTimeStore';
+import type { GlobalTimeProviderOptions } from './types';
 import {
 	createCustomTimeRange,
 	isCustomTimeRange,

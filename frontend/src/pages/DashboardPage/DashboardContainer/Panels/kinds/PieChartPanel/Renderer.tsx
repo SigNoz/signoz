@@ -8,7 +8,7 @@ import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5
 
 import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,

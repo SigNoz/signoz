@@ -1,4 +1,4 @@
-import { IntegrationType } from 'container/Integrations/types';
+import type { IntegrationType } from 'container/Integrations/types';
 
 import AccountActions from '../CloudIntegration/AmazonWebServices/AccountActions/AccountActions';
 import { getIntegrationMetadata } from '../CloudIntegration/utils';

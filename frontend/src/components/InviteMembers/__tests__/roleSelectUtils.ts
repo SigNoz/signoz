@@ -1,4 +1,5 @@
-import { screen, userEvent, waitFor } from 'tests/test-utils';
+import type { userEvent } from 'tests/test-utils';
+import { screen, waitFor } from 'tests/test-utils';
 
 const ROLE_TRIGGER_TEST_ID = /^invite-role-[0-9a-f-]{36}$/;
 

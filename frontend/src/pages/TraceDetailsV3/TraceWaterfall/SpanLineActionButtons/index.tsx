@@ -2,7 +2,7 @@ import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Link } from '@signozhq/icons';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import styles from './SpanLineActionButtons.module.scss';
 

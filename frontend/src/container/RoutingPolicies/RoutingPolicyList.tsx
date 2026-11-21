@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 
 import RoutingPoliciesEmptyState from './RoutingPoliciesEmptyState';
 import RoutingPolicyActionsMenu from './RoutingPolicyActionsMenu';
 import styles from './RoutingPolicies.module.scss';
-import { RoutingPolicy, RoutingPolicyListProps } from './types';
+import type { RoutingPolicy, RoutingPolicyListProps } from './types';
 import { ROUTING_POLICIES_QUERY_PARAMS } from './useRoutingPoliciesTable';
 
 function RoutingPolicyList({

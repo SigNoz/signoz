@@ -9,7 +9,7 @@ import {
 } from 'react';
 import * as Sentry from '@sentry/react';
 import { Typography } from '@signozhq/ui/typography';
-import { ToggleGraphProps } from 'components/Graph/types';
+import type { ToggleGraphProps } from 'components/Graph/types';
 import { ChartLine } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import UPlot from 'uplot';

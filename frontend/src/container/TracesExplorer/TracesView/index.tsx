@@ -1,12 +1,10 @@
-import {
+import type {
 	Dispatch,
-	memo,
 	MutableRefObject,
 	ReactNode,
 	SetStateAction,
-	useEffect,
-	useMemo,
 } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Typography } from '@signozhq/ui/typography';
@@ -19,15 +17,15 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getListViewQuery } from 'container/TracesExplorer/explorerUtils';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { useKeepRowsForSameQuery } from 'container/TracesExplorer/TracesTable/useKeepRowsForSameQuery';
 import { useTracesTablePagination } from 'container/TracesExplorer/TracesTable/useTracesTablePagination';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
 import { columns } from './configs';

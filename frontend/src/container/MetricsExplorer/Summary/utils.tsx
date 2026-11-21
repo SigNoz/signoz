@@ -1,17 +1,17 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
-import {
+import type { TableColumnType as ColumnType } from 'antd';
+import type {
 	MetricsexplorertypesStatDTO,
 	MetricsexplorertypesTreemapEntryDTO,
-	MetricsexplorertypesTreemapModeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Filter } from 'api/v5/v5';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
 import MetricNameSearch from './MetricNameSearch';
 import MetricTypeViewRenderer from './MetricTypeViewRenderer';
-import { MetricsListItemRowData, TreemapTile } from './types';
+import type { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
 	queryFilterExpression: Filter,

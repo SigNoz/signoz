@@ -1,8 +1,8 @@
 import { act, renderHook } from 'tests/test-utils';
 import { getCenter } from 'ol/extent';
-import View from 'ol/View';
+import type View from 'ol/View';
 
-import {
+import type {
 	GeoMapPoint,
 	GeoMapProjection,
 	GeoMapView,

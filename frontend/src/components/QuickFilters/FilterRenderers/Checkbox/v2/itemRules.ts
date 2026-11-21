@@ -1,4 +1,4 @@
-import { CheckedState } from '../../../types';
+import type { CheckedState } from '../../../types';
 
 export enum SectionType {
 	SELECTED = 'selected',

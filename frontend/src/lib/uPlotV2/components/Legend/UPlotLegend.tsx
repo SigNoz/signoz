@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 import { useLegendActions } from '../../hooks/useLegendActions';
-import { LegendPosition, UPlotLegendProps } from '../types';
+import type { UPlotLegendProps } from '../types';
+import { LegendPosition } from '../types';
 
 import Legend from './Legend';
 

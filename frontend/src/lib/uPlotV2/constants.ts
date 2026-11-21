@@ -1,4 +1,4 @@
-import { Cursor, Options } from 'uplot';
+import type { Cursor, Options } from 'uplot';
 
 const POINTS_FILL_COLOR = '#FFFFFF';
 

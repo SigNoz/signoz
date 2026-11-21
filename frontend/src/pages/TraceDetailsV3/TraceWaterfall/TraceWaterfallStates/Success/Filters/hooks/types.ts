@@ -1,5 +1,5 @@
-import { MutableRefObject } from 'react';
-import { IQueryPair } from 'types/antlrQueryTypes';
+import type { MutableRefObject } from 'react';
+import type { IQueryPair } from 'types/antlrQueryTypes';
 
 /**
  * Shared props for expression-based filter hooks.

@@ -1,4 +1,5 @@
-import axios, { AxiosHeaders, AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios, { AxiosHeaders } from 'axios';
 
 import { interceptorRejected } from './index';
 

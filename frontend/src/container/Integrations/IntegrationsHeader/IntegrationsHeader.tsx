@@ -1,4 +1,5 @@
-import { ChangeEvent, KeyboardEvent, useState } from 'react';
+import type { ChangeEvent, KeyboardEvent } from 'react';
+import { useState } from 'react';
 import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';

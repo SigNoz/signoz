@@ -1,6 +1,6 @@
-import { Y_AXIS_UNIT_NAMES } from './constants';
-import { YAxisCategoryNames } from './constants';
-import { UniversalYAxisUnit, YAxisCategory } from './types';
+import { Y_AXIS_UNIT_NAMES, YAxisCategoryNames } from './constants';
+import type { YAxisCategory } from './types';
+import { UniversalYAxisUnit } from './types';
 
 // Base categories for the universal y-axis units
 export const BASE_Y_AXIS_CATEGORIES: YAxisCategory[] = [

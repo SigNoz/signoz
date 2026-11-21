@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 
-import { RuleMode } from '../../../types';
+import type { RuleMode } from '../../../types';
 import styles from './ModeSelector.module.scss';
 
 interface ModeOption {

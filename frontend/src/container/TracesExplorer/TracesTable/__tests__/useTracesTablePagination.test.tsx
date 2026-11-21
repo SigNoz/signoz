@@ -1,5 +1,6 @@
-import { ReactNode } from 'react';
-import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
+import type { ReactNode } from 'react';
+import type { UrlUpdateEvent } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { renderHook, waitFor } from 'tests/test-utils';
 
 import { useTracesTablePagination } from '../useTracesTablePagination';

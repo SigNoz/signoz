@@ -12,14 +12,14 @@ import {
 	ANOMALY_THRESHOLD_OPERATOR_OPTIONS,
 	INITIAL_ANOMALY_THRESHOLD,
 } from '../context/constants';
-import {
+import type {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from '../context/types';
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { AnomalyAndThresholdProps } from './types';
+import type { AnomalyAndThresholdProps } from './types';
 import { useThresholdList } from './useThresholdList';
 import { getQueryNames, RoutingPolicyBanner } from './utils';
 

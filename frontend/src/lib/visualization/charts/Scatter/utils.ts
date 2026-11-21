@@ -10,17 +10,17 @@ import {
 	createScatterPlugin,
 	SCATTER_FACETS,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/scatterPlugin';
-import {
-	DEFAULT_SCATTER_POINT_SIZE,
+import type {
 	ScatterChartData,
 	ScatterSeriesData,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
+import { DEFAULT_SCATTER_POINT_SIZE } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 import {
 	logScaleSplits,
 	spacedLogLabels,
 } from 'lib/uPlotV2/utils/logGridSplits';
 import { adjustSoftLimitsWithThresholds } from 'lib/uPlotV2/utils/scale';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import { resolveAxisDistribution } from './axisDistribution';
 import { createScatterRange } from './scatterRange';

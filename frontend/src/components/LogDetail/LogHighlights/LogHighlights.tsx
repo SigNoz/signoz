@@ -1,5 +1,5 @@
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import { LOG_HIGHLIGHTS } from './config';
 import styles from './LogHighlights.module.scss';

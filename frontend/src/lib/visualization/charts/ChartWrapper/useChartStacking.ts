@@ -1,14 +1,9 @@
-import {
-	MutableRefObject,
-	useCallback,
-	useLayoutEffect,
-	useMemo,
-	useRef,
-} from 'react';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { MutableRefObject } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { has } from 'lodash-es';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import { stackSeries } from 'lib/visualization/charts/utils/stackSeriesUtils';
 

@@ -1,4 +1,5 @@
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
 
 import {
 	interceptorRejected,

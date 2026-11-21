@@ -1,5 +1,5 @@
 import { defaultStyles } from '@visx/tooltip';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const tooltipStyles = {
 	...defaultStyles,

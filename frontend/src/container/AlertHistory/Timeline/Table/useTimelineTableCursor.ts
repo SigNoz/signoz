@@ -1,10 +1,5 @@
-import {
-	Options,
-	parseAsInteger,
-	parseAsStringLiteral,
-	useQueryState,
-	UseQueryStateReturn,
-} from 'nuqs';
+import type { Options, UseQueryStateReturn } from 'nuqs';
+import { parseAsInteger, parseAsStringLiteral, useQueryState } from 'nuqs';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 
 const defaultNuqsOptions: Options = {

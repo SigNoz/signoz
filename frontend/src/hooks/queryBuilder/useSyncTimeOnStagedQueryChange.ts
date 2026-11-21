@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 // Push fresh min/max back into Redux whenever the staged query changes for a
 // relative time interval. The data hooks that read minTime/maxTime from Redux

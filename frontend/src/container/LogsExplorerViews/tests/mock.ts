@@ -6,7 +6,7 @@ import {
 } from 'constants/queryBuilder';
 import { noop } from 'lodash-es';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const logsQueryRangeSuccessNewFormatResponse = {
 	data: {

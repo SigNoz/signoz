@@ -1,7 +1,7 @@
+import type { PropsWithChildren } from 'react';
 import {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	PropsWithChildren,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -29,10 +29,8 @@ import {
 	TRACE_OPERATOR_QUERY_NAME,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import {
-	panelTypeDataSourceFormValuesMap,
-	PartialPanelTypes,
-} from 'lib/query/panelTypeDataSourceFormValuesMap';
+import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
+import { panelTypeDataSourceFormValuesMap } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useNormalizedCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
@@ -46,9 +44,9 @@ import {
 } from 'lib/query/builderSlot';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 // ** Types
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -58,13 +56,12 @@ import {
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import {
-	DataSource,
+import type {
 	IsDefaultQueryProps,
 	QueryBuilderContextType,
 	QueryBuilderData,
-	ReduceOperators,
 } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';

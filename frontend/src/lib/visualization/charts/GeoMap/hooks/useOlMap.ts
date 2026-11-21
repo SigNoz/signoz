@@ -1,4 +1,5 @@
-import { RefObject, useEffect, useState } from 'react';
+import type { RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import {

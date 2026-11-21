@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { PermissionScope, ResourcePermissions } from '../types';
+import type { ResourcePermissions } from '../types';
+import { PermissionScope } from '../types';
 
 interface UseRoleFormValidationResult {
 	validationErrors: Set<string>;

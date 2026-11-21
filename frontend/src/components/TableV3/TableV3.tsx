@@ -1,18 +1,13 @@
-import React, {
-	Dispatch,
-	MutableRefObject,
-	SetStateAction,
-	useEffect,
-	useMemo,
-} from 'react';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import type { ColumnDef, Table } from '@tanstack/react-table';
 import {
-	ColumnDef,
 	flexRender,
 	getCoreRowModel,
-	Table,
 	useReactTable,
 } from '@tanstack/react-table';
-import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
+import type { Virtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
 
 import './TableV3.styles.scss';

@@ -2,7 +2,10 @@ import { renderHook } from '@testing-library/react';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder');
 jest.mock('hooks/saveViews/useGetSavedViewParams', () => ({

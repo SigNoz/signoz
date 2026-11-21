@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {

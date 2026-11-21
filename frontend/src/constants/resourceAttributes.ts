@@ -1,4 +1,4 @@
-import { OperatorValues } from 'hooks/useResourceAttribute/types';
+import type { OperatorValues } from 'hooks/useResourceAttribute/types';
 
 export const OperatorConversions: Array<{
 	label: string;

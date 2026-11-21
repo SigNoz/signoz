@@ -15,7 +15,7 @@ import { uniqBy } from 'lodash-es';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import NozButton from 'pages/TraceDetailsV3/TraceDetailsHeader/NozButton';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DataSource,
 	TracesAggregatorOperator,
@@ -25,10 +25,8 @@ import { validateQuery } from 'utils/queryValidationUtils';
 
 import { BASE_FILTER_QUERY } from './constants';
 import { useHighlightErrors } from './hooks/useHighlightErrors';
-import {
-	SpanCategory,
-	useSpanCategoryFilter,
-} from './hooks/useSpanCategoryFilter';
+import type { SpanCategory } from './hooks/useSpanCategoryFilter';
+import { useSpanCategoryFilter } from './hooks/useSpanCategoryFilter';
 import QueryResult from './QueryResult';
 
 import styles from './Filters.module.scss';

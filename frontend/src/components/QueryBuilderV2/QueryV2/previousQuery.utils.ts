@@ -1,7 +1,7 @@
 import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import removeSessionStorageApi from 'api/browser/sessionstorage/remove';
 import setSessionStorageApi from 'api/browser/sessionstorage/set';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export const PREVIOUS_QUERY_KEY = 'previousQuery';
 

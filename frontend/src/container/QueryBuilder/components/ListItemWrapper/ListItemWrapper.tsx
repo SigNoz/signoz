@@ -1,5 +1,5 @@
 // ** Types
-import { ListItemWrapperProps } from './ListItemWrapper.interfaces';
+import type { ListItemWrapperProps } from './ListItemWrapper.interfaces';
 // ** Styles
 import { StyledDeleteEntity, StyledRow } from './ListItemWrapper.styled';
 

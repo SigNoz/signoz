@@ -7,10 +7,8 @@ import {
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 
-import {
-	InfraMonitoringEntity,
-	METRIC_NAMESPACE_BY_ENTITY,
-} from '../constants';
+import type { InfraMonitoringEntity } from '../constants';
+import { METRIC_NAMESPACE_BY_ENTITY } from '../constants';
 
 export interface GroupByOption {
 	value: string;

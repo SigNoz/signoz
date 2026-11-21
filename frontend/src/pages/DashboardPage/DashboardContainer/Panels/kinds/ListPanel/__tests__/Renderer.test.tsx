@@ -1,6 +1,6 @@
-import {
-	type DashboardtypesListPanelSpecDTO,
-	type QueryRangeV5200,
+import type {
+	DashboardtypesListPanelSpecDTO,
+	QueryRangeV5200,
 } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type {

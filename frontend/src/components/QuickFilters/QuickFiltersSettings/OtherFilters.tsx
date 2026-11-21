@@ -4,12 +4,12 @@ import {
 	QuickfiltertypesSourceDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { FieldKeysConfig } from 'api/querySuggestions/types';
+import type { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QUICK_FILTER_SOURCE_TO_SIGNAL } from 'components/QuickFilters/constants';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import {
+import type {
 	BuilderQueryType,
 	FieldContext,
 	FieldDataType,

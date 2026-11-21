@@ -2,7 +2,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import type { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import dayjs from 'dayjs';
 
 export interface CustomTimeRange {

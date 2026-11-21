@@ -1,4 +1,4 @@
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import { matchRoute } from 'lib/router/matchRoute';
 import ROUTES from 'constants/routes';
 import { Compass, Cone } from '@signozhq/icons';

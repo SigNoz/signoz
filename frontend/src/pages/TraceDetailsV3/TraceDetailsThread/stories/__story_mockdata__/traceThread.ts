@@ -3,9 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	type GetTraceThread200,
-	type SpantypesThreadSpanDTO,
+import type {
+	GetTraceThread200,
+	SpantypesThreadSpanDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import { STORY_TRACE_ID } from '../../../stories/__story_mockdata__/traceDetails';

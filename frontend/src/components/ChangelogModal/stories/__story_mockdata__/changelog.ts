@@ -3,10 +3,8 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { DeploymentType } from 'types/api/changelog/getChangelogByVersion';
 
 const PUBLISHED_AT = '2026-08-12T09:00:00.000Z';
 

@@ -10,7 +10,7 @@ import { getQueryByPanelType as getTracesQueryByPanelType } from 'container/Trac
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mockAppNavigate } from 'tests/router-mocks';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import CreateAlertButton from '../CreateAlertButton';

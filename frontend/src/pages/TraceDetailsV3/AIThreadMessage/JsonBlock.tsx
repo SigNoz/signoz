@@ -1,4 +1,5 @@
-import { MouseEvent, useMemo, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { PrettyView } from 'periscope/components/PrettyView';

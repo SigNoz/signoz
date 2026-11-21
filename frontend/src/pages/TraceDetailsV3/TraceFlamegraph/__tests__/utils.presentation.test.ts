@@ -1,4 +1,4 @@
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { getFlamegraphSpanGroupValue, getSpanColor } from '../utils';
 import { MOCK_SPAN } from './testUtils';

@@ -4,7 +4,7 @@ import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { Info } from '@signozhq/icons';
 
-import { IAdvancedOptionItemProps } from '../types';
+import type { IAdvancedOptionItemProps } from '../types';
 
 import './styles.scss';
 

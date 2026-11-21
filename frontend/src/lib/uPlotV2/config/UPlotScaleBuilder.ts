@@ -1,4 +1,4 @@
-import { Scale } from 'uplot';
+import type { Scale } from 'uplot';
 
 import {
 	adjustSoftLimitsWithThresholds,
@@ -8,7 +8,8 @@ import {
 	getRangeConfig,
 	normalizeLogScaleLimits,
 } from '../utils/scale';
-import { ConfigBuilder, ScaleProps } from './types';
+import type { ScaleProps } from './types';
+import { ConfigBuilder } from './types';
 
 /**
  * Builder for uPlot scale configuration

@@ -1,7 +1,7 @@
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 export interface SaveError {
 	context: string;

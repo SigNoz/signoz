@@ -3,10 +3,8 @@ import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import ColorBar from 'lib/uPlotV2/components/ColorBar/ColorBar';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import HeatmapTooltip from 'lib/uPlotV2/components/Tooltip/components/HeatmapTooltip/HeatmapTooltip';
-import {
-	LegendPosition,
-	TooltipRenderArgs,
-} from 'lib/uPlotV2/components/types';
+import type { TooltipRenderArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	createColorRampResolver,
 	DEFAULT_COLOR_RAMP_OPTIONS,
@@ -20,13 +18,11 @@ import {
 	resolveHeatmapYAxis,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { resolveHeatmapGrid } from 'lib/uPlotV2/plugins/HeatmapPlugin/grid';
-import {
-	HeatmapAxisScale,
-	HeatmapCell,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
-import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import type { HeatmapCell } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
-import { HeatmapChartProps } from 'lib/visualization/charts/types';
+import type { HeatmapChartProps } from 'lib/visualization/charts/types';
 import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import {

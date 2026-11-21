@@ -6,12 +6,12 @@ import {
 	mapPanelTypeToRequestType,
 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { TRACE_OPERATOR_QUERY_NAME } from 'constants/queryBuilder';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import {
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type {
 	BuilderQueryDataResourse,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { OrderBy, QueryEnvelope } from 'types/api/v5/queryRange';
+import type { OrderBy, QueryEnvelope } from 'types/api/v5/queryRange';
 
 function convertFormulasToV5(
 	formulas: BuilderQueryDataResourse,

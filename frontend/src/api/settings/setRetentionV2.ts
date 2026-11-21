@@ -1,8 +1,8 @@
 import { ApiV2Instance } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { PayloadPropsV2, PropsV2 } from 'types/api/settings/setRetention';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { PayloadPropsV2, PropsV2 } from 'types/api/settings/setRetention';
 
 const setRetentionV2 = async ({
 	type,

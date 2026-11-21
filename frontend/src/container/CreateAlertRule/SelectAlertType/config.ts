@@ -1,7 +1,7 @@
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { OptionType } from './types';
+import type { OptionType } from './types';
 
 export const getOptionList = (
 	t: TFunction,

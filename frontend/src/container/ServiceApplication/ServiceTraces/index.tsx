@@ -13,9 +13,9 @@ import {
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
 import { isUndefined } from 'lodash-es';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import { useServicesStripInfo } from '../useServicesStripInfo';

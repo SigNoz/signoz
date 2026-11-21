@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
-import { UseFormSetValue } from 'react-hook-form';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { UseFormSetValue } from 'react-hook-form';
 
-import { GcpSetupFormValues } from './types';
+import type { GcpSetupFormValues } from './types';
 
 // Pre-fill the deployment/ingestion fields with the fetched credentials.
 export function usePrefillCredentials(

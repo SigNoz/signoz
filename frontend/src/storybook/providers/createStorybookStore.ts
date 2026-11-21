@@ -1,11 +1,10 @@
 // eslint-disable-next-line no-restricted-imports
-import {
-	applyMiddleware,
-	legacy_createStore as createStore,
-	Store,
-} from 'redux';
+import type { Store } from 'redux';
+// eslint-disable-next-line no-restricted-imports
+import { applyMiddleware, legacy_createStore as createStore } from 'redux';
 import thunk from 'redux-thunk';
-import reducers, { AppState } from 'store/reducers';
+import type { AppState } from 'store/reducers';
+import reducers from 'store/reducers';
 
 /**
  * A fresh store per story, seeded with the real reducers so dispatches keep

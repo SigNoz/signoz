@@ -3,11 +3,11 @@ import { useMeasure } from 'react-use';
 import { resolveTimeFromInterval } from 'components/TimelineV2/utils';
 import { toFixed } from 'utils/toFixed';
 
+import type { Interval } from './utils';
 import {
 	getIntervals,
 	getIntervalUnit,
 	getMinimumIntervalsBasedOnWidth,
-	Interval,
 } from './utils';
 
 import './TimelineV3.styles.scss';

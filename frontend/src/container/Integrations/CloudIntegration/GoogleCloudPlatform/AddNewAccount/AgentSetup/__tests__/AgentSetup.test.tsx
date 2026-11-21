@@ -1,6 +1,7 @@
 import { screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 
+import type { AgentSetupApiMock } from './agentSetupTestHelpers';
 import {
 	DEPLOYMENT_PROJECT_ID,
 	fillAgentForm,
@@ -8,7 +9,6 @@ import {
 	onCommandGenerated,
 	renderAgentSetup,
 	mockAgentSetupApi,
-	AgentSetupApiMock,
 } from './agentSetupTestHelpers';
 import {
 	connectionCredentials,

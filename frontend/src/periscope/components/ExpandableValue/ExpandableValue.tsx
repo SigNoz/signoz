@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
 import { Tooltip } from '@signozhq/ui/tooltip';

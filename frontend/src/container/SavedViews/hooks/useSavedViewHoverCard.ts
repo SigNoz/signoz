@@ -5,7 +5,7 @@ import {
 	SAVED_VIEW_HOVER_CARD_CLOSE_DELAY_MS,
 	SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS,
 } from '../constants';
-import { UseSavedViewHoverCardResult } from '../types';
+import type { UseSavedViewHoverCardResult } from '../types';
 
 // The delays are ours rather than the popover's: the card follows a handle, not a trigger, so
 // the list owns both when it appears and when it survives the pointer crossing into it.

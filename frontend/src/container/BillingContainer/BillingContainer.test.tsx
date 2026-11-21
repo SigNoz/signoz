@@ -8,11 +8,8 @@ import {
 import { server } from 'mocks-server/server';
 import { act, render, screen, getAppContextMock } from 'tests/test-utils';
 import APIError from 'types/api/error';
-import {
-	LicensePlatform,
-	LicenseResModel,
-	LicenseState,
-} from 'types/api/licensesV3/getActive';
+import type { LicenseResModel } from 'types/api/licensesV3/getActive';
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import BillingContainer from './BillingContainer';

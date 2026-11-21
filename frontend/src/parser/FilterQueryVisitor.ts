@@ -3,24 +3,24 @@
 import {ParseTreeVisitor} from 'antlr4';
 
 
-import { QueryContext } from "./FilterQueryParser.js";
-import { ExpressionContext } from "./FilterQueryParser.js";
-import { OrExpressionContext } from "./FilterQueryParser.js";
-import { AndExpressionContext } from "./FilterQueryParser.js";
-import { UnaryExpressionContext } from "./FilterQueryParser.js";
-import { PrimaryContext } from "./FilterQueryParser.js";
-import { ComparisonContext } from "./FilterQueryParser.js";
-import { InClauseContext } from "./FilterQueryParser.js";
-import { NotInClauseContext } from "./FilterQueryParser.js";
-import { ValueListContext } from "./FilterQueryParser.js";
-import { FullTextContext } from "./FilterQueryParser.js";
-import { FunctionCallContext } from "./FilterQueryParser.js";
-import { SearchCallContext } from "./FilterQueryParser.js";
-import { FunctionParamListContext } from "./FilterQueryParser.js";
-import { FunctionParamContext } from "./FilterQueryParser.js";
-import { ArrayContext } from "./FilterQueryParser.js";
-import { ValueContext } from "./FilterQueryParser.js";
-import { KeyContext } from "./FilterQueryParser.js";
+import type { QueryContext } from "./FilterQueryParser.js";
+import type { ExpressionContext } from "./FilterQueryParser.js";
+import type { OrExpressionContext } from "./FilterQueryParser.js";
+import type { AndExpressionContext } from "./FilterQueryParser.js";
+import type { UnaryExpressionContext } from "./FilterQueryParser.js";
+import type { PrimaryContext } from "./FilterQueryParser.js";
+import type { ComparisonContext } from "./FilterQueryParser.js";
+import type { InClauseContext } from "./FilterQueryParser.js";
+import type { NotInClauseContext } from "./FilterQueryParser.js";
+import type { ValueListContext } from "./FilterQueryParser.js";
+import type { FullTextContext } from "./FilterQueryParser.js";
+import type { FunctionCallContext } from "./FilterQueryParser.js";
+import type { SearchCallContext } from "./FilterQueryParser.js";
+import type { FunctionParamListContext } from "./FilterQueryParser.js";
+import type { FunctionParamContext } from "./FilterQueryParser.js";
+import type { ArrayContext } from "./FilterQueryParser.js";
+import type { ValueContext } from "./FilterQueryParser.js";
+import type { KeyContext } from "./FilterQueryParser.js";
 
 
 /**

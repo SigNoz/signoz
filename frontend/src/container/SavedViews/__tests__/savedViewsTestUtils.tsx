@@ -1,12 +1,16 @@
-import { ReactElement, useEffect, useMemo } from 'react';
+import type { ReactElement } from 'react';
+import { useEffect, useMemo } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, RenderResult } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
-import {
+import type {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -26,9 +30,9 @@ import thunk from 'redux-thunk';
 import store from 'store';
 import { TestRouter } from 'tests/router';
 import { getAppContextMock } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { __setSearchParamsGetterForTest } from 'utils/getUnstableCurrentSearchParams';
 
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 
 import signozBrandLogoUrl from '@/assets/Logos/signoz-brand-logo.svg';

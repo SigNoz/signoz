@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import styles from './TraceIdField.module.scss';
 

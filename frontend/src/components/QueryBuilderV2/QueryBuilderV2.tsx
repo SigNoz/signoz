@@ -2,9 +2,9 @@ import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { Formula } from 'container/QueryBuilder/components/Formula';
-import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
+import type { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderField } from './queryBuilderFields.types';

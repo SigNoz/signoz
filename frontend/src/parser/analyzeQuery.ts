@@ -2,14 +2,14 @@ import FilterQueryLexer from './FilterQueryLexer';
 import FilterQueryParser from './FilterQueryParser';
 import { ParseTreeWalker, CharStreams, CommonTokenStream, Token } from 'antlr4';
 import { isOperatorToken } from 'utils/tokenUtils';
-import FilterQueryListener from './FilterQueryListener';
+import type FilterQueryListener from './FilterQueryListener';
 
-import {
+import type {
 	KeyContext,
 	ValueContext,
 	ComparisonContext,
 } from './FilterQueryParser';
-import { IToken } from 'types/antlrQueryTypes';
+import type { IToken } from 'types/antlrQueryTypes';
 
 // 👇 Define the token classification
 type TokenClassification = 'Key' | 'Value' | 'Operator';

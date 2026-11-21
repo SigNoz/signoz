@@ -1,12 +1,12 @@
 // ===================== Base Types =====================
 
-import {
+import type {
 	MetrictypesComparisonSpaceAggregationParamDTO,
 	Querybuildertypesv5BucketOptionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ReduceOperators } from 'types/common/queryBuilder';
+import type { ReduceOperators } from 'types/common/queryBuilder';
 
-import { Warning } from '..';
+import type { Warning } from '..';
 
 export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
 

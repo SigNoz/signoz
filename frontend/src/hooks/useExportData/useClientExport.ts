@@ -8,12 +8,16 @@ import { exportScalarData } from 'lib/exportData/exportScalarData';
 import { exportTimeseriesData } from 'lib/exportData/exportTimeseriesData';
 import { toCsv } from 'lib/exportData/toCsv';
 import { toJsonl } from 'lib/exportData/toJsonl';
-import { ExportFormat, SerializedTable } from 'lib/exportData/types';
+import type { SerializedTable } from 'lib/exportData/types';
+import { ExportFormat } from 'lib/exportData/types';
 import { useCallback, useState } from 'react';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeResponseV5, TimeSeriesData } from 'types/api/v5/queryRange';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	QueryRangeResponseV5,
+	TimeSeriesData,
+} from 'types/api/v5/queryRange';
 
 const FORMAT_META: Record<ExportFormat, { mime: string; extension: string }> = {
 	[ExportFormat.Csv]: { mime: 'text/csv;charset=utf-8;', extension: 'csv' },

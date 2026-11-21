@@ -1,6 +1,7 @@
 import type { HTMLAttributes, SyntheticEvent } from 'react';
 import { useMemo } from 'react';
-import { Resizable, ResizeCallbackData } from 'react-resizable';
+import type { ResizeCallbackData } from 'react-resizable';
+import { Resizable } from 'react-resizable';
 
 import styles from './ResizableHeader.module.scss';
 

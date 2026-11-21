@@ -1,21 +1,21 @@
 import { useCallback, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/toast';
+import type { GetConnectionCredentialsQueryResult } from 'api/generated/services/cloudintegration';
 import {
-	GetConnectionCredentialsQueryResult,
 	invalidateListAccounts,
 	useCreateAccount,
 	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
-import {
+import type {
 	CloudintegrationtypesCredentialsDTO,
 	CloudintegrationtypesGCPPostableAccountConfigDTO,
 	CloudintegrationtypesGettableAccountWithConnectionArtifactDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
+import type { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
 import useAxiosError from 'hooks/useAxiosError';
 import { toAPIError } from 'utils/errorUtils';
 

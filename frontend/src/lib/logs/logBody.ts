@@ -1,4 +1,4 @@
-import { ILogBody } from 'types/api/logs/log';
+import type { ILogBody } from 'types/api/logs/log';
 import { coerceToString } from 'utils/stringUtils';
 
 function isBodyObject(body: unknown): body is ILogBody {

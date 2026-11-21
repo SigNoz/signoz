@@ -30,7 +30,7 @@ import {
 	getBuilderSlotKeyForQueryType,
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useActiveQueryIndex from './hooks/useActiveQueryIndex';
 import CheckboxV2 from './FilterRenderers/Checkbox/v2/CheckboxFilterV2';
@@ -38,7 +38,8 @@ import Duration from './FilterRenderers/Duration/Duration';
 import Slider from './FilterRenderers/Slider/Slider';
 import useFilterConfig from './hooks/useFilterConfig';
 import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
-import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
+import type { IQuickFiltersProps } from './types';
+import { FiltersType, QuickFiltersSource } from './types';
 
 import './QuickFilters.styles.scss';
 

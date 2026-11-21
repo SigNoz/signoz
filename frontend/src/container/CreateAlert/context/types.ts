@@ -1,5 +1,5 @@
-import { Dispatch } from 'react';
-import { UseMutateFunction } from 'react-query';
+import type { Dispatch } from 'react';
+import type { UseMutateFunction } from 'react-query';
 import type {
 	CreateRule201,
 	RenderErrorResponseDTO,
@@ -8,9 +8,9 @@ import type {
 	UpdateRuleByIDPathParameters,
 } from 'api/generated/services/sigNoz.schemas';
 import type { BodyType, ErrorType } from 'api/generatedAPIInstance';
-import { Dayjs } from 'dayjs';
-import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Labels } from 'types/api/alerts/def';
+import type { Dayjs } from 'dayjs';
+import type { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { Labels } from 'types/api/alerts/def';
 
 export interface ICreateAlertContextProps {
 	alertState: AlertState;

@@ -1,20 +1,13 @@
-import {
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { SyntheticEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TableProps } from 'antd';
 import type { ResizeCallbackData } from 'react-resizable';
 import { debounce } from 'lodash-es';
 
-import ResizableHeader, {
-	ResizableHeaderProps,
-} from '../components/ResizableTable/ResizableHeader';
+import type { ResizableHeaderProps } from '../components/ResizableTable/ResizableHeader';
+import ResizableHeader from '../components/ResizableTable/ResizableHeader';
+import type { ColumnWidths } from '../utils/columnWidthStorage';
 import {
-	ColumnWidths,
 	readColumnWidths,
 	writeColumnWidths,
 } from '../utils/columnWidthStorage';

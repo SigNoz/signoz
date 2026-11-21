@@ -1,4 +1,4 @@
-import {
+import type {
 	AuthtypesGettableRoleDTO,
 	AuthtypesRoleDTO,
 } from 'api/generated/services/sigNoz.schemas';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ColumnSizingState, VisibilityState } from '@tanstack/react-table';
+import type { ColumnSizingState, VisibilityState } from '@tanstack/react-table';
 
-import { TableColumnDef } from './types';
+import type { TableColumnDef } from './types';
 import {
 	cleanupStaleHiddenColumns as storeCleanupStaleHiddenColumns,
 	hideColumn as storeHideColumn,

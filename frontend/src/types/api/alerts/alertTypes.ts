@@ -1,5 +1,5 @@
-import { ICompositeMetricQuery } from './compositeQuery';
-import { Labels } from './def';
+import type { ICompositeMetricQuery } from './compositeQuery';
+import type { Labels } from './def';
 
 // this list must exactly match with the backend
 export enum AlertTypes {

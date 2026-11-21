@@ -1,7 +1,5 @@
-import {
-	compareTableColumnValues,
-	RowData,
-} from '../createTableColumnsFromQuery';
+import type { RowData } from '../createTableColumnsFromQuery';
+import { compareTableColumnValues } from '../createTableColumnsFromQuery';
 
 // Builds a minimal RowData row. Values are intentionally loosely typed because
 // real query responses can put objects/arrays into cells despite RowData's

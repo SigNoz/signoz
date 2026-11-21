@@ -3,7 +3,7 @@ import { Skeleton } from 'antd';
 import { useFunnelsList } from 'hooks/TracesFunnels/useFunnels';
 import useHandleTraceFunnelsSearch from 'hooks/TracesFunnels/useHandleTraceFunnelsSearch';
 import useHandleTraceFunnelsSort from 'hooks/TracesFunnels/useHandleTraceFunnelsSort';
-import { FunnelData } from 'types/api/traceFunnels';
+import type { FunnelData } from 'types/api/traceFunnels';
 
 import CreateFunnel from './components/CreateFunnel/CreateFunnel';
 import FunnelsEmptyState from './components/FunnelsEmptyState/FunnelsEmptyState';

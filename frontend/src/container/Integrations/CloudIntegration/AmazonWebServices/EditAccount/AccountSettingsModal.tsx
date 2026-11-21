@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
@@ -13,7 +14,7 @@ import { Save } from '@signozhq/icons';
 import logEvent from '../../../../../api/common/logEvent';
 import RemoveIntegrationAccount from '../../RemoveAccount/RemoveIntegrationAccount';
 import { RegionSelector } from '../RegionForm/RegionSelector';
-import { CloudAccount } from '../types';
+import type { CloudAccount } from '../types';
 
 import './AccountSettingsModal.style.scss';
 

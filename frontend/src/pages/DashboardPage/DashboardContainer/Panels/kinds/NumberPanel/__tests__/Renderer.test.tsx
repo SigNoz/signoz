@@ -9,7 +9,7 @@ import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render } from 'tests/test-utils';
 
-import { BaseRendererProps } from '../../../types/rendererProps';
+import type { BaseRendererProps } from '../../../types/rendererProps';
 import BaseNumberPanelRenderer from '../Renderer';
 
 // The kind's interaction map is `Record<string, never>`, which makes the strict

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Typography } from '@signozhq/ui/typography';
 
-import { OptionsMenuConfig } from '../types';
+import type { OptionsMenuConfig } from '../types';
 import { MaxLinesFieldWrapper, MaxLinesInput } from './styles';
 
 function MaxLinesField({ config }: MaxLinesFieldProps): JSX.Element | null {

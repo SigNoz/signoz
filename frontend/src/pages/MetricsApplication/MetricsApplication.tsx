@@ -1,4 +1,5 @@
-import { Tabs, TabsProps } from 'antd';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useAppParams } from 'lib/router/useAppParams';
 import { QueryParams } from 'constants/query';

@@ -9,8 +9,8 @@ import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
-import { UserPreference } from 'types/api/preferences/preference';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import type { UserPreference } from 'types/api/preferences/preference';
 
 import ChangelogRenderer from './components/ChangelogRenderer';
 

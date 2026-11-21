@@ -1,4 +1,5 @@
-import { ChangeEvent, useCallback, useMemo } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Plus, Search } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
@@ -16,7 +17,7 @@ import styles from './RoutingPolicies.module.scss';
 import RoutingPolicyDetails from './RoutingPolicyDetails';
 import RoutingPolicyList from './RoutingPolicyList';
 import { getRoutingPolicyColumns } from './table.config';
-import { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types';
 import useRoutingPolicies from './useRoutingPolicies';
 import useRoutingPoliciesTable from './useRoutingPoliciesTable';
 

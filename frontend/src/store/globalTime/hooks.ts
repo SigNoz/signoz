@@ -3,8 +3,9 @@ import { useContext } from 'react';
 import { useStoreWithEqualityFn } from 'zustand/traditional';
 
 import { GlobalTimeContext } from './GlobalTimeContext';
-import { defaultGlobalTimeStore, GlobalTimeStoreApi } from './globalTimeStore';
-import { GlobalTimeStore, ParsedTimeRange } from './types';
+import type { GlobalTimeStoreApi } from './globalTimeStore';
+import { defaultGlobalTimeStore } from './globalTimeStore';
+import type { GlobalTimeStore, ParsedTimeRange } from './types';
 import { isCustomTimeRange } from './utils';
 
 /**

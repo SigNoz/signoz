@@ -1,19 +1,12 @@
-import {
-	ChangeEvent,
-	Dispatch,
-	SetStateAction,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Input as SignozInput } from '@signozhq/ui/input';
 import { Select } from 'antd';
 import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
-import { TTTLType } from 'types/api/settings/common';
+import type { TTTLType } from 'types/api/settings/common';
 
 import {
 	Input,
@@ -21,9 +14,9 @@ import {
 	RetentionFieldInputContainer,
 	RetentionFieldLabel,
 } from './styles';
+import type { SettingPeriod } from './utils';
 import {
 	convertHoursValueToRelevantUnit,
-	SettingPeriod,
 	TimeUnits,
 	TimeUnitsValues,
 } from './utils';

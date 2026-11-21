@@ -1,6 +1,7 @@
-import { FunctionComponent } from 'react';
+import type { FunctionComponent } from 'react';
 import { Trash2 } from '@signozhq/icons';
-import { Card, Select, SelectProps } from 'antd';
+import type { SelectProps } from 'antd';
+import { Card, Select } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import { themeColors } from 'constants/theme';
 import styled from 'styled-components';

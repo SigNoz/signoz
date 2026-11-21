@@ -7,7 +7,7 @@ import { Check, Copy } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 
 import { AIAssistantEvents } from '../../events';
-import { Message } from '../../types';
+import type { Message } from '../../types';
 
 import styles from './UserMessageActions.module.scss';
 

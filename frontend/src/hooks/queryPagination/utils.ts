@@ -1,5 +1,5 @@
 import { DEFAULT_PER_PAGE_OPTIONS } from './config';
-import { Pagination } from './types';
+import type { Pagination } from './types';
 
 export const checkIsValidPaginationData = (
 	{ limit, offset }: Pagination,

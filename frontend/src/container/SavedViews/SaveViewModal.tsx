@@ -1,4 +1,5 @@
-import { FormEvent, useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useRef, useState } from 'react';
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
@@ -6,7 +7,7 @@ import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 
 import { SAVE_VIEW_MODAL_TITLE } from './constants';
-import { SaveViewModalProps } from './types';
+import type { SaveViewModalProps } from './types';
 
 import styles from './SaveViewModal.module.scss';
 

@@ -1,6 +1,6 @@
-import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import {
+import type {
 	AdvancedOptionsState,
 	AlertState,
 	AlertThresholdState,

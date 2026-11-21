@@ -7,7 +7,7 @@ import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 /**
  * Clone keeps the source's name/panels/tags as a new unlocked dashboard owned by

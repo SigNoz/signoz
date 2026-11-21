@@ -12,21 +12,20 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { get, isEmpty } from 'lodash-es';
 import { ChevronUp } from '@signozhq/icons';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	Querybuildertypesv5BucketOptionsDTO,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
 	Querybuildertypesv5QueryEnvelopeTraceOperatorDTOType,
 } from 'api/generated/services/sigNoz.schemas';
 import { isLoneBuilderQuery } from 'lib/query/builderEnvelope';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
-import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
+import type { ReduceOperators } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
-import {
-	QueryBuilderField,
-	QueryBuilderFieldsConfig,
-} from '../../queryBuilderFields.types';
+import type { QueryBuilderFieldsConfig } from '../../queryBuilderFields.types';
+import { QueryBuilderField } from '../../queryBuilderFields.types';
 import {
 	mergeQueryBuilderFieldsConfig,
 	RAW_QUERY_FIELDS,

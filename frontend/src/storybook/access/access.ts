@@ -12,7 +12,8 @@ import {
 	gettableTransactionToPermission,
 	permissionToTransactionDto,
 } from 'lib/authz/hooks/useAuthZ/utils';
-import { ROLES, USER_ROLES } from 'types/roles';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
 
 import type { ResponseState } from '../runtime/responseState';
 

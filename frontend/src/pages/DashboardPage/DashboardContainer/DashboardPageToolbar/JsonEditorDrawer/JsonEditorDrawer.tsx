@@ -1,4 +1,5 @@
-import { KeyboardEvent, useCallback } from 'react';
+import type { KeyboardEvent } from 'react';
+import { useCallback } from 'react';
 import MEditor from '@monaco-editor/react';
 import { TriangleAlert } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

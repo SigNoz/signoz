@@ -2,11 +2,8 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import {
-	getIntervals,
-	getMinimumIntervalsBasedOnWidth,
-	Interval,
-} from './utils';
+import type { Interval } from './utils';
+import { getIntervals, getMinimumIntervalsBasedOnWidth } from './utils';
 
 import './TimelineV2.styles.scss';
 

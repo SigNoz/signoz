@@ -9,7 +9,7 @@ import {
 	QueryChipItem,
 	QueryChipRemoveButton,
 } from '../../styles';
-import { IQueryChipProps } from './types';
+import type { IQueryChipProps } from './types';
 
 function QueryChip({ queryData, onClose }: IQueryChipProps): JSX.Element {
 	const onCloseHandler = (): void => {

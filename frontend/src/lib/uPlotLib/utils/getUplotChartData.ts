@@ -1,8 +1,8 @@
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { isUndefined } from 'lodash-es';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 import { normalizePlotValue } from './dataUtils';
 import { generateColor } from './generateColor';

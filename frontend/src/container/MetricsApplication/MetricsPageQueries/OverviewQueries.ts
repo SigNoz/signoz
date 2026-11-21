@@ -1,15 +1,10 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
+import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
 
 import {
 	FORMULA,
@@ -21,7 +16,7 @@ import {
 	QUERYNAME_AND_EXPRESSION,
 	WidgetKeys,
 } from '../constant';
-import {
+import type {
 	ApDexMetricsQueryBuilderQueriesProps,
 	LatencyProps,
 	OperationPerSecProps,

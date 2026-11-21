@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { useAgentCheckIn } from 'api/generated/services/cloudintegration';
-import {
-	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesGCPConnectionMethodDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
-import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
+import type { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
 
 import logEvent from '../../../api/common/logEvent';
 import { useGcpAccountSetup } from './useGcpAccountSetup';

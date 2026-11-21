@@ -1,6 +1,6 @@
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { exportScalarData } from '../exportScalarData';
 

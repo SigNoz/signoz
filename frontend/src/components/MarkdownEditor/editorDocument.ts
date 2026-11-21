@@ -1,4 +1,4 @@
-import { EditorView } from '@uiw/react-codemirror';
+import type { EditorView } from '@uiw/react-codemirror';
 
 import type { EditorSnapshot, EditorTransform } from './types';
 

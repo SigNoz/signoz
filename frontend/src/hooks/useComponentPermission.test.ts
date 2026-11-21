@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { ComponentTypes } from 'utils/permission';
+import type { ComponentTypes } from 'utils/permission';
 
 import useComponentPermission from './useComponentPermission';
 

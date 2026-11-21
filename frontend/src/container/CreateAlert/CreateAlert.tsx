@@ -9,7 +9,7 @@ import CreateAlertHeader from './CreateAlertHeader';
 import Footer from './Footer';
 import NotificationSettings from './NotificationSettings';
 import QuerySection from './QuerySection';
-import { CreateAlertProps } from './types';
+import type { CreateAlertProps } from './types';
 import { Spinner } from './utils';
 
 import './CreateAlert.styles.scss';

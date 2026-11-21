@@ -10,18 +10,21 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import LogsExplorer from 'pages/LogsExplorer';
 import { mockAppLocation } from 'tests/router-mocks';
+import type { RenderResult } from 'tests/test-utils';
 import {
 	act,
 	AllTheProviders,
 	fireEvent,
 	render,
-	RenderResult,
 	screen,
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 import { verifyFiltersAndOrderBy } from './verifyFiltersAndOrderBy';

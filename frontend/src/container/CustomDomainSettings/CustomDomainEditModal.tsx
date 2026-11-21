@@ -4,8 +4,8 @@ import { CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
 
 interface CustomDomainEditModalProps {

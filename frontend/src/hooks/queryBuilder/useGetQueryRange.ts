@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
-import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import type { UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { isAxiosError } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateBarStepInterval } from 'container/WidgetCard/utils';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
-import {
-	GetMetricQueryRange,
-	GetQueryResultsProps,
-} from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import APIError from 'types/api/error';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 type UseGetQueryRangeOptions = UseQueryOptions<

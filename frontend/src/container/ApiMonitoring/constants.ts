@@ -1,5 +1,5 @@
 import { QUERY_BUILDER_KEY_TYPES } from 'constants/antlrQueryConstants';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
 

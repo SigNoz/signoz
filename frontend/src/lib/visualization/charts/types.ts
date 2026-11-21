@@ -1,13 +1,13 @@
-import uPlot from 'uplot';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PrecisionOption } from 'components/Graph/types';
-import {
+import type uPlot from 'uplot';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { PrecisionOption } from 'components/Graph/types';
+import type {
 	IRenderTooltipFooterArgs,
 	LegendConfig,
 	LegendPosition,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import type {
 	HeatmapAxisScale,
@@ -19,12 +19,12 @@ import type {
 	ScatterPointLabel,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
 import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
-import {
+import type {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
 	ChartClickData,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { StackMode } from 'lib/uPlotV2/config/types';
 
 interface BaseChartProps {

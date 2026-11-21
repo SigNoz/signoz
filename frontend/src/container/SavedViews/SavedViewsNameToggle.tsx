@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Button } from '@signozhq/ui/button';
 
 import styles from './SavedViewsNameToggle.module.scss';

@@ -1,10 +1,10 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { TRACE_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/constants';
-import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
+import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
@@ -12,7 +12,7 @@ import {
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import { usePreferenceContext } from '../context/PreferenceContextProvider';
-import { PanelColumns, PreferenceSourcePage } from '../types';
+import type { PanelColumns, PreferenceSourcePage } from '../types';
 
 const ROUTE_LOGS = '/logs';
 const ROUTE_TRACES = '/traces';

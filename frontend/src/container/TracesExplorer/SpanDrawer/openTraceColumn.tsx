@@ -1,5 +1,5 @@
 import type { TableColumnDef } from 'components/TanStackTableView/types';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 
 import OpenTraceButton from './OpenTraceButton';
 

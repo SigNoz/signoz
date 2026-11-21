@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,

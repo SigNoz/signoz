@@ -1,5 +1,5 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	attributeTypeToFieldContext,

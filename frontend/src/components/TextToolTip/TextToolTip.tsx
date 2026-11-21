@@ -1,4 +1,5 @@
-import { ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { blue, grey } from '@ant-design/colors';
 import { CircleHelp } from '@signozhq/icons';
 import { Tooltip } from 'antd';

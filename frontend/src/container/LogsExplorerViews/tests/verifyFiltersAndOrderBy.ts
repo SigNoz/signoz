@@ -1,4 +1,4 @@
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export const verifyFiltersAndOrderBy = (queryData: IBuilderQuery): void => {
 	// Verify that the 'id' filter is not present in the pagination query

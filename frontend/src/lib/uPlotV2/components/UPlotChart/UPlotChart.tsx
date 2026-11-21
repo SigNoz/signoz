@@ -4,10 +4,11 @@ import { Typography } from '@signozhq/ui/typography';
 import { isEqual } from 'lodash-es';
 import { ChartLine } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import uPlot, { AlignedData, Options } from 'uplot';
+import type { AlignedData, Options } from 'uplot';
+import uPlot from 'uplot';
 
 import { usePlotContext } from '../../context/PlotContext';
-import { UPlotChartProps } from '../types';
+import type { UPlotChartProps } from '../types';
 import { prepareAlignedData, setInstanceHandle } from './utils';
 
 /**

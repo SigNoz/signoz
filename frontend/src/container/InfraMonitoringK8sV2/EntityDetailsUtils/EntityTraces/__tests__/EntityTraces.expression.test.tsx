@@ -1,5 +1,5 @@
 import { act, waitFor } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';

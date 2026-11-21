@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { DetailsPanelState, UseDetailsPanelOptions } from './types';
+import type { DetailsPanelState, UseDetailsPanelOptions } from './types';
 
 function useDetailsPanel({
 	entityId,

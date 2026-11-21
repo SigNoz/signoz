@@ -1,4 +1,5 @@
-import { Options, useQueryState, UseQueryStateReturn } from 'nuqs';
+import type { Options, UseQueryStateReturn } from 'nuqs';
+import { useQueryState } from 'nuqs';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 const defaultNuqsOptions: Options = {

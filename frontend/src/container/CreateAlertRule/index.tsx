@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Tabs, TabsProps } from 'antd';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';

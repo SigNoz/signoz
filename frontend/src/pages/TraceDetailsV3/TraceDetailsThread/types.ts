@@ -1,6 +1,6 @@
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { ThreadMessage } from '../AIThreadMessage/types';
+import type { ThreadMessage } from '../AIThreadMessage/types';
 
 export type ThreadSpan = SpanV3 & {
 	formattedInput?: ThreadMessage[];

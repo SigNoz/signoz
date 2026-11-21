@@ -14,11 +14,11 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/widgets/widget';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import type { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import {
 	applyCeleryFilterOnWidgetData,
 	getFiltersFromQueryParams,

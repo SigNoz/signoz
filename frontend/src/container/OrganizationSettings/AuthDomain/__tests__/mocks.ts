@@ -1,8 +1,8 @@
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AuthtypesAuthDomainConfigGoogleDTOKind,
 	AuthtypesAuthDomainConfigOIDCDTOKind,
 	AuthtypesAuthDomainConfigSAMLDTOKind,
-	AuthtypesGettableAuthDomainDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 // API Endpoints

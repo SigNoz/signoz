@@ -2,7 +2,8 @@ import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 
 import { TAB_KEYS_VS_METRICS_APPLICATION_KEY } from './config';
-import { MetricsApplicationTab, OnSaveApDexSettingsProps } from './types';
+import type { OnSaveApDexSettingsProps } from './types';
+import { MetricsApplicationTab } from './types';
 
 export const isMetricsApplicationTab = (
 	tab: string,

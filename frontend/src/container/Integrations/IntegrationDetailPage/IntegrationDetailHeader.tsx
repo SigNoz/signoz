@@ -11,7 +11,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Cable, Check } from '@signozhq/icons';
-import { IntegrationConnectionStatus } from 'types/api/integrations/types';
+import type { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../constants';
 import TestConnection, { ConnectionStates } from './TestConnection';

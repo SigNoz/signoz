@@ -5,7 +5,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { toRelativeTime } from 'pages/AlertList/NotificationChannels/utils/relativeTime';
 
 import styles from './RoutingPolicies.module.scss';
-import { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types';
 
 const COLUMN_WIDTH = { default: 'auto', min: '120px' };
 

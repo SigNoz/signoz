@@ -1,4 +1,4 @@
-import { Monaco } from '@monaco-editor/react';
+import type { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 
 type EditorOptions = Parameters<Monaco['editor']['create']>[1];

@@ -7,8 +7,8 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 
 export interface UseZoomOutOptions {

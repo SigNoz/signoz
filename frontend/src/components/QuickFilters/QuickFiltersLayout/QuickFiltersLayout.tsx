@@ -1,4 +1,5 @@
-import { ComponentProps, ReactNode, useState } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
+import { useState } from 'react';
 import cx from 'classnames';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';

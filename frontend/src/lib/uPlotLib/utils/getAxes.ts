@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { PrecisionOption } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 

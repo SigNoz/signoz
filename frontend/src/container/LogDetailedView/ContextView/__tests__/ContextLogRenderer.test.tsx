@@ -1,13 +1,8 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import {
-	act,
-	render,
-	RenderResult,
-	screen,
-	waitFor,
-} from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
@@ -19,8 +14,8 @@ import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { TestRouter } from 'tests/router';
-import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import ContextLogRenderer from '../ContextLogRenderer';
 import {

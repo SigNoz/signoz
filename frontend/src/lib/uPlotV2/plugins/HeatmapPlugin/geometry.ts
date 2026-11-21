@@ -1,4 +1,5 @@
-import { HeatmapAxisScale, HeatmapRow, HeatmapYAxis } from './types';
+import type { HeatmapRow, HeatmapYAxis } from './types';
+import { HeatmapAxisScale } from './types';
 
 /** Used when the ratio cannot be inferred, i.e. a single boundary. */
 const FALLBACK_LOG_RATIO = 2;

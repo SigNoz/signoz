@@ -1,6 +1,6 @@
-import { StatusCodes } from 'http-status-codes';
+import type { StatusCodes } from 'http-status-codes';
 
-import { ErrorResponseV2 } from '.';
+import type { ErrorResponseV2 } from '.';
 
 class APIError extends Error {
 	error: ErrorResponseV2;

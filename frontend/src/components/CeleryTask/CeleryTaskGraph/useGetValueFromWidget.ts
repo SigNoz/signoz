@@ -9,11 +9,11 @@ import {
 	getQueryPayloadFromWidgetsData,
 	getValueFromScalarResponse,
 } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
-import { AppState } from 'store/reducers';
-import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { SuccessResponse } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 interface UseGetValueResult {
 	values: string[];

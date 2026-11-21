@@ -1,4 +1,5 @@
-import { createElement, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { createElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -6,13 +7,13 @@ import { useGetQueryKeySuggestions } from 'hooks/querySuggestions/useGetQueryKey
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import {
+import type {
 	FormattingOptions,
 	PreferenceContextValue,
 	PreferenceSlice,
 } from 'providers/preferences/types';
 import { renderHook } from 'tests/test-utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import { FontSize } from '../types';
 import useOptionsMenu from '../useOptionsMenu';

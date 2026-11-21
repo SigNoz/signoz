@@ -19,15 +19,13 @@ import RightToolbarActions from 'container/QueryBuilder/components/ToolbarAction
 import Toolbar from 'container/Toolbar/Toolbar';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
-	ICurrentQueryData,
-	useHandleExplorerTabChange,
-} from 'hooks/useHandleExplorerTabChange';
+import type { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
+import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { defaultTo, isEmpty, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
-import { Warning } from 'types/api';
+import type { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 import {
 	explorerViewToPanelType,

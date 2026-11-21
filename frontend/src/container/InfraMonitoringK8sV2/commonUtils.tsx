@@ -1,11 +1,9 @@
 import { Color } from '@signozhq/design-tokens';
 import type { BadgeColorType } from '@signozhq/ui/badge';
-import {
-	InframonitoringtypesPodCountsByStatusDTO,
-	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesPodCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { StatusCountItem } from './components/GroupedStatusCounts';
+import type { StatusCountItem } from './components/GroupedStatusCounts';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units

@@ -1,11 +1,11 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GlobalTimeStoreApi } from 'store/globalTime';
 import {
 	createCustomTimeRange,
 	createGlobalTimeStore,
 	GlobalTimeContext,
-	GlobalTimeStoreApi,
 	NANO_SECOND_MULTIPLIER,
 } from 'store/globalTime';
 import { act, render } from 'tests/test-utils';

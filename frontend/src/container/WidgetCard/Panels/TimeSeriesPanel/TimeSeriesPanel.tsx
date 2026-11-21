@@ -2,20 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/WidgetCard/Panels/hooks/usePanelContextMenu';
-import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
+import type { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import {
-	IRenderTooltipFooterArgs,
-	LegendPosition,
-} from 'lib/uPlotV2/components/types';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
 import { prepareUPlotConfig } from 'container/WidgetCard/Panels/TimeSeriesPanel/utils';

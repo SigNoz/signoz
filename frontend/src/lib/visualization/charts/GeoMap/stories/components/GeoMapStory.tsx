@@ -2,16 +2,16 @@ import { useCallback, useMemo, useState } from 'react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import type { ColorRampPalette } from 'lib/visualization/colorRamp/types';
 import {
 	ColorRampMode,
-	ColorRampPalette,
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
 
 import GeoMap from '../../GeoMap';
 import { useGeoMapShapes } from '../../hooks/useGeoMapShapes';
 import { useSubdivisionSet } from '../../hooks/useSubdivisionSet';
-import {
+import type {
 	GeoMapLayer,
 	GeoMapProjection,
 	GeoMapSelection,
@@ -23,7 +23,7 @@ import {
 	formatterFor,
 	prepareFixture,
 } from '../fixtures/prepareFixture';
-import { FixtureDataset } from '../fixtures/types';
+import type { FixtureDataset } from '../fixtures/types';
 import GeoMapStoryMenu from './GeoMapStoryMenu';
 
 import styles from './GeoMapStory.module.scss';

@@ -1,4 +1,4 @@
-import { YAxisCategoryNames } from './constants';
+import type { YAxisCategoryNames } from './constants';
 
 export interface YAxisUnitSelectorProps {
 	value: string | undefined;

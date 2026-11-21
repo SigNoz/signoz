@@ -1,21 +1,21 @@
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
-import uPlot, { Series } from 'uplot';
+import type { Series } from 'uplot';
+import uPlot from 'uplot';
 
 import { resolveFillOpacity, toAlphaHex } from '../utils/fillOpacity';
 import { reportBarRect } from '../utils/barRect';
 import { generateGradientFill } from '../utils/generateGradientFill';
 import { isolatedPointFilter } from '../utils/seriesPointsFilter';
+import type { ExtendedSeries, SeriesProps } from './types';
 import {
 	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
-	ExtendedSeries,
 	FillMode,
 	LineInterpolation,
 	LineStyle,
-	SeriesProps,
 } from './types';
 
 /**

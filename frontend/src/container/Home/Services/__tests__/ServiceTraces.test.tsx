@@ -1,7 +1,7 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { ServicesList } from 'types/api/metrics/getService';
+import type { ServicesList } from 'types/api/metrics/getService';
 
 import ServiceTraces from '../ServiceTraces';
 

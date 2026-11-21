@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
-import {
+import type {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -20,7 +20,7 @@ import SavedViewHoverCard from './SavedViewHoverCard';
 import SavedViewsEmptyState from './SavedViewsEmptyState';
 import SavedViewsListSection from './SavedViewsListSection';
 import SaveViewModal from './SaveViewModal';
-import {
+import type {
 	PendingSavedViewAction,
 	SavedViewRowActionKey,
 	SavedViewsListRowHoverProps,

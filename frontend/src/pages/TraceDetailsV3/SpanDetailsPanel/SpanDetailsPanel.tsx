@@ -5,8 +5,8 @@ import { Bookmark, ChartColumnBig, List, ScrollText } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { DetailsHeader, DetailsPanelDrawer } from 'components/DetailsPanel';
-import { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
-import { DetailsPanelState } from 'components/DetailsPanel/types';
+import type { HeaderAction } from 'components/DetailsPanel/DetailsHeader/DetailsHeader';
+import type { DetailsPanelState } from 'components/DetailsPanel/types';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValuesMap,
@@ -31,8 +31,8 @@ import { DataViewer } from 'periscope/components/DataViewer';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import { getLeafKeyFromPath } from 'periscope/components/PrettyView/utils';
 import { useMeasure } from 'react-use';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 import { DataSource, LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 

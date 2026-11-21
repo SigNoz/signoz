@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { Filter } from 'api/v5/v5';
+import type { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
 import { TreemapViewType } from '../types';

@@ -1,7 +1,8 @@
-import { CharStreams, CommonTokenStream, Token } from 'antlr4';
+import type { Token } from 'antlr4';
+import { CharStreams, CommonTokenStream } from 'antlr4';
 import { analyzeQuery } from 'parser/analyzeQuery';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
-import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
+import type { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
 
 import {
 	isBracketToken,

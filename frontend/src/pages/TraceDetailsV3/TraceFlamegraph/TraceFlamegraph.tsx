@@ -5,7 +5,7 @@ import { Skeleton } from 'antd';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_FIELDS } from '../constants';
 import { useTraceStore } from '../stores/traceStore';

@@ -19,7 +19,7 @@ import {
 import EvaluationSettings from '../EvaluationSettings/EvaluationSettings';
 import { normalizeMatchType, normalizeOperator } from '../utils';
 import ThresholdItem from './ThresholdItem';
-import { AnomalyAndThresholdProps } from './types';
+import type { AnomalyAndThresholdProps } from './types';
 import { useThresholdList } from './useThresholdList';
 import {
 	getCategoryByOptionId,
