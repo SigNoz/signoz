@@ -60,7 +60,9 @@ function RouteTab({
 		tabKey: route,
 		children: (
 			<OverlayScrollbar>
-				<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+				<Suspense
+					fallback={<Spinner size="large" tip="Loading..." height="100%" />}
+				>
 					<Component />
 				</Suspense>
 			</OverlayScrollbar>
