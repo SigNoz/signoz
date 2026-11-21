@@ -74,7 +74,7 @@ func TestBuildSamplesQuery(t *testing.T) {
 	}
 
 	t.Run("raw fetch filters by a shard-local semi-join", func(t *testing.T) {
-		query, args, err := buildSamplesQuery(start, end, []string{"up"}, matchers, nil)
+		query, args, err := buildSamplesQuery(start, end, []string{"up"}, matchers, nil, 0)
 		require.NoError(t, err)
 		assert.Contains(t, query, "fingerprint IN (SELECT fingerprint FROM signoz_metrics.time_series_v4 WHERE ")
 		assert.NotContains(t, query, "GLOBAL IN")
@@ -86,7 +86,7 @@ func TestBuildSamplesQuery(t *testing.T) {
 
 	t.Run("last-sample-per-step groups by step bucket anchored at first eval", func(t *testing.T) {
 		lastPerStep := &lastSamplePerStep{firstEvalMs: start + 299_999, stepMs: 60_000}
-		query, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, lastPerStep)
+		query, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, lastPerStep, 0)
 		require.NoError(t, err)
 		assert.Contains(t, query, "argMax(value, unix_milli) AS val")
 		assert.Contains(t, query, "argMax(flags, unix_milli) AS fl")
@@ -100,14 +100,22 @@ func TestBuildSamplesQuery(t *testing.T) {
 
 	t.Run("instant query keeps one bucket", func(t *testing.T) {
 		lastPerStep := &lastSamplePerStep{firstEvalMs: end, stepMs: 0}
-		query, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, lastPerStep)
+		query, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, lastPerStep, 0)
 		require.NoError(t, err)
 		assert.Contains(t, query, "GROUP BY fingerprint ORDER BY fingerprint, ts")
 		assert.NotContains(t, query, "intDiv")
 	})
 
+	t.Run("samples budget renders in the statement", func(t *testing.T) {
+		capped, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, nil, 100)
+		require.NoError(t, err)
+		uncapped, _, err := buildSamplesQuery(start, end, []string{"up"}, matchers, nil, 0)
+		require.NoError(t, err)
+		assert.Equal(t, uncapped+" SETTINGS max_result_rows = 100, result_overflow_mode = 'throw'", capped)
+	})
+
 	t.Run("multiple metric names from regex selector", func(t *testing.T) {
-		query, args, err := buildSamplesQuery(start, end, []string{"node_cpu", "node_memory"}, matchers, nil)
+		query, args, err := buildSamplesQuery(start, end, []string{"node_cpu", "node_memory"}, matchers, nil, 0)
 		require.NoError(t, err)
 		assert.Contains(t, query, "metric_name IN (?, ?)")
 		assert.Equal(t, []any{"node_cpu", "node_memory", "up", adjustedStart, end, "job", "api", start, end}, args)

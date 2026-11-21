@@ -43,8 +43,8 @@ func New(_ context.Context, providerSettings factory.ProviderSettings, config pr
 	}, nil
 }
 
-func (p *provider) QueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (*prometheus.Result, error) {
-	matrix, served, err := p.executor.TryExecuteRange(ctx, query, start, end, step)
+func (provider *provider) QueryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (*prometheus.Result, error) {
+	matrix, served, err := provider.executor.TryExecuteRange(ctx, query, start, end, step)
 	if err != nil {
 		return nil, err
 	}
@@ -52,15 +52,15 @@ func (p *provider) QueryRange(ctx context.Context, query string, start, end time
 		return &prometheus.Result{Value: matrix}, nil
 	}
 
-	qry, err := p.engine.NewRangeQuery(p.traitsContext(ctx, query), p, nil, query, start, end, step)
+	qry, err := provider.engine.NewRangeQuery(provider.traitsContext(ctx, query), provider, nil, query, start, end, step)
 	if err != nil {
 		return nil, err
 	}
 	return finishQuery(ctx, qry)
 }
 
-func (p *provider) Query(ctx context.Context, query string, ts time.Time) (*prometheus.Result, error) {
-	qry, err := p.engine.NewInstantQuery(p.traitsContext(ctx, query), p, nil, query, ts)
+func (provider *provider) Query(ctx context.Context, query string, ts time.Time) (*prometheus.Result, error) {
+	qry, err := provider.engine.NewInstantQuery(provider.traitsContext(ctx, query), provider, nil, query, ts)
 	if err != nil {
 		return nil, err
 	}
@@ -69,10 +69,10 @@ func (p *provider) Query(ctx context.Context, query string, ts time.Time) (*prom
 
 // A fresh recorder per call keeps concurrent dry-runs isolated. Exec drives
 // a Select per selector (recording SQL) but reads no data.
-func (p *provider) Statements(ctx context.Context, query string, start, end time.Time, step time.Duration) ([]prometheus.CapturedStatement, error) {
+func (provider *provider) Statements(ctx context.Context, query string, start, end time.Time, step time.Duration) ([]prometheus.CapturedStatement, error) {
 	recorder := &statementRecorder{}
-	capture := &captureQueryable{client: p.client, recorder: recorder}
-	qry, err := p.engine.NewRangeQuery(p.traitsContext(ctx, query), capture, nil, query, start, end, step)
+	capture := &captureQueryable{client: provider.client, recorder: recorder}
+	qry, err := provider.engine.NewRangeQuery(provider.traitsContext(ctx, query), capture, nil, query, start, end, step)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,8 @@ func (p *provider) Statements(ctx context.Context, query string, start, end time
 // traitsContext attaches the query's traits so the storage can prove
 // step-aligned optimizations safe (see prometheus.QueryTraits). A parse
 // failure surfaces from the engine with its own error.
-func (p *provider) traitsContext(ctx context.Context, query string) context.Context {
-	expr, err := p.parser.ParseExpr(query)
+func (provider *provider) traitsContext(ctx context.Context, query string) context.Context {
+	expr, err := provider.parser.ParseExpr(query)
 	if err != nil {
 		return ctx
 	}
@@ -106,6 +106,6 @@ func finishQuery(ctx context.Context, qry promql.Query) (*prometheus.Result, err
 	return &prometheus.Result{Value: res.Value, Warnings: res.Warnings, Stats: qry.Stats()}, nil
 }
 
-func (p *provider) Querier(mint, maxt int64) (storage.Querier, error) {
-	return &querier{mint: mint, maxt: maxt, client: p.client}, nil
+func (provider *provider) Querier(mint, maxt int64) (storage.Querier, error) {
+	return &querier{mint: mint, maxt: maxt, client: provider.client}, nil
 }

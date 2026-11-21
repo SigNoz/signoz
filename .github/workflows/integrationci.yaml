@@ -62,6 +62,7 @@ jobs:
           - rawexportdata
           - promqlconformance
           - promapiconformance
+          - promqlbudget
           - promote
           - querierauthz
           - role
