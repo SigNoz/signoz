@@ -173,7 +173,9 @@ describe('ChangelogModal', () => {
 			clientHeight.mockReturnValue(400);
 			renderChangelog();
 
-			const content = await screen.findByTestId('changelog-content');
+			const content = (await screen.findByTestId('changelog-content')).closest(
+				'[data-slot="dialog-body"]',
+			) as HTMLElement;
 			Object.defineProperty(content, 'scrollTop', {
 				value: 100,
 				configurable: true,
@@ -193,7 +195,9 @@ describe('ChangelogModal', () => {
 			clientHeight.mockReturnValue(400);
 			renderChangelog();
 
-			const content = await screen.findByTestId('changelog-content');
+			const content = (await screen.findByTestId('changelog-content')).closest(
+				'[data-slot="dialog-body"]',
+			) as HTMLElement;
 			await screen.findByTestId('scroll-more-btn');
 			Object.defineProperty(content, 'scrollTop', {
 				value: 600,

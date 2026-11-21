@@ -100,15 +100,11 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				)
 			}
 		>
-			<div className={styles.contentWrapper}>
-				<div
-					className={styles.content}
-					data-testid="changelog-content"
-					ref={contentRef}
-				>
-					<ChangelogRenderer changelog={changelog} />
-				</div>
-				{hasScroll && (
+			<div data-testid="changelog-content" ref={contentRef}>
+				<ChangelogRenderer changelog={changelog} />
+			</div>
+			{hasScroll && (
+				<div className={styles.scrollHint}>
 					<button
 						data-testid="scroll-more-btn"
 						type="button"
@@ -127,8 +123,8 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 							Scroll for more
 						</Typography>
 					</button>
-				)}
-			</div>
+				</div>
+			)}
 		</Dialog>
 	);
 }
