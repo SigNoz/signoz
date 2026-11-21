@@ -7,7 +7,6 @@ import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import type {
 	Appcues,
 	Posthog,
@@ -82,7 +81,6 @@ export default defineConfig(({ mode }): UserConfig => {
 	const basePath = env.VITE_BASE_PATH || '/';
 
 	const plugins = [
-		tsconfigPaths(),
 		rawMarkdownPlugin(),
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
@@ -142,6 +140,7 @@ export default defineConfig(({ mode }): UserConfig => {
 	return {
 		plugins,
 		resolve: {
+			tsconfigPaths: true,
 			alias: {
 				// @grafana/data imports bare CJS `lodash`, whose UMD footer checks for an
 				// AMD loader before assigning module.exports. Any third-party script that
@@ -149,13 +148,13 @@ export default defineConfig(({ mode }): UserConfig => {
 				// every lodash method reached through it is undefined at runtime. lodash-es
 				// is the same version, real ESM, and tree-shakes.
 				lodash: 'lodash-es',
-				'@': resolve(__dirname, './src'),
-				utils: resolve(__dirname, './src/utils'),
-				types: resolve(__dirname, './src/types'),
-				constants: resolve(__dirname, './src/constants'),
-				parser: resolve(__dirname, './src/parser'),
-				providers: resolve(__dirname, './src/providers'),
-				lib: resolve(__dirname, './src/lib'),
+				'@': resolve(import.meta.dirname, './src'),
+				utils: resolve(import.meta.dirname, './src/utils'),
+				types: resolve(import.meta.dirname, './src/types'),
+				constants: resolve(import.meta.dirname, './src/constants'),
+				parser: resolve(import.meta.dirname, './src/parser'),
+				providers: resolve(import.meta.dirname, './src/providers'),
+				lib: resolve(import.meta.dirname, './src/lib'),
 			},
 		},
 		css: {
@@ -188,6 +187,15 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			rolldownOptions: {
+				output: {
+					// Without this group Rolldown splits the entry's static graph into ~300
+					// chunks, 324 requests on first load.
+					codeSplitting: {
+						groups: [{ name: 'initial', tags: ['$initial'] }],
+					},
+				},
+			},
 		},
 		server: {
 			open: true,
