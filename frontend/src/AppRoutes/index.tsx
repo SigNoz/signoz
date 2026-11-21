@@ -131,11 +131,11 @@ function App(): JSX.Element {
 				};
 
 				if (email) {
-					logEvent('Email Identified', identifyPayload, 'identify');
+					void logEvent('Email Identified', identifyPayload, 'identify');
 				}
 
 				if (domain) {
-					logEvent('Domain Identified', groupTraits, 'group');
+					void logEvent('Domain Identified', groupTraits, 'group');
 				}
 				if (window && window.Appcues) {
 					window.Appcues.identify(id, {
@@ -385,7 +385,7 @@ function App(): JSX.Element {
 			}
 		} else {
 			void resetPostHog();
-			Sentry.close();
+			void Sentry.close();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
