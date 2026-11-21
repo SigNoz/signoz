@@ -4,7 +4,7 @@
  */
 
 import { buildRoleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/role.permissions';
-import { within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 
 import { grantsAll } from '@/storybook/access/access';
 import {
@@ -42,6 +42,11 @@ const UNKNOWN_RELATION_JSON = JSON.stringify(
 	null,
 	2,
 );
+
+const UNKNOWN_RELATION_LINE =
+	UNKNOWN_RELATION_JSON.split('\n').findIndex((line) =>
+		line.includes('"relation"'),
+	) + 1;
 
 /** Custom roles need a valid license, and editing one needs the role and `read` on it. */
 const showsJsonEditor = (args: RoleEditorArgs): boolean =>
@@ -86,5 +91,12 @@ export const enterUnknownRelation = async (
 
 	await setMonacoText('json', UNKNOWN_RELATION_JSON);
 	await findMonacoEditor(editor, 'approve');
+	await waitFor(
+		() =>
+			expect(
+				within(editor).getByTestId('json-editor-schema-error'),
+			).toHaveTextContent(`Line ${UNKNOWN_RELATION_LINE}:`),
+		PAGE_LOAD,
+	);
 	blurActiveElement();
 };
