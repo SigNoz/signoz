@@ -25,6 +25,7 @@ import {
 import {
 	expandPanelSearch,
 	hoverJsonValidation,
+	showJsonEditor,
 	openDeleteDashboardDialog,
 	openAIQueryBuilderViewPanel,
 	openClickHouseViewPanel,
@@ -573,6 +574,14 @@ export const JsonCopiedToast: Story = {
 		await userEvent.click(screen.getByTestId('json-editor-copy'));
 		await expectToast('JSON copied to clipboard');
 	},
+};
+
+/**
+ * The JSON editor drawer over the dashboard: the stored document, the footer's
+ * validation and the copy and apply actions.
+ */
+export const JsonEditor: Story = {
+	play: showJsonEditor,
 };
 
 /**
