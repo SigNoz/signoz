@@ -85,6 +85,11 @@ export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
 
+/** Rows whose images are bundled logos rather than icons. */
+export const Logos: Story = {
+	args: { images: 'logos' },
+};
+
 /** The rows the user pinned, which the page filters out of the fetched page. */
 export const Pinned: Story = {
 	args: { view: 'pinned' },

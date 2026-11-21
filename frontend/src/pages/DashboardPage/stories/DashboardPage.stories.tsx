@@ -119,6 +119,11 @@ export const DefaultTimeRange: Story = {
 	args: { duration: '6h' },
 };
 
+/** A dashboard whose image is a bundled logo, beside its name in the header. */
+export const Logo: Story = {
+	args: { image: '/assets/Logos/kubernetes' },
+};
+
 /** The panels mid-fetch, with the header, variable bar and grid already laid out. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
