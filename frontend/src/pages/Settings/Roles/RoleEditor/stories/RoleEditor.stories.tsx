@@ -2,18 +2,20 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import {
+	enterUnknownRelation,
+	showJsonEditor,
+} from './__story_mockdata__/roleEditor.play';
 import {
 	openLogsCard,
 	openSelectorWizard,
 	roleEditorMocks,
+	type RoleEditorArgs,
 	save,
 } from './RoleEditor.stories.mocks';
 
 import SettingsPage from '../../../Settings';
-
-type RoleEditorArgs = PageStoryArgs<typeof roleEditorMocks>;
 
 const pageStory = storyMocks(roleEditorMocks, { layout: 'app' });
 
@@ -49,6 +51,16 @@ export const EditExisting: Story = {
 /** The JSON the API stores, which is the other way the same grant is written. */
 export const JsonEditor: Story = {
 	args: { mode: 'edit', editor: 'json' },
+	play: showJsonEditor,
+};
+
+/**
+ * A grant whose relation the schema does not list, which schema validation
+ * underlines and reports under the editor, keeping the role from being saved.
+ */
+export const JsonUnknownRelation: Story = {
+	args: { mode: 'edit', editor: 'json' },
+	play: enterUnknownRelation,
 };
 
 /**
@@ -79,6 +91,7 @@ export const Tooltips: Story = {
 /** The copy action over the JSON editor, which the resource cards replace. */
 export const TooltipsInJsonEditor: Story = {
 	args: { tooltipsOpen: true, mode: 'edit', editor: 'json' },
+	play: showJsonEditor,
 };
 
 /** The Logs card's first verb granted over everything instead of nothing. */

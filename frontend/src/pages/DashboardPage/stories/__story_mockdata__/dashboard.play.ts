@@ -5,6 +5,11 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import {
+	blurActiveElement,
+	findMonacoEditor,
+} from '@/storybook/play/monacoEditor';
+
 import { dashboardDurationError } from '../../DashboardContainer/utils/dashboardDuration';
 import {
 	canDeleteDashboard,
@@ -18,6 +23,7 @@ import {
 	openJsonEditor,
 	openSettings,
 	PAGE_LOAD,
+	showsDashboard,
 } from '../DashboardPage.stories.mocks';
 import type { PanelId } from './dashboard';
 
@@ -79,11 +85,25 @@ export const openDefaultTimeRange = async (
 	await screen.findByRole('listbox');
 };
 
+export const showJsonEditor = async ({
+	canvasElement,
+	args,
+}: DashboardPlayContext): Promise<void> => {
+	if (!showsDashboard(args)) {
+		return;
+	}
+
+	await openJsonEditor(canvasElement);
+	await findMonacoEditor();
+	blurActiveElement();
+};
+
 export const hoverJsonValidation = async ({
 	canvasElement,
 	args,
 }: DashboardPlayContext): Promise<void> => {
 	await openJsonEditor(canvasElement);
+	await findMonacoEditor();
 	const validation = await screen.findByTestId('json-editor-validation');
 
 	if (args.duration === 'unset' || !dashboardDurationError(args.duration)) {
