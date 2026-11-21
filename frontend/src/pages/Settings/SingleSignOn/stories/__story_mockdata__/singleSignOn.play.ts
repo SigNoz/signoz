@@ -113,6 +113,25 @@ export const expandAttributeMapping = async (
 	);
 };
 
+export const expandWorkspaceGroups = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!listsDomains(context.args)) {
+		return;
+	}
+	await openConfigureDomain(context);
+	if (context.args.provider !== 'google') {
+		return;
+	}
+
+	await userEvent.click(
+		screen.getByTestId('google-auth-workspace-groups-header'),
+	);
+	await waitFor(() =>
+		expect(screen.getByTestId('google-auth-allowed-groups')).toBeVisible(),
+	);
+};
+
 export const submitEmptyProvider = async (
 	context: PlayContext,
 ): Promise<void> => {
