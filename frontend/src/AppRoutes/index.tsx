@@ -27,10 +27,15 @@ import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
+import {
+	getLoadedPostHog,
+	loadPostHog,
+	resetPostHog,
+	withPostHog,
+} from 'lib/analytics/posthog';
 import { IS_PROD } from 'lib/env';
 import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
@@ -126,11 +131,11 @@ function App(): JSX.Element {
 				};
 
 				if (email) {
-					logEvent('Email Identified', identifyPayload, 'identify');
+					void logEvent('Email Identified', identifyPayload, 'identify');
 				}
 
 				if (domain) {
-					logEvent('Domain Identified', groupTraits, 'group');
+					void logEvent('Domain Identified', groupTraits, 'group');
 				}
 				if (window && window.Appcues) {
 					window.Appcues.identify(id, {
@@ -145,26 +150,28 @@ function App(): JSX.Element {
 					});
 				}
 
-				posthog?.identify(id, {
-					email,
-					name: displayName,
-					orgName,
-					deployment_name: hostNameParts[0],
-					data_region: hostNameParts[1],
-					deployment_url: hostname,
-					company_domain: domain,
-					source: 'signoz-ui',
-					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
-				});
+				void withPostHog((posthog) => {
+					posthog.identify(id, {
+						email,
+						name: displayName,
+						orgName,
+						deployment_name: hostNameParts[0],
+						data_region: hostNameParts[1],
+						deployment_url: hostname,
+						company_domain: domain,
+						source: 'signoz-ui',
+						isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
 
-				posthog?.group('company', orgId, {
-					name: orgName,
-					deployment_name: hostNameParts[0],
-					data_region: hostNameParts[1],
-					deployment_url: hostname,
-					company_domain: domain,
-					source: 'signoz-ui',
-					isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+					posthog.group('company', orgId, {
+						name: orgName,
+						deployment_name: hostNameParts[0],
+						data_region: hostNameParts[1],
+						deployment_url: hostname,
+						company_domain: domain,
+						source: 'signoz-ui',
+						isPaidUser: !!trialInfo?.trialConvertedToSubscription,
+					});
 				});
 			}
 		},
@@ -302,16 +309,7 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			if (
-				window.signozBootData?.settings?.posthog?.enabled &&
-				window.signozBootData?.settings?.posthog?.key
-			) {
-				posthog.init(window.signozBootData.settings.posthog.key, {
-					api_host: window.signozBootData.settings.posthog.apiHost,
-					ui_host: window.signozBootData.settings.posthog.uiHost,
-					person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
-				});
-			}
+			void loadPostHog();
 
 			if (
 				!isSentryInitialized &&
@@ -327,10 +325,6 @@ function App(): JSX.Element {
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 						Sentry.browserTracingIntegration(),
-						Sentry.replayIntegration({
-							maskAllText: false,
-							blockAllMedia: false,
-						}),
 					],
 					tracesSampleRate: 0, // Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
@@ -369,7 +363,7 @@ function App(): JSX.Element {
 							return null;
 						}
 
-						const sessionReplayUrl = posthog.get_session_replay_url?.({
+						const sessionReplayUrl = getLoadedPostHog()?.get_session_replay_url?.({
 							withTimestamp: true,
 						});
 						if (sessionReplayUrl) {
@@ -384,10 +378,14 @@ function App(): JSX.Element {
 				});
 
 				setIsSentryInitialized(true);
+
+				import('lib/analytics/sentryReplay')
+					.then(({ addSentryReplay }) => addSentryReplay())
+					.catch(() => undefined);
 			}
 		} else {
-			posthog.reset();
-			Sentry.close();
+			void resetPostHog();
+			void Sentry.close();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
