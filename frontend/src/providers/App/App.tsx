@@ -327,6 +327,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(isUserPreferencesQueryIdle && !userFetchError) ||
 		(!!userPreferencesData?.data && userPreferences === null);
 
+	// The last clause covers the gap between the fetches settling and their data
+	// landing in state.
 	const isSessionPending =
 		isLoggedIn &&
 		(isPreflightLoading ||

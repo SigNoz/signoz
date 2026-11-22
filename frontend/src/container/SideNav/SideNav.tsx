@@ -312,8 +312,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const [isNavReady, setIsNavReady] = useState(false);
 
-	// Sync state only once: when the session has settled, so the role and the license
-	// are known, and userPreferences have loaded for the first time
+	// Sync state only once, so user actions during the session are not overwritten:
+	// when the session has settled, so the role and the license are known, and
+	// userPreferences have loaded for the first time
 	useEffect(() => {
 		if (!isNavReady && !isSessionPending && isFetchingUserPreferences === false) {
 			setPinnedMenuItems(computedPinnedMenuItems);
