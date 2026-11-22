@@ -333,3 +333,54 @@ func TestServeCacheControl(t *testing.T) {
 		})
 	}
 }
+
+func TestServeIndexETag(t *testing.T) {
+	t.Parallel()
+
+	base := startServer(t, web.Config{Index: "no_template.html", Directory: "testdata"}, global.Config{})
+
+	get := func(path string, ifNoneMatch string) *http.Response {
+		req, err := http.NewRequest(http.MethodGet, base+path, nil)
+		require.NoError(t, err)
+		if ifNoneMatch != "" {
+			req.Header.Set("If-None-Match", ifNoneMatch)
+		}
+		res, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = res.Body.Close() })
+		return res
+	}
+
+	first := get("/", "")
+	require.Equal(t, http.StatusOK, first.StatusCode)
+	etag := first.Header.Get("ETag")
+	require.NotEmpty(t, etag)
+	assert.Contains(t, first.Header.Get("Cache-Control"), "no-cache")
+
+	t.Run("SameETagForEveryIndexPath", func(t *testing.T) {
+		assert.Equal(t, etag, get("/does-not-exist", "").Header.Get("ETag"))
+		assert.Equal(t, etag, get("/assets", "").Header.Get("ETag"))
+	})
+
+	t.Run("MatchingETagIsNotModified", func(t *testing.T) {
+		res := get("/home", etag)
+		assert.Equal(t, http.StatusNotModified, res.StatusCode)
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		assert.Empty(t, body)
+	})
+
+	t.Run("StaleETagGetsTheIndex", func(t *testing.T) {
+		res := get("/home", `"stale"`)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+		expected, err := os.ReadFile(filepath.Join("testdata", "no_template.html"))
+		require.NoError(t, err)
+		assert.Equal(t, string(expected), string(body))
+	})
+
+	t.Run("StaticFilesHaveNoIndexETag", func(t *testing.T) {
+		assert.NotEqual(t, etag, get("/no_template.html", "").Header.Get("ETag"))
+	})
+}
