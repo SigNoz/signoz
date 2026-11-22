@@ -21,6 +21,7 @@ export interface IAppContext {
 	hostsData: GetHosts200 | null;
 	isLoggedIn: boolean;
 	isPreflightLoading: boolean;
+	isSessionPending: boolean;
 	org: Organization[] | null;
 	isFetchingUser: boolean;
 	isFetchingActiveLicense: boolean;

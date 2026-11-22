@@ -327,6 +327,16 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		(isUserPreferencesQueryIdle && !userFetchError) ||
 		(!!userPreferencesData?.data && userPreferences === null);
 
+	const isSessionPending =
+		isLoggedIn &&
+		(isPreflightLoading ||
+			isFetchingActiveLicense ||
+			isFetchingUser ||
+			isFetchingFeatureFlags ||
+			((!activeLicense || !user.email || !featureFlags) &&
+				!userFetchError &&
+				!activeLicenseFetchError));
+
 	function updateUser(user: IUser): void {
 		setDefaultUser((prev) => ({
 			...prev,
@@ -437,6 +447,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			hostsData,
 			isLoggedIn,
 			isPreflightLoading,
+			isSessionPending,
 			org,
 			isFetchingUser,
 			isFetchingActiveLicense,
@@ -480,6 +491,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			hostsData,
 			hostsFetchError,
 			isPreflightLoading,
+			isSessionPending,
 			org,
 			orgPreferences,
 			activeLicenseRefetch,

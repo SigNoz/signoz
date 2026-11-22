@@ -152,6 +152,7 @@ export function createAppContextMock(
 		orgPreferencesFetchError: null,
 		isLoggedIn: true,
 		isPreflightLoading: false,
+		isSessionPending: false,
 		showChangelogModal: false,
 		updateUser: createSpy(),
 		updateOrg: createSpy(),

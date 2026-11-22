@@ -584,3 +584,169 @@ describe('AppProvider no-auth preflight', () => {
 		);
 	});
 });
+
+describe('AppProvider isSessionPending', () => {
+	const LICENSE_URL = 'http://localhost/api/v4/licenses/active';
+	const FEATURES_URL = 'http://localhost/api/v1/features';
+	const TIMESTAMP = '2026-01-01T00:00:00Z';
+
+	const mockBootCalls = (authzDelayMs = 0): void => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: {} })),
+			),
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: {
+							id: 'u-1',
+							displayName: 'Alex Example',
+							email: 'alex@example.com',
+							orgId: 'org-1',
+							isRoot: false,
+							status: 'active',
+						},
+					}),
+				),
+			),
+			rest.get(LICENSE_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: {
+							id: 'lic-1',
+							status: 'valid',
+							state: 'activated',
+							platform: 'cloud',
+							plan: {
+								id: 'plan-1',
+								name: 'TEAMS',
+								description: '',
+								isActive: true,
+								createdAt: TIMESTAMP,
+								updatedAt: TIMESTAMP,
+							},
+							eventQueue: {
+								event: '',
+								status: '',
+								scheduledAt: TIMESTAMP,
+								createdAt: TIMESTAMP,
+								updatedAt: TIMESTAMP,
+							},
+							features: [],
+							freeUntil: TIMESTAMP,
+							createdAt: TIMESTAMP,
+							updatedAt: TIMESTAMP,
+							validFrom: 0,
+							validUntil: -1,
+						},
+					}),
+				),
+			),
+			rest.get(FEATURES_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: [] })),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.delay(authzDelayMs),
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [true, false, false])),
+				);
+			}),
+		);
+	};
+
+	beforeEach(() => {
+		queryClient.clear();
+		localStorage.clear();
+	});
+
+	it('is false for a visitor without a session, even while the preflight is loading', () => {
+		mockBootCalls();
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		expect(result.current.isPreflightLoading).toBe(true);
+		expect(result.current.isLoggedIn).toBe(false);
+		expect(result.current.isSessionPending).toBe(false);
+	});
+
+	it('is true from the first render of a logged-in user and false once user, license, flags and role are loaded', async () => {
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+		mockBootCalls();
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		expect(result.current.isSessionPending).toBe(true);
+
+		await waitFor(
+			() => {
+				expect(result.current.isSessionPending).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.user.email).toBe('alex@example.com');
+		expect(result.current.user.role).toBe(USER_ROLES.ADMIN);
+		expect(result.current.activeLicense).not.toBeNull();
+		expect(result.current.featureFlags).toEqual([]);
+	});
+
+	it('stays true while the role checks are in flight, with the role still unknown', async () => {
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+		mockBootCalls(600);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(
+			() => {
+				expect(result.current.user.email).toBe('alex@example.com');
+				expect(result.current.activeLicense).not.toBeNull();
+				expect(result.current.featureFlags).not.toBeNull();
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.user.role).toBe(USER_ROLES.ANONYMOUS);
+		expect(result.current.isSessionPending).toBe(true);
+
+		await waitFor(
+			() => {
+				expect(result.current.isSessionPending).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.user.role).toBe(USER_ROLES.ADMIN);
+	});
+
+	it('settles with the user fetch error when /users/me fails', async () => {
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+		mockBootCalls();
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(ctx.status(500), ctx.json({ status: 'error' })),
+			),
+		);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(
+			() => {
+				expect(result.current.userFetchError).toBeTruthy();
+				expect(result.current.isSessionPending).toBe(false);
+			},
+			{ timeout: 3000 },
+		);
+	});
+});
