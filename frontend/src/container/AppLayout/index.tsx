@@ -96,6 +96,7 @@ import './AppLayout.styles.scss';
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const {
 		isLoggedIn,
+		isSessionPending,
 		user,
 		trialInfo,
 		activeLicense,
@@ -225,7 +226,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(currentVersion, changelogForTenant),
 			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(currentVersion),
+			enabled: isLoggedIn && !isSessionPending && Boolean(currentVersion),
 		},
 	]);
 
@@ -236,6 +237,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			!changelog &&
 			!getChangelogByVersionResponse.isLoading &&
 			isLoggedIn &&
+			!isSessionPending &&
 			Boolean(currentVersion)
 		) {
 			getChangelogByVersionResponse.refetch();
