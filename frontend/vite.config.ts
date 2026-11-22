@@ -245,6 +245,12 @@ export default defineConfig(({ mode }): UserConfig => {
 				plugins: [injectChunkImportMap()],
 			},
 		},
+		// An iife worker runs as a sloppy script, where a function declared in a
+		// block is hoisted as a `var` over the minifier's renamed outer names (the
+		// JSON worker's validation then throws on every non-empty array).
+		worker: {
+			format: 'es',
+		},
 		server: {
 			open: true,
 			port: 3301,
