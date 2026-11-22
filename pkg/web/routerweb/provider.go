@@ -2,6 +2,8 @@ package routerweb
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -26,6 +28,7 @@ const (
 type provider struct {
 	config        web.Config
 	indexContents []byte
+	indexETag     string
 	fileHandler   http.Handler
 }
 
@@ -66,6 +69,7 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 	return &provider{
 		config:        config,
 		indexContents: indexContents,
+		indexETag:     indexETag(indexContents),
 		fileHandler:   newPrecompressedHandler(http.Dir(config.Directory), config.Index),
 	}, nil
 }
@@ -92,7 +96,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
-			provider.serveIndex(rw)
+			provider.serveIndex(rw, req)
 			return
 		}
 
@@ -104,7 +108,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fi.IsDir() {
 		// path is a directory, serve index.html
-		provider.serveIndex(rw)
+		provider.serveIndex(rw, req)
 		return
 	}
 
@@ -118,7 +122,38 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	provider.fileHandler.ServeHTTP(rw, req)
 }
 
-func (provider *provider) serveIndex(rw http.ResponseWriter) {
+func (provider *provider) serveIndex(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("ETag", provider.indexETag)
+
+	if (req.Method == http.MethodGet || req.Method == http.MethodHead) && matchesIfNoneMatch(req.Header.Values("If-None-Match"), provider.indexETag) {
+		rw.WriteHeader(http.StatusNotModified)
+		return
+	}
+
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = rw.Write(provider.indexContents)
+}
+
+// Weak (W/) because the compression middleware gzips the index after this
+// handler, so one ETag labels both the gzip and the plain body. A weak ETag
+// promises the same content, not the same bytes: enough for If-None-Match,
+// and it keeps clients from using it for Range requests.
+func indexETag(contents []byte) string {
+	sum := sha256.Sum256(contents)
+	return `W/"` + hex.EncodeToString(sum[:16]) + `"`
+}
+
+func matchesIfNoneMatch(values []string, etag string) bool {
+	opaque := strings.TrimPrefix(etag, "W/")
+
+	for _, value := range values {
+		for _, candidate := range strings.Split(value, ",") {
+			candidate = strings.TrimSpace(candidate)
+			if candidate == "*" || strings.TrimPrefix(candidate, "W/") == opaque {
+				return true
+			}
+		}
+	}
+
+	return false
 }
