@@ -32,7 +32,7 @@ type Logging struct {
 }
 
 type Compression struct {
-	// Whether to gzip responses on the fly
+	// Whether to gzip responses on the fly. Precompressed web files are served either way
 	Enabled bool `mapstructure:"enabled"`
 	// The gzip level, from 1 (fastest) to 9 (smallest), or -1 for the default
 	Level int `mapstructure:"level"`

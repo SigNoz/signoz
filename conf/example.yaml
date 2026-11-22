@@ -167,6 +167,7 @@ apiserver:
       - /
   compression:
     # Gzip responses on the fly. Turn off when a proxy in front already compresses.
+    # Web files shipped with a .gz twin are served precompressed either way.
     enabled: true
     # Gzip level, from 1 (fastest) to 9 (smallest), or -1 for the default.
     level: -1
