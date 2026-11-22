@@ -9,18 +9,27 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { useQuery } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import type { GetMyUser200 } from 'api/generated/services/sigNoz.schemas';
 import { useGetHosts } from 'api/generated/services/zeus';
-import { useGetGlobalConfig } from 'api/generated/services/global';
-import { useGetMyUser } from 'api/generated/services/users';
+import {
+	getGetGlobalConfigQueryKey,
+	useGetGlobalConfig,
+} from 'api/generated/services/global';
+import { getGetActiveLicenseQueryKey } from 'api/generated/services/licenses';
+import {
+	getGetMyUserQueryKey,
+	useGetMyUser,
+} from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import { clearAuthStorage } from 'utils/clearAuthStorage';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import dayjs from 'dayjs';
 import useActiveLicense from 'hooks/useActiveLicense/useActiveLicense';
 import {
@@ -31,6 +40,7 @@ import {
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
+import { SuccessResponseV2 } from 'types/api';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
 import {
@@ -54,27 +64,101 @@ import { getUserDefaults } from './utils';
 
 export const AppContext = createContext<IAppContext | undefined>(undefined);
 
+type MyUser = GetMyUser200['data'];
+
+const USER_PREFERENCES_QUERY_KEY = ['getAllUserPreferences', 'app-context'];
+const ORG_PREFERENCES_QUERY_KEY = ['getOrgPreferences', 'app-context'];
+
+function withUserData(prev: IUser, data: MyUser): IUser {
+	return {
+		...prev,
+		id: data.id,
+		displayName: data.displayName ?? prev.displayName,
+		email: data.email ?? prev.email,
+		orgId: data.orgId ?? prev.orgId,
+		isRoot: data.isRoot,
+		status: data.status as UserResponse['status'],
+		createdAt: toISOString(data.createdAt) ?? prev.createdAt,
+		updatedAt: toISOString(data.updatedAt) ?? prev.updatedAt,
+	};
+}
+
+function toTrialInfo(license: LicenseResModel): TrialInfo {
+	const freeUntilUnix = dayjs(license.freeUntil).unix();
+	const scheduledAtUnix = dayjs(license.eventQueue.scheduledAt).unix();
+
+	return {
+		trialStart: license.validFrom,
+		trialEnd: freeUntilUnix > 0 ? freeUntilUnix : dayjs().unix(),
+		onTrial: dayjs(license.freeUntil).isAfter(dayjs()),
+		workSpaceBlock:
+			license.state === LicenseState.EVALUATION_EXPIRED &&
+			license.platform === LicensePlatform.CLOUD,
+		trialConvertedToSubscription:
+			license.state !== LicenseState.ISSUED &&
+			license.state !== LicenseState.EVALUATING &&
+			license.state !== LicenseState.EVALUATION_EXPIRED,
+		gracePeriodEnd: scheduledAtUnix > 0 ? scheduledAtUnix : dayjs().unix(),
+	};
+}
+
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
+	const queryClient = useQueryClient();
+	// Seeded from the cache restored by lib/bootQueryCache, so the first render
+	// already has the session and the shell does not wait on the refetch.
+	const [restored] = useState(() => ({
+		user: queryClient.getQueryData<GetMyUser200>(getGetMyUserQueryKey())?.data,
+		license:
+			queryClient.getQueryData<LicenseResModel>(getGetActiveLicenseQueryKey()) ??
+			null,
+		featureFlags:
+			queryClient.getQueryData<SuccessResponseV2<FeatureFlags[]>>([
+				REACT_QUERY_KEY.GET_FEATURES_FLAGS,
+			])?.data ?? null,
+		userPreferences:
+			queryClient.getQueryData<{ data: UserPreference[] }>(
+				USER_PREFERENCES_QUERY_KEY,
+			)?.data ?? null,
+		orgPreferences:
+			queryClient.getQueryData<{ data: OrgPreference[] }>(
+				ORG_PREFERENCES_QUERY_KEY,
+			)?.data ?? null,
+	}));
+
 	// on load of the provider set the user defaults with access token , refresh token from local storage
-	const [defaultUser, setDefaultUser] = useState<IUser>(() => getUserDefaults());
-	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
-		null,
+	const [defaultUser, setDefaultUser] = useState<IUser>(() =>
+		restored.user
+			? withUserData(getUserDefaults(), restored.user)
+			: getUserDefaults(),
 	);
-	const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(null);
-	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(null);
+	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
+		restored.license,
+	);
+	const [trialInfo, setTrialInfo] = useState<TrialInfo | null>(() =>
+		restored.license ? toTrialInfo(restored.license) : null,
+	);
+	const [featureFlags, setFeatureFlags] = useState<FeatureFlags[] | null>(
+		restored.featureFlags,
+	);
 	const [orgPreferences, setOrgPreferences] = useState<OrgPreference[] | null>(
-		null,
+		restored.orgPreferences,
 	);
 
 	const [userPreferences, setUserPreferences] = useState<
 		UserPreference[] | null
-	>(null);
+	>(restored.userPreferences);
 
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
 	);
-	const [isPreflightLoading, setIsPreflightLoading] = useState<boolean>(true);
-	const [org, setOrg] = useState<Organization[] | null>(null);
+	const [isPreflightLoading, setIsPreflightLoading] = useState<boolean>(
+		() => !queryClient.getQueryData(getGetGlobalConfigQueryKey()),
+	);
+	const [org, setOrg] = useState<Organization[] | null>(() =>
+		restored.user?.orgId
+			? ([{ createdAt: 0, id: restored.user.orgId }] as Organization[])
+			: null,
+	);
 	const [changelog, setChangelog] = useState<ChangelogSchema | null>(null);
 
 	const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
@@ -134,7 +218,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		enabled: isLoggedIn,
 	});
 
-	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
+	// Restored data counts as loaded: the refetch behind it should not hold the shell.
+	const isFetchingUser =
+		(isFetchingUserData && !userData) ||
+		(isFetchingPermissions && !permissionsResult);
 	const userFetchError = userFetchDataError;
 
 	const userRole = useMemo(() => {
@@ -159,22 +246,12 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [defaultUser, userRole]);
 
 	useEffect(() => {
-		if (!isFetchingUserData && userData?.data) {
+		if (userData?.data) {
 			setLocalStorageApi(
 				LOCALSTORAGE.LOGGED_IN_USER_EMAIL,
 				userData.data.email ?? '',
 			);
-			setDefaultUser((prev) => ({
-				...prev,
-				id: userData.data.id,
-				displayName: userData.data.displayName ?? prev.displayName,
-				email: userData.data.email ?? prev.email,
-				orgId: userData.data.orgId ?? prev.orgId,
-				isRoot: userData.data.isRoot,
-				status: userData.data.status as UserResponse['status'],
-				createdAt: toISOString(userData.data.createdAt) ?? prev.createdAt,
-				updatedAt: toISOString(userData.data.updatedAt) ?? prev.updatedAt,
-			}));
+			setDefaultUser((prev) => withUserData(prev, userData.data));
 
 			// todo: we need to update the org name as well, we should have the [admin only role restriction on the get org api call] - BE input needed
 			setOrg((prev): any => {
@@ -208,41 +285,23 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				];
 			});
 		}
-	}, [userData, isFetchingUserData]);
+	}, [userData]);
 
 	// fetcher for the active license
 	const {
 		data: activeLicenseData,
-		isFetching: isFetchingActiveLicense,
+		isFetching: isFetchingActiveLicenseQuery,
 		error: activeLicenseFetchError,
 		refetch: activeLicenseRefetch,
 	} = useActiveLicense(isLoggedIn);
+	const isFetchingActiveLicense =
+		isFetchingActiveLicenseQuery && !activeLicenseData;
 	useEffect(() => {
-		if (!isFetchingActiveLicense && activeLicenseData) {
+		if (activeLicenseData) {
 			setActiveLicense(activeLicenseData);
-
-			const freeUntilUnix = dayjs(activeLicenseData.freeUntil).unix();
-			const scheduledAtUnix = dayjs(
-				activeLicenseData.eventQueue.scheduledAt,
-			).unix();
-
-			const trialInfo: TrialInfo = {
-				trialStart: activeLicenseData.validFrom,
-				trialEnd: freeUntilUnix > 0 ? freeUntilUnix : dayjs().unix(),
-				onTrial: dayjs(activeLicenseData.freeUntil).isAfter(dayjs()),
-				workSpaceBlock:
-					activeLicenseData.state === LicenseState.EVALUATION_EXPIRED &&
-					activeLicenseData.platform === LicensePlatform.CLOUD,
-				trialConvertedToSubscription:
-					activeLicenseData.state !== LicenseState.ISSUED &&
-					activeLicenseData.state !== LicenseState.EVALUATING &&
-					activeLicenseData.state !== LicenseState.EVALUATION_EXPIRED,
-				gracePeriodEnd: scheduledAtUnix > 0 ? scheduledAtUnix : dayjs().unix(),
-			};
-
-			setTrialInfo(trialInfo);
+			setTrialInfo(toTrialInfo(activeLicenseData));
 		}
-	}, [activeLicenseData, isFetchingActiveLicense]);
+	}, [activeLicenseData]);
 
 	const isCloudUser = activeLicense?.platform === LicensePlatform.CLOUD;
 
@@ -267,31 +326,42 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [hostsData]);
 
 	// fetcher for feature flags
-	const { isFetching: isFetchingFeatureFlags, error: featureFlagsFetchError } =
-		useGetFeatureFlag((allFlags: FeatureFlags[]) => {
-			setFeatureFlags(allFlags);
-		}, isLoggedIn);
+	const {
+		data: featureFlagsData,
+		isFetching: isFetchingFeatureFlagsQuery,
+		error: featureFlagsFetchError,
+	} = useGetFeatureFlag((allFlags: FeatureFlags[]) => {
+		setFeatureFlags(allFlags);
+	}, isLoggedIn);
+	const isFetchingFeatureFlags =
+		isFetchingFeatureFlagsQuery && !featureFlagsData;
+
+	// onSuccess does not run for data restored from the persisted cache.
+	useEffect(() => {
+		if (featureFlagsData?.data) {
+			setFeatureFlags(featureFlagsData.data);
+		}
+	}, [featureFlagsData]);
 
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
 		data: orgPreferencesData,
-		isFetching: isFetchingOrgPreferences,
+		isFetching: isFetchingOrgPreferencesQuery,
 		error: orgPreferencesFetchError,
 	} = useQuery({
 		queryFn: () => listOrgPreferences(),
-		queryKey: ['getOrgPreferences', 'app-context'],
+		queryKey: ORG_PREFERENCES_QUERY_KEY,
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
 
+	const isFetchingOrgPreferences =
+		isFetchingOrgPreferencesQuery && !orgPreferencesData;
+
 	useEffect(() => {
-		if (
-			!isFetchingOrgPreferences &&
-			orgPreferencesData &&
-			orgPreferencesData.data
-		) {
+		if (orgPreferencesData?.data) {
 			setOrgPreferences(orgPreferencesData.data);
 		}
-	}, [orgPreferencesData, isFetchingOrgPreferences]);
+	}, [orgPreferencesData]);
 
 	const {
 		data: userPreferencesData,
@@ -299,23 +369,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		isIdle: isUserPreferencesQueryIdle,
 	} = useQuery({
 		queryFn: () => listUserPreferences(),
-		queryKey: ['getAllUserPreferences', 'app-context'],
+		queryKey: USER_PREFERENCES_QUERY_KEY,
 		enabled: !!isLoggedIn,
 	});
 
 	useEffect(() => {
-		if (
-			userPreferencesData &&
-			userPreferencesData.data &&
-			!isFetchingUserPreferencesQuery
-		) {
+		if (userPreferencesData?.data) {
 			setUserPreferences(userPreferencesData.data);
 		}
-	}, [userPreferencesData, isFetchingUserPreferencesQuery, isLoggedIn]);
+	}, [userPreferencesData, isLoggedIn]);
 
 	// Idle means logged out.
 	const isFetchingUserPreferences =
-		isFetchingUserPreferencesQuery ||
+		(isFetchingUserPreferencesQuery && !userPreferencesData) ||
 		(isUserPreferencesQueryIdle && !userFetchError) ||
 		(!!userPreferencesData?.data && userPreferences === null);
 
