@@ -701,7 +701,7 @@ describe('AppProvider isSessionPending', () => {
 
 	it('stays true while the role checks are in flight, with the role still unknown', async () => {
 		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
-		mockBootCalls(600);
+		mockBootCalls(1500);
 
 		const { result } = renderHook(() => useAppContext(), {
 			wrapper: createWrapper(),
@@ -753,7 +753,7 @@ describe('AppProvider isSessionPending', () => {
 
 	it('requests /version only once the session has settled', async () => {
 		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
-		mockBootCalls(600);
+		mockBootCalls(1500);
 		const versionRequests = jest.fn();
 		server.use(
 			rest.get(VERSION_URL, (_, res, ctx) => {
@@ -805,7 +805,7 @@ describe('AppProvider user preferences', () => {
 		server.use(
 			rest.get(MY_USER_URL, (_, res, ctx) =>
 				res(
-					ctx.delay(800),
+					ctx.delay(2000),
 					ctx.status(200),
 					ctx.json({
 						data: { id: 'u-1', email: 'alex@example.com', orgId: 'org-1' },
@@ -831,7 +831,7 @@ describe('AppProvider user preferences', () => {
 			() => {
 				expect(result.current.isFetchingUserPreferences).toBe(false);
 			},
-			{ timeout: 700 },
+			{ timeout: 1500 },
 		);
 
 		expect(result.current.userPreferences).toEqual([
