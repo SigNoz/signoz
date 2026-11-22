@@ -1,6 +1,8 @@
 package alertmanagertypes
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +15,18 @@ import (
 // any surface that ends up visible to a template author or a notification
 // recipient; the alertmanager reads them off the raw alert before stripping.
 const privateAnnotationPrefix = "_"
+
+var (
+	// templateErrorPosition matches what the template engine puts in front of
+	// the reason, such as `template: :1:431: executing "" `. The position
+	// counts a preamble that Expand adds to a rule template, so it does not
+	// point into the text the author wrote.
+	templateErrorPosition = regexp.MustCompile(`^.*?template: [^:]*:\d+(?::\d+)?: (?:executing "[^"]*" )?`)
+	// templateErrorExpression matches how the engine names the expression that
+	// failed: `at <.Value>: `. The angle brackets are markup in more than one
+	// channel.
+	templateErrorExpression = regexp.MustCompile(`^at <(.*)>: `)
+)
 
 // IsPrivateAnnotation reports whether an annotation key is considered
 // private — i.e. internal to alertmanager and should not be rendered in
@@ -60,11 +74,9 @@ type ExpandResult struct {
 	// user-authored body was supplied, or it failed), false when a custom
 	// template was used.
 	IsDefaultBody bool
-	// TitleTemplateErr and BodyTemplateErr are set when the custom template
-	// failed and the default was used in its place. A custom template that
-	// expands to an empty string leaves them nil.
-	TitleTemplateErr error
-	BodyTemplateErr  error
+	// Failures names each template that failed and was replaced. A template
+	// that expands to an empty string is not in it.
+	Failures TemplateFailures
 	// MissingVars is the union of $-references in the title and body templates
 	// that did not resolve to any known field. Surfaced for preview warnings;
 	// at runtime these render as "<no value>".
@@ -73,6 +85,38 @@ type ExpandResult struct {
 	// exposed so callers can reuse it when rendering a channel-specific layout
 	// (e.g. the email HTML shell) without rebuilding it from the alerts.
 	NotificationData *NotificationTemplateData
+}
+
+// TemplateFailures holds the error of each title or body template that failed
+// and was replaced: the rule's by the channel's, and the channel's by the
+// builtin one.
+type TemplateFailures struct {
+	RuleTitle    error
+	RuleBody     error
+	ChannelTitle error
+	ChannelBody  error
+}
+
+// Notice returns markdown for the reader of the notification, one line for
+// each template that failed, and an empty string when none failed.
+func (f TemplateFailures) Notice() string {
+	var lines []string
+	for _, failure := range []struct {
+		template    string
+		replacement string
+		err         error
+	}{
+		{"rule title", "channel title", f.RuleTitle},
+		{"rule body", "channel body", f.RuleBody},
+		{"channel title", "built-in title", f.ChannelTitle},
+		{"channel body", "built-in body", f.ChannelBody},
+	} {
+		if failure.err != nil {
+			lines = append(lines, fmt.Sprintf("The %s template failed: `%s`. The %s is shown.", failure.template, templateFailureReason(failure.err), failure.replacement))
+		}
+	}
+
+	return strings.Join(lines, "\n\n")
 }
 
 // AlertData holds per-alert data used when expanding body templates.
@@ -151,4 +195,14 @@ type NotificationAlert struct {
 	Status        string `json:"status"        mapstructure:"status"`
 	TotalFiring   int    `json:"totalFiring"   mapstructure:"total_firing"`
 	TotalResolved int    `json:"totalResolved" mapstructure:"total_resolved"`
+}
+
+// templateFailureReason returns the error as one line that is safe inside a
+// markdown code span.
+func templateFailureReason(err error) string {
+	reason := strings.Join(strings.Fields(err.Error()), " ")
+	reason = templateErrorPosition.ReplaceAllString(reason, "")
+	reason = templateErrorExpression.ReplaceAllString(reason, "$1: ")
+
+	return strings.ReplaceAll(reason, "`", "'")
 }

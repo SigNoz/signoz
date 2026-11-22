@@ -91,6 +91,9 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 			parts = append(parts, body)
 		}
 	}
+	if notice := result.Failures.Notice(); notice != "" {
+		parts = append(parts, notice)
+	}
 	// custom body templates render per alert; join them under ADF rule dividers.
 	// The default body is a single combined part, so the join is a no-op there.
 	descText := truncateRunes(strings.Join(parts, "\n\n---\n\n"), maxDescriptionLenRunes)

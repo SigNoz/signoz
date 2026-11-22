@@ -369,6 +369,28 @@ func TestNotifyCustomTemplateAnnotationsOverrideDefaults(t *testing.T) {
 	assert.NotContains(t, s, "Summary:") // default body template not used
 }
 
+// A rule title that the notifier cannot execute must not cost the issue. The
+// channel summary takes its place and the description says why.
+func TestNotifyRuleTitleFailureUsesTheChannelSummary(t *testing.T) {
+	m := newMockJira(t)
+	a := alert(true)
+	a.Annotations[ruletypes.AnnotationTitleTemplate] = "Rule title: {{ .CommonLabels.alertname }}"
+
+	_, err := newNotifier(t, m).Notify(ctx(), a)
+	require.NoError(t, err)
+
+	body := m.lastBody(t, "/issue")
+	fields, ok := body["fields"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "[FIRING:1] HighCPU", fields["summary"])
+
+	js, err := json.Marshal(fields["description"])
+	require.NoError(t, err)
+	assert.Contains(t, string(js), "The rule title template failed: ")
+	assert.Contains(t, string(js), ".CommonLabels.alertname: nil pointer evaluating interface {}.alertname")
+	assert.Contains(t, string(js), ". The channel title is shown.")
+}
+
 // Jira replaces labels wholesale on PUT, so the update must union in the
 // labels already on the issue or user-added ones get wiped.
 func TestNotifyUpdatePreservesUserAddedLabels(t *testing.T) {

@@ -209,11 +209,24 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 	var description string
 	if result.IsDefaultBody && !n.advancedFeatures {
 		description = strings.Join(result.Body, "\n")
+		if notice := alertmanagertemplate.RenderFailureNotice(ctx, n.logger, result.Failures, markdownrenderer.RenderPlainText); notice != "" {
+			description += "\n\n" + notice
+		}
 	} else {
-		description, err = buildHTMLDescription(result.Body, maxDescriptionLenRunes)
+		// The notice takes its share of the budget first, so the alert parts
+		// are the ones that shrink.
+		notice := alertmanagertemplate.RenderFailureNotice(ctx, n.logger, result.Failures, markdownrenderer.RenderHTML)
+		if notice != "" {
+			notice = "<hr><div>" + notice + "</div>"
+		}
+		description, err = buildHTMLDescription(result.Body, maxDescriptionLenRunes-utf8.RuneCountInString(notice))
 		if err != nil {
 			return "", "", err
 		}
+		if description == "" {
+			notice = strings.TrimPrefix(notice, "<hr>")
+		}
+		description += notice
 	}
 
 	title, truncated := notify.TruncateInRunes(result.Title, maxMessageLenRunes)

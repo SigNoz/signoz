@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -159,7 +160,10 @@ func (n *Notifier) encodeSendMessage(chatID int64, text string) (*bytes.Buffer, 
 func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*types.Alert) (string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
 
-	var result *alertmanagertypes.ExpandResult
+	var (
+		result   *alertmanagertypes.ExpandResult
+		failures alertmanagertypes.TemplateFailures
+	)
 	if customTitle != "" || customBody != "" {
 		var err error
 		result, err = n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
@@ -169,6 +173,7 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 		if err != nil {
 			return "", err
 		}
+		failures = result.Failures
 
 		if len(result.MissingVars) > 0 {
 			logger.WarnContext(ctx, "unresolved variables in rule template", slog.Any("template_missing_vars", result.MissingVars))
@@ -179,54 +184,65 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 		title, body string
 		err         error
 	)
-	if customTitle != "" && result.TitleTemplateErr == nil {
+	if customTitle != "" && failures.RuleTitle == nil {
 		title, err = n.renderRuleTemplate(result.Title)
 	} else {
-		title, err = n.renderChannelTemplate(ctx, as, n.conf.Title, alertmanagertypes.DefaultTelegramTitleTemplate)
+		title, failures.ChannelTitle, err = n.renderChannelTemplate(ctx, as, n.conf.Title, alertmanagertypes.DefaultTelegramTitleTemplate)
 	}
 	if err != nil {
 		return "", err
 	}
 
-	if customBody != "" && result.BodyTemplateErr == nil {
+	if customBody != "" && failures.RuleBody == nil {
 		body, err = n.renderRuleTemplate(strings.Join(nonEmpty(result.Body), "\n\n"))
 	} else {
-		body, err = n.renderChannelTemplate(ctx, as, n.conf.Message, alertmanagertypes.DefaultTelegramMessageTemplate)
+		body, failures.ChannelBody, err = n.renderChannelTemplate(ctx, as, n.conf.Message, alertmanagertypes.DefaultTelegramMessageTemplate)
 	}
 	if err != nil {
 		return "", err
 	}
 
-	if title == "" {
-		return body, nil
+	message := body
+	if title != "" {
+		message = "<b>" + title + "</b>\n\n" + body
+	}
+	// Past the limit the message is cut, and a cut inside the notice leaves
+	// markup that does not close, which Telegram rejects.
+	if notice := alertmanagertemplate.RenderFailureNotice(ctx, logger, failures, markdownrenderer.RenderTelegramHTML); notice != "" {
+		if utf8.RuneCountInString(message)+utf8.RuneCountInString(notice)+2 <= maxMessageLenRunes {
+			message += "\n\n" + notice
+		} else {
+			logger.WarnContext(ctx, "left the template failure notice out of a message at the length limit")
+		}
 	}
 
-	return strings.TrimSpace("<b>" + title + "</b>\n\n" + body), nil
+	return strings.TrimSpace(message), nil
 }
 
 // renderChannelTemplate reproduces upstream's rendering, including its choice
 // of engine under parse_mode HTML: html/template escapes every interpolated
 // value, so a channel template that does not pipe through html still sends.
-// A channel template that fails gives way to the builtin one.
-func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert, text string, builtin string) (string, error) {
+// A channel template that fails gives way to the builtin one, and its error is
+// the second result.
+func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert, text string, builtin string) (string, error, error) {
 	if text == "" {
-		return "", nil
+		return "", nil, nil
 	}
 
-	var tmplErr error
+	var tmplErr, channelTemplateErr error
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 
 	rendered := notify.TmplHTML(n.tmpl, data, &tmplErr)(text)
 	if tmplErr != nil && text != builtin {
 		n.logger.WarnContext(ctx, "telegram template failed, using the builtin template", errors.Attr(tmplErr))
-		tmplErr = nil
+		channelTemplateErr, tmplErr = tmplErr, nil
 		rendered = notify.TmplHTML(n.tmpl, data, &tmplErr)(builtin)
 	}
 	if tmplErr != nil {
-		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute telegram template: %s", tmplErr.Error())
+		return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute telegram template: %s", tmplErr.Error())
 	}
 
-	return strings.TrimSpace(rendered), nil
+	return strings.TrimSpace(rendered), channelTemplateErr, nil
 }
 
 // renderRuleTemplate converts the templater's output from markdown, which is

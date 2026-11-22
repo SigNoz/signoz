@@ -945,7 +945,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 		}
 
-		title, err := notifier.prepareTitle(ctx, alerts)
+		title, _, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
 		assert.Equal(t, "HighCPU for Payment service (FIRING)", title)
 	})
@@ -981,7 +981,7 @@ func TestPrepareContent(t *testing.T) {
 			},
 		}
 
-		title, err := notifier.prepareTitle(ctx, alerts)
+		title, _, err := notifier.prepareTitle(ctx, alerts)
 		require.NoError(t, err)
 		assert.Equal(t, "HighCPU on api-server is in resolved state", title)
 	})

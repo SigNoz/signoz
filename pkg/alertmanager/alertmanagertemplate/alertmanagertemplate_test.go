@@ -328,15 +328,17 @@ func TestExpandTemplateFailures(t *testing.T) {
 	at, ctx := testSetup(t)
 
 	testCases := []struct {
-		name                 string
-		alerts               []*types.Alert
-		input                alertmanagertypes.ExpandRequest
-		wantTitle            string
-		wantBody             []string
-		wantIsDefaultBody    bool
-		wantTitleTemplateErr string
-		wantBodyTemplateErr  string
-		wantErr              string
+		name                string
+		alerts              []*types.Alert
+		input               alertmanagertypes.ExpandRequest
+		wantTitle           string
+		wantBody            []string
+		wantIsDefaultBody   bool
+		wantRuleTitleErr    string
+		wantRuleBodyErr     string
+		wantChannelTitleErr string
+		wantChannelBodyErr  string
+		wantErr             string
 	}{
 		{
 			// A title copied from a channel template reads fields that only
@@ -351,9 +353,9 @@ func TestExpandTemplateFailures(t *testing.T) {
 				DefaultTitleTemplate: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
 				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
 			},
-			wantTitle:            "[FIRING] HighCPU",
-			wantBody:             []string{"HighCPU is firing"},
-			wantTitleTemplateErr: "nil pointer evaluating interface {}.alertname",
+			wantTitle:        "[FIRING] HighCPU",
+			wantBody:         []string{"HighCPU is firing"},
+			wantRuleTitleErr: "nil pointer evaluating interface {}.alertname",
 		},
 		{
 			name: "CustomTitleCallsUnknownFunction_UsesDefaultTitle",
@@ -364,10 +366,10 @@ func TestExpandTemplateFailures(t *testing.T) {
 				TitleTemplate:        "$rule.name ({{ $severity | toUpperAndTrim }})",
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} is {{ .Status }}",
 			},
-			wantTitle:            "DiskFull is firing",
-			wantBody:             []string{""},
-			wantIsDefaultBody:    true,
-			wantTitleTemplateErr: `function "toUpperAndTrim" not defined`,
+			wantTitle:         "DiskFull is firing",
+			wantBody:          []string{""},
+			wantIsDefaultBody: true,
+			wantRuleTitleErr:  `function "toUpperAndTrim" not defined`,
 		},
 		{
 			name: "CustomTitleDoesNotParse_UsesDefaultTitle",
@@ -378,10 +380,10 @@ func TestExpandTemplateFailures(t *testing.T) {
 				TitleTemplate:        "Lag on {{ $labels.queue",
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
 			},
-			wantTitle:            "QueueLag",
-			wantBody:             []string{""},
-			wantIsDefaultBody:    true,
-			wantTitleTemplateErr: "unclosed action",
+			wantTitle:         "QueueLag",
+			wantBody:          []string{""},
+			wantIsDefaultBody: true,
+			wantRuleTitleErr:  "unclosed action",
 		},
 		{
 			// The custom title is empty for a firing group, so the default one
@@ -413,10 +415,10 @@ func TestExpandTemplateFailures(t *testing.T) {
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
 				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.pod }};{{ end }}",
 			},
-			wantTitle:           "PodMemoryHigh",
-			wantBody:            []string{"checkout-7d9c8b5f4-x2k9p-canary-eu-west;cart-5f6d7c8b9-q8w2z;payments-6c5d7f9b8-h4j7m-canary-us-east;"},
-			wantIsDefaultBody:   true,
-			wantBodyTemplateErr: "index out of range: 30",
+			wantTitle:         "PodMemoryHigh",
+			wantBody:          []string{"checkout-7d9c8b5f4-x2k9p-canary-eu-west;cart-5f6d7c8b9-q8w2z;payments-6c5d7f9b8-h4j7m-canary-us-east;"},
+			wantIsDefaultBody: true,
+			wantRuleBodyErr:   "index out of range: 30",
 		},
 		{
 			name: "DefaultTitleFails_UsesBuiltinTitle",
@@ -429,9 +431,10 @@ func TestExpandTemplateFailures(t *testing.T) {
 				BuiltinTitleTemplate: "builtin: {{ .CommonLabels.alertname }}",
 				BuiltinBodyTemplate:  "builtin body",
 			},
-			wantTitle:         "builtin: HighLatency",
-			wantBody:          []string{"HighLatency"},
-			wantIsDefaultBody: true,
+			wantTitle:           "builtin: HighLatency",
+			wantBody:            []string{"HighLatency"},
+			wantIsDefaultBody:   true,
+			wantChannelTitleErr: "unclosed action",
 		},
 		{
 			// .Value is not a field of an alert in the channel data model.
@@ -445,9 +448,10 @@ func TestExpandTemplateFailures(t *testing.T) {
 				BuiltinTitleTemplate: "builtin title",
 				BuiltinBodyTemplate:  "builtin: {{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
 			},
-			wantTitle:         "ErrorRateHigh",
-			wantBody:          []string{"builtin: ErrorRateHigh"},
-			wantIsDefaultBody: true,
+			wantTitle:          "ErrorRateHigh",
+			wantBody:           []string{"builtin: ErrorRateHigh"},
+			wantIsDefaultBody:  true,
+			wantChannelBodyErr: "can't evaluate field Value in type template.Alert",
 		},
 		{
 			name: "CustomAndDefaultTitleFail_UsesBuiltinTitle",
@@ -459,10 +463,11 @@ func TestExpandTemplateFailures(t *testing.T) {
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname | toUpperAndTrim }}",
 				BuiltinTitleTemplate: "builtin: {{ .CommonLabels.alertname }}",
 			},
-			wantTitle:            "builtin: ReplicaLag",
-			wantBody:             []string{""},
-			wantIsDefaultBody:    true,
-			wantTitleTemplateErr: "nil pointer evaluating interface {}.alertname",
+			wantTitle:           "builtin: ReplicaLag",
+			wantBody:            []string{""},
+			wantIsDefaultBody:   true,
+			wantRuleTitleErr:    "nil pointer evaluating interface {}.alertname",
+			wantChannelTitleErr: `function "toUpperAndTrim" not defined`,
 		},
 		{
 			name: "EmptyDefaultTitle_IsNotAFailure",
@@ -500,15 +505,20 @@ func TestExpandTemplateFailures(t *testing.T) {
 			assert.Equal(t, testCase.wantTitle, got.Title)
 			assert.Equal(t, testCase.wantBody, got.Body)
 			assert.Equal(t, testCase.wantIsDefaultBody, got.IsDefaultBody)
-			if testCase.wantTitleTemplateErr == "" {
-				assert.NoError(t, got.TitleTemplateErr)
-			} else {
-				assert.ErrorContains(t, got.TitleTemplateErr, testCase.wantTitleTemplateErr)
-			}
-			if testCase.wantBodyTemplateErr == "" {
-				assert.NoError(t, got.BodyTemplateErr)
-			} else {
-				assert.ErrorContains(t, got.BodyTemplateErr, testCase.wantBodyTemplateErr)
+			for _, failure := range []struct {
+				got  error
+				want string
+			}{
+				{got.Failures.RuleTitle, testCase.wantRuleTitleErr},
+				{got.Failures.RuleBody, testCase.wantRuleBodyErr},
+				{got.Failures.ChannelTitle, testCase.wantChannelTitleErr},
+				{got.Failures.ChannelBody, testCase.wantChannelBodyErr},
+			} {
+				if failure.want == "" {
+					assert.NoError(t, failure.got)
+				} else {
+					assert.ErrorContains(t, failure.got, failure.want)
+				}
 			}
 		})
 	}

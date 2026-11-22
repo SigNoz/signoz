@@ -108,6 +108,9 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 			parts = append(parts, body)
 		}
 	}
+	if notice := result.Failures.Notice(); notice != "" {
+		parts = append(parts, notice)
+	}
 	description := truncateRunes(strings.Join(parts, "\n\n---\n\n"), maxDescriptionLenRunes)
 
 	status := statusFiring

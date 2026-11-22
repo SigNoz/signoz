@@ -433,6 +433,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 	}
 
 	subject := result.Title
+	notice := alertmanagertemplate.RenderFailureNotice(ctx, n.logger, result.Failures, markdownrenderer.RenderHTML)
 
 	if !result.IsDefaultBody {
 		// Custom-body path: render each expanded markdown body to HTML, then
@@ -449,6 +450,9 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 			result.Body[i] = rendered
 		}
 		appendRelatedLinkButtons(alerts, result.Body)
+		if notice != "" {
+			result.Body = append(result.Body, notice)
+		}
 		html, err := n.renderLayout(result)
 		if err != nil {
 			n.logger.WarnContext(ctx, "custom email template rendering failed, falling back to plain <div> wrap", errors.Attr(err))
@@ -457,7 +461,7 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 		return subject, html, nil
 	}
 
-	return subject, result.Body[0], nil
+	return subject, result.Body[0] + notice, nil
 }
 
 // renderLayout wraps result in the email.signoz.html HTML layout loaded

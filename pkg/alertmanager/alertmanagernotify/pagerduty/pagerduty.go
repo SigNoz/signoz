@@ -17,6 +17,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/alecthomas/units"
 	commoncfg "github.com/prometheus/common/config"
@@ -303,7 +304,7 @@ func (n *Notifier) notifyV2(
 // we care about — the description/summary field is what users see as the
 // incident headline, so we feed the configured Description as the default
 // title template and ignore any custom body_template entirely.
-func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (string, error) {
+func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (string, alertmanagertypes.TemplateFailures, error) {
 	customTitle, _ := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
@@ -311,9 +312,9 @@ func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (str
 		BuiltinTitleTemplate: config.DefaultPagerdutyConfig.Description,
 	}, alerts)
 	if err != nil {
-		return "", err
+		return "", alertmanagertypes.TemplateFailures{}, err
 	}
-	return result.Title, nil
+	return result.Title, result.Failures, nil
 }
 
 // Notify implements the Notifier interface.
@@ -324,7 +325,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 	logger := n.logger.With(slog.Any("group_key", key))
 
-	title, err := n.prepareTitle(ctx, as)
+	title, failures, err := n.prepareTitle(ctx, as)
 	if err != nil {
 		n.logger.ErrorContext(ctx, "failed to prepare notification content", errors.Attr(err))
 		return false, err
@@ -345,6 +346,10 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	details, err := n.renderDetails(data)
 	if err != nil {
 		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to render details: %v", err)
+	}
+	// An event has no body, so the notice goes with the details.
+	if notice := alertmanagertemplate.RenderFailureNotice(ctx, logger, failures, markdownrenderer.RenderPlainText); notice != "" {
+		details["template_failure"] = notice
 	}
 
 	if n.conf.Timeout > 0 {

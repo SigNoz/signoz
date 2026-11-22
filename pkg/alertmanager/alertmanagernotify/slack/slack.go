@@ -212,7 +212,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		} else {
 			markdownIn = n.conf.MrkdwnIn
 		}
-		return []attachment{
+		return n.appendFailureNotice(ctx, result.Failures, []attachment{
 			{
 				Title:      title,
 				TitleLink:  tmplText(n.conf.TitleLink),
@@ -226,7 +226,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 				Color:      tmplText(n.conf.Color),
 				MrkdwnIn:   markdownIn,
 			},
-		}, nil
+		}), nil
 	}
 
 	// Custom template path: one title attachment + one attachment per
@@ -263,7 +263,17 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		})
 	}
 
-	return attachments, nil
+	return n.appendFailureNotice(ctx, result.Failures, attachments), nil
+}
+
+// appendFailureNotice adds an attachment that says which template failed.
+func (n *Notifier) appendFailureNotice(ctx context.Context, failures alertmanagertypes.TemplateFailures, attachments []attachment) []attachment {
+	notice := alertmanagertemplate.RenderFailureNotice(ctx, n.logger, failures, markdownrenderer.RenderSlackMrkdwn)
+	if notice == "" {
+		return attachments
+	}
+
+	return append(attachments, attachment{Text: notice, MrkdwnIn: []string{"text"}})
 }
 
 // buildRelatedLinkActions returns the "View Related Logs/Traces" action

@@ -41,6 +41,7 @@ func TestReceiverIntegrationsNotifyWhenATemplateFails(t *testing.T) {
 		channelBody  string
 		annotations  model.LabelSet
 		wantTitle    string
+		wantNotice   string
 	}{
 		{
 			// A title copied from a channel template reads fields that the
@@ -50,6 +51,7 @@ func TestReceiverIntegrationsNotifyWhenATemplateFails(t *testing.T) {
 			channelBody:  "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}",
 			annotations:  model.LabelSet{ruletypes.AnnotationTitleTemplate: "Rule title: {{ .CommonLabels.alertname }}"},
 			wantTitle:    "slow: PodMemoryHigh",
+			wantNotice:   "The rule title template failed",
 		},
 		{
 			// slice fails on a pod name shorter than 40 characters.
@@ -58,12 +60,14 @@ func TestReceiverIntegrationsNotifyWhenATemplateFails(t *testing.T) {
 			channelBody:  "{{ range .Alerts }}{{ .Labels.pod }}{{ end }}",
 			annotations:  model.LabelSet{ruletypes.AnnotationBodyTemplate: "{{ slice .labels.pod 0 40 }} is high"},
 			wantTitle:    "high: PodMemoryHigh",
+			wantNotice:   "The rule body template failed",
 		},
 		{
 			name:         "ChannelTitleFails_SendsTheBuiltinTitle",
 			channelTitle: "{{ .Alerts.Firing | len",
 			channelBody:  "{{ range .Alerts }}{{ .Labels.severity }}{{ end }}",
 			wantTitle:    "[FIRING:1]",
+			wantNotice:   "The channel title template failed",
 		},
 		{
 			// .Value is not a field of an alert in the channel data model.
@@ -71,6 +75,7 @@ func TestReceiverIntegrationsNotifyWhenATemplateFails(t *testing.T) {
 			channelTitle: "hot: {{ .CommonLabels.alertname }}",
 			channelBody:  "{{ range .Alerts }}{{ .Value }}{{ end }}",
 			wantTitle:    "hot: PodMemoryHigh",
+			wantNotice:   "The channel body template failed",
 		},
 	}
 
@@ -137,6 +142,11 @@ func TestReceiverIntegrationsNotifyWhenATemplateFails(t *testing.T) {
 			defer mu.Unlock()
 			for _, integration := range integrations {
 				assert.Contains(t, posted[integration.Name()], testCase.wantTitle, integration.Name())
+				// A PagerDuty event has a title and no body template.
+				if integration.Name() == pagerduty.Integration && strings.Contains(testCase.wantNotice, "body") {
+					continue
+				}
+				assert.Contains(t, posted[integration.Name()], testCase.wantNotice, integration.Name())
 			}
 		})
 	}

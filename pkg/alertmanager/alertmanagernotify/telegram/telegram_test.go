@@ -8,9 +8,11 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
@@ -272,7 +274,8 @@ func TestNotifySendsWhenATemplateFails(t *testing.T) {
 				ruletypes.AnnotationTitleTemplate: "Rule title: {{ .CommonLabels.alertname }}",
 				ruletypes.AnnotationBodyTemplate:  "$alert.status for $rule.name",
 			})},
-			wantText: "<b>[FIRING:1] checkout-latency-high</b>\n\nfiring for checkout-latency-high",
+			wantText: "<b>[FIRING:1] checkout-latency-high</b>\n\nfiring for checkout-latency-high\n\n" +
+				"The rule title template failed: <code>.CommonLabels.alertname: nil pointer evaluating interface {}.alertname</code>. The channel title is shown.",
 		},
 		{
 			// slice fails on a host name shorter than 40 characters.
@@ -283,7 +286,8 @@ func TestNotifySendsWhenATemplateFails(t *testing.T) {
 				ruletypes.AnnotationTitleTemplate: "Incident on $labels.host",
 				ruletypes.AnnotationBodyTemplate:  "{{ slice .labels.host 0 40 }} is slow",
 			})},
-			wantText: "<b>Incident on web-4</b>\n\nweb-4 is slow",
+			wantText: "<b>Incident on web-4</b>\n\nweb-4 is slow\n\n" +
+				"The rule body template failed: <code>slice .labels.host 0 40: error calling slice: index out of range: 40</code>. The channel body is shown.",
 		},
 		{
 			// An empty title is a choice the rule made, not a failure.
@@ -301,7 +305,8 @@ func TestNotifySendsWhenATemplateFails(t *testing.T) {
 			channelTitle:   "{{ .Alerts.Firing | len",
 			channelMessage: "{{ range .Alerts }}{{ .Labels.host }} is degraded{{ end }}",
 			alerts:         []*types.Alert{newAlert("web-6", nil)},
-			wantText:       "<b>[FIRING:1] checkout-latency-high</b>\n\nweb-6 is degraded",
+			wantText: "<b>[FIRING:1] checkout-latency-high</b>\n\nweb-6 is degraded\n\n" +
+				"The channel title template failed: <code>unclosed action</code>. The built-in title is shown.",
 		},
 		{
 			// .Value is not a field of an alert in the channel data model.
@@ -309,7 +314,8 @@ func TestNotifySendsWhenATemplateFails(t *testing.T) {
 			channelTitle:   "{{ .CommonLabels.host }}",
 			channelMessage: "{{ range .Alerts }}{{ .Value }}{{ end }}",
 			alerts:         []*types.Alert{newAlert("web-7", nil)},
-			wantText:       "<b>web-7</b>\n\n<b>Alert:</b> checkout-latency-high (warning)\n<b>Summary:</b> p99 is 612ms\n<a href=\"http://am/alerts/overview?ruleId=r1\">View in SigNoz</a>",
+			wantText: "<b>web-7</b>\n\n<b>Alert:</b> checkout-latency-high (warning)\n<b>Summary:</b> p99 is 612ms\n<a href=\"http://am/alerts/overview?ruleId=r1\">View in SigNoz</a>\n\n" +
+				"The channel body template failed: <code>.Value: can't evaluate field Value in type template.Alert</code>. The built-in body is shown.",
 		},
 	}
 
@@ -338,6 +344,34 @@ func TestNotifySendsWhenATemplateFails(t *testing.T) {
 			assert.Equal(t, testCase.wantText, mock.only(t)["text"])
 		})
 	}
+}
+
+// The message fits and the notice does not. The notice is the last part, so
+// the cut at the limit would leave its markup open, which Telegram rejects.
+func TestNotifyLeavesTheFailureNoticeOutOfAFullMessage(t *testing.T) {
+	mock := newMockBotAPI(t)
+	tmpl := test.CreateTmpl(t)
+	apiURL, err := url.Parse(mock.srv.URL)
+	require.NoError(t, err)
+
+	logger := slog.New(slog.DiscardHandler)
+	notifier, err := New(&alertmanagertypes.TelegramReceiverConfig{
+		HTTPConfig: &commoncfg.HTTPClientConfig{},
+		APIUrl:     &config.URL{URL: apiURL},
+		BotToken:   "123456:tok",
+		ChatID:     -1001234567890,
+		ParseMode:  "HTML",
+		Title:      "{{ .Alerts.Firing | len",
+		Message:    strings.Repeat("a long line of text. ", 190),
+	}, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
+	require.NoError(t, err)
+
+	_, err = notifier.Notify(notify.WithGroupKey(context.Background(), "1"), newAlert("web-8", nil))
+	require.NoError(t, err)
+
+	text := mock.only(t)["text"]
+	assert.Equal(t, "<b>[FIRING:1] checkout-latency-high</b>\n\n"+strings.TrimSpace(strings.Repeat("a long line of text. ", 190)), text)
+	assert.Less(t, utf8.RuneCountInString(text), 4096)
 }
 
 // A v1-written receiver can carry a mode the v2 spec no longer offers. Nothing

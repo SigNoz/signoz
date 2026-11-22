@@ -247,7 +247,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 			})
 			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
 		}
-		return blocks, nil
+		return appendFailureNotice(blocks, result.Failures), nil
 	}
 
 	// Custom body path: result.Body is positionally aligned with alerts;
@@ -268,7 +268,17 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 			Color: perAlertColor,
 		})
 	}
-	return blocks, nil
+	return appendFailureNotice(blocks, result.Failures), nil
+}
+
+// appendFailureNotice adds a block that says which template failed.
+func appendFailureNotice(blocks []Body, failures alertmanagertypes.TemplateFailures) []Body {
+	notice := failures.Notice()
+	if notice == "" {
+		return blocks
+	}
+
+	return append(blocks, Body{Type: "TextBlock", Text: notice, Wrap: true})
 }
 
 func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {

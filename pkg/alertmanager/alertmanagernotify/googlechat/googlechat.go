@@ -103,6 +103,9 @@ type openLink struct {
 type content struct {
 	title  string
 	bodies []string
+	// notice says which template failed. It is not one of bodies, which stay
+	// aligned with the alerts.
+	notice string
 }
 
 func New(conf *alertmanagertypes.GoogleChatReceiverConfig, t *template.Template, l *slog.Logger, templater alertmanagertypes.Templater) (*Notifier, error) {
@@ -164,7 +167,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	if len(alerts) > 0 {
 		footerAlert = alerts[0]
 	}
-	buf, err := encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, footerAlert))
+	buf, err := encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, c.notice, footerAlert))
 	if err != nil {
 		return false, err
 	}
@@ -180,7 +183,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 			// templating makes that reachable.
 			break
 		}
-		if buf, err = encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, footerAlert)); err != nil {
+		if buf, err = encodeMessage(buildMessage(title, status, capAlerts, bodies, remaining, c.notice, footerAlert)); err != nil {
 			return false, err
 		}
 	}
@@ -230,7 +233,9 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 		bodies[i] = html
 	}
 
-	return content{title: result.Title, bodies: bodies}, nil
+	notice := alertmanagertemplate.RenderFailureNotice(ctx, n.logger, result.Failures, markdownrenderer.RenderHTML)
+
+	return content{title: result.Title, bodies: bodies, notice: notice}, nil
 }
 
 // statusLine returns a colored firing/resolved banner for the card body.
@@ -292,7 +297,7 @@ func capAlertSections(alerts []*types.Alert, bodies []string) ([]*types.Alert, [
 // alerts and bodies slices are the already-capped, aligned render set; footerAlert
 // is the original first alert, used for the per-rule footer button so it survives
 // even when no body renders.
-func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []string, remaining int, footerAlert *types.Alert) Message {
+func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []string, remaining int, notice string, footerAlert *types.Alert) Message {
 	sections := []cardSection{{Widgets: []widget{{TextParagraph: &textParagraph{Text: statusHTML}}}}}
 
 	for i, body := range bodies {
@@ -311,6 +316,10 @@ func buildMessage(title, statusHTML string, alerts []*types.Alert, bodies []stri
 	if remaining > 0 {
 		note := fmt.Sprintf("<i>…and %d more alerts. Open in SigNoz for the full list.</i>", remaining)
 		sections = append(sections, cardSection{Widgets: []widget{{TextParagraph: &textParagraph{Text: note}}}})
+	}
+
+	if notice != "" {
+		sections = append(sections, cardSection{Widgets: []widget{{TextParagraph: &textParagraph{Text: notice}}}})
 	}
 
 	if footerAlert != nil {

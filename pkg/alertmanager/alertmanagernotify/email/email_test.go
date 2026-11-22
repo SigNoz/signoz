@@ -1154,6 +1154,58 @@ func TestPrepareContent(t *testing.T) {
 		assert.Equal(t, "fixed from firing", subject)
 		assert.NotContains(t, subject, "subject")
 	})
+
+	t.Run("custom title template that fails; custom body template", func(t *testing.T) {
+		tmpl, err := template.FromGlobs([]string{})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+
+		alerts := []*types.Alert{{
+			Alert: model.Alert{
+				Labels: model.LabelSet{"instance": "three"},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationTitleTemplate): "Rule title: {{ .CommonLabels.alertname }}",
+					model.LabelName(ruletypes.AnnotationBodyTemplate):  "line $labels.instance",
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}}
+		cfg := &config.EmailConfig{Headers: map[string]string{"Subject": "channel subject"}}
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
+
+		subject, htmlBody, err := n.prepareContent(context.Background(), alerts)
+		require.NoError(t, err)
+		assert.Equal(t, "channel subject", subject)
+		assert.Equal(t, "<div><p>line three</p>\n</div><div><p>The rule title template failed: <code>.CommonLabels.alertname: nil pointer evaluating interface {}.alertname</code>. The channel title is shown.</p></div>", htmlBody)
+	})
+
+	t.Run("custom body template that fails; default body HTML template", func(t *testing.T) {
+		tmpl, err := template.FromGlobs([]string{})
+		require.NoError(t, err)
+		tmpl.ExternalURL, _ = url.Parse("http://am")
+
+		alerts := []*types.Alert{{
+			Alert: model.Alert{
+				Labels: model.LabelSet{"instance": "four"},
+				Annotations: model.LabelSet{
+					model.LabelName(ruletypes.AnnotationBodyTemplate): "{{ slice .labels.instance 0 40 }}",
+				},
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+			},
+		}}
+		cfg := &config.EmailConfig{
+			Headers: map[string]string{"Subject": "the channel subject"},
+			HTML:    "<p>Status: {{ .Status }}</p>",
+		}
+		n := New(cfg, tmpl, promslog.NewNopLogger(), testTemplater(tmpl))
+
+		subject, htmlBody, err := n.prepareContent(context.Background(), alerts)
+		require.NoError(t, err)
+		assert.Equal(t, "the channel subject", subject)
+		assert.Equal(t, "<p>Status: firing</p><p>The rule body template failed: <code>slice .labels.instance 0 40: error calling slice: index out of range: 40</code>. The channel body is shown.</p>", htmlBody)
+	})
 }
 
 func ptrTo(b bool) *bool {

@@ -666,9 +666,19 @@ func TestOpsGenieMessageFallsBackToTheBuiltinOfTheChannelKind(t *testing.T) {
 		name             string
 		advancedFeatures bool
 		wantMessage      string
+		wantDescription  string
 	}{
-		{name: "OpsGenie", advancedFeatures: false, wantMessage: "[FIRING:1] DiskFull (critical)"},
-		{name: "JSMOps", advancedFeatures: true, wantMessage: "[FIRING:1] DiskFull"},
+		{
+			name:            "OpsGenie",
+			wantMessage:     "[FIRING:1] DiskFull (critical)",
+			wantDescription: "DiskFull\n\nThe channel title template failed: unclosed action. The built-in title is shown.",
+		},
+		{
+			name:             "JSMOps",
+			advancedFeatures: true,
+			wantMessage:      "[FIRING:1] DiskFull",
+			wantDescription:  "<div><p>DiskFull</p>\n</div><hr><div><p>The channel title template failed: <code>unclosed action</code>. The built-in title is shown.</p></div>",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -699,6 +709,7 @@ func TestOpsGenieMessageFallsBackToTheBuiltinOfTheChannelKind(t *testing.T) {
 			var created opsGenieCreateMessage
 			require.NoError(t, json.Unmarshal([]byte(readBody(t, reqs[0])), &created))
 			assert.Equal(t, testCase.wantMessage, created.Message)
+			assert.Equal(t, testCase.wantDescription, created.Description)
 		})
 	}
 }
