@@ -13,6 +13,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerstore/sqlalertmanagerstore"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory/factorytest"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
@@ -317,7 +318,11 @@ func TestServerTestAlertContinuesOnFailure(t *testing.T) {
 	}
 
 	err = server.TestAlert(context.Background(), receiversMap, config)
-	assert.Error(t, err)
+	require.Error(t, err)
+	assert.True(t, errors.Ast(err, errors.TypeInvalidInput))
+	failures := errors.AsJSON(err).Errors
+	require.Len(t, failures, 1)
+	assert.Contains(t, failures[0].Message, `receiver "failing-receiver": `)
 
 	time.Sleep(100 * time.Millisecond)
 

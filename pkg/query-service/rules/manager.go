@@ -827,9 +827,9 @@ func (m *Manager) notifyFunc(ctx context.Context, orgID string, alerts ...*rulet
 	}
 }
 
-func (m *Manager) testNotifyFunc(ctx context.Context, orgID string, alerts ...*ruletypes.Alert) {
+func (m *Manager) sendTestAlerts(ctx context.Context, orgID string, alerts ...*ruletypes.Alert) error {
 	if len(alerts) == 0 {
-		return
+		return nil
 	}
 	ruleID := alerts[0].Labels.Map()[ruletypes.AlertRuleIDLabel]
 	receiverMap := make(map[*alertmanagertypes.PostableAlert][]string)
@@ -852,10 +852,7 @@ func (m *Manager) testNotifyFunc(ctx context.Context, orgID string, alerts ...*r
 		}
 		receiverMap[a] = alert.Receivers
 	}
-	err := m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
-	if err != nil {
-		m.logger.ErrorContext(ctx, "failed to send test notification", errors.Attr(err))
-	}
+	return m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
 }
 
 func (m *Manager) ListActiveRules() ([]Rule, error) {
@@ -1140,6 +1137,7 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		return 0, err
 	}
 
+	var sendErr error
 	alertCount, err := m.prepareTestRuleFunc(PrepareTestRuleOptions{
 		Rule:        &parsedRule,
 		RuleStore:   m.ruleStore,
@@ -1147,10 +1145,15 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		Logger:      m.opts.Logger,
 		Cache:       m.cache,
 		ManagerOpts: m.opts,
-		NotifyFunc:  m.testNotifyFunc,
-		SQLStore:    m.sqlstore,
-		OrgID:       orgID,
+		NotifyFunc: func(ctx context.Context, orgID string, alerts ...*ruletypes.Alert) {
+			sendErr = m.sendTestAlerts(ctx, orgID, alerts...)
+		},
+		SQLStore: m.sqlstore,
+		OrgID:    orgID,
 	})
+	if err != nil {
+		return alertCount, err
+	}
 
-	return alertCount, err
+	return alertCount, sendErr
 }

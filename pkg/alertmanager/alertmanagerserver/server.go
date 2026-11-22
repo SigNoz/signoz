@@ -2,7 +2,9 @@ package alertmanagerserver
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -418,7 +420,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	}
 
 	var mu sync.Mutex
-	var errs []error
+	var failures []string
 
 	g, gCtx := errgroup.WithContext(ctx)
 	for _, group := range groupMap {
@@ -430,7 +432,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 				receiver, err := server.alertmanagerConfig.GetReceiver(receiverName)
 				if err != nil {
 					mu.Lock()
-					errs = append(errs, errors.WrapInternalf(err, errors.CodeInternal, "failed to get receiver %q", receiverName))
+					failures = append(failures, fmt.Sprintf("receiver %q: %s", receiverName, err.Error()))
 					mu.Unlock()
 					return nil // Return nil to continue processing other goroutines
 				}
@@ -448,7 +450,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 				)
 				if err != nil {
 					mu.Lock()
-					errs = append(errs, errors.WrapInternalf(err, errors.CodeInternal, "receiver %q test failed", receiverName))
+					failures = append(failures, fmt.Sprintf("receiver %q: %s", receiverName, err.Error()))
 					mu.Unlock()
 				}
 				return nil // Return nil to continue processing other goroutines
@@ -457,8 +459,11 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	}
 	_ = g.Wait()
 
-	if len(errs) > 0 {
-		return errors.Join(errs...)
+	// A receiver that does not take the alert is the caller's to correct, so
+	// this is not an internal error.
+	if len(failures) > 0 {
+		slices.Sort(failures)
+		return errors.NewInvalidInputf(alertmanagertypes.ErrCodeAlertmanagerTestAlertFailed, "the test alert was not delivered to every receiver").WithAdditional(failures...)
 	}
 
 	return nil

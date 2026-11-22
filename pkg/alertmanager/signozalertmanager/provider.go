@@ -137,6 +137,9 @@ func (provider *provider) TestAlert(ctx context.Context, orgID string, ruleID st
 				receiversMap[alert] = match
 			}
 		}
+		if len(receiversMap) == 0 {
+			return errors.NewInvalidInputf(alertmanagertypes.ErrCodeAlertmanagerTestAlertFailed, "no notification policy matches the alerts of this rule")
+		}
 	}
 	return provider.service.TestAlert(ctx, orgID, receiversMap, config)
 }

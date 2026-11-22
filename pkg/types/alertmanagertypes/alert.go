@@ -45,6 +45,8 @@ const (
 	NoDataLabel = model.LabelName("nodata")
 )
 
+var ErrCodeAlertmanagerTestAlertFailed = errors.MustNewCode("alertmanager_test_alert_failed")
+
 type DeprecatedGettableAlert struct {
 	*model.Alert
 	Status      types.AlertStatus `json:"status" description:"The alert state and the silences and inhibitions suppressing it."`

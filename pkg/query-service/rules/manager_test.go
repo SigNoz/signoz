@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagerserver"
 	alertmanagermock "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertest"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
@@ -146,6 +147,56 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 			}
 		})
 	}
+}
+
+// The caller pressed "test" to learn whether the notification arrives, so a
+// receiver that does not take it is the result of the test.
+func TestManager_TestNotification_ReturnsTheSendError(t *testing.T) {
+	target := 10.0
+	recovery := 5.0
+	rule := ThresholdRuleAtLeastOnceValueAbove(target, &recovery)
+	ruleBytes, err := json.Marshal(rule)
+	require.NoError(t, err)
+
+	orgID := valuer.GenerateUUID()
+	sendErr := errors.NewInvalidInputf(alertmanagertypes.ErrCodeAlertmanagerTestAlertFailed, "the test alert was not delivered to every receiver")
+
+	mgr := NewTestManager(t, &TestManagerOptions{
+		AlertmanagerHook: func(am alertmanager.Alertmanager) {
+			mockAM := am.(*alertmanagermock.MockAlertmanager)
+			mockAM.On("SetNotificationConfig", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			mockAM.On("Config").Return(alertmanagerserver.Config{ExternalURL: mustParseURL(t, "http://localhost:8080")})
+			mockAM.On("TestAlert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(sendErr).Once()
+		},
+		SqlStoreHook: func(store sqlstore.SQLStore) {
+			mockStore := store.(*sqlstoretest.Provider)
+			orgRows := mockStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
+			mockStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
+		},
+		TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
+			mock := store.(*telemetrystoretest.Provider).Mock()
+			metadataCols := []cmock.ColumnType{
+				{Name: "metric_name", Type: "String"},
+				{Name: "temporality", Type: "String"},
+				{Name: "type", Type: "String"},
+				{Name: "is_monotonic", Type: "Bool"},
+			}
+			mock.ExpectQuery("*distributed_time_series_v4*").WithArgs(nil, nil, nil).WillReturnRows(cmock.NewRows(metadataCols, [][]any{
+				{"probe_success", metrictypes.Unspecified, metrictypes.GaugeType, false},
+			}))
+			mock.ExpectQuery("*meter*").WithArgs(nil).WillReturnRows(cmock.NewRows(metadataCols, [][]any{}))
+
+			queryArgs := GenerateMetricQueryCHArgs(time.Now().UTC(), 5*time.Minute, time.Duration(0), "probe_success", metrictypes.Unspecified)
+			mock.ExpectQuery("*WITH __temporal_aggregation_cte*").WithArgs(queryArgs...).WillReturnRows(cmock.NewRows(
+				[]cmock.ColumnType{{Name: "value", Type: "Float64"}, {Name: "attr", Type: "String"}, {Name: "ts", Type: "DateTime"}},
+				[][]any{{float64(12), "attr", time.Now()}},
+			))
+		},
+	})
+
+	count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+	require.ErrorIs(t, err, sendErr)
+	assert.Equal(t, 1, count)
 }
 
 func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
