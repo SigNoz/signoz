@@ -53,7 +53,6 @@ const EXCLUDED_PLUGINS = [
 	'vite-plugin-checker',
 	'dev-base-path',
 	'dev-boot-data',
-	'vite-plugin-image-optimizer',
 	'vite-plugin-compression',
 ];
 
