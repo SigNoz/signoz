@@ -42,7 +42,10 @@ const config: Config.InitialOptions = {
 			'<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
-	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],
+	testMatch: [
+		'<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)',
+		'<rootDir>/vite-plugins/**/*.test.ts',
+	],
 	preset: 'ts-jest/presets/js-with-ts-esm',
 	transform: {
 		'^.+\\.(ts|tsx)?$': [
