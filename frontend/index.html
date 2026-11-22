@@ -3,6 +3,70 @@
 	<head>
 		<meta charset="utf-8" />
 		<base href="[[.BaseHref]]" />
+		<script id="signoz-boot-guard">
+			(function () {
+				function render(kind) {
+					if (document.getElementById('signoz-boot-error')) return;
+					var light = document.body.classList.contains('lightMode');
+					var box = document.createElement('div');
+					box.id = 'signoz-boot-error';
+					box.setAttribute('role', 'alert');
+					box.setAttribute('data-testid', 'boot-error');
+					box.style.cssText =
+						'position:fixed;top:0;right:0;bottom:0;left:0;z-index:2147483647;display:flex;' +
+						'flex-direction:column;align-items:center;justify-content:center;padding:24px;' +
+						'box-sizing:border-box;text-align:center;font:16px/1.5 system-ui,sans-serif;' +
+						'background:' +
+						(light ? '#fff' : '#0b0c0e') +
+						';color:' +
+						(light ? '#1a1a1a' : '#e6e6e6');
+					var title = document.createElement('h1');
+					title.style.cssText = 'margin:0 0 8px;font-size:20px;font-weight:600';
+					var text = document.createElement('p');
+					text.style.cssText = 'margin:0 0 16px;max-width:520px';
+					if (kind === 'unsupported') {
+						title.textContent = 'Your browser is not supported';
+						text.textContent =
+							'SigNoz needs a newer browser. Update Chrome, Edge, Firefox or Safari, then reload this page.';
+					} else {
+						title.textContent = 'SigNoz failed to load';
+						text.textContent =
+							'Part of the app could not be downloaded. Check your connection and reload the page. If it keeps happening, contact your administrator.';
+					}
+					box.appendChild(title);
+					box.appendChild(text);
+					if (kind !== 'unsupported') {
+						var reload = document.createElement('button');
+						reload.type = 'button';
+						reload.textContent = 'Reload';
+						reload.setAttribute('data-testid', 'boot-error-reload');
+						reload.style.cssText =
+							'padding:8px 20px;font:inherit;cursor:pointer;border:1px solid currentColor;border-radius:4px;background:transparent;color:inherit';
+						reload.onclick = function () {
+							window.location.reload();
+						};
+						box.appendChild(reload);
+					}
+					document.body.appendChild(box);
+				}
+				window.__signozBoot = {
+					supported: !!(
+						window.HTMLScriptElement &&
+						HTMLScriptElement.supports &&
+						HTMLScriptElement.supports('importmap')
+					),
+					fail: function (kind) {
+						if (document.body) {
+							render(kind);
+						} else {
+							document.addEventListener('DOMContentLoaded', function () {
+								render(kind);
+							});
+						}
+					},
+				};
+			})();
+		</script>
 		<meta
 			http-equiv="Cache-Control"
 			content="no-cache, no-store, must-revalidate, max-age: 0"

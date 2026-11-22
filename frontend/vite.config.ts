@@ -14,6 +14,8 @@ import type {
 	Sentry,
 	WebSettings,
 } from 'types/generated/webSettings';
+import { injectChunkImportMap } from './vite-plugins/injectChunkImportMap';
+import { vendorChunkName } from './vite-plugins/vendorChunkName';
 
 // In dev the Go backend is not involved, so replace the [[.BaseHref]] placeholder
 // with the configured base path so relative assets resolve correctly from the Vite dev server.
@@ -75,7 +77,7 @@ function rawMarkdownPlugin(): Plugin {
 	};
 }
 
-export default defineConfig(({ mode }): UserConfig => {
+export default defineConfig(({ command, mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
 	// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
 	const basePath = env.VITE_BASE_PATH || '/';
@@ -112,7 +114,13 @@ export default defineConfig(({ mode }): UserConfig => {
 				project: env.VITE_SENTRY_PROJECT_ID,
 				// Pin the sourcemap-upload release to the same value injected as
 				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
-				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
+				// `inject: false`: the release string would otherwise land in every chunk
+				// and change all their hashes on each release. Sentry.init sets it.
+				release: {
+					name: env.VITE_VERSION,
+					inject: false,
+					setCommits: { auto: true },
+				},
 			}),
 		);
 	}
@@ -187,14 +195,38 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			chunkImportMap: true,
 			rolldownOptions: {
 				output: {
-					// Without this group Rolldown splits the entry's static graph into ~300
-					// chunks, 324 requests on first load.
+					// Export aliases are renumbered whenever a chunk's exports change, which
+					// re-hashes every importer.
+					minifyInternalExports: false,
+					// Without these groups Rolldown splits the entry's static graph into ~300
+					// chunks, 324 requests on first load. `initial` keeps the app code of that
+					// graph in one chunk, so the packages around it can keep their hashes.
 					codeSplitting: {
-						groups: [{ name: 'initial', tags: ['$initial'] }],
+						groups: [
+							{
+								name: vendorChunkName,
+								debugName: 'per-package',
+								test: 'node_modules',
+								tags: ['$initial'],
+								minSize: 100 * 1024,
+								priority: 5,
+							},
+							{
+								name: 'v-misc',
+								test: 'node_modules',
+								tags: ['$initial'],
+								priority: 1,
+							},
+							{ name: 'initial', tags: ['$initial'] },
+						],
 					},
 				},
+				// `experimental.bundledDev` runs these during serve without emitting the
+				// import map.
+				plugins: command === 'build' ? [injectChunkImportMap()] : [],
 			},
 		},
 		server: {
