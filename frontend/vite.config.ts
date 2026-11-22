@@ -91,7 +91,7 @@ const MONACO_UNUSED_CONTRIBS = [
 	'semanticTokens',
 ];
 
-export default defineConfig(({ mode }): UserConfig => {
+export default defineConfig(({ command, mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
 	// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
 	const basePath = env.VITE_BASE_PATH || '/';
@@ -242,7 +242,9 @@ export default defineConfig(({ mode }): UserConfig => {
 						],
 					},
 				},
-				plugins: [injectChunkImportMap()],
+				// `experimental.bundledDev` runs these during serve without emitting the
+				// import map.
+				plugins: command === 'build' ? [injectChunkImportMap()] : [],
 			},
 		},
 		// An iife worker runs as a sloppy script, where a function declared in a
