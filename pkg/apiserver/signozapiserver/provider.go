@@ -338,7 +338,7 @@ func newProvider(
 	}
 
 	httpHandler := middleware.NewCors().Wrap(router)
-	compress, err := middleware.NewCompress()
+	compress, err := middleware.NewCompress(config.Compression.Enabled, config.Compression.Level)
 	if err != nil {
 		return nil, err
 	}

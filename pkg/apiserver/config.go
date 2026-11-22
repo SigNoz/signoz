@@ -1,6 +1,7 @@
 package apiserver
 
 import (
+	"compress/gzip"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -11,8 +12,9 @@ import (
 // Config holds the configuration for config.
 type Config struct {
 	httpserver.Config `mapstructure:",squash" yaml:",squash"`
-	Timeout           Timeout `mapstructure:"timeout"`
-	Logging           Logging `mapstructure:"logging"`
+	Timeout           Timeout     `mapstructure:"timeout"`
+	Logging           Logging     `mapstructure:"logging"`
+	Compression       Compression `mapstructure:"compression"`
 }
 
 type Timeout struct {
@@ -27,6 +29,13 @@ type Timeout struct {
 type Logging struct {
 	// The list of routes that are excluded from the logging
 	ExcludedRoutes []string `mapstructure:"excluded_routes"`
+}
+
+type Compression struct {
+	// Whether to gzip responses on the fly
+	Enabled bool `mapstructure:"enabled"`
+	// The gzip level, from 1 (fastest) to 9 (smallest), or -1 for the default
+	Level int `mapstructure:"level"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -55,6 +64,10 @@ func newConfig() factory.Config {
 				"/",
 			},
 		},
+		Compression: Compression{
+			Enabled: true,
+			Level:   gzip.DefaultCompression,
+		},
 	}
 }
 
@@ -65,6 +78,10 @@ func (c Config) Validate() error {
 
 	if c.Address == "" {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.address is required")
+	}
+
+	if level := c.Compression.Level; level != gzip.DefaultCompression && (level < gzip.BestSpeed || level > gzip.BestCompression) {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "apiserver.compression.level must be -1 or between 1 and 9")
 	}
 
 	return nil
