@@ -6,7 +6,6 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import type {
 	Appcues,
@@ -130,12 +129,6 @@ export default defineConfig(({ mode }): UserConfig => {
 	}
 
 	if (mode === 'production') {
-		plugins.push(
-			ViteImageOptimizer({
-				jpeg: { quality: 80 },
-				jpg: { quality: 80 },
-			}),
-		);
 		plugins.push(viteCompression());
 	}
 
