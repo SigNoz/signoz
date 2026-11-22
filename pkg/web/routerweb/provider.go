@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -14,6 +15,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
+)
+
+const (
+	assetsPathPrefix      = "/assets/"
+	immutableCacheControl = "public, max-age=31536000, immutable"
 )
 
 type provider struct {
@@ -99,6 +105,11 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// path is a directory, serve index.html
 		provider.serveIndex(rw)
 		return
+	}
+
+	// files under /assets/ are content-hashed, so their URL changes with their content
+	if strings.HasPrefix(req.URL.Path, assetsPathPrefix) {
+		rw.Header().Set("Cache-Control", immutableCacheControl)
 	}
 
 	// otherwise, use http.FileServer to serve the static file
