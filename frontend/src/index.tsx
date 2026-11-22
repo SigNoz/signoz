@@ -18,6 +18,7 @@ import 'lib/monaco/loader';
 import './ReactI18';
 
 import 'styles.scss';
+import 'lib/uPlotStylesheet';
 
 installTranslationResilience();
 configureOverlayScrollbars();
