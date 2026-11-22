@@ -676,7 +676,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	)?.value as boolean;
 
 	// Add loading state to prevent layout shift during initial load
-	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
+	// Already loaded when the preferences were restored from the cache, so the
+	// first paint uses the saved width instead of the localStorage fallback.
+	const [isSidebarLoaded, setIsSidebarLoaded] = useState(
+		() => !isFetchingUserPreferences,
+	);
 
 	// Get sidebar state from localStorage as fallback until preferences are loaded
 	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
