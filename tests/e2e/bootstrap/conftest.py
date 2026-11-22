@@ -17,10 +17,12 @@ def e2e_env() -> dict:
     """Environment every e2e SigNoz gets. Each Playwright worker logs in once,
     and the default cap of 5 sessions per user evicts the oldest, which turns a
     worker's requests into 401s mid-run. Metrics reduction is off by default in
-    pkg/flagger/registry.go and the Volume Control specs need it."""
+    pkg/flagger/registry.go and the Volume Control specs need it. On-the-fly gzip
+    is slow in the -race build, so compression is off."""
     return {
         "SIGNOZ_TOKENIZER_OPAQUE_TOKEN_MAX__PER__USER": 100,
         "SIGNOZ_FLAGGER_CONFIG_BOOLEAN_ENABLE__METRICS__REDUCTION": True,
+        "SIGNOZ_APISERVER_COMPRESSION_ENABLED": False,
     }
 
 
