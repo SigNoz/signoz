@@ -90,6 +90,19 @@ describe('getAutoContexts', () => {
 		]);
 	});
 
+	it('includes query with percent wildcards without dropping it due to URIError', () => {
+		const query = {
+			queryType: 'builder',
+			builder: { queryData: [{ filter: '%error%' }] },
+		};
+		const compositeQuery = encodeURIComponent(JSON.stringify(query));
+		const search = `?${QueryParams.compositeQuery}=${compositeQuery}`;
+
+		const contexts = getAutoContexts(ROUTES.ALERTS_NEW, search);
+
+		expect(contexts[0]?.metadata?.query).toStrictEqual(query);
+	});
+
 	it('returns triggered alerts context on alert history without ruleId', () => {
 		const contexts = getAutoContexts(ROUTES.ALERT_HISTORY, '');
 
