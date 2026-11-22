@@ -109,6 +109,7 @@ const ChangelogModal = lazy(() =>
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const {
 		isLoggedIn,
+		isSessionPending,
 		user,
 		trialInfo,
 		activeLicense,
@@ -227,7 +228,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
-			enabled: isLoggedIn,
+			enabled: isLoggedIn && !isSessionPending,
 		},
 		{
 			queryFn: getUserLatestVersion,
@@ -238,7 +239,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(currentVersion, changelogForTenant),
 			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(currentVersion),
+			enabled: isLoggedIn && !isSessionPending && Boolean(currentVersion),
 		},
 	]);
 
@@ -249,6 +250,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			!changelog &&
 			!getChangelogByVersionResponse.isLoading &&
 			isLoggedIn &&
+			!isSessionPending &&
 			Boolean(currentVersion)
 		) {
 			getChangelogByVersionResponse.refetch();
@@ -289,10 +291,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getUserLatestVersionResponse.refetch();
 		}
 
-		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
+		if (
+			getUserVersionResponse.status === 'idle' &&
+			isLoggedIn &&
+			!isSessionPending
+		) {
 			getUserVersionResponse.refetch();
 		}
-	}, [getUserLatestVersionResponse, getUserVersionResponse, isLoggedIn]);
+	}, [
+		getUserLatestVersionResponse,
+		getUserVersionResponse,
+		isLoggedIn,
+		isSessionPending,
+	]);
 
 	const { children } = props;
 

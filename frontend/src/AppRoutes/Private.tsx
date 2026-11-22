@@ -44,6 +44,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 		activeLicense,
 		isFetchingActiveLicense,
 		trialInfo,
+		isSessionPending,
 	} = useAppContext();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
@@ -130,6 +131,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 				}}
 			/>
 		);
+	}
+
+	if (isSessionPending) {
+		return <>{children}</>;
 	}
 
 	// Public dashboard - no redirect needed

@@ -324,6 +324,10 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	},
 ];
 
+export const DEFAULT_PINNED_COUNT = defaultMoreMenuItems.filter(
+	(item) => item.isPinned,
+).length;
+
 export const settingsNavSections: SettingsNavSection[] = [
 	{
 		key: 'general',
