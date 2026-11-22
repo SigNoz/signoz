@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -52,11 +53,9 @@ func TestCompress(t *testing.T) {
 	large := []byte(strings.Repeat(`{"status":"ok","value":12345}`, 200))
 	small := []byte(`{"status":"ok"}`)
 
-	compress, err := NewCompress()
-	require.NoError(t, err)
-
 	testCases := []struct {
 		name           string
+		disabled       bool
 		acceptEncoding string
 		contentType    string
 		contentRange   string
@@ -130,6 +129,27 @@ func TestCompress(t *testing.T) {
 			wantLayers:     1,
 		},
 		{
+			name:           "Disabled_AcceptsGzip_Plain",
+			disabled:       true,
+			acceptEncoding: "gzip",
+			contentType:    "application/json",
+			status:         http.StatusOK,
+			payload:        large,
+			wantEncoding:   "",
+			wantLayers:     0,
+		},
+		{
+			name:           "Disabled_AlreadyEncoded_Untouched",
+			disabled:       true,
+			acceptEncoding: "gzip",
+			contentType:    "text/javascript",
+			status:         http.StatusOK,
+			payload:        large,
+			encoded:        true,
+			wantEncoding:   "gzip",
+			wantLayers:     1,
+		},
+		{
 			name:           "PartialContent_Plain",
 			acceptEncoding: "gzip",
 			contentType:    "application/json",
@@ -144,6 +164,9 @@ func TestCompress(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			t.Parallel()
+
+			compress, err := NewCompress(!testCase.disabled, gzip.DefaultCompression)
+			require.NoError(t, err)
 
 			wire := testCase.payload
 			if testCase.encoded {
@@ -192,7 +215,7 @@ func TestCompress(t *testing.T) {
 func TestCompressFlushesStream(t *testing.T) {
 	t.Parallel()
 
-	compress, err := NewCompress()
+	compress, err := NewCompress(true, gzip.DefaultCompression)
 	require.NoError(t, err)
 
 	release := make(chan struct{})
@@ -241,4 +264,49 @@ func TestCompressFlushesStream(t *testing.T) {
 	rest, err := io.ReadAll(lines)
 	require.NoError(t, err)
 	assert.Equal(t, "\ndata: second\n\n", string(rest))
+}
+
+func TestNewCompressLevel(t *testing.T) {
+	t.Parallel()
+
+	var payload strings.Builder
+	for i := range 4000 {
+		fmt.Fprintf(&payload, `{"id":%d,"name":"service-%d","latency":%d}`, i*7919%10007, i%97, i*104729%1009)
+	}
+
+	size := func(t *testing.T, level int) int {
+		compress, err := NewCompress(true, level)
+		require.NoError(t, err)
+
+		server := httptest.NewServer(compress.Wrap(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
+			rw.Header().Set("Content-Type", "application/json")
+			_, _ = rw.Write([]byte(payload.String()))
+		})))
+		t.Cleanup(server.Close)
+
+		req, err := http.NewRequest(http.MethodGet, server.URL, nil)
+		require.NoError(t, err)
+		req.Header.Set("Accept-Encoding", "gzip")
+
+		res, err := newCompressClient().Do(req)
+		require.NoError(t, err)
+		defer func() { _ = res.Body.Close() }()
+
+		body, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		return len(body)
+	}
+
+	assert.Less(t, size(t, gzip.BestCompression), size(t, gzip.BestSpeed))
+}
+
+func TestNewCompressInvalidLevel(t *testing.T) {
+	t.Parallel()
+
+	_, err := NewCompress(true, 10)
+	assert.Error(t, err)
+
+	_, err = NewCompress(false, 10)
+	assert.NoError(t, err)
 }
