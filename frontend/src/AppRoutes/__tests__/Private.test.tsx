@@ -1508,6 +1508,99 @@ describe('PrivateRoute', () => {
 		});
 	});
 
+	describe('Pending session', () => {
+		it('should not send a role that has not resolved to the unauthorized page', () => {
+			mockIsCloudUser = true;
+			const pendingContext: Partial<IAppContext> = {
+				isLoggedIn: true,
+				isSessionPending: true,
+				user: createMockUser({ role: USER_ROLES.ANONYMOUS as ROLES }),
+			};
+			const { rerender } = render(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.ALERTS_NEW,
+					appContext: pendingContext,
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.ALERTS_NEW);
+			assertRendersChildren();
+
+			rerender(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.ALERTS_NEW,
+					appContext: {
+						...pendingContext,
+						isSessionPending: false,
+						user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
+					},
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.UN_AUTHORIZED);
+		});
+
+		it('should keep a logged-in user on a public route until the session settles', () => {
+			mockIsCloudUser = true;
+			const { rerender } = render(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.LOGIN,
+					appContext: { isLoggedIn: true, isSessionPending: true },
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.LOGIN);
+
+			rerender(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.LOGIN,
+					appContext: { isLoggedIn: true, isSessionPending: false },
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.HOME);
+		});
+
+		it('should hold the workspace state redirects until the session settles', () => {
+			mockIsCloudUser = true;
+			const terminated = createMockLicense({ state: LicenseState.TERMINATED });
+			const { rerender } = render(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.HOME,
+					appContext: {
+						isLoggedIn: true,
+						isSessionPending: true,
+						activeLicense: terminated,
+					},
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.HOME);
+
+			rerender(
+				buildPrivateRouteTree({
+					initialRoute: ROUTES.HOME,
+					appContext: {
+						isLoggedIn: true,
+						isSessionPending: false,
+						activeLicense: terminated,
+					},
+				}),
+			);
+
+			assertStaysOnRoute(ROUTES.WORKSPACE_ACCESS_RESTRICTED);
+		});
+
+		it('should still redirect an old route while the session is pending', () => {
+			renderPrivateRoute({
+				initialRoute: '/pipelines',
+				appContext: { isLoggedIn: true, isSessionPending: true },
+			});
+
+			assertStaysOnRoute('/logs/pipelines');
+		});
+	});
+
 	describe('Role-based Route Access', () => {
 		it('should allow ADMIN to access /licenses route', () => {
 			renderPrivateRoute({

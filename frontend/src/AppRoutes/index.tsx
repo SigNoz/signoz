@@ -13,7 +13,6 @@ import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import AppPageProviders from 'app/AppPageProviders';
 import AppShell from 'app/AppShell';
-import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
 import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
@@ -58,16 +57,15 @@ function App(): JSX.Element {
 	const {
 		user,
 		isFetchingUser,
-		isFetchingFeatureFlags,
 		trialInfo,
 		activeLicense,
 		isFetchingActiveLicense,
 		activeLicenseFetchError,
 		userFetchError,
 		isLoggedIn: isLoggedInState,
-		featureFlags,
 		org,
 		isPreflightLoading,
+		isSessionPending,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
 	const enabledRouteKeys = useMemo<EnabledRouteKeys>(
@@ -392,39 +390,28 @@ function App(): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isCloudUser, isEnterpriseSelfHostedUser]);
 
-	if (isPreflightLoading) {
+	if (isPreflightLoading && !isLoggedInState) {
 		return <Spinner tip="Loading..." />;
 	}
 
-	// if the user is in logged in state
-	if (isLoggedInState) {
-		// if the setup calls are loading then return a spinner
-		if (isFetchingActiveLicense || isFetchingUser || isFetchingFeatureFlags) {
-			return <AppLoading />;
-		}
-
-		// if the required calls fails then return a something went wrong error
-		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
-		// move to indefinitive loading
-		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			navigate(ROUTES.SOMETHING_WENT_WRONG, { replace: true });
-		}
-
-		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
-		if (
-			(!activeLicense || !user.email || !featureFlags) &&
-			!userFetchError &&
-			!activeLicenseFetchError
-		) {
-			return <Spinner tip="Loading..." />;
-		}
+	// if the required calls fails then return a something went wrong error
+	// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
+	// move to indefinitive loading
+	if (
+		isLoggedInState &&
+		!isSessionPending &&
+		userFetchError &&
+		pathname !== ROUTES.SOMETHING_WENT_WRONG
+	) {
+		navigate(ROUTES.SOMETHING_WENT_WRONG, { replace: true });
 	}
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<AppShell
 				overlays={
-					isLoggedInState && (
+					isLoggedInState &&
+					!isSessionPending && (
 						<>
 							<CmdKPalette userRole={user.role} />
 							<ShiftHoldOverlayController userRole={user.role} />
@@ -435,7 +422,11 @@ function App(): JSX.Element {
 				<PrivateRoute>
 					<AppPageProviders layout={appLayout}>
 						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-							<Outlet context={enabledRouteKeys} />
+							{isSessionPending ? (
+								<Spinner size="large" tip="Loading..." />
+							) : (
+								<Outlet context={enabledRouteKeys} />
+							)}
 						</Suspense>
 					</AppPageProviders>
 				</PrivateRoute>
