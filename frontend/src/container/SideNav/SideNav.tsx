@@ -3,6 +3,7 @@ import {
 	MouseEvent,
 	useCallback,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -314,8 +315,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	// Sync state only once, so user actions during the session are not overwritten:
 	// when the session has settled, so the role and the license are known, and
-	// userPreferences have loaded for the first time
-	useEffect(() => {
+	// userPreferences have loaded for the first time.
+	// A layout effect, so a session restored from the cache never paints the skeleton.
+	useLayoutEffect(() => {
 		if (!isNavReady && !isSessionPending && isFetchingUserPreferences === false) {
 			setPinnedMenuItems(computedPinnedMenuItems);
 			setSecondaryMenuItems(computedSecondaryMenuItems);
