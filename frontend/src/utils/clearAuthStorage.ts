@@ -1,5 +1,6 @@
 import deleteLocalStorageKey from 'api/browser/localstorage/remove';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { clearBootQueryCache } from 'lib/bootQueryCache/clear';
 
 const AUTH_KEYS: LOCALSTORAGE[] = [
 	LOCALSTORAGE.AUTH_TOKEN,
@@ -13,4 +14,5 @@ const AUTH_KEYS: LOCALSTORAGE[] = [
 
 export const clearAuthStorage = (): void => {
 	AUTH_KEYS.forEach((key) => deleteLocalStorageKey(key));
+	clearBootQueryCache();
 };

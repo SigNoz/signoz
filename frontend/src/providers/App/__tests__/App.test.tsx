@@ -4,6 +4,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { getIsNoAuthMode, setNoAuthMode } from 'utils/noAuthMode';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { persistBootQueries } from 'lib/bootQueryCache';
 import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'lib/authz/hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -789,6 +790,139 @@ describe('AppProvider isSessionPending', () => {
 
 		expect(result.current.isSessionPending).toBe(false);
 		expect(versionRequests).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('AppProvider with the persisted boot cache', () => {
+	const LICENSE_URL = 'http://localhost/api/v4/licenses/active';
+	const FEATURES_URL = 'http://localhost/api/v1/features';
+	const TIMESTAMP = '2026-01-01T00:00:00Z';
+
+	const mockBootCalls = (email: string, onAuthzCheck: () => void): void => {
+		server.use(
+			rest.get(GLOBAL_CONFIG_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: {} })),
+			),
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.delay(300),
+					ctx.status(200),
+					ctx.json({ data: { id: 'u-1', email, orgId: 'org-1' } }),
+				),
+			),
+			rest.get(LICENSE_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: {
+							id: 'lic-1',
+							status: 'valid',
+							state: 'activated',
+							platform: 'cloud',
+							plan: {
+								id: 'plan-1',
+								name: 'TEAMS',
+								description: '',
+								isActive: true,
+								createdAt: TIMESTAMP,
+								updatedAt: TIMESTAMP,
+							},
+							eventQueue: {
+								event: '',
+								status: '',
+								scheduledAt: TIMESTAMP,
+								createdAt: TIMESTAMP,
+								updatedAt: TIMESTAMP,
+							},
+							features: [],
+							freeUntil: TIMESTAMP,
+							createdAt: TIMESTAMP,
+							updatedAt: TIMESTAMP,
+							validFrom: 0,
+							validUntil: -1,
+						},
+					}),
+				),
+			),
+			rest.get(FEATURES_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: [] })),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				onAuthzCheck();
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [true, false, false])),
+				);
+			}),
+		);
+	};
+
+	const wrapperFor = (
+		client: QueryClient,
+	): (({ children }: { children: ReactElement }) => ReactElement) =>
+		function Wrapper({ children }: { children: ReactElement }): ReactElement {
+			return (
+				<QueryClientProvider client={client}>
+					<AppProvider>{children}</AppProvider>
+				</QueryClientProvider>
+			);
+		};
+
+	const newClient = (): QueryClient =>
+		new QueryClient({
+			defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false } },
+		});
+
+	beforeEach(() => {
+		localStorage.clear();
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+	});
+
+	it('renders the restored session on the first render, then refreshes it', async () => {
+		const firstVisit = newClient();
+		persistBootQueries(firstVisit);
+		mockBootCalls('alex@example.com', jest.fn());
+		const first = renderHook(() => useAppContext(), {
+			wrapper: wrapperFor(firstVisit),
+		});
+		await waitFor(
+			() => expect(first.result.current.isSessionPending).toBe(false),
+			{ timeout: 3000 },
+		);
+		await waitFor(
+			() =>
+				expect(localStorage.getItem(LOCALSTORAGE.BOOT_QUERY_CACHE)).toContain(
+					'alex@example.com',
+				),
+			{ timeout: 3000 },
+		);
+		first.unmount();
+
+		const authzChecks = jest.fn();
+		mockBootCalls('alex.renamed@example.com', authzChecks);
+		const reload = newClient();
+		persistBootQueries(reload);
+		await waitFor(() =>
+			expect(reload.getQueryData(['GET_FEATURES_FLAGS'])).toBeDefined(),
+		);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: wrapperFor(reload),
+		});
+
+		expect(result.current.isSessionPending).toBe(false);
+		expect(result.current.isPreflightLoading).toBe(false);
+		expect(result.current.user.email).toBe('alex@example.com');
+		expect(result.current.user.role).toBe(USER_ROLES.ADMIN);
+		expect(result.current.activeLicense).not.toBeNull();
+		expect(result.current.featureFlags).toEqual([]);
+
+		await waitFor(
+			() => expect(result.current.user.email).toBe('alex.renamed@example.com'),
+			{ timeout: 3000 },
+		);
+		expect(authzChecks).toHaveBeenCalled();
 	});
 });
 
