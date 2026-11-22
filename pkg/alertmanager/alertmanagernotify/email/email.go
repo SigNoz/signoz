@@ -425,6 +425,8 @@ func (n *Email) prepareContent(ctx context.Context, alerts []*types.Alert) (stri
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Headers["Subject"],
 		DefaultBodyTemplate:  n.conf.HTML,
+		BuiltinTitleTemplate: config.DefaultEmailSubject,
+		BuiltinBodyTemplate:  config.DefaultEmailConfig.HTML,
 	}, alerts)
 	if err != nil {
 		return "", "", err

@@ -34,14 +34,16 @@ func (at *templater) Expand(
 	ntd := at.buildNotificationTemplateData(ctx, alerts)
 	missingVars := make(map[string]bool)
 
-	title, titleMissingVars, err := at.expandTitle(req.TitleTemplate, ntd)
-	if err != nil {
-		return nil, err
+	title, titleMissingVars, titleTemplateErr := at.expandTitle(req.TitleTemplate, ntd)
+	if titleTemplateErr != nil {
+		at.logger.WarnContext(ctx, "custom title template failed, using the default template", slog.String("rule.id", ntd.Rule.ID), errors.Attr(titleTemplateErr))
 	}
 	// if title template results in empty string, use default template
 	// this happens for rules where custom title annotation was not set
+	// or failed
 	if title == "" && req.DefaultTitleTemplate != "" {
-		title, err = at.expandDefaultTemplate(ctx, req.DefaultTitleTemplate, alerts)
+		var err error
+		title, err = at.expandDefaultTemplate(ctx, req.DefaultTitleTemplate, req.BuiltinTitleTemplate, alerts)
 		if err != nil {
 			return nil, err
 		}
@@ -50,15 +52,16 @@ func (at *templater) Expand(
 	}
 
 	isDefaultBody := false
-	body, bodyMissingVars, err := at.expandBody(req.BodyTemplate, ntd)
-	if err != nil {
-		return nil, err
+	body, bodyMissingVars, bodyTemplateErr := at.expandBody(req.BodyTemplate, ntd)
+	if bodyTemplateErr != nil {
+		at.logger.WarnContext(ctx, "custom body template failed, using the default template", slog.String("rule.id", ntd.Rule.ID), errors.Attr(bodyTemplateErr))
 	}
 	// if body template results in nil, use default template
 	// this happens for rules where custom body annotation was not set
+	// or failed
 	if body == nil {
 		isDefaultBody = true
-		defaultBody, err := at.expandDefaultTemplate(ctx, req.DefaultBodyTemplate, alerts)
+		defaultBody, err := at.expandDefaultTemplate(ctx, req.DefaultBodyTemplate, req.BuiltinBodyTemplate, alerts)
 		if err != nil {
 			return nil, err
 		}
@@ -79,14 +82,18 @@ func (at *templater) Expand(
 		Body:             body,
 		MissingVars:      missingVarsList,
 		IsDefaultBody:    isDefaultBody,
+		TitleTemplateErr: titleTemplateErr,
+		BodyTemplateErr:  bodyTemplateErr,
 		NotificationData: ntd,
 	}, nil
 }
 
-// expandDefaultTemplate uses go-template to expand the default template.
+// expandDefaultTemplate uses go-template to expand the default template, and
+// the builtin template when the default one fails.
 func (at *templater) expandDefaultTemplate(
 	ctx context.Context,
 	tmplStr string,
+	builtinTmplStr string,
 	alerts []*types.Alert,
 ) (string, error) {
 	// if even the default template is empty, return empty string
@@ -97,8 +104,18 @@ func (at *templater) expandDefaultTemplate(
 	}
 	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
 	result, err := at.tmpl.ExecuteTextString(tmplStr, data)
-	if err != nil {
+	if err == nil {
+		return result, nil
+	}
+	if builtinTmplStr == "" || builtinTmplStr == tmplStr {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute default template: %s", err.Error())
+	}
+
+	receiver, _ := notify.ReceiverName(ctx)
+	at.logger.WarnContext(ctx, "default template failed, using the builtin template", slog.String("receiver", receiver), errors.Attr(err))
+	result, err = at.tmpl.ExecuteTextString(builtinTmplStr, data)
+	if err != nil {
+		return "", errors.NewInternalf(errors.CodeInternal, "failed to execute builtin template: %s", err.Error())
 	}
 	return result, nil
 }

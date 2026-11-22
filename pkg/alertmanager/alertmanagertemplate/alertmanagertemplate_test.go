@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/notify"
@@ -60,7 +61,6 @@ func TestExpandTemplates(t *testing.T) {
 		wantTitle         string
 		wantBody          []string
 		wantMissingVars   []string
-		errorContains     string
 		wantIsDefaultBody bool
 	}{
 		{
@@ -299,25 +299,11 @@ Description: Request rate exceeded 10k/s`},
 			wantBody:          []string{"Runbook: https://runbook.example.com"},
 			wantIsDefaultBody: true,
 		},
-		{
-			name: "using non-existing function in template",
-			alerts: []*types.Alert{
-				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil, true),
-			},
-			input: alertmanagertypes.ExpandRequest{
-				TitleTemplate: "$rule.name ({{$severity | toUpperAndTrim}}) for $alertname",
-			},
-			errorContains: "function \"toUpperAndTrim\" not defined",
-		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := at.Expand(ctx, tc.input, tc.alerts)
-			if tc.errorContains != "" {
-				require.ErrorContains(t, err, tc.errorContains)
-				return
-			}
 			require.NoError(t, err)
 
 			if tc.wantTitle != "" {
@@ -333,6 +319,196 @@ Description: Request rate exceeded 10k/s`},
 			} else {
 				sort.Strings(tc.wantMissingVars)
 				require.Equal(t, tc.wantMissingVars, got.MissingVars)
+			}
+		})
+	}
+}
+
+func TestExpandTemplateFailures(t *testing.T) {
+	at, ctx := testSetup(t)
+
+	testCases := []struct {
+		name                 string
+		alerts               []*types.Alert
+		input                alertmanagertypes.ExpandRequest
+		wantTitle            string
+		wantBody             []string
+		wantIsDefaultBody    bool
+		wantTitleTemplateErr string
+		wantBodyTemplateErr  string
+		wantErr              string
+	}{
+		{
+			// A title copied from a channel template reads fields that only
+			// the channel data model has.
+			name: "CustomTitleReadsChannelField_UsesDefaultTitle",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "Rule title: {{ .CommonLabels.alertname }}",
+				BodyTemplate:         "$rule.name is $alert.status",
+				DefaultTitleTemplate: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
+			},
+			wantTitle:            "[FIRING] HighCPU",
+			wantBody:             []string{"HighCPU is firing"},
+			wantTitleTemplateErr: "nil pointer evaluating interface {}.alertname",
+		},
+		{
+			name: "CustomTitleCallsUnknownFunction_UsesDefaultTitle",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "DiskFull", ruletypes.LabelSeverityName: "critical"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "$rule.name ({{ $severity | toUpperAndTrim }})",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }} is {{ .Status }}",
+			},
+			wantTitle:            "DiskFull is firing",
+			wantBody:             []string{""},
+			wantIsDefaultBody:    true,
+			wantTitleTemplateErr: `function "toUpperAndTrim" not defined`,
+		},
+		{
+			name: "CustomTitleDoesNotParse_UsesDefaultTitle",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "QueueLag"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "Lag on {{ $labels.queue",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+			},
+			wantTitle:            "QueueLag",
+			wantBody:             []string{""},
+			wantIsDefaultBody:    true,
+			wantTitleTemplateErr: "unclosed action",
+		},
+		{
+			// The custom title is empty for a firing group, so the default one
+			// is used. Nothing failed.
+			name: "CustomTitleExpandsToEmpty_UsesDefaultTitleWithoutAnError",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "CertExpiry"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        `{{ if eq $alert.status "resolved" }}Recovered{{ end }}`,
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+			},
+			wantTitle:         "CertExpiry",
+			wantBody:          []string{""},
+			wantIsDefaultBody: true,
+		},
+		{
+			// slice fails on the one pod name shorter than 30 characters, and
+			// the group shares one default body.
+			name: "CustomBodyFailsForOneAlert_UsesDefaultBodyForTheGroup",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodMemoryHigh", "pod": "checkout-7d9c8b5f4-x2k9p-canary-eu-west"}, nil, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodMemoryHigh", "pod": "cart-5f6d7c8b9-q8w2z"}, nil, true),
+				createAlert(map[string]string{ruletypes.LabelAlertName: "PodMemoryHigh", "pod": "payments-6c5d7f9b8-h4j7m-canary-us-east"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "$rule.name",
+				BodyTemplate:         "Pod {{ slice .labels.pod 0 30 }} is high",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.pod }};{{ end }}",
+			},
+			wantTitle:           "PodMemoryHigh",
+			wantBody:            []string{"checkout-7d9c8b5f4-x2k9p-canary-eu-west;cart-5f6d7c8b9-q8w2z;payments-6c5d7f9b8-h4j7m-canary-us-east;"},
+			wantIsDefaultBody:   true,
+			wantBodyTemplateErr: "index out of range: 30",
+		},
+		{
+			name: "DefaultTitleFails_UsesBuiltinTitle",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "HighLatency"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: "{{ .Alerts.Firing | len",
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
+				BuiltinTitleTemplate: "builtin: {{ .CommonLabels.alertname }}",
+				BuiltinBodyTemplate:  "builtin body",
+			},
+			wantTitle:         "builtin: HighLatency",
+			wantBody:          []string{"HighLatency"},
+			wantIsDefaultBody: true,
+		},
+		{
+			// .Value is not a field of an alert in the channel data model.
+			name: "DefaultBodyFails_UsesBuiltinBody",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "ErrorRateHigh"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Value }}{{ end }}",
+				BuiltinTitleTemplate: "builtin title",
+				BuiltinBodyTemplate:  "builtin: {{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
+			},
+			wantTitle:         "ErrorRateHigh",
+			wantBody:          []string{"builtin: ErrorRateHigh"},
+			wantIsDefaultBody: true,
+		},
+		{
+			name: "CustomAndDefaultTitleFail_UsesBuiltinTitle",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "ReplicaLag"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				TitleTemplate:        "{{ .GroupLabels.alertname }}",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname | toUpperAndTrim }}",
+				BuiltinTitleTemplate: "builtin: {{ .CommonLabels.alertname }}",
+			},
+			wantTitle:            "builtin: ReplicaLag",
+			wantBody:             []string{""},
+			wantIsDefaultBody:    true,
+			wantTitleTemplateErr: "nil pointer evaluating interface {}.alertname",
+		},
+		{
+			name: "EmptyDefaultTitle_IsNotAFailure",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "NodeDown"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultBodyTemplate:  "{{ range .Alerts }}{{ .Labels.alertname }}{{ end }}",
+				BuiltinTitleTemplate: "builtin: {{ .CommonLabels.alertname }}",
+			},
+			wantBody:          []string{"NodeDown"},
+			wantIsDefaultBody: true,
+		},
+		{
+			name: "DefaultTitleFails_NoBuiltin_ReturnsTheError",
+			alerts: []*types.Alert{
+				createAlert(map[string]string{ruletypes.LabelAlertName: "JobFailed"}, nil, true),
+			},
+			input: alertmanagertypes.ExpandRequest{
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname | toUpperAndTrim }}",
+			},
+			wantErr: `failed to execute default template: template: :1: function "toUpperAndTrim" not defined`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			got, err := at.Expand(ctx, testCase.input, testCase.alerts)
+			if testCase.wantErr != "" {
+				require.EqualError(t, err, testCase.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, testCase.wantTitle, got.Title)
+			assert.Equal(t, testCase.wantBody, got.Body)
+			assert.Equal(t, testCase.wantIsDefaultBody, got.IsDefaultBody)
+			if testCase.wantTitleTemplateErr == "" {
+				assert.NoError(t, got.TitleTemplateErr)
+			} else {
+				assert.ErrorContains(t, got.TitleTemplateErr, testCase.wantTitleTemplateErr)
+			}
+			if testCase.wantBodyTemplateErr == "" {
+				assert.NoError(t, got.BodyTemplateErr)
+			} else {
+				assert.ErrorContains(t, got.BodyTemplateErr, testCase.wantBodyTemplateErr)
 			}
 		})
 	}

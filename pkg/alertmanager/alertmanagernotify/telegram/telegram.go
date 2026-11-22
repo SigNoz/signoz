@@ -154,8 +154,8 @@ func (n *Notifier) encodeSendMessage(chatID int64, text string) (*bytes.Buffer, 
 }
 
 // buildMessage sends the title in bold above the message. Each half comes from
-// the rule's template when it has one and from the channel's otherwise; an
-// empty title sends the message alone.
+// the rule's template when it has one that executes and from the channel's
+// otherwise; an empty title sends the message alone.
 func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*types.Alert) (string, error) {
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
 
@@ -179,19 +179,19 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 		title, body string
 		err         error
 	)
-	if customTitle != "" {
+	if customTitle != "" && result.TitleTemplateErr == nil {
 		title, err = n.renderRuleTemplate(result.Title)
 	} else {
-		title, err = n.renderChannelTemplate(ctx, as, n.conf.Title)
+		title, err = n.renderChannelTemplate(ctx, as, n.conf.Title, alertmanagertypes.DefaultTelegramTitleTemplate)
 	}
 	if err != nil {
 		return "", err
 	}
 
-	if customBody != "" {
+	if customBody != "" && result.BodyTemplateErr == nil {
 		body, err = n.renderRuleTemplate(strings.Join(nonEmpty(result.Body), "\n\n"))
 	} else {
-		body, err = n.renderChannelTemplate(ctx, as, n.conf.Message)
+		body, err = n.renderChannelTemplate(ctx, as, n.conf.Message, alertmanagertypes.DefaultTelegramMessageTemplate)
 	}
 	if err != nil {
 		return "", err
@@ -207,7 +207,8 @@ func (n *Notifier) buildMessage(ctx context.Context, logger *slog.Logger, as []*
 // renderChannelTemplate reproduces upstream's rendering, including its choice
 // of engine under parse_mode HTML: html/template escapes every interpolated
 // value, so a channel template that does not pipe through html still sends.
-func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert, text string) (string, error) {
+// A channel template that fails gives way to the builtin one.
+func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert, text string, builtin string) (string, error) {
 	if text == "" {
 		return "", nil
 	}
@@ -216,6 +217,11 @@ func (n *Notifier) renderChannelTemplate(ctx context.Context, as []*types.Alert,
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 
 	rendered := notify.TmplHTML(n.tmpl, data, &tmplErr)(text)
+	if tmplErr != nil && text != builtin {
+		n.logger.WarnContext(ctx, "telegram template failed, using the builtin template", errors.Attr(tmplErr))
+		tmplErr = nil
+		rendered = notify.TmplHTML(n.tmpl, data, &tmplErr)(builtin)
+	}
 	if tmplErr != nil {
 		return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to execute telegram template: %s", tmplErr.Error())
 	}

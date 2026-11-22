@@ -193,6 +193,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert, tm
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		DefaultBodyTemplate:  n.conf.Text,
+		BuiltinTitleTemplate: config.DefaultSlackConfig.Title,
+		BuiltinBodyTemplate:  config.DefaultSlackConfig.Text,
 	}, alerts)
 	if err != nil {
 		return nil, err

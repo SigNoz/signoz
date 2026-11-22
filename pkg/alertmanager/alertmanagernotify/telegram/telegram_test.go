@@ -254,6 +254,92 @@ func TestNotifyBuildsTheMessage(t *testing.T) {
 	}
 }
 
+func TestNotifySendsWhenATemplateFails(t *testing.T) {
+	testCases := []struct {
+		name           string
+		channelTitle   string
+		channelMessage string
+		alerts         []*types.Alert
+		wantText       string
+	}{
+		{
+			// A title copied from a channel template reads fields that the
+			// rule data model does not have.
+			name:           "RuleTitleFails_UsesChannelTitle",
+			channelTitle:   alertmanagertypes.DefaultTelegramTitleTemplate,
+			channelMessage: alertmanagertypes.DefaultTelegramMessageTemplate,
+			alerts: []*types.Alert{newAlert("web-3", model.LabelSet{
+				ruletypes.AnnotationTitleTemplate: "Rule title: {{ .CommonLabels.alertname }}",
+				ruletypes.AnnotationBodyTemplate:  "$alert.status for $rule.name",
+			})},
+			wantText: "<b>[FIRING:1] checkout-latency-high</b>\n\nfiring for checkout-latency-high",
+		},
+		{
+			// slice fails on a host name shorter than 40 characters.
+			name:           "RuleBodyFails_UsesChannelMessage",
+			channelTitle:   alertmanagertypes.DefaultTelegramTitleTemplate,
+			channelMessage: "{{ range .Alerts }}{{ .Labels.host }} is slow{{ end }}",
+			alerts: []*types.Alert{newAlert("web-4", model.LabelSet{
+				ruletypes.AnnotationTitleTemplate: "Incident on $labels.host",
+				ruletypes.AnnotationBodyTemplate:  "{{ slice .labels.host 0 40 }} is slow",
+			})},
+			wantText: "<b>Incident on web-4</b>\n\nweb-4 is slow",
+		},
+		{
+			// An empty title is a choice the rule made, not a failure.
+			name:           "RuleTitleExpandsToEmpty_SendsTheMessageAlone",
+			channelTitle:   alertmanagertypes.DefaultTelegramTitleTemplate,
+			channelMessage: alertmanagertypes.DefaultTelegramMessageTemplate,
+			alerts: []*types.Alert{newAlert("web-5", model.LabelSet{
+				ruletypes.AnnotationTitleTemplate: `{{ if eq $alert.status "resolved" }}Recovered{{ end }}`,
+				ruletypes.AnnotationBodyTemplate:  "$alert.status on $labels.host",
+			})},
+			wantText: "firing on web-5",
+		},
+		{
+			name:           "ChannelTitleFails_UsesBuiltinTitle",
+			channelTitle:   "{{ .Alerts.Firing | len",
+			channelMessage: "{{ range .Alerts }}{{ .Labels.host }} is degraded{{ end }}",
+			alerts:         []*types.Alert{newAlert("web-6", nil)},
+			wantText:       "<b>[FIRING:1] checkout-latency-high</b>\n\nweb-6 is degraded",
+		},
+		{
+			// .Value is not a field of an alert in the channel data model.
+			name:           "ChannelMessageFails_UsesBuiltinMessage",
+			channelTitle:   "{{ .CommonLabels.host }}",
+			channelMessage: "{{ range .Alerts }}{{ .Value }}{{ end }}",
+			alerts:         []*types.Alert{newAlert("web-7", nil)},
+			wantText:       "<b>web-7</b>\n\n<b>Alert:</b> checkout-latency-high (warning)\n<b>Summary:</b> p99 is 612ms\n<a href=\"http://am/alerts/overview?ruleId=r1\">View in SigNoz</a>",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mock := newMockBotAPI(t)
+			tmpl := test.CreateTmpl(t)
+			apiURL, err := url.Parse(mock.srv.URL)
+			require.NoError(t, err)
+
+			logger := slog.New(slog.DiscardHandler)
+			notifier, err := New(&alertmanagertypes.TelegramReceiverConfig{
+				HTTPConfig: &commoncfg.HTTPClientConfig{},
+				APIUrl:     &config.URL{URL: apiURL},
+				BotToken:   "123456:tok",
+				ChatID:     -1001234567890,
+				ParseMode:  "HTML",
+				Title:      testCase.channelTitle,
+				Message:    testCase.channelMessage,
+			}, tmpl, logger, alertmanagertemplate.New(tmpl, logger))
+			require.NoError(t, err)
+
+			retry, err := notifier.Notify(notify.WithGroupKey(context.Background(), "1"), testCase.alerts...)
+			require.NoError(t, err)
+			assert.False(t, retry)
+			assert.Equal(t, testCase.wantText, mock.only(t)["text"])
+		})
+	}
+}
+
 // A v1-written receiver can carry a mode the v2 spec no longer offers. Nothing
 // renders to those, so the send goes out as HTML without touching the receiver.
 func TestNewForcesParseModeHTML(t *testing.T) {

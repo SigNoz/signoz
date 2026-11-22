@@ -308,6 +308,7 @@ func (n *Notifier) prepareTitle(ctx context.Context, alerts []*types.Alert) (str
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
 		DefaultTitleTemplate: n.conf.Description,
+		BuiltinTitleTemplate: config.DefaultPagerdutyConfig.Description,
 	}, alerts)
 	if err != nil {
 		return "", err

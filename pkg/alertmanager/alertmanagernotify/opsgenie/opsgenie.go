@@ -54,6 +54,10 @@ type Notifier struct {
 	// immutable timeline. Off for plain OpsGenie. The alert-refresh-on-refire part
 	// rides on the upstream UpdateAlerts config flag, set alongside this.
 	advancedFeatures bool
+	// The compiled defaults of the channel kind this notifier serves: JSM Ops
+	// when advancedFeatures is set, OpsGenie otherwise.
+	builtinMessage     string
+	builtinDescription string
 }
 
 // New returns a new OpsGenie notifier. advancedFeatures enables the JSM Ops
@@ -64,14 +68,20 @@ func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, templat
 	if err != nil {
 		return nil, err
 	}
+	builtinMessage, builtinDescription := config.DefaultOpsGenieConfig.Message, config.DefaultOpsGenieConfig.Description
+	if advancedFeatures {
+		builtinMessage, builtinDescription = alertmanagertypes.DefaultJSMOpsMessageTemplate, alertmanagertypes.DefaultJSMOpsDescriptionTemplate
+	}
 	return &Notifier{
-		conf:             c,
-		tmpl:             t,
-		logger:           l,
-		client:           client,
-		retrier:          &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
-		templater:        templater,
-		advancedFeatures: advancedFeatures,
+		conf:               c,
+		tmpl:               t,
+		logger:             l,
+		client:             client,
+		retrier:            &notify.Retrier{RetryCodes: []int{http.StatusTooManyRequests}},
+		templater:          templater,
+		advancedFeatures:   advancedFeatures,
+		builtinMessage:     builtinMessage,
+		builtinDescription: builtinDescription,
 	}, nil
 }
 
@@ -189,6 +199,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (s
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Message,
 		DefaultBodyTemplate:  n.conf.Description,
+		BuiltinTitleTemplate: n.builtinMessage,
+		BuiltinBodyTemplate:  n.builtinDescription,
 	}, alerts)
 	if err != nil {
 		return "", "", err
@@ -315,6 +327,8 @@ func (n *Notifier) prepareNote(ctx context.Context, alerts []*types.Alert) (stri
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Message,
 		DefaultBodyTemplate:  n.conf.Description,
+		BuiltinTitleTemplate: n.builtinMessage,
+		BuiltinBodyTemplate:  n.builtinDescription,
 	}, alerts)
 	if err != nil {
 		return "", err

@@ -85,6 +85,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		DefaultBodyTemplate:  n.conf.Description,
+		BuiltinTitleTemplate: alertmanagertypes.DefaultIncidentIOTitleTemplate,
+		BuiltinBodyTemplate:  alertmanagertypes.DefaultIncidentIODescriptionTemplate,
 	}, as)
 	if err != nil {
 		return false, err

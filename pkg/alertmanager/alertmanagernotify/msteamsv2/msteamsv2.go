@@ -210,6 +210,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		DefaultBodyTemplate:  n.conf.Text,
+		BuiltinTitleTemplate: config.DefaultMSTeamsV2Config.Title,
+		BuiltinBodyTemplate:  config.DefaultMSTeamsV2Config.Text,
 	}, alerts)
 	if err != nil {
 		return nil, err

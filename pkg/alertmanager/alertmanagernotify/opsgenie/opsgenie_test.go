@@ -19,6 +19,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	signoztest "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
@@ -657,4 +658,47 @@ func readBody(t *testing.T, r *http.Request) string {
 	body, err := io.ReadAll(r.Body)
 	require.NoError(t, err)
 	return string(body)
+}
+
+// JSM Ops is served by this notifier, and its builtin title is not OpsGenie's.
+func TestOpsGenieMessageFallsBackToTheBuiltinOfTheChannelKind(t *testing.T) {
+	testCases := []struct {
+		name             string
+		advancedFeatures bool
+		wantMessage      string
+	}{
+		{name: "OpsGenie", advancedFeatures: false, wantMessage: "[FIRING:1] DiskFull (critical)"},
+		{name: "JSMOps", advancedFeatures: true, wantMessage: "[FIRING:1] DiskFull"},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			u, err := url.Parse("https://test-opsgenie-url")
+			require.NoError(t, err)
+			tmpl := signoztest.CreateTmpl(t)
+
+			notifier, err := New(&config.OpsGenieConfig{
+				Message:     "{{ .Alerts.Firing | len",
+				Description: "{{ .CommonLabels.alertname }}",
+				APIKey:      "k",
+				APIURL:      &config.URL{URL: u},
+				HTTPConfig:  &commoncfg.HTTPClientConfig{},
+			}, tmpl, promslog.NewNopLogger(), newTestTemplater(tmpl), testCase.advancedFeatures)
+			require.NoError(t, err)
+
+			ctx := notify.WithGroupKey(context.Background(), "1")
+			ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "DiskFull"})
+			reqs, _, err := notifier.createRequests(ctx, &types.Alert{Alert: model.Alert{
+				StartsAt: time.Now(),
+				EndsAt:   time.Now().Add(time.Hour),
+				Labels:   model.LabelSet{"alertname": "DiskFull", "severity": "critical"},
+			}})
+			require.NoError(t, err)
+			require.NotEmpty(t, reqs)
+
+			var created opsGenieCreateMessage
+			require.NoError(t, json.Unmarshal([]byte(readBody(t, reqs[0])), &created))
+			assert.Equal(t, testCase.wantMessage, created.Message)
+		})
+	}
 }

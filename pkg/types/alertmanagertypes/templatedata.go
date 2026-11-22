@@ -37,12 +37,16 @@ func FilterPublicAnnotations(kv template.KV) template.KV {
 
 // ExpandRequest carries the title/body templates and their defaults handed to
 // Templater.Expand. Default templates are used when the custom templates
-// expand to empty strings.
+// expand to empty strings or fail. Builtin templates are the channel kind's
+// compiled defaults, used when a default template fails; a default template
+// that is empty or expands to an empty string is not a failure.
 type ExpandRequest struct {
 	TitleTemplate        string
 	BodyTemplate         string
 	DefaultTitleTemplate string
 	DefaultBodyTemplate  string
+	BuiltinTitleTemplate string
+	BuiltinBodyTemplate  string
 }
 
 // ExpandResult is the rendered output of Templater.Expand.
@@ -53,8 +57,14 @@ type ExpandResult struct {
 	// body template is applied per-alert and concatenated by the caller.
 	Body []string
 	// IsDefaultBody is true when Body came from the default template (no
-	// user-authored body was supplied), false when a custom template was used.
+	// user-authored body was supplied, or it failed), false when a custom
+	// template was used.
 	IsDefaultBody bool
+	// TitleTemplateErr and BodyTemplateErr are set when the custom template
+	// failed and the default was used in its place. A custom template that
+	// expands to an empty string leaves them nil.
+	TitleTemplateErr error
+	BodyTemplateErr  error
 	// MissingVars is the union of $-references in the title and body templates
 	// that did not resolve to any known field. Surfaced for preview warnings;
 	// at runtime these render as "<no value>".

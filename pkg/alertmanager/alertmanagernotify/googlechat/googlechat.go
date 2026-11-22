@@ -208,6 +208,8 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) (c
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		DefaultBodyTemplate:  n.conf.Text,
+		BuiltinTitleTemplate: alertmanagertypes.DefaultGoogleChatReceiverConfig.Title,
+		BuiltinBodyTemplate:  alertmanagertypes.DefaultGoogleChatReceiverConfig.Text,
 	}, alerts)
 	if err != nil {
 		return content{}, err

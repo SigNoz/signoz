@@ -77,6 +77,8 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Summary,
 		DefaultBodyTemplate:  n.conf.Description,
+		BuiltinTitleTemplate: alertmanagertypes.DefaultJiraSummaryTemplate,
+		BuiltinBodyTemplate:  alertmanagertypes.DefaultJiraDescriptionTemplate,
 	}, as)
 	if err != nil {
 		return false, err
