@@ -569,11 +569,11 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 	query := req.CompositeQuery.Queries[0]
 	spec := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
 	// add the new id to the id filter
-	if spec.Filter == nil || spec.Filter.Expression == "" {
-		spec.Filter = &qbtypes.Filter{Expression: "id > $id"}
-	} else {
-		spec.Filter.Expression = fmt.Sprintf("%s and id > $id", spec.Filter.Expression)
+	expression := ""
+	if spec.Filter != nil {
+		expression = spec.Filter.Expression
 	}
+	spec.Filter = &qbtypes.Filter{Expression: liveTailFilterExpression(expression)}
 
 	tsStart := req.Start
 	if tsStart == 0 {
@@ -635,6 +635,17 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 
 		}
 	}
+}
+
+// liveTailFilterExpression adds the live tail's `id > $id` bound to the user's filter. The
+// filter is wrapped in parentheses: `a or b and id > $id` parses as `a or (b and id > $id)`,
+// so rows matching `a` would come back on every poll and the newest of them would be streamed
+// again and again.
+func liveTailFilterExpression(expression string) string {
+	if strings.TrimSpace(expression) == "" {
+		return "id > $id"
+	}
+	return fmt.Sprintf("(%s) and id > $id", expression)
 }
 
 func (q *querier) run(
