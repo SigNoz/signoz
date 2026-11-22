@@ -387,6 +387,12 @@ func TestValidate_PostableRule_Common(t *testing.T) {
 			name: "valid template in label",
 			json: patchJSON(validV2Alpha1Builder(), `{"labels": {"severity": "{{$labels.host}}"}}`),
 		},
+		{
+			// $alert is a variable of the notifier engine, which expands the
+			// private annotations; it is not one of the ruler engine.
+			name: "notifier template in private annotation",
+			json: patchJSON(validV2Alpha1Builder(), `{"annotations": {"_body_template": "{{ if $alert.is_firing }}up{{ end }} $rule.name"}}`),
+		},
 
 		// anomaly seasonality
 		{

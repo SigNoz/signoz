@@ -547,8 +547,12 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 		}
 	}
 
-	// Parsing Annotations.
-	for _, val := range rl.Annotations {
+	// Parsing Annotations. Private ones carry templates for the notifier,
+	// which has its own engine; the rule manager validates those.
+	for name, val := range rl.Annotations {
+		if alertmanagertypes.IsPrivateAnnotation(name) {
+			continue
+		}
 		err := parseTest(val)
 		if err != nil {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "template parsing error: %s", err.Error()))

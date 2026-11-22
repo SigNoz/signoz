@@ -16,6 +16,7 @@ import (
 	"github.com/go-openapi/strfmt"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -380,6 +381,9 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
 		return err
 	}
+	if err := alertmanagertemplate.ValidateRuleTemplates(ctx, parsedRule.Annotations[ruletypes.AnnotationTitleTemplate], parsedRule.Annotations[ruletypes.AnnotationBodyTemplate]); err != nil {
+		return err
+	}
 	existingRule, err := m.ruleStore.GetStoredRule(ctx, orgID, id)
 	if err != nil {
 		return err
@@ -588,6 +592,9 @@ func (m *Manager) createRule(ctx context.Context, parsedRule ruletypes.PostableR
 		return nil, err
 	}
 	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
+		return nil, err
+	}
+	if err := alertmanagertemplate.ValidateRuleTemplates(ctx, parsedRule.Annotations[ruletypes.AnnotationTitleTemplate], parsedRule.Annotations[ruletypes.AnnotationBodyTemplate]); err != nil {
 		return nil, err
 	}
 	now := time.Now()
@@ -1119,6 +1126,9 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		return 0, err
 	}
 	if err := m.validateChannels(ctx, orgID.StringValue(), &parsedRule); err != nil {
+		return 0, err
+	}
+	if err := alertmanagertemplate.ValidateRuleTemplates(ctx, parsedRule.Annotations[ruletypes.AnnotationTitleTemplate], parsedRule.Annotations[ruletypes.AnnotationBodyTemplate]); err != nil {
 		return 0, err
 	}
 	if !parsedRule.NotificationSettings.UsePolicy {
