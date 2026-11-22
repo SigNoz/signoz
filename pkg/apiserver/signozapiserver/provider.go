@@ -338,7 +338,11 @@ func newProvider(
 	}
 
 	httpHandler := middleware.NewCors().Wrap(router)
-	httpHandler = middleware.NewCompress().Wrap(httpHandler)
+	compress, err := middleware.NewCompress(config.Compression.Enabled, config.Compression.Level)
+	if err != nil {
+		return nil, err
+	}
+	httpHandler = compress.Wrap(httpHandler)
 
 	routePrefix := globalConfig.ExternalPath()
 	if routePrefix != "" {
