@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import * as monaco from 'monaco-editor';
+import { monaco } from 'lib/monaco/setup';
 import ROUTES from 'constants/routes';
 import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';

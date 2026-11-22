@@ -75,6 +75,21 @@ function rawMarkdownPlugin(): Plugin {
 	};
 }
 
+// Monaco contributions that need a provider SigNoz never registers. monaco-editor
+// declares no `sideEffects`, so its bare imports keep all of them.
+const MONACO_UNUSED_CONTRIBS = [
+	'codelens',
+	'dropOrPasteInto',
+	'gpu',
+	'inlayHints',
+	'inlineCompletions',
+	'linkedEditing',
+	'parameterHints',
+	'rename',
+	'sectionHeaders',
+	'semanticTokens',
+];
+
 export default defineConfig(({ mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
 	// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
@@ -188,6 +203,16 @@ export default defineConfig(({ mode }): UserConfig => {
 			outDir: 'build',
 			cssMinify: 'esbuild',
 			rolldownOptions: {
+				treeshake: {
+					moduleSideEffects: [
+						{
+							test: new RegExp(
+								`monaco-editor/esm/vs/editor/contrib/(${MONACO_UNUSED_CONTRIBS.join('|')})/`,
+							),
+							sideEffects: false,
+						},
+					],
+				},
 				output: {
 					// Without this group Rolldown splits the entry's static graph into ~300
 					// chunks, 324 requests on first load.
