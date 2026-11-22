@@ -215,7 +215,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
-			enabled: isLoggedIn,
+			enabled: isLoggedIn && !isSessionPending,
 		},
 		{
 			queryFn: getUserLatestVersion,
@@ -278,10 +278,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getUserLatestVersionResponse.refetch();
 		}
 
-		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
+		if (
+			getUserVersionResponse.status === 'idle' &&
+			isLoggedIn &&
+			!isSessionPending
+		) {
 			getUserVersionResponse.refetch();
 		}
-	}, [getUserLatestVersionResponse, getUserVersionResponse, isLoggedIn]);
+	}, [
+		getUserLatestVersionResponse,
+		getUserVersionResponse,
+		isLoggedIn,
+		isSessionPending,
+	]);
 
 	const { children } = props;
 

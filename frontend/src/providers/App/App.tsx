@@ -283,12 +283,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		enabled: !!isLoggedIn && !!user.email && user.role === USER_ROLES.ADMIN,
 	});
 
-	const { data: versionData } = useQuery({
-		queryFn: getUserVersion,
-		queryKey: ['getUserVersion', user?.accessJwt],
-		enabled: isLoggedIn,
-	});
-
 	useEffect(() => {
 		if (
 			!isFetchingOrgPreferences &&
@@ -299,7 +293,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
-	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
 		data: userPreferencesData,
 		isFetching: isFetchingUserPreferencesQuery,
@@ -307,7 +300,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	} = useQuery({
 		queryFn: () => listUserPreferences(),
 		queryKey: ['getAllUserPreferences', 'app-context'],
-		enabled: !!isLoggedIn && !!user.email,
+		enabled: !!isLoggedIn,
 	});
 
 	useEffect(() => {
@@ -320,8 +313,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [userPreferencesData, isFetchingUserPreferencesQuery, isLoggedIn]);
 
-	// Idle means waiting for `user.email`, unless `/users/me` failed and it never
-	// arrives.
+	// Idle means logged out.
 	const isFetchingUserPreferences =
 		isFetchingUserPreferencesQuery ||
 		(isUserPreferencesQueryIdle && !userFetchError) ||
@@ -338,6 +330,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			((!activeLicense || !user.email || !featureFlags) &&
 				!userFetchError &&
 				!activeLicenseFetchError));
+
+	// Held back so the boot calls fit the six connections a browser opens to one
+	// host over HTTP/1.1: a seventh queues the role check the page waits for.
+	const { data: versionData } = useQuery({
+		queryFn: getUserVersion,
+		queryKey: ['getUserVersion', user?.accessJwt],
+		enabled: isLoggedIn && !isSessionPending,
+	});
 
 	function updateUser(user: IUser): void {
 		setDefaultUser((prev) => ({

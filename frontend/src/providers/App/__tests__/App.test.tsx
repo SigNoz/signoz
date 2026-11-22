@@ -588,6 +588,7 @@ describe('AppProvider no-auth preflight', () => {
 describe('AppProvider isSessionPending', () => {
 	const LICENSE_URL = 'http://localhost/api/v4/licenses/active';
 	const FEATURES_URL = 'http://localhost/api/v1/features';
+	const VERSION_URL = 'http://localhost/api/v1/version';
 	const TIMESTAMP = '2026-01-01T00:00:00Z';
 
 	const mockBootCalls = (authzDelayMs = 0): void => {
@@ -748,5 +749,94 @@ describe('AppProvider isSessionPending', () => {
 			},
 			{ timeout: 3000 },
 		);
+	});
+
+	it('requests /version only once the session has settled', async () => {
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+		mockBootCalls(600);
+		const versionRequests = jest.fn();
+		server.use(
+			rest.get(VERSION_URL, (_, res, ctx) => {
+				versionRequests();
+				return res(
+					ctx.status(200),
+					ctx.json({ version: '1.0.0', ee: 'Y', setupCompleted: true }),
+				);
+			}),
+		);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(
+			() => {
+				expect(result.current.activeLicense).not.toBeNull();
+				expect(result.current.featureFlags).not.toBeNull();
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.isSessionPending).toBe(true);
+		expect(versionRequests).not.toHaveBeenCalled();
+
+		await waitFor(
+			() => {
+				expect(result.current.versionData?.version).toBe('1.0.0');
+			},
+			{ timeout: 3000 },
+		);
+
+		expect(result.current.isSessionPending).toBe(false);
+		expect(versionRequests).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('AppProvider user preferences', () => {
+	const USER_PREFERENCES_URL = 'http://localhost/api/v1/user/preferences';
+
+	beforeEach(() => {
+		queryClient.clear();
+		localStorage.clear();
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+	});
+
+	it('loads without waiting for /users/me', async () => {
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.delay(800),
+					ctx.status(200),
+					ctx.json({
+						data: { id: 'u-1', email: 'alex@example.com', orgId: 'org-1' },
+					}),
+				),
+			),
+			rest.get(USER_PREFERENCES_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						status: 'success',
+						data: [{ name: 'nav_shortcuts', value: ['logs'] }],
+					}),
+				),
+			),
+		);
+
+		const { result } = renderHook(() => useAppContext(), {
+			wrapper: createWrapper(),
+		});
+
+		await waitFor(
+			() => {
+				expect(result.current.isFetchingUserPreferences).toBe(false);
+			},
+			{ timeout: 700 },
+		);
+
+		expect(result.current.userPreferences).toEqual([
+			{ name: 'nav_shortcuts', value: ['logs'] },
+		]);
+		expect(result.current.user.email).toBe('');
 	});
 });
