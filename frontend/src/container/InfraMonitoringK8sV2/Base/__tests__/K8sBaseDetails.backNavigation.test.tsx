@@ -26,27 +26,6 @@ jest.mock('api/common/logEvent', () => ({
 
 const logEventMock = jest.mocked(logEvent);
 
-// The breadcrumb of the trail reads `maxWidth`, which the fallback style of
-// jest.setup.ts does not carry.
-const baseGetComputedStyle = window.getComputedStyle;
-
-beforeAll(() => {
-	window.getComputedStyle = (
-		element: Element,
-		pseudoElement?: string | null,
-	): CSSStyleDeclaration => {
-		const style = baseGetComputedStyle(element, pseudoElement);
-
-		return style.maxWidth === undefined
-			? ({ ...style, maxWidth: '' } as CSSStyleDeclaration)
-			: style;
-	};
-});
-
-afterAll(() => {
-	window.getComputedStyle = baseGetComputedStyle;
-});
-
 type TestEntity = { name: string };
 
 const mockEntity: TestEntity = { name: 'test-container' };
