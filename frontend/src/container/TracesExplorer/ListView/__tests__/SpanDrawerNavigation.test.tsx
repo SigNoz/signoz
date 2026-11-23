@@ -104,8 +104,6 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 	});
 
-	// A press in the list moves focus out of the drawer, and Base UI then walks
-	// every tabbable in it with getComputedStyle, which takes seconds in jsdom.
 	it('stays open on a press in the drawer or the list, and closes on one outside', async () => {
 		const user = userEvent.setup();
 		renderListView();
@@ -125,7 +123,7 @@ describe('Traces ListView - span drawer navigation', () => {
 		await waitFor(() =>
 			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
 		);
-	}, 30000);
+	});
 
 	it('opens the trace page in a new tab from the row icon without opening the drawer', async () => {
 		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
