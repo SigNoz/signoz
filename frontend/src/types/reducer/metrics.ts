@@ -21,4 +21,4 @@ interface MetricReducer {
 	topLevelOperations: string[];
 }
 
-export default MetricReducer;
+export type { MetricReducer as default };

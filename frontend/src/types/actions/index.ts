@@ -4,4 +4,4 @@ import type { MetricsActions } from './metrics';
 
 type AppActions = AppAction | GlobalTimeAction | MetricsActions;
 
-export default AppActions;
+export type { AppActions as default };
