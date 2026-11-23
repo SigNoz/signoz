@@ -8,6 +8,7 @@ import {
 	Grid3X3,
 	Key,
 	ListFilter,
+	LogIn,
 	Logs,
 	Receipt,
 	Shield,
@@ -164,6 +165,14 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type password ID, separate multiple with comma or space',
 		docsAnchor: 'factor-password',
+	},
+	'auth-domain': {
+		label: 'Auth Domains',
+		description: 'SSO domains and the roles they grant at sign-in.',
+		icon: LogIn,
+		selectorPlaceholder:
+			'Type auth domain ID, separate multiple with comma or space',
+		docsAnchor: 'auth-domain',
 	},
 };
 
