@@ -35,13 +35,14 @@ describe('ConfigMultiSelect', () => {
 			<ConfigMultiSelect
 				testId="multi"
 				value={['c']}
+				placeholder="Every group key"
 				items={ITEMS}
 				onChange={onChange}
 			/>,
 		);
 
 		const user = await open();
-		await user.click(await screen.findByRole('option', { name: 'alpha' }));
+		await user.type(await screen.findByTestId('multi-search'), 'alpha{Enter}');
 
 		expect(onChange).toHaveBeenLastCalledWith(['a', 'c']);
 	});

@@ -57,12 +57,19 @@ export const showRootSpansNextPage = async ({
 	}
 
 	await userEvent.click(
-		await screen.findByRole('button', { name: 'Go to next page' }, untilLoaded),
+		await screen.findByTestId(
+			'traces-table-trace-pagination-next',
+			undefined,
+			untilLoaded,
+		),
 	);
-	const pager = screen.getByLabelText('pagination');
 
 	await expect(
-		await within(pager).findByText('3', undefined, untilLoaded),
+		await screen.findByTestId(
+			'traces-table-trace-pagination-page-3',
+			undefined,
+			untilLoaded,
+		),
 	).toBeVisible();
 };
 
@@ -342,7 +349,7 @@ export const showCreateFunnelNameError = async (
 	await openCreateFunnel(context);
 
 	await userEvent.type(
-		await screen.findByTestId('create-funnel-name-input'),
+		await screen.findByTestId('create-funnel-name-input-field'),
 		taken.funnel_name,
 	);
 	await userEvent.click(screen.getByRole('button', { name: /create funnel/i }));

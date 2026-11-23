@@ -6,13 +6,7 @@ import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDas
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isModifierKeyPressed } from 'utils/app';
 
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbSeparator,
-} from '@signozhq/ui/breadcrumb';
+import { Breadcrumb } from '@signozhq/ui/breadcrumb';
 
 import styles from './DashboardPageBreadcrumbs.module.scss';
 
@@ -39,7 +33,7 @@ function DashboardPageBreadcrumbs({
 
 	// Keep the href for middle/modifier-click (open in new tab) but intercept a plain
 	// click for instant client-side navigation instead of a full-page reload.
-	const onDashboardLinkClick = (event: MouseEvent<HTMLAnchorElement>): void => {
+	const onDashboardLinkClick = (event: MouseEvent): void => {
 		if (isModifierKeyPressed(event)) {
 			return;
 		}
@@ -48,29 +42,23 @@ function DashboardPageBreadcrumbs({
 	};
 
 	return (
-		<Breadcrumb>
-			<BreadcrumbList>
-				<BreadcrumbItem>
-					<BreadcrumbLink
-						icon={<LayoutGrid size={14} />}
-						href={dashboardPageLink}
-						onClick={onDashboardLinkClick}
-					>
-						Dashboard
-					</BreadcrumbLink>
-				</BreadcrumbItem>
-				<BreadcrumbSeparator>/</BreadcrumbSeparator>
-				<BreadcrumbItem>
-					<BreadcrumbLink
-						icon={<img src={image} alt="dashboard-icon" className={styles.icon} />}
-					>
-						<span className={styles.title} title={title}>
-							{title}
-						</span>
-					</BreadcrumbLink>
-				</BreadcrumbItem>
-			</BreadcrumbList>
-		</Breadcrumb>
+		<div className={styles.breadcrumbs}>
+			<Breadcrumb
+				testId="dashboard-page-breadcrumb"
+				items={[
+					{
+						title: 'Dashboard',
+						icon: <LayoutGrid size={14} />,
+						href: dashboardPageLink,
+						onClick: onDashboardLinkClick,
+					},
+					{
+						title,
+						icon: <img src={image} alt="dashboard-icon" className={styles.icon} />,
+					},
+				]}
+			/>
+		</div>
 	);
 }
 

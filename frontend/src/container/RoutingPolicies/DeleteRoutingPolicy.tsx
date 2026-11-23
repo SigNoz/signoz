@@ -45,11 +45,18 @@ function DeleteRoutingPolicy({
 				</Button>,
 			]}
 		>
-			<Typography.Text className="delete-text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Are you sure you want to delete <strong>{routingPolicy?.name}</strong>{' '}
 				routing policy? Deleting a routing policy is irreversible and cannot be
 				undone.
-			</Typography.Text>
+			</Typography>
 		</Modal>
 	);
 }

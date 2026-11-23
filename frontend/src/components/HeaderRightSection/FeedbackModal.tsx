@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Button, Input } from 'antd';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
+import { Button as SignozButton } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { handleContactSupport } from 'container/Integrations/utils';
@@ -39,7 +40,8 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 			})
 			.catch(() => {
 				console.error(`Failed to submit ${entityName}`);
-				toast.error(`Failed to submit ${entityName}`, {
+				toast.danger(`Failed to submit ${entityName}`, {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 			})
@@ -136,14 +138,23 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 					Submit
 				</Button>
 				<div className="feedback-modal-content-footer-info-text">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Have a specific issue?{' '}
-						<Typography.Link
-							className="contact-support-link"
+						<SignozButton
+							variant="link"
+							color="primary"
+							size="sm"
 							onClick={handleContactSupportClick}
 						>
 							Contact Support{' '}
-						</Typography.Link>
+						</SignozButton>
 						or{' '}
 						<a
 							href="https://signoz.io/docs/introduction/"
@@ -153,7 +164,7 @@ function FeedbackModal({ onClose }: { onClose: () => void }): JSX.Element {
 						>
 							Read our docs
 						</a>
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 		</div>

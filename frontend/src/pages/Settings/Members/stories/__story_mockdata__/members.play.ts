@@ -5,14 +5,20 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { getToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	canInvite,
 	clickWhenEnabled,
+	closeRoles,
+	findInviteRoleTriggers,
 	MEMBERS_PAGE_SIZE,
 	membersMocks,
+	offersRole,
 	openMember,
 	openResetLink,
+	roleItemTestId,
 	sendInvites,
 	untilLoaded,
 } from '../Members.stories.mocks';
@@ -125,7 +131,7 @@ export const confirmDeleteMember = async ({
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Delete Member' }, untilLoaded),
 	);
-	await screen.findByRole('dialog', { name: 'Delete Member' });
+	await screen.findByRole('alertdialog', { name: 'Delete Member' });
 };
 
 export const confirmRevokeInvite = async (
@@ -137,20 +143,30 @@ export const confirmRevokeInvite = async (
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Revoke Invite' }, untilLoaded),
 	);
-	await screen.findByRole('dialog', { name: 'Revoke Invite' });
+	await screen.findByRole('alertdialog', { name: 'Revoke Invite' });
 };
 
 export const openRoleDropdown = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openMember(canvasElement, /jon snow/i);
-	await userEvent.click(await screen.findByRole('combobox'));
-	await screen.findByText('oncall-responder', undefined, untilLoaded);
+	await userEvent.click(
+		await screen.findByTestId('member-roles-select', undefined, untilLoaded),
+	);
+	await screen.findByTestId(
+		roleItemTestId('member-roles-select', 'oncall-responder'),
+		undefined,
+		untilLoaded,
+	);
 };
 
 export const openInviteForm = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args)) {
+		return;
+	}
 	await clickWhenEnabled(
 		await within(canvasElement).findByText(
 			/invite member/i,
@@ -162,10 +178,63 @@ export const openInviteForm = async ({
 	await screen.findAllByTestId(/^invite-email-/, undefined, untilLoaded);
 };
 
+export const openInviteRoles = async (context: PlayContext): Promise<void> => {
+	const { args } = context;
+
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
+	await openInviteForm(context);
+	const [trigger] = await findInviteRoleTriggers();
+
+	await userEvent.click(trigger);
+	await screen.findByTestId(
+		roleItemTestId(trigger.dataset.testid ?? '', 'viewer'),
+		undefined,
+		untilLoaded,
+	);
+};
+
+export const selectInviteRoles = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { args } = context;
+	const roles = ['viewer', 'editor', 'oncall-responder'].filter((role) =>
+		offersRole(args, role),
+	);
+
+	if (!canInvite(args) || roles.length === 0) {
+		return;
+	}
+	await openInviteForm(context);
+	const [trigger] = await findInviteRoleTriggers();
+	const triggerTestId = trigger.dataset.testid ?? '';
+
+	await userEvent.click(trigger);
+	for (const role of roles) {
+		await userEvent.click(
+			await screen.findByTestId(
+				roleItemTestId(triggerTestId, role),
+				undefined,
+				untilLoaded,
+			),
+		);
+	}
+	await closeRoles();
+	await screen.findByTestId(
+		`${triggerTestId}-chip-role-${roles[roles.length - 1]}`,
+		undefined,
+		untilLoaded,
+	);
+};
+
 export const sendInvitesToast = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 	await sendInvites(canvasElement, [
 		'bran@nightswatch.io',
 		'hodor@nightswatch.io',
@@ -181,6 +250,9 @@ export const sendPartialInvitesToast = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!canInvite(args) || !offersRole(args, 'viewer')) {
+		return;
+	}
 	await sendInvites(canvasElement, [
 		'bran@nightswatch.io',
 		'hodor@blocked.example',
@@ -230,7 +302,9 @@ export const deleteMemberToast = async ({
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Delete Member' }, untilLoaded),
 	);
-	const dialog = await screen.findByRole('dialog', { name: 'Delete Member' });
+	const dialog = await screen.findByRole('alertdialog', {
+		name: 'Delete Member',
+	});
 
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Delete Member' }),
@@ -253,7 +327,9 @@ export const revokeInviteToast = async (
 	await clickWhenEnabled(
 		await screen.findByRole('button', { name: 'Revoke Invite' }, untilLoaded),
 	);
-	const dialog = await screen.findByRole('dialog', { name: 'Revoke Invite' });
+	const dialog = await screen.findByRole('alertdialog', {
+		name: 'Revoke Invite',
+	});
 
 	await userEvent.click(
 		within(dialog).getByRole('button', { name: 'Revoke Invite' }),
@@ -296,7 +372,7 @@ export const failResetLink = async ({
 	if (args.resetLink === 'no-token') {
 		await waitFor(() =>
 			expect(
-				screen.getByText(/failed to generate password reset link/i),
+				getToastText(/failed to generate password reset link/i),
 			).toBeVisible(),
 		);
 	}

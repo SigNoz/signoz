@@ -9,7 +9,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/SigNoz/clickhouse-go-mock v0.15.1
 	github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd
-	github.com/SigNoz/signoz-otel-collector v0.144.6
+	github.com/SigNoz/signoz-otel-collector v0.144.17-rc.1
 	github.com/SigNoz/signoz-semantic-conventions/gen/go v0.0.2
 	github.com/antlr4-go/antlr/v4 v4.13.1
 	github.com/antonmedv/expr v1.15.3

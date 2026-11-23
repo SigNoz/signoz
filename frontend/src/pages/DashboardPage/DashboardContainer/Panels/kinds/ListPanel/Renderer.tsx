@@ -212,7 +212,7 @@ function ListPanelRenderer({
 					)}
 				</>
 			)}
-			{logDetail?.activeLog && (
+			{logDetail && (
 				<LogDetail
 					log={logDetail.activeLog}
 					selectedTab={logDetail.selectedTab}

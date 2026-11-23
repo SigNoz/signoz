@@ -117,7 +117,8 @@ function TagKeyValueInput({
 					index === editIndex ? (
 						<Input
 							key={tag}
-							className={styles.editInput}
+							size="sm"
+							width={160}
 							value={editValue}
 							autoFocus
 							testId={`${testId}-edit`}
@@ -142,17 +143,28 @@ function TagKeyValueInput({
 						</Pill.Closeable>
 					),
 				)}
-				<Input
-					className={styles.input}
-					value={inputValue}
-					placeholder={placeholder}
-					testId={testId}
-					onChange={handleChange}
-					onKeyDown={handleKeyDown}
-				/>
+				<div className={styles.input}>
+					<Input
+						variant="unstyled"
+						width="100%"
+						value={inputValue}
+						placeholder={placeholder}
+						testId={testId}
+						onChange={handleChange}
+						onKeyDown={handleKeyDown}
+					/>
+				</div>
 			</div>
 			{error && (
-				<Typography className={styles.error} data-testid={`${testId}-error`}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="danger"
+					as="span"
+					textOverflow="wrap"
+					data-testid={`${testId}-error`}
+				>
 					{error}
 				</Typography>
 			)}

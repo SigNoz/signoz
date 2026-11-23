@@ -43,6 +43,7 @@
 
 .relation {
 	flex: 0 0 auto;
+	/* Typography has no accent color variant. */
 	--typography-color: var(--accent-primary);
 }
 

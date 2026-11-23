@@ -66,16 +66,16 @@
 
 .emptyTitle {
 	margin: 0;
-	font-size: var(--periscope-font-size-large);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-large-400-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
 	line-height: 1;
 	color: var(--l1-foreground);
 }
 
 .emptySubtitle {
 	margin: 0;
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.005em;
 	color: var(--l2-foreground);
 }
@@ -88,8 +88,8 @@
 	--button-height: auto;
 	--button-padding: var(--spacing-3) var(--spacing-5);
 	--button-border-radius: var(--radius-3);
-	--button-font-weight: var(--font-weight-normal);
-	--button-size-line-height: var(--line-height-20);
+	--button-font-weight: var(--paragraph-base-400-font-weight);
+	--button-size-line-height: var(--paragraph-base-400-line-height);
 	--button-white-space: normal;
 	--button-label-white-space: normal;
 	--button-variant-ghost-background-color: var(--l3-background-60);
@@ -111,23 +111,22 @@
 	padding: var(--spacing-3) var(--spacing-5);
 	border-radius: var(--radius-3);
 	overflow: hidden;
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.005em;
 	color: transparent;
 	user-select: none;
 
-	// Nested so it outranks the skeleton's own `position: relative`.
 	.suggestionSkeletonFill {
 		position: absolute;
 		inset: 0;
-		--skeleton-background: var(--l3-background-60);
-		--skeleton-shimmer-color: color-mix(
+		--skeleton-background-color: var(--l3-background-60);
+		--skeleton-active-band-color: color-mix(
 			in srgb,
 			var(--l2-foreground),
 			transparent 92%
 		);
-		--skeleton-input-height: 100%;
-		--skeleton-input-border-radius: var(--radius-3);
+		--skeleton-input-md-height: 100%;
+		--skeleton-border-radius: var(--radius-3);
 	}
 }

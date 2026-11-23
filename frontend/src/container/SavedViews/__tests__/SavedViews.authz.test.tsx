@@ -288,7 +288,7 @@ describe('SavedViews - AuthZ', () => {
 		const create = screen.getByTestId('saved-views-create');
 		expect(create).toHaveAttribute('aria-busy', 'true');
 		await userEvent.click(create);
-		expect(screen.queryByTestId('save-view-name')).toBeNull();
+		expect(screen.queryByTestId('save-view-name-field')).toBeNull();
 	});
 
 	it('disables edit details without update and delete without delete', async () => {

@@ -9,6 +9,10 @@ import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
+// Picking a role in the Combobox inside the Drawer takes seconds in jsdom, and
+// the 429 retry waits another second on top.
+jest.setTimeout(20000);
+
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
@@ -161,8 +165,11 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add signoz-viewer while keeping signoz-admin selected
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -205,11 +212,11 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Remove the signoz-admin tag from the multi-select
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		await user.click(
+			await screen.findByTestId(
+				`sa-roles-select-chip-${managedRoles[0].id}-remove`,
+			),
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -402,8 +409,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		// Add the signoz-viewer role (which is not currently assigned)
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>
@@ -440,8 +450,11 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 
 		await screen.findByDisplayValue('CI Bot');
 
-		await user.click(screen.getByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-viewer'));
+		await user.click(screen.getByTestId('sa-roles-select'));
+		await user.type(
+			await screen.findByTestId('sa-roles-select-search'),
+			`${managedRoles[2].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() =>

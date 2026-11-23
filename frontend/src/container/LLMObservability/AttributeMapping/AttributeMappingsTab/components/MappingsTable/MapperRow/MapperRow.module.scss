@@ -8,7 +8,7 @@
 	padding: var(--spacing-4) var(--spacing-6);
 	vertical-align: middle;
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 }
 
 .targetCell {
@@ -67,7 +67,7 @@
 }
 
 .sourceMore {
-	font-size: var(--font-size-xs);
+	font-size: var(--label-small-400-font-size);
 	white-space: nowrap;
 }
 

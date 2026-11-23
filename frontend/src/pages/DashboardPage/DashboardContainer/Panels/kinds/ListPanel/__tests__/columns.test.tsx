@@ -76,6 +76,23 @@ describe('buildListColumns', () => {
 		expect(body.ellipsis).toBe(true);
 	});
 
+	it.each(['body', 'service.name'])(
+		'keeps the %s log cell on one line so a narrow column clips instead of growing the row',
+		(key) => {
+			const cols = buildListColumns({
+				columns: [key],
+				signal: TelemetrytypesSignalDTO.logs,
+				formatTimestamp: fmt,
+			}) as Col[];
+			const cell = renderCell(colByKey(cols, key), 'checkout complete');
+			expect(
+				cell
+					.querySelector('[data-slot="typography"]')
+					?.getAttribute('data-text-overflow'),
+			).toBe('visible');
+		},
+	);
+
 	it('renders trace http fields as a tag', () => {
 		const cols = buildListColumns({
 			columns: ['http_method'],
