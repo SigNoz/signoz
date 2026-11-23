@@ -209,9 +209,9 @@ function ListAlertRules(): JSX.Element {
 			data={rules}
 			columns={columnsWithActions}
 			isLoading={isFetching}
-			getRowKey={(row): string => row.id ?? ''}
-			getRowTestId={(row): string => `alert-row-${row.id ?? ''}`}
-			getItemKey={(row): string => row.id ?? ''}
+			getRowKey={(row): string => row.id}
+			getRowTestId={(row): string => `alert-row-${row.id}`}
+			getItemKey={(row): string => row.id}
 			columnStorageKey="alert-rules-columns"
 			enableQueryParams={QUERY_PARAMS_CONFIG}
 			onSort={changeSort}

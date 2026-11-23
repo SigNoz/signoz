@@ -15,13 +15,12 @@ import {
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { grantsAll } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
-import {
-	getRuleActionChecks,
-	type RuleAction,
-} from 'container/ListAlertRules/components/ruleActionChecks';
+import type { RuleAction, RuleViewCtx } from 'container/ListAlertRules/types';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
-import type { RuleViewCtx } from 'container/ListAlertRules/types';
-import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
+import {
+	DEFAULT_RULE_LIST_FILTER,
+	getRuleActionChecks,
+} from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
 	findRuleBuiltinView,

@@ -19,8 +19,11 @@ import type {
 import type { AxiosError } from 'axios';
 
 import type { AlertRule } from '../types';
-import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
-import { getRuleActionChecks } from './ruleActionChecks';
+import {
+	ALERT_ACTIONS,
+	alertActionLogEvent,
+	getRuleActionChecks,
+} from '../utils';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
