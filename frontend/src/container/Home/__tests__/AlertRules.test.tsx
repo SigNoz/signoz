@@ -2,6 +2,7 @@ import {
 	RuletypesAlertStateDTO,
 	type RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
@@ -150,7 +151,7 @@ describe('Home alert rules - authz', () => {
 		expect(screen.queryByTestId(/^home-alert-rule-/)).not.toBeInTheDocument();
 	});
 
-	it('locks Create Alert Rule without create, with no link to follow', async () => {
+	it('locks Create Alert Rule without create', async () => {
 		serveRules([]);
 		server.use(setupAuthzDeny(RuleCreatePermission));
 		renderAlertRules();
@@ -161,19 +162,28 @@ describe('Home alert rules - authz', () => {
 				RuleCreatePermission,
 			),
 		);
-		const button = screen.getByTestId('home-create-alert-rule');
-		expect(button).toBeDisabled();
-		expect(button.closest('a')).toBeNull();
+		expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
-	it('links Create Alert Rule to the new alert page with create', async () => {
+	it('opens the new alert page from Create Alert Rule with create', async () => {
 		serveRules([]);
 		server.use(setupAuthzAdmin());
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderAlertRules();
 
-		const button = await screen.findByTestId('home-create-alert-rule');
 		await waitFor(() =>
-			expect(button.closest('a')).toHaveAttribute('href', ROUTES.ALERTS_NEW),
+			expect(screen.getByTestId('home-create-alert-rule')).toHaveAttribute(
+				'aria-disabled',
+				'false',
+			),
+		);
+		await user.click(screen.getByTestId('home-create-alert-rule'));
+		expect(safeNavigateMock).toHaveBeenCalledWith(
+			ROUTES.ALERTS_NEW,
+			expect.objectContaining({ newTab: false }),
 		);
 		expect(screen.queryByText('list:rule:*')).not.toBeInTheDocument();
 	});

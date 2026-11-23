@@ -1,16 +1,18 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
 import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { AppLink } from 'lib/router/AppLink';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { isModifierKeyPressed } from 'utils/app';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import {
 	RuleCreatePermission,
@@ -45,15 +47,14 @@ export default function AlertRules({
 		!listCheck.isLoading &&
 		!listCheck.error &&
 		!listCheck.isGranted(RuleListPermission);
-	// Create is only offered by the empty state, so it is only checked there.
-	const createCheck = useAuthZ(CREATE_CHECKS, {
-		enabled: !isLoading && !rulesExist,
-	});
-	const isCreateDenied =
-		!createCheck.isLoading &&
-		!createCheck.error &&
-		!!createCheck.permissions &&
-		!createCheck.isGranted(RuleCreatePermission);
+	const { safeNavigate } = useSafeNavigate();
+	const handleCreateAlertRule = useCallback(
+		(e: React.MouseEvent): void => {
+			void logEvent('Homepage: Create alert rule clicked', {});
+			safeNavigate(ROUTES.ALERTS_NEW, { newTab: isModifierKeyPressed(e) });
+		},
+		[safeNavigate],
+	);
 
 	useEffect(() => {
 		if (rulesExist && !loadingUserPreferences) {
@@ -75,33 +76,17 @@ export default function AlertRules({
 				</div>
 
 				<div className="empty-actions-container">
-					{isCreateDenied ? (
-						// No link while denied: the tooltip's trigger would still follow it.
-						<AuthZTooltip checks={CREATE_CHECKS}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
-								data-testid="home-create-alert-rule"
-							>
-								Create Alert Rule
-							</Button>
-						</AuthZTooltip>
-					) : (
-						<AppLink to={ROUTES.ALERTS_NEW}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
-								icon={<Plus size={16} />}
-								data-testid="home-create-alert-rule"
-								onClick={(): void => {
-									void logEvent('Homepage: Create alert rule clicked', {});
-								}}
-							>
-								Create Alert Rule
-							</Button>
-						</AppLink>
-					)}
+					<AuthZButton
+						checks={CREATE_CHECKS}
+						size="md"
+						variant="solid"
+						color="secondary"
+						prefix={<Plus size={16} />}
+						testId="home-create-alert-rule"
+						onClick={handleCreateAlertRule}
+					>
+						Create Alert Rule
+					</AuthZButton>
 
 					<Button
 						type="link"
