@@ -1,5 +1,6 @@
 import {
 	Bot,
+	Building,
 	Cable,
 	ChartLine,
 	DraftingCompass,
@@ -173,6 +174,13 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type auth domain ID, separate multiple with comma or space',
 		docsAnchor: 'auth-domain',
+	},
+	organization: {
+		label: 'Organization',
+		description: 'The workspace organization and its display name.',
+		icon: Building,
+		selectorPlaceholder: 'Type * to cover the workspace organization',
+		docsAnchor: 'organization',
 	},
 };
 

@@ -65,6 +65,11 @@ export default {
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
+				kind: 'organization',
+				type: 'organization',
+				allowedVerbs: ['read', 'update'],
+			},
+			{
 				kind: 'role',
 				type: 'role',
 				allowedVerbs: [
@@ -134,12 +139,13 @@ export default {
 			list: ['metaresource', 'role', 'serviceaccount', 'user'],
 			read: [
 				'metaresource',
+				'organization',
 				'role',
 				'serviceaccount',
 				'telemetryresource',
 				'user',
 			],
-			update: ['metaresource', 'role', 'serviceaccount', 'user'],
+			update: ['metaresource', 'organization', 'role', 'serviceaccount', 'user'],
 		},
 	},
 } as const;
