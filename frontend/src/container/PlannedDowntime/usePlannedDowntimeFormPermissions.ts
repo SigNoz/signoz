@@ -1,8 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { DefaultOptionType } from 'antd/es/select';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
-import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
-import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import {
 	buildPlannedMaintenanceAttachPermission,
 	buildPlannedMaintenanceDetachPermission,
@@ -13,8 +11,11 @@ import {
 	buildRuleDetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { useAppContext } from 'providers/App/App';
+import type {
+	LinkAccess,
+	LinkPermissions,
+} from 'lib/authz/hooks/useLinkPickerAccess/types';
+import { useLinkPickerAccess } from 'lib/authz/hooks/useLinkPickerAccess/useLinkPickerAccess';
 
 import { getDowntimeSaveChecks } from './downtimeSaveChecks';
 
@@ -26,24 +27,15 @@ interface UsePlannedDowntimeFormPermissionsArgs {
 	selectedRules: DefaultOptionType[];
 }
 
-export interface RuleAccess {
-	disabled: boolean;
-	/** The denial, or that the check is still running. */
-	reason?: string;
-}
-
 export interface UsePlannedDowntimeFormPermissionsReturn {
 	/** Editing a schedule the user may not update. */
 	isReadOnly: boolean;
 	saveChecks: BrandedPermission[];
 	/** Whether a rule can be added or, if the schedule already has it, removed. */
-	getRuleAccess: (ruleId: string) => RuleAccess;
+	getRuleAccess: (ruleId: string) => LinkAccess;
 	/** Starts the `attach` checks on unsilenced rules once the picker opens. */
 	onPickerVisibleChange: (open: boolean) => void;
 }
-
-const ALLOWED: RuleAccess = { disabled: false };
-const PENDING: RuleAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
 
 const toIds = (options: DefaultOptionType[]): string[] =>
 	options
@@ -51,11 +43,15 @@ const toIds = (options: DefaultOptionType[]): string[] =>
 		.filter((value) => value !== undefined && value !== null)
 		.map(String);
 
+const buildRulePermissions = (id: string): LinkPermissions => ({
+	attach: buildRuleAttachPermission(id),
+	detach: buildRuleDetachPermission(id),
+});
+
 /**
  * The schedule's own verbs when editing, and per rule `detach` if the schedule
- * silences it, `attach` if not. Silenced rules are checked up front, since
- * their tags can be removed without opening the picker; every other rule once
- * the picker opens. Save is checked by its own button against `saveChecks`.
+ * silences it, `attach` if not. Save is checked by its own button against
+ * `saveChecks`.
  */
 export function usePlannedDowntimeFormPermissions({
 	initialValues,
@@ -64,8 +60,6 @@ export function usePlannedDowntimeFormPermissions({
 	isAllRules,
 	selectedRules,
 }: UsePlannedDowntimeFormPermissionsArgs): UsePlannedDowntimeFormPermissionsReturn {
-	const { user } = useAppContext();
-	const [hasPickerOpened, setHasPickerOpened] = useState(false);
 	const scheduleId = isEditMode ? initialValues.id : undefined;
 
 	const storedIds = useMemo(
@@ -76,94 +70,33 @@ export function usePlannedDowntimeFormPermissions({
 		() => (isAllRules ? [] : toIds(selectedRules)),
 		[isAllRules, selectedRules],
 	);
+	const optionIds = useMemo(() => toIds(alertOptions), [alertOptions]);
 
-	const scheduleChecks = useMemo(
+	const update = useMemo(
+		() =>
+			scheduleId ? buildPlannedMaintenanceUpdatePermission(scheduleId) : undefined,
+		[scheduleId],
+	);
+	const owner = useMemo(
 		() =>
 			scheduleId
 				? {
-						update: buildPlannedMaintenanceUpdatePermission(scheduleId),
 						attach: buildPlannedMaintenanceAttachPermission(scheduleId),
 						detach: buildPlannedMaintenanceDetachPermission(scheduleId),
 					}
 				: undefined,
 		[scheduleId],
 	);
+	const ownerChecks = useMemo(() => (update ? [update] : []), [update]);
 
-	const ruleCheck = useCallback(
-		(ruleId: string): BrandedPermission =>
-			storedIds.includes(ruleId)
-				? buildRuleDetachPermission(ruleId)
-				: buildRuleAttachPermission(ruleId),
-		[storedIds],
-	);
-
-	const upfrontChecks = useMemo(
-		() => [
-			...(scheduleChecks ? Object.values(scheduleChecks) : []),
-			...storedIds.map(buildRuleDetachPermission),
-		],
-		[scheduleChecks, storedIds],
-	);
-	const pickerChecks = useMemo(
-		() =>
-			toIds(alertOptions)
-				.filter((id) => !storedIds.includes(id))
-				.map(buildRuleAttachPermission),
-		[alertOptions, storedIds],
-	);
-
-	const upfront = useAuthZ(upfrontChecks, {
-		enabled: upfrontChecks.length > 0,
-	});
-	const picker = useAuthZ(pickerChecks, {
-		enabled: hasPickerOpened && pickerChecks.length > 0,
-	});
-
-	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
-
-	const getRuleAccess = useCallback(
-		(ruleId: string): RuleAccess => {
-			const scheduleCheck = storedIds.includes(ruleId)
-				? scheduleChecks?.detach
-				: scheduleChecks?.attach;
-			// A failed request fails open for its own checks only.
-			const required = [scheduleCheck, ruleCheck(ruleId)].filter(
-				(permission): permission is BrandedPermission =>
-					!!permission &&
-					!(upfrontSet.has(permission) ? upfront.error : picker.error),
-			);
-			const results = { ...upfront.permissions, ...picker.permissions };
-			// A check reports loading only once its fetch starts, a render after the
-			// picker opens; a missing result keeps the rule from flashing enabled.
-			if (required.some((permission) => !results[permission])) {
-				return PENDING;
-			}
-
-			const denied = required.filter(
-				(permission) => !results[permission].isGranted,
-			);
-			return denied.length > 0
-				? { disabled: true, reason: formatDeniedMessage(denied, user.id) }
-				: ALLOWED;
-		},
-		[
-			upfront.error,
-			upfront.permissions,
-			picker.error,
-			picker.permissions,
-			upfrontSet,
-			storedIds,
-			scheduleChecks,
-			ruleCheck,
-			user.id,
-		],
-	);
-
-	const onPickerVisibleChange = useCallback((open: boolean): void => {
-		if (open) {
-			setHasPickerOpened(true);
-		}
-	}, []);
+	const { getAccess, onPickerVisibleChange, isOwnerDenied } =
+		useLinkPickerAccess({
+			owner,
+			ownerChecks,
+			linkedIds: storedIds,
+			optionIds,
+			buildItemPermissions: buildRulePermissions,
+		});
 
 	const saveChecks = useMemo(
 		() =>
@@ -176,13 +109,9 @@ export function usePlannedDowntimeFormPermissions({
 	);
 
 	return {
-		isReadOnly:
-			!!scheduleChecks &&
-			!upfront.isLoading &&
-			!upfront.error &&
-			!upfront.isGranted(scheduleChecks.update),
+		isReadOnly: !!update && isOwnerDenied(update),
 		saveChecks,
-		getRuleAccess,
+		getRuleAccess: getAccess,
 		onPickerVisibleChange,
 	};
 }
