@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import {
+	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 	setupAuthzAllow,
 	setupAuthzDenyAll,
@@ -120,11 +122,19 @@ describe('RoutingPolicies', () => {
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeDisabled();
 	});
 
+	it('keeps search usable when the permission check fails', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+		);
+		render(<RoutingPolicies />);
+
+		await waitFor(() => expect(screen.getByTestId(SEARCH_TEST_ID)).toBeEnabled());
+	});
+
 	it('filters routing policies by search term', async () => {
 		render(<RoutingPolicies />);
-		const searchInput = screen.getByTestId(SEARCH_TEST_ID);
-		await waitFor(() => expect(searchInput).toBeEnabled());
-		fireEvent.change(searchInput, {
+		await waitFor(() => expect(screen.getByTestId(SEARCH_TEST_ID)).toBeEnabled());
+		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
 			target: { value: MOCK_ROUTING_POLICY_1.name },
 		});
 

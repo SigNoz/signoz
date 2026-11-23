@@ -10,7 +10,7 @@ import {
 	RoutePolicyCreateChecks,
 	RoutePolicyListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
@@ -66,8 +66,7 @@ function RoutingPolicies(): JSX.Element {
 	const { containerRef, calculatedPageSize, pagedPolicies, setPage, setLimit } =
 		useRoutingPoliciesTable(routingPoliciesData);
 
-	const { isGranted } = useAuthZ(LIST_CHECKS);
-	const canList = isGranted(RoutePolicyListPermission);
+	const searchLock = useAuthZDisabled(LIST_CHECKS);
 
 	const columns = useMemo(
 		() => getRoutingPolicyColumns(formatTimezoneAdjustedTimestamp),
@@ -160,8 +159,8 @@ function RoutingPolicies(): JSX.Element {
 							placeholder="Search by name or description"
 							value={searchTerm}
 							onChange={handleSearch}
-							disabled={!canList}
-							disabledTooltip={undefined}
+							disabled={searchLock.disabled}
+							disabledTooltip={searchLock.disabledTooltip}
 							suffix={<Search size={14} className={styles.searchIcon} />}
 							testId="routing-policies-search"
 						/>
