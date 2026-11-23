@@ -56,7 +56,7 @@ function AddVariableIcon({
 			disabledTooltip={disabledTooltip}
 			variant="outlined"
 			color="secondary"
-			size="sm"
+			size="md"
 			icon
 			aria-label="Add variable"
 			testId="dashboard-variables-add"

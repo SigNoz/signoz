@@ -29,28 +29,29 @@ function NewSectionNameInput({
 	};
 
 	return (
-		<Input
-			autoFocus
-			value={value}
-			placeholder="New section name"
-			containerClassName={styles.nameInput}
-			onChange={(e): void => onChange(e.target.value)}
-			onKeyDown={handleKeyDown}
-			testId="panel-section-name"
-			suffix={
-				<Button
-					variant="ghost"
-					color="secondary"
-					size="sm"
-					icon
-					aria-label="Cancel new section"
-					onClick={onCancel}
-					testId="panel-section-name-cancel"
-				>
-					<X size={14} />
-				</Button>
-			}
-		/>
+		<div className={styles.nameInput}>
+			<Input
+				autoFocus
+				value={value}
+				placeholder="New section name"
+				onChange={(e): void => onChange(e.target.value)}
+				onKeyDown={handleKeyDown}
+				testId="panel-section-name"
+				suffix={
+					<Button
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						aria-label="Cancel new section"
+						onClick={onCancel}
+						testId="panel-section-name-cancel"
+					>
+						<X size={14} />
+					</Button>
+				}
+			/>
+		</div>
 	);
 }
 

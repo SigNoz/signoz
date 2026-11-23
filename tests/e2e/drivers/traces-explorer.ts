@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { quickFiltersDriver } from './explorers';
+import { inputField } from './input';
 import {
 	allowFor,
 	driver,
@@ -254,7 +255,7 @@ export function tracesExplorerDriver(page: Page): TracesExplorer {
 			await expect(header).toHaveAttribute('data-state', 'open');
 			// The rail shows ten values, so the seeded one has to be searched for. The
 			// search box renders only once the section holds more than that.
-			const searchBox = section.getByTestId('checkbox-filter-search');
+			const searchBox = inputField(section, 'checkbox-filter-search');
 			const row = explorer.quickFilterValue(key, value);
 			await expect(searchBox.or(row).first()).toBeVisible({
 				timeout: SEEDED_DATA_TIMEOUT,

@@ -4,13 +4,11 @@
 	gap: 6px;
 	flex-wrap: wrap;
 	color: var(--l1-foreground);
+
+	--divider-border: var(--callout-warning-border);
 }
 
 .presentIcon {
 	color: var(--success-background);
 	flex-shrink: 0;
-}
-
-.divider {
-	--divider-color: var(--callout-warning-border);
 }

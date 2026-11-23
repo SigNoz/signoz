@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Save } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
@@ -47,48 +47,48 @@ function AccountSettingsDrawer({
 		gcpConfig?.connection_method ===
 		CloudintegrationtypesGCPConnectionMethodDTO.agent;
 
-	return (
-		<DrawerWrapper
-			open={true}
-			title="Account Settings"
-			direction="right"
-			showCloseButton
-			onOpenChange={(open): void => {
-				if (!open) {
-					handleClose();
-				}
+	const removeAccount = (
+		<RemoveIntegrationAccount
+			accountId={account?.id}
+			onRemoveIntegrationAccountSuccess={(): void => {
+				void invalidateListAccounts(queryClient, {
+					cloudProvider: INTEGRATION_TYPES.GCP,
+				});
+				setActiveAccount(null);
+				handleClose();
 			}}
+			cloudProvider={INTEGRATION_TYPES.GCP}
+			gcpConnectionMethod={gcpConfig?.connection_method}
+		/>
+	);
+
+	return (
+		<Drawer
+			type="task"
+			stack="overlay"
+			open
+			onClose={handleClose}
+			title="Account Settings"
 			width="wide"
-			footer={
-				<div className={styles.footer}>
-					<RemoveIntegrationAccount
-						accountId={account?.id}
-						onRemoveIntegrationAccountSuccess={(): void => {
-							void invalidateListAccounts(queryClient, {
-								cloudProvider: INTEGRATION_TYPES.GCP,
-							});
-							setActiveAccount(null);
-							handleClose();
-						}}
-						cloudProvider={INTEGRATION_TYPES.GCP}
-						gcpConnectionMethod={gcpConfig?.connection_method}
-					/>
-					{!isAgentAccount && (
-						<Button
-							disabledTooltip="Change the project IDs first"
-							size="md"
-							variant="solid"
-							color="secondary"
-							disabled={isSaveDisabled}
-							onClick={handleSubmit}
-							loading={isLoading}
-							prefix={<Save size={14} />}
-							testId="gcp-update-account-btn"
-						>
-							Update Changes
-						</Button>
-					)}
-				</div>
+			footerPrefix={isAgentAccount ? undefined : removeAccount}
+			footerSuffix={
+				isAgentAccount ? (
+					removeAccount
+				) : (
+					<Button
+						disabledTooltip="Change the project IDs first"
+						size="md"
+						variant="solid"
+						color="secondary"
+						disabled={isSaveDisabled}
+						onClick={handleSubmit}
+						loading={isLoading}
+						prefix={<Save size={14} />}
+						testId="gcp-update-account-btn"
+					>
+						Update Changes
+					</Button>
+				)
 			}
 		>
 			<Form
@@ -170,7 +170,7 @@ function AccountSettingsDrawer({
 					</div>
 				</div>
 			</Form>
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

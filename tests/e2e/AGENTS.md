@@ -128,6 +128,11 @@ never by reaching for another fixture.
 - Locate by testid. A missing one is added to the product in the same change.
   Role, label and CSS lookups are converted as you touch them; antd internals
   (`antd.ts`) are the exception.
+- A `@signozhq/ui` Input puts its `testId` on the frame `<div>` and
+  `${testId}-field` on the native control, so `fill`, `toHaveValue` and
+  `toBeDisabled` go through `inputField` (`drivers/input.ts`). Pick from a
+  Combobox with `comboboxAt` (`drivers/combobox.ts`) and find a toast with
+  `toastByText` (`drivers/toast.ts`).
 - Scroll with `wheelTo` (`drivers/scroll.ts`) before acting on an element that
   may be off screen. It turns the mouse wheel and asserts `toBeInViewport()`.
   Scripted scrolling (`scrollIntoView`, `scrollIntoViewIfNeeded`) moves even an

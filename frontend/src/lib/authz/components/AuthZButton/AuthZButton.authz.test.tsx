@@ -1,3 +1,4 @@
+import { createRef } from 'react';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import type { AuthZObject } from 'lib/authz/hooks/useAuthZ/types';
@@ -118,6 +119,26 @@ describe('AuthZButton', () => {
 			'Locked',
 		);
 		expect(onCheck).not.toHaveBeenCalled();
+	});
+
+	it('forwards its ref to the button', () => {
+		const ref = createRef<HTMLButtonElement>();
+
+		render(
+			<AuthZButton
+				ref={ref}
+				size="md"
+				variant="solid"
+				color="primary"
+				checks={[createPerm]}
+				authZEnabled={false}
+				testId="create-btn"
+			>
+				Create
+			</AuthZButton>,
+		);
+
+		expect(ref.current).toBe(screen.getByTestId('create-btn'));
 	});
 
 	it('skips the check when authZEnabled is false', async () => {

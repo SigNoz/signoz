@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Skeleton } from 'antd';
+import { Button as SignozButton } from '@signozhq/ui/button';
 import { AppLink } from 'lib/router/AppLink';
 import logEvent from 'api/common/logEvent';
 import { useListSavedViews } from 'api/generated/services/saved-view';
@@ -92,7 +93,7 @@ export default function SavedViews({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const handleRedirectQuery = (view: SavedviewtypesSavedViewDTO): void => {
-		logEvent('Homepage: Saved view clicked', {
+		void logEvent('Homepage: Saved view clicked', {
 			viewId: view.id,
 			viewName: view.spec.displayName,
 			entity: selectedEntity,
@@ -149,25 +150,28 @@ export default function SavedViews({
 				{user?.role !== USER_ROLES.VIEWER && (
 					<div className="empty-actions-container">
 						<AppLink to={getStartedLink}>
-							<Button
-								type="default"
-								className="periscope-btn secondary"
+							<SignozButton
+								size="md"
+								variant="solid"
+								color="secondary"
+								suffix={<ArrowRight size={16} />}
+								testId="saved-views-get-started"
 								onClick={(): void => {
-									logEvent('Homepage: Get Started clicked', {
+									void logEvent('Homepage: Get Started clicked', {
 										source: 'Saved Views',
 										entity: selectedEntity,
 									});
 								}}
 							>
-								Get Started &nbsp; <ArrowRight size={16} />
-							</Button>
+								Get Started
+							</SignozButton>
 						</AppLink>
 
 						<Button
 							type="link"
 							className="learn-more-link"
 							onClick={(): void => {
-								logEvent('Homepage: Learn more clicked', {
+								void logEvent('Homepage: Learn more clicked', {
 									source: 'Saved Views',
 									entity: selectedEntity,
 								});
@@ -262,7 +266,7 @@ export default function SavedViews({
 	);
 
 	const handleTabChange = (tab: string): void => {
-		logEvent('Homepage: Saved views switched', {
+		void logEvent('Homepage: Saved views switched', {
 			tab,
 		});
 		let currentViews: SavedviewtypesSavedViewDTO[] = [];

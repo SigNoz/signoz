@@ -1,5 +1,5 @@
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Typography } from '@signozhq/ui/typography';
 import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -40,12 +40,21 @@ function VolumeControlConfigDrawer({
 		isSaveDisabled,
 	} = useVolumeControlConfig({ metricName, existingRule, open, onClose });
 
-	const footer = (
-		<div className={styles.footer}>
-			<Typography.Text size="small" color="muted">
-				Changes take effect about 5 minutes after saving.
-			</Typography.Text>
-			<div className={styles.footerSpacer} />
+	const footerStatus = (
+		<Typography
+			variant="paragraph"
+			size="small"
+			weight="regular"
+			color="secondary"
+			as="span"
+			textOverflow="wrap"
+		>
+			Changes take effect about 5 minutes after saving.
+		</Typography>
+	);
+
+	const footerActions = (
+		<>
 			<Button
 				size="md"
 				variant="outlined"
@@ -79,36 +88,34 @@ function VolumeControlConfigDrawer({
 			>
 				Save rule
 			</Button>
-		</div>
+		</>
 	);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
+			stack="overlay"
 			open={open}
-			onOpenChange={(next: boolean): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={`Manage attributes · ${metricName}`}
-			direction="right"
-			showCloseButton
 			width="wide"
-			footer={footer}
-			showOverlay={false}
-			className="volume-control-config-drawer"
-			style={{ zIndex: 1100 }}
+			footerPrefix={footerStatus}
+			footerSuffix={footerActions}
 		>
 			<div className={styles.body} data-testid="volume-control-config-drawer">
 				<div className={styles.adminRow}>
-					<Typography.Text
-						size="xs"
-						weight="semibold"
-						color="warning"
-						className={styles.adminOnlyTag}
-					>
-						Admin only
-					</Typography.Text>
+					<span className={styles.adminOnlyTag}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="bold"
+							color="warning"
+							as="span"
+							textOverflow="wrap"
+						>
+							Admin only
+						</Typography>
+					</span>
 				</div>
 				<ModeSelector mode={mode} onChange={setMode} />
 				{mode !== 'all' && (
@@ -123,7 +130,7 @@ function VolumeControlConfigDrawer({
 				<ImpactPanel mode={mode} preview={preview} isLoading={isPreviewLoading} />
 				<RelatedAssetsWarning affectedAssets={preview?.affectedAssets} />
 			</div>
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

@@ -81,6 +81,10 @@
 	background-color: var(--bg-robin-600);
 }
 
+.right-toolbar-actions-container {
+	flex-shrink: 0;
+}
+
 .right-actions {
 	display: flex;
 	align-items: center;

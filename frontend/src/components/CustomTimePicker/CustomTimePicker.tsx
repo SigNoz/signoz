@@ -531,7 +531,7 @@ function CustomTimePicker({
 		// Use setTimeout to wait for React to update the DOM and make input editable
 		setTimeout(() => {
 			const inputElement = inputRef.current?.input;
-			if (inputElement) {
+			if (inputElement && !document.activeElement?.closest('.timezone-picker')) {
 				inputElement.focus();
 				inputElement.select();
 			}

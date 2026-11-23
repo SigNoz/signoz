@@ -106,9 +106,17 @@ function MultipleNotifications(): JSX.Element {
 						data-testid="multiple-notifications-select"
 					/>
 					{isMultipleNotificationsEnabled && (
-						<Typography.Text className="multiple-notifications-select-description">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="p"
+							marginTop={2}
+							textOverflow="wrap"
+						>
 							{groupByDescription}
-						</Typography.Text>
+						</Typography>
 					)}
 				</div>
 			</Tooltip>
@@ -124,15 +132,31 @@ function MultipleNotifications(): JSX.Element {
 	return (
 		<div className="multiple-notifications-container">
 			<div className="multiple-notifications-header">
-				<Typography.Text className="multiple-notifications-header-title">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="p"
+					display="flex"
+					gap={4}
+					textOverflow="wrap"
+				>
 					Group alerts by{' '}
 					<Tooltip title="Group similar alerts together to reduce notification volume. Leave empty to combine all matching alerts into one notification without grouping.">
 						<Info size={16} />
 					</Tooltip>
-				</Typography.Text>
-				<Typography.Text className="multiple-notifications-header-description">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Combine alerts with the same field values into a single notification.
-				</Typography.Text>
+				</Typography>
 			</div>
 			{multipleNotificationsInput}
 		</div>

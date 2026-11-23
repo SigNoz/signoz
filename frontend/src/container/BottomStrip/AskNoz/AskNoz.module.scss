@@ -7,7 +7,6 @@
 .badge {
 	flex-shrink: 0;
 	display: inline-flex;
-	line-height: 0;
 	color: var(--accent-primary);
 }
 
@@ -16,7 +15,6 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	line-height: 0;
 	animation: askNozDotPulse 1.5s ease-in-out infinite;
 	transform: scale(0.8);
 	margin-right: -12px;

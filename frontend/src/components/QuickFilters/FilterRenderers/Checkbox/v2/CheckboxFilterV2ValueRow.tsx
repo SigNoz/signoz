@@ -91,9 +91,19 @@ export function CheckboxFilterV2ValueRow({
 					{customRendererForValue ? (
 						customRendererForValue(value)
 					) : (
-						<Typography.Text title={value} className={styles.valueLabel}>
-							{value}
-						</Typography.Text>
+						<span title={value} className={styles.valueLabel}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+							>
+								{value}
+							</Typography>
+						</span>
 					)}
 				</div>
 

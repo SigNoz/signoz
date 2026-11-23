@@ -12,6 +12,7 @@ import {
 
 import { BASE_PATH } from './base-path';
 import { collectRequests } from './console';
+import { inputField } from './input';
 import { dismissQuickFiltersAnnouncement } from './logs/explorer';
 import {
 	filterExpressions,
@@ -27,6 +28,7 @@ import type {
 } from './saved-views/spec.types';
 
 import { driver, kit } from './kit';
+import { toastByText } from './toast';
 import {
 	createViaApi,
 	getViaApi,
@@ -262,12 +264,11 @@ export function savedViewsFor(page: Page): SavedViews {
 			await expect(savedViews.clearButton()).toBeHidden();
 			await expect.poll(() => savedViews.param('viewKey')).toBeNull();
 		},
-		toast: (text) =>
-			page.locator('[data-sonner-toast]').filter({ hasText: text }),
+		toast: (text) => toastByText(page, text),
 
 		openListButton: () => tid('saved-views-open'),
 		panel: () => tid('saved-views-panel'),
-		searchInput: () => tid('saved-views-search'),
+		searchInput: () => inputField(page, 'saved-views-search'),
 		async openList() {
 			await expect(
 				savedViews.openListButton().or(savedViews.panel()),
@@ -387,7 +388,7 @@ export function savedViewsFor(page: Page): SavedViews {
 		},
 
 		modal: () => tid('save-view-modal'),
-		modalNameInput: () => tid('save-view-name'),
+		modalNameInput: () => inputField(page, 'save-view-name'),
 		modalSubmit: () => tid('save-view-submit'),
 		deleteConfirm: () => tid('delete-saved-view-confirm'),
 		async createFromHeader(displayName) {
@@ -420,7 +421,7 @@ export function savedViewsFor(page: Page): SavedViews {
 			formatMenu()
 				.locator('.menu-items .item')
 				.filter({ has: page.locator('svg') }),
-		logsMaxLines: () => formatMenu().getByTestId('max-lines-per-row'),
+		logsMaxLines: () => inputField(formatMenu(), 'max-lines-per-row'),
 		logsFontSize: () => formatMenu().getByTestId('font-size-select'),
 		explorerTab: (tab) => page.locator(`.${tab}-view-tab`),
 		documentId: () => page.evaluate(() => performance.timeOrigin),

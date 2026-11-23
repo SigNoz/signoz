@@ -7,10 +7,11 @@ import type { DslGrammar, SuggestionSource } from '../dsl/types';
 import SearchBar from '../SearchBar/SearchBar';
 import type {
 	CreatorOption,
+	ExtraFiltersApi,
 	FilterAppliedPayload,
 	FilterAppliedType,
 } from '../types';
-import FilterChips from './FilterChips';
+import FilterChips, { type CreatedByProps } from './FilterChips';
 import { useFilterZoneDraft } from './useFilterZoneDraft';
 
 import styles from './FilterZone.module.scss';
@@ -22,15 +23,16 @@ interface Props {
 	// Ids: `${testIdPrefix}-search-zone`, `-list-search*`, `-filter-zone`,
 	// `-filter-clear`, `-filter-created-by`, `-filter-updated`.
 	testIdPrefix: string;
-	creatorOptions: CreatorOption[];
+	// Omitted when the entity has no creator, which drops the Created-by chip.
+	creatorOptions?: CreatorOption[];
 	source: SuggestionSource;
 	// Commit (run) the draft — the only path that triggers a fetch.
 	onQueryChange: (value: string) => void;
 	placeholder?: string;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	// Rendered in the filters row after the chips.
-	extraFilters?: ReactNode;
+	// Rendered in the filters row after the chips. A function receives the draft.
+	extraFilters?: ReactNode | ((api: ExtraFiltersApi) => ReactNode);
 	// Shows Clear even when the query is empty.
 	hasExtraFilters?: boolean;
 	// Called by Clear after it empties the query.
@@ -76,6 +78,7 @@ function FilterZone({
 		dirty,
 		isEmpty,
 		run,
+		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
 		handleClearCreatedBy,
@@ -87,6 +90,15 @@ function FilterZone({
 		onCleared,
 		onClearAll,
 	});
+
+	const createdByProps: CreatedByProps = creatorOptions
+		? {
+				creatorOptions,
+				createdBy: reflected.createdBy,
+				onCreatedByChange: handleCreatedByChange,
+				onClearCreatedBy: handleClearCreatedBy,
+			}
+		: {};
 
 	return (
 		<div className={styles.filterZone}>
@@ -113,24 +125,34 @@ function FilterZone({
 				{rightSlot}
 			</div>
 			<div className={styles.filtersRow}>
-				<Typography.Text className={styles.filtersLabel}>Filters</Typography.Text>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					display="inline-block"
+					marginRight={1}
+					textOverflow="wrap"
+				>
+					Filters
+				</Typography>
 				{wrapControl(
 					<div
 						className={styles.filterControls}
 						data-testid={`${testIdPrefix}-filter-zone`}
 					>
 						<FilterChips
-							createdBy={reflected.createdBy}
+							{...createdByProps}
 							updated={reflected.updated}
-							creatorOptions={creatorOptions}
 							testIdPrefix={testIdPrefix}
-							onCreatedByChange={handleCreatedByChange}
 							onUpdatedChange={handleUpdatedChange}
 							onApply={run}
-							onClearCreatedBy={handleClearCreatedBy}
 							disabled={disabled}
 						/>
-						{extraFilters}
+						{typeof extraFilters === 'function'
+							? extraFilters({ draft, applyDraft, setDraft })
+							: extraFilters}
 						{(!isEmpty || hasExtraFilters) && (
 							<Button
 								disabledTooltip={undefined}

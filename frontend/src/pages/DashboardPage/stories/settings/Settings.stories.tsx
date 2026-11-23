@@ -10,6 +10,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	clickWhenEnabled,
 	dashboardMocks,
+	expectToast,
 	openSettings,
 } from '../DashboardPage.stories.mocks';
 import {
@@ -55,7 +56,10 @@ export const Overview: Story = {
 export const OverviewUnsavedChanges: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.type(
 			screen.getByTestId('dashboard-desc'),
 			' Owned by the platform team.',
@@ -146,10 +150,13 @@ export const PublishPrivate: Story = {
 export const OverviewSavedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.click(await screen.findByTestId('save-dashboard-config'));
 		if (args.dashboardPatch === 'success') {
-			await screen.findByText('Dashboard updated');
+			await expectToast('Dashboard updated');
 		}
 	},
 };
@@ -163,7 +170,7 @@ export const PublishedToast: Story = {
 		await openSettings(canvasElement, 'Publish');
 		await clickWhenEnabled('public-dashboard-publish');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Dashboard published successfully');
+			await expectToast('Dashboard published successfully');
 		}
 	},
 };
@@ -174,7 +181,7 @@ export const PublicUpdatedToast: Story = {
 		await openSettings(canvasElement, 'Publish');
 		await clickWhenEnabled('public-dashboard-update');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Public dashboard updated successfully');
+			await expectToast('Public dashboard updated successfully');
 		}
 	},
 };
@@ -185,7 +192,7 @@ export const UnpublishedToast: Story = {
 		await openSettings(canvasElement, 'Publish');
 		await clickWhenEnabled('public-dashboard-unpublish');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Dashboard unpublished successfully');
+			await expectToast('Dashboard unpublished successfully');
 		}
 	},
 };
@@ -197,6 +204,6 @@ export const PublicUrlCopiedToast: Story = {
 		await userEvent.click(
 			await screen.findByRole('button', { name: 'Copy link' }),
 		);
-		await screen.findByText('Copied public dashboard URL successfully');
+		await expectToast('Copied public dashboard URL successfully');
 	},
 };

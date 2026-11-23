@@ -6,13 +6,21 @@
 import { EQueryType } from 'types/common/dashboard';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { savePanel } from '../PanelEditorPage.stories.mocks';
+import {
+	hasClickHouseTab,
+	hasDisconnectValues,
+	hasPromQLTab,
+	type PanelEditorArgs,
+	pickSegment,
+	savePanel,
+} from '../PanelEditorPage.stories.mocks';
+import { openChartAppearance } from './chartOptions.play';
 
 const EDITOR_LOAD = { timeout: 10_000 };
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: { panelSave?: string };
+	args: PanelEditorArgs;
 }
 
 export const expandConfigSections = async ({
@@ -104,4 +112,56 @@ export const openAIQueryBuilder = async ({
 			).not.toBeInTheDocument(),
 		);
 	}
+};
+
+export const openClickHouseQuery = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!hasClickHouseTab(args)) {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByText('ClickHouse Query', undefined, {
+			timeout: 15000,
+		}),
+	);
+	await screen.findByText(/ClickHouse query agent skill/i, undefined, {
+		timeout: 15000,
+	});
+};
+
+export const openPromQLQuery = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!hasPromQLTab(args)) {
+		return;
+	}
+
+	await userEvent.click(
+		await within(canvasElement).findByText('PromQL', undefined, {
+			timeout: 15000,
+		}),
+	);
+	await screen.findByTestId('promql-query-input', undefined, {
+		timeout: 15000,
+	});
+};
+
+export const enterInvalidDisconnectThreshold = async ({
+	args,
+}: PlayContext): Promise<void> => {
+	if (!hasDisconnectValues(args)) {
+		return;
+	}
+
+	await openChartAppearance();
+	await pickSegment('panel-editor-v2-span-gaps', 'threshold');
+	const input = await screen.findByTestId('panel-editor-v2-span-gaps-value');
+
+	await userEvent.clear(input);
+	await userEvent.type(input, '5x');
+	await screen.findByText(/enter a valid duration/i);
 };

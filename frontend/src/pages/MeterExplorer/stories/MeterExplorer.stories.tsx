@@ -85,24 +85,6 @@ export const NoUsage: Story = {
 	args: { signals: [], quickFilters: 0, savedViews: 0 },
 };
 
-/**
- * A window from the meter's beta phase, which a cloud tenant is warned about
- * because the numbers from before 22 August 2025 are not billable.
- */
-export const BeforeMeterLaunch: Story = {
-	args: { timeRange: 'august-2025' },
-};
-
-/** The warning shown when the selected window is shorter than one hour. */
-export const ShortWindowNotice: Story = {
-	args: { timeRange: 'last-30-minutes' },
-};
-
-/** The returning-user meter view after the billing notice was dismissed. */
-export const BillingNoticeDismissed: Story = {
-	args: { billingNotice: false },
-};
-
 /** Meter usage where only logs are currently ingesting. */
 export const PartialIngestion: Story = {
 	args: { signals: ['logs'] },
@@ -122,16 +104,5 @@ export const QuickFiltersSettings: Story = {
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
 	args: { tab: 'explorer' },
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { tab: 'explorer', banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };

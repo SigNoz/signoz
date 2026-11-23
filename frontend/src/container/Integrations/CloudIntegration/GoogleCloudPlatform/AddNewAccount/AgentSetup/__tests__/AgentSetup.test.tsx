@@ -25,6 +25,14 @@ jest.mock('../../../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
+jest.mock('@floating-ui/dom', () =>
+	jest.requireActual('../../../__tests__/floatingUiDomMock').floatingUiDomMock(),
+);
+
+// Opening the region Combobox inside the Drawer takes seconds in jsdom: Base UI
+// walks every tabbable with getComputedStyle on each focus move.
+jest.setTimeout(20000);
+
 describe('GCP AgentSetup form', () => {
 	let api: AgentSetupApiMock;
 
@@ -172,7 +180,7 @@ describe('GCP AgentSetup form', () => {
 		});
 
 		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input'),
+			screen.getByTestId('gcp-deployment-project-id-input-field'),
 			'-edited',
 		);
 

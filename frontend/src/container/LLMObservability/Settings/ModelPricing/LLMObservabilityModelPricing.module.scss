@@ -1,10 +1,35 @@
+// Fills the route pane so each tab's table takes the height left under its
+// toolbar and scrolls inside, instead of the pane scrolling too.
 .llmObservabilityModelPricing {
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-8);
+	height: 100%;
+
+	> :global(.ant-tabs) {
+		flex: 1;
+		min-height: 0;
+	}
+
+	> :global(.ant-tabs) > :global(.ant-tabs-content-holder) {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	> :global(.ant-tabs) :global(.ant-tabs-content) {
+		flex: 1;
+		min-height: 0;
+	}
 
 	:global(.ant-tabs-tabpane) {
-		padding: var(--spacing-0) var(--spacing-8);
+		padding: var(--spacing-0) var(--spacing-8) var(--spacing-8);
+	}
+
+	:global(.ant-tabs-tabpane-active) {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
 	}
 }
 
