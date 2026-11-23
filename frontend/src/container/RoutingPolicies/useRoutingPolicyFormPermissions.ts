@@ -30,8 +30,8 @@ export interface UseRoutingPolicyFormPermissionsReturn {
 	saveChecks: BrandedPermission[];
 	/** Whether a channel can be added or, if the policy already has it, removed. */
 	getChannelAccess: (channel: ChannelOption) => ChannelAccess;
-	/** Starts the `attach` checks on unlinked channels. */
-	onPickerOpen: () => void;
+	/** Starts the `attach` checks on unlinked channels once the picker opens. */
+	onPickerVisibleChange: (open: boolean) => void;
 }
 
 const ALLOWED: ChannelAccess = { disabled: false };
@@ -100,17 +100,18 @@ export function useRoutingPolicyFormPermissions(
 		enabled: hasPickerOpened && pickerChecks.length > 0,
 	});
 
+	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
+
 	const getChannelAccess = useCallback(
 		(channel: ChannelOption): ChannelAccess => {
-			if (upfront.error || picker.error) {
-				return ALLOWED;
-			}
-
 			const policyCheck = linkedNames.has(channel.name)
 				? policyChecks?.detach
 				: policyChecks?.attach;
+			// A failed request fails open for its own checks only.
 			const required = [policyCheck, channelCheck(channel)].filter(
-				(permission): permission is BrandedPermission => !!permission,
+				(permission): permission is BrandedPermission =>
+					!!permission &&
+					!(upfrontSet.has(permission) ? upfront.error : picker.error),
 			);
 			const results = { ...upfront.permissions, ...picker.permissions };
 			// A check reports loading only once its fetch starts, a render after the
@@ -131,6 +132,7 @@ export function useRoutingPolicyFormPermissions(
 			upfront.permissions,
 			picker.error,
 			picker.permissions,
+			upfrontSet,
 			linkedNames,
 			policyChecks,
 			channelCheck,
@@ -138,7 +140,11 @@ export function useRoutingPolicyFormPermissions(
 		],
 	);
 
-	const onPickerOpen = useCallback(() => setHasPickerOpened(true), []);
+	const onPickerVisibleChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasPickerOpened(true);
+		}
+	}, []);
 
 	const saveChecks = useMemo(
 		() => (policyChecks ? [policyChecks.update] : RoutePolicyCreateChecks),
@@ -153,6 +159,6 @@ export function useRoutingPolicyFormPermissions(
 			!upfront.isGranted(policyChecks.update),
 		saveChecks,
 		getChannelAccess,
-		onPickerOpen,
+		onPickerVisibleChange,
 	};
 }

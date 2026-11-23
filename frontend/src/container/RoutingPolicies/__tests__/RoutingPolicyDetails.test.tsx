@@ -21,6 +21,7 @@ import {
 	RoutePolicyAttachPermission,
 	RoutePolicyCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
+import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
@@ -74,7 +75,12 @@ function channelsSelectInput(): HTMLElement {
 }
 
 async function waitForSaveEnabled(): Promise<void> {
-	await waitFor(() => expect(screen.getByTestId(SAVE_BUTTON)).toBeEnabled());
+	await waitFor(() =>
+		expect(screen.getByTestId(SAVE_BUTTON)).toHaveAttribute(
+			'aria-disabled',
+			'false',
+		),
+	);
 }
 
 type User = ReturnType<typeof userEvent.setup>;
@@ -226,8 +232,8 @@ describe('RoutingPolicyDetails', () => {
 
 		const saveButton = screen.getByTestId(SAVE_BUTTON);
 		expect(saveButton).toHaveTextContent(SAVE_BUTTON_TEXT);
-		expect(saveButton).toBeDisabled();
-		expect(within(saveButton).getByLabelText('loading')).toBeInTheDocument();
+		expect(saveButton).toHaveAttribute('aria-disabled', 'true');
+		expect(saveButton).toHaveAttribute('aria-busy', 'true');
 	});
 
 	it('submit should not be called when inputs are invalid', async () => {
@@ -301,7 +307,10 @@ describe('RoutingPolicyDetails', () => {
 			await waitFor(() =>
 				expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeDisabled(),
 			);
-			expect(screen.getByTestId(SAVE_BUTTON)).toBeDisabled();
+			expect(screen.getByTestId(SAVE_BUTTON)).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('names update when Save is denied on edit', async () => {
@@ -326,7 +335,10 @@ describe('RoutingPolicyDetails', () => {
 					RoutePolicyAttachPermission,
 				),
 			);
-			expect(screen.getByTestId(SAVE_BUTTON)).toBeDisabled();
+			expect(screen.getByTestId(SAVE_BUTTON)).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
 		});
 
 		it('enables Save on create with create and attach', async () => {
@@ -456,6 +468,42 @@ describe('RoutingPolicyDetails', () => {
 			await waitFor(() =>
 				expect(option).toHaveAttribute('aria-disabled', 'false'),
 			);
+		});
+
+		it('keeps a denied linked channel locked when only the picker check fails', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+					const payload = (await req.json()) as AuthtypesTransactionDTO[];
+					const isPickerCheck = payload.some(
+						(txn) =>
+							gettableTransactionToPermission(txn) ===
+							buildNotificationChannelAttachPermission(UNLINKED.id),
+					);
+					if (isPickerCheck) {
+						return res(ctx.status(500));
+					}
+					const denied = buildNotificationChannelDetachPermission(LINKED.id);
+					return res(
+						ctx.json(
+							authzMockResponse(
+								payload,
+								payload.map((txn) => gettableTransactionToPermission(txn) !== denied),
+							),
+						),
+					);
+				}),
+			);
+			const user = userEvent.setup();
+			renderDetails({ mode: 'edit' });
+			await waitForSaveEnabled();
+
+			const unlinked = await findChannelOption(user, UNLINKED.id);
+			await waitFor(() =>
+				expect(unlinked).toHaveAttribute('aria-disabled', 'false'),
+			);
+			expect(
+				screen.getByTestId(`routing-policy-channel-option-${LINKED.id}`),
+			).toHaveAttribute('aria-disabled', 'true');
 		});
 
 		it('falls open when the check fails', async () => {

@@ -3,8 +3,8 @@ import { Button, Form, Input, Modal, Select } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
-import { Check, Loader, X } from '@signozhq/icons';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import { Check, X } from '@signozhq/icons';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { openInNewTab } from 'utils/navigation';
@@ -30,7 +30,7 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { isReadOnly, saveChecks, getChannelAccess, onPickerOpen } =
+	const { isReadOnly, saveChecks, getChannelAccess, onPickerVisibleChange } =
 		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
 	const { isGranted } = useAuthZ(CHANNEL_CREATE_CHECKS);
 	const canCreateChannel = isGranted(NotificationChannelCreatePermission);
@@ -46,12 +46,6 @@ function RoutingPolicyDetails({
 		}
 		return INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE;
 	}, [routingPolicy, mode]);
-
-	const saveButtonIcon = isPolicyDetailsModalActionLoading ? (
-		<Loader size={16} />
-	) : (
-		<Check size={16} />
-	);
 
 	const modalTitle =
 		mode === 'edit' ? 'Edit routing policy' : 'Create routing policy';
@@ -260,11 +254,7 @@ function RoutingPolicyDetails({
 										'data-testid': `routing-policy-channel-option-${channel.id}`,
 									};
 								})}
-								onDropdownVisibleChange={(open): void => {
-									if (open) {
-										onPickerOpen();
-									}
-								}}
+								onDropdownVisibleChange={onPickerVisibleChange}
 								mode="multiple"
 								placeholder="Select notification channels"
 								aria-label="Notification Channels"
@@ -294,18 +284,18 @@ function RoutingPolicyDetails({
 					>
 						Cancel
 					</Button>
-					<AuthZTooltip checks={saveChecks}>
-						<Button
-							icon={saveButtonIcon}
-							type="primary"
-							htmlType="submit"
-							loading={isPolicyDetailsModalActionLoading}
-							disabled={isPolicyDetailsModalActionLoading}
-							data-testid="routing-policy-save"
-						>
-							Save Routing Policy
-						</Button>
-					</AuthZTooltip>
+					<AuthZButton
+						checks={saveChecks}
+						size="md"
+						variant="solid"
+						color="primary"
+						type="submit"
+						prefix={<Check size={16} />}
+						loading={isPolicyDetailsModalActionLoading}
+						testId="routing-policy-save"
+					>
+						Save Routing Policy
+					</AuthZButton>
 				</Flex>
 			</Form>
 		</Modal>

@@ -136,7 +136,10 @@ export const untilLoaded = { timeout: 15_000 };
 /** Save stays disabled until its permission check answers. */
 const clickSave = async (): Promise<void> => {
 	const save = await screen.findByTestId('routing-policy-save');
-	await waitFor(() => expect(save).not.toHaveAttribute('disabled'), untilLoaded);
+	await waitFor(
+		() => expect(save).not.toHaveAttribute('aria-disabled', 'true'),
+		untilLoaded,
+	);
 	await userEvent.click(save);
 };
 
