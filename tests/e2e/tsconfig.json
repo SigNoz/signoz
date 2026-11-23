@@ -16,7 +16,9 @@
     "types": ["node", "@playwright/test"],
     "paths": {
       "@tests/*": ["./tests/*"],
-      "@specs/*": ["./specs/*"]
+      "@specs/*": ["./specs/*"],
+      // `drivers/noz/schemas.ts` reaches into `frontend/`, which CI never installs.
+      "@signozhq/noz-client": ["./node_modules/@signozhq/noz-client"]
     }
   },
   "include": ["tests/**/*.ts", "drivers/**/*.ts", "bootstrap/**/*.ts", "playwright.config.ts"],
