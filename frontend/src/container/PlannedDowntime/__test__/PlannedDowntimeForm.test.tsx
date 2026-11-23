@@ -26,6 +26,7 @@ import {
 	buildRuleDetachPermission,
 	RuleListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 import { PlannedDowntimeForm } from '../PlannedDowntimeForm';
 import { createMockDowntime } from './testUtils';
@@ -183,14 +184,16 @@ describe('PlannedDowntimeForm authz', () => {
 		await waitFor(() =>
 			expect(screen.getByDisplayValue('Nightly')).toBeDisabled(),
 		);
-		expect(screen.getByTestId(SAVE)).toBeDisabled();
+		expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('saves an unchanged scoped schedule with update alone', async () => {
 		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={scoped} />);
 
-		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 		expect(screen.getByDisplayValue('Nightly')).toBeEnabled();
 	});
 
@@ -198,7 +201,9 @@ describe('PlannedDowntimeForm authz', () => {
 		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={allRules} />);
 
-		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 		expect(deniedOnSave()).toBeNull();
 	});
 
@@ -263,7 +268,9 @@ describe('PlannedDowntimeForm authz', () => {
 			txn.object.selector === 'rule-2';
 		const user = setupUser();
 		render(<FormHarness initialValues={scoped} />);
-		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 
 		expect(requested.some(isRule2Attach)).toBe(false);
 
@@ -276,7 +283,9 @@ describe('PlannedDowntimeForm authz', () => {
 		const user = setupUser();
 		server.use(setupAuthzDeny(buildRuleAttachPermission('rule-2')));
 		render(<FormHarness initialValues={scoped} />);
-		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 
 		const option = await findRuleOption(user, 'rule-2');
 		await waitFor(() =>
@@ -334,6 +343,36 @@ describe('PlannedDowntimeForm authz', () => {
 		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
 	});
 
+	it('keeps a denied silenced rule locked when only the picker check fails', async () => {
+		const user = setupUser();
+		const pickerCheck = buildRuleAttachPermission('rule-2');
+		const denied = buildRuleDetachPermission('rule-1');
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
+				const permissions = payload.map(gettableTransactionToPermission);
+				if (permissions.includes(pickerCheck)) {
+					return res(ctx.status(500));
+				}
+				return res(
+					ctx.json(
+						authzMockResponse(
+							payload,
+							permissions.map((permission) => permission !== denied),
+						),
+					),
+				);
+			}),
+		);
+		render(<FormHarness initialValues={scoped} />);
+
+		const option = await findRuleOption(user, 'rule-2');
+		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
+		expect(
+			screen.getByTestId('alert-rule-tag-locked-rule-1'),
+		).toBeInTheDocument();
+	});
+
 	it('explains an empty picker without rule:list', async () => {
 		const user = setupUser();
 		server.use(setupAuthzDeny(RuleListPermission));
@@ -373,7 +412,9 @@ describe('PlannedDowntimeForm authz', () => {
 		);
 
 		await expect(screen.findByText('rule-1')).resolves.toBeInTheDocument();
-		await waitFor(() => expect(screen.getByTestId(SAVE)).toBeEnabled());
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 		await user.click(screen.getByTestId(SAVE));
 
 		await waitFor(() =>

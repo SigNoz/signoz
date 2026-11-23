@@ -38,8 +38,8 @@ export interface UsePlannedDowntimeFormPermissionsReturn {
 	saveChecks: BrandedPermission[];
 	/** Whether a rule can be added or, if the schedule already has it, removed. */
 	getRuleAccess: (ruleId: string) => RuleAccess;
-	/** Starts the `attach` checks on rules the schedule does not silence. */
-	onPickerOpen: () => void;
+	/** Starts the `attach` checks on unsilenced rules once the picker opens. */
+	onPickerVisibleChange: (open: boolean) => void;
 }
 
 const ALLOWED: RuleAccess = { disabled: false };
@@ -55,7 +55,7 @@ const toIds = (options: DefaultOptionType[]): string[] =>
  * The schedule's own verbs when editing, and per rule `detach` if the schedule
  * silences it, `attach` if not. Silenced rules are checked up front, since
  * their tags can be removed without opening the picker; every other rule once
- * the picker opens. Save is checked by its own tooltip against `saveChecks`.
+ * the picker opens. Save is checked by its own button against `saveChecks`.
  */
 export function usePlannedDowntimeFormPermissions({
 	initialValues,
@@ -119,17 +119,18 @@ export function usePlannedDowntimeFormPermissions({
 		enabled: hasPickerOpened && pickerChecks.length > 0,
 	});
 
+	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
+
 	const getRuleAccess = useCallback(
 		(ruleId: string): RuleAccess => {
-			if (upfront.error || picker.error) {
-				return ALLOWED;
-			}
-
 			const scheduleCheck = storedIds.includes(ruleId)
 				? scheduleChecks?.detach
 				: scheduleChecks?.attach;
+			// A failed request fails open for its own checks only.
 			const required = [scheduleCheck, ruleCheck(ruleId)].filter(
-				(permission): permission is BrandedPermission => !!permission,
+				(permission): permission is BrandedPermission =>
+					!!permission &&
+					!(upfrontSet.has(permission) ? upfront.error : picker.error),
 			);
 			const results = { ...upfront.permissions, ...picker.permissions };
 			// A check reports loading only once its fetch starts, a render after the
@@ -150,6 +151,7 @@ export function usePlannedDowntimeFormPermissions({
 			upfront.permissions,
 			picker.error,
 			picker.permissions,
+			upfrontSet,
 			storedIds,
 			scheduleChecks,
 			ruleCheck,
@@ -157,7 +159,11 @@ export function usePlannedDowntimeFormPermissions({
 		],
 	);
 
-	const onPickerOpen = useCallback(() => setHasPickerOpened(true), []);
+	const onPickerVisibleChange = useCallback((open: boolean): void => {
+		if (open) {
+			setHasPickerOpened(true);
+		}
+	}, []);
 
 	const saveChecks = useMemo(
 		() =>
@@ -177,6 +183,6 @@ export function usePlannedDowntimeFormPermissions({
 			!upfront.isGranted(scheduleChecks.update),
 		saveChecks,
 		getRuleAccess,
-		onPickerOpen,
+		onPickerVisibleChange,
 	};
 }

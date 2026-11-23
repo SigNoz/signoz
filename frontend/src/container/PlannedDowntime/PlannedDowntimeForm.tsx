@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Info } from '@signozhq/icons';
 import {
-	Button,
 	DatePicker,
 	Form,
 	FormInstance,
@@ -12,7 +11,6 @@ import {
 	Spin,
 	Tooltip,
 } from 'antd';
-import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import type { DefaultOptionType } from 'antd/es/select';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -37,7 +35,7 @@ import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppContext } from 'providers/App/App';
-import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -148,7 +146,7 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
-	const { isReadOnly, saveChecks, getRuleAccess, onPickerOpen } =
+	const { isReadOnly, saveChecks, getRuleAccess, onPickerVisibleChange } =
 		usePlannedDowntimeFormPermissions({
 			initialValues,
 			isEditMode,
@@ -577,11 +575,7 @@ export function PlannedDowntimeForm(
 									showSearch
 									options={gatedAlertOptions}
 									data-testid="downtime-alert-rules"
-									onDropdownVisibleChange={(open): void => {
-										if (open) {
-											onPickerOpen();
-										}
-									}}
+									onDropdownVisibleChange={onPickerVisibleChange}
 									filterOption={(input, option): boolean =>
 										(option?.label as string)
 											?.toLowerCase()
@@ -648,24 +642,19 @@ export function PlannedDowntimeForm(
 				</Form.Item>
 				<Form.Item style={{ marginBottom: 0 }}>
 					<ModalButtonWrapper>
-						<AuthZTooltip checks={saveChecks}>
-							<Button
-								key="submit"
-								type="primary"
-								htmlType="submit"
-								onClick={handleOk}
-								loading={saveLoading || isLoading}
-								className="downtime-schedule-btn"
-								data-testid="downtime-save"
-							>
-								<Flex align="center" gap={4}>
-									<Check size={16} />
-									<span className="translate-safe">
-										{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
-									</span>
-								</Flex>
-							</Button>
-						</AuthZTooltip>
+						<AuthZButton
+							checks={saveChecks}
+							size="md"
+							variant="solid"
+							color="primary"
+							type="submit"
+							onClick={handleOk}
+							loading={saveLoading || isLoading}
+							prefix={<Check size={16} />}
+							testId="downtime-save"
+						>
+							{isEditMode ? 'Update downtime schedule' : 'Add downtime schedule'}
+						</AuthZButton>
 					</ModalButtonWrapper>
 				</Form.Item>
 			</Form>
