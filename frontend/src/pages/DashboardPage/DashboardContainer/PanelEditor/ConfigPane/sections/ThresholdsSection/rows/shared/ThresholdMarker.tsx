@@ -1,4 +1,4 @@
-import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
 
 import styles from '../../ThresholdsSection.module.scss';
 

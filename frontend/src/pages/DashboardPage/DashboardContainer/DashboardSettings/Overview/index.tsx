@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesJSONPatchOperationDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPatchOpDTO';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
 import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { isEqual } from 'lodash-es';

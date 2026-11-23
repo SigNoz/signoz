@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import { AutoComplete, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useListMetrics } from 'api/generated/services/metrics';
-import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesListMetricDTO';
 import type { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import { toAttributeType } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';

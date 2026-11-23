@@ -1,11 +1,9 @@
 import { useCallback, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
-import type {
-	DashboardtypesPanelPluginDTO,
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesQueryDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';

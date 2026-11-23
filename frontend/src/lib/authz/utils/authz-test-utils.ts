@@ -1,7 +1,5 @@
-import type {
-	AuthtypesGettableTransactionDTO,
-	AuthtypesTransactionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableTransactionDTO';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
 import { ENVIRONMENT } from 'constants/env';
 import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {

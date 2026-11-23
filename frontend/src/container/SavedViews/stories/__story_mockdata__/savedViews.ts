@@ -3,16 +3,12 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetSavedView200,
-	ListSavedViews200,
-	RenderErrorResponseDTO,
-	SavedviewtypesSavedViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SavedviewtypesSchemaVersionDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetSavedView200 } from 'api/generated/services/sigNoz.schemas/getSavedView200';
+import type { ListSavedViews200 } from 'api/generated/services/sigNoz.schemas/listSavedViews200';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,

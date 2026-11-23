@@ -1,10 +1,8 @@
-import type {
-	SpantypesPostableSpanMapperDTO,
-	SpantypesPostableSpanMapperGroupDTO,
-	SpantypesSpanMapperGroupConditionKeyDTO,
-	SpantypesUpdatableSpanMapperDTO,
-	SpantypesUpdatableSpanMapperGroupDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesPostableSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperDTO';
+import type { SpantypesPostableSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperGroupDTO';
+import type { SpantypesSpanMapperGroupConditionKeyDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupConditionKeyDTO';
+import type { SpantypesUpdatableSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesUpdatableSpanMapperDTO';
+import type { SpantypesUpdatableSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesUpdatableSpanMapperGroupDTO';
 import { v4 as uuid } from 'uuid';
 
 import type {

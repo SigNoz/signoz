@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { useGetFieldsKeys } from 'api/generated/services/fields';
-import {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import cx from 'classnames';
 import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';

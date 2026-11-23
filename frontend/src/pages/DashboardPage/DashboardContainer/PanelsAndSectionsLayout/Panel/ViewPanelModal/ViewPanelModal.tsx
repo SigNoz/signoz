@@ -1,6 +1,6 @@
 import { Dialog } from '@signozhq/ui/dialog';
 import { ConfigProvider } from 'antd';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { useRef } from 'react';
 
 import ViewPanelModalContent from './ViewPanelModalContent';

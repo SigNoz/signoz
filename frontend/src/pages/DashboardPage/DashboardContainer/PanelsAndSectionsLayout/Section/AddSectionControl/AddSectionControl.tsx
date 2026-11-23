@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
 
 import type { DashboardSection } from '../../../utils';
 import { useAddSection } from '../hooks/useAddSection';

@@ -7,11 +7,9 @@ import {
 	useCreateAuthDomain,
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
-import type {
-	AuthtypesAuthNProviderDTO,
-	AuthtypesGettableAuthDomainDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesAuthNProviderDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthNProviderDTO';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
 import { defaultTo } from 'lodash-es';

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryWarnDataDTO';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import type APIError from 'types/api/error';

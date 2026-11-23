@@ -3,18 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	ListSpanMapperGroups200,
-	ListSpanMappers200,
-	SpantypesSpanMapperDTO,
-	SpantypesSpanMapperGroupConditionKeyDTO,
-	SpantypesSpanMapperGroupDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	SpantypesFieldContextDTO,
-	SpantypesSpanMapperOperationDTO,
-	SpantypesSpanMapperOriginDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { ListSpanMapperGroups200 } from 'api/generated/services/sigNoz.schemas/listSpanMapperGroups200';
+import type { ListSpanMappers200 } from 'api/generated/services/sigNoz.schemas/listSpanMappers200';
+import type { SpantypesSpanMapperDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperDTO';
+import type { SpantypesSpanMapperGroupConditionKeyDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupConditionKeyDTO';
+import type { SpantypesSpanMapperGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperGroupDTO';
+import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/spantypesFieldContextDTO';
+import { SpantypesSpanMapperOperationDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOperationDTO';
+import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperOriginDTO';
 
 const ORG_ID = 'org-signoz';
 

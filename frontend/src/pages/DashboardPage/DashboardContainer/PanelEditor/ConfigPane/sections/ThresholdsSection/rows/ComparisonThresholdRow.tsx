@@ -1,4 +1,4 @@
-import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonThresholdDTO';
 import { formatPanelValue } from 'pages/DashboardPage/DashboardContainer/Panels/utils/formatPanelValue';
 
 import { describeThresholdPaint, OPERATOR_SYMBOL } from '../thresholdOptions';

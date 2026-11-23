@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { Button, Skeleton } from 'antd';
-import {
-	QuickfiltertypesSourceDTO,
-	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import type { FieldKeysConfig } from 'api/querySuggestions/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QUICK_FILTER_SOURCE_TO_SIGNAL } from 'components/QuickFilters/constants';

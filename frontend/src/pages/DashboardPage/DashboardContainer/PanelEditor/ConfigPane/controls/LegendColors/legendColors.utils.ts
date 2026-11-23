@@ -1,4 +1,4 @@
-import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLegendDTOCustomColors } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendDTOCustomColors';
 
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 

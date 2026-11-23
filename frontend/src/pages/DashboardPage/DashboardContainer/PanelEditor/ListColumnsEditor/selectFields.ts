@@ -1,9 +1,7 @@
-import {
-	TelemetrytypesSignalDTO,
-	type DashboardtypesListPanelSpecDTO,
-	type DashboardtypesPanelSpecDTO,
-	type TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { DashboardtypesListPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListPanelSpecDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

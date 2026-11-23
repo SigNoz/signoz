@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesLayoutDTO,
-	DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesLayoutDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 
 export interface GridItem {
 	id: string;

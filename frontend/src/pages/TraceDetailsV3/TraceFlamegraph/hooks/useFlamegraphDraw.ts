@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { useTraceStore } from 'pages/TraceDetailsV3/stores/traceStore';
-import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas/spantypesFlamegraphSpanDTO';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import type { ConnectorLine } from '../computeVisualLayout';

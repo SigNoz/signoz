@@ -1,7 +1,5 @@
-import {
-	Querybuildertypesv5QueryTypeDTO,
-	TelemetrytypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryTypeDTO';
+import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,

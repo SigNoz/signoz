@@ -2,10 +2,8 @@ import { useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Plus } from '@signozhq/icons';
-import type {
-	TelemetrytypesSignalDTO,
-	TelemetrytypesTelemetryFieldKeyDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
+import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 
 import { useListColumnSuggestions } from '../../hooks/useListColumnSuggestions';
 

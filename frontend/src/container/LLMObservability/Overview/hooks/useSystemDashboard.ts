@@ -6,10 +6,8 @@ import {
 	useGetSystemDashboard,
 } from 'api/generated/services/dashboard';
 import type { GetSystemDashboardQueryError } from 'api/generated/services/dashboard';
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 
 const SYSTEM_DASHBOARD_NAME = 'ai-o11y-overview';
 

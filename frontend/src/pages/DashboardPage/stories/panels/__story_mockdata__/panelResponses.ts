@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import type { Warning } from 'types/api';
 import type { MetricRangePayloadV5, RawRow } from 'types/api/v5/queryRange';
 

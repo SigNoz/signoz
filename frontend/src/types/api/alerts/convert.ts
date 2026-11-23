@@ -1,15 +1,11 @@
-import type {
-	RuletypesAlertCompositeQueryDTO,
-	RuletypesPostableRuleDTO,
-	RuletypesPostableRuleDTOLabels,
-	RuletypesRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	RuletypesAlertTypeDTO,
-	RuletypesPanelTypeDTO,
-	RuletypesQueryTypeDTO,
-	RuletypesRuleTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesAlertCompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertCompositeQueryDTO';
+import type { RuletypesPostableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPostableRuleDTO';
+import type { RuletypesPostableRuleDTOLabels } from 'api/generated/services/sigNoz.schemas/ruletypesPostableRuleDTOLabels';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
+import { RuletypesAlertTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertTypeDTO';
+import { RuletypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesPanelTypeDTO';
+import { RuletypesQueryTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesQueryTypeDTO';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 

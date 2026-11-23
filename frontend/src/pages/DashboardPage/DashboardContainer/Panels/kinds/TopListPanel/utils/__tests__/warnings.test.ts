@@ -1,8 +1,6 @@
-import {
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-	type Querybuildertypesv5ColumnDescriptorDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
+import type { Querybuildertypesv5ColumnDescriptorDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnDescriptorDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import {

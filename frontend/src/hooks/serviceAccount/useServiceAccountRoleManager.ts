@@ -4,10 +4,8 @@ import {
 	useDeleteServiceAccountRole,
 	useGetServiceAccount,
 } from 'api/generated/services/serviceaccount';
-import type {
-	AuthtypesGettableRoleDTO,
-	ServiceaccounttypesServiceAccountRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
+import type { ServiceaccounttypesServiceAccountRoleDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountRoleDTO';
 import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {

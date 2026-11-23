@@ -1,12 +1,10 @@
-import {
-	DashboardtypesGeoMapCountryFormatDTO,
-	DashboardtypesGeoMapLayerDTO,
-	DashboardtypesGeoMapLocationModeDTO,
-	DashboardtypesGeoMapProjectionDTO,
-	type DashboardtypesGeoMapLocationDTO,
-	type DashboardtypesGeoMapSettingsDTO,
-	DashboardtypesGeoMapViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapCountryFormatDTO';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
+import { DashboardtypesGeoMapProjectionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapProjectionDTO';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
 import type { SubdivisionSet } from 'lib/visualization/charts/GeoMap/geo/subdivisions';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import type {

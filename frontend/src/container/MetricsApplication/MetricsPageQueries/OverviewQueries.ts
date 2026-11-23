@@ -1,4 +1,4 @@
-import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas/metrictypesComparisonSpaceAggregationParamDTO';
 import { OPERATORS } from 'constants/queryBuilder';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

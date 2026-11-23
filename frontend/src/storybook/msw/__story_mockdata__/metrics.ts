@@ -3,12 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-	type GetMetricMetadata200,
-	type ListMetrics200,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
+import type { ListMetrics200 } from 'api/generated/services/sigNoz.schemas/listMetrics200';
 
 /**
  * A metric as the catalogue endpoints describe it. Anywhere a metric name is

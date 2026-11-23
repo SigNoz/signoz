@@ -3,15 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	AiobservabilitytypesBlobPartDTOType,
-	AiobservabilitytypesCompactionPartDTOType,
-	AiobservabilitytypesFilePartDTOType,
-	AiobservabilitytypesReasoningPartDTOType,
-	AiobservabilitytypesServerToolCallPartDTOType,
-	AiobservabilitytypesServerToolCallResponsePartDTOType,
-	AiobservabilitytypesUriPartDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import { AiobservabilitytypesBlobPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesBlobPartDTOType';
+import { AiobservabilitytypesCompactionPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesCompactionPartDTOType';
+import { AiobservabilitytypesFilePartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesFilePartDTOType';
+import { AiobservabilitytypesReasoningPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesReasoningPartDTOType';
+import { AiobservabilitytypesServerToolCallPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesServerToolCallPartDTOType';
+import { AiobservabilitytypesServerToolCallResponsePartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesServerToolCallResponsePartDTOType';
+import { AiobservabilitytypesUriPartDTOType } from 'api/generated/services/sigNoz.schemas/aiobservabilitytypesUriPartDTOType';
 
 import {
 	input,

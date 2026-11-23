@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesListOrderDTO,
-	DashboardtypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListOrderDTO';
+import type { DashboardtypesListSortDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListSortDTO';
 
 // The filter a saved view captures. The backend stores a flat `{ query, sort, order }`
 // (no structured chips), so a view captures the fully-combined DSL query plus the

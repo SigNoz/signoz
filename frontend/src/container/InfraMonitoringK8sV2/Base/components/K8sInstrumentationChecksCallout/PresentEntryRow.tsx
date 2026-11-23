@@ -2,10 +2,8 @@ import styles from './PresentEntryRow.module.scss';
 import { CircleCheck } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { Divider } from '@signozhq/ui/divider';
-import type {
-	InframonitoringtypesAttributesComponentEntryDTO,
-	InframonitoringtypesMetricsComponentEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesAttributesComponentEntryDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesAttributesComponentEntryDTO';
+import type { InframonitoringtypesMetricsComponentEntryDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesMetricsComponentEntryDTO';
 
 type PresentEntryRowProps =
 	| {

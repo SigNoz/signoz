@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import ROUTES from 'constants/routes';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
 import { act, screen, userEvent, waitFor } from 'tests/test-utils';

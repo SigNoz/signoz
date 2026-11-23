@@ -1,11 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useUpdateQuickFilters } from 'api/generated/services/quick-filter';
 import logEvent from 'api/common/logEvent';
-import type {
-	TelemetrytypesFieldContextDTO,
-	TelemetrytypesFieldDataTypeDTO,
-	QuickfiltertypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
+import type { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
+import type { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';

@@ -1,4 +1,4 @@
-import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
 
 import ConfigField from '../../../controls/ConfigField/ConfigField';
 import ConfigTiles from '../../../controls/ConfigTiles/ConfigTiles';

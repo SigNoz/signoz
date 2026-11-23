@@ -1,6 +1,6 @@
 import type { HTMLAttributes } from 'react';
 import { useCallback, useMemo } from 'react';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { VIEW_TYPES, type VIEWS } from 'components/LogDetail/constants';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';

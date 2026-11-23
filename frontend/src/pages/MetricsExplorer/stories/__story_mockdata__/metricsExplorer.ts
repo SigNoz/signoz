@@ -3,35 +3,31 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetMetricAlerts200,
-	GetMetricAttributes200,
-	GetMetricDashboardsV2200,
-	GetMetricHighlights200,
-	GetMetricMetadata200,
-	GetMetricReductionRuleStats200,
-	GetMetricReductionRuleTimeseries200,
-	GetMetricsStats200,
-	GetMetricsTreemap200,
-	InspectMetrics200,
-	ListMetricReductionRules200,
-	ListMetrics200,
-	ListSavedViews200,
-	MetricreductionruletypesGettableReductionRuleDTO,
-	MetricsexplorertypesStatDTO,
-	MetricsexplorertypesTreemapEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	MetricreductionruletypesMatchTypeDTO,
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSchemaVersionDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetMetricAlerts200 } from 'api/generated/services/sigNoz.schemas/getMetricAlerts200';
+import type { GetMetricAttributes200 } from 'api/generated/services/sigNoz.schemas/getMetricAttributes200';
+import type { GetMetricDashboardsV2200 } from 'api/generated/services/sigNoz.schemas/getMetricDashboardsV2200';
+import type { GetMetricHighlights200 } from 'api/generated/services/sigNoz.schemas/getMetricHighlights200';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas/getMetricMetadata200';
+import type { GetMetricReductionRuleStats200 } from 'api/generated/services/sigNoz.schemas/getMetricReductionRuleStats200';
+import type { GetMetricReductionRuleTimeseries200 } from 'api/generated/services/sigNoz.schemas/getMetricReductionRuleTimeseries200';
+import type { GetMetricsStats200 } from 'api/generated/services/sigNoz.schemas/getMetricsStats200';
+import type { GetMetricsTreemap200 } from 'api/generated/services/sigNoz.schemas/getMetricsTreemap200';
+import type { InspectMetrics200 } from 'api/generated/services/sigNoz.schemas/inspectMetrics200';
+import type { ListMetricReductionRules200 } from 'api/generated/services/sigNoz.schemas/listMetricReductionRules200';
+import type { ListMetrics200 } from 'api/generated/services/sigNoz.schemas/listMetrics200';
+import type { ListSavedViews200 } from 'api/generated/services/sigNoz.schemas/listSavedViews200';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesGettableReductionRuleDTO';
+import type { MetricsexplorertypesStatDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesStatDTO';
+import type { MetricsexplorertypesTreemapEntryDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapEntryDTO';
+import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas/metricreductionruletypesMatchTypeDTO';
+import { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
+import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 
 interface MetricSeed {
 	metricName: string;

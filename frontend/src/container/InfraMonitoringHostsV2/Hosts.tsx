@@ -3,15 +3,11 @@ import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listHosts } from 'api/generated/services/inframonitoring';
-import type {
-	InframonitoringtypesHostRecordDTO,
-	InframonitoringtypesHostStatusDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	InframonitoringtypesResponseTypeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostRecordDTO';
+import type { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostStatusDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import { InframonitoringtypesResponseTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesResponseTypeDTO';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
 import type { AxiosError } from 'axios';
 import type APIError from 'types/api/error';
 import QuickFilters from 'components/QuickFilters/QuickFilters';

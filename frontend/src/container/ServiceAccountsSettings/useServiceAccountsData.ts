@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 
 import { SA_LIST_INVALID_ERROR_CODES, SA_PAGE_SIZE } from './constants';

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports -- TODO: migrate global time selector off redux
 import { useSelector } from 'react-redux';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import {
 	DASHBOARD_CACHE_TIME,
 	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,

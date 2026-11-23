@@ -1,7 +1,5 @@
-import type {
-	DashboardtypesJSONPatchOperationDTO,
-	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import type { DashboardtypesVariableDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVariableDTO';
 
 /**
  * Builds the JSON-Patch to persist the dashboard's variable list. Add/edit/

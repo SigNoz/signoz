@@ -17,17 +17,23 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	AuthtypesPostableAuthDomainDTO,
-	AuthtypesUpdatableAuthDomainDTO,
-	CreateAuthDomain201,
-	DeleteAuthDomainPathParameters,
-	GetAuthDomain200,
-	GetAuthDomainPathParameters,
-	ListAuthDomains200,
-	RenderErrorResponseDTO,
-	UpdateAuthDomainPathParameters,
-} from '../sigNoz.schemas';
+import type { AuthtypesPostableAuthDomainDTO } from '../sigNoz.schemas/authtypesPostableAuthDomainDTO';
+
+import type { AuthtypesUpdatableAuthDomainDTO } from '../sigNoz.schemas/authtypesUpdatableAuthDomainDTO';
+
+import type { CreateAuthDomain201 } from '../sigNoz.schemas/createAuthDomain201';
+
+import type { DeleteAuthDomainPathParameters } from '../sigNoz.schemas/deleteAuthDomainPathParameters';
+
+import type { GetAuthDomain200 } from '../sigNoz.schemas/getAuthDomain200';
+
+import type { GetAuthDomainPathParameters } from '../sigNoz.schemas/getAuthDomainPathParameters';
+
+import type { ListAuthDomains200 } from '../sigNoz.schemas/listAuthDomains200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UpdateAuthDomainPathParameters } from '../sigNoz.schemas/updateAuthDomainPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -122,7 +128,7 @@ export function useListAuthDomains<
 }
 
 /**
- * @summary List all auth domains
+ * @summary Invalidates the {@link useListAuthDomains} query
  */
 export const invalidateListAuthDomains = async (
 	queryClient: QueryClient,
@@ -153,6 +159,9 @@ export const createAuthDomain = (
 	});
 };
 
+export const getCreateAuthDomainMutationKey = () =>
+	['createAuthDomain'] as const;
+
 export const getCreateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -160,16 +169,16 @@ export const getCreateAuthDomainMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
+		CreateAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
+	CreateAuthDomainMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createAuthDomain'];
+	const mutationKey = getCreateAuthDomainMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -180,7 +189,7 @@ export const getCreateAuthDomainMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createAuthDomain>>,
-		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> }
+		CreateAuthDomainMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -197,6 +206,9 @@ export type CreateAuthDomainMutationBody =
 	| BodyType<AuthtypesPostableAuthDomainDTO>
 	| undefined;
 export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateAuthDomainMutationVariables = {
+	data?: BodyType<AuthtypesPostableAuthDomainDTO>;
+};
 
 /**
  * @summary Create auth domain
@@ -208,13 +220,13 @@ export const useCreateAuthDomain = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
 		TError,
-		{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
+		CreateAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createAuthDomain>>,
 	TError,
-	{ data?: BodyType<AuthtypesPostableAuthDomainDTO> },
+	CreateAuthDomainMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateAuthDomainMutationOptions(options));
@@ -234,6 +246,9 @@ export const deleteAuthDomain = (
 	});
 };
 
+export const getDeleteAuthDomainMutationKey = () =>
+	['deleteAuthDomain'] as const;
+
 export const getDeleteAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -241,16 +256,16 @@ export const getDeleteAuthDomainMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
 		TError,
-		{ pathParams: DeleteAuthDomainPathParameters },
+		DeleteAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteAuthDomain>>,
 	TError,
-	{ pathParams: DeleteAuthDomainPathParameters },
+	DeleteAuthDomainMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteAuthDomain'];
+	const mutationKey = getDeleteAuthDomainMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -261,7 +276,7 @@ export const getDeleteAuthDomainMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
-		{ pathParams: DeleteAuthDomainPathParameters }
+		DeleteAuthDomainMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -276,6 +291,9 @@ export type DeleteAuthDomainMutationResult = NonNullable<
 >;
 
 export type DeleteAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteAuthDomainMutationVariables = {
+	pathParams: DeleteAuthDomainPathParameters;
+};
 
 /**
  * @summary Delete auth domain
@@ -287,13 +305,13 @@ export const useDeleteAuthDomain = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
 		TError,
-		{ pathParams: DeleteAuthDomainPathParameters },
+		DeleteAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteAuthDomain>>,
 	TError,
-	{ pathParams: DeleteAuthDomainPathParameters },
+	DeleteAuthDomainMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteAuthDomainMutationOptions(options));
@@ -384,7 +402,7 @@ export function useGetAuthDomain<
 }
 
 /**
- * @summary Get auth domain by ID
+ * @summary Invalidates the {@link useGetAuthDomain} query
  */
 export const invalidateGetAuthDomain = async (
 	queryClient: QueryClient,
@@ -417,6 +435,9 @@ export const updateAuthDomain = (
 	});
 };
 
+export const getUpdateAuthDomainMutationKey = () =>
+	['updateAuthDomain'] as const;
+
 export const getUpdateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -424,22 +445,16 @@ export const getUpdateAuthDomainMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		TError,
-		{
-			pathParams: UpdateAuthDomainPathParameters;
-			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
-		},
+		UpdateAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateAuthDomain>>,
 	TError,
-	{
-		pathParams: UpdateAuthDomainPathParameters;
-		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
-	},
+	UpdateAuthDomainMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateAuthDomain'];
+	const mutationKey = getUpdateAuthDomainMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -450,10 +465,7 @@ export const getUpdateAuthDomainMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
-		{
-			pathParams: UpdateAuthDomainPathParameters;
-			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
-		}
+		UpdateAuthDomainMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -470,6 +482,10 @@ export type UpdateAuthDomainMutationBody =
 	| BodyType<AuthtypesUpdatableAuthDomainDTO>
 	| undefined;
 export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateAuthDomainMutationVariables = {
+	pathParams: UpdateAuthDomainPathParameters;
+	data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
+};
 
 /**
  * @summary Update auth domain
@@ -481,19 +497,13 @@ export const useUpdateAuthDomain = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
 		TError,
-		{
-			pathParams: UpdateAuthDomainPathParameters;
-			data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
-		},
+		UpdateAuthDomainMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateAuthDomain>>,
 	TError,
-	{
-		pathParams: UpdateAuthDomainPathParameters;
-		data?: BodyType<AuthtypesUpdatableAuthDomainDTO>;
-	},
+	UpdateAuthDomainMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateAuthDomainMutationOptions(options));

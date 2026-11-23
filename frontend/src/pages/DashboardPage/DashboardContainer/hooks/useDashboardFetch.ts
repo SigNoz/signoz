@@ -3,7 +3,7 @@ import type {
 	GetDashboardV2QueryError,
 	getDashboardV2,
 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 
 // Instantiation expression pins `TData`/`TError` to the hook's defaults; a plain
 // `ReturnType<typeof useGetDashboardV2>` collapses the generics to `unknown`.

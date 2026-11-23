@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import type { DashboardtypesHeatmapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeatmapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPanelSpecDTO';
 import Heatmap from 'lib/visualization/charts/Heatmap/Heatmap';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { useIsDarkMode } from 'hooks/useDarkMode';

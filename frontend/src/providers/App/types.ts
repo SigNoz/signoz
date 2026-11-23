@@ -12,7 +12,7 @@ import type {
 import type { Organization } from 'types/api/user/getOrganization';
 import type { UserResponse as User } from 'types/api/user/getUser';
 import type { Info } from 'types/api/v1/version/get';
-import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas/getHosts200';
 
 export interface IAppContext {
 	user: IUser;

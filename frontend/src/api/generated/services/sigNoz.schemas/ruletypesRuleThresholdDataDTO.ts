@@ -1,0 +1,9 @@
+/**
+ * ! Do not edit manually
+ * * The file has been auto-generated using Orval for SigNoz
+ * * regenerate with 'pnpm generate:api'
+ * SigNoz
+ */
+import type { RuletypesThresholdBasicDTO } from './ruletypesThresholdBasicDTO';
+
+export type RuletypesRuleThresholdDataDTO = RuletypesThresholdBasicDTO;

@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesVariableDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesVariableDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVariableDTO';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
 import { useDashboardFetch } from './useDashboardFetch';

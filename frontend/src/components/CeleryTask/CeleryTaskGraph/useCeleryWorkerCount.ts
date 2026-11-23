@@ -4,7 +4,7 @@ import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { queryRangeV5 } from 'api/generated/services/querier';
-import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getScalarResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5ResponseData';
 import type { AppState } from 'store/reducers';

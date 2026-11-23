@@ -17,13 +17,15 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	CreateSubscription201,
-	GetSubscription200,
-	RenderErrorResponseDTO,
-	SubscriptiontypesPostableSubscriptionDTO,
-	UpdateSubscription200,
-} from '../sigNoz.schemas';
+import type { CreateSubscription201 } from '../sigNoz.schemas/createSubscription201';
+
+import type { GetSubscription200 } from '../sigNoz.schemas/getSubscription200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { SubscriptiontypesPostableSubscriptionDTO } from '../sigNoz.schemas/subscriptiontypesPostableSubscriptionDTO';
+
+import type { UpdateSubscription200 } from '../sigNoz.schemas/updateSubscription200';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -118,7 +120,7 @@ export function useGetSubscription<
 }
 
 /**
- * @summary Get the subscription.
+ * @summary Invalidates the {@link useGetSubscription} query
  */
 export const invalidateGetSubscription = async (
 	queryClient: QueryClient,
@@ -149,6 +151,9 @@ export const createSubscription = (
 	});
 };
 
+export const getCreateSubscriptionMutationKey = () =>
+	['createSubscription'] as const;
+
 export const getCreateSubscriptionMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -156,16 +161,16 @@ export const getCreateSubscriptionMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSubscription>>,
 		TError,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+		CreateSubscriptionMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createSubscription>>,
 	TError,
-	{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+	CreateSubscriptionMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createSubscription'];
+	const mutationKey = getCreateSubscriptionMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -176,7 +181,7 @@ export const getCreateSubscriptionMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createSubscription>>,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> }
+		CreateSubscriptionMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -193,6 +198,9 @@ export type CreateSubscriptionMutationBody =
 	| BodyType<SubscriptiontypesPostableSubscriptionDTO>
 	| undefined;
 export type CreateSubscriptionMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateSubscriptionMutationVariables = {
+	data?: BodyType<SubscriptiontypesPostableSubscriptionDTO>;
+};
 
 /**
  * @summary Create a subscription.
@@ -204,13 +212,13 @@ export const useCreateSubscription = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSubscription>>,
 		TError,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+		CreateSubscriptionMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createSubscription>>,
 	TError,
-	{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+	CreateSubscriptionMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateSubscriptionMutationOptions(options));
@@ -232,6 +240,9 @@ export const updateSubscription = (
 	});
 };
 
+export const getUpdateSubscriptionMutationKey = () =>
+	['updateSubscription'] as const;
+
 export const getUpdateSubscriptionMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -239,16 +250,16 @@ export const getUpdateSubscriptionMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateSubscription>>,
 		TError,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+		UpdateSubscriptionMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateSubscription>>,
 	TError,
-	{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+	UpdateSubscriptionMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateSubscription'];
+	const mutationKey = getUpdateSubscriptionMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -259,7 +270,7 @@ export const getUpdateSubscriptionMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateSubscription>>,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> }
+		UpdateSubscriptionMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -276,6 +287,9 @@ export type UpdateSubscriptionMutationBody =
 	| BodyType<SubscriptiontypesPostableSubscriptionDTO>
 	| undefined;
 export type UpdateSubscriptionMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateSubscriptionMutationVariables = {
+	data?: BodyType<SubscriptiontypesPostableSubscriptionDTO>;
+};
 
 /**
  * @summary Update the subscription.
@@ -287,13 +301,13 @@ export const useUpdateSubscription = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateSubscription>>,
 		TError,
-		{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+		UpdateSubscriptionMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateSubscription>>,
 	TError,
-	{ data?: BodyType<SubscriptiontypesPostableSubscriptionDTO> },
+	UpdateSubscriptionMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateSubscriptionMutationOptions(options));

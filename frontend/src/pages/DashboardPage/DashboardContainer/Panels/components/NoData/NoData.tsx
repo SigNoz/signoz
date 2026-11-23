@@ -1,6 +1,6 @@
 import { CalendarRange, Clock, RotateCw } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { panelHasFixedTimePreference } from '../../../hooks/resolvePanelTimeWindow';

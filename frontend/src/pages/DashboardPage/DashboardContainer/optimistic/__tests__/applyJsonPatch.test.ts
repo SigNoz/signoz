@@ -1,5 +1,5 @@
-import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
+import { DashboardtypesPatchOpDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPatchOpDTO';
 
 import { applyJsonPatch } from '../applyJsonPatch';
 

@@ -6,7 +6,7 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
-import type { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldValuesDTO';
 import type { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';

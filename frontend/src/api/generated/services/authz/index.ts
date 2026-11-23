@@ -11,11 +11,11 @@ import type {
 	UseMutationResult,
 } from 'react-query';
 
-import type {
-	AuthtypesTransactionDTO,
-	AuthzCheck200,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from '../sigNoz.schemas/authtypesTransactionDTO';
+
+import type { AuthzCheck200 } from '../sigNoz.schemas/authzCheck200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -37,6 +37,8 @@ export const authzCheck = (
 	});
 };
 
+export const getAuthzCheckMutationKey = () => ['authzCheck'] as const;
+
 export const getAuthzCheckMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -44,16 +46,16 @@ export const getAuthzCheckMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
 		TError,
-		{ data?: BodyType<AuthtypesTransactionDTO[]> },
+		AuthzCheckMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof authzCheck>>,
 	TError,
-	{ data?: BodyType<AuthtypesTransactionDTO[]> },
+	AuthzCheckMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['authzCheck'];
+	const mutationKey = getAuthzCheckMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -64,7 +66,7 @@ export const getAuthzCheckMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof authzCheck>>,
-		{ data?: BodyType<AuthtypesTransactionDTO[]> }
+		AuthzCheckMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -81,6 +83,9 @@ export type AuthzCheckMutationBody =
 	| BodyType<AuthtypesTransactionDTO[]>
 	| undefined;
 export type AuthzCheckMutationError = ErrorType<RenderErrorResponseDTO>;
+export type AuthzCheckMutationVariables = {
+	data?: BodyType<AuthtypesTransactionDTO[]>;
+};
 
 /**
  * @summary Check permissions
@@ -92,13 +97,13 @@ export const useAuthzCheck = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
 		TError,
-		{ data?: BodyType<AuthtypesTransactionDTO[]> },
+		AuthzCheckMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof authzCheck>>,
 	TError,
-	{ data?: BodyType<AuthtypesTransactionDTO[]> },
+	AuthzCheckMutationVariables,
 	TContext
 > => {
 	return useMutation(getAuthzCheckMutationOptions(options));

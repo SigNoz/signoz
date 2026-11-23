@@ -2,7 +2,7 @@ import {
 	ApplyFilterSignalDTO,
 	type MessageActionDTOQuery,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export function getPanelTypeForRequestType(

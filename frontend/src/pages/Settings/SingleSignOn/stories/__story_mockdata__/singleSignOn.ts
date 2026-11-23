@@ -3,17 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	AuthtypesAuthDomainConfigDTO,
-	AuthtypesGettableAuthDomainDTO,
-	GetMyOrganization200,
-	ListAuthDomains200,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesAuthDomainConfigDTO } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigDTO';
+import type { AuthtypesGettableAuthDomainDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableAuthDomainDTO';
+import type { GetMyOrganization200 } from 'api/generated/services/sigNoz.schemas/getMyOrganization200';
+import type { ListAuthDomains200 } from 'api/generated/services/sigNoz.schemas/listAuthDomains200';
+import { AuthtypesAuthDomainConfigGoogleDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigGoogleDTOKind';
+import { AuthtypesAuthDomainConfigOIDCDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigOIDCDTOKind';
+import { AuthtypesAuthDomainConfigSAMLDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigSAMLDTOKind';
 
 export const AUTHN_PROVIDERS = ['saml', 'google', 'oidc'] as const;
 

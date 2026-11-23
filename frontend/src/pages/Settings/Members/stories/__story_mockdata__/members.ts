@@ -3,14 +3,12 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	AuthtypesUserRoleDTO,
-	CreateUser201,
-	GetResetPasswordToken200,
-	GetUser200,
-	ListUsers200,
-	TypesUserDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesUserRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesUserRoleDTO';
+import type { CreateUser201 } from 'api/generated/services/sigNoz.schemas/createUser201';
+import type { GetResetPasswordToken200 } from 'api/generated/services/sigNoz.schemas/getResetPasswordToken200';
+import type { GetUser200 } from 'api/generated/services/sigNoz.schemas/getUser200';
+import type { ListUsers200 } from 'api/generated/services/sigNoz.schemas/listUsers200';
+import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas/typesUserDTO';
 import { RoleType } from 'types/roles';
 import { UserApiStatus } from 'container/MembersSettings/utils';
 

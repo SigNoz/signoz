@@ -1,5 +1,5 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
 
 /** Absolute time window in epoch milliseconds — the V5 request's native unit. */
 export interface PanelTimeWindow {

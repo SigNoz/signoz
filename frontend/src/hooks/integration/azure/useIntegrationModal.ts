@@ -13,11 +13,9 @@ import {
 	useCreateAccount,
 	useGetConnectionCredentials,
 } from 'api/generated/services/cloudintegration';
-import type {
-	CloudintegrationtypesAccountDTO,
-	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesPostableAccountDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesAccountDTO';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
+import type { CloudintegrationtypesPostableAccountDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesPostableAccountDTO';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import useAxiosError from 'hooks/useAxiosError';

@@ -1,4 +1,4 @@
-import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
 import type {
 	SectionEditorProps,
 	SectionKind,

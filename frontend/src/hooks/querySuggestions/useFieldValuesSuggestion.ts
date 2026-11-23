@@ -1,10 +1,8 @@
 import type { QueryKey, UseQueryOptions, UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import type {
-	RenderErrorResponseDTO,
-	TelemetrytypesTelemetryFieldValuesDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldValuesDTO';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

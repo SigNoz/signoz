@@ -1,13 +1,9 @@
-import type {
-	Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderDTO,
-	Querybuildertypesv5QueryEnvelopeDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	DashboardtypesQueryPluginKindDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryEnvelopeBuilderAIDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderAIDTO';
+import type { Querybuildertypesv5QueryEnvelopeBuilderDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import { DashboardtypesQueryPluginKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryPluginKindDTO';
+import { Querybuildertypesv5QueryEnvelopeBuilderAIDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderAIDTOType';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
 
 const BUILDER_ENVELOPE_TYPES: string[] = [
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,

@@ -14,7 +14,9 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
+import type { GetFeatures200 } from '../sigNoz.schemas/getFeatures200';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
@@ -109,7 +111,7 @@ export function useGetFeatures<
 }
 
 /**
- * @summary Get features
+ * @summary Invalidates the {@link useGetFeatures} query
  */
 export const invalidateGetFeatures = async (
 	queryClient: QueryClient,

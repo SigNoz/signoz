@@ -3,10 +3,8 @@ import { ExternalLink, TriangleAlert } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Typography } from '@signozhq/ui/typography';
 import { Divider } from '@signozhq/ui/divider';
-import type {
-	InframonitoringtypesMissingAttributesComponentEntryDTO,
-	InframonitoringtypesMissingMetricsComponentEntryDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesMissingAttributesComponentEntryDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesMissingAttributesComponentEntryDTO';
+import type { InframonitoringtypesMissingMetricsComponentEntryDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesMissingMetricsComponentEntryDTO';
 
 type MissingEntryRowProps =
 	| {

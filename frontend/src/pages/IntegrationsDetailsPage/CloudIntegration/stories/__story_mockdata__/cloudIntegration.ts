@@ -3,18 +3,16 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import type {
-	CloudintegrationtypesAccountConfigDTO,
-	CloudintegrationtypesAccountDTO,
-	CloudintegrationtypesServiceConfigDTO,
-	CloudintegrationtypesServiceDTO,
-	CreateAccount201,
-	GetAccount200,
-	GetConnectionCredentials200,
-	ListAccounts200,
-	ListAccountServicesMetadata200,
-} from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
+import type { CloudintegrationtypesAccountConfigDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesAccountConfigDTO';
+import type { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesAccountDTO';
+import type { CloudintegrationtypesServiceConfigDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceConfigDTO';
+import type { CloudintegrationtypesServiceDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesServiceDTO';
+import type { CreateAccount201 } from 'api/generated/services/sigNoz.schemas/createAccount201';
+import type { GetAccount200 } from 'api/generated/services/sigNoz.schemas/getAccount200';
+import type { GetConnectionCredentials200 } from 'api/generated/services/sigNoz.schemas/getConnectionCredentials200';
+import type { ListAccounts200 } from 'api/generated/services/sigNoz.schemas/listAccounts200';
+import type { ListAccountServicesMetadata200 } from 'api/generated/services/sigNoz.schemas/listAccountServicesMetadata200';
 
 import { monogramIcon } from '@/pages/IntegrationsModulePage/stories/__story_mockdata__/integrations';
 

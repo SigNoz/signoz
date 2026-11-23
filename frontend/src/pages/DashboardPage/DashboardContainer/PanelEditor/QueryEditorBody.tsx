@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/toast';
 import { ConfigProvider } from 'antd';
-import {
-	type DashboardtypesPanelDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { RenderableQueryPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 import type { PanelKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';

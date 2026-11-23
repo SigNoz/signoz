@@ -1,11 +1,9 @@
-import type {
-	MetricsexplorertypesMetricAlertDTO,
-	MetricsexplorertypesMetricAttributeDTO,
-	MetricsexplorertypesMetricHighlightsResponseDTO,
-	MetricsexplorertypesMetricMetadataDTO,
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricAlertDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricAlertDTO';
+import type { MetricsexplorertypesMetricAttributeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricAttributeDTO';
+import type { MetricsexplorertypesMetricHighlightsResponseDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricHighlightsResponseDTO';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesMetricMetadataDTO';
+import type { MetrictypesTemporalityDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTemporalityDTO';
+import type { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 
 export interface MetricDetailsProps {
 	onClose: () => void;

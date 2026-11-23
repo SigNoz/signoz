@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import type { DashboardtypesPieChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPieChartPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPieChartPanelSpecDTO';
 import Pie from 'lib/visualization/charts/Pie/Pie';
 import type { PieSlice } from 'lib/visualization/charts/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';

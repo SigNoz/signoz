@@ -3,11 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
 import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';

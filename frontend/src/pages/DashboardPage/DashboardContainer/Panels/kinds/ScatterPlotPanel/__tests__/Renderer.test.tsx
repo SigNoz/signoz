@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import type {
-	DashboardtypesPanelDTO,
-	DashboardtypesScatterPlotPanelSpecDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPanelSpecDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render, screen, userEvent } from 'tests/test-utils';

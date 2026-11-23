@@ -1,9 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { ChartScatter } from '@signozhq/icons';
-import {
-	type DashboardtypesScatterPlotPanelSpecDTO,
-	DashboardtypesThresholdAxisDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPanelSpecDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';

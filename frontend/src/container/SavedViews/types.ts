@@ -2,10 +2,8 @@ import type { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
 import type { PopoverHandleType } from '@signozhq/ui/popover';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import type {
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

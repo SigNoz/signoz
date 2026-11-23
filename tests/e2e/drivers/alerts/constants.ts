@@ -71,7 +71,7 @@ export const AlertType = {
 
 export type AlertTypeValue = (typeof AlertType)[keyof typeof AlertType];
 
-/** `RuletypesRuleTypeDTO` (`frontend/src/api/generated/services/sigNoz.schemas.ts`). */
+/** `RuletypesRuleTypeDTO` (`frontend/src/api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO.ts`). */
 export const RuleType = {
 	THRESHOLD: 'threshold_rule',
 	ANOMALY: 'anomaly_rule',

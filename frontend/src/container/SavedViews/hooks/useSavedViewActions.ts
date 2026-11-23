@@ -5,12 +5,10 @@ import {
 	useCreateSavedView,
 	useUpdateSavedView,
 } from 'api/generated/services/saved-view';
-import type {
-	RenderErrorResponseDTO,
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSavedViewSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewSpecDTO';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';

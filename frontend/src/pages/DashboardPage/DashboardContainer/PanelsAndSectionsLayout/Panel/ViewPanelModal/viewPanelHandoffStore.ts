@@ -1,7 +1,7 @@
 import getSessionStorage from 'api/browser/sessionstorage/get';
 import removeSessionStorage from 'api/browser/sessionstorage/remove';
 import setSessionStorage from 'api/browser/sessionstorage/set';
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { SESSIONSTORAGE } from 'constants/sessionStorage';
 
 interface ViewPanelHandoff {

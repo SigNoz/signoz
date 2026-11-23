@@ -1,9 +1,7 @@
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
-import type {
-	DashboardtypesListedDashboardForUserV2DTO,
-	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListedDashboardForUserV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesListedDashboardForUserV2DTO';
+import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas/tagtypesPostableTagDTO';
 
 // The list is fetched via the per-user endpoint, so every row carries `pinned`.
 export type DashboardListItem = DashboardtypesListedDashboardForUserV2DTO;

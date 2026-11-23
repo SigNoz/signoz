@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import type { LegendSeries } from 'pages/DashboardPage/DashboardContainer/Panels/utils/legendSeries';
 import { getSectionControls } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getSectionControls';
 import { SectionKind } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import type { ColumnType } from 'antd/es/table';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 import type { RawTableRow } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareRawTable';
 

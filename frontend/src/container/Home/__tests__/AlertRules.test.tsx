@@ -1,7 +1,5 @@
-import {
-	RuletypesAlertStateDTO,
-	type RuletypesRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
+import type { RuletypesRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';

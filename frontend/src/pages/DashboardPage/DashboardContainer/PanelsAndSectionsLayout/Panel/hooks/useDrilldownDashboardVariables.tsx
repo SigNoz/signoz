@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
-import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesDynamicVariableSignalDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDynamicVariableSignalDTO';
 import type { FilterData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	dtoToFormModel,

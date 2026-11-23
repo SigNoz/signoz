@@ -1,4 +1,4 @@
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
 import { BellOff, Flame, Layers, User } from '@signozhq/icons';
 import { clause } from 'components/ListFilter/dsl/filterQuery';
 import type {

@@ -1,6 +1,6 @@
 import { Combobox } from '@signozhq/ui/combobox';
 import type { ComboboxItemType } from '@signozhq/ui/combobox';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import { GCP_REGIONS } from 'container/Integrations/constants';
 import type { Control } from 'react-hook-form';
 import { Controller } from 'react-hook-form';

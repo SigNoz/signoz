@@ -1,15 +1,13 @@
 import { rangeUtil } from '@grafana/data';
-import {
-	type DashboardtypesHeatmapYScaleDTO,
-	type DashboardtypesLegendPositionDTO,
-	type DashboardtypesAreaFillModeDTO,
-	DashboardtypesPrecisionOptionDTO,
-	Querybuildertypesv5BucketOptionsLinearDTOKind,
-	type DashboardtypesHeatmapColorsDTO,
-	type DashboardtypesSpanGapsDTO,
-	type DashboardtypesStackModeDTO,
-	type Querybuildertypesv5BucketOptionsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import type { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import type { DashboardtypesAreaFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesAreaFillModeDTO';
+import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPrecisionOptionDTO';
+import { Querybuildertypesv5BucketOptionsLinearDTOKind } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsLinearDTOKind';
+import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorsDTO';
+import type { DashboardtypesSpanGapsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSpanGapsDTO';
+import type { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
 import type { PrecisionOption } from 'components/Graph/types';
 import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';

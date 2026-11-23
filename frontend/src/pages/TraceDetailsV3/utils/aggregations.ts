@@ -1,5 +1,5 @@
-import type { SpantypesSpanAggregationResultDTO } from 'api/generated/services/sigNoz.schemas';
-import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesSpanAggregationResultDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanAggregationResultDTO';
+import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanAggregationTypeDTO';
 
 export const AGGREGATIONS = {
 	EXEC_TIME_PCT: SpantypesSpanAggregationTypeDTO.execution_time_percentage,

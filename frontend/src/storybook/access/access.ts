@@ -1,4 +1,4 @@
-import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionDTO';
 import {
 	IsAdminPermission,
 	IsAnonymousPermission,

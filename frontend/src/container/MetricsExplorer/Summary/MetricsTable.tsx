@@ -4,7 +4,7 @@ import type { TablePaginationConfig, TableProps } from 'antd';
 import { Spin, Table, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
-import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';

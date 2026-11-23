@@ -1,8 +1,6 @@
-import {
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
-} from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesAuthDomainConfigGoogleDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigGoogleDTOKind';
+import { AuthtypesAuthDomainConfigOIDCDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigOIDCDTOKind';
+import { AuthtypesAuthDomainConfigSAMLDTOKind } from 'api/generated/services/sigNoz.schemas/authtypesAuthDomainConfigSAMLDTOKind';
 
 import {
 	convertDomainMappingsToList,

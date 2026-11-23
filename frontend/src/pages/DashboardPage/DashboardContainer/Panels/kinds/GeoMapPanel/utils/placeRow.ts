@@ -1,4 +1,4 @@
-import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapCountryFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapCountryFormatDTO';
 import { COUNTRY_BY_ISO2 } from 'lib/visualization/charts/GeoMap/geo/countries';
 import { normalizeCountry } from 'lib/visualization/charts/GeoMap/geo/normalizeCountry';
 import { normalizeSubdivision } from 'lib/visualization/charts/GeoMap/geo/normalizeSubdivision';

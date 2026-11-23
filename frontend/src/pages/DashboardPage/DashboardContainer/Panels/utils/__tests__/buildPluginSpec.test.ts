@@ -1,17 +1,15 @@
-import {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesFillModeDTO,
-	DashboardtypesHeatmapYScaleDTO,
-	DashboardtypesLegendPositionDTO,
-	DashboardtypesLineInterpolationDTO,
-	DashboardtypesLineStyleDTO,
-	type DashboardtypesPanelSpecDTO,
-	DashboardtypesStackModeDTO,
-	DashboardtypesThresholdAxisDTO,
-	DashboardtypesThresholdFormatDTO,
-	DashboardtypesTimePreferenceDTO,
-	TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import { DashboardtypesFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillModeDTO';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import { DashboardtypesLineInterpolationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineInterpolationDTO';
+import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 import { DEFAULT_BAR_COLOR } from '../../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';

@@ -1,22 +1,20 @@
-import {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesFillModeDTO,
-	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapColorScaleDTO,
-	DashboardtypesHeatmapPaletteDTO,
-	DashboardtypesHeatmapYScaleDTO,
-	DashboardtypesLegendPositionDTO,
-	DashboardtypesLineInterpolationDTO,
-	DashboardtypesLineStyleDTO,
-	type DashboardtypesPanelSpecDTO,
-	DashboardtypesStackModeDTO,
-	DashboardtypesThresholdAxisDTO,
-	DashboardtypesThresholdFormatDTO,
-	DashboardtypesTextAlignDTO,
-	DashboardtypesTimePreferenceDTO,
-	DashboardtypesVerticalAlignDTO,
-	type TelemetrytypesSignalDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import { DashboardtypesFillModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesFillModeDTO';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import { DashboardtypesHeatmapColorScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorScaleDTO';
+import { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
+import { DashboardtypesHeatmapYScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
+import { DashboardtypesLegendPositionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLegendPositionDTO';
+import { DashboardtypesLineInterpolationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineInterpolationDTO';
+import { DashboardtypesLineStyleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesLineStyleDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
+import { DashboardtypesStackModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesStackModeDTO';
+import { DashboardtypesThresholdAxisDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdAxisDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
+import { DashboardtypesTextAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTextAlignDTO';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimePreferenceDTO';
+import { DashboardtypesVerticalAlignDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesVerticalAlignDTO';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 
 import { defaultColumnsForSignal } from '../../PanelEditor/ListColumnsEditor/selectFields';
 import {

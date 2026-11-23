@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesThresholdWithLabelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdWithLabelDTO';
 import type { AnyThreshold } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 

@@ -1,7 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { BellOff, CircleCheck, CircleOff, Flame } from '@signozhq/icons';
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas/ruletypesAlertStateDTO';
 
 import './AlertState.styles.scss';
 

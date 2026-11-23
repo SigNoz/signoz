@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import {
-	DashboardtypesComparisonOperatorDTO,
-	type DashboardtypesComparisonThresholdDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonThresholdDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
 import {
 	ThresholdVariant,
 	type AnyThreshold,

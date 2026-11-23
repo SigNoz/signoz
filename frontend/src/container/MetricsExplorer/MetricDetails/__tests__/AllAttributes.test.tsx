@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTypeDTO';
 import { mockAppLocation } from 'tests/router-mocks';
 import { userEvent } from 'tests/test-utils';
 

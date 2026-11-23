@@ -4,10 +4,8 @@
  */
 
 import setLocalStorage from 'api/browser/localstorage/set';
-import type {
-	MetricsexplorertypesInspectMetricsRequestDTO,
-	MetricsexplorertypesStatsRequestDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesInspectMetricsRequestDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesInspectMetricsRequestDTO';
+import type { MetricsexplorertypesStatsRequestDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesStatsRequestDTO';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';

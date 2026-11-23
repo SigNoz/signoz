@@ -1,10 +1,8 @@
 import { Box } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
-import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	InframonitoringtypesContainerReadyDTO,
-	InframonitoringtypesContainerStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerRecordDTO';
+import { InframonitoringtypesContainerReadyDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerReadyDTO';
+import { InframonitoringtypesContainerStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerStatusDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';

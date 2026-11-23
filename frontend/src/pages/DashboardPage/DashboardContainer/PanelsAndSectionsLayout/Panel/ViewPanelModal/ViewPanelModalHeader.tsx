@@ -1,6 +1,6 @@
 import { PenLine, RotateCw } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import type {
 	CustomTimeType,

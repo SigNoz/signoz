@@ -1,22 +1,18 @@
-import type {
-	DashboardtypesQueryDTO,
-	Querybuildertypesv5BuilderQuerySpecDTO,
-	Querybuildertypesv5ClickHouseQueryDTO,
-	Querybuildertypesv5CompositeQueryDTO,
-	Querybuildertypesv5OrderByDTO,
-	Querybuildertypesv5PromQueryDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderAIDTO,
-	Querybuildertypesv5QueryEnvelopeDTO,
-	Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5QueryRangeRequestDTOVariables,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	Querybuildertypesv5OrderDirectionDTO,
-	Querybuildertypesv5QueryEnvelopeBuilderAIDTOType,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
-	Querybuildertypesv5QueryEnvelopePromQLDTOType,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesQueryDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesQueryDTO';
+import type { Querybuildertypesv5BuilderQuerySpecDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BuilderQuerySpecDTO';
+import type { Querybuildertypesv5ClickHouseQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ClickHouseQueryDTO';
+import type { Querybuildertypesv5CompositeQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5CompositeQueryDTO';
+import type { Querybuildertypesv5OrderByDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderByDTO';
+import type { Querybuildertypesv5PromQueryDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5PromQueryDTO';
+import type { Querybuildertypesv5QueryEnvelopeBuilderAIDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderAIDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTOVariables } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTOVariables';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
+import { Querybuildertypesv5QueryEnvelopeBuilderAIDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderAIDTOType';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
+import { Querybuildertypesv5QueryEnvelopePromQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopePromQLDTOType';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
 import {

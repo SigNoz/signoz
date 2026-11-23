@@ -1,8 +1,6 @@
-import type {
-	DashboardtypesGeoMapPanelSpecDTO,
-	DashboardtypesPanelDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import type { GeoMapProps } from 'lib/visualization/charts/GeoMap/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

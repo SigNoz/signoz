@@ -11,15 +11,11 @@ import {
 	useGetMetricsStats,
 	useGetMetricsTreemap,
 } from 'api/generated/services/metrics';
-import type {
-	MetricsexplorertypesStatsRequestDTO,
-	MetricsexplorertypesTreemapRequestDTO,
-	Querybuildertypesv5OrderByDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	MetricsexplorertypesTreemapModeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesStatsRequestDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesStatsRequestDTO';
+import type { MetricsexplorertypesTreemapRequestDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapRequestDTO';
+import type { Querybuildertypesv5OrderByDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderByDTO';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas/metricsexplorertypesTreemapModeDTO';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5OrderDirectionDTO';
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';

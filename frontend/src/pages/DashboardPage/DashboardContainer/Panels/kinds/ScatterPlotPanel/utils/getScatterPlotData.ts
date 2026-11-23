@@ -1,4 +1,4 @@
-import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesScatterPlotPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesScatterPlotPanelSpecDTO';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import { getJoinedScalarTable } from '../../../utils/getJoinedScalarTable';

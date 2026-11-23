@@ -1,4 +1,4 @@
-import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas/getHosts200';
 import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';

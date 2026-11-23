@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPrecisionOptionDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPrecisionOptionDTO';
 
 import FormattingSection from '../FormattingSection';
 

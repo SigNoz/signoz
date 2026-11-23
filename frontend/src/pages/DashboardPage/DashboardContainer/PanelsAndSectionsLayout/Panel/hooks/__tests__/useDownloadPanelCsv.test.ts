@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { getTableCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
 import { downloadCsv } from 'pages/DashboardPage/DashboardContainer/Panels/utils/downloadCsv';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas/getPublicDashboard200';
 
 /** The public link the dashboard header reads on every load. */
 export const publicDashboardMeta = (

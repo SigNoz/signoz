@@ -1,7 +1,5 @@
-import type {
-	AuthtypesGettableRoleDTO,
-	AuthtypesRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
+import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesRoleDTO';
 
 const orgId = '019ba2bb-2fa1-7b24-8159-cfca08617ef9';
 

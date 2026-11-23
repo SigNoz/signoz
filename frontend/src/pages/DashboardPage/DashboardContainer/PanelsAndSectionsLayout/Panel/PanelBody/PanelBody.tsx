@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { RotateCw, SquarePlus, TriangleAlert } from '@signozhq/icons';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { PanelMode } from 'lib/visualization/panels/types';
 import PanelLoader from 'pages/DashboardPage/DashboardContainer/Panels/components/PanelLoader/PanelLoader';
 import PanelMessage from 'pages/DashboardPage/DashboardContainer/Panels/components/PanelMessage/PanelMessage';

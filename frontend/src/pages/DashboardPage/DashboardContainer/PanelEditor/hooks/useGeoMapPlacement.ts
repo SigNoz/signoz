@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
-import type {
-	DashboardtypesGeoMapPanelSpecDTO,
-	DashboardtypesPanelDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { isSubdivisionCountry } from 'lib/visualization/charts/GeoMap/geo/subdivisions';
 import { resolveColorScale } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/utils/chartOptions';
 import { useLoadedSubdivisions } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/hooks/useLoadedSubdivisions';

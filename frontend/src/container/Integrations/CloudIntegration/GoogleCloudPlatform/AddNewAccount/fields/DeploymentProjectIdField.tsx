@@ -1,5 +1,5 @@
 import { Input } from '@signozhq/ui/input';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import type { Control } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 

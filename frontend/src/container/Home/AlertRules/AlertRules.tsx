@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Button, Skeleton } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import logEvent from 'api/common/logEvent';
-import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { AppLink } from 'lib/router/AppLink';

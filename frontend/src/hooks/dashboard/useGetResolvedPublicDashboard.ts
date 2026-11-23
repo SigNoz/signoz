@@ -1,5 +1,5 @@
 import { getPublicDashboardDataV2 } from 'api/generated/services/dashboard';
-import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettablePublicDashboardDataV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettablePublicDashboardDataV2DTO';
 import type { AxiosError } from 'axios';
 import { isAxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

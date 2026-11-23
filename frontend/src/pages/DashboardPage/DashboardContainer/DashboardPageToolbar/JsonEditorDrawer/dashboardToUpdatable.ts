@@ -1,9 +1,7 @@
-import type {
-	DashboardtypesGettableDashboardV2DTO,
-	DashboardtypesDashboardSpecDTO,
-	DashboardtypesUpdatableDashboardV2DTO,
-	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
+import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTO';
+import type { DashboardtypesUpdatableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesUpdatableDashboardV2DTO';
+import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas/tagtypesPostableTagDTO';
 
 /**
  * Narrow a parsed (full Gettable-shaped) dashboard JSON down to the PUT-updatable

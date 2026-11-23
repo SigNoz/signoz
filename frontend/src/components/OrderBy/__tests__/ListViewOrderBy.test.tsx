@@ -7,7 +7,7 @@ import {
 } from 'container/LLMObservability/Explorer/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
 import { DataSource } from 'types/common/queryBuilder';
 
 import ListViewOrderBy from '../ListViewOrderBy';

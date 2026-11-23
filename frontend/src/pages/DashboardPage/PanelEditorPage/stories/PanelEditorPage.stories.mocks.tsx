@@ -4,7 +4,7 @@
  */
 
 import { rest } from 'msw';
-import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import ROUTES from 'constants/routes';
 import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { buildRoutePath } from 'lib/router/buildRoutePath';

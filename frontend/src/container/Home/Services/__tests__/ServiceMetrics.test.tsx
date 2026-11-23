@@ -1,9 +1,7 @@
 import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
-import {
-	Querybuildertypesv5ColumnTypeDTO,
-	Querybuildertypesv5RequestTypeDTO,
-	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import { Querybuildertypesv5ColumnTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnTypeDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, waitFor } from 'tests/test-utils';

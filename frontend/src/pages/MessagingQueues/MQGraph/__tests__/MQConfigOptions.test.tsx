@@ -1,4 +1,4 @@
-import type { GetFieldsValues200 } from 'api/generated/services/sigNoz.schemas';
+import type { GetFieldsValues200 } from 'api/generated/services/sigNoz.schemas/getFieldsValues200';
 import { rest, server } from 'mocks-server/server';
 import { render, waitFor } from 'tests/test-utils';
 

@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
 import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
 import { ThresholdVariant } from 'pages/DashboardPage/DashboardContainer/Panels/types/sections';
 import { render, screen, userEvent } from 'tests/test-utils';

@@ -1,9 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { getPublicDashboardPanelQueryRangeV2 } from 'api/generated/services/dashboard';
-import {
-	type DashboardtypesPanelDTO,
-	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 

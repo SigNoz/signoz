@@ -3,16 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	GetFlamegraph200,
-	GetTraceAggregations200,
-	GetTraceSummary200,
-	GetWaterfallV4200,
-	SpantypesFlamegraphSpanDTO,
-	SpantypesSpanAggregationDTO,
-	SpantypesWaterfallSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { GetFlamegraph200 } from 'api/generated/services/sigNoz.schemas/getFlamegraph200';
+import type { GetTraceAggregations200 } from 'api/generated/services/sigNoz.schemas/getTraceAggregations200';
+import type { GetTraceSummary200 } from 'api/generated/services/sigNoz.schemas/getTraceSummary200';
+import type { GetWaterfallV4200 } from 'api/generated/services/sigNoz.schemas/getWaterfallV4200';
+import type { SpantypesFlamegraphSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesFlamegraphSpanDTO';
+import type { SpantypesSpanAggregationDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanAggregationDTO';
+import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesWaterfallSpanDTO';
+import { SpantypesSpanAggregationTypeDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanAggregationTypeDTO';
 import type { GetSpanPercentilesResponseDataProps } from 'types/api/trace/getSpanPercentiles';
 import type { RawRow } from 'types/api/v5/queryRange';
 

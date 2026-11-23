@@ -1,8 +1,8 @@
 import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Container } from '@signozhq/icons';
-import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostRecordDTO';
+import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostStatusDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable from 'components/TanStackTableView';
 import { getGroupByEl } from 'container/InfraMonitoringK8sV2/Base/utils';

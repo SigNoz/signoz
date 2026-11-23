@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesCredentialsDTO';
 import type { UseFormSetValue } from 'react-hook-form';
 
 import type { GcpSetupFormValues } from './types';

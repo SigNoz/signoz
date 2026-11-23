@@ -1,6 +1,6 @@
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas/cloudintegrationtypesGCPConnectionMethodDTO';
 import { useManualAccountSetup } from 'hooks/integration/gcp/useManualAccountSetup';
 import { Controller, useForm } from 'react-hook-form';
 

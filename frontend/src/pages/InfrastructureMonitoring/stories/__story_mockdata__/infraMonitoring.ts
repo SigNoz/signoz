@@ -3,28 +3,26 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	type InframonitoringtypesAssociatedComponentDTO,
-	InframonitoringtypesCheckComponentTypeDTO,
-	InframonitoringtypesCheckTypeDTO,
-	type InframonitoringtypesChecksDTO,
-	type InframonitoringtypesClusterRecordDTO,
-	type InframonitoringtypesDaemonSetRecordDTO,
-	type InframonitoringtypesDeploymentRecordDTO,
-	type InframonitoringtypesHostRecordDTO,
-	InframonitoringtypesHostStatusDTO,
-	type InframonitoringtypesJobRecordDTO,
-	type InframonitoringtypesNamespaceRecordDTO,
-	InframonitoringtypesNodeConditionDTO,
-	type InframonitoringtypesNodeRecordDTO,
-	type InframonitoringtypesPodCountsByStatusDTO,
-	type InframonitoringtypesPodRecordDTO,
-	InframonitoringtypesPodStatusDTO,
-	InframonitoringtypesResponseTypeDTO,
-	type InframonitoringtypesStatefulSetRecordDTO,
-	type InframonitoringtypesVolumeRecordDTO,
-	type Querybuildertypesv5QueryWarnDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesAssociatedComponentDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesAssociatedComponentDTO';
+import { InframonitoringtypesCheckComponentTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesCheckComponentTypeDTO';
+import { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesCheckTypeDTO';
+import type { InframonitoringtypesChecksDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesChecksDTO';
+import type { InframonitoringtypesClusterRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesClusterRecordDTO';
+import type { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesDaemonSetRecordDTO';
+import type { InframonitoringtypesDeploymentRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesDeploymentRecordDTO';
+import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostRecordDTO';
+import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesHostStatusDTO';
+import type { InframonitoringtypesJobRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesJobRecordDTO';
+import type { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNamespaceRecordDTO';
+import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeConditionDTO';
+import type { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeRecordDTO';
+import type { InframonitoringtypesPodCountsByStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodCountsByStatusDTO';
+import type { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodRecordDTO';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodStatusDTO';
+import { InframonitoringtypesResponseTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesResponseTypeDTO';
+import type { InframonitoringtypesStatefulSetRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesStatefulSetRecordDTO';
+import type { InframonitoringtypesVolumeRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesVolumeRecordDTO';
+import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryWarnDataDTO';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,

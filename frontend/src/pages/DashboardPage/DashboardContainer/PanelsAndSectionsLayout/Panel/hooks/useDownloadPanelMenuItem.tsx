@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { DropdownSubmenuItemType } from '@signozhq/ui/dropdown';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import {
 	DownloadFormat,
 	type PanelActionCapabilities,

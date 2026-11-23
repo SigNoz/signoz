@@ -1,8 +1,6 @@
-import type {
-	SpantypesPostableSpanMapperTestDTO,
-	SpantypesPostableSpanMapperTestGroupDTO,
-	SpantypesSpanMapperTestSpanDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesPostableSpanMapperTestDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperTestDTO';
+import type { SpantypesPostableSpanMapperTestGroupDTO } from 'api/generated/services/sigNoz.schemas/spantypesPostableSpanMapperTestGroupDTO';
+import type { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas/spantypesSpanMapperTestSpanDTO';
 import { isEqual } from 'lodash-es';
 
 import type { DraftGroup } from '../types';

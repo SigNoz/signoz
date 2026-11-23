@@ -1,5 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
-import type { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
 
 import ConfigTiles from '../../../../controls/ConfigTiles/ConfigTiles';
 import { OPERATOR_PHRASE, OPERATOR_TILES } from '../../thresholdOptions';

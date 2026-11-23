@@ -1,7 +1,5 @@
-import type {
-	GetService200,
-	ListAccounts200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GetService200 } from 'api/generated/services/sigNoz.schemas/getService200';
+import type { ListAccounts200 } from 'api/generated/services/sigNoz.schemas/listAccounts200';
 
 const CLOUD_ACCOUNT_ID = 'a1b2c3d4-e5f6-7890-1234-567890abcdef';
 const PROVIDER_ACCOUNT_ID = '123456789012';

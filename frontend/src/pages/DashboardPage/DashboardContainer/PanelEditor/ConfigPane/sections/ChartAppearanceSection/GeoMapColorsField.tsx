@@ -1,10 +1,8 @@
 import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
-import {
-	DashboardtypesHeatmapColorModeDTO,
-	type DashboardtypesGeoMapColorsDTO,
-	type DashboardtypesHeatmapColorScaleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import type { DashboardtypesGeoMapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapColorsDTO';
+import type { DashboardtypesHeatmapColorScaleDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorScaleDTO';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';

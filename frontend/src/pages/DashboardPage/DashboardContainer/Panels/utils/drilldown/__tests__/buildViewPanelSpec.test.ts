@@ -1,4 +1,4 @@
-import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getSwitchedPluginSpec } from 'pages/DashboardPage/DashboardContainer/PanelEditor/getSwitchedPluginSpec';
 import { PANEL_TYPE_TO_PANEL_KIND } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';

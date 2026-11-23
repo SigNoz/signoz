@@ -1,6 +1,6 @@
 import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
-import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorsDTO';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';

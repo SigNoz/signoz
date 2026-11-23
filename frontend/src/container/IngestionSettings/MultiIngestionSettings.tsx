@@ -34,10 +34,8 @@ import {
 	useUpdateIngestionKey,
 	useUpdateIngestionKeyLimit,
 } from 'api/generated/services/gateway';
-import type {
-	GatewaytypesIngestionKeyDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas/gatewaytypesIngestionKeyDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Badges from 'components/Badges/Badges';

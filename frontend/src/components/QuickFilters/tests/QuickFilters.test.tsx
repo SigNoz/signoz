@@ -1,4 +1,4 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { ENVIRONMENT } from 'constants/env';
 import type { ApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';

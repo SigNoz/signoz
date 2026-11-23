@@ -10,7 +10,7 @@ import {
 	// eslint-disable-next-line no-restricted-imports -- list rename targets another dashboard by id; useOptimisticPatch is bound to the open dashboard's store/cache.
 	patchDashboardV2,
 } from 'api/generated/services/dashboard';
-import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesJSONPatchOperationDTO';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import type APIError from 'types/api/error';

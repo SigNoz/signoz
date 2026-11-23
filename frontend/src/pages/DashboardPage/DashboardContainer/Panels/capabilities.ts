@@ -1,4 +1,4 @@
-import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { EQueryType } from 'types/common/dashboard';
 
 import { getPanelDefinition } from './registry';

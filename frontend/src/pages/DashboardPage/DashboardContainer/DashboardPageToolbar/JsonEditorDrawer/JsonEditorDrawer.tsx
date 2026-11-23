@@ -8,7 +8,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { Drawer } from 'antd';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGettableDashboardV2DTO';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/toast';

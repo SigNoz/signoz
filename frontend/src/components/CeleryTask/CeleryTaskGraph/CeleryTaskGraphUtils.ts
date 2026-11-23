@@ -1,12 +1,10 @@
-import {
-	MetrictypesSpaceAggregationDTO,
-	MetrictypesTimeAggregationDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5ReduceToDTO,
-	Querybuildertypesv5RequestTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesSpaceAggregationDTO } from 'api/generated/services/sigNoz.schemas/metrictypesSpaceAggregationDTO';
+import { MetrictypesTimeAggregationDTO } from 'api/generated/services/sigNoz.schemas/metrictypesTimeAggregationDTO';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import { Querybuildertypesv5ReduceToDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ReduceToDTO';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { getFiltersFromKeyValue } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';

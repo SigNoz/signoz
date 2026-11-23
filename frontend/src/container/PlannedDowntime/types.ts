@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
 import type { TableColumnDef } from 'components/TanStackTableView';
 import type { SelectOption } from 'types/common/select';
 

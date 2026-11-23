@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { rest } from 'msw';
 
 import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';

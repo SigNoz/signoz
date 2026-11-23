@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { ListUsers200 } from 'api/generated/services/sigNoz.schemas';
+import type { ListUsers200 } from 'api/generated/services/sigNoz.schemas/listUsers200';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import { USER_ROLES } from 'types/roles';
 

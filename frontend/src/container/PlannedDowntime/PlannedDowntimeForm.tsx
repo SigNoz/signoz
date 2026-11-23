@@ -19,12 +19,10 @@ import {
 	createDowntimeSchedule,
 	updateDowntimeScheduleByID,
 } from 'api/generated/services/downtimeschedules';
-import type {
-	AlertmanagertypesPlannedMaintenanceDTO,
-	AlertmanagertypesPostablePlannedMaintenanceDTO,
-	AlertmanagertypesRecurrenceDTO,
-	RenderErrorResponseDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
+import type { AlertmanagertypesPostablePlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPostablePlannedMaintenanceDTO';
+import type { AlertmanagertypesRecurrenceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesRecurrenceDTO';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
 import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ModalButtonWrapper } from 'container/PipelinePage/PipelineListsView/styles';

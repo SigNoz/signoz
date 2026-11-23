@@ -1,5 +1,5 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import type { DashboardtypesPanelPluginKindDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelPluginKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginKindDTO';
 
 /**
  * String-literal union of every panel kind, derived from the generated enum.

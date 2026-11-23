@@ -3,14 +3,12 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	AlertmanagertypesMaintenanceKindDTO,
-	AlertmanagertypesMaintenanceStatusDTO,
-	AlertmanagertypesRepeatOnDTO,
-	AlertmanagertypesRepeatTypeDTO,
-	type AlertmanagertypesPlannedMaintenanceDTO,
-	type ListDowntimeSchedules200,
-} from 'api/generated/services/sigNoz.schemas';
+import { AlertmanagertypesMaintenanceKindDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesMaintenanceKindDTO';
+import { AlertmanagertypesMaintenanceStatusDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesMaintenanceStatusDTO';
+import { AlertmanagertypesRepeatOnDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesRepeatOnDTO';
+import { AlertmanagertypesRepeatTypeDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesRepeatTypeDTO';
+import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesPlannedMaintenanceDTO';
+import type { ListDowntimeSchedules200 } from 'api/generated/services/sigNoz.schemas/listDowntimeSchedules200';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;

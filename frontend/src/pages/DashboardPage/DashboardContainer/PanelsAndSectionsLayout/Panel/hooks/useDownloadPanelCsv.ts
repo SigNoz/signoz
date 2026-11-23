@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { getTableCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TablePanel/tableCsv';
 import { getTopListCsvRows } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TopListPanel/utils/csv';

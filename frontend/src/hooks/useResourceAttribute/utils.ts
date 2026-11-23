@@ -1,5 +1,5 @@
 import { getFieldsKeys, getFieldsValues } from 'api/generated/services/fields';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import {
 	CompositeQueryOperatorsConfig,
 	OperatorConversions,

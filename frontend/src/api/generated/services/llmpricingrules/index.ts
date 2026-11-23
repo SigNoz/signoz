@@ -17,16 +17,21 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	DeleteLLMPricingRulePathParameters,
-	GetLLMPricingRule200,
-	GetLLMPricingRulePathParameters,
-	ListLLMPricingRules200,
-	ListLLMPricingRulesParams,
-	ListUnmappedLLMModels200,
-	LlmpricingruletypesUpdatableLLMPricingRulesDTO,
-	RenderErrorResponseDTO,
-} from '../sigNoz.schemas';
+import type { DeleteLLMPricingRulePathParameters } from '../sigNoz.schemas/deleteLLMPricingRulePathParameters';
+
+import type { GetLLMPricingRule200 } from '../sigNoz.schemas/getLLMPricingRule200';
+
+import type { GetLLMPricingRulePathParameters } from '../sigNoz.schemas/getLLMPricingRulePathParameters';
+
+import type { ListLLMPricingRules200 } from '../sigNoz.schemas/listLLMPricingRules200';
+
+import type { ListLLMPricingRulesParams } from '../sigNoz.schemas/listLLMPricingRulesParams';
+
+import type { ListUnmappedLLMModels200 } from '../sigNoz.schemas/listUnmappedLLMModels200';
+
+import type { LlmpricingruletypesUpdatableLLMPricingRulesDTO } from '../sigNoz.schemas/llmpricingruletypesUpdatableLLMPricingRulesDTO';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -134,7 +139,7 @@ export function useListLLMPricingRules<
 }
 
 /**
- * @summary List pricing rules
+ * @summary Invalidates the {@link useListLLMPricingRules} query
  */
 export const invalidateListLLMPricingRules = async (
 	queryClient: QueryClient,
@@ -166,6 +171,9 @@ export const createOrUpdateLLMPricingRules = (
 	});
 };
 
+export const getCreateOrUpdateLLMPricingRulesMutationKey = () =>
+	['createOrUpdateLLMPricingRules'] as const;
+
 export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -173,16 +181,16 @@ export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
-		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+		CreateOrUpdateLLMPricingRulesMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
-	{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+	CreateOrUpdateLLMPricingRulesMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createOrUpdateLLMPricingRules'];
+	const mutationKey = getCreateOrUpdateLLMPricingRulesMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -193,7 +201,7 @@ export const getCreateOrUpdateLLMPricingRulesMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
-		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> }
+		CreateOrUpdateLLMPricingRulesMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -211,6 +219,9 @@ export type CreateOrUpdateLLMPricingRulesMutationBody =
 	| undefined;
 export type CreateOrUpdateLLMPricingRulesMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type CreateOrUpdateLLMPricingRulesMutationVariables = {
+	data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO>;
+};
 
 /**
  * @summary Create or update pricing rules
@@ -222,13 +233,13 @@ export const useCreateOrUpdateLLMPricingRules = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 		TError,
-		{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+		CreateOrUpdateLLMPricingRulesMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createOrUpdateLLMPricingRules>>,
 	TError,
-	{ data?: BodyType<LlmpricingruletypesUpdatableLLMPricingRulesDTO> },
+	CreateOrUpdateLLMPricingRulesMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateOrUpdateLLMPricingRulesMutationOptions(options));
@@ -248,6 +259,9 @@ export const deleteLLMPricingRule = (
 	});
 };
 
+export const getDeleteLLMPricingRuleMutationKey = () =>
+	['deleteLLMPricingRule'] as const;
+
 export const getDeleteLLMPricingRuleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -255,16 +269,16 @@ export const getDeleteLLMPricingRuleMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLLMPricingRule>>,
 		TError,
-		{ pathParams: DeleteLLMPricingRulePathParameters },
+		DeleteLLMPricingRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteLLMPricingRule>>,
 	TError,
-	{ pathParams: DeleteLLMPricingRulePathParameters },
+	DeleteLLMPricingRuleMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteLLMPricingRule'];
+	const mutationKey = getDeleteLLMPricingRuleMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -275,7 +289,7 @@ export const getDeleteLLMPricingRuleMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteLLMPricingRule>>,
-		{ pathParams: DeleteLLMPricingRulePathParameters }
+		DeleteLLMPricingRuleMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -291,6 +305,9 @@ export type DeleteLLMPricingRuleMutationResult = NonNullable<
 
 export type DeleteLLMPricingRuleMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type DeleteLLMPricingRuleMutationVariables = {
+	pathParams: DeleteLLMPricingRulePathParameters;
+};
 
 /**
  * @summary Delete a pricing rule
@@ -302,13 +319,13 @@ export const useDeleteLLMPricingRule = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteLLMPricingRule>>,
 		TError,
-		{ pathParams: DeleteLLMPricingRulePathParameters },
+		DeleteLLMPricingRuleMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteLLMPricingRule>>,
 	TError,
-	{ pathParams: DeleteLLMPricingRulePathParameters },
+	DeleteLLMPricingRuleMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteLLMPricingRuleMutationOptions(options));
@@ -400,7 +417,7 @@ export function useGetLLMPricingRule<
 }
 
 /**
- * @summary Get a pricing rule
+ * @summary Invalidates the {@link useGetLLMPricingRule} query
  */
 export const invalidateGetLLMPricingRule = async (
 	queryClient: QueryClient,
@@ -485,7 +502,7 @@ export function useListUnmappedLLMModels<
 }
 
 /**
- * @summary List unmapped models
+ * @summary Invalidates the {@link useListUnmappedLLMModels} query
  */
 export const invalidateListUnmappedLLMModels = async (
 	queryClient: QueryClient,

@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 
 import { usePanelEditorDraft } from '../usePanelEditorDraft';
 

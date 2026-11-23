@@ -1,4 +1,4 @@
-import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5BucketOptionsDTO';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { Format } from 'constants/formats/types';
 import type { EQueryType } from 'types/common/dashboard';

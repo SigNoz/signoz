@@ -17,23 +17,35 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	GetFlamegraph200,
-	GetFlamegraphPathParameters,
-	GetTraceAggregations200,
-	GetTraceAggregationsPathParameters,
-	GetTraceSummary200,
-	GetTraceSummaryPathParameters,
-	GetTraceThread200,
-	GetTraceThreadParams,
-	GetTraceThreadPathParameters,
-	GetWaterfallV4200,
-	GetWaterfallV4PathParameters,
-	RenderErrorResponseDTO,
-	SpantypesPostableFlamegraphDTO,
-	SpantypesPostableTraceAggregationsDTO,
-	SpantypesPostableWaterfallDTO,
-} from '../sigNoz.schemas';
+import type { GetFlamegraph200 } from '../sigNoz.schemas/getFlamegraph200';
+
+import type { GetFlamegraphPathParameters } from '../sigNoz.schemas/getFlamegraphPathParameters';
+
+import type { GetTraceAggregations200 } from '../sigNoz.schemas/getTraceAggregations200';
+
+import type { GetTraceAggregationsPathParameters } from '../sigNoz.schemas/getTraceAggregationsPathParameters';
+
+import type { GetTraceSummary200 } from '../sigNoz.schemas/getTraceSummary200';
+
+import type { GetTraceSummaryPathParameters } from '../sigNoz.schemas/getTraceSummaryPathParameters';
+
+import type { GetTraceThread200 } from '../sigNoz.schemas/getTraceThread200';
+
+import type { GetTraceThreadParams } from '../sigNoz.schemas/getTraceThreadParams';
+
+import type { GetTraceThreadPathParameters } from '../sigNoz.schemas/getTraceThreadPathParameters';
+
+import type { GetWaterfallV4200 } from '../sigNoz.schemas/getWaterfallV4200';
+
+import type { GetWaterfallV4PathParameters } from '../sigNoz.schemas/getWaterfallV4PathParameters';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { SpantypesPostableFlamegraphDTO } from '../sigNoz.schemas/spantypesPostableFlamegraphDTO';
+
+import type { SpantypesPostableTraceAggregationsDTO } from '../sigNoz.schemas/spantypesPostableTraceAggregationsDTO';
+
+import type { SpantypesPostableWaterfallDTO } from '../sigNoz.schemas/spantypesPostableWaterfallDTO';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -76,6 +88,9 @@ export const getTraceAggregations = (
 	});
 };
 
+export const getGetTraceAggregationsMutationKey = () =>
+	['getTraceAggregations'] as const;
+
 export const getGetTraceAggregationsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -83,22 +98,16 @@ export const getGetTraceAggregationsMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getTraceAggregations>>,
 		TError,
-		{
-			pathParams: GetTraceAggregationsPathParameters;
-			data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
-		},
+		GetTraceAggregationsMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getTraceAggregations>>,
 	TError,
-	{
-		pathParams: GetTraceAggregationsPathParameters;
-		data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
-	},
+	GetTraceAggregationsMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['getTraceAggregations'];
+	const mutationKey = getGetTraceAggregationsMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -109,10 +118,7 @@ export const getGetTraceAggregationsMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getTraceAggregations>>,
-		{
-			pathParams: GetTraceAggregationsPathParameters;
-			data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
-		}
+		GetTraceAggregationsMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -130,6 +136,10 @@ export type GetTraceAggregationsMutationBody =
 	| undefined;
 export type GetTraceAggregationsMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type GetTraceAggregationsMutationVariables = {
+	pathParams: GetTraceAggregationsPathParameters;
+	data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
+};
 
 /**
  * @summary Get aggregations for a trace
@@ -141,19 +151,13 @@ export const useGetTraceAggregations = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getTraceAggregations>>,
 		TError,
-		{
-			pathParams: GetTraceAggregationsPathParameters;
-			data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
-		},
+		GetTraceAggregationsMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getTraceAggregations>>,
 	TError,
-	{
-		pathParams: GetTraceAggregationsPathParameters;
-		data?: BodyType<SpantypesPostableTraceAggregationsDTO>;
-	},
+	GetTraceAggregationsMutationVariables,
 	TContext
 > => {
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
@@ -245,7 +249,7 @@ export function useGetTraceSummary<
 }
 
 /**
- * @summary Get summary for a trace
+ * @summary Invalidates the {@link useGetTraceSummary} query
  */
 export const invalidateGetTraceSummary = async (
 	queryClient: QueryClient,
@@ -359,7 +363,7 @@ export function useGetTraceThread<
 }
 
 /**
- * @summary Get thread view for a trace
+ * @summary Invalidates the {@link useGetTraceThread} query
  */
 export const invalidateGetTraceThread = async (
 	queryClient: QueryClient,
@@ -393,6 +397,8 @@ export const getFlamegraph = (
 	});
 };
 
+export const getGetFlamegraphMutationKey = () => ['getFlamegraph'] as const;
+
 export const getGetFlamegraphMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -400,22 +406,16 @@ export const getGetFlamegraphMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getFlamegraph>>,
 		TError,
-		{
-			pathParams: GetFlamegraphPathParameters;
-			data?: BodyType<SpantypesPostableFlamegraphDTO>;
-		},
+		GetFlamegraphMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getFlamegraph>>,
 	TError,
-	{
-		pathParams: GetFlamegraphPathParameters;
-		data?: BodyType<SpantypesPostableFlamegraphDTO>;
-	},
+	GetFlamegraphMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['getFlamegraph'];
+	const mutationKey = getGetFlamegraphMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -426,10 +426,7 @@ export const getGetFlamegraphMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getFlamegraph>>,
-		{
-			pathParams: GetFlamegraphPathParameters;
-			data?: BodyType<SpantypesPostableFlamegraphDTO>;
-		}
+		GetFlamegraphMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -446,6 +443,10 @@ export type GetFlamegraphMutationBody =
 	| BodyType<SpantypesPostableFlamegraphDTO>
 	| undefined;
 export type GetFlamegraphMutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetFlamegraphMutationVariables = {
+	pathParams: GetFlamegraphPathParameters;
+	data?: BodyType<SpantypesPostableFlamegraphDTO>;
+};
 
 /**
  * @summary Get flamegraph view for a trace
@@ -457,19 +458,13 @@ export const useGetFlamegraph = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getFlamegraph>>,
 		TError,
-		{
-			pathParams: GetFlamegraphPathParameters;
-			data?: BodyType<SpantypesPostableFlamegraphDTO>;
-		},
+		GetFlamegraphMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getFlamegraph>>,
 	TError,
-	{
-		pathParams: GetFlamegraphPathParameters;
-		data?: BodyType<SpantypesPostableFlamegraphDTO>;
-	},
+	GetFlamegraphMutationVariables,
 	TContext
 > => {
 	return useMutation(getGetFlamegraphMutationOptions(options));
@@ -492,6 +487,8 @@ export const getWaterfallV4 = (
 	});
 };
 
+export const getGetWaterfallV4MutationKey = () => ['getWaterfallV4'] as const;
+
 export const getGetWaterfallV4MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -499,22 +496,16 @@ export const getGetWaterfallV4MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getWaterfallV4>>,
 		TError,
-		{
-			pathParams: GetWaterfallV4PathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		},
+		GetWaterfallV4MutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof getWaterfallV4>>,
 	TError,
-	{
-		pathParams: GetWaterfallV4PathParameters;
-		data?: BodyType<SpantypesPostableWaterfallDTO>;
-	},
+	GetWaterfallV4MutationVariables,
 	TContext
 > => {
-	const mutationKey = ['getWaterfallV4'];
+	const mutationKey = getGetWaterfallV4MutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -525,10 +516,7 @@ export const getGetWaterfallV4MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof getWaterfallV4>>,
-		{
-			pathParams: GetWaterfallV4PathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		}
+		GetWaterfallV4MutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -545,6 +533,10 @@ export type GetWaterfallV4MutationBody =
 	| BodyType<SpantypesPostableWaterfallDTO>
 	| undefined;
 export type GetWaterfallV4MutationError = ErrorType<RenderErrorResponseDTO>;
+export type GetWaterfallV4MutationVariables = {
+	pathParams: GetWaterfallV4PathParameters;
+	data?: BodyType<SpantypesPostableWaterfallDTO>;
+};
 
 /**
  * @summary Get waterfall view for a trace
@@ -556,19 +548,13 @@ export const useGetWaterfallV4 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof getWaterfallV4>>,
 		TError,
-		{
-			pathParams: GetWaterfallV4PathParameters;
-			data?: BodyType<SpantypesPostableWaterfallDTO>;
-		},
+		GetWaterfallV4MutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof getWaterfallV4>>,
 	TError,
-	{
-		pathParams: GetWaterfallV4PathParameters;
-		data?: BodyType<SpantypesPostableWaterfallDTO>;
-	},
+	GetWaterfallV4MutationVariables,
 	TContext
 > => {
 	return useMutation(getGetWaterfallV4MutationOptions(options));

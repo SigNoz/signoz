@@ -1,10 +1,8 @@
 /** Derives an alert-condition seed from a panel's Reduce To + Thresholds (issue #5291). */
 
-import type {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesPanelDTO,
-	DashboardtypesPanelPluginDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginDTO';
 import { normalizeOperator } from 'container/CreateAlert/context/conditionNormalizers';
 import type {
 	AlertThresholdOperator,

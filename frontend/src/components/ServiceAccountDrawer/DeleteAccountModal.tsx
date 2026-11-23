@@ -11,10 +11,8 @@ import {
 	invalidateListServiceAccounts,
 	useDeleteServiceAccount,
 } from 'api/generated/services/serviceaccount';
-import type {
-	RenderErrorResponseDTO,
-	ServiceaccounttypesServiceAccountDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas/serviceaccounttypesServiceAccountDTO';
 import type { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';

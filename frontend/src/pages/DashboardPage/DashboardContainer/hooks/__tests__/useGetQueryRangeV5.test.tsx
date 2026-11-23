@@ -5,10 +5,8 @@ import type { RenderHookResult } from '@testing-library/react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { AxiosError, AxiosHeaders } from 'axios';
 import { queryRangeV5 } from 'api/generated/services/querier';
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 
 import { useGetQueryRangeV5 } from '../useGetQueryRangeV5';
 

@@ -9,11 +9,9 @@ import {
 	useQueryState,
 	useQueryStates,
 } from 'nuqs';
-import {
-	InframonitoringtypesContainerStatusDTO,
-	InframonitoringtypesNodeConditionDTO,
-	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesContainerStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerStatusDTO';
+import { InframonitoringtypesNodeConditionDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesNodeConditionDTO';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesPodStatusDTO';
 import { useCallback, useMemo } from 'react';
 import type {
 	IBuilderQuery,

@@ -1,4 +1,4 @@
-import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesTimeSeriesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTimeSeriesPanelSpecDTO';
 import {
 	buildBaseConfig,
 	minStepInterval,

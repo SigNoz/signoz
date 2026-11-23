@@ -1,25 +1,23 @@
-import {
-	DashboardtypesPanelKindDTO,
-	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListPluginKind,
-	Querybuildertypesv5ColumnTypeDTO,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
-	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TraceSignal,
-	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
-	Querybuildertypesv5QueryEnvelopeFormulaDTOType,
-	Querybuildertypesv5RequestTypeDTO,
-	type DashboardtypesTopListAppearanceDTO,
-	type DashboardtypesTopListPanelSpecDTO,
-	type Querybuildertypesv5ColumnDescriptorDTO,
-	type Querybuildertypesv5MetricAggregationDTO,
-	type Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO as TraceQuerySpec,
-	type Querybuildertypesv5QueryEnvelopeBuilderDTO,
-	type Querybuildertypesv5QueryEnvelopeDTO,
-	type Querybuildertypesv5QueryEnvelopeFormulaDTO,
-	type Querybuildertypesv5QueryRangeRequestDTO,
-	type Querybuildertypesv5ScalarDataDTO,
-	type Querybuildertypesv5TraceAggregationDTO,
-	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesPanelKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelKindDTO';
+import { DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListPluginKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind';
+import { Querybuildertypesv5ColumnTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnTypeDTO';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal';
+import { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TraceSignal } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal';
+import { Querybuildertypesv5QueryEnvelopeBuilderDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTOType';
+import { Querybuildertypesv5QueryEnvelopeFormulaDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTOType';
+import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
+import type { DashboardtypesTopListAppearanceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTopListAppearanceDTO';
+import type { DashboardtypesTopListPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesTopListPanelSpecDTO';
+import type { Querybuildertypesv5ColumnDescriptorDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnDescriptorDTO';
+import type { Querybuildertypesv5MetricAggregationDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5MetricAggregationDTO';
+import type { Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO as TraceQuerySpec } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO';
+import type { Querybuildertypesv5QueryEnvelopeBuilderDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeBuilderDTO';
+import type { Querybuildertypesv5QueryEnvelopeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeDTO';
+import type { Querybuildertypesv5QueryEnvelopeFormulaDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeFormulaDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5ScalarDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ScalarDataDTO';
+import type { Querybuildertypesv5TraceAggregationDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5TraceAggregationDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 
 import type { PanelOfKind } from '../../../types/rendererProps';
 

@@ -1,4 +1,4 @@
-import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapYScaleDTO as HeatmapYScale } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapYScaleDTO';
 import {
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	getRampBottom,

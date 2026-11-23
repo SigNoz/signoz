@@ -1,8 +1,6 @@
 import type { ComponentProps } from 'react';
-import {
-	DashboardtypesHeatmapColorModeDTO,
-	DashboardtypesHeatmapPaletteDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesHeatmapColorModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapColorModeDTO';
+import { DashboardtypesHeatmapPaletteDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesHeatmapPaletteDTO';
 import type { GeoMapPlacement } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/GeoMapPanel/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 

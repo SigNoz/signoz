@@ -1,10 +1,8 @@
-import {
-	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
-	LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO,
-	type LlmpricingruletypesLLMPricingCacheCostsDTO,
-	type LlmpricingruletypesLLMRulePricingDTO,
-	type LlmpricingruletypesUpdatableLLMPricingRuleDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleCacheModeDTO';
+import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleUnitDTO';
+import type { LlmpricingruletypesLLMPricingCacheCostsDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingCacheCostsDTO';
+import type { LlmpricingruletypesLLMRulePricingDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMRulePricingDTO';
+import type { LlmpricingruletypesUpdatableLLMPricingRuleDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesUpdatableLLMPricingRuleDTO';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

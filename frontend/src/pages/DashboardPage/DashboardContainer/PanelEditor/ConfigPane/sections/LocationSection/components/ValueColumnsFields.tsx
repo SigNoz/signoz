@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
 import {
 	SECTION_METADATA,
 	SectionKind,

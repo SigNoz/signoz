@@ -1,10 +1,8 @@
-import {
-	DashboardtypesGeoMapLayerDTO,
-	DashboardtypesGeoMapLocationModeDTO,
-	DashboardtypesGeoMapViewDTO,
-	type DashboardtypesGeoMapLocationDTO,
-	type DashboardtypesGeoMapSettingsDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
+import type { DashboardtypesGeoMapSettingsDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapSettingsDTO';
 import type { PanelTableColumn } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
 import {

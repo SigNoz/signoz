@@ -1,7 +1,5 @@
-import {
-	DashboardtypesGeoMapLayerDTO,
-	DashboardtypesGeoMapViewDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesGeoMapLayerDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLayerDTO';
+import { DashboardtypesGeoMapViewDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapViewDTO';
 import { SUBDIVISION_COUNTRY_CODES } from 'lib/visualization/charts/GeoMap/geo/subdivisionCountries';
 import { ColorRampScale } from 'lib/visualization/colorRamp/types';
 import type { PanelTableColumn } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

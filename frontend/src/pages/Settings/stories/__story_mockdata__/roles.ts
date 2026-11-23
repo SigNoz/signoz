@@ -3,18 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type {
-	AuthtypesGettableRoleDTO,
-	AuthtypesRoleDTO,
-	AuthtypesTransactionGroupDTO,
-	GetRole200,
-	ListRoles200,
-} from 'api/generated/services/sigNoz.schemas';
-import {
-	AuthtypesRelationDTO,
-	CoretypesKindDTO,
-	CoretypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesGettableRoleDTO';
+import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas/authtypesRoleDTO';
+import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas/authtypesTransactionGroupDTO';
+import type { GetRole200 } from 'api/generated/services/sigNoz.schemas/getRole200';
+import type { ListRoles200 } from 'api/generated/services/sigNoz.schemas/listRoles200';
+import { AuthtypesRelationDTO } from 'api/generated/services/sigNoz.schemas/authtypesRelationDTO';
+import { CoretypesKindDTO } from 'api/generated/services/sigNoz.schemas/coretypesKindDTO';
+import { CoretypesTypeDTO } from 'api/generated/services/sigNoz.schemas/coretypesTypeDTO';
 import { RoleType } from 'types/roles';
 
 export const CUSTOM_ROLE_MAX = 8;

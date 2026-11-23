@@ -1,9 +1,7 @@
-import {
-	type DashboardtypesGeoMapLocationDTO,
-	DashboardtypesGeoMapLocationModeDTO,
-	type DashboardtypesGeoMapPanelSpecDTO,
-	type DashboardtypesPanelSpecDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapLocationDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationDTO';
+import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapLocationModeDTO';
+import type { DashboardtypesGeoMapPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesGeoMapPanelSpecDTO';
+import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelSpecDTO';
 
 import { getQueryColumnKeys } from '../../../utils/getQueryColumnKeys';
 

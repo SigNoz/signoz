@@ -3,7 +3,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { Plus } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import type { AlertmanagertypesChannelSlackActionDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesChannelSlackActionDTO } from 'api/generated/services/sigNoz.schemas/alertmanagertypesChannelSlackActionDTO';
 
 import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormField from '../FormField';

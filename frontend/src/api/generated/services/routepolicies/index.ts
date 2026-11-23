@@ -17,17 +17,23 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	AlertmanagertypesPostableRoutePolicyDTO,
-	CreateRoutePolicy201,
-	DeleteRoutePolicyByIDPathParameters,
-	GetAllRoutePolicies200,
-	GetRoutePolicyByID200,
-	GetRoutePolicyByIDPathParameters,
-	RenderErrorResponseDTO,
-	UpdateRoutePolicy200,
-	UpdateRoutePolicyPathParameters,
-} from '../sigNoz.schemas';
+import type { AlertmanagertypesPostableRoutePolicyDTO } from '../sigNoz.schemas/alertmanagertypesPostableRoutePolicyDTO';
+
+import type { CreateRoutePolicy201 } from '../sigNoz.schemas/createRoutePolicy201';
+
+import type { DeleteRoutePolicyByIDPathParameters } from '../sigNoz.schemas/deleteRoutePolicyByIDPathParameters';
+
+import type { GetAllRoutePolicies200 } from '../sigNoz.schemas/getAllRoutePolicies200';
+
+import type { GetRoutePolicyByID200 } from '../sigNoz.schemas/getRoutePolicyByID200';
+
+import type { GetRoutePolicyByIDPathParameters } from '../sigNoz.schemas/getRoutePolicyByIDPathParameters';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { UpdateRoutePolicy200 } from '../sigNoz.schemas/updateRoutePolicy200';
+
+import type { UpdateRoutePolicyPathParameters } from '../sigNoz.schemas/updateRoutePolicyPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -122,7 +128,7 @@ export function useGetAllRoutePolicies<
 }
 
 /**
- * @summary List route policies
+ * @summary Invalidates the {@link useGetAllRoutePolicies} query
  */
 export const invalidateGetAllRoutePolicies = async (
 	queryClient: QueryClient,
@@ -153,6 +159,9 @@ export const createRoutePolicy = (
 	});
 };
 
+export const getCreateRoutePolicyMutationKey = () =>
+	['createRoutePolicy'] as const;
+
 export const getCreateRoutePolicyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -160,16 +169,16 @@ export const getCreateRoutePolicyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRoutePolicy>>,
 		TError,
-		{ data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO> },
+		CreateRoutePolicyMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createRoutePolicy>>,
 	TError,
-	{ data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO> },
+	CreateRoutePolicyMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createRoutePolicy'];
+	const mutationKey = getCreateRoutePolicyMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -180,7 +189,7 @@ export const getCreateRoutePolicyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createRoutePolicy>>,
-		{ data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO> }
+		CreateRoutePolicyMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -197,6 +206,9 @@ export type CreateRoutePolicyMutationBody =
 	| BodyType<AlertmanagertypesPostableRoutePolicyDTO>
 	| undefined;
 export type CreateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateRoutePolicyMutationVariables = {
+	data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
+};
 
 /**
  * @summary Create route policy
@@ -208,13 +220,13 @@ export const useCreateRoutePolicy = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRoutePolicy>>,
 		TError,
-		{ data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO> },
+		CreateRoutePolicyMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createRoutePolicy>>,
 	TError,
-	{ data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO> },
+	CreateRoutePolicyMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateRoutePolicyMutationOptions(options));
@@ -234,6 +246,9 @@ export const deleteRoutePolicyByID = (
 	});
 };
 
+export const getDeleteRoutePolicyByIDMutationKey = () =>
+	['deleteRoutePolicyByID'] as const;
+
 export const getDeleteRoutePolicyByIDMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -241,16 +256,16 @@ export const getDeleteRoutePolicyByIDMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
 		TError,
-		{ pathParams: DeleteRoutePolicyByIDPathParameters },
+		DeleteRoutePolicyByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
 	TError,
-	{ pathParams: DeleteRoutePolicyByIDPathParameters },
+	DeleteRoutePolicyByIDMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteRoutePolicyByID'];
+	const mutationKey = getDeleteRoutePolicyByIDMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -261,7 +276,7 @@ export const getDeleteRoutePolicyByIDMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
-		{ pathParams: DeleteRoutePolicyByIDPathParameters }
+		DeleteRoutePolicyByIDMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -277,6 +292,9 @@ export type DeleteRoutePolicyByIDMutationResult = NonNullable<
 
 export type DeleteRoutePolicyByIDMutationError =
 	ErrorType<RenderErrorResponseDTO>;
+export type DeleteRoutePolicyByIDMutationVariables = {
+	pathParams: DeleteRoutePolicyByIDPathParameters;
+};
 
 /**
  * @summary Delete route policy
@@ -288,13 +306,13 @@ export const useDeleteRoutePolicyByID = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
 		TError,
-		{ pathParams: DeleteRoutePolicyByIDPathParameters },
+		DeleteRoutePolicyByIDMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteRoutePolicyByID>>,
 	TError,
-	{ pathParams: DeleteRoutePolicyByIDPathParameters },
+	DeleteRoutePolicyByIDMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteRoutePolicyByIDMutationOptions(options));
@@ -386,7 +404,7 @@ export function useGetRoutePolicyByID<
 }
 
 /**
- * @summary Get route policy by ID
+ * @summary Invalidates the {@link useGetRoutePolicyByID} query
  */
 export const invalidateGetRoutePolicyByID = async (
 	queryClient: QueryClient,
@@ -419,6 +437,9 @@ export const updateRoutePolicy = (
 	});
 };
 
+export const getUpdateRoutePolicyMutationKey = () =>
+	['updateRoutePolicy'] as const;
+
 export const getUpdateRoutePolicyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -426,22 +447,16 @@ export const getUpdateRoutePolicyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRoutePolicy>>,
 		TError,
-		{
-			pathParams: UpdateRoutePolicyPathParameters;
-			data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
-		},
+		UpdateRoutePolicyMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateRoutePolicy>>,
 	TError,
-	{
-		pathParams: UpdateRoutePolicyPathParameters;
-		data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
-	},
+	UpdateRoutePolicyMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateRoutePolicy'];
+	const mutationKey = getUpdateRoutePolicyMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -452,10 +467,7 @@ export const getUpdateRoutePolicyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateRoutePolicy>>,
-		{
-			pathParams: UpdateRoutePolicyPathParameters;
-			data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
-		}
+		UpdateRoutePolicyMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -472,6 +484,10 @@ export type UpdateRoutePolicyMutationBody =
 	| BodyType<AlertmanagertypesPostableRoutePolicyDTO>
 	| undefined;
 export type UpdateRoutePolicyMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateRoutePolicyMutationVariables = {
+	pathParams: UpdateRoutePolicyPathParameters;
+	data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
+};
 
 /**
  * @summary Update route policy
@@ -483,19 +499,13 @@ export const useUpdateRoutePolicy = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateRoutePolicy>>,
 		TError,
-		{
-			pathParams: UpdateRoutePolicyPathParameters;
-			data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
-		},
+		UpdateRoutePolicyMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateRoutePolicy>>,
 	TError,
-	{
-		pathParams: UpdateRoutePolicyPathParameters;
-		data?: BodyType<AlertmanagertypesPostableRoutePolicyDTO>;
-	},
+	UpdateRoutePolicyMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateRoutePolicyMutationOptions(options));

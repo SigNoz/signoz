@@ -15,7 +15,7 @@ import {
 	invalidateGetChecks,
 	useGetChecks,
 } from 'api/generated/services/inframonitoring';
-import type { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesCheckTypeDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesCheckTypeDTO';
 import type { InfraMonitoringEntity } from '../../../constants';
 
 import styles from './K8sInstrumentationChecksCallout.module.scss';

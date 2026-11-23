@@ -3,7 +3,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render } from 'tests/test-utils';
-import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import { QuickfiltertypesSourceDTO } from 'api/generated/services/sigNoz.schemas/quickfiltertypesSourceDTO';
 
 import OtherFilters from '../OtherFilters';
 

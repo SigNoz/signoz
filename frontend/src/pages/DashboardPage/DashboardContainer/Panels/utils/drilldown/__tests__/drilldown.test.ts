@@ -1,4 +1,4 @@
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import type {
 	PanelSeries,

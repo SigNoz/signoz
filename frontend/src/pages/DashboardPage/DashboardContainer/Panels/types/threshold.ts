@@ -4,10 +4,8 @@
  * V2 panels never reach into the V1 `container/NewWidget` `ThresholdProps` shape.
  */
 
-import type {
-	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesThresholdFormatDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import type { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
 
 /**
  * Comparison-shaped fields shared by every threshold DTO that recolors on an

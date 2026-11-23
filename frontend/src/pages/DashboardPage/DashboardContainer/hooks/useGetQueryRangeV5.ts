@@ -2,10 +2,8 @@ import type { UseQueryResult } from 'react-query';
 import { useQuery, useQueryClient } from 'react-query';
 import { isAxiosError } from 'axios';
 import { queryRangeV5 } from 'api/generated/services/querier';
-import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
-	QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 
 export interface UseGetQueryRangeV5Args {

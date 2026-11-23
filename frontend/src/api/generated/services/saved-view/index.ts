@@ -17,18 +17,25 @@ import type {
 	UseQueryResult,
 } from 'react-query';
 
-import type {
-	CreateSavedView201,
-	DeleteSavedViewPathParameters,
-	GetSavedView200,
-	GetSavedViewPathParameters,
-	ListSavedViews200,
-	ListSavedViewsParams,
-	RenderErrorResponseDTO,
-	SavedviewtypesPostableSavedViewDTO,
-	SavedviewtypesUpdatableSavedViewDTO,
-	UpdateSavedViewPathParameters,
-} from '../sigNoz.schemas';
+import type { CreateSavedView201 } from '../sigNoz.schemas/createSavedView201';
+
+import type { DeleteSavedViewPathParameters } from '../sigNoz.schemas/deleteSavedViewPathParameters';
+
+import type { GetSavedView200 } from '../sigNoz.schemas/getSavedView200';
+
+import type { GetSavedViewPathParameters } from '../sigNoz.schemas/getSavedViewPathParameters';
+
+import type { ListSavedViews200 } from '../sigNoz.schemas/listSavedViews200';
+
+import type { ListSavedViewsParams } from '../sigNoz.schemas/listSavedViewsParams';
+
+import type { RenderErrorResponseDTO } from '../sigNoz.schemas/renderErrorResponseDTO';
+
+import type { SavedviewtypesPostableSavedViewDTO } from '../sigNoz.schemas/savedviewtypesPostableSavedViewDTO';
+
+import type { SavedviewtypesUpdatableSavedViewDTO } from '../sigNoz.schemas/savedviewtypesUpdatableSavedViewDTO';
+
+import type { UpdateSavedViewPathParameters } from '../sigNoz.schemas/updateSavedViewPathParameters';
 
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
@@ -133,7 +140,7 @@ export function useListSavedViews<
 }
 
 /**
- * @summary List saved views
+ * @summary Invalidates the {@link useListSavedViews} query
  */
 export const invalidateListSavedViews = async (
 	queryClient: QueryClient,
@@ -165,6 +172,8 @@ export const createSavedView = (
 	});
 };
 
+export const getCreateSavedViewMutationKey = () => ['createSavedView'] as const;
+
 export const getCreateSavedViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -172,16 +181,16 @@ export const getCreateSavedViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSavedView>>,
 		TError,
-		{ data?: BodyType<SavedviewtypesPostableSavedViewDTO> },
+		CreateSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createSavedView>>,
 	TError,
-	{ data?: BodyType<SavedviewtypesPostableSavedViewDTO> },
+	CreateSavedViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['createSavedView'];
+	const mutationKey = getCreateSavedViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -192,7 +201,7 @@ export const getCreateSavedViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createSavedView>>,
-		{ data?: BodyType<SavedviewtypesPostableSavedViewDTO> }
+		CreateSavedViewMutationVariables
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -209,6 +218,9 @@ export type CreateSavedViewMutationBody =
 	| BodyType<SavedviewtypesPostableSavedViewDTO>
 	| undefined;
 export type CreateSavedViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateSavedViewMutationVariables = {
+	data?: BodyType<SavedviewtypesPostableSavedViewDTO>;
+};
 
 /**
  * @summary Create saved view
@@ -220,13 +232,13 @@ export const useCreateSavedView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createSavedView>>,
 		TError,
-		{ data?: BodyType<SavedviewtypesPostableSavedViewDTO> },
+		CreateSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createSavedView>>,
 	TError,
-	{ data?: BodyType<SavedviewtypesPostableSavedViewDTO> },
+	CreateSavedViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getCreateSavedViewMutationOptions(options));
@@ -246,6 +258,8 @@ export const deleteSavedView = (
 	});
 };
 
+export const getDeleteSavedViewMutationKey = () => ['deleteSavedView'] as const;
+
 export const getDeleteSavedViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -253,16 +267,16 @@ export const getDeleteSavedViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteSavedView>>,
 		TError,
-		{ pathParams: DeleteSavedViewPathParameters },
+		DeleteSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteSavedView>>,
 	TError,
-	{ pathParams: DeleteSavedViewPathParameters },
+	DeleteSavedViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['deleteSavedView'];
+	const mutationKey = getDeleteSavedViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -273,7 +287,7 @@ export const getDeleteSavedViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteSavedView>>,
-		{ pathParams: DeleteSavedViewPathParameters }
+		DeleteSavedViewMutationVariables
 	> = (props) => {
 		const { pathParams } = props ?? {};
 
@@ -288,6 +302,9 @@ export type DeleteSavedViewMutationResult = NonNullable<
 >;
 
 export type DeleteSavedViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteSavedViewMutationVariables = {
+	pathParams: DeleteSavedViewPathParameters;
+};
 
 /**
  * @summary Delete saved view
@@ -299,13 +316,13 @@ export const useDeleteSavedView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteSavedView>>,
 		TError,
-		{ pathParams: DeleteSavedViewPathParameters },
+		DeleteSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteSavedView>>,
 	TError,
-	{ pathParams: DeleteSavedViewPathParameters },
+	DeleteSavedViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getDeleteSavedViewMutationOptions(options));
@@ -394,7 +411,7 @@ export function useGetSavedView<
 }
 
 /**
- * @summary Get saved view
+ * @summary Invalidates the {@link useGetSavedView} query
  */
 export const invalidateGetSavedView = async (
 	queryClient: QueryClient,
@@ -427,6 +444,8 @@ export const updateSavedView = (
 	});
 };
 
+export const getUpdateSavedViewMutationKey = () => ['updateSavedView'] as const;
+
 export const getUpdateSavedViewMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
 	TContext = unknown,
@@ -434,22 +453,16 @@ export const getUpdateSavedViewMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateSavedView>>,
 		TError,
-		{
-			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
-		},
+		UpdateSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateSavedView>>,
 	TError,
-	{
-		pathParams: UpdateSavedViewPathParameters;
-		data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
-	},
+	UpdateSavedViewMutationVariables,
 	TContext
 > => {
-	const mutationKey = ['updateSavedView'];
+	const mutationKey = getUpdateSavedViewMutationKey();
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
 			'mutationKey' in options.mutation &&
@@ -460,10 +473,7 @@ export const getUpdateSavedViewMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateSavedView>>,
-		{
-			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
-		}
+		UpdateSavedViewMutationVariables
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -480,6 +490,10 @@ export type UpdateSavedViewMutationBody =
 	| BodyType<SavedviewtypesUpdatableSavedViewDTO>
 	| undefined;
 export type UpdateSavedViewMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateSavedViewMutationVariables = {
+	pathParams: UpdateSavedViewPathParameters;
+	data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
+};
 
 /**
  * @summary Update saved view
@@ -491,19 +505,13 @@ export const useUpdateSavedView = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateSavedView>>,
 		TError,
-		{
-			pathParams: UpdateSavedViewPathParameters;
-			data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
-		},
+		UpdateSavedViewMutationVariables,
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateSavedView>>,
 	TError,
-	{
-		pathParams: UpdateSavedViewPathParameters;
-		data?: BodyType<SavedviewtypesUpdatableSavedViewDTO>;
-	},
+	UpdateSavedViewMutationVariables,
 	TContext
 > => {
 	return useMutation(getUpdateSavedViewMutationOptions(options));

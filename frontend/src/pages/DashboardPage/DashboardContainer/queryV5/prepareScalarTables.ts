@@ -1,9 +1,7 @@
-import type {
-	Querybuildertypesv5ColumnDescriptorDTO,
-	Querybuildertypesv5QueryRangeRequestDTO,
-	Querybuildertypesv5ScalarDataDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5ColumnDescriptorDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ColumnDescriptorDTO';
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryRangeRequestDTO';
+import type { Querybuildertypesv5ScalarDataDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5ScalarDataDTO';
+import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
 
 import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
 

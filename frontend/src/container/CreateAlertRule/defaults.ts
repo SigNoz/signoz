@@ -1,4 +1,4 @@
-import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/ruletypesRuleTypeDTO';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,

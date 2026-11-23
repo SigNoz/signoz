@@ -1,4 +1,4 @@
-import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas';
+import { LlmpricingruletypesLLMPricingRuleUnitDTO as UnitDTO } from 'api/generated/services/sigNoz.schemas/llmpricingruletypesLLMPricingRuleUnitDTO';
 import {
 	TOAST_MODEL_COST_DELETED,
 	TOAST_MODEL_COST_UPDATED,

@@ -1,10 +1,8 @@
-import {
-	DashboardtypesComparisonOperatorDTO,
-	type DashboardtypesNumberPanelSpecDTO,
-	type DashboardtypesPanelDTO,
-	DashboardtypesThresholdFormatDTO,
-	type QueryRangeV5200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesComparisonOperatorDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesComparisonOperatorDTO';
+import type { DashboardtypesNumberPanelSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesNumberPanelSpecDTO';
+import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
+import { DashboardtypesThresholdFormatDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesThresholdFormatDTO';
+import type { QueryRangeV5200 } from 'api/generated/services/sigNoz.schemas/queryRangeV5200';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render } from 'tests/test-utils';

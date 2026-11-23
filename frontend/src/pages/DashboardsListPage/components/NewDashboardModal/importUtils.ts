@@ -1,8 +1,6 @@
-import type {
-	DashboardtypesDashboardSpecDTO,
-	DashboardtypesPostableDashboardV2DTO,
-	TagtypesPostableTagDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesDashboardSpecDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesDashboardSpecDTO';
+import type { DashboardtypesPostableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPostableDashboardV2DTO';
+import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas/tagtypesPostableTagDTO';
 
 // Accept either a complete PostableDashboardV2 (flat shape with `spec` and
 // top-level `name` / `image` / `tags` / `schemaVersion`) or a bare spec — wrap

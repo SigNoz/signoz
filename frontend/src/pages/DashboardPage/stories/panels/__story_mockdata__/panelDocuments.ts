@@ -3,12 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import {
-	DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind as GridKind,
-	DashboardtypesPanelKindDTO as PanelKindDTO,
-	DashboardtypesSourceDTO,
-	type GetDashboardV2200,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind as GridKind } from 'api/generated/services/sigNoz.schemas/dashboardtypesLayoutEnvelopeGithubComPersesSpecGoDashboardGridLayoutSpecDTOKind';
+import { DashboardtypesPanelKindDTO as PanelKindDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelKindDTO';
+import { DashboardtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesSourceDTO';
+import type { GetDashboardV2200 } from 'api/generated/services/sigNoz.schemas/getDashboardV2200';
 
 import { documentStore } from '../../__story_mockdata__/documentStore';
 

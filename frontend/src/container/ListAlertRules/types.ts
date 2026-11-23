@@ -1,8 +1,6 @@
-import type {
-	RuletypesListableRuleDTO,
-	RuletypesListOrderDTO,
-	RuletypesListSortDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListableRuleDTO';
+import type { RuletypesListOrderDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListOrderDTO';
+import type { RuletypesListSortDTO } from 'api/generated/services/sigNoz.schemas/ruletypesListSortDTO';
 import type { SavedListView } from 'components/ListViews/types';
 
 export type AlertRule = RuletypesListableRuleDTO;

@@ -7,11 +7,9 @@ import {
 	updateSavedView,
 	useDeleteSavedView,
 } from 'api/generated/services/saved-view';
-import type {
-	RenderErrorResponseDTO,
-	SavedviewtypesSavedViewDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas/renderErrorResponseDTO';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSavedViewDTO';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { getAbsoluteUrl } from 'utils/basePath';
