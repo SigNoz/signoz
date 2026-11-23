@@ -56,14 +56,14 @@ export const formatDateTime = (
 };
 
 /**
- * With `keepUnknownIds`, an id the options lack stays selected under its own
+ * With `shouldKeepUnknownIds`, an id the options lack stays selected under its own
  * id, so a form opened without the rule list saves the rules it was given. A
  * loaded list lacking an id means the rule is gone, so it is dropped.
  */
 export const getAlertOptionsFromIds = (
 	alertIds: string[],
 	alertOptions: DowntimeAlertOption[],
-	keepUnknownIds = false,
+	shouldKeepUnknownIds = false,
 ): DowntimeAlertOption[] => {
 	const known = alertOptions.filter(
 		(alert) =>
@@ -71,7 +71,7 @@ export const getAlertOptionsFromIds = (
 			alert.value &&
 			alertIds?.includes(alert.value as string),
 	);
-	if (!keepUnknownIds) {
+	if (!shouldKeepUnknownIds) {
 		return known;
 	}
 
