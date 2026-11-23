@@ -76,14 +76,21 @@ function LogSelectedField({
 	fontSize,
 }: LogSelectedFieldProps): JSX.Element {
 	const fieldKeyText = (
-		<Typography.Text>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			<span
 				style={{ color: blue[4] }}
 				className={cx('selected-log-field-key', fontSize)}
 			>
 				{fieldKey}
 			</span>
-		</Typography.Text>
+		</Typography>
 	);
 
 	return (
@@ -100,12 +107,22 @@ function LogSelectedField({
 			) : (
 				fieldKeyText
 			)}
-			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
-				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
-				<span className={cx('selected-log-value', fontSize)}>
-					{coerceToString(fieldValue) || "''"}
-				</span>
-			</Typography.Text>
+			<div className={cx('selected-log-kv', fontSize)}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="p"
+					textOverflow="ellipsis"
+					maxLines={1}
+				>
+					<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
+					<span className={cx('selected-log-value', fontSize)}>
+						{coerceToString(fieldValue) || "''"}
+					</span>
+				</Typography>
+			</div>
 		</div>
 	);
 }
@@ -204,7 +221,7 @@ function ListLogView({
 						severityText={logData.severity_text}
 						severityNumber={logData.severity_number}
 					/>
-					<div>
+					<div className="log-line-content">
 						<LogContainer fontSize={fontSize}>
 							{updatedSelecedFields.some((field) => field.name === 'body') && (
 								<LogGeneralField

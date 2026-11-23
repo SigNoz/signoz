@@ -3,14 +3,15 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-
 import {
-	type QueryRangeV3Body,
-	queryRangeV3TimeSeriesResponse,
-	v3Series,
-} from '@/storybook/msw/__story_mockdata__/queryRange';
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5RequestTypeDTO,
+	type Querybuildertypesv5BuilderQuerySpecDTO,
+	type Querybuildertypesv5QueryRangeRequestDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
+
+import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 export const TASK_HEALTH_STATES = ['healthy', 'degraded', 'failing'] as const;
 
@@ -23,27 +24,30 @@ const FAILURE_SHARE: Record<TaskHealth, { failed: number; retried: number }> = {
 	failing: { failed: 0.21, retried: 0.27 },
 };
 
-const CELERY_STATE_KEY = 'celery.state';
+const builderSpecs = (
+	body: Querybuildertypesv5QueryRangeRequestDTO,
+): Querybuildertypesv5BuilderQuerySpecDTO[] =>
+	(body.compositeQuery?.queries ?? []).flatMap((envelope) =>
+		envelope.type ===
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query && envelope.spec
+			? [envelope.spec]
+			: [],
+	);
 
 /**
  * The four counters above the state graph are four `VALUE` requests that differ
  * only by their `celery.state` filter, so the split has to be read off the
  * request rather than answered the same way four times.
  */
-const filteredState = (body: QueryRangePayload): string | undefined => {
-	const queries = Object.values(body.compositeQuery.builderQueries ?? {});
-
-	for (const query of queries) {
-		const items = (query as IBuilderQuery).filters?.items ?? [];
-		const stateFilter = items.find((item) => item.key?.key === CELERY_STATE_KEY);
-
-		if (stateFilter) {
-			return String(stateFilter.value);
-		}
-	}
-
-	return undefined;
-};
+const filteredState = (
+	specs: Querybuildertypesv5BuilderQuerySpecDTO[],
+): string | undefined =>
+	specs
+		.map(
+			(spec) =>
+				/celery\.state\s*=\s*'([^']+)'/.exec(spec.filter?.expression ?? '')?.[1],
+		)
+		.find(Boolean);
 
 const countFor = (
 	state: string | undefined,
@@ -69,42 +73,40 @@ const countFor = (
 
 /**
  * Answers a state counter, or `null` when the request is one of the page's other
- * `VALUE` panels and the generic builder should take it.
+ * requests and the generic builder should take it.
  */
 export const celeryStateCountResponse = (
-	body: QueryRangePayload,
+	body: Querybuildertypesv5QueryRangeRequestDTO,
 	tasks: number,
 	health: TaskHealth,
-): QueryRangeV3Body | null => {
-	const queries = Object.values(body.compositeQuery.builderQueries ?? {});
-	const aggregatesSpans = queries.some(
-		(query) => (query as IBuilderQuery).aggregateAttribute?.key === 'span_id',
+): MetricRangePayloadV5 | null => {
+	const specs = builderSpecs(body);
+	const countsSpans = specs.some((spec) =>
+		(spec.aggregations ?? []).some(
+			(aggregation) =>
+				'expression' in aggregation && aggregation.expression?.includes('span_id'),
+		),
 	);
 
-	if (!aggregatesSpans) {
+	if (
+		body.requestType !== Querybuildertypesv5RequestTypeDTO.scalar ||
+		!countsSpans
+	) {
 		return null;
 	}
 
-	return queryRangeV3TimeSeriesResponse([
-		{
-			queryName: 'A',
-			series: [
-				v3Series({}, [
-					{
-						timestamp: body.end,
-						value: String(countFor(filteredState(body), tasks, health)),
-					},
-				]),
-			],
-		},
-	]);
+	return queryRangeV5ScalarResponse(
+		countFor(filteredState(specs), tasks, health),
+	);
 };
 
 /**
  * The flower graphs and the online-worker card read the same set of workers, so
  * a request grouped by `worker` has to draw as many lines as the card counts.
  */
-export const groupsByWorker = (body: QueryRangePayload): boolean =>
-	Object.values(body.compositeQuery.builderQueries ?? {}).some((query) =>
-		((query as IBuilderQuery).groupBy ?? []).some((key) => key.key === 'worker'),
+export const groupsByWorker = (
+	body: Querybuildertypesv5QueryRangeRequestDTO,
+): boolean =>
+	builderSpecs(body).some((spec) =>
+		(spec.groupBy ?? []).some((key) => key.name === 'worker'),
 	);

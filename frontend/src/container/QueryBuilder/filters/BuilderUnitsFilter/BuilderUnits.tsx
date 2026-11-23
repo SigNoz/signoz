@@ -40,12 +40,21 @@ function BuilderUnitsFilter({
 			className={cx('builder-units-filter', className)}
 			data-testid="builder-units-filter"
 		>
-			<Typography.Text
+			<span
 				className={cx('builder-units-filter-label', labelClassName)}
 				data-testid="builder-units-filter-label"
 			>
-				Y-axis unit
-			</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Y-axis unit
+				</Typography>
+			</span>
 			<Select
 				getPopupContainer={getPopupContainer}
 				style={selectStyles}

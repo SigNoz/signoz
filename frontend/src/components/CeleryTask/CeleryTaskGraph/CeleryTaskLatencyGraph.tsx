@@ -9,6 +9,7 @@ import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
@@ -28,7 +29,10 @@ import {
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
 import { useNavigateToExplorer } from '../useNavigateToExplorer';
-import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
+import {
+	celeryTaskLatencyWidgetData,
+	getClickedSeries,
+} from './CeleryTaskGraphUtils';
 
 import './CeleryTaskGraph.style.scss';
 
@@ -129,13 +133,12 @@ function CeleryTaskLatencyGraph({
 
 	const onGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] =>
-			(xValue, yValue, mouseX, mouseY, data): Promise<void> => {
-				const [firstDataPoint] = Object.entries(data || {});
-				const [entity, value] = firstDataPoint;
-				setEntityData({
-					entity,
-					value,
-				});
+			(xValue, yValue, mouseX, mouseY, data, queryData): Promise<void> => {
+				const clickedSeries = getClickedSeries(data, queryData);
+				if (!clickedSeries) {
+					return Promise.resolve();
+				}
+				setEntityData(clickedSeries);
 
 				return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
 			},
@@ -199,6 +202,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p99_latency')}
@@ -220,6 +224,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p95_latency')}
@@ -240,6 +245,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p90_latency')}

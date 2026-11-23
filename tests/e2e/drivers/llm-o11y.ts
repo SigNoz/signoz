@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { apiDriver } from './api';
 import { quickFiltersDriver } from './explorers';
+import { inputField } from './input';
 import {
 	allowFor,
 	driver,
@@ -197,16 +198,16 @@ export function llmO11yDriver(page: Page): LlmO11y {
 		mapping: {
 			addGroup: () => page.getByTestId('add-group-row'),
 			groupDrawer: () => page.getByTestId('group-form-drawer'),
-			groupName: () => page.getByTestId('group-form-name'),
+			groupName: () => inputField(page, 'group-form-name'),
 			addGroupAttribute: () => page.getByTestId('group-form-attribute-add'),
-			groupAttribute: (index) => page.getByTestId(`group-form-attribute-${index}`),
+			groupAttribute: (index) => inputField(page, `group-form-attribute-${index}`),
 			saveGroup: () => page.getByTestId('group-form-save'),
 			groupHeader: (name) =>
 				page.locator('[data-testid^="group-expand-"]').filter({ hasText: name }),
 			addMapper: () => page.locator('[data-testid^="add-mapper-"]'),
 			mapperDrawer: () => page.getByTestId('mapper-form-drawer'),
-			mapperTarget: () => page.getByTestId('mapper-form-target'),
-			mapperSource: (index) => page.getByTestId(`mapper-form-source-${index}`),
+			mapperTarget: () => inputField(page, 'mapper-form-target'),
+			mapperSource: (index) => inputField(page, `mapper-form-source-${index}`),
 			saveMapper: () => page.getByTestId('mapper-form-save'),
 			unsavedChanges: () => page.getByTestId('unsaved-changes'),
 			tab: (name) => page.getByRole('tab', { name }),
@@ -219,11 +220,11 @@ export function llmO11yDriver(page: Page): LlmO11y {
 
 		pricing: {
 			addModelCost: () => page.getByTestId('add-model-cost-btn'),
-			modelIdInput: () => page.getByTestId('drawer-model-id-input'),
-			patternInput: () => page.getByTestId('drawer-pattern-input'),
+			modelIdInput: () => inputField(page, 'drawer-model-id-input'),
+			patternInput: () => inputField(page, 'drawer-pattern-input'),
 			addPattern: () => page.getByTestId('drawer-pattern-add-btn'),
-			inputCost: () => page.getByTestId('drawer-input-cost'),
-			outputCost: () => page.getByTestId('drawer-output-cost'),
+			inputCost: () => inputField(page, 'drawer-input-cost'),
+			outputCost: () => inputField(page, 'drawer-output-cost'),
 			save: () => page.getByTestId('drawer-save-btn'),
 			table: () => page.getByTestId('model-costs-table'),
 			modelName: (modelName) =>

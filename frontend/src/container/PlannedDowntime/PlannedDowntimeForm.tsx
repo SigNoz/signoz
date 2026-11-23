@@ -28,10 +28,7 @@ import type {
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import {
-	ModalButtonWrapper,
-	ModalTitle,
-} from 'container/PipelinePage/PipelineListsView/styles';
+import { ModalButtonWrapper } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
@@ -344,9 +341,17 @@ export function PlannedDowntimeForm(
 	return (
 		<Modal
 			title={
-				<ModalTitle level={4}>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h4"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					{isEditMode ? 'Edit planned downtime' : 'New planned downtime'}
-				</ModalTitle>
+				</Typography>
 			}
 			centered
 			open={isOpen}
@@ -462,7 +467,16 @@ export function PlannedDowntimeForm(
 					<div className="scheduleTimeInfoText">{endTimeText}</div>
 				)}
 				<div>
-					<Typography>Silence Alerts</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Silence Alerts
+					</Typography>
 					<Form.Item
 						name="alertRuleScope"
 						initialValue="specific"

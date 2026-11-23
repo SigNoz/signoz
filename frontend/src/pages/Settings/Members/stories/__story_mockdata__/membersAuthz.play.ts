@@ -25,7 +25,9 @@ export const expectListDenied = async ({
 		undefined,
 		untilLoaded,
 	);
-	await expectDenied(await findInCanvas(canvasElement, 'members-search-input'));
+	await expectDenied(
+		await findInCanvas(canvasElement, 'members-search-input-field'),
+	);
 	await expectDenied(
 		await findInCanvas(canvasElement, 'members-filter-trigger'),
 	);
@@ -91,7 +93,7 @@ export const expectPasswordListDenied = async ({
 		untilLoaded,
 	);
 	await expectDenied(button);
-	expect(button).toHaveTextContent('Invite Link Unavailable');
+	await expect(button).toHaveTextContent('Invite Link Unavailable');
 };
 
 export const expectInviteOpen = async ({

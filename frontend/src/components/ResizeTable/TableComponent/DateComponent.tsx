@@ -6,7 +6,19 @@ function DateComponent(
 	CreatedOrUpdateTime: string | number | Date,
 ): JSX.Element {
 	if (CreatedOrUpdateTime === null) {
-		return <Typography> - </Typography>;
+		return (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{' '}
+				-{' '}
+			</Typography>
+		);
 	}
 
 	return <Time CreatedOrUpdateTime={CreatedOrUpdateTime} />;

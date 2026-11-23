@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	invalidateListDashboardsForUserV2,
 	useMigrateDashboardV2,
@@ -17,8 +17,8 @@ jest.mock('api/generated/services/dashboard', () => ({
 	invalidateListDashboardsForUserV2: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const queryClient = { invalidateQueries: jest.fn() };
@@ -90,7 +90,12 @@ describe('useRetryMigration', () => {
 		setup();
 		captured.onError(envelopeError);
 
-		expect(toast.error).toHaveBeenCalledWith('not in v6 schema');
+		expect(toast.danger).toHaveBeenCalledWith(
+			'not in v6 schema',
+			expect.objectContaining({
+				action: expect.objectContaining({ label: 'Dismiss' }),
+			}),
+		);
 		expect(onMigrated).not.toHaveBeenCalled();
 	});
 
@@ -98,8 +103,11 @@ describe('useRetryMigration', () => {
 		setup();
 		captured.onError(bodylessError);
 
-		expect(toast.error).toHaveBeenCalledWith(
+		expect(toast.danger).toHaveBeenCalledWith(
 			'Could not migrate this dashboard. Please contact support.',
+			expect.objectContaining({
+				action: expect.objectContaining({ label: 'Dismiss' }),
+			}),
 		);
 	});
 

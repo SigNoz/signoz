@@ -1,4 +1,4 @@
-import { CircleAlert, Plus, Trash2 } from '@signozhq/icons';
+import { CircleAlert, Plus, SolidCheckCircle2, Trash2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
@@ -68,20 +68,30 @@ function InviteMembers({
 			<div className={styles.table}>
 				{showHeader && (
 					<div className={styles.header}>
-						<Typography.Text
-							size="base"
-							weight="semibold"
-							className={styles.headerCellEmail}
-						>
-							Email address
-						</Typography.Text>
-						<Typography.Text
-							size="base"
-							weight="semibold"
-							className={styles.headerCellRole}
-						>
-							Roles
-						</Typography.Text>
+						<span className={styles.headerCellEmail}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Email address
+							</Typography>
+						</span>
+						<span className={styles.headerCellRole}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Roles
+							</Typography>
+						</span>
 						<div className={styles.headerCellAction} />
 					</div>
 				)}
@@ -97,12 +107,19 @@ function InviteMembers({
 									onChange={(e): void => updateEmail(row.id, e.target.value)}
 									name={`invite-email-${row.id}`}
 									autoComplete="email"
-									data-testid={`invite-email-${row.id}`}
+									testId={`invite-email-${row.id}`}
 								/>
 								{emailValidity[row.id] === false && row.email.trim() !== '' && (
-									<Typography.Text size="small" className={styles.errorText}>
+									<Typography
+										variant="paragraph"
+										size="small"
+										weight="regular"
+										color="danger"
+										as="span"
+										textOverflow="wrap"
+									>
 										Invalid email address
-									</Typography.Text>
+									</Typography>
 								)}
 							</div>
 
@@ -113,6 +130,7 @@ function InviteMembers({
 									onChange={(roleIds): void => updateRole(row.id, roleIds)}
 									placeholder="Select roles"
 									id={`invite-role-${row.id}`}
+									testId={`invite-role-${row.id}`}
 								/>
 							</div>
 
@@ -152,61 +170,90 @@ function InviteMembers({
 			</div>
 
 			{hasValidationErrors && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					icon={<CircleAlert size={12} />}
-					className={styles.callout}
-					data-testid="invite-validation-error"
-				>
-					{getValidationErrorMessage()}
-				</Callout>
+				<div className={styles.callout}>
+					<Callout
+						color="danger"
+						size="sm"
+						icon={<CircleAlert />}
+						testId="invite-validation-error"
+					>
+						{getValidationErrorMessage()}
+					</Callout>
+				</div>
 			)}
 
 			{hasResults && hasFailures && (
-				<Callout
-					type="error"
-					size="small"
-					showIcon
-					icon={<CircleAlert size={12} />}
-					className={styles.callout}
-					data-testid="invite-api-error"
-				>
-					<div className={styles.results}>
-						{hasSuccesses && (
-							<Typography.Text size="small">
-								{successResults.length} invite(s) sent successfully.
-							</Typography.Text>
-						)}
-						<Typography.Text size="small">
-							{failedResults.length} invite(s) failed:
-						</Typography.Text>
-						<ul className={styles.resultsList}>
-							{failedResults.map((result) => (
-								<li key={result.email}>
-									<Typography.Text size="small">
-										{result.email}: {result.error}
-									</Typography.Text>
-								</li>
-							))}
-						</ul>
-					</div>
-				</Callout>
+				<div className={styles.callout}>
+					<Callout
+						color="danger"
+						size="sm"
+						icon={<CircleAlert />}
+						testId="invite-api-error"
+					>
+						<div className={styles.results}>
+							{hasSuccesses && (
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									{successResults.length} invite(s) sent successfully.
+								</Typography>
+							)}
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{failedResults.length} invite(s) failed:
+							</Typography>
+							<ul className={styles.resultsList}>
+								{failedResults.map((result) => (
+									<li key={result.email}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											{result.email}: {result.error}
+										</Typography>
+									</li>
+								))}
+							</ul>
+						</div>
+					</Callout>
+				</div>
 			)}
 
 			{hasResults && !hasFailures && hasSuccesses && (
-				<Callout
-					type="success"
-					size="small"
-					showIcon
-					className={styles.callout}
-					data-testid="invite-success"
-				>
-					<Typography.Text size="small">
-						{successResults.length} invite(s) sent successfully!
-					</Typography.Text>
-				</Callout>
+				<div className={styles.callout}>
+					<Callout
+						color="success"
+						size="sm"
+						icon={<SolidCheckCircle2 />}
+						testId="invite-success"
+					>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							{successResults.length} invite(s) sent successfully!
+						</Typography>
+					</Callout>
+				</div>
 			)}
 
 			{renderFooter?.({

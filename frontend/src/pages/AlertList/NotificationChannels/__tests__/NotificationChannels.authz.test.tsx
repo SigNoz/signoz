@@ -35,7 +35,7 @@ describe('Notification channels list - AuthZ', () => {
 			).resolves.toBeInTheDocument();
 			// the page still loads: the search and the kind filter stay, inert,
 			// the way the dashboards list keeps its filter zone
-			expect(screen.getByTestId('channels-search')).toBeDisabled();
+			expect(screen.getByTestId('channels-search-field')).toBeDisabled();
 			expect(screen.getByTestId('channels-create')).toBeInTheDocument();
 		},
 		TEST_TIMEOUT,

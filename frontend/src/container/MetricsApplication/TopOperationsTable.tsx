@@ -7,10 +7,9 @@ import {
 	InputRef,
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
-	Tooltip,
 } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -115,23 +114,24 @@ function TopOperationsTable({
 			}
 		},
 		render: (text: string): JSX.Element => (
-			<Tooltip placement="topLeft" title={text}>
-				<Typography.Link
-					testId="top-operation-link"
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
+			<Button
+				variant="link"
+				color="primary"
+				size="md"
+				testId="top-operation-link"
+				onClick={(e): void => {
+					e.stopPropagation();
+					e.preventDefault();
 
-						if (e.metaKey || e.ctrlKey) {
-							handleOnClick(text, true); // open in new tab
-						} else {
-							handleOnClick(text, false); // open in current tab
-						}
-					}}
-				>
-					{text}
-				</Typography.Link>
-			</Tooltip>
+					if (e.metaKey || e.ctrlKey) {
+						handleOnClick(text, true); // open in new tab
+					} else {
+						handleOnClick(text, false); // open in current tab
+					}
+				}}
+			>
+				{text}
+			</Button>
 		),
 	});
 

@@ -219,6 +219,7 @@ function ListAlertRules(): JSX.Element {
 						<ListCommandHeader
 							label={activeLabel}
 							count={total}
+							isCountLoading={isFetching}
 							isModified={ruleViews.isModified}
 							testIdPrefix="alert-rules"
 							action={

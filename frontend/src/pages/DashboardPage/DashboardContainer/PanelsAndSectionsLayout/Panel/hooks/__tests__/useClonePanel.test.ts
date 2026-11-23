@@ -14,7 +14,7 @@ jest.mock('../../../../hooks/useOptimisticPatch', () => ({
 }));
 
 const mockToastPromise = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
+jest.mock('@signozhq/ui/toast', () => ({
 	toast: { promise: (...args: unknown[]): unknown => mockToastPromise(...args) },
 }));
 
@@ -141,19 +141,21 @@ describe('useClonePanel', () => {
 		);
 	});
 
-	it('records the cloned panel as the scroll target when the toast auto-closes', async () => {
-		const { result } = renderHook(() => useClonePanel({ sections: sections() }));
+	it('records the cloned panel as the scroll target after the confirmation delay', async () => {
+		jest.useFakeTimers();
+		try {
+			const { result } = renderHook(() => useClonePanel({ sections: sections() }));
 
-		await result.current({ panelId: 'p1', layoutIndex: 0 });
+			await result.current({ panelId: 'p1', layoutIndex: 0 });
 
-		// The reveal is deferred to the toast's auto-close, not fired inline.
-		expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
-		const { onAutoClose } = mockToastPromise.mock.calls[0][1] as {
-			onAutoClose: () => void;
-		};
-		onAutoClose();
+			// The reveal is deferred so the confirmation toast registers first.
+			expect(useScrollIntoViewStore.getState().scrollTargetId).toBeNull();
+			jest.advanceTimersByTime(2000);
 
-		expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('cloned-id');
+			expect(useScrollIntoViewStore.getState().scrollTargetId).toBe('cloned-id');
+		} finally {
+			jest.useRealTimers();
+		}
 	});
 
 	it('swallows a patch rejection (toast owns the error UX) — does not throw', async () => {

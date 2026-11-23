@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
-import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -62,9 +61,6 @@ function ProducerLatencyTabs({
 const getTableApi = (selectedView: MessagingQueuesViewTypeOptions): any => {
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
 		return getTopicThroughputOverview;
-	}
-	if (selectedView === MessagingQueuesViewType.dropRate.value) {
-		return getKafkaSpanEval;
 	}
 	return getPartitionLatencyOverview;
 };

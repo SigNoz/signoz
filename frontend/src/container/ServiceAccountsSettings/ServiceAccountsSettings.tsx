@@ -1,23 +1,20 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { Input } from '@signozhq/ui/input';
-import {
-	invalidateListServiceAccounts,
-	useListServiceAccounts,
-} from 'api/generated/services/serviceaccount';
+import { Plus } from '@signozhq/icons';
+import { invalidateListServiceAccounts } from 'api/generated/services/serviceaccount';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import type { SuggestionSource } from 'components/ListFilter/dsl/types';
+import FilterZone from 'components/ListFilter/FilterZone/FilterZone';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
-import ServiceAccountsTable, {
-	PAGE_SIZE,
-} from 'components/ServiceAccountsTable/ServiceAccountsTable';
+import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
+import { useRecoverFromEmptyPage } from 'components/TanStackTableView';
 import {
 	SACreatePermission,
 	SAListPermission,
@@ -26,23 +23,24 @@ import {
 	parseAsBoolean,
 	parseAsInteger,
 	parseAsString,
-	parseAsStringEnum,
 	useQueryState,
 } from 'nuqs';
 import { toAPIError } from 'utils/errorUtils';
 
-import { SA_QUERY_PARAMS } from './constants';
+import { SA_PAGE_SIZE, SA_QUERY_PARAMS } from './constants';
 import {
-	FilterMode,
-	ServiceAccountRow,
-	ServiceAccountStatus,
-	toServiceAccountRow,
-} from './utils';
+	SERVICE_ACCOUNTS_DEFAULT_QUERY,
+	SERVICE_ACCOUNTS_DSL_GRAMMAR,
+} from './list.config';
+import ServiceAccountStatusFilter from './ServiceAccountStatusFilter';
+import { useServiceAccountsData } from './useServiceAccountsData';
+import { ServiceAccountRow } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 
 function ServiceAccountsSettings(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { isCloudUser } = useGetTenantLicense();
 	const { permissions: authzPermissions, isLoading: isAuthZLoading } = useAuthZ([
 		SAListPermission,
 	]);
@@ -55,13 +53,9 @@ function ServiceAccountsSettings(): JSX.Element {
 	);
 	const [searchQuery, setSearchQuery] = useQueryState(
 		SA_QUERY_PARAMS.SEARCH,
-		parseAsString.withDefault(''),
-	);
-	const [filterMode, setFilterMode] = useQueryState(
-		SA_QUERY_PARAMS.FILTER,
-		parseAsStringEnum<FilterMode>(Object.values(FilterMode)).withDefault(
-			FilterMode.All,
-		),
+		parseAsString
+			.withDefault(SERVICE_ACCOUNTS_DEFAULT_QUERY)
+			.withOptions({ history: 'push' }),
 	);
 	const [, setIsCreateModalOpen] = useQueryState(
 		SA_QUERY_PARAMS.CREATE_SA,
@@ -69,131 +63,59 @@ function ServiceAccountsSettings(): JSX.Element {
 	);
 
 	const {
-		data: serviceAccountsData,
-		isLoading,
+		accounts,
+		total,
+		reservedKeywords,
+		isFetching,
 		isError,
 		error,
-	} = useListServiceAccounts({ query: { enabled: canListServiceAccounts } });
+		queryError,
+	} = useServiceAccountsData({
+		query: searchQuery,
+		page: currentPage,
+		enabled: canListServiceAccounts,
+	});
 
 	const controlsDisabled = isAuthZLoading || !canListServiceAccounts;
 
-	const allAccounts = useMemo(
-		(): ServiceAccountRow[] =>
-			(serviceAccountsData?.data ?? []).map(toServiceAccountRow),
-		[serviceAccountsData],
+	useRecoverFromEmptyPage({
+		page: currentPage,
+		pageSize: SA_PAGE_SIZE,
+		rowCount: accounts.length,
+		total,
+		isFetching: isFetching || isAuthZLoading,
+		isDisabled: isError || Boolean(queryError) || !canListServiceAccounts,
+		setPage,
+	});
+
+	const source = useMemo<SuggestionSource>(
+		() => ({
+			reservedKeys: reservedKeywords,
+			dynamicKeys: [],
+			valuesByKey: {},
+			creatorEmails: [],
+		}),
+		[reservedKeywords],
 	);
 
-	const activeCount = useMemo(
-		() =>
-			allAccounts.filter(
-				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Active,
-			).length,
-		[allAccounts],
-	);
-
-	const deletedCount = useMemo(
-		() =>
-			allAccounts.filter(
-				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Deleted,
-			).length,
-		[allAccounts],
-	);
-
-	const filteredAccounts = useMemo((): ServiceAccountRow[] => {
-		let result = allAccounts;
-
-		if (filterMode === FilterMode.Active) {
-			result = result.filter(
-				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Active,
-			);
-		} else if (filterMode === FilterMode.Deleted) {
-			result = result.filter(
-				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Deleted,
-			);
-		}
-
-		if (searchQuery.trim()) {
-			const q = searchQuery.trim().toLowerCase();
-			result = result.filter(
-				(a) =>
-					a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q),
-			);
-		}
-
-		return result;
-	}, [allAccounts, filterMode, searchQuery]);
-
-	useEffect(() => {
-		if (filteredAccounts.length === 0) {
-			return;
-		}
-
-		const maxPage = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
-		if (currentPage > maxPage) {
-			void setPage(maxPage);
-		} else if (currentPage < 1) {
+	const handleQueryChange = useCallback(
+		(value: string): void => {
+			void setSearchQuery(value);
 			void setPage(1);
-		}
-	}, [filteredAccounts.length, currentPage, setPage]);
-
-	const totalCount = allAccounts.length;
-
-	const filterMenuItems: DropdownItemType[] = [
-		{
-			type: 'item',
-			value: FilterMode.All,
-			label: (
-				<div className="sa-settings-filter-option">
-					<span>All accounts ⎯ {totalCount}</span>
-					{filterMode === FilterMode.All && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				void setFilterMode(FilterMode.All);
-				void setPage(1);
-			},
 		},
-		{
-			type: 'item',
-			value: FilterMode.Active,
-			label: (
-				<div className="sa-settings-filter-option">
-					<span>Active ⎯ {activeCount}</span>
-					{filterMode === FilterMode.Active && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				void setFilterMode(FilterMode.Active);
-				void setPage(1);
-			},
-		},
-		{
-			type: 'item',
-			value: FilterMode.Deleted,
-			label: (
-				<div className="sa-settings-filter-option">
-					<span>Deleted ⎯ {deletedCount}</span>
-					{filterMode === FilterMode.Deleted && <Check size={14} />}
-				</div>
-			),
-			onClick: (): void => {
-				void setFilterMode(FilterMode.Deleted);
-				void setPage(1);
-			},
-		},
-	];
+		[setSearchQuery, setPage],
+	);
 
-	function getFilterLabel(): string {
-		switch (filterMode) {
-			case FilterMode.Active:
-				return `Active ⎯ ${activeCount}`;
-			case FilterMode.Deleted:
-				return `Deleted ⎯ ${deletedCount}`;
-			default:
-				return `All accounts ⎯ ${totalCount}`;
-		}
-	}
-	const filterLabel = getFilterLabel();
+	const handleClearSearch = useCallback((): void => {
+		handleQueryChange(SERVICE_ACCOUNTS_DEFAULT_QUERY);
+	}, [handleQueryChange]);
+
+	const wrapControl = useCallback(
+		(node: ReactElement): ReactElement => (
+			<AuthZTooltip checks={[SAListPermission]}>{node}</AuthZTooltip>
+		),
+		[],
+	);
 
 	const handleRowClick = useCallback(
 		(row: ServiceAccountRow): void => {
@@ -232,79 +154,60 @@ function ServiceAccountsSettings(): JSX.Element {
 			</div>
 
 			<div className="sa-settings__list-section">
-				<div className="sa-settings__controls">
-					<AuthZTooltip checks={[SAListPermission]}>
-						<span>
-							<Dropdown items={filterMenuItems} nativeButton align="end" side="bottom">
-								<Button
-									size="md"
-									variant="solid"
-									color="secondary"
-									loading={isAuthZLoading}
-									disabled={!canListServiceAccounts}
-									disabledTooltip={undefined}
-									testId="sa-filter-trigger"
-									suffix={
-										<ChevronDown
-											size={12}
-											className="sa-settings-filter-trigger__chevron"
-										/>
-									}
-								>
-									<span>{filterLabel}</span>
-								</Button>
-							</Dropdown>
-						</span>
-					</AuthZTooltip>
-
-					<div className="sa-settings__search">
-						<AuthZTooltip
-							checks={[SAListPermission]}
-							triggerClassName="sa-settings__search-trigger"
+				<FilterZone
+					query={searchQuery}
+					grammar={SERVICE_ACCOUNTS_DSL_GRAMMAR}
+					testIdPrefix="sa"
+					placeholder="DSL Filter — e.g. name CONTAINS 'ci' AND status = 'active'"
+					source={source}
+					disabled={controlsDisabled}
+					wrapControl={wrapControl}
+					onQueryChange={handleQueryChange}
+					extraFilters={({ draft, applyDraft, setDraft }): JSX.Element => (
+						<ServiceAccountStatusFilter
+							draft={draft}
+							disabled={controlsDisabled}
+							onApplyDraft={applyDraft}
+							setDraft={setDraft}
+						/>
+					)}
+					rightSlot={
+						<AuthZButton
+							size="md"
+							checks={[SACreatePermission]}
+							variant="solid"
+							color="primary"
+							onClick={async (): Promise<void> => {
+								await setIsCreateModalOpen(true);
+							}}
+							prefix={<Plus size={12} />}
+							testId="new-sa-btn"
 						>
-							<Input
-								type="search"
-								name="service-accounts-search"
-								placeholder="Search by name or email..."
-								value={searchQuery}
-								onChange={(e): void => {
-									void setSearchQuery(e.target.value);
-									void setPage(1);
-								}}
-								className="sa-settings-search-input"
-								testId="sa-search-input"
-								disabled={controlsDisabled}
-							/>
-						</AuthZTooltip>
-					</div>
-
-					<AuthZButton
-						size="md"
-						checks={[SACreatePermission]}
-						variant="solid"
-						color="primary"
-						onClick={async (): Promise<void> => {
-							await setIsCreateModalOpen(true);
-						}}
-						prefix={<Plus size={12} />}
-						testId="new-sa-btn"
-					>
-						New Service Account
-					</AuthZButton>
-				</div>
+							New Service Account
+						</AuthZButton>
+					}
+				/>
 
 				<AuthZGuardContent checks={[SAListPermission]}>
-					{isError ? (
+					{isError && error ? (
 						<ErrorInPlace
 							error={toAPIError(
 								error,
 								'An unexpected error occurred while fetching service accounts.',
 							)}
 						/>
+					) : queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="sa"
+						/>
 					) : (
 						<ServiceAccountsTable
-							data={filteredAccounts}
-							loading={isLoading}
+							data={accounts}
+							total={total}
+							loading={isFetching}
+							onClearSearch={handleClearSearch}
 							onRowClick={handleRowClick}
 						/>
 					)}

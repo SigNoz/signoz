@@ -31,19 +31,10 @@
 	min-width: 120px;
 }
 
-.tooltipHeader {
-	font-weight: 600;
-	margin-bottom: 2px;
-}
-
 .tooltipRow {
 	display: flex;
 	justify-content: space-between;
 	gap: 12px;
-}
-
-.tooltipValue {
-	font-variant-numeric: tabular-nums;
 }
 
 .itemSelectable {

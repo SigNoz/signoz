@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { GetRoutingPoliciesResponse } from 'api/routingPolicies/getRoutingPolicies';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useCreateRoutingPolicy } from 'hooks/routingPolicies/useCreateRoutingPolicy';
@@ -175,7 +175,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 						handlePolicyDetailsModalClose();
 					},
 					onError: (error) => {
-						toast.error(`Error: ${error.message}`);
+						toast.danger(`Error: ${error.message}`, {
+							action: { label: 'Dismiss' },
+						});
 					},
 				},
 			);
@@ -197,7 +199,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 						handlePolicyDetailsModalClose();
 					},
 					onError: () => {
-						toast.error('Failed to update routing policy');
+						toast.danger('Failed to update routing policy', {
+							action: { label: 'Dismiss' },
+						});
 					},
 				},
 			);
@@ -230,7 +234,9 @@ function useRoutingPolicies(): UseRoutingPoliciesReturn {
 				handleDeleteModalClose();
 			},
 			onError: () => {
-				toast.error('Failed to delete routing policy');
+				toast.danger('Failed to delete routing policy', {
+					action: { label: 'Dismiss' },
+				});
 			},
 		});
 	};

@@ -100,27 +100,10 @@
 
 .searchInput {
 	flex: 1;
-	padding: 6px 8px;
-	background: var(--l3-background);
-
-	height: 18px;
 	margin-inline-end: 6px;
 
 	svg {
 		opacity: 0.4;
-	}
-
-	input {
-		font-size: 14px;
-		line-height: 18px;
-		letter-spacing: -0.07px;
-		font-weight: 400;
-		background: var(--l3-background);
-	}
-
-	input::placeholder {
-		color: var(--l2-foreground);
-		opacity: 0.6;
 	}
 }
 

@@ -18,6 +18,25 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 
 import { THEME_MODE } from './constant';
 
+// antd tokens take literal colours, not CSS variables: these mirror the dark
+// design tokens named next to each value.
+const DARK_FIELD: ThemeConfig['token'] = {
+	colorBgContainer: 'rgba(236, 238, 242, 0.035)', // --input-background
+	colorBorder: 'rgba(236, 238, 242, 0.093)', // --l2-border
+	colorTextPlaceholder: '#747b8b', // --l3-foreground
+};
+
+const DARK_ROWS: ThemeConfig['token'] = {
+	controlItemBgHover: 'rgba(236, 238, 242, 0.07)', // --dropdown-item-background-hover
+	controlItemBgActive: 'rgba(78, 116, 248, 0.16)', // --primary-background at 16%
+};
+
+// Translucent: styles.scss blurs what is behind these popups.
+const DARK_POPUP: ThemeConfig['token'] = {
+	...DARK_ROWS,
+	colorBgElevated: 'rgba(35, 38, 46, 0.6)', // --surface-3
+};
+
 export const ThemeContext = createContext({
 	theme: THEME_MODE.DARK,
 	toggleTheme: (): void => {},
@@ -150,14 +169,16 @@ export const useThemeConfig = (): ThemeConfig => {
 		},
 		components: {
 			Dropdown: {
-				colorBgElevated: isDarkMode ? '#121317' : '#fff',
-				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
+				colorBgElevated: '#fff',
+				controlItemBgHover: '#fff',
+				...(isDarkMode && { colorBgElevated: '#121317', ...DARK_ROWS }),
 				colorText: isDarkMode ? '#C0C1C3' : '#121317',
 				fontSize: 12,
 			},
 			Select: {
-				colorBgElevated: isDarkMode ? '#121317' : '#fff',
-				controlItemBgHover: isDarkMode ? '#1D212D' : '#fff',
+				colorBgElevated: '#fff',
+				controlItemBgHover: '#fff',
+				...(isDarkMode && { ...DARK_FIELD, ...DARK_POPUP }),
 				boxShadowSecondary: isDarkMode
 					? '4px 10px 16px 2px rgba(0, 0, 0, 0.30)'
 					: '#fff',
@@ -167,10 +188,20 @@ export const useThemeConfig = (): ThemeConfig => {
 			Button: {
 				paddingInline: 12,
 				fontSize: 12,
+				defaultShadow: 'none',
+				primaryShadow: 'none',
+				dangerShadow: 'none',
+				...(isDarkMode && {
+					defaultBg: 'rgba(236, 238, 242, 0.04)', // --secondary-background
+					defaultBorderColor: 'rgba(236, 238, 242, 0.093)', // --l2-border
+				}),
 			},
 			Input: {
-				colorBorder: isDarkMode ? '#1D212D' : '#E9E9E9',
+				colorBorder: '#E9E9E9',
+				...(isDarkMode && DARK_FIELD),
 			},
+			InputNumber: { ...(isDarkMode && DARK_FIELD) },
+			DatePicker: { ...(isDarkMode && { ...DARK_FIELD, ...DARK_POPUP }) },
 			Breadcrumb: {
 				separatorMargin: 4,
 			},

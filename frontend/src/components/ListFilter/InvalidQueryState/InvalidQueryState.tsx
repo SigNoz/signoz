@@ -33,18 +33,28 @@ function InvalidQueryState({
 	return (
 		<div className={styles.wrapper} data-testid={`${testIdPrefix}-invalid-query`}>
 			<img src={awwSnapUrl} alt="something went wrong" className={styles.img} />
-			<Typography.Text
-				className={styles.title}
-				data-testid={`${testIdPrefix}-invalid-query-title`}
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+				testId={`${testIdPrefix}-invalid-query-title`}
 			>
 				Invalid query
-			</Typography.Text>
-			<Typography.Text
-				className={styles.detail}
-				data-testid={`${testIdPrefix}-invalid-query-detail`}
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+				testId={`${testIdPrefix}-invalid-query-detail`}
 			>
 				{formatQueryErrorMessage(errorMessage) || INVALID_QUERY_FALLBACK}
-			</Typography.Text>
+			</Typography>
 			<section className={styles.actionButtons}>
 				<Button
 					size="md"

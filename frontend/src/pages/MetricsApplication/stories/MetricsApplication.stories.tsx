@@ -6,7 +6,10 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import MetricsApplication from '../MetricsApplication';
-import { openDownloadMenu } from './__story_mockdata__/metricsApplication.play';
+import {
+	openApDexSettings,
+	openDownloadMenu,
+} from './__story_mockdata__/metricsApplication.play';
 import { metricsApplicationMocks } from './MetricsApplication.stories.mocks';
 
 type MetricsApplicationArgs = PageStoryArgs<typeof metricsApplicationMocks>;
@@ -74,4 +77,9 @@ export const NoOperations: Story = {
  */
 export const DownloadMenu: Story = {
 	play: openDownloadMenu,
+};
+
+/** The apdex threshold popover, opened from the overview's settings control. */
+export const ApDexSettingsOpen: Story = {
+	play: openApDexSettings,
 };

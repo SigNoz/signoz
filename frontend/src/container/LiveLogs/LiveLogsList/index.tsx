@@ -2,7 +2,7 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
@@ -179,7 +179,16 @@ function LiveLogsList({
 				<div className="loading-live-logs-content">
 					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
-					<Typography>Fetching live logs...</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Fetching live logs...
+					</Typography>
 				</div>
 			</div>
 		),
@@ -256,17 +265,15 @@ function LiveLogsList({
 				</InfinityWrapperStyled>
 			)}
 
-			{activeLog && selectedTab && (
-				<LogDetail
-					selectedTab={selectedTab}
-					log={activeLog}
-					onClose={handleCloseLogDetail}
-					handleChangeSelectedView={handleChangeSelectedView}
-					logs={formattedLogs}
-					onNavigateLog={handleSetActiveLog}
-					onScrollToLog={handleScrollToLog}
-				/>
-			)}
+			<LogDetail
+				selectedTab={selectedTab}
+				log={activeLog}
+				onClose={handleCloseLogDetail}
+				handleChangeSelectedView={handleChangeSelectedView}
+				logs={formattedLogs}
+				onNavigateLog={handleSetActiveLog}
+				onScrollToLog={handleScrollToLog}
+			/>
 		</div>
 	);
 }

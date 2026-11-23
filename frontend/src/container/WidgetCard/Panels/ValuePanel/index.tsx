@@ -68,7 +68,16 @@ function GridValueComponent({
 	if (data.length === 0) {
 		return (
 			<ValueContainer>
-				<Typography>No Data</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No Data
+				</Typography>
 			</ValueContainer>
 		);
 	}
@@ -79,7 +88,16 @@ function GridValueComponent({
 	return (
 		<>
 			<TitleContainer isDashboardPage={isDashboardPage}>
-				<Typography>{gridTitle}</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{gridTitle}
+				</Typography>
 			</TitleContainer>
 			<ValueContainer
 				showClickable={enableDrillDown && isQueryTypeBuilder}

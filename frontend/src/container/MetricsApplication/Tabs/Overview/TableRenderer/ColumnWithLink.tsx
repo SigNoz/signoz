@@ -1,5 +1,4 @@
-import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { navigateToTrace } from 'container/MetricsApplication/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
@@ -49,13 +48,14 @@ function ColumnWithLink({
 	};
 
 	return (
-		<Tooltip placement="topLeft" title={text}>
-			<Typography.Link
-				onClick={(e): void => handleOnClick(text, e.metaKey || e.ctrlKey)}
-			>
-				{text}
-			</Typography.Link>
-		</Tooltip>
+		<Button
+			variant="link"
+			color="primary"
+			size="md"
+			onClick={(e): void => handleOnClick(text, e.metaKey || e.ctrlKey)}
+		>
+			{text}
+		</Button>
 	);
 }
 

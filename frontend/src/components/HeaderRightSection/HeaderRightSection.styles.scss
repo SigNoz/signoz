@@ -65,15 +65,6 @@
 		gap: 8px;
 		align-items: center;
 		justify-content: space-between;
-
-		.absolute-relative-time-toggler-label {
-			color: var(--l1-foreground);
-			font-size: 13px;
-			font-style: normal;
-			font-weight: 500;
-			line-height: 20px; /* 142.857% */
-			letter-spacing: -0.07px;
-		}
 	}
 
 	.absolute-relative-time-toggler {
@@ -98,24 +89,6 @@
 				display: flex;
 				flex-direction: column;
 				gap: 4px;
-
-				.url-share-title,
-				.url-share-sub-title {
-					color: var(--l1-foreground);
-					font-size: 13px;
-					font-style: normal;
-					font-weight: 500;
-					line-height: 20px; /* 142.857% */
-					letter-spacing: -0.07px;
-				}
-
-				.url-share-sub-title {
-					font-size: 12px;
-					color: var(--l3-foreground);
-					font-weight: 400;
-					line-height: 18px;
-					letter-spacing: -0.06px;
-				}
 			}
 		}
 	}
@@ -183,7 +156,6 @@
 			font-weight: 500;
 			line-height: 24px; /* 200% */
 
-			.contact-support-link,
 			.read-docs-link {
 				color: var(--bg-robin-400);
 				font-weight: 500;

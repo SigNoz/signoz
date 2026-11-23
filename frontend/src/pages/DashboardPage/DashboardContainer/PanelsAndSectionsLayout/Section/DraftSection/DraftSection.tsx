@@ -24,9 +24,19 @@ function DraftSection(): JSX.Element | null {
 		<div className={styles.draftSection} data-testid="draft-section">
 			<div className={styles.header}>
 				<ChevronDown size={14} />
-				<Typography.Text className={title ? styles.title : styles.placeholder}>
-					{title || 'New section'}
-				</Typography.Text>
+				<span className={title ? styles.title : styles.placeholder}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						display="block"
+						textOverflow="ellipsis"
+					>
+						{title || 'New section'}
+					</Typography>
+				</span>
 			</div>
 			<div style={{ padding: GRID_MARGIN }}>
 				<div

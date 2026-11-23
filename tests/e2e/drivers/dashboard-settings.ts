@@ -12,6 +12,7 @@ import type {
 } from './dashboard-spec.types';
 
 import { toolbarAt } from './dashboard-page';
+import { inputField } from './input';
 import { boxOf, dragBy, openSelectOption } from './panels/dom';
 import { PATH } from './dashboards';
 import { driver } from './kit';
@@ -527,9 +528,9 @@ function settingsDriver(page: Page): DashboardSettings {
 		},
 		panel: panelLocator,
 		overview: {
-			name: () => dialog().getByTestId('dashboard-name'),
+			name: () => inputField(dialog(), 'dashboard-name'),
 			description: () => dialog().getByTestId('dashboard-desc'),
-			tagInput: () => dialog().getByTestId('tag-key-value-input'),
+			tagInput: () => inputField(dialog(), 'tag-key-value-input'),
 			async addTag(tag) {
 				const input = settings.overview.tagInput();
 				await input.fill(tag);
@@ -573,7 +574,7 @@ function settingsDriver(page: Page): DashboardSettings {
 			},
 		},
 		form: {
-			name: () => dialog().getByTestId('variable-name'),
+			name: () => inputField(dialog(), 'variable-name'),
 			type: (type) => dialog().getByTestId(`variable-type-${type}`),
 			customValues: () => dialog().getByTestId('variable-custom-input'),
 			async dynamicField(field) {
@@ -583,7 +584,7 @@ function settingsDriver(page: Page): DashboardSettings {
 				await openSelectOption(page, field).click();
 				await expect(select).toContainText(field);
 			},
-			textDefault: () => dialog().getByTestId('variable-text-input'),
+			textDefault: () => inputField(dialog(), 'variable-text-input'),
 			// Monaco renders a textbox named "Editor content" with no test id.
 			queryEditor: () => dialog().locator('.monaco-editor'),
 			error: (text) => dialog().getByText(text),

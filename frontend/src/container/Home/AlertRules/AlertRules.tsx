@@ -138,7 +138,7 @@ export default function AlertRules({
 							{rule.thresholds.map((threshold) => (
 								<Badge
 									key={threshold}
-									textTransform="uppercase"
+									textTransform="none"
 									color="archive"
 									variant="outlined"
 									testId={`home-alert-threshold-${rule.id}-${threshold}`}
@@ -148,7 +148,7 @@ export default function AlertRules({
 							))}
 
 							{rule.state === 'firing' && (
-								<Badge color="danger" variant="outlined" textTransform="uppercase">
+								<Badge color="danger" variant="outlined">
 									{rule.state}
 								</Badge>
 							)}

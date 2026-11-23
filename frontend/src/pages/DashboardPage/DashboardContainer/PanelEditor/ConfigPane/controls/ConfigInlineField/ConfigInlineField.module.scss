@@ -7,7 +7,7 @@
 
 // Matches ConfigField's heading.
 .label {
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
