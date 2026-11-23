@@ -9,7 +9,6 @@ import { buildNavUrl, getQueryString } from 'container/SideNav/helper';
 import { settingsNavSections } from 'container/SideNav/menuItems';
 import NavItem from 'container/SideNav/NavItem/NavItem';
 import { SidebarItem } from 'container/SideNav/sideNav.types';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
@@ -40,10 +39,6 @@ function SettingsPage(): JSX.Element {
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const [isCurrentOrgSettings] = useComponentPermission(
-		['current_org_settings'],
-		user.role,
-	);
 	const { t } = useTranslation(['routes']);
 
 	const isGatewayEnabled =
@@ -61,11 +56,10 @@ function SettingsPage(): JSX.Element {
 					isEnabled:
 						item.key === ROUTES.BILLING ||
 						item.key === ROUTES.MEMBERS_SETTINGS ||
+						item.key === ROUTES.ORG_SETTINGS ||
 						!!(
 							isAdmin &&
-							(item.key === ROUTES.ORG_SETTINGS ||
-								item.key === ROUTES.MY_SETTINGS ||
-								item.key === ROUTES.SHORTCUTS)
+							(item.key === ROUTES.MY_SETTINGS || item.key === ROUTES.SHORTCUTS)
 						),
 				}));
 
@@ -83,7 +77,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-						item.key === ROUTES.MEMBERS_SETTINGS
+						item.key === ROUTES.MEMBERS_SETTINGS ||
+						item.key === ROUTES.ORG_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
@@ -94,7 +89,6 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
-							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
 							item.key === ROUTES.SHORTCUTS ||
 							item.key === ROUTES.MCP_SERVER
@@ -135,7 +129,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-						item.key === ROUTES.MEMBERS_SETTINGS
+						item.key === ROUTES.MEMBERS_SETTINGS ||
+						item.key === ROUTES.ORG_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
@@ -145,7 +140,6 @@ function SettingsPage(): JSX.Element {
 						...item,
 						isEnabled:
 							item.key === ROUTES.INTEGRATIONS ||
-							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.MCP_SERVER
@@ -184,7 +178,8 @@ function SettingsPage(): JSX.Element {
 						item.key === ROUTES.ROLE_DETAILS ||
 						item.key === ROUTES.ROLE_EDIT ||
 						item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
-						item.key === ROUTES.MEMBERS_SETTINGS
+						item.key === ROUTES.MEMBERS_SETTINGS ||
+						item.key === ROUTES.ORG_SETTINGS
 							? true
 							: item.isEnabled,
 				}));
@@ -192,10 +187,7 @@ function SettingsPage(): JSX.Element {
 				if (isAdmin) {
 					updatedItems = updatedItems.map((item) => ({
 						...item,
-						isEnabled:
-							item.key === ROUTES.ORG_SETTINGS || item.key === ROUTES.MEMBERS_SETTINGS
-								? true
-								: item.isEnabled,
+						isEnabled: item.key === ROUTES.MEMBERS_SETTINGS ? true : item.isEnabled,
 					}));
 				}
 
@@ -226,7 +218,6 @@ function SettingsPage(): JSX.Element {
 		() =>
 			getRoutes(
 				user.role,
-				isCurrentOrgSettings,
 				isGatewayEnabled,
 				isWorkspaceBlocked,
 				isCloudUser,
@@ -235,7 +226,6 @@ function SettingsPage(): JSX.Element {
 			),
 		[
 			user.role,
-			isCurrentOrgSettings,
 			isGatewayEnabled,
 			isWorkspaceBlocked,
 			isCloudUser,

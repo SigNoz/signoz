@@ -7,7 +7,6 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	listsDomains,
-	showsOrgSettings,
 	type SingleSignOnArgs,
 } from '../SingleSignOn.stories.mocks';
 
@@ -53,11 +52,7 @@ export const openConfigureDomain = async ({
 
 export const openAddDomain = async ({
 	canvasElement,
-	args,
 }: PlayContext): Promise<void> => {
-	if (!showsOrgSettings(args)) {
-		return;
-	}
 	await userEvent.click(
 		await within(canvasElement).findByTestId(
 			'auth-domain-add',
@@ -70,9 +65,6 @@ export const openAddDomain = async ({
 export const openProviderSelector = async (
 	context: PlayContext,
 ): Promise<void> => {
-	if (!showsOrgSettings(context.args)) {
-		return;
-	}
 	await openAddDomain(context);
 	await screen.findByText(
 		/configure authentication method/i,
@@ -116,9 +108,6 @@ export const expandAttributeMapping = async (
 export const submitEmptyProvider = async (
 	context: PlayContext,
 ): Promise<void> => {
-	if (!showsOrgSettings(context.args)) {
-		return;
-	}
 	await openAddDomain(context);
 	await userEvent.click(
 		await screen.findByTestId(
@@ -152,9 +141,6 @@ export const updateDisplayName = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!showsOrgSettings(args)) {
-		return;
-	}
 	const input = await within(canvasElement).findByLabelText(
 		/display name/i,
 		undefined,

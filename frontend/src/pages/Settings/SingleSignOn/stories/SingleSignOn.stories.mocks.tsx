@@ -5,9 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { componentPermission } from 'utils/permission';
 
-import { accessFor } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -128,15 +126,8 @@ export const singleSignOnMocks = defineStoryMocks({
 
 export type SingleSignOnArgs = PageStoryArgs<typeof singleSignOnMocks>;
 
-/** The Settings page lists the organization tab for the admin role only. */
-export const showsOrgSettings = (args: SingleSignOnArgs): boolean =>
-	componentPermission.current_org_settings.includes(
-		accessFor(args.access, args.permissions, args.revoked).legacyRole,
-	);
-
 /** Rows come from the domains handler, which State can hold back or fail. */
 export const listsDomains = (args: SingleSignOnArgs): boolean =>
-	showsOrgSettings(args) &&
 	args.dataState === 'loaded' &&
 	authDomainsResponse(args.domains, args.provider, args.enforced).data.length >
 		0;
