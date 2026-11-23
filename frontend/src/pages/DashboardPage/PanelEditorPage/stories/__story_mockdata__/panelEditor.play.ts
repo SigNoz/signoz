@@ -122,9 +122,15 @@ export const pickHeatmapTracesField = async ({
 	await openConfigSelect('query-data-source-selector-0');
 	await userEvent.click(await screen.findByTitle('Traces'));
 
-	await openConfigSelect('heatmap-field-select');
+	await userEvent.click(
+		await screen.findByTestId('distribution-field-select', {}, EDITOR_LOAD),
+	);
 	if (args.dataState === 'loaded') {
-		await screen.findByTitle('attribute.retry.count', undefined, EDITOR_LOAD);
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.retry.count',
+			{},
+			EDITOR_LOAD,
+		);
 	}
 };
 

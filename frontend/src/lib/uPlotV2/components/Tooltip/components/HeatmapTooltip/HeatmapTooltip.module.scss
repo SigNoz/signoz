@@ -26,13 +26,6 @@
 	&.pinned {
 		border-color: var(--ring);
 	}
-
-	// Pinned to be read, so a long group name wraps instead of clipping.
-	&.pinned .rowLabel,
-	&.pinned .filterLabel {
-		white-space: normal;
-		overflow-wrap: anywhere;
-	}
 }
 
 // Separates the cell identity from whichever question the second block answers.

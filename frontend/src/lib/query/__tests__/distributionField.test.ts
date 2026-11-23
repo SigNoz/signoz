@@ -3,11 +3,11 @@ import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
-	getHeatmapFieldPlaceholder,
-	setHeatmapField,
-	toHeatmapAggregation,
-	fromHeatmapAggregation,
-} from '../heatmapField';
+	getDistributionFieldPlaceholder,
+	setDistributionField,
+	toDistributionAggregation,
+	fromDistributionAggregation,
+} from '../distributionField';
 
 const queryOf = (
 	dataSource: DataSource,
@@ -17,21 +17,21 @@ const queryOf = (
 	aggregations: expressions.map((expression) => ({ expression })),
 });
 
-describe('getHeatmapFieldPlaceholder', () => {
+describe('getDistributionFieldPlaceholder', () => {
 	it.each([
 		[DataSource.TRACES, 'Numeric field to bucket, e.g. duration_nano'],
 		[DataSource.LOGS, 'Numeric field to bucket'],
 	])('%s → %s', (dataSource, expected) => {
-		expect(getHeatmapFieldPlaceholder(dataSource)).toBe(expected);
+		expect(getDistributionFieldPlaceholder(dataSource)).toBe(expected);
 	});
 });
 
-describe('toHeatmapAggregation', () => {
+describe('toDistributionAggregation', () => {
 	it.each([DataSource.TRACES, DataSource.LOGS])(
 		'clears a %s count() for the user to pick a field',
 		(dataSource) => {
 			expect(
-				toHeatmapAggregation(queryOf(dataSource, ['count()'])).aggregations,
+				toDistributionAggregation(queryOf(dataSource, ['count()'])).aggregations,
 			).toStrictEqual([{ expression: '' }]);
 		},
 	);
@@ -40,14 +40,15 @@ describe('toHeatmapAggregation', () => {
 		'keeps the bare field %s',
 		(field) => {
 			const query = queryOf(DataSource.LOGS, [field]);
-			expect(toHeatmapAggregation(query)).toBe(query);
+			expect(toDistributionAggregation(query)).toBe(query);
 		},
 	);
 
 	it('keeps the field of a one-argument call', () => {
 		expect(
-			toHeatmapAggregation(queryOf(DataSource.LOGS, ['avg(attribute.latency)']))
-				.aggregations,
+			toDistributionAggregation(
+				queryOf(DataSource.LOGS, ['avg(attribute.latency)']),
+			).aggregations,
 		).toStrictEqual([{ expression: 'attribute.latency' }]);
 	});
 
@@ -55,14 +56,15 @@ describe('toHeatmapAggregation', () => {
 		'clears the field rather than bucket the argument of %s',
 		(expression) => {
 			expect(
-				toHeatmapAggregation(queryOf(DataSource.TRACES, [expression])).aggregations,
+				toDistributionAggregation(queryOf(DataSource.TRACES, [expression]))
+					.aggregations,
 			).toStrictEqual([{ expression: '' }]);
 		},
 	);
 
 	it('keeps a field with an alias', () => {
 		const query = queryOf(DataSource.LOGS, ['body.latency as lat']);
-		expect(toHeatmapAggregation(query)).toBe(query);
+		expect(toDistributionAggregation(query)).toBe(query);
 	});
 
 	it('renames an order on the aggregation alias to the field', () => {
@@ -71,7 +73,7 @@ describe('toHeatmapAggregation', () => {
 			aggregations: [{ expression: 'p99(duration_nano)', alias: 'lat' }],
 			orderBy: [{ columnName: 'lat', order: 'desc' }],
 		};
-		expect(toHeatmapAggregation(query).orderBy).toStrictEqual([
+		expect(toDistributionAggregation(query).orderBy).toStrictEqual([
 			{ columnName: 'duration_nano', order: 'desc' },
 		]);
 	});
@@ -81,7 +83,7 @@ describe('toHeatmapAggregation', () => {
 			...queryOf(DataSource.TRACES, ["p99(duration_nano) as 'lat'"]),
 			orderBy: [{ columnName: 'lat', order: 'desc' }],
 		};
-		const next = toHeatmapAggregation(query);
+		const next = toDistributionAggregation(query);
 		expect(next.aggregations).toStrictEqual([{ expression: 'duration_nano' }]);
 		expect(next.orderBy).toStrictEqual([
 			{ columnName: 'duration_nano', order: 'desc' },
@@ -96,7 +98,7 @@ describe('toHeatmapAggregation', () => {
 				{ columnName: 'timestamp', order: 'asc' },
 			],
 		};
-		expect(toHeatmapAggregation(query).orderBy).toStrictEqual([
+		expect(toDistributionAggregation(query).orderBy).toStrictEqual([
 			{ columnName: 'timestamp', order: 'asc' },
 		]);
 	});
@@ -113,7 +115,7 @@ describe('toHeatmapAggregation', () => {
 				{ columnName: 'timestamp', order: 'asc' },
 			],
 		};
-		expect(toHeatmapAggregation(query).orderBy).toStrictEqual([
+		expect(toDistributionAggregation(query).orderBy).toStrictEqual([
 			{ columnName: 'timestamp', order: 'asc' },
 		]);
 	});
@@ -123,31 +125,33 @@ describe('toHeatmapAggregation', () => {
 			...queryOf(DataSource.TRACES, ['p99(duration_nano)']),
 			orderBy: [{ columnName: 'p99(duration_nano)', order: 'desc' }],
 		};
-		expect(toHeatmapAggregation(query).orderBy).toStrictEqual([
+		expect(toDistributionAggregation(query).orderBy).toStrictEqual([
 			{ columnName: 'duration_nano', order: 'desc' },
 		]);
 	});
 
 	it('leaves a metrics query alone', () => {
 		const query = initialQueriesMap.metrics.builder.queryData[0];
-		expect(toHeatmapAggregation(query)).toBe(query);
+		expect(toDistributionAggregation(query)).toBe(query);
 	});
 });
 
-describe('fromHeatmapAggregation', () => {
+describe('fromDistributionAggregation', () => {
 	it.each([
 		['duration_nano', 'p90(duration_nano)'],
 		['', 'count()'],
 	])('turns the field %j into %s', (field, expression) => {
 		expect(
-			fromHeatmapAggregation(queryOf(DataSource.TRACES, [field])).aggregations,
+			fromDistributionAggregation(queryOf(DataSource.TRACES, [field]))
+				.aggregations,
 		).toStrictEqual([{ expression }]);
 	});
 
 	it('drops the alias out of the field', () => {
 		expect(
-			fromHeatmapAggregation(queryOf(DataSource.LOGS, ['body.latency as lat']))
-				.aggregations,
+			fromDistributionAggregation(
+				queryOf(DataSource.LOGS, ['body.latency as lat']),
+			).aggregations,
 		).toStrictEqual([{ expression: 'p90(body.latency)' }]);
 	});
 
@@ -156,7 +160,7 @@ describe('fromHeatmapAggregation', () => {
 			...queryOf(DataSource.TRACES, ['duration_nano']),
 			orderBy: [{ columnName: 'duration_nano', order: 'asc' }],
 		};
-		expect(fromHeatmapAggregation(query).orderBy).toStrictEqual([
+		expect(fromDistributionAggregation(query).orderBy).toStrictEqual([
 			{ columnName: 'p90(duration_nano)', order: 'asc' },
 		]);
 	});
@@ -165,25 +169,25 @@ describe('fromHeatmapAggregation', () => {
 		'leaves function aggregations %j alone',
 		(...expressions) => {
 			const query = queryOf(DataSource.LOGS, expressions);
-			expect(fromHeatmapAggregation(query)).toBe(query);
+			expect(fromDistributionAggregation(query)).toBe(query);
 		},
 	);
 });
 
-describe('setHeatmapField', () => {
+describe('setDistributionField', () => {
 	const sorted = {
 		...queryOf(DataSource.TRACES, ['duration_nano']),
 		orderBy: [{ columnName: 'duration_nano', order: 'desc' }],
 	};
 
 	it('moves the sort on the old field to the new one', () => {
-		expect(setHeatmapField(sorted, 'attribute.quantity')).toMatchObject({
+		expect(setDistributionField(sorted, 'attribute.quantity')).toMatchObject({
 			aggregations: [{ expression: 'attribute.quantity' }],
 			orderBy: [{ columnName: 'attribute.quantity', order: 'desc' }],
 		});
 	});
 
 	it('drops the sort when the field is cleared', () => {
-		expect(setHeatmapField(sorted, '').orderBy).toStrictEqual([]);
+		expect(setDistributionField(sorted, '').orderBy).toStrictEqual([]);
 	});
 });

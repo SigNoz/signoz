@@ -6,7 +6,7 @@ import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { aggregatesBareField } from 'lib/query/heatmapField';
+import { aggregatesDistributionField } from 'lib/query/distributionField';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -20,7 +20,7 @@ import {
 } from '../../queryBuilderFields.utils';
 
 import { isScalarPanelType } from '../panelTypes';
-import HeatmapFieldSelect from './HeatmapFieldSelect';
+import DistributionFieldSelect from './DistributionFieldSelect';
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 import './QueryAggregation.styles.scss';
@@ -65,8 +65,8 @@ function QueryAggregationOptions({
 			data-testid="query-aggregation-container"
 		>
 			<div className="aggregation-container">
-				{aggregatesBareField(panelType, dataSource) ? (
-					<HeatmapFieldSelect queryData={queryData} onChange={onChange} />
+				{aggregatesDistributionField(panelType, dataSource) ? (
+					<DistributionFieldSelect queryData={queryData} onChange={onChange} />
 				) : (
 					<QueryAggregationSelect
 						onChange={onChange}

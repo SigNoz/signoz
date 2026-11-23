@@ -22,7 +22,7 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedQueryTypesKindMap: {
-		// Logs and traces bucket the bare field named as the aggregation.
+		// Logs and traces bucket the field named as the aggregation.
 		[EQueryType.QUERY_BUILDER]: {
 			kind: QueryTypeKind.SIGNAL,
 			signals: [

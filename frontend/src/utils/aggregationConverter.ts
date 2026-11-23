@@ -8,6 +8,7 @@ import {
 	MetricAggregation,
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
@@ -113,10 +114,10 @@ export function getParsedAggregationOptionsForOrderBy(
 		timeAggregation?: string;
 		temporality?: string;
 	},
-	isBareField?: boolean,
+	panelType?: PANEL_TYPES,
 ): BaseAutocompleteData[] {
 	// First, use createAggregation to parse the aggregations
-	const parsedAggregations = createAggregation(query, undefined, isBareField);
+	const parsedAggregations = createAggregation(query, panelType);
 
 	// Then convert the parsed aggregations to BaseAutocompleteData format
 	return convertAggregationsToBaseAutocompleteData(

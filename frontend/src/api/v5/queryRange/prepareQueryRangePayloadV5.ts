@@ -6,7 +6,7 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { parseAggregations } from 'lib/query/aggregationExpression';
-import { aggregatesBareField } from 'lib/query/heatmapField';
+import { aggregatesDistributionField } from 'lib/query/distributionField';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
@@ -245,7 +245,6 @@ function createBaseSpec(
 export function createAggregation(
 	queryData: any,
 	panelType?: PANEL_TYPES,
-	isBareField = false,
 ): TraceAggregation[] | LogAggregation[] | MetricAggregation[] {
 	if (!queryData) {
 		return [];
@@ -288,8 +287,12 @@ export function createAggregation(
 	}
 
 	// A heatmap buckets the field the user names; count() would be rejected as one.
-	// Elsewhere a bare field is not an aggregation, so it falls back to count().
-	const fallback = isBareField ? [] : [{ expression: 'count()' }];
+	// Elsewhere a field is not an aggregation, so it falls back to count().
+	const isDistributionField = aggregatesDistributionField(
+		panelType,
+		queryData.dataSource,
+	);
+	const fallback = isDistributionField ? [] : [{ expression: 'count()' }];
 
 	if (queryData.aggregations?.length > 0) {
 		return queryData.aggregations.flatMap(
@@ -297,7 +300,7 @@ export function createAggregation(
 				const parsedAggregations = parseAggregations(
 					agg.expression,
 					agg?.alias,
-					isBareField,
+					isDistributionField,
 				);
 				return isEmpty(parsedAggregations) ? fallback : parsedAggregations;
 			},
@@ -323,13 +326,7 @@ export function convertBuilderQueriesToV5(
 
 			// Skip aggregation for raw request type
 			const aggregations =
-				requestType === 'raw'
-					? undefined
-					: createAggregation(
-							queryData,
-							panelType,
-							aggregatesBareField(panelType, queryData.dataSource),
-						);
+				requestType === 'raw' ? undefined : createAggregation(queryData, panelType);
 
 			switch (signal) {
 				case 'traces':

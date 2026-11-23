@@ -5,11 +5,13 @@ import type {
 	Querybuildertypesv5TimeSeriesDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import getLabelName from 'lib/getLabelName';
+import { upperFirst } from 'lodash-es';
 import type {
 	HeatmapSeries,
 	HeatmapSeriesLabel,
 	HeatmapSeriesPoint,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type { QuerySpecView } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
 
 const MS_PER_SECOND = 1000;
 
@@ -91,18 +93,11 @@ export function resolveBucketLabel(
 	request: Querybuildertypesv5QueryRangeRequestDTO | undefined,
 ): string | undefined {
 	for (const envelope of request?.compositeQuery?.queries ?? []) {
-		const spec = envelope.spec as
-			| {
-					signal?: string;
-					disabled?: boolean;
-					aggregations?: { metricName?: string; expression?: string }[];
-			  }
-			| undefined;
+		const spec = envelope.spec as QuerySpecView | undefined;
 		const [aggregation] = spec?.aggregations ?? [];
 		const bucketed = aggregation?.metricName || aggregation?.expression;
 		if (spec?.signal && !spec.disabled && bucketed) {
-			const signal = spec.signal.charAt(0).toUpperCase() + spec.signal.slice(1);
-			return `${signal} · ${bucketed}`;
+			return `${upperFirst(spec.signal)} · ${bucketed}`;
 		}
 	}
 	return undefined;

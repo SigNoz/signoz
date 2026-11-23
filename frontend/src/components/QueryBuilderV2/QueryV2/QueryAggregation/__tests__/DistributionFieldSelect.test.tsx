@@ -5,19 +5,13 @@ import {
 	type GetFieldsKeys200,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
+import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import {
-	act,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-	within,
-} from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
-import HeatmapFieldSelect from '../HeatmapFieldSelect';
+import DistributionFieldSelect from '../DistributionFieldSelect';
 
 const keysResponse: GetFieldsKeys200 = {
 	status: 'success',
@@ -49,7 +43,7 @@ const tracesQuery = (expression: string): IBuilderQuery => ({
 	aggregations: [{ expression }],
 });
 
-describe('HeatmapFieldSelect', () => {
+describe('DistributionFieldSelect', () => {
 	const requests: URLSearchParams[] = [];
 
 	afterEach(() => {
@@ -68,13 +62,13 @@ describe('HeatmapFieldSelect', () => {
 
 	it('shows the saved field', () => {
 		render(
-			<HeatmapFieldSelect
+			<DistributionFieldSelect
 				queryData={tracesQuery('duration_nano')}
 				onChange={jest.fn()}
 			/>,
 		);
 
-		expect(screen.getByTestId('heatmap-field-select')).toHaveTextContent(
+		expect(screen.getByTestId('distribution-field-select')).toHaveTextContent(
 			'duration_nano',
 		);
 	});
@@ -83,14 +77,17 @@ describe('HeatmapFieldSelect', () => {
 		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 		const onChange = jest.fn() as jest.MockedFunction<(field: string) => void>;
 		render(
-			<HeatmapFieldSelect queryData={tracesQuery('')} onChange={onChange} />,
+			<DistributionFieldSelect queryData={tracesQuery('')} onChange={onChange} />,
 		);
 
-		// The combobox input is antd's own markup, which carries no test id.
-		await user.click(
-			within(screen.getByTestId('heatmap-field-select')).getByRole('combobox'),
+		await user.click(screen.getByTestId('distribution-field-select'));
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.quantity',
 		);
-		await user.click(await screen.findByTitle('attribute.quantity'));
+		await user.type(
+			screen.getByTestId('distribution-field-select-search'),
+			'attribute.quantity{Enter}',
+		);
 
 		expect(onChange).toHaveBeenCalledWith('attribute.quantity');
 		expect(requests[0].get('fieldDataType')).toBe(
@@ -103,16 +100,20 @@ describe('HeatmapFieldSelect', () => {
 		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 		const onChange = jest.fn() as jest.MockedFunction<(field: string) => void>;
 		render(
-			<HeatmapFieldSelect
+			<DistributionFieldSelect
 				queryData={tracesQuery('duration_nano')}
 				onChange={onChange}
 			/>,
 		);
 
-		await user.click(
-			within(screen.getByTestId('heatmap-field-select')).getByRole('combobox'),
+		await user.click(screen.getByTestId('distribution-field-select'));
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.quantity',
 		);
-		await user.click(await screen.findByTitle('attribute.quantity'));
+		await user.type(
+			screen.getByTestId('distribution-field-select-search'),
+			'attribute.quantity{Enter}',
+		);
 
 		expect(onChange).toHaveBeenCalledWith('attribute.quantity');
 	});
@@ -120,18 +121,22 @@ describe('HeatmapFieldSelect', () => {
 	it('only offers listed fields: typed text is a filter, not a value', async () => {
 		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
 		render(
-			<HeatmapFieldSelect queryData={tracesQuery('')} onChange={jest.fn()} />,
+			<DistributionFieldSelect queryData={tracesQuery('')} onChange={jest.fn()} />,
 		);
 
-		const input = within(screen.getByTestId('heatmap-field-select')).getByRole(
-			'combobox',
+		await user.click(screen.getByTestId('distribution-field-select'));
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.quantity',
 		);
-		await user.click(input);
-		await screen.findByTitle('attribute.quantity');
-		await user.type(input, 'no_such_field');
+		await user.type(
+			screen.getByTestId('distribution-field-select-search'),
+			'no_such_field',
+		);
 
 		await screen.findByText('No numeric fields');
-		expect(screen.queryByTitle('no_such_field')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('distribution-field-select-item-no_such_field'),
+		).not.toBeInTheDocument();
 	});
 
 	it('searches the server for typed text, past the listed fields', async () => {
@@ -141,16 +146,16 @@ describe('HeatmapFieldSelect', () => {
 			pointerEventsCheck: 0,
 		});
 		render(
-			<HeatmapFieldSelect queryData={tracesQuery('')} onChange={jest.fn()} />,
+			<DistributionFieldSelect queryData={tracesQuery('')} onChange={jest.fn()} />,
 		);
 
-		const input = within(screen.getByTestId('heatmap-field-select')).getByRole(
-			'combobox',
+		await user.click(screen.getByTestId('distribution-field-select'));
+		await user.type(
+			await screen.findByTestId('distribution-field-select-search'),
+			'queue',
 		);
-		await user.click(input);
-		await user.type(input, 'queue');
 		act(() => {
-			jest.advanceTimersByTime(300);
+			jest.advanceTimersByTime(DEBOUNCE_DELAY);
 		});
 
 		await waitFor(() => expect(requests.at(-1)?.get('searchText')).toBe('queue'));

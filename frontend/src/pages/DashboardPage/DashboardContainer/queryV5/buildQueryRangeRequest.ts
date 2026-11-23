@@ -27,7 +27,7 @@ import {
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
-interface QuerySpecView {
+export interface QuerySpecView {
 	name?: string;
 	legend?: string;
 	signal?: string;

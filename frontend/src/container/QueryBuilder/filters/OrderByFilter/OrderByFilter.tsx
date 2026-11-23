@@ -23,7 +23,7 @@ export function OrderByFilter({
 	entityVersion,
 	isNewQueryV2 = false,
 	placeholder,
-	isBareField,
+	panelType,
 }: OrderByFilterProps): JSX.Element {
 	const getPopupContainer = useSelectPopupContainer();
 	const {
@@ -54,10 +54,8 @@ export function OrderByFilter({
 	// Get parsed aggregation options using createAggregation only for QueryV2
 	const parsedAggregationOptions = useMemo(
 		() =>
-			isNewQueryV2
-				? getParsedAggregationOptionsForOrderBy(query, isBareField)
-				: [],
-		[query, isNewQueryV2, isBareField],
+			isNewQueryV2 ? getParsedAggregationOptionsForOrderBy(query, panelType) : [],
+		[query, isNewQueryV2, panelType],
 	);
 
 	const optionsData = useMemo(() => {

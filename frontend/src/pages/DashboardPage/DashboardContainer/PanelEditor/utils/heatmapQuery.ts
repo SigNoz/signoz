@@ -1,5 +1,5 @@
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
-import { DEFAULT_PERCENTILE } from 'lib/query/heatmapField';
+import { DEFAULT_PERCENTILE } from 'lib/query/distributionField';
 import type {
 	IBuilderQuery,
 	Query,

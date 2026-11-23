@@ -30,10 +30,10 @@ import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetri
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import {
-	aggregatesBareField,
-	setHeatmapField,
-	toHeatmapAggregation,
-} from 'lib/query/heatmapField';
+	aggregatesDistributionField,
+	setDistributionField,
+	toDistributionAggregation,
+} from 'lib/query/distributionField';
 import { isEmpty, isEqual } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -483,8 +483,8 @@ export const useQueryOperations: UseQueryOperations = ({
 			setOperators(newOperators);
 			handleSetQueryData(
 				index,
-				aggregatesBareField(panelType, newQueryData.dataSource)
-					? toHeatmapAggregation(newQueryData)
+				aggregatesDistributionField(panelType, newQueryData.dataSource)
+					? toDistributionAggregation(newQueryData)
 					: newQueryData,
 			);
 		},
@@ -518,8 +518,9 @@ export const useQueryOperations: UseQueryOperations = ({
 			(key: string, value: any) => {
 				// A heatmap's sort names its field, so it follows a field change.
 				const newQuery =
-					key === 'aggregations' && aggregatesBareField(panelType, query.dataSource)
-						? setHeatmapField(query, value?.[0]?.expression ?? '')
+					key === 'aggregations' &&
+					aggregatesDistributionField(panelType, query.dataSource)
+						? setDistributionField(query, value?.[0]?.expression ?? '')
 						: {
 								...query,
 								[key]:

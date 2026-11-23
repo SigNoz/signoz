@@ -4,10 +4,11 @@ import type {
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+import type { LogAggregation, TraceAggregation } from 'types/api/v5/queryRange';
 
 import {
 	ALIAS,
-	BARE_FIELD,
+	DISTRIBUTION_FIELD,
 	parseAggregations,
 	unquoteAlias,
 } from './aggregationExpression';
@@ -22,7 +23,12 @@ const NUMERIC_FIELD_CALL = new RegExp(
 /** The percentile a field or histogram metric gets when it leaves a heatmap. */
 export const DEFAULT_PERCENTILE = 'p90';
 
-type Aggregation = { expression?: string; alias?: string };
+type FieldAggregation = TraceAggregation | LogAggregation;
+
+const fieldAggregations = (query: IBuilderQuery): FieldAggregation[] =>
+	(query.aggregations ?? []).filter(
+		(aggregation): aggregation is FieldAggregation => 'expression' in aggregation,
+	);
 
 function isLogsOrTraces(
 	dataSource: DataSource,
@@ -30,8 +36,8 @@ function isLogsOrTraces(
 	return dataSource === DataSource.LOGS || dataSource === DataSource.TRACES;
 }
 
-/** Whether the query's aggregation is a bare field rather than a function call. */
-export function aggregatesBareField(
+/** Whether the query's aggregation is a field rather than a function call. */
+export function aggregatesDistributionField(
 	panelType: string | null | undefined,
 	dataSource: DataSource,
 ): boolean {
@@ -45,7 +51,7 @@ export function aggregatesBareField(
  */
 function replaceAggregation(
 	query: IBuilderQuery,
-	from: Aggregation | undefined,
+	from: Partial<FieldAggregation> | undefined,
 	to: string,
 	removedKeys: string[] = [],
 ): IBuilderQuery {
@@ -54,7 +60,7 @@ function replaceAggregation(
 		Boolean(fromKey) && order.columnName === fromKey;
 	return {
 		...query,
-		aggregations: [{ expression: to }] as IBuilderQuery['aggregations'],
+		aggregations: [{ expression: to }],
 		orderBy: query.orderBy
 			?.filter((order) =>
 				isFrom(order) ? Boolean(to) : !removedKeys.includes(order.columnName),
@@ -63,32 +69,34 @@ function replaceAggregation(
 	};
 }
 
-export function getHeatmapFieldPlaceholder(dataSource: DataSource): string {
+export function getDistributionFieldPlaceholder(
+	dataSource: DataSource,
+): string {
 	return dataSource === DataSource.TRACES
 		? 'Numeric field to bucket, e.g. duration_nano'
 		: 'Numeric field to bucket';
 }
 
 /**
- * Logs and traces heatmaps bucket a bare field; any function aggregation is
+ * Logs and traces heatmaps bucket a field; any function aggregation is
  * rejected, so a numeric `fn(field)` keeps its field and anything else leaves
  * the field for the user to pick.
  */
-export function toHeatmapAggregation(query: IBuilderQuery): IBuilderQuery {
+export function toDistributionAggregation(query: IBuilderQuery): IBuilderQuery {
 	if (!isLogsOrTraces(query.dataSource)) {
 		return query;
 	}
-	const aggregations = query.aggregations as Aggregation[] | undefined;
-	const [first] = aggregations ?? [];
-	const hasOneAggregation = aggregations?.length === 1;
-	if (hasOneAggregation && BARE_FIELD.test(first.expression ?? '')) {
+	const aggregations = fieldAggregations(query);
+	const [first] = aggregations;
+	const hasOneAggregation = aggregations.length === 1;
+	if (hasOneAggregation && DISTRIBUTION_FIELD.test(first.expression ?? '')) {
 		return query;
 	}
 	const fieldCall = hasOneAggregation
 		? NUMERIC_FIELD_CALL.exec(first.expression ?? '')
 		: null;
 	const inlineAlias = fieldCall?.[2] && unquoteAlias(fieldCall[2]);
-	const removedKeys = (aggregations ?? [])
+	const removedKeys = aggregations
 		.flatMap(({ expression, alias }) =>
 			parseAggregations(expression ?? '', alias),
 		)
@@ -102,22 +110,25 @@ export function toHeatmapAggregation(query: IBuilderQuery): IBuilderQuery {
 }
 
 /** Picks `field` as the heatmap's aggregation; a sort on the old field follows it. */
-export function setHeatmapField(
+export function setDistributionField(
 	query: IBuilderQuery,
 	field: string,
 ): IBuilderQuery {
-	const [first] = (query.aggregations as Aggregation[] | undefined) ?? [];
+	const [first] = fieldAggregations(query);
 	return replaceAggregation(query, first, field);
 }
 
-/** Inverse of `toHeatmapAggregation`: every other panel needs a function aggregation. */
-export function fromHeatmapAggregation(query: IBuilderQuery): IBuilderQuery {
-	if (!isLogsOrTraces(query.dataSource) || query.aggregations?.length !== 1) {
+/** Inverse of `toDistributionAggregation`: every other panel needs a function aggregation. */
+export function fromDistributionAggregation(
+	query: IBuilderQuery,
+): IBuilderQuery {
+	const aggregations = fieldAggregations(query);
+	if (!isLogsOrTraces(query.dataSource) || aggregations.length !== 1) {
 		return query;
 	}
-	const [first] = query.aggregations as Aggregation[];
+	const [first] = aggregations;
 	const expression = first.expression?.trim() ?? '';
-	const field = BARE_FIELD.exec(expression)?.[1];
+	const field = DISTRIBUTION_FIELD.exec(expression)?.[1];
 	if (expression && !field) {
 		return query;
 	}

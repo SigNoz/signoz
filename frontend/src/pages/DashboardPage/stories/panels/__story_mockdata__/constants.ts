@@ -61,7 +61,7 @@ export const HEATMAP_SOURCES = [
 	'no field',
 ] as const;
 
-/** The bare field a logs or traces heatmap buckets. */
+/** The field a logs or traces heatmap buckets. */
 export const HEATMAP_FIELDS = {
 	logs: 'attribute.queue_depth',
 	traces: 'duration_nano',

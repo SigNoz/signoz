@@ -10,9 +10,9 @@ import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
 import {
-	fromHeatmapAggregation,
-	toHeatmapAggregation,
-} from 'lib/query/heatmapField';
+	fromDistributionAggregation,
+	toDistributionAggregation,
+} from 'lib/query/distributionField';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -190,7 +190,7 @@ export function usePanelKindChange({
 				const converted = {
 					...ordered,
 					queryData: ordered.queryData.map(
-						isHeatmap ? toHeatmapAggregation : fromHeatmapAggregation,
+						isHeatmap ? toDistributionAggregation : fromDistributionAggregation,
 					),
 				};
 				return isHeatmap

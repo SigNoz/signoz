@@ -1,4 +1,4 @@
-/** An `as` alias: quoted, or a bare word that may carry dashes. */
+/** An `as` alias: quoted, or an unquoted word that may carry dashes. */
 export const ALIAS = `(?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)`;
 
 export const unquoteAlias = (alias: string): string =>
@@ -8,7 +8,7 @@ export const unquoteAlias = (alias: string): string =>
  * A logs or traces heatmap's aggregation: one field with an optional alias.
  * The field mirrors the querier's HeatmapAggregationField: no call, no whitespace.
  */
-export const BARE_FIELD = new RegExp(
+export const DISTRIBUTION_FIELD = new RegExp(
 	`^\\s*([^\\s()]+)(?:\\s+as\\s+(${ALIAS}))?\\s*$`,
 );
 
@@ -16,7 +16,7 @@ export const BARE_FIELD = new RegExp(
 export function parseAggregations(
 	expression: string,
 	availableAlias?: string,
-	allowBareField = false,
+	allowDistributionField = false,
 ): { expression: string; alias?: string }[] {
 	const result: { expression: string; alias?: string }[] = [];
 	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
@@ -25,11 +25,11 @@ export function parseAggregations(
 		`([a-zA-Z0-9_]+\\([^)]*\\))(?:\\s*as\\s+(${ALIAS}))?`,
 		'g',
 	);
-	// With no call at all, the whole expression may be the bare field a logs/traces
+	// With no call at all, the whole expression may be the field a logs/traces
 	// heatmap buckets, e.g. "duration_nano"
 	let match =
 		regex.exec(expression) ??
-		(allowBareField ? BARE_FIELD.exec(expression) : null);
+		(allowDistributionField ? DISTRIBUTION_FIELD.exec(expression) : null);
 	while (match !== null) {
 		const expr = match[1];
 		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
