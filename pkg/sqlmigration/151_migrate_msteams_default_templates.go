@@ -491,7 +491,8 @@ func migrateMSTeamsText(text string) (string, msteamsTemplateOutcome, error) {
 		return msteamsDefaultText, msteamsTemplateReplaced, nil
 	}
 
-	if !isMSTeamsSlackSeedDerived(text) {
+	// Text already holding a placeholder character cannot be masked safely.
+	if strings.Contains(text, msteamsMaskOpen) || strings.Contains(text, msteamsMaskClose) || !isMSTeamsSlackSeedDerived(text) {
 		return text, msteamsTemplateCustom, nil
 	}
 
