@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Tests the static Storybook build. Arguments go to test-storybook: runner flags
-# and, optionally, the story files to test (all of them when none are given).
-# STORYBOOK_STATIC_DIR points at an existing build; without it the script builds
-# one into storybook-static/.
 set -euo pipefail
 
 port=6006
@@ -21,7 +17,7 @@ if curl -s -o /dev/null "http://127.0.0.1:$port/"; then
 	exit 1
 fi
 
-node_modules/.bin/vite preview --outDir "$static_dir" --host 127.0.0.1 --port "$port" --strictPort >/dev/null &
+node_modules/.bin/vite preview --outDir "$static_dir" --host 127.0.0.1 --port "$port" --strictPort --no-open >/dev/null &
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 

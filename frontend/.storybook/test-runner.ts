@@ -7,11 +7,6 @@ const IGNORED_MESSAGES = [
 	// browser still warns on the real cross-origin one it briefly requests
 	// before msw starts (no CORS headers), regardless of story content.
 	/Can't access cssRules/,
-	// Pre-existing dev-server noise, unrelated to any story.
-	/Couldn't load preload assets/,
-	// Fires because a Jest-driven browser sets a global testing flag React
-	// checks for; unrelated to anything a story does.
-	/current testing environment is not configured to support act/,
 	// React and antd route dev-only warnings (missing keys, DOM nesting, API
 	// deprecations) through `console.error` under this prefix; app-wide and
 	// tracked separately from story regressions.
@@ -37,11 +32,11 @@ interface CapturedMessage {
 	text: string;
 }
 
-const PREPARE_TIMEOUT_MS = 180_000;
-
 const messagesByPage = new WeakMap<Page, CapturedMessage[]>();
 
 const SETTLE_TIMEOUT_MS = 1_000;
+
+const SETTLE_POLL_MS = 25;
 
 const requestsByPage = new WeakMap<Page, Set<Request>>();
 
@@ -60,7 +55,7 @@ const settleRequests = async (page: Page): Promise<void> => {
 	const deadline = Date.now() + SETTLE_TIMEOUT_MS;
 	while (pending.size > 0 && Date.now() < deadline) {
 		await new Promise((resolve) => {
-			setTimeout(resolve, 25);
+			setTimeout(resolve, SETTLE_POLL_MS);
 		});
 	}
 	pending.clear();
@@ -86,15 +81,6 @@ const config: TestRunnerConfig = {
 	// msw logs every mocked request at `log`; keep it out of the failure dump
 	// unless the job is re-run with debug logging (GitHub sets RUNNER_DEBUG=1).
 	logLevel: process.env.RUNNER_DEBUG === '1' ? 'info' : 'warn',
-	// The runner's default prepare, minus Playwright's 30s navigation timeout: on
-	// a cold dev server the first load compiles the whole preview, which outlasts
-	// it on a shared CI runner.
-	async prepare({ page }): Promise<void> {
-		await page.goto(new URL('iframe.html', process.env.TARGET_URL).toString(), {
-			waitUntil: 'load',
-			timeout: PREPARE_TIMEOUT_MS,
-		});
-	},
 	async preVisit(page): Promise<void> {
 		await settleRequests(page);
 

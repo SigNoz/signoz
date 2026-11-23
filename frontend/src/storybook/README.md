@@ -7,7 +7,14 @@ values.
 ```bash
 pnpm storybook          # dev server on :6006
 pnpm storybook:build    # static build into storybook-static/
+pnpm test:storybook     # build, then run every story through the test runner
 ```
+
+`pnpm test:storybook` tests the static build, the same code users get. Extra
+arguments go to `test-storybook`: runner flags, and story files to test only
+those (`pnpm test:storybook src/components/NewSelect/stories/NewSelect.stories.tsx`).
+Set `STORYBOOK_STATIC_DIR` to test an existing build instead of building one.
+The build is served on `:6006`, so stop the dev server first.
 
 ## Layout
 
