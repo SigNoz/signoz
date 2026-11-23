@@ -1855,9 +1855,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, orgID val
 		sb.Where(sb.E("attr_type", fieldValueSelector.FieldContext.MetricAttrType()))
 	}
 
-	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-		sb.Where(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
-	}
+	// attr_datatype is not filtered on: metric attributes are all strings, and it is not stored as TagDataType spells it.
 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
 		if metricNames := querybuilder.FamilyMetricNames(ctx, orgID, t.fl, fieldValueSelector.MetricContext.MetricName); len(metricNames) > 1 {
