@@ -85,7 +85,17 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			key: 'top-level-operation',
 			render: (operation: string): JSX.Element => (
 				<div className="top-level-operations-list-item" key={operation}>
-					<Typography.Text> {operation} </Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{' '}
+						{operation}{' '}
+					</Typography>
 				</div>
 			),
 		},
@@ -93,7 +103,17 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 	return (
 		<div className="container">
-			<Typography.Title level={5} className="top-level-operations-header">
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="bold"
+				color="inherit"
+				as="h5"
+				display="flex"
+				gap={4}
+				marginY={4}
+				textOverflow="wrap"
+			>
 				<AppLink to={ROUTES.APPLICATION}>
 					<span className="breadcrumb">
 						{' '}
@@ -104,7 +124,7 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 				<AppLink to={`${ROUTES.APPLICATION}/${servicename}`}>
 					<span className="breadcrumb">{servicename} </span>
 				</AppLink>
-			</Typography.Title>
+			</Typography>
 
 			<div className="info-alert">
 				<Alert message={alertDesc()} type="info" showIcon />
@@ -112,9 +132,17 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 			{isLoading && (
 				<div className="loading-top-level-operations">
-					<Typography.Title level={5}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						<RefreshCw className="animate-spin" size="sm" /> Loading ...
-					</Typography.Title>
+					</Typography>
 				</div>
 			)}
 

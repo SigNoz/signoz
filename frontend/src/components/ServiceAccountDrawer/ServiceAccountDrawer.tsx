@@ -8,8 +8,8 @@ import React, {
 import { useQueryClient } from 'react-query';
 import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { toast } from '@signozhq/ui/sonner';
+import { Drawer } from '@signozhq/ui/drawer';
+import { toast } from '@signozhq/ui/toast';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -370,64 +370,62 @@ function ServiceAccountDrawer({
 		setSelectedAccountId,
 	]);
 
-	const footer = useMemo(
+	const showFooter =
+		activeTab === ServiceAccountDrawerTab.Overview && !isDeleted && open;
+
+	const footerStart = useMemo(
 		() =>
-			activeTab === ServiceAccountDrawerTab.Overview && !isDeleted && open ? (
-				<div className="sa-drawer__footer">
+			showFooter ? (
+				<AuthZButton
+					size="md"
+					checks={[buildSADeletePermission(selectedAccountId ?? '')]}
+					authZEnabled={!!selectedAccountId}
+					variant="link"
+					color="danger"
+					onClick={(): void => {
+						void setIsDeleteOpen(true);
+					}}
+					prefix={<Trash2 size={12} />}
+					testId="sa-delete-btn"
+				>
+					Delete Service Account
+				</AuthZButton>
+			) : null,
+		[showFooter, selectedAccountId, setIsDeleteOpen],
+	);
+
+	const footerActions = useMemo(
+		() =>
+			showFooter ? (
+				<>
+					<Button
+						size="md"
+						variant="outlined"
+						color="secondary"
+						onClick={handleClose}
+						prefix={<X size={14} />}
+					>
+						Cancel
+					</Button>
 					<AuthZButton
 						size="md"
-						checks={[buildSADeletePermission(selectedAccountId ?? '')]}
+						checks={[
+							buildSAReadPermission(selectedAccountId ?? ''),
+							buildSAUpdatePermission(selectedAccountId ?? ''),
+						]}
 						authZEnabled={!!selectedAccountId}
-						variant="link"
-						color="danger"
-						onClick={(): void => {
-							void setIsDeleteOpen(true);
-						}}
-						prefix={<Trash2 size={12} />}
-						testId="sa-delete-btn"
+						variant="solid"
+						color="primary"
+						loading={isSaving}
+						disabled={!isDirty}
+						onClick={handleSave}
+						testId="sa-save-btn"
 					>
-						Delete Service Account
+						Save Changes
 					</AuthZButton>
-					<div className="sa-drawer__footer-right">
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleClose}
-							prefix={<X size={14} />}
-						>
-							Cancel
-						</Button>
-						<AuthZButton
-							size="md"
-							checks={[
-								buildSAReadPermission(selectedAccountId ?? ''),
-								buildSAUpdatePermission(selectedAccountId ?? ''),
-							]}
-							authZEnabled={!!selectedAccountId}
-							variant="solid"
-							color="primary"
-							loading={isSaving}
-							disabled={!isDirty}
-							onClick={handleSave}
-							testId="sa-save-btn"
-						>
-							Save Changes
-						</AuthZButton>
-					</div>
-				</div>
+				</>
 			) : null,
-		[
-			activeTab,
-			isDeleted,
-			open,
-			selectedAccountId,
-			isSaving,
-			isDirty,
-			handleClose,
-			handleSave,
-			setIsDeleteOpen,
-		],
+		[showFooter, selectedAccountId, isSaving, isDirty, handleClose, handleSave],
 	);
 
 	const body = (
@@ -546,20 +544,15 @@ function ServiceAccountDrawer({
 	);
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
+			stack="overlay"
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleClose();
-				}
-			}}
-			direction="right"
-			showCloseButton
-			showOverlay={false}
+			onClose={handleClose}
 			title="Service Account Details"
-			className="sa-drawer"
 			width="wide"
-			footer={footer}
+			footerPrefix={footerStart}
+			footerSuffix={footerActions}
 		>
 			{open && (
 				<>
@@ -568,7 +561,7 @@ function ServiceAccountDrawer({
 					<AddKeyModal />
 				</>
 			)}
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

@@ -2,10 +2,13 @@ import { useCallback } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { getQueryPayloadFromWidgetsData } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
+import {
+	getQueryPayloadFromWidgetsData,
+	getValueFromScalarResponse,
+} from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
 import { AppState } from 'store/reducers';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/widgets/widget';
@@ -39,9 +42,9 @@ export const useGetValueFromWidget = (
 
 	const queries = useQueries(
 		queryPayloads().map((payload) => ({
-			queryKey: [...queryKey, payload, ENTITY_VERSION_V4],
+			queryKey: [...queryKey, payload, ENTITY_VERSION_V5],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 		})),
 	);
@@ -57,11 +60,7 @@ export const useGetValueFromWidget = (
 			return 'Error';
 		}
 
-		const value = parseFloat(
-			query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-				?.values?.[0]?.value || 'NaN',
-		);
-		return Number.isNaN(value) ? 'NaN' : value.toFixed(2);
+		return getValueFromScalarResponse(query.data);
 	});
 
 	return { values, isLoading, isError };

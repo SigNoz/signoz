@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Fullscreen } from '@signozhq/icons';
 
@@ -9,13 +9,10 @@ import styles from './ExpandableValue.module.scss';
 const DEFAULT_THRESHOLD = 100;
 const DEFAULT_DIALOG_TITLE = 'Value';
 
-const DEFAULT_Z_INDEX = 1100;
-
 interface ExpandableValueProps {
 	value: string;
 	title?: string;
 	threshold?: number;
-	zIndex?: number;
 	children: ReactNode;
 }
 
@@ -23,7 +20,6 @@ function ExpandableValue({
 	value,
 	title = DEFAULT_DIALOG_TITLE,
 	threshold = DEFAULT_THRESHOLD,
-	zIndex = DEFAULT_Z_INDEX,
 	children,
 }: ExpandableValueProps): JSX.Element {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -54,15 +50,14 @@ function ExpandableValue({
 				<span className={styles.trigger}>{children}</span>
 			</Tooltip>
 
-			<DialogWrapper
+			<Dialog
 				title={title}
 				open={isDialogOpen}
-				onOpenChange={setIsDialogOpen}
-				className={styles.dialog}
-				style={{ zIndex }}
+				onClose={(): void => setIsDialogOpen(false)}
+				width="extra-wide"
 			>
 				<pre className={styles.fullValue}>{value}</pre>
-			</DialogWrapper>
+			</Dialog>
 		</>
 	);
 }

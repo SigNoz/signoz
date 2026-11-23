@@ -1,41 +1,17 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { liveLogsMocks } from './LiveLogs.stories.mocks';
+import { type LiveLogsArgs, liveLogsMocks } from './LiveLogs.stories.mocks';
+import {
+	copyLiveLogLink,
+	openLiveLogDetails,
+	tailLive,
+} from './__story_mockdata__/liveLogs.play';
 
 import LogsModulePage from '../../LogsModulePage';
 
-type LiveLogsArgs = PageStoryArgs<typeof liveLogsMocks>;
-
 const pageStory = storyMocks(liveLogsMocks, { layout: 'app' });
-
-/** The page connects before it renders a line, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-/** Live tail is reached through the time picker, which owns the `Live` option. */
-const goLive = async (canvasElement: HTMLElement): Promise<void> => {
-	const canvas = within(canvasElement);
-
-	const timePicker = await waitFor(() => {
-		const input = canvasElement.querySelector<HTMLElement>(
-			'.timeSelection-input',
-		);
-
-		if (!input) {
-			throw new Error('Time picker did not render');
-		}
-
-		return input;
-	}, untilLoaded);
-
-	await userEvent.click(timePicker);
-	await userEvent.click(
-		await canvas.findByRole('button', { name: 'Live' }, untilLoaded),
-	);
-};
 
 /**
  * Live tail: the explorer following a filter as lines arrive, over the log
@@ -49,20 +25,7 @@ const meta = {
 	title: 'Pages/Logs/Live Tail',
 	tags: ['play'],
 	component: LogsModulePage,
-	play: async ({ mount, args, canvasElement }): Promise<void> => {
-		await mount();
-		await goLive(canvasElement);
-
-		// The stream answers after a connect delay, so without this the story is
-		// captured on `Fetching live logs...` rather than on the lines it names.
-		if (args.liveLogs > 0) {
-			await within(canvasElement).findAllByText(
-				/order 8412 placed/,
-				undefined,
-				untilLoaded,
-			);
-		}
-	},
+	play: tailLive,
 	...pageStory,
 	// The stream mock answers in one piece, so the polyfill reads its end as a
 	// dropped connection and logs the error it would on any reconnect; that is the
@@ -95,30 +58,10 @@ export const JsonBody: Story = {
 
 /** Row actions render on hover, so a streamed line is hovered before its copy link is pressed. */
 export const LogLinkCopiedToast: Story = {
-	play: async ({ mount, canvasElement }): Promise<void> => {
-		await mount();
-		await goLive(canvasElement);
+	play: copyLiveLogLink,
+};
 
-		const [line] = await within(canvasElement).findAllByText(
-			/order 8412 placed/,
-			undefined,
-			untilLoaded,
-		);
-
-		await userEvent.hover(line);
-		await userEvent.click(
-			await waitFor(() => {
-				const button = canvasElement.querySelector<HTMLElement>('.copy-log-btn');
-
-				if (!button) {
-					throw new Error('Row actions did not render');
-				}
-
-				return button;
-			}, untilLoaded),
-		);
-		await waitFor(() =>
-			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
-		);
-	},
+/** A streamed line opened in the log detail drawer. */
+export const LiveLogDetails: Story = {
+	play: openLiveLogDetails,
 };

@@ -6,7 +6,7 @@ import {
 	useState,
 } from 'react';
 import logEvent from 'api/common/logEvent';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import type {
 	DashboardtypesGettableDashboardV2DTO,
 	DashboardtypesJSONPatchOperationDTO,
@@ -320,7 +320,7 @@ export function useVariableListActions({
 				} else {
 					message = 'Could not delete the variable';
 				}
-				toast.error(message);
+				toast.danger(message, { action: { label: 'Dismiss' } });
 			}
 			setImpact(null);
 		},

@@ -171,7 +171,7 @@ export const fillValidAlert = async (
 	const canvas = within(canvasElement);
 
 	await userEvent.type(
-		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
+		await canvas.findByTestId('alert-name-input-field', undefined, untilLoaded),
 		'Toast alert',
 	);
 	const channels = await canvas.findByTestId(

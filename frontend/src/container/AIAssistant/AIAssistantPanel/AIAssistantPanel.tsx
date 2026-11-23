@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
+import { Typography } from '@signozhq/ui/typography';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -42,7 +42,7 @@ const PANEL_RESIZE_EDGES = {
 const PANEL_AVOID = [supportChatObstacle];
 
 export default function AIAssistantPanel(): JSX.Element | null {
-	const { pathname } = useAppLocation();
+	const { pathname, search } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
@@ -66,12 +66,12 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		closeDrawer();
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the drawer, so this is a surface
-		// switch, not a new open.
+		// switch, not a new open. `returnTo` is where its minimize button comes back to.
 		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ state: { fromInApp: true } },
+			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
-	}, [activeConversationId, closeDrawer]);
+	}, [activeConversationId, closeDrawer, pathname, search]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -106,6 +106,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
 				isOpen
+				className={styles.panel}
 				width={PANEL_WIDTH}
 				height={panelHeight}
 				minWidth={PANEL_MIN_WIDTH}
@@ -121,7 +122,19 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				<div className={`${styles.header} floating-panel__drag-handle`}>
 					<div className={`${styles.title} noz-wave`}>
 						<Noz size={18} />
-						{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
+						{chatTitle && (
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+							>
+								{chatTitle}
+							</Typography>
+						)}
 					</div>
 
 					<div className={styles.actions}>

@@ -7,8 +7,6 @@
 .slider {
 	flex: 1;
 	min-width: 0;
-	// Cancel the slider's half-thumb track inset so it aligns with the other controls.
-	margin-inline: calc(var(--slider-thumb-width, 18px) / -2);
 }
 
 .value {

@@ -46,8 +46,3 @@ export const Default: Story = {};
 export const PaginatedOperations: Story = {
 	args: { operations: 120 },
 };
-
-/** The documented 2,500-operation threshold is exceeded by one entry point. */
-export const ThresholdWarning: Story = {
-	args: { operations: 2501 },
-};

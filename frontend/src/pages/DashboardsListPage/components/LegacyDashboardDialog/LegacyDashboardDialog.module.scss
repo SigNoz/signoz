@@ -6,8 +6,6 @@
 
 .description {
 	color: var(--l2-foreground);
-	font-size: 13px;
-	line-height: 20px;
 
 	strong {
 		color: var(--l1-foreground);
@@ -21,14 +19,6 @@
 	gap: 6px;
 }
 
-.idLabel {
-	color: var(--l2-foreground);
-	font-size: 11px;
-	font-weight: 500;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
 .idRow {
 	display: flex;
 	align-items: center;
@@ -38,18 +28,4 @@
 	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 	background: var(--l2-background);
-}
-
-.idValue {
-	color: var(--l1-foreground);
-	font-family: 'SF Mono', 'Fira Code', monospace;
-	font-size: 12px;
-	word-break: break-all;
-}
-
-.footer {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: flex-end;
-	gap: 8px;
 }

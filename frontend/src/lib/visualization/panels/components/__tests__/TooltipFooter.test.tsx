@@ -18,9 +18,10 @@ describe('TooltipFooter', () => {
 
 			expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
 			expect(screen.getByText('to pin the tooltip')).toBeInTheDocument();
-			expect(
-				screen.getByText(DEFAULT_PIN_TOOLTIP_KEY.toUpperCase()),
-			).toBeInTheDocument();
+			expect(screen.getByTestId('uplot-tooltip-pin-key')).toHaveAttribute(
+				'data-key',
+				DEFAULT_PIN_TOOLTIP_KEY,
+			);
 		});
 
 		it('hides the drilldown hint when canDrilldown is false', () => {
@@ -37,10 +38,13 @@ describe('TooltipFooter', () => {
 			expect(screen.queryByText('to pin the tooltip')).not.toBeInTheDocument();
 		});
 
-		it('renders a custom pin key in uppercase', () => {
+		it('renders a custom pin key', () => {
 			render(<TooltipFooter {...defaultProps} pinKey="x" />);
 
-			expect(screen.getByText('X')).toBeInTheDocument();
+			expect(screen.getByTestId('uplot-tooltip-pin-key')).toHaveAttribute(
+				'data-key',
+				'x',
+			);
 		});
 
 		it('does not render the unpin button', () => {
@@ -55,10 +59,14 @@ describe('TooltipFooter', () => {
 			render(<TooltipFooter {...defaultProps} isPinned />);
 
 			expect(screen.getByText('to unpin')).toBeInTheDocument();
-			expect(
-				screen.getByText(DEFAULT_PIN_TOOLTIP_KEY.toUpperCase()),
-			).toBeInTheDocument();
-			expect(screen.getByText('Esc')).toBeInTheDocument();
+			expect(screen.getByTestId('uplot-tooltip-pin-key')).toHaveAttribute(
+				'data-key',
+				DEFAULT_PIN_TOOLTIP_KEY,
+			);
+			expect(screen.getByTestId('uplot-tooltip-escape-key')).toHaveAttribute(
+				'data-key',
+				'Escape',
+			);
 		});
 
 		it('renders the unpin button', () => {

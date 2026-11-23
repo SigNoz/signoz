@@ -9,6 +9,7 @@ import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
@@ -16,6 +17,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import { CategoryIcon } from './Base/categoryIcons';
 import { DefaultQueryRedirect } from './Base/DefaultQueryRedirect';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import { carryOverListFilters } from './Base/relations';
 import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
@@ -186,6 +188,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
+			const carriedExpression = carryOverListFilters(
+				currentQuery.builder.queryData[0]?.filter?.expression || '',
+				key as InfraMonitoringEntity,
+			);
+
 			// Navigate first: a navigation drops the nuqs writes still queued.
 			redirectWithQueryBuilderData({
 				...currentQuery,
@@ -194,8 +201,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 					queryData: [
 						{
 							...(currentQuery.builder.queryData[0] || {}),
-							filter: { expression: '' },
-							filters: { items: [], op: 'AND' as const },
+							filter: { expression: carriedExpression },
+							filters: {
+								items: convertExpressionToFilters(carriedExpression),
+								op: 'AND' as const,
+							},
 						},
 					],
 				},
@@ -246,9 +256,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								<>
 									<div className={styles.categorySelectorSection}>
 										<div className={styles.sectionHeader} data-type="resource">
-											<Typography.Text className={styles.sectionLabel}>
+											<Typography
+												variant="uppercase"
+												size="small"
+												weight="bold"
+												color="tertiary"
+												as="span"
+												textOverflow="visible"
+											>
 												Viewing · Resource
-											</Typography.Text>
+											</Typography>
 											<div className={styles.sectionLine} />
 											<Tooltip title="Collapse Filters">
 												<ArrowUpToLine
@@ -274,7 +291,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 														data-testid={`category-${category.key}`}
 													>
 														{category.icon}
-														<Typography.Text>{category.label}</Typography.Text>
+														<Typography
+															variant="paragraph"
+															size="base"
+															weight="regular"
+															color="inherit"
+															as="span"
+															textOverflow="wrap"
+														>
+															{category.label}
+														</Typography>
 													</button>
 												))}
 											</div>
@@ -283,9 +309,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 									<div className={styles.quickFiltersSection}>
 										<div className={styles.sectionHeader} data-type="filter">
-											<Typography.Text className={styles.sectionLabel}>
+											<Typography
+												variant="uppercase"
+												size="small"
+												weight="bold"
+												color="tertiary"
+												as="span"
+												textOverflow="visible"
+											>
 												Filter by
-											</Typography.Text>
+											</Typography>
 											<div className={styles.sectionLine} />
 										</div>
 										{selectedCategoryConfig && (

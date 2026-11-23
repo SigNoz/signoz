@@ -10,8 +10,10 @@ import {
 import { antdDriver, type Antd } from '../antd';
 import { apiDriver } from '../api';
 import { collectRequests } from '../console';
+import { inputField } from '../input';
 import { driver, type Layer } from '../kit';
 import { tanstackDriver, type Tanstack } from '../tanstack';
+import { toastByText } from '../toast';
 
 import {
 	ALERT_EDIT_PATH,
@@ -70,6 +72,8 @@ export interface AlertsShell {
 	crumbButton(name: string): Locator;
 	/** A toast or notification, by its text. */
 	message(text: string | RegExp): Locator;
+	/** A toast only; `message` also matches a danger toast's live-region copy. */
+	toast(text: string | RegExp): Locator;
 	/** Every request the page makes from this call on. */
 	recordRequests(): Request[];
 }
@@ -376,17 +380,18 @@ export function alertsDriver(page: Page): Alerts {
 		configSidebarItem: (key) => page.getByTestId(`configuration-sidebar-${key}`),
 		rulesHeading: () =>
 			page.getByRole('heading', { name: 'Alert Rules', exact: true }),
-		triggeredSearch: () => page.getByTestId('triggered-alerts-search-input'),
+		triggeredSearch: () => inputField(page, 'triggered-alerts-search-input'),
 		breadcrumb: () => page.locator('.ant-breadcrumb'),
 		crumb: (text) => shell.breadcrumb().getByText(text),
 		crumbButton: (name) => shell.breadcrumb().getByRole('button', { name }),
 		message: (text) => page.getByText(text),
+		toast: (text) => toastByText(page, text),
 		recordRequests: () => collectRequests(page),
 	};
 
 	const channels: AlertChannels = {
 		search: async (name) => {
-			await page.getByTestId('channels-search').fill(name);
+			await inputField(page, 'channels-search').fill(name);
 		},
 		entry: (name) => page.locator('tbody tr').filter({ hasText: name }),
 		newButton: () => page.getByTestId('channels-create'),
@@ -437,7 +442,7 @@ export function alertsDriver(page: Page): Alerts {
 		newAlertButton: () => page.getByTestId('list-alerts-new-alert-button'),
 		columnHeader: (name) => page.getByRole('columnheader', { name }),
 		sortButton: (name) => page.getByRole('button', { name }),
-		nextPageButton: () => page.getByLabel('Go to next page'),
+		nextPageButton: () => page.getByTestId('pagination-next'),
 		pageSizeSelect: () => page.getByTestId('pagination-page-size'),
 		pageSizeOption: (size) =>
 			page.getByRole('option', { name: String(size), exact: true }),
@@ -462,7 +467,7 @@ export function alertsDriver(page: Page): Alerts {
 
 		saveAs: async (name) => {
 			await page.getByTestId('alert-rules-view-save-trigger').click();
-			await page.getByTestId('save-alert-rule-view-name').fill(name);
+			await inputField(page, 'save-alert-rule-view-name').fill(name);
 			const [created] = await Promise.all([
 				viewWrite('POST'),
 				page.getByTestId('save-alert-rule-view-confirm').click(),
@@ -475,7 +480,7 @@ export function alertsDriver(page: Page): Alerts {
 		rename: async (id, name) => {
 			await views.item(id).hover();
 			await page.getByTestId(`alert-rules-view-rename-${id}`).click();
-			await page.getByTestId('rename-alert-rule-view-name').fill(name);
+			await inputField(page, 'rename-alert-rule-view-name').fill(name);
 			await Promise.all([
 				viewWrite('PUT'),
 				page.getByTestId('rename-alert-rule-view-confirm').click(),
@@ -547,7 +552,7 @@ export function alertsDriver(page: Page): Alerts {
 			await page.waitForURL(/compositeQuery=/, { timeout: 15_000 });
 		},
 
-		name: () => page.getByTestId('alert-name-input'),
+		name: () => inputField(page, 'alert-name-input'),
 		saveButton: () => page.getByTestId('save-alert-rule-button'),
 		testButton: () => page.getByTestId('test-notification-button'),
 		discardButton: () => page.getByTestId('discard-alert-rule-button'),
@@ -577,7 +582,7 @@ export function alertsDriver(page: Page): Alerts {
 		thresholdRows: () => page.locator('.threshold-item'),
 		thresholdRow: (index) => form.thresholdRows().nth(index),
 		thresholdValue: (index = 0) =>
-			page.getByTestId('threshold-value-input').nth(index),
+			inputField(page, 'threshold-value-input').nth(index),
 
 		selectThresholdChannel: async (index, channelName) => {
 			await wheelTo(form.thresholdChannelSelects().nth(index));
@@ -709,13 +714,13 @@ export function alertsDriver(page: Page): Alerts {
 		newRuleChip: () => page.getByText('New Alert Rule'),
 		addThresholdButton: () => page.getByTestId('add-threshold-button'),
 		thresholdName: (index = 0) =>
-			page.getByTestId('threshold-name-input').nth(index),
+			inputField(page, 'threshold-name-input').nth(index),
 		thresholdOperatorSelect: () =>
 			page.getByTestId('alert-threshold-operator-select'),
 		thresholdMatchTypeSelect: () =>
 			page.getByTestId('alert-threshold-match-type-select'),
 		recoveryThresholdValue: () =>
-			page.getByTestId('recovery-threshold-value-input'),
+			inputField(page, 'recovery-threshold-value-input'),
 		thresholdChannelSelects: () =>
 			page.getByTestId('threshold-notification-channel-select'),
 
@@ -737,15 +742,15 @@ export function alertsDriver(page: Page): Alerts {
 		viewRoutingPoliciesButton: () =>
 			page.getByTestId('view-routing-policies-button'),
 		repeatNotificationsInterval: () =>
-			page.getByTestId('repeat-notifications-time-input'),
+			inputField(page, 'repeat-notifications-time-input'),
 		repeatNotificationsUnitSelect: () =>
 			page.getByTestId('repeat-notifications-unit-select'),
 		repeatNotificationsConditionsSelect: () =>
 			page.getByTestId('repeat-notifications-conditions-select'),
 		missingDataToleranceInput: () =>
-			page.getByTestId('send-notification-if-data-is-missing-input'),
+			inputField(page, 'send-notification-if-data-is-missing-input'),
 		minimumDatapointsInput: () =>
-			page.getByTestId('enforce-minimum-datapoints-input'),
+			inputField(page, 'enforce-minimum-datapoints-input'),
 		customScheduleEditor: () => page.locator('.edit-custom-schedule'),
 		errorModal: () => page.locator('.error-modal__wrap'),
 		errorModalCloseButton: () => page.getByTestId('close-button'),
@@ -790,7 +795,7 @@ export function alertsDriver(page: Page): Alerts {
 		root: () => page.getByTestId('alert-details-root'),
 		tab: (name) => page.getByRole('tab', { name }),
 		menuItem: (label) => page.getByRole('menuitem').filter({ hasText: label }),
-		nameInput: () => page.getByTestId('alert-name-input'),
+		nameInput: () => inputField(page, 'alert-name-input'),
 
 		openActions: async () => {
 			await page.getByTestId('alert-actions-menu').click();
@@ -909,7 +914,8 @@ export function alertsDriver(page: Page): Alerts {
 		contributorsViewAll: () => page.getByTestId('top-contributors-view-all'),
 		contributorsDrawer: () => page.getByTestId('top-contributors-drawer'),
 		contributorsDrawerTitle: () => page.getByText('Viewing All Contributors'),
-		contributorsDrawerTotal: () => history.contributorsDrawer().locator('.total'),
+		contributorsDrawerTotal: () =>
+			history.contributorsDrawer().getByText(/^\s*of \d+\s*$/),
 		contributorRows: (scope) =>
 			(scope ?? page).getByTestId('top-contributors-row'),
 		contributorCount: (row) => row.getByTestId('top-contributors-row-count'),

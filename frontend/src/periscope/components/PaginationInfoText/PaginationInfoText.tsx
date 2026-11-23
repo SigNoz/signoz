@@ -13,10 +13,27 @@ function PaginationInfoText(
 				marginLeft: '16px',
 			}}
 		>
-			<Typography.Text className="numbers">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{start} &#8212; {end}
-			</Typography.Text>
-			<Typography.Text className="total"> of {total}</Typography.Text>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{' '}
+				of {total}
+			</Typography>
 		</span>
 	);
 }

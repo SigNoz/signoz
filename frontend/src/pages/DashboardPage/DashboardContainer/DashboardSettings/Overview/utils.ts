@@ -1,3 +1,4 @@
+import type { SelectItemType } from '@signozhq/ui/select';
 import type { TagtypesPostableTagDTO } from 'api/generated/services/sigNoz.schemas';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 
@@ -48,18 +49,25 @@ function storedDurationLabel(value: string): string {
 
 // A window set through the API or the JSON editor may sit outside the list;
 // it's appended so the select shows it instead of rendering blank.
-export function buildDefaultTimeRangeItems(
-	value: string,
-): { value: string; label: string }[] {
-	const items = [
-		{ value: DEFAULT_TIME_RANGE_UNSET, label: 'Default (Last 30 minutes)' },
-		...SELECTABLE_DURATIONS.map((option) => ({
+export function buildDefaultTimeRangeItems(value: string): SelectItemType[] {
+	const items: SelectItemType[] = [
+		{
+			type: 'item',
+			value: DEFAULT_TIME_RANGE_UNSET,
+			label: 'Default (Last 30 minutes)',
+		},
+		...SELECTABLE_DURATIONS.map((option): SelectItemType => ({
+			type: 'item',
 			value: option.value,
 			label: option.label,
 		})),
 	];
-	if (value && value !== '30m' && !items.some((item) => item.value === value)) {
-		items.push({ value, label: storedDurationLabel(value) });
+	if (
+		value &&
+		value !== '30m' &&
+		!items.some((item) => item.type === 'item' && item.value === value)
+	) {
+		items.push({ type: 'item', value, label: storedDurationLabel(value) });
 	}
 	return items;
 }

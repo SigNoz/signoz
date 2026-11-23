@@ -26,11 +26,10 @@
 	gap: 1rem;
 	flex-shrink: 0;
 	padding: 0 var(--spacing-8);
-
-	--combobox-trigger-height: 2rem;
 }
 
 .searchInput {
+	width: 100%;
 	min-width: 250px;
 }
 

@@ -1,3 +1,7 @@
+.panel:global(.floating-panel) {
+	background: var(--l2-background);
+}
+
 .header {
 	display: flex;
 	align-items: center;
@@ -5,7 +9,7 @@
 	padding: 8px;
 	border-bottom: 1px solid var(--l1-border);
 	flex-shrink: 0;
-	background: var(--l1-background);
+	background: var(--l2-background);
 }
 
 .title {

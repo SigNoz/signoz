@@ -1,4 +1,9 @@
 import type { ServiceaccounttypesServiceAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	reflectedValues,
+	spliceClause,
+	valuesClause,
+} from 'components/ListFilter/dsl/filterQuery';
 import { toISOString } from 'utils/app';
 
 export function toServiceAccountRow(
@@ -14,10 +19,14 @@ export function toServiceAccountRow(
 	};
 }
 
-export enum FilterMode {
-	All = 'all',
-	Active = 'active',
-	Deleted = 'deleted',
+// The statuses the filter shows for a query: its one top-level `status = x` or
+// `status IN [...]` term, else none. Other operators are left to the box.
+export function statusesOfQuery(query: string): string[] {
+	return reflectedValues(query, 'status');
+}
+
+export function withStatuses(query: string, statuses: string[]): string {
+	return spliceClause(query, 'status', valuesClause('status', statuses));
 }
 
 export enum ServiceAccountStatus {

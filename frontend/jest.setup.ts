@@ -137,6 +137,8 @@ window.getComputedStyle = function (
 		return {
 			display: '',
 			visibility: '',
+			width: '',
+			height: '',
 			opacity: '1',
 			animationName: 'none',
 			getPropertyValue: () => '',

@@ -23,7 +23,16 @@ function TracesFunnelDetails(): JSX.Element {
 	if (isError) {
 		return (
 			<NotFoundContainer>
-				<Typography>Error loading funnel details</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Error loading funnel details
+				</Typography>
 			</NotFoundContainer>
 		);
 	}

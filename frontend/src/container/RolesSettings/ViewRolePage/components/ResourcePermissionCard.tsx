@@ -61,19 +61,31 @@ function ResourcePermissionCard({
 					<span className={styles.icon}>
 						<Icon size={16} />
 					</span>
-					<Typography as="h4" size="base" weight="bold">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="bold"
+						color="inherit"
+						as="h4"
+						display="inline"
+						textOverflow="wrap"
+					>
 						{resourceLabel}
 					</Typography>
 				</div>
-				<Typography
-					as="span"
-					size="small"
-					weight="medium"
-					className={styles.grantedCount}
-					testId={`granted-count-${resourceKind}`}
-				>
-					{grantedCount} / {totalCount} granted
-				</Typography>
+				<span className={styles.grantedCount}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="medium"
+						color="primary"
+						as="span"
+						textOverflow="visible"
+						testId={`granted-count-${resourceKind}`}
+					>
+						{grantedCount} / {totalCount} granted
+					</Typography>
+				</span>
 			</button>
 
 			{isExpanded && (

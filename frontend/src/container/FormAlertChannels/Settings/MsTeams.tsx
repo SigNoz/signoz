@@ -10,7 +10,11 @@ import FormField from '../FormField';
 
 const { TextArea } = AntdInput;
 
-function MsTeams(): JSX.Element {
+interface MsTeamsProps {
+	readOnly: boolean;
+}
+
+function MsTeams({ readOnly }: MsTeamsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -30,7 +34,7 @@ function MsTeams(): JSX.Element {
 					<Input
 						{...register('webhookUrl')}
 						aria-required
-						data-testid="webhook-url-textbox"
+						testId="webhook-url-textbox"
 					/>
 				</FormField>
 
@@ -40,6 +44,7 @@ function MsTeams(): JSX.Element {
 						name="title"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={4}
 								data-testid="title-textarea"
 								value={(field.value as string) ?? ''}
@@ -58,6 +63,7 @@ function MsTeams(): JSX.Element {
 						name="text"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								data-testid="description-textarea"
 								placeholder={t('placeholder_slack_description')}
 								value={(field.value as string) ?? ''}

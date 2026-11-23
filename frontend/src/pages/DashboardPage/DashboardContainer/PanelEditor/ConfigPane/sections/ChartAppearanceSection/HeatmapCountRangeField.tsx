@@ -1,3 +1,4 @@
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import type { DashboardtypesHeatmapColorsDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -33,7 +34,7 @@ function HeatmapCountRangeField({
 			onReset={onReset}
 			help={
 				isRangeInverted(minCount, maxCount) ? (
-					<Callout type="error" size="small" showIcon>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
 						Min count can&apos;t be greater than max count.
 					</Callout>
 				) : (

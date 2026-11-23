@@ -12,9 +12,9 @@ import { USER_ROLES } from 'types/roles';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import {
-	attributeKeysResponse,
-	attributeValuesResponse,
-} from '@/storybook/msw/__story_mockdata__/attributes';
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	DEPLOYMENT_ENVIRONMENTS,
@@ -46,12 +46,6 @@ const featureFlagsFor = (mode: ServiceMode): FeatureFlagProps[] =>
 			? { ...flag, active: mode === 'span-metrics' }
 			: flag,
 	);
-
-/**
- * The span-metrics table derives one point per series, so every request answers
- * on the same timestamp and a refetch redraws the same numbers.
- */
-const POINT_AT = 1_735_689_600_000;
 
 export const servicesMocks = defineStoryMocks({
 	controls: {
@@ -95,23 +89,22 @@ export const servicesMocks = defineStoryMocks({
 			response.json(() => topLevelOperationsResponse(values.services)),
 		),
 		rest.post(
-			'http://localhost/api/v4/query_range',
+			'http://localhost/api/v5/query_range',
 			response.json(async (req) =>
 				serviceMetricsResponse(
 					(await req.json()) as Record<string, unknown>,
 					values.services,
 					values.health,
 					values.traffic,
-					POINT_AT,
 				),
 			),
 		),
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_keys',
+			'http://localhost/api/v1/fields/keys',
 			response.json((req) => {
 				const match = req.url.searchParams.get('searchText') ?? '';
 
-				return attributeKeysResponse(
+				return fieldKeysResponse(
 					match === DEPLOYMENT_KEY
 						? [DEPLOYMENT_KEY]
 						: RESOURCE_ATTRIBUTE_KEYS.filter((key) => key !== DEPLOYMENT_KEY),
@@ -119,14 +112,14 @@ export const servicesMocks = defineStoryMocks({
 			}),
 		),
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
+			'http://localhost/api/v1/fields/values',
 			response.json((req) => {
-				const attributeKey = req.url.searchParams.get('attributeKey') ?? '';
+				const name = req.url.searchParams.get('name') ?? '';
 
-				return attributeValuesResponse(
-					attributeKey === DEPLOYMENT_KEY
+				return fieldValuesResponse(
+					name === DEPLOYMENT_KEY
 						? DEPLOYMENT_ENVIRONMENTS
-						: [`${attributeKey.replace('resource_', '')}-01`],
+						: [`${name.replace('resource_', '')}-01`],
 				);
 			}),
 		),

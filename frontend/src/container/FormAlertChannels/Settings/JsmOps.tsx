@@ -10,7 +10,11 @@ import FormField from '../FormField';
 
 const { TextArea } = AntdInput;
 
-function JsmOpsSettings(): JSX.Element {
+interface JsmOpsSettingsProps {
+	readOnly: boolean;
+}
+
+function JsmOpsSettings({ readOnly }: JsmOpsSettingsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -30,6 +34,7 @@ function JsmOpsSettings(): JSX.Element {
 					name="priority"
 					render={({ field }): JSX.Element => (
 						<TextArea
+							disabled={readOnly}
 							rows={2}
 							data-testid="jsmops-priority-textarea"
 							value={(field.value as string) ?? ''}
@@ -50,6 +55,7 @@ function JsmOpsSettings(): JSX.Element {
 					name="tags"
 					render={({ field }): JSX.Element => (
 						<Select
+							disabled={readOnly}
 							mode="tags"
 							open={false}
 							placeholder={t('placeholder_jsmops_tags')}
@@ -66,21 +72,28 @@ function JsmOpsSettings(): JSX.Element {
 	return (
 		<>
 			<FormCard title={t('section_connection')}>
-				<Typography.Text
-					color="muted"
-					size="sm"
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="p"
+					marginBottom={8}
+					textOverflow="wrap"
 					testId="jsmops-tip"
-					style={{ display: 'block', marginBottom: 16 }}
 				>
 					{t('jsmops_tip')}{' '}
 					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
 						href="https://signoz.io/docs/alerts-management/notification-channel/jsm-ops/"
 						target="_blank"
-						rel="noopener noreferrer"
 					>
 						{t('jsmops_tip_link')}
 					</Typography.Link>
-				</Typography.Text>
+				</Typography>
 
 				<FormField
 					label={t('field_jsmops_api_key')}
@@ -92,7 +105,7 @@ function JsmOpsSettings(): JSX.Element {
 						{...register('apiKey')}
 						aria-required
 						type="password"
-						data-testid="jsmops-api-key-textbox"
+						testId="jsmops-api-key-textbox"
 					/>
 				</FormField>
 
@@ -106,6 +119,7 @@ function JsmOpsSettings(): JSX.Element {
 						name="message"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={2}
 								data-testid="jsmops-message-textarea"
 								value={(field.value as string) ?? ''}
@@ -125,6 +139,7 @@ function JsmOpsSettings(): JSX.Element {
 						name="description"
 						render={({ field }): JSX.Element => (
 							<TextArea
+								disabled={readOnly}
 								rows={6}
 								data-testid="jsmops-description-textarea"
 								value={(field.value as string) ?? ''}

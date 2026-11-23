@@ -15,7 +15,7 @@ func TestReservedFilterKeys(t *testing.T) {
 		DSLKeyLabelsPlaceholder,
 		DSLKeyName,
 		DSLKeyRuleType,
-		DSLKeySeverity,
+		DSLKeyThresholds,
 		DSLKeyUpdatedAt,
 		DSLKeyUpdatedBy,
 	}, ReservedFilterKeys())

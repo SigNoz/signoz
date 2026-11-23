@@ -5,11 +5,5 @@ export const persistToasts = (value: boolean): void => {
 	persisted = value;
 };
 
-/**
- * Sonner's default is 4s. A toast with no `duration` of its own follows the
- * `Toaster`, so `Infinity` here keeps it on screen for the capture.
- */
-export const toastDuration = (): number | undefined =>
-	persisted ? Infinity : undefined;
-
+/** Whether the Toasts control is holding the stack open. */
 export const areToastsPersisted = (): boolean => persisted;

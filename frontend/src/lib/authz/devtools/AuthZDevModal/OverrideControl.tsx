@@ -72,9 +72,16 @@ export function OverrideControl({
 							prefix={option.icon}
 						>
 							{isActive && (
-								<Typography.Text as="span" size="small" weight="medium">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="medium"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									{option.label}
-								</Typography.Text>
+								</Typography>
 							)}
 						</Button>
 					</Tooltip>

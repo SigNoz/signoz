@@ -125,7 +125,7 @@ export const alertRulesMocks = defineStoryMocks({
 		ruleSeverity: choiceControl<SeverityChoice>('Severity', {
 			group: LIST,
 			description:
-				'The severity label every rule carries. `mixed` leaves each rule with its own.',
+				'The one threshold every rule fires at, shown in the Severity column. `mixed` leaves each rule with its own, some with two.',
 			options: SEVERITY_CHOICES,
 			value: 'mixed',
 		}),
@@ -139,7 +139,7 @@ export const alertRulesMocks = defineStoryMocks({
 		invalidQuery: choiceControl<InvalidQueryChoice>('Invalid query', {
 			group: LIST,
 			description:
-				'The 400 code any request carrying a `query` answers with. Both show the server message under the search box.',
+				'The 400 code any request carrying a `query` answers with. Both replace the list with the Invalid query state and the server message.',
 			options: INVALID_QUERY_CHOICES,
 			value: 'off',
 		}),
