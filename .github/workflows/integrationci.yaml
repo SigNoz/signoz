@@ -87,7 +87,7 @@ jobs:
           - 25.12.5
           - 26.8.34
         signoz-otel-collector-version:
-          - v0.144.16-rc.1
+          - v0.144.17
         postgres-version:
           - 15
         exclude:
