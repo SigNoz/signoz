@@ -26,7 +26,7 @@ import {
 	PlannedMaintenanceCreateChecks,
 	PlannedMaintenanceListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/planned-maintenance.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -145,8 +145,7 @@ export function PlannedDowntime(): JSX.Element {
 		setPage(1);
 	};
 
-	const { isGranted } = useAuthZ(LIST_CHECKS);
-	const canList = isGranted(PlannedMaintenanceListPermission);
+	const searchLock = useAuthZDisabled(LIST_CHECKS);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const isAlertsLoading = isLoading || (!alertsData && isFetchingAlerts);
 	const columns = React.useMemo(
@@ -276,8 +275,8 @@ export function PlannedDowntime(): JSX.Element {
 							placeholder="Search by name"
 							value={searchValue}
 							onChange={handleSearch}
-							disabled={!canList}
-							disabledTooltip={undefined}
+							disabled={searchLock.disabled}
+							disabledTooltip={searchLock.disabledTooltip}
 							suffix={<Search size={14} className={styles.searchIcon} />}
 							testId="planned-downtime-search"
 						/>

@@ -13,7 +13,9 @@ import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { server } from 'mocks-server/server';
+import { rest } from 'msw';
 import {
+	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 	setupAuthzAllow,
 	setupAuthzDenyAll,
@@ -229,6 +231,15 @@ describe('PlannedDowntime Component', () => {
 		).resolves.toBeInTheDocument();
 		expect(screen.queryByText(MOCK_DOWNTIME_1_NAME)).not.toBeInTheDocument();
 		expect(screen.getByTestId(SEARCH_TEST_ID)).toBeDisabled();
+	});
+
+	it('keeps search usable when the permission check fails', async () => {
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, (_req, res, ctx) => res(ctx.status(500))),
+		);
+		renderPage();
+
+		await waitFor(() => expect(screen.getByTestId(SEARCH_TEST_ID)).toBeEnabled());
 	});
 
 	it('should load with search term from URL query params', () => {

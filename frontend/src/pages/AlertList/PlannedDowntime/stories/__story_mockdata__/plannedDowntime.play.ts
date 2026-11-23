@@ -145,17 +145,18 @@ export const searchWithNoResults = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	const canvas = within(canvasElement);
-	const search = await canvas.findByPlaceholderText(
-		'Search by name',
-		undefined,
-		untilLoaded,
-	);
-
+	// The input remounts once the check answers, so look it up after.
 	await waitFor(
-		() => expect(search).not.toHaveAttribute('disabled'),
+		() =>
+			expect(canvas.getByPlaceholderText('Search by name')).not.toHaveAttribute(
+				'disabled',
+			),
 		untilLoaded,
 	);
-	await userEvent.type(search, 'no matching downtime');
+	await userEvent.type(
+		canvas.getByPlaceholderText('Search by name'),
+		'no matching downtime',
+	);
 	await canvas.findByText('No matching planned downtime');
 };
 
