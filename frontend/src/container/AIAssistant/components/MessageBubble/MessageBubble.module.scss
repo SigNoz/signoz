@@ -71,7 +71,7 @@
 		align-items: flex-start;
 		background: var(--l2-background);
 		color: var(--l1-foreground);
-		font-size: var(--periscope-font-size-base);
+		font-size: var(--paragraph-base-400-font-size);
 		border-bottom-left-radius: var(--radius-2);
 	}
 
@@ -274,7 +274,7 @@
 		width: max-content;
 		min-width: 100%;
 		border-collapse: collapse;
-		font-size: var(--periscope-font-size-base);
+		font-size: var(--paragraph-base-400-font-size);
 		font-variant-numeric: tabular-nums;
 		word-break: normal;
 
@@ -286,7 +286,7 @@
 
 		th {
 			padding-block: 13px;
-			font-size: var(--periscope-font-size-small);
+			font-size: var(--paragraph-small-400-font-size);
 			font-weight: var(--font-weight-medium);
 			line-height: 1;
 			letter-spacing: 0.04em;
