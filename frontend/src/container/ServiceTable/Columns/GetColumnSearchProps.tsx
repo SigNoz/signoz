@@ -1,5 +1,6 @@
 import { AppLink } from 'lib/router/AppLink';
 import { Search } from '@signozhq/icons';
+import { Typography } from '@signozhq/ui/typography';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
@@ -7,7 +8,6 @@ import { getQueryString } from 'container/SideNav/helper';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
-import { Name } from '../styles';
 
 export const getColumnSearchProps = (
 	dataIndex: keyof ServicesList,
@@ -35,7 +35,16 @@ export const getColumnSearchProps = (
 
 		return (
 			<AppLink to={`${ROUTES.APPLICATION}/${metrics}?${queryString.join('')}`}>
-				<Name>{metrics}</Name>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="primary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{metrics}
+				</Typography>
 			</AppLink>
 		);
 	},

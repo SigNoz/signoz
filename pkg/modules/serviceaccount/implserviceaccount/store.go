@@ -2,8 +2,11 @@ package implserviceaccount
 
 import (
 	"context"
+	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -159,21 +162,62 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 	return int64(count), nil
 }
 
-func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
-	storables := make([]*serviceaccounttypes.ServiceAccount, 0)
+func (store *store) List(ctx context.Context, orgID valuer.UUID, params *serviceaccounttypes.ListServiceAccountsParams) ([]*serviceaccounttypes.ServiceAccount, int64, error) {
+	compiled, err := store.compileListFilter(params.Query)
+	if err != nil {
+		return nil, 0, err
+	}
 
-	err := store.
+	type listedServiceAccount struct {
+		*serviceaccounttypes.ServiceAccount `bun:",extend"`
+
+		Total int64 `bun:"total"`
+	}
+
+	rows := make([]*listedServiceAccount, 0)
+
+	query := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(&storables).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
+		Model(&rows).
+		ColumnExpr("*").
+		ColumnExpr("COUNT(*) OVER () AS total").
+		Where("org_id = ?", orgID)
+
+	if !compiled.IsEmpty() {
+		query = query.Where(compiled.SQL, compiled.Args...)
 	}
 
-	return storables, nil
+	direction := strings.ToUpper(params.Order.StringValue())
+	query = query.
+		OrderExpr(params.Sort.StringValue() + " " + direction).
+		OrderExpr("id " + direction).
+		Limit(params.Limit).
+		Offset(params.Offset)
+
+	if err := query.Scan(ctx); err != nil {
+		return nil, 0, err
+	}
+
+	var total int64
+	if len(rows) > 0 {
+		total = rows[0].Total
+	} else if params.Offset > 0 {
+		matches, err := query.Count(ctx)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		total = int64(matches)
+	}
+
+	serviceAccounts := make([]*serviceaccounttypes.ServiceAccount, len(rows))
+	for index, row := range rows {
+		serviceAccounts[index] = row.ServiceAccount
+	}
+
+	return serviceAccounts, total, nil
 }
 
 func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *serviceaccounttypes.ServiceAccount) error {
@@ -428,4 +472,13 @@ func (store *store) RunInTx(ctx context.Context, cb func(context.Context) error)
 	return store.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
 		return cb(ctx)
 	})
+}
+
+func (store *store) compileListFilter(query string) (*sqlcompiler.Compiled, error) {
+	compiled, errs := sqlcompiler.Compile(query, store.sqlstore.Formatter(), newServiceAccountFieldResolver())
+	if len(errs) > 0 {
+		return nil, errors.NewInvalidInputf(serviceaccounttypes.ErrCodeServiceAccountListFilterInvalid, "invalid filter query: %s", strings.Join(errs, "; "))
+	}
+
+	return compiled, nil
 }

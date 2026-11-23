@@ -1,13 +1,11 @@
-import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Combobox } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import { GCP_REGIONS } from 'container/Integrations/constants';
 import { Control, Controller } from 'react-hook-form';
 
 import FormField from '../FormField';
 import { GcpSetupFormValues } from '../types';
-
-import styles from './Fields.module.scss';
 
 const TOOLTIPS: Record<CloudintegrationtypesGCPConnectionMethodDTO, string> = {
 	[CloudintegrationtypesGCPConnectionMethodDTO.manual]:
@@ -16,7 +14,8 @@ const TOOLTIPS: Record<CloudintegrationtypesGCPConnectionMethodDTO, string> = {
 		'The GCP region where the agent resources are deployed',
 };
 
-const REGION_ITEMS = GCP_REGIONS.map((region) => ({
+const REGION_ITEMS: ComboboxItemType[] = GCP_REGIONS.map((region) => ({
+	type: 'item',
 	value: region.value,
 	label: `${region.label} (${region.value})`,
 }));
@@ -43,17 +42,13 @@ function DeploymentRegionField({
 					required
 					error={fieldState.error}
 				>
-					<ComboboxSimple
+					<Combobox
 						id="gcp-deployment-region-select"
-						className={cx(styles.fullWidth, styles.regionSelect, {
-							[styles.regionEmpty]: !field.value,
-						})}
 						items={REGION_ITEMS}
-						value={field.value}
-						onChange={(value): void => field.onChange(value as string)}
+						value={field.value || undefined}
+						onChange={(value): void => field.onChange(value ?? '')}
 						placeholder="Select a region..."
-						inputPlaceholder="Search regions…"
-						withPortal={false}
+						searchInputProps={{ placeholder: 'Search regions…' }}
 						testId="gcp-deployment-region-select"
 					/>
 				</FormField>

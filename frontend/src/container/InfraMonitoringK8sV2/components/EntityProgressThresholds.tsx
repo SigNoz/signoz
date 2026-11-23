@@ -21,9 +21,17 @@ export function EntityProgressThresholds({
 			data-testid={`entity-progress-thresholds-${type}`}
 		>
 			{note && (
-				<Typography.Text as="p" size="small">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="inherit"
+					as="p"
+					display="inline"
+					textOverflow="wrap"
+				>
 					{note}
-				</Typography.Text>
+				</Typography>
 			)}
 			{THRESHOLDS_BY_TYPE[type].map((threshold) => (
 				<div key={threshold.range} className={styles.threshold}>
@@ -33,21 +41,39 @@ export function EntityProgressThresholds({
 					/>
 					<div className={styles.thresholdBody}>
 						<div className={styles.thresholdHeading}>
-							<Typography.Text as="span" size="small" weight="medium">
-								{threshold.label}
-							</Typography.Text>
-							<Typography.Text
-								as="span"
+							<Typography
+								variant="paragraph"
 								size="small"
-								color="muted"
-								className={styles.range}
+								weight="medium"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{threshold.label}
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="visible"
+								tabularNumbers
 							>
 								{threshold.range}
-							</Typography.Text>
+							</Typography>
 						</div>
-						<Typography.Text as="p" size="small" color="muted">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="p"
+							display="inline"
+							textOverflow="wrap"
+						>
 							{threshold.description}
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 			))}

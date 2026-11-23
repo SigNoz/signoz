@@ -6,6 +6,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { PanelKind } from '../dashboard-spec';
 import { PATH } from '../dashboards';
+import { inputField } from '../input';
 import { wheelTo } from '../scroll';
 
 const NEW_PANEL_DRAWER = 'panel-type-drawer';
@@ -59,7 +60,7 @@ export function newPanelDriver(page: Page): NewPanelPicker {
 		async newSection(title) {
 			await root().getByRole('button', { name: 'Choose section' }).click();
 			await page.getByTestId('panel-section-create').click();
-			await root().getByTestId('panel-section-name').fill(title);
+			await inputField(root(), 'panel-section-name').fill(title);
 		},
 		sectionAddPanel: () =>
 			page.locator('[data-testid^="section-add-panel-"]').first(),

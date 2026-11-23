@@ -58,7 +58,7 @@ describe('ListAlertRules — pagination', () => {
 
 		await screen.findByText('Pag Rule 0');
 
-		await user.click(screen.getByLabelText('Go to next page'));
+		await user.click(await screen.findByTestId('pagination-next'));
 
 		await waitFor(() => {
 			expect(screen.getByText('Pag Rule 10')).toBeInTheDocument();

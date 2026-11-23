@@ -6,6 +6,10 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import LLMObservabilityPage from '../../index';
 import { modelPricingMocks } from './ModelPricing.stories.mocks';
+import {
+	openModelCostDrawerCreate,
+	openUnpricedModels,
+} from './__story_mockdata__/modelPricing.play';
 
 type ModelPricingArgs = PageStoryArgs<typeof modelPricingMocks>;
 
@@ -55,6 +59,16 @@ export const ModelCostActionsMenu: Story = {
 	},
 };
 
+/** Models seen in spans that no rule prices yet. */
+export const UnpricedModels: Story = {
+	play: openUnpricedModels,
+};
+
+/** Creating a rule: the provider select starts on OpenAI and enabled. */
+export const ModelCostDrawerCreate: Story = {
+	play: openModelCostDrawerCreate,
+};
+
 /** The first pricing rule's drawer, opened from its row menu. */
 export const ModelCostDrawer: Story = {
 	play: async (context): Promise<void> => {
@@ -85,7 +99,7 @@ export const ModelCostSavedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostDrawer.play?.(context);
 		await userEvent.type(
-			await screen.findByTestId('drawer-pattern-input'),
+			await screen.findByTestId('drawer-pattern-input-field'),
 			'gpt-4o-2026{Enter}',
 		);
 		await userEvent.click(await screen.findByTestId('drawer-save-btn'));
@@ -105,7 +119,9 @@ export const ModelCostDeletedToast: Story = {
 	play: async (context): Promise<void> => {
 		await ModelCostActionsMenu.play?.(context);
 		await userEvent.click(await screen.findByText('Delete'));
-		await userEvent.click(await screen.findByTestId('drawer-delete-confirm-btn'));
+		await userEvent.click(
+			await screen.findByTestId('drawer-delete-dialog-confirm'),
+		);
 		if (context.args.ruleDelete === 'success') {
 			await waitFor(() =>
 				expect(screen.getByText(/model cost .*deleted/i)).toBeVisible(),

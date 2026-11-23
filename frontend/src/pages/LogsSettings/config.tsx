@@ -9,12 +9,7 @@ import { TABS_KEY, TABS_TITLE } from './constant';
 export const getLogsSettingsRoute = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: LogsIndexToFields,
-		name: (
-			<TabLabel
-				label={TABS_TITLE(t)[TABS_KEY.LOGS_INDEX_FIELDS]}
-				routeKey={ROUTES.LOGS_INDEX_FIELDS}
-			/>
-		),
+		name: <TabLabel label={TABS_TITLE(t)[TABS_KEY.LOGS_INDEX_FIELDS]} />,
 		route: ROUTES.LOGS_INDEX_FIELDS,
 		key: ROUTES.LOGS_INDEX_FIELDS,
 	},

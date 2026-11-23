@@ -108,15 +108,6 @@
 		gap: 6px;
 	}
 
-	&__select {
-		width: 100%;
-
-		.ant-select-selection-search {
-			inset-inline-start: var(--padding-2) !important;
-			inset-inline-end: var(--padding-2) !important;
-		}
-	}
-
 	&__group-mappings {
 		display: flex;
 		flex-direction: column;
@@ -185,31 +176,6 @@
 			[class*='icon'] {
 				color: var(--l1-foreground) !important;
 			}
-		}
-	}
-
-	// todo: https://github.com/SigNoz/components/issues/116
-	input:not(.ant-select-selection-search-input) {
-		height: 32px;
-		background: var(--l2-background) !important;
-		border: 1px solid var(--l2-border) !important;
-		border-radius: 2px;
-		color: var(--l2-foreground) !important;
-
-		&::placeholder {
-			color: var(--l2-foreground) !important;
-			opacity: 1;
-		}
-
-		&:hover {
-			border-color: var(--l2-border) !important;
-		}
-
-		&:focus,
-		&:focus-visible {
-			border-color: var(--primary) !important;
-			box-shadow: none !important;
-			outline: none;
 		}
 	}
 }

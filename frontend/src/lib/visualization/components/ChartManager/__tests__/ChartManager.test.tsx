@@ -32,8 +32,8 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	}),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -137,7 +137,7 @@ describe('ChartManager', () => {
 		expect(screen.getByTestId('row-1')).toBeInTheDocument();
 		expect(screen.getByTestId('row-2')).toBeInTheDocument();
 
-		const filterInput = screen.getByTestId('filter-input');
+		const filterInput = screen.getByTestId('filter-input-field');
 		await userEvent.type(filterInput, 'Series 1');
 
 		// After filter: only Series 1 row is visible, Series 2 row is filtered out

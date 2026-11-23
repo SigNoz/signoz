@@ -55,19 +55,30 @@ function ActionRow({
 							{isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
 						</button>
 					)}
-					<Typography as="span" size="base">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{actionLabel}
 					</Typography>
 				</div>
-				<Typography
-					as="span"
-					size="small"
-					weight="medium"
-					className={`${styles.badge} ${BADGE_VARIANT_CLASS[badge.variant]}`}
-					testId={`scope-badge-${actionName}`}
-				>
-					{badge.label}
-				</Typography>
+				<span className={`${styles.badge} ${BADGE_VARIANT_CLASS[badge.variant]}`}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="medium"
+						color="inherit"
+						as="span"
+						textOverflow="visible"
+						testId={`scope-badge-${actionName}`}
+					>
+						{badge.label}
+					</Typography>
+				</span>
 			</div>
 
 			{isExpanded && isExpandable && (

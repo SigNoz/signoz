@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
+import { Typography } from '@signozhq/ui/typography';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -122,7 +122,19 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				<div className={`${styles.header} floating-panel__drag-handle`}>
 					<div className={`${styles.title} noz-wave`}>
 						<Noz size={18} />
-						{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
+						{chatTitle && (
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+							>
+								{chatTitle}
+							</Typography>
+						)}
 					</div>
 
 					<div className={styles.actions}>

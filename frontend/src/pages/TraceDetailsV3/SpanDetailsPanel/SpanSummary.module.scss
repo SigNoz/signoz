@@ -13,15 +13,15 @@
 	flex-direction: column;
 	gap: 4px;
 	padding: 8px 0;
-	--typography-line-height: var(--line-height-20);
+	--typography-line-height: var(--paragraph-base-400-line-height);
 }
 
 .spanInfoItem {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	color: var(--l2-foreground);
 	white-space: nowrap;
 }

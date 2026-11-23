@@ -68,6 +68,7 @@ function AddPanelSplitButton({
 				onClick={onConfirm}
 				disabled={disabled}
 				disabledTooltip="Name the new section first"
+				width={180}
 				testId="panel-type-confirm"
 			>
 				{label}

@@ -1,7 +1,6 @@
 import { Card as CardComponent } from 'antd';
 import ColComponent from 'periscope/components/Col/Col';
 import RowComponent from 'periscope/components/Row/Row';
-import { Typography } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const Card = styled(CardComponent)`
@@ -39,10 +38,4 @@ export const ColErrorContainer = styled(ColComponent)`
 export const GraphContainer = styled.div`
 	min-height: calc(40vh - 40px);
 	height: 100%;
-`;
-
-export const GraphTitle = styled(Typography)`
-	&&& {
-		text-align: center;
-	}
 `;

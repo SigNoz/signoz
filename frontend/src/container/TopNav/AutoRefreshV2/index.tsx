@@ -153,9 +153,18 @@ function AutoRefresh({
 							Auto Refresh
 						</Checkbox>
 					</div>
-					<Typography.Text disabled={isDisabled} className="refresh-interval-text">
-						Refresh Interval
-					</Typography.Text>
+					<div className="refresh-interval-text">
+						<Typography
+							variant="uppercase"
+							size="base"
+							weight="medium"
+							color={isDisabled ? 'tertiary' : 'inherit'}
+							as="p"
+							textOverflow="wrap"
+						>
+							Refresh Interval
+						</Typography>
+					</div>
 					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (

@@ -64,9 +64,16 @@ function ErrorState({
 		<div className={styles.wrapper}>
 			<img src={awwSnapUrl} alt="something went wrong" className={styles.img} />
 
-			<Typography.Text className={styles.errorText}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
 				{GENERIC_MESSAGE}
-			</Typography.Text>
+			</Typography>
 
 			<section className={styles.actionButtons}>
 				<Button

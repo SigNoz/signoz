@@ -28,6 +28,7 @@ interface FilterZoneDraft {
 	dirty: boolean;
 	isEmpty: boolean;
 	run: () => void;
+	applyDraft: (next: string) => void;
 	handleCreatedByChange: (emails: string[]) => void;
 	handleUpdatedChange: (window: UpdatedWindow) => void;
 	handleClearCreatedBy: () => void;
@@ -67,6 +68,14 @@ export function useFilterZoneDraft({
 
 	const run = useCallback((): void => commit(draft), [commit, draft]);
 
+	const applyDraft = useCallback(
+		(next: string): void => {
+			setDraft(next);
+			commit(next);
+		},
+		[commit],
+	);
+
 	// Created-by (multi-select) only STAGES its clause into the draft; the query runs
 	// when the dropdown closes (FilterChips fires onApply), not on each pick.
 	const handleCreatedByChange = useCallback(
@@ -83,18 +92,15 @@ export function useFilterZoneDraft({
 		(window: UpdatedWindow): void => {
 			onFilterApplied?.('updatedWindow', {});
 			const next = spliceClause(draft, 'updated_at', updatedClause(window));
-			setDraft(next);
-			commit(next);
+			applyDraft(next);
 		},
-		[draft, commit, onFilterApplied],
+		[draft, applyDraft, onFilterApplied],
 	);
 
 	// Clear-all on the Created-by select removes its clause and runs immediately.
 	const handleClearCreatedBy = useCallback((): void => {
-		const next = spliceClause(draft, 'created_by', null);
-		setDraft(next);
-		commit(next);
-	}, [draft, commit]);
+		applyDraft(spliceClause(draft, 'created_by', null));
+	}, [draft, applyDraft]);
 
 	// Clear resets the draft and runs immediately (empty query).
 	const handleClear = useCallback((): void => {
@@ -113,6 +119,7 @@ export function useFilterZoneDraft({
 		dirty,
 		isEmpty,
 		run,
+		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
 		handleClearCreatedBy,

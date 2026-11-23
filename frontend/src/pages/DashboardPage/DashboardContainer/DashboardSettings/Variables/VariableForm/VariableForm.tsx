@@ -115,9 +115,16 @@ function VariableForm({
 								{listFields}
 								<div className={styles.row}>
 									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="secondary"
+											as="p"
+											textOverflow="wrap"
+										>
 											Apply to panels
-										</Typography.Text>
+										</Typography>
 									</div>
 									<CustomMultiSelect
 										placeholder="Select panels"
@@ -175,17 +182,25 @@ function VariableForm({
 							<div className={styles.typeContent}>
 								<div className={cx(styles.row, styles.textboxSection)}>
 									<div className={styles.labelContainer}>
-										<Typography.Text className={styles.label}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="secondary"
+											as="p"
+											textOverflow="wrap"
+										>
 											Default Value
-										</Typography.Text>
+										</Typography>
 									</div>
-									<Input
-										className={styles.defaultInput}
-										value={model.textValue}
-										placeholder="Enter a default value (if any)..."
-										onChange={(e): void => set({ textValue: e.target.value })}
-										testId="variable-text-input"
-									/>
+									<div className={styles.defaultInput}>
+										<Input
+											value={model.textValue}
+											placeholder="Enter a default value (if any)..."
+											onChange={(e): void => set({ textValue: e.target.value })}
+											testId="variable-text-input"
+										/>
+									</div>
 								</div>
 							</div>
 						),
@@ -193,9 +208,16 @@ function VariableForm({
 				/>
 
 				{cycleError ? (
-					<Typography.Text className={styles.errorText}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="warning"
+						as="span"
+						textOverflow="wrap"
+					>
 						{cycleError}
-					</Typography.Text>
+					</Typography>
 				) : null}
 
 				<div className={styles.actionButtons}>
