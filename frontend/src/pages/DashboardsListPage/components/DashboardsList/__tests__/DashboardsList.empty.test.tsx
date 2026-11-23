@@ -39,5 +39,6 @@ describe('DashboardsList - empty workspace', () => {
 
 		await screen.findByTestId('learn-more');
 		expect(screen.getByTestId('dashboards-list-search')).toBeInTheDocument();
+		expect(screen.getAllByTestId('new-dashboard-cta')).toHaveLength(1);
 	});
 });

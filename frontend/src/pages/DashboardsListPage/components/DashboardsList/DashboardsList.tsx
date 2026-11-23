@@ -331,7 +331,11 @@ function DashboardsList(): JSX.Element {
 							count={total}
 							isCountLoading={isFetching}
 							isModified={isModified}
-							action={<NewDashboardButton onClick={openCreate} />}
+							action={
+								isWorkspaceEmpty ? undefined : (
+									<NewDashboardButton onClick={openCreate} />
+								)
+							}
 						/>
 						<DashboardsFilterZone
 							query={query}
