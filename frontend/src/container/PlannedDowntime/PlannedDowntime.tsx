@@ -277,6 +277,7 @@ export function PlannedDowntime(): JSX.Element {
 							value={searchValue}
 							onChange={handleSearch}
 							disabled={!canList}
+							disabledTooltip={undefined}
 							suffix={<Search size={14} className={styles.searchIcon} />}
 							testId="planned-downtime-search"
 						/>
