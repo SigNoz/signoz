@@ -34,8 +34,8 @@ interface UseTelemetrySelectorWizardResult {
 	validation: SelectorValidation;
 	canAdd: boolean;
 	handleOpenChange: (nextOpen: boolean) => void;
-	handleQueryTypeChange: (value: string | string[]) => void;
-	handleKeyChange: (value: string | string[]) => void;
+	handleQueryTypeChange: (value: string) => void;
+	handleKeyChange: (value: string) => void;
 	handleValueChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 	handleAnyResourceChange: (checked: boolean) => void;
 	handleSelectorChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -79,8 +79,8 @@ function useTelemetrySelectorWizard({
 	);
 
 	const handleQueryTypeChange = useCallback(
-		(next: string | string[]): void => {
-			const selected = (Array.isArray(next) ? next[0] : next) as QueryTypeId;
+		(next: string): void => {
+			const selected = next as QueryTypeId;
 			const keepsValue = getQueryTypeOption(selected)?.supportsKeyScoping ?? false;
 
 			applyDraft(selected, grantKey, keepsValue ? value : '');
@@ -89,8 +89,8 @@ function useTelemetrySelectorWizard({
 	);
 
 	const handleKeyChange = useCallback(
-		(next: string | string[]): void => {
-			applyDraft(queryType, Array.isArray(next) ? next[0] : next, value);
+		(next: string): void => {
+			applyDraft(queryType, next, value);
 		},
 		[applyDraft, queryType, value],
 	);

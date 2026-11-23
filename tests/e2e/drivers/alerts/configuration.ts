@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { apiDriver } from '../api';
+import { inputField } from '../input';
 
 import { ALERTS_LIST_PATH } from './constants';
 
@@ -146,7 +147,7 @@ export function plannedDowntimeDriver(page: Page): PlannedDowntime {
 		},
 
 		search: async (name) => {
-			await page.getByTestId('planned-downtime-search').fill(name);
+			await inputField(page, 'planned-downtime-search').fill(name);
 		},
 
 		row: (name) => page.locator('tbody tr').filter({ hasText: name }),
@@ -260,7 +261,7 @@ export function routingPoliciesDriver(page: Page): RoutingPolicies {
 		},
 
 		search: async (name) => {
-			await page.getByTestId('routing-policies-search').fill(name);
+			await inputField(page, 'routing-policies-search').fill(name);
 		},
 
 		row: (name) => page.locator('tbody tr').filter({ hasText: name }),

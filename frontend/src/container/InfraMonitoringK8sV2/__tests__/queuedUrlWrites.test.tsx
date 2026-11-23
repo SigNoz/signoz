@@ -139,7 +139,9 @@ describe('K8s URL writes queued by nuqs', () => {
 				queryData: [
 					{
 						...query.builder.queryData[0],
-						filter: { expression: "k8s.pod.name = 'pod-1'" },
+						filter: {
+							expression: "k8s.node.name = 'node-1' AND k8s.pod.name = 'pod-1'",
+						},
 					},
 				],
 			},
@@ -154,18 +156,20 @@ describe('K8s URL writes queued by nuqs', () => {
 		});
 
 		await userEvent.click(
-			await screen.findByTestId(`category-${K8sCategories.CONTAINERS}`),
+			await screen.findByTestId(`category-${K8sCategories.NODES}`),
 		);
 
 		await waitFor(() => {
 			const compositeQuery = JSON.parse(
 				decodeURIComponent(getUrlParam('compositeQuery') ?? ''),
 			);
-			expect(compositeQuery.builder.queryData[0].filter.expression).toBe('');
+			expect(compositeQuery.builder.queryData[0].filter.expression).toBe(
+				"k8s.node.name = 'node-1'",
+			);
 		});
 		await waitFor(() =>
 			expect(getUrlParam(INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY)).toBe(
-				K8sCategories.CONTAINERS,
+				K8sCategories.NODES,
 			),
 		);
 	});

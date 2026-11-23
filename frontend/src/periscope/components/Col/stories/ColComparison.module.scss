@@ -12,7 +12,7 @@
 }
 
 .label {
-	font-size: var(--periscope-font-size-small);
+	font-size: var(--paragraph-small-400-font-size);
 	color: var(--l2-foreground);
 }
 
@@ -24,7 +24,7 @@
 	// Beats antd Row's font reset, so the columns' own reset shows.
 	.row {
 		font-family: monospace;
-		font-size: var(--periscope-font-size-small);
+		font-size: var(--paragraph-small-400-font-size);
 	}
 }
 

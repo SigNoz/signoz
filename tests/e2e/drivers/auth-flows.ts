@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { User } from './auth';
 import { storageKey } from './base-path';
 import { dashboardListDriver } from './dashboard-list';
+import { inputField } from './input';
 import { guestDriver, kit, type Layer } from './kit';
 import { withSettings } from './settings/driver';
 
@@ -22,6 +23,8 @@ export interface AuthFlows {
 	expectOnLogin(): Promise<void>;
 	enterEmail(email: string): Promise<void>;
 	emailInput(): Locator;
+	/** The email field on `/forgot-password`, a different component from the login one. */
+	forgotEmailInput(): Locator;
 	enterPassword(password: string): Promise<void>;
 	submitPassword(): Promise<void>;
 	/** Sign in and wait for the app to leave `/login`. */
@@ -71,6 +74,7 @@ export function authFlowsDriver(page: Page): AuthFlows {
 		},
 
 		emailInput: () => page.getByTestId('email'),
+		forgotEmailInput: () => inputField(page, 'email'),
 
 		enterEmail: async (email) => {
 			await flows.emailInput().fill(email);

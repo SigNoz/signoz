@@ -18,7 +18,19 @@ function SavedViewsListSection({
 }: SavedViewsListSectionProps): JSX.Element {
 	return (
 		<section className={styles.section} data-testid={testId}>
-			<Typography.Text className={styles.sectionTitle}>{title}</Typography.Text>
+			<Typography
+				variant="uppercase"
+				size="small"
+				weight="medium"
+				color="secondary"
+				as="span"
+				display="inline-block"
+				paddingY={4}
+				paddingX={6}
+				textOverflow="wrap"
+			>
+				{title}
+			</Typography>
 			<div className={styles.sectionList}>
 				<OverlayScrollbar>
 					<div>

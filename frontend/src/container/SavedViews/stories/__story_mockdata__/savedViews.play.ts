@@ -10,6 +10,7 @@ import {
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { grantsAll } from '@/storybook/access/access';
+import { getToastText } from '@/storybook/play/toastText';
 
 import {
 	byTestId,
@@ -46,10 +47,7 @@ const viewIdOf = (row: HTMLElement): string =>
 	row.getAttribute('data-view-id') ?? '';
 
 const expectToast = (text: string): Promise<void> =>
-	waitFor(
-		async () => expect(screen.getByText(text)).toBeVisible(),
-		UNTIL_LOADED,
-	);
+	waitFor(async () => expect(getToastText(text)).toBeVisible(), UNTIL_LOADED);
 
 export const openFirstRowMenu = async ({
 	canvasElement,

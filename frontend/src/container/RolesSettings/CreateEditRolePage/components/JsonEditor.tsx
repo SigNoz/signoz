@@ -199,13 +199,23 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 				<div className={styles.jsonEditorErrorWrapper}>
 					{parseError && (
 						<div className={styles.jsonEditorError} data-testid="json-editor-error">
-							<Typography as="span" size="base" weight="medium">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="medium"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								Parse Error:
 							</Typography>
 							<Typography
-								as="span"
+								variant="code"
 								size="base"
-								className={styles.jsonEditorErrorMessage}
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
 							>
 								{parseError}
 							</Typography>
@@ -216,13 +226,23 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 							className={styles.jsonEditorError}
 							data-testid="json-editor-schema-error"
 						>
-							<Typography as="span" size="base" weight="medium">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="medium"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								Schema Error:
 							</Typography>
 							<Typography
-								as="span"
+								variant="code"
 								size="base"
-								className={styles.jsonEditorErrorMessage}
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
 							>
 								{schemaErrors[0]}
 								{schemaErrors.length > 1 && ` (+${schemaErrors.length - 1} more)`}

@@ -199,7 +199,16 @@ export default function UPlotChart({
 				}}
 			>
 				<ChartLine size={48} strokeWidth={0.5} />
-				<Typography>No Data</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No Data
+				</Typography>
 			</div>
 		);
 	}

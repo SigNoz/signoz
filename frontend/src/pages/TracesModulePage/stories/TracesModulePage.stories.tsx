@@ -10,8 +10,10 @@ import {
 	loadNextListPage,
 	openAddToDashboard,
 	openColumnHeaderMenu,
+	openCreateFunnel,
 	openPageSize,
 	openQuickFiltersSettings,
+	openRenameFunnel,
 	showCreateFunnelNameError,
 	showRootSpansNextPage,
 	suggestBooleanValues,
@@ -116,6 +118,18 @@ export const CreateFunnelNameError: Story = {
 	play: showCreateFunnelNameError,
 };
 
+/** The name field for a funnel that does not exist yet. */
+export const CreateFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openCreateFunnel,
+};
+
+/** The rename field for a funnel already on the list. */
+export const RenameFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openRenameFunnel,
+};
+
 /**
  * A fresh workspace: nothing ingested in the window and no quick filters
  * configured yet, so the table and the filter panel both show their empty
@@ -155,17 +169,6 @@ export const QuickFiltersSettings: Story = {
 
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
 

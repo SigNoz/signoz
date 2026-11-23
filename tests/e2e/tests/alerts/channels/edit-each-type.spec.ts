@@ -23,14 +23,14 @@ test.describe('Notification channels — edit one of each type', () => {
 				({ id } = await channels.api.create(name, kind, spec));
 
 				await authedPage.goto(`/alerts/channels/edit/${id}`);
-				const field = authedPage.getByTestId(testId);
+				const field = channels.form.field(testId);
 				await expect(field).toHaveValue(original);
 
 				await field.fill(edited);
 				await channels.form.saveEdit();
 
 				await authedPage.goto(`/alerts/channels/edit/${id}`);
-				await expect(authedPage.getByTestId(testId)).toHaveValue(edited);
+				await expect(channels.form.field(testId)).toHaveValue(edited);
 			} finally {
 				await channels.api.remove(id);
 			}

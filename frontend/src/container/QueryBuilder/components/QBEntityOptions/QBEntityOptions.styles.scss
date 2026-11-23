@@ -20,7 +20,13 @@
 	}
 
 	.options {
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		// The buttons' fill is translucent and the query rail runs behind them.
+		background: var(--query-builder-v2-surface);
+		// Stops the rail 8px below the buttons, like the connectors before each field.
+		box-shadow: 0 8px 0 0 var(--query-builder-v2-surface);
+		// The rail is absolutely positioned; without a stacking level it paints on top.
+		position: relative;
+		z-index: 1;
 		border-radius: 2px;
 		margin-left: -32px;
 		max-width: 100%;
@@ -37,15 +43,16 @@
 			);
 			--periscope-btn-background-color: var(
 				--query-builder-v2-background-color,
-				var(--l2-background)
+				var(--input-background)
 			);
-			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+		}
+
+		// The next button overlaps this edge by 1px and draws the divider.
+		.ant-btn-group > .ant-btn:not(:last-child, :hover, :focus-visible) {
+			border-right-color: transparent;
 		}
 
 		.query-name {
-			font-size: 12px;
-			font-style: normal;
-			font-weight: 400;
 			pointer-events: none;
 			// line-height: 18px;
 

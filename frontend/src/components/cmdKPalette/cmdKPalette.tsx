@@ -1,13 +1,8 @@
 import React, { useEffect } from 'react';
-import cx from 'classnames';
 import {
-	CommandDialog,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-	CommandShortcut,
+	Command,
+	type CommandActionItemType,
+	type CommandItemType,
 } from '@signozhq/ui/command';
 import logEvent from 'api/common/logEvent';
 import {
@@ -26,8 +21,12 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ROLES as UserRole } from 'types/roles';
 
-import { createShortcutActions } from '../../constants/shortcutActions';
+import {
+	type CmdAction,
+	createShortcutActions,
+} from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
+import { toKbdKeys } from './utils';
 
 import './cmdKPalette.scss';
 
@@ -58,17 +57,6 @@ const openAuthZDevModal = IS_DEV
 		}
 	: undefined;
 
-type CmdAction = {
-	id: string;
-	name: string;
-	shortcut?: string[];
-	keywords?: string;
-	section?: string;
-	icon?: React.ReactNode;
-	roles?: UserRole[];
-	perform: () => void;
-};
-
 export function CmdKPalette({
 	userRole,
 }: {
@@ -76,7 +64,7 @@ export function CmdKPalette({
 }): JSX.Element | null {
 	const { open, setOpen } = useCmdK();
 
-	const { setAutoSwitch, setTheme, theme } = useThemeMode();
+	const { setAutoSwitch, setTheme } = useThemeMode();
 	const location = useAppLocation();
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
 	const startNewConversation = useAIAssistantStore(
@@ -146,8 +134,25 @@ export function CmdKPalette({
 		(a) => !a.roles || a.roles.includes(userRole),
 	);
 
+	const toCommandItem = (action: CmdAction): CommandActionItemType => ({
+		type: 'item',
+		value: action.id,
+		label: action.name,
+		prefix: action.icon,
+		searchMetadata: action.keywords,
+		shortcut: toKbdKeys(action.shortcut),
+		onClick: (): void => {
+			// the palette closes itself after a pick, also when this throws
+			try {
+				action.perform();
+			} catch (e) {
+				console.error('Error invoking action', e);
+			}
+		},
+	});
+
 	// group permitted actions by section
-	const grouped: [string, CmdAction[]][] = ((): [string, CmdAction[]][] => {
+	const items: CommandItemType[] = ((): CommandItemType[] => {
 		const map = new Map<string, CmdAction[]>();
 
 		permitted.forEach((a) => {
@@ -161,61 +166,25 @@ export function CmdKPalette({
 			}
 		});
 
-		return Array.from(map.entries());
+		return Array.from(map.entries()).map(([section, sectionActions]) => ({
+			type: 'group',
+			value: section.toLowerCase().replace(/\s+/g, '-'),
+			label: section,
+			items: sectionActions.map(toCommandItem),
+		}));
 	})();
-
-	const handleInvoke = (action: CmdAction): void => {
-		try {
-			action.perform();
-		} catch (e) {
-			console.error('Error invoking action', e);
-		} finally {
-			setOpen(false);
-		}
-	};
 
 	return (
 		<>
-			<CommandDialog
+			<Command
+				label="Command palette"
 				open={open}
 				onOpenChange={setOpen}
-				position="top"
-				offset={110}
-			>
-				<CommandInput placeholder="Search…" className="cmdk-input-wrapper" />
-				<CommandList className="cmdk-list-scroll">
-					<CommandEmpty>No results</CommandEmpty>
-					{grouped.map(([section, items]) => (
-						<CommandGroup
-							key={section}
-							heading={section}
-							className="cmdk-section-heading"
-						>
-							{items.map((it) => (
-								<CommandItem
-									key={it.id}
-									onSelect={(): void => handleInvoke(it)}
-									value={it.name}
-									className={theme === 'light' ? 'cmdk-item-light' : 'cmdk-item'}
-								>
-									<span
-										className={cx(
-											'cmd-item-icon',
-											it.id === 'ai-assistant' && 'noz-icon',
-										)}
-									>
-										{it.icon}
-									</span>
-									{it.name}
-									{it.shortcut && it.shortcut.length > 0 && (
-										<CommandShortcut>{it.shortcut.join(' • ')}</CommandShortcut>
-									)}
-								</CommandItem>
-							))}
-						</CommandGroup>
-					))}
-				</CommandList>
-			</CommandDialog>
+				items={items}
+				searchInputProps={{ placeholder: 'Search…' }}
+				noContent="No results"
+				testId="cmdk-palette"
+			/>
 			{IS_DEV && AuthZDevModal && (
 				<React.Suspense fallback={null}>
 					<AuthZDevModal />

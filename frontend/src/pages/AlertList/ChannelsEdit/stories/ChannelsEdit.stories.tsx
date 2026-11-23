@@ -4,6 +4,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import {
+	expectEditableForm,
+	expectJiraAdvancedFields,
+	expectJiraConnectionFields,
+} from './__story_mockdata__/channelsEdit.play';
 import { channelsEditMocks } from './ChannelsEdit.stories.mocks';
 
 import AlertList from '../../index';
@@ -36,15 +41,17 @@ type Story = StoryObj<ChannelsEditArgs>;
 /**
  * A saved notification channel opened for editing: the name and the type are
  * fixed, and the integration's own settings are filled from what was stored.
+ * The Channel type control swaps the integration, and typing into any field
+ * unlocks Save.
  */
-export const Default: Story = {};
+export const Default: Story = { play: expectEditableForm };
 
 /** Mutation: clearing the required webhook URL surfaces the form's validation feedback. */
 export const InvalidRequiredFields: Story = {
 	play: async ({ canvasElement }): Promise<void> => {
 		const canvas = within(canvasElement);
 		const webhookUrl = await canvas.findByTestId(
-			'webhook-url-textbox',
+			'webhook-url-textbox-field',
 			undefined,
 			untilLoaded,
 		);
@@ -95,7 +102,11 @@ export const SaveFailure: Story = {
 		// Save is off until the form is edited, so the failure is reached through
 		// a real change rather than an empty submit.
 		await userEvent.type(
-			await canvas.findByTestId('slack-channel-textbox', undefined, untilLoaded),
+			await canvas.findByTestId(
+				'slack-channel-textbox-field',
+				undefined,
+				untilLoaded,
+			),
 			'-edited',
 		);
 		await userEvent.click(canvas.getByTestId('save-channel-button'));
@@ -110,21 +121,25 @@ export const SaveFailure: Story = {
  */
 export const PagerDuty: Story = {
 	args: { channelType: 'pagerduty' },
+	play: expectEditableForm,
 };
 
 /** The webhook channel, saved with basic auth on the outgoing request. */
 export const Webhook: Story = {
 	args: { channelType: 'webhook' },
+	play: expectEditableForm,
 };
 
 /** The webhook channel saved with a bearer token: only the token field shows. */
 export const WebhookBearerToken: Story = {
 	args: { channelType: 'webhook', webhookAuth: 'bearer' },
+	play: expectEditableForm,
 };
 
 /** The webhook channel saved without credentials: the auth option is None. */
 export const WebhookWithoutAuth: Story = {
 	args: { channelType: 'webhook', webhookAuth: 'none' },
+	play: expectEditableForm,
 };
 
 /**
@@ -133,6 +148,7 @@ export const WebhookWithoutAuth: Story = {
  */
 export const Opsgenie: Story = {
 	args: { channelType: 'opsgenie' },
+	play: expectEditableForm,
 };
 
 /**
@@ -141,6 +157,7 @@ export const Opsgenie: Story = {
  */
 export const Email: Story = {
 	args: { channelType: 'email' },
+	play: expectEditableForm,
 };
 
 /**
@@ -149,11 +166,13 @@ export const Email: Story = {
  */
 export const MicrosoftTeams: Story = {
 	args: { channelType: 'msteams' },
+	play: expectEditableForm,
 };
 
 /** The Google Chat channel, filled from the space's incoming webhook. */
 export const GoogleChat: Story = {
 	args: { channelType: 'googlechat' },
+	play: expectEditableForm,
 };
 
 /**
@@ -163,17 +182,7 @@ export const GoogleChat: Story = {
  */
 export const Jira: Story = {
 	args: { channelType: 'jira' },
-	play: async ({ canvasElement }): Promise<void> => {
-		// the advanced fields have their own card now, so nothing has to be
-		// expanded before they can be read
-		await expect(
-			await within(canvasElement).findByTestId(
-				'jira-reopen-duration-textbox',
-				undefined,
-				{ timeout: 15_000 },
-			),
-		).toBeVisible();
-	},
+	play: expectJiraAdvancedFields,
 };
 
 /**
@@ -183,17 +192,7 @@ export const Jira: Story = {
  */
 export const JiraSelfHosted: Story = {
 	args: { channelType: 'jira', jiraDeployment: 'selfhosted' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-		await expect(
-			await canvas.findByTestId('jira-pat-textbox', undefined, {
-				timeout: 15_000,
-			}),
-		).toHaveValue('story-jira-pat');
-		await expect(
-			canvas.queryByTestId('jira-email-textbox'),
-		).not.toBeInTheDocument();
-	},
+	play: expectJiraConnectionFields,
 };
 
 /**
@@ -202,6 +201,7 @@ export const JiraSelfHosted: Story = {
  */
 export const JiraServiceManagementOps: Story = {
 	args: { channelType: 'jsmops' },
+	play: expectEditableForm,
 };
 
 /**
@@ -210,9 +210,11 @@ export const JiraServiceManagementOps: Story = {
  */
 export const IncidentIO: Story = {
 	args: { channelType: 'incidentio' },
+	play: expectEditableForm,
 };
 
 /** A Telegram channel, with its bot token masked behind the password field. */
 export const Telegram: Story = {
 	args: { channelType: 'telegram' },
+	play: expectEditableForm,
 };
