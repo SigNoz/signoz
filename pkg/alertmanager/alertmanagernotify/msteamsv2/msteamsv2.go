@@ -13,10 +13,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -192,7 +194,7 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		BodyTemplate:         customBody,
 		DefaultTitleTemplate: n.conf.Title,
 		DefaultBodyTemplate:  n.conf.Text,
-	}, alerts)
+	}, escapeLabelValues(alerts))
 	if err != nil {
 		return nil, err
 	}
@@ -243,6 +245,52 @@ func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([
 		})
 	}
 	return blocks, nil
+}
+
+// escapeLabelValues copies the alerts so a label value shows on the card as written instead of being read as markdown.
+func escapeLabelValues(alerts []*types.Alert) []*types.Alert {
+	escaped := make([]*types.Alert, 0, len(alerts))
+
+	for _, alert := range alerts {
+		labels := make(model.LabelSet, len(alert.Labels))
+		for name, value := range alert.Labels {
+			if name == ruletypes.LabelRuleSource {
+				labels[name] = value
+				continue
+			}
+			labels[name] = model.LabelValue(escapeMarkdown(string(value)))
+		}
+
+		copied := *alert
+		copied.Labels = labels
+		escaped = append(escaped, &copied)
+	}
+
+	return escaped
+}
+
+// escapeMarkdown leaves an underscore inside a word alone, since Teams only reads one at a word edge as emphasis.
+func escapeMarkdown(value string) string {
+	runes := []rune(value)
+
+	var escaped strings.Builder
+	for i, r := range runes {
+		switch r {
+		case '*', '[', ']':
+			escaped.WriteRune('\\')
+		case '_':
+			if i == 0 || i == len(runes)-1 || !isWordRune(runes[i-1]) || !isWordRune(runes[i+1]) {
+				escaped.WriteRune('\\')
+			}
+		}
+		escaped.WriteRune(r)
+	}
+
+	return escaped.String()
+}
+
+func isWordRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 // A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema

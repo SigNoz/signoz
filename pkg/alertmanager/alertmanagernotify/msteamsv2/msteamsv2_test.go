@@ -497,3 +497,119 @@ func TestNotifyMessageSize(t *testing.T) {
 		})
 	}
 }
+
+func TestEscapeMarkdown(t *testing.T) {
+	testCases := []struct {
+		name     string
+		value    string
+		expected string
+	}{
+		{name: "AsteriskPair_Escaped", value: "a*b*c", expected: `a\*b\*c`},
+		{name: "LinkSyntax_BracketsEscaped", value: "[runbook](https://wiki.test)", expected: `\[runbook\](https://wiki.test)`},
+		{name: "UnderscoreAtWordEdges_Escaped", value: "_internal_ value", expected: `\_internal\_ value`},
+		{name: "DoubleUnderscore_AllEscaped", value: "__init__", expected: `\_\_init\_\_`},
+		{name: "UnderscoreInsideWord_Untouched", value: "k8s_namespace_name", expected: "k8s_namespace_name"},
+		{name: "UnderscoreAfterSymbol_Escaped", value: "/api/v1/*_bulk", expected: `/api/v1/\*\_bulk`},
+		{name: "TrailingUnderscore_Escaped", value: "tmp_", expected: `tmp\_`},
+		{name: "NonASCIIWord_UnderscoreUntouched", value: "größe_wert", expected: "größe_wert"},
+		{name: "HTMLAndHash_Untouched", value: "<b>tag</b> # not a heading", expected: "<b>tag</b> # not a heading"},
+		{name: "Empty_Untouched", value: "", expected: ""},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, escapeMarkdown(testCase.value))
+		})
+	}
+}
+
+func TestPrepareContentEscapesLabelValues(t *testing.T) {
+	testCases := []struct {
+		name          string
+		title         string
+		text          string
+		annotations   model.LabelSet
+		expectedTitle string
+		expectedBody  string
+	}{
+		{
+			name:          "DefaultTemplates_AlertNameAndDetailsEscaped",
+			title:         `{{ template "msteamsv2.default.title" . }}`,
+			text:          `{{ template "msteamsv2.default.text" . }}`,
+			expectedTitle: `[FIRING:1] CPU \*high\* \[prod\]`,
+			expectedBody:  "**Alert:** CPU \\*high\\* \\[prod\\] (critical) - firing\n\n**Details:**\n\n- **expr:** rate(a\\[5m\\]) \\* 2\n- **k8s_pod_name:** api_server_1",
+		},
+		{
+			name:          "CustomChannelTemplates_LabelValuesEscaped",
+			title:         "Custom: {{ .CommonLabels.alertname }}",
+			text:          "{{ range .Alerts }}expr={{ .Labels.expr }} pod={{ .Labels.k8s_pod_name }}{{ end }}",
+			expectedTitle: `Custom: CPU \*high\* \[prod\]`,
+			expectedBody:  `expr=rate(a\[5m\]) \* 2 pod=api_server_1`,
+		},
+		{
+			name:          "RuleBodyTemplate_LabelValuesEscaped",
+			title:         "Rule: {{ .CommonLabels.alertname }}",
+			text:          "unused channel text",
+			annotations:   model.LabelSet{ruletypes.AnnotationBodyTemplate: "expr is $expr"},
+			expectedTitle: `Rule: CPU \*high\* \[prod\]`,
+			expectedBody:  `expr is rate(a\[5m\]) \* 2`,
+		},
+		{
+			name:          "AnnotationValues_LeftAsWritten",
+			title:         "Annotations: {{ .CommonLabels.severity }}",
+			text:          "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}",
+			annotations:   model.LabelSet{"summary": "see **the** [runbook](https://wiki.test) for a*b"},
+			expectedTitle: "Annotations: critical",
+			expectedBody:  "see **the** [runbook](https://wiki.test) for a*b",
+		},
+		{
+			name:          "RuleSourceLabel_LeftAsWritten",
+			title:         "Source: {{ .CommonLabels.severity }}",
+			text:          "{{ range .Alerts }}[open]({{ .Labels.ruleSource }}){{ end }}",
+			expectedTitle: "Source: critical",
+			expectedBody:  "[open](https://signoz.test/alerts/overview?ruleId=[x]_)",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			tmpl, err := alertmanagertypes.FromGlobs([]string{})
+			require.NoError(t, err)
+			tmpl.ExternalURL = &url.URL{Scheme: "http", Host: "signoz.test"}
+
+			notifier, err := New(
+				&config.MSTeamsV2Config{
+					WebhookURL: &config.SecretURL{URL: testWebhookURL},
+					HTTPConfig: &commoncfg.HTTPClientConfig{},
+					Title:      testCase.title,
+					Text:       testCase.text,
+				},
+				tmpl,
+				`{{ template "msteamsv2.default.titleLink" . }}`,
+				promslog.NewNopLogger(),
+				newTestTemplater(tmpl),
+			)
+			require.NoError(t, err)
+
+			alerts := []*types.Alert{{
+				Alert: model.Alert{
+					Labels: model.LabelSet{
+						"alertname": "CPU *high* [prod]", "severity": "critical", "expr": "rate(a[5m]) * 2", "k8s_pod_name": "api_server_1",
+						"ruleSource": "https://signoz.test/alerts/overview?ruleId=[x]_",
+					},
+					Annotations: testCase.annotations,
+					StartsAt:    time.Now(),
+					EndsAt:      time.Now().Add(time.Hour),
+				},
+			}}
+
+			blocks, err := notifier.prepareContent(notify.WithGroupKey(context.Background(), "1"), alerts)
+			require.NoError(t, err)
+			require.Len(t, blocks, 2)
+			assert.Equal(t, testCase.expectedTitle, blocks[0].Text)
+			assert.Equal(t, testCase.expectedBody, blocks[1].Text)
+			assert.Equal(t, model.LabelValue("CPU *high* [prod]"), alerts[0].Labels["alertname"])
+			assert.Equal(t, model.LabelValue("rate(a[5m]) * 2"), alerts[0].Labels["expr"])
+		})
+	}
+}
