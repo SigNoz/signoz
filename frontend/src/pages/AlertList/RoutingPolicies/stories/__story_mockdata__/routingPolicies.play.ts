@@ -134,14 +134,19 @@ export const searchWithNoResults = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	const canvas = within(canvasElement);
-	const search = await canvas.findByPlaceholderText(
-		'Search by name or description',
-		undefined,
+	const placeholder = 'Search by name or description';
+	// The input remounts once the check answers, so look it up after.
+	await waitFor(
+		() =>
+			expect(canvas.getByPlaceholderText(placeholder)).not.toHaveAttribute(
+				'disabled',
+			),
 		untilLoaded,
 	);
-
-	await waitFor(() => expect(search).not.toHaveAttribute('disabled'));
-	await userEvent.type(search, 'no matching policy');
+	await userEvent.type(
+		canvas.getByPlaceholderText(placeholder),
+		'no matching policy',
+	);
 	await canvas.findByText('No matching routing policies');
 };
 
