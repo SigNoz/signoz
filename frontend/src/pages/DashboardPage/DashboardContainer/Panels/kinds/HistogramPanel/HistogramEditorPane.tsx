@@ -1,3 +1,4 @@
+import { SolidInfoCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 
@@ -15,7 +16,6 @@ import styles from './HistogramEditorPane.module.scss';
 function HistogramEditorPane({
 	panelDefinition,
 	isLoadingQueries,
-	onChangeQueryMode,
 	onStageRunQuery,
 	onCancelQuery,
 	stickyHeader,
@@ -26,20 +26,21 @@ function HistogramEditorPane({
 		<PanelEditorQueryBuilder
 			panelDefinition={panelDefinition}
 			isLoadingQueries={isLoadingQueries}
-			onChangeQueryMode={onChangeQueryMode}
 			onStageRunQuery={onStageRunQuery}
 			onCancelQuery={onCancelQuery}
 			stickyHeader={stickyHeader}
 			banner={
 				isMetricQuery(currentQuery) && (
-					<Callout
-						className={styles.banner}
-						type="info"
-						size="small"
-						showIcon
-						title="For bucket counts over the time range, use the Distribution panel."
-						testId="histogram-distribution-banner"
-					/>
+					<div className={styles.banner}>
+						<Callout
+							color="primary"
+							size="sm"
+							icon={<SolidInfoCircle />}
+							testId="histogram-distribution-banner"
+						>
+							For bucket counts over the time range, use the Distribution panel.
+						</Callout>
+					</div>
 				)
 			}
 		/>

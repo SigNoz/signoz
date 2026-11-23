@@ -1,3 +1,4 @@
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import type {
 	SectionEditorProps,
@@ -31,7 +32,7 @@ function DistributionAxesSection({
 					label="X-axis range"
 					help={
 						isRangeInverted(xMin, xMax) ? (
-							<Callout type="error" size="small" showIcon>
+							<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
 								Min can&apos;t be greater than max.
 							</Callout>
 						) : (

@@ -18,6 +18,7 @@ import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListKind,
 	MetrictypesSpaceAggregationDTO as SpaceAggregation,
+	DashboardtypesDistributionStackModeDTO as DistributionStackMode,
 	DashboardtypesStackModeDTO as StackMode,
 	DashboardtypesTextModeDTO as TextMode,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
@@ -158,7 +159,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 							},
 						},
 						chartAppearance: {
-							stack: args.stack,
+							stack: DistributionStackMode[args.stack],
 							percentiles: { enabled: args.percentiles, values: [50, 90, 99] },
 						},
 					},

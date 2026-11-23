@@ -53,6 +53,7 @@ function DistributionPercentilesField({
 				>
 					<ConfigMultiSelect
 						testId="panel-editor-v2-percentile-values"
+						placeholder="Pick percentiles"
 						value={values.map(String)}
 						items={resolvePercentileItems(values)}
 						onChange={(picked): void => {

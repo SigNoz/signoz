@@ -1,5 +1,5 @@
 import {
-	DashboardtypesStackModeDTO,
+	DashboardtypesDistributionStackModeDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
@@ -102,30 +102,33 @@ export const DISCONNECT_MODE_OPTIONS: ConfigTileItem<DisconnectValuesMode>[] = [
 ];
 
 /** Distribution's layout of groups within a bucket. */
-export const BUCKET_STACK_OPTIONS: ConfigTileItem<DashboardtypesStackModeDTO>[] =
+export const BUCKET_STACK_OPTIONS: ConfigTileItem<DashboardtypesDistributionStackModeDTO>[] =
 	[
 		{
-			value: DashboardtypesStackModeDTO.normal,
+			value: DashboardtypesDistributionStackModeDTO.normal,
 			label: 'Stacked',
 			drawing: TILE_DRAWINGS.barsStacked,
 		},
 		{
-			value: DashboardtypesStackModeDTO.none,
+			value: DashboardtypesDistributionStackModeDTO.none,
 			label: 'Side by side',
 			drawing: TILE_DRAWINGS.barsSideBySide,
 		},
 		{
-			value: DashboardtypesStackModeDTO.percent,
+			value: DashboardtypesDistributionStackModeDTO.percent,
 			label: '100%',
 			drawing: TILE_DRAWINGS.barsPercent,
 		},
 	];
 
-export const BUCKET_STACK_HELP: Record<DashboardtypesStackModeDTO, string> = {
-	[DashboardtypesStackModeDTO.normal]:
+export const BUCKET_STACK_HELP: Record<
+	DashboardtypesDistributionStackModeDTO,
+	string
+> = {
+	[DashboardtypesDistributionStackModeDTO.normal]:
 		'Groups sit on top of each other, so the height shows the bucket total.',
-	[DashboardtypesStackModeDTO.none]:
+	[DashboardtypesDistributionStackModeDTO.none]:
 		'Groups share each bucket side by side; hard to read past a few groups.',
-	[DashboardtypesStackModeDTO.percent]:
+	[DashboardtypesDistributionStackModeDTO.percent]:
 		"Each group's share of the bucket; the y axis becomes a percentage.",
 };

@@ -141,13 +141,6 @@ export const panelsMocks = defineStoryMocks({
 			options: HEATMAP_COUNT_RANGES,
 			value: 'auto',
 		}),
-		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
-			group: PANEL,
-			description:
-				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
-			options: HEATMAP_SOURCES,
-			value: 'metrics',
-		}),
 		distributionXRange: choiceControl<DistributionXRange>(
 			'Distribution x range',
 			{
@@ -163,6 +156,13 @@ export const panelsMocks = defineStoryMocks({
 			description:
 				'Dashed p50, p90 and p99 markers across the Distribution panel.',
 			value: true,
+		}),
+		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
+			group: PANEL,
+			description:
+				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
+			options: HEATMAP_SOURCES,
+			value: 'metrics',
 		}),
 		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {
 			group: PANEL,

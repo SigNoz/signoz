@@ -17,9 +17,9 @@ export type PartialPanelTypes = {
 	[PANEL_TYPES.SCATTER]: 'scatter';
 	[PANEL_TYPES.HISTOGRAM]: 'histogram';
 	[PANEL_TYPES.HEATMAP]: 'heatmap';
+	[PANEL_TYPES.DISTRIBUTION]: 'distribution';
 	[PANEL_TYPES.GEO_MAP]: 'geo_map';
 	[PANEL_TYPES.TOP_LIST]: 'top_list';
-	[PANEL_TYPES.DISTRIBUTION]: 'distribution';
 };
 
 export type BuilderField = keyof IBuilderQuery;
