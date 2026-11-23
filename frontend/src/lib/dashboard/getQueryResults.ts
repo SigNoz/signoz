@@ -356,6 +356,7 @@ export interface GetQueryResultsProps {
 	formatForWeb?: boolean;
 	tableParams?: {
 		pagination?: Pagination;
+		pageSize?: number;
 		selectColumns?: any;
 	};
 	start?: number;
