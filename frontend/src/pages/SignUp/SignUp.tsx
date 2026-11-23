@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import { Input } from '@signozhq/ui/input';
-import { Form, Input as AntdInput } from 'antd';
+import { Form } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import signUpApi from 'api/v1/register/post';
@@ -11,7 +11,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
-import { ArrowRight } from '@signozhq/icons';
+import { ArrowRight, SolidInfoCircle } from '@signozhq/icons';
 import APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';
@@ -114,13 +114,30 @@ function SignUp(): JSX.Element {
 					<div className="signup-header-icon">
 						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} className="signup-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						Create your account
-					</Typography.Title>
-					<Typography.Text className="signup-header-subtitle">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						maxWidth={360}
+						textOverflow="wrap"
+					>
 						You&apos;re almost in. Create a password to start monitoring your
 						applications with SigNoz.
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<FormContainer onFinish={handleSubmit} form={form} className="signup-form">
@@ -135,7 +152,6 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
-										className="signup-form-input"
 									/>
 								</FormContainer.Item>
 							</div>
@@ -147,12 +163,12 @@ function SignUp(): JSX.Element {
 									validateTrigger="onBlur"
 									rules={[{ required: true, message: 'Please enter password!' }]}
 								>
-									<AntdInput.Password
+									<Input.Password
 										required
 										id="currentPassword"
 										placeholder="Enter new password"
 										disabled={loading}
-										className="signup-antd-input"
+										disabledTooltip="Creating your account"
 									/>
 								</FormContainer.Item>
 							</div>
@@ -170,23 +186,26 @@ function SignUp(): JSX.Element {
 									}
 									rules={[{ required: true, message: 'Please enter confirm password!' }]}
 								>
-									<AntdInput.Password
+									<Input.Password
 										required
 										id="confirmPassword"
 										placeholder="Confirm your new password"
 										disabled={loading}
-										className="signup-antd-input"
-										onBlur={() => setConfirmPasswordTouched(true)}
+										disabledTooltip="Creating your account"
+										status={showPasswordMismatchError ? 'danger' : undefined}
+										onBlur={(): void => setConfirmPasswordTouched(true)}
 									/>
 								</FormContainer.Item>
 							</div>
 						</div>
 					</div>
 
-					<Callout type="info" size="small" showIcon className="signup-info-callout">
-						This will create an admin account. If you are not an admin, please ask
-						your admin for an invite link
-					</Callout>
+					<div className="signup-info-callout">
+						<Callout color="primary" size="sm" icon={<SolidInfoCircle />}>
+							This will create an admin account. If you are not an admin, please ask
+							your admin for an invite link
+						</Callout>
+					</div>
 
 					{formError && <AuthError error={formError} />}
 

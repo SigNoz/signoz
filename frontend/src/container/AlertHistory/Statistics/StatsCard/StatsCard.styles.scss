@@ -43,7 +43,7 @@
 		gap: 4px;
 		.count-label {
 			color: var(--l1-foreground);
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 			font-size: 24px;
 			line-height: 36px;
 		}

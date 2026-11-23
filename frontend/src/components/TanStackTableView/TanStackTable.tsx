@@ -17,7 +17,7 @@ import {
 	horizontalListSortingStrategy,
 	SortableContext,
 } from '@dnd-kit/sortable';
-import { ComboboxSimple } from '@signozhq/ui/combobox';
+import { Combobox } from '@signozhq/ui/combobox';
 import { Pagination } from '@signozhq/ui/pagination';
 import type { Row } from '@tanstack/react-table';
 import {
@@ -664,25 +664,31 @@ function TanStackTableInner<TData, TItemKey = string>(
 								{pagination.totalCountLabel ? ` ${pagination.totalCountLabel}` : ''}
 							</span>
 						)}
-						<Pagination
-							current={page}
-							pageSize={limit}
-							total={effectiveTotalCount}
-							onPageChange={(p): void => {
-								setPage(p);
-								pagination.onPageChange?.(p);
-							}}
-						/>
+						{effectiveTotalCount > limit && (
+							<Pagination
+								testId={testId ? `${testId}-pagination` : 'pagination'}
+								current={page}
+								pageSize={limit}
+								total={effectiveTotalCount}
+								showTotal={false}
+								onPageChange={(p): void => {
+									setPage(p);
+									pagination.onPageChange?.(p);
+								}}
+							/>
+						)}
 						{pagination.showPageSize !== false && (
 							<div className={viewStyles.paginationPageSize}>
-								<ComboboxSimple
+								<Combobox
 									testId="pagination-page-size"
+									aria-label="Rows per page"
+									placeholder="Page size"
+									searchInputProps={{ placeholder: 'Search page sizes' }}
 									value={limit?.toString()}
-									defaultValue="10"
-									onChange={(value): void => {
-										value ??= '10';
-										setLimit(+value);
-										pagination.onLimitChange?.(+value);
+									onChange={(value: string | undefined): void => {
+										const nextValue = value ?? '10';
+										setLimit(+nextValue);
+										pagination.onLimitChange?.(+nextValue);
 										if (page !== 1) {
 											setPage(1);
 											pagination.onPageChange?.(1);

@@ -64,11 +64,12 @@ function ViewRoleContentInner({
 					<div className={styles.permissionSection}>
 						<div className={styles.permissionHeader}>
 							<Typography
-								as="span"
+								variant="uppercase"
 								size="small"
 								weight="medium"
-								color="muted"
-								className={styles.permissionTitle}
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
 							>
 								Transaction Groups
 							</Typography>
@@ -145,7 +146,16 @@ function ViewRoleContentInner({
 					<label htmlFor="role-description" className={styles.formLabel}>
 						Description
 					</label>
-					<Typography>{role.description}</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{role.description}
+					</Typography>
 				</div>
 				<div className={styles.formRow}>
 					<div className={styles.formField}>
@@ -169,15 +179,17 @@ function ViewRoleContentInner({
 
 			<Divider />
 
-			<Tabs
-				variant="primary"
-				orientation="horizontal"
-				alignment="start"
-				className={styles.roleTabs}
-				value={activeTab}
-				onChange={handleTabChange}
-				items={tabItems}
-			/>
+			<div className={styles.roleTabs}>
+				<Tabs
+					variant="primary"
+					orientation="horizontal"
+					alignment="start"
+					value={activeTab}
+					onChange={handleTabChange}
+					noTabContentPadding
+					items={tabItems}
+				/>
+			</div>
 		</div>
 	);
 }
@@ -243,7 +255,17 @@ function ViewRolePage(): JSX.Element {
 						>
 							<ArrowLeft size={16} />
 						</Button>
-						<Typography.Title level={3}>View Role</Typography.Title>
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="inherit"
+							as="h3"
+							marginY={4}
+							textOverflow="wrap"
+						>
+							View Role
+						</Typography>
 					</div>
 				</div>
 
@@ -289,9 +311,17 @@ function ViewRolePage(): JSX.Element {
 					>
 						<ArrowLeft size={16} />
 					</Button>
-					<Typography.Title level={3}>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h3"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						{'Role - ' + (roleName || 'Loading role...')}
-					</Typography.Title>
+					</Typography>
 				</div>
 
 				<ViewRolePageHeaderActions

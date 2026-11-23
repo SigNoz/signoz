@@ -79,14 +79,18 @@ function QuerySection({
 	const anomalyDisabledTooltip = (url: string): JSX.Element => (
 		<span>
 			Coming soon for anomaly detection.{' '}
-			<Typography.Link
-				href={url}
-				target="_blank"
-				rel="noopener noreferrer"
-				style={{ color: 'inherit', textDecoration: 'underline' }}
-			>
-				Leave a thumbs-up
-			</Typography.Link>{' '}
+			<span style={{ color: 'inherit', textDecoration: 'underline' }}>
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					textOverflow="wrap"
+					href={url}
+					target="_blank"
+				>
+					Leave a thumbs-up
+				</Typography.Link>
+			</span>{' '}
 			to help us prioritize!
 		</span>
 	);
@@ -97,7 +101,16 @@ function QuerySection({
 				<Tooltip title="Query Builder">
 					<Button className="nav-btns" data-testid="query-builder-tab">
 						<Atom size={14} />
-						<Typography.Text>Query Builder</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Query Builder
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
@@ -118,7 +131,16 @@ function QuerySection({
 						data-testid="clickhouse-tab"
 					>
 						<Terminal size={14} />
-						<Typography.Text>ClickHouse Query</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							ClickHouse Query
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
@@ -141,7 +163,16 @@ function QuerySection({
 					<Tooltip title="Query Builder">
 						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
-							<Typography.Text>Query Builder</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Query Builder
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -162,7 +193,16 @@ function QuerySection({
 							data-testid="clickhouse-tab"
 						>
 							<Terminal size={14} />
-							<Typography.Text>ClickHouse Query</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								ClickHouse Query
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -186,7 +226,16 @@ function QuerySection({
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
-							<Typography.Text>PromQL</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								PromQL
+							</Typography>
 						</Button>
 					</Tooltip>
 				),

@@ -15,26 +15,6 @@
 	max-width: 100%;
 }
 
-.text {
-	font-family: Inter;
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	line-height: 18px;
-	letter-spacing: -0.07px;
-}
-
-.title {
-	composes: text;
-	color: var(--l1-foreground);
-	font-weight: var(--font-weight-medium);
-}
-
-.detail {
-	composes: text;
-	color: var(--l2-foreground);
-	font-weight: var(--font-weight-normal);
-}
-
 .actionButtons {
 	display: flex;
 	gap: 24px;

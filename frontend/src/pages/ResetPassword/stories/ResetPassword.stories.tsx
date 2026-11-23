@@ -1,12 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import ResetPassword from '../index';
-import { resetPasswordMocks } from './ResetPassword.stories.mocks';
-
-type ResetPasswordArgs = PageStoryArgs<typeof resetPasswordMocks>;
+import {
+	type ResetPasswordArgs,
+	resetPasswordMocks,
+} from './ResetPassword.stories.mocks';
+import { showPasswordMismatch } from './__story_mockdata__/resetPassword.play';
 
 const pageStory = storyMocks(resetPasswordMocks, { layout: 'app' });
 
@@ -34,4 +35,9 @@ export const ExpiredLink: Story = {
 	args: { token: 'expired' },
 	// The deliberate 410 is the state under test.
 	parameters: { allowConsoleErrors: true },
+};
+
+/** The mismatch callout, after the two password fields disagree and blur. */
+export const PasswordMismatch: Story = {
+	play: showPasswordMismatch,
 };

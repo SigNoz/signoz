@@ -125,9 +125,9 @@ function ClientTabs({
 			variant="primary"
 			orientation="horizontal"
 			alignment="start"
-			className="mcp-client-tabs-root"
 			value={activeTab}
 			onChange={onTabChange}
+			noTabContentPadding
 			items={items}
 		/>
 	);

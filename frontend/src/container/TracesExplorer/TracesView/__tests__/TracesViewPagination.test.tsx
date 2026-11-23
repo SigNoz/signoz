@@ -1,6 +1,6 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { screen, userEvent, waitFor } from 'tests/test-utils';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
@@ -34,6 +34,9 @@ const mockPages = (
 	return offsets;
 };
 
+const PAGINATION_TEST_ID = 'traces-table-trace-pagination';
+const NEXT_TEST_ID = `${PAGINATION_TEST_ID}-next`;
+
 describe('TracesView pagination', () => {
 	afterEach(() => {
 		server.resetHandlers();
@@ -44,7 +47,7 @@ describe('TracesView pagination', () => {
 		const user = userEvent.setup();
 		renderTracesView();
 
-		const next = await screen.findByRole('button', { name: 'Go to next page' });
+		const next = await screen.findByTestId(NEXT_TEST_ID);
 		await waitFor(() => expect(next).toBeEnabled());
 		await user.click(next);
 
@@ -61,15 +64,18 @@ describe('TracesView pagination', () => {
 		const user = userEvent.setup();
 		renderTracesView();
 
-		const next = await screen.findByRole('button', { name: 'Go to next page' });
+		const next = await screen.findByTestId(NEXT_TEST_ID);
 		await waitFor(() => expect(next).toBeEnabled());
 		await user.click(next);
 
-		const pager = screen.getByLabelText('pagination');
-		expect(within(pager).queryByText('3')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId(`${PAGINATION_TEST_ID}-page-3`),
+		).not.toBeInTheDocument();
 
 		release();
-		await expect(within(pager).findByText('3')).resolves.toBeInTheDocument();
+		await expect(
+			screen.findByTestId(`${PAGINATION_TEST_ID}-page-3`),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('offers no next page after a short page', async () => {
@@ -77,8 +83,6 @@ describe('TracesView pagination', () => {
 		renderTracesView();
 
 		await screen.findAllByText('frontend');
-		expect(
-			screen.queryByRole('button', { name: 'Go to next page' }),
-		).not.toBeInTheDocument();
+		expect(screen.queryByTestId(NEXT_TEST_ID)).not.toBeInTheDocument();
 	});
 });

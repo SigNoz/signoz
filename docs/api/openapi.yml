@@ -11882,7 +11882,7 @@ components:
       - created_at
       - name
       - state
-      - severity
+      - thresholds
       type: string
     RuletypesListableRule:
       properties:
@@ -11922,6 +11922,13 @@ components:
           - $ref: '#/components/schemas/RuletypesAlertState'
           description: 'The current evaluation state: inactive, pending, recovering,
             firing, nodata or disabled.'
+        thresholds:
+          description: The rule's threshold names in lowercase, deduplicated and ordered
+            critical, error, warning, info, then other names. An alert carries the
+            name of the threshold that fired as its severity. Read-only.
+          items:
+            type: string
+          type: array
         updatedAt:
           format: date-time
           type: string
@@ -11933,6 +11940,7 @@ components:
       - alert
       - alertType
       - ruleType
+      - thresholds
       type: object
     RuletypesListableRuleViews:
       properties:
@@ -12299,7 +12307,8 @@ components:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
         states:
           description: 'Only return rules in these states: firing, pending, recovering,
             inactive, nodata or disabled. Empty means every state.'
@@ -12513,6 +12522,14 @@ components:
       - schemaVersion
       - spec
       type: object
+    ServiceaccounttypesDSLKey:
+      enum:
+      - created_at
+      - email
+      - name
+      - status
+      - updated_at
+      type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -12548,6 +12565,28 @@ components:
       required:
       - id
       - key
+      type: object
+    ServiceaccounttypesListableServiceAccount:
+      properties:
+        reservedKeywords:
+          description: The filter keys the query accepts.
+          items:
+            $ref: '#/components/schemas/ServiceaccounttypesDSLKey'
+          type: array
+        serviceAccounts:
+          description: The service accounts on this page.
+          items:
+            $ref: '#/components/schemas/ServiceaccounttypesServiceAccount'
+          type: array
+        total:
+          description: The number of service accounts the filter matches across all
+            pages.
+          format: int64
+          type: integer
+      required:
+      - serviceAccounts
+      - total
+      - reservedKeywords
       type: object
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
@@ -12591,17 +12630,30 @@ components:
         orgId:
           type: string
         status:
-          type: string
+          $ref: '#/components/schemas/ServiceaccounttypesServiceAccountStatus'
         updatedAt:
           format: date-time
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status
       - orgId
       type: object
+    ServiceaccounttypesServiceAccountListOrder:
+      enum:
+      - asc
+      - desc
+      type: string
+    ServiceaccounttypesServiceAccountListSort:
+      enum:
+      - created_at
+      - updated_at
+      - name
+      type: string
     ServiceaccounttypesServiceAccountRole:
       properties:
         createdAt:
@@ -12624,6 +12676,11 @@ components:
       - roleId
       - role
       type: object
+    ServiceaccounttypesServiceAccountStatus:
+      enum:
+      - active
+      - deleted
+      type: string
     ServiceaccounttypesServiceAccountWithRoles:
       properties:
         createdAt:
@@ -12643,12 +12700,14 @@ components:
           nullable: true
           type: array
         status:
-          type: string
+          $ref: '#/components/schemas/ServiceaccounttypesServiceAccountStatus'
         updatedAt:
           format: date-time
           type: string
       required:
       - id
+      - createdAt
+      - updatedAt
       - name
       - email
       - status
@@ -17744,8 +17803,56 @@ paths:
   /api/v1/service_accounts:
     get:
       deprecated: false
-      description: This endpoint lists the service accounts for an organisation
+      description: Returns a page of the service accounts for an organisation. `query`
+        is a filter expression over name, email, status, created_at and updated_at,
+        for example `status = 'active'`; `sort`/`order` pick the ordering and `limit`/`offset`
+        the page.
       operationId: ListServiceAccounts
+      parameters:
+      - description: 'A filter expression over the reserved keys name, email, status,
+          created_at and updated_at using the SigNoz filter grammar: comparisons such
+          as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps
+          in quotes for created_at and updated_at, combined with AND, OR and NOT,
+          for example name CONTAINS ''ci'' AND status = ''active''. A bare or quoted
+          token without a key matches name or email case-insensitively. At most 1024
+          characters. Empty matches every service account.'
+        in: query
+        name: query
+        schema:
+          description: 'A filter expression over the reserved keys name, email, status,
+            created_at and updated_at using the SigNoz filter grammar: comparisons
+            such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339
+            timestamps in quotes for created_at and updated_at, combined with AND,
+            OR and NOT, for example name CONTAINS ''ci'' AND status = ''active''.
+            A bare or quoted token without a key matches name or email case-insensitively.
+            At most 1024 characters. Empty matches every service account.'
+          type: string
+      - description: 'The sort column: created_at (default), updated_at or name.'
+        in: query
+        name: sort
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/ServiceaccounttypesServiceAccountListSort'
+          description: 'The sort column: created_at (default), updated_at or name.'
+      - description: 'The sort order: asc or desc (default).'
+        in: query
+        name: order
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/ServiceaccounttypesServiceAccountListOrder'
+          description: 'The sort order: asc or desc (default).'
+      - description: The page size; defaults to 20 and is capped at 200.
+        in: query
+        name: limit
+        schema:
+          description: The page size; defaults to 20 and is capped at 200.
+          type: integer
+      - description: The number of service accounts to skip; defaults to 0.
+        in: query
+        name: offset
+        schema:
+          description: The number of service accounts to skip; defaults to 0.
+          type: integer
       responses:
         "200":
           content:
@@ -17753,9 +17860,7 @@ paths:
               schema:
                 properties:
                   data:
-                    items:
-                      $ref: '#/components/schemas/ServiceaccounttypesServiceAccount'
-                    type: array
+                    $ref: '#/components/schemas/ServiceaccounttypesListableServiceAccount'
                   status:
                     type: string
                 required:
@@ -17763,6 +17868,12 @@ paths:
                 - data
                 type: object
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
         "401":
           content:
             application/json:
@@ -32094,7 +32205,7 @@ paths:
       deprecated: false
       description: Returns a page of alert rules with their current evaluation state,
         trimmed to the fields the list page renders. Supports a filter DSL (`query`),
-        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`),
+        a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`thresholds`),
         order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the
         filter DSL, a non-reserved key is matched as a rule label directly (`team
         = infra`); a key that collides with a reserved keyword matches either interpretation
@@ -32122,14 +32233,16 @@ paths:
             type: string
           type: array
       - description: 'The field to sort by: updated_at (the default), created_at,
-          name, state or severity.'
+          name, state or thresholds. Sorting by thresholds ranks each rule by its
+          first threshold name.'
         in: query
         name: sort
         schema:
           allOf:
           - $ref: '#/components/schemas/RuletypesListSort'
           description: 'The field to sort by: updated_at (the default), created_at,
-            name, state or severity.'
+            name, state or thresholds. Sorting by thresholds ranks each rule by its
+            first threshold name.'
       - description: 'The sort direction: asc or desc (the default).'
         in: query
         name: order

@@ -5,6 +5,8 @@ import logEvent from 'api/common/logEvent';
 import { Events } from 'constants/events';
 import { DEFAULT_PIN_TOOLTIP_KEY } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
+import footerStyles from 'lib/visualization/panels/components/TooltipFooter.module.scss';
+
 import styles from './ChartTooltipFooter.module.scss';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -34,32 +36,59 @@ export default function ChartTooltipFooter({
 		<output className={styles.footer} data-testid="entity-chart-tooltip-footer">
 			<div>
 				{isPinned ? (
-					<Typography.Text className={styles.hint} size="small">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="p"
+						display="flex"
+						gap={3}
+						textOverflow="wrap"
+					>
 						<span>Press</span>
-						<Kbd active>{pinKey.toUpperCase()}</Kbd>
+						<Kbd value={pinKey} testId="entity-chart-tooltip-pin-key" />
 						<span>or</span>
-						<Kbd active>Esc</Kbd>
+						<Kbd value="Escape" testId="entity-chart-tooltip-escape-key" />
 						<span>to unpin</span>
-					</Typography.Text>
+					</Typography>
 				) : (
 					<div className={styles.hintList}>
 						{canSelectTimeRange && (
-							<Typography.Text
-								className={styles.hint}
-								size="small"
-								data-active="false"
-							>
-								<Kbd>
-									<MousePointerClick size={12} />
-								</Kbd>
-								<span>Click and drag to zoom into a time range</span>
-							</Typography.Text>
+							<div className={styles.hint} data-active="false">
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="p"
+									display="flex"
+									gap={3}
+									textOverflow="wrap"
+								>
+									<span className={footerStyles.pointerKey} aria-hidden="true">
+										<MousePointerClick size={12} />
+									</span>
+									<span>Click and drag to zoom into a time range</span>
+								</Typography>
+							</div>
 						)}
-						<Typography.Text className={styles.hint} size="small" data-active="false">
-							<span>Press</span>
-							<Kbd>{pinKey.toUpperCase()}</Kbd>
-							<span>to pin the tooltip</span>
-						</Typography.Text>
+						<div className={styles.hint} data-active="false">
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="p"
+								display="flex"
+								gap={3}
+								textOverflow="wrap"
+							>
+								<span>Press</span>
+								<Kbd value={pinKey} testId="entity-chart-tooltip-pin-key" />
+								<span>to pin the tooltip</span>
+							</Typography>
+						</div>
 					</div>
 				)}
 			</div>

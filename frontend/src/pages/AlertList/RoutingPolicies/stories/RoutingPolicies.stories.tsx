@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
+import { getToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
@@ -139,7 +140,7 @@ export const FormValidationError: Story = {
 };
 
 const expectToast = async (text: RegExp): Promise<void> => {
-	await waitFor(() => expect(screen.getByText(text)).toBeVisible());
+	await waitFor(() => expect(getToastText(text)).toBeVisible());
 };
 
 const confirmDelete = async (canvasElement: HTMLElement): Promise<void> => {

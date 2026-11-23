@@ -10,7 +10,7 @@ import {
 } from './testUtils';
 
 const ROUTING_POLICY_DETAILS_TEST_ID = 'routing-policy-details';
-const SEARCH_TEST_ID = 'routing-policies-search';
+const SEARCH_TEST_ID = 'routing-policies-search-field';
 const CREATE_TEST_ID = 'routing-policies-create';
 
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());

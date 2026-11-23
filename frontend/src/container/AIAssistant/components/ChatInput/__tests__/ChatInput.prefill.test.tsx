@@ -50,7 +50,10 @@ describe('ChatInput — empty-state CTA prefill flow', () => {
 
 		// Open the picker and search for an entity that does not exist.
 		await userEvent.click(screen.getByTestId('ai-chat-input-add-context'));
-		await userEvent.type(await screen.findByTestId('ai-context-search'), 'chk');
+		await userEvent.type(
+			await screen.findByTestId('ai-context-search-field'),
+			'chk',
+		);
 
 		const cta = await screen.findByTestId('ai-context-empty-cta-Dashboards');
 		expect(cta).toHaveTextContent('Create a dashboard for "chk"');

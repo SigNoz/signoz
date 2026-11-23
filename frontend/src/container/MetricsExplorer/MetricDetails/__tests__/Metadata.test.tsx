@@ -168,7 +168,7 @@ describe('Metadata', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		const metricDescriptionInput = screen.getByTestId('description-input');
+		const metricDescriptionInput = screen.getByTestId('description-input-field');
 		expect(metricDescriptionInput).toBeInTheDocument();
 		await userEvent.clear(metricDescriptionInput);
 		await userEvent.type(metricDescriptionInput, 'Updated description');
@@ -223,7 +223,7 @@ describe('Metadata', () => {
 		const editButton = screen.getByText('Edit');
 		await userEvent.click(editButton);
 
-		const metricDescriptionInput = screen.getByTestId('description-input');
+		const metricDescriptionInput = screen.getByTestId('description-input-field');
 		await userEvent.clear(metricDescriptionInput);
 		await userEvent.type(metricDescriptionInput, 'Updated description');
 
@@ -253,7 +253,7 @@ describe('Metadata', () => {
 		const editButton = screen.getByText('Edit');
 		await userEvent.click(editButton);
 
-		const metricDescriptionInput = screen.getByTestId('description-input');
+		const metricDescriptionInput = screen.getByTestId('description-input-field');
 		await userEvent.clear(metricDescriptionInput);
 		await userEvent.type(metricDescriptionInput, 'Updated description');
 
@@ -283,7 +283,7 @@ describe('Metadata', () => {
 		const editButton = screen.getByText('Edit');
 		await userEvent.click(editButton);
 
-		const metricDescriptionInput = screen.getByTestId('description-input');
+		const metricDescriptionInput = screen.getByTestId('description-input-field');
 		await userEvent.clear(metricDescriptionInput);
 		await userEvent.type(metricDescriptionInput, 'Updated description');
 

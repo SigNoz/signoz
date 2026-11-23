@@ -1,75 +1,44 @@
 import { ReactNode } from 'react';
 import { Trash2, X } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
-
-import styles from './ConfirmDeleteDialog.module.scss';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 
 interface ConfirmDeleteDialogProps {
 	open: boolean;
 	title: string;
 	description: ReactNode;
 	confirmLabel?: string;
-	isLoading?: boolean;
-	onConfirm: () => void;
+	onConfirm: () => void | Promise<void>;
 	onClose: () => void;
 }
 
 /**
- * Shared destructive-confirm dialog built on @signozhq/ui DialogWrapper (not
+ * Shared destructive-confirm dialog built on @signozhq/ui AlertDialog (not
  * antd Modal), so it inherits the design-system styling/theme. Used by the
- * dashboard and section delete flows.
+ * dashboard and section delete flows. `onConfirm` must close the dialog, and
+ * may return a promise to show the confirm button as loading.
  */
 function ConfirmDeleteDialog({
 	open,
 	title,
 	description,
 	confirmLabel = 'Delete',
-	isLoading = false,
 	onConfirm,
 	onClose,
 }: ConfirmDeleteDialogProps): JSX.Element {
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={onClose}
-				prefix={<X size={12} />}
-				testId="confirm-delete-cancel"
-			>
-				Cancel
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color="danger"
-				loading={isLoading}
-				onClick={onConfirm}
-				testId="confirm-delete"
-				prefix={<Trash2 size={12} />}
-			>
-				{confirmLabel}
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<AlertDialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
 			title={title}
-			width="narrow"
-			showCloseButton={false}
-			footer={footer}
+			color="danger"
+			confirmText={confirmLabel}
+			confirmIcon={<Trash2 size={12} />}
+			cancelIcon={<X size={12} />}
+			onConfirm={onConfirm}
+			onCancel={onClose}
+			testId="confirm-delete"
 		>
-			<div className={styles.body}>{description}</div>
-		</DialogWrapper>
+			{description}
+		</AlertDialog>
 	);
 }
 

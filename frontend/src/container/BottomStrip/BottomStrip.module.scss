@@ -5,18 +5,21 @@
 	gap: var(--spacing-6);
 
 	flex-shrink: 0;
-	height: var(--bottom-strip-height);
 	padding: 0 var(--spacing-6);
 
 	background: var(--l2-background);
 	border-top: 1px solid var(--l2-border);
 
-	--button-font-size: 12px;
-
-	font-family: var(--font-family-sf-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 
 	// Above page content, below the body-portalled overlays that are meant to
 	// cover the strip.
+	position: relative;
+	z-index: 1;
+}
+
+.topSlot {
+	flex-shrink: 0;
 	position: relative;
 	z-index: 1;
 }

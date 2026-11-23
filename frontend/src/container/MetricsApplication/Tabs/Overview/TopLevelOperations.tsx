@@ -21,7 +21,14 @@ function TopLevelOperation({
 	return (
 		<Card data-testid={name}>
 			{topLevelOperationsIsError ? (
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{axios.isAxiosError(topLevelOperationsError)
 						? topLevelOperationsError.response?.data
 						: SOMETHING_WENT_WRONG}

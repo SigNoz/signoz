@@ -8,6 +8,7 @@ import {
 
 import { antdDriver } from '../antd';
 import { apiDriver } from '../api';
+import { inputField } from '../input';
 import {
 	createDashboard,
 	dashboardsDriver,
@@ -296,7 +297,7 @@ export function metricsDriver(page: Page): Metrics {
 				label.split(' ')[0],
 			),
 		setDescription: async (text) => {
-			await page.getByTestId('description-input').fill(text);
+			await inputField(page, 'description-input').fill(text);
 		},
 
 		value: (field) =>
