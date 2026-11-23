@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@signozhq/ui/button';
-import { TextEllipsis } from '@signozhq/ui/text-ellipsis';
+import { Typography } from '@signozhq/ui/typography';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -154,7 +154,19 @@ export default function AIAssistantModal(): JSX.Element | null {
 					<div className={styles.header}>
 						<div className={`${styles.title} noz-wave`}>
 							<Noz size={16} />
-							{chatTitle && <TextEllipsis position="end">{chatTitle}</TextEllipsis>}
+							{chatTitle && (
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="inherit"
+									as="span"
+									display="block"
+									textOverflow="ellipsis"
+								>
+									{chatTitle}
+								</Typography>
+							)}
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>

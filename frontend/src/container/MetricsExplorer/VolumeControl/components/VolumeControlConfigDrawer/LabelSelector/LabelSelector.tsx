@@ -30,12 +30,26 @@ function LabelSelector({
 			className={styles.fieldGroup}
 			data-testid="volume-control-label-selector"
 		>
-			<Typography.Text size="small" weight="semibold">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="bold"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Attributes
-			</Typography.Text>
-			<Typography.Text size="sm" color="muted">
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{helpText}
-			</Typography.Text>
+			</Typography>
 			<Select
 				mode="multiple"
 				className={styles.attributeSelect}

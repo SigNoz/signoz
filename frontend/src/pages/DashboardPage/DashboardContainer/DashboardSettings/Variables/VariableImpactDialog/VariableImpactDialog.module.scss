@@ -2,8 +2,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	max-height: 60vh;
-	overflow-y: auto;
 }
 
 .intro {
@@ -38,7 +36,6 @@
 .sourceLabel {
 	color: var(--l1-foreground);
 	font-weight: 600;
-	font-size: 13px;
 }
 
 .kindTag {
@@ -66,16 +63,10 @@
 }
 
 .textArea {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 }
 
 .disabled {
 	opacity: 0.6;
-}
-
-.footer {
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
 }

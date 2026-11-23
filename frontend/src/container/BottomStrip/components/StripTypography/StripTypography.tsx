@@ -17,7 +17,16 @@ function StripTypography({
 	return (
 		<span className={styles.stripTypography}>
 			{prefix}
-			<Typography.Text as="span">{children}</Typography.Text>
+			<Typography
+				variant="code"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
+				{children}
+			</Typography>
 		</span>
 	);
 }

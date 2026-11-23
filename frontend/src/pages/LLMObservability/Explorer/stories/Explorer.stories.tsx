@@ -168,17 +168,6 @@ export const QuickFiltersSettingsDirty: Story = {
 	play: dirtyQuickFiltersSettings,
 };
 
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
-	play: dirtyQuickFiltersSettings,
-};
-
 /** A quick-filter value selected against the LLM span query. */
 export const QuickFilterSelected: Story = {
 	play: async ({ canvasElement }): Promise<void> => {

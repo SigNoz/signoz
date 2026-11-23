@@ -15,6 +15,7 @@ import {
 	removeTrackedDashboards,
 	trackDashboard,
 } from './dashboards';
+import { inputField } from './input';
 import { driver } from './kit';
 import { test as editorTest } from './panel-editor';
 
@@ -220,9 +221,9 @@ export function dashboardListDriver(page: Page): DashboardList {
 			await expect(list.newDashboardButton()).toBeVisible();
 		},
 		newDashboardButton: () => page.getByTestId('new-dashboard-cta'),
-		nameInput: () => page.getByTestId('create-dashboard-name'),
+		nameInput: () => inputField(page, 'create-dashboard-name'),
 		descriptionInput: () => page.getByTestId('create-dashboard-description'),
-		tagsInput: () => page.getByTestId('create-dashboard-tags'),
+		tagsInput: () => inputField(page, 'create-dashboard-tags'),
 		tagChips: () => page.getByTestId('create-dashboard-tags-chip'),
 		submit: () => page.getByTestId('create-dashboard-submit'),
 		async create({ name, description, tags = [] }) {
@@ -351,7 +352,7 @@ export function dashboardListDriver(page: Page): DashboardList {
 		async renameRow(name, to) {
 			await list.openRowMenu(name);
 			await list.rowAction('rename').click();
-			const input = page.getByTestId('rename-dashboard-input');
+			const input = inputField(page, 'rename-dashboard-input');
 			await input.fill(to);
 			await page.getByTestId('rename-dashboard-submit').click();
 			await expect(input).toBeHidden();
@@ -359,7 +360,7 @@ export function dashboardListDriver(page: Page): DashboardList {
 		async editRowTags(name, tags) {
 			await list.openRowMenu(name);
 			await list.rowAction('edit-tags').click();
-			const input = page.getByTestId('edit-dashboard-tags');
+			const input = inputField(page, 'edit-dashboard-tags');
 			// Closing a chip removes the tag, and the dialog opens with the current ones.
 			const chips = page.locator(
 				'[data-testid^="edit-dashboard-tags-chip"] button',

@@ -29,7 +29,16 @@ function Overview(props: OverviewProps): JSX.Element {
 		<div className="integration-detail-overview">
 			<div className="integration-detail-overview-left-container">
 				<div className="integration-detail-overview-category">
-					<Typography.Text className="heading">Category</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Category
+					</Typography>
 					<div className="category-tabs">
 						{categories.map((category) => (
 							<div
@@ -43,7 +52,16 @@ function Overview(props: OverviewProps): JSX.Element {
 					</div>
 				</div>
 				<div className="integration-detail-overview-assets">
-					<Typography.Text className="heading">Assets</Typography.Text>
+					<Typography
+						variant="uppercase"
+						size="small"
+						weight="medium"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Assets
+					</Typography>
 					<ul className="assets-list" data-testid="integration-assets">
 						{assetsCount.map((count, index) => {
 							if (count === 0) {

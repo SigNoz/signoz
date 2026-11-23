@@ -12,8 +12,8 @@
 	--list-line-height-lg: calc(22 / 14);
 
 	@include border-box;
-	font-family: var(--periscope-font-family-sans);
-	font-size: var(--periscope-font-size-base);
+	font-family: var(--paragraph-base-400-font-family);
+	font-size: var(--paragraph-base-400-font-size);
 
 	position: relative;
 	margin: 0;
@@ -67,8 +67,8 @@
 
 .nestedLoading {
 	@include border-box;
-	font-family: var(--periscope-font-family-sans);
-	font-size: var(--periscope-font-size-base);
+	font-family: var(--paragraph-base-400-font-family);
+	font-size: var(--paragraph-base-400-font-size);
 
 	position: relative;
 }
@@ -143,7 +143,7 @@
 
 	margin: 0 0 var(--spacing-2) 0;
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--list-line-height);
 
 	> a {
@@ -160,7 +160,7 @@
 	@include border-box;
 
 	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--list-line-height);
 }
 
@@ -179,7 +179,7 @@
 	display: inline-block;
 	padding: 0 var(--spacing-4);
 	color: var(--l2-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--list-line-height);
 	text-align: center;
 
@@ -205,7 +205,7 @@
 
 	padding: var(--spacing-8);
 	color: var(--l3-foreground);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	text-align: center;
 }
 

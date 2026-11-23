@@ -19,11 +19,6 @@
 	--button-width: auto;
 }
 
-.label {
-	letter-spacing: 0.44px;
-	text-transform: uppercase;
-}
-
 // Single-line ellipsis rather than Typography's `truncate`, which line-clamps:
 // clamping still wraps the text, so a value breaking at a hyphen ends its line
 // early and leaves a gap between the ellipsis and the copy button.
@@ -36,8 +31,4 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.valueText {
-	font-family: var(--periscope-font-family-mono);
 }

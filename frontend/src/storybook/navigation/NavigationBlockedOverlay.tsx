@@ -26,9 +26,16 @@ function NavigationBlockedOverlay(): JSX.Element | null {
 			data-testid="navigation-blocked-overlay"
 		>
 			<div className={styles.header}>
-				<Typography.Text as="span" size="small" weight="semibold" color="warning">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="bold"
+					color="warning"
+					as="span"
+					textOverflow="wrap"
+				>
 					Navigation blocked in Storybook
-				</Typography.Text>
+				</Typography>
 				<div className={styles.actions}>
 					<button
 						type="button"
@@ -36,21 +43,42 @@ function NavigationBlockedOverlay(): JSX.Element | null {
 						onClick={clear}
 						data-testid="navigation-blocked-clear"
 					>
-						<Typography.Text as="span" size="small" weight="medium">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="medium"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							clear
-						</Typography.Text>
+						</Typography>
 					</button>
 				</div>
 			</div>
 			<ul className={styles.list}>
 				{blockedNavigations.map((navigation) => (
 					<li key={navigation.id} className={styles.item}>
-						<Typography.Text as="span" size="small" color="muted">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{navigation.via}
-						</Typography.Text>{' '}
-						<Typography.Text as="span" size="small">
+						</Typography>{' '}
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							→ {navigation.to}
-						</Typography.Text>
+						</Typography>
 					</li>
 				))}
 			</ul>

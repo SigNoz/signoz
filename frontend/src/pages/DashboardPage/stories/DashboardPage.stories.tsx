@@ -22,7 +22,17 @@ import {
 	tooltipRoute,
 	warnedPanelQueryHandler,
 } from './DashboardPage.stories.mocks';
-import { hoverJsonValidation } from './__story_mockdata__/dashboard.play';
+import {
+	expandPanelSearch,
+	hoverJsonValidation,
+	openDeleteDashboardDialog,
+	openAIQueryBuilderViewPanel,
+	openClickHouseViewPanel,
+	openPromQLViewPanel,
+	openRecentLogsViewPanel,
+	openRequestRateViewPanel,
+	openRenameSectionDialog,
+} from './__story_mockdata__/dashboard.play';
 import { TOOLTIP_PANEL_NAME } from './__story_mockdata__/tooltipDashboard';
 
 import DashboardPage from '../DashboardPage';
@@ -174,8 +184,8 @@ export const TooltipsInJsonDrawer: Story = {
 };
 
 /**
- * A panel expanded into view mode, whose header carries the full panel name its
- * title truncates, over the dashboard's own tooltips behind the dialog.
+ * A panel expanded into view mode, whose header carries the full panel name, over
+ * the dashboard's own tooltips behind the dialog.
  *
  * The document is answered by the story, so the Panels, Sections, Variables and
  * Locked controls do not reach it.
@@ -198,6 +208,40 @@ export const TooltipsInViewPanelModal: Story = {
 		await userEvent.click(await screen.findByText('View'));
 		await screen.findByText(`${TOOLTIP_PANEL_NAME} - (View mode)`);
 	},
+};
+
+/** A metrics time series panel expanded into view mode, its query builder on the dialog surface. */
+export const ViewPanelModal: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openRequestRateViewPanel,
+};
+
+/** A logs list panel expanded into view mode, its query builder on the dialog surface. */
+export const ViewPanelModalLogs: Story = {
+	play: openRecentLogsViewPanel,
+};
+
+/** The view mode editor on its ClickHouse tab. */
+export const ViewPanelModalClickHouse: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openClickHouseViewPanel,
+};
+
+/** The view mode editor on its PromQL tab. */
+export const ViewPanelModalPromQL: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openPromQLViewPanel,
+};
+
+/** The view mode editor on its AI query builder tab. */
+export const ViewPanelModalAIQueryBuilder: Story = {
+	parameters: { msw: { handlers: [metricsListHandler] } },
+	play: openAIQueryBuilderViewPanel,
+};
+
+/** A list or table panel's search field, expanded and filled. */
+export const PanelSearchExpanded: Story = {
+	play: expandPanelSearch,
 };
 
 /**
@@ -252,6 +296,16 @@ export const SectionActionsMenu: Story = {
 	},
 };
 
+/** Delete dashboard, the confirm dialog the Actions menu opens. */
+export const DeleteDashboardDialog: Story = {
+	play: openDeleteDashboardDialog,
+};
+
+/** Rename section, the title dialog a section menu opens. */
+export const RenameSectionDialog: Story = {
+	play: openRenameSectionDialog,
+};
+
 const openNewPanelPicker = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -288,7 +342,10 @@ export const NewPanelPickerTypeSelected: Story = {
 export const NewPanelPickerSearch: Story = {
 	play: async ({ canvasElement }) => {
 		await openNewPanelPicker(canvasElement);
-		await userEvent.type(await screen.findByTestId('panel-type-search'), 'heat');
+		await userEvent.type(
+			await screen.findByTestId('panel-type-search-field'),
+			'heat',
+		);
 	},
 };
 
@@ -322,7 +379,7 @@ export const NewPanelPickerNewSection: Story = {
 		);
 		await userEvent.click(await screen.findByTestId('panel-section-create'));
 		await userEvent.type(
-			await screen.findByTestId('panel-section-name'),
+			await screen.findByTestId('panel-section-name-field'),
 			'Errors',
 		);
 	},
@@ -390,7 +447,7 @@ export const DashboardClonedToast: Story = {
 export const DashboardRenamedToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await clickAction(canvasElement, 'Rename');
-		const input = await screen.findByTestId('dashboard-title-input');
+		const input = await screen.findByTestId('dashboard-title-input-field');
 		await userEvent.clear(input);
 		await userEvent.type(input, 'Service overview (renamed){enter}');
 		if (args.dashboardPatch === 'success') {

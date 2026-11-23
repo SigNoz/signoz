@@ -8,7 +8,6 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { isModifierKeyPressed } from 'utils/app';
-import { openInNewTab } from 'utils/navigation';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';
@@ -21,7 +20,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 
-	function handleRedirection(option: AlertTypes): void {
+	function getSampleAlertUrl(option: AlertTypes): string {
 		let url = '';
 		switch (option) {
 			case AlertTypes.ANOMALY_BASED_ALERT:
@@ -47,13 +46,15 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 				break;
 		}
 
+		return url;
+	}
+
+	function handleSampleAlertClick(option: AlertTypes): void {
 		logEvent('Alert: Sample alert link clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[option],
-			link: url,
+			link: getSampleAlertUrl(option),
 			page: 'New alert data source selection page',
 		});
-
-		openInNewTab(url);
 	}
 	const renderOptions = useMemo(
 		() => (
@@ -76,10 +77,15 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 					>
 						{option.description}{' '}
 						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
+							href={getSampleAlertUrl(option.selection)}
+							target="_blank"
 							onClick={(e): void => {
-								e.preventDefault();
 								e.stopPropagation();
-								handleRedirection(option.selection);
+								handleSampleAlertClick(option.selection);
 							}}
 						>
 							Click here to see how to create a sample alert.
@@ -93,14 +99,18 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 
 	return (
 		<SelectTypeContainer>
-			<Typography.Title
-				level={4}
-				style={{
-					padding: '0 8px',
-				}}
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				paddingX={4}
+				textOverflow="wrap"
 			>
 				{t('choose_alert_type')}
-			</Typography.Title>
+			</Typography>
 			<Row>{renderOptions}</Row>
 		</SelectTypeContainer>
 	);

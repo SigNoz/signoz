@@ -37,7 +37,7 @@
 	.ant-breadcrumb-separator,
 	.breadcrumb-item--last {
 		color: var(--muted-foreground);
-		font-family: 'Geist Mono';
+		font-family: var(--code-base-400-font-family);
 	}
 }
 

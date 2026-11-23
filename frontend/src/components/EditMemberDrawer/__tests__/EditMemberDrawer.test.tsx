@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useCreateResetPasswordToken,
@@ -51,52 +51,31 @@ jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
 
 jest.mock('@signozhq/ui/drawer', () => ({
 	...jest.requireActual('@signozhq/ui/drawer'),
-	DrawerWrapper: ({
+	Drawer: ({
 		children,
-		footer,
+		footerPrefix,
+		footerSuffix,
 		open,
 	}: {
 		children?: ReactNode;
-		footer?: ReactNode;
+		footerPrefix?: ReactNode;
+		footerSuffix?: ReactNode;
 		open: boolean;
 	}): JSX.Element | null =>
 		open ? (
 			<div>
 				{children}
-				{footer}
+				{footerPrefix}
+				{footerSuffix}
 			</div>
 		) : null,
 }));
 
-jest.mock('@signozhq/ui/dialog', () => ({
-	...jest.requireActual('@signozhq/ui/dialog'),
-	DialogWrapper: ({
-		children,
-		footer,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		footer?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-				{footer}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -229,7 +208,7 @@ describe('EditMemberDrawer', () => {
 			isLoading: false,
 		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
-			mutate: mockDeleteMutate,
+			mutateAsync: mockDeleteMutate,
 			isLoading: false,
 		});
 		// Token query: valid token for invited members
@@ -363,8 +342,11 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin is already selected; add signoz-editor on top
-		await user.click(await screen.findByLabelText('Roles'));
-		await user.click(await screen.findByTitle('signoz-editor'));
+		await user.click(await screen.findByTestId('member-roles-select'));
+		await user.type(
+			await screen.findByTestId('member-roles-select-search'),
+			`${managedRoles[1].name}{Enter}`,
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() =>
@@ -388,11 +370,11 @@ describe('EditMemberDrawer', () => {
 		renderDrawer({ onComplete });
 
 		// signoz-admin appears as a selected tag — click its remove button to deselect
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		await user.click(
+			await screen.findByTestId(
+				`member-roles-select-chip-${managedRoles[0].id}-remove`,
+			),
+		);
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() =>
@@ -413,7 +395,7 @@ describe('EditMemberDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
+			mutateAsync: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
 			isLoading: false,
@@ -574,7 +556,7 @@ describe('EditMemberDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
+			mutateAsync: mockDeleteMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
 			isLoading: false,
@@ -690,7 +672,7 @@ describe('EditMemberDrawer', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
+				mutateAsync: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
 				isLoading: false,
@@ -721,7 +703,7 @@ describe('EditMemberDrawer', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
+				mutateAsync: mockDeleteMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
 				isLoading: false,

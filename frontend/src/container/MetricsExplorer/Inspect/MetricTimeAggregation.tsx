@@ -1,12 +1,10 @@
+import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-// TODO(@signozhq/ui-input): migrate this <Input> once @signozhq/ui Input
-// supports the `onWheel` handler (used to blur on scroll for number inputs).
-import { Input, Select } from 'antd';
+import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { TIME_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep } from './types';
-import { MetricTimeAggregationProps } from './types';
+import { InspectionStep, MetricTimeAggregationProps } from './types';
 import { getDefaultTimeAggregationInterval } from './utils';
 
 function MetricTimeAggregation({
@@ -25,11 +23,29 @@ function MetricTimeAggregation({
 					'selected-step': inspectionStep === InspectionStep.TIME_AGGREGATION,
 				})}
 			>
-				<Typography.Text>AGGREGATE BY TIME</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					AGGREGATE BY TIME
+				</Typography>
 			</div>
 			<div className="metric-time-aggregation-content">
 				<div className="inspect-metrics-input-group">
-					<Typography.Text>Align with</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Align with
+					</Typography>
 					<Select
 						value={currentMetricInspectionOptions.timeAggregationOption}
 						onChange={(value): void => {
@@ -58,11 +74,19 @@ function MetricTimeAggregation({
 					</Select>
 				</div>
 				<div className="inspect-metrics-input-group">
-					<Typography.Text>aggregated every</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						aggregated every
+					</Typography>
 					<Input
 						type="number"
-						className="no-arrows-input"
-						value={currentMetricInspectionOptions.timeAggregationInterval}
+						value={currentMetricInspectionOptions.timeAggregationInterval ?? ''}
 						placeholder="Select interval..."
 						suffix="seconds"
 						onChange={(e): void => {

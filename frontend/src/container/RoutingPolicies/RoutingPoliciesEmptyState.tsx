@@ -18,13 +18,28 @@ function RoutingPoliciesEmptyState({
 	return (
 		<div className={styles.emptyState} data-testid="routing-policies-empty-state">
 			<Route className={styles.emptyIcon} size={16} />
-			<Typography.Text className={styles.emptyTitle}>
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="medium"
+				color="main"
+				as="span"
+				textOverflow="wrap"
+			>
 				No routing policies yet
-			</Typography.Text>
-			<Typography.Text className={styles.emptySubtitle}>
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="p"
+				maxWidth={420}
+				textOverflow="wrap"
+			>
 				A routing policy sends alerts matching an expression to the channels you
 				pick, without editing each alert rule.
-			</Typography.Text>
+			</Typography>
 			{canCreate && (
 				<Button
 					variant="solid"

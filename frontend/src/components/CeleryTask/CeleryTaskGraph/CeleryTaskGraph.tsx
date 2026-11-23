@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
@@ -22,7 +22,10 @@ import {
 	applyCeleryFilterOnWidgetData,
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
-import { celeryTimeSeriesTablesWidgetData } from './CeleryTaskGraphUtils';
+import {
+	celeryTimeSeriesTablesWidgetData,
+	getClickedSeries,
+} from './CeleryTaskGraphUtils';
 
 function CeleryTaskGraph({
 	widgetData,
@@ -102,12 +105,20 @@ function CeleryTaskGraph({
 				widget={applyCeleryTaskFilter ? updatedWidgetData : widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
-				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
+				onClickHandler={(
+					xValue,
+					_yValue,
+					_mouseX,
+					_mouseY,
+					data,
+					queryData,
+				): void => {
+					const clickedSeries = getClickedSeries(data, queryData);
+					if (!clickedSeries) {
+						return;
+					}
+					const { entity, value } = clickedSeries;
 					const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
-
-					// Extract entity and value from data
-					const [firstDataPoint] = Object.entries(data || {});
-					const [entity, value] = firstDataPoint || [];
 
 					const widgetData = celeryTimeSeriesTablesWidgetData(
 						entity,
@@ -126,7 +137,7 @@ function CeleryTaskGraph({
 				isQueryEnabled={queryEnabled}
 				openTracesButton={openTracesButton}
 				onOpenTraceBtnClick={onOpenTraceBtnClick}
-				version={ENTITY_VERSION_V4}
+				version={ENTITY_VERSION_V5}
 				customErrorMessage={customErrorMessage}
 				start={start}
 				end={end}

@@ -11,6 +11,7 @@ import {
 
 import { watchConsole } from './console';
 import { isQueryRange } from './query-range-mock';
+import { inputField } from './input';
 import { dismissQuickFiltersAnnouncement } from './logs/explorer';
 
 import { driver, kit } from './kit';
@@ -96,7 +97,7 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 				aggregation: editorAt(page, () =>
 					root().getByTestId('query-aggregation-editor'),
 				),
-				step: () => root().getByTestId('input-Seconds'),
+				step: () => inputField(root(), 'input-Seconds'),
 				metric: metricAt(page, root),
 				addOns: addOnsAt(page, root),
 				actions: () => root().getByTestId('query-actions'),

@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { DownloadFormat } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelDefinition';
 
 import { downloadElementAsImage } from '../../utils/downloadPanelImage';
@@ -9,15 +9,15 @@ jest.mock('../../utils/downloadPanelImage', () => ({
 	downloadElementAsImage: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { error: jest.fn(), dismiss: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { danger: jest.fn(), dismiss: jest.fn() },
 }));
 
 const mockCapture = downloadElementAsImage as jest.MockedFunction<
 	typeof downloadElementAsImage
 >;
-const mockToastError = toast.error as jest.Mock;
+const mockToastError = toast.danger as jest.Mock;
 
 function mountPanel(panelId: string): HTMLElement {
 	const node = document.createElement('div');

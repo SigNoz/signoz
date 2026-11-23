@@ -72,38 +72,86 @@ function EventsTable(props: IEventsTableProps): JSX.Element {
 											label: (
 												<div className={styles.collapseTitle}>
 													<Diamond size={14} className={styles.diamond} />
-													<Typography.Text>{name}</Typography.Text>
+													<Typography
+														variant="paragraph"
+														size="base"
+														weight="regular"
+														color="inherit"
+														as="span"
+														textOverflow="wrap"
+													>
+														{name}
+													</Typography>
 												</div>
 											),
 											children: (
 												<div className={styles.eventDetails}>
 													<div className={styles.attributeContainer} key="timeUnixNano">
-														<Typography.Text className={styles.attributeKey}>
+														<Typography
+															variant="paragraph"
+															size="base"
+															weight="regular"
+															color="secondary"
+															as="span"
+															textOverflow="wrap"
+														>
 															Start Time
-														</Typography.Text>
+														</Typography>
 														{startTime !== undefined && (
 															<div className={styles.timestampContainer}>
-																<Typography.Text className={styles.attributeValue}>
-																	{getYAxisFormattedValue(
-																		`${(timeUnixNano || 0) / 1e6 - startTime}`,
-																		'ms',
-																	)}
-																</Typography.Text>
-																<Typography.Text className={styles.timestampText}>
+																<div className={styles.attributeValue}>
+																	<Typography
+																		variant="paragraph"
+																		size="base"
+																		weight="regular"
+																		color="main"
+																		as="p"
+																		textOverflow="wrap"
+																	>
+																		{getYAxisFormattedValue(
+																			`${(timeUnixNano || 0) / 1e6 - startTime}`,
+																			'ms',
+																		)}
+																	</Typography>
+																</div>
+																<Typography
+																	variant="paragraph"
+																	size="base"
+																	weight="regular"
+																	color="secondary"
+																	as="span"
+																	textOverflow="wrap"
+																>
 																	since trace start
-																</Typography.Text>
+																</Typography>
 															</div>
 														)}
 														<div className={styles.timestampContainer}>
-															<Typography.Text className={styles.attributeValue}>
-																{getYAxisFormattedValue(
-																	`${(timeUnixNano || 0) / 1e6 - span.timestamp}`,
-																	'ms',
-																)}
-															</Typography.Text>
-															<Typography.Text className={styles.timestampText}>
+															<div className={styles.attributeValue}>
+																<Typography
+																	variant="paragraph"
+																	size="base"
+																	weight="regular"
+																	color="main"
+																	as="p"
+																	textOverflow="wrap"
+																>
+																	{getYAxisFormattedValue(
+																		`${(timeUnixNano || 0) / 1e6 - span.timestamp}`,
+																		'ms',
+																	)}
+																</Typography>
+															</div>
+															<Typography
+																variant="paragraph"
+																size="base"
+																weight="regular"
+																color="secondary"
+																as="span"
+																textOverflow="wrap"
+															>
 																since span start
-															</Typography.Text>
+															</Typography>
 														</div>
 													</div>
 													{attributeMap &&

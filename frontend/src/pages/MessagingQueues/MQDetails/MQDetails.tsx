@@ -112,7 +112,7 @@ const checkValidityOfDetailConfigs = (
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
-	return selectedView === MessagingQueuesViewType.dropRate.value;
+	return false;
 };
 
 function MessagingQueuesDetails({

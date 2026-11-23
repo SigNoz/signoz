@@ -47,11 +47,11 @@ describe('ScatterAxesSection', () => {
 			/>,
 		);
 
-		expect(screen.getByTestId('panel-editor-v2-x-label')).toHaveAttribute(
+		expect(screen.getByTestId('panel-editor-v2-x-label-field')).toHaveAttribute(
 			'placeholder',
 			'Request rate',
 		);
-		expect(screen.getByTestId('panel-editor-v2-y-label')).toHaveAttribute(
+		expect(screen.getByTestId('panel-editor-v2-y-label-field')).toHaveAttribute(
 			'placeholder',
 			'p99 latency',
 		);
@@ -120,7 +120,7 @@ describe('ScatterAxesSection', () => {
 		const onChange = jest.fn();
 		render(<ScatterAxesSection value={undefined} onChange={onChange} />);
 
-		await user.type(screen.getByTestId('panel-editor-v2-y-label'), 'p');
+		await user.type(screen.getByTestId('panel-editor-v2-y-label-field'), 'p');
 
 		expect(onChange).toHaveBeenCalledWith({ y: { label: 'p' } });
 	});

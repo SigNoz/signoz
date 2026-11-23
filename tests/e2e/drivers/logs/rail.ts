@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { DEFAULT_CUSTOM_FILTERS, quickFiltersDriver } from '../explorers';
+import { inputField } from '../input';
 import { SEEDED_DATA_TIMEOUT } from '../kit';
 
 /** The quick-filters rail on the logs explorer. */
@@ -32,7 +33,7 @@ export function logsRailDriver(page: Page): LogsRail {
 			// The service list is global and grows with every worker, so search it
 			// rather than scroll it. The search box renders only once the section
 			// holds more values than it shows.
-			const searchBox = section.getByTestId('checkbox-filter-search');
+			const searchBox = inputField(section, 'checkbox-filter-search');
 			const row = section.getByTestId(`checkbox-value-row-${value}`);
 			await expect(searchBox.or(row).first()).toBeVisible({
 				timeout: SEEDED_DATA_TIMEOUT,

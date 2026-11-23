@@ -8,7 +8,9 @@ import {
 import { antdDriver } from './antd';
 import { apiDriver } from './api';
 import type { ConsoleWatch } from './console';
+import { inputField } from './input';
 import { driver, kit, seeded, type Layer, type WorkerLayer } from './kit';
+import { toastByText } from './toast';
 
 /**
  * The integrations surface: the list, a built-in integration's detail page, and
@@ -185,8 +187,7 @@ export function integrationsDriver(page: Page): Integrations {
 				.catch(() => undefined);
 		},
 
-		toast: (text) =>
-			page.locator('[data-sonner-toast]').filter({ hasText: text }),
+		toast: (text) => toastByText(page, text),
 
 		unexpectedFailures: (noise) =>
 			noise.failedResponses.filter((entry) => {
@@ -407,7 +408,9 @@ export function cloudDriver(page: Page, provider: CloudProvider): Cloud {
 		editAccount: async () => {
 			await cloud.editAccountButton().click();
 			await expect(
-				page.getByRole('dialog').filter({ hasText: 'Account Settings' }),
+				page.locator('[data-slot="drawer-popup"]').filter({
+					hasText: 'Account Settings',
+				}),
 			).toBeVisible();
 		},
 
@@ -533,8 +536,8 @@ export function cloudDriver(page: Page, provider: CloudProvider): Cloud {
 
 		gcp: {
 			fill: async ({ name, projectId, region, projectIds }) => {
-				await page.getByTestId('gcp-account-name-input').fill(name);
-				await page.getByTestId('gcp-deployment-project-id-input').fill(projectId);
+				await inputField(page, 'gcp-account-name-input').fill(name);
+				await inputField(page, 'gcp-deployment-project-id-input').fill(projectId);
 				await page.getByTestId('gcp-deployment-region-select').click();
 				await page.getByText(region, { exact: true }).click();
 				const projects = page.getByTestId('gcp-project-ids-select');
@@ -559,7 +562,7 @@ export function cloudDriver(page: Page, provider: CloudProvider): Cloud {
 				];
 				for (const [testId, value] of secrets) {
 					// A backend-provided secret renders read-only under the same testid.
-					const input = page.locator(`input[data-testid="${testId}"]`);
+					const input = inputField(page, testId);
 					// eslint-disable-next-line no-await-in-loop
 					if (await input.isVisible()) {
 						// eslint-disable-next-line no-await-in-loop

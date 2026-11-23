@@ -12,7 +12,9 @@ import {
 	expandConfigSections,
 	openAddColumn,
 	openAIQueryBuilder,
+	openClickHouseQuery,
 	openPanelTypeSwitcher,
+	openPromQLQuery,
 	pickHeatmapTracesField,
 	saveAndExpectToast,
 } from './__story_mockdata__/panelEditor.play';
@@ -51,6 +53,16 @@ type Story = StoryObj<PanelEditorArgs>;
  * the left, the panel's formatting, legend, axes and thresholds on the right.
  */
 export const Default: Story = {};
+
+/** The ClickHouse query tab, including its info callout. */
+export const ClickHouseQuery: Story = {
+	play: openClickHouseQuery,
+};
+
+/** The PromQL query tab, its query and legend fields empty. */
+export const PromQLQuery: Story = {
+	play: openPromQLQuery,
+};
 
 /** The create route, seeding an unsaved panel of the chosen kind. */
 export const NewPanel: Story = {

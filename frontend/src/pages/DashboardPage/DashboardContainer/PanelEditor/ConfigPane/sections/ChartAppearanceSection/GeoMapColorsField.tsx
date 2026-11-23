@@ -1,3 +1,4 @@
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import {
 	DashboardtypesHeatmapColorModeDTO,
@@ -106,7 +107,7 @@ function GeoMapColorsField({
 				{...reset('min', 'max')}
 				help={
 					isRangeInverted(value?.min, value?.max) ? (
-						<Callout type="error" size="small" showIcon>
+						<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
 							Min can&apos;t be greater than max.
 						</Callout>
 					) : (

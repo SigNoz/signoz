@@ -40,10 +40,27 @@ const INITIAL_PAGE_SIZE = 20;
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
-		<Typography.Text className="numbers">
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
+		</Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{' '}
+			of {total}
+		</Typography>
 	</>
 );
 
@@ -56,22 +73,15 @@ function ProgressRender(item: string | number): JSX.Element {
 	const percent = Number(Number(item).toFixed(1));
 	return (
 		<div className="progress-container">
-			<Progress
-				percent={percent}
-				strokeLinecap="butt"
-				showInfo
-				strokeColor={((): string => {
-					const cpuPercent = percent;
-					if (cpuPercent >= 90) {
-						return Color.BG_SAKURA_500;
+			<div className="progress-bar">
+				<Progress
+					percent={percent}
+					showInfo
+					color={
+						percent >= 90 ? 'highlight-danger' : percent >= 60 ? 'warning' : 'success'
 					}
-					if (cpuPercent >= 60) {
-						return Color.BG_AMBER_500;
-					}
-					return Color.BG_FOREST_500;
-				})()}
-				className="progress-bar"
-			/>
+				/>
+			</div>
 		</div>
 	);
 }
@@ -526,7 +536,18 @@ export default function CeleryOverviewTable({
 					),
 				}}
 				locale={{
-					emptyText: isLoading ? null : <Typography.Text>No data</Typography.Text>,
+					emptyText: isLoading ? null : (
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							No data
+						</Typography>
+					),
 				}}
 				scroll={{ x: 'max-content' }}
 				showSorterTooltip

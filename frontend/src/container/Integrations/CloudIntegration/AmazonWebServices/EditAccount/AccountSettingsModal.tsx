@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Form } from 'antd';
 import { invalidateListAccounts } from 'api/generated/services/cloudintegration';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
@@ -116,56 +116,47 @@ function AccountSettingsModal({
 		setIncludeAllRegions,
 	]);
 
-	const handleDrawerOpenChange = useCallback(
-		(open: boolean): void => {
-			if (!open) {
-				handleClose();
-			}
-		},
-		[handleClose],
+	const footerPrefix = (
+		<RemoveIntegrationAccount
+			accountId={account?.id}
+			onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+			cloudProvider={INTEGRATION_TYPES.AWS}
+		/>
 	);
 
-	const footer = (
-		<div className="account-settings-modal__footer">
-			<RemoveIntegrationAccount
-				accountId={account?.id}
-				onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
-				cloudProvider={INTEGRATION_TYPES.AWS}
-			/>
-
-			<Button
-				disabledTooltip={
-					selectedRegions.length === 0
-						? 'Select at least one region'
-						: 'Change the regions first'
-				}
-				size="md"
-				variant="solid"
-				color="secondary"
-				disabled={isSaveDisabled}
-				onClick={handleSubmit}
-				loading={isLoading}
-				prefix={<Save size={14} />}
-				testId="aws-update-account-btn"
-			>
-				Update Changes
-			</Button>
-		</div>
+	const footerSuffix = (
+		<Button
+			disabledTooltip={
+				selectedRegions.length === 0
+					? 'Select at least one region'
+					: 'Change the regions first'
+			}
+			size="md"
+			variant="solid"
+			color="secondary"
+			disabled={isSaveDisabled}
+			onClick={handleSubmit}
+			loading={isLoading}
+			prefix={<Save size={14} />}
+			testId="aws-update-account-btn"
+		>
+			Update Changes
+		</Button>
 	);
 
 	return (
-		<DrawerWrapper
-			open={true}
-			className="account-settings-modal"
+		<Drawer
+			type="task"
+			stack="overlay"
+			open
+			onClose={handleClose}
 			title="Account Settings"
-			direction="right"
-			showCloseButton
-			onOpenChange={handleDrawerOpenChange}
 			width="wide"
-			footer={footer}
+			footerPrefix={footerPrefix}
+			footerSuffix={footerSuffix}
 		>
 			{renderAccountDetails()}
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 
