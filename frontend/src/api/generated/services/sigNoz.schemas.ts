@@ -14877,6 +14877,7 @@ export interface SpantypesSpanTreeStatsDTO {
 
 export enum SpantypesUnmarkedFailureReasonDTO {
 	http_4xx = 'http_4xx',
+	http_5xx = 'http_5xx',
 	grpc_status = 'grpc_status',
 	exception_event = 'exception_event',
 }
@@ -16511,7 +16512,7 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
+	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**

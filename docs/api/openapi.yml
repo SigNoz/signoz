@@ -13707,6 +13707,7 @@ components:
     SpantypesUnmarkedFailureReason:
       enum:
       - http_4xx
+      - http_5xx
       - grpc_status
       - exception_event
       type: string
@@ -19939,7 +19940,7 @@ paths:
           every span in tree order, a span followed by the spans below it. errors:
           the spans where an error started, meaning error spans with no failing child,
           by start time. unmarked_failures: spans that failed without being marked
-          as errors (a 4xx response, a gRPC status other than OK, or an exception
+          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
           event), by start time. slowest: one span for each group of same-name siblings,
           by the group''s total own time. expensive: the spans that carry gen_ai token
           or cost usage, by cost, or by tokens when none has a cost; each includes
@@ -19955,13 +19956,13 @@ paths:
             every span in tree order, a span followed by the spans below it. errors:
             the spans where an error started, meaning error spans with no failing
             child, by start time. unmarked_failures: spans that failed without being
-            marked as errors (a 4xx response, a gRPC status other than OK, or an exception
-            event), by start time. slowest: one span for each group of same-name siblings,
-            by the group''s total own time. expensive: the spans that carry gen_ai
-            token or cost usage, by cost, or by tokens when none has a cost; each
-            includes those attributes. links: the spans that link to other spans,
-            by start time. The view is picked from the whole trace first; search and
-            parentSpanId then filter it.'
+            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
+            or an exception event), by start time. slowest: one span for each group
+            of same-name siblings, by the group''s total own time. expensive: the
+            spans that carry gen_ai token or cost usage, by cost, or by tokens when
+            none has a cost; each includes those attributes. links: the spans that
+            link to other spans, by start time. The view is picked from the whole
+            trace first; search and parentSpanId then filter it.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource
