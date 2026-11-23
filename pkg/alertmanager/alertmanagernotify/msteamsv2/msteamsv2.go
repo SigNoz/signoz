@@ -157,6 +157,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	if err != nil {
 		return false, err
 	}
+	originalBytes := payload.Len()
 	for payload.Len() > maxMessageBytes {
 		longest := indexLongestText(bodyBlocks)
 		if longest < 0 {
@@ -164,10 +165,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		}
 		text := bodyBlocks[longest].Text
 		bodyBlocks[longest].Text, _ = notify.TruncateInBytes(text, max(len(text)-(payload.Len()-maxMessageBytes), 0))
-		n.logger.WarnContext(ctx, "truncated message text to fit the size limit", slog.Int("max_bytes", maxMessageBytes))
 		if payload, err = encodeMessage(bodyBlocks, titleLink); err != nil {
 			return false, err
 		}
+	}
+	if payload.Len() < originalBytes {
+		n.logger.WarnContext(ctx, "truncated message text to fit the size limit", slog.Int("original_bytes", originalBytes), slog.Int("final_bytes", payload.Len()), slog.Int("max_bytes", maxMessageBytes))
 	}
 
 	resp, err := n.postJSONFunc(ctx, n.client, url, payload) //nolint:bodyclose
@@ -188,6 +191,10 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 // The first block is always the title; the remainder is the channel text, or
 // one block per alert when the alerts carried a custom body template.
 func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
+	if groupLabels, ok := notify.GroupLabels(ctx); ok {
+		ctx = notify.WithGroupLabels(ctx, escapeLabels(groupLabels))
+	}
+
 	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
 	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
 		TitleTemplate:        customTitle,
@@ -252,18 +259,22 @@ func escapeLabelValues(alerts []*types.Alert) []*types.Alert {
 	escaped := make([]*types.Alert, 0, len(alerts))
 
 	for _, alert := range alerts {
-		labels := make(model.LabelSet, len(alert.Labels))
-		for name, value := range alert.Labels {
-			if name == ruletypes.LabelRuleSource {
-				labels[name] = value
-				continue
-			}
-			labels[name] = model.LabelValue(escapeMarkdown(string(value)))
-		}
-
 		copied := *alert
-		copied.Labels = labels
+		copied.Labels = escapeLabels(alert.Labels)
 		escaped = append(escaped, &copied)
+	}
+
+	return escaped
+}
+
+func escapeLabels(labels model.LabelSet) model.LabelSet {
+	escaped := make(model.LabelSet, len(labels))
+	for name, value := range labels {
+		if name == ruletypes.LabelRuleSource {
+			escaped[name] = value
+			continue
+		}
+		escaped[name] = model.LabelValue(escapeMarkdown(string(value)))
 	}
 
 	return escaped
@@ -276,7 +287,7 @@ func escapeMarkdown(value string) string {
 	var escaped strings.Builder
 	for i, r := range runes {
 		switch r {
-		case '*', '[', ']':
+		case '\\', '*', '[', ']':
 			escaped.WriteRune('\\')
 		case '_':
 			if i == 0 || i == len(runes)-1 || !isWordRune(runes[i-1]) || !isWordRune(runes[i+1]) {

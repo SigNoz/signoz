@@ -5,6 +5,7 @@
 package msteamsv2
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -438,21 +439,25 @@ func TestNotifyMessageSize(t *testing.T) {
 		name              string
 		text              string
 		expectedTruncated bool
+		expectedWarnLogs  int
 	}{
 		{
 			name:              "UnderLimit_TextUntouched",
 			text:              strings.Repeat("short body ", 100),
 			expectedTruncated: false,
+			expectedWarnLogs:  0,
 		},
 		{
 			name:              "OverLimit_TextTrimmedToFit",
 			text:              strings.Repeat("a very long body line\n\n", 4000),
 			expectedTruncated: true,
+			expectedWarnLogs:  1,
 		},
 		{
 			name:              "OverLimit_EscapedCharacters_StillFits",
 			text:              strings.Repeat(`"quoted" <tag> & more `, 4000),
 			expectedTruncated: true,
+			expectedWarnLogs:  1,
 		},
 	}
 
@@ -466,6 +471,7 @@ func TestNotifyMessageSize(t *testing.T) {
 			u, err := url.Parse(srv.URL)
 			require.NoError(t, err)
 
+			var logs bytes.Buffer
 			tmpl := test.CreateTmpl(t)
 			notifier, err := New(
 				&config.MSTeamsV2Config{
@@ -476,7 +482,7 @@ func TestNotifyMessageSize(t *testing.T) {
 				},
 				tmpl,
 				`{{ template "msteamsv2.default.titleLink" . }}`,
-				promslog.NewNopLogger(),
+				slog.New(slog.NewTextHandler(&logs, &slog.HandlerOptions{Level: slog.LevelWarn})),
 				newTestTemplater(tmpl),
 			)
 			require.NoError(t, err)
@@ -487,6 +493,7 @@ func TestNotifyMessageSize(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, received)
 			assert.LessOrEqual(t, len(received), maxMessageBytes)
+			assert.Equal(t, testCase.expectedWarnLogs, strings.Count(logs.String(), "level=WARN"))
 
 			var message teamsMessage
 			require.NoError(t, json.Unmarshal(received, &message))
@@ -512,6 +519,9 @@ func TestEscapeMarkdown(t *testing.T) {
 		{name: "UnderscoreAfterSymbol_Escaped", value: "/api/v1/*_bulk", expected: `/api/v1/\*\_bulk`},
 		{name: "TrailingUnderscore_Escaped", value: "tmp_", expected: `tmp\_`},
 		{name: "NonASCIIWord_UnderscoreUntouched", value: "größe_wert", expected: "größe_wert"},
+		{name: "WindowsPath_BackslashesEscaped", value: `C:\Users\x`, expected: `C:\\Users\\x`},
+		{name: "UNCPath_BackslashesEscaped", value: `\\server\share`, expected: `\\\\server\\share`},
+		{name: "EscapedAsterisk_BackslashAndAsteriskEscaped", value: `x\*y*`, expected: `x\\\*y\*`},
 		{name: "HTMLAndHash_Untouched", value: "<b>tag</b> # not a heading", expected: "<b>tag</b> # not a heading"},
 		{name: "Empty_Untouched", value: "", expected: ""},
 	}
@@ -545,6 +555,13 @@ func TestPrepareContentEscapesLabelValues(t *testing.T) {
 			text:          "{{ range .Alerts }}expr={{ .Labels.expr }} pod={{ .Labels.k8s_pod_name }}{{ end }}",
 			expectedTitle: `Custom: CPU \*high\* \[prod\]`,
 			expectedBody:  `expr=rate(a\[5m\]) \* 2 pod=api_server_1`,
+		},
+		{
+			name:          "CustomChannelTemplates_GroupLabelValuesEscaped",
+			title:         "Group: {{ .GroupLabels.alertname }}",
+			text:          "{{ .GroupLabels.alertname }} from {{ .GroupLabels.ruleSource }}",
+			expectedTitle: `Group: CPU \*high\* \[prod\]`,
+			expectedBody:  `CPU \*high\* \[prod\] from https://signoz.test/alerts/overview?ruleId=[x]_`,
 		},
 		{
 			name:          "RuleBodyTemplate_LabelValuesEscaped",
@@ -603,11 +620,15 @@ func TestPrepareContentEscapesLabelValues(t *testing.T) {
 				},
 			}}
 
-			blocks, err := notifier.prepareContent(notify.WithGroupKey(context.Background(), "1"), alerts)
+			groupLabels := model.LabelSet{"alertname": "CPU *high* [prod]", "ruleSource": "https://signoz.test/alerts/overview?ruleId=[x]_"}
+			ctx := notify.WithGroupLabels(notify.WithGroupKey(context.Background(), "1"), groupLabels)
+
+			blocks, err := notifier.prepareContent(ctx, alerts)
 			require.NoError(t, err)
 			require.Len(t, blocks, 2)
 			assert.Equal(t, testCase.expectedTitle, blocks[0].Text)
 			assert.Equal(t, testCase.expectedBody, blocks[1].Text)
+			assert.Equal(t, model.LabelValue("CPU *high* [prod]"), groupLabels["alertname"])
 			assert.Equal(t, model.LabelValue("CPU *high* [prod]"), alerts[0].Labels["alertname"])
 			assert.Equal(t, model.LabelValue("rate(a[5m]) * 2"), alerts[0].Labels["expr"])
 		})
