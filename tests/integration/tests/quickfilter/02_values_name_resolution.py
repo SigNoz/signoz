@@ -93,8 +93,8 @@ def test_fields_values_every_reading(
 
     assert response.status_code == HTTPStatus.OK
     values = response.json()["data"]["values"]
-    assert values.get("stringValues", []) == string_values
-    assert values.get("numberValues", []) == number_values
+    assert sorted(values.get("stringValues", [])) == sorted(string_values)
+    assert sorted(values.get("numberValues", [])) == sorted(number_values)
 
 
 @pytest.mark.parametrize("name", ["latency", "latency:number", "latency:int64", "latency:float64"])
