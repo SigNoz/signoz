@@ -269,10 +269,6 @@ type TimeSeries struct {
 
 // EvaluableValues returns only the values where Partial is false and value is not NaN or +/- Inf.
 // TODO(srikanthccv): should we skip them in the consume.go?
-func (ts *TimeSeries) ExtractLabels() []*Label {
-	return ts.Labels
-}
-
 func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 	if ts == nil {
 		return nil
@@ -454,10 +450,6 @@ type ScalarData struct {
 type ScalarGroup struct {
 	Labels []*Label
 	Values []float64
-}
-
-func (g ScalarGroup) ExtractLabels() []*Label {
-	return g.Labels
 }
 
 func (sd *ScalarData) ExtractGroups() []ScalarGroup {
