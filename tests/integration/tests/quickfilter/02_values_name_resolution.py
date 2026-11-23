@@ -82,17 +82,27 @@ def test_fields_values_number_search_text(
     assert response.json()["data"]["values"].get("numberValues", []) == [42]
 
 
-def test_fields_values_metric_attribute_context(
+@pytest.mark.parametrize(
+    "params",
+    [
+        pytest.param({"name": "service", "fieldContext": "attribute"}, id="attribute_context_matches_point"),
+        pytest.param({"name": "service:string"}, id="type_suffix"),
+        pytest.param({"name": "attribute.service:string"}, id="context_prefix_and_type_suffix"),
+        pytest.param({"name": "service", "fieldDataType": "string"}, id="explicit_data_type"),
+    ],
+)
+def test_fields_values_metric_attribute(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[list[Metrics]], None],
+    params: dict,
 ) -> None:
-    """Metric attributes are stored with attr_type point."""
+    """Metric attributes are stored with attr_type point, and a data type does not filter them out."""
     insert_metrics([Metrics(metric_name="fields.requests_total", labels={"service": "svc-metric"}, value=1.0)])
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    response = get_field_values(signoz, token, {"signal": "metrics", "name": "service", "fieldContext": "attribute"})
+    response = get_field_values(signoz, token, {"signal": "metrics", **params})
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["data"]["values"]["stringValues"] == ["svc-metric"]
