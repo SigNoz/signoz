@@ -6,7 +6,6 @@ import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
 import { ColumnSelector } from 'components/TanStackTableView';
 import TextToolTip from 'components/TextToolTip';
-import { Skeleton } from '@signozhq/ui/skeleton';
 import {
 	RoutePolicyCreateChecks,
 	RoutePolicyListPermission,
@@ -162,6 +161,7 @@ function RoutingPolicies(): JSX.Element {
 							value={searchTerm}
 							onChange={handleSearch}
 							disabled={!canList}
+							disabledTooltip={undefined}
 							suffix={<Search size={14} className={styles.searchIcon} />}
 							testId="routing-policies-search"
 						/>
