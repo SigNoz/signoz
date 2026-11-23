@@ -3,9 +3,9 @@ import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -258,7 +258,7 @@ function EditMemberDrawer({
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
 
-	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
+	const { mutateAsync: deleteUser, isLoading: isDeleting } = useDeleteUser({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success(
@@ -426,11 +426,15 @@ function EditMemberDrawer({
 		onComplete,
 	]);
 
-	const handleDelete = useCallback((): void => {
+	const handleDelete = useCallback(async (): Promise<void> => {
 		if (!member) {
 			return;
 		}
-		deleteUser({ pathParams: { id: member.id } });
+		try {
+			await deleteUser({ pathParams: { id: member.id } });
+		} catch {
+			// `onError` already shows the error modal, and the confirmation stays open.
+		}
 	}, [member, deleteUser]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
@@ -457,7 +461,8 @@ function EditMemberDrawer({
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {
-				toast.error('Failed to generate password reset link', {
+				toast.danger('Failed to generate password reset link', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 			}
@@ -486,7 +491,7 @@ function EditMemberDrawer({
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link');
+			toast.danger('Failed to copy link', { action: { label: 'Dismiss' } });
 		}
 	}, [copyState.error]);
 
@@ -560,6 +565,7 @@ function EditMemberDrawer({
 						}}
 						placeholder="Enter name"
 						disabled={isRootUser || isDeleted}
+						disabledTooltip={undefined}
 					/>
 				</AuthZTooltip>
 			</div>
@@ -612,6 +618,7 @@ function EditMemberDrawer({
 					<RolesSelect
 						id="member-role"
 						mode="multiple"
+						testId="member-roles-select"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}
@@ -687,91 +694,83 @@ function EditMemberDrawer({
 		</div>
 	);
 
-	const footer = (
-		<div className="edit-member-drawer__footer">
-			{!isDeleted && (
-				<>
-					<div className="edit-member-drawer__footer-left">
-						<AuthZButton
-							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
-							size="md"
-							onClick={(): void => setShowDeleteConfirm(true)}
-							testId="member-delete-btn"
-							variant="link"
-							color="danger"
-							checks={member ? [buildUserDeletePermission(member.id)] : []}
-							prefix={<Trash2 size={12} />}
-						>
-							{isInvited ? 'Revoke Invite' : 'Delete Member'}
-						</AuthZButton>
+	const footerStart = isDeleted ? null : (
+		<div className="edit-member-drawer__footer-left">
+			<AuthZButton
+				disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
+				size="md"
+				onClick={(): void => setShowDeleteConfirm(true)}
+				testId="member-delete-btn"
+				variant="link"
+				color="danger"
+				checks={member ? [buildUserDeletePermission(member.id)] : []}
+				prefix={<Trash2 size={12} />}
+			>
+				{isInvited ? 'Revoke Invite' : 'Delete Member'}
+			</AuthZButton>
 
-						<div className="edit-member-drawer__footer-divider" />
-						<AuthZButton
-							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
-							size="md"
-							onClick={handleGenerateResetLink}
-							testId="member-reset-link-btn"
-							loading={isGeneratingLink || isLoadingTokenStatus}
-							variant="link"
-							color="warning"
-							checks={resetLinkChecks}
-							prefix={<RefreshCw size={12} />}
-						>
-							{inviteLinkAndResetPasswordText}
-						</AuthZButton>
-					</div>
-
-					<div className="edit-member-drawer__footer-right">
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleClose}
-							prefix={<X size={14} />}
-						>
-							Cancel
-						</Button>
-
-						<AuthZButton
-							disabledTooltip={
-								isRootUser
-									? ROOT_USER_TOOLTIP
-									: !isDirty
-										? 'No changes to save'
-										: undefined
-							}
-							size="md"
-							variant="solid"
-							color="primary"
-							disabled={!isDirty || isRootUser}
-							onClick={handleSave}
-							checks={[]}
-							testId="member-save-btn"
-							loading={isSaving}
-						>
-							{isSaving ? 'Saving...' : 'Save Member Details'}
-						</AuthZButton>
-					</div>
-				</>
-			)}
+			<div className="edit-member-drawer__footer-divider" />
+			<AuthZButton
+				disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				size="md"
+				onClick={handleGenerateResetLink}
+				testId="member-reset-link-btn"
+				loading={isGeneratingLink || isLoadingTokenStatus}
+				variant="link"
+				color="warning"
+				checks={resetLinkChecks}
+				prefix={<RefreshCw size={12} />}
+			>
+				{inviteLinkAndResetPasswordText}
+			</AuthZButton>
 		</div>
+	);
+
+	const footerActions = isDeleted ? null : (
+		<>
+			<Button
+				size="md"
+				variant="outlined"
+				color="secondary"
+				onClick={handleClose}
+				prefix={<X size={14} />}
+			>
+				Cancel
+			</Button>
+
+			<AuthZButton
+				disabledTooltip={
+					isRootUser
+						? ROOT_USER_TOOLTIP
+						: !isDirty
+							? 'No changes to save'
+							: undefined
+				}
+				size="md"
+				variant="solid"
+				color="primary"
+				disabled={!isDirty || isRootUser}
+				onClick={handleSave}
+				checks={[]}
+				testId="member-save-btn"
+				loading={isSaving}
+			>
+				{isSaving ? 'Saving...' : 'Save Member Details'}
+			</AuthZButton>
+		</>
 	);
 
 	return (
 		<>
-			<DrawerWrapper
+			<Drawer
+				type="task"
+				stack="overlay"
 				open={member !== null}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						handleClose();
-					}
-				}}
-				direction="right"
-				showCloseButton
-				showOverlay={false}
+				onClose={handleClose}
 				title="Member Details"
-				footer={footer}
 				width="wide"
+				footerPrefix={footerStart}
+				footerSuffix={footerActions}
 			>
 				<AuthZGuardContent
 					checks={member ? [buildUserReadPermission(member?.id)] : []}
@@ -779,7 +778,7 @@ function EditMemberDrawer({
 				>
 					{drawerContent}
 				</AuthZGuardContent>
-			</DrawerWrapper>
+			</Drawer>
 
 			<ResetLinkDialog
 				open={showResetLinkDialog}

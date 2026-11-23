@@ -9,7 +9,7 @@ jest.mock('react-use', () => ({
 }));
 
 const mockToastSuccess = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
+jest.mock('@signozhq/ui/toast', () => ({
 	toast: { success: (message: string): void => mockToastSuccess(message) },
 }));
 

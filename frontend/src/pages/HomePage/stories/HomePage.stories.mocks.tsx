@@ -3,9 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { createShortcutActions } from 'constants/shortcutActions';
 import { listRulesV3Response } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
 
+import { accessFor } from '@/storybook/access/access';
 import {
 	countControl,
 	choiceControl,
@@ -13,6 +15,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	buildAlertRules,
 	buildServices,
@@ -206,3 +209,18 @@ export const homeMocks = defineStoryMocks({
 		appContext: { featureFlags: homeFeatureFlags(servicesSource) },
 	}),
 });
+
+export type HomeArgs = PageStoryArgs<typeof homeMocks>;
+
+const noop = (): void => undefined;
+
+/** The palette only lists the actions the role it runs as is allowed. */
+export const paletteListsHome = (args: HomeArgs): boolean => {
+	const { legacyRole } = accessFor(args.access, args.permissions, args.revoked);
+	const home = createShortcutActions({
+		navigate: noop,
+		handleThemeChange: noop,
+	}).find((action) => action.id === 'home');
+
+	return !home?.roles || home.roles.includes(legacyRole);
+};

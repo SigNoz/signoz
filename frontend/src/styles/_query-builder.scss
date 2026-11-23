@@ -1,0 +1,40 @@
+// Query builder controls on a surface-2 container (a dialog).
+@mixin query-builder-on-surface-2 {
+	--query-builder-v2-color: var(--l2-foreground);
+	--query-builder-v2-background-color: var(--input-background);
+	--query-builder-v2-border-color: var(--l2-border);
+	--query-builder-v2-selection-background-color: var(--l2-background);
+	--query-builder-v2-chip-decorator-background-color: var(--l2-background);
+	--query-builder-v2-placeholder-color: var(--l3-foreground);
+	--query-builder-v2-selected-background-color: var(--l3-foreground);
+	--query-builder-v2-toggle-group-background-color: var(--secondary-background);
+	--query-builder-v2-toggle-group-border-color: var(--l2-border);
+	--query-builder-v2-toggle-group-active-background-color: var(
+		--secondary-background-hover
+	);
+	--query-builder-v2-toggle-group-background-color-hover: var(
+		--secondary-background-hover
+	);
+	--input-with-label-border-color: var(--l2-border);
+	--input-with-label-background-color: var(--input-background);
+	--input-with-label-color: var(--l2-foreground);
+
+	// antd's own input colors have no token to fall back to, so the PromQL
+	// fields take the field colours here instead of through a var.
+	:global(.promql-query-field) {
+		// Hover and focus keep antd's highlight.
+		:global(.ant-input:not(:hover):not(:focus)),
+		:global(.ant-input-group-addon) {
+			border-color: var(--l2-border);
+		}
+
+		:global(.ant-input) {
+			background-color: var(--input-background);
+			color: var(--l2-foreground);
+
+			&::placeholder {
+				color: var(--l3-foreground);
+			}
+		}
+	}
+}

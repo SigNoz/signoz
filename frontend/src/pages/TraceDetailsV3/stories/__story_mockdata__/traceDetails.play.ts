@@ -12,6 +12,8 @@ import {
 	within,
 } from 'storybook/test';
 
+import { getToastText } from '@/storybook/play/toastText';
+
 import { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
 import {
 	openRowMenu,
@@ -341,7 +343,7 @@ export const hoverEventStacktrace = async (
 	const key = await within(canvasElement).findByText('exception.stacktrace');
 	const value = key
 		.closest('[class*="attributeContainer"]')
-		?.querySelector<HTMLElement>('[class*="attributeValue"]');
+		?.querySelector<HTMLElement>('[class*="wrapper"] > *');
 
 	await expect(value).toBeTruthy();
 	await userEvent.hover(value as HTMLElement);
@@ -422,7 +424,7 @@ const EXPORT_TOAST: Partial<Record<TraceDetailsArgs['exportState'], string>> = {
 };
 
 const expectExportToast = (text: string): Promise<void> =>
-	waitFor(async () => expect(screen.getByText(text)).toBeVisible(), untilLoaded);
+	waitFor(async () => expect(getToastText(text)).toBeVisible(), untilLoaded);
 
 export const downloadTrace = async ({
 	canvasElement,
@@ -498,4 +500,41 @@ export const showsAnalyticsState = async (
 	if (showsTrace(context.args) && text) {
 		await screen.findAllByText(text, undefined, untilLoaded);
 	}
+};
+
+const openFunnelPicker = async (canvasElement: HTMLElement): Promise<void> => {
+	const [button] = await within(canvasElement).findAllByTestId(
+		'span-add-to-funnel-btn',
+		undefined,
+		untilLoaded,
+	);
+
+	await fireEvent.click(button);
+	await screen.findByText('Add span to funnel', undefined, untilLoaded);
+};
+
+export const openAddSpanToFunnel = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+};
+
+export const openCreateFunnelStep = async ({
+	canvasElement,
+	args,
+}: PageContext): Promise<void> => {
+	if (!showsTrace(args)) {
+		return;
+	}
+
+	await openFunnelPicker(canvasElement);
+	await userEvent.click(
+		await screen.findByRole('button', { name: /create new funnel/i }),
+	);
+	await screen.findByTestId('create-funnel-name-input-field');
 };

@@ -22,8 +22,8 @@
 }
 
 .general-settings-subtitle {
-	font-size: var(--font-size-sm);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 }
@@ -45,9 +45,9 @@
 }
 
 .retention-controls-header-label {
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-24);
+	font-size: var(--uppercase-small-500-font-size);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
 	color: var(--l2-foreground);
@@ -70,9 +70,9 @@
 	display: flex;
 	align-items: center;
 	gap: var(--spacing-3);
-	font-size: var(--font-size-sm);
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
 	letter-spacing: -0.07px;
 	color: var(--l1-foreground);
 
@@ -92,34 +92,23 @@
 	display: flex;
 	align-items: flex-start;
 
+	--input-border-radius: 2px 0 0 2px;
+	--input-border: var(--l1-border);
+	--input-background: transparent;
+	--input-foreground: var(--l1-foreground);
+	--input-font-size: var(--label-small-400-font-size);
+	--input-line-height: 16px;
+	--input-disabled-opacity: 0.8;
+
 	// todo: https://github.com/SigNoz/components/issues/116
 	input[type='number'] {
-		display: flex;
-		width: 120px;
-		height: 32px;
-		align-items: center;
-		gap: var(--spacing-2);
-		border-radius: 2px 0 0 2px;
-		border: 1px solid var(--l1-border);
-		background: transparent;
-		text-align: left;
 		-moz-appearance: textfield;
 		appearance: textfield;
-		color: var(--l1-foreground);
-		font-size: var(--font-size-xs);
-		font-weight: var(--font-weight-normal);
-		line-height: 16px;
-		box-shadow: none;
 
 		&::-webkit-outer-spin-button,
 		&::-webkit-inner-spin-button {
 			-webkit-appearance: none;
 			margin: 0;
-		}
-
-		&:disabled {
-			opacity: 0.8;
-			cursor: not-allowed;
 		}
 	}
 
@@ -139,14 +128,12 @@
 }
 
 .retention-error-text {
-	font-size: var(--font-size-xs);
 	color: var(--accent-amber);
-	font-style: italic;
 }
 
 .retention-modal-description {
 	margin: 0;
 	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: 22px;
 }

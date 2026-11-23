@@ -6,16 +6,17 @@ import {
 } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Bookmark, Plus, Search } from '@signozhq/icons';
 import cx from 'classnames';
 
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
-import ViewNamePopover from 'components/ViewNamePopover/ViewNamePopover';
 
 import type { BuiltinListView, ViewSaveMode } from '../types';
 import ViewsRailDirtyPanel from './ViewsRailDirtyPanel';
 import ViewsRailItem from './ViewsRailItem';
+import ViewNameDialog from './ViewNameDialog';
 
 import styles from './ViewsRail.module.scss';
 
@@ -72,8 +73,12 @@ function ViewsRail({
 	onViewRenamed,
 	onViewDeleted,
 }: Props): JSX.Element {
-	const [saveOpen, setSaveOpen] = useState(false);
 	const [query, setQuery] = useState('');
+	const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+	const [renameTarget, setRenameTarget] = useState<{
+		id: string;
+		label: string;
+	} | null>(null);
 	const { contextHolder, confirmDelete } = useDeleteConfirm();
 
 	const q = query.trim().toLowerCase();
@@ -94,11 +99,28 @@ function ViewsRail({
 		(id: string, label: string): void => {
 			confirmDelete({
 				title: (
-					<Typography.Title level={5}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						Delete the{' '}
-						<Typography.Text className={styles.deleteName}>{label}</Typography.Text>{' '}
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
+						>
+							{label}
+						</Typography>{' '}
 						view?
-					</Typography.Title>
+					</Typography>
 				),
 				content: deleteDescription,
 				// Return the delete promise so the modal's Delete button stays loading
@@ -112,18 +134,27 @@ function ViewsRail({
 		[confirmDelete, deleteDescription, onDelete, onViewDeleted],
 	);
 
-	const handleRename = useCallback(
-		(id: string, name: string): void => {
-			onViewRenamed?.();
-			onRename(id, name);
-		},
-		[onRename, onViewRenamed],
+	const openRenameDialog = useCallback(
+		(id: string, label: string): void => setRenameTarget({ id, label }),
+		[],
 	);
+	const closeRenameDialog = (): void => setRenameTarget(null);
+
+	const handleRename = (name: string): void => {
+		if (!renameTarget) {
+			return;
+		}
+		onViewRenamed?.();
+		onRename(renameTarget.id, name);
+	};
 
 	const handleSaveAsView = (name: string): void => {
 		onViewSaved?.('new');
 		onSave(name);
 	};
+
+	const openSaveDialog = (): void => setIsSaveDialogOpen(true);
+	const closeSaveDialog = (): void => setIsSaveDialogOpen(false);
 
 	const handleSaveViewChanges = (): void => {
 		onViewSaved?.('update');
@@ -139,7 +170,6 @@ function ViewsRail({
 			active={v.id === activeViewId}
 			isModified={isModified}
 			testIdPrefix={testIdPrefix}
-			renameTestIdPrefix={renameTestIdPrefix}
 			onSelect={onSelect}
 		/>
 	);
@@ -148,27 +178,19 @@ function ViewsRail({
 		<>
 			<div className={styles.header}>
 				<h4 className={styles.headerTitle}>Views</h4>
-				<ViewNamePopover
-					open={saveOpen}
-					onOpenChange={setSaveOpen}
-					onSubmit={handleSaveAsView}
-					title="Save as view"
-					confirmLabel="Save view"
-					testIdPrefix={saveTestIdPrefix}
-					tooltip="Save current filters as a view"
-					trigger={
-						<Button
-							aria-label="Save current filters as a view"
-							variant="ghost"
-							color="secondary"
-							size="sm"
-							icon
-							testId={`${testIdPrefix}-view-save-trigger`}
-						>
-							<Plus size={14} />
-						</Button>
-					}
-				/>
+				<Tooltip title="Save current filters as a view">
+					<Button
+						aria-label="Save current filters as a view"
+						variant="ghost"
+						color="secondary"
+						size="sm"
+						icon
+						testId={`${testIdPrefix}-view-save-trigger`}
+						onClick={openSaveDialog}
+					>
+						<Plus size={14} />
+					</Button>
+				</Tooltip>
 			</div>
 
 			<div className={styles.search}>
@@ -204,9 +226,18 @@ function ViewsRail({
 					<>
 						<div className={cx(styles.groupLabel, styles.groupLabelSpaced)}>
 							{customSectionLabel}
-							<Typography.Text className={styles.groupCount}>
-								{customViews.length}
-							</Typography.Text>
+							<span className={styles.groupCount}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="tertiary"
+									as="span"
+									textOverflow="wrap"
+								>
+									{customViews.length}
+								</Typography>
+							</span>
 						</div>
 						{customViewsLoading ? (
 							<div className={styles.empty}>Loading views…</div>
@@ -224,9 +255,8 @@ function ViewsRail({
 									active={v.id === activeViewId}
 									isModified={isModified}
 									testIdPrefix={testIdPrefix}
-									renameTestIdPrefix={renameTestIdPrefix}
 									onSelect={onSelect}
-									onRename={handleRename}
+									onRename={openRenameDialog}
 									onDelete={onConfirmDelete}
 								/>
 							))
@@ -246,10 +276,29 @@ function ViewsRail({
 					isCustomActive={isCustomActive}
 					testIdPrefix={testIdPrefix}
 					onSaveChanges={handleSaveViewChanges}
-					onSaveAs={(): void => setSaveOpen(true)}
+					onSaveAs={openSaveDialog}
 					onReset={onReset}
 				/>
 			)}
+			<ViewNameDialog
+				open={isSaveDialogOpen}
+				onClose={closeSaveDialog}
+				onSubmit={handleSaveAsView}
+				title="Save as view"
+				description="Save the current filters as a view you can return to."
+				confirmLabel="Save view"
+				testIdPrefix={saveTestIdPrefix}
+			/>
+			<ViewNameDialog
+				open={renameTarget !== null}
+				onClose={closeRenameDialog}
+				onSubmit={handleRename}
+				title="Rename view"
+				description="The view keeps its filters under the new name."
+				confirmLabel="Rename"
+				initialName={renameTarget?.label}
+				testIdPrefix={renameTestIdPrefix}
+			/>
 			{contextHolder}
 		</>
 	);

@@ -244,10 +244,10 @@ function MembersSettings(): JSX.Element {
 									setSearchQuery(e.target.value);
 									setPage(1);
 								}}
-								className="members-search-input"
 								name="members-search"
 								testId="members-search-input"
 								disabled={controlsDisabled}
+								disabledTooltip={undefined}
 							/>
 						</AuthZTooltip>
 					</div>

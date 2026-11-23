@@ -39,6 +39,12 @@
 	--badge-cursor: pointer;
 }
 
+.thresholds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
 .actionsColumn {
 	display: flex;
 	justify-content: flex-end;

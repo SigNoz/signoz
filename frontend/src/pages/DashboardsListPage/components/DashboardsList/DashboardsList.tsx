@@ -329,6 +329,7 @@ function DashboardsList(): JSX.Element {
 						<ListCommandHeader
 							label={activeLabel}
 							count={total}
+							isCountLoading={isFetching}
 							isModified={isModified}
 							action={<NewDashboardButton onClick={openCreate} />}
 						/>

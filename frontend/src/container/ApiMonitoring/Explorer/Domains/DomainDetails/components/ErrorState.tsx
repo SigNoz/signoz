@@ -13,10 +13,26 @@ function ErrorState({ refetch }: { refetch: () => void }): JSX.Element {
 						<img src={awwSnapUrl} alt="awwSnap" width={32} height={32} />
 					</div>
 					<div className="error-state-text">
-						<Typography.Text>Uh-oh :/ We ran into an error.</Typography.Text>
-						<Typography.Text color="muted">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Uh-oh :/ We ran into an error.
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Please refresh this panel.
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 				<Button

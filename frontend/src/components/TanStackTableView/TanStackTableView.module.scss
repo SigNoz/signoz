@@ -40,7 +40,6 @@
 }
 
 .tanstackTableFootLoaderCell {
-	text-align: center;
 	padding: 8px 0;
 }
 
@@ -118,18 +117,18 @@
 	gap: 12px;
 	margin-top: 12px;
 
-	ul {
-		padding: 0;
-	}
+	--pagination-inline-size: auto;
+	--pagination-padding-block: 0;
+	--pagination-padding-inline-start: 0;
+	--pagination-padding-inline-end: 0;
 }
 
 .paginationPageSize {
 	width: 80px;
-	--combobox-trigger-height: 2rem;
 }
 
 .paginationTotalCount {
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--label-base-400-font-size);
 	color: var(--l1-foreground);
 }
 
