@@ -513,6 +513,34 @@ func prepareQuery(r *http.Request) (string, error) {
 	for k, v := range postData.Variables {
 		vars[k] = metrics.FormattedValue(v)
 	}
+
+	keys := make([]string, 0, len(vars))
+	for k := range vars {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	// Rewrite Go template references to dotted variable names (e.g. {{.db.name}})
+	// into `index . "db.name"` so text/template looks up the flat map key instead
+	// of traversing nested fields and rendering `<no value>`.
+	for _, k := range keys {
+		if !strings.Contains(k, ".") {
+			continue
+		}
+		re := regexp.MustCompile(`\{\{(-?)\s*\.` + regexp.QuoteMeta(k) + `(\s*(?:\|[^}]*)?)(-?)\}\}`)
+		query = re.ReplaceAllStringFunc(query, func(match string) string {
+			sub := re.FindStringSubmatch(match)
+			prefix := "{{"
+			if sub[1] == "-" {
+				prefix = "{{- "
+			}
+			return fmt.Sprintf(`%sindex . %q%s%s}}`, prefix, k, sub[2], sub[3])
+		})
+	}
+
 	tmpl := template.New("dashboard-vars")
 	tmpl, tmplErr := tmpl.Parse(query)
 	if tmplErr != nil {
@@ -527,15 +555,6 @@ func prepareQuery(r *http.Request) (string, error) {
 	query = queryBuf.String()
 
 	// Now handle $var replacements (simple string replace)
-	keys := make([]string, 0, len(vars))
-	for k := range vars {
-		keys = append(keys, k)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return len(keys[i]) > len(keys[j])
-	})
-
 	newQuery := query
 	for _, k := range keys {
 		placeholder := "$" + k

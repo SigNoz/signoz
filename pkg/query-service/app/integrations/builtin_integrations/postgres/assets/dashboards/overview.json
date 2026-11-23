@@ -47,15 +47,6 @@
             "name": "table.name",
             "description": "List of tables"
           },
-          "defaultValue": [
-            "public.activations",
-            "public.licenses",
-            "public.plans",
-            "public.subscription_items",
-            "public.subscriptions",
-            "public.trials",
-            "public.usage"
-          ],
           "allowAllValue": true,
           "allowMultiple": true,
           "customAllValue": "",
@@ -77,9 +68,6 @@
             "name": "db.name",
             "description": "List of databases"
           },
-          "defaultValue": [
-            "postgres"
-          ],
           "allowAllValue": true,
           "allowMultiple": true,
           "customAllValue": "",
