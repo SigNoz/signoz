@@ -7,8 +7,8 @@ import store from 'store';
 import type { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
-import type {
-	InspectMetricsSeries,
+import type { InspectMetricsSeries } from '../types';
+import {
 	InspectionStep,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,

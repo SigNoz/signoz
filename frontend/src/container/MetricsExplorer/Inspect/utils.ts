@@ -6,9 +6,8 @@ import type {
 	GraphPopoverData,
 	GraphPopoverOptions,
 	MetricInspectionOptions,
-	SpaceAggregationOptions,
-	TimeAggregationOptions,
 } from './types';
+import { SpaceAggregationOptions, TimeAggregationOptions } from './types';
 
 /**
  * Check if the inspect feature flag is enabled

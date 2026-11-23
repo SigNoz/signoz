@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
 import TableView from '../TableView';
-import type {
-	InspectMetricsSeries,
+import type { InspectMetricsSeries } from '../types';
+import {
 	InspectionStep,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,

@@ -8,8 +8,10 @@ import ExpandedView from '../ExpandedView';
 import type {
 	InspectMetricsSeries,
 	GraphPopoverData,
-	InspectionStep,
 	MetricInspectionOptions,
+} from '../types';
+import {
+	InspectionStep,
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';

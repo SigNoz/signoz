@@ -1,11 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import GraphPopover from '../GraphPopover';
-import type {
-	InspectMetricsSeries,
-	GraphPopoverOptions,
-	InspectionStep,
-} from '../types';
+import type { InspectMetricsSeries, GraphPopoverOptions } from '../types';
+import { InspectionStep } from '../types';
 
 describe('GraphPopover', () => {
 	const mockOptions: GraphPopoverOptions = {
