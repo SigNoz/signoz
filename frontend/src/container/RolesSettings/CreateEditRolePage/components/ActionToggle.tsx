@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Divider } from '@signozhq/ui/divider';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
@@ -106,7 +106,14 @@ function ActionToggle({
 				data-testid={`action-toggle-${resource}-${action}`}
 			>
 				<div className={styles.actionToggleHeader}>
-					<Typography as="span" size="base">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{displayLabel}
 					</Typography>
 					<ToggleGroup
@@ -150,20 +157,23 @@ function ActionToggle({
 				)}
 			</div>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={confirmDialogOpen}
-				onOpenChange={(next): void => {
-					if (!next) {
-						handleCancelScopeChange();
-					}
-				}}
 				title="Change permission scope?"
 				confirmText="Change scope"
+				color="danger"
 				cancelText="Cancel"
 				onConfirm={handleConfirmScopeChange}
 				onCancel={handleCancelScopeChange}
 			>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					You have {selectedIds.length} item{selectedIds.length > 1 ? 's' : ''}{' '}
 					selected. Changing the scope will clear your current items.
 					<br />
@@ -171,7 +181,7 @@ function ActionToggle({
 					Don&apos;t worry, this doesn&apos;t update this role yet, it only confirms
 					that you want to clear the items.
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</>
 	);
 }

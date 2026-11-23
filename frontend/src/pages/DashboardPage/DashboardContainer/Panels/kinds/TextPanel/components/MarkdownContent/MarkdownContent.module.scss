@@ -40,9 +40,9 @@
 	--md-list-indent: 24px;
 
 	display: block;
-	font-family: var(--font-family-inter);
+	font-family: var(--paragraph-base-400-font-family);
 	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: var(--paragraph-base-400-line-height);
 	color: var(--md-foreground);
 	overflow-wrap: break-word;
@@ -80,13 +80,13 @@
 .content.content h5,
 .content.content h6 {
 	margin: 16px 0 8px;
-	font-weight: var(--font-weight-semibold);
-	line-height: var(--line-height-tight);
+	font-weight: var(--label-base-600-font-weight);
+	line-height: 1.25;
 	color: var(--md-foreground);
 }
 
 .content.content h1 {
-	font-size: var(--font-size-lg);
+	font-size: var(--label-large-400-font-size);
 }
 
 .content.content h2 {
@@ -94,7 +94,7 @@
 }
 
 .content.content h3 {
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 }
 
 .content.content h4,
@@ -183,7 +183,7 @@
 }
 
 .content.content strong {
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--label-base-600-font-weight);
 	color: var(--md-foreground);
 }
 
@@ -201,7 +201,7 @@
 	border-radius: 2px;
 
 	background: var(--md-surface);
-	font-family: var(--font-family-sf-mono);
+	font-family: var(--code-small-400-font-family);
 	font-size: var(--code-small-400-font-size);
 	color: var(--md-foreground);
 }
@@ -218,7 +218,7 @@
 		padding: 0;
 		background: none;
 		font-size: var(--code-small-400-font-size);
-		line-height: var(--line-height-18);
+		line-height: var(--code-small-400-line-height);
 		color: var(--md-foreground);
 	}
 }
@@ -256,7 +256,7 @@
 
 .content.content th {
 	background: var(--md-surface);
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--label-base-600-font-weight);
 }
 
 // Rendered by the `table` component override.
@@ -328,7 +328,7 @@
 }
 
 .content.content :global(.token.bold) {
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--label-base-600-font-weight);
 }
 
 .content.content :global(.token.italic) {

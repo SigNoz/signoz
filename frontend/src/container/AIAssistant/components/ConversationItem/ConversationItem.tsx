@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import {
@@ -13,10 +13,10 @@ import {
 	ArchiveRestore,
 	EllipsisVertical,
 	Link,
-	MessageSquare,
 	Pencil,
 } from '@signozhq/icons';
 
+import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
 
 import styles from './ConversationItem.module.scss';
@@ -37,18 +37,18 @@ function formatRelativeTime(ts: number): string {
 	const diff = Date.now() - ts;
 	const mins = Math.floor(diff / 60_000);
 	if (mins < 1) {
-		return 'just now';
+		return 'now';
 	}
 	if (mins < 60) {
-		return `${mins}m ago`;
+		return `${mins}m`;
 	}
 	const hrs = Math.floor(mins / 60);
 	if (hrs < 24) {
-		return `${hrs}h ago`;
+		return `${hrs}h`;
 	}
 	const days = Math.floor(hrs / 24);
 	if (days < 7) {
-		return `${days}d ago`;
+		return `${days}d`;
 	}
 	return new Date(ts).toLocaleDateString(undefined, {
 		month: 'short',
@@ -70,6 +70,9 @@ export default function ConversationItem({
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isArchived = Boolean(conversation.archived);
+	const isReplying = useAIAssistantStore((s) =>
+		Boolean(s.streams[conversation.id]?.isStreaming),
+	);
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -126,14 +129,14 @@ export default function ConversationItem({
 			type: 'item',
 			value: 'rename',
 			label: 'Rename',
-			prefix: <Pencil size={12} />,
+			prefix: <Pencil size={16} />,
 			onClick: (): void => startEditing(),
 		},
 		{
 			type: 'item',
 			value: 'copy-link',
 			label: 'Copy link',
-			prefix: <Link size={12} />,
+			prefix: <Link size={16} />,
 			onClick: handleCopyLink,
 		},
 		{ type: 'separator', value: 'divider' },
@@ -145,7 +148,7 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'restore',
 					label: 'Restore',
-					prefix: <ArchiveRestore size={12} />,
+					prefix: <ArchiveRestore size={16} />,
 					onClick: (): void => onRestore(conversation.id),
 				},
 			]
@@ -155,7 +158,8 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'archive',
 					label: 'Archive',
-					prefix: <Archive size={12} />,
+					prefix: <Archive size={16} />,
+					danger: true,
 					onClick: (): void => onArchive(conversation.id),
 				},
 			];
@@ -172,20 +176,25 @@ export default function ConversationItem({
 				}
 			}}
 		>
-			<MessageSquare size={12} className={styles.icon} />
+			<span className={cx(styles.dot, { [styles.isReplying]: isReplying })} />
 
 			<div className={styles.body}>
 				{isEditing ? (
-					<Input
-						ref={inputRef}
-						className={styles.input}
-						value={editValue}
-						onChange={(e): void => setEditValue(e.target.value)}
-						onKeyDown={handleKeyDown}
-						onBlur={commitEdit}
-						onClick={(e): void => e.stopPropagation()}
-						maxLength={80}
-					/>
+					<div className={styles.input}>
+						<Input
+							ref={inputRef}
+							// The wrapper's accent bottom border is the edit/focus
+							// treatment, so the Input renders chromeless.
+							variant="unstyled"
+							noFocusRing
+							value={editValue}
+							onChange={(e): void => setEditValue(e.target.value)}
+							onKeyDown={handleKeyDown}
+							onBlur={commitEdit}
+							onClick={(e): void => e.stopPropagation()}
+							maxLength={80}
+						/>
+					</div>
 				) : (
 					<>
 						<span className={styles.title} title={displayTitle}>

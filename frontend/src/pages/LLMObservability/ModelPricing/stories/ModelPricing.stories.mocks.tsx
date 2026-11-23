@@ -5,9 +5,12 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
+import { componentPermission } from 'utils/permission';
 
+import { accessFor } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	PRICING_RULE_MAX,
@@ -110,3 +113,11 @@ export const modelPricingMocks = defineStoryMocks({
 	],
 	config: () => ({ route: ROUTES.AI_OBSERVABILITY_CONFIGURATION }),
 });
+
+export type ModelPricingArgs = PageStoryArgs<typeof modelPricingMocks>;
+
+/** Add model cost is gated on the legacy role rather than an authz check. */
+export const canManagePricing = (args: ModelPricingArgs): boolean =>
+	componentPermission.manage_llm_pricing.includes(
+		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+	);

@@ -1,6 +1,8 @@
+import secrets
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures import types
@@ -80,17 +82,136 @@ def test_list_service_accounts(
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": "test-sa"},
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
 
     assert response.status_code == HTTPStatus.OK, response.text
     data = response.json()["data"]
-    assert isinstance(data, list)
+    assert isinstance(data["serviceAccounts"], list)
+    assert data["total"] >= 1
 
     # should contain the SA we created in the earlier test
-    names = [service_account["name"] for service_account in data]
+    names = [service_account["name"] for service_account in data["serviceAccounts"]]
     assert "test-sa" in names
+
+
+def test_list_service_accounts_filters_and_pages(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    suffix = secrets.token_hex(4)
+    names = [f"sa-alpha-{suffix}", f"sa-beta-{suffix}", f"sa-gamma-{suffix}"]
+    ids = [create_service_account(signoz, token, name) for name in names]
+    delete_service_account(signoz, token, ids[2])
+
+    for query, total in [
+        (f"'{suffix}'", 3),
+        (f"'{suffix.upper()}'", 3),
+        (f"'{suffix}@'", 3),
+        (f"'{suffix}' AND status = active", 2),
+        (f"'{suffix}' AND status = deleted", 1),
+        (f"'{suffix}' AND status IN (active, deleted)", 3),
+        (f"name = 'sa-alpha-{suffix}'", 1),
+        (f"email CONTAINS '{suffix}' AND NOT name CONTAINS alpha", 2),
+    ]:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+            params={"query": query},
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        assert response.json()["data"]["total"] == total, query
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}' AND status = deleted"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [sa["name"] for sa in response.json()["data"]["serviceAccounts"]] == [names[2]]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}'", "sort": "name", "order": "asc"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [sa["name"] for sa in response.json()["data"]["serviceAccounts"]] == names
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}'", "sort": "created_at", "order": "desc"},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert [sa["name"] for sa in response.json()["data"]["serviceAccounts"]] == list(reversed(names))
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}'", "sort": "name", "order": "asc", "limit": 2},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["total"] == 3
+    assert [sa["name"] for sa in response.json()["data"]["serviceAccounts"]] == names[:2]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}'", "sort": "name", "order": "asc", "limit": 2, "offset": 2},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["total"] == 3
+    assert [sa["name"] for sa in response.json()["data"]["serviceAccounts"]] == names[2:]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params={"query": f"'{suffix}'", "offset": 10},
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert response.json()["data"]["total"] == 3
+    assert response.json()["data"]["serviceAccounts"] == []
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        pytest.param({"sort": "email"}, id="sort_outside_the_enum"),
+        pytest.param({"order": "sideways"}, id="order_outside_the_enum"),
+        pytest.param({"limit": -1}, id="negative_limit"),
+        pytest.param({"offset": -1}, id="negative_offset"),
+        pytest.param({"query": "owner = ci"}, id="query_key_outside_the_reserved_set"),
+        pytest.param({"query": "status CONTAINS act"}, id="query_operator_not_allowed_on_status"),
+        pytest.param({"query": "name ="}, id="query_syntax_error"),
+    ],
+)
+def test_list_rejects_invalid_params(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    params: dict,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(SERVICE_ACCOUNT_BASE),
+        params=params,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
 
 
 def test_get_service_account(

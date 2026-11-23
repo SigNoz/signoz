@@ -23,7 +23,8 @@ import styles from './AskNoz.module.scss';
 
 /**
  * Opens the Noz drawer, matching the header entry it replaces. Cmd+K opens the
- * modal instead; this is deliberately the drawer.
+ * modal instead; this is deliberately the drawer. It stays while the drawer is
+ * open, where it closes the drawer and keeps the chat for the next open.
  *
  * Carries the header's pending badge: when Noz is blocked on the user
  * (`awaiting_approval` / `awaiting_clarification`) a dot pulses. Without it,
@@ -38,21 +39,28 @@ function AskNoz(): JSX.Element | null {
 		selectPendingUserInputStreamCount,
 	);
 
-	// Noz is already on screen in the modal, so the "needs you" dot would be noise.
-	const showPendingBadge = pendingUserInputCount > 0 && !isModalOpen;
+	const closeDrawer = useAIAssistantStore((state) => state.closeDrawer);
+
+	// Noz is already on screen in the drawer or modal, so the "needs you" dot would be noise.
+	const showPendingBadge =
+		pendingUserInputCount > 0 && !isDrawerOpen && !isModalOpen;
 
 	// The drawer does not render on the Noz full page, so the button would be inert.
 	const isAIAssistantPage = pathname.startsWith(ROUTES.AI_ASSISTANT_BASE);
 
-	const handleOpen = useCallback((): void => {
+	const handleClick = useCallback((): void => {
+		if (isDrawerOpen) {
+			closeDrawer();
+			return;
+		}
 		void logEvent(AIAssistantEvents.Opened, {
 			source: AIAssistantOpenSource.BottomStrip,
 			currentPage: normalizePage(pathname),
 		});
 		openAIAssistant();
-	}, [pathname]);
+	}, [closeDrawer, isDrawerOpen, pathname]);
 
-	if (!isAIAssistantEnabled || isDrawerOpen || isAIAssistantPage) {
+	if (!isAIAssistantEnabled || isAIAssistantPage) {
 		return null;
 	}
 
@@ -72,7 +80,9 @@ function AskNoz(): JSX.Element | null {
 						color="secondary"
 						size="sm"
 						prefix={<Noz size={16} />}
-						onClick={handleOpen}
+						testId="bottom-strip-ask-noz-button"
+						onClick={handleClick}
+						aria-pressed={isDrawerOpen}
 						aria-label={
 							showPendingBadge
 								? `Ask Noz, ${pendingUserInputCount} ${

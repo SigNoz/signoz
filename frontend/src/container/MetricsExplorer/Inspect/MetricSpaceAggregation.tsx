@@ -3,8 +3,7 @@ import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { SPACE_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep } from './types';
-import { MetricSpaceAggregationProps } from './types';
+import { InspectionStep, MetricSpaceAggregationProps } from './types';
 
 function MetricSpaceAggregation({
 	spaceAggregationLabels,
@@ -22,7 +21,16 @@ function MetricSpaceAggregation({
 					'selected-step': inspectionStep === InspectionStep.SPACE_AGGREGATION,
 				})}
 			>
-				<Typography.Text>AGGREGATE BY LABELS</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					AGGREGATE BY LABELS
+				</Typography>
 			</div>
 			<div className="metric-space-aggregation-content">
 				<div className="metric-space-aggregation-content-left">

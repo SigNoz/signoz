@@ -80,7 +80,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await screen.findByTestId('checkbox-value-row-production');
 			expect(screen.getByTestId('checkbox-value-row-staging')).toBeInTheDocument();
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -198,7 +198,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			// Related values now appear in "Related" section (no badge, uses divider instead)
 			expect(screen.getByTestId('section-divider-related')).toBeInTheDocument();
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -250,7 +250,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'prod');
 
 			await waitFor(() => {
@@ -295,7 +295,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-prod');
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'xyz-no-match');
 
 			await waitFor(() => {
@@ -404,7 +404,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 
 			await screen.findByTestId('checkbox-value-row-pod-a-v1');
 
-			const searchInput = screen.getByTestId('checkbox-filter-search');
+			const searchInput = screen.getByTestId('checkbox-filter-search-field');
 			await user.type(searchInput, 'pod-a');
 
 			// After search, both sections should still appear with filtered results
@@ -574,7 +574,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			);
 
 			await screen.findByTestId('checkbox-value-row-value-00');
-			await user.type(screen.getByTestId('checkbox-filter-search'), '11');
+			await user.type(screen.getByTestId('checkbox-filter-search-field'), '11');
 			await waitFor(() =>
 				expect(
 					screen.queryByTestId('checkbox-value-row-value-00'),
@@ -586,7 +586,7 @@ describe('CheckboxFilterV2 - interactions', () => {
 			await user.click(header);
 
 			await screen.findByTestId('checkbox-value-row-value-00');
-			expect(screen.getByTestId('checkbox-filter-search')).toHaveValue('');
+			expect(screen.getByTestId('checkbox-filter-search-field')).toHaveValue('');
 		});
 	});
 

@@ -42,7 +42,7 @@
 	border-radius: var(--spacing-1);
 	background: var(--l3-background);
 	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-400-font-size);
 
 	&.isDirty {
 		background: var(--callout-warning-background);

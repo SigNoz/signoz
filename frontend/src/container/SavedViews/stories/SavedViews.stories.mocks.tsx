@@ -3,7 +3,13 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { rest, type RequestHandler } from 'msw';
+import {
+	rest,
+	type RequestHandler,
+	type ResponseResolver,
+	type RestContext,
+	type RestRequest,
+} from 'msw';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
 import remove from 'api/browser/localstorage/remove';
 import {
@@ -18,9 +24,10 @@ import {
 	AUTHZ_CHECK_URL,
 	authzMockResponse,
 } from 'lib/authz/utils/authz-test-utils';
+import { SavedViewListPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
-import { accessFor } from '@/storybook/access/access';
+import { accessFor, grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -30,6 +37,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { MockControlValues, StoryMocks } from '@/storybook/controls/types';
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 import { authzMocks, type AuthzArgs } from '@/storybook/globals/authzMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { respondWith } from '@/storybook/runtime/responseState';
 
 import {
@@ -45,7 +53,12 @@ import {
 	savedViewsListResponse,
 	type SavedViewSource,
 	unreadableViewId,
+	VIEW_QUERIES,
+	type ViewQuery,
 	withLongName,
+	WRITE_ERRORS,
+	WRITE_STATES,
+	type WriteState,
 } from './__story_mockdata__/savedViews';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -56,6 +69,7 @@ const API = 'http://localhost/api/v2/saved_views';
 
 const LIST = 'Saved Views · list';
 const VIEW = 'Saved Views · open view';
+const WRITES = 'Saved Views · writes';
 
 const controls = {
 	source: choiceControl<SavedViewSource>('Source', {
@@ -100,11 +114,41 @@ const controls = {
 			'Lengthens every view name past the sidebar width, so rows and the open view name truncate.',
 		value: false,
 	}),
+	viewQueries: choiceControl<ViewQuery>('View queries', {
+		group: LIST,
+		description:
+			'What every view saved: one filtered query, a query with no filter, which the hover card shows as No filters, or two filtered queries, which it lists by query name.',
+		options: VIEW_QUERIES,
+		value: 'filtered',
+	}),
+	writes: choiceControl<WriteState>('Writes', {
+		group: WRITES,
+		description:
+			'How creating, updating and deleting a view answer. `success` raises their toast, `loading` never answers, `error` answers a 500 and raises the failure toast.',
+		options: WRITE_STATES,
+		value: 'success',
+	}),
 };
 
 type SavedViewsValues = MockControlValues<typeof controls>;
 
 type WrittenView = Pick<SavedviewtypesSavedViewDTO, 'spec' | 'source'>;
+
+const gated =
+	(
+		state: WriteState,
+		error: (typeof WRITE_ERRORS)[keyof typeof WRITE_ERRORS],
+		success: ResponseResolver<RestRequest, RestContext>,
+	): ResponseResolver<RestRequest, RestContext> =>
+	(req, res, ctx) => {
+		if (state === 'loading') {
+			return res(ctx.delay('infinite'));
+		}
+
+		return state === 'error'
+			? res(ctx.status(500), ctx.json(error))
+			: success(req, res, ctx);
+	};
 
 const viewDenied = (
 	transaction: AuthtypesTransactionDTO,
@@ -127,6 +171,8 @@ const definition = defineStoryMocks({
 			createdByMe,
 			createdByOthers,
 			longNames,
+			viewQueries,
+			writes,
 		} = values;
 
 		// What the panel writes stays in this handler set until a control changes.
@@ -143,7 +189,7 @@ const definition = defineStoryMocks({
 		): SavedviewtypesSavedViewDTO => (longNames ? withLongName(view) : view);
 
 		const findView = (id: string): SavedviewtypesSavedViewDTO | undefined => {
-			const stored = savedViewById(id);
+			const stored = savedViewById(id, viewQueries);
 			const view =
 				created.find((item) => item.id === id) ?? (stored && named(stored));
 
@@ -153,19 +199,27 @@ const definition = defineStoryMocks({
 		const openError = OPEN_VIEW_ERRORS[openView];
 
 		return [
-			rest.post(API, async (req, res, ctx) => {
-				const body = (await req.json()) as SavedviewtypesUpdatableSavedViewDTO;
-				const id = `storybook-${source}-created-${created.length + 1}`;
+			rest.post(
+				API,
+				gated(writes, WRITE_ERRORS.create, async (req, res, ctx) => {
+					const body = (await req.json()) as SavedviewtypesUpdatableSavedViewDTO;
+					const id = `storybook-${source}-created-${created.length + 1}`;
 
-				created.push(createdSavedView(source, id, body.spec));
+					created.push(createdSavedView(source, id, body.spec));
 
-				return res(ctx.status(201), ctx.json({ status: 'success', data: { id } }));
-			}),
+					return res(ctx.status(201), ctx.json({ status: 'success', data: { id } }));
+				}),
+			),
 
 			rest.get(
 				API,
 				response.json(() => {
-					const list = savedViewsListResponse(source, createdByMe, createdByOthers);
+					const list = savedViewsListResponse(
+						source,
+						createdByMe,
+						createdByOthers,
+						viewQueries,
+					);
 
 					return {
 						...list,
@@ -194,22 +248,28 @@ const definition = defineStoryMocks({
 				return response.json(() => savedViewResponse(view))(req, res, ctx);
 			}),
 
-			rest.put(`${API}/:id`, async (req, res, ctx) => {
-				const body = (await req.json()) as SavedviewtypesUpdatableSavedViewDTO;
+			rest.put(
+				`${API}/:id`,
+				gated(writes, WRITE_ERRORS.update, async (req, res, ctx) => {
+					const body = (await req.json()) as SavedviewtypesUpdatableSavedViewDTO;
 
-				updated.set(String(req.params.id), {
-					spec: body.spec,
-					source: body.source,
-				});
+					updated.set(String(req.params.id), {
+						spec: body.spec,
+						source: body.source,
+					});
 
-				return res(ctx.status(204));
-			}),
+					return res(ctx.status(204));
+				}),
+			),
 
-			rest.delete(`${API}/:id`, (req, res, ctx) => {
-				deleted.add(String(req.params.id));
+			rest.delete(
+				`${API}/:id`,
+				gated(writes, WRITE_ERRORS.delete, (req, res, ctx) => {
+					deleted.add(String(req.params.id));
 
-				return res(ctx.status(204));
-			}),
+					return res(ctx.status(204));
+				}),
+			),
 
 			...(values.unreadableView
 				? [
@@ -237,8 +297,8 @@ const definition = defineStoryMocks({
 				: []),
 		];
 	},
-	config: ({ source, openView }) => ({
-		route: savedViewRoute(source, openView),
+	config: ({ source, openView, viewQueries }) => ({
+		route: savedViewRoute(source, openView, viewQueries),
 	}),
 	effect: () => {
 		remove(LOCALSTORAGE.LAST_USED_SAVED_VIEWS);
@@ -254,6 +314,14 @@ export const savedViewsMocks: StoryMocks<typeof controls> = {
 	...definition,
 	read: (args) => ({ ...authzMocks.read(args), ...definition.read(args) }),
 };
+
+export type SavedViewsArgs = PageStoryArgs<typeof savedViewsMocks>;
+
+/** The list renders rows once it loads with at least one view the user may list. */
+export const listsViews = (args: SavedViewsArgs): boolean =>
+	args.dataState === 'loaded' &&
+	args.createdByMe + args.createdByOthers > 0 &&
+	grantsAll(args, SavedViewListPermission);
 
 /** The sidebar slot of an explorer without quick filters. */
 export const sidebarCanvas = withCanvas({
@@ -334,7 +402,7 @@ export const rowName =
 	(): HTMLElement =>
 		within(row).getByTestId('saved-views-row-name');
 
-const hoverRow = async (row: HTMLElement): Promise<HTMLElement> => {
+export const hoverRow = async (row: HTMLElement): Promise<HTMLElement> => {
 	await userEvent.hover(row);
 
 	return screen.findByTestId('saved-view-hover-card', undefined, UNTIL_LOADED);
@@ -345,7 +413,7 @@ const searchViews = async (
 	text: string,
 ): Promise<void> => {
 	const search = await within(canvasElement).findByTestId(
-		'saved-views-search',
+		'saved-views-search-field',
 		undefined,
 		UNTIL_LOADED,
 	);
@@ -387,19 +455,6 @@ export const saveChangesItem = (key: 'save-as-new' | 'update'): FindElement =>
 type PlayContext = {
 	canvasElement: HTMLElement;
 	args: { source: SavedViewSource };
-};
-
-export const hoverFirstRow = async ({
-	canvasElement,
-}: PlayContext): Promise<void> => {
-	const [row] = await findRows(canvasElement);
-	const card = await hoverRow(row);
-
-	await within(card).findByTestId(
-		'saved-view-hover-card-query',
-		undefined,
-		UNTIL_LOADED,
-	);
 };
 
 export const hoverFirstRowLoading = async ({

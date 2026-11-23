@@ -5,7 +5,6 @@
 }
 
 .help {
-	font-size: 13px;
 	line-height: 19px;
 	color: var(--l2-foreground);
 }
@@ -33,25 +32,6 @@
 	min-width: 0;
 }
 
-.listItemLabel,
-.listItemUrl {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	max-width: 100%;
-}
-
-.listItemLabel {
-	font-size: 13px;
-	color: var(--l1-foreground);
-}
-
-.listItemUrl {
-	font-family: 'Geist Mono', monospace;
-	font-size: 12px;
-	color: var(--l2-foreground);
-}
-
 .listItemActions {
 	display: flex;
 	align-items: center;
@@ -72,17 +52,7 @@
 	gap: 6px;
 }
 
-.formLabel {
-	font-size: 12px;
-	color: var(--l2-foreground);
-}
-
 .required {
-	color: var(--bg-cherry-400);
-}
-
-.urlError {
-	font-size: 11px;
 	color: var(--bg-cherry-400);
 }
 
@@ -103,9 +73,4 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-}
-
-.newTabLabel {
-	font-size: 12px;
-	color: var(--l2-foreground);
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
+	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -25,16 +26,17 @@ type provider struct {
 	settings  factory.ScopedProviderSettings
 	orgGetter organization.Getter
 	analytics analytics.Analytics
+	cache     cache.Cache
 	stopChan  chan struct{}
 }
 
-func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+func NewProviderFactory(store sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics, cache cache.Cache) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("http"), func(ctx context.Context, providerSettings factory.ProviderSettings, config licensing.Config) (licensing.Licensing, error) {
-		return New(ctx, providerSettings, config, store, zeus, orgGetter, analytics)
+		return New(ctx, providerSettings, config, store, zeus, orgGetter, analytics, cache)
 	})
 }
 
-func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) (licensing.Licensing, error) {
+func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Config, sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics, cache cache.Cache) (licensing.Licensing, error) {
 	settings := factory.NewScopedProviderSettings(ps, "github.com/SigNoz/signoz/ee/licensing/httplicensing")
 	licensestore := sqllicensingstore.New(sqlstore)
 	return &provider{
@@ -45,6 +47,7 @@ func New(ctx context.Context, ps factory.ProviderSettings, config licensing.Conf
 		orgGetter: orgGetter,
 		stopChan:  make(chan struct{}),
 		analytics: analytics,
+		cache:     cache,
 	}, nil
 }
 
@@ -109,6 +112,7 @@ func (provider *provider) Activate(ctx context.Context, organizationID valuer.UU
 		return nil, err
 	}
 
+	provider.cache.Delete(ctx, organizationID, activeLicenseCacheKey)
 	return license, nil
 }
 
@@ -150,25 +154,38 @@ func (provider *provider) Delete(ctx context.Context, organizationID valuer.UUID
 		return errors.WithAdditionalf(err, "license %s cannot be deleted", licenseID.StringValue())
 	}
 
-	return provider.store.Delete(ctx, organizationID, licenseID)
+	if err := provider.store.Delete(ctx, organizationID, licenseID); err != nil {
+		return err
+	}
+
+	provider.cache.Delete(ctx, organizationID, activeLicenseCacheKey)
+	return nil
 }
 
+// Caches both an active license and no active license, but never a store error.
 func (provider *provider) GetActive(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error) {
-	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
-	if err != nil {
+	if cached, ok := provider.getActiveFromCache(ctx, organizationID); ok {
+		if cached.License == nil {
+			return nil, licensetypes.ErrActiveLicenseNotFound(organizationID)
+		}
+
+		return cached.License, nil
+	}
+
+	activeLicense, err := provider.getActiveFromStore(ctx, organizationID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return nil, err
 	}
 
-	activeLicense, err := licensetypes.GetActiveLicenseFromStorableLicenses(storableLicenses, organizationID)
-	if err != nil {
-		return nil, err
+	if cacheErr := provider.cache.Set(ctx, organizationID, activeLicenseCacheKey, &cachedActiveLicense{License: activeLicense}, activeLicenseCacheTTL); cacheErr != nil {
+		provider.settings.Logger().WarnContext(ctx, "failed to write active license to cache", errors.Attr(cacheErr), slog.String("org_id", organizationID.StringValue()))
 	}
 
-	return activeLicense, nil
+	return activeLicense, err
 }
 
 func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUID) error {
-	activeLicense, err := provider.GetActive(ctx, organizationID)
+	activeLicense, err := provider.getActiveFromStore(ctx, organizationID)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil
@@ -187,6 +204,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 				return err
 			}
 
+			provider.cache.Delete(ctx, organizationID, activeLicenseCacheKey)
 			return nil
 		}
 		return err
@@ -202,6 +220,8 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 	if err != nil {
 		return err
 	}
+
+	provider.cache.Delete(ctx, organizationID, activeLicenseCacheKey)
 
 	stats := licensetypes.NewStatsFromLicense(activeLicense)
 	provider.analytics.Send(ctx,
@@ -248,4 +268,31 @@ func (provider *provider) Collect(ctx context.Context, orgID valuer.UUID) (map[s
 	}
 
 	return licensetypes.NewStatsFromLicense(activeLicense), nil
+}
+
+func (provider *provider) getActiveFromCache(ctx context.Context, organizationID valuer.UUID) (*cachedActiveLicense, bool) {
+	cached := new(cachedActiveLicense)
+	err := provider.cache.Get(ctx, organizationID, activeLicenseCacheKey, cached)
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			provider.settings.Logger().WarnContext(ctx, "failed to read active license from cache", errors.Attr(err), slog.String("org_id", organizationID.StringValue()))
+		}
+
+		return nil, false
+	}
+
+	if cached.License != nil && cached.License.IsExpired() {
+		return nil, false
+	}
+
+	return cached, true
+}
+
+func (provider *provider) getActiveFromStore(ctx context.Context, organizationID valuer.UUID) (*licensetypes.License, error) {
+	storableLicenses, err := provider.store.GetAll(ctx, organizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return licensetypes.GetActiveLicenseFromStorableLicenses(storableLicenses, organizationID)
 }

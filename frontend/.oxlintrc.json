@@ -497,7 +497,11 @@
     // Requires final else in if-else-if chains (was disabled)
     "signoz/no-conditional-text-nodes-with-siblings": "warn",
     // Vendored from eslint-plugin-react-google-translate
-    "signoz/no-return-text-nodes": "warn"
+    "signoz/no-return-text-nodes": "warn",
+    "signoz/no-text-css": "warn",
+    // Font and text CSS in style props, CSSProperties objects and styled-components; text style goes through Typography props
+    "signoz/require-disable-reason": "error"
+    // A disable of signoz/no-text-css must say why Typography cannot render the text
   },
   "ignorePatterns": [
     "src/parser/*.ts",
@@ -593,16 +597,19 @@
       }
     },
     {
-      // The react-router allowlist: the facade itself, the route table, `useSafeNavigate`,
-      // the history singleton and the test and story router mounts. Test files are
+      // The react-router allowlist: the facade itself, the route table, the router mount,
+      // `useSafeNavigate` and the test and story router mounts. Test files are
       // deliberately absent: they render at a route or use tests/router-mocks.
       "files": [
         "src/lib/router/**",
         "src/AppRoutes/**",
+        "src/app/AppRouterProvider.tsx",
+        "src/app/createAppRouter.ts",
         "src/hooks/useSafeNavigate.ts",
-        "src/lib/history.ts",
         "src/tests/router.tsx",
-        "src/storybook/providers/StorybookProviders.tsx",
+        "src/tests/router-utils.ts",
+        "src/storybook/navigation/containment.ts",
+        "src/storybook/navigation/pageScope.ts",
         "src/storybook/renderAtRoute.tsx"
       ],
       "rules": {

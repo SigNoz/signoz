@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { Typography } from '@signozhq/ui/typography';
 
-import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
 import { MaxLinesFieldWrapper, MaxLinesInput } from './styles';
 
@@ -13,7 +13,16 @@ function MaxLinesField({ config }: MaxLinesFieldProps): JSX.Element | null {
 
 	return (
 		<MaxLinesFieldWrapper>
-			<FieldTitle>{t('options_menu.maxLines')}</FieldTitle>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{t('options_menu.maxLines')}
+			</Typography>
 			<MaxLinesInput
 				controls
 				size="small"

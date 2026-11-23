@@ -40,11 +40,11 @@ jobs:
         suite:
           - alertmanager
           - alertmanagerrotation
-          - auditquerier
           - basepath
           - callbackauthn
           - cloudintegrations
           - dashboard
+          - fileauditor
           - ingestionkeys
           - inframonitoring
           - llmpricingrules
@@ -58,6 +58,7 @@ jobs:
           - querierscalar
           - queriercommon
           - querierai
+          - querieraudit
           - rawexportdata
           - promqlconformance
           - promapiconformance

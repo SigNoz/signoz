@@ -59,7 +59,6 @@
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
-		background: var(--query-builder-v2-background-color, var(--l2-background));
 		padding-right: 38px;
 
 		.having-filter-select-editor {
@@ -86,12 +85,10 @@
 
 				.cm-content {
 					border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-					border-left-width: 0px;
-					border-right-width: 0px;
 					padding: 0px !important;
 					background-color: var(
 						--query-builder-v2-background-color,
-						var(--l2-background)
+						var(--input-background)
 					) !important;
 
 					&:focus-within {
@@ -114,8 +111,8 @@
 					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
-						color-mix(in srgb, var(--card) 80%, transparent) 0%,
-						color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+						color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+						color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 					) !important;
 					backdrop-filter: blur(20px);
 					box-sizing: border-box;
@@ -202,10 +199,8 @@
 					min-height: 34px;
 					line-height: 32px !important;
 					font-family: 'Space Mono', monospace !important;
-					background-color: var(
-						--query-builder-v2-background-color,
-						var(--l2-background)
-					) !important;
+					// The field box paints the fill; also hides the theme's active-line tint.
+					background-color: transparent !important;
 
 					::-moz-selection {
 						background: var(
@@ -266,7 +261,10 @@
 			right: 0;
 			border-radius: 0px 2px 2px 0px;
 			border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-			background: var(--query-builder-v2-background-color, var(--l2-background));
+			background: var(
+				--query-builder-v2-background-color,
+				var(--input-background)
+			);
 			height: 100%;
 			width: 38px;
 
@@ -298,11 +296,6 @@
 			font-size: 12px !important;
 		}
 
-		// Not select search inputs: they would grow the select past 36px.
-		.input-with-label input {
-			min-height: 36px;
-		}
-
 		.input-with-label,
 		.periscope-input-with-label {
 			min-height: 36px;
@@ -314,7 +307,11 @@
 			// `ghost` strips the border.
 			.close-btn.periscope-btn {
 				border: 1px solid var(--input-with-label-border-color, var(--l2-border));
-				background: var(--input-with-label-background-color, var(--l2-background));
+				border-left-width: 0;
+				background: var(
+					--input-with-label-background-color,
+					var(--input-background)
+				);
 			}
 		}
 

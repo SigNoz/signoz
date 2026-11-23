@@ -1,61 +1,35 @@
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
-import { Button } from '@signozhq/ui/button';
 import { Trash2, X } from '@signozhq/icons';
 
 interface DeleteConfirmDialogProps {
 	open: boolean;
 	modelName: string;
-	isDeleting: boolean;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void> | void;
 	onCancel: () => void;
 }
 
 // Confirmation step before deleting a model cost — deletion is irreversible, so
 // the destructive action is gated behind an explicit confirm. AlertDialog blocks
-// outside-click dismissal and hides the close button to force an explicit choice.
+// outside-click dismissal and hides the close button to force an explicit choice,
+// and shows the confirm button as loading while the onConfirm promise is pending.
 function DeleteConfirmDialog({
 	open,
 	modelName,
-	isDeleting,
 	onConfirm,
 	onCancel,
 }: DeleteConfirmDialogProps): JSX.Element {
 	return (
 		<AlertDialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onCancel();
-				}
-			}}
-			width="narrow"
 			title="Delete Model Cost Data "
 			titleIcon={<Trash2 size={16} />}
-			footer={
-				<>
-					<Button
-						size="md"
-						variant="solid"
-						color="secondary"
-						onClick={onCancel}
-						prefix={<X size={12} />}
-						testId="drawer-delete-cancel-btn"
-					>
-						Cancel
-					</Button>
-					<Button
-						size="md"
-						variant="solid"
-						color="danger"
-						loading={isDeleting}
-						onClick={onConfirm}
-						prefix={<Trash2 size={12} />}
-						testId="drawer-delete-confirm-btn"
-					>
-						Delete
-					</Button>
-				</>
-			}
+			color="danger"
+			confirmText="Delete"
+			confirmIcon={<Trash2 size={12} />}
+			onConfirm={onConfirm}
+			cancelIcon={<X size={12} />}
+			onCancel={onCancel}
+			testId="drawer-delete-dialog"
 		>
 			Are you sure you want to delete <strong>{modelName}</strong>? Once deleted,
 			this action cannot be undone.

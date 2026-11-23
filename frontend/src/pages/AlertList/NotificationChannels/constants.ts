@@ -1,3 +1,4 @@
+import type { SelectItemType } from '@signozhq/ui/select';
 import { AlertmanagertypesChannelKindDTO } from 'api/generated/services/sigNoz.schemas';
 
 export const SEARCH_KEY = 'search';
@@ -26,10 +27,9 @@ export const CHANNEL_KIND_LABEL: Record<
 
 export const KIND_FILTER_ALL = 'all';
 
-export const KIND_FILTER_OPTIONS = [
-	{ value: KIND_FILTER_ALL, label: 'All types' },
-	...Object.entries(CHANNEL_KIND_LABEL).map(([value, label]) => ({
-		value,
-		label,
-	})),
+export const KIND_FILTER_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: KIND_FILTER_ALL, label: 'All types' },
+	...Object.entries(CHANNEL_KIND_LABEL).map(
+		([value, label]): SelectItemType => ({ type: 'item', value, label }),
+	),
 ];

@@ -32,9 +32,21 @@ function SearchBar({
 				trigger="click"
 				content={
 					<div className="sort-popover-content">
-						<Typography.Text className="sort-popover-content__heading">
+						<Typography
+							variant="uppercase"
+							size="small"
+							weight="bold"
+							color="secondary"
+							as="span"
+							display="inline-block"
+							paddingTop={6}
+							paddingRight={8}
+							paddingBottom={3}
+							paddingLeft={7}
+							textOverflow="wrap"
+						>
 							Sort By
-						</Typography.Text>
+						</Typography>
 						<Button
 							type="text"
 							className="sort-popover-content__button"
@@ -66,20 +78,21 @@ function SearchBar({
 					<div className="search__sort-btn-text">Sort</div>
 				</Button>
 			</Popover>
-			<Input
-				className="search__input"
-				testId="traces-funnels-search"
-				placeholder="Search by name, description, or tags..."
-				prefix={
-					<Search
-						size={12}
-						color={Color.BG_VANILLA_400}
-						style={{ opacity: '0.4' }}
-					/>
-				}
-				value={searchQuery}
-				onChange={onSearch}
-			/>
+			<div className="search__input">
+				<Input
+					testId="traces-funnels-search"
+					placeholder="Search by name, description, or tags..."
+					prefix={
+						<Search
+							size={12}
+							color={Color.BG_VANILLA_400}
+							style={{ opacity: '0.4' }}
+						/>
+					}
+					value={searchQuery}
+					onChange={onSearch}
+				/>
+			</div>
 			<Tooltip
 				title={
 					!hasEditPermission

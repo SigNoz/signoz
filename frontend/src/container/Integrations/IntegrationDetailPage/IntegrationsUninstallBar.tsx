@@ -69,11 +69,31 @@ function IntergrationsUninstallBar(
 	return (
 		<div className="uninstall-integration-bar">
 			<div className="unintall-integration-bar-text">
-				<Typography.Text className="heading">Remove Integration</Typography.Text>
-				<Typography.Text className="subtitle">
-					Removing the {integrationTitle} integration would make your workspace stop
-					listening for data from {integrationTitle} instances.
-				</Typography.Text>
+				<span className="heading">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Remove Integration
+					</Typography>
+				</span>
+				<span className="subtitle">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Removing the {integrationTitle} integration would make your workspace stop
+						listening for data from {integrationTitle} instances.
+					</Typography>
+				</span>
 			</div>
 			<Button
 				data-testid="integration-remove-btn"
@@ -96,11 +116,18 @@ function IntergrationsUninstallBar(
 					'data-testid': 'integration-remove-confirm',
 				}}
 			>
-				<Typography.Text className="remove-integration-text">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Removing this integration makes SigNoz stop listening for data from{' '}
 					{integrationTitle} instances. You would still have to manually remove the
 					configuration in your code to stop sending data.
-				</Typography.Text>
+				</Typography>
 			</Modal>
 		</div>
 	);

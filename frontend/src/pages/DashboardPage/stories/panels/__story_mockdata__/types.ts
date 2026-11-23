@@ -23,6 +23,7 @@ import type {
 	PIE_SLICES,
 	SPAN_GAPS,
 	TEXT_SAMPLES,
+	TOP_LIST_AGGREGATIONS,
 	UNITS,
 	Y_SCALES,
 } from './constants';
@@ -45,6 +46,8 @@ export type Gaps = (typeof GAPS)[number];
 
 export type SpanGaps = (typeof SPAN_GAPS)[number];
 
+export type TopListAggregation = (typeof TOP_LIST_AGGREGATIONS)[number];
+
 export type PieSlices = (typeof PIE_SLICES)[number];
 
 /** The controls that shape the dashboard document. */
@@ -66,6 +69,9 @@ export interface PanelArgs {
 	showPoints: boolean;
 	spanGaps: SpanGaps;
 	columnUnits: boolean;
+	showRank: boolean;
+	showShare: boolean;
+	topListAggregation: TopListAggregation;
 }
 
 /** What one `query_range` call asked for, as the handler reads it. */
@@ -81,6 +87,7 @@ export interface PanelResponseArgs extends PanelRequest {
 	series: number;
 	listRows: number;
 	listJsonBody: boolean;
+	listWideRows: boolean;
 	gaps: Gaps;
 	pieSlices: PieSlices;
 }

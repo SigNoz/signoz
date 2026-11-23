@@ -44,15 +44,31 @@ function EvaluationCadence(): JSX.Element {
 		<div className="evaluation-cadence-container">
 			<div className="advanced-option-item evaluation-cadence-item">
 				<div className="advanced-option-item-left-content">
-					<Typography.Text className="advanced-option-item-title">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="secondary"
+						as="p"
+						display="flex"
+						gap={4}
+						textOverflow="wrap"
+					>
 						How often to check
 						<Tooltip title="Controls how frequently the alert evaluates your conditions. For most alerts, 1-5 minutes is sufficient.">
 							<Info data-testid="evaluation-cadence-tooltip-icon" size={16} />
 						</Tooltip>
-					</Typography.Text>
-					<Typography.Text className="advanced-option-item-description">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						How frequently this alert checks your data. Default: Every 1 minute
-					</Typography.Text>
+					</Typography>
 				</div>
 				{isCustomScheduleButtonVisible && (
 					<div

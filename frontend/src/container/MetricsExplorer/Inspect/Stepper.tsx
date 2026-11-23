@@ -16,10 +16,26 @@ function Stepper({
 	return (
 		<div className="home-checklist-container">
 			<div className="home-checklist-title">
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					👋 Hello, welcome to the Metrics Inspector
-				</Typography.Text>
-				<Typography.Text>Let’s get you started...</Typography.Text>
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Let’s get you started...
+				</Typography>
 			</div>
 			<div className="completed-checklist-container whats-next-checklist-container">
 				<div
@@ -39,7 +55,14 @@ function Stepper({
 						})}
 					>
 						First, align the data by selecting a{' '}
-						<Typography.Link href={TEMPORAL_AGGREGATION_LINK} target="_blank">
+						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
+							href={TEMPORAL_AGGREGATION_LINK}
+							target="_blank"
+						>
 							Temporal Aggregation{' '}
 							<SquareArrowOutUpRight color={Color.BG_ROBIN_500} size={10} />
 						</Typography.Link>
@@ -63,7 +86,14 @@ function Stepper({
 						})}
 					>
 						Add a{' '}
-						<Typography.Link href={SPACE_AGGREGATION_LINK} target="_blank">
+						<Typography.Link
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							textOverflow="wrap"
+							href={SPACE_AGGREGATION_LINK}
+							target="_blank"
+						>
 							Spatial Aggregation{' '}
 							<SquareArrowOutUpRight color={Color.BG_ROBIN_500} size={10} />
 						</Typography.Link>
@@ -74,12 +104,26 @@ function Stepper({
 			<div className="completed-message-container">
 				{inspectionStep === InspectionStep.COMPLETED && (
 					<>
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							🎉 Ta-da! You have completed your metric query tutorial.
-						</Typography.Text>
-						<Typography.Text>
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							You can inspect a new metric or reset the query builder.
-						</Typography.Text>
+						</Typography>
 						<Button icon={<RefreshCcw size={12} />} onClick={resetInspection}>
 							Reset query
 						</Button>

@@ -20,8 +20,8 @@ interface ExportDashboardSelectProps {
 /**
  * Dashboard picker for the "Add to dashboard" dialog. Server-side search (`filterOption`
  * off, typing via `onSearch`); the selected dashboard is pinned as an option so its label
- * survives a narrowing search, and `getPopupContainer` keeps the overlay from clipping the
- * dropdown.
+ * survives a narrowing search. The dropdown renders in the dialog panel: outside it a click
+ * would close the dialog, and inside its scrolling body it is clipped and pushed over the field.
  */
 function ExportDashboardSelect({
 	dashboards,
@@ -59,8 +59,8 @@ function ExportDashboardSelect({
 			onSearch={onSearch}
 			data-testid="export-dashboard-select"
 			options={options}
-			getPopupContainer={(trigger): HTMLElement =>
-				trigger.parentElement ?? document.body
+			getPopupContainer={(trigger: HTMLElement): HTMLElement =>
+				trigger.closest<HTMLElement>('[role="dialog"]') ?? document.body
 			}
 		/>
 	);

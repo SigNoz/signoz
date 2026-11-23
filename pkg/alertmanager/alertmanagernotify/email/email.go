@@ -29,7 +29,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/templating/markdownrenderer"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
-	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -489,11 +488,8 @@ func appendRelatedLinkButtons(alerts []*types.Alert, bodies []string) {
 		if i >= len(alerts) || bodies[i] == "" {
 			continue
 		}
-		if link := alerts[i].Annotations[ruletypes.AnnotationRelatedLogs]; link != "" {
-			bodies[i] += htmlButton("View Related Logs", string(link))
-		}
-		if link := alerts[i].Annotations[ruletypes.AnnotationRelatedTraces]; link != "" {
-			bodies[i] += htmlButton("View Related Traces", string(link))
+		for _, link := range alertmanagertypes.BuildRelatedLinks(alerts[i].Annotations) {
+			bodies[i] += htmlButton(link.Label, link.URL)
 		}
 	}
 }

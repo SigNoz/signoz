@@ -1,3 +1,4 @@
+import { DashboardtypesTextAlignDTO as TextAlign } from 'api/generated/services/sigNoz.schemas';
 import { expect, within } from 'storybook/test';
 
 import { PANEL_NAME } from '../__story_mockdata__/constants';
@@ -22,7 +23,9 @@ export const expectText = async (
 		'kubectl scale',
 	);
 
-	await expect(getComputedStyle(panel).textAlign).toBe(args.textAlign);
+	await expect(getComputedStyle(panel).textAlign).toBe(
+		args.textAlign === TextAlign.left ? 'start' : args.textAlign,
+	);
 
 	await expect(within(root).getByText(PANEL_NAME.Text)).toBeInTheDocument();
 };

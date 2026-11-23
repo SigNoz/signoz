@@ -543,6 +543,32 @@ TEST_RULES_MISCELLANEOUS = [
             ],
         ),
     ),
+    # the rule carries threshold.name and severity labels of its own; the alert
+    # keeps the values the engine wrote and only the plain label comes through
+    types.AlertTestCase(
+        name="test_rule_labels_do_not_override_engine_labels",
+        rule_path="ruler/test_scenarios/reserved_labels_from_engine/rule.json",
+        alert_data=[
+            types.AlertData(
+                type="metrics",
+                data_path="ruler/test_scenarios/reserved_labels_from_engine/alert_data.jsonl",
+            ),
+        ],
+        alert_expectation=types.AlertExpectation(
+            should_alert=True,
+            wait_time_seconds=30,
+            expected_alerts=[
+                types.FiringAlert(
+                    labels={
+                        "alertname": "reserved_labels_from_engine",
+                        "threshold.name": "critical",
+                        "severity": "critical",
+                        "team": "payments",
+                    }
+                ),
+            ],
+        ),
+    ),
     # TODO: @abhishekhugetech enable the test for multi threshold rule, pylint: disable=W0511
     # after the [issue](https://github.com/SigNoz/engineering-pod/issues/3934) with alertManager is resolved
     # types.AlertTestCase(

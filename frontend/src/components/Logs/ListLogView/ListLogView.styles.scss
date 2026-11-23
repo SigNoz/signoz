@@ -7,9 +7,6 @@
 .log-field-key,
 .log-field-key-colon {
 	color: var(--l2-foreground);
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
 
 	&.small {
 		font-size: 11px;
@@ -27,8 +24,7 @@
 	}
 }
 .log-field-key {
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
+	flex-shrink: 0;
 	white-space: nowrap;
 	display: inline-block;
 	max-width: 20vw;
@@ -42,11 +38,6 @@
 }
 .log-value {
 	color: var(--l2-foreground);
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 18px; /* 128.571% */
-	letter-spacing: -0.07px;
 
 	&.small {
 		font-size: 11px;
@@ -68,6 +59,10 @@
 	overflow: hidden;
 	.log-state-indicator {
 		padding-left: 0;
+	}
+	.log-line-content {
+		flex: 1;
+		min-width: 0;
 	}
 	transition: background-color 0.2s ease-in;
 }
@@ -128,7 +123,9 @@
 	}
 
 	.selected-log-kv {
+		flex: 1 1 0;
 		min-height: 24px;
+		min-width: 0;
 		display: flex;
 		align-items: center;
 		&.small {

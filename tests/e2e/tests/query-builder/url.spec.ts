@@ -87,9 +87,43 @@ const legacyLogsQuery = (having: unknown[]): unknown => ({
 const FIRST = "service.name = 'frontend'";
 const SECOND = "service.name = 'cartservice'";
 
+type UrlBuilder = { queryData?: { filter?: { expression?: string } }[] };
+
 interface UrlQuery {
-	builder?: { queryData?: { filter?: { expression?: string } }[] };
+	queryType?: string;
+	builder?: UrlBuilder;
+	builder_ai_query?: UrlBuilder;
 }
+
+const LLM_FILTER = "gen_ai.request.model = 'gpt-4o'";
+
+/** An AI explorer link from before AI queries had their own slot: tagged queries inside `builder`. */
+const olderAIExplorerLink = {
+	queryType: 'builder',
+	promql: [],
+	clickhouse_sql: [],
+	builder: {
+		queryFormulas: [],
+		queryData: [
+			{
+				queryName: 'A',
+				dataSource: 'traces',
+				builderQueryType: 'builder_ai_query',
+				expression: 'A',
+				disabled: false,
+				aggregations: [{ expression: 'count()' }],
+				filter: { expression: LLM_FILTER },
+				groupBy: [],
+				orderBy: [],
+				functions: [],
+				legend: '',
+				limit: null,
+				stepInterval: null,
+				having: { expression: '' },
+			},
+		],
+	},
+};
 
 test.describe('Query builder — URL handling', () => {
 	for (const [label, raw] of Object.entries(MALFORMED)) {
@@ -191,4 +225,57 @@ test.describe('Query builder — URL handling', () => {
 			);
 		});
 	}
+
+	test('TC-05 the AI explorer moves an older link into the AI slot', async ({
+		qb,
+	}) => {
+		await qb.openExplorer(EXPLORER.ai, { query: olderAIExplorerLink });
+
+		await expect
+			.poll(() => (qb.urlQuery() as UrlQuery)?.queryType)
+			.toBe('builder_ai_query');
+		const url = qb.urlQuery() as UrlQuery;
+		expect(url.builder_ai_query?.queryData?.[0]?.filter?.expression).toBe(
+			LLM_FILTER,
+		);
+		await expect(qb.query('A').filter.content()).toBeVisible();
+		await expect.poll(() => qb.query('A').filter.expression()).toBe(LLM_FILTER);
+
+		const fired = await qb.run();
+		const sentA = fired
+			.flatMap((body) => body.compositeQuery.queries)
+			.find((query) => query.spec.name === 'A');
+		expect(sentA?.type).toBe('builder_ai_query');
+		expect(sentA?.spec.filter?.expression).toBe(LLM_FILTER);
+		expect(qb.console.failedResponses).toEqual([]);
+	});
+
+	test('TC-06 an AI explorer filter goes out as an AI query and stays in the AI slot', async ({
+		qb,
+	}) => {
+		await qb.openExplorer(EXPLORER.ai);
+		await expect(qb.query('A').filter.content()).toBeVisible();
+
+		await qb.query('A').filter.type(LLM_FILTER);
+		const fired = await qb.run();
+
+		const sentA = fired
+			.flatMap((body) => body.compositeQuery.queries)
+			.find((query) => query.spec.name === 'A');
+		expect(sentA?.type).toBe('builder_ai_query');
+		expect(sentA?.spec.filter?.expression).toBe(LLM_FILTER);
+
+		await expect
+			.poll(
+				() =>
+					(qb.urlQuery() as UrlQuery)?.builder_ai_query?.queryData?.[0]?.filter
+						?.expression,
+			)
+			.toBe(LLM_FILTER);
+		const url = qb.urlQuery() as UrlQuery;
+		expect(url.queryType).toBe('builder_ai_query');
+		expect(url.builder?.queryData?.[0]?.filter?.expression ?? '').not.toBe(
+			LLM_FILTER,
+		);
+	});
 });

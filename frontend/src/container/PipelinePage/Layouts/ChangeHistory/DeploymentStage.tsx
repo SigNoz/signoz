@@ -2,7 +2,7 @@ import { IconDataSpan } from 'container/PipelinePage/styles';
 
 import { getDeploymentStage, getDeploymentStageIcon } from './utils';
 
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 
 function DeploymentStage(deployStatus: string): JSX.Element {
 	return (

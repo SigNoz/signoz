@@ -17,7 +17,7 @@
 	align-items: center;
 	gap: var(--spacing-2);
 	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--font-weight-medium);
+	font-weight: var(--paragraph-base-500-font-weight);
 	color: var(--secondary-foreground);
 	white-space: nowrap;
 }
@@ -29,7 +29,7 @@
 
 .percent {
 	font-size: var(--paragraph-base-400-font-size);
-	font-weight: var(--font-weight-semibold);
+	font-weight: var(--paragraph-base-600-font-weight);
 	color: var(--l2-foreground);
 	flex-shrink: 0;
 }

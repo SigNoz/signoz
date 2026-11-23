@@ -20,7 +20,7 @@ test.describe('Alert rules list', () => {
 	}) => {
 		await alerts.list.goto({ query: nameContains(alertList.namePrefix) });
 
-		for (const header of ['Status', 'Alert Name', 'Severity', 'Labels']) {
+		for (const header of ['Status', 'Alert Name', 'Thresholds', 'Labels']) {
 			await expect(alerts.list.columnHeader(header)).toBeVisible();
 		}
 		await expect(alerts.list.rows()).toHaveCount(ALERT_LIST_PAGE_SIZE);

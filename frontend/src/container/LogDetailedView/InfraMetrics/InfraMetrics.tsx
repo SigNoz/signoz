@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Empty } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';
