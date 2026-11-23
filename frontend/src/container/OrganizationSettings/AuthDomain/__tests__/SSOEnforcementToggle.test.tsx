@@ -156,6 +156,44 @@ describe('SSOEnforcementToggle', () => {
 		});
 	});
 
+	it('reverts the switch and shows the error modal when the update is forbidden', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(403),
+					ctx.json({
+						error: {
+							code: 'authz_forbidden',
+							message: 'not allowed to update this domain',
+							url: '',
+						},
+					}),
+				),
+			),
+		);
+
+		render(
+			<SSOEnforcementToggle
+				isDefaultChecked={true}
+				record={mockGoogleAuthDomain}
+			/>,
+		);
+
+		const switchElement = screen.getByRole('switch');
+		await user.click(switchElement);
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(/not allowed to update this domain/i),
+			).toBeInTheDocument();
+		});
+		await waitFor(() =>
+			expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true'),
+		);
+	});
+
 	it('does not call API when record has no id', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		let apiCalled = false;
