@@ -85,7 +85,7 @@ func TestConditionForAttributePromoted(t *testing.T) {
 		require.NoError(t, err)
 		sb.Where(conds...)
 		sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-		assert.Contains(t, sql, "(attributes_promoted.`span.operation`::String = ? AND attributes_promoted.`span.operation` IS NOT NULL)")
+		assert.Contains(t, sql, "(attributes_promoted.`span.operation`::String = ? AND indexHint(has(JSONAllPaths(attributes_promoted), 'span.operation')) AND attributes_promoted.`span.operation` IS NOT NULL)")
 		assert.NotContains(t, sql, "attributes.`span.operation`")
 	})
 

@@ -233,19 +233,21 @@ func (m *storage) getColumn(
 
 // resolveColumnExprs resolves key to its per-column value expressions and existence guards
 // (after evolution selection); existExprs only carries guards for guardable column types.
+// pathIndexHints parallels existExprs: a skip-index hint for the guard, or "" when its column has
+// no paths index.
 func (m *storage) resolveColumnExprs(
 	ctx context.Context,
 	q qbtypes.QueryInfo,
 	key *telemetrytypes.TelemetryFieldKey,
-) (exprs []string, existExprs []string, columns []*schema.Column, err error) {
+) (exprs []string, existExprs []string, pathIndexHints []string, columns []*schema.Column, err error) {
 	columns, err = m.getColumn(ctx, q, key)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	newColumns, evolutionsEntries, err := qbtypes.SelectEvolutionsForColumns(columns, key.Evolutions, q.StartNs, q.EndNs)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	for i, column := range newColumns {
@@ -278,8 +280,9 @@ func (m *storage) resolveColumnExprs(
 				expr, existExpr := AttributeJSONValueExpr(path, key.FieldDataType)
 				exprs = append(exprs, expr)
 				existExprs = append(existExprs, existExpr)
+				pathIndexHints = append(pathIndexHints, attributePathIndexHint(columnName, key.Name))
 			default:
-				return nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
+				return nil, nil, nil, nil, errors.NewInternalf(errors.CodeInternal, "only resource, scope and attribute context fields are supported for json columns, got %s", key.FieldContext.String)
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64,
@@ -295,12 +298,12 @@ func (m *storage) resolveColumnExprs(
 			case schema.ColumnTypeEnumString:
 				exprs = append(exprs, column.Name)
 			default:
-				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
+				return nil, nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for low cardinality column type %s", elementType, column.Type)
 			}
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
-				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
+				return nil, nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "key type %s is not supported for map column type %s", keyType, column.Type)
 			}
 
 			switch valueType := column.Type.(schema.MapColumnType).ValueType; valueType.GetType() {
@@ -314,12 +317,15 @@ func (m *storage) resolveColumnExprs(
 					existExprs = append(existExprs, fmt.Sprintf("mapContains(%s, %s)", columnName, clickhousesql.StringLiteral(key.Name)))
 				}
 			default:
-				return nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
+				return nil, nil, nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "value type %s is not supported for map column type %s", valueType, column.Type)
 			}
+		}
+		for len(pathIndexHints) < len(existExprs) {
+			pathIndexHints = append(pathIndexHints, "")
 		}
 	}
 
-	return exprs, existExprs, columns, nil
+	return exprs, existExprs, pathIndexHints, columns, nil
 }
 
 // attributeColumnEvolutionRegistered reports whether key carries an evolution entry for the given column.
@@ -398,7 +404,7 @@ func (m *storage) read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 		return key.Name, nil
 	}
 
-	exprs, existExpr, columns, err := m.resolveColumnExprs(ctx, q, key)
+	exprs, existExpr, _, columns, err := m.resolveColumnExprs(ctx, q, key)
 	if err != nil {
 		return "", err
 	}
@@ -461,7 +467,7 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 	if isSpanSearchScopeField(key.Name) {
 		return qbtypes.Read{SQL: key.Name, Presence: "true", Absence: "false", WhenAbsent: qbtypes.AlwaysPresent}, nil
 	}
-	exprs, existExprs, columns, err := m.resolveColumnExprs(ctx, q, key)
+	exprs, existExprs, pathIndexHints, columns, err := m.resolveColumnExprs(ctx, q, key)
 	if err != nil {
 		return qbtypes.Read{}, err
 	}
@@ -487,6 +493,9 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 		// a JSON path, where a numeric or bool attribute is present as its
 		// type only
 		read.Presence, read.Absence = existExprs[0], negatePresence(existExprs[0])
+		if pathIndexHints[0] != "" {
+			read.Presence = pathIndexHints[0] + " AND " + read.Presence
+		}
 	default:
 		if read.Presence, err = querybuilder.ExistsExpression(columns, key, q.StartNs, q.EndNs, sql, true); err != nil {
 			return qbtypes.Read{}, err
@@ -496,6 +505,17 @@ func (m *storage) Read(ctx context.Context, q qbtypes.QueryInfo, key *telemetryt
 		}
 	}
 	return read, nil
+}
+
+// attributePathIndexHint lets the JSONAllPaths skip index prune granules lacking the path.
+// ClickHouse 25.12 does not apply that index to `path IS NOT NULL`, and a bare has() would
+// evaluate JSONAllPaths per row, reading every path; indexHint is only used for index analysis.
+// The hint is valid for presence only: AND-ed with an absence test it drops matching granules.
+func attributePathIndexHint(columnName string, path string) string {
+	if columnName != SpanAttributesColumn && columnName != SpanAttributesPromotedColumn {
+		return ""
+	}
+	return fmt.Sprintf("indexHint(has(JSONAllPaths(%s), %s))", columnName, clickhousesql.StringLiteral(path))
 }
 
 // negatePresence negates a single column's presence test in its own form.

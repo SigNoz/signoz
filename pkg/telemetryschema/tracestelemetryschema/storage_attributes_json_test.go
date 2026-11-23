@@ -170,7 +170,7 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "equal string",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorEqual, value: "admin",
-			expected: "(attributes.`user.id`::String = ? AND attributes.`user.id` IS NOT NULL)",
+			expected: "(attributes.`user.id`::String = ? AND indexHint(has(JSONAllPaths(attributes), 'user.id')) AND attributes.`user.id` IS NOT NULL)",
 		},
 		{
 			name:     "not equal string has no exists guard",
@@ -194,19 +194,19 @@ func TestConditionForAttributeJSON(t *testing.T) {
 			name:     "exists uses raw path",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorExists, value: nil,
-			expected: "attributes.`user.id` IS NOT NULL",
+			expected: "WHERE indexHint(has(JSONAllPaths(attributes), 'user.id')) AND attributes.`user.id` IS NOT NULL",
 		},
 		{
-			name:     "not exists uses raw path",
+			name:     "not exists uses raw path without index hint",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorNotExists, value: nil,
-			expected: "attributes.`user.id` IS NULL",
+			expected: "WHERE attributes.`user.id` IS NULL",
 		},
 		{
 			name:     "in string",
 			key:      attrKey("user.id", telemetrytypes.FieldDataTypeString, evo),
 			operator: qbtypes.FilterOperatorIn, value: []any{"a", "b"},
-			expected: "((attributes.`user.id`::String = ? OR attributes.`user.id`::String = ?) AND attributes.`user.id` IS NOT NULL)",
+			expected: "((attributes.`user.id`::String = ? OR attributes.`user.id`::String = ?) AND indexHint(has(JSONAllPaths(attributes), 'user.id')) AND attributes.`user.id` IS NOT NULL)",
 		},
 		{
 			name:     "not in string has no exists guard",
@@ -290,14 +290,14 @@ func TestColumnExpressionForAttributeJSON(t *testing.T) {
 		key := attrKey("user.id", telemetrytypes.FieldDataTypeString, evo)
 		got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeString, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
+		assert.Equal(t, "multiIf(indexHint(has(JSONAllPaths(attributes), 'user.id')) AND attributes.`user.id` IS NOT NULL, attributes.`user.id`::String, mapContains(attributes_string, 'attribute.user.id'), attributes_string['attribute.user.id'], NULL)", got)
 	})
 
 	t.Run("aggregation numeric", func(t *testing.T) {
 		key := attrKey("latency", telemetrytypes.FieldDataTypeNumber, evo)
 		got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &key, telemetrytypes.FieldDataTypeFloat64, nil)
 		require.NoError(t, err)
-		assert.Equal(t, "multiIf(toFloat64OrNull(attributes.`latency`::String) IS NOT NULL, toFloat64OrNull(attributes.`latency`::String), mapContains(attributes_number, 'attribute.latency'), toFloat64(attributes_number['attribute.latency']), NULL)", got)
+		assert.Equal(t, "multiIf(indexHint(has(JSONAllPaths(attributes), 'latency')) AND toFloat64OrNull(attributes.`latency`::String) IS NOT NULL, toFloat64OrNull(attributes.`latency`::String), mapContains(attributes_number, 'attribute.latency'), toFloat64(attributes_number['attribute.latency']), NULL)", got)
 	})
 }
 
@@ -365,7 +365,7 @@ func TestColumnExpressionForAttributeJSONTypeCollision(t *testing.T) {
 	got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeString, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toString(toFloat64OrNull(attributes.`http.status_code`::String)), NULL)",
+		"multiIf(indexHint(has(JSONAllPaths(attributes), 'http.status_code')) AND attributes.`http.status_code` IS NOT NULL, attributes.`http.status_code`::String, indexHint(has(JSONAllPaths(attributes), 'http.status_code')) AND toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toString(toFloat64OrNull(attributes.`http.status_code`::String)), NULL)",
 		got)
 }
 
@@ -389,7 +389,7 @@ func TestColumnExpressionForAttributeJSONTypeCollisionNumericAgg(t *testing.T) {
 	got, _, err := querybuilder.ResolveColumn(ctx, qbtypes.QueryInfo{StartNs: attrWindowAfter[0], EndNs: attrWindowAfter[1], TraceAttrsJSONOn: true}, storage, &ref, telemetrytypes.FieldDataTypeFloat64, fieldKeys)
 	require.NoError(t, err)
 	assert.Equal(t,
-		"multiIf(toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
+		"multiIf(indexHint(has(JSONAllPaths(attributes), 'http.status_code')) AND toFloat64OrNull(attributes.`http.status_code`::String) IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), indexHint(has(JSONAllPaths(attributes), 'http.status_code')) AND attributes.`http.status_code` IS NOT NULL, toFloat64OrNull(attributes.`http.status_code`::String), NULL)",
 		got)
 }
 
