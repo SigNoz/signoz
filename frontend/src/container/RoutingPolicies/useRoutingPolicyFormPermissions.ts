@@ -1,7 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
-import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
-import { formatDeniedMessage } from 'lib/authz/components/formatDeniedMessage';
 import {
 	buildNotificationChannelAttachPermission,
 	buildNotificationChannelDetachPermission,
@@ -13,150 +11,85 @@ import {
 	RoutePolicyCreateChecks,
 } from 'lib/authz/hooks/useAuthZ/permissions/route-policy.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { useAppContext } from 'providers/App/App';
+import type {
+	LinkAccess,
+	LinkPermissions,
+} from 'lib/authz/hooks/useLinkPickerAccess/types';
+import { useLinkPickerAccess } from 'lib/authz/hooks/useLinkPickerAccess/useLinkPickerAccess';
 
 import { PolicyDetailsModalMode, RoutingPolicy } from './types';
-
-export interface ChannelAccess {
-	disabled: boolean;
-	/** The denial, or that the check is still running. */
-	reason?: string;
-}
 
 export interface UseRoutingPolicyFormPermissionsReturn {
 	/** Editing a policy the user may not update. */
 	isReadOnly: boolean;
 	saveChecks: BrandedPermission[];
 	/** Whether a channel can be added or, if the policy already has it, removed. */
-	getChannelAccess: (channel: ChannelOption) => ChannelAccess;
+	getChannelAccess: (channel: ChannelOption) => LinkAccess;
 	/** Starts the `attach` checks on unlinked channels once the picker opens. */
 	onPickerVisibleChange: (open: boolean) => void;
 }
 
-const ALLOWED: ChannelAccess = { disabled: false };
-const PENDING: ChannelAccess = {
-	disabled: true,
-	reason: AUTHZ_LOADING_TOOLTIP,
-};
+const buildChannelPermissions = (id: string): LinkPermissions => ({
+	attach: buildNotificationChannelAttachPermission(id),
+	detach: buildNotificationChannelDetachPermission(id),
+});
 
 /**
  * Mirrors the route policy routes: create needs `create` and `attach` on every
  * policy; an edit needs `update`, and `attach`/`detach` on both the policy and
- * each channel it gains or loses. A linked channel is asked for `detach` up
- * front, since its tag can be removed without opening the picker; every other
- * channel is asked for `attach` once the picker opens.
+ * each channel it gains or loses.
  */
 export function useRoutingPolicyFormPermissions(
 	mode: PolicyDetailsModalMode,
 	routingPolicy: RoutingPolicy | null,
 	channels: ChannelOption[],
 ): UseRoutingPolicyFormPermissionsReturn {
-	const { user } = useAppContext();
-	const [hasPickerOpened, setHasPickerOpened] = useState(false);
 	const policyId = mode === 'edit' ? routingPolicy?.id : undefined;
 
-	const linkedNames = useMemo(
-		() => new Set(policyId ? (routingPolicy?.channels ?? []) : []),
-		[policyId, routingPolicy?.channels],
+	const update = useMemo(
+		() => (policyId ? buildRoutePolicyUpdatePermission(policyId) : undefined),
+		[policyId],
 	);
-
-	const policyChecks = useMemo(
+	const owner = useMemo(
 		() =>
 			policyId
 				? {
-						update: buildRoutePolicyUpdatePermission(policyId),
 						attach: buildRoutePolicyAttachPermission(policyId),
 						detach: buildRoutePolicyDetachPermission(policyId),
 					}
 				: undefined,
 		[policyId],
 	);
+	const ownerChecks = useMemo(() => (update ? [update] : []), [update]);
 
-	const channelCheck = useCallback(
-		(channel: ChannelOption): BrandedPermission =>
-			linkedNames.has(channel.name)
-				? buildNotificationChannelDetachPermission(channel.id)
-				: buildNotificationChannelAttachPermission(channel.id),
-		[linkedNames],
-	);
+	// The policy names its channels; permissions are keyed by channel id.
+	const linkedIds = useMemo(() => {
+		const linkedNames = new Set(policyId ? (routingPolicy?.channels ?? []) : []);
+		return channels.filter((c) => linkedNames.has(c.name)).map((c) => c.id);
+	}, [policyId, routingPolicy?.channels, channels]);
+	const optionIds = useMemo(() => channels.map((c) => c.id), [channels]);
 
-	const upfrontChecks = useMemo(
-		() => [
-			...(policyChecks ? Object.values(policyChecks) : []),
-			...channels.filter((c) => linkedNames.has(c.name)).map(channelCheck),
-		],
-		[policyChecks, channels, linkedNames, channelCheck],
-	);
-	const pickerChecks = useMemo(
-		() => channels.filter((c) => !linkedNames.has(c.name)).map(channelCheck),
-		[channels, linkedNames, channelCheck],
-	);
-
-	const upfront = useAuthZ(upfrontChecks, {
-		enabled: upfrontChecks.length > 0,
-	});
-	const picker = useAuthZ(pickerChecks, {
-		enabled: hasPickerOpened && pickerChecks.length > 0,
-	});
-
-	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
+	const { getAccess, onPickerVisibleChange, isOwnerDenied } =
+		useLinkPickerAccess({
+			owner,
+			ownerChecks,
+			linkedIds,
+			optionIds,
+			buildItemPermissions: buildChannelPermissions,
+		});
 
 	const getChannelAccess = useCallback(
-		(channel: ChannelOption): ChannelAccess => {
-			const policyCheck = linkedNames.has(channel.name)
-				? policyChecks?.detach
-				: policyChecks?.attach;
-			// A failed request fails open for its own checks only.
-			const required = [policyCheck, channelCheck(channel)].filter(
-				(permission): permission is BrandedPermission =>
-					!!permission &&
-					!(upfrontSet.has(permission) ? upfront.error : picker.error),
-			);
-			const results = { ...upfront.permissions, ...picker.permissions };
-			// A check reports loading only once its fetch starts, a render after the
-			// picker opens; a missing result keeps the option from flashing enabled.
-			if (required.some((permission) => !results[permission])) {
-				return PENDING;
-			}
-
-			const denied = required.filter(
-				(permission) => !results[permission].isGranted,
-			);
-			return denied.length > 0
-				? { disabled: true, reason: formatDeniedMessage(denied, user.id) }
-				: ALLOWED;
-		},
-		[
-			upfront.error,
-			upfront.permissions,
-			picker.error,
-			picker.permissions,
-			upfrontSet,
-			linkedNames,
-			policyChecks,
-			channelCheck,
-			user.id,
-		],
+		(channel: ChannelOption): LinkAccess => getAccess(channel.id),
+		[getAccess],
 	);
 
-	const onPickerVisibleChange = useCallback((open: boolean): void => {
-		if (open) {
-			setHasPickerOpened(true);
-		}
-	}, []);
-
 	const saveChecks = useMemo(
-		() => (policyChecks ? [policyChecks.update] : RoutePolicyCreateChecks),
-		[policyChecks],
+		() => (update ? [update] : RoutePolicyCreateChecks),
+		[update],
 	);
 
 	return {
-		isReadOnly:
-			!!policyChecks &&
-			!upfront.isLoading &&
-			!upfront.error &&
-			!upfront.isGranted(policyChecks.update),
+		isReadOnly: !!update && isOwnerDenied(update),
 		saveChecks,
 		getChannelAccess,
 		onPickerVisibleChange,
