@@ -1,10 +1,10 @@
-import { Dimensions } from 'hooks/useDimensions';
+import type { Dimensions } from 'hooks/useDimensions';
 import { LegendPosition } from 'types/api/widgets/widget';
 
+import type { EnhancedLegendConfig } from 'container/WidgetCard/Panels/enhancedLegend';
 import {
 	applyEnhancedLegendStyling,
 	calculateEnhancedLegendConfig,
-	EnhancedLegendConfig,
 } from 'container/WidgetCard/Panels/enhancedLegend';
 
 describe('Enhanced Legend Functionality', () => {

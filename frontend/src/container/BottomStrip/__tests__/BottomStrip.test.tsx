@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { fireEvent } from '@testing-library/react';
 import { render } from 'tests/test-utils';
-import { Info } from 'types/api/v1/version/get';
+import type { Info } from 'types/api/v1/version/get';
 
 import BottomStrip, {
 	BOTTOM_STRIP_HEIGHT,

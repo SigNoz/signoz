@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useGetNotificationChannel } from 'api/generated/services/channels';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
-import {
-	ChannelFormState,
-	toChannelFormState,
-} from 'container/CreateAlertChannels/channelFormValues';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
+import type { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
+import { toChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
 import {
 	ChannelInitialConfig,
 	DEFAULT_CHANNEL_KIND,
 } from 'container/CreateAlertChannels/defaults';
-import { ChannelKind } from 'container/CreateAlertChannels/types';
+import type { ChannelKind } from 'container/CreateAlertChannels/types';
 import { toAPIError } from 'utils/errorUtils';
 
 export interface ChannelDraftResult {

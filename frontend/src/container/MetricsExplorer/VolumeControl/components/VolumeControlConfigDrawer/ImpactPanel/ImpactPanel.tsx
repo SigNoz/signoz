@@ -1,11 +1,11 @@
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { Spin, Tooltip } from 'antd';
-import { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRulePreviewDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { formatCompact } from '../../../configUtils';
-import { RuleMode } from '../../../types';
+import type { RuleMode } from '../../../types';
 import styles from './ImpactPanel.module.scss';
 
 interface ImpactPanelProps {

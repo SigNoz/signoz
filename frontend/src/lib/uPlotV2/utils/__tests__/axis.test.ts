@@ -1,5 +1,5 @@
 import type uPlot from 'uplot';
-import { Axis } from 'uplot';
+import type { Axis } from 'uplot';
 
 import {
 	buildYAxisSizeCalculator,

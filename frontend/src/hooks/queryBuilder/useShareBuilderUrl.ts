@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useGetCompositeQueryParam } from './useGetCompositeQueryParam';
 import { useQueryBuilder } from './useQueryBuilder';

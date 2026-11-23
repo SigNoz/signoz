@@ -1,6 +1,6 @@
+import type { MouseEvent } from 'react';
 import {
 	isValidElement,
-	MouseEvent,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -11,10 +11,10 @@ import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
 	PointerSensor,
 	useSensor,
 	useSensors,
@@ -62,8 +62,8 @@ import {
 } from '@signozhq/icons';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { useAppContext } from 'providers/App/App';
-import { AppState } from 'store/reducers';
-import AppReducer from 'types/reducer/app';
+import type { AppState } from 'store/reducers';
+import type AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState, isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
@@ -85,11 +85,8 @@ import {
 	type UserSettingsMenuKey,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
-import {
-	CHANGELOG_LABEL,
-	DropdownSeparator,
-	SidebarItem,
-} from './sideNav.types';
+import type { DropdownSeparator, SidebarItem } from './sideNav.types';
+import { CHANGELOG_LABEL } from './sideNav.types';
 import { getActiveMenuKeyFromPath } from './sideNav.utils';
 
 import './SideNav.styles.scss';

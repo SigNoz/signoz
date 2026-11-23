@@ -1,5 +1,5 @@
-import { DraftGroup } from '../types';
-import { AttributeMappingEditor } from '../hooks/useAttributeMappingEditor';
+import type { DraftGroup } from '../types';
+import type { AttributeMappingEditor } from '../hooks/useAttributeMappingEditor';
 import styles from './AttributeMappingsTab.module.scss';
 import MappingsTable from './components/MappingsTable/MappingsTable';
 

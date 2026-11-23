@@ -6,7 +6,7 @@ import {
 } from 'constants/resourceAttributes';
 import ROUTES from 'constants/routes';
 import { MetricsType, WidgetKeys } from 'container/MetricsApplication/constant';
-import {
+import type {
 	IOption,
 	IResourceAttribute,
 	IResourceAttributeProps,
@@ -16,7 +16,7 @@ import {
 import { decode } from 'js-base64';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { whilelistedKeys } from './config';

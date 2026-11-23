@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import logEvent from 'api/common/logEvent';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { SavedViewEventKeys, SavedViewEvents } from '../events';
+import type { SavedViewEvents } from '../events';
+import { SavedViewEventKeys } from '../events';
 
 export type SavedViewLogEvent = (
 	event: SavedViewEvents,

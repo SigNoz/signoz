@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { createDashboardV2 } from 'api/generated/services/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import type { ExportDashboard } from './useExportDashboards';
 

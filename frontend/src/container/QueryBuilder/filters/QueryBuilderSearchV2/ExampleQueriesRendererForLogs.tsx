@@ -1,4 +1,4 @@
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 function ExampleQueriesRendererForLogs({
 	label,

@@ -17,7 +17,8 @@ import {
 } from 'lib/authz/hooks/useAuthZ/utils';
 import { mockAppLocation, mockAppParams } from 'tests/router-mocks';
 
-import { withAuthZ, RouterContext } from './withAuthZ';
+import type { RouterContext } from './withAuthZ';
+import { withAuthZ } from './withAuthZ';
 import { withAuthZContent } from './withAuthZContent';
 import { withAuthZPage } from './withAuthZPage';
 

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import {
+import type {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesNodeConditionDTO,
 	InframonitoringtypesPodStatusDTO,

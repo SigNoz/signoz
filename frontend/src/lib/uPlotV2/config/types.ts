@@ -1,7 +1,8 @@
-import { PrecisionOption } from 'components/Graph/types';
-import uPlot, { Series } from 'uplot';
+import type { PrecisionOption } from 'components/Graph/types';
+import type { Series } from 'uplot';
+import type uPlot from 'uplot';
 
-import { ThresholdsDrawHookOptions } from '../hooks/types';
+import type { ThresholdsDrawHookOptions } from '../hooks/types';
 
 /**
  * Base abstract class for all configuration builders

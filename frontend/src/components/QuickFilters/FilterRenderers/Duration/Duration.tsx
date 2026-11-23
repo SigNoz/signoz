@@ -3,7 +3,7 @@ import { Collapse } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { ChevronDown, ChevronRight, Undo2 } from '@signozhq/icons';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';
-import {
+import type {
 	IQuickFiltersConfig,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
@@ -17,19 +17,23 @@ import {
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
 import { cloneDeep, isArray, isEqual, isFunction } from 'lodash-es';
+import type { AllTraceFilterKeys } from 'constants/traceFilterKeys';
 import {
-	AllTraceFilterKeys,
 	AllTraceFilterKeyValue,
 	traceFilterKeys,
 } from 'constants/traceFilterKeys';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { clearFilterFromQuery } from '../shared/filterQuery';
 import { SectionActionButton } from '../shared/SectionActionButton/SectionActionButton';
 import { DurationSection } from './DurationSection';
-import { FilterType, HandleRunProps, unionTagFilterItems } from './utils';
+import type { FilterType, HandleRunProps } from './utils';
+import { unionTagFilterItems } from './utils';
 
 import './Duration.styles.scss';
 

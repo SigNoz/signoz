@@ -3,7 +3,8 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
 import { render, screen, waitFor } from 'tests/test-utils';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import Summary from '../Summary';
 

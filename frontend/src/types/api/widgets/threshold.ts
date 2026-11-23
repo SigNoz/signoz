@@ -1,6 +1,6 @@
-import { Dispatch, ReactNode, SetStateAction } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ColumnUnit } from 'types/api/widgets/columnUnit';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { ColumnUnit } from 'types/api/widgets/columnUnit';
 
 export type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
 

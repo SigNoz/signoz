@@ -36,7 +36,7 @@ import {
 	mockGroups,
 	mockMappers,
 } from 'container/LLMObservability/AttributeMapping/__tests__/fixtures';
-import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import type { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 import AttributeMappingsTab from '../AttributeMappingsTab';
 import { useAttributeMappingEditor } from '../../hooks/useAttributeMappingEditor';
 

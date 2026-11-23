@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 import { Undo } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';

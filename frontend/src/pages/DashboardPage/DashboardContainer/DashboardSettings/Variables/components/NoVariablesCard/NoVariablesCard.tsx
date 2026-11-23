@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 import AddVariableButton from '../AddVariableButton';
-import { EditingState } from '../../types';
+import type { EditingState } from '../../types';
 import styles from './NoVariables.module.scss';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 

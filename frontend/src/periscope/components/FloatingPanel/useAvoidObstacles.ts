@@ -1,4 +1,5 @@
-import { RefObject, useEffect } from 'react';
+import type { RefObject } from 'react';
+import { useEffect } from 'react';
 import type { Rnd } from 'react-rnd';
 
 import type { FloatingObstacle, FloatingRect, Position } from './types';

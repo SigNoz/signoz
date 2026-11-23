@@ -5,8 +5,8 @@ import {
 	TIME_AGGREGATION_OPTIONS,
 } from '../constants';
 import ExpandedView from '../ExpandedView';
-import { InspectMetricsSeries } from '../types';
-import {
+import type {
+	InspectMetricsSeries,
 	GraphPopoverData,
 	InspectionStep,
 	MetricInspectionOptions,

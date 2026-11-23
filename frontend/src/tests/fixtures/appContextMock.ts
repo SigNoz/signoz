@@ -1,13 +1,14 @@
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
-import { IAppContext } from 'providers/App/types';
+import type { IAppContext } from 'providers/App/types';
 import {
 	LicenseEvent,
 	LicensePlatform,
 	LicenseState,
 	LicenseStatus,
 } from 'types/api/licensesV3/getActive';
-import { ROLES, USER_ROLES } from 'types/roles';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
 
 /**
  * Factory for the spies assigned to the callable members of `IAppContext`.

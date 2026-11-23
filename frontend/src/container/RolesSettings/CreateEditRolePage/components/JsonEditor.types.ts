@@ -1,4 +1,4 @@
-import { ResourcePermissions } from '../../types';
+import type { ResourcePermissions } from '../../types';
 
 export type EditorMode = 'interactive' | 'json';
 

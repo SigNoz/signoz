@@ -2,7 +2,7 @@ import { Badge } from '@signozhq/ui/badge';
 import ChevronDown from '@signozhq/icons/ChevronDown';
 import ChevronRight from '@signozhq/icons/ChevronRight';
 import { Button } from '@signozhq/ui/button';
-import { GroupedAlert } from 'container/TriggeredAlerts/types';
+import type { GroupedAlert } from 'container/TriggeredAlerts/types';
 import { useEffect, useState } from 'react';
 import styles from '../TriggeredAlerts.module.scss';
 

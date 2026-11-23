@@ -1,7 +1,7 @@
 import { Button } from '@signozhq/ui/button';
 import { Plus, X } from '@signozhq/icons';
 
-import {
+import type {
 	ConditionKey,
 	FieldContextValue,
 } from 'container/LLMObservability/AttributeMapping/types';

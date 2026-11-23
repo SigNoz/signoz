@@ -12,9 +12,9 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 import { useTimezone } from 'providers/Timezone';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import uPlot from 'uplot';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type uPlot from 'uplot';
 
 import { buildMeterChartConfig } from './configBuilder';
 import EmptyMeterSearch from './EmptyMeterSearch';

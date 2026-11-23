@@ -1,16 +1,19 @@
-import { ReactNode } from 'react';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PrecisionOption } from 'components/Graph/types';
-import uPlot from 'uplot';
+import type { ReactNode } from 'react';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { PrecisionOption } from 'components/Graph/types';
+import type uPlot from 'uplot';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { LegendItem } from '../config/types';
-import { HeatmapSeries, HeatmapYAxis } from '../plugins/HeatmapPlugin/types';
+import type { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import type { LegendItem } from '../config/types';
+import type {
+	HeatmapSeries,
+	HeatmapYAxis,
+} from '../plugins/HeatmapPlugin/types';
 import type {
 	ScatterChannels,
 	ScatterPointLabel,
 } from '../plugins/ScatterPlugin/types';
-import { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
+import type { SyncTooltipFilterMode } from '../plugins/TooltipPlugin/types';
 
 /**
  * Props for the Plot component

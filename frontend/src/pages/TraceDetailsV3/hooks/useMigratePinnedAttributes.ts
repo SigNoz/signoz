@@ -5,7 +5,7 @@ import { USER_PREFERENCES } from 'constants/userPreferences';
 import { isV3PinnedAttribute } from 'pages/TraceDetailsV3/utils';
 import { serializeKeyPath } from 'periscope/components/PrettyView/utils';
 import { useAppContext } from 'providers/App/App';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 /**
  * V2 stored pinned attributes as flat strings (`["http.method"]`).

@@ -2,8 +2,9 @@ import { useMemo } from 'react';
 import cx from 'classnames';
 import { calculateChartDimensions } from 'lib/visualization/charts/utils';
 import { MAX_LEGEND_WIDTH } from 'lib/uPlotV2/components/Legend/constants';
-import { LegendConfig, LegendPosition } from 'lib/uPlotV2/components/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { LegendConfig } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 
 import 'lib/visualization/layout/ChartLayout/ChartLayout.styles.scss';
 

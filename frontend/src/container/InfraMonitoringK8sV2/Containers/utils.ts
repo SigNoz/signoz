@@ -1,14 +1,16 @@
 import { Color } from '@signozhq/design-tokens';
 import type { BadgeColorType } from '@signozhq/ui/badge';
-import {
+import type {
 	InframonitoringtypesContainerCountsByReadyDTO,
 	InframonitoringtypesContainerCountsByStatusDTO,
-	InframonitoringtypesContainerReadyDTO,
 	InframonitoringtypesContainerRecordDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	InframonitoringtypesContainerReadyDTO,
 	InframonitoringtypesContainerStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { StatusCountItem } from '../components/GroupedStatusCounts';
+import type { StatusCountItem } from '../components/GroupedStatusCounts';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
 
 export const CONTAINERS_DOC_PATH =

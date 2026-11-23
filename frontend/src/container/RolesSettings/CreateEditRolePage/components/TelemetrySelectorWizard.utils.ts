@@ -1,14 +1,16 @@
-import { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
+import type { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
 
-import {
-	ANY_RESOURCE_VALUE,
-	DEFAULT_GRANT_KEY,
+import type {
 	ParsedSelector,
-	QUERY_TYPES,
 	QueryTypeId,
 	QueryTypeOption,
 	SelectorDraft,
 	SelectorValidation,
+} from './TelemetrySelectorWizard.constants';
+import {
+	ANY_RESOURCE_VALUE,
+	DEFAULT_GRANT_KEY,
+	QUERY_TYPES,
 	SUPPORTED_GRANT_KEYS,
 } from './TelemetrySelectorWizard.constants';
 

@@ -1,4 +1,4 @@
-import { FunnelData } from 'types/api/traceFunnels';
+import type { FunnelData } from 'types/api/traceFunnels';
 
 export function filterFunnelsByQuery(
 	funnels: FunnelData[],

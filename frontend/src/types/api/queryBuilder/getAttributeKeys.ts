@@ -1,6 +1,6 @@
-import { DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
 
-import { BaseAutocompleteData } from './queryAutocompleteResponse';
+import type { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 export interface IGetAttributeKeysPayload {
 	aggregateOperator: string;

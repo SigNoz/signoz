@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { getTraceAggregations } from 'api/generated/services/tracedetail';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import useGetTraceAggregations from '../useGetTraceAggregations';

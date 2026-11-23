@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useCreateAlertState } from 'container/CreateAlert/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlert/context/constants';
-import { IEditCustomScheduleProps } from 'container/CreateAlert/EvaluationSettings/types';
+import type { IEditCustomScheduleProps } from 'container/CreateAlert/EvaluationSettings/types';
 import { Calendar1, Pencil, Trash } from '@signozhq/icons';
 
 function EditCustomSchedule({

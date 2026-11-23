@@ -1,4 +1,4 @@
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import LLMObservabilityAttributeMapping from 'container/LLMObservability/AttributeMapping/LLMObservabilityAttributeMapping';
 import ExplorerPage from 'container/LLMObservability/Explorer/Explorer';

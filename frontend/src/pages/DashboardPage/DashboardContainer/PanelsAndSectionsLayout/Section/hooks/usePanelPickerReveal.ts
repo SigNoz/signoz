@@ -1,4 +1,5 @@
-import { RefObject, useEffect } from 'react';
+import type { RefObject } from 'react';
+import { useEffect } from 'react';
 
 import { usePanelPickerTargetStore } from '../../../store/usePanelPickerTargetStore';
 import { centeredScrollTop, getScrollParent } from './scrollUtils';

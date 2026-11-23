@@ -6,7 +6,7 @@ import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
-import { DataType } from 'container/LogDetailedView/LogDetailedView.types';
+import type { DataType } from 'container/LogDetailedView/LogDetailedView.types';
 import {
 	Check,
 	Copy,
@@ -23,7 +23,7 @@ import {
 	AllAttributesEmptyText,
 	AllAttributesValue,
 } from './AllAttributesValue';
-import { AllAttributesProps } from './types';
+import type { AllAttributesProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
 const ALL_ATTRIBUTES_KEY = 'all-attributes';

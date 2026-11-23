@@ -6,7 +6,7 @@ import {
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	resolveExtremeColor,
 } from 'lib/visualization/colorRamp/colorScale';
-import { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import {
 	ColorRampMode,
 	ColorRampScale,

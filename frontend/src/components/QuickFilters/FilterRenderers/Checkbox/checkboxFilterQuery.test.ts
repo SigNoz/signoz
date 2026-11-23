@@ -5,7 +5,7 @@ import {
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
-import {
+import type {
 	Query,
 	TagFilter,
 	TagFilterItem,
@@ -17,7 +17,7 @@ import {
 	getNotInOperator,
 } from './checkboxFilterQuery';
 import { clearFilterFromQuery } from '../shared/filterQuery';
-import { CheckedState } from '../../types';
+import type { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
 const KEY = 'service.name';

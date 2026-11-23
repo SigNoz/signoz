@@ -3,13 +3,13 @@ import {
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { FORMULA_REGEXP, TRACE_OPERATOR_REGEXP } from 'constants/regExp';
-import {
+import type {
 	BuilderQueryDataResourse,
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryBuilderData } from 'types/common/queryBuilder';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 
 export const transformQueryBuilderDataModel = (
 	data: BuilderQueryDataResourse,

@@ -12,7 +12,8 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import {
 	useGlobalTimeQueryInvalidate,
 	useIsGlobalTimeQueryRefreshing,
@@ -25,19 +26,20 @@ import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 // eslint-disable-next-line no-restricted-imports
-import { bindActionCreators, Dispatch } from 'redux';
-import { ThunkDispatch } from 'redux-thunk';
+import type { Dispatch } from 'redux';
+import { bindActionCreators } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type AppActions from 'types/actions';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
 import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import AutoRefresh from '../AutoRefreshV2';
-import { DateTimeRangeType } from '../CustomDateTimeModal';
+import type { DateTimeRangeType } from '../CustomDateTimeModal';
 import {
 	convertOldTimeToNewValidCustomTimeFormat,
 	getDefaultOption,
@@ -47,7 +49,7 @@ import {
 } from './constants';
 import RefreshText from './Refresh';
 import { Form, FormContainer, FormItem } from './styles';
-import {
+import type {
 	CustomTimeType,
 	LocalStorageTimeRange,
 	Time,

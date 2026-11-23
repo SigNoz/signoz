@@ -1,6 +1,6 @@
-import { APIMonitoringResponseColumn } from 'container/ApiMonitoring/types';
+import type { APIMonitoringResponseColumn } from 'container/ApiMonitoring/types';
 
-import { RequestType } from '../v5/queryRange';
+import type { RequestType } from '../v5/queryRange';
 
 export interface Props {
 	start: number;

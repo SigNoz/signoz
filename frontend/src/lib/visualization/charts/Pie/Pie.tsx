@@ -8,9 +8,9 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { useResizeObserver } from 'hooks/useDimensions';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
+import type { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import { calculateChartDimensions } from 'lib/visualization/charts/utils';
 
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';

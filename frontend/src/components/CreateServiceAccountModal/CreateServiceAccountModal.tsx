@@ -14,11 +14,11 @@ import {
 	useCreateServiceAccount,
 } from 'api/generated/services/serviceaccount';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import './CreateServiceAccountModal.styles.scss';
 import { Skeleton } from 'antd';

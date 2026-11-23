@@ -1,6 +1,7 @@
-import { RouteTabProps } from 'components/RouteTab/types';
-import { TFunction } from 'i18next';
-import { ROLES, USER_ROLES } from 'types/roles';
+import type { RouteTabProps } from 'components/RouteTab/types';
+import type { TFunction } from 'i18next';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
 
 import {
 	billingSettings,

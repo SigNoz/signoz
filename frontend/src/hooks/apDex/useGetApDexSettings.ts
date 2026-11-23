@@ -1,8 +1,9 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import getApDexSettings from 'api/v1/settings/apdex/services/get';
-import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
-import { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
+import type { SuccessResponseV2 } from 'types/api';
+import type APIError from 'types/api/error';
+import type { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
 
 export const useGetApDexSettings = (
 	servicename: string,

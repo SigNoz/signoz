@@ -1,6 +1,7 @@
 import { render, screen, within } from 'tests/test-utils';
 
-import { ThreadSpan, ThreadView } from '../../TraceDetailsThread/types';
+import type { ThreadSpan } from '../../TraceDetailsThread/types';
+import { ThreadView } from '../../TraceDetailsThread/types';
 import { GEN_AI_KEYS } from '../../utils/aiTraceUtils';
 import SpanMessages from '../SpanMessages';
 

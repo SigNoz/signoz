@@ -4,7 +4,7 @@ import {
 	MetricAggregateOperator,
 	StringOperators,
 } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 
 type GetQueryOperatorsParams = {
 	dataSource: DataSource;

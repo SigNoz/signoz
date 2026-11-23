@@ -1,4 +1,5 @@
-import { ChangeEvent, useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Spin } from 'antd';
@@ -20,8 +21,8 @@ import {
 	useFunnelContext,
 } from 'pages/TracesFunnels/FunnelContext';
 import { filterFunnelsByQuery } from 'pages/TracesFunnels/utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
-import { FunnelData } from 'types/api/traceFunnels';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { FunnelData } from 'types/api/traceFunnels';
 
 import styles from './AddSpanToFunnelModal.module.scss';
 

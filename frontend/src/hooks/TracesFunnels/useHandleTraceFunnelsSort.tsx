@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { FunnelData } from 'types/api/traceFunnels';
+import type { FunnelData } from 'types/api/traceFunnels';
 
 interface SortOrder {
 	columnKey: string;

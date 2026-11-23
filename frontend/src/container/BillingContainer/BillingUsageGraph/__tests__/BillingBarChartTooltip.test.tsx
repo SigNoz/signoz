@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from 'tests/test-utils';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import uPlot from 'uplot';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type uPlot from 'uplot';
 
 import { BillingBarChartTooltip } from '../BillingBarChartTooltip';
 

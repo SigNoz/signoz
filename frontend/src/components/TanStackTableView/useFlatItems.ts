@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { ExpandedState, Row } from '@tanstack/react-table';
 
-import { FlatItem } from './types';
+import type { FlatItem } from './types';
 
 export interface UseFlatItemsOptions<TData> {
 	tableRows: Row<TData>[];

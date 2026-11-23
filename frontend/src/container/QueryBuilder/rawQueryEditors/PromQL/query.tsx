@@ -1,8 +1,9 @@
-import { ChangeEvent, useCallback } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback } from 'react';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 

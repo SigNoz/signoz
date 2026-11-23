@@ -1,7 +1,8 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { act, render, RenderResult, screen } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { EditorView } from '@uiw/react-codemirror';
 import ListAlertRules from 'container/ListAlertRules';

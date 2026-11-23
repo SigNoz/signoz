@@ -1,10 +1,11 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import {
 	getActiveLicense,
 	getGetActiveLicenseQueryKey,
 } from 'api/generated/services/licenses';
-import APIError from 'types/api/error';
-import { LicenseResModel } from 'types/api/licensesV3/getActive';
+import type APIError from 'types/api/error';
+import type { LicenseResModel } from 'types/api/licensesV3/getActive';
 import { toAPIError } from 'utils/errorUtils';
 
 import { toLicenseResModel } from './utils';

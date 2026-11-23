@@ -1,7 +1,7 @@
+import type { PropsWithChildren } from 'react';
 import {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	PropsWithChildren,
 	useCallback,
 	// eslint-disable-next-line no-restricted-imports
 	useContext,
@@ -31,25 +31,25 @@ import {
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
-import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
-import {
-	LicensePlatform,
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import type { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
+import type {
 	LicenseResModel,
-	LicenseState,
 	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import {
+import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
+import type {
 	OrgPreference,
 	UserPreference,
 } from 'types/api/preferences/preference';
-import { Organization } from 'types/api/user/getOrganization';
-import { UserResponse } from 'types/api/user/getUser';
-import { ROLES, USER_ROLES } from 'types/roles';
+import type { Organization } from 'types/api/user/getOrganization';
+import type { UserResponse } from 'types/api/user/getUser';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
 import { toISOString } from 'utils/app';
 import { setSigNozInstanceUrl } from 'utils/signozInstanceUrl';
 
-import { IAppContext, IUser } from './types';
+import type { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
 
 export const AppContext = createContext<IAppContext | undefined>(undefined);

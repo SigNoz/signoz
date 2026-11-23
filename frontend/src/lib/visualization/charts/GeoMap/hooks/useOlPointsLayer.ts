@@ -3,7 +3,7 @@ import type WebGLVectorLayer from 'ol/layer/WebGLVector';
 import VectorSource from 'ol/source/Vector';
 
 import { supportsWebGL } from '../utils/webgl';
-import { OlMapHandle } from './useOlMap';
+import type { OlMapHandle } from './useOlMap';
 
 export type PointsLayerStatus = 'idle' | 'loading' | 'ready' | 'unsupported';
 

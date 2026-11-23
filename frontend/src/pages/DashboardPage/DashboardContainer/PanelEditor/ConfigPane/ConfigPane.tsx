@@ -21,7 +21,7 @@ import PanelTitleInput from './PanelTitleInput/PanelTitleInput';
 import SectionSlot from './SectionSlot/SectionSlot';
 
 import styles from './ConfigPane.module.scss';
-import { PanelKind } from '../../Panels/types/panelKind';
+import type { PanelKind } from '../../Panels/types/panelKind';
 
 interface ConfigPaneProps {
 	/** The panel spec — the single editing surface (title/description + section slices). */

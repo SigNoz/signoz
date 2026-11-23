@@ -1,11 +1,12 @@
 import { Ellipsis } from '@signozhq/icons';
-import { Button, TableColumnsType as ColumnsType, Tooltip } from 'antd';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
-import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import type { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import type { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 
 export const timelineTableColumns = ({
 	formatTimezoneAdjustedTimestamp,

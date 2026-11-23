@@ -5,7 +5,8 @@ import classNames from 'classnames';
 import { RefreshCcw, SquareArrowOutUpRight } from '@signozhq/icons';
 
 import { SPACE_AGGREGATION_LINK, TEMPORAL_AGGREGATION_LINK } from './constants';
-import { InspectionStep, StepperProps } from './types';
+import type { StepperProps } from './types';
+import { InspectionStep } from './types';
 
 import '../../Home/HomeChecklist/HomeChecklist.styles.scss';
 

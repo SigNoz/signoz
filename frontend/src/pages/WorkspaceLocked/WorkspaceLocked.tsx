@@ -21,7 +21,7 @@ import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissio
 import { navigate } from 'lib/router/navigation';
 import { CircleArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { isModifierKeyPressed } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';

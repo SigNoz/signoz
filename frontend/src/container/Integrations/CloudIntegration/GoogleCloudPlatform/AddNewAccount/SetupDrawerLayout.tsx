@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Drawer } from '@signozhq/ui/drawer';
 
 import styles from './SetupDrawerLayout.module.scss';

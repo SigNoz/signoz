@@ -1,5 +1,5 @@
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const mergeExtraFields = (
 	extra: TelemetryFieldKey[] = [],

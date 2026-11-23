@@ -1,5 +1,5 @@
-import { TableProps } from 'antd';
-import { ServicesList } from 'types/api/metrics/getService';
+import type { TableProps } from 'antd';
+import type { ServicesList } from 'types/api/metrics/getService';
 
 export const getColumns = (
 	isMetricData: boolean,

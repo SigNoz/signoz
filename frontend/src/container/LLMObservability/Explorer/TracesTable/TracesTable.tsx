@@ -9,8 +9,9 @@ import type {
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { TracesLoading } from '../TraceLoading/TraceLoading';
-import APIError from 'types/api/error';
-import { DataSource, PanelTypeKeys } from 'types/common/queryBuilder';
+import type APIError from 'types/api/error';
+import type { PanelTypeKeys } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { TracesTableRow } from './getFieldColumn';

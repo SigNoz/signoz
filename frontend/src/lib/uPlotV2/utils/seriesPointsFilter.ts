@@ -1,4 +1,4 @@
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 /**
  * Scans outward from approxIdx to find the nearest non-null data index.

@@ -1,5 +1,5 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { withBasePath } from 'utils/basePath';
 
@@ -7,7 +7,7 @@ import {
 	AI_OBSERVABILITY_COLUMN_PANELS,
 	PREFERENCE_SOURCE_PAGES,
 } from './constants';
-import { PreferenceSourcePage } from './types';
+import type { PreferenceSourcePage } from './types';
 
 export function isPreferenceSourcePage(
 	sourcePage: SavedviewtypesSourceDTO,

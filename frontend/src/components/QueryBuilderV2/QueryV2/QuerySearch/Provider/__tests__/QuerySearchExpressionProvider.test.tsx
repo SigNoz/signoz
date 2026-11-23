@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { act, renderHook } from 'tests/test-utils';
 
 import {
@@ -10,10 +11,8 @@ import {
 	useQuerySearchOnRun,
 	useUserExpression,
 } from '../context';
-import {
-	QuerySearchV2Provider,
-	QuerySearchV2ProviderProps,
-} from '../QuerySearchV2.provider';
+import type { QuerySearchV2ProviderProps } from '../QuerySearchV2.provider';
+import { QuerySearchV2Provider } from '../QuerySearchV2.provider';
 
 const mockSetQueryState = jest.fn();
 let mockUrlValue: string | null = null;

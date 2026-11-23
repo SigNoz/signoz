@@ -1,4 +1,4 @@
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 export interface ExportRawDataProps {
 	format: string;

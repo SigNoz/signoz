@@ -7,8 +7,8 @@ import {
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import styles from 'components/DeleteConfirmModal/DeleteConfirmModal.module.scss';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ReactNode } from 'react';
-import APIError from 'types/api/error';
+import type { ReactNode } from 'react';
+import type APIError from 'types/api/error';
 
 import type { Channel } from '../types';
 

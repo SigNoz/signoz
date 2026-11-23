@@ -1,11 +1,8 @@
 import { useCallback, useRef } from 'react';
 import logEvent from 'api/common/logEvent';
 
-import {
-	TraceDetailEventKeys,
-	TraceDetailEvents,
-	TraceDetailView,
-} from '../events';
+import type { TraceDetailEvents, TraceDetailView } from '../events';
+import { TraceDetailEventKeys } from '../events';
 
 export type TraceDetailLogEvent = (
 	event: TraceDetailEvents,

@@ -4,7 +4,7 @@ import cx from 'classnames';
 import styles from './PermissionDeniedCallout.module.scss';
 import { useAppContext } from 'providers/App/App';
 import { Typography } from '@signozhq/ui/typography';
-import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 export interface PermissionDeniedCalloutProps {

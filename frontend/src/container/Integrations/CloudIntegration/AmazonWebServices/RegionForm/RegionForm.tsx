@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import { RegionFormProps } from 'container/Integrations/HeroSection/types';
+import type { RegionFormProps } from 'container/Integrations/HeroSection/types';
 import { regions } from 'utils/regions';
 
 import AgentSetupCommand from '../../AgentSetupCommand/AgentSetupCommand';

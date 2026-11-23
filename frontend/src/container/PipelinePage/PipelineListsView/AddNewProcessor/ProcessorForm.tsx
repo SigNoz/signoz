@@ -5,10 +5,10 @@ import { Form, Select } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import { ModalFooterTitle } from 'container/PipelinePage/styles';
 import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
-import { ProcessorData } from 'types/api/pipeline/def';
+import type { ProcessorData } from 'types/api/pipeline/def';
 
 import { formValidationRules } from '../config';
-import { ProcessorFormField } from './config';
+import type { ProcessorFormField } from './config';
 import CSVInput from './FormFields/CSVInput';
 import JsonFlattening from './FormFields/JsonFlattening';
 import { FormWrapper, PipelineIndexIcon, StyledSelect } from './styles';

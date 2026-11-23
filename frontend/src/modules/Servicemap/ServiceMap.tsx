@@ -9,12 +9,13 @@ import TextToolTip from 'components/TextToolTip';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { whilelistedKeys } from 'hooks/useResourceAttribute/config';
-import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import type { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { filterServiceMapSupportedQueries } from 'hooks/useResourceAttribute/utils';
-import { getDetailedServiceMapItems, ServiceMapStore } from 'store/actions';
-import { AppState } from 'store/reducers';
+import type { ServiceMapStore } from 'store/actions';
+import { getDetailedServiceMapItems } from 'store/actions';
+import type { AppState } from 'store/reducers';
 import styled from 'styled-components';
-import { GlobalTime } from 'types/actions/globalTime';
+import type { GlobalTime } from 'types/actions/globalTime';
 
 import Map from './Map';
 

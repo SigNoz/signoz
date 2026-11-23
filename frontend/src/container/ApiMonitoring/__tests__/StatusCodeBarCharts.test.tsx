@@ -4,7 +4,7 @@ import {
 	getFormattedEndPointStatusCodeChartData,
 	getStatusCodeBarChartWidgetData,
 } from 'container/ApiMonitoring/utils';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 
 import ErrorState from '../Explorer/Domains/DomainDetails/components/ErrorState';
 import StatusCodeBarCharts from '../Explorer/Domains/DomainDetails/components/StatusCodeBarCharts';

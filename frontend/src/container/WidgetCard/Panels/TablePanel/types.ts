@@ -1,17 +1,17 @@
-import { TableProps } from 'antd';
-import { PrecisionOption } from 'components/Graph/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
-import {
+import type { TableProps } from 'antd';
+import type { PrecisionOption } from 'components/Graph/types';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
+import type {
 	ThresholdOperators,
 	ThresholdProps,
 } from 'types/api/widgets/threshold';
-import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ColumnUnit } from 'types/api/widgets/columnUnit';
-import { ContextLinksData } from 'types/api/widgets/widget';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { ColumnUnit } from 'types/api/widgets/columnUnit';
+import type { ContextLinksData } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 export type GridTableComponentProps = {
 	query: Query;

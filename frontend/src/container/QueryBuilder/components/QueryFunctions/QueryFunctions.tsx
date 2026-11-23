@@ -4,8 +4,8 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { cloneDeep, pullAt } from 'lodash-es';
 import { Plus } from '@signozhq/icons';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryFunction } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryFunction } from 'types/api/v5/queryRange';
 import { DataSource, QueryFunctionsTypes } from 'types/common/queryBuilder';
 import { normalizeFunctionName } from 'utils/functionNameNormalizer';
 

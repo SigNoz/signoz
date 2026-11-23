@@ -9,7 +9,7 @@ import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
 import { TestRouter } from 'tests/router';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useTableContextMenu from '../useTableContextMenu';
 import {

@@ -3,7 +3,7 @@ import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser from 'parser/FilterQueryParser';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
 import TraceOperatorGrammarParser from 'parser/TraceOperatorParser/TraceOperatorGrammarParser';
-import { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
+import type { IDetailedError, IValidationResult } from 'types/antlrQueryTypes';
 
 // Custom error listener to capture ANTLR errors
 class QueryErrorListener {

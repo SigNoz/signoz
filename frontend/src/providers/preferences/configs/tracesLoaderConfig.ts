@@ -1,9 +1,9 @@
 /* eslint-disable no-empty */
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { isAiObservabilityExplorerRoute } from '../utils';
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { ScatterTooltipProps } from '../types';
+import type { ScatterTooltipProps } from '../types';
 import TooltipCard from './components/TooltipCard/TooltipCard';
 import { buildChannelRows, resolveHoveredPoint } from './scatterTooltipContent';
 

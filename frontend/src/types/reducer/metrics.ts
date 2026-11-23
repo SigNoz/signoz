@@ -1,10 +1,10 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
-import { DBOverView } from 'types/api/metrics/getDBOverview';
-import { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
-import { ExternalError } from 'types/api/metrics/getExternalError';
-import { ExternalService } from 'types/api/metrics/getExternalService';
-import { ServicesList } from 'types/api/metrics/getService';
-import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
+import type { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import type { DBOverView } from 'types/api/metrics/getDBOverview';
+import type { ExternalAverageDuration } from 'types/api/metrics/getExternalAverageDuration';
+import type { ExternalError } from 'types/api/metrics/getExternalError';
+import type { ExternalService } from 'types/api/metrics/getExternalService';
+import type { ServicesList } from 'types/api/metrics/getService';
+import type { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 
 interface MetricReducer {
 	services: ServicesList[];

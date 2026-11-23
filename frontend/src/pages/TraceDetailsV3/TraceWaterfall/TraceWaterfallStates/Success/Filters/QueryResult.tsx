@@ -2,7 +2,7 @@ import { ChevronDown, ChevronUp, Info, Loader } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import cx from 'classnames';
 
 import styles from './QueryResult.module.scss';

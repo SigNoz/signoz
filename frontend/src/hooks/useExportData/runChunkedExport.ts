@@ -8,8 +8,8 @@ import {
 import { stitchCsvParts, stitchJsonlParts } from 'lib/exportData/stitchParts';
 import { ExportFormat } from 'lib/exportData/types';
 import store from 'store';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import { EXPORT_CONCURRENCY, EXPORT_PAGE_SIZE } from './constants';
 

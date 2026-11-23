@@ -11,8 +11,8 @@ import { AIAssistantEvents } from '../events';
 import { getAutoContexts } from '../getAutoContexts';
 import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
-import { MessageAttachment } from '../types';
-import { MessageContext } from '../../../api/ai-assistant/chat';
+import type { MessageAttachment } from '../types';
+import type { MessageContext } from '../../../api/ai-assistant/chat';
 import { useVariant } from '../VariantContext';
 
 import styles from './ConversationView.module.scss';

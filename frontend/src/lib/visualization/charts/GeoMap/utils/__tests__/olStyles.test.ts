@@ -1,4 +1,4 @@
-import CircleStyle from 'ol/style/Circle';
+import type CircleStyle from 'ol/style/Circle';
 
 import { createStyleCache, readPalette, withAlpha } from '../olStyles';
 

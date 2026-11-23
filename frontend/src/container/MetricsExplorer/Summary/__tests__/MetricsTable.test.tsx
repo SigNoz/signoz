@@ -2,14 +2,14 @@
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
-import { Filter } from 'api/v5/v5';
+import type { Filter } from 'api/v5/v5';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
 import { TestRouter } from 'tests/router';
 import APIError from 'types/api/error';
 
 import MetricsTable from '../MetricsTable';
-import { MetricsListItemRowData } from '../types';
+import type { MetricsListItemRowData } from '../types';
 
 const mockData: MetricsListItemRowData[] = [
 	{

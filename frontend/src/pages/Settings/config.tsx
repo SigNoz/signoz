@@ -1,4 +1,4 @@
-import { RouteTabProps } from 'components/RouteTab/types';
+import type { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import GeneralSettings from 'container/GeneralSettings';
@@ -11,7 +11,7 @@ import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
 import CreateEditRolePage from 'container/RolesSettings/CreateEditRolePage';
 import ViewRolePage from 'container/RolesSettings/ViewRolePage';
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import {
 	Backpack,
 	Bot,

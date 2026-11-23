@@ -4,7 +4,7 @@ import {
 	type ColorRampResolver,
 	getRampBottom,
 } from 'lib/visualization/colorRamp/colorScale';
-import { ColorRampScale } from 'lib/visualization/colorRamp/types';
+import type { ColorRampScale } from 'lib/visualization/colorRamp/types';
 
 import type { GeoMapColorKey } from '../../types';
 import SizeLegend from '../SizeLegend/SizeLegend';

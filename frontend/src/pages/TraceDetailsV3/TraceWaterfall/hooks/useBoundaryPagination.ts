@@ -1,7 +1,8 @@
-import { RefObject, useEffect, useRef } from 'react';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { RefObject } from 'react';
+import { useEffect, useRef } from 'react';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { IInterestedSpan } from '../types';
+import type { IInterestedSpan } from '../types';
 
 const MIN_SPANS_FOR_PAGINATION = 500;
 

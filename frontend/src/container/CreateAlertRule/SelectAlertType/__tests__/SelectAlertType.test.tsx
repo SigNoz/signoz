@@ -1,8 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import {
-	LicensePlatform,
-	LicenseResModel,
-} from 'types/api/licensesV3/getActive';
+import type { LicenseResModel } from 'types/api/licensesV3/getActive';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';

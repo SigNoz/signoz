@@ -1,8 +1,8 @@
-import {
+import { useGetDashboardV2 } from 'api/generated/services/dashboard';
+import type {
+	GetDashboardV2QueryError,
 	getDashboardV2,
-	useGetDashboardV2,
 } from 'api/generated/services/dashboard';
-import type { GetDashboardV2QueryError } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 
 // Instantiation expression pins `TData`/`TError` to the hook's defaults; a plain

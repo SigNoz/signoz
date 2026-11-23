@@ -1,4 +1,5 @@
-import { ChangeEventHandler, useState } from 'react';
+import type { ChangeEventHandler } from 'react';
+import { useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 
 interface CSVInputProps {

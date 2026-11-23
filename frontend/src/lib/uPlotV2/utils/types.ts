@@ -1,4 +1,4 @@
-import { Range } from 'uplot';
+import type { Range } from 'uplot';
 
 export type LogScaleLimits = {
 	min: number | null;

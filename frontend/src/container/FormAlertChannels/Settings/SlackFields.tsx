@@ -6,7 +6,7 @@ import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormField from '../FormField';
 import RowEntry from './RowEntry';
 import styles from './RowEditor.module.scss';

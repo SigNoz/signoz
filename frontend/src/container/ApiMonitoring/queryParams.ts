@@ -3,7 +3,7 @@ import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { omit } from 'lodash-es';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 // --- Types for all API Monitoring query params ---

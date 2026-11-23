@@ -1,5 +1,5 @@
 import { act, renderHook } from 'tests/test-utils';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 
 import { useSpanDrawer } from '../useSpanDrawer';
 

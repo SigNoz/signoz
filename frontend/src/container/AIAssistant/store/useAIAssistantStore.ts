@@ -10,6 +10,11 @@ import type {
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
+import type {
+	MessageContext,
+	MessageSummary,
+	ThreadSummary,
+} from '../../../api/ai-assistant/chat';
 import {
 	approveExecution,
 	cancelExecution,
@@ -17,17 +22,14 @@ import {
 	createThread,
 	getThreadDetail,
 	listThreads,
-	MessageContext,
-	MessageSummary,
 	regenerateMessage,
 	rejectExecution,
 	sendMessage as sendMessageToThread,
 	streamEvents,
 	submitFeedback,
-	ThreadSummary,
 	updateThread,
 } from '../../../api/ai-assistant/chat';
-import {
+import type {
 	Conversation,
 	ConversationStreamState,
 	FeedbackRating,

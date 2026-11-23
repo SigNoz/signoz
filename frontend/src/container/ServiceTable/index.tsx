@@ -4,7 +4,7 @@ import { ResizeTable } from 'components/ResizeTable';
 
 import { getColumns } from './Columns/ServiceColumn';
 import { Container } from './styles';
-import ServiceTableProp from './types';
+import type ServiceTableProp from './types';
 
 function Services({ services, isLoading }: ServiceTableProp): JSX.Element {
 	const { search } = useAppLocation();

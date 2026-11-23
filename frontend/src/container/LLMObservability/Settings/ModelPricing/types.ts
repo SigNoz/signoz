@@ -1,7 +1,7 @@
-import {
+import type {
 	LlmpricingruletypesLLMPricingRuleCacheModeDTO as CacheModeDTO,
-	type LlmpricingruletypesLLMPricingRuleDTO,
-	type LlmpricingruletypesUnmappedModelDTO,
+	LlmpricingruletypesLLMPricingRuleDTO,
+	LlmpricingruletypesUnmappedModelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export type PricingRule = LlmpricingruletypesLLMPricingRuleDTO;

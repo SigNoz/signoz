@@ -1,11 +1,7 @@
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 
-import {
-	ChannelFormValues,
-	ChannelKind,
-	JiraDeployment,
-	WebhookAuth,
-} from './types';
+import type { ChannelFormValues } from './types';
+import { ChannelKind, JiraDeployment, WebhookAuth } from './types';
 import { validateChannel } from './validation';
 
 const t = ((key: string) => key) as TFunction;

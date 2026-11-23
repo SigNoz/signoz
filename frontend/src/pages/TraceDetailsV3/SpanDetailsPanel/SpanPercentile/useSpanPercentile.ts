@@ -13,7 +13,7 @@ import {
 	TraceDetailEvents,
 } from 'pages/TraceDetailsV3/events';
 import { useTraceDetailLogEvent } from 'pages/TraceDetailsV3/hooks/useTraceDetailLogEvent';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 export interface IResourceAttribute {
 	key: string;

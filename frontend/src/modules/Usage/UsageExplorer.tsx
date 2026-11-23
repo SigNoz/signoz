@@ -7,11 +7,12 @@ import { Select } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
-import { GetService, getUsageData, UsageDataItem } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { GlobalTime } from 'types/actions/globalTime';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import MetricReducer from 'types/reducer/metrics';
+import type { UsageDataItem } from 'store/actions';
+import { GetService, getUsageData } from 'store/actions';
+import type { AppState } from 'store/reducers';
+import type { GlobalTime } from 'types/actions/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type MetricReducer from 'types/reducer/metrics';
 import { isOnboardingSkipped } from 'utils/app';
 
 import { Card } from './styles';

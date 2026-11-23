@@ -1,9 +1,7 @@
 import { renderHook } from '@testing-library/react';
 
-import {
-	useRecoverFromEmptyPage,
-	UseRecoverFromEmptyPageParams,
-} from '../useRecoverFromEmptyPage';
+import type { UseRecoverFromEmptyPageParams } from '../useRecoverFromEmptyPage';
+import { useRecoverFromEmptyPage } from '../useRecoverFromEmptyPage';
 
 const REPLACE = { history: 'replace' };
 

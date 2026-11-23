@@ -1,5 +1,5 @@
-import { ComponentType } from 'react';
-import { TabsProps } from 'antd';
+import type { ComponentType } from 'react';
+import type { TabsProps } from 'antd';
 
 export type TabRoutes = {
 	name: React.ReactNode;

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
-import {
+import type {
 	DashboardtypesListOrderDTO,
 	DashboardtypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';

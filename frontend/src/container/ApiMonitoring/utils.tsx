@@ -1,47 +1,44 @@
-import { ReactNode } from 'react';
-import { TableColumnType as ColumnType, Tooltip } from 'antd';
+import type { ReactNode } from 'react';
+import type { TableColumnType as ColumnType } from 'antd';
+import { Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Badge } from '@signozhq/ui/badge';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import {
-	FiltersType,
-	IQuickFiltersConfig,
-} from 'components/QuickFilters/types';
+import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import { FiltersType } from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { GraphClickMetaData } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
+import type { GraphClickMetaData } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
 import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderQuery,
 	OrderByPayload,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	ColumnDescriptor,
 	QueryRangePayloadV5,
 	ScalarData,
 } from 'types/api/v5/queryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 
 import { domainNameKey } from './constants';
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
-import {
+import type {
 	APIDomainsRowData,
 	APIMonitoringResponseColumn,
 	EndPointsResponseRow,

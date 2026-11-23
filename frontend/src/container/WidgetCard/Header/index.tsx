@@ -1,5 +1,6 @@
-import { ReactNode, useCallback, useMemo, useState } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import type { UseQueryResult } from 'react-query';
 import {
 	Bell,
 	CircleX,
@@ -29,14 +30,14 @@ import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { isEmpty } from 'lodash-es';
 import { unparse } from 'papaparse';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
-import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse, Warning } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
+import type APIError from 'types/api/error';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { buildAbsolutePath } from 'utils/app';
 
 import { errorTooltipPosition } from 'container/WidgetCard/Header/config';
@@ -48,7 +49,7 @@ import {
 	MenuItemKeys,
 	VIEW_LOADING_TOOLTIP,
 } from 'container/WidgetCard/Header/contants';
-import { MenuItem } from 'container/WidgetCard/Header/types';
+import type { MenuItem } from 'container/WidgetCard/Header/types';
 import { generateMenuList } from 'container/WidgetCard/Header/utils';
 
 import 'container/WidgetCard/Header/WidgetHeader.styles.scss';

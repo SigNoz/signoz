@@ -3,7 +3,7 @@ import type CircleStyle from 'ol/style/Circle';
 import { renderHook } from 'tests/test-utils';
 
 import { getCountryShapes } from '../../geo/shapes';
-import { GeoMapPoint } from '../../types';
+import type { GeoMapPoint } from '../../types';
 import { useOlLayers } from '../useOlLayers';
 import { createFakeOlMap } from './fakeOlMap';
 import { PALETTE, styleOf } from './olLayersSetup';

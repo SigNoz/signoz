@@ -7,12 +7,14 @@ import {
 	Filter,
 	Play,
 } from '@signozhq/icons';
+import type {
+	CompletionContext,
+	CompletionResult,
+} from '@codemirror/autocomplete';
 import {
 	autocompletion,
 	closeCompletion,
-	CompletionContext,
 	completionKeymap,
-	CompletionResult,
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
@@ -37,13 +39,13 @@ import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDebounce from 'hooks/useDebounce';
 import { debounce, isNull } from 'lodash-es';
-import {
+import type {
 	IDetailedError,
 	IQueryContext,
 	IValidationResult,
 } from 'types/antlrQueryTypes';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 import {
 	getCurrentValueIndexAtCursor,

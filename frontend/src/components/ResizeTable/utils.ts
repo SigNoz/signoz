@@ -2,7 +2,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 
 import { DynamicColumnsKey } from './contants';
-import {
+import type {
 	GetNewColumnDataFunction,
 	GetVisibleColumnsFunction,
 	SetVisibleColumnsProps,

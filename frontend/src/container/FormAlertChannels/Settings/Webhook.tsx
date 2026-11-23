@@ -3,10 +3,8 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 
-import {
-	ChannelFormValues,
-	WebhookAuth,
-} from '../../CreateAlertChannels/types';
+import type { ChannelFormValues } from '../../CreateAlertChannels/types';
+import { WebhookAuth } from '../../CreateAlertChannels/types';
 import { webhookAuthOf } from '../../CreateAlertChannels/utils';
 import FormCard from '../FormCard';
 import FormField from '../FormField';

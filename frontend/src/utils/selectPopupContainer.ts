@@ -1,4 +1,5 @@
-import { ConfigProvider, SelectProps } from 'antd';
+import type { SelectProps } from 'antd';
+import { ConfigProvider } from 'antd';
 // eslint-disable-next-line no-restricted-imports
 import { useContext } from 'react';
 

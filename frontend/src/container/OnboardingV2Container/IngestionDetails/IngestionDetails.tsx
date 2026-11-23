@@ -4,7 +4,7 @@ import { Button, Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { useGetIngestionKeys } from 'api/generated/services/gateway';
-import { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { GatewaytypesIngestionKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { DOCS_BASE_URL } from 'constants/app';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useGetGlobalConfig } from 'api/generated/services/global';

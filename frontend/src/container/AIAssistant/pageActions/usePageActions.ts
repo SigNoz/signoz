@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { PageActionRegistry } from './PageActionRegistry';
-import { PageAction } from './types';
+import type { PageAction } from './types';
 
 /**
  * Registers page-specific actions into the PageActionRegistry for the lifetime

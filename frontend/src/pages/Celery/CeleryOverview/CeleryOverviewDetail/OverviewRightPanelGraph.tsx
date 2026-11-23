@@ -15,14 +15,14 @@ import GridCard from 'container/WidgetCard/Card';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { Widgets } from 'types/api/widgets/widget';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { AppState } from 'store/reducers';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	celeryOverviewAvgLatencyGraphData,

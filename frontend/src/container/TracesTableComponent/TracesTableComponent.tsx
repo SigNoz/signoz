@@ -1,13 +1,6 @@
-import {
-	Dispatch,
-	HTMLAttributes,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
-import { UseQueryResult } from 'react-query';
+import type { Dispatch, HTMLAttributes, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { UseQueryResult } from 'react-query';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { ResizeTable } from 'components/ResizeTable';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -19,15 +12,15 @@ import {
 	getTraceLink,
 	transformDataWithDate,
 } from 'container/TracesExplorer/ListView/utils';
-import { Pagination } from 'hooks/queryPagination';
+import type { Pagination } from 'hooks/queryPagination';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { navigate } from 'lib/router/navigation';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { useTimezone } from 'providers/Timezone';
-import { SuccessResponse } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { openInNewTab } from 'utils/navigation';
 
 import './TracesTableComponent.styles.scss';

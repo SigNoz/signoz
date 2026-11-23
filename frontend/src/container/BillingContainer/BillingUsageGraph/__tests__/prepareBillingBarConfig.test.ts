@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { prepareBillingBarConfig } from '../prepareBillingBarConfig';
 

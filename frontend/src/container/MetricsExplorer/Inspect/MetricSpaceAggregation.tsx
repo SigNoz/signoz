@@ -3,7 +3,8 @@ import { Select } from 'antd';
 import classNames from 'classnames';
 
 import { SPACE_AGGREGATION_OPTIONS } from './constants';
-import { InspectionStep, MetricSpaceAggregationProps } from './types';
+import type { MetricSpaceAggregationProps } from './types';
+import { InspectionStep } from './types';
 
 function MetricSpaceAggregation({
 	spaceAggregationLabels,

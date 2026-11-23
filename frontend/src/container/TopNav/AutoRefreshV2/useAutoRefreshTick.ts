@@ -3,11 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useInterval } from 'react-use';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 // eslint-disable-next-line no-restricted-imports
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
+import type { Dispatch } from 'redux';
+import type { AppState } from 'store/reducers';
+import type AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 /**
  * Advances the global time window on the auto-refresh interval. The global

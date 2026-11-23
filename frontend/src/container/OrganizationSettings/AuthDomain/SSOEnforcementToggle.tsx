@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import { useUpdateAuthDomain } from 'api/generated/services/authdomains';
-import {
+import type {
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorV2Resp } from 'types/api';
-import APIError from 'types/api/error';
+import type { ErrorV2Resp } from 'types/api';
+import type APIError from 'types/api/error';
 
 interface SSOEnforcementToggleProps {
 	isDefaultChecked: boolean;

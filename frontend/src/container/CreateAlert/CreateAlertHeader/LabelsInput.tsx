@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
 import { useNotifications } from 'hooks/useNotifications';
 
-import { LabelInputState, LabelsInputProps } from './types';
+import type { LabelInputState, LabelsInputProps } from './types';
 
 function LabelsInput({
 	labels,

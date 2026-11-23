@@ -1,12 +1,14 @@
-import React, { ReactElement } from 'react';
+import type { ReactElement } from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, RenderOptions, RenderResult } from '@testing-library/react';
+import type { RenderOptions, RenderResult } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { AppContext } from 'providers/App/App';
-import { IAppContext } from 'providers/App/types';
+import type { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import {
@@ -18,7 +20,7 @@ import configureStore from 'redux-mock-store';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
 import thunk from 'redux-thunk';
 import store from 'store';
-import { QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import { TestRouter } from './router';
 

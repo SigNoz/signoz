@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';
 import { removePanelOp, removeSectionOp } from '../../../patchOps';

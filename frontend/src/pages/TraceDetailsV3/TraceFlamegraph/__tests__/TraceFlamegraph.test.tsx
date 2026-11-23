@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import useGetTraceFlamegraphV3 from 'hooks/trace/useGetTraceFlamegraphV3';
 import { AllTheProviders } from 'tests/test-utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { FLAMEGRAPH_SPAN_LIMIT } from '../constants';
 import TraceFlamegraph from '../TraceFlamegraph';

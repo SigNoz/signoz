@@ -1,4 +1,5 @@
-import { MouseEvent, useMemo } from 'react';
+import type { MouseEvent } from 'react';
+import { useMemo } from 'react';
 import { LayoutGrid } from '@signozhq/icons';
 import getSessionStorageApi from 'api/browser/sessionstorage/get';
 import ROUTES from 'constants/routes';

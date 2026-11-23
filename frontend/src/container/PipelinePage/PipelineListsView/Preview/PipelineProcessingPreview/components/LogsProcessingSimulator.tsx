@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from 'antd';
-import { ILog } from 'types/api/logs/log';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { ILog } from 'types/api/logs/log';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 import PipelineSimulationResult from './PipelineSimulationResult';
 

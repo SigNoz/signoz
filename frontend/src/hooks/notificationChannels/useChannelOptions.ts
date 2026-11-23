@@ -1,9 +1,10 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { listNotificationChannels } from 'api/generated/services/channels';
+import type { AlertmanagertypesListedNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AlertmanagertypesChannelListOrderDTO,
 	AlertmanagertypesChannelListSortDTO,
-	AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { range } from 'lodash-es';
 

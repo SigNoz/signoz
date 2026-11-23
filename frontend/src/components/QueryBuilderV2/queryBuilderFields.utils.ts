@@ -1,8 +1,8 @@
-import {
-	QueryBuilderField,
+import type {
 	QueryBuilderFieldRule,
 	QueryBuilderFieldsConfig,
 } from './queryBuilderFields.types';
+import { QueryBuilderField } from './queryBuilderFields.types';
 
 export interface ResolvedQueryBuilderField {
 	hidden: boolean;

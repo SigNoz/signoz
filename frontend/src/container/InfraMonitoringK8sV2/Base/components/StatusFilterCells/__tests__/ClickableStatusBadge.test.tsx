@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
+import type { UrlUpdateEvent } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 import ClickableStatusBadge from '../ClickableStatusBadge';
 

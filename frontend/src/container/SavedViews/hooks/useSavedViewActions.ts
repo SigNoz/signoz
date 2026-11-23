@@ -5,13 +5,13 @@ import {
 	useCreateSavedView,
 	useUpdateSavedView,
 } from 'api/generated/services/saved-view';
-import {
+import type {
 	RenderErrorResponseDTO,
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
-	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
@@ -33,12 +33,9 @@ import {
 	SAVED_VIEW_TOAST_POSITION,
 	SAVED_VIEW_URL_PARAMS,
 } from '../constants';
-import {
-	SavedViewCreatedFrom,
-	SavedViewEventKeys,
-	SavedViewEvents,
-} from '../events';
-import { UseSavedViewActionsResult } from '../types';
+import type { SavedViewCreatedFrom } from '../events';
+import { SavedViewEventKeys, SavedViewEvents } from '../events';
+import type { UseSavedViewActionsResult } from '../types';
 import { getSavedViewQuery } from '../utils/getSavedViewQuery';
 import { getViewColumnsAndFormatting } from '../utils/getViewColumnsAndFormatting';
 import { invalidateSavedViews } from '../utils/invalidateSavedViews';

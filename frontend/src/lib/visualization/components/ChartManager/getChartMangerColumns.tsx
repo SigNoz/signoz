@@ -1,10 +1,11 @@
-import { TableColumnType as ColumnType } from 'antd';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { TableColumnType as ColumnType } from 'antd';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import CustomCheckBox from 'lib/visualization/components/ChartManager/CustomCheckBox';
 
 import { SeriesLabel } from 'lib/visualization/components/ChartManager/SeriesLabel';
+import type { ExtendedChartDataset } from 'lib/visualization/components/ChartManager/utils';
 import {
-	ExtendedChartDataset,
 	formatTableValueWithUnit,
 	getTableColumnTitle,
 } from 'lib/visualization/components/ChartManager/utils';

@@ -1,4 +1,5 @@
-import { ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	ALL_ENDPOINTS_EXPRESSION_KEY,
 	ENDPOINT_STATS_EXPRESSION_KEY,
@@ -13,7 +14,7 @@ import {
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { renderHook, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	__resetSearchParamsGetter,
 	__setSearchParamsGetterForTest,

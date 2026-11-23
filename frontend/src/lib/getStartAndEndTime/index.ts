@@ -1,4 +1,4 @@
-import { timePreferenceType } from 'constants/timePreference';
+import type { timePreferenceType } from 'constants/timePreference';
 
 import getMicroSeconds from './getMicroSeconds';
 import getMinAgo from './getMinAgo';

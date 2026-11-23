@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { GeoMapDatum, GeoMapSizeMetric } from '../../types';
+import type { GeoMapDatum, GeoMapSizeMetric } from '../../types';
 import { buildTooltipStats } from './tooltipStats';
 
 import styles from './CountryTooltip.module.scss';

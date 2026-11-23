@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { ArrowUp, ChevronUp, Command, Option } from '@signozhq/icons';
 
 import './shiftOverlay.scss';

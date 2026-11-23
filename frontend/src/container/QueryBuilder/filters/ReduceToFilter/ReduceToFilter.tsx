@@ -1,12 +1,12 @@
 import { memo, useEffect, useState } from 'react';
 import { Select } from 'antd';
 import { REDUCE_TO_VALUES } from 'constants/queryBuilder';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 // ** Types
-import { ReduceOperators } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { ReduceOperators } from 'types/common/queryBuilder';
+import type { SelectOption } from 'types/common/select';
 
-import { ReduceToFilterProps } from './ReduceToFilter.interfaces';
+import type { ReduceToFilterProps } from './ReduceToFilter.interfaces';
 
 export const ReduceToFilter = memo(function ReduceToFilter({
 	query,

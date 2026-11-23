@@ -1,10 +1,10 @@
 import type { MouseEvent } from 'react';
 import { memo, useCallback } from 'react';
-import { Row as TanStackRowModel } from '@tanstack/react-table';
+import type { Row as TanStackRowModel } from '@tanstack/react-table';
 
 import { TanStackRowCell } from './TanStackRowCell';
 import { useIsRowHovered } from './TanStackTableStateContext';
-import { TableRowContext } from './types';
+import type { TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
 

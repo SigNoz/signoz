@@ -1,8 +1,8 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
-import { Widgets } from 'types/api/widgets/widget';
+import type { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
+import type { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';

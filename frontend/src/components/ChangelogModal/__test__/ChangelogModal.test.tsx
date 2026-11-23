@@ -3,10 +3,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { DeploymentType } from 'types/api/changelog/getChangelogByVersion';
 
 import ChangelogModal from '../ChangelogModal';
 

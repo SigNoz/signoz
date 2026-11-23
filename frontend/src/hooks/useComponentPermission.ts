@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { ROLES } from 'types/roles';
-import { componentPermission, ComponentTypes } from 'utils/permission';
+import type { ROLES } from 'types/roles';
+import type { ComponentTypes } from 'utils/permission';
+import { componentPermission } from 'utils/permission';
 
 const useComponentPermission = (
 	component: ComponentTypes[],

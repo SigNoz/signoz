@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
-import { TimelineFilter } from 'container/AlertHistory/types';
+import type { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from '@signozhq/icons';
 
 import './Tabs2.styles.scss';

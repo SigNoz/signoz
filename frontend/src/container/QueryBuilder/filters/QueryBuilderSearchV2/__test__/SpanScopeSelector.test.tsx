@@ -1,14 +1,9 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {
-	fireEvent,
-	render,
-	RenderResult,
-	screen,
-	within,
-} from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import {
+import type {
 	IBuilderQuery,
 	Query,
 	TagFilter,

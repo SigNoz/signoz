@@ -1,11 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 
 import { createGlobalTimeStore, useGlobalTimeStore } from '../globalTimeStore';
 import { GlobalTimeContext } from '../GlobalTimeContext';
 import { useGlobalTime } from '../hooks';
-import { GlobalTimeSelectedTime, GlobalTimeState } from '../types';
+import type { GlobalTimeSelectedTime, GlobalTimeState } from '../types';
 import { createCustomTimeRange, NANO_SECOND_MULTIPLIER } from '../utils';
 
 /**

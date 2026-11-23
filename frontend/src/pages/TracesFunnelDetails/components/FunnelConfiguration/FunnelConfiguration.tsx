@@ -9,8 +9,8 @@ import FunnelItemPopover from 'pages/TracesFunnels/components/FunnelsList/Funnel
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAppContext } from 'providers/App/App';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
-import { FunnelData } from 'types/api/traceFunnels';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { FunnelData } from 'types/api/traceFunnels';
 
 import AddFunnelDescriptionModal from './AddFunnelDescriptionModal';
 import FunnelBreadcrumb from './FunnelBreadcrumb';

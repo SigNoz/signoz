@@ -1,16 +1,10 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from '@signozhq/ui/toast';
 import { Form } from 'antd';
-import { FormInstance } from 'antd/lib';
+import type { FormInstance } from 'antd/lib';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';
-import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
+import type { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { isEqual } from 'lodash-es';
 import { regions } from 'utils/regions';

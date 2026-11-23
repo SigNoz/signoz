@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from 'react-query';
-import { TablePaginationConfig, TableProps } from 'antd';
+import type { TablePaginationConfig, TableProps } from 'antd';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import { patchRulePartial } from 'api/alerts/patchRulePartial';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -26,7 +26,7 @@ import {
 	type RenderErrorResponseDTO,
 	type RuletypesPostableRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { QueryParams } from 'constants/query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -44,8 +44,8 @@ import GetMinMax, { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
 import { navigate } from 'lib/router/navigation';
 import { useAlertRule } from 'providers/Alert';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
-import APIError from 'types/api/error';
+import type { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
+import type APIError from 'types/api/error';
 import { nanoToMilli } from 'utils/timeUtils';
 import { Typography } from '@signozhq/ui/typography';
 

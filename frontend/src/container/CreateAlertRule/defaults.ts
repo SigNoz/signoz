@@ -5,8 +5,8 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { AlertDef } from 'types/api/alerts/def';
 import {
-	AlertDef,
 	defaultAlgorithm,
 	defaultCompareOp,
 	defaultEvalWindow,

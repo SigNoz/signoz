@@ -1,7 +1,7 @@
 import { ArrowLeft } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import styles from './BackToAllVariables.module.scss';
-import { VariableFormProps } from '../../types';
+import type { VariableFormProps } from '../../types';
 
 const BackToAllVariables = ({
 	onClose,

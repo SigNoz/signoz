@@ -1,11 +1,11 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { useQueryStates, parseAsInteger } from 'nuqs';
-import {
-	NuqsTestingAdapter,
+import type {
 	OnUrlUpdateFunction,
 	UrlUpdateEvent,
 } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
 import { useTableParams } from '../useTableParams';

@@ -1,7 +1,7 @@
 import type { DefaultOptionType } from 'antd/es/select';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
-import {
+import type {
 	NotificationSettingsAction,
 	NotificationSettingsState,
 	Threshold,

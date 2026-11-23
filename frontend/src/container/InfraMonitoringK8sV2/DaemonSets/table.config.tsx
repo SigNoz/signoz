@@ -1,13 +1,14 @@
 import { Color } from '@signozhq/design-tokens';
-import { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { InframonitoringtypesDaemonSetRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
 import ClickableStatusCounts from '../Base/components/StatusFilterCells/ClickableStatusCounts';
 import EntityGroupHeader from '../Base/EntityGroupHeader';
 import K8sGroupCell from '../Base/K8sGroupCell';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 import { formatBytes, getPodStatusItems } from '../commonUtils';
 import {
 	EntityProgressBar,

@@ -1,4 +1,5 @@
-import { MouseEventHandler, useCallback } from 'react';
+import type { MouseEventHandler } from 'react';
+import { useCallback } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/ui/toast';

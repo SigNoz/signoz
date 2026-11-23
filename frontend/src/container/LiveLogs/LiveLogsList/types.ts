@@ -1,5 +1,5 @@
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
-import { ILog } from 'types/api/logs/log';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { ILog } from 'types/api/logs/log';
 
 export interface ILiveLogsLog {
 	data: ILog[];

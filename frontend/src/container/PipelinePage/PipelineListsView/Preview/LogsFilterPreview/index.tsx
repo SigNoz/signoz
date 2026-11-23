@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import PreviewIntervalSelector from '../components/PreviewIntervalSelector';
 import SampleLogs from '../components/SampleLogs';

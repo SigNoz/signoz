@@ -5,7 +5,7 @@ import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import VectorSource from 'ol/source/Vector';
 import View from 'ol/View';
 
-import { OlLayers, OlMapHandle } from '../useOlMap';
+import type { OlLayers, OlMapHandle } from '../useOlMap';
 
 type Listener = (event: MapBrowserEvent) => void;
 type HitTest = (

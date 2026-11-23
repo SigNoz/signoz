@@ -8,8 +8,8 @@ import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
 import { TestRouter } from 'tests/router';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import useTableContextMenu from '../useTableContextMenu';
 import {

@@ -6,14 +6,12 @@ import type {
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import GetMinMax from 'lib/getMinMax';
-import {
-	buildExtendWindow,
-	ExtendTimeWindow,
-} from 'pages/DashboardPage/DashboardContainer/Panels/components/NoData/extendWindow';
+import type { ExtendTimeWindow } from 'pages/DashboardPage/DashboardContainer/Panels/components/NoData/extendWindow';
+import { buildExtendWindow } from 'pages/DashboardPage/DashboardContainer/Panels/components/NoData/extendWindow';
 import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import type { PanelQueryTimeOverride } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { NANO_SECOND_MULTIPLIER } from '@/store/globalTime';
 
 export interface ViewPanelTimeWindow {

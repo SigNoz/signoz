@@ -1,4 +1,4 @@
-import { ChartEvent } from 'chart.js';
+import type { ChartEvent } from 'chart.js';
 
 export type ChartEventHandler = (ev: ChartEvent | MouseEvent) => void;
 

@@ -1,6 +1,6 @@
 import { Badge } from '@signozhq/ui/badge';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { getAiSpanKind } from '../utils/aiTraceUtils';
 import { AI_SPAN_BADGES } from './constants';

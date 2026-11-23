@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider, QueryObserver } from 'react-query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { act, renderHook, waitFor } from 'tests/test-utils';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 
 import { useWidgetQueries } from '../useWidgetQueries';
 

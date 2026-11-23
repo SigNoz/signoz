@@ -1,6 +1,6 @@
 import { attempt, isError, isObjectLike } from 'lodash-es';
 
-import { MediaMessagePart, MessagePart, ThreadMessage } from './types';
+import type { MediaMessagePart, MessagePart, ThreadMessage } from './types';
 
 export const MAX_TEXT_LENGTH = 1000;
 

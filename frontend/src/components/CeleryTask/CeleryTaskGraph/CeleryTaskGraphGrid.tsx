@@ -7,10 +7,10 @@ import logEvent from 'api/common/logEvent';
 import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
+import type { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskBar from './CeleryTaskBar';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {

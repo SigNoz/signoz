@@ -1,4 +1,4 @@
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { fireEvent, screen } from '@testing-library/react';
 import type {

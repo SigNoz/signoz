@@ -1,7 +1,7 @@
 import axios from 'api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 
-import {
+import type {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from './getConsumerLagDetails';

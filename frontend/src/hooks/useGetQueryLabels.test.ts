@@ -1,6 +1,6 @@
 import { renderHook } from 'tests/test-utils';
 import { initialFormulaBuilderFormValues } from 'constants/queryBuilder';
-import {
+import type {
 	IBuilderFormula,
 	IClickHouseQuery,
 	IPromQLQuery,

@@ -6,9 +6,9 @@ import { OPERATORS } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Filter } from 'types/api/v5/queryRange';
+import type { Filter } from 'types/api/v5/queryRange';
 import { v4 as uuid } from 'uuid';
 
 import { getSpanLogsQueryPayload, getTraceOnlyFilters } from './constants';

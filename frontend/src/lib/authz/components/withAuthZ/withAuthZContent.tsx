@@ -1,7 +1,8 @@
-import { ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 
-import { createAuthZHOC, WithAuthZOptions } from './withAuthZ.utils';
+import type { WithAuthZOptions } from './withAuthZ.utils';
+import { createAuthZHOC } from './withAuthZ.utils';
 
 export function withAuthZContent<P extends object>(
 	Component: ComponentType<P>,

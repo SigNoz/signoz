@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import convertObjectIntoParams from 'lib/query/convertObjectIntoParams';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/alerts/getTriggered';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { PayloadProps, Props } from 'types/api/alerts/getTriggered';
 
 /**
  * @deprecated Use the generated `useGetAlerts` hook (or `getAlerts` fetcher) from

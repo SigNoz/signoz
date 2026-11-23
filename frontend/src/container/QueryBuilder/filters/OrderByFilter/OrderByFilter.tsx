@@ -12,7 +12,7 @@ import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { getMetricNameForQuery } from '../utils';
-import { OrderByFilterProps } from './OrderByFilter.interfaces';
+import type { OrderByFilterProps } from './OrderByFilter.interfaces';
 import { useOrderByFilter } from './useOrderByFilter';
 import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 

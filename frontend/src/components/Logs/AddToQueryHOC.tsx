@@ -1,10 +1,11 @@
-import { memo, MouseEvent, ReactNode, useMemo } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
+import { memo, useMemo } from 'react';
 import { Popover } from 'antd';
 import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
-import { FontSize } from 'container/OptionsMenu/types';
+import type { FontSize } from 'container/OptionsMenu/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { ScalarFieldValue } from 'utils/stringUtils';
+import type { ScalarFieldValue } from 'utils/stringUtils';
 
 import './AddToQueryHOC.styles.scss';
 

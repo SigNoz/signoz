@@ -1,7 +1,7 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Widgets } from 'types/api/widgets/widget';
 
 import { getWidgetQuery } from '../MessagingQueuesUtils';
 import * as MetricPageUtil from '../MQDetails/MetricPage/MetricPageUtil';

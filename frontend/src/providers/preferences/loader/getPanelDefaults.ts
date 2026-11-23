@@ -1,8 +1,8 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 
 import getAiObservabilityLoaderConfig from '../configs/aiObservabilityLoaderConfig';
-import { Preferences } from '../types';
+import type { Preferences } from '../types';
 
 // The defaults of one panel, for source pages whose panels each keep their own
 // columns; undefined for the others.

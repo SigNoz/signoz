@@ -1,5 +1,5 @@
-import { TFunction } from 'react-i18next';
-import { RouteTabProps } from 'components/RouteTab/types';
+import type { TFunction } from 'react-i18next';
+import type { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import LogsIndexToFields from 'container/LogsIndexToFields';
 

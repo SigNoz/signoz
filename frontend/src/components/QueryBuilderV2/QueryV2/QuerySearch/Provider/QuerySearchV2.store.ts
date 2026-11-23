@@ -1,4 +1,5 @@
-import { createStore, StoreApi } from 'zustand';
+import type { StoreApi } from 'zustand';
+import { createStore } from 'zustand';
 
 export type QuerySearchV2Store = {
 	/**

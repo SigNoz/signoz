@@ -2,11 +2,11 @@ import { useCallback } from 'react';
 import { Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/WidgetCard/panelTypeItems';
 import { handleQueryChange } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import 'container/WidgetCard/Card/FullView/PanelTypeSelector.scss';
 

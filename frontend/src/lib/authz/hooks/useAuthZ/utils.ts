@@ -1,11 +1,11 @@
-import {
+import type {
 	AuthtypesTransactionDTO,
 	CoretypesTypeDTO,
 	AuthtypesRelationDTO,
 	CoretypesKindDTO,
 } from '../../../../api/generated/services/sigNoz.schemas';
 import permissionsType from './permissions.type';
-import {
+import type {
 	AuthZObject,
 	AuthZRelation,
 	BrandedPermission,

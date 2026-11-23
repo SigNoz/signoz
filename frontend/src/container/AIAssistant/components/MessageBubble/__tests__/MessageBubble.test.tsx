@@ -5,7 +5,7 @@ import {
 	RetryActionDTO,
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
-import { Message } from '../../../types';
+import type { Message } from '../../../types';
 
 // react-markdown + remark-gfm are ESM-only and pull a large untransformed
 // dependency chain into jest. The error-rendering path under test renders

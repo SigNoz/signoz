@@ -1,4 +1,4 @@
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
 
 export const GEN_AI_KEYS = {

@@ -19,7 +19,7 @@ import VariablesList from './components/VariablesList/VariablesList';
 import styles from './Variables.module.scss';
 import AddVariableButton from './components/AddVariableButton';
 import NoVariablesCard from './components/NoVariablesCard/NoVariablesCard';
-import { EditingState } from './types';
+import type { EditingState } from './types';
 import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 
 interface VariablesSettingsProps {

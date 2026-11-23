@@ -1,5 +1,5 @@
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 // Mock dependencies
 jest.mock('lib/uPlotLib/plugins/tooltipPlugin', () => jest.fn(() => ({})));

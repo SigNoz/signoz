@@ -1,6 +1,6 @@
 import { useLocation } from 'react-use';
 import RouteTab from 'components/RouteTab';
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 
 import { Hosts, Kubernetes } from './constants';
 

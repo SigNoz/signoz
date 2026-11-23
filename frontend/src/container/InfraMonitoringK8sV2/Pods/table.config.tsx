@@ -1,9 +1,8 @@
 import { Container } from '@signozhq/icons';
-import {
-	InframonitoringtypesPodRecordDTO,
-	InframonitoringtypesPodStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { InframonitoringtypesPodRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesPodStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';

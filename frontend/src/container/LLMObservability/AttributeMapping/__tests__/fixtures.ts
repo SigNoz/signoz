@@ -1,10 +1,12 @@
-import {
-	SpantypesFieldContextDTO as FieldContext,
+import type {
 	SpantypesSpanMapperDTO as Mapper,
 	SpantypesSpanMapperGroupDTO as MapperGroup,
+	SpantypesSpanMapperTestSpanDTO as TestSpan,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	SpantypesFieldContextDTO as FieldContext,
 	SpantypesSpanMapperOperationDTO as MapperOperation,
 	SpantypesSpanMapperOriginDTO as MapperOrigin,
-	SpantypesSpanMapperTestSpanDTO as TestSpan,
 } from 'api/generated/services/sigNoz.schemas';
 
 // Endpoint globs used by MSW handlers. The generated client hits relative

@@ -18,7 +18,7 @@ import DeploymentProjectIdField from '../fields/DeploymentProjectIdField';
 import DeploymentRegionField from '../fields/DeploymentRegionField';
 import SetupDrawerFooter from '../SetupDrawerFooter';
 import SetupGuideCallout from '../SetupGuideCallout';
-import { GcpSetupFormValues } from '../types';
+import type { GcpSetupFormValues } from '../types';
 import { usePrefillCredentials } from '../usePrefillCredentials';
 
 import styles from './AgentSetup.module.scss';

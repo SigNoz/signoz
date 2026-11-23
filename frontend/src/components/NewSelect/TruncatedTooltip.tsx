@@ -1,13 +1,7 @@
-import {
-	cloneElement,
-	FocusEvent,
-	PointerEvent,
-	ReactElement,
-	RefObject,
-	useRef,
-	useState,
-} from 'react';
-import { Tooltip, TooltipProps } from '@signozhq/ui/tooltip';
+import type { FocusEvent, PointerEvent, ReactElement, RefObject } from 'react';
+import { cloneElement, useRef, useState } from 'react';
+import type { TooltipProps } from '@signozhq/ui/tooltip';
+import { Tooltip } from '@signozhq/ui/tooltip';
 
 interface TruncatedTooltipProps {
 	title: string;

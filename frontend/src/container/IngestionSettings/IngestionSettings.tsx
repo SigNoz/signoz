@@ -1,10 +1,11 @@
 import { useQuery } from 'react-query';
-import { Skeleton, Table, TableColumnsType as ColumnsType } from 'antd';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Skeleton, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import getIngestionData from 'api/settings/getIngestionData';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { useAppContext } from 'providers/App/App';
-import { IngestionDataType } from 'types/api/settings/ingestion';
+import type { IngestionDataType } from 'types/api/settings/ingestion';
 
 import styles from './IngestionSettings.module.scss';
 import './IngestionSettings.styles.scss';

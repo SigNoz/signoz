@@ -1,4 +1,5 @@
-import { ReactElement, ReactNode, useMemo } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { useMemo } from 'react';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 

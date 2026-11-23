@@ -9,8 +9,9 @@ import type {
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 
 import { useVariant } from '../../VariantContext';
-import { StreamingEventItem } from '../../types';
-import ActivityGroup, { ActivityItem } from '../ActivityGroup';
+import type { StreamingEventItem } from '../../types';
+import type { ActivityItem } from '../ActivityGroup';
+import ActivityGroup from '../ActivityGroup';
 import ActivityStep from '../ActivityStep/ActivityStep';
 import ApprovalCard from '../ApprovalCard';
 import { RichCodeBlock } from '../blocks';

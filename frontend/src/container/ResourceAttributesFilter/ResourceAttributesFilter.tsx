@@ -1,6 +1,8 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SolidXCircle } from '@signozhq/icons';
-import { Button, Select, SelectProps, Spin } from 'antd';
+import type { SelectProps } from 'antd';
+import { Button, Select, Spin } from 'antd';
 import useResourceAttribute, {
 	isResourceEmpty,
 } from 'hooks/useResourceAttribute';
@@ -10,7 +12,7 @@ import {
 	getEnvironmentTagValues,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 

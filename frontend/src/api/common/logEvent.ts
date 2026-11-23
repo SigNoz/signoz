@@ -1,10 +1,10 @@
 import { LogEventAxiosInstance as axios } from 'api';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { EventSuccessPayloadProps } from 'types/api/events/types';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { EventSuccessPayloadProps } from 'types/api/events/types';
 
 const logEvent = async (
 	eventName: string,

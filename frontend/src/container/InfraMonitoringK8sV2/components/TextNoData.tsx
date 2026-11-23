@@ -1,4 +1,5 @@
-import { CSSProperties, forwardRef } from 'react';
+import type { CSSProperties } from 'react';
+import { forwardRef } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import TanStackTable from 'components/TanStackTableView';
 

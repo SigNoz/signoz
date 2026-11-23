@@ -1,17 +1,11 @@
 import { useMemo } from 'react';
-import {
-	QueryKey,
-	useQueries,
-	UseQueryOptions,
-	UseQueryResult,
-} from 'react-query';
+import type { QueryKey, UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQueries } from 'react-query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	GetMetricQueryRange,
-	GetQueryResultsProps,
-} from 'lib/dashboard/getQueryResults';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 export const useGetQueriesRange = (
 	requestData: GetQueryResultsProps[],

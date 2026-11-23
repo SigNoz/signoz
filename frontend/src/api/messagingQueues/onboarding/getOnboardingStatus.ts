@@ -1,8 +1,8 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 
 export interface OnboardingStatusResponse {
 	status: string;

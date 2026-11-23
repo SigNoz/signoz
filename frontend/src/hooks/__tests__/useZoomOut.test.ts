@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { QueryParams } from 'constants/query';
 import { mockAppLocation } from 'tests/router-mocks';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { useZoomOut } from '../useZoomOut';
 

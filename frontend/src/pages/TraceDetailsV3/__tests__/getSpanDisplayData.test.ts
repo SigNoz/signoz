@@ -1,4 +1,4 @@
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { getSpanDisplayData } from '../utils';
 

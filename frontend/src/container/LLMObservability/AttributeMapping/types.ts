@@ -1,11 +1,13 @@
-import {
-	SpantypesFieldContextDTO,
+import type {
 	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesSpanMapperGroupDTO,
+	SpantypesSpanMapperSourceDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	SpantypesFieldContextDTO,
 	SpantypesSpanMapperOperationDTO,
 	SpantypesSpanMapperOriginDTO,
-	SpantypesSpanMapperSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 export type MapperGroup = SpantypesSpanMapperGroupDTO;

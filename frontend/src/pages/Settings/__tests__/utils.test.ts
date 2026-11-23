@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import { createInstance } from 'i18next';
-import { ROLES, USER_ROLES } from 'types/roles';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
 
 import { getRoutes } from '../utils';
 

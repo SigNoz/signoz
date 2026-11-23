@@ -1,7 +1,7 @@
+import type { ChromePerformanceTrackEntryOptions } from 'lib/chromePerformanceDevTools';
 import {
 	createChromePerformanceInteractionTracker,
 	chromePerformanceMeasure,
-	ChromePerformanceTrackEntryOptions,
 } from 'lib/chromePerformanceDevTools';
 
 const TABLE_TRACK_GROUP = 'SigNoz Table';

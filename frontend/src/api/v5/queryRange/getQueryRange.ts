@@ -1,9 +1,9 @@
 import { ApiV5Instance } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import {
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type {
 	MetricRangePayloadV5,
 	QueryRangePayloadV5,
 } from 'types/api/v5/queryRange';

@@ -1,10 +1,10 @@
-import {
+import type {
 	SpantypesEventDTO as FlamegraphEvent,
 	SpantypesFlamegraphSpanDTO as FlamegraphSpan,
 } from 'api/generated/services/sigNoz.schemas';
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
-import { VisualLayout } from './computeVisualLayout';
+import type { VisualLayout } from './computeVisualLayout';
 
 export interface ITraceMetadata {
 	startTime: number;

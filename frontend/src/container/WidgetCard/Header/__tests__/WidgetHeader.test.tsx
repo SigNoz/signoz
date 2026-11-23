@@ -1,21 +1,23 @@
-import React, { MutableRefObject } from 'react';
-import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
+import type { MutableRefObject } from 'react';
+import React from 'react';
+import type { UseQueryResult } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
-import { IAppContext } from 'providers/App/types';
+import type { IAppContext } from 'providers/App/types';
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import { TestRouter } from 'tests/router';
-import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { EQueryType } from 'types/common/dashboard';
-import { ROLES } from 'types/roles';
+import type { SuccessResponse, Warning } from 'types/api';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { EQueryType } from 'types/common/dashboard';
+import type { ROLES } from 'types/roles';
 
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 import WidgetHeader from 'container/WidgetCard/Header/index';

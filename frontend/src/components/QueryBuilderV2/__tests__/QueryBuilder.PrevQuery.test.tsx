@@ -2,7 +2,7 @@ import { jest } from '@jest/globals';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render, screen, userEvent } from 'tests/test-utils';
-import {
+import type {
 	Having,
 	IBuilderQuery,
 	Query,

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Link2 } from '@signozhq/icons';
 import dayjs from 'dayjs';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import EntityMetadataRow from '../EntityMetadata/EntityMetadataRow';
 import { getAIUsageDetails, convertToAiTokens } from '../utils/aiTraceUtils';

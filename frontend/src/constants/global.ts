@@ -1,4 +1,4 @@
-import { ManipulateType } from 'dayjs';
+import type { ManipulateType } from 'dayjs';
 
 const MAX_RPS_LIMIT = 100;
 export { MAX_RPS_LIMIT };

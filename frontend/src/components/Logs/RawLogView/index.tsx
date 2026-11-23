@@ -1,10 +1,5 @@
-import {
-	memo,
-	MouseEvent,
-	MouseEventHandler,
-	useCallback,
-	useMemo,
-} from 'react';
+import type { MouseEvent, MouseEventHandler } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -25,7 +20,7 @@ import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { InfoIconWrapper, RawLogContent, RawLogViewContainer } from './styles';
-import { RawLogViewProps } from './types';
+import type { RawLogViewProps } from './types';
 
 function RawLogView({
 	isActiveLog,

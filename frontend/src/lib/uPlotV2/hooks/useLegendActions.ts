@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { usePlotContext } from 'lib/uPlotV2/context/PlotContext';
 
-import {
-	LegendAction,
-	LegendActionPayload,
-	OnLegendAction,
-} from '../components/types';
+import type { LegendActionPayload, OnLegendAction } from '../components/types';
+import { LegendAction } from '../components/types';
 
 /**
  * Legend interactions, bound to the plot through PlotContext. Hover is coalesced

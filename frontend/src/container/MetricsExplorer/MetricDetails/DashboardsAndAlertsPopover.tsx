@@ -15,7 +15,7 @@ import { Bell, Grid2X2 } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 import { pluralize } from 'utils/pluralize';
 
-import { DashboardsAndAlertsPopoverProps } from './types';
+import type { DashboardsAndAlertsPopoverProps } from './types';
 
 function DashboardsAndAlertsPopover({
 	metricName,

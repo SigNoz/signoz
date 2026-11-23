@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { red } from '@ant-design/colors';
 // eslint-disable-next-line signoz/no-antd-components -- Upload has no @signozhq/ui equivalent yet
-import { Upload, UploadProps } from 'antd';
+import type { UploadProps } from 'antd';
+import { Upload } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
@@ -14,7 +15,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { isValidDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 import { dashboardDurationError } from 'pages/DashboardPage/DashboardContainer/utils/dashboardDuration';

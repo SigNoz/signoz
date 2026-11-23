@@ -1,9 +1,9 @@
 import api from 'api';
-import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import type { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
 // eslint-disable-next-line no-restricted-imports
-import { Dispatch } from 'redux';
-import { GlobalTime } from 'types/actions/globalTime';
+import type { Dispatch } from 'redux';
+import type { GlobalTime } from 'types/actions/globalTime';
 
 import { ActionTypes } from './types';
 

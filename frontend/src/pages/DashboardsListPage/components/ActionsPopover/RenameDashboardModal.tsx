@@ -13,7 +13,7 @@ import {
 import type { DashboardtypesJSONPatchOperationDTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../../DashboardPage/DashboardContainer/constants';
 

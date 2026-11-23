@@ -1,19 +1,19 @@
 import { useMemo } from 'react';
-import { QueryFunctionContext, useQueries, UseQueryResult } from 'react-query';
+import type { QueryFunctionContext, UseQueryResult } from 'react-query';
+import { useQueries } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import {
-	GetMetricQueryRange,
-	GetQueryResultsProps,
-} from 'lib/dashboard/getQueryResults';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import uPlot from 'uplot';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type uPlot from 'uplot';
 
-import { getMetricsTableData, MetricsTableData } from './utils';
+import type { MetricsTableData } from './utils';
+import { getMetricsTableData } from './utils';
 
 export interface UseEntityMetricsParams<T> {
 	queryKey: string;

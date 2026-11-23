@@ -1,7 +1,7 @@
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';
 
 import { getCreateAlertLink, getExportPanelType } from '../utils';

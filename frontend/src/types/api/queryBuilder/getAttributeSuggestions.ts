@@ -1,7 +1,7 @@
-import { DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
 
-import { BaseAutocompleteData } from './queryAutocompleteResponse';
-import { TagFilter } from './queryBuilderData';
+import type { BaseAutocompleteData } from './queryAutocompleteResponse';
+import type { TagFilter } from './queryBuilderData';
 
 export interface IGetAttributeSuggestionsPayload {
 	dataSource: DataSource;

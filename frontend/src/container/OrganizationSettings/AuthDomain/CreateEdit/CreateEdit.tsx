@@ -7,22 +7,22 @@ import {
 	useCreateAuthDomain,
 	useUpdateAuthDomain,
 } from 'api/generated/services/authdomains';
-import {
+import type {
 	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { FeatureKeys } from 'constants/features';
 import { defaultTo } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorV2Resp } from 'types/api';
-import APIError from 'types/api/error';
+import type { ErrorV2Resp } from 'types/api';
+import type APIError from 'types/api/error';
 
 import AuthnProviderSelector from './AuthnProviderSelector';
+import type { FormValues } from './CreateEdit.utils';
 import {
-	FormValues,
 	kindToProvider,
 	prepareConfig,
 	prepareInitialValues,

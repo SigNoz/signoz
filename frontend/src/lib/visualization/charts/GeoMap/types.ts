@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import type { LegendPosition } from 'lib/uPlotV2/components/types';
-import {
+import type {
 	ColorRampMode,
 	ColorRampPalette,
 	ColorRampScale,

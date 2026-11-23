@@ -5,7 +5,7 @@ import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/t
 
 import { SAVED_VIEW_ROW_ACTIONS } from './constants';
 import SavedViewsRowButton from './SavedViewsRowButton';
-import { SavedViewsRowMenuProps } from './types';
+import type { SavedViewsRowMenuProps } from './types';
 
 function SavedViewsRowMenu({
 	viewId,

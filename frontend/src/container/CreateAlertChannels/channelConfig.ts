@@ -1,4 +1,4 @@
-import {
+import type {
 	AlertmanagertypesChannelConfigDTO,
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
@@ -18,14 +18,12 @@ import {
 import { omit, pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 
-import {
+import type {
 	ChannelFormValues,
-	ChannelKind,
 	ChannelSpecFormValues,
-	JiraDeployment,
 	KeysOfUnion,
-	WebhookAuth,
 } from './types';
+import { ChannelKind, JiraDeployment, WebhookAuth } from './types';
 import {
 	canonicalJiraReopenDuration,
 	filledRows,

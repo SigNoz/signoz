@@ -4,8 +4,8 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import logEvent from 'api/common/logEvent';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { DataSource } from 'types/common/queryBuilder';
 
 import {
 	EXPLORER_ACTION_EVENTS,

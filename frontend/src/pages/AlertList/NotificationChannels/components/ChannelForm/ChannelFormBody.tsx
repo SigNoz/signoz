@@ -2,10 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { Typography } from '@signozhq/ui/typography';
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import FormAlertChannels from 'container/FormAlertChannels';
-import { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
+import type { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
-import { ChannelFormTarget, useChannelFormState } from './useChannelFormState';
+import type { ChannelFormTarget } from './useChannelFormState';
+import { useChannelFormState } from './useChannelFormState';
 
 interface ChannelFormBodyProps {
 	draft: ChannelFormState;

@@ -1,4 +1,5 @@
-import { RefObject, useLayoutEffect, useRef } from 'react';
+import type { RefObject } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 
 const CURSOR_OFFSET = 15;
 

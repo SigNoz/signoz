@@ -1,4 +1,4 @@
-import { TableColumnsType as ColumnsType } from 'antd';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { Badge } from '@signozhq/ui/badge';
 import { Typography } from '@signozhq/ui/typography';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
@@ -8,9 +8,9 @@ import {
 	BlockLink,
 	getTraceLink,
 } from 'container/TracesExplorer/ListView/utils';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { FormatTimezoneAdjustedTimestamp } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import styles from './traceListColumns.module.scss';
 
 const keyToLabelMap: Record<string, string> = {

@@ -20,11 +20,11 @@ import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { useListOverview } from 'hooks/thirdPartyApis/useListOverview';
 import { get } from 'lodash-es';
 import { parseAsString, useQueryStates } from 'nuqs';
-import { AppState } from 'store/reducers';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
+import type { AppState } from 'store/reducers';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import DOCLINKS from 'utils/docLinks';
 
 import { ApiMonitoringHardcodedAttributeKeys } from '../../constants';

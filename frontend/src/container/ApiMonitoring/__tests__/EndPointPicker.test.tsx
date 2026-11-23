@@ -1,9 +1,7 @@
-import {
-	GetMetricQueryRange,
-	GetQueryResultsProps,
-} from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import EndPointPicker from '../Explorer/Domains/DomainDetails/components/EndPointPicker';
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';

@@ -1,4 +1,5 @@
-import React, { Dispatch, SetStateAction, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import React, { useState } from 'react';
 import { Check, Plus, X } from '@signozhq/icons';
 import { Button } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';

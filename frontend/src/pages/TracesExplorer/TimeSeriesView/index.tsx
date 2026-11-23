@@ -1,11 +1,10 @@
-import {
+import type {
 	Dispatch,
 	MutableRefObject,
 	ReactNode,
 	SetStateAction,
-	useEffect,
-	useMemo,
 } from 'react';
+import { useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -16,11 +15,11 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
-import APIError from 'types/api/error';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
+import type APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import './TimeSeriesView.styles.scss';
 

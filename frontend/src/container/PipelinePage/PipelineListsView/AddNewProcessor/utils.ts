@@ -1,4 +1,5 @@
-import { processorFields, ProcessorFormField } from './config';
+import type { ProcessorFormField } from './config';
+import { processorFields } from './config';
 
 const BODY_PARSE_FROM = 'body';
 const JSON_BODY_PARSE_FROM = 'body.message';

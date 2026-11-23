@@ -4,11 +4,11 @@ import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
-import {
+import type {
 	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
-	QuickFiltersSource,
 } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';

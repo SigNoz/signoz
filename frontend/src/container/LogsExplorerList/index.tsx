@@ -1,7 +1,8 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -32,15 +33,15 @@ import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 // interfaces
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import NoLogs from '../NoLogs/NoLogs';
-import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
+import type { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
 import {
 	convertKeysToColumnFields,

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isModifierKeyPressed } from 'utils/app';

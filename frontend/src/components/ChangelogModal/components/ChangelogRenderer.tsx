@@ -1,8 +1,10 @@
 import ReactMarkdown from 'react-markdown';
 import dayjs from 'dayjs';
-import {
+import type {
 	ChangelogSchema,
 	Media,
+} from 'types/api/changelog/getChangelogByVersion';
+import {
 	SupportedImageTypes,
 	SupportedVideoTypes,
 } from 'types/api/changelog/getChangelogByVersion';

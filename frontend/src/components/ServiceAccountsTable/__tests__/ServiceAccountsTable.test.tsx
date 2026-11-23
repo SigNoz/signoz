@@ -1,4 +1,4 @@
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent } from 'tests/test-utils';
 

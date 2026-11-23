@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { navigate } from 'lib/router/navigation';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
-import { IntegrationsProps } from 'types/api/integrations/types';
+import type { IntegrationsProps } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from './constants';
 import IntegrationsHeader from './IntegrationsHeader/IntegrationsHeader';

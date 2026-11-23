@@ -1,5 +1,5 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
-import { EQueryType } from 'types/common/dashboard';
+import type { EQueryType } from 'types/common/dashboard';
 
 import { toQueryEnvelopes } from '../../queryV5/buildQueryRangeRequest';
 import { deriveQueryType } from '../../queryV5/persesQueryAdapters';

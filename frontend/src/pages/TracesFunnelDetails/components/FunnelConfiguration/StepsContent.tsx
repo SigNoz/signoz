@@ -4,7 +4,7 @@ import logEvent from 'api/common/logEvent';
 import { Plus, Undo2 } from '@signozhq/icons';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import FunnelStep from './FunnelStep';
 import InterStepConfig from './InterStepConfig';

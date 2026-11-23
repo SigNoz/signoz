@@ -1,10 +1,14 @@
 import { OPERATORS, PANEL_TYPES } from 'constants/queryBuilder';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
-import { BreakoutAttributeType } from './types';
-import { AggregateData } from './useAggregateDrilldown';
+import type { FilterData } from './drilldownUtils';
+import { addFilterToSelectedQuery } from './drilldownUtils';
+import type { BreakoutAttributeType } from './types';
+import type { AggregateData } from './useAggregateDrilldown';
 
 export const isEmptyFilterValue = (value: any): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';

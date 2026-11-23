@@ -1,5 +1,5 @@
 import { render, screen } from 'tests/test-utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import Events from '../Events';
 

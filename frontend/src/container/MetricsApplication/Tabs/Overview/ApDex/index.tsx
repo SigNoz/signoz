@@ -5,7 +5,7 @@ import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import { useGetApDexSettings } from 'hooks/apDex/useGetApDexSettings';
 import { useNotifications } from 'hooks/useNotifications';
 import ApDexMetricsApplication from './ApDexMetricsApplication';
-import { ApDexApplicationProps } from './types';
+import type { ApDexApplicationProps } from './types';
 
 function ApDexApplication({
 	handleGraphClick,

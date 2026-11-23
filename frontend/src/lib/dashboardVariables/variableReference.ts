@@ -1,6 +1,9 @@
 import { escapeRegExp, isArray } from 'lodash-es';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import type { QueryBuilderData } from 'types/common/queryBuilder';
 

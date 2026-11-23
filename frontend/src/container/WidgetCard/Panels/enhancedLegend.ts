@@ -1,4 +1,4 @@
-import { Dimensions } from 'hooks/useDimensions';
+import type { Dimensions } from 'hooks/useDimensions';
 import { LegendPosition } from 'types/api/widgets/widget';
 
 export interface EnhancedLegendConfig {

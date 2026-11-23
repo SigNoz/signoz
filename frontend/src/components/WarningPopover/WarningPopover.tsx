@@ -1,12 +1,14 @@
-import { ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Popover, PopoverProps } from 'antd';
+import type { PopoverProps } from 'antd';
+import { Button, Popover } from 'antd';
 import ErrorIcon from 'assets/Error';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown, TriangleAlert } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import { Warning } from 'types/api';
+import type { Warning } from 'types/api';
 
 import './WarningPopover.styles.scss';
 

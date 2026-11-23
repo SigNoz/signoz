@@ -2,7 +2,7 @@ import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button as ButtonComponent, Card as CardComponent } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { StyledCSS } from 'types/styledComponents';
+import type { StyledCSS } from 'types/styledComponents';
 import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);

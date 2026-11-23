@@ -1,4 +1,5 @@
-import { UnitFamilyConfig, UniversalYAxisUnit, YAxisUnit } from './types';
+import type { UnitFamilyConfig } from './types';
+import { UniversalYAxisUnit, YAxisUnit } from './types';
 
 export enum YAxisCategoryNames {
 	Time = 'Time',

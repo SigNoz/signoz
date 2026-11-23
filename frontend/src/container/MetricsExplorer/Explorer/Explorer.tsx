@@ -26,8 +26,8 @@ import {
 	metricsRunQueryAction,
 	metricsSaveViewAction,
 } from 'pages/MetricsExplorer/aiActions';
-import { Warning } from 'types/api';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { Warning } from 'types/api';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';

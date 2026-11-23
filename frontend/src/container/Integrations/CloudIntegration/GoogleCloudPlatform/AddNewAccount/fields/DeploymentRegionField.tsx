@@ -2,10 +2,11 @@ import { Combobox } from '@signozhq/ui/combobox';
 import type { ComboboxItemType } from '@signozhq/ui/combobox';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
 import { GCP_REGIONS } from 'container/Integrations/constants';
-import { Control, Controller } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
 import FormField from '../FormField';
-import { GcpSetupFormValues } from '../types';
+import type { GcpSetupFormValues } from '../types';
 
 const TOOLTIPS: Record<CloudintegrationtypesGCPConnectionMethodDTO, string> = {
 	[CloudintegrationtypesGCPConnectionMethodDTO.manual]:

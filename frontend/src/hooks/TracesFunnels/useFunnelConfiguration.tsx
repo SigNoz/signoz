@@ -7,8 +7,8 @@ import { useLocalStorage } from 'hooks/useLocalStorage';
 import { useNotifications } from 'hooks/useNotifications';
 import { isEqual } from 'lodash-es';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
 
 import { useUpdateFunnelSteps } from './useFunnels';
 

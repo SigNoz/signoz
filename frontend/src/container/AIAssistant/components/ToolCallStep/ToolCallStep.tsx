@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { StreamingToolCall } from '../../types';
+import type { StreamingToolCall } from '../../types';
 import ActivityStep from '../ActivityStep/ActivityStep';
 
 import styles from './ToolCallStep.module.scss';

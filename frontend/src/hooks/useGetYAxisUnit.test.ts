@@ -1,10 +1,11 @@
 import { renderHook } from '@testing-library/react';
-import { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesMetricMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { useGetMetrics } from 'container/MetricsExplorer/Explorer/utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
+import type { QueryBuilderContextType } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { useQueryBuilder } from './queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from './useGetYAxisUnit';

@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import {
+import type { UseQueryResult } from 'react-query';
+import type {
 	ErrorTraceData,
 	FunnelOverviewPayload,
 	SlowTraceData,
 } from 'api/traceFunnels';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { FunnelStepData } from 'types/api/traceFunnels';
 
 import FunnelTable from './FunnelTable';
 import { topTracesTableColumns } from './utils';

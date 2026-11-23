@@ -1,6 +1,6 @@
 import type { FilterValue, SortOrder } from 'antd/lib/table/interface';
 import Timestamp from 'timestamp-nano';
-import { Order, OrderBy } from 'types/api/errors/getAll';
+import type { Order, OrderBy } from 'types/api/errors/getAll';
 
 import {
 	DEFAULT_FILTER_VALUE,

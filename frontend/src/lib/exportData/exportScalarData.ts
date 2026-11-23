@@ -1,11 +1,11 @@
 import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 import { exportTableData } from './exportTableData';
-import { SerializedTable } from './types';
+import type { SerializedTable } from './types';
 
 interface ExportScalarDataArgs {
 	// The queryRange response object the table mount already holds (the

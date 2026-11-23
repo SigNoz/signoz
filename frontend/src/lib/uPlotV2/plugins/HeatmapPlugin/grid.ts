@@ -1,4 +1,4 @@
-import { HeatmapGrid, HeatmapSeries } from './types';
+import type { HeatmapGrid, HeatmapSeries } from './types';
 
 const EMPTY_GRID: HeatmapGrid = {
 	bounds: [],

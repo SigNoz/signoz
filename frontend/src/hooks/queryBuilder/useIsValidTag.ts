@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { OperatorType } from './useOperatorType';
+import type { OperatorType } from './useOperatorType';
 
 export const validationMapper: Record<
 	OperatorType,

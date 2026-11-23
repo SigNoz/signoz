@@ -1,11 +1,6 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import {
-	fireEvent,
-	render,
-	RenderResult,
-	screen,
-	waitFor,
-} from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 

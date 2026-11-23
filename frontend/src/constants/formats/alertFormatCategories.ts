@@ -1,13 +1,11 @@
 import type { DefaultOptionType } from 'antd/es/select';
 
+import type { Category, HelperCategory, HelperFormat } from './types';
 import {
 	BooleanFormats,
-	Category,
 	CategoryNames,
 	DataFormats,
 	DataRateFormats,
-	HelperCategory,
-	HelperFormat,
 	MiscellaneousFormats,
 	ThroughputFormats,
 	TimeFormats,

@@ -1,12 +1,16 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings } from '@signozhq/icons';
-import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import type { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import FieldsSelector from 'components/FieldsSelector';
-import Controls, { ControlsProps } from 'container/Controls';
-import { OptionsMenuConfig } from 'container/OptionsMenu/types';
+import type { ControlsProps } from 'container/Controls';
+import Controls from 'container/Controls';
+import type { OptionsMenuConfig } from 'container/OptionsMenu/types';
 import useQueryPagination from 'hooks/queryPagination/useQueryPagination';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type {
+	BuilderQueryType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import styles from './Controls.module.scss';

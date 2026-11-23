@@ -11,11 +11,11 @@ import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';
 import PlotTag from 'components/PlotTag/PlotTag';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useGetYAxisUnit from 'hooks/useGetYAxisUnit';
-import { AppState } from 'store/reducers';
+import type { AppState } from 'store/reducers';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
+import type { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 export interface ChartPreviewProps {
 	alertDef: AlertDef;

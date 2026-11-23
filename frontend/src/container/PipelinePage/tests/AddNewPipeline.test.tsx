@@ -1,6 +1,6 @@
 import { Form } from 'antd';
 import { render } from 'tests/test-utils';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewPipeline from '../PipelineListsView/AddNewPipeline';

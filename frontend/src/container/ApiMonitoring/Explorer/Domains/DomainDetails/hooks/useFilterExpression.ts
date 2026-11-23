@@ -1,4 +1,5 @@
-import { FocusEvent, useCallback, useEffect, useMemo, useRef } from 'react';
+import type { FocusEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
 	useInitialExpression,
 	useQuerySearchInitialExpressionProp,
@@ -10,7 +11,7 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 

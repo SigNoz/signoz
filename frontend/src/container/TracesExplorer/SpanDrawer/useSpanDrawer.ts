@@ -1,14 +1,8 @@
-import {
-	PointerEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { PointerEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { useRowNavigation } from 'components/TanStackTableView/useRowNavigation';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import type { TracesTableProps } from 'container/TracesExplorer/TracesTable/TracesTable';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useCloseOnOutsidePress } from 'hooks/useCloseOnOutsidePress';

@@ -15,7 +15,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { SlidersHorizontal } from '@signozhq/icons';
 
 import ResizeTable from './ResizeTable';
-import { DynamicColumnTableProps } from './types';
+import type { DynamicColumnTableProps } from './types';
 import {
 	getNewColumnData,
 	getVisibleColumns,

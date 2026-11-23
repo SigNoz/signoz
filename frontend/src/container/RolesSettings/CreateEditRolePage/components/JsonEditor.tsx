@@ -7,7 +7,8 @@ import {
 	useRef,
 } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import MEditor, { Monaco, OnMount } from '@monaco-editor/react';
+import type { Monaco, OnMount } from '@monaco-editor/react';
+import MEditor from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -32,7 +33,7 @@ import {
 } from './jsonSchema.config';
 
 import styles from './JsonEditor.module.scss';
-import { JsonEditorProps, JsonEditorRef } from './JsonEditor.types';
+import type { JsonEditorProps, JsonEditorRef } from './JsonEditor.types';
 
 type MonacoEditor = Parameters<OnMount>[0];
 

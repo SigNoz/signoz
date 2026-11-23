@@ -1,7 +1,10 @@
-import { SuccessResponse } from 'types/api/index';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryRangeResponseV5, TimeSeriesData } from 'types/api/v5/queryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { SuccessResponse } from 'types/api/index';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type {
+	QueryRangeResponseV5,
+	TimeSeriesData,
+} from 'types/api/v5/queryRange';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 type ConvertibleData = SuccessResponse<MetricRangePayloadProps> & {
 	rawV5Response?: QueryRangeResponseV5;

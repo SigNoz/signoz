@@ -1,11 +1,11 @@
-import {
+import type {
 	Querybuildertypesv5QueryRangeResponseDTO,
 	Querybuildertypesv5TimeSeriesDataDTO,
 	Querybuildertypesv5TimeSeriesDTO,
 	Querybuildertypesv5TimeSeriesValueDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 function findSeries(
 	series: Querybuildertypesv5TimeSeriesDTO[] | null | undefined,

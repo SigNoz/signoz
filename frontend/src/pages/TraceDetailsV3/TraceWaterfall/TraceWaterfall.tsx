@@ -1,9 +1,13 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useMemo } from 'react';
 import { Skeleton } from 'antd';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { GetTraceV4SuccessResponse, SpanV3 } from 'types/api/trace/getTraceV3';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
+	GetTraceV4SuccessResponse,
+	SpanV3,
+} from 'types/api/trace/getTraceV3';
 
 import { TraceWaterfallStates } from './constants';
 import Error from './TraceWaterfallStates/Error/Error';
@@ -11,7 +15,7 @@ import NoData from './TraceWaterfallStates/NoData/NoData';
 import Success from './TraceWaterfallStates/Success/Success';
 import { getVisibleSpans } from './utils';
 
-import { IInterestedSpan } from './types';
+import type { IInterestedSpan } from './types';
 
 import styles from './TraceWaterfall.module.scss';
 

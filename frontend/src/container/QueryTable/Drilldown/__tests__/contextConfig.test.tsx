@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ClickedData } from 'periscope/components/ContextMenu';
+import type { ClickedData } from 'periscope/components/ContextMenu';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getGroupContextMenuConfig } from '../contextConfig';
 

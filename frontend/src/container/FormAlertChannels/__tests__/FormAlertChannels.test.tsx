@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { ChannelInitialConfig } from 'container/CreateAlertChannels/defaults';
+import type { ChannelFormValues } from 'container/CreateAlertChannels/types';
 import {
-	ChannelFormValues,
 	ChannelKind,
 	JiraDeployment,
 	WebhookAuth,

@@ -1,6 +1,6 @@
-import { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { InframonitoringtypesNodeRecordDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -12,9 +12,9 @@ import {
 	buildLogsTracesExpression,
 } from 'container/InfraMonitoringK8sV2/Base/utils';
 
-import { K8sDetailsMetadataConfig } from '../Base/types';
+import type { K8sDetailsMetadataConfig } from '../Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 
 export const k8sNodeGetSelectedItemExpression = (
 	params: SelectedItemParams,

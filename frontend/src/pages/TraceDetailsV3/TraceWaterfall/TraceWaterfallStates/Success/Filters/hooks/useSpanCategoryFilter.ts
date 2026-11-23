@@ -1,7 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 
-import { applyExpression, ExpressionFilterProps } from './types';
+import type { ExpressionFilterProps } from './types';
+import { applyExpression } from './types';
 
 export type SpanCategory =
 	| 'All'

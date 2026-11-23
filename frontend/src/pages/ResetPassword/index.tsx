@@ -1,11 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { useLocation } from 'react-use';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import getUserVersion from 'api/v1/version/get';
 import { verifyResetPasswordToken } from 'api/generated/services/users';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { Logout } from 'api/utils';
 import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';
@@ -14,7 +14,7 @@ import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 function ResetPassword(): JSX.Element {
 	const { user, isLoggedIn } = useAppContext();

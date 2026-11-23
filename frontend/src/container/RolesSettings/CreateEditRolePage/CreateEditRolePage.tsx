@@ -15,7 +15,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { useNavigationBlocker } from 'hooks/useNavigationBlocker';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
-import { RouterContext } from 'lib/authz/components/withAuthZ/withAuthZ';
+import type { RouterContext } from 'lib/authz/components/withAuthZ/withAuthZ';
 import {
 	buildRoleReadPermission,
 	buildRoleUpdatePermission,
@@ -27,7 +27,7 @@ import PermissionEditor from './components/PermissionEditor';
 import { useCreateEditRolePageActions } from './useCreateEditRolePageActions';
 
 import styles from './CreateEditRolePage.module.scss';
-import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 
 function authzCheckFn(

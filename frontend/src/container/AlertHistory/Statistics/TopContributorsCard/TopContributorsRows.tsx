@@ -1,11 +1,12 @@
-import { HTMLAttributes } from 'react';
-import { Table, TableColumnsType as ColumnsType } from 'antd';
+import type { HTMLAttributes } from 'react';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Table } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import logEvent from 'api/common/logEvent';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
-import {
+import type {
 	AlertRuleStats,
 	AlertRuleTimelineTableResponse,
 	AlertRuleTopContributors,

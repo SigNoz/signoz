@@ -8,12 +8,12 @@ import {
 	CornerDownLeft,
 	Slash,
 } from '@signozhq/icons';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { getUserOperatingSystem, UserOperatingSystem } from 'utils/getUserOS';
 
 import ExampleQueriesRendererForLogs from './ExampleQueriesRendererForLogs';
 import { convertExampleQueriesToOptions } from './utils';
-import { ITag, Option } from './QueryBuilderSearchV2';
+import type { ITag, Option } from './QueryBuilderSearchV2';
 
 import './QueryBuilderSearchV2.styles.scss';
 

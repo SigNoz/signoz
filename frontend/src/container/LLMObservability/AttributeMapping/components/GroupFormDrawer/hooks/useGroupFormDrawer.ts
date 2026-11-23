@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { DraftGroup, GroupDraft, MapperDraftMode } from '../../../types';
+import type { DraftGroup, GroupDraft, MapperDraftMode } from '../../../types';
 import { EMPTY_GROUP_DRAFT, groupDraftFromNode } from '../../../utils';
 
 interface UseGroupFormDrawer {

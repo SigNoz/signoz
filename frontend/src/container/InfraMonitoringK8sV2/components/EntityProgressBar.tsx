@@ -2,10 +2,8 @@ import { Progress } from '@signozhq/ui/progress';
 import TanStackTable from 'components/TanStackTableView';
 
 import styles from './EntityProgressBar.module.scss';
-import {
-	EntityProgressBarType,
-	getProgressColor,
-} from './EntityProgressBar.utils';
+import type { EntityProgressBarType } from './EntityProgressBar.utils';
+import { getProgressColor } from './EntityProgressBar.utils';
 
 export function EntityProgressBar({
 	value,

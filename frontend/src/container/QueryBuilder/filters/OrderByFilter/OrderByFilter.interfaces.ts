@@ -1,4 +1,4 @@
-import {
+import type {
 	IBuilderQuery,
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';

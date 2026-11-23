@@ -1,7 +1,7 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 import logEvent from 'api/common/logEvent';
 
 import { createSyncDisplayHook } from './syncDisplayHook';
@@ -15,15 +15,17 @@ import {
 	updatePlotVisibility,
 	updateWindowSize,
 } from './tooltipController';
-import {
-	DashboardCursorSync,
-	DEFAULT_PIN_TOOLTIP_KEY,
-	SyncTooltipFilterMode,
+import type {
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
 	TooltipPluginProps,
 	TooltipViewState,
+} from './types';
+import {
+	DashboardCursorSync,
+	DEFAULT_PIN_TOOLTIP_KEY,
+	SyncTooltipFilterMode,
 } from './types';
 import {
 	buildClickData,

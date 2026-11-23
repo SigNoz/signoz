@@ -1,5 +1,5 @@
 import axios from 'api';
-import {
+import type {
 	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,
 } from 'types/api/metrics/getApDex';

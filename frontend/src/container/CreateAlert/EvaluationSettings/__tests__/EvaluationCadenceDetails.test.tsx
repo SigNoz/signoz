@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import * as alertState from 'container/CreateAlert/context';
 import { INITIAL_ADVANCED_OPTIONS_STATE } from 'container/CreateAlert/context/constants';
-import { AdvancedOptionsState } from 'container/CreateAlert/context/types';
+import type { AdvancedOptionsState } from 'container/CreateAlert/context/types';
 
 import EvaluationCadenceDetails from '../EvaluationCadence/EvaluationCadenceDetails';
 import { createMockAlertContextState } from './testUtils';

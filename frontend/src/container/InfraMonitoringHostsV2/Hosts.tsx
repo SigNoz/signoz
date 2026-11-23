@@ -3,27 +3,26 @@ import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { listHosts } from 'api/generated/services/inframonitoring';
-import {
+import type {
 	InframonitoringtypesHostRecordDTO,
 	InframonitoringtypesHostStatusDTO,
-	InframonitoringtypesResponseTypeDTO,
-	Querybuildertypesv5OrderDirectionDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
-import APIError from 'types/api/error';
-import QuickFilters from 'components/QuickFilters/QuickFilters';
 import {
-	QuickFilterChangeEventData,
-	QuickFiltersSource,
-} from 'components/QuickFilters/types';
-import K8sBaseDetails, {
-	K8sDetailsFilters,
-} from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+	InframonitoringtypesResponseTypeDTO,
+	Querybuildertypesv5OrderDirectionDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+import type APIError from 'types/api/error';
+import QuickFilters from 'components/QuickFilters/QuickFilters';
+import type { QuickFilterChangeEventData } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
+import type { K8sDetailsFilters } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import K8sBaseDetails from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
 import { DefaultQueryRedirect } from 'container/InfraMonitoringK8sV2/Base/DefaultQueryRedirect';
 import { K8sBaseList } from 'container/InfraMonitoringK8sV2/Base/K8sBaseList';
 import StatusFilter from 'container/InfraMonitoringHostsV2/StatusFilter';
-import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
+import type { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
 import {
 	InfraMonitoringEntity,
 	METRIC_NAMESPACE_BY_ENTITY,

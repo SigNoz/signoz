@@ -1,7 +1,11 @@
-import { QueryRangeRequestV5 } from 'api/v5/v5';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Column, QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { QueryRangeRequestV5 } from 'api/v5/v5';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type {
+	Column,
+	QueryData,
+	QueryDataV3,
+} from 'types/api/widgets/getQuery';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function populateMultipleResults(

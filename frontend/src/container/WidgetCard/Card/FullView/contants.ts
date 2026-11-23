@@ -1,4 +1,4 @@
-import { PanelTypeAndGraphManagerVisibilityProps } from 'container/WidgetCard/Card/FullView/types';
+import type { PanelTypeAndGraphManagerVisibilityProps } from 'container/WidgetCard/Card/FullView/types';
 
 export enum ColumnsKeyAndDataIndex {
 	Index = 'index',

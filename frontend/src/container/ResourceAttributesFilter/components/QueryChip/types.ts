@@ -1,4 +1,4 @@
-import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
+import type { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 
 export interface IQueryChipProps {
 	queryData: IResourceAttribute;

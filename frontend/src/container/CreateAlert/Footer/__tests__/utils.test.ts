@@ -7,18 +7,20 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlert/context/constants';
-import {
+import type {
 	AdvancedOptionsState,
-	AlertThresholdOperator,
 	EvaluationWindowState,
 	NotificationSettingsState,
+} from 'container/CreateAlert/context/types';
+import {
+	AlertThresholdOperator,
 	Seasonality,
 } from 'container/CreateAlert/context/types';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
-import { BuildCreateAlertRulePayloadArgs } from '../types';
+import type { BuildCreateAlertRulePayloadArgs } from '../types';
 import {
 	buildCreateAlertRulePayload,
 	buildCreateThresholdAlertRulePayload,

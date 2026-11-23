@@ -1,13 +1,13 @@
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import { UserPreference } from 'types/api/preferences/preference';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { UserPreference } from 'types/api/preferences/preference';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { create } from 'zustand';
 
+import type { ColorByOption } from '../constants';
 import {
 	COLOR_BY_FIELDS,
 	COLOR_BY_OPTIONS,
-	ColorByOption,
 	DEFAULT_COLOR_BY_FIELD,
 } from '../constants';
 import { toTelemetryFieldKey } from '../utils/previewFields';

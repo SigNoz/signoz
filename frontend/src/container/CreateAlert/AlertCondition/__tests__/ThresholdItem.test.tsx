@@ -3,11 +3,11 @@ import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
-import { ThresholdItemProps } from '../types';
+import type { ThresholdItemProps } from '../types';
 
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 

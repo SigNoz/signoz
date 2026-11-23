@@ -1,6 +1,6 @@
 import { Gauge } from '@signozhq/icons';
 import { Tooltip } from 'antd';
-import { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesGettableReductionRuleDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { Badge } from '@signozhq/ui/badge';
 

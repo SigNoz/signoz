@@ -1,23 +1,18 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import {
-	render,
-	RenderResult,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 } from 'constants/queryBuilder';
-import { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
-import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
+import type { TelemetrytypesTelemetryFieldValuesDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesSuggestion';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { getQueryLabelWithAggregation } from 'components/QueryBuilderV2/utils';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 export const useGetQueryLabels = (

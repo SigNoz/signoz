@@ -16,7 +16,7 @@ import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphTestHook } from './hooks/useFlamegraphTestHook';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
 import { useScrollToSpan } from './hooks/useScrollToSpan';
-import { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
+import type { EventRect, FlamegraphCanvasProps, SpanRect } from './types';
 
 import styles from './FlamegraphCanvas.module.scss';
 

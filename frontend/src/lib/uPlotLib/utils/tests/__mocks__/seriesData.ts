@@ -1,6 +1,6 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
-import { GetSeriesProps } from '../../getSeriesData';
+import type { GetSeriesProps } from '../../getSeriesData';
 
 export const seriesBarChartData = {
 	series: [

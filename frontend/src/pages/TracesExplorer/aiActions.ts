@@ -11,18 +11,18 @@
  */
 
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import type { FilterDeps } from 'container/AIAssistant/pageActions/builderQueryHelpers';
 import {
 	aiFilterToTagFilterItem,
 	FILTER_OP_ENUM,
 	FILTER_VALUE_DESCRIPTION,
-	FilterDeps,
 	replaceFirstQueryData,
 } from 'container/AIAssistant/pageActions/builderQueryHelpers';
-import {
+import type {
 	ActionResult,
 	PageAction,
 } from 'container/AIAssistant/pageActions/types';
-import {
+import type {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';

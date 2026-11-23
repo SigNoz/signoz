@@ -1,10 +1,10 @@
 import type { UseQueryResult } from 'react-query';
-import { HistogramChartProps } from 'lib/visualization/charts/types';
+import type { HistogramChartProps } from 'lib/visualization/charts/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { render, screen } from 'tests/test-utils';
-import { Widgets } from 'types/api/widgets/widget';
-import {
+import type { Widgets } from 'types/api/widgets/widget';
+import type {
 	MetricQueryRangeSuccessResponse,
 	MetricRangePayloadProps,
 } from 'types/api/metrics/getQueryRange';

@@ -7,11 +7,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import {
-	NuqsTestingAdapter,
+import type {
 	OnUrlUpdateFunction,
 	UrlUpdateEvent,
 } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
@@ -21,10 +21,10 @@ import APIError from 'types/api/error';
 import logEvent from 'api/common/logEvent';
 import { openInNewTab } from 'utils/navigation';
 
-import { TableColumnDef } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
 
 import { InfraMonitoringEntity } from '../../constants';
-import { SelectedItemParams } from '../../hooks';
+import type { SelectedItemParams } from '../../hooks';
 
 window.ResizeObserver =
 	window.ResizeObserver ||
@@ -34,7 +34,8 @@ window.ResizeObserver =
 		unobserve: jest.fn(),
 	}));
 
-import { K8sBaseList, K8sBaseListProps, K8sEntityData } from '../K8sBaseList';
+import type { K8sBaseListProps, K8sEntityData } from '../K8sBaseList';
+import { K8sBaseList } from '../K8sBaseList';
 
 jest.mock('utils/navigation', () => ({
 	...jest.requireActual('utils/navigation'),

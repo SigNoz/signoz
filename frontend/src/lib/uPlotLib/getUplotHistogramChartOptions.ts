@@ -1,17 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { Dispatch, SetStateAction } from 'react';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { Dispatch, SetStateAction } from 'react';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { saveLegendEntriesToLocalStorage } from 'container/WidgetCard/Card/FullView/utils';
-import { Dimensions } from 'hooks/useDimensions';
+import type { Dimensions } from 'hooks/useDimensions';
 import getLabelName from 'lib/getLabelName';
 import _noop from 'lodash-es/noop';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
-import onClickPlugin, { OnClickPluginOpts } from './plugins/onClickPlugin';
+import type { OnClickPluginOpts } from './plugins/onClickPlugin';
+import onClickPlugin from './plugins/onClickPlugin';
 import tooltipPlugin from './plugins/tooltipPlugin';
 import { drawStyles } from './utils/constants';
 import { generateColor } from './utils/generateColor';

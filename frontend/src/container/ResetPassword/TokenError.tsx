@@ -5,7 +5,7 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import './ResetPassword.styles.scss';
 

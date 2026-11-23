@@ -1,5 +1,6 @@
 import { forwardRef, useMemo } from 'react';
-import { Button, ButtonProps } from '@signozhq/ui/button';
+import type { ButtonProps } from '@signozhq/ui/button';
+import { Button } from '@signozhq/ui/button';
 import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
 import { deniedTooltip } from 'lib/authz/components/deniedTooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';

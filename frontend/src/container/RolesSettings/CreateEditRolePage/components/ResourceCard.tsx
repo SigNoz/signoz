@@ -9,7 +9,8 @@ import { supportsOnlySelected } from '../../permissions.config';
 import ActionToggle from './ActionToggle';
 
 import styles from './ResourceCard.module.scss';
-import { PermissionScope, ResourcePermissions } from '../../types';
+import type { ResourcePermissions } from '../../types';
+import { PermissionScope } from '../../types';
 import cx from 'classnames';
 
 interface ResourceCardProps {

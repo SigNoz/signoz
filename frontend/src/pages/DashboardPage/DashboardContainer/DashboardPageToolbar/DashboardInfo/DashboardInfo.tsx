@@ -1,4 +1,4 @@
-import { type FocusEvent, KeyboardEvent } from 'react';
+import type { KeyboardEvent, FocusEvent } from 'react';
 import {
 	Check,
 	Globe,

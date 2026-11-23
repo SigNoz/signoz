@@ -1,4 +1,4 @@
-import { ParsedRgb } from 'lib/visualization/charts/Pie/types';
+import type { ParsedRgb } from 'lib/visualization/charts/Pie/types';
 
 // Parses `#rrggbb` into its components. Returns null for anything else (e.g. an
 // already-rgba string), letting callers fall back to the original colour.

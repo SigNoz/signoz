@@ -1,18 +1,22 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	defaultOptionsQuery,
 	URL_OPTIONS,
 } from 'container/OptionsMenu/constants';
-import { OptionsQuery } from 'container/OptionsMenu/types';
+import type { OptionsQuery } from 'container/OptionsMenu/types';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 
 import getAiObservabilityUpdaterConfig from '../configs/aiObservabilityUpdaterConfig';
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';
 import getTracesUpdaterConfig from '../configs/tracesUpdaterConfig';
-import { FormattingOptions, Preferences, PreferenceSourcePage } from '../types';
+import type {
+	FormattingOptions,
+	Preferences,
+	PreferenceSourcePage,
+} from '../types';
 
 const getUpdaterConfig = (
 	preferences: Preferences | null,

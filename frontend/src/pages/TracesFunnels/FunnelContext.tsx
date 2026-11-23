@@ -1,8 +1,7 @@
+import type { Dispatch, SetStateAction } from 'react';
 import {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	Dispatch,
-	SetStateAction,
 	useCallback,
 	// eslint-disable-next-line no-restricted-imports
 	useContext,
@@ -13,9 +12,9 @@ import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import { ValidateFunnelResponse } from 'api/traceFunnels';
+import type { ValidateFunnelResponse } from 'api/traceFunnels';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
@@ -27,10 +26,10 @@ import {
 	createInitialStepsData,
 	createSingleStepData,
 } from 'pages/TracesFunnelDetails/constants';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { FunnelData, FunnelStepData } from 'types/api/traceFunnels';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 } from 'uuid';
 
 interface FunnelContextType {

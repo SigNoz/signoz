@@ -3,7 +3,7 @@ import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { Info } from '@signozhq/icons';
 
-import { MetricDetailsErrorStateProps } from './types';
+import type { MetricDetailsErrorStateProps } from './types';
 
 function MetricDetailsErrorState({
 	refetch,

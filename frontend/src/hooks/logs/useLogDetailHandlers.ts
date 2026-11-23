@@ -3,7 +3,7 @@ import { VIEW_TYPES } from 'components/LogDetail/constants';
 import type { UseActiveLog } from 'hooks/logs/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsTextSelected } from 'hooks/useIsTextSelected';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 type SelectedTab = (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES] | undefined;
 

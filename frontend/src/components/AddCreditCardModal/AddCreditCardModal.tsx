@@ -8,7 +8,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { CreditCard, X } from '@signozhq/icons';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 
 interface AddCreditCardModalProps {

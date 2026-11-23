@@ -3,17 +3,16 @@ import { flushSync } from 'react-dom';
 import { AutoComplete, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useListMetrics } from 'api/generated/services/metrics';
-import { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
-import { ATTRIBUTE_TYPES, toAttributeType } from 'constants/queryBuilder';
+import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { toAttributeType } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
-import { ExtendedSelectOption } from 'types/common/select';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
+import type { ExtendedSelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';

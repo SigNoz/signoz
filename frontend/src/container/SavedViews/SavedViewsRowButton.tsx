@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 
-import { SavedViewsRowButtonProps } from './types';
+import type { SavedViewsRowButtonProps } from './types';
 
 // forwardRef and rest props so a menu can use it as its trigger.
 const SavedViewsRowButton = forwardRef<

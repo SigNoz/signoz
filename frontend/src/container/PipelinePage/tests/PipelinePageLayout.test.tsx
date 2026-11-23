@@ -1,5 +1,5 @@
 import { render } from 'tests/test-utils';
-import { Pipeline } from 'types/api/pipeline/def';
+import type { Pipeline } from 'types/api/pipeline/def';
 import { v4 } from 'uuid';
 
 import PipelinePageLayout from '../Layouts/Pipeline';

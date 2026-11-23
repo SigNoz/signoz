@@ -2,7 +2,7 @@ import { useAppParams } from 'lib/router/useAppParams';
 import { useFunnelStepsMetrics } from 'hooks/TracesFunnels/useFunnelMetrics';
 
 import FunnelMetricsTable from './FunnelMetricsTable';
-import { StepTransition } from './StepsTransitionResults';
+import type { StepTransition } from './StepsTransitionResults';
 
 interface StepsTransitionMetricsProps {
 	selectedTransition: string;

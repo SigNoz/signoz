@@ -12,8 +12,9 @@ import timelinePlugin from 'lib/uPlotLib/plugins/timelinePlugin';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
-import { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
-import uPlot, { AlignedData } from 'uplot';
+import type { AlertRuleTimelineGraphResponse } from 'types/api/alerts/def';
+import type { AlignedData } from 'uplot';
+import uPlot from 'uplot';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import { ALERT_STATUS, TIMELINE_OPTIONS } from './constants';

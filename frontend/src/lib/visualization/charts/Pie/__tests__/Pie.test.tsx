@@ -1,9 +1,9 @@
 import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
+import type { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import Pie from 'lib/visualization/charts/Pie/Pie';
 import { userEvent } from 'tests/test-utils';
 

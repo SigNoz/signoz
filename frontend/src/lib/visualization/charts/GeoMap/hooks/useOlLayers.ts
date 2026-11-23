@@ -3,8 +3,8 @@ import Feature from 'ol/Feature';
 import Point from 'ol/geom/Point';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 
-import { GeoMapShapes } from '../geo/shapes';
-import {
+import type { GeoMapShapes } from '../geo/shapes';
+import type {
 	GeoMapDatum,
 	GeoMapLayer,
 	GeoMapPoint,
@@ -18,14 +18,14 @@ import {
 	toWebGLPointFeatures,
 } from '../utils/olFeatures';
 import { labelFits } from '../utils/olLabels';
+import type { OlPalette } from '../utils/olStyles';
 import {
 	createPointsStyle,
 	createStyleCache,
 	MIN_OUTLINED_POINT_RADIUS,
-	OlPalette,
 } from '../utils/olStyles';
-import { OlMapHandle } from './useOlMap';
-import { OlPointsLayer } from './useOlPointsLayer';
+import type { OlMapHandle } from './useOlMap';
+import type { OlPointsLayer } from './useOlPointsLayer';
 
 interface UseOlLayersArgs {
 	handle: OlMapHandle | null;

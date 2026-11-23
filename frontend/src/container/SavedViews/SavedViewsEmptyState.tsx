@@ -5,7 +5,7 @@ import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { SavedViewCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
 import SaveViewModal from './SaveViewModal';
-import { SavedViewsEmptyStateProps } from './types';
+import type { SavedViewsEmptyStateProps } from './types';
 
 import styles from './SavedViewsList.module.scss';
 

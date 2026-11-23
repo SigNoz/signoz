@@ -1,4 +1,5 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useMemo } from 'react';
 import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';

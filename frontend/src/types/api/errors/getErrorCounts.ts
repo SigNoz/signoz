@@ -1,5 +1,5 @@
-import { GlobalTime } from 'types/actions/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { GlobalTime } from 'types/actions/globalTime';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 export type Props = {
 	start: GlobalTime['minTime'];

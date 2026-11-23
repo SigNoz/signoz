@@ -1,8 +1,11 @@
-import {
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { BuilderQuery, QueryBuilderFormula } from 'types/api/v5/queryRange';
+import type {
+	BuilderQuery,
+	QueryBuilderFormula,
+} from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 // Helper functions

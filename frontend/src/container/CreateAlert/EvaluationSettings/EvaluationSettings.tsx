@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp } from '@signozhq/icons';
 
 import { useCreateAlertState } from '../context';
 import EvaluationWindowPopover from './EvaluationWindowPopover';
-import { IEvaluationSettingsProps } from './types';
+import type { IEvaluationSettingsProps } from './types';
 import { getEvaluationWindowTypeText, getTimeframeText } from './utils';
 
 import './styles.scss';

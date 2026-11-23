@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { AlertTypes, PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import AlertCondition from '../CreateAlert/AlertCondition';
 import { buildInitialAlertDef } from '../CreateAlert/context/utils';

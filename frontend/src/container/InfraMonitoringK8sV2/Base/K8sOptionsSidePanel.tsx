@@ -1,22 +1,21 @@
-import { ChangeEvent, ReactNode, useCallback, useMemo } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
 import { Check, Minus, Plus } from '@signozhq/icons';
+import type { TableColumnDef } from 'components/TanStackTableView';
 import {
 	hideColumn,
 	showColumn,
-	TableColumnDef,
 	useColumnOrder,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView';
-import { InfraMonitoringEntity } from '../constants';
+import type { InfraMonitoringEntity } from '../constants';
 
-import {
-	FontSize,
-	useInfraMonitoringTablePreferencesStore,
-} from './useInfraMonitoringTablePreferencesStore';
+import type { FontSize } from './useInfraMonitoringTablePreferencesStore';
+import { useInfraMonitoringTablePreferencesStore } from './useInfraMonitoringTablePreferencesStore';
 import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
 import { sortByColumnOrder } from './utils';
 

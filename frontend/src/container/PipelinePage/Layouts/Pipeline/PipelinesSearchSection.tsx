@@ -1,4 +1,4 @@
-import { BaseSyntheticEvent, Dispatch, SetStateAction } from 'react';
+import type { BaseSyntheticEvent, Dispatch, SetStateAction } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from 'antd';
 import { debounce } from 'lodash-es';

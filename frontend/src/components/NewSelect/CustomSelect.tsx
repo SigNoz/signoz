@@ -25,7 +25,7 @@ import { capitalize, isEmpty } from 'lodash-es';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import TruncatedTooltip from './TruncatedTooltip';
-import { CustomSelectProps, OptionData } from './types';
+import type { CustomSelectProps, OptionData } from './types';
 import {
 	filterOptionsBySearch,
 	handleScrollToBottom,
