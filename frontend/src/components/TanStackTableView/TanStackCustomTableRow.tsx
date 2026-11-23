@@ -1,5 +1,6 @@
-import { ComponentProps, memo, useCallback, useLayoutEffect } from 'react';
-import { TableComponents } from 'react-virtuoso';
+import type { ComponentProps } from 'react';
+import { memo, useCallback, useLayoutEffect } from 'react';
+import type { TableComponents } from 'react-virtuoso';
 import cx from 'classnames';
 
 import {
@@ -11,7 +12,7 @@ import {
 	useClearRowHovered,
 	useSetRowHovered,
 } from './TanStackTableStateContext';
-import { FlatItem, TableRowContext } from './types';
+import type { FlatItem, TableRowContext } from './types';
 
 import tableStyles from './TanStackTable.module.scss';
 import { chromePerformanceNow } from 'lib/chromePerformanceDevTools';

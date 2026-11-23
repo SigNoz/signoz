@@ -1,6 +1,6 @@
-import { Pipeline, PipelineData } from 'types/api/pipeline/def';
+import type { Pipeline, PipelineData } from 'types/api/pipeline/def';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 export const configurationVersion = '1.0';
 

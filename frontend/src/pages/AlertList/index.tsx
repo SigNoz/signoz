@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Tabs, TabsProps } from 'antd';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';

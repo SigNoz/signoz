@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -6,7 +7,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
 
 import { ResourceContext } from './context';
-import {
+import type {
 	IResourceAttribute,
 	IResourceAttributeProps,
 	OptionsData,

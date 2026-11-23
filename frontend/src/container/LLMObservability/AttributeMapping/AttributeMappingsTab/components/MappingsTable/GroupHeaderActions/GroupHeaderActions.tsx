@@ -1,6 +1,6 @@
 import { Switch } from '@signozhq/ui/switch';
 
-import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import type { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import GroupActionsMenu from '../GroupActionsMenu/GroupActionsMenu';
 import styles from './GroupHeaderActions.module.scss';

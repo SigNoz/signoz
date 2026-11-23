@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
 
-import { computeVisualLayout, VisualLayout } from '../computeVisualLayout';
-import { LayoutWorkerResponse } from '../visualLayoutWorkerTypes';
+import type { VisualLayout } from '../computeVisualLayout';
+import { computeVisualLayout } from '../computeVisualLayout';
+import type { LayoutWorkerResponse } from '../visualLayoutWorkerTypes';
 
 const EMPTY_LAYOUT: VisualLayout = {
 	visualRows: [],

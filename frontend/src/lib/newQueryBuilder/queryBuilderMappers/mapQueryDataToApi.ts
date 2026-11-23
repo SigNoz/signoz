@@ -1,5 +1,5 @@
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import {
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type {
 	MapData,
 	MapQueryDataToApiResult,
 } from 'types/api/queryBuilder/queryBuilderData';

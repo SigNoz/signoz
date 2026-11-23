@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { LoaderCircle } from '@signozhq/icons';
-import {
+import type {
 	IQuickFiltersConfig,
 	QuickFilterChangeEventData,
 	QuickFilterCheckboxUseFieldApis,
@@ -14,7 +14,7 @@ import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { NON_SELECTED_OPERATORS } from '../checkboxFilterQuery';
 import useActiveQueryIndex from 'components/QuickFilters/hooks/useActiveQueryIndex';

@@ -3,7 +3,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 
 import RoutingPolicyList from '../RoutingPolicyList';
 import { getRoutingPolicyColumns } from '../table.config';
-import { RoutingPolicyListProps } from '../types';
+import type { RoutingPolicyListProps } from '../types';
 import { MOCK_ROUTING_POLICY_1, MOCK_ROUTING_POLICY_2 } from './testUtils';
 
 const POLICIES = [MOCK_ROUTING_POLICY_1, MOCK_ROUTING_POLICY_2];

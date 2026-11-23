@@ -1,20 +1,20 @@
-import {
-	getConsumerLagDetails,
+import type {
 	MessagingQueueServicePayload,
 	MessagingQueuesPayloadProps,
 } from 'api/messagingQueues/getConsumerLagDetails';
+import { getConsumerLagDetails } from 'api/messagingQueues/getConsumerLagDetails';
 import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
-import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
+import type { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
+import type { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
 import { navigate } from 'lib/router/navigation';
 import type { AppLocation } from 'lib/router/types';
 import { isEmpty } from 'lodash-es';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';

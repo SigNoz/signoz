@@ -3,11 +3,12 @@ import { Provider } from 'react-redux';
 import { act, render } from '@testing-library/react';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
-import configureStore, { MockStoreEnhanced } from 'redux-mock-store';
-import { AppState } from 'store/reducers';
+import type { MockStoreEnhanced } from 'redux-mock-store';
+import configureStore from 'redux-mock-store';
+import type { AppState } from 'store/reducers';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { TestRouter } from 'tests/router';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import AutoRefresh from '../index';
 import AutoRefreshTicker from '../AutoRefreshTicker';

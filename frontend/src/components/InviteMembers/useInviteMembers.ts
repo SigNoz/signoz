@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { createUser } from 'api/generated/services/users';
 import { cloneDeep, debounce } from 'lodash-es';
 import { EMAIL_REGEX } from 'utils/app';
 import { getBaseUrl } from 'utils/basePath';
 import { v4 as uuid } from 'uuid';
 
-import {
+import type {
 	InviteMemberRow,
 	InviteResult,
 	UseInviteMembersOptions,

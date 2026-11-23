@@ -1,6 +1,6 @@
+import type { DashboardtypesComparisonThresholdDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	DashboardtypesComparisonOperatorDTO,
-	DashboardtypesComparisonThresholdDTO,
 	DashboardtypesThresholdFormatDTO,
 } from 'api/generated/services/sigNoz.schemas';
 

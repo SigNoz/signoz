@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, Loader } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 
-import { UseSpanPercentileReturn } from './useSpanPercentile';
+import type { UseSpanPercentileReturn } from './useSpanPercentile';
 
 import styles from './SpanPercentileBadge.module.scss';
 

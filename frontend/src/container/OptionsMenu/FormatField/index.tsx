@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Typography } from '@signozhq/ui/typography';
 
-import { LogViewMode, OptionsMenuConfig } from '../types';
+import type { LogViewMode, OptionsMenuConfig } from '../types';
 import { FormatFieldWrapper } from './styles';
 
 function FormatField({ config }: FormatFieldProps): JSX.Element | null {

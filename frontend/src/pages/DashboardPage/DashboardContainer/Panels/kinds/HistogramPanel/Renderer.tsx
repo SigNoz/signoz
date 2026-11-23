@@ -4,7 +4,7 @@ import Histogram from 'lib/visualization/charts/Histogram/Histogram';
 import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import {
 	flattenTimeSeries,
 	getTimeSeriesResults,
@@ -14,7 +14,7 @@ import type uPlot from 'uplot';
 
 import NoData from '../../components/NoData/NoData';
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import { resolveLegendPosition } from '../../utils/chartAppearance/resolvers';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 

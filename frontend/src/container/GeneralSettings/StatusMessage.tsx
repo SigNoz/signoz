@@ -4,7 +4,7 @@ import { green, orange, volcano } from '@ant-design/colors';
 import { SolidInfoCircle } from '@signozhq/icons';
 import { Card } from 'antd';
 import Col from 'periscope/components/Col/Col';
-import { TStatus } from 'types/api/settings/getRetention';
+import type { TStatus } from 'types/api/settings/getRetention';
 
 import { convertHoursValueToRelevantUnitString } from './utils';
 

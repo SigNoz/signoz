@@ -1,5 +1,5 @@
-import { SelectProps } from 'antd';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { SelectProps } from 'antd';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 
 export const getOptionsFromKeys = (
 	keys: TelemetryFieldKey[],

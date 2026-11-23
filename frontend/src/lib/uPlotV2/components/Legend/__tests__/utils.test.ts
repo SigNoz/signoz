@@ -1,4 +1,4 @@
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 
 import { filterLegendItems, getVisibleSeriesState } from '../utils';
 

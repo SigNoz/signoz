@@ -9,8 +9,9 @@ import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { mockAppLocation } from 'tests/router-mocks';
-import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { RenderResult } from 'tests/test-utils';
+import { fireEvent, render, waitFor } from 'tests/test-utils';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
 import LogsExplorerViews from '..';

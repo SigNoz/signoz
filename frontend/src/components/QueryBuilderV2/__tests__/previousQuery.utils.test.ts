@@ -1,4 +1,4 @@
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import '@testing-library/jest-dom';
 

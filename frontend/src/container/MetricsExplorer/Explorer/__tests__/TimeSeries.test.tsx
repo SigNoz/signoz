@@ -4,7 +4,7 @@ import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { initialQueriesMap } from 'constants/queryBuilder';
 
 import TimeSeries from '../TimeSeries';
-import { TimeSeriesProps } from '../types';
+import type { TimeSeriesProps } from '../types';
 import { MOCK_METRIC_METADATA } from './testUtils';
 
 const mockUpdateMetricMetadata = jest.fn();

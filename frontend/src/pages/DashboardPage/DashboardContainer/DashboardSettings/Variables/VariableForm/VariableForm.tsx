@@ -15,7 +15,7 @@ import { useVariableForm } from './useVariableForm';
 import VariableTypeTabs from './VariableTypeTabs';
 import styles from './VariableForm.module.scss';
 import BackToAllVariables from '../components/BackToAllVariables/BackToAllVariables';
-import { VariableFormProps } from '../types';
+import type { VariableFormProps } from '../types';
 import VariableInfoForm from '../components/VariableInfoForm/VariableInfoForm';
 
 /**

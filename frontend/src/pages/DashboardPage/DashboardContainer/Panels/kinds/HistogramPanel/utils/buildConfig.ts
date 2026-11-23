@@ -7,7 +7,7 @@ import { resolveSeriesLabelV5 } from 'pages/DashboardPage/DashboardContainer/Pan
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import getLabelName from 'lib/getLabelName';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { BuilderQuery } from 'types/api/v5/queryRange';
 
 const POINT_SIZE = 5;

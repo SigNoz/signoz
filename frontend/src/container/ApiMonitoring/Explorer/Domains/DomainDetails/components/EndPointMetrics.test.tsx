@@ -1,8 +1,9 @@
-import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 
 import EndPointMetrics from './EndPointMetrics';
 

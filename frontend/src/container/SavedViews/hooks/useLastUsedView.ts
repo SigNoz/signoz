@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import {
+import type {
 	PreservedViewsInLocalStorage,
 	PreservedViewType,
 	UseLastUsedViewResult,

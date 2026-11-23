@@ -5,7 +5,8 @@ import LearnMore from 'components/LearnMore/LearnMore';
 import { Download } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 import CopyIconButton from '../CopyIconButton';
-import { docsUrl, MCP_CLIENTS, McpClient } from '../clients';
+import type { McpClient } from '../clients';
+import { docsUrl, MCP_CLIENTS } from '../clients';
 
 import './ClientTabs.styles.scss';
 

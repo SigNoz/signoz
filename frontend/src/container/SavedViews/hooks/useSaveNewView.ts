@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/toast';
 
 import { SAVED_VIEW_TOAST_POSITION } from '../constants';
-import { SavedViewCreatedFrom } from '../events';
-import { UseSavedViewActionsResult } from '../types';
+import type { SavedViewCreatedFrom } from '../events';
+import type { UseSavedViewActionsResult } from '../types';
 
 export function useSaveNewView(
 	createView: UseSavedViewActionsResult['createView'],

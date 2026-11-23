@@ -1,5 +1,5 @@
 import { seededRandom } from './seededRandom';
-import { FixtureRow } from './types';
+import type { FixtureRow } from './types';
 
 // GeoIP emits the bare region code next to a separate country column.
 const US_REGIONS = [

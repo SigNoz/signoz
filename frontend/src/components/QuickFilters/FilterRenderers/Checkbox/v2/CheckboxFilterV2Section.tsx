@@ -1,4 +1,4 @@
-import {
+import type {
 	IQuickFiltersConfig,
 	CheckedState,
 } from 'components/QuickFilters/types';
@@ -6,7 +6,7 @@ import {
 import { FILTER_DISABLED_REASON } from '../useCheckboxFilterState';
 import { CheckboxFilterV2ValueRow } from './CheckboxFilterV2ValueRow';
 import { SectionDivider } from './SectionDivider';
-import { Section } from './useSectionedValues';
+import type { Section } from './useSectionedValues';
 import { SectionType } from './itemRules';
 
 import styles from './CheckboxFilterV2.module.scss';

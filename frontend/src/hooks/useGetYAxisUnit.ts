@@ -3,8 +3,8 @@ import {
 	getMetricUnits,
 	useGetMetrics,
 } from 'container/MetricsExplorer/Explorer/utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 

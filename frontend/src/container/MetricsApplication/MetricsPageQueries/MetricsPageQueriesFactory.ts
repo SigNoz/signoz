@@ -1,4 +1,4 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	alphabet,
 	initialFormulaBuilderFormValues,
@@ -6,17 +6,20 @@ import {
 } from 'constants/queryBuilder';
 import getStep from 'lib/getStep';
 import store from 'store';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	SpaceAggregation,
+	TimeAggregation,
+} from 'types/api/v5/queryRange';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 import {
 	DataSource,
 	MetricAggregateOperator,
-	QueryBuilderData,
 	ReduceOperators,
 	Temporality,
 } from 'types/common/queryBuilder';
 
-import {
+import type {
 	BuilderQueriesProps,
 	BuilderQuerieswithFormulaProps,
 } from '../Tabs/types';

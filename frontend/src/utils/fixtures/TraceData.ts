@@ -1,4 +1,4 @@
-import { Span } from 'types/api/trace/getTraceItem';
+import type { Span } from 'types/api/trace/getTraceItem';
 
 export const TraceData: Span[] = [
 	[

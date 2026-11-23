@@ -1,5 +1,5 @@
-import { StoreApi } from 'zustand';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { StoreApi } from 'zustand';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 
 export type CustomTimeRangeSeparator = '||_||';
 export type CustomTimeRange = `${number}${CustomTimeRangeSeparator}${number}`;

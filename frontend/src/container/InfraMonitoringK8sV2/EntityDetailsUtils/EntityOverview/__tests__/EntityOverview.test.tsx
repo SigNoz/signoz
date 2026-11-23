@@ -2,9 +2,10 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import type { OnUrlUpdateFunction } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
-import { TableColumnDef } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
 import { TestRouter } from 'tests/router';
 
 import { InfraMonitoringEntity } from '../../../constants';

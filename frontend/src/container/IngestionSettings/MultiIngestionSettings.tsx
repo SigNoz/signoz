@@ -1,4 +1,5 @@
-import { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { navigate } from 'lib/router/navigation';
 import { useCopyToClipboard } from 'react-use';
@@ -6,6 +7,7 @@ import { Color } from '@signozhq/design-tokens';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
+import type { TablePaginationConfig, TableProps as AntDTableProps } from 'antd';
 import {
 	Collapse,
 	DatePicker,
@@ -14,8 +16,6 @@ import {
 	Modal,
 	Select,
 	Table,
-	TablePaginationConfig,
-	TableProps as AntDTableProps,
 	Tooltip,
 } from 'antd';
 import Col from 'periscope/components/Col/Col';
@@ -34,11 +34,11 @@ import {
 	useUpdateIngestionKey,
 	useUpdateIngestionKeyLimit,
 } from 'api/generated/services/gateway';
-import {
+import type {
 	GatewaytypesIngestionKeyDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import Badges from 'components/Badges/Badges';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
@@ -73,12 +73,12 @@ import {
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import {
+import type {
 	AddLimitProps,
 	LimitProps,
 	UpdateLimitProps,
 } from 'types/api/ingestionKeys/limits/types';
-import { PaginationProps } from 'types/api/ingestionKeys/types';
+import type { PaginationProps } from 'types/api/ingestionKeys/types';
 import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';

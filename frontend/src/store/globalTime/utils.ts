@@ -1,8 +1,8 @@
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 
 import { REACT_QUERY_KEY } from '../../constants/reactQueryKeys';
-import {
+import type {
 	CustomTimeRange,
 	CustomTimeRangeSeparator,
 	GlobalTimeSelectedTime,

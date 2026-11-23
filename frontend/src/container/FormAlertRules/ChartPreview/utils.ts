@@ -1,34 +1,33 @@
 import { Color } from '@signozhq/design-tokens';
-import { ExecStats } from 'api/v5/v5';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { ExecStats } from 'api/v5/v5';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Threshold } from 'container/CreateAlert/context/types';
+import type { Threshold } from 'container/CreateAlert/context/types';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { buildBaseConfig } from 'lib/visualization/panels/utils/baseConfigBuilder';
-import { ThresholdProps } from 'types/api/widgets/threshold';
-import {
-	BooleanFormats,
+import type { ThresholdProps } from 'types/api/widgets/threshold';
+import type {
 	DataFormats,
 	DataRateFormats,
-	MiscellaneousFormats,
 	ThroughputFormats,
 	TimeFormats,
 } from 'constants/formats/types';
-import { TFunction } from 'i18next';
+import { BooleanFormats, MiscellaneousFormats } from 'constants/formats/types';
+import type { TFunction } from 'i18next';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
 	DrawStyle,
 	FillMode,
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { hasSingleVisiblePoint } from 'lib/uPlotV2/utils/dataUtils';
 import { get } from 'lodash-es';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
 	dataFormatConfig,

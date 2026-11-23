@@ -5,7 +5,8 @@ import { Switch } from '@signozhq/ui/switch';
 
 import ConditionKeyList from './components/ConditionKeyList/ConditionKeyList';
 import styles from './GroupFormDrawer.module.scss';
-import { FieldContext, GroupDraft, MapperDraftMode } from '../../types';
+import type { GroupDraft, MapperDraftMode } from '../../types';
+import { FieldContext } from '../../types';
 import { isGroupDraftValid } from '../../utils';
 
 interface GroupFormDrawerProps {

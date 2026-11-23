@@ -1,5 +1,6 @@
 import { YAxisCategoryNames } from '../constants';
-import { UniversalYAxisUnit, YAxisCategory } from '../types';
+import type { YAxisCategory } from '../types';
+import { UniversalYAxisUnit } from '../types';
 import {
 	getUniversalNameFromMetricUnit,
 	mapMetricUnitToUniversalUnit,

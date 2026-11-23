@@ -1,7 +1,5 @@
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import APIError from 'types/api/error';
 
 export const selectedEntityTracesColumns: BaseAutocompleteData[] = [

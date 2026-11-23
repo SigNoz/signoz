@@ -1,6 +1,7 @@
 import { Badge } from '@signozhq/ui/badge';
 
-import { MessageType, ThreadMessage } from './types';
+import type { ThreadMessage } from './types';
+import { MessageType } from './types';
 import CollapsibleBlock from './CollapsibleBlock';
 import MessagePart from './MessagePart';
 import PartChip from './PartChip';

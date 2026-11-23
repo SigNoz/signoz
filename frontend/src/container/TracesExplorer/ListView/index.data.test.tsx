@@ -5,8 +5,8 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { screen } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
 	listResponse,

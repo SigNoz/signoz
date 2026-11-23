@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { render, screen } from 'tests/test-utils';
 
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';

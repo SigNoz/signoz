@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { QueryFunctionContext, useQuery } from 'react-query';
+import type { QueryFunctionContext } from 'react-query';
+import { useQuery } from 'react-query';
 import { Spin, Table, Tooltip } from 'antd';
 import { Info, Loader } from '@signozhq/icons';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { getQueryRangeV5 } from 'api/v5/queryRange/getQueryRange';
-import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
+import type { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { withErrorBoundary } from 'components/ErrorBoundaryHOC';
@@ -18,7 +19,7 @@ import {
 	getTopErrorsCoRelationQueryFilters,
 	getTopErrorsQueryPayload,
 } from 'container/ApiMonitoring/utils';
-import { SuccessResponseV2 } from 'types/api';
+import type { SuccessResponseV2 } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';

@@ -1,12 +1,9 @@
 import { Container } from '@signozhq/icons';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 
-import { CustomTab } from '../Base/types';
-import {
-	InfraMonitoringEntity,
-	podUtilizationByPodWidgetInfo,
-	VIEW_TYPES,
-} from '../constants';
+import type { CustomTab } from '../Base/types';
+import type { InfraMonitoringEntity } from '../constants';
+import { podUtilizationByPodWidgetInfo, VIEW_TYPES } from '../constants';
 
 import EntityMetrics from './EntityMetrics';
 

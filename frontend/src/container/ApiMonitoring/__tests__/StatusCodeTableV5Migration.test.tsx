@@ -11,7 +11,7 @@
  * - Three queries: A (count), B (p99 latency), C (rate)
  * - All grouped by response_status_code
  */
-import { TraceAggregation } from 'api/v5/v5';
+import type { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 
 describe('StatusCodeTable - V5 Migration Validation', () => {

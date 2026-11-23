@@ -1,4 +1,5 @@
-import { ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppParams } from 'lib/router/useAppParams';
@@ -13,11 +14,11 @@ import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useNotifications } from 'hooks/useNotifications';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { AppState } from 'store/reducers';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { AppState } from 'store/reducers';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
 import { title } from './config';

@@ -4,7 +4,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { useDashboardEventMeta } from '../../../hooks/useDashboardEventMeta';
 import { useOptimisticPatch } from '../../../hooks/useOptimisticPatch';

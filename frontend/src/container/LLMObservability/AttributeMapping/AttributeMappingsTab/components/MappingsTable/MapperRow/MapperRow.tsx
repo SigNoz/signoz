@@ -5,7 +5,7 @@ import { SpantypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas'
 import cx from 'classnames';
 import { motion } from 'motion/react';
 
-import { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
+import type { DraftMapper } from 'container/LLMObservability/AttributeMapping/types';
 import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import MapperActionsMenu from '../MapperActionsMenu/MapperActionsMenu';
 import styles from './MapperRow.module.scss';

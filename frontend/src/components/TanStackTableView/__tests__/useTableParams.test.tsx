@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { act, renderHook } from '@testing-library/react';
-import {
-	NuqsTestingAdapter,
+import type {
 	OnUrlUpdateFunction,
 	UrlUpdateEvent,
 } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 
 import { useTableParams } from '../useTableParams';
 import { usePreferredPageSizeStore } from '../usePreferredPageSize.store';

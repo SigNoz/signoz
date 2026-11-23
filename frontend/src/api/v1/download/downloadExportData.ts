@@ -1,8 +1,8 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError, AxiosResponse } from 'axios';
-import { ErrorV2Resp } from 'types/api';
-import { ExportRawDataProps } from 'types/api/exportRawData/getExportRawData';
+import type { AxiosError, AxiosResponse } from 'axios';
+import type { ErrorV2Resp } from 'types/api';
+import type { ExportRawDataProps } from 'types/api/exportRawData/getExportRawData';
 
 export interface FetchExportDataProps extends ExportRawDataProps {
 	signal?: AbortSignal;

@@ -1,13 +1,10 @@
-import {
+import type {
 	Dispatch,
-	memo,
 	MutableRefObject,
 	ReactNode,
 	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
 } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
@@ -16,10 +13,8 @@ import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsM
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import TracesTable from 'container/TracesExplorer/TracesTable/TracesTable';
-import {
-	getFieldColumn,
-	TracesTableRow,
-} from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import { getFieldColumn } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -31,10 +26,10 @@ import { useSpanDrawer } from 'container/TracesExplorer/SpanDrawer/useSpanDrawer
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 import { ArrowUp10, Minus } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { defaultSelectedColumns, TIMESTAMP_FIELD } from './configs';
 import { useListViewInfiniteQuery } from './useListViewInfiniteQuery';

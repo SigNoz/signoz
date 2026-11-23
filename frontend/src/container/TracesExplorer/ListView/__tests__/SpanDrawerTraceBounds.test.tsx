@@ -1,7 +1,8 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { TraceBounds } from './testUtils';
 import {
 	FIVE_MINUTES_IN_MS,
 	listResponse,
@@ -10,7 +11,6 @@ import {
 	mockTraceSummary,
 	QUERY_RANGE_URL,
 	renderListView,
-	TraceBounds,
 } from './testUtils';
 
 // globalTime starts with loading:true, which gates the list query. Force just that

@@ -5,7 +5,7 @@ import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
 import { AppLink } from 'lib/router/AppLink';
 
-import { InfraMonitoringEntity } from '../../../constants';
+import type { InfraMonitoringEntity } from '../../../constants';
 import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
 import { buildK8sListNavigationUrl } from '../../utils';
 import styles from './EntityCountsSection.module.scss';

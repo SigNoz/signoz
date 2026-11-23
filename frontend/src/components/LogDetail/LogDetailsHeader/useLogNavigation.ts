@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 interface UseLogNavigationParams {
 	logs?: ILog[];

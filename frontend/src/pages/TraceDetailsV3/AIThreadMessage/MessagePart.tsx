@@ -1,4 +1,4 @@
-import { MessagePart as MessagePartType } from './types';
+import type { MessagePart as MessagePartType } from './types';
 import JsonBlock from './JsonBlock';
 import ThinkingPart from './parts/ThinkingPart';
 import ToolCallPart from './parts/ToolCallPart';

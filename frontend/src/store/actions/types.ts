@@ -1,5 +1,5 @@
-import { ServiceMapItemAction, ServiceMapLoading } from './serviceMap';
-import { GetUsageDataAction } from './usage';
+import type { ServiceMapItemAction, ServiceMapLoading } from './serviceMap';
+import type { GetUsageDataAction } from './usage';
 
 export enum ActionTypes {
 	updateTimeInterval = 'UPDATE_TIME_INTERVAL',

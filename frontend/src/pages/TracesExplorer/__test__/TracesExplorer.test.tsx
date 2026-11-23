@@ -18,7 +18,7 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import TracesExplorer from '..';
 import { optionMenuReturn, qbProviderValue } from './testUtils';

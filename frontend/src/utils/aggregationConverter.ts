@@ -1,9 +1,7 @@
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	LogAggregation,
 	MetricAggregation,
 	TraceAggregation,

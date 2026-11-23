@@ -1,4 +1,4 @@
-import { ComponentType, ReactElement } from 'react';
+import type { ComponentType, ReactElement } from 'react';
 import * as Sentry from '@sentry/react';
 
 import ErrorBoundaryFallback from '../../pages/ErrorBoundaryFallback/ErrorBoundaryFallback';

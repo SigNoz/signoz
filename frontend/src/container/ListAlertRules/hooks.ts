@@ -1,10 +1,5 @@
-import {
-	Options,
-	parseAsArrayOf,
-	parseAsString,
-	useQueryState,
-	UseQueryStateReturn,
-} from 'nuqs';
+import type { Options, UseQueryStateReturn } from 'nuqs';
+import { parseAsArrayOf, parseAsString, useQueryState } from 'nuqs';
 
 const defaultNuqsOptions: Options = {
 	history: 'push',

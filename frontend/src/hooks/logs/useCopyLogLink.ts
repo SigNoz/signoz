@@ -1,4 +1,5 @@
-import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -9,12 +10,12 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import { HIGHLIGHTED_DELAY } from './configs';
-import { UseCopyLogLink } from './types';
+import type { UseCopyLogLink } from './types';
 
 export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();

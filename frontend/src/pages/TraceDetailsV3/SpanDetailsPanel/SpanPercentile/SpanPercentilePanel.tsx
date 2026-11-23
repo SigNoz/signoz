@@ -8,9 +8,9 @@ import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { Check, ChevronDown, Loader, Plus } from '@signozhq/icons';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
-import { UseSpanPercentileReturn } from './useSpanPercentile';
+import type { UseSpanPercentileReturn } from './useSpanPercentile';
 
 import styles from './SpanPercentilePanel.module.scss';
 

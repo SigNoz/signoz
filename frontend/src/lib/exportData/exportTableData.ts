@@ -1,4 +1,4 @@
-import { SerializedTable } from './types';
+import type { SerializedTable } from './types';
 import { withUnit } from './withUnit';
 
 /** Generic table-model column — any prepared table (QueryTable, dashboard

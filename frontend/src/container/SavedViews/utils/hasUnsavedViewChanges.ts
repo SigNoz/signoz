@@ -5,7 +5,7 @@ import {
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import isEqual from 'lodash-es/isEqual';
 
-import { HasUnsavedViewChangesArgs } from '../types';
+import type { HasUnsavedViewChangesArgs } from '../types';
 import { getSavedViewQuery } from './getSavedViewQuery';
 import { toSavedViewPanelType } from './toSavedViewSpec';
 import { getViewColumnsAndFormatting } from './getViewColumnsAndFormatting';

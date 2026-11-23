@@ -11,11 +11,13 @@ import {
 	useGetMetricsStats,
 	useGetMetricsTreemap,
 } from 'api/generated/services/metrics';
-import {
+import type {
 	MetricsexplorertypesStatsRequestDTO,
-	MetricsexplorertypesTreemapModeDTO,
 	MetricsexplorertypesTreemapRequestDTO,
 	Querybuildertypesv5OrderByDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	MetricsexplorertypesTreemapModeDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import eyesEmojiUrl from 'assets/Images/eyesEmoji.svg';
@@ -26,10 +28,10 @@ import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { AppState } from 'store/reducers';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { AppState } from 'store/reducers';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 

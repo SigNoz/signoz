@@ -10,7 +10,8 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import AuthZButton, { AuthZButtonProps } from './AuthZButton';
+import type { AuthZButtonProps } from './AuthZButton';
+import AuthZButton from './AuthZButton';
 
 const createPerm = buildPermission(
 	'create',

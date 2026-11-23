@@ -1,20 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	KeyboardEvent,
-	ReactElement,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { KeyboardEvent, ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { type RefSelectProps, Select, Spin } from 'antd';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { Pill } from '@signozhq/ui/pill';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
+import type { OperatorConfigKeys } from 'constants/queryBuilder';
 import {
-	OperatorConfigKeys,
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 	QUERY_BUILDER_SEARCH_VALUES,
@@ -32,11 +25,9 @@ import { useFieldValuesSuggestion } from 'hooks/querySuggestions/useFieldValuesS
 import useDebounceValue from 'hooks/useDebounce';
 import { isArray, isEmpty, isEqual, isObject, isUndefined } from 'lodash-es';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';

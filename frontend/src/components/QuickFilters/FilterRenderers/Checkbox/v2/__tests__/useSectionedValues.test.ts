@@ -1,7 +1,8 @@
 import { renderHook } from '@testing-library/react';
 
 import { SectionType } from '../itemRules';
-import { useSectionedValues, SectionedItem } from '../useSectionedValues';
+import type { SectionedItem } from '../useSectionedValues';
+import { useSectionedValues } from '../useSectionedValues';
 
 function flattenSections(
 	sections: { type: SectionType; items: SectionedItem[] }[],

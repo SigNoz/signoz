@@ -1,8 +1,9 @@
 import { mockFieldsAPIsWithEmptyResponse } from '__tests__/fields_api.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, RenderResult } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { RenderResult } from 'tests/test-utils';
+import { render } from 'tests/test-utils';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityTraces from '../EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';

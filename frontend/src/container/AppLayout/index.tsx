@@ -1,11 +1,5 @@
-import {
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
@@ -24,7 +18,7 @@ import type { UpdateSubscription200 } from 'api/generated/services/sigNoz.schema
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import cx from 'classnames';
 import AppToaster from 'components/AppToaster/AppToaster';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
@@ -56,28 +50,26 @@ import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
 // eslint-disable-next-line no-restricted-imports
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
+import type { Dispatch } from 'redux';
+import type { AppState } from 'store/reducers';
+import type AppActions from 'types/actions';
 import {
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
-import APIError from 'types/api/error';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { DeploymentType } from 'types/api/changelog/getChangelogByVersion';
+import type APIError from 'types/api/error';
 import {
 	LicenseEvent,
 	LicensePlatform,
 	LicenseState,
 } from 'types/api/licensesV3/getActive';
-import { UserPreference } from 'types/api/preferences/preference';
-import AppReducer from 'types/reducer/app';
+import type { UserPreference } from 'types/api/preferences/preference';
+import type AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';

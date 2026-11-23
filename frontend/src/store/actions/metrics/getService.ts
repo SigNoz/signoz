@@ -1,13 +1,13 @@
 import getService from 'api/metrics/getService';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import GetMinMax from 'lib/getMinMax';
 // eslint-disable-next-line no-restricted-imports
-import { Dispatch } from 'redux';
-import { AppState } from 'store/reducers';
-import AppActions from 'types/actions';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { Dispatch } from 'redux';
+import type { AppState } from 'store/reducers';
+import type AppActions from 'types/actions';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 export const GetService =
 	(

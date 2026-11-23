@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
-import { TraceDetailsTab } from '../constants';
+import type { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
-import { TraceDetailLogEvent } from './useTraceDetailLogEvent';
+import type { TraceDetailLogEvent } from './useTraceDetailLogEvent';
 
 interface SpanDetailsOpenedEventArgs {
 	isOpen: boolean;

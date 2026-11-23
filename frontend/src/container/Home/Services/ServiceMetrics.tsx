@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { QueryKey } from 'react-query';
+import type { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Button, Select, Skeleton, Table } from 'antd';
@@ -20,15 +20,13 @@ import { navigate } from 'lib/router/navigation';
 import { ArrowRight, ArrowUpRight } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
-import { IUser } from 'providers/App/types';
-import { AppState } from 'store/reducers';
-import {
-	LicensePlatform,
-	LicenseResModel,
-} from 'types/api/licensesV3/getActive';
-import { ServicesList } from 'types/api/metrics/getService';
-import { GlobalReducer } from 'types/reducer/globalTime';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { IUser } from 'providers/App/types';
+import type { AppState } from 'store/reducers';
+import type { LicenseResModel } from 'types/api/licensesV3/getActive';
+import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import type { ServicesList } from 'types/api/metrics/getService';
+import type { GlobalReducer } from 'types/reducer/globalTime';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 import { USER_ROLES } from 'types/roles';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';

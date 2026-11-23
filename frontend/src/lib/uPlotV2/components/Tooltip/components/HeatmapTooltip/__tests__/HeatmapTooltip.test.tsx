@@ -1,9 +1,8 @@
 import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import {
-	HeatmapAxisScale,
-	HeatmapSeries,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
-import { render, RenderResult, screen } from 'tests/test-utils';
+import type { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import type { RenderResult } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
 import HeatmapTooltip from '../HeatmapTooltip';

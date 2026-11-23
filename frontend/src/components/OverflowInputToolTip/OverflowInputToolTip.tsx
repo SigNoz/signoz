@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Input, InputProps, InputRef, Tooltip } from 'antd';
+import type { InputProps, InputRef } from 'antd';
+import { Input, Tooltip } from 'antd';
 import cx from 'classnames';
 
 import './OverflowInputToolTip.scss';

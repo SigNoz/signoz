@@ -2,7 +2,7 @@ import { Typography } from '@signozhq/ui/typography';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 
 import SavedViewsListRow from './SavedViewsListRow';
-import { SavedViewsListSectionProps } from './types';
+import type { SavedViewsListSectionProps } from './types';
 
 import styles from './SavedViewsList.module.scss';
 

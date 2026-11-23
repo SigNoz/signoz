@@ -1,5 +1,5 @@
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface ApDexApplicationProps {
 	handleGraphClick: (type: string) => OnClickPluginOpts['onClick'];

@@ -1,4 +1,4 @@
-import { PageAction, PageActionDescriptor } from './types';
+import type { PageAction, PageActionDescriptor } from './types';
 
 /**
  * Module-level singleton (mirrors BlockRegistry) that maps action IDs to their

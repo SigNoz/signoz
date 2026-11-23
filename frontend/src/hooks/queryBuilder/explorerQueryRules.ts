@@ -1,7 +1,8 @@
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { EQueryType } from 'types/common/dashboard';
-import { BuilderQuerySource, DataSource } from 'types/common/queryBuilder';
+import type { BuilderQuerySource } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 
 export type ExplorerQueryRules = {
 	dataSource: DataSource;

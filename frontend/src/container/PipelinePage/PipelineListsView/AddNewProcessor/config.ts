@@ -1,7 +1,7 @@
-import { FormInstance } from 'antd';
+import type { FormInstance } from 'antd';
 import type { Rule, RuleRender } from 'antd/es/form';
 import type { NamePath } from 'antd/es/form/interface';
-import { ProcessorData } from 'types/api/pipeline/def';
+import type { ProcessorData } from 'types/api/pipeline/def';
 
 type ProcessorType = {
 	key: string;

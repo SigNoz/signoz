@@ -1,4 +1,4 @@
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {
 	service: string;

@@ -1,4 +1,5 @@
-import { Button, SelectProps } from 'antd';
+import type { SelectProps } from 'antd';
+import { Button } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
@@ -14,16 +15,16 @@ import {
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from '@signozhq/icons';
-import { IUser } from 'providers/App/types';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryFunction } from 'types/api/v5/queryRange';
+import type { IUser } from 'providers/App/types';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
-import { Threshold } from '../context/types';
-import { RoutingPolicyBannerProps } from './types';
+import type { Threshold } from '../context/types';
+import type { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(

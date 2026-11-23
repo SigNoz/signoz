@@ -6,9 +6,9 @@ import {
 	useDeleteRole,
 } from 'api/generated/services/role';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
-import APIError from 'types/api/error';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
+import type APIError from 'types/api/error';
 
 interface UseDeleteRoleModalProps {
 	roleId?: string | null;

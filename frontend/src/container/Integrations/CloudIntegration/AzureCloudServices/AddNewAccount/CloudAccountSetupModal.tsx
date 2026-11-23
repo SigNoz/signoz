@@ -11,10 +11,8 @@ import { Callout } from '@signozhq/ui/callout';
 import { Drawer } from '@signozhq/ui/drawer';
 import { Form, Select, Spin } from 'antd';
 import { AZURE_REGIONS } from 'container/Integrations/constants';
-import {
-	IntegrationModalProps,
-	ModalStateEnum,
-} from 'container/Integrations/HeroSection/types';
+import type { IntegrationModalProps } from 'container/Integrations/HeroSection/types';
+import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { useIntegrationModal } from '../../../../../hooks/integration/azure/useIntegrationModal';

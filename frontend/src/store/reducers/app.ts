@@ -1,12 +1,12 @@
+import type { AppAction } from 'types/actions/app';
 import {
-	AppAction,
 	UPDATE_CONFIGS,
 	UPDATE_CURRENT_ERROR,
 	UPDATE_CURRENT_VERSION,
 	UPDATE_LATEST_VERSION,
 	UPDATE_LATEST_VERSION_ERROR,
 } from 'types/actions/app';
-import InitialValueTypes from 'types/reducer/app';
+import type InitialValueTypes from 'types/reducer/app';
 
 const InitialValue: InitialValueTypes = {
 	currentVersion: '',

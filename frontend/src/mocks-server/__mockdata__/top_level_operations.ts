@@ -1,4 +1,4 @@
-import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
+import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 
 export const topLevelOperationSuccessResponse: ServiceDataProps = {
 	TestApp: ['GET', 'GET frontpage'],

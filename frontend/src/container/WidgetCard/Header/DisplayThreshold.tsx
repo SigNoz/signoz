@@ -2,7 +2,7 @@ import { SolidInfoCircle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 
 import { DisplayThresholdContainer } from 'container/WidgetCard/Header/styles';
-import { DisplayThresholdProps } from 'container/WidgetCard/Header/types';
+import type { DisplayThresholdProps } from 'container/WidgetCard/Header/types';
 
 function DisplayThreshold({ threshold }: DisplayThresholdProps): JSX.Element {
 	return (

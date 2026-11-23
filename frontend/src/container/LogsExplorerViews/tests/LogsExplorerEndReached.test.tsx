@@ -6,7 +6,7 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { mockAppLocation } from 'tests/router-mocks';
 import { act, render } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorerViews from '..';
 import {

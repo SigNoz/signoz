@@ -1,5 +1,5 @@
-import { ILog } from 'types/api/logs/log';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { ILog } from 'types/api/logs/log';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 import LogsList from '../../../components/LogsList';
 import usePipelinePreview from '../../../hooks/usePipelinePreview';

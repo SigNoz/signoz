@@ -1,12 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	MutableRefObject,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import {
 	ChartNoAxesGantt,
@@ -25,7 +19,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
@@ -45,7 +39,7 @@ import SpanDetailsPanel from '../SpanDetailsPanel/SpanDetailsPanel';
 import { FLAMEGRAPH_SPAN_LIMIT } from '../TraceFlamegraph/constants';
 import TraceFlamegraph from '../TraceFlamegraph/TraceFlamegraph';
 import TraceWaterfall from '../TraceWaterfall/TraceWaterfall';
-import { IInterestedSpan } from '../TraceWaterfall/types';
+import type { IInterestedSpan } from '../TraceWaterfall/types';
 import { getAncestorSpanIds } from '../TraceWaterfall/utils';
 import { getAvailableColorByFieldNames } from '../utils';
 

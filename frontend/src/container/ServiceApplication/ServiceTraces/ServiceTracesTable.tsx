@@ -12,7 +12,7 @@ import { useAppContext } from 'providers/App/App';
 import { getTotalRPS } from 'utils/services';
 
 import { getColumns } from '../Columns/ServiceColumn';
-import ServiceTableProps from '../types';
+import type ServiceTableProps from '../types';
 
 function ServiceTraceTable({
 	services,

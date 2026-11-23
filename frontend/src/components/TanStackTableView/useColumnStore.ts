@@ -1,9 +1,9 @@
-import { ColumnSizingState } from '@tanstack/react-table';
+import type { ColumnSizingState } from '@tanstack/react-table';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { create } from 'zustand';
 
-import { TableColumnDef } from './types';
+import type { TableColumnDef } from './types';
 
 const STORAGE_PREFIX = '@signoz/table-columns/';
 

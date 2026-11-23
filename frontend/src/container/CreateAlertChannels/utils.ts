@@ -3,7 +3,8 @@ import {
 	prometheusDurationToMs,
 } from 'utils/prometheusDuration';
 
-import { ChannelFormValues, WebhookAuth } from './types';
+import type { ChannelFormValues } from './types';
+import { WebhookAuth } from './types';
 
 const JIRA_MIN_REOPEN_MS = 60_000;
 

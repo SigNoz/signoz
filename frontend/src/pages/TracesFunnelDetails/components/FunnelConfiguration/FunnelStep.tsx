@@ -14,7 +14,7 @@ import { ChevronDown, PencilLine } from '@signozhq/icons';
 import { LatencyPointers } from 'pages/TracesFunnelDetails/constants';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
 import { DataSource } from 'types/common/queryBuilder';
 
 import FunnelStepPopover from './FunnelStepPopover';

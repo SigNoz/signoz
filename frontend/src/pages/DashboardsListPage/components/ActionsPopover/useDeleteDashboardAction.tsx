@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from 'react-query';
 import { toast } from '@signozhq/ui/toast';
@@ -13,7 +14,7 @@ import { useDashboardPermissions } from 'hooks/dashboards/useDashboardPermission
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 interface DeleteDashboardAction {
 	openConfirm: () => void;

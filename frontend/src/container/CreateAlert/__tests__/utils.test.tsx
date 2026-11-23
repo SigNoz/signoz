@@ -1,6 +1,7 @@
 import { Color } from '@signozhq/design-tokens';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { AlertTypes, PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { defaultPostableAlertRuleV2 } from '../constants';
 import { INITIAL_ALERT_STATE } from '../context/constants';

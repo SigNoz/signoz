@@ -2,14 +2,14 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import getLabelName from 'lib/getLabelName';
-import { QueryData } from 'types/api/widgets/getQuery';
-import uPlot from 'uplot';
+import type { QueryData } from 'types/api/widgets/getQuery';
+import type uPlot from 'uplot';
 
-import {
+import type {
 	LegendEntryProps,
 	SaveLegendEntriesToLocalStoreProps,
 } from 'container/WidgetCard/Card/FullView/types';
-import { ExtendedChartDataset } from 'lib/visualization/charts/types';
+import type { ExtendedChartDataset } from 'lib/visualization/charts/types';
 
 function convertToTwoDecimalsOrZero(value: number): number {
 	if (

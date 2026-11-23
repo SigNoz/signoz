@@ -5,11 +5,11 @@ import TooltipItem from 'lib/uPlotV2/components/Tooltip/components/TooltipItem/T
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { buildTooltipContent } from 'lib/uPlotV2/components/Tooltip/utils';
-import {
+import type {
 	TooltipContentItem,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import TooltipStyles from 'lib/uPlotV2/components/Tooltip/Tooltip.module.scss';
 import Styles from './BillingBarChartTooltip.module.scss';

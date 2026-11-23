@@ -3,7 +3,7 @@ import { useLocation } from 'react-use';
 import cx from 'classnames';
 import RouteTab from 'components/RouteTab';
 import ROUTES from 'constants/routes';
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useVolumeControlFeatureGate } from 'hooks/metricsExplorer/useVolumeControlFeatureGate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

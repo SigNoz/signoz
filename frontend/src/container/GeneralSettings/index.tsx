@@ -6,10 +6,14 @@ import getRetentionPeriodApi from 'api/settings/getRetention';
 import getRetentionPeriodApiV2 from 'api/settings/getRetentionV2';
 import Spinner from 'components/Spinner';
 import { useAppContext } from 'providers/App/App';
-import { ErrorResponse, SuccessResponse, SuccessResponseV2 } from 'types/api';
+import type {
+	ErrorResponse,
+	SuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 import APIError from 'types/api/error';
-import { TTTLType } from 'types/api/settings/common';
-import { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
+import type { TTTLType } from 'types/api/settings/common';
+import type { PayloadProps as GetRetentionPeriodAPIPayloadProps } from 'types/api/settings/getRetention';
 
 import GeneralSettingsContainer from './GeneralSettings';
 

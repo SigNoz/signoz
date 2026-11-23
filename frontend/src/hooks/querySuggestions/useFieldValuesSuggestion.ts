@@ -1,22 +1,18 @@
-import {
-	QueryKey,
-	useQuery,
-	UseQueryOptions,
-	UseQueryResult,
-} from 'react-query';
-import { ErrorType } from 'api/generatedAPIInstance';
-import {
+import type { QueryKey, UseQueryOptions, UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type { ErrorType } from 'api/generatedAPIInstance';
+import type {
 	RenderErrorResponseDTO,
 	TelemetrytypesTelemetryFieldValuesDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { FIELD_API_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
+import type {
 	FieldValuesConfig,
 	FieldValuesResponse,
 } from 'api/querySuggestions/types';
-import { BuilderQueryType } from 'types/api/v5/queryRange';
+import type { BuilderQueryType } from 'types/api/v5/queryRange';
 
 export type FieldValuesQueryOptions = UseQueryOptions<
 	FieldValuesResponse,

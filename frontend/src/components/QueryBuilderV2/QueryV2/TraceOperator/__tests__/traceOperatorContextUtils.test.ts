@@ -1,4 +1,4 @@
-import { Token } from 'antlr4';
+import type { Token } from 'antlr4';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
 
 import {

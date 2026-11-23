@@ -8,7 +8,7 @@ import { Info } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
-import { HighlightsProps } from './types';
+import type { HighlightsProps } from './types';
 import {
 	formatNumberToCompactFormat,
 	formatTimestampToReadableDate,

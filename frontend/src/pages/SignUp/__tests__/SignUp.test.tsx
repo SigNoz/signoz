@@ -1,8 +1,8 @@
 import afterLogin from 'AppRoutes/utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { SignupResponse } from 'types/api/v1/register/post';
-import { Token } from 'types/api/v2/sessions/email_password/post';
+import type { SignupResponse } from 'types/api/v1/register/post';
+import type { Token } from 'types/api/v2/sessions/email_password/post';
 
 import SignUp from '../SignUp';
 

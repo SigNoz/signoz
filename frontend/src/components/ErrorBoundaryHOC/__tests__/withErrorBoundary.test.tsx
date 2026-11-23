@@ -1,9 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-import withErrorBoundary, {
-	WithErrorBoundaryOptions,
-} from '../withErrorBoundary';
+import type { WithErrorBoundaryOptions } from '../withErrorBoundary';
+import withErrorBoundary from '../withErrorBoundary';
 
 // Mock dependencies before imports
 jest.mock('@sentry/react', () => {

@@ -2,8 +2,8 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { withBasePath } from 'utils/basePath';
 
-import { TopOperationList } from './TopOperationsTable';
-import { NavigateToTraceProps } from './types';
+import type { TopOperationList } from './TopOperationsTable';
+import type { NavigateToTraceProps } from './types';
 
 export const getErrorRate = (list: TopOperationList): number => {
 	if (list.errorCount === 0 && list.numCalls === 0) {

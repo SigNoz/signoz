@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useGetAccount } from 'api/generated/services/cloudintegration';
-import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
 
 export const POLL_INTERVAL_MS = 10 * 1000;
 export const CONNECTION_TIMEOUT_MS = 10 * 60 * 1000;

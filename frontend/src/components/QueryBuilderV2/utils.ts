@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
+import type { ParserRuleContext } from 'antlr4';
+import { CharStreams, CommonTokenStream } from 'antlr4';
 import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { v4 as uuid } from 'uuid';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
@@ -15,7 +16,7 @@ import {
 	isBuilderQueryType,
 } from 'lib/query/builderSlot';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
-import FilterQueryParser, {
+import type {
 	AndExpressionContext,
 	ComparisonContext,
 	InClauseContext,
@@ -24,21 +25,23 @@ import FilterQueryParser, {
 	PrimaryContext,
 	UnaryExpressionContext,
 } from 'parser/FilterQueryParser';
-import { IQueryPair } from 'types/antlrQueryTypes';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import FilterQueryParser from 'parser/FilterQueryParser';
+import type { IQueryPair } from 'types/antlrQueryTypes';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	Having,
 	IBuilderQuery,
 	Query,
 	TagFilter,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	LogAggregation,
 	MetricAggregation,
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
-import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import type { ReduceOperators } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
 import { isFunctionOperator, isNonValueOperator } from 'utils/tokenUtils';

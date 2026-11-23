@@ -3,7 +3,7 @@ import { QueryParams } from 'constants/query';
 import { DEFAULT_PANEL_TYPE } from 'container/LLMObservability/Explorer/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-import { PreferenceMode, PreferenceSlice } from '../types';
+import type { PreferenceMode, PreferenceSlice } from '../types';
 import { usePreferenceSync } from './usePreferenceSync';
 
 export function useAiObservabilityPreferenceSync({

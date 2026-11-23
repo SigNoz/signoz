@@ -3,7 +3,7 @@ import { Badge } from '@signozhq/ui/badge';
 import cx from 'classnames';
 import { Pin, PinOff } from '@signozhq/icons';
 
-import { SidebarItem } from '../sideNav.types';
+import type { SidebarItem } from '../sideNav.types';
 
 import './NavItem.styles.scss';
 

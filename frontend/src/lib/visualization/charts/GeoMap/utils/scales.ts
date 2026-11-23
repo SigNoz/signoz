@@ -1,10 +1,10 @@
+import type { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
 import {
-	ColorRampResolver,
 	createColorRampResolver,
 	resolveColorDomain,
 } from 'lib/visualization/colorRamp/colorScale';
 
-import { GeoMapColors, GeoMapDatum, GeoMapPoint } from '../types';
+import type { GeoMapColors, GeoMapDatum, GeoMapPoint } from '../types';
 
 /** Enough of the palette's background-coloured end to skip that the lowest
  *  value stays apart from the map's background and no-data fill in either theme. */

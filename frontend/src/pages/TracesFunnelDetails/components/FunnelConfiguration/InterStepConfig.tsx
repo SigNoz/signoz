@@ -2,7 +2,8 @@ import { Divider } from '@signozhq/ui/divider';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { useFunnelContext } from 'pages/TracesFunnels/FunnelContext';
 import { useAppContext } from 'providers/App/App';
-import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
+import { LatencyOptions } from 'types/api/traceFunnels';
 
 import './InterStepConfig.styles.scss';
 

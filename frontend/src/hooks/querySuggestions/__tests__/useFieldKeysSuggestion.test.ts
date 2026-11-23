@@ -3,8 +3,14 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
-import { FieldKeysConfig, FieldKeysResponse } from 'api/querySuggestions/types';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type {
+	FieldKeysConfig,
+	FieldKeysResponse,
+} from 'api/querySuggestions/types';
+import type {
+	BuilderQueryType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
 import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
 
 import {

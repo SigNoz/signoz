@@ -9,10 +9,8 @@ import cx from 'classnames';
 import Spinner from 'components/Spinner';
 import useDebounce from 'hooks/useDebounce';
 
-import {
-	FieldContext,
-	FieldContextValue,
-} from 'container/LLMObservability/AttributeMapping/types';
+import type { FieldContextValue } from 'container/LLMObservability/AttributeMapping/types';
+import { FieldContext } from 'container/LLMObservability/AttributeMapping/types';
 import styles from './KeySearchInput.module.scss';
 
 const SUGGESTION_LIMIT = 50;

@@ -6,14 +6,15 @@ import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppLink } from 'lib/router/AppLink';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Button, Card, Input, TableProps, Tooltip } from 'antd';
+import type { TableProps } from 'antd';
+import { Button, Card, Input, Tooltip } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
 import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import type { ColumnsType } from 'antd/lib/table';
-import { FilterConfirmProps } from 'antd/lib/table/interface';
+import type { FilterConfirmProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';
 import getErrorCounts from 'api/errors/getErrorCounts';
@@ -28,19 +29,19 @@ import {
 	convertCompositeQueryToTraceSelectedTags,
 	getResourceDeploymentKeys,
 } from 'hooks/useResourceAttribute/utils';
-import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import type { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { Exception, PayloadProps } from 'types/api/errors/getAll';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { Exception, PayloadProps } from 'types/api/errors/getAll';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FilterDropdownExtendsProps } from './types';
+import type { FilterDropdownExtendsProps } from './types';
 import { useExceptionsStripInfo } from './useExceptionsStripInfo';
 import {
 	extractFilterValues,

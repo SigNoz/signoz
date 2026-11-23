@@ -2,7 +2,7 @@ import { COUNTRIES } from '../../geo/countries';
 import { seededRandom } from './seededRandom';
 import { cityLatency } from './pointFixtures';
 import { usRequests } from './stateFixtures';
-import { Fixture, FixtureDataset, FixtureRow } from './types';
+import type { Fixture, FixtureDataset, FixtureRow } from './types';
 
 const ISO2S = COUNTRIES.map((country) => country.properties.code).filter(
 	(iso2): iso2 is string => Boolean(iso2),

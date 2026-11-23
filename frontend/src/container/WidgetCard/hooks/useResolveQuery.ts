@@ -5,13 +5,13 @@ import { useSelector } from 'react-redux';
 import { isEmpty } from 'lodash-es';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { timePreferenceType } from 'constants/timePreference';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { timePreferenceType } from 'constants/timePreference';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { AppState } from 'store/reducers';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 
 interface UseUpdatedQueryOptions {

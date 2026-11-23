@@ -1,5 +1,5 @@
-import { ThreadMessage } from '../AIThreadMessage/types';
-import { ThreadSpan } from '../TraceDetailsThread/types';
+import type { ThreadMessage } from '../AIThreadMessage/types';
+import type { ThreadSpan } from '../TraceDetailsThread/types';
 
 export interface SpanMessagesData {
 	formattedInput: ThreadMessage[];

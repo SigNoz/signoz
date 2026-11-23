@@ -1,9 +1,9 @@
-import { QueryParams } from 'constants/query';
+import type { QueryParams } from 'constants/query';
 import type { AppLocation, NavigateFn } from 'lib/router/types';
 import getRenderer from 'lib/uPlotLib/utils/getRenderer';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuidv4 } from 'uuid';
 
 export function getValuesFromQueryParams(

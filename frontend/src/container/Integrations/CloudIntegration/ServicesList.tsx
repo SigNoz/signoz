@@ -8,7 +8,7 @@ import {
 } from 'api/generated/services/cloudintegration';
 import type { CloudintegrationtypesServiceMetadataDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
-import { IntegrationType } from 'container/Integrations/types';
+import type { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import emptyStateIconUrl from '@/assets/Icons/emptyState.svg';

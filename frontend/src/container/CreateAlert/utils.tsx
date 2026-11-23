@@ -4,7 +4,8 @@ import { Spin } from 'antd';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { AlertTypes, PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from './context';
@@ -15,15 +16,17 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './context/constants';
-import {
+import type {
 	AdvancedOptionsState,
 	AlertState,
-	AlertThresholdMatchType,
-	AlertThresholdOperator,
 	AlertThresholdState,
 	CreateAlertState,
 	EvaluationWindowState,
 	NotificationSettingsState,
+} from './context/types';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
 } from './context/types';
 import { EVALUATION_WINDOW_TIMEFRAME } from './EvaluationSettings/constants';
 

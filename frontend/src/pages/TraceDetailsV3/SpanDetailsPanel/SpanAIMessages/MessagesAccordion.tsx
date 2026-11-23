@@ -1,9 +1,10 @@
-import { MouseEvent, ReactNode, useState } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { Collapse } from 'antd';
 
-import { AIThreadMessageProps } from '../../AIThreadMessage/AIThreadMessage';
-import { ThreadMessage } from '../../AIThreadMessage/types';
+import type { AIThreadMessageProps } from '../../AIThreadMessage/AIThreadMessage';
+import type { ThreadMessage } from '../../AIThreadMessage/types';
 import MessagesSection from '../../SpanMessages/MessagesSection';
 import { ThreadView } from '../../TraceDetailsThread/types';
 import ThreadViewToggle from '../../TraceDetailsThread/ThreadViewToggle';

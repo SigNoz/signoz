@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import dayjs from 'dayjs';
 import { render } from 'tests/test-utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import SpanSummary from '../SpanSummary';
 

@@ -1,4 +1,5 @@
-import { ComponentProps, useRef } from 'react';
+import type { ComponentProps } from 'react';
+import { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 

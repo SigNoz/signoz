@@ -1,8 +1,8 @@
 import { ApiV2Instance } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp } from 'types/api';
-import { PayloadProps, Props } from 'types/api/metrics/getTopOperations';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp } from 'types/api';
+import type { PayloadProps, Props } from 'types/api/metrics/getTopOperations';
 
 const getTopOperations = async (props: Props): Promise<PayloadProps> => {
 	try {

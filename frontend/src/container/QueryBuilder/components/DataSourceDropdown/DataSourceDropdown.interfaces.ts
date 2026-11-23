@@ -1,6 +1,6 @@
-import { SelectProps } from 'antd';
-import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { DataSource } from 'types/common/queryBuilder';
+import type { SelectProps } from 'antd';
+import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DataSource } from 'types/common/queryBuilder';
 
 export type QueryLabelProps = {
 	onChange: (value: DataSource) => void;

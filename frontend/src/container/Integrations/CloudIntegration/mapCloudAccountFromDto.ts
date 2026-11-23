@@ -1,7 +1,7 @@
-import { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
-import { CloudAccount as IntegrationCloudAccount } from 'container/Integrations/types';
+import type { CloudintegrationtypesAccountDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudAccount as IntegrationCloudAccount } from 'container/Integrations/types';
 
-import { CloudAccount as AwsCloudAccount } from './AmazonWebServices/types';
+import type { CloudAccount as AwsCloudAccount } from './AmazonWebServices/types';
 
 export function mapAccountDtoToAwsCloudAccount(
 	account: CloudintegrationtypesAccountDTO,

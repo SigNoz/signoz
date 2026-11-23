@@ -2,10 +2,8 @@ import React from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import {
-	FiltersType,
-	IQuickFiltersConfig,
-} from 'components/QuickFilters/types';
+import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import { FiltersType } from 'components/QuickFilters/types';
 import { TriangleAlert } from '@signozhq/icons';
 import TanStackTable from 'components/TanStackTableView';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';

@@ -12,13 +12,14 @@ import { useGeoMapShapes } from './hooks/useGeoMapShapes';
 import { formatCoordinates } from './utils/coordinates';
 import { findShapeAt } from './utils/olFeatures';
 import { pointAsDatum } from './utils/scales';
-import { GeoMapProps } from './types';
+import type { GeoMapProps } from './types';
 import { useOlLayers } from './hooks/useOlLayers';
 import { useOlMap } from './hooks/useOlMap';
 import { useOlPointer } from './hooks/useOlPointer';
 import { useOlPointsLayer } from './hooks/useOlPointsLayer';
 import { useOlView } from './hooks/useOlView';
-import { OlPalette, readPalette } from './utils/olStyles';
+import type { OlPalette } from './utils/olStyles';
+import { readPalette } from './utils/olStyles';
 
 import styles from './GeoMap.module.scss';
 

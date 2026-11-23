@@ -1,13 +1,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 
 import set from 'api/browser/localstorage/set';
 
 import { GlobalTimeProvider } from '../GlobalTimeContext';
 import { useGlobalTime } from '../hooks';
-import { GlobalTimeProviderOptions } from '../types';
+import type { GlobalTimeProviderOptions } from '../types';
 import { createCustomTimeRange, NANO_SECOND_MULTIPLIER } from '../utils';
 
 jest.mock('api/browser/localstorage/set');

@@ -34,7 +34,7 @@ import {
 } from './list.config';
 import ServiceAccountStatusFilter from './ServiceAccountStatusFilter';
 import { useServiceAccountsData } from './useServiceAccountsData';
-import { ServiceAccountRow } from './utils';
+import type { ServiceAccountRow } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 

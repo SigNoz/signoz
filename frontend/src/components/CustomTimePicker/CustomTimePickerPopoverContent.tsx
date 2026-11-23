@@ -1,11 +1,5 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -14,9 +8,9 @@ import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import type { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import { RelativeDurationSuggestionOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
-import {
+import type {
 	LexicalContext,
 	Option,
 } from 'container/TopNav/DateTimeSelectionV2/types';
@@ -24,12 +18,12 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
-import { TimeRangeValidationResult } from 'utils/timeUtils';
+import type { TimeRangeValidationResult } from 'utils/timeUtils';
 
 import CalendarContainer from './CalendarContainer';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
-import { Timezone } from './timezoneUtils';
+import type { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
 

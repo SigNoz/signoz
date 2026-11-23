@@ -1,4 +1,4 @@
-import {
+import type {
 	IQuickFiltersConfig,
 	QuickFilterChangeEventData,
 	QuickFiltersSource,
@@ -6,12 +6,12 @@ import {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { isEqual, isFunction } from 'lodash-es';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { applyCheckboxToggle, MANAGED_OPERATORS } from './checkboxFilterQuery';
 import { clearFilterFromQuery } from '../shared/filterQuery';
-import { CheckedState } from '../../types';
-import { SectionType } from './v2/itemRules';
+import type { CheckedState } from '../../types';
+import type { SectionType } from './v2/itemRules';
 
 interface UseCheckboxFilterActionsProps {
 	filter: IQuickFiltersConfig;

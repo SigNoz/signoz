@@ -12,7 +12,7 @@ import {
 	JSON_THEME_DARK,
 	READONLY_EDITOR_OPTIONS,
 } from '../monaco.config';
-import { RolePermissionsData } from '../types';
+import type { RolePermissionsData } from '../types';
 import { transformResourcePermissionsToTransactionGroups } from '../hooks/useRolePermissions';
 
 import styles from './ReadOnlyJsonViewer.module.scss';

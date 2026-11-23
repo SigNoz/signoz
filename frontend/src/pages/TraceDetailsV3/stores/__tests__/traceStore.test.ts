@@ -1,5 +1,5 @@
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import { UserPreference } from 'types/api/preferences/preference';
+import type { UserPreference } from 'types/api/preferences/preference';
 
 import { COLOR_BY_OPTIONS, DEFAULT_COLOR_BY_FIELD } from '../../constants';
 import {

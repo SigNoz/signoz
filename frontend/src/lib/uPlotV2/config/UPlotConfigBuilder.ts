@@ -1,12 +1,13 @@
-import { SeriesVisibilityItem } from 'lib/visualization/panels/types';
+import type { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import { getStoredSeriesVisibility } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 import { partialPointsDrawHook } from 'lib/uPlotV2/hooks/partialPointsDrawHook';
-import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
+import type { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
 import { thresholdsDrawHook } from 'lib/uPlotV2/hooks/useThresholdsDrawHook';
 import { resolveSeriesVisibility } from 'lib/uPlotV2/utils/seriesVisibility';
 import { merge } from 'lodash-es';
 import noop from 'lodash-es/noop';
-import uPlot, { Cursor, Hooks, Options } from 'uplot';
+import type { Cursor, Hooks, Options } from 'uplot';
+import type uPlot from 'uplot';
 
 import {
 	DEFAULT_CURSOR_CONFIG,
@@ -15,18 +16,20 @@ import {
 	STEP_INTERVAL_MULTIPLIER,
 } from '../constants';
 import { calculateWidthBasedOnStepInterval } from '../utils';
-import { SeriesSpanGapsOption } from '../utils/dataUtils';
+import type { SeriesSpanGapsOption } from '../utils/dataUtils';
+import type { ConfigBuilderProps, LegendItem } from './types';
 import {
 	ConfigBuilder,
-	ConfigBuilderProps,
-	LegendItem,
 	PlotMode,
 	SelectionPreferencesSource,
 	StackMode,
 } from './types';
-import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
-import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
-import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
+import type { AxisProps } from './UPlotAxisBuilder';
+import { UPlotAxisBuilder } from './UPlotAxisBuilder';
+import type { ScaleProps } from './UPlotScaleBuilder';
+import { UPlotScaleBuilder } from './UPlotScaleBuilder';
+import type { SeriesProps } from './UPlotSeriesBuilder';
+import { UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 
 /**
  * Type definitions for uPlot option objects

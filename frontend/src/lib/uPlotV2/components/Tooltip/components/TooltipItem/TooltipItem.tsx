@@ -1,4 +1,4 @@
-import { TooltipContentItem } from '../../../types';
+import type { TooltipContentItem } from '../../../types';
 
 import Styles from './TooltipItem.module.scss';
 

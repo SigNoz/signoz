@@ -9,13 +9,13 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import {
 	buildSAReadPermission,
 	buildSAUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import { useTimezone } from 'providers/Timezone';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import SaveErrorItem from './SaveErrorItem';
 import type { SaveError } from './utils';

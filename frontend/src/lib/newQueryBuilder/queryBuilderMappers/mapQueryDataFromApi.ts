@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { initialQueryState } from 'constants/queryBuilder';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import {
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -9,7 +9,7 @@ import {
 	IPromQLQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	BuilderQuery,
 	ClickHouseQuery,
 	PromQuery,

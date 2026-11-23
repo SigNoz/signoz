@@ -1,11 +1,12 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import listOverview from 'api/thirdPartyApis/listOverview';
 import { isAxiosError } from 'axios';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
-import {
+import type { SuccessResponseV2 } from 'types/api';
+import type APIError from 'types/api/error';
+import type {
 	PayloadProps,
 	Props as ListOverviewProps,
 } from 'types/api/thirdPartyApis/listOverview';

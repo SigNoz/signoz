@@ -3,10 +3,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getViewQuery } from './drilldownUtils';
-import { AggregateData } from './useAggregateDrilldown';
+import type { AggregateData } from './useAggregateDrilldown';
 
 type DrilldownKey = 'view_logs' | 'view_metrics' | 'view_traces';
 

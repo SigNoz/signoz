@@ -1,6 +1,7 @@
 import { render, screen, userEvent } from 'tests/test-utils';
 
-import ActivityGroup, { ActivityItem } from '../ActivityGroup';
+import type { ActivityItem } from '../ActivityGroup';
+import ActivityGroup from '../ActivityGroup';
 
 const steps: ActivityItem[] = [
 	{ id: 'thought-1', kind: 'thinking', content: 'Checking the error rate' },

@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery, useQueryClient } from 'react-query';
 import { isAxiosError } from 'axios';
 import { queryRangeV5 } from 'api/generated/services/querier';
 import type {

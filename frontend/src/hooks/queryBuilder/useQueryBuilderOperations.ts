@@ -30,19 +30,19 @@ import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetri
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
 import { isEmpty, isEqual } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	MetricAggregation,
 	QueryFunction,
 	SpaceAggregation,
 	TimeAggregation,
 } from 'types/api/v5/queryRange';
-import {
+import type {
 	HandleChangeFormulaData,
 	HandleChangeQueryData,
 	HandleChangeQueryDataV5,
@@ -53,7 +53,7 @@ import {
 	MetricAggregateOperator,
 	ReduceOperators,
 } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
 
 export const useQueryOperations: UseQueryOperations = ({

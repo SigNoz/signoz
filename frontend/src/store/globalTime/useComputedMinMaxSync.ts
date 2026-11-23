@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { GlobalTimeStoreApi } from './globalTimeStore';
+import type { GlobalTimeStoreApi } from './globalTimeStore';
 
 /**
  * Used to initialize computed min/max on mount when store has no values yet.

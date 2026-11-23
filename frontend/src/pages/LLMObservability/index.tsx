@@ -1,5 +1,5 @@
 import RouteTab from 'components/RouteTab';
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
 import {

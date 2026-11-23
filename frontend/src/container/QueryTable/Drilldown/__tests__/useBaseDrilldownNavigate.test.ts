@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
 import ROUTES from 'constants/routes';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getViewQuery } from '../drilldownUtils';
-import { AggregateData } from '../useAggregateDrilldown';
+import type { AggregateData } from '../useAggregateDrilldown';
 import useBaseDrilldownNavigate, {
 	buildDrilldownUrl,
 	getRoute,

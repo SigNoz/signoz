@@ -1,19 +1,19 @@
-import { ReactNode } from 'react';
-import {
+import type { ReactNode } from 'react';
+import type {
 	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesNodeConditionDTO,
 	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import APIError from 'types/api/error';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type APIError from 'types/api/error';
 
-import { EntityCountConfig } from './components/EntityCountsSection/EntityCountsSection';
-import { InfraMonitoringEntity } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { EntityCountConfig } from './components/EntityCountsSection/EntityCountsSection';
+import type { InfraMonitoringEntity } from '../constants';
+import type { SelectedItemParams } from '../hooks';
 
 export type K8sDetailsCountConfig<T> = EntityCountConfig<T>;
 

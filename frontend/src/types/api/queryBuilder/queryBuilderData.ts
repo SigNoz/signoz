@@ -1,15 +1,15 @@
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { Format } from 'constants/formats/types';
-import { EQueryType } from 'types/common/dashboard';
-import {
+import type { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { Format } from 'constants/formats/types';
+import type { EQueryType } from 'types/common/dashboard';
+import type {
 	BuilderQuerySource,
 	DataSource,
 	QueryBuilderData,
 	ReduceOperators,
 } from 'types/common/queryBuilder';
 
-import {
+import type {
 	BuilderQueryType,
 	Filter,
 	Having as HavingV5,
@@ -18,7 +18,7 @@ import {
 	QueryFunction,
 	TraceAggregation,
 } from '../v5/queryRange';
-import { BaseAutocompleteData } from './queryAutocompleteResponse';
+import type { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
 export interface IBuilderFormula {

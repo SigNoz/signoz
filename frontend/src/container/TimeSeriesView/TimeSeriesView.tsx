@@ -1,13 +1,5 @@
-import {
-	Dispatch,
-	ReactNode,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
@@ -24,7 +16,7 @@ import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { MetricsLoading } from 'container/MetricsExplorer/MetricsLoading/MetricsLoading';
 import NoLogs from 'container/NoLogs/NoLogs';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -39,14 +31,14 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { isEmpty } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { SuccessResponse, Warning } from 'types/api';
+import type { AppState } from 'store/reducers';
+import type { SuccessResponse, Warning } from 'types/api';
 import { LegendPosition } from 'types/api/widgets/widget';
-import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
+import type APIError from 'types/api/error';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { QueryRangeResponseV5 } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 

@@ -1,6 +1,9 @@
-import { Layout } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 import { FORMULA_REGEXP } from 'constants/regExp';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 export type PanelMap = Record<
 	string,

@@ -1,4 +1,4 @@
-import { IntegrationType } from 'container/Integrations/types';
+import type { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import HeroSection from '../../HeroSection/HeroSection';

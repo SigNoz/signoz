@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import { getEntityEventsQueryPayload } from './utils';
 

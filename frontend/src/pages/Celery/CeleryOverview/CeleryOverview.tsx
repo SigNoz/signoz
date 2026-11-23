@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import CeleryOverviewConfigOptions from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
-import CeleryOverviewTable, {
-	RowData,
-} from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
+import type { RowData } from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
+import CeleryOverviewTable from 'components/CeleryOverview/CeleryOverviewTable/CeleryOverviewTable';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 
 import CeleryOverviewDetails from './CeleryOverviewDetail/CeleryOverviewDetails';

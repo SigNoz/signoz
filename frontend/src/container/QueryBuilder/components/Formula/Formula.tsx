@@ -1,4 +1,5 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Input, Select } from 'antd';
 import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
@@ -10,7 +11,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import {
+import type {
 	IBuilderFormula,
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -19,7 +20,7 @@ import { popupContainer } from 'utils/selectPopupContainer';
 
 import QBEntityOptions from '../QBEntityOptions/QBEntityOptions';
 // ** Types
-import { FormulaProps } from './Formula.interfaces';
+import type { FormulaProps } from './Formula.interfaces';
 
 import './Formula.styles.scss';
 

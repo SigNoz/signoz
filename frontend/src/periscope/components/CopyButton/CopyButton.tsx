@@ -1,4 +1,4 @@
-import { CSSProperties, type MouseEvent, useCallback } from 'react';
+import { type CSSProperties, type MouseEvent, useCallback } from 'react';
 import { Check, Copy } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import cx from 'classnames';

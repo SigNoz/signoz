@@ -18,7 +18,8 @@ import {
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
 import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../FilterRenderers/Checkbox/constants';
-import { FiltersType, QuickFilterCheckboxUseFieldApis } from '../types';
+import type { QuickFilterCheckboxUseFieldApis } from '../types';
+import { FiltersType } from '../types';
 
 const customFilters = [
 	{

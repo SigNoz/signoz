@@ -1,11 +1,11 @@
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
+import type { SeriesSpanGapsOption } from '../dataUtils';
 import {
 	applySpanGapsToAlignedData,
 	insertLargeGapNullsIntoAlignedData,
 	isInvalidPlotValue,
 	normalizePlotValue,
-	SeriesSpanGapsOption,
 } from '../dataUtils';
 
 describe('dataUtils', () => {

@@ -2,7 +2,7 @@ import type { SetStateAction } from 'react';
 import { useCallback } from 'react';
 import type { ColumnSizingState } from '@tanstack/react-table';
 
-import { TableColumnDef } from './types';
+import type { TableColumnDef } from './types';
 
 export interface UseColumnHandlersOptions<TData> {
 	/** Storage key for persisting column state (enables store mode) */

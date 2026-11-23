@@ -5,7 +5,10 @@ import { Typography } from '@signozhq/ui/typography';
 import { Check, Copy, Search, SquareArrowOutUpRight } from '@signozhq/icons';
 
 import MetricDetailsErrorState from './MetricDetailsErrorState';
-import { AllAttributesEmptyTextProps, AllAttributesValueProps } from './types';
+import type {
+	AllAttributesEmptyTextProps,
+	AllAttributesValueProps,
+} from './types';
 
 const INITIAL_VISIBLE_COUNT = 5;
 const COPY_FEEDBACK_DURATION_MS = 1500;

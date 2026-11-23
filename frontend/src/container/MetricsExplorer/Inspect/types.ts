@@ -1,6 +1,6 @@
-import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { AlignedData } from 'uplot';
+import type { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { AlignedData } from 'uplot';
 
 export interface InspectMetricsTimestampValue {
 	timestamp: number;

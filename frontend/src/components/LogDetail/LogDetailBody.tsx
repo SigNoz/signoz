@@ -31,11 +31,12 @@ import {
 	Table,
 	TextSelect,
 } from '@signozhq/icons';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
-import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
-import { LogDetailBodyProps } from './LogDetail.interfaces';
+import type { VIEWS } from './constants';
+import { RESOURCE_KEYS, VIEW_TYPES } from './constants';
+import type { LogDetailBodyProps } from './LogDetail.interfaces';
 import LogHighlights from './LogHighlights/LogHighlights';
 
 /* eslint-disable-next-line sonarjs/cognitive-complexity */

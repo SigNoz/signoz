@@ -17,15 +17,17 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from '../constants';
-import {
+import type {
 	AdvancedOptionsState,
 	AlertState,
-	AlertThresholdMatchType,
-	AlertThresholdOperator,
 	AlertThresholdState,
-	Algorithm,
 	EvaluationWindowState,
 	NotificationSettingsState,
+} from '../types';
+import {
+	AlertThresholdMatchType,
+	AlertThresholdOperator,
+	Algorithm,
 	Seasonality,
 } from '../types';
 import {

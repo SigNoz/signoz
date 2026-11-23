@@ -1,5 +1,6 @@
-import { useQuery, UseQueryResult } from 'react-query';
-import {
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type {
 	GetTraceAggregations200,
 	SpantypesSpanAggregationDTO,
 } from 'api/generated/services/sigNoz.schemas';

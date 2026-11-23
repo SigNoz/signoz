@@ -1,8 +1,8 @@
-import {
+import type {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSavedViewSpecDTO,
-	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,
@@ -13,9 +13,10 @@ import {
 	defaultTraceSelectedColumns,
 	ensureLogsRequiredColumns,
 } from 'container/OptionsMenu/constants';
-import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { LogViewMode } from 'container/OptionsMenu/types';
+import { FontSize } from 'container/OptionsMenu/types';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { getSavedViewQuery } from '../getSavedViewQuery';

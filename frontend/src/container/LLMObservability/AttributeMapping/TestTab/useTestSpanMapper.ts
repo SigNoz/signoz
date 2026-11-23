@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import logEvent from 'api/common/logEvent';
-import {
+import type {
 	RenderErrorResponseDTO,
 	SpantypesSpanMapperTestSpanDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useTestSpanMappers } from 'api/generated/services/spanmapper';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { debounce } from 'lodash-es';
 
 import { buildTestRequest, parseSpanInput } from './testPayload';
@@ -15,7 +15,7 @@ import {
 	SAMPLE_SPAN_JSON,
 	setStoredSpanInput,
 } from './spanInputStorage';
-import { DraftGroup } from '../types';
+import type { DraftGroup } from '../types';
 
 export type TestTabAttributes = Record<string, unknown>;
 export type TestTabResource = Record<string, unknown>;

@@ -1,8 +1,8 @@
+import type { ZoomOutResult } from '../zoomOutUtils';
 import {
 	getNextDurationInLadder,
 	getNextZoomOutRange,
 	isZoomOutDisabled,
-	ZoomOutResult,
 } from '../zoomOutUtils';
 
 const MS_PER_MIN = 60 * 1000;

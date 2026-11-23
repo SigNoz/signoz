@@ -3,14 +3,14 @@ import { useMemo } from 'react';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
-import { FontSize } from 'container/OptionsMenu/types';
+import type { FontSize } from 'container/OptionsMenu/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { getLogFieldValue } from 'lib/logs/flatLogData';
 import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
-import { IField } from 'types/api/logs/fields';
-import { ILog } from 'types/api/logs/log';
+import type { IField } from 'types/api/logs/fields';
+import type { ILog } from 'types/api/logs/log';
 import { coerceToString } from 'utils/stringUtils';
 
 import type { TableColumnDef } from '../../TanStackTableView/types';

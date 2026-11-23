@@ -1,5 +1,5 @@
-import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 
 // default match type for threshold
 export const defaultMatchType = '1';

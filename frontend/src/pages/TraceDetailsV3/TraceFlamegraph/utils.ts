@@ -1,14 +1,14 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
 import { getSpanAttribute } from 'pages/TraceDetailsV3/utils';
+import type { ColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import {
-	ColorPair,
 	darkenHex,
 	generateColorPair,
 	RESERVED_ERROR,
 } from 'pages/TraceDetailsV3/utils/generateColorPair';
-import { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { SpantypesFlamegraphSpanDTO as FlamegraphSpan } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 import {
 	DASHED_BORDER_LINE_DASH,
@@ -23,7 +23,7 @@ import {
 	MIN_WIDTH_FOR_NAME_AND_DURATION,
 	SPAN_BAR_HEIGHT_RATIO,
 } from './constants';
-import { EventRect, SpanRect } from './types';
+import type { EventRect, SpanRect } from './types';
 
 export function clamp(v: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, v));

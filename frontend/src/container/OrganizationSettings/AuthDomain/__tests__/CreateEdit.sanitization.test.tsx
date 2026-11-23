@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
-import {
+import type {
 	AuthtypesAuthDomainConfigGoogleDTO,
 	AuthtypesGettableAuthDomainDTO,
 } from 'api/generated/services/sigNoz.schemas';

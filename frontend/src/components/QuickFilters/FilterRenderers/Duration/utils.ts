@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction } from 'react';
-import { AllTraceFilterKeys } from 'constants/traceFilterKeys';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { Dispatch, SetStateAction } from 'react';
+import type { AllTraceFilterKeys } from 'constants/traceFilterKeys';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 export type FilterType = Record<
 	AllTraceFilterKeys,

@@ -1,17 +1,17 @@
-import { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
 import type { PopoverHandleType } from '@signozhq/ui/popover';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import {
+import type {
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { OptionsQuery } from 'container/OptionsMenu/types';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { OptionsQuery } from 'container/OptionsMenu/types';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { DataSource } from 'types/common/queryBuilder';
 
-import { SavedViewCreatedFrom } from './events';
+import type { SavedViewCreatedFrom } from './events';
 
 export type SavedViewSourcePage = DataSource | 'meter';
 

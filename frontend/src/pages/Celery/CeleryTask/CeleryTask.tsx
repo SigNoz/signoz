@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import logEvent from 'api/common/logEvent';
 import CeleryTaskConfigOptions from 'components/CeleryTask/CeleryTaskConfigOptions/CeleryTaskConfigOptions';
-import CeleryTaskDetail, {
-	CaptureDataProps,
-} from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
+import type { CaptureDataProps } from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
+import CeleryTaskDetail from 'components/CeleryTask/CeleryTaskDetail/CeleryTaskDetail';
 import CeleryTaskGraphGrid from 'components/CeleryTask/CeleryTaskGraph/CeleryTaskGraphGrid';
 import { QueryParams } from 'constants/query';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';

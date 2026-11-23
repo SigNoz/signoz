@@ -7,7 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
-import { PermissionScope, ResourcePermissions } from '../../types';
+import type { PermissionScope, ResourcePermissions } from '../../types';
 import type { EditorMode, JsonEditorRef } from './JsonEditor.types';
 import JsonEditor from './JsonEditor';
 import ResourceCard from './ResourceCard';

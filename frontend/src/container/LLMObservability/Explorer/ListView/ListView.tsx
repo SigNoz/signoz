@@ -1,13 +1,6 @@
-import {
-	Dispatch,
-	memo,
-	MutableRefObject,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-} from 'react';
-import { QueryKey } from 'react-query';
+import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import { memo, useCallback, useEffect, useMemo } from 'react';
+import type { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
@@ -21,20 +14,21 @@ import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { getTraceLink, transformSpanRows } from './utils';
-import { getFieldColumn, TracesTableRow } from '../TracesTable/getFieldColumn';
+import type { TracesTableRow } from '../TracesTable/getFieldColumn';
+import { getFieldColumn } from '../TracesTable/getFieldColumn';
 import TracesTable from '../TracesTable/TracesTable';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
+import type { Pagination } from 'hooks/queryPagination';
 import { getDefaultPaginationConfig } from 'hooks/queryPagination/utils';
 import useUrlQueryData from 'hooks/useUrlQueryData';
 import { ArrowUp10, Minus } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 

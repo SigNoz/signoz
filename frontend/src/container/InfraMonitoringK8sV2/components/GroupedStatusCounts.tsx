@@ -3,7 +3,7 @@ import styles from './GroupedStatusCounts.module.scss';
 import TanStackTable from 'components/TanStackTableView';
 import { Typography } from '@signozhq/ui/typography';
 import { TextNoData } from './TextNoData';
-import { MouseEventHandler } from 'react';
+import type { MouseEventHandler } from 'react';
 
 export interface StatusBreakdownItem {
 	label: string;

@@ -3,7 +3,7 @@
  * Each shape is cut from the widest one by omission.
  */
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 export type PartialPanelTypes = {

@@ -5,7 +5,7 @@ import {
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { useViewPanelStore } from '../../../../store/useViewPanelStore';
-import { ExtendTimeWindow } from '../extendWindow';
+import type { ExtendTimeWindow } from '../extendWindow';
 import NoData from '../NoData';
 
 const mockUseExtendTimeWindow = jest.fn();

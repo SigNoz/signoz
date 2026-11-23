@@ -1,4 +1,4 @@
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';

@@ -10,7 +10,7 @@ import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextM
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 
-import {
+import type {
 	PanelWrapperProps,
 	TooltipData,
 } from 'container/WidgetCard/Panels/panelWrapper.types';

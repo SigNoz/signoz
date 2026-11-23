@@ -1,6 +1,6 @@
 import axios from 'api';
-import { MessagingQueueServiceDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { MessagingQueueServiceDetailType } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 
 export interface MessagingQueueServicePayload {
 	start?: number | string;

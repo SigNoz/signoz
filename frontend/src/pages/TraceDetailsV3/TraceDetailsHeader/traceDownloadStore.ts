@@ -1,8 +1,6 @@
-import {
-	ChunkedExportArgs,
-	runChunkedExport,
-} from 'hooks/useExportData/runChunkedExport';
-import { ExportFormat } from 'lib/exportData/types';
+import type { ChunkedExportArgs } from 'hooks/useExportData/runChunkedExport';
+import { runChunkedExport } from 'hooks/useExportData/runChunkedExport';
+import type { ExportFormat } from 'lib/exportData/types';
 import { create } from 'zustand';
 
 /** 'skipped' = a download was already in flight; the call was ignored. */

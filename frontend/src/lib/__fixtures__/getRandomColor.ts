@@ -1,6 +1,6 @@
 import { themeColors } from 'constants/theme';
 import { SIGNOZ_UI_COLOR_HEX } from 'lib/getRandomColor';
-import { Span } from 'types/api/trace/getTraceItem';
+import type { Span } from 'types/api/trace/getTraceItem';
 
 const spans: Span[] = [
 	[

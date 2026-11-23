@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useQueryClient } from 'react-query';
 import { server } from 'mocks-server/server';
@@ -9,7 +9,7 @@ import {
 	authzMockResponse,
 } from 'lib/authz/utils/authz-test-utils';
 
-import { BrandedPermission } from './types';
+import type { BrandedPermission } from './types';
 import { useAuthZ } from './useAuthZ';
 import { buildPermission } from './utils';
 

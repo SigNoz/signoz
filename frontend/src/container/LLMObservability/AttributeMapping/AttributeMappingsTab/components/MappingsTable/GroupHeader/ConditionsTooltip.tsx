@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 
-import { ConditionKey } from 'container/LLMObservability/AttributeMapping/types';
+import type { ConditionKey } from 'container/LLMObservability/AttributeMapping/types';
 
 import styles from './ConditionsTooltip.module.scss';
 

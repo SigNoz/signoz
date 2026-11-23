@@ -42,7 +42,7 @@ import {
 
 import { EntityCountsSection } from './components/EntityCountsSection/EntityCountsSection';
 import { EntityMetadataItem } from './components/EntityMetadataItem/EntityMetadataItem';
-import { K8sBaseDetailsContentProps } from './types';
+import type { K8sBaseDetailsContentProps } from './types';
 import { getDrawerDurationMs } from './useDrawerLifecycleStore';
 
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';

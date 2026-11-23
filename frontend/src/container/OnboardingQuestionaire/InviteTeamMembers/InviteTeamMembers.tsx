@@ -3,7 +3,10 @@ import { ArrowRight } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import logEvent from 'api/common/logEvent';
 import InviteMembers from 'components/InviteMembers/InviteMembers';
-import { InviteMemberRow, InviteResult } from 'components/InviteMembers/types';
+import type {
+	InviteMemberRow,
+	InviteResult,
+} from 'components/InviteMembers/types';
 import { useRoles } from 'components/RolesSelect/RolesSelect';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';

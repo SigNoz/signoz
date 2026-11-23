@@ -1,11 +1,5 @@
-import {
-	memo,
-	ReactNode,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Select, Spin } from 'antd';
 // ** Constants
 import { idDivider } from 'constants/queryBuilder';
@@ -16,18 +10,18 @@ import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAut
 // ** Components
 // ** Helpers
 import { isEqual, uniqWith } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	DATA_SOURCE_TO_SIGNAL,
 	QUERY_SOURCE_TO_FIELD_SOURCE,
 } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { selectStyle } from '../QueryBuilderSearchV2/config';
 import { getMetricNameForQuery } from '../utils';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
-import { GroupByFilterProps } from './GroupByFilter.interfaces';
+import type { GroupByFilterProps } from './GroupByFilter.interfaces';
 import { toAttributeKey } from './utils';
 import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 

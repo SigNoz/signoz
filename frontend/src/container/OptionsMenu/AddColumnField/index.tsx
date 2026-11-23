@@ -4,7 +4,7 @@ import { Input, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { OptionsMenuConfig } from '../types';
+import type { OptionsMenuConfig } from '../types';
 import {
 	AddColumnItem,
 	AddColumnSelect,

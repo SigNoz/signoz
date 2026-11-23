@@ -1,26 +1,24 @@
-import { ReactNode, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback } from 'react';
 import cx from 'classnames';
 import TanStackTable from 'components/TanStackTableView';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
-import {
+import type {
 	K8sEntityData,
 	K8sEntityListConfig,
 } from '../../Base/entity.config.types';
 import { K8sEmptyState } from '../../Base/K8sEmptyState';
-import {
-	DrawerHistoryEntry,
-	useDrawerHistoryStore,
-} from '../../Base/useDrawerHistoryStore';
+import type { DrawerHistoryEntry } from '../../Base/useDrawerHistoryStore';
+import { useDrawerHistoryStore } from '../../Base/useDrawerHistoryStore';
 import {
 	useInfraMonitoringFontSize,
 	useInfraMonitoringLineClamp,
 } from '../../Base/useInfraMonitoringTablePreferencesStore';
-import { InfraMonitoringEntity, K8S_CATEGORY_LABELS } from '../../constants';
-import {
-	SelectedItemParams,
-	useInfraMonitoringSelectedItemParams,
-} from '../../hooks';
+import type { InfraMonitoringEntity } from '../../constants';
+import { K8S_CATEGORY_LABELS } from '../../constants';
+import type { SelectedItemParams } from '../../hooks';
+import { useInfraMonitoringSelectedItemParams } from '../../hooks';
 import { usePrimeEntityDetails } from '../../Base/usePrimeEntityDetails';
 import { RELATED_ENTITIES_PAGE_SIZE } from './useRelatedEntities';
 

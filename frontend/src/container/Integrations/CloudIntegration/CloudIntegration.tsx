@@ -1,4 +1,4 @@
-import { IntegrationType } from 'container/Integrations/types';
+import type { IntegrationType } from 'container/Integrations/types';
 
 import Header from './Header/Header';
 import ServicesTabs from './ServiceTabs/ServicesTabs';

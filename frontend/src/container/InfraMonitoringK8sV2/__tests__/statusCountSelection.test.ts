@@ -1,7 +1,9 @@
-import {
+import type {
 	InframonitoringtypesContainerCountsByStatusDTO,
-	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesPodCountsByStatusDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	InframonitoringtypesContainerStatusDTO,
 	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 

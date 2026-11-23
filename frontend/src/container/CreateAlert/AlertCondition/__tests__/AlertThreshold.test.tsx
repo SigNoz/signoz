@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TestRouter } from 'tests/router';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import { CreateAlertProvider } from '../../context';
 import {

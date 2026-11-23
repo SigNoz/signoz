@@ -1,8 +1,8 @@
-import { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
-import { IAppContext, IUser } from 'providers/App/types';
-import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
+import type { ApiRoutingPolicy } from 'api/routingPolicies/getRoutingPolicies';
+import type { IAppContext, IUser } from 'providers/App/types';
+import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
-import { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
+import type { RoutingPolicy, UseRoutingPoliciesReturn } from '../types';
 
 export const MOCK_ROUTING_POLICY_1: RoutingPolicy = {
 	id: '1',

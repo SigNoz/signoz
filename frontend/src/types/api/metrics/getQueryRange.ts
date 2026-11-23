@@ -1,19 +1,19 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { EQueryType } from 'types/common/dashboard';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { EQueryType } from 'types/common/dashboard';
 
-import { SuccessResponse, Warning } from '..';
-import {
+import type { SuccessResponse, Warning } from '..';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IClickHouseQuery,
 	IPromQLQuery,
 } from '../queryBuilder/queryBuilderData';
-import {
+import type {
 	ExecStats,
 	QueryRangeRequestV5,
 	QueryRangeResponseV5,
 } from '../v5/queryRange';
-import { QueryData, QueryDataV3 } from '../widgets/getQuery';
+import type { QueryData, QueryDataV3 } from '../widgets/getQuery';
 
 export type QueryRangePayload = {
 	compositeQuery: {

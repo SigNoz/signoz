@@ -1,4 +1,4 @@
-import { MetricsType } from 'container/MetricsApplication/constant';
+import type { MetricsType } from 'container/MetricsApplication/constant';
 
 export type AnyObject = { [key: string]: any };
 

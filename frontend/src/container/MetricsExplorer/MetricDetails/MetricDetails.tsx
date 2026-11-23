@@ -9,8 +9,8 @@ import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -22,7 +22,7 @@ import DashboardsAndAlertsPopover from './DashboardsAndAlertsPopover';
 import Highlights from './Highlights';
 import Metadata from './Metadata';
 import VolumeControlSection from '../VolumeControl/components/VolumeControlSection/VolumeControlSection';
-import { MetricDetailsProps } from './types';
+import type { MetricDetailsProps } from './types';
 import { getMetricDetailsQuery } from './utils';
 
 import './MetricDetails.styles.scss';

@@ -1,11 +1,11 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import ErrorIcon from 'assets/Error';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { BookOpenText, ChevronsDown } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import './ErrorContent.styles.scss';
 

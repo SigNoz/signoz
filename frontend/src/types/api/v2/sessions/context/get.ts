@@ -1,4 +1,4 @@
-import { ErrorV2 } from 'types/api';
+import type { ErrorV2 } from 'types/api';
 
 export interface Props {
 	email: string;

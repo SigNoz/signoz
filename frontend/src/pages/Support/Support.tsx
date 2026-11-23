@@ -22,7 +22,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getBaseUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 

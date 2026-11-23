@@ -1,6 +1,7 @@
-import { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AlertmanagertypesGettableNotificationChannelDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelFormValues, ChannelKind } from './types';
+import type { ChannelFormValues } from './types';
+import { ChannelKind } from './types';
 import { webhookAuthOf } from './utils';
 
 export interface ChannelFormState {

@@ -1,7 +1,8 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { getFieldKeys } from 'api/dynamicVariables/getFieldKeys';
-import { SuccessResponseV2 } from 'types/api';
-import { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
+import type { SuccessResponseV2 } from 'types/api';
+import type { FieldKeyResponse } from 'types/api/dynamicVariables/getFieldKeys';
 
 interface UseGetFieldKeysProps {
 	/** Type of signal (traces, logs, metrics) */

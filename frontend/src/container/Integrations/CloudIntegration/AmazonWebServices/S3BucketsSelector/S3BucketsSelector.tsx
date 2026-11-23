@@ -5,7 +5,7 @@ import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import { mapAccountDtoToAwsCloudAccount } from '../../mapCloudAccountFromDto';
-import { CloudAccount } from '../types';
+import type { CloudAccount } from '../types';
 
 import './S3BucketsSelector.styles.scss';
 

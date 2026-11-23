@@ -1,5 +1,5 @@
 import cx from 'classnames';
-import { FontSize } from 'container/OptionsMenu/types';
+import type { FontSize } from 'container/OptionsMenu/types';
 
 import { getLogTypeBySeverityNumber } from './utils';
 

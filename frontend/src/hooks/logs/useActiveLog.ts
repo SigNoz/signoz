@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScalarFieldValue } from 'utils/stringUtils';
+import type { ScalarFieldValue } from 'utils/stringUtils';
 import { QueryParams } from 'constants/query';
 import { getFilterQueryData } from 'container/LogDetailedView/logAttributeActions.utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ILog } from 'types/api/logs/log';
+import type { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UseActiveLog } from './types';
+import type { UseActiveLog } from './types';
 
 export const useActiveLog = (): UseActiveLog => {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();

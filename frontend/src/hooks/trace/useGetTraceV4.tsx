@@ -1,8 +1,9 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import getTraceV4 from 'api/trace/getTraceV4';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	GetTraceV4PayloadProps,
 	GetTraceV4SuccessResponse,
 } from 'types/api/trace/getTraceV3';

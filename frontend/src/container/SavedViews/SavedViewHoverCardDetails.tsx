@@ -13,7 +13,7 @@ import {
 } from './constants';
 import SavedViewHighlightedExpression from './SavedViewHighlightedExpression';
 import SavedViewHoverCardSkeleton from './SavedViewHoverCardSkeleton';
-import { SavedViewHoverCardDetailsProps } from './types';
+import type { SavedViewHoverCardDetailsProps } from './types';
 import { getSavedViewQuerySummaries } from './utils/getSavedViewQuerySummaries';
 
 import styles from './SavedViewHoverCard.module.scss';

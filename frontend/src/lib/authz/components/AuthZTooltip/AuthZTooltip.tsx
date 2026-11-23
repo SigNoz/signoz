@@ -1,10 +1,5 @@
-import {
-	cloneElement,
-	CSSProperties,
-	ReactElement,
-	useMemo,
-	useRef,
-} from 'react';
+import type { CSSProperties, ReactElement } from 'react';
+import { cloneElement, useMemo, useRef } from 'react';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';

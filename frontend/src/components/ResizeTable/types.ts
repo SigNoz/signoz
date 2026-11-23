@@ -1,10 +1,10 @@
-import { TableProps } from 'antd';
+import type { TableProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { PaginationProps } from 'antd/lib';
 import type { ColumnGroupType, ColumnType } from 'antd/lib/table';
-import { LaunchChatSupportProps } from 'components/LaunchChatSupport/LaunchChatSupport';
+import type { LaunchChatSupportProps } from 'components/LaunchChatSupport/LaunchChatSupport';
 
-import { TableDataSource } from './contants';
+import type { TableDataSource } from './contants';
 
 type ColumnWidths = Record<string, number>;
 

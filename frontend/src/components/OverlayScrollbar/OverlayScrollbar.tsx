@@ -1,8 +1,9 @@
-import { CSSProperties, ReactElement, useMemo } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
+import { useMemo } from 'react';
 import TypicalOverlayScrollbar from 'components/TypicalOverlayScrollbar/TypicalOverlayScrollbar';
 import VirtuosoOverlayScrollbar from 'components/VirtuosoOverlayScrollbar/VirtuosoOverlayScrollbar';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { PartialOptions } from 'overlayscrollbars';
+import type { PartialOptions } from 'overlayscrollbars';
 
 type Props = {
 	children: ReactElement;

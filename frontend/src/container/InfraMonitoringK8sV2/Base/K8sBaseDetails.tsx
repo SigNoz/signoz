@@ -22,7 +22,7 @@ import { CategoryIcon } from './categoryIcons';
 import { getEntityNameAttributeKey } from './relations';
 import { useDrawerHistoryStore } from './useDrawerHistoryStore';
 import { usePrimeEntityDetails } from './usePrimeEntityDetails';
-import { K8sBaseDetailsProps } from './types';
+import type { K8sBaseDetailsProps } from './types';
 import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';

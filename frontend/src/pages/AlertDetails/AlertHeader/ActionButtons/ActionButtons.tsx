@@ -14,7 +14,7 @@ import {
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
 
-import { AlertHeaderProps } from '../AlertHeader';
+import type { AlertHeaderProps } from '../AlertHeader';
 
 import './ActionButtons.styles.scss';
 

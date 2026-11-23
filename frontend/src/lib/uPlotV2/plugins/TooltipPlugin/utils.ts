@@ -1,11 +1,11 @@
 import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 
-import {
-	TOOLTIP_OFFSET,
+import type {
 	ChartClickData,
 	TooltipLayoutInfo,
 	TooltipViewState,
 } from './types';
+import { TOOLTIP_OFFSET } from './types';
 
 export function isPlotInViewport(
 	rect: uPlot.BBox,

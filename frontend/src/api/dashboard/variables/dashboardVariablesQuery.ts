@@ -1,10 +1,10 @@
 import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import store from 'store';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type {
 	Props,
 	VariableResponseProps,
 } from 'types/api/dashboard/variables/query';

@@ -1,11 +1,7 @@
 import { UniversalYAxisUnitMappings, Y_AXIS_UNIT_NAMES } from './constants';
 import { ADDITIONAL_Y_AXIS_CATEGORIES, BASE_Y_AXIS_CATEGORIES } from './data';
-import {
-	UniversalYAxisUnit,
-	YAxisCategory,
-	YAxisSource,
-	YAxisUnit,
-} from './types';
+import type { YAxisCategory, YAxisUnit } from './types';
+import { UniversalYAxisUnit, YAxisSource } from './types';
 
 export const mapMetricUnitToUniversalUnit = (
 	unit: string | undefined,

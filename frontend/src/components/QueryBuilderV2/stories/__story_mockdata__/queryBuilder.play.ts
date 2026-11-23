@@ -9,10 +9,10 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import type { QueryBuilderV2 } from '../../QueryBuilderV2';
 import { QueryBuilderField } from '../../queryBuilderFields.types';
+import type { ResolvedQueryBuilderField } from '../../queryBuilderFields.utils';
 import {
 	mergeQueryBuilderFieldsConfig,
 	RAW_QUERY_FIELDS,
-	ResolvedQueryBuilderField,
 	resolveQueryBuilderField,
 } from '../../queryBuilderFields.utils';
 import { expectFirstQuery, payloadIn } from '../QueryBuilderV2.stories.mocks';

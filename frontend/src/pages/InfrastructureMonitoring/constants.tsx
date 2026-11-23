@@ -1,4 +1,4 @@
-import { TabRoutes } from 'components/RouteTab/types';
+import type { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import InfraMonitoringHostsV2 from 'container/InfraMonitoringHostsV2';
 import InfraMonitoringK8sV2 from 'container/InfraMonitoringK8sV2';

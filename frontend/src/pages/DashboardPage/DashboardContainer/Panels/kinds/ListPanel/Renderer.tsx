@@ -15,7 +15,7 @@ import { getRawResults } from 'pages/DashboardPage/DashboardContainer/queryV5/v5
 import type { IField } from 'types/api/logs/fields';
 
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import { useResizableColumns } from '../../hooks/useResizableColumns';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import NoData from '../../components/NoData/NoData';

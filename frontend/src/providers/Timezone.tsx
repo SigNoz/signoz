@@ -1,8 +1,7 @@
+import type { Dispatch, SetStateAction } from 'react';
 import React, {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	Dispatch,
-	SetStateAction,
 	useCallback,
 	// eslint-disable-next-line no-restricted-imports
 	useContext,
@@ -11,17 +10,18 @@ import React, {
 } from 'react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import {
 	getBrowserTimezone,
 	getTimezoneObjectByTimezoneString,
-	Timezone,
 	UTC_TIMEZONE,
 } from 'components/CustomTimePicker/timezoneUtils';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import useTimezoneFormatter, {
+import type {
 	FormatTimezoneAdjustedTimestamp,
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import useTimezoneFormatter from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 
 export interface TimezoneContextType {
 	timezone: Timezone;

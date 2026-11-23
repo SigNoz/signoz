@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { toast } from '@signozhq/ui/toast';
-import { ExportFormat } from 'lib/exportData/types';
+import type { ExportFormat } from 'lib/exportData/types';
 
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';

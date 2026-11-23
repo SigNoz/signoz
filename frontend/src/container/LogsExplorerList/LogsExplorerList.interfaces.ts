@@ -1,7 +1,7 @@
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
-import APIError from 'types/api/error';
-import { ILog } from 'types/api/logs/log';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type APIError from 'types/api/error';
+import type { ILog } from 'types/api/logs/log';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type LogsExplorerListProps = {
 	isLoading: boolean;

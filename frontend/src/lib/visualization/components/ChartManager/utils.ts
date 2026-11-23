@@ -1,7 +1,8 @@
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 /** Extended series with computed stats for table display */
 export type ExtendedChartDataset = uPlot.Series & {

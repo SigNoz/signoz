@@ -1,14 +1,16 @@
-import {
+import type {
 	AuthtypesAuthDomainConfigDTO,
-	AuthtypesAuthDomainConfigGoogleDTOKind,
-	AuthtypesAuthDomainConfigOIDCDTOKind,
-	AuthtypesAuthDomainConfigSAMLDTOKind,
-	AuthtypesAuthNProviderDTO,
 	AuthtypesGettableAuthDomainDTO,
 	AuthtypesGoogleConfigDTO,
 	AuthtypesOIDCConfigDTO,
 	AuthtypesRoleMappingDTO,
 	AuthtypesSamlConfigDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	AuthtypesAuthDomainConfigGoogleDTOKind,
+	AuthtypesAuthDomainConfigOIDCDTOKind,
+	AuthtypesAuthDomainConfigSAMLDTOKind,
+	AuthtypesAuthNProviderDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 /**

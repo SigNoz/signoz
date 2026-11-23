@@ -11,8 +11,8 @@ import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import ErrorDetailsContainer from 'container/ErrorDetails';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { urlKey } from './utils';
 

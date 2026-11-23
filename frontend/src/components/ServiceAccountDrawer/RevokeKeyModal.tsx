@@ -18,11 +18,11 @@ import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesGettableFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 export interface RevokeKeyFooterProps {
 	isRevoking: boolean;

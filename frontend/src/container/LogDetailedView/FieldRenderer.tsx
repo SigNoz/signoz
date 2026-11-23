@@ -3,7 +3,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
-import { FieldRendererProps } from './LogDetailedView.types';
+import type { FieldRendererProps } from './LogDetailedView.types';
 import { getFieldAttributes } from './utils';
 
 import './FieldRenderer.styles.scss';

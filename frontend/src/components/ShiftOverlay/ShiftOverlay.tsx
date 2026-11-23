@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import ReactDOM from 'react-dom';
-import { ROLES } from 'types/roles';
+import type { ROLES } from 'types/roles';
 
 import { formatShortcut } from './formatShortcut';
 

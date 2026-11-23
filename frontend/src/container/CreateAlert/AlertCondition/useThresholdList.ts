@@ -7,8 +7,8 @@ import {
 	INITIAL_RANDOM_THRESHOLD,
 	INITIAL_WARNING_THRESHOLD,
 } from '../context/constants';
-import { Threshold } from '../context/types';
-import { ThresholdList, UpdateThreshold } from './types';
+import type { Threshold } from '../context/types';
+import type { ThresholdList, UpdateThreshold } from './types';
 
 export function useThresholdList(): ThresholdList {
 	const { thresholdState, setThresholdState } = useCreateAlertState();

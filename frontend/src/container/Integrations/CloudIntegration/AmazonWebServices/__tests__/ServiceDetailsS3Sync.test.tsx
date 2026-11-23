@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
+import type { RestRequest } from 'msw';
+import { rest } from 'msw';
 
 import {
 	accountsResponse,

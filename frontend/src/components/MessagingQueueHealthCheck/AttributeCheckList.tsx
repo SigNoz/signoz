@@ -1,5 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
-import { ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	OctagonAlert,
 	Bolt,
@@ -9,8 +10,9 @@ import {
 	Loader,
 	X,
 } from '@signozhq/icons';
-import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
-import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
+import type { TreeDataNode } from 'antd';
+import { Modal, Select, Spin, Tooltip, Tree } from 'antd';
+import type { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';

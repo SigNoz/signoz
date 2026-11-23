@@ -1,12 +1,12 @@
 /* eslint-disable no-empty */
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
-import { FontSize } from 'container/OptionsMenu/types';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { FontSize } from 'container/OptionsMenu/types';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { FormattingOptions } from '../types';
+import type { FormattingOptions } from '../types';
 import { isAiObservabilityExplorerRoute } from '../utils';
 
 /**

@@ -1,5 +1,5 @@
 import { Table } from 'antd';
-import {
+import type {
 	CloudintegrationtypesCollectedLogAttributeDTO,
 	CloudintegrationtypesCollectedMetricDTO,
 } from 'api/generated/services/sigNoz.schemas';

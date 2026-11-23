@@ -1,7 +1,7 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
 import {
 	groupedResponse,

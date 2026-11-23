@@ -1,4 +1,5 @@
-import { RefObject, useCallback } from 'react';
+import type { RefObject } from 'react';
+import { useCallback } from 'react';
 
 import { TOOL_CALL_ID_ATTR } from './utils';
 

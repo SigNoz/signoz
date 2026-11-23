@@ -1,4 +1,4 @@
-import { GeoMapDatum, GeoMapSizeMetric } from '../../types';
+import type { GeoMapDatum, GeoMapSizeMetric } from '../../types';
 
 export interface TooltipStat {
 	label: string;

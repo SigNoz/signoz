@@ -1,11 +1,12 @@
-import { MouseEvent, useMemo } from 'react';
+import type { MouseEvent } from 'react';
+import { useMemo } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { AppLink } from 'lib/router/AppLink';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { isModifierKeyPressed } from 'utils/app';
 import { useTimeSearchParams } from 'hooks/useTimeSearchParams';
 
-import { SavedViewsRowLinkProps } from './types';
+import type { SavedViewsRowLinkProps } from './types';
 import { getSavedViewPath } from './utils/getSavedViewPath';
 
 import styles from './SavedViewsList.module.scss';

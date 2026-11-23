@@ -9,7 +9,7 @@ import { USER_ROLES } from 'types/roles';
 import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
-import {
+import type {
 	RoutingPolicyDetailsFormState,
 	RoutingPolicyDetailsProps,
 } from './types';

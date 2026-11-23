@@ -1,11 +1,12 @@
 import { getFlamegraph } from 'api/generated/services/tracedetail';
-import {
+import type {
 	SpantypesGettableFlamegraphTraceDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useQuery, UseQueryResult } from 'react-query';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export interface GetTraceFlamegraphV3Props {
 	traceId: string;

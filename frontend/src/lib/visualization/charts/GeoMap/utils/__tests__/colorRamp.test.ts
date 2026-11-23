@@ -4,7 +4,7 @@ import {
 	ColorRampScale,
 } from 'lib/visualization/colorRamp/types';
 
-import { GeoMapDatum } from '../../types';
+import type { GeoMapDatum } from '../../types';
 import { createGeoMapColorResolver } from '../scales';
 
 const data = (...values: number[]): GeoMapDatum[] =>

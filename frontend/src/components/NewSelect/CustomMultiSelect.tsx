@@ -29,7 +29,11 @@ import { capitalize, isEmpty } from 'lodash-es';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import TruncatedTooltip from './TruncatedTooltip';
-import { CustomMultiSelectProps, CustomTagProps, OptionData } from './types';
+import type {
+	CustomMultiSelectProps,
+	CustomTagProps,
+	OptionData,
+} from './types';
 import {
 	ALL_SELECTED_VALUE,
 	filterOptionsBySearch,

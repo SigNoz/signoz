@@ -19,7 +19,7 @@ import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { IS_DEV } from 'lib/env';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { ROLES as UserRole } from 'types/roles';
+import type { ROLES as UserRole } from 'types/roles';
 
 import {
 	type CmdAction,

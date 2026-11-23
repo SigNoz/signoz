@@ -1,7 +1,8 @@
 import Feature from 'ol/Feature';
 import type CircleStyle from 'ol/style/Circle';
 
-import { PALETTE, setup, SetupHandle, styleOf } from './olLayersSetup';
+import type { SetupHandle } from './olLayersSetup';
+import { PALETTE, setup, styleOf } from './olLayersSetup';
 
 const bubbleCodes = (handle: SetupHandle): unknown[] =>
 	handle.layers.bubbles

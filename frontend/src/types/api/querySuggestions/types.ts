@@ -1,4 +1,4 @@
-import { FieldDataType } from 'types/api/v5/queryRange';
+import type { FieldDataType } from 'types/api/v5/queryRange';
 
 export interface QueryKeyDataSuggestionsProps {
 	label: string;

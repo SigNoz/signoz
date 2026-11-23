@@ -1,5 +1,5 @@
-import { AxiosError } from 'axios';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { AxiosError } from 'axios';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {
 	start: number;

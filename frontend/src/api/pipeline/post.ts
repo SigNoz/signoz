@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import { Pipeline } from 'types/api/pipeline/def';
-import { Props } from 'types/api/pipeline/post';
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type { Pipeline } from 'types/api/pipeline/def';
+import type { Props } from 'types/api/pipeline/post';
 
 const post = async (props: Props): Promise<SuccessResponseV2<Pipeline>> => {
 	try {

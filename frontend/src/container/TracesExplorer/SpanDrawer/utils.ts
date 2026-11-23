@@ -1,5 +1,5 @@
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 type ListSpanEvent = {
 	name: string;

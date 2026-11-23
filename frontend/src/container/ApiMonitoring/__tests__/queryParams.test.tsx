@@ -1,5 +1,5 @@
+import type { ApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import {
-	ApiMonitoringParams,
 	DEFAULT_PARAMS,
 	getApiMonitoringParams,
 	getLegacyFilterExpressions,

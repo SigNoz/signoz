@@ -1,4 +1,5 @@
-import { HTMLAttributes, useCallback, useMemo } from 'react';
+import type { HTMLAttributes } from 'react';
+import { useCallback, useMemo } from 'react';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { VIEW_TYPES, type VIEWS } from 'components/LogDetail/constants';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';

@@ -1,6 +1,6 @@
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 
 export function useLogTimestamp(log: ILog | null): string {

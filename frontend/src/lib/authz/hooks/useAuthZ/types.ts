@@ -1,4 +1,4 @@
-import permissionsType from './permissions.type';
+import type permissionsType from './permissions.type';
 
 const ObjectSeparator = ':';
 

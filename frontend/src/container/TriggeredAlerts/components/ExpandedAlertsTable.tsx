@@ -1,8 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
-import TanStackTable, {
-	SortState,
-	TableColumnDef,
-} from 'components/TanStackTableView';
+import type { SortState, TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 
 import type { Alert } from '../types';
 import { sortAlerts } from '../utils';

@@ -1,6 +1,6 @@
 import useUrlQuery from 'hooks/useUrlQuery';
 import { fireEvent, render, screen } from 'tests/test-utils';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 // Local identity-proxy mock for this module so `styles.foo` resolves to
 // `'foo'` in test assertions. The global `__mocks__/cssMock.ts` stays as

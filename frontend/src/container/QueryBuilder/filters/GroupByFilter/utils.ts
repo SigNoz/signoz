@@ -3,8 +3,8 @@ import {
 	initialAutocompleteData,
 } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';
 
 export const toAttributeKey = (

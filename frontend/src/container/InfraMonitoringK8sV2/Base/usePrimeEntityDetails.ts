@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
 import { useGlobalTimeStore } from 'store/globalTime';
 
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 
 interface PrimeEntityDetailsParams {
 	params: SelectedItemParams;

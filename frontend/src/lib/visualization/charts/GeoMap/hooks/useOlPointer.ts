@@ -3,7 +3,7 @@ import type MapBrowserEvent from 'ol/MapBrowserEvent';
 
 import type BaseLayer from 'ol/layer/Base';
 
-import { OlMapHandle } from './useOlMap';
+import type { OlMapHandle } from './useOlMap';
 
 /**
  * Hover and click through OpenLayers' hit detection. OpenLayers only fires

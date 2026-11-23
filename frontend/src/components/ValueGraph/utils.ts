@@ -1,5 +1,5 @@
 import { evaluateThresholdWithConvertedValue } from 'container/WidgetCard/Panels/TablePanel/utils';
-import { ThresholdProps } from 'types/api/widgets/threshold';
+import type { ThresholdProps } from 'types/api/widgets/threshold';
 
 function doesValueSatisfyThreshold(
 	rawValue: number,

@@ -16,10 +16,8 @@ import {
 	POD_UID,
 } from './K8sBaseDetails.stories.mocks';
 import type { K8sBaseDetailsProps } from './types';
-import {
-	DrawerHistoryEntry,
-	useDrawerHistoryStore,
-} from './useDrawerHistoryStore';
+import type { DrawerHistoryEntry } from './useDrawerHistoryStore';
+import { useDrawerHistoryStore } from './useDrawerHistoryStore';
 
 type DrawerArgs = PageStoryArgs<typeof drawerMocks> &
 	K8sBaseDetailsProps<unknown>;

@@ -10,7 +10,7 @@ import ItemInputSelector from './ItemInputSelector';
 import TelemetrySelectorWizard from './TelemetrySelectorWizard';
 
 import styles from './ActionToggle.module.scss';
-import { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
+import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 import { getActionLabel } from 'container/RolesSettings/ViewRolePage/components/permissionDisplay.utils';
 
 const SCOPE_LABELS: Record<PermissionScope, string> = {

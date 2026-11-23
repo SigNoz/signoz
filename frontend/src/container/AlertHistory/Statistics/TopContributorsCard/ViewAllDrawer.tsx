@@ -1,7 +1,10 @@
 import { Color } from '@signozhq/design-tokens';
 import { Drawer } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { AlertRuleStats, AlertRuleTopContributors } from 'types/api/alerts/def';
+import type {
+	AlertRuleStats,
+	AlertRuleTopContributors,
+} from 'types/api/alerts/def';
 
 import TopContributorsRows from './TopContributorsRows';
 

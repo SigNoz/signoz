@@ -1,4 +1,4 @@
-import { PipelineData } from 'types/api/pipeline/def';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 import { IconListStyle } from '../../styles';
 import DeleteAction from '../TableActions/DeleteAction';

@@ -1,14 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	Dispatch,
-	memo,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { usePopoverHandle } from '@signozhq/ui/popover';
@@ -19,7 +11,8 @@ import {
 	getCoreRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import { useVirtualizer, Virtualizer } from '@tanstack/react-virtual';
+import type { Virtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import cx from 'classnames';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { convertTimeToRelevantUnit } from 'utils/traceUtils';
@@ -40,7 +33,7 @@ import { resolveSpanColor } from 'pages/TraceDetailsV3/utils';
 import { useBoundaryPagination } from 'pages/TraceDetailsV3/TraceWaterfall/hooks/useBoundaryPagination';
 import { useCrosshair } from 'pages/TraceDetailsV3/hooks/useCrosshair';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
+import type { EventV3, SpanV3 } from 'types/api/trace/getTraceV3';
 import { toFixed } from 'utils/toFixed';
 
 import { EventTooltipContent } from '../../../SpanHoverCard/EventTooltipContent';
@@ -48,7 +41,7 @@ import { SpanHoverCard } from '../../../SpanHoverCard/SpanHoverCard';
 import SpanHintBadge from '../../../SpanHintBadge/SpanHintBadge';
 import { isAiSpan } from '../../../utils/aiTraceUtils';
 import AddSpanToFunnelModal from '../../AddSpanToFunnelModal/AddSpanToFunnelModal';
-import { IInterestedSpan } from '../../types';
+import type { IInterestedSpan } from '../../types';
 
 import styles from './Success.module.scss';
 

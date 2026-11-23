@@ -1,9 +1,12 @@
-import { ReactNode } from 'react';
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import type { ReactNode } from 'react';
+import type { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	DataSource,
+	MetricAggregateOperator,
+} from 'types/common/queryBuilder';
 
 export interface IServiceName {
 	servicename: string;

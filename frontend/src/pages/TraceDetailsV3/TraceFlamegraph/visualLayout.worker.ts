@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 import { computeVisualLayout } from './computeVisualLayout';
-import {
+import type {
 	LayoutWorkerRequest,
 	LayoutWorkerResponse,
 } from './visualLayoutWorkerTypes';

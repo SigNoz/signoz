@@ -1,8 +1,5 @@
-import {
-	GeoRawProjection,
-	geoEqualEarthRaw,
-	geoNaturalEarth1Raw,
-} from 'd3-geo';
+import type { GeoRawProjection } from 'd3-geo';
+import { geoEqualEarthRaw, geoNaturalEarth1Raw } from 'd3-geo';
 import type { Coordinate } from 'ol/coordinate';
 import {
 	addCoordinateTransforms,
@@ -11,7 +8,7 @@ import {
 	Projection,
 } from 'ol/proj';
 
-import { GeoMapProjection } from '../types';
+import type { GeoMapProjection } from '../types';
 
 /** Web Mercator's radius, so every projection zooms and sizes labels alike. */
 const EARTH_RADIUS = 6378137;

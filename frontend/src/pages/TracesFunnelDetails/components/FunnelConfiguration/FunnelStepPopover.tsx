@@ -3,7 +3,7 @@ import { Button, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Ellipsis, PencilLine, Trash2 } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { FunnelStepData } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
 
 import AddFunnelStepDetailsModal from './AddFunnelStepDetailsModal';
 import DeleteFunnelStep from './DeleteFunnelStep';

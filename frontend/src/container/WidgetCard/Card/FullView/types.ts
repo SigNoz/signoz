@@ -1,11 +1,16 @@
-import { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
-import { ToggleGraphProps } from 'components/Graph/types';
-import { UplotProps } from 'components/Uplot/Uplot';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/widgets/widget';
-import uPlot from 'uplot';
+import type {
+	Dispatch,
+	MutableRefObject,
+	RefObject,
+	SetStateAction,
+} from 'react';
+import type { ToggleGraphProps } from 'components/Graph/types';
+import type { UplotProps } from 'components/Uplot/Uplot';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Widgets } from 'types/api/widgets/widget';
+import type uPlot from 'uplot';
 
 export interface DataSetProps {
 	index: number;

@@ -15,7 +15,7 @@ import {
 	useGetService,
 	useUpdateService,
 } from 'api/generated/services/cloudintegration';
-import {
+import type {
 	CloudintegrationtypesServiceConfigDTO,
 	CloudintegrationtypesServiceDTO,
 	ListAccountServicesMetadata200,
@@ -23,7 +23,8 @@ import {
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/ServiceDashboards/ServiceDashboards';
-import { IntegrationType, IServiceStatus } from 'container/Integrations/types';
+import type { IServiceStatus } from 'container/Integrations/types';
+import { IntegrationType } from 'container/Integrations/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Save, X } from '@signozhq/icons';
 

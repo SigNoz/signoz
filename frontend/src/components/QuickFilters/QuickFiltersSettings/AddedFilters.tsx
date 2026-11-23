@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
 	PointerSensor,
 	useSensor,
 	useSensors,
@@ -17,7 +17,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical } from '@signozhq/icons';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 function SortableFilter({
 	filter,

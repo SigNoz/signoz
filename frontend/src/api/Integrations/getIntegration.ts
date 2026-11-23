@@ -1,6 +1,6 @@
 import axios from 'api';
-import { AxiosResponse } from 'axios';
-import {
+import type { AxiosResponse } from 'axios';
+import type {
 	GetIntegrationPayloadProps,
 	GetIntegrationProps,
 } from 'types/api/integrations/types';

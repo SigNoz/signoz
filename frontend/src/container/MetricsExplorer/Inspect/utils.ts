@@ -1,14 +1,13 @@
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { InspectMetricsSeries } from './types';
-import {
+import type {
+	InspectMetricsSeries,
 	GraphPopoverData,
 	GraphPopoverOptions,
 	MetricInspectionOptions,
-	SpaceAggregationOptions,
-	TimeAggregationOptions,
 } from './types';
+import { SpaceAggregationOptions, TimeAggregationOptions } from './types';
 
 /**
  * Check if the inspect feature flag is enabled

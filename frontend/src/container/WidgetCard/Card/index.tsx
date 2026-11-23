@@ -7,18 +7,18 @@ import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
-import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import APIError from 'types/api/error';
+import type { AppState } from 'store/reducers';
+import type APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -29,7 +29,7 @@ import {
 import { REACT_QUERY_KEY } from '../../../constants/reactQueryKeys';
 import EmptyWidget from 'container/WidgetCard/EmptyWidget';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
-import { GridCardGraphProps } from 'container/WidgetCard/Card/types';
+import type { GridCardGraphProps } from 'container/WidgetCard/Card/types';
 import {
 	errorDetails,
 	isDataAvailableByPanelType,

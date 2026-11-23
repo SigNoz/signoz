@@ -1,4 +1,4 @@
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import {
@@ -7,8 +7,8 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import uPlot from 'uplot';
 
 export interface MeterChartConfigProps {

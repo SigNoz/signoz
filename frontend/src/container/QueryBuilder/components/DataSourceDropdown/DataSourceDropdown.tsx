@@ -1,13 +1,13 @@
 import { memo } from 'react';
 import { Select } from 'antd';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { DataSource } from 'types/common/queryBuilder';
+import type { SelectOption } from 'types/common/select';
 // ** Helpers
 import { transformToUpperCase } from 'utils/transformToUpperCase';
 
 // ** Types
-import { QueryLabelProps } from './DataSourceDropdown.interfaces';
+import type { QueryLabelProps } from './DataSourceDropdown.interfaces';
 import { signalsToDataSources } from './DataSourceDropdown.utils';
 
 const ALL_SIGNALS = [

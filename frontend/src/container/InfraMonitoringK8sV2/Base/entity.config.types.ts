@@ -1,6 +1,6 @@
-import { SelectedItemParams } from '../hooks';
-import { K8sBaseListProps } from './K8sBaseList';
-import { K8sBaseDetailsProps } from './types';
+import type { SelectedItemParams } from '../hooks';
+import type { K8sBaseListProps } from './K8sBaseList';
+import type { K8sBaseDetailsProps } from './types';
 
 export type K8sEntityData = { meta?: Record<string, string> | null };
 

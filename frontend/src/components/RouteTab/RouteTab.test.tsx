@@ -2,7 +2,7 @@ import { navigate } from 'lib/router/navigation';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
 import RouteTab from './index';
-import { RouteTabProps } from './types';
+import type { RouteTabProps } from './types';
 
 jest.mock('./RouteTab.module.scss', () => ({
 	__esModule: true,

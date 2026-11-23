@@ -16,7 +16,7 @@ import {
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ResizeTable } from 'components/ResizeTable';
 import Controls from 'container/Controls';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
 import { TracesLoading } from 'container/TracesExplorer/TraceLoading/TraceLoading';

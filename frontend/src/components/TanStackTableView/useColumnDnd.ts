@@ -1,13 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import {
-	DragEndEvent,
-	PointerSensor,
-	useSensor,
-	useSensors,
-} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 
-import { TableColumnDef } from './types';
+import type { TableColumnDef } from './types';
 
 export interface UseColumnDndOptions<TData> {
 	columns: TableColumnDef<TData>[];

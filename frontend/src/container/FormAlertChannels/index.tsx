@@ -1,14 +1,13 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Controller, FormProvider, UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
+import { Controller, FormProvider } from 'react-hook-form';
 import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Select, type SelectItemType } from '@signozhq/ui/select';
 import { Switch } from '@signozhq/ui/switch';
-import {
-	ChannelFormValues,
-	ChannelKind,
-} from 'container/CreateAlertChannels/types';
+import type { ChannelFormValues } from 'container/CreateAlertChannels/types';
+import { ChannelKind } from 'container/CreateAlertChannels/types';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 

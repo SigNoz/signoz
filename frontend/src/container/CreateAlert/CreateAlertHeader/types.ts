@@ -1,4 +1,4 @@
-import { Labels } from 'types/api/alerts/def';
+import type { Labels } from 'types/api/alerts/def';
 
 export interface LabelsInputProps {
 	labels: Labels;

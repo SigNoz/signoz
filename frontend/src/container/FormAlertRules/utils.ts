@@ -1,5 +1,5 @@
-import { SelectProps } from 'antd';
-import {
+import type { SelectProps } from 'antd';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,

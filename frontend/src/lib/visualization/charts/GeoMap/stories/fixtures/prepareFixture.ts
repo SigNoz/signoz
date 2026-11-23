@@ -1,8 +1,12 @@
 import { normalizeCountry } from '../../geo/normalizeCountry';
 import { normalizeSubdivision } from '../../geo/normalizeSubdivision';
-import { SubdivisionSet } from '../../geo/subdivisions';
-import { GeoMapDatum, GeoMapSelection, SubdivisionCountry } from '../../types';
-import { Fixture } from './types';
+import type { SubdivisionSet } from '../../geo/subdivisions';
+import type {
+	GeoMapDatum,
+	GeoMapSelection,
+	SubdivisionCountry,
+} from '../../types';
+import type { Fixture } from './types';
 
 /**
  * Stand-in for the panel's prepareGeoMapData: normalise, keep the first row per

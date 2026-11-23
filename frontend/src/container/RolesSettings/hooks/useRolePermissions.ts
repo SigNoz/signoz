@@ -1,12 +1,10 @@
 import { useMutation, useQueryClient } from 'react-query';
-import { ErrorType } from 'api/generatedAPIInstance';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import type {
 	AuthtypesPostableRoleDTO,
 	AuthtypesRoleDTO,
 	AuthtypesTransactionGroupDTO,
 	AuthtypesUpdatableRoleDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import {
 	AuthtypesRelationDTO,
 	CoretypesKindDTO,
 	RenderErrorResponseDTO,
@@ -26,12 +24,12 @@ import {
 	getResourceVerbs,
 	RESOURCE_ORDER,
 } from '../permissions.config';
-import {
+import type {
 	ActionConfig,
-	PermissionScope,
 	ResourcePermissions,
 	RolePermissionsData,
 } from '../types';
+import { PermissionScope } from '../types';
 
 const WILDCARD_SELECTOR = '*';
 

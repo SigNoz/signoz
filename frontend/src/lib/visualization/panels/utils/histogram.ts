@@ -3,7 +3,7 @@ import {
 	NULL_REMOVE,
 	NULL_RETAIN,
 } from 'lib/visualization/constants';
-import { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
 
 /**
  * Expands contiguous runs of `null` values to the left and right of their

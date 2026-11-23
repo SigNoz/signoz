@@ -7,9 +7,10 @@ import {
 	server,
 } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
+import type { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
-import ForgotPassword, { ForgotPasswordRouteState } from '../index';
+import type { ForgotPasswordRouteState } from '../index';
+import ForgotPassword from '../index';
 
 // Mock dependencies
 jest.mock('lib/router/navigation', () => ({

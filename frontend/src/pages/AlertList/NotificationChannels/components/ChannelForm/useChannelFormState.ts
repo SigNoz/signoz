@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import type { UseFormReturn } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetNotificationChannel,
@@ -10,15 +11,15 @@ import {
 	useTestNotificationChannel,
 	useUpdateNotificationChannel,
 } from 'api/generated/services/channels';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import {
 	toPostableChannel,
 	toTestableChannel,
 	toUpdatableChannel,
 } from 'container/CreateAlertChannels/channelConfig';
-import { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
-import {
+import type { ChannelFormState } from 'container/CreateAlertChannels/channelFormValues';
+import type {
 	ChannelFormValues,
 	ChannelKind,
 } from 'container/CreateAlertChannels/types';

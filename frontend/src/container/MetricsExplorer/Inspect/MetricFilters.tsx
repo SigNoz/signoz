@@ -6,7 +6,7 @@ import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import { MetricFiltersProps } from './types';
+import type { MetricFiltersProps } from './types';
 
 function MetricFilters({
 	dispatchMetricInspectionOptions,

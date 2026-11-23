@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useListDashboardsForUserV2 } from 'api/generated/services/dashboard';
-import { DashboardtypesListedDashboardForUserV2DTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesListedDashboardForUserV2DTO } from 'api/generated/services/sigNoz.schemas';
 import useDebounce from 'hooks/useDebounce';
 
 const V2_LIST_LIMIT = 1000;

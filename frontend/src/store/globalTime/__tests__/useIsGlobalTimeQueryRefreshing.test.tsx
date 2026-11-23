@@ -1,12 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
 import { GlobalTimeProvider } from '../GlobalTimeContext';
-import { GlobalTimeProviderOptions } from '../types';
+import type { GlobalTimeProviderOptions } from '../types';
 import { useIsGlobalTimeQueryRefreshing } from '../useIsGlobalTimeQueryRefreshing';
 
 const createTestQueryClient = (): QueryClient =>

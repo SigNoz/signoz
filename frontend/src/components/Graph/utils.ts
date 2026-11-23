@@ -1,5 +1,5 @@
-import { MutableRefObject } from 'react';
-import {
+import type { MutableRefObject } from 'react';
+import type {
 	ActiveElement,
 	Chart,
 	ChartConfiguration,
@@ -10,7 +10,7 @@ import {
 	TooltipItem,
 } from 'chart.js';
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 
@@ -23,15 +23,17 @@ import {
 	createIntersectionCursorPluginOptions,
 	intersectionCursorPluginId,
 } from './Plugin/IntersectionCursor';
-import {
+import type {
 	CustomChartOptions,
-	DEFAULT_SIGNIFICANT_DIGITS,
 	GraphOnClickHandler,
 	IAxisTimeConfig,
-	MAX_DECIMALS,
 	PrecisionOption,
-	PrecisionOptionsEnum,
 	StaticLineProps,
+} from './types';
+import {
+	DEFAULT_SIGNIFICANT_DIGITS,
+	MAX_DECIMALS,
+	PrecisionOptionsEnum,
 } from './types';
 import { getToolTipValue, getYAxisFormattedValue } from './yAxisConfig';
 

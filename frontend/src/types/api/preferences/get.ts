@@ -1,4 +1,4 @@
-import { OrgPreference, UserPreference } from './preference';
+import type { OrgPreference, UserPreference } from './preference';
 
 export interface Props {
 	name: string;

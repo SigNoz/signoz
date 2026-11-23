@@ -3,7 +3,7 @@ import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import {
+import type {
 	GraphVisibilityState,
 	SeriesVisibilityItem,
 } from 'lib/visualization/panels/types';

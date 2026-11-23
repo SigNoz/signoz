@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { Calendar as CalendarIcon, Check, X } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
-import { DateRange } from './CustomTimePickerPopoverContent';
+import type { DateRange } from './CustomTimePickerPopoverContent';
 
 function CalendarContainer({
 	dateRange,

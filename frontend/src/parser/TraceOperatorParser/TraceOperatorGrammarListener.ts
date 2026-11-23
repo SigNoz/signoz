@@ -3,10 +3,10 @@
 import {ParseTreeListener} from "antlr4";
 
 
-import { QueryContext } from "./TraceOperatorGrammarParser";
-import { ExpressionContext } from "./TraceOperatorGrammarParser";
-import { AtomContext } from "./TraceOperatorGrammarParser";
-import { OperatorContext } from "./TraceOperatorGrammarParser";
+import type { QueryContext } from "./TraceOperatorGrammarParser";
+import type { ExpressionContext } from "./TraceOperatorGrammarParser";
+import type { AtomContext } from "./TraceOperatorGrammarParser";
+import type { OperatorContext } from "./TraceOperatorGrammarParser";
 
 
 /**

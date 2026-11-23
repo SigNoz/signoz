@@ -1,9 +1,9 @@
 import type uPlot from 'uplot';
 
+import type { ScatterHoveredPoint } from '../scatterTooltipContent';
 import {
 	buildChannelRows,
 	resolveHoveredPoint,
-	ScatterHoveredPoint,
 } from '../scatterTooltipContent';
 
 jest.mock('components/Graph/yAxisConfig', () => ({

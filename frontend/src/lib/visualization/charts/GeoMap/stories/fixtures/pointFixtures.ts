@@ -1,4 +1,4 @@
-import { GeoMapPoint } from '../../types';
+import type { GeoMapPoint } from '../../types';
 import { seededRandom } from './seededRandom';
 
 // [name, lat, lon]

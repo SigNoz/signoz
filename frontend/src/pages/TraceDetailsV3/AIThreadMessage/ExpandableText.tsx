@@ -1,4 +1,5 @@
-import { MouseEvent, useState } from 'react';
+import type { MouseEvent } from 'react';
+import { useState } from 'react';
 
 import AIMarkdown from './AIMarkdown';
 import { MAX_TEXT_LENGTH } from './utils';

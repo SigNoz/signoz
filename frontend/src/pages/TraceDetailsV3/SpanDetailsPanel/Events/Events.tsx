@@ -4,7 +4,7 @@ import { Collapse, Modal } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Diamond } from '@signozhq/icons';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import EventAttribute from './components/EventAttribute';
 import NoData from './NoData/NoData';

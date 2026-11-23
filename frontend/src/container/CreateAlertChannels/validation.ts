@@ -1,4 +1,4 @@
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import type { ZodType } from 'zod';
 
 import { emailSchema } from './schemas/email';
@@ -13,7 +13,8 @@ import { channelNameSchema } from './schemas/shared';
 import { slackSchema } from './schemas/slack';
 import { telegramSchema } from './schemas/telegram';
 import { webhookSchema } from './schemas/webhook';
-import { ChannelFormValues, ChannelKind } from './types';
+import type { ChannelFormValues } from './types';
+import { ChannelKind } from './types';
 
 export const CHANNEL_SCHEMAS: Record<ChannelKind, ZodType> = {
 	[ChannelKind.slack]: slackSchema,

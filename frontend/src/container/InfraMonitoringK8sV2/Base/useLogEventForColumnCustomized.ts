@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
+import type { TableColumnDef } from 'components/TanStackTableView';
 import {
-	TableColumnDef,
 	useColumnOrder,
 	useHiddenColumnIds,
 } from 'components/TanStackTableView';
 
-import { InfraMonitoringEntity } from '../constants';
+import type { InfraMonitoringEntity } from '../constants';
 
 import {
 	useInfraMonitoringFontSize,

@@ -1,16 +1,14 @@
 import React from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Progress } from '@signozhq/ui/progress';
-import {
-	InframonitoringtypesHostRecordDTO,
-	InframonitoringtypesHostStatusDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
+import type { InframonitoringtypesHostRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import { InframonitoringtypesHostStatusDTO } from 'api/generated/services/sigNoz.schemas';
+import type { K8sDetailsMetadataConfig } from 'container/InfraMonitoringK8sV2/Base/types';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import { TextNoData } from 'container/InfraMonitoringK8sV2/components';
 import { getProgressColorForPercent } from 'container/InfraMonitoringK8sV2/components/EntityProgressBar.utils';
-import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
+import type { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
 import {
 	getHostQueryPayload,
 	hostWidgetInfo,

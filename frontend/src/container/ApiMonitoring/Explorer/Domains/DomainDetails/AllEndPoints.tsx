@@ -11,7 +11,7 @@ import { GroupByFilter } from 'container/QueryBuilder/filters/GroupByFilter/Grou
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { isEqual } from 'lodash-es';
 import { parseAsString, useQueryState } from 'nuqs';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ENDPOINT_STATS_EXPRESSION_KEY } from '../../../filterParamKeys';

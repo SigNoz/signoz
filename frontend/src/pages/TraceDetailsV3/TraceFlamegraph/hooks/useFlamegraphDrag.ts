@@ -1,14 +1,13 @@
-import {
+import type {
 	Dispatch,
 	MouseEvent as ReactMouseEvent,
 	MutableRefObject,
 	RefObject,
 	SetStateAction,
-	useCallback,
-	useRef,
 } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { ITraceMetadata } from '../types';
+import type { ITraceMetadata } from '../types';
 import { clamp } from '../utils';
 
 interface UseFlamegraphDragArgs {

@@ -2,15 +2,9 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import { mockQueryRangeV5WithLogsResponse } from '__tests__/query_range_v5.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	act,
-	fireEvent,
-	render,
-	RenderResult,
-	screen,
-	waitFor,
-} from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { RenderResult } from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityLogs from '../EntityLogs';
 import { K8S_ENTITY_LOGS_EXPRESSION_KEY } from '../hooks';

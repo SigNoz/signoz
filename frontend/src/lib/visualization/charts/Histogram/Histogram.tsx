@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import HistogramTooltip from 'lib/uPlotV2/components/Tooltip/HistogramTooltip';
-import {
+import type {
 	HistogramTooltipProps,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
-import { HistogramChartProps } from 'lib/visualization/charts/types';
+import type { HistogramChartProps } from 'lib/visualization/charts/types';
 
 export default function Histogram(props: HistogramChartProps): JSX.Element {
 	const {

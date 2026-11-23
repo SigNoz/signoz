@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { SetPageOptions } from './useTableParams';
+import type { SetPageOptions } from './useTableParams';
 
 const FIRST_PAGE = 1;
 const REPLACE_HISTORY: SetPageOptions = { history: 'replace' };

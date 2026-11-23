@@ -1,15 +1,16 @@
 /* eslint-disable no-restricted-imports */
+import type { ReactNode } from 'react';
 import {
 	createContext,
-	ReactNode,
 	useCallback,
 	useContext,
 	useEffect,
 	useRef,
 } from 'react';
 /* eslint-enable no-restricted-imports */
-import { VisibilityState } from '@tanstack/react-table';
-import { createStore, StoreApi, useStore } from 'zustand';
+import type { VisibilityState } from '@tanstack/react-table';
+import type { StoreApi } from 'zustand';
+import { createStore, useStore } from 'zustand';
 
 const CLEAR_HOVER_DELAY_MS = 100;
 

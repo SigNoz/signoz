@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CellTypographySize } from 'components/TanStackTableView';
+import type { CellTypographySize } from 'components/TanStackTableView';
 
 export type FontSize = CellTypographySize;
 

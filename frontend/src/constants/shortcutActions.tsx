@@ -18,7 +18,7 @@ import {
 	Workflow,
 } from '@signozhq/icons';
 import Noz from 'components/Noz/Noz';
-import { ROLES } from 'types/roles';
+import type { ROLES } from 'types/roles';
 
 export type CmdAction = {
 	id: string;

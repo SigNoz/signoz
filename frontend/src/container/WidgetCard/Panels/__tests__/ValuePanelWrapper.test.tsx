@@ -1,6 +1,6 @@
 import { PanelMode } from 'lib/visualization/panels/types';
 import { render } from 'tests/test-utils';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Widgets } from 'types/api/widgets/widget';
 
 import ValuePanelWrapper from 'container/WidgetCard/Panels/ValuePanelWrapper';
 import {

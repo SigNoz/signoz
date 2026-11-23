@@ -3,7 +3,7 @@ import { Input } from '@signozhq/ui/input';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useAlertRuleOptional } from 'providers/Alert';
-import { Labels } from 'types/api/alerts/def';
+import type { Labels } from 'types/api/alerts/def';
 
 import { useCreateAlertState } from '../context';
 import LabelsInput from './LabelsInput';

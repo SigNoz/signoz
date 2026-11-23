@@ -1,5 +1,5 @@
-import { SuccessResponseV2 } from 'types/api';
-import { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
+import type { SuccessResponseV2 } from 'types/api';
+import type { ApDexPayloadAndSettingsProps } from 'types/api/metrics/getApDex';
 
 export interface ApDexSettingsProps {
 	servicename: string;

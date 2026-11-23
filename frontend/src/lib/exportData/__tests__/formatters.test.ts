@@ -1,6 +1,6 @@
 import { toCsv } from '../toCsv';
 import { toJsonl } from '../toJsonl';
-import { SerializedTable } from '../types';
+import type { SerializedTable } from '../types';
 
 const table: SerializedTable = {
 	headers: ['timestamp', 'value'],

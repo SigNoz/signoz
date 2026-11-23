@@ -3,9 +3,9 @@ import { Button } from '@signozhq/ui/button';
 import type { CSSProperties } from 'react';
 
 import styles from './ChatInput.module.scss';
+import type { ContextCategory } from './contextPicker';
 import {
 	CONTEXT_CATEGORY_ICONS,
-	ContextCategory,
 	getContextPickerEmptyContent,
 } from './contextPicker';
 

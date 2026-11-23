@@ -1,4 +1,5 @@
-import { Modal, ModalProps } from 'antd';
+import type { ModalProps } from 'antd';
+import { Modal } from 'antd';
 
 import './SignozModal.style.scss';
 

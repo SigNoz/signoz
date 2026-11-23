@@ -1,6 +1,7 @@
-import { Layout } from 'react-grid-layout';
+import type { Layout } from 'react-grid-layout';
 
-import { applyRowCollapse, PanelMap } from 'container/WidgetCard/utils';
+import type { PanelMap } from 'container/WidgetCard/utils';
+import { applyRowCollapse } from 'container/WidgetCard/utils';
 
 // Helper to produce deeply-frozen objects that mimic what zustand/immer returns.
 function freeze<T>(obj: T): T {

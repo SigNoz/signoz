@@ -1,10 +1,12 @@
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
-import uPlot, { Axis } from 'uplot';
+import type { Axis } from 'uplot';
+import type uPlot from 'uplot';
 
 import { uPlotXAxisValuesFormat } from '../../uPlotLib/utils/constants';
 import getGridColor from '../../uPlotLib/utils/getGridColor';
 import { buildYAxisSizeCalculator } from '../utils/axis';
-import { AxisProps, ConfigBuilder } from './types';
+import type { AxisProps } from './types';
+import { ConfigBuilder } from './types';
 
 /**
  * Builder for uPlot axis configuration

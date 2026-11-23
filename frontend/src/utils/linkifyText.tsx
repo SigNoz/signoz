@@ -1,4 +1,5 @@
-import { Fragment, MouseEvent, ReactNode } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
+import { Fragment } from 'react';
 
 /** Matches http(s) URLs and bare www. links up to the next whitespace. */
 const URL_REGEX = /((?:https?:\/\/|www\.)[^\s]+)/gi;

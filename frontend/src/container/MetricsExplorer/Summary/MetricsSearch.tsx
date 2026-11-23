@@ -5,7 +5,7 @@ import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { MetricsSearchProps } from './types';
+import type { MetricsSearchProps } from './types';
 
 function MetricsSearch({
 	query,

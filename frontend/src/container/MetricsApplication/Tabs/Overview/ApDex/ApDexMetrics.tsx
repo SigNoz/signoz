@@ -1,4 +1,5 @@
-import { ReactNode, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
@@ -21,7 +22,7 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
-import { ApDexMetricsProps } from './types';
+import type { ApDexMetricsProps } from './types';
 
 function ApDexMetrics({
 	delta,

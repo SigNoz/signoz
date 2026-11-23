@@ -1,5 +1,5 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
-import { Tags } from 'hooks/useResourceAttribute/types';
+import type { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import type { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {
 	service: string;

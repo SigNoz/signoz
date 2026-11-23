@@ -1,12 +1,13 @@
 import { formattedValueToString, getValueFormat } from '@grafana/data';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { formatDecimalWithLeadingZeros } from 'components/Graph/utils';
 import {
 	AdditionalLabelsMappingForGrafanaUnits,
 	CUSTOM_SCALING_FAMILIES,
 	UniversalUnitToGrafanaUnit,
 } from 'components/YAxisUnitSelector/constants';
-import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import type { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 function scaleValue(
 	value: number,

@@ -1,10 +1,11 @@
-import { RefObject, useEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Skeleton, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { ToggleGraphProps } from 'components/Graph/types';
+import type { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
@@ -15,7 +16,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 import {
 	getCustomTimeRangeWindowSweepInMS,
 	getStartAndEndTimesInMilliseconds,
@@ -27,7 +28,7 @@ import useNavigateToExplorerPages from 'container/WidgetCard/hooks/useNavigateTo
 import WidgetHeader from 'container/WidgetCard/Header';
 import FullView from 'container/WidgetCard/Card/FullView';
 import { Modal } from 'container/WidgetCard/Card/styles';
-import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
+import type { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import {
 	getLocalStorageGraphVisibilityState,
 	handleGraphClick,

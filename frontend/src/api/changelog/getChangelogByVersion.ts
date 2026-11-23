@@ -1,10 +1,9 @@
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import axios, { AxiosError } from 'axios';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import {
-	ChangelogSchema,
-	DeploymentType,
-} from 'types/api/changelog/getChangelogByVersion';
+import type { AxiosError } from 'axios';
+import axios from 'axios';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import { DeploymentType } from 'types/api/changelog/getChangelogByVersion';
 
 const getChangelogByVersion = async (
 	versionId: string,

@@ -12,9 +12,9 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
-import { ErrorV2 } from 'types/api';
+import type { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { SessionsContext } from 'types/api/v2/sessions/context/get';
+import type { SessionsContext } from 'types/api/v2/sessions/context/get';
 
 import tvUrl from '@/assets/svgs/tv.svg';
 

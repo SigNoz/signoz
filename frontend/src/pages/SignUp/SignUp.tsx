@@ -12,7 +12,7 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, SolidInfoCircle } from '@signozhq/icons';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import tvUrl from '@/assets/svgs/tv.svg';
 

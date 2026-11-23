@@ -9,7 +9,7 @@ import {
 	NANO_SECOND_MULTIPLIER,
 } from 'store/globalTime';
 import { act, render, waitFor } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityTraces from '../EntityTraces';
 import { K8S_ENTITY_TRACES_EXPRESSION_KEY } from '../hooks';

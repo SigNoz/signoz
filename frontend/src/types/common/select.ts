@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 export type SelectOption<Value, Label extends unknown = string> = {
 	value: Value;

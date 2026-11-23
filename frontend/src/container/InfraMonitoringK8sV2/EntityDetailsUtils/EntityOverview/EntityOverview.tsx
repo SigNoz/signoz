@@ -19,27 +19,29 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { openInNewTab } from 'utils/navigation';
 import { validateQuery } from 'utils/queryValidationUtils';
 
 import { getEntityConfig } from '../../Base/entity.registry';
 import { logInfraExplorerNavigatedEvent } from '../../Base/events';
+import type {
+	EntityAttributes,
+	RelatedFilterClause,
+} from '../../Base/relations';
 import {
 	buildRelatedFilterClauses,
-	EntityAttributes,
 	formatRelatedFilterClause,
-	RelatedFilterClause,
 	getEntityNameAttributeKey,
 	getRelatedCategories,
 	resolveRelatedCategory,
 } from '../../Base/relations';
 import { getDrawerDurationMs } from '../../Base/useDrawerLifecycleStore';
 import { buildK8sListNavigationUrl } from '../../Base/utils';
+import type { InfraMonitoringEntity } from '../../constants';
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	InfraMonitoringEntity,
 	K8S_CATEGORY_LABELS,
 	K8S_CATEGORY_SINGULAR_LABELS,
 	METRIC_NAMESPACE_BY_ENTITY,

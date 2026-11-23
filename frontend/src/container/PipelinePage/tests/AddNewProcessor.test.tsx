@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { render as customRender } from 'tests/test-utils';
-import { ProcessorData } from 'types/api/pipeline/def';
+import type { ProcessorData } from 'types/api/pipeline/def';
 
 import { pipelineMockData } from '../mocks/pipeline';
 import AddNewProcessor from '../PipelineListsView/AddNewProcessor';
