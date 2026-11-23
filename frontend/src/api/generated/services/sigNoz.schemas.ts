@@ -12787,7 +12787,7 @@ export enum RuletypesQueryTypeDTO {
 }
 export interface RuletypesAlertCompositeQueryDTO {
 	/**
-	 * @description The panel the UI renders the queries with: graph, table or value. Use graph for alerts.
+	 * @description How the queries are evaluated. graph runs them as time series and matchType decides which points must satisfy op. table and value run them as scalar: one value per group over the whole evaluation window, compared directly, so matchType has no effect and metric aggregations need reduceTo. promql queries and anomaly_rule support graph only.
 	 */
 	panelType: RuletypesPanelTypeDTO;
 	/**

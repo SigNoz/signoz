@@ -126,6 +126,9 @@ type RuleThreshold interface {
 	// Eval runs the given series through the threshold rules
 	// using the given EvalData and returns the matching series
 	Eval(series *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error)
+	// EvalScalar runs one value per group through the threshold rules; the
+	// value is compared directly, matchType plays no part.
+	EvalScalar(labels []*qbtypes.Label, value float64, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
 	// Validate runs on the write path and before a task is built; a stored
 	// rule may hold a threshold that fails it and still decode.
@@ -263,6 +266,37 @@ func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData E
 				smpl.IsRecovering = true
 				resultVector = append(resultVector, smpl)
 			}
+		}
+	}
+	return resultVector, nil
+}
+
+func (r BasicRuleThresholds) EvalScalar(labels []*qbtypes.Label, value float64, unit string, evalData EvalData) (Vector, error) {
+	var resultVector Vector
+	if math.IsNaN(value) || math.IsInf(value, 0) {
+		return resultVector, nil
+	}
+
+	thresholds := []BasicRuleThreshold(r)
+	sortThresholds(thresholds)
+	for _, threshold := range thresholds {
+		op := threshold.CompareOperator.Normalize()
+		smpl := Sample{
+			Point:           Point{V: value},
+			Metric:          PrepareSampleLabelsForRule(labels, threshold.Name),
+			Target:          *threshold.TargetValue,
+			RecoveryTarget:  threshold.RecoveryTarget,
+			TargetUnit:      threshold.TargetUnit,
+			CompareOperator: threshold.CompareOperator,
+			MatchType:       threshold.MatchType,
+		}
+		if matchesCompareOp(op, value, threshold.target(unit)) || evalData.SendUnmatched {
+			resultVector = append(resultVector, smpl)
+			continue
+		}
+		if threshold.RecoveryTarget != nil && evalData.HasActiveAlert(smpl.Metric.Hash()) && matchesCompareOp(op, value, threshold.recoveryTarget(unit)) {
+			smpl.IsRecovering = true
+			resultVector = append(resultVector, smpl)
 		}
 	}
 	return resultVector, nil

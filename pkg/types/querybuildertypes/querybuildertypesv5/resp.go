@@ -269,6 +269,10 @@ type TimeSeries struct {
 
 // EvaluableValues returns only the values where Partial is false and value is not NaN or +/- Inf.
 // TODO(srikanthccv): should we skip them in the consume.go?
+func (ts *TimeSeries) ExtractLabels() []*Label {
+	return ts.Labels
+}
+
 func (ts *TimeSeries) EvaluableValues() []*TimeSeriesValue {
 	if ts == nil {
 		return nil
@@ -442,6 +446,43 @@ type ScalarData struct {
 	QueryName string              `json:"queryName" description:"The name of the query that produced this table."`
 	Columns   []*ColumnDescriptor `json:"columns" description:"The column definitions, in the same order as the values in each data row."`
 	Data      [][]any             `json:"data" description:"The rows, each a list of values aligned with columns."`
+}
+
+// ScalarGroup is one entry of a ScalarData, the scalar counterpart of a
+// TimeSeries: the group-by cells as labels and one value per aggregation, in
+// column order. A cell that is not numeric reads as NaN.
+type ScalarGroup struct {
+	Labels []*Label
+	Values []float64
+}
+
+func (g ScalarGroup) ExtractLabels() []*Label {
+	return g.Labels
+}
+
+func (sd *ScalarData) ExtractGroups() []ScalarGroup {
+	if !slices.ContainsFunc(sd.Columns, func(col *ColumnDescriptor) bool { return col.Type == ColumnTypeAggregation }) {
+		return nil
+	}
+
+	groups := make([]ScalarGroup, 0, len(sd.Data))
+	for _, row := range sd.Data {
+		group := ScalarGroup{Labels: make([]*Label, 0), Values: make([]float64, 0)}
+		for i, col := range sd.Columns {
+			var cell any
+			if i < len(row) {
+				cell = row[i]
+			}
+			switch col.Type {
+			case ColumnTypeGroup:
+				group.Labels = append(group.Labels, &Label{Key: col.TelemetryFieldKey, Value: cell})
+			case ColumnTypeAggregation:
+				group.Values = append(group.Values, numericAsFloat(cell))
+			}
+		}
+		groups = append(groups, group)
+	}
+	return groups
 }
 
 type RawData struct {
@@ -648,4 +689,18 @@ func (t TimeSeriesValue) MarshalJSON() ([]byte, error) {
 func (r RawData) MarshalJSON() ([]byte, error) {
 	type Alias RawData
 	return json.Marshal((*Alias)(&r))
+}
+
+func numericAsFloat(v any) float64 {
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Float32, reflect.Float64:
+		return rv.Float()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return float64(rv.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return float64(rv.Uint())
+	default:
+		return math.NaN()
+	}
 }

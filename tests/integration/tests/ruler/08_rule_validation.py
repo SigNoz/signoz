@@ -2,6 +2,7 @@ import time
 from collections.abc import Callable
 from http import HTTPStatus
 
+import pytest
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -460,6 +461,87 @@ def test_create_rejects_channel_by_name(
             "code": "invalid_input",
             "message": f'channels: rules reference channels by display name, not name: [{channel["name"]} (display name "{channel["displayName"]}")]',
             "errors": [],
+            "suggestions": [],
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    ("rule", "expected_message"),
+    [
+        (
+            {**VALID_RULE, "condition": {**VALID_RULE["condition"], "compositeQuery": {**VALID_RULE["condition"]["compositeQuery"], "panelType": "value"}}},
+            "invalid query 'A': reduceTo is required for aggregation #1 in query 'A' for the scalar request type",
+        ),
+        (
+            {
+                **VALID_RULE,
+                "ruleType": "anomaly_rule",
+                "condition": {
+                    **VALID_RULE["condition"],
+                    "compositeQuery": {
+                        "queryType": "builder",
+                        "panelType": "value",
+                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "validation_probe_cpu", "timeAggregation": "avg", "spaceAggregation": "max", "reduceTo": "avg"}]}}],
+                    },
+                },
+            },
+            'condition.compositeQuery.panelType: anomaly_rule supports "graph" only, got "value"',
+        ),
+        (
+            {
+                **VALID_RULE,
+                "ruleType": "promql_rule",
+                "condition": {
+                    **VALID_RULE["condition"],
+                    "compositeQuery": {"queryType": "promql", "panelType": "table", "queries": [{"type": "promql", "spec": {"name": "A", "query": "up == 0", "disabled": False}}]},
+                },
+            },
+            'condition.compositeQuery.panelType: promql queries support "graph" only, got "table"',
+        ),
+        (
+            {
+                **VALID_RULE,
+                "condition": {
+                    **VALID_RULE["condition"],
+                    "requireMinPoints": True,
+                    "requiredNumPoints": 2,
+                    "compositeQuery": {
+                        "queryType": "builder",
+                        "panelType": "value",
+                        "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "validation_probe_cpu", "timeAggregation": "avg", "spaceAggregation": "max", "reduceTo": "avg"}]}}],
+                    },
+                },
+            },
+            'condition.requireMinPoints: not supported with panelType "value", which evaluates one value per group',
+        ),
+    ],
+    ids=["metrics_without_reduce_to", "anomaly_rule", "promql_query", "require_min_points"],
+)
+def test_create_rejects_rules_a_scalar_panel_cannot_evaluate(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    rule: dict,
+    expected_message: str,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=rule,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "alert rule is not valid",
+            "errors": [{"message": expected_message, "suggestions": []}],
             "suggestions": [],
         },
     }

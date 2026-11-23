@@ -75,7 +75,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 	req := &qbtypes.QueryRangeRequest{
 		Start:       uint64(start),
 		End:         uint64(end),
-		RequestType: qbtypes.RequestTypeTimeSeries,
+		RequestType: r.Condition().CompositeQuery.PanelType.GetQueryRangeRequestType(),
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: make([]qbtypes.QueryEnvelope, 0),
 		},
@@ -132,8 +132,6 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return nil, err
 	}
 
-	var results []*qbtypes.TimeSeriesData
-
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "rules",
 		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
@@ -144,22 +142,22 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		return nil, err
 	}
 
-	for _, item := range v5Result.Data.Results {
-		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
-			results = append(results, tsData)
-		} else {
-			// NOTE: should not happen but just to ensure we don't miss it if it happens for some reason
-			r.logger.WarnContext(ctx, "expected qbtypes.TimeSeriesData but got unexpected type", slog.String("item.type", reflect.TypeOf(item).String()))
-		}
-	}
-
 	selectedQuery := r.SelectedQuery(ctx)
 
 	var queryResult *qbtypes.TimeSeriesData
-	for _, res := range results {
-		if res.QueryName == selectedQuery {
-			queryResult = res
-			break
+	for _, item := range v5Result.Data.Results {
+		switch data := item.(type) {
+		case *qbtypes.TimeSeriesData:
+			if data.QueryName == selectedQuery {
+				queryResult = data
+			}
+		case *qbtypes.ScalarData:
+			if data.QueryName == selectedQuery {
+				return r.evalScalarResult(ctx, ts, data)
+			}
+		default:
+			// NOTE: should not happen but just to ensure we don't miss it if it happens for some reason
+			r.logger.WarnContext(ctx, "expected qbtypes.TimeSeriesData or qbtypes.ScalarData but got unexpected type", slog.String("item.type", reflect.TypeOf(item).String()))
 		}
 	}
 
@@ -201,6 +199,44 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 			continue
 		}
 		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
+	}
+
+	return resultVector, nil
+}
+
+func (r *ThresholdRule) evalScalarResult(ctx context.Context, ts time.Time, queryResult *qbtypes.ScalarData) (ruletypes.Vector, error) {
+	groups := queryResult.ExtractGroups()
+
+	hasData := len(groups) > 0
+
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
+	var resultVector ruletypes.Vector
+
+	// Filter out new groups if newGroupEvalDelay is configured
+	groupsToProcess := groups
+	if r.ShouldSkipNewGroups() {
+		filteredGroups, filterErr := r.BaseRule.FilterNewScalarGroups(ctx, ts, groupsToProcess)
+		// In case of error we log the error and continue with the original groups
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "error filtering new groups", errors.Attr(filterErr))
+		} else {
+			groupsToProcess = filteredGroups
+		}
+	}
+
+	for _, group := range groupsToProcess {
+		// the first aggregation, as the series path reads Aggregations[0]
+		resultSeries, err := r.Threshold.EvalScalar(group.Labels, group.Values[0], r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})
