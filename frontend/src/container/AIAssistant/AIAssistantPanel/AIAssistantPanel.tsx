@@ -7,7 +7,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
-import Noz from 'components/Noz/Noz';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
 import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
@@ -133,8 +132,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				}}
 			>
 				<div className={`${styles.header} floating-panel__drag-handle`}>
-					<div className={`${styles.title} noz-wave`}>
-						<Noz size={18} />
+					<div className={styles.title}>
 						{chatTitle && (
 							<Typography
 								variant="paragraph"
