@@ -1,4 +1,5 @@
 import { toast } from '@signozhq/ui/toast';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -25,6 +26,7 @@ const defaultProps = { index: 0, id: 'does-not-matter-id' };
 describe('DisplayName', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -34,10 +36,15 @@ describe('DisplayName', () => {
 	it('renders form pre-filled with org displayName from context', async () => {
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input');
 		expect(input).toHaveValue('Pentagon');
 
-		expect(screen.getByRole('button', { name: /submit/i })).toBeDisabled();
+		await waitFor(() =>
+			expect(screen.getByTestId('org-display-name-submit')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
 	});
 
 	it('enables submit and calls PUT when display name is changed', async () => {
@@ -47,12 +54,15 @@ describe('DisplayName', () => {
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input');
+		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 		await user.type(input, 'New Org Name');
 
-		const submitBtn = screen.getByRole('button', { name: /submit/i });
-		expect(submitBtn).toBeEnabled();
+		const submitBtn = screen.getByTestId('org-display-name-submit');
+		await waitFor(() =>
+			expect(submitBtn).not.toHaveAttribute('aria-disabled', 'true'),
+		);
 
 		await user.click(submitBtn);
 
@@ -66,7 +76,8 @@ describe('DisplayName', () => {
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByRole('textbox');
+		const input = await screen.findByTestId('org-display-name-input');
+		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 
 		const form = input.closest('form') as HTMLFormElement;
