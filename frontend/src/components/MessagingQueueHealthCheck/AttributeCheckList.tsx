@@ -81,9 +81,18 @@ function ErrorTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-error-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
+				<div className="tree-text">
+					<Typography
+						variant="code"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{title}
+					</Typography>
+				</div>
 				<Tooltip title={errorMsg}>
 					<div
 						className="attribute-error-warning"
@@ -122,9 +131,18 @@ function treeTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-success-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
+				<div className="tree-text">
+					<Typography
+						variant="code"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{title}
+					</Typography>
+				</div>
 				{isLeaf && (
 					<div className="success-attribute-icon">
 						<Tooltip title="Success">

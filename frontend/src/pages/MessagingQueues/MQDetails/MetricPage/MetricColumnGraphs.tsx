@@ -41,12 +41,28 @@ function MetricSection({
 		<div className="metric-column-graph">
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
 				<div className="row-panel">
-					<Typography.Text className="section-title">{title}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						{title}
+					</Typography>
 				</div>
 			</CardContainer>
-			<Typography.Text className="graph-description">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{description}
-			</Typography.Text>
+			</Typography>
 			<div className="metric-page-grid">
 				{graphCount.map((widgetData) => (
 					<MetricPageGridGraph

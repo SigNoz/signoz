@@ -4,7 +4,7 @@ import { Input as AntInput } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { AxiosError } from 'axios';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import logEvent from 'api/common/logEvent';
@@ -76,7 +76,9 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 			);
 		} catch (e) {
 			showErrorModal(e as APIError);
-			toast.error((e as AxiosError).toString() || 'Failed to create dashboard');
+			toast.danger((e as AxiosError).toString() || 'Failed to create dashboard', {
+				action: { label: 'Dismiss' },
+			});
 			setSubmitting(false);
 		}
 	};
@@ -85,36 +87,63 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 		<div className={styles.panel}>
 			<div className={styles.form}>
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>
-						Title <Typography.Text className={styles.required}>*</Typography.Text>
-					</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Title{' '}
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="danger"
+							as="span"
+							textOverflow="wrap"
+						>
+							*
+						</Typography>
+					</Typography>
 					<div className={styles.titleRow}>
 						<DashboardImagePicker
 							image={image}
 							onChange={setImage}
 							triggerClassName={styles.imageTrigger}
 						/>
-						<Input
-							className={styles.titleInput}
-							value={name}
-							autoFocus
-							maxLength={DASHBOARD_NAME_MAX_LENGTH}
-							placeholder="e.g. Sample Dashboard"
-							testId="create-dashboard-name"
-							onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-								setName(e.target.value)
-							}
-							onKeyDown={(e): void => {
-								if (e.key === 'Enter') {
-									void handleCreate();
+						<div className={styles.titleInput}>
+							<Input
+								value={name}
+								autoFocus
+								maxLength={DASHBOARD_NAME_MAX_LENGTH}
+								placeholder="e.g. Sample Dashboard"
+								testId="create-dashboard-name"
+								onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+									setName(e.target.value)
 								}
-							}}
-						/>
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter') {
+										void handleCreate();
+									}
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Description</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Description
+					</Typography>
 					{/* eslint-disable-next-line signoz/no-antd-components -- no @signozhq TextArea yet */}
 					<AntInput.TextArea
 						value={description}
@@ -126,16 +155,32 @@ function BlankDashboardPanel({ onClose }: Props): JSX.Element {
 				</div>
 
 				<div className={styles.field}>
-					<Typography.Text className={styles.label}>Tags</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						Tags
+					</Typography>
 					<TagKeyValueInput
 						tags={tags}
 						onTagsChange={setTags}
 						placeholder="team:jarvis (press Enter)"
 						testId="create-dashboard-tags"
 					/>
-					<Typography.Text className={styles.hint}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Use key:value (e.g. team:jarvis) and press Enter to add.
-					</Typography.Text>
+					</Typography>
 				</div>
 			</div>
 

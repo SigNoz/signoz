@@ -14,16 +14,6 @@
 		.ant-typography {
 			color: var(--l1-foreground);
 			font-size: 13px;
-
-			.highlight {
-				background-color: var(--l1-background);
-				padding: 4px 8px;
-				border-radius: 4px;
-				color: var(--l2-foreground);
-				font-weight: 500;
-				margin: 0 4px;
-				font-size: 13px;
-			}
 		}
 
 		.ant-btn-group {
@@ -45,14 +35,6 @@
 	flex-direction: column;
 	gap: 16px;
 	border: 1px solid var(--l1-border);
-
-	.evaluation-cadence-details-title {
-		color: var(--l1-foreground);
-		font-size: 13px;
-		font-weight: 500;
-		padding-left: 16px;
-		padding-top: 16px;
-	}
 
 	.query-section-tabs {
 		display: flex;
@@ -217,7 +199,7 @@
 					align-items: center;
 					gap: 8px;
 					padding: 8px 0;
-					background-color: var(--card);
+					background-color: var(--surface-2);
 					position: sticky;
 					top: 0;
 					z-index: 1;
@@ -389,7 +371,7 @@
 
 				.schedule-preview {
 					.schedule-preview-header {
-						background-color: var(--card);
+						background-color: var(--surface-2);
 						border-bottom: 1px solid var(--l1-border);
 						padding: 12px 16px;
 						margin: -12px -12px 16px -12px;

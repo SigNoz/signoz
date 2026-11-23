@@ -1,0 +1,10 @@
+@use '../../../styles/query-builder' as *;
+
+.surface {
+	@include query-builder-on-surface-2;
+}
+
+.content {
+	padding: 12px;
+	min-height: 60vh;
+}

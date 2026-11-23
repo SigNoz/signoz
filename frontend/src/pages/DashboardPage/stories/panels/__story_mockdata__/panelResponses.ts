@@ -158,6 +158,42 @@ const logBodyAt = (index: number, line: string): Record<string, unknown> =>
 		? { message: line, service: serviceAt(index % MAX_SERIES), attempt: 1 }
 		: { message: line };
 
+/** Attribute keys a busy service stamps on every log, so the panel opens with a column each. */
+const WIDE_ATTRIBUTE_KEYS = [
+	'http.method',
+	'http.route',
+	'http.status_code',
+	'http.user_agent',
+	'net.peer.name',
+	'net.peer.port',
+	'user.id',
+	'session.id',
+	'tenant.id',
+	'region',
+	'zone',
+	'host.name',
+	'container.id',
+	'k8s.pod.name',
+	'k8s.namespace.name',
+	'k8s.node.name',
+	'code.function',
+	'code.filepath',
+	'thread.name',
+	'log.file.name',
+	'deployment.environment',
+	'service.version',
+	'feature.flag',
+	'request.id',
+];
+
+const wideAttributes = (index: number): Record<string, string> =>
+	Object.fromEntries(
+		WIDE_ATTRIBUTE_KEYS.map((key) => [
+			key,
+			`${key.split('.').pop()}-${index + 1}`,
+		]),
+	);
+
 /** Spaced by the window, newest first, as the `timestamp desc` order asks for. */
 const logRows = (
 	{ start, end }: PanelWindow,
@@ -165,6 +201,7 @@ const logRows = (
 	offset: number,
 	limit: number,
 	jsonBody: boolean,
+	wide: boolean,
 ): RawRow[] =>
 	Array.from(
 		{ length: Math.max(0, Math.min(limit, total - offset)) },
@@ -184,6 +221,7 @@ const logRows = (
 					body: jsonBody ? logBodyAt(index, line) : line,
 					severity_text: index % 5 === 0 ? 'ERROR' : 'INFO',
 					resources_string: { 'service.name': service },
+					...(wide ? { attributes_string: wideAttributes(index) } : {}),
 				},
 			};
 		},
@@ -196,6 +234,7 @@ export const panelQueryResponse = ({
 	series,
 	listRows,
 	listJsonBody,
+	listWideRows,
 	gaps,
 	pieSlices,
 	window,
@@ -246,7 +285,7 @@ export const panelQueryResponse = ({
 			return queryRangeV5ScalarResponse(NUMBER_VALUE, QUERY_NAME, { warning });
 		case 'List':
 			return queryRangeV5RawResponse(
-				logRows(window, listRows, offset, limit, listJsonBody),
+				logRows(window, listRows, offset, limit, listJsonBody, listWideRows),
 				{
 					warning,
 				},

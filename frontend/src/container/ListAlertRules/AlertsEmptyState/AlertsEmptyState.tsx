@@ -60,10 +60,27 @@ export function AlertsEmptyState({
 		<div className={styles.alertListContainer}>
 			<div className={styles.alertListViewContent}>
 				<div>
-					<Typography.Title className={styles.title}>Alert Rules</Typography.Title>
-					<Typography.Text className={styles.subtitle}>
+					<Typography
+						variant="label"
+						size="large"
+						weight="regular"
+						color="main"
+						as="h1"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						Alert Rules
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Create and manage alert rules for your resources.
-					</Typography.Text>
+					</Typography>
 				</div>
 				<section className={styles.emptyAlertInfoContainer}>
 					<div className={styles.alertContent}>
@@ -74,13 +91,27 @@ export function AlertsEmptyState({
 								style={{ height: '32px', width: '32px' }}
 							/>
 							<div>
-								<Typography.Text className={styles.emptyInfo}>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="main"
+									as="span"
+									textOverflow="wrap"
+								>
 									No Alert rules yet.{' '}
-								</Typography.Text>
+								</Typography>
 								<br />
-								<Typography.Text className={styles.emptyAlertAction}>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Create an Alert Rule to get started
-								</Typography.Text>
+								</Typography>
 							</div>
 						</section>
 						<div className={styles.actionContainer}>
@@ -148,8 +179,17 @@ export function AlertsEmptyState({
 					</div>
 				</section>
 				<div className={styles.getStartedText}>
-					<Divider className="get-started-text__divider">
-						<Typography.Text>Or get started with these sample alerts</Typography.Text>
+					<Divider>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Or get started with these sample alerts
+						</Typography>
 					</Divider>
 				</div>
 

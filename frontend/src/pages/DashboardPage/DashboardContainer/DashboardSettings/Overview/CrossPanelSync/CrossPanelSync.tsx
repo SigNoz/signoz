@@ -46,9 +46,16 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 	return (
 		<div className={cx(settingsStyles.settingsCard, styles.crossPanelSyncGroup)}>
 			<div className={styles.crossPanelSyncSectionHeader}>
-				<Typography.Text className={styles.crossPanelsSyncSectionTitle}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
 					Cross-Panel Sync
-				</Typography.Text>
+				</Typography>
 
 				<Tooltip
 					side="top"
@@ -61,10 +68,15 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 								Sync crosshair and tooltip across all the dashboard panels
 							</span>
 							<Typography.Link
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								display="inline-flex"
+								gap={2}
+								marginTop={8}
+								textOverflow="wrap"
 								href="https://signoz.io/docs/dashboards/interactivity/#cross-panel-sync"
 								target="_blank"
-								rel="noopener noreferrer"
-								className={styles.crossPanelSyncTooltipDocLink}
 							>
 								Learn more
 								<ExternalLink size={12} />
@@ -78,12 +90,26 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 
 			<div className={styles.crossPanelSyncRow}>
 				<div className={styles.crossPanelSyncInfo}>
-					<Typography.Text className={styles.crossPanelSyncTitle}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Sync Mode
-					</Typography.Text>
-					<Typography.Text className={styles.crossPanelSyncDescription}>
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Sync crosshair and tooltip across all the dashboard panels
-					</Typography.Text>
+					</Typography>
 				</div>
 				<SegmentedControl
 					testId="cursor-sync-mode"
@@ -100,13 +126,27 @@ function CrossPanelSync({ dashboardId }: CrossPanelSyncProps): JSX.Element {
 			{cursorSyncMode === DashboardCursorSync.Tooltip && (
 				<div className={styles.crossPanelSyncRow}>
 					<div className={styles.crossPanelSyncInfo}>
-						<Typography.Text className={styles.crossPanelSyncTitle}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Synced Tooltip Series
-						</Typography.Text>
-						<Typography.Text className={styles.crossPanelSyncDescription}>
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Show only series that intersect on group-by, or every series with the
 							matching ones highlighted
-						</Typography.Text>
+						</Typography>
 					</div>
 
 					<SegmentedControl

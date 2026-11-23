@@ -9,28 +9,10 @@
 		border-right: 1px solid var(--l1-border);
 		padding: 16px 0;
 		color: var(--l2-foreground);
-		font-family: Inter;
-		font-size: 11px;
-		font-style: normal;
-		font-weight: 400;
-		line-height: 16px; /* 145.455% */
-		letter-spacing: 0.44px;
-		text-transform: uppercase;
 
 		.integration-detail-overview-category {
 			display: flex;
 			flex-direction: column;
-
-			.heading {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 16px; /* 145.455% */
-				letter-spacing: 0.44px;
-				text-transform: uppercase;
-			}
 
 			.category-tabs {
 				display: flex;
@@ -44,10 +26,7 @@
 					border: 1px solid color-mix(in srgb, var(--accent-sienna) 20%, transparent);
 					background: color-mix(in srgb, var(--accent-sienna) 10%, transparent);
 					color: var(--accent-sienna-hover);
-					font-family: Inter;
 					font-size: 14px;
-					font-style: normal;
-					font-weight: 400;
 					line-height: 20px; /* 142.857% */
 					letter-spacing: -0.07px;
 					text-transform: none;
@@ -59,25 +38,11 @@
 			display: flex;
 			flex-direction: column;
 
-			.heading {
-				color: var(--l2-foreground);
-				font-family: Inter;
-				font-size: 11px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 16px; /* 145.455% */
-				letter-spacing: 0.44px;
-				text-transform: uppercase;
-			}
-
 			.assets-list {
 				margin-left: 5px;
 				margin-top: 12px;
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 22px; /* 157.143% */
 				letter-spacing: -0.07px;
 				padding-inline-start: 16px !important;
@@ -100,10 +65,6 @@
 	gap: 32px;
 	margin-top: 8px;
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
 	line-height: 20px; /* 142.857% */
 	letter-spacing: -0.07px;
 
@@ -195,10 +156,7 @@
 			height: auto;
 			text-align: start;
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: 18px; /* 128.571% */
 
 			.configure-text {

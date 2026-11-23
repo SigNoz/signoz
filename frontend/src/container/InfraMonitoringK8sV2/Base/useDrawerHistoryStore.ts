@@ -5,9 +5,9 @@ import { SelectedItemParams } from '../hooks';
 
 export interface DrawerHistoryEntry {
 	params: SelectedItemParams;
-	/** Category of the resource that was open, which the back control names */
+	/** Category of the resource that was open, which picks the icon of its crumb */
 	category: InfraMonitoringEntity;
-	/** Name of that resource, shown on hover */
+	/** Name of that resource, the label of its crumb */
 	label: string;
 	/**
 	 * The record the drawer was showing, and the prefix of the query that holds
@@ -20,28 +20,21 @@ export interface DrawerHistoryEntry {
 export interface IDrawerHistoryStore {
 	entries: DrawerHistoryEntry[];
 	push: (entry: DrawerHistoryEntry) => void;
-	pop: () => DrawerHistoryEntry | null;
+	/** Drops the entry at `length` and every one after it */
+	trimTo: (length: number) => void;
 	reset: () => void;
 }
 
 /**
- * The trail left by opening one resource from another's overview tab, so the
- * drawer can step back through it instead of only closing.
+ * The trail left by opening one resource from another's overview tab, which
+ * the drawer shows as its breadcrumb so it can step back instead of only
+ * closing.
  */
 export const useDrawerHistoryStore = create<IDrawerHistoryStore>()(
 	(set, get) => ({
 		entries: [],
 		push: (entry): void => set({ entries: [...get().entries, entry] }),
-		pop: (): DrawerHistoryEntry | null => {
-			const { entries } = get();
-			const previous = entries[entries.length - 1] ?? null;
-
-			if (previous) {
-				set({ entries: entries.slice(0, -1) });
-			}
-
-			return previous;
-		},
+		trimTo: (length): void => set({ entries: get().entries.slice(0, length) }),
 		reset: (): void => set({ entries: [] }),
 	}),
 );

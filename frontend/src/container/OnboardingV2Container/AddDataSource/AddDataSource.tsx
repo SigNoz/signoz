@@ -1,17 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, Check, Goal, Search, UserPlus, X } from '@signozhq/icons';
-import {
-	Button,
-	Flex,
-	Input,
-	Layout,
-	Modal,
-	Skeleton,
-	Space,
-	Steps,
-} from 'antd';
+import { Button, Input, Modal, Skeleton, Steps } from 'antd';
+import Layout from 'periscope/components/Layout/Layout';
+import Space from 'periscope/components/Space/Space';
+import Flex from 'periscope/components/Flex/Flex';
 import { Button as SignozButton } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -99,7 +93,18 @@ interface Entity {
 const setupStepItemsBase = [
 	{
 		title: 'Org Setup',
-		description: <Typography.Text>&nbsp;</Typography.Text>,
+		description: (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				&nbsp;
+			</Typography>
+		),
 	},
 	{
 		title: 'Add your first data source',
@@ -592,7 +597,16 @@ function OnboardingAddDataSource(): JSX.Element {
 			<div className="request-data-source-container">
 				{!isNoResultsFound && (
 					<>
-						<Typography.Text>Can’t find what you’re looking for?</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Can’t find what you’re looking for?
+						</Typography>
 
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -634,11 +648,18 @@ function OnboardingAddDataSource(): JSX.Element {
 
 				{isNoResultsFound && !isSearchQueryEmpty && (
 					<>
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							Our team can help add{' '}
 							<span className="request-data-source-search-query">{searchQuery}</span>{' '}
 							support for you
-						</Typography.Text>
+						</Typography>
 
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -706,7 +727,16 @@ function OnboardingAddDataSource(): JSX.Element {
 									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
 								}}
 							/>
-							<Typography.Text>{progressText}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{progressText}
+							</Typography>
 						</div>
 
 						<div className="header-right-section">
@@ -760,15 +790,28 @@ function OnboardingAddDataSource(): JSX.Element {
 								<div className="onboarding-data-sources-container">
 									<div className="onboarding-question-header">
 										<div className="question-title-container">
-											<Typography.Title
-												level={3}
-												className="question-title onboarding-question"
+											<Typography
+												variant="label"
+												size="large"
+												weight="bold"
+												color="main"
+												as="h3"
+												marginY={4}
+												paddingTop={8}
+												textOverflow="wrap"
 											>
 												Select your data source
-											</Typography.Title>
-											<Typography.Text className="question-sub-title">
+											</Typography>
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="secondary"
+												as="span"
+												textOverflow="wrap"
+											>
 												Select from a host of services to start sending data to SigNoz
-											</Typography.Text>
+											</Typography>
 										</div>
 									</div>
 
@@ -790,9 +833,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 												{Object.keys(groupedDataSources).map((tag) => (
 													<div key={tag} className="onboarding-data-source-group">
-														<Typography.Title level={5} className="onboarding-title">
+														<Typography
+															variant="uppercase"
+															size="small"
+															weight="medium"
+															color="secondary"
+															as="p"
+															textOverflow="wrap"
+														>
 															{tag} ({groupedDataSources[tag].length})
-														</Typography.Title>
+														</Typography>
 														<div className="onboarding-data-source-list">
 															{groupedDataSources[tag].map((dataSource) => (
 																<Button
@@ -820,7 +870,16 @@ function OnboardingAddDataSource(): JSX.Element {
 
 												{Object.keys(groupedDataSources).length === 0 && (
 													<div className="no-results-found-container">
-														<Typography.Text>No results for {searchQuery} :/</Typography.Text>
+														<Typography
+															variant="paragraph"
+															size="base"
+															weight="regular"
+															color="inherit"
+															as="span"
+															textOverflow="wrap"
+														>
+															No results for {searchQuery} :/
+														</Typography>
 													</div>
 												)}
 
@@ -829,10 +888,19 @@ function OnboardingAddDataSource(): JSX.Element {
 
 											<div className="data-source-categories-filter-container">
 												<div className="onboarding-data-source-category">
-													<Typography.Title level={5} className="onboarding-filters-title">
+													<Typography
+														variant="uppercase"
+														size="small"
+														weight="medium"
+														color="secondary"
+														as="p"
+														marginTop={6}
+														marginBottom={12}
+														textOverflow="wrap"
+													>
 														{' '}
 														Filters{' '}
-													</Typography.Title>
+													</Typography>
 
 													<div
 														key="all"
@@ -846,20 +914,37 @@ function OnboardingAddDataSource(): JSX.Element {
 															}
 														}}
 													>
-														<Typography.Title
-															level={5}
+														<div
 															className={`onboarding-filters-item-title ${
 																selectedCategory === 'All' ? 'selected' : ''
 															}`}
 														>
-															All
-														</Typography.Title>
+															<Typography
+																variant="uppercase"
+																size="small"
+																weight="medium"
+																color="inherit"
+																as="span"
+																textOverflow="wrap"
+															>
+																All
+															</Typography>
+														</div>
 
 														<div className="line-divider" />
 
-														<Typography.Text className="onboarding-filters-item-count">
-															{onboardingConfigWithLinks.length}
-														</Typography.Text>
+														<div className="onboarding-filters-item-count">
+															<Typography
+																variant="paragraph"
+																size="small"
+																weight="regular"
+																color="secondary"
+																as="p"
+																textOverflow="wrap"
+															>
+																{onboardingConfigWithLinks.length}
+															</Typography>
+														</div>
 													</div>
 
 													{Object.keys(allGroupedDataSources).map((tag) => (
@@ -875,20 +960,37 @@ function OnboardingAddDataSource(): JSX.Element {
 																}
 															}}
 														>
-															<Typography.Title
-																level={5}
+															<div
 																className={`onboarding-filters-item-title ${
 																	selectedCategory === tag ? 'selected' : ''
 																}`}
 															>
-																{tag}
-															</Typography.Title>
+																<Typography
+																	variant="uppercase"
+																	size="small"
+																	weight="medium"
+																	color="inherit"
+																	as="span"
+																	textOverflow="wrap"
+																>
+																	{tag}
+																</Typography>
+															</div>
 
 															<div className="line-divider" />
 
-															<Typography.Text className="onboarding-filters-item-count">
-																{allGroupedDataSources[tag].length}
-															</Typography.Text>
+															<div className="onboarding-filters-item-count">
+																<Typography
+																	variant="paragraph"
+																	size="small"
+																	weight="regular"
+																	color="secondary"
+																	as="p"
+																	textOverflow="wrap"
+																>
+																	{allGroupedDataSources[tag].length}
+																</Typography>
+															</div>
 														</div>
 													))}
 												</div>
@@ -906,14 +1008,29 @@ function OnboardingAddDataSource(): JSX.Element {
 													{selectedDataSource?.question?.desc && (
 														<>
 															<div className="question-title-container">
-																<Typography.Title
-																	level={3}
-																	className="question-title onboarding-text"
-																>
-																	{selectedDataSource?.question?.desc}
-																</Typography.Title>
+																<div className="question-title onboarding-text">
+																	<Typography
+																		variant="label"
+																		size="large"
+																		weight="bold"
+																		color="inherit"
+																		as="h3"
+																		marginBottom={4}
+																		textOverflow="wrap"
+																	>
+																		{selectedDataSource?.question?.desc}
+																	</Typography>
+																</div>
 																{selectedDataSource?.question?.helpText && (
-																	<Typography.Text className="question-help-text">
+																	<Typography
+																		variant="paragraph"
+																		size="base"
+																		weight="regular"
+																		color="secondary"
+																		as="p"
+																		marginTop={4}
+																		textOverflow="wrap"
+																	>
 																		{selectedDataSource?.question?.helpText}
 																		{selectedDataSource?.question?.helpLink && (
 																			<a
@@ -926,7 +1043,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																					'Learn more →'}
 																			</a>
 																		)}
-																	</Typography.Text>
+																	</Typography>
 																)}
 															</div>
 
@@ -976,14 +1093,29 @@ function OnboardingAddDataSource(): JSX.Element {
 													{selectedFramework?.question?.desc && (
 														<>
 															<div className="question-title-container">
-																<Typography.Title
-																	level={3}
-																	className="question-title onboarding-text"
-																>
-																	{selectedFramework?.question?.desc}
-																</Typography.Title>
+																<div className="question-title onboarding-text">
+																	<Typography
+																		variant="label"
+																		size="large"
+																		weight="bold"
+																		color="inherit"
+																		as="h3"
+																		marginBottom={4}
+																		textOverflow="wrap"
+																	>
+																		{selectedFramework?.question?.desc}
+																	</Typography>
+																</div>
 																{selectedFramework?.question?.helpText && (
-																	<Typography.Text className="question-help-text">
+																	<Typography
+																		variant="paragraph"
+																		size="base"
+																		weight="regular"
+																		color="secondary"
+																		as="p"
+																		marginTop={4}
+																		textOverflow="wrap"
+																	>
 																		{selectedFramework?.question?.helpText}
 																		{selectedFramework?.question?.helpLink && (
 																			<a
@@ -996,7 +1128,7 @@ function OnboardingAddDataSource(): JSX.Element {
 																					'Learn more →'}
 																			</a>
 																		)}
-																	</Typography.Text>
+																	</Typography>
 																)}
 															</div>
 
@@ -1246,7 +1378,16 @@ function OnboardingAddDataSource(): JSX.Element {
 					destroyOnClose
 				>
 					<div className="request-data-source-modal-content">
-						<Typography.Text>Enter your request</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Enter your request
+						</Typography>
 						<Input
 							placeholder="Eg: Kotlin"
 							className="request-data-source-modal-input"

@@ -1,5 +1,3 @@
-import { Typography } from '@signozhq/ui/typography';
-
 import styles from './ValueUnit.module.scss';
 
 interface ValueUnitProps {
@@ -18,13 +16,13 @@ function ValueUnit({
 	fontSize,
 }: ValueUnitProps): JSX.Element {
 	return (
-		<Typography.Text
+		<span
 			className={styles.unit}
 			data-testid={`value-display-${type}-unit`}
 			style={{ color, fontSize: `calc(${fontSize} * 0.7)` }}
 		>
 			{unit}
-		</Typography.Text>
+		</span>
 	);
 }
 

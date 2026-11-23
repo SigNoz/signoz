@@ -128,11 +128,11 @@ export const TelemetryKeyScoped: Story = {
 			),
 		);
 		await userEvent.type(
-			screen.getByTestId('wizard-value-input-logs-read'),
+			screen.getByTestId('wizard-value-input-logs-read-field'),
 			'checkout',
 		);
 		await expect(
-			screen.getByTestId('wizard-selector-input-logs-read'),
+			screen.getByTestId('wizard-selector-input-logs-read-field'),
 		).toHaveValue('builder_query/resource.service.name/checkout');
 	},
 };
@@ -144,9 +144,13 @@ export const TelemetryKeyScoped: Story = {
 export const RoleCreatedToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await userEvent.type(
-			await within(canvasElement).findByTestId('role-name-input', undefined, {
-				timeout: 15_000,
-			}),
+			await within(canvasElement).findByTestId(
+				'role-name-input-field',
+				undefined,
+				{
+					timeout: 15_000,
+				},
+			),
 			'release-manager',
 		);
 		await save(canvasElement);
@@ -166,7 +170,7 @@ export const RoleUpdatedToast: Story = {
 	args: { mode: 'edit' },
 	play: async ({ canvasElement, args }): Promise<void> => {
 		const description = await within(canvasElement).findByTestId(
-			'role-description-input',
+			'role-description-input-field',
 			undefined,
 			{ timeout: 15_000 },
 		);

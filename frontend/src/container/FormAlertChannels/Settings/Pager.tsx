@@ -10,7 +10,11 @@ import PagerDetails from './PagerDetails';
 
 const { TextArea } = AntdInput;
 
-function PagerForm(): JSX.Element {
+interface PagerFormProps {
+	readOnly: boolean;
+}
+
+function PagerForm({ readOnly }: PagerFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const {
 		register,
@@ -29,7 +33,7 @@ function PagerForm(): JSX.Element {
 					<Input
 						{...register('routingKey')}
 						aria-required
-						data-testid="pager-routing-key-textbox"
+						testId="pager-routing-key-textbox"
 					/>
 				</FormField>
 
@@ -48,6 +52,7 @@ function PagerForm(): JSX.Element {
 								data-testid="pager-description-textarea"
 								value={(field.value as string) ?? ''}
 								onChange={field.onChange}
+								disabled={readOnly}
 							/>
 						)}
 					/>
@@ -58,10 +63,10 @@ function PagerForm(): JSX.Element {
 					label={t('field_pager_severity')}
 					error={errors.severity?.message}
 				>
-					<Input {...register('severity')} data-testid="pager-severity-textbox" />
+					<Input {...register('severity')} testId="pager-severity-textbox" />
 				</FormField>
 
-				<PagerDetails />
+				<PagerDetails readOnly={readOnly} />
 
 				<FormField
 					help={t('help_pager_component')}
@@ -76,7 +81,7 @@ function PagerForm(): JSX.Element {
 					label={t('field_pager_group')}
 					error={errors.group?.message}
 				>
-					<Input {...register('group')} data-testid="pager-group-textarea" />
+					<Input {...register('group')} testId="pager-group-textarea" />
 				</FormField>
 
 				<FormField
@@ -84,14 +89,14 @@ function PagerForm(): JSX.Element {
 					label={t('field_pager_class')}
 					error={errors.class?.message}
 				>
-					<Input {...register('class')} data-testid="pager-class-textarea" />
+					<Input {...register('class')} testId="pager-class-textarea" />
 				</FormField>
 				<FormField
 					help={t('help_pager_client')}
 					label={t('field_pager_client')}
 					error={errors.client?.message}
 				>
-					<Input {...register('client')} data-testid="pager-client-textarea" />
+					<Input {...register('client')} testId="pager-client-textarea" />
 				</FormField>
 
 				<FormField
@@ -99,10 +104,7 @@ function PagerForm(): JSX.Element {
 					label={t('field_pager_client_url')}
 					error={errors.clientUrl?.message}
 				>
-					<Input
-						{...register('clientUrl')}
-						data-testid="pager-client-url-textarea"
-					/>
+					<Input {...register('clientUrl')} testId="pager-client-url-textarea" />
 				</FormField>
 			</FormCard>
 		</>

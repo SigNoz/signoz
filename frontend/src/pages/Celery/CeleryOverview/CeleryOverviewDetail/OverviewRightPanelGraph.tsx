@@ -10,6 +10,7 @@ import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustom
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/WidgetCard/config';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
@@ -155,6 +156,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={requestRateWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_request_rate')}
@@ -175,6 +177,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={errorRateWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_error_rate')}
@@ -195,6 +198,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={avgLatencyWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_avg_latency')}

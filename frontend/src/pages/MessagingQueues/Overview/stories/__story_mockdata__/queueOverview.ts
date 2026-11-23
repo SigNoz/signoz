@@ -3,15 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
-import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-
 import {
-	type QueryRangeV3Body,
-	queryRangeV3TimeSeriesResponse,
-	v3Series,
-} from '@/storybook/msw/__story_mockdata__/queryRange';
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	Querybuildertypesv5RequestTypeDTO,
+	type Querybuildertypesv5QueryRangeRequestDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import type { MetricRangePayloadV5 } from 'types/api/v5/queryRange';
+
+import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
 	KAFKA_SERVICES,
@@ -172,37 +171,36 @@ export const queueOverviewResponse = (
  * aggregates `duration_nano`, and what is left is the request rate.
  */
 export const overviewValueResponse = (
-	body: QueryRangePayload,
+	body: Querybuildertypesv5QueryRangeRequestDTO,
 	failing: boolean,
-): QueryRangeV3Body | null => {
-	if (body.compositeQuery.panelType !== PANEL_TYPES.VALUE) {
+): MetricRangePayloadV5 | null => {
+	if (body.requestType !== Querybuildertypesv5RequestTypeDTO.scalar) {
 		return null;
 	}
 
-	const [query] = Object.values(
-		body.compositeQuery.builderQueries ?? {},
-	) as IBuilderQuery[];
-
-	const isError = (query?.filters?.items ?? []).some(
-		(item) => item.key?.key === 'has_error',
+	const query = body.compositeQuery?.queries?.find(
+		(envelope) =>
+			envelope.type ===
+			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
 	);
-	const isLatency = query?.aggregateAttribute?.key === 'duration_nano';
+	const spec =
+		query?.type === Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query
+			? query.spec
+			: undefined;
+
+	const isError = (spec?.filter?.expression ?? '').includes('has_error');
+	const isLatency = (spec?.aggregations ?? []).some(
+		(aggregation) =>
+			'expression' in aggregation &&
+			aggregation.expression?.includes('duration_nano'),
+	);
 
 	const errorRate = failing ? 63.4 : 2.4;
 	// The tile divides by 1e6 to label itself in ms.
 	const latencyNs = 148 * 1e6;
 
-	return queryRangeV3TimeSeriesResponse([
-		{
-			queryName: query?.queryName ?? 'A',
-			series: [
-				v3Series({}, [
-					{
-						timestamp: body.end,
-						value: String(isError ? errorRate : isLatency ? latencyNs : 42.6),
-					},
-				]),
-			],
-		},
-	]);
+	return queryRangeV5ScalarResponse(
+		isError ? errorRate : isLatency ? latencyNs : 42.6,
+		spec?.name ?? 'A',
+	);
 };

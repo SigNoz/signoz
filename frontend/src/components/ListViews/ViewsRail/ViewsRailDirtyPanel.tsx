@@ -8,6 +8,7 @@ interface Props {
 	isCustomActive: boolean;
 	testIdPrefix: string;
 	onSaveChanges: () => void;
+	/** Opens the save-as dialog. */
 	onSaveAs: () => void;
 	onReset: () => void;
 }

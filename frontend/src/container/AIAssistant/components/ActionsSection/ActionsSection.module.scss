@@ -1,13 +1,10 @@
 .section {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--spacing-6);
 	flex-shrink: 0;
 	width: 100%;
-	padding: 8px;
 	margin-top: 16px;
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-2);
 
 	// Background, padding-x, and rounding are inherited from the parent
 	// bubble — the section sits inside the assistant bubble as its last
@@ -15,40 +12,52 @@
 }
 
 .heading {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 10px;
-	font-weight: 600;
+	font-size: var(--label-small-500-font-size);
+	font-weight: var(--label-small-500-font-weight);
+	line-height: 1;
+	letter-spacing: 0.04em;
 	text-transform: uppercase;
-	letter-spacing: 0.06em;
+	font-feature-settings:
+		'tnum' on,
+		'lnum' on,
+		'zero' on,
+		'ss01' on;
 	color: var(--l3-foreground);
 }
 
-.headingIcon {
-	color: var(--primary);
-	flex-shrink: 0;
-}
-
+// One action per line, each in the sent-message bubble.
 .list {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--spacing-5);
+	--button-height: auto;
+	--button-padding: var(--spacing-4) var(--spacing-6);
+	--button-border-radius: var(--radius-3);
+	--button-font-size: var(--label-base-400-font-size);
+	--button-size-line-height: var(--line-height-20);
+	--button-font-weight: var(--label-base-400-font-weight);
+	--button-variant-outlined-background-color: var(--l3-background-60);
+	--button-variant-outlined-border: none;
+	--button-variant-outlined-color: var(--l2-foreground);
+	--button-variant-outlined-hover-background-color: var(--l3-background);
+	--button-variant-outlined-hover-color: var(--l1-foreground);
+
+	// Buttons don't inherit the page font; the tooltip takes over their data-slot.
+	> button {
+		font-family: inherit;
+	}
 }
 
 .chipLabel {
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	max-width: 220px;
 }
 
 .chipState {
-	font-size: 10px;
-	font-weight: 500;
 	color: var(--l3-foreground);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 	padding: 1px 5px;
 	border: 1px solid var(--l2-border);
 	border-radius: 999px;

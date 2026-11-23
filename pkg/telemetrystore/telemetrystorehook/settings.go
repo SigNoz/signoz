@@ -30,6 +30,10 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
 
+	// The result model has no Variant type: mismatched types must fail with the
+	// no-common-type error rather than become a Variant (the 26.8 default).
+	settings["use_variant_as_common_type"] = 0
+
 	if ctx.Value("enforce_max_result_rows") != nil {
 		settings["max_result_rows"] = h.settings.MaxResultRows
 	}

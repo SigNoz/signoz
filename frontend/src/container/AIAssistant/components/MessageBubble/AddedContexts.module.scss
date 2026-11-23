@@ -1,0 +1,26 @@
+// Right under the bubble, beside its 28px hover actions rather than below them.
+.addedContexts {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--spacing-3) var(--spacing-4);
+	margin-top: -28px;
+	padding: 0 calc(var(--spacing-8) + 28px) var(--spacing-4) var(--spacing-8);
+
+	&.compact {
+		padding: 0 calc(var(--spacing-3) + 28px) var(--spacing-3) var(--spacing-3);
+	}
+}
+
+.note {
+	font-size: var(--label-small-500-font-size);
+	font-weight: var(--label-small-500-font-weight);
+	line-height: 1;
+	font-feature-settings:
+		'tnum' on,
+		'lnum' on,
+		'zero' on,
+		'ss01' on;
+	color: var(--l3-foreground);
+}

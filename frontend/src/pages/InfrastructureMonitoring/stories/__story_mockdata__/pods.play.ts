@@ -32,6 +32,28 @@ export const openDrawerLogsTab = async ({
 	await drawer.findAllByText(/handled request in/, {}, { timeout: 10000 });
 };
 
+export const openDrawerLogDetails = async ({
+	args,
+}: PlayContext): Promise<void> => {
+	if (!args.drawer || args.dataState !== 'loaded' || args.telemetryRows === 0) {
+		return;
+	}
+
+	const drawer = within(
+		await screen.findByRole('dialog', {}, { timeout: 10000 }),
+	);
+
+	await userEvent.click(await drawer.findByText('Logs', {}, { timeout: 10000 }));
+	const [line] = await drawer.findAllByText(
+		/handled request in/,
+		{},
+		{ timeout: 10000 },
+	);
+
+	await userEvent.click(line);
+	await screen.findByTestId('log-detail-drawer', {}, { timeout: 10000 });
+};
+
 export const copyPodName = async ({ args }: PlayContext): Promise<void> => {
 	if (!args.drawer) {
 		return;

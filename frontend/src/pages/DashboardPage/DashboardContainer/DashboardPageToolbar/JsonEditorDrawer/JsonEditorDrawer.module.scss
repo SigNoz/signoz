@@ -10,8 +10,6 @@
 
 		:global(.ant-drawer-title) {
 			color: var(--l2-foreground);
-			font-family: Inter;
-			font-size: 14px;
 			font-weight: 500;
 		}
 	}
@@ -58,8 +56,7 @@
 .validation {
 	min-width: 0;
 	overflow: hidden;
-	font-family: 'Space Mono', monospace;
-	font-size: 12px;
+	// stylelint-disable-next-line property-disallowed-list -- Typography's ellipsis adds a second tooltip under the one around this line
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
@@ -70,7 +67,6 @@
 	align-items: center;
 	gap: 4px;
 	color: var(--bg-amber-400);
-	font-size: 12px;
 }
 
 .warningIcon {
@@ -78,9 +74,9 @@
 }
 
 .warningText {
+	min-width: 0;
 	overflow: hidden;
-	color: var(--bg-amber-400);
-	font-size: 12px;
+	// stylelint-disable-next-line property-disallowed-list -- Typography's ellipsis adds a second tooltip under the panel list one
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
