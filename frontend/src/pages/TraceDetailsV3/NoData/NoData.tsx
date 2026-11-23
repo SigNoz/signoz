@@ -17,32 +17,60 @@ function NoData(): JSX.Element {
 		<div className={styles.notFoundTrace} data-testid="trace-no-data">
 			<section className={styles.description}>
 				<img src={noDataUrl} alt="no-data" className={styles.notFoundImg} />
-				<Typography.Text className={styles.notFoundText1}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Uh-oh! We cannot show the selected trace.
 					<span className={styles.notFoundText2}>
 						This can happen in either of the two scenarios -
 					</span>
-				</Typography.Text>
+				</Typography>
 			</section>
 			<section className={styles.reasons}>
 				<div className={styles.reason}>
 					<img src={constructionUrl} alt="no-data" className={styles.reasonImg} />
-					<Typography.Text className={styles.reasonText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						The trace data has not been rendered on your SigNoz server yet. You can
 						wait for a bit and refresh this page if this is the case.
-					</Typography.Text>
+					</Typography>
 				</div>
 				<div className={styles.reason}>
 					<img src={broomUrl} alt="no-data" className={styles.reasonImg} />
-					<Typography.Text className={styles.reasonText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						The trace has been deleted as the data has crossed it’s retention period.
-					</Typography.Text>
+					</Typography>
 				</div>
 			</section>
 			<section className={styles.noneOfAbove}>
-				<Typography.Text className={styles.noneText}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					If you feel the issue is none of the above, please contact support.
-				</Typography.Text>
+				</Typography>
 				<div className={styles.actionBtns}>
 					<Button
 						size="md"

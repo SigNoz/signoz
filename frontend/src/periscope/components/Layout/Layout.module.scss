@@ -2,8 +2,8 @@
 .header,
 .footer,
 .content {
-	font-family: var(--periscope-font-family-sans);
-	font-size: var(--periscope-font-size-base);
+	font-family: var(--paragraph-base-400-font-family);
+	font-size: var(--paragraph-base-400-font-size);
 
 	box-sizing: border-box;
 
@@ -93,7 +93,7 @@
 .footer {
 	padding: var(--spacing-12) var(--layout-padding-inline);
 	color: var(--layout-text-color);
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	background: var(--layout-body-bg);
 }
 

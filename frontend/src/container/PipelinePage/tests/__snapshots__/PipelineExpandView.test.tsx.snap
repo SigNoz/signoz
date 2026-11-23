@@ -63,18 +63,18 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
+                        class="_badge_1wurm_1"
                         data-color="primary"
                         data-single-char="true"
                         data-slot="badge"
                         data-text-overflow="ellipsis"
                         data-text-transform="uppercase"
+                        data-trigger-disabled=""
                         data-variant="solid"
                         id="base-ui-:r1:"
                       >
                         <span
-                          class="_badge__label_u1hg9_133"
+                          class="_badge__label_1wurm_141"
                           data-slot="badge-label"
                         >
                           1
@@ -102,18 +102,18 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
+                        class="_badge_1wurm_1"
                         data-color="primary"
                         data-single-char="true"
                         data-slot="badge"
                         data-text-overflow="ellipsis"
                         data-text-transform="uppercase"
+                        data-trigger-disabled=""
                         data-variant="solid"
                         id="base-ui-:r3:"
                       >
                         <span
-                          class="_badge__label_u1hg9_133"
+                          class="_badge__label_1wurm_141"
                           data-slot="badge-label"
                         >
                           2
@@ -141,18 +141,18 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="_badge_u1hg9_1"
-                        data-base-ui-tooltip-trigger=""
+                        class="_badge_1wurm_1"
                         data-color="primary"
                         data-single-char="true"
                         data-slot="badge"
                         data-text-overflow="ellipsis"
                         data-text-transform="uppercase"
+                        data-trigger-disabled=""
                         data-variant="solid"
                         id="base-ui-:r5:"
                       >
                         <span
-                          class="_badge__label_u1hg9_133"
+                          class="_badge__label_1wurm_141"
                           data-slot="badge-label"
                         >
                           3

@@ -30,14 +30,12 @@ export type KafkaView =
 	| 'consumerLag'
 	| 'producerLatency'
 	| 'partitionLatency'
-	| 'dropRate'
 	| 'metricPage';
 
 export const KAFKA_VIEWS: KafkaView[] = [
 	'consumerLag',
 	'producerLatency',
 	'partitionLatency',
-	'dropRate',
 	'metricPage',
 ];
 
@@ -161,7 +159,6 @@ export interface MessagingQueues {
 	gotoConsumerLagPoint(seed: MqSeed): Promise<void>;
 	viewSelect(): Locator;
 	table(type: 'overview' | 'detail'): Locator;
-	dropRateTable(): Locator;
 	/** Reload the current detail URL until `table` has a row containing `text`. */
 	waitForTableRow(table: Locator, text: string): Promise<void>;
 	/** A row of `table` containing `text`. */
@@ -303,7 +300,6 @@ export function messagingQueuesDriver(page: Page): MessagingQueues {
 
 		viewSelect: () => page.getByTestId('mq-view-select'),
 		table: (type) => page.getByTestId(`mq-table-${type}`),
-		dropRateTable: () => page.getByTestId('mq-drop-rate-table'),
 		tableRow: rowOf,
 		tableHeader: (table, name) => table.getByRole('columnheader', { name }),
 

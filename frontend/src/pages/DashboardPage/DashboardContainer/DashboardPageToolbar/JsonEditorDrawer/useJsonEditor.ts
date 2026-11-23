@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { updateDashboardV2 } from 'api/generated/services/dashboard';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';

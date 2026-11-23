@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 
 import { DASHBOARD_NAME_MAX_LENGTH } from '../../constants';
-import styles from './SectionTitleModal.module.scss';
 
 interface SectionTitleModalProps {
 	open: boolean;
@@ -31,6 +30,7 @@ function SectionTitleModal({
 	onSubmit,
 }: SectionTitleModalProps): JSX.Element {
 	const [value, setValue] = useState<string>(initialValue);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	// Reseed the field each time the modal opens.
 	useEffect(() => {
@@ -51,17 +51,14 @@ function SectionTitleModal({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			title={heading}
 			open={open}
 			width="narrow"
-			onOpenChange={(next): void => {
-				if (!next) {
-					onClose();
-				}
-			}}
-			footer={
-				<div className={styles.footer}>
+			initialFocus={inputRef}
+			onClose={(): void => onClose()}
+			footerSuffix={
+				<>
 					<Button
 						variant="ghost"
 						color="secondary"
@@ -83,12 +80,12 @@ function SectionTitleModal({
 					>
 						{okText}
 					</Button>
-				</div>
+				</>
 			}
 		>
 			<Input
+				ref={inputRef}
 				testId="section-title-input"
-				autoFocus
 				value={value}
 				maxLength={DASHBOARD_NAME_MAX_LENGTH}
 				placeholder={placeholder}
@@ -100,7 +97,7 @@ function SectionTitleModal({
 					}
 				}}
 			/>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

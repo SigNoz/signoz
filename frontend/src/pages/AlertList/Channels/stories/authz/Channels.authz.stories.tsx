@@ -68,7 +68,7 @@ export const NoList: Story = {
 		const canvas = within(canvasElement);
 
 		await canvas.findByText(/is not authorized/, undefined, PAGE_LOAD);
-		await expectDisabled(await canvas.findByTestId('channels-search'));
+		await expectDisabled(await canvas.findByTestId('channels-search-field'));
 	},
 };
 
@@ -151,7 +151,7 @@ export const CheckLoading: Story = {
 			setTimeout(resolve, 1500);
 		});
 		await expect(
-			canvasElement.querySelector('.ant-skeleton'),
+			canvasElement.querySelector('[data-slot="skeleton"]'),
 		).toBeInTheDocument();
 	},
 };

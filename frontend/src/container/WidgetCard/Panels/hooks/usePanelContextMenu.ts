@@ -5,6 +5,7 @@ import {
 	isApmMetric,
 } from 'container/WidgetCard/Panels/utils';
 import { getUplotClickData } from 'container/QueryTable/Drilldown/drilldownUtils';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import useGraphContextMenu from 'container/QueryTable/Drilldown/useGraphContextMenu';
 import {
 	PopoverPosition,
@@ -18,12 +19,14 @@ interface UseTimeSeriesContextMenuParams {
 	widget: Widgets;
 	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	enableDrillDown?: boolean;
+	onClickHandler?: OnClickPluginOpts['onClick'];
 }
 
 export const usePanelContextMenu = ({
 	widget,
 	queryResponse,
 	enableDrillDown = false,
+	onClickHandler,
 }: UseTimeSeriesContextMenuParams): {
 	coordinates: { x: number; y: number } | null;
 	popoverPosition: PopoverPosition | null;
@@ -60,6 +63,7 @@ export const usePanelContextMenu = ({
 	const clickHandlerWithContextMenu = useCallback(
 		(...args: any[]) => {
 			if (!enableDrillDown) {
+				onClickHandler?.(...(args as Parameters<OnClickPluginOpts['onClick']>));
 				return;
 			}
 			const [
@@ -113,7 +117,7 @@ export const usePanelContextMenu = ({
 				});
 			}
 		},
-		[enableDrillDown, onClick, queryResponse],
+		[enableDrillDown, onClick, onClickHandler, queryResponse],
 	);
 
 	return {

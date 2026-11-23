@@ -48,15 +48,11 @@
 	:global(.ant-table) {
 		:global(.ant-table-thead) > tr > th {
 			padding: 12px;
-			font-weight: 500;
 			font-size: 11px;
 			line-height: 18px;
-			background: var(--card);
+			background: var(--surface-2);
 			border-bottom: none;
 			color: var(--l2-foreground);
-			font-family: Inter;
-			font-style: normal;
-			font-weight: 600;
 			letter-spacing: 0.44px;
 			text-transform: uppercase;
 
@@ -67,10 +63,9 @@
 
 		:global(.ant-table-cell) {
 			padding: 12px;
-			font-size: 13px;
 			line-height: 20px;
 			color: var(--l1-foreground);
-			background: var(--card);
+			background: var(--surface-2);
 			border-bottom: none;
 		}
 

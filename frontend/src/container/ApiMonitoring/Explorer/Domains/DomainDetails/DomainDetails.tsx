@@ -172,12 +172,20 @@ function DomainDetails({
 			title={
 				<div className="domain-details-drawer-header">
 					<div className="domain-details-drawer-header-title">
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 
 						{domainData?.domainName && (
-							<Typography.Text className="title" testId="domain-details-title">
+							<Typography
+								variant="code"
+								size="base"
+								weight="medium"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+								testId="domain-details-title"
+							>
 								{domainData.domainName}
-							</Typography.Text>
+							</Typography>
 						)}
 					</div>
 					<div className="domain-details-drawer-header-right-container">

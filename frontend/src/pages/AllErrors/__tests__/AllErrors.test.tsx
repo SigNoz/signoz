@@ -88,7 +88,7 @@ describe('Exceptions page - run query', () => {
 		const user = userEvent.setup({ delay: null });
 		await renderWithFilter();
 
-		await user.click(screen.getByRole('button', { name: /run query/i }));
+		await user.click(await screen.findByRole('button', { name: /run query/i }));
 
 		await waitFor(() =>
 			expect(lastNavigatedFilterItems()).toStrictEqual(KEPT_FILTER_ITEMS),

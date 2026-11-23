@@ -14,7 +14,6 @@
 		height: 34px;
 		padding: 6px 6px 6px 8px;
 		flex-shrink: 0;
-		text-align: start;
 		margin-right: 8px;
 		justify-content: space-between;
 		align-items: center;
@@ -87,8 +86,8 @@
 		border-radius: 4px;
 		background: linear-gradient(
 			139deg,
-			color-mix(in srgb, var(--card) 80%, transparent) 0%,
-			color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+			color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+			color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 		) !important;
 		backdrop-filter: blur(20px);
 	}
@@ -144,8 +143,6 @@
 			height: 37px;
 			color: var(--l2-foreground);
 			font-size: 13px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
 
@@ -210,26 +207,11 @@
 				.date-time-custom-option-from-title,
 				.date-time-custom-option-to-title {
 					color: var(--muted-foreground);
-					font-variant-numeric: slashed-zero;
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: normal;
-					letter-spacing: 0.12px;
-					text-transform: uppercase;
 				}
 
 				.date-time-custom-option-from-value,
 				.date-time-custom-option-to-value {
 					color: var(--l2-foreground);
-					font-variant-numeric: slashed-zero;
-					font-family: Inter;
-					font-size: 13px;
-					font-style: normal;
-					font-weight: 300;
-					line-height: normal;
-					letter-spacing: 0.14px;
 				}
 
 				&.active {
@@ -397,7 +379,6 @@
 			text-align: left;
 			color: var(--l2-foreground);
 			font-size: 11px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 18px;
 			letter-spacing: 0.88px;
@@ -407,7 +388,6 @@
 		.time-btns {
 			color: var(--l2-foreground);
 			background-color: var(--l3-background);
-			font-size: 12px;
 			line-height: 16px;
 			letter-spacing: 0.04em;
 			text-align: left;

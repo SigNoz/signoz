@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { Button, Form } from 'antd';
 import { CircleCheck, CloudUpload, Info, Wrench } from '@signozhq/icons';
+import { Input } from '@signozhq/ui/input';
 import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { checkVersionState } from 'utils/app';
 
 import { githubReleaseURL } from './constant';
-import { InputComponent } from './styles';
 
 import './Version.styles.scss';
 
@@ -59,16 +59,20 @@ function Version(): JSX.Element {
 						labelAlign="left"
 					>
 						<Form.Item label={t('current_version')}>
-							<InputComponent
+							<Input
 								readOnly
+								readOnlyTooltip={undefined}
+								maxWidth={183}
 								value={isCurrentVersionError ? t('n_a').toString() : currentVersion}
 								placeholder={t('current_version')}
 							/>
 						</Form.Item>
 
 						<Form.Item label={t('latest_version')}>
-							<InputComponent
+							<Input
 								readOnly
+								readOnlyTooltip={undefined}
+								maxWidth={183}
 								value={isLatestVersionError ? t('n_a').toString() : latestVersion}
 								placeholder={t('latest_version')}
 							/>

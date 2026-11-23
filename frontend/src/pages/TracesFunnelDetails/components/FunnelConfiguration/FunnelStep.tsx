@@ -124,7 +124,7 @@ function FunnelStep({
 							/>
 						</Tooltip>
 
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}

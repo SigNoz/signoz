@@ -88,8 +88,8 @@
 	outline: none;
 	resize: none;
 	color: var(--l1-foreground);
-	font-size: var(--periscope-font-size-base);
-	line-height: var(--line-height-20);
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--paragraph-base-400-line-height);
 	letter-spacing: -0.005em;
 	overflow-y: auto;
 	font-family: inherit;
@@ -154,26 +154,14 @@
 	}
 }
 
-.contextPopover {
-	box-sizing: border-box;
-	max-width: min(92vw, 532px);
+.contextPopoverContent {
+	display: grid;
+	grid-template-columns: 224px 1fr;
 	height: 326px;
-	backdrop-filter: blur(20px);
 	// Clip horizontal overflow so long entity titles can't poke past the
 	// popover's right edge. Vertical overflow is handled inside
 	// `.contextPopoverEntities`.
 	overflow-x: hidden;
-
-	--popover-width: 532px;
-	--popover-padding: 0;
-	// Above the floating panel (999) and the popup chat (1050) it opens from.
-	--popover-z-index: 1100;
-}
-
-.contextPopoverContent {
-	display: grid;
-	grid-template-columns: 224px 1fr;
-	height: 100%;
 	min-width: 0;
 }
 
@@ -226,12 +214,8 @@
 	height: 44px;
 	padding: 0 var(--spacing-6);
 	border-bottom: 1px solid var(--l2-border);
-	@include bare-input;
-}
-
-.contextPopoverSearchInput {
-	width: 100%;
 	caret-color: var(--accent-primary);
+	@include bare-input;
 }
 
 .contextPopoverEntities {

@@ -53,11 +53,9 @@ export default function EmptyState({
 								data-testid="empty-state-chip-skeleton"
 								aria-hidden
 							>
-								<Skeleton.Input
-									active
-									block
-									className={styles.suggestionSkeletonFill}
-								/>
+								<span className={styles.suggestionSkeletonFill}>
+									<Skeleton.Input size="md" />
+								</span>
 								{chip.text}
 							</span>
 						))}

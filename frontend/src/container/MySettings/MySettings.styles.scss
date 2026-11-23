@@ -17,7 +17,6 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	font-size: 11px;
 }
 
 .logout-button {
@@ -36,18 +35,14 @@
 
 		.user-info-section-title {
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 16px;
-			font-style: normal;
 			line-height: 24px; /* 155.556% */
 			letter-spacing: -0.08px;
 		}
 
 		.user-info-section-subtitle {
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 12px;
-			font-style: normal;
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
 		}
@@ -66,18 +61,14 @@
 
 		.user-preference-section-title {
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 16px;
-			font-style: normal;
 			line-height: 24px; /* 155.556% */
 			letter-spacing: -0.08px;
 		}
 
 		.user-preference-section-subtitle {
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 12px;
-			font-style: normal;
 			line-height: 20px; /* 142.857% */
 			letter-spacing: -0.07px;
 		}
@@ -102,9 +93,7 @@
 				gap: 8px;
 
 				color: var(--l1-foreground);
-				font-family: Inter;
 				font-size: 14px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: normal;
 				letter-spacing: -0.07px;
@@ -114,9 +103,7 @@
 
 			.user-preference-section-content-item-description {
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 12px;
-				font-style: normal;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
 			}

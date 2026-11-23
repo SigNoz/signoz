@@ -8,9 +8,10 @@ import {
 	type TooltipProps,
 	// eslint-disable-next-line signoz/no-signozhq-ui-barrel
 } from '@signozhq/ui';
+import { ForceOpenProvider } from '@signozhq/ui/testing';
 import { forwardRef } from 'react';
 
-import { heldOpenState } from './tooltipsHeldOpen';
+import { areTooltipsHeldOpen } from './tooltipsHeldOpen';
 
 /**
  * Replaces `@signozhq/ui/tooltip` in Storybook (aliased in `.storybook/main.ts`)
@@ -20,11 +21,18 @@ import { heldOpenState } from './tooltipsHeldOpen';
  * The real components are imported from the package root, which re-exports them
  * over a relative path the alias does not match. The app therefore still sees
  * one tooltip context rather than two that cannot talk to each other.
+ *
+ * `Tooltip` no longer takes `open`. `ForceOpenProvider` holds the popup open
+ * while the Tooltips control is on.
  */
 const HeldTooltip = forwardRef<HTMLButtonElement, TooltipProps>(
-	(props, ref) => (
-		<UiTooltip {...props} ref={ref} open={heldOpenState(props.open)} />
-	),
+	(props, ref) => {
+		const tooltip = <UiTooltip {...props} ref={ref} />;
+		if (!areTooltipsHeldOpen()) {
+			return tooltip;
+		}
+		return <ForceOpenProvider>{tooltip}</ForceOpenProvider>;
+	},
 );
 
 HeldTooltip.displayName = 'Tooltip';

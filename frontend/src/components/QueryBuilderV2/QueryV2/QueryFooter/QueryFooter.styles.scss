@@ -2,6 +2,15 @@
 .add-new-query-button,
 .add-formula-button {
 	border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-	background: var(--query-builder-v2-background-color, var(--l2-background));
-	box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+	background: var(--query-builder-v2-background-color, var(--input-background));
+}
+
+// The query rail ends behind this button and shows through its translucent fill.
+.qb-add-new-query .add-new-query-button {
+	background:
+		linear-gradient(
+			var(--periscope-btn-background-color, var(--l2-background)),
+			var(--periscope-btn-background-color, var(--l2-background))
+		),
+		var(--query-builder-v2-surface);
 }
