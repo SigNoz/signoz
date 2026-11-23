@@ -5,8 +5,11 @@
 
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { expectDenied } from './singleSignOnAuthz';
 import {
+	canDeleteDomain,
 	canEditDisplayName,
+	canListDomains,
 	listsDomains,
 	type SingleSignOnArgs,
 } from '../SingleSignOn.stories.mocks';
@@ -170,16 +173,110 @@ export const deleteDomain = async ({
 		return;
 	}
 	await clickFirst(canvasElement, 'auth-domain-delete');
-	await userEvent.click(
-		await screen.findByTestId(
-			'auth-domain-delete-confirm',
-			undefined,
-			untilLoaded,
-		),
+	const confirm = await screen.findByTestId(
+		'auth-domain-delete-confirm',
+		undefined,
+		untilLoaded,
 	);
+	await expectDenied(confirm, !canDeleteDomain(args));
+	if (!canDeleteDomain(args)) {
+		return;
+	}
+	await userEvent.click(confirm);
 	if (args.domainDelete === 'success') {
 		await waitFor(() =>
 			expect(screen.getByText(/domain deleted successfully/i)).toBeVisible(),
 		);
 	}
+};
+
+const waitForSaveOutcome = async (
+	outcome: SingleSignOnArgs['domainSave'],
+	successToast: RegExp,
+): Promise<void> => {
+	if (outcome === 'error') {
+		await screen.findAllByText(/the request failed/i, undefined, untilLoaded);
+	}
+	if (outcome === 'success') {
+		await waitFor(() => expect(screen.getByText(successToast)).toBeVisible(), {
+			timeout: 15_000,
+		});
+	}
+};
+
+export const createDomain = async (context: PlayContext): Promise<void> => {
+	await openAddDomain(context);
+	await userEvent.click(
+		await screen.findByTestId(
+			'authn-provider-configure-google',
+			undefined,
+			untilLoaded,
+		),
+	);
+	await userEvent.type(
+		await screen.findByLabelText(/^domain/i, undefined, untilLoaded),
+		'acme.io',
+	);
+	await userEvent.type(screen.getByLabelText(/client id/i), 'client-id');
+	await userEvent.type(screen.getByLabelText(/client secret/i), 'secret');
+	await userEvent.click(screen.getByTestId('auth-domain-save'));
+	await waitForSaveOutcome(
+		context.args.domainSave,
+		/domain created successfully/i,
+	);
+};
+
+export const saveConfiguredDomain = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
+	await clickFirst(canvasElement, 'auth-domain-configure');
+	await userEvent.click(
+		await screen.findByTestId('auth-domain-save', undefined, untilLoaded),
+	);
+	await waitForSaveOutcome(args.domainSave, /domain updated successfully/i);
+};
+
+export const toggleEnforcement = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsDomains(args)) {
+		return;
+	}
+	await clickFirst(canvasElement, 'auth-domain-enforce-sso');
+	if (args.domainSave === 'error') {
+		await screen.findAllByText(/the request failed/i, undefined, untilLoaded);
+	}
+};
+
+export const expectViewerAccess = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.authzState !== 'loaded') {
+		return;
+	}
+	if (!canListDomains(args)) {
+		await within(canvasElement).findByText(
+			/is not authorized/i,
+			undefined,
+			untilLoaded,
+		);
+	}
+	const input = await within(canvasElement).findByTestId(
+		'org-display-name-input',
+		undefined,
+		untilLoaded,
+	);
+	await waitFor(
+		() =>
+			canEditDisplayName(args)
+				? expect(input).toBeEnabled()
+				: expect(input).toBeDisabled(),
+		untilLoaded,
+	);
 };
