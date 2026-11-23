@@ -717,10 +717,7 @@ describe('ChannelForm save', () => {
 			render(<ChannelForm onDone={jest.fn()} />);
 
 			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
-			await user.click(await screen.findByTestId('channel-type-select', {}, FIND));
-			await user.click(
-				await screen.findByRole('option', { name: /^Microsoft Teams$/ }),
-			);
+			await pickChannelType(user, ChannelKind.msteams);
 
 			const teamsTitle =
 				'[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}';
@@ -737,9 +734,12 @@ describe('ChannelForm save', () => {
 			expect(description.value).not.toContain('*Alert:* ');
 			expect(description.value).not.toContain('signoz.relatedLinks.slack');
 
-			await user.type(screen.getByTestId('channel-name-textbox'), 'teams alerts');
 			await user.type(
-				screen.getByTestId('webhook-url-textbox'),
+				screen.getByTestId('channel-name-textbox-field'),
+				'teams alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox-field'),
 				'https://teams.example.com/workflows/hook',
 			);
 
