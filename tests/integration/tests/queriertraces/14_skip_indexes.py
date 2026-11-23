@@ -7,7 +7,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import RequestType, build_aggregation, build_traces_scalar_query, get_preview_statements, make_preview_query_request
+from fixtures.querier import RequestType, build_aggregation, build_traces_scalar_query, get_attribute_evolution_time, get_preview_statements, make_preview_query_request
 from fixtures.traces import Traces
 
 PROMOTED_PATHS = "/api/v1/promoted_paths"
@@ -45,11 +45,12 @@ def test_traces_filters_use_skip_indexes(
     assert resp.status_code == HTTPStatus.BAD_REQUEST, resp.text
 
     now = datetime.now(tz=UTC)
-    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe"})])
+    insert_traces([Traces(timestamp=now - timedelta(seconds=10), attributes={"index.number_probe": 200, "index.string_probe": "probe", "index.exists_probe": "probe"})])
 
     for filter_expression, index_name in [
         ("index.number_probe = 200", "attributes.index.number_probe_float64_bloom_filter"),
         ("index.string_probe = 'probe'", "attributes.index.string_probe_string_bloom_filter"),
+        ("index.exists_probe EXISTS", "attributes_paths_tokenbf"),
         ("name = 'probe'", "idx_name"),
         ("duration_nano > 100", "idx_duration"),
         ("kind = 2", "idx_kind"),
@@ -66,7 +67,8 @@ def test_traces_filters_use_skip_indexes(
             make_preview_query_request(
                 signoz,
                 token,
-                start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
+                # after the attributes JSON rollout, where the window reads the JSON column alone
+                start_ms=int(max(now - timedelta(minutes=5), get_attribute_evolution_time(signoz, "traces") + timedelta(seconds=1)).timestamp() * 1000),
                 end_ms=int(now.timestamp() * 1000),
                 request_type=RequestType.SCALAR,
                 # count() over primary-key filters is answered by the exact count projection, which reads no index
