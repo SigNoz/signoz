@@ -240,7 +240,9 @@ function AuthDomain(): JSX.Element {
 					onClose={(): void => {
 						setAddDomain(false);
 						setRecord(undefined);
-						refetchAuthDomainListResponse();
+						if (canListAuthDomains) {
+							void refetchAuthDomainListResponse();
+						}
 					}}
 				/>
 			)}

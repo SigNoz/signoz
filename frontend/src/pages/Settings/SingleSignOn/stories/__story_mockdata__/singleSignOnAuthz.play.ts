@@ -72,6 +72,14 @@ export const expectDisplayNameDenied = async ({
 		),
 		denied,
 	);
+	if (!denied) {
+		const input = await within(canvasElement).findByTestId(
+			'org-display-name-input',
+			undefined,
+			untilLoaded,
+		);
+		await userEvent.type(input, ' edited');
+	}
 	await expectDenied(
 		await within(canvasElement).findByTestId(
 			'org-display-name-submit',
