@@ -24,6 +24,13 @@ import SSOEnforcementToggle from './SSOEnforcementToggle';
 
 import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
+import { useAuthZ } from '@/lib/authz/hooks/useAuthZ/useAuthZ';
+import {
+	AuthDomainListPermission,
+	buildAuthDomainDeletePermission,
+} from '@/lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
+import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
+import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
 
 export const SSOType = new Map<string, string>([
 	['google', 'Google Auth'],
@@ -41,13 +48,18 @@ function AuthDomain(): JSX.Element {
 
 	const { showErrorModal } = useErrorModal();
 
+	const { permissions: authzPermissions } = useAuthZ([AuthDomainListPermission]);
+
+	const canListAuthDomains =
+		authzPermissions?.[AuthDomainListPermission]?.isGranted ?? false;
+
 	const {
 		data: authDomainListResponse,
 		isLoading: isLoadingAuthDomainListResponse,
 		isFetching: isFetchingAuthDomainListResponse,
 		error: errorFetchingAuthDomainListResponse,
 		refetch: refetchAuthDomainListResponse,
-	} = useListAuthDomains();
+	} = useListAuthDomains({ query: { enabled: canListAuthDomains } });
 
 	const { mutate: deleteAuthDomain, isLoading } =
 		useDeleteAuthDomain<AxiosError<RenderErrorResponseDTO>>();
@@ -198,25 +210,29 @@ function AuthDomain(): JSX.Element {
 				</Button>
 			</section>
 			{formattedError && <ErrorContent error={formattedError} />}
-			{!errorFetchingAuthDomainListResponse && (
-				<Table
-					columns={columns}
-					dataSource={authDomainListResponse?.data}
-					onRow={(
-						record: AuthtypesGettableAuthDomainDTO,
-					): HTMLAttributes<HTMLElement> =>
-						// data-* attributes are valid row props but absent from the antd typing
-						({
-							'data-testid': `auth-domain-row-${record.name}`,
-						}) as unknown as HTMLAttributes<HTMLElement>
-					}
-					loading={
-						isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
-					}
-					className="auth-domain-list"
-					rowKey="id"
-				/>
-			)}
+			<AuthZGuardContent checks={[AuthDomainListPermission]}>
+				{!errorFetchingAuthDomainListResponse ? (
+					<Table
+						columns={columns}
+						dataSource={authDomainListResponse?.data}
+						onRow={(
+							record: AuthtypesGettableAuthDomainDTO,
+						): HTMLAttributes<HTMLElement> =>
+							// data-* attributes are valid row props but absent from the antd typing
+							({
+								'data-testid': `auth-domain-row-${record.name}`,
+							}) as unknown as HTMLAttributes<HTMLElement>
+						}
+						loading={
+							isLoadingAuthDomainListResponse || isFetchingAuthDomainListResponse
+						}
+						className="auth-domain-list"
+						rowKey="id"
+					/>
+				) : (
+					<></>
+				)}
+			</AuthZGuardContent>
 			{(addDomain || record) && (
 				<CreateEdit
 					isCreate={!record}
@@ -248,7 +264,7 @@ function AuthDomain(): JSX.Element {
 					>
 						Cancel
 					</Button>,
-					<Button
+					<AuthZButton
 						size="md"
 						variant="solid"
 						color="danger"
@@ -257,9 +273,14 @@ function AuthDomain(): JSX.Element {
 						onClick={handleDeleteDomain}
 						loading={isLoading}
 						testId="auth-domain-delete-confirm"
+						checks={
+							isDeleteModalOpen && activeDomain?.id
+								? [buildAuthDomainDeletePermission(activeDomain.id)]
+								: []
+						}
 					>
 						Delete Domain
-					</Button>,
+					</AuthZButton>,
 				]}
 			>
 				<p className="delete-text">
