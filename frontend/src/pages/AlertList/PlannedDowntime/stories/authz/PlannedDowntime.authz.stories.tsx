@@ -121,6 +121,9 @@ export const NoRuleList: Story = {
  */
 export const NoRuleListEditing: Story = {
 	args: { revoked: ['list:rule'], rulesState: 'error' },
+	// The mocked rules request intentionally fails; the resulting console error is
+	// the point of the story, not a regression.
+	parameters: { allowConsoleErrors: true },
 	play: expectRulesKeptWithoutList,
 };
 
