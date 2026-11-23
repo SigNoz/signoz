@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { UseQueryOptions, UseQueryResult } from 'react-query';
 import { useQuery } from 'react-query';
 import { isAxiosError } from 'axios';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { updateBarStepInterval } from 'container/WidgetCard/utils';

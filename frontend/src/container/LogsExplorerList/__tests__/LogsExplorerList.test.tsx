@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import LogsExplorerViews from 'container/LogsExplorerViews';
 import { mockQueryBuilderContextValue } from 'container/LogsExplorerViews/tests/mock';

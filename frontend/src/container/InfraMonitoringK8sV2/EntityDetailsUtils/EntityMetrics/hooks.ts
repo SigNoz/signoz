@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { QueryFunctionContext, UseQueryResult } from 'react-query';
 import { useQueries } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';

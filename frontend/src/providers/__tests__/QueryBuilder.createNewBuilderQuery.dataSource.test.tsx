@@ -1,8 +1,8 @@
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { act, AllTheProviders, renderHook } from 'tests/test-utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

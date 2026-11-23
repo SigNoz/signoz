@@ -3,7 +3,7 @@ import type { DashboardtypesPanelPluginDTO } from 'api/generated/services/sigNoz
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
 import {

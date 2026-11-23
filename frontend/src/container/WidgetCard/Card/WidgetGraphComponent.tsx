@@ -7,7 +7,7 @@ import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import type { ToggleGraphProps } from 'components/Graph/types';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { PanelMode } from 'lib/visualization/panels/types';
 import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';

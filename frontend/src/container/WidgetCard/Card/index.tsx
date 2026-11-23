@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import type { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';

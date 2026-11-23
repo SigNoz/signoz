@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import type { QueryKey } from 'react-query';
 import { useInfiniteQuery } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { useKeepRowsForSameQuery } from 'container/TracesExplorer/TracesTable/useKeepRowsForSameQuery';

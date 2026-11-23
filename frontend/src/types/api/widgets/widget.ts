@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { PrecisionOption } from 'components/Graph/types';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { timePreferenceType } from 'constants/timePreference';
 import type { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import type {

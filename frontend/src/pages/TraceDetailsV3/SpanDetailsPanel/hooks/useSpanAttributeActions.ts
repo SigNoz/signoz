@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import GroupByIcon from 'assets/CustomIcons/GroupByIcon';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

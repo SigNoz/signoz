@@ -9,7 +9,7 @@ import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import type { AppState } from 'store/reducers';
 import type { SuccessResponse } from 'types/api';

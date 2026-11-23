@@ -2,7 +2,7 @@ import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.s
 import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
 import { SavedviewtypesSchemaVersionDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSchemaVersionDTO';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 

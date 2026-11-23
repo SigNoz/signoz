@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
 import type { TelemetryFieldKey } from 'api/v5/v5';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
 
 import { getPanelDefaults } from '../loader/getPanelDefaults';

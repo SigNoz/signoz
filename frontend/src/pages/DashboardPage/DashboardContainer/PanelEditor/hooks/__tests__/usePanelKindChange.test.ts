@@ -3,8 +3,8 @@ import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.s
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

@@ -5,7 +5,7 @@ import { message } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { AppState } from 'store/reducers';
 import type { DataSource } from 'types/common/queryBuilder';

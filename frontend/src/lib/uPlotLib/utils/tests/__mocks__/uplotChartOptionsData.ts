@@ -1,4 +1,5 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GetUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 
 export const inputPropsTimeSeries = {

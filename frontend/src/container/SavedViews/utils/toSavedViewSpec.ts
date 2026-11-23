@@ -6,7 +6,7 @@ import type { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigN
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import type { TelemetrytypesTelemetryFieldKeyDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesTelemetryFieldKeyDTO';
 import { SavedviewtypesPanelTypeDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesPanelTypeDTO';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { panelTypeToRequestType } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';

@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { isEmpty } from 'lodash-es';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { timePreferenceType } from 'constants/timePreference';
 import { useDynamicVariableSuggestions } from 'hooks/dashboard/useDynamicVariableSuggestions';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';

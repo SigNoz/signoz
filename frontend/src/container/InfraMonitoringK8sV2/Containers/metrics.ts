@@ -1,5 +1,5 @@
 import type { InframonitoringtypesContainerRecordDTO } from 'api/generated/services/sigNoz.schemas/inframonitoringtypesContainerRecordDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';

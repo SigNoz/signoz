@@ -1,5 +1,6 @@
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { StringOperators } from 'types/common/queryBuilder';

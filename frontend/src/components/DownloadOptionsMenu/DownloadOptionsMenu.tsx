@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { RadioGroup } from '@signozhq/ui/radio-group';
 import { Typography } from '@signozhq/ui/typography';
 import type { TelemetryFieldKey } from 'api/v5/v5';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useExportRawData } from 'hooks/useExportData/useServerExport';
 import { Download } from '@signozhq/icons';
 import { DataSource } from 'types/common/queryBuilder';

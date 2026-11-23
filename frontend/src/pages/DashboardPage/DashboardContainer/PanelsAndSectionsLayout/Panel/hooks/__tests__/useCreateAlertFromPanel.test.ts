@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import logEvent from 'api/common/logEvent';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { Querybuildertypesv5VariableTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5VariableTypeDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
 
 import { useCreateAlertFromPanel } from '../useCreateAlertFromPanel';

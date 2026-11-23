@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { QueryParams } from 'constants/query';
 import { useCreateAlertState } from 'container/CreateAlert/context';
 import ChartPreviewComponent from 'container/FormAlertRules/ChartPreview';

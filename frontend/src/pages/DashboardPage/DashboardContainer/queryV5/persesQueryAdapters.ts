@@ -9,7 +9,8 @@ import { DashboardtypesQueryPluginVariantGithubComSigNozSignozPkgTypesQuerybuild
 import { Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType';
 import { Querybuildertypesv5QueryEnvelopePromQLDTOType } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5QueryEnvelopePromQLDTOType';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { mapCompositeQueryFromQuery } from 'lib/newQueryBuilder/queryBuilderMappers/mapCompositeQueryFromQuery';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';

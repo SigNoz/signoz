@@ -1,4 +1,5 @@
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { render } from 'tests/test-utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

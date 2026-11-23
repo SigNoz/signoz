@@ -2,7 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
 import type { OptionsQuery } from 'container/OptionsMenu/types';
 

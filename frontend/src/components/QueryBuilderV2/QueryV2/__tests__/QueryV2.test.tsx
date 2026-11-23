@@ -2,7 +2,7 @@
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { server } from 'mocks-server/server';

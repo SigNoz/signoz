@@ -1,5 +1,5 @@
 import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldContextDTO';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 export const DEFAULT_PANEL_TYPE = PANEL_TYPES.TRACE;

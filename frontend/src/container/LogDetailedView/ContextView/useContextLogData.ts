@@ -2,7 +2,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	getOrderByTimestamp,
 	INITIAL_PAGE_SIZE,

@@ -5,7 +5,7 @@ import LogsPanelComponent from 'container/LogsPanelTable/LogsPanelComponent';
 import TracesTableComponent from 'container/TracesTableComponent/TracesTableComponent';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { PANEL_TYPES } from './queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 export const PANEL_TYPES_COMPONENT_MAP = {
 	[PANEL_TYPES.TIME_SERIES]: Uplot,

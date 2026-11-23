@@ -1,6 +1,6 @@
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 

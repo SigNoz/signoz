@@ -1,5 +1,5 @@
 import { logEventMock } from '__tests__/logEventMock';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	OpenTraceSource,
 	TracesExplorerEvents,

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { QueryParams } from 'constants/query';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowLeft } from '@signozhq/icons';
 import ContextMenu from 'periscope/components/ContextMenu';

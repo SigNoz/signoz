@@ -13,8 +13,8 @@ import { QueryParams } from 'constants/query';
 import {
 	initialQueriesMap,
 	initialQueryMeterWithType,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { getSavedViewQuery } from 'container/SavedViews/utils/getSavedViewQuery';
 import { toSavedViewSpec } from 'container/SavedViews/utils/toSavedViewSpec';

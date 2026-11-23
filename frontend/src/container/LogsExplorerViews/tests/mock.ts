@@ -2,8 +2,8 @@ import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,
 	OPERATORS,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { noop } from 'lodash-es';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

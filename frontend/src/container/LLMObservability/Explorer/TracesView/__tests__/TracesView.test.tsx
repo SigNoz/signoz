@@ -6,7 +6,8 @@ import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.sch
 import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesFieldDataTypeDTO';
 import { useColumnStore } from 'components/TanStackTableView/useColumnStore';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 
 import TracesView from '../TracesView';
 

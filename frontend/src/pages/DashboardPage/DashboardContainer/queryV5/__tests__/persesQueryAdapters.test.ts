@@ -5,8 +5,8 @@ import { Querybuildertypesv5BucketOptionsLogDTOKind } from 'api/generated/servic
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';

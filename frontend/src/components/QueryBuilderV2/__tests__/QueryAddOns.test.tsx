@@ -1,4 +1,5 @@
-import { ATTRIBUTE_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	fireEvent,
 	render,

@@ -2,7 +2,8 @@ import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryMeterWithType } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import type {

@@ -10,7 +10,8 @@ import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalField
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
 import { getExportPanelType } from 'container/ExplorerActions/utils';

@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { foldAISlot } from 'lib/query/builderSlot';
 import type {

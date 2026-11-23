@@ -6,7 +6,7 @@ import {
 } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas/querybuildertypesv5RequestTypeDTO';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { getCurrentLocation } from 'lib/router/navigation';
 import { UpdateTimeInterval } from 'store/actions';

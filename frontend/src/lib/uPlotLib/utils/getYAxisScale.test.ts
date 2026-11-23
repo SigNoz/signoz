@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { ThresholdProps } from 'types/api/widgets/threshold';
 import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 

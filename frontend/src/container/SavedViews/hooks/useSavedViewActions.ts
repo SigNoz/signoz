@@ -11,7 +11,7 @@ import type { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigN
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/savedviewtypesSourceDTO';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import useOptionsMenu from 'container/OptionsMenu/useOptionsMenu';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';

@@ -7,7 +7,7 @@ import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/Query
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
 import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
 import { FiltersType } from 'components/QuickFilters/types';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import type { GraphClickMetaData } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';

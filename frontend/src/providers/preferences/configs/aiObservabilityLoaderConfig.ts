@@ -2,7 +2,7 @@ import getLocalStorageKey from 'api/browser/localstorage/get';
 import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import {
 	DEFAULT_PANEL_TYPE,
 	TRACE_VIEW_DEFAULT_COLUMNS,

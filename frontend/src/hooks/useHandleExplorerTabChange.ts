@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { QueryParams } from 'constants/query';
-import { initialAutocompleteData, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialAutocompleteData } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type ROUTES from 'constants/routes';
 import type { ExplorerViews } from 'pages/LogsExplorer/utils';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

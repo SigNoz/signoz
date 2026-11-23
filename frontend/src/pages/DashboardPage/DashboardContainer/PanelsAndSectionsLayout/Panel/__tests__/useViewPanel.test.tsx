@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas/dashboardtypesPanelDTO';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';

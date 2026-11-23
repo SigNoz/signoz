@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getGroupContextMenuConfig } from 'container/QueryTable/Drilldown/contextConfig';
 import type { ClickedData } from 'periscope/components/ContextMenu';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';

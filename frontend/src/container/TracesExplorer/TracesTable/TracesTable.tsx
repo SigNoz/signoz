@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useAppNavigate } from 'lib/router/useAppNavigate';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import TanStackTable from 'components/TanStackTableView';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type {
 	CellTypographySize,
 	TableColumnDef,

@@ -2,8 +2,8 @@ import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas/rule
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
-	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import type { AlertDef } from 'types/api/alerts/def';
 import {

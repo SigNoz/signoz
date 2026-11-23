@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
 import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';

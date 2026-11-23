@@ -8,7 +8,8 @@ import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas/s
 import QuickFiltersLayout from 'components/QuickFilters/QuickFiltersLayout/QuickFiltersLayout';
 import { useSignalFieldApis } from 'components/QuickFilters/hooks/useSignalFieldApis';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
-import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryMeterWithType } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';

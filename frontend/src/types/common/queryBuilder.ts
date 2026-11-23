@@ -1,7 +1,7 @@
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSignalDTO';
 import { TelemetrytypesSourceDTO } from 'api/generated/services/sigNoz.schemas/telemetrytypesSourceDTO';
 import type { Format } from 'constants/formats/types';
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type ROUTES from 'constants/routes';
 import type { Dispatch, SetStateAction } from 'react';
 import type {

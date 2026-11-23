@@ -1,7 +1,5 @@
-import {
-	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 

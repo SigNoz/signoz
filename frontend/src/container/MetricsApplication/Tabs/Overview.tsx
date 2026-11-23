@@ -9,7 +9,7 @@ import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import getTopLevelOperations from 'api/metrics/getTopLevelOperations';
 import { FeatureKeys } from 'constants/features';
 import { QueryParams } from 'constants/query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';

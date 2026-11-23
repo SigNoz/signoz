@@ -1,4 +1,4 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 
 export const ViewMenuAction = [MenuItemKeys.View];

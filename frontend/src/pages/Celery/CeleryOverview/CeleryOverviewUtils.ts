@@ -1,4 +1,4 @@
-import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import type { SuccessResponse } from 'types/api';
 import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';

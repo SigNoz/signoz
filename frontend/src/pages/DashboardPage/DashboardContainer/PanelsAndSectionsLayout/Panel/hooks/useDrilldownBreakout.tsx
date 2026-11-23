@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import logEvent from 'api/common/logEvent';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { getQueryData } from 'container/QueryTable/Drilldown/drilldownUtils';
 import {
 	getBreakoutPanelType,

@@ -3,10 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import { QueryParams } from 'constants/query';
-import {
-	initialQueryBuilderFormValues,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
+import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
+import { PANEL_TYPES } from 'constants/queryBuilderPanelTypes';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import type { AppState } from 'store/reducers';
