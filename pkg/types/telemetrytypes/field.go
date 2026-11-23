@@ -225,6 +225,15 @@ type FieldKeySelector struct {
 	MetricContext     *MetricContext         `json:"metricContext,omitempty" description:"Scopes the lookup to one metric or metric namespace. Metrics signal only."`
 }
 
+func (s *FieldKeySelector) Copy() *FieldKeySelector {
+	copied := *s
+	if s.MetricContext != nil {
+		metricContext := *s.MetricContext
+		copied.MetricContext = &metricContext
+	}
+	return &copied
+}
+
 // MatchesKey reports whether a statically defined key satisfies the selector, so
 // callers can suggest keys that were never ingested.
 func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
@@ -385,6 +394,14 @@ func (selector *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
 	return []*FieldValueSelector{selector}
 }
 
+func (selector *FieldValueSelector) Copy() *FieldValueSelector {
+	copied := *selector
+	if selector.FieldKeySelector != nil {
+		copied.FieldKeySelector = selector.FieldKeySelector.Copy()
+	}
+	return &copied
+}
+
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
 	return &TelemetryFieldKey{
 		Name:          name,
@@ -452,12 +469,9 @@ func (key *TelemetryFieldKey) normalizeContext() {
 
 // withName returns a copy looking up name in any context.
 func (selector *FieldValueSelector) withName(name string) *FieldValueSelector {
-	keySelector := *selector.FieldKeySelector
-	keySelector.Name = name
-	keySelector.FieldContext = FieldContextUnspecified
-
-	renamed := *selector
-	renamed.FieldKeySelector = &keySelector
+	renamed := selector.Copy()
+	renamed.Name = name
+	renamed.FieldContext = FieldContextUnspecified
 	renamed.prefixedName = ""
-	return &renamed
+	return renamed
 }

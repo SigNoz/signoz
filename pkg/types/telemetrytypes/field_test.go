@@ -616,3 +616,23 @@ func TestFieldContextMetricAttrType(t *testing.T) {
 		})
 	}
 }
+
+func TestFieldValueSelectorCopy(t *testing.T) {
+	original := &FieldValueSelector{
+		FieldKeySelector: &FieldKeySelector{Name: "service.name", FieldContext: FieldContextResource, MetricContext: &MetricContext{MetricName: "requests_total"}},
+		Value:            "front",
+		prefixedName:     "resource.service.name",
+	}
+
+	copied := original.Copy()
+	copied.Name = "host.name"
+	copied.FieldContext = FieldContextAttribute
+	copied.MetricContext.MetricName = "latency"
+	copied.Value = "back"
+
+	assert.Equal(t, "service.name", original.Name)
+	assert.Equal(t, FieldContextResource, original.FieldContext)
+	assert.Equal(t, "requests_total", original.MetricContext.MetricName)
+	assert.Equal(t, "front", original.Value)
+	assert.Equal(t, "resource.service.name", copied.prefixedName)
+}
