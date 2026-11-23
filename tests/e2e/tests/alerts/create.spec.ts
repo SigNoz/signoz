@@ -246,7 +246,7 @@ test.describe('Alert create', () => {
 		// evaluated fine, it just did not fire. Asserted permissively so a stack
 		// that happens to have matching data does not flip it.
 		await expect(
-			alerts.shell.message(
+			alerts.shell.toast(
 				/No alerts found during the evaluation|sent successfully/,
 			),
 		).toBeVisible();

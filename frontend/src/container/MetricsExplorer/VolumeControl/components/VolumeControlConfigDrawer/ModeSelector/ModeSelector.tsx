@@ -49,12 +49,26 @@ function ModeSelector({ mode, onChange }: ModeSelectorProps): JSX.Element {
 					onClick={(): void => onChange(option.mode)}
 					data-testid={`volume-control-mode-${option.mode}`}
 				>
-					<Typography.Text size="small" weight="semibold">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="bold"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{option.title}
-					</Typography.Text>
-					<Typography.Text size="sm" color="muted">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{option.description}
-					</Typography.Text>
+					</Typography>
 				</button>
 			))}
 		</div>

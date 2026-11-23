@@ -14,13 +14,15 @@ import {
 	expandFilterBar,
 	hoverAiSpan,
 	hoverEventStacktrace,
+	openAddSpanToFunnel,
+	openAnalytics,
+	openCreateFunnelStep,
 	openPercentile,
 	openPercentileResourceSelector,
 	openSpanEvents,
 	openTraceOptions,
 	showsAnalyticsState,
 	showsHighlightedErrors,
-	showsMissingSpansBanner,
 	showsTraceOnlyLogs,
 	showTooltips,
 	switchDockMode,
@@ -41,7 +43,7 @@ const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
  * Route: `/trace/:id`.
  */
 const meta = {
-	title: 'Pages/Traces/Trace Details',
+	title: 'Pages/Traces/Trace Details/Overview',
 	tags: ['play'],
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
@@ -81,12 +83,6 @@ export const NoTrace: Story = {
 /** The waterfall and the flamegraph mid-fetch, shell included. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
-};
-
-/** A trace whose spans have not all arrived: the dismissible banner over the panels. */
-export const MissingSpans: Story = {
-	args: { missingSpans: true },
-	play: showsMissingSpansBanner,
 };
 
 /** The strip over a trace with no failing span: the error icon stays neutral. */
@@ -207,6 +203,27 @@ export const SpanPanelNoEvents: Story = {
 /** The exception's stacktrace hovered: the preview popover with its Expand action. */
 export const SpanPanelEventAttributePopover: Story = {
 	play: hoverEventStacktrace,
+};
+
+/** The analytics panel the header toggle opens. */
+export const AnalyticsOpen: Story = {
+	play: openAnalytics,
+};
+
+/** The download progress panel, held open by an export that never answers. */
+export const TraceDownload: Story = {
+	args: { exportState: 'loading' },
+	play: downloadTrace,
+};
+
+/** The funnel picker a span row's add-to-funnel action opens. */
+export const AddSpanToFunnel: Story = {
+	play: openAddSpanToFunnel,
+};
+
+/** The name field behind "Create new funnel" in that picker. */
+export const AddSpanToFunnelCreateStep: Story = {
+	play: openCreateFunnelStep,
 };
 
 /** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */

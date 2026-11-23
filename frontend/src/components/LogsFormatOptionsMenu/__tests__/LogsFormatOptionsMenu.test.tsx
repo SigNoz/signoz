@@ -116,7 +116,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		const { maxLinesOnChange, getByTestId } = setup();
 
 		// Increment max lines
-		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const initial = Number(input.value);
 		fireEvent.click(screen.getByRole('button', { name: 'More lines per row' }));
 
@@ -130,7 +130,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	it('clamps a typed max-lines value to 10', async () => {
 		const { maxLinesOnChange, getByTestId } = setup();
-		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const user = userEvent.setup();
 
 		await user.clear(input);
@@ -143,7 +143,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	it('stops max-lines at 10', async () => {
 		const { getByTestId } = setup();
-		const input = getByTestId('max-lines-per-row') as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const increment = screen.getByRole('button', { name: 'More lines per row' });
 		const user = userEvent.setup();
 

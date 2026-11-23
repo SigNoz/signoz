@@ -250,6 +250,12 @@ export const panelsMocks = defineStoryMocks({
 				'`use_json_body`: the List panel’s log bodies arrive as objects, every third one with keys beside `message`.',
 			value: false,
 		}),
+		listWideRows: toggleControl('List wide rows', {
+			group: DATA,
+			description:
+				'Every log carries 24 attributes, so the List panel opens with a column each beside the body.',
+			value: false,
+		}),
 	},
 	handlers: (values, response) => {
 		const args: PanelArgs = values;
@@ -297,6 +303,7 @@ export const panelsMocks = defineStoryMocks({
 						series: values.series,
 						listRows: values.listRows,
 						listJsonBody: values.listJsonBody,
+						listWideRows: values.listWideRows,
 						gaps: values.gaps,
 						pieSlices: values.pieSlices,
 					});

@@ -57,7 +57,7 @@ describe('Notification channels list', () => {
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
 
-			await userEvent.type(screen.getByTestId('channels-search'), 'oncall');
+			await userEvent.type(screen.getByTestId('channels-search-field'), 'oncall');
 
 			await waitFor(() => {
 				expect(screen.queryByText('Dummy-Channel')).not.toBeInTheDocument();

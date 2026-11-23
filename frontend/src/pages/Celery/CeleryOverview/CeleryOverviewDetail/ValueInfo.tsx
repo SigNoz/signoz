@@ -8,7 +8,7 @@ import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
@@ -25,7 +25,10 @@ import {
 	celeryOverviewErrorRateWidgetData,
 	celeryOverviewRequestRateWidgetData,
 } from '../CeleryOverviewGraphUtils';
-import { getQueryPayloadFromWidgetsData } from '../CeleryOverviewUtils';
+import {
+	getQueryPayloadFromWidgetsData,
+	getValueFromScalarResponse,
+} from '../CeleryOverviewUtils';
 
 import './ValueInfo.styles.scss';
 
@@ -59,24 +62,17 @@ export default function ValueInfo({
 			queryKey: [
 				'overview-detail',
 				payload,
-				ENTITY_VERSION_V4,
+				ENTITY_VERSION_V5,
 				'overview-right-panel',
 			],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V4),
+				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
 			enabled: !!payload,
 		})),
 	);
 
 	const getValues = useCallback(
-		() =>
-			queries.map((query) => {
-				const value = parseFloat(
-					query.data?.payload?.data?.newResult?.data?.result?.[0]?.series?.[0]
-						?.values?.[0]?.value || 'NaN',
-				);
-				return Number.isNaN(value) ? 'NaN' : value.toFixed(2);
-			}),
+		() => queries.map((query) => getValueFromScalarResponse(query.data)),
 		[queries],
 	);
 

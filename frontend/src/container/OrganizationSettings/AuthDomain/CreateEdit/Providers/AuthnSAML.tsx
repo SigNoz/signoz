@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Style } from '@signozhq/design-tokens';
-import { CircleHelp } from '@signozhq/icons';
+import { CircleHelp, TriangleAlert } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
@@ -64,7 +64,11 @@ function ConfigureSAMLAuthnProvider({
 								{ required: true, message: 'Domain is required', whitespace: true },
 							]}
 						>
-							<Input id="saml-domain" disabled={!isCreate} />
+							<Input
+								id="saml-domain"
+								disabled={!isCreate}
+								disabledTooltip={undefined}
+							/>
 						</Form.Item>
 					</div>
 
@@ -164,9 +168,11 @@ function ConfigureSAMLAuthnProvider({
 					</div>
 
 					<div className="authn-provider__callout-wrapper">
-						<Callout type="warning" size="small" showIcon className="callout">
-							SAML won&apos;t be enabled unless you enter all the attributes above
-						</Callout>
+						<div className="callout">
+							<Callout color="warning" size="sm" icon={<TriangleAlert />}>
+								SAML won&apos;t be enabled unless you enter all the attributes above
+							</Callout>
+						</div>
 					</div>
 				</div>
 

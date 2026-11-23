@@ -63,6 +63,8 @@ function PromQLQueryBuilder({
 				name="query"
 				defaultValue={queryData?.query}
 				addonBefore="PromQL Query"
+				placeholder="e.g. sum(rate(http_requests_total[5m])) by (service)"
+				rootClassName="promql-query-field"
 				style={{ marginBottom: '0.5rem' }}
 				data-testid="promql-query-input"
 			/>
@@ -73,6 +75,8 @@ function PromQLQueryBuilder({
 				name="legend"
 				defaultValue={queryData?.legend}
 				addonBefore="Legend Format"
+				placeholder="Write legend format"
+				rootClassName="promql-query-field"
 				style={{ marginBottom: '0.5rem' }}
 				data-testid="promql-legend-input"
 			/>

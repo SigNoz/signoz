@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SolidAlertCircle } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 
 import styles from './ConfigInlineField.module.scss';
@@ -27,7 +28,7 @@ function ConfigInlineField({
 			{children}
 			{error ? (
 				<div className={styles.help} data-testid={helpTestId}>
-					<Callout type="error" size="small" showIcon>
+					<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
 						{error}
 					</Callout>
 				</div>

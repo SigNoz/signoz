@@ -35,6 +35,7 @@ import {
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
+import { getToastText } from '@/storybook/play/toastText';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
@@ -575,6 +576,6 @@ export const saveUnit = async (
 	);
 	await userEvent.click(await screen.findByRole('button', { name: 'Yes' }));
 	if (expected) {
-		await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
+		await waitFor(() => expect(getToastText(expected)).toBeVisible());
 	}
 };

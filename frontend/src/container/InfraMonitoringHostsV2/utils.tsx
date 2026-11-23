@@ -24,7 +24,16 @@ export function HostnameCell({
 	}
 	return (
 		<>
-			<Typography.Text color="muted">-</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				-
+			</Typography>
 			<Tooltip
 				title={
 					<div>
