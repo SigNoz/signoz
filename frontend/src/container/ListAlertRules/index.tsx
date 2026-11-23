@@ -193,7 +193,7 @@ function ListAlertRules(): JSX.Element {
 						action={
 							<AlertRulesHeaderActions
 								columns={columns}
-								canAddAlert={addNewAlert}
+								canAddAlert={addNewAlert && !isEmptyNoRules}
 								onNewAlert={handleNewAlert}
 							/>
 						}
