@@ -252,8 +252,8 @@ type FieldValueSelector struct {
 	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
 	Limit         int    `json:"limit" description:"Maximum number of values to return."`
 
-	// nameAsWritten is set when FieldContext was parsed from the name's prefix.
-	nameAsWritten string
+	// prefixedName keeps the context prefix of Name; set when FieldContext was parsed from it.
+	prefixedName string
 }
 
 type GettableFieldKeys struct {
@@ -346,15 +346,15 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	key := TelemetryFieldKey{Name: params.Name, FieldContext: keySelector.FieldContext, FieldDataType: keySelector.FieldDataType}
 	if keySelector.FieldContext == FieldContextUnspecified {
 		key.normalizeDataType()
-		nameWithContext := key.Name
+		prefixedName := key.Name
 		key.normalizeContext()
 		// Only apply inferred context if it is valid for the current signal
 		if isContextValidForSignal(key.FieldContext, keySelector.Signal) {
 			if key.FieldContext != FieldContextUnspecified {
-				fieldValueSelector.nameAsWritten = nameWithContext
+				fieldValueSelector.prefixedName = prefixedName
 			}
 		} else {
-			key.Name = nameWithContext
+			key.Name = prefixedName
 			key.FieldContext = FieldContextUnspecified
 		}
 	}
@@ -377,10 +377,10 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 // NameMatchSelectors returns the lookups for the requested key, highest priority first.
 // A context parsed from the name may instead be part of the stored name (attribute.key
 // may be the attribute named attribute.key), so like the query builder both readings are
-// looked up: the name as written, in any context, before the name with its prefix stripped.
+// looked up: the prefixed name, in any context, before the name with its prefix stripped.
 func (selector *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
-	if selector.nameAsWritten != "" {
-		return []*FieldValueSelector{selector.withName(selector.nameAsWritten), selector}
+	if selector.prefixedName != "" {
+		return []*FieldValueSelector{selector.withName(selector.prefixedName), selector}
 	}
 	return []*FieldValueSelector{selector}
 }
@@ -458,6 +458,6 @@ func (selector *FieldValueSelector) withName(name string) *FieldValueSelector {
 
 	renamed := *selector
 	renamed.FieldKeySelector = &keySelector
-	renamed.nameAsWritten = ""
+	renamed.prefixedName = ""
 	return &renamed
 }
