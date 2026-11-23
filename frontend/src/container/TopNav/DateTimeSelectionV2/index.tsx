@@ -27,6 +27,7 @@ import { cloneDeep, isObject } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 // eslint-disable-next-line no-restricted-imports
 import type { Dispatch } from 'redux';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';

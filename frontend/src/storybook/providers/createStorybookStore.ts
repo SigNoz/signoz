@@ -1,5 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import type { Store } from 'redux';
+// eslint-disable-next-line no-restricted-imports
 import { applyMiddleware, legacy_createStore as createStore } from 'redux';
 import thunk from 'redux-thunk';
 import type { AppState } from 'store/reducers';
