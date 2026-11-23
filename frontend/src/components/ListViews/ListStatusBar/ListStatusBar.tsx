@@ -36,9 +36,16 @@ function ListStatusBar({
 			>
 				{collapsed ? 'Expand' : 'Collapse'}
 			</Button>
-			<Typography.Text className={styles.count}>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="tertiary"
+				as="span"
+				textOverflow="wrap"
+			>
 				{count} of {total} {noun}
-			</Typography.Text>
+			</Typography>
 		</div>
 	);
 }

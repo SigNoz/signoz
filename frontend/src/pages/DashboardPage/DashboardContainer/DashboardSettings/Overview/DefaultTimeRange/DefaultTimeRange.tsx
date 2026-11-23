@@ -1,4 +1,4 @@
-import { SelectSimple } from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
 import { Typography } from '@signozhq/ui/typography';
 
 import { buildDefaultTimeRangeItems, DEFAULT_TIME_RANGE_UNSET } from '../utils';
@@ -17,20 +17,34 @@ function DefaultTimeRange({
 	return (
 		<div className={settingsStyles.settingsCard}>
 			<div className={styles.infoItemContainer}>
-				<Typography className={styles.infoTitle}>Default time range</Typography>
-				<section className={styles.defaultTimeRangeInput}>
-					<SelectSimple
-						className={styles.defaultTimeRangeSelect}
-						testId="dashboard-default-time-range"
-						items={buildDefaultTimeRangeItems(value)}
-						value={value && value !== '30m' ? value : DEFAULT_TIME_RANGE_UNSET}
-						withPortal={false}
-						onChange={(value): void =>
-							onChange(value === DEFAULT_TIME_RANGE_UNSET ? '' : (value as string))
-						}
-					/>
-				</section>
-				<Typography className={styles.infoHint}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="span"
+					textOverflow="wrap"
+				>
+					Default time range
+				</Typography>
+				<Select
+					width="100%"
+					placeholder="Select a time range"
+					testId="dashboard-default-time-range"
+					items={buildDefaultTimeRangeItems(value)}
+					value={value && value !== '30m' ? value : DEFAULT_TIME_RANGE_UNSET}
+					onChange={(next: string): void =>
+						onChange(next === DEFAULT_TIME_RANGE_UNSET ? '' : next)
+					}
+				/>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Applies by default when a viewer opens the dashboard for the first time.
 				</Typography>
 			</div>

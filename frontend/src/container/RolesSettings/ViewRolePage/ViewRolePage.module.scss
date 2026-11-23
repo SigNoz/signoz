@@ -30,10 +30,6 @@
 }
 
 .unsavedText {
-	font-family: Inter;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
-	line-height: var(--line-height-20);
 	color: var(--primary);
 }
 
@@ -61,22 +57,12 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--spacing-2);
-
-	--input-background: var(--l2-background);
-	--input-hover-background: var(--l2-background);
-	--input-focus-background: var(--l2-background);
-	--input-disabled-background: var(--l2-background);
-
-	input::placeholder {
-		color: var(--l3-foreground);
-	}
 }
 
 .formLabel {
-	font-family: Inter;
 	font-size: 12px;
-	font-weight: var(--font-weight-medium);
-	line-height: var(--line-height-20);
+	font-weight: var(--uppercase-small-500-font-weight);
+	line-height: var(--uppercase-small-500-line-height);
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
 	color: var(--l2-foreground);
@@ -88,12 +74,12 @@
 	background: var(--l1-border);
 }
 
+// The one grid row stretches the Tabs root to the height left on the page.
 .roleTabs {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-rows: minmax(0, 1fr);
 	flex: 1;
 	min-height: 0;
-	--tabs-content-padding: 0px;
 
 	[role='tabpanel'] {
 		display: flex;
@@ -116,12 +102,6 @@
 	align-items: center;
 	justify-content: space-between;
 	--radio-group-display: flex;
-}
-
-.permissionTitle {
-	letter-spacing: 0.48px;
-	text-transform: uppercase;
-	position: relative;
 }
 
 .permissionDivider {

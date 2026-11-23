@@ -87,6 +87,17 @@ describe('ExportMenu', () => {
 		expect(screen.queryByText('FORMAT')).not.toBeInTheDocument();
 	});
 
+	it('closes the popover on a second press of the trigger', async () => {
+		renderMenu();
+		await userEvent.click(screen.getByTestId(TEST_ID));
+		expect(screen.getByText('FORMAT')).toBeInTheDocument();
+
+		await userEvent.click(screen.getByTestId(TEST_ID));
+
+		expect(screen.getByTestId(TEST_ID)).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('FORMAT')).not.toBeInTheDocument();
+	});
+
 	it('disables the trigger while an export is in progress', () => {
 		mockIsExporting = true;
 		renderMenu();

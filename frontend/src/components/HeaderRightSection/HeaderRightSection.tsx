@@ -128,7 +128,16 @@ function HeaderRightSection({
 								}
 								prefix={<Noz size={20} />}
 							>
-								<Typography.Text>Noz</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									Noz
+								</Typography>
 							</Button>
 						</Tooltip>
 					</span>

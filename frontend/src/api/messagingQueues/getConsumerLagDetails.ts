@@ -12,7 +12,6 @@ export interface MessagingQueueServicePayload {
 		service_name?: string;
 	};
 	detailType?: MessagingQueueServiceDetailType | 'producer' | 'consumer';
-	evalTime?: number;
 }
 
 export interface MessagingQueuesPayloadProps {

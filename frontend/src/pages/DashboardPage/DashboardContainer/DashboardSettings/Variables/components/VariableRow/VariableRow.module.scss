@@ -56,6 +56,7 @@ $grid-columns: minmax(0, 2fr) minmax(0, 3fr);
 	color: var(--bg-sienna-400);
 	white-space: pre-wrap;
 	word-break: break-word;
+	--typography-white-space: pre-wrap;
 }
 
 .varDescEmpty {

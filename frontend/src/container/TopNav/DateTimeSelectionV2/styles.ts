@@ -1,16 +1,9 @@
 import { Form as FormComponent } from 'antd';
-import { Typography as TypographyComponent } from '@signozhq/ui/typography';
 import styled from 'styled-components';
 
 export const Form = styled(FormComponent)`
 	&&& {
 		justify-content: flex-end;
-	}
-`;
-
-export const Typography = styled(TypographyComponent)`
-	&&& {
-		text-align: right;
 	}
 `;
 
@@ -26,7 +19,7 @@ interface Props {
 
 export const RefreshTextContainer = styled.div<Props>`
 	padding-right: 8px;
-	visibility: ${({ refreshButtonHidden }): string =>
+	visibility: ${({ refreshButtonHidden }: Props): string =>
 		refreshButtonHidden ? 'hidden' : 'visible'};
 `;
 

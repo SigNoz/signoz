@@ -1,19 +1,9 @@
+@use '../../../../../../styles/query-builder' as *;
 @use '../../../../../../styles/scrollbar' as *;
 
-.dialog[data-width] {
-	max-width: 85%;
-	width: 85%;
-}
-
-// Truncate a long panel name so the header stays on one line; the wrapping tooltip
-// then surfaces the full name on hover.
-.title {
-	display: inline-block;
-	max-width: 100%;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	vertical-align: bottom;
+// Also the popup container, so the builder's dropdowns get the same colors.
+.surface {
+	@include query-builder-on-surface-2;
 }
 
 // Tall, fixed-height column so the renderer's resize observer measures real

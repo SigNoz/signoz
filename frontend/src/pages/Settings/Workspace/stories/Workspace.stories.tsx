@@ -1,9 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import {
+	copyLicenseKey,
+	openAddCreditCardFromConflict,
+	openCustomDomainMenu,
+	updateCustomDomain,
+} from './__story_mockdata__/workspace.play';
 import { workspaceMocks } from './Workspace.stories.mocks';
 
 import SettingsPage from '../../Settings';
@@ -61,16 +66,7 @@ export const NoColdStorage: Story = {
  * of them is the active one.
  */
 export const CustomDomainMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'custom-domain-menu-trigger',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openCustomDomainMenu,
 };
 
 /**
@@ -79,38 +75,21 @@ export const CustomDomainMenu: Story = {
  * instead.
  */
 export const CustomDomainUpdatedToast: Story = {
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: /edit workspace link/i },
-				{ timeout: 10000 },
-			),
-		);
-		const input = await screen.findByRole('textbox');
-		await userEvent.clear(input);
-		await userEvent.type(input, 'watchers');
-		await userEvent.click(
-			await screen.findByRole('button', { name: /apply changes/i }),
-		);
-		if (args.domainUpdate === 'success') {
-			await waitFor(() =>
-				expect(screen.getByText(/workspace url is being updated/i)).toBeVisible(),
-			);
-		}
-	},
+	play: updateCustomDomain,
+};
+
+/**
+ * A workspace link change the instance refuses with a 409: the edit modal swaps
+ * Apply Changes for Contact Support, which on a cloud trial without a card opens
+ * the Add Credit Card modal.
+ */
+export const CustomDomainConflictAddCard: Story = {
+	args: { domainUpdate: 'error', support: 'add-card' },
+	parameters: { allowConsoleErrors: true },
+	play: openAddCreditCardFromConflict,
 };
 
 /** The license key copied: the toast confirming it. */
 export const LicenseKeyCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'license-key-row-copy-btn',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByText(/license key copied to clipboard/i);
-	},
+	play: copyLicenseKey,
 };

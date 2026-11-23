@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
-import { SelectSimple } from '@signozhq/ui/select';
+import { Drawer } from '@signozhq/ui/drawer';
+import { Select } from '@signozhq/ui/select';
+import type { SelectItemType } from '@signozhq/ui/select';
 import {
 	closestCenter,
 	DndContext,
@@ -31,9 +32,9 @@ import {
 } from '../../types';
 import { createEmptySource, isMapperDraftValid } from '../../utils';
 
-const FIELD_CONTEXT_OPTIONS = [
-	{ value: FieldContext.attribute, label: 'Span attribute' },
-	{ value: FieldContext.resource, label: 'Resource' },
+const FIELD_CONTEXT_OPTIONS: SelectItemType[] = [
+	{ type: 'item', value: FieldContext.attribute, label: 'Span attribute' },
+	{ type: 'item', value: FieldContext.resource, label: 'Resource' },
 ];
 
 interface MapperFormDrawerProps {
@@ -113,61 +114,59 @@ function MapperFormDrawer({
 	};
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
+			stack="overlay"
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={isEdit ? 'Edit mapping' : 'New custom mapping'}
-			subTitle="Map source attributes onto a canonical target attribute"
+			description="Map source attributes onto a canonical target attribute"
 			width="wide"
 			testId="mapper-form-drawer"
-			footer={
-				<div className={styles.footer}>
-					{isEdit && (
-						<Button
-							size="md"
-							variant="solid"
-							color="danger"
-							prefix={<Trash2 size={14} />}
-							onClick={onDelete}
-							loading={isDeleting}
-							testId="mapper-form-delete"
-						>
-							{isDeleting ? 'Deleting…' : 'Delete'}
-						</Button>
-					)}
-					<div className={styles.footerActions}>
-						<Button
-							size="md"
-							variant="ghost"
-							color="secondary"
-							onClick={onClose}
-							testId="mapper-form-cancel"
-						>
-							Cancel
-						</Button>
-						<Button
-							size="md"
-							variant="solid"
-							color="primary"
-							onClick={onSave}
-							loading={isSaving}
-							disabled={!isValid}
-							disabledTooltip={
-								draft.name.trim()
-									? 'Add at least one source attribute'
-									: 'Enter a target attribute first'
-							}
-							testId="mapper-form-save"
-						>
-							{/* eslint-disable-next-line no-nested-ternary */}
-							{isSaving ? 'Saving…' : isEdit ? 'Save mapping' : 'Create mapping'}
-						</Button>
-					</div>
-				</div>
+			footerPrefix={
+				isEdit ? (
+					<Button
+						size="md"
+						variant="solid"
+						color="danger"
+						prefix={<Trash2 size={14} />}
+						onClick={onDelete}
+						loading={isDeleting}
+						testId="mapper-form-delete"
+					>
+						{isDeleting ? 'Deleting…' : 'Delete'}
+					</Button>
+				) : undefined
+			}
+			footerSuffix={
+				<>
+					<Button
+						size="md"
+						variant="ghost"
+						color="secondary"
+						onClick={onClose}
+						testId="mapper-form-cancel"
+					>
+						Cancel
+					</Button>
+					<Button
+						size="md"
+						variant="solid"
+						color="primary"
+						onClick={onSave}
+						loading={isSaving}
+						disabled={!isValid}
+						disabledTooltip={
+							draft.name.trim()
+								? 'Add at least one source attribute'
+								: 'Enter a target attribute first'
+						}
+						testId="mapper-form-save"
+					>
+						{/* eslint-disable-next-line no-nested-ternary */}
+						{isSaving ? 'Saving…' : isEdit ? 'Save mapping' : 'Create mapping'}
+					</Button>
+				</>
 			}
 		>
 			<div className={styles.form}>
@@ -190,12 +189,12 @@ function MapperFormDrawer({
 
 				<div className={styles.field}>
 					<span className={styles.label}>Write target to</span>
-					<SelectSimple
-						className={styles.fieldContext}
+					<Select
+						width={200}
 						items={FIELD_CONTEXT_OPTIONS}
+						placeholder="Select where to write"
 						value={draft.fieldContext}
-						withPortal={false}
-						onChange={(next): void =>
+						onChange={(next: string): void =>
 							setDraft({ ...draft, fieldContext: next as FieldContextValue })
 						}
 						testId="mapper-form-field-context"
@@ -255,7 +254,7 @@ function MapperFormDrawer({
 					</div>
 				)}
 			</div>
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

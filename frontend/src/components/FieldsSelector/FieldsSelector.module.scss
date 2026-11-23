@@ -32,12 +32,15 @@
 	}
 }
 
+// Full-bleed search bar: only top/bottom borders, square corners.
+// Per-side widths cannot be expressed via --input-border-width.
 .searchInput {
-	background-color: var(--l1-background);
-	height: 40px;
-	border-radius: 0;
-	border-left: none;
-	border-right: none;
+	--input-border-radius: 0;
+
+	[data-slot='input'] {
+		border-left: none;
+		border-right: none;
+	}
 }
 
 .section {

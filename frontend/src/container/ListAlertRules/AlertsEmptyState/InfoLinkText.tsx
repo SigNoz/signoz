@@ -29,7 +29,18 @@ function InfoLinkText({
 			className={styles.infoLinkContainer}
 		>
 			{leftIconVisible && <CirclePlay size={16} />}
-			<Typography.Text className={styles.infoText}>{infoText}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="medium"
+				color="primary"
+				as="span"
+				display="inline-block"
+				marginX={4}
+				textOverflow="visible"
+			>
+				{infoText}
+			</Typography>
 			{rightIconVisible && (
 				<ArrowRight size={16} style={{ transform: 'rotate(315deg)' }} />
 			)}

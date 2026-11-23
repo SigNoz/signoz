@@ -18,10 +18,7 @@
 		padding: 12px 14px 12px;
 		padding-bottom: 24px;
 		color: var(--l1-foreground);
-		font-family: Inter;
 		font-size: 14px;
-		font-style: normal;
-		font-weight: 400;
 		line-height: 18px;
 		background: var(--l2-background);
 		display: flex;
@@ -34,10 +31,7 @@
 			padding: 2px 12px;
 			border-bottom: none;
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 11px;
-			font-style: normal;
-			font-weight: 600;
 			line-height: 18px;
 			letter-spacing: 0.44px;
 			text-transform: uppercase;
@@ -53,7 +47,6 @@
 
 		.ant-table-cell {
 			padding: 12px;
-			font-size: 13px;
 			line-height: 20px;
 			color: var(--l1-foreground);
 			border-bottom: none;

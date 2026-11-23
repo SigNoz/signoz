@@ -15,11 +15,13 @@ import {
 	openEditMember,
 	openFilterMenu,
 	openInviteForm,
+	openInviteRoles,
 	openPendingMember,
 	openRoleDropdown,
 	revokeInviteToast,
 	saveMemberName,
 	searchNoResults,
+	selectInviteRoles,
 	sendInvitesToast,
 	sendPartialInvitesToast,
 } from './__story_mockdata__/members.play';
@@ -127,6 +129,16 @@ export const AssignRoles: Story = {
 /** The form that mails seats out: an email and a role per row. */
 export const InviteMembers: Story = {
 	play: openInviteForm,
+};
+
+/** The invite form with the first row's roles dropdown open. */
+export const InviteRolesOpen: Story = {
+	play: openInviteRoles,
+};
+
+/** The invite form after three roles were picked on the first row. */
+export const InviteRolesSelected: Story = {
+	play: selectInviteRoles,
 };
 
 /**

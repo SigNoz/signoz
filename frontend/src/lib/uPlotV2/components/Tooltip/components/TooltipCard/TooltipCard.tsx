@@ -4,6 +4,7 @@ import { Pin } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 
+import RowText from './RowText';
 import Styles from './TooltipCard.module.scss';
 
 export interface TooltipCardRow {
@@ -47,14 +48,20 @@ export default function TooltipCard({
 					className={Styles.marker}
 					style={{ backgroundColor: color, borderColor: color }}
 				/>
-				<Typography.Text
-					as="span"
-					className={Styles.title}
-					title={title}
-					testId={`${testId}-title`}
-				>
-					{title}
-				</Typography.Text>
+				<div className={Styles.title} title={title}>
+					<Typography
+						variant="code"
+						size="small"
+						weight="bold"
+						color="main"
+						as="span"
+						display="block"
+						textOverflow="ellipsis"
+						testId={`${testId}-title`}
+					>
+						{title}
+					</Typography>
+				</div>
 				{isPinned && (
 					<Button
 						variant="ghost"
@@ -73,12 +80,12 @@ export default function TooltipCard({
 			<div className={Styles.rows}>
 				{rows.map((row) => (
 					<div key={row.key} className={Styles.row} data-testid={`${testId}-row`}>
-						<Typography.Text as="span" className={Styles.rowLabel}>
-							{row.label}
-						</Typography.Text>
-						<Typography.Text as="span" className={Styles.rowValue}>
-							{row.value}
-						</Typography.Text>
+						<div className={Styles.rowLabel}>
+							<RowText>{row.label}</RowText>
+						</div>
+						<div className={Styles.rowValue}>
+							<RowText>{row.value}</RowText>
+						</div>
 					</div>
 				))}
 			</div>
@@ -93,20 +100,12 @@ export default function TooltipCard({
 								className={cx(Styles.row, Styles.rowMuted)}
 								data-testid={`${testId}-label`}
 							>
-								<Typography.Text
-									as="span"
-									className={Styles.rowLabel}
-									title={row.label}
-								>
-									{row.label}
-								</Typography.Text>
-								<Typography.Text
-									as="span"
-									className={Styles.rowValue}
-									title={row.value}
-								>
-									{row.value}
-								</Typography.Text>
+								<div className={Styles.rowLabel} title={row.label}>
+									<RowText>{row.label}</RowText>
+								</div>
+								<div className={Styles.rowValue} title={row.value}>
+									<RowText>{row.value}</RowText>
+								</div>
 							</div>
 						))}
 					</div>

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	getGetSavedViewQueryOptions,
 	updateSavedView,
@@ -29,12 +29,12 @@ import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { useSavedViewLogEvent } from './useSavedViewLogEvent';
 
 function showErrorToast(error: unknown, fallback: string): void {
-	toast.error(
+	toast.danger(
 		toAPIError(
 			error as ErrorType<RenderErrorResponseDTO>,
 			fallback,
 		).getErrorMessage(),
-		{ position: SAVED_VIEW_TOAST_POSITION },
+		{ action: { label: 'Dismiss' }, position: SAVED_VIEW_TOAST_POSITION },
 	);
 }
 

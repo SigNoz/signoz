@@ -217,6 +217,15 @@ export const GeoMapValueNames: Story = {
 	play: playPanel,
 };
 
+/**
+ * Logs carrying 24 attributes each, a column apiece: every row stays one line
+ * high, the body truncated rather than wrapped.
+ */
+export const ListWideRows: Story = {
+	args: { kind: 'List', listWideRows: true },
+	play: playPanel,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },

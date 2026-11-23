@@ -88,6 +88,7 @@ export interface PanelResponseArgs extends PanelRequest {
 	series: number;
 	listRows: number;
 	listJsonBody: boolean;
+	listWideRows: boolean;
 	gaps: Gaps;
 	pieSlices: PieSlices;
 }

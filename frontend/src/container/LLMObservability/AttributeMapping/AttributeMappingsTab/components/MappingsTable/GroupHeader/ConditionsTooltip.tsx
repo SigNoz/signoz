@@ -17,9 +17,16 @@ function ConditionsTooltip({
 
 	if (!hasConditions) {
 		return (
-			<Typography.Text as="span" size="small" color="muted">
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				No conditions set up
-			</Typography.Text>
+			</Typography>
 		);
 	}
 
@@ -30,9 +37,16 @@ function ConditionsTooltip({
 		>
 			{attributes.length > 0 && (
 				<div className={styles.section}>
-					<Typography.Text as="span" size="small" color="muted">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						Runs when a span attribute key contains
-					</Typography.Text>
+					</Typography>
 					<div className={styles.keyList}>
 						{attributes.map((key) => (
 							<code key={`${key.origin}-${key.value}`} className={styles.key}>
@@ -44,9 +58,16 @@ function ConditionsTooltip({
 			)}
 			{resource.length > 0 && (
 				<div className={styles.section}>
-					<Typography.Text as="span" size="sm" color="muted">
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{attributes.length > 0 ? 'or when' : 'Runs when'} a resource key contains
-					</Typography.Text>
+					</Typography>
 					<div className={styles.keyList}>
 						{resource.map((key) => (
 							<code key={`${key.origin}-${key.value}`} className={styles.key}>

@@ -16,8 +16,6 @@ import { MANUAL_SETUP_GUIDE, DEFAULT_SETUP_FORM_VALUES } from '../constants';
 import { GcpSetupFormValues } from '../types';
 import { usePrefillCredentials } from '../usePrefillCredentials';
 
-import styles from './ManualSetup.module.scss';
-
 interface ManualSetupProps {
 	footerSlot: HTMLDivElement | null;
 	onConnectionMethodChange: (
@@ -68,7 +66,6 @@ function ManualSetup({
 					>
 						<Input
 							id="gcp-account-name-input"
-							className={styles.fullWidth}
 							placeholder="e.g. my-org or billing@company.com"
 							value={field.value}
 							onChange={(e): void => field.onChange(e.target.value)}

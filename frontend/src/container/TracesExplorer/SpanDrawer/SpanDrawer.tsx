@@ -51,7 +51,7 @@ function SpanDrawer({
 					<Button
 						variant="outlined"
 						color="secondary"
-						size="md"
+						size="sm"
 						prefix={<CornerUpRight />}
 						onClick={(): void => {
 							logOpenTraceClicked(PANEL_TYPES.LIST, OpenTraceSource.SpanDrawer);
@@ -69,7 +69,7 @@ function SpanDrawer({
 					<ButtonGroup
 						variant="outlined"
 						color="secondary"
-						size="md"
+						size="sm"
 						testId="span-drawer-nav"
 						items={[
 							{

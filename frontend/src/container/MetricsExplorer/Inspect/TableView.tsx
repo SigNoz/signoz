@@ -109,7 +109,16 @@ function TableView({
 												openExpandedView(series, value.value, value.timestamp)
 											}
 										>
-											<Typography.Text>{formattedValue}</Typography.Text>
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="span"
+												textOverflow="visible"
+											>
+												{formattedValue}
+											</Typography>
 										</Card>
 									);
 								})}

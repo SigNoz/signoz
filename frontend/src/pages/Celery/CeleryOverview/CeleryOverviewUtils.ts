@@ -1,5 +1,7 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { SuccessResponse } from 'types/api';
+import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
@@ -25,6 +27,16 @@ export const getQueryPayloadFromWidgetsData = ({
 		formatForWeb: false,
 		variables: {},
 	}));
+
+export const getValueFromScalarResponse = (
+	response: SuccessResponse<MetricRangePayloadProps> | undefined,
+): string => {
+	const result = response?.payload?.data?.newResult?.data?.result?.[0];
+	const value = parseFloat(
+		result?.table?.rows?.[0]?.data?.[result.queryName] ?? 'NaN',
+	);
+	return Number.isNaN(value) ? 'NaN' : value.toFixed(2);
+};
 
 export const getFiltersFromKeyValue = (
 	key: string,

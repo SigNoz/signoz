@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/huandu/go-sqlbuilder"
+
 	grammar "github.com/SigNoz/signoz/pkg/parser/filterquery/grammar"
 	"github.com/SigNoz/signoz/pkg/parser/filterquery/sqlcompiler"
 	qbtypesv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -12,13 +14,15 @@ import (
 )
 
 const (
-	ruleDataColumn  = "rule.data"
-	ruleLabelsField = "labels"
-	nameJSONPath    = "$.alert"
-	descriptionPath = "$.description"
-	labelsJSONPath  = "$.labels"
-	alertTypePath   = "$.alertType"
-	ruleTypePath    = "$.ruleType"
+	ruleDataColumn    = "rule.data"
+	ruleLabelsField   = "labels"
+	nameJSONPath      = "$.alert"
+	descriptionPath   = "$.description"
+	labelsJSONPath    = "$.labels"
+	alertTypePath     = "$.alertType"
+	ruleTypePath      = "$.ruleType"
+	thresholdSpecPath = "$.condition.thresholds.spec"
+	thresholdNamePath = "$.name"
 )
 
 // ruleFieldResolver maps rule list DSL keys; a non-reserved key is a case-sensitive label lookup.
@@ -53,10 +57,6 @@ func (r ruleFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, rawKey stri
 	}
 
 	_, reservedAllowed := allowedOperations[operation]
-	// reserved severity is itself the severity-label lookup; an identical spelling would duplicate the predicate
-	if ruletypes.DSLKey(key) == ruletypes.DSLKeySeverity && rawKey == string(ruletypes.DSLKeySeverity) {
-		labelAllowed = false
-	}
 
 	switch {
 	case reservedAllowed && labelAllowed:
@@ -85,9 +85,8 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 	case ruletypes.DSLKeyName:
 		columnExpression := string(v.Formatter.JSONExtractString(ruleDataColumn, nameJSONPath))
 		return v.BuildStringOperation(v.Sb, ctx, operation, columnExpression, string(key))
-	case ruletypes.DSLKeySeverity:
-		// severity is an alias for labels.severity, sharing its missing-label semantics.
-		return r.labelComparison(v, ctx, operation, "severity")
+	case ruletypes.DSLKeyThresholds:
+		return r.thresholdsComparison(v, ctx, operation)
 	case ruletypes.DSLKeyCreatedBy:
 		return v.BuildStringOperation(v.Sb, ctx, operation, "rule.created_by", string(key))
 	case ruletypes.DSLKeyUpdatedBy:
@@ -103,6 +102,27 @@ func (r ruleFieldResolver) resolveReservedKey(v *sqlcompiler.Visitor, ctx *gramm
 	}
 	v.AddError("no handler for reserved key %q", key)
 	return ""
+}
+
+// thresholdsComparison mirrors ruletypes' storedRuleData.extractThresholdNames. A positive term holds when any
+// threshold name matches and a negative term when none does, so the subquery takes the positive operator.
+func (ruleFieldResolver) thresholdsComparison(v *sqlcompiler.Visitor, ctx *grammar.ComparisonContext, operation qbtypesv5.FilterOperator) string {
+	positiveOperation := operation
+	if operation.IsNegativeOperator() {
+		positiveOperation = operation.Inverse()
+	}
+	thresholdsFrom, threshold := v.Formatter.JSONArrayElements(ruleDataColumn, thresholdSpecPath, "threshold")
+	nameExpression := string(v.Formatter.LowerExpression(string(v.Formatter.JSONExtractString(string(threshold), thresholdNamePath))))
+	subqueryBuilder := sqlbuilder.NewSelectBuilder()
+	namePredicate := v.BuildStringOperation(subqueryBuilder, ctx, positiveOperation, nameExpression, string(ruletypes.DSLKeyThresholds))
+	if namePredicate == "" {
+		return ""
+	}
+	subqueryBuilder.Select("1").From(string(thresholdsFrom)).Where(namePredicate)
+	if operation.IsNegativeOperator() {
+		return v.Sb.NotExists(subqueryBuilder)
+	}
+	return v.Sb.Exists(subqueryBuilder)
 }
 
 // A missing label evaluates as the empty string for every value operator; EXISTS/NOT EXISTS test the raw extraction.

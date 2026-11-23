@@ -150,9 +150,23 @@ function TracesView({
 	return (
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					This tab only shows Root Spans. More details
-					<Typography.Link href={DOCLINKS.TRACES_DETAILS_LINK} target="_blank">
+					<Typography.Link
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						textOverflow="wrap"
+						href={DOCLINKS.TRACES_DETAILS_LINK}
+						target="_blank"
+					>
 						{' '}
 						here
 					</Typography.Link>

@@ -72,7 +72,19 @@ export default function TraceOperator({
 						!isRawQuery && 'qb-trace-operator-arrow',
 					)}
 				>
-					<Typography.Text className="label">Trace Operator</Typography.Text>
+					<span className="label">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							display="inline-block"
+							textOverflow="ellipsis"
+						>
+							Trace Operator
+						</Typography>
+					</span>
 					<div className="qb-trace-operator-editor-container">
 						<TraceOperatorEditor
 							value={traceOperator?.expression || ''}
