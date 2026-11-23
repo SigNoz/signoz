@@ -17,6 +17,7 @@
     "paths": {
       "@tests/*": ["./tests/*"],
       "@specs/*": ["./specs/*"],
+      "@frontend/*": ["../../frontend/src/*"],
       // `drivers/noz/schemas.ts` reaches into `frontend/`, which CI never installs.
       "@signozhq/noz-client": ["./node_modules/@signozhq/noz-client"]
     }
