@@ -14949,7 +14949,7 @@ export interface SpantypesTraceOverviewDTO {
 	 */
 	errors: SpantypesSpanListDTO;
 	/**
-	 * @description The most expensive gen_ai spans. First page of the expensive view of the span list. Empty for a trace without gen_ai spans.
+	 * @description The spans with the highest gen_ai cost or token usage. First page of the expensive view of the span list. Empty for a trace where no span carries that usage.
 	 */
 	expensive: SpantypesSpanListDTO;
 	/**
@@ -14969,10 +14969,6 @@ export interface SpantypesTraceOverviewDTO {
 	 * @description Totals of the trace. The same object the trace summary route returns.
 	 */
 	summary: SpantypesGettableTraceSummaryDTO;
-	/**
-	 * @description The top levels of the trace, chosen level by level and listed in tree order. Not a page of the span list. Its total is the number of spans in the trace.
-	 */
-	tree: SpantypesSpanListDTO;
 	/**
 	 * @description Spans that failed without being marked as errors. First page of the unmarked_failures view of the span list.
 	 */
@@ -16435,14 +16431,9 @@ export type GetTraceOverviewPathParameters = {
 export type GetTraceOverviewParams = {
 	/**
 	 * @type integer
-	 * @description Number of spans in each of the errors, unmarkedFailures, expensive, links and slowest lists. Default: 10. Maximum: 1000.
+	 * @description Number of spans in each list. Default: 10. Maximum: 1000.
 	 */
 	limit?: number;
-	/**
-	 * @type integer
-	 * @description Number of spans in tree. Default: 50. Maximum: 1000.
-	 */
-	treeLimit?: number;
 };
 
 export type GetTraceOverview200 = {
@@ -16458,7 +16449,7 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the gen_ai spans by cost, or by tokens when none has a cost; each includes its gen_ai token and cost attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
+	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**

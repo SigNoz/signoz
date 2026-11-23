@@ -13585,8 +13585,9 @@ components:
         expensive:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
-          description: The most expensive gen_ai spans. First page of the expensive
-            view of the span list. Empty for a trace without gen_ai spans.
+          description: The spans with the highest gen_ai cost or token usage. First
+            page of the expensive view of the span list. Empty for a trace where no
+            span carries that usage.
         links:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -13607,12 +13608,6 @@ components:
           - $ref: '#/components/schemas/SpantypesGettableTraceSummary'
           description: Totals of the trace. The same object the trace summary route
             returns.
-        tree:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpanList'
-          description: The top levels of the trace, chosen level by level and listed
-            in tree order. Not a page of the span list. Its total is the number of
-            spans in the trace.
         unmarkedFailures:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -13626,7 +13621,6 @@ components:
       - expensive
       - links
       - slowest
-      - tree
       type: object
     SpantypesTraceServiceStats:
       properties:
@@ -19747,26 +19741,19 @@ paths:
     get:
       deprecated: false
       description: 'Returns the trace summary plus the spans to look at, for a trace
-        of any size: per-service totals, the first spans of the errors, unmarked failures,
-        expensive, links and slowest span lists, and the top levels of the span tree.
-        The summary is the one the trace summary route returns. Read more of a list
-        from the span list with the view of the same name, and the spans below a span
-        with parentSpanId.'
+        of any size: per-service totals and the first spans of the errors, unmarked
+        failures, expensive, links and slowest span lists. The summary is the one
+        the trace summary route returns. Read more of a list from the span list with
+        the view of the same name. For the structure of the trace, use the span list:
+        the all view is in tree order, and parentSpanId returns the children of a
+        span.'
       operationId: GetTraceOverview
       parameters:
-      - description: 'Number of spans in each of the errors, unmarkedFailures, expensive,
-          links and slowest lists. Default: 10. Maximum: 1000.'
+      - description: 'Number of spans in each list. Default: 10. Maximum: 1000.'
         in: query
         name: limit
         schema:
-          description: 'Number of spans in each of the errors, unmarkedFailures, expensive,
-            links and slowest lists. Default: 10. Maximum: 1000.'
-          type: integer
-      - description: 'Number of spans in tree. Default: 50. Maximum: 1000.'
-        in: query
-        name: treeLimit
-        schema:
-          description: 'Number of spans in tree. Default: 50. Maximum: 1000.'
+          description: 'Number of spans in each list. Default: 10. Maximum: 1000.'
           type: integer
       - in: path
         name: traceID
@@ -19841,10 +19828,10 @@ paths:
           by start time. unmarked_failures: spans that failed without being marked
           as errors (a 4xx response, a gRPC status other than OK, or an exception
           event), by start time. slowest: one span for each group of same-name siblings,
-          by the group''s total own time. expensive: the gen_ai spans by cost, or
-          by tokens when none has a cost; each includes its gen_ai token and cost
-          attributes. links: the spans that link to other spans, by start time. The
-          view is picked from the whole trace first; search and parentSpanId then
+          by the group''s total own time. expensive: the spans that carry gen_ai token
+          or cost usage, by cost, or by tokens when none has a cost; each includes
+          those attributes. links: the spans that link to other spans, by start time.
+          The view is picked from the whole trace first; search and parentSpanId then
           filter it.'
         in: query
         name: view
@@ -19857,11 +19844,11 @@ paths:
             child, by start time. unmarked_failures: spans that failed without being
             marked as errors (a 4xx response, a gRPC status other than OK, or an exception
             event), by start time. slowest: one span for each group of same-name siblings,
-            by the group''s total own time. expensive: the gen_ai spans by cost, or
-            by tokens when none has a cost; each includes its gen_ai token and cost
-            attributes. links: the spans that link to other spans, by start time.
-            The view is picked from the whole trace first; search and parentSpanId
-            then filter it.'
+            by the group''s total own time. expensive: the spans that carry gen_ai
+            token or cost usage, by cost, or by tokens when none has a cost; each
+            includes those attributes. links: the spans that link to other spans,
+            by start time. The view is picked from the whole trace first; search and
+            parentSpanId then filter it.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource

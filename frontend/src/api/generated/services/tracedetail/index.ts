@@ -167,7 +167,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals, the first spans of the errors, unmarked failures, expensive, links and slowest span lists, and the top levels of the span tree. The summary is the one the trace summary route returns. Read more of a list from the span list with the view of the same name, and the spans below a span with parentSpanId.
+ * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of the errors, unmarked failures, expensive, links and slowest span lists. The summary is the one the trace summary route returns. Read more of a list from the span list with the view of the same name. For the structure of the trace, use the span list: the all view is in tree order, and parentSpanId returns the children of a span.
  * @summary Get overview of a trace
  */
 export const getTraceOverview = (
