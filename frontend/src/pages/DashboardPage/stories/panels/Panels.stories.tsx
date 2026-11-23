@@ -196,8 +196,8 @@ export const DistributionNoField: Story = {
 };
 
 /**
- * The tooltip over a bucket: its total, then each service's count, share of its
- * own total, and running share up to the bucket's upper bound.
+ * The tooltip over a bucket: its total, then each service's count and share of its
+ * own total.
  */
 export const DistributionTooltip: Story = {
 	args: { kind: 'Distribution', stack: StackMode.normal },
