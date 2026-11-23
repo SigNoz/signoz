@@ -1,8 +1,11 @@
+@use '../../container/AIAssistant/_selection' as *;
+
 .page {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	background: var(--l1-background);
+	@include selection;
 }
 
 .header {
@@ -39,9 +42,18 @@
 }
 
 .chat {
+	position: relative;
 	flex: 1;
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+}
+
+// In the thread pane's top-right corner, 6px inside its edge.
+.minimize {
+	position: absolute;
+	top: 18px;
+	right: 18px;
+	z-index: 1;
 }

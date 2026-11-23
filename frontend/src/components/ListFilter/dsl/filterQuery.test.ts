@@ -5,6 +5,7 @@ import {
 	createdByClause,
 	isQueryEmpty,
 	parseReflectedClauses,
+	reflectedValues,
 	spliceClause,
 	updatedWindowFromTimestamp,
 } from './filterQuery';
@@ -62,7 +63,39 @@ describe('parseReflectedClauses', () => {
 	});
 });
 
+describe('reflectedValues', () => {
+	it('reads an equality as one value and an IN list as all of them', () => {
+		expect(reflectedValues("status = 'active'", 'status')).toStrictEqual([
+			'active',
+		]);
+		expect(reflectedValues("status IN ['active']", 'status')).toStrictEqual([
+			'active',
+		]);
+		expect(
+			reflectedValues('status in (active, deleted)', 'status'),
+		).toStrictEqual(['active', 'deleted']);
+	});
+
+	it('is empty when the key is absent, nested, repeated or not = / IN', () => {
+		expect(reflectedValues('name = x', 'status')).toStrictEqual([]);
+		expect(reflectedValues("(status = 'active')", 'status')).toStrictEqual([]);
+		expect(
+			reflectedValues('status = active OR status = deleted', 'status'),
+		).toStrictEqual([]);
+		expect(reflectedValues('status != active', 'status')).toStrictEqual([]);
+	});
+});
+
 describe('spliceClause', () => {
+	it('groups OR-joined terms before appending a clause', () => {
+		expect(
+			spliceClause("name = 'foo' OR email = 'bar'", 'status', "status = 'x'"),
+		).toBe("(name = 'foo' OR email = 'bar') AND status = 'x'");
+		expect(
+			spliceClause("name = 'foo' AND email = 'bar'", 'status', "status = 'x'"),
+		).toBe("name = 'foo' AND email = 'bar' AND status = 'x'");
+	});
+
 	it('appends a clause when the key is absent', () => {
 		expect(
 			spliceClause("name = 'x'", 'created_by', "created_by = 'a@x.io'"),

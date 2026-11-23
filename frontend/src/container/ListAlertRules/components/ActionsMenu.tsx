@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	deleteRuleByID,
@@ -31,7 +31,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleToggle = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
 		const newDisabled = !rule.disabled;
-		toast.promise(
+		void toast.promise(
 			patchRuleByID({ id: rule.id ?? '' }, {
 				disabled: newDisabled,
 			} as RuletypesPostableRuleDTO).then(() =>
@@ -46,6 +46,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to toggle alert state';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);
@@ -63,7 +64,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 
 	const handleClone = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.CLONE, rule);
-		toast.promise(
+		void toast.promise(
 			cloneRuleByID({
 				id: rule.id,
 			}).then(async (response) => {
@@ -83,6 +84,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to clone alert';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);
@@ -90,7 +92,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 
 	const handleDelete = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
-		toast.promise(
+		void toast.promise(
 			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
 				invalidateListRulesV3(queryClient),
 			),
@@ -103,6 +105,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to delete alert';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);

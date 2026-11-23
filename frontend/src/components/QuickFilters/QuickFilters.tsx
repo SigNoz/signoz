@@ -5,14 +5,7 @@ import {
 	RefreshCw,
 	Settings2 as SettingsIcon,
 } from '@signozhq/icons';
-import {
-	Combobox,
-	ComboboxCommand,
-	ComboboxContent,
-	ComboboxItem,
-	ComboboxList,
-	ComboboxTrigger,
-} from '@signozhq/ui/combobox';
+import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
 import { Skeleton } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -32,6 +25,11 @@ import {
 	QuickFilterReadPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/quick-filter.permissions';
 import { isFunction } from 'lodash-es';
+import {
+	getActiveBuilder,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useActiveQueryIndex from './hooks/useActiveQueryIndex';
@@ -86,16 +84,15 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		redirectWithQueryBuilderData,
 		panelType,
 	} = useQueryBuilder();
-	const [open, setOpen] = useState(false);
+	const activeBuilder = currentQuery
+		? getActiveBuilder(currentQuery)
+		: undefined;
 
 	// Sync lastUsedQuery when queries change (e.g., after deletion)
 	const validQueryIndex = useMemo(
 		() =>
-			Math.min(
-				lastUsedQuery || 0,
-				(currentQuery?.builder?.queryData?.length || 1) - 1,
-			),
-		[lastUsedQuery, currentQuery?.builder?.queryData?.length],
+			Math.min(lastUsedQuery || 0, (activeBuilder?.queryData?.length || 1) - 1),
+		[lastUsedQuery, activeBuilder?.queryData?.length],
 	);
 
 	// Determine if we're in ListView mode
@@ -103,15 +100,25 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// Generate query options based on available queries
 	const queryOptions = useMemo(() => {
-		if (!currentQuery?.builder?.queryData) {
+		if (!activeBuilder?.queryData) {
 			return [];
 		}
 
-		return currentQuery.builder.queryData.map((query, index) => ({
+		return activeBuilder.queryData.map((query, index) => ({
 			label: query.queryName || String.fromCharCode(65 + index),
 			value: index,
 		}));
-	}, [currentQuery?.builder?.queryData]);
+	}, [activeBuilder?.queryData]);
+
+	const queryItems = useMemo<ComboboxItemType[]>(
+		() =>
+			queryOptions.map((option) => ({
+				type: 'item',
+				value: String(option.value),
+				label: option.label,
+			})),
+		[queryOptions],
+	);
 
 	// Show dropdown in ListView only for TRACES_EXPLORER source
 	const shouldShowDropdownInListView =
@@ -127,36 +134,34 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 
 	// clear all the filters for the query which is in sync with filters
 	const handleReset = (): void => {
-		const activeQuery = currentQuery?.builder.queryData?.[activeQueryIndex];
+		const activeQuery = activeBuilder?.queryData?.[activeQueryIndex];
 
-		if (!activeQuery) {
+		if (!activeBuilder || !activeQuery) {
 			return;
 		}
 
-		const preparedQuery: Query = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item, idx) => {
-					if (idx !== activeQueryIndex) {
-						return item;
-					}
+		const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+		const preparedQuery: Query = replaceBuilderBySlotKey(currentQuery, slotKey, {
+			...activeBuilder,
+			queryData: activeBuilder.queryData.map((item, idx) => {
+				if (idx !== activeQueryIndex) {
+					return item;
+				}
 
-					return {
-						...item,
-						filter: {
-							...item.filter,
-							expression: '',
-						},
-						filters: {
-							...item.filters,
-							items: [],
-							op: item.filters?.op || 'AND',
-						},
-					};
-				}),
-			},
-		};
+				return {
+					...item,
+					filter: {
+						...item.filter,
+						expression: '',
+					},
+					filters: {
+						...item.filters,
+						items: [],
+						op: item.filters?.op || 'AND',
+					},
+				};
+			}),
+		});
 
 		if (onFilterChange && isFunction(onFilterChange)) {
 			onFilterChange(preparedQuery);
@@ -166,13 +171,12 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	};
 
 	const lastQueryName =
-		showQueryName &&
-		currentQuery.builder.queryData?.[lastUsedQuery || 0]?.queryName;
+		showQueryName && activeBuilder?.queryData?.[lastUsedQuery || 0]?.queryName;
 
 	// In ListView, always show the 0th query's name; otherwise use the active query's name
 	const displayedQueryName =
 		isListView || isAIObservabilityRowView
-			? showQueryName && currentQuery.builder.queryData?.[0]?.queryName
+			? showQueryName && activeBuilder?.queryData?.[0]?.queryName
 			: lastQueryName;
 
 	const handleQueryChange = (value: number): void => {
@@ -182,48 +186,53 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<Typography.Text className="text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="main"
+				as="span"
+				display="inline-block"
+				minWidth={70}
+				paddingLeft={4}
+				textOverflow="visible"
+			>
 				{displayedQueryName ? 'Filters for' : 'Filters'}
-			</Typography.Text>
+			</Typography>
 			{queryOptions.length > 1 &&
 			!isAIObservabilityRowView &&
 			(!isListView || shouldShowDropdownInListView) ? (
-				<Combobox open={open} onOpenChange={setOpen}>
-					<ComboboxTrigger
+				<div className="select-box">
+					<Combobox
+						aria-label="Select a query"
 						placeholder="Select a query"
-						value={queryOptions.find((f) => f.value === validQueryIndex)?.label || ''}
-						className="select-box"
+						searchInputProps={{ placeholder: 'Search queries' }}
+						items={queryItems}
+						value={String(validQueryIndex)}
+						onChange={(value): void => {
+							if (value !== undefined) {
+								handleQueryChange(Number(value));
+							}
+						}}
 					/>
-					{open && (
-						<ComboboxContent>
-							<ComboboxCommand>
-								<ComboboxList>
-									{queryOptions.map((option) => (
-										<ComboboxItem
-											key={option.value}
-											value={String(option.value)}
-											onSelect={(): void => {
-												handleQueryChange(option.value);
-												setOpen(false);
-											}}
-											isSelected={validQueryIndex === option.value}
-										>
-											{option.label}
-										</ComboboxItem>
-									))}
-								</ComboboxList>
-							</ComboboxCommand>
-						</ComboboxContent>
-					)}
-				</Combobox>
+				</div>
 			) : (
 				displayedQueryName && (
 					<Tooltip
 						title={`Filter currently in sync with query ${displayedQueryName}`}
 					>
-						<Typography.Text className="sync-tag">
-							{displayedQueryName}
-						</Typography.Text>
+						<div className="sync-tag">
+							<Typography
+								variant="code"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="visible"
+							>
+								{displayedQueryName}
+							</Typography>
+						</div>
 					</Tooltip>
 				)
 			)}
@@ -295,13 +304,22 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 		<>
 			{quickFilterSource === QuickFiltersSource.API_MONITORING && (
 				<div className="api-quick-filters-header">
-					<Typography.Text>Show IP addresses</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Show IP addresses
+					</Typography>
 					<Switch
 						color="primary"
 						textPlacement="right"
 						value={showIP ?? true}
 						onChange={(checked): void => {
-							logEvent('API Monitoring: Show IP addresses clicked', {
+							void logEvent('API Monitoring: Show IP addresses clicked', {
 								showIP: checked,
 							});
 							setParams({ showIP: checked });
@@ -340,7 +358,16 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				{filterConfig.length === 0 && (
 					<div className="no-filters-container">
 						<Frown size={16} />
-						<Typography.Text>No filters found</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							No filters found
+						</Typography>
 					</div>
 				)}
 			</section>
@@ -384,7 +411,11 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					filtersContent
 				)}
 			</div>
-			<div className="quick-filters-settings-container">
+			<div
+				className={classNames('quick-filters-settings-container', {
+					'settings-open': isSettingsOpen,
+				})}
+			>
 				<div
 					className={classNames(
 						'quick-filters-settings',

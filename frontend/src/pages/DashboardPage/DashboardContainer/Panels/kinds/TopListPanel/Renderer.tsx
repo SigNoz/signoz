@@ -62,6 +62,7 @@ function TopListPanelRenderer({
 					queryName: row.queryName,
 					labels: row.labels,
 				},
+				missingLabels: row.missingLabels,
 				builderQueries,
 				coordinates,
 				timeRange: getPanelTimeRange(data.requestPayload),

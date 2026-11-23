@@ -101,7 +101,7 @@ describe('AnomalyThreshold', () => {
 	it('renames the severity from its threshold row', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('threshold-name-input'), 'x');
+		await user.type(screen.getByTestId('threshold-name-input-field'), 'x');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ label: 'criticalx' })],
@@ -123,7 +123,7 @@ describe('AnomalyThreshold', () => {
 			},
 		});
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('threshold-value-input'), '4');
+		await user.type(screen.getByTestId('threshold-value-input-field'), '4');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ thresholdValue: '4' })],

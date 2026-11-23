@@ -6,7 +6,9 @@ import { useQueries } from 'react-query';
 import { useSelector } from 'react-redux';
 import { AppLink } from 'lib/router/AppLink';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
+import { Button, Card, Input, TableProps, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Flex from 'periscope/components/Flex/Flex';
 import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
@@ -189,7 +191,14 @@ function AllErrors(): JSX.Element {
 			format?: string,
 		) => string,
 	): JSX.Element => (
-		<Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{formatTimezoneAdjustedTimestamp(
 				value,
 				DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
@@ -363,7 +372,17 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Text truncate={2}>{value}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+						maxLines={2}
+					>
+						{value}
+					</Typography>
 				</Tooltip>
 			),
 		},

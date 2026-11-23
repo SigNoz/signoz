@@ -104,12 +104,26 @@ function ResourceCard({
 					<span className={styles.resourceCardChevron}>
 						{isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
 					</span>
-					<Typography as="span" size="base" weight="medium">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{resource.resourceLabel}
 					</Typography>
 				</div>
 				<div className={styles.resourceCardHeaderRight}>
-					<Typography as="span" size="base" color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{grantedCount} / {totalCount} granted
 					</Typography>
 				</div>

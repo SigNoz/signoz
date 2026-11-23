@@ -11,12 +11,13 @@ import { EMPTY_STATE_CHIPS_FALLBACK } from './emptyStateChipsFallback';
 
 interface UseEmptyStateChipsResult {
 	chips: ChipDTO[];
+	isLoading: boolean;
 }
 
 export function useEmptyStateChips(enabled: boolean): UseEmptyStateChipsResult {
 	const pageType = useResolvePageType();
 
-	const { data, isError } = useQuery(
+	const { data, isError, isLoading } = useQuery(
 		[REACT_QUERY_KEY.AI_ASSISTANT_EMPTY_STATE_CHIPS, pageType],
 		({ signal }) => getEmptyStateChips(pageType, signal),
 		{ enabled },
@@ -29,5 +30,5 @@ export function useEmptyStateChips(enabled: boolean): UseEmptyStateChipsResult {
 		return data ?? [];
 	}, [data, isError]);
 
-	return { chips };
+	return { chips, isLoading };
 }

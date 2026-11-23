@@ -9,6 +9,7 @@ import { rest } from 'msw';
 
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 const LINK = 'Reset password · link';
 
@@ -64,3 +65,9 @@ export const resetPasswordMocks = defineStoryMocks({
 		appContext: { isLoggedIn: false },
 	}),
 });
+
+export type ResetPasswordArgs = PageStoryArgs<typeof resetPasswordMocks>;
+
+/** The form renders once the token verifies, which the State control can hold back or fail. */
+export const showsResetForm = (args: ResetPasswordArgs): boolean =>
+	args.token === 'valid' && args.dataState === 'loaded';

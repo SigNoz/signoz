@@ -1,6 +1,6 @@
 import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 
@@ -22,26 +22,17 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
-// jsdom has no layout, and Floating UI's getComputedStyle walk over every
-// popover ancestor costs ~1 s per open here, enough to time out under load.
-jest.mock('@floating-ui/dom', () => ({
-	...jest.requireActual('@floating-ui/dom'),
-	autoUpdate: (): (() => void) => (): void => {},
-	computePosition: (
-		_reference: unknown,
-		_floating: unknown,
-		{ placement = 'bottom', strategy = 'absolute' } = {},
-	): Promise<unknown> =>
-		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
-}));
+jest.mock('@floating-ui/dom', () =>
+	jest.requireActual('./floatingUiDomMock').floatingUiDomMock(),
+);
 
 type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
 
@@ -214,7 +205,7 @@ describe('GCP AccountSettingsDrawer', () => {
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
 		await waitFor(() => {
-			expect(toast.error).toHaveBeenCalledWith(
+			expect(toast.danger).toHaveBeenCalledWith(
 				'Failed to update account settings',
 				expect.anything(),
 			);

@@ -41,12 +41,19 @@ function QueryResult({
 		// Prefer count over loader on refresh so stale results stay visible.
 		content = (
 			<>
-				<Typography.Text
-					className={styles.resultNavCount}
+				<Typography
+					variant="code"
+					size="small"
+					weight="regular"
+					color="main"
+					as="span"
+					display="inline-flex"
+					paddingX={3}
+					textOverflow="visible"
 					testId="waterfall-filter-count"
 				>
 					{currentIndex + 1} / {total}
-				</Typography.Text>
+				</Typography>
 				<Button
 					aria-label="Previous match"
 					testId="waterfall-filter-prev"
@@ -88,12 +95,17 @@ function QueryResult({
 		);
 	} else if (noData) {
 		content = (
-			<Typography.Text
-				className={styles.filterStatus}
+			<Typography
+				variant="code"
+				size="small"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
 				testId="waterfall-filter-no-results"
 			>
 				No results found
-			</Typography.Text>
+			</Typography>
 		);
 	}
 

@@ -23,7 +23,6 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	line-height: 20px;
 	flex: 1 1 auto;
 	min-width: 0;
 }
@@ -36,23 +35,8 @@
 
 .icon {
 	display: inline-block;
-	line-height: 20px;
 	height: 14px;
 	width: 14px;
-}
-
-.title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	font-weight: var(--font-weight-medium);
-	line-height: 20px;
-	letter-spacing: -0.07px;
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
-	overflow-wrap: anywhere;
 }
 
 .lockIcon {
@@ -111,11 +95,6 @@
 	align-items: center;
 	gap: 6px;
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
-	line-height: 18px;
-	letter-spacing: -0.07px;
 }
 
 .createdBy {
@@ -132,23 +111,6 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-}
-
-.avatarText {
-	color: var(--l2-foreground);
-	font-size: 8px;
-	font-weight: var(--font-weight-normal);
-	line-height: normal;
-	letter-spacing: -0.05px;
-}
-
-.byLabel {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: var(--font-size-xs);
-	font-weight: var(--font-weight-normal);
-	line-height: 18px;
-	letter-spacing: -0.07px;
 }
 
 .updatedBy {

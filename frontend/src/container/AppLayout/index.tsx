@@ -13,9 +13,8 @@ import { useMutation, useQueries } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import * as Sentry from '@sentry/react';
-import { Toaster } from '@signozhq/ui/sonner';
 import { TooltipProvider } from '@signozhq/ui/tooltip';
-import { Flex } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import getChangelogByVersion from 'api/changelog/getChangelogByVersion';
@@ -27,6 +26,7 @@ import getUserVersion from 'api/v1/version/get';
 import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
+import AppToaster from 'components/AppToaster/AppToaster';
 import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -843,9 +843,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
 				)}
 
-				<Toaster
-					offset={{ bottom: 'calc(var(--bottom-strip-height, 0px) + 24px)' }}
-				/>
+				<AppToaster />
 			</Layout>
 		</TooltipProvider>
 	);

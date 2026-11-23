@@ -47,7 +47,16 @@ function CollapsibleMetricSection({
 			<CardContainer className="row-card" isDarkMode={isDarkMode}>
 				<div className={cx('row-panel')}>
 					<div className="row-panel-section">
-						<Typography.Text className="section-title">{title}</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							{title}
+						</Typography>
 						{isCollapsed ? (
 							<ChevronDown size={14} onClick={onToggle} className="row-icon" />
 						) : (
@@ -58,9 +67,19 @@ function CollapsibleMetricSection({
 			</CardContainer>
 			{!isCollapsed && (
 				<>
-					<Typography.Text className="graph-description">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						display="inline-block"
+						paddingY={8}
+						paddingX={5}
+						textOverflow="wrap"
+					>
 						{description}
-					</Typography.Text>
+					</Typography>
 					<div className="metric-page-grid">
 						{graphCount.map((widgetData) => (
 							<MetricPageGridGraph

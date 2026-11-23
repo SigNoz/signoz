@@ -170,7 +170,7 @@ func New(
 	zeusConfig zeus.Config,
 	zeusProviderFactory factory.ProviderFactory[zeus.Zeus, zeus.Config],
 	licenseConfig licensing.Config,
-	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config],
+	licenseProviderFactory func(sqlstore.SQLStore, zeus.Zeus, organization.Getter, analytics.Analytics, cache.Cache) factory.ProviderFactory[licensing.Licensing, licensing.Config],
 	subscriptionCallback func(zeus.Zeus, licensing.Licensing) subscription.Subscription,
 	emailingProviderFactories factory.NamedMap[factory.ProviderFactory[emailing.Emailing, emailing.Config]],
 	cacheProviderFactories factory.NamedMap[factory.ProviderFactory[cache.Cache, cache.Config]],
@@ -410,7 +410,7 @@ func New(
 	// Initialize user role store
 	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
-	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
+	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics, cache)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
 		providerSettings,

@@ -17,13 +17,13 @@
 
 	pre {
 		color: var(--l2-foreground) !important;
-		font-family: 'Geist Mono' !important;
+		font-family: var(--code-small-400-font-family) !important;
 		font-size: 12px !important;
 	}
 
 	code {
 		color: var(--l1-foreground) !important;
-		font-family: 'Geist Mono' !important;
+		font-family: var(--code-small-400-font-family) !important;
 		font-size: 12px !important;
 	}
 }

@@ -5284,6 +5284,7 @@ export interface TelemetrytypesTelemetryFieldKeyDTO {
 }
 
 export enum TelemetrytypesSourceDTO {
+	audit = 'audit',
 	meter = 'meter',
 	'' = '',
 }
@@ -8042,7 +8043,7 @@ export interface DashboardtypesDashboardSpecDTO {
 	display: DashboardtypesDisplayDTO;
 	/**
 	 * @type string
-	 * @description The default time range, as a Prometheus duration such as 1h or 7d. Stored, but not applied by the UI.
+	 * @description The default time range, as a Prometheus duration such as 1h or 7d. The UI opens the dashboard on it, rounded up to whole minutes, when neither the URL nor the viewer's last pick sets a time range.
 	 */
 	duration?: string;
 	/**
@@ -13017,7 +13018,7 @@ export enum RuletypesListSortDTO {
 	created_at = 'created_at',
 	name = 'name',
 	state = 'state',
-	severity = 'severity',
+	thresholds = 'thresholds',
 }
 /**
  * The labels attached to alerts the rule fires.
@@ -13077,6 +13078,11 @@ export interface RuletypesListableRuleDTO {
 	 */
 	state: RuletypesAlertStateDTO;
 	/**
+	 * @type array
+	 * @description The rule's threshold names in lowercase, deduplicated and ordered critical, error, warning, info, then other names. An alert carries the name of the threshold that fired as its severity. Read-only.
+	 */
+	thresholds: string[];
+	/**
 	 * @type string
 	 * @format date-time
 	 */
@@ -13098,7 +13104,7 @@ export interface RuletypesRuleViewDataDTO {
 	 */
 	query?: string;
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**
@@ -13611,6 +13617,13 @@ export interface SavedviewtypesUpdatableSavedViewDTO {
 	spec: SavedviewtypesSavedViewSpecDTO;
 }
 
+export enum ServiceaccounttypesDSLKeyDTO {
+	created_at = 'created_at',
+	email = 'email',
+	name = 'name',
+	status = 'status',
+	updated_at = 'updated_at',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -13657,6 +13670,59 @@ export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
 	key: string;
 }
 
+export enum ServiceaccounttypesServiceAccountStatusDTO {
+	active = 'active',
+	deleted = 'deleted',
+}
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt: string;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt: string;
+}
+
+export interface ServiceaccounttypesListableServiceAccountDTO {
+	/**
+	 * @type array
+	 * @description The filter keys the query accepts.
+	 */
+	reservedKeywords: ServiceaccounttypesDSLKeyDTO[];
+	/**
+	 * @type array
+	 * @description The service accounts on this page.
+	 */
+	serviceAccounts: ServiceaccounttypesServiceAccountDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description The number of service accounts the filter matches across all pages.
+	 */
+	total: number;
+}
+
 export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	/**
 	 * @type integer
@@ -13687,39 +13753,15 @@ export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	serviceAccountId: string;
 }
 
-export interface ServiceaccounttypesServiceAccountDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: string;
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	status: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: string;
+export enum ServiceaccounttypesServiceAccountListOrderDTO {
+	asc = 'asc',
+	desc = 'desc',
 }
-
+export enum ServiceaccounttypesServiceAccountListSortDTO {
+	created_at = 'created_at',
+	updated_at = 'updated_at',
+	name = 'name',
+}
 export interface ServiceaccounttypesServiceAccountRoleDTO {
 	/**
 	 * @type string
@@ -13751,7 +13793,7 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: string;
+	createdAt: string;
 	/**
 	 * @type string
 	 */
@@ -13772,15 +13814,12 @@ export interface ServiceaccounttypesServiceAccountWithRolesDTO {
 	 * @type array,null
 	 */
 	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status: string;
+	status: ServiceaccounttypesServiceAccountStatusDTO;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: string;
+	updatedAt: string;
 }
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
@@ -15828,11 +15867,34 @@ export type GetServiceAccountRole200 = {
 	status: string;
 };
 
-export type ListServiceAccounts200 = {
+export type ListServiceAccountsParams = {
 	/**
-	 * @type array
+	 * @type string
+	 * @description A filter expression over the reserved keys name, email, status, created_at and updated_at using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'ci' AND status = 'active'. A bare or quoted token without a key matches name or email case-insensitively. At most 1024 characters. Empty matches every service account.
 	 */
-	data: ServiceaccounttypesServiceAccountDTO[];
+	query?: string;
+	/**
+	 * @description The sort column: created_at (default), updated_at or name.
+	 */
+	sort?: ServiceaccounttypesServiceAccountListSortDTO;
+	/**
+	 * @description The sort order: asc or desc (default).
+	 */
+	order?: ServiceaccounttypesServiceAccountListOrderDTO;
+	/**
+	 * @type integer
+	 * @description The page size; defaults to 20 and is capped at 200.
+	 */
+	limit?: number;
+	/**
+	 * @type integer
+	 * @description The number of service accounts to skip; defaults to 0.
+	 */
+	offset?: number;
+};
+
+export type ListServiceAccounts200 = {
+	data: ServiceaccounttypesListableServiceAccountDTO;
 	/**
 	 * @type string
 	 */
@@ -17584,7 +17646,7 @@ export type ListRulesV3Params = {
 	 */
 	states?: string[];
 	/**
-	 * @description The field to sort by: updated_at (the default), created_at, name, state or severity.
+	 * @description The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name.
 	 */
 	sort?: RuletypesListSortDTO;
 	/**

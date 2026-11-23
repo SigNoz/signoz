@@ -1,7 +1,7 @@
 import { Typography } from '@signozhq/ui/typography';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import Graph from 'container/WidgetCard/Card';
 import { SERVICE_DETAIL_DRILLDOWN_ENABLED } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
@@ -21,7 +21,14 @@ function TopLevelOperation({
 	return (
 		<Card data-testid={name}>
 			{topLevelOperationsIsError ? (
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{axios.isAxiosError(topLevelOperationsError)
 						? topLevelOperationsError.response?.data
 						: SOMETHING_WENT_WRONG}
@@ -33,7 +40,7 @@ function TopLevelOperation({
 						onClickHandler={handleGraphClick(opName)}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={!topLevelOperationsIsLoading}
-						version={ENTITY_VERSION_V4}
+						version={ENTITY_VERSION_V5}
 						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 					/>
 				</GraphContainer>

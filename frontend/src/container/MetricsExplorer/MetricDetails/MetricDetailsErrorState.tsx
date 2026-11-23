@@ -12,7 +12,16 @@ function MetricDetailsErrorState({
 	return (
 		<div className="metric-details-error-state">
 			<Info size={20} color={Color.BG_CHERRY_500} />
-			<Typography.Text>{errorMessage}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{errorMessage}
+			</Typography>
 			{refetch && <Button onClick={refetch}>Retry</Button>}
 		</div>
 	);

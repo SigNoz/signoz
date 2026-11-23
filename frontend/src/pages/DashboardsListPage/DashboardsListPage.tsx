@@ -6,7 +6,7 @@ import { useDashboardCollectionPermissions } from 'hooks/dashboards/useDashboard
 import DashboardsList from './components/DashboardsList/DashboardsList';
 
 import styles from './DashboardsListPage.module.scss';
-import { BreadcrumbLink } from '@signozhq/ui/breadcrumb';
+import { Breadcrumb } from '@signozhq/ui/breadcrumb';
 
 function DashboardsListPage(): JSX.Element {
 	// Resolved before the list mounts, so no control renders enabled-then-disabled.
@@ -16,7 +16,10 @@ function DashboardsListPage(): JSX.Element {
 		<div className={styles.page}>
 			<div className={styles.header}>
 				<div className={styles.headerLeft}>
-					<BreadcrumbLink icon={<LayoutGrid size={14} />}>Dashboard</BreadcrumbLink>
+					<Breadcrumb
+						testId="dashboards-list-breadcrumb"
+						items={[{ title: 'Dashboard', icon: <LayoutGrid size={14} /> }]}
+					/>
 				</div>
 				<HeaderRightSection
 					enableAnnouncements={false}

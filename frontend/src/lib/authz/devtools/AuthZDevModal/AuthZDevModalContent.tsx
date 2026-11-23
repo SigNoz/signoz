@@ -33,22 +33,45 @@ export function AuthZDevModalContent({
 		<div className={styles.list} data-testid="authz-dev-permission-list">
 			{orderedPermissions.length === 0 ? (
 				<div className={styles.empty}>
-					<Typography.Text align="center" color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="p"
+						display="inline-block"
+						align="center"
+						textOverflow="wrap"
+					>
 						{observedListLength === 0
 							? 'No permissions observed yet. Navigate the app to trigger permission checks.'
 							: 'No permissions match your search.'}
-					</Typography.Text>
+					</Typography>
 				</div>
 			) : (
 				groups.map((group) => (
 					<div key={group.resource} className={styles.section}>
 						<div className={styles.sectionHeader}>
-							<Typography.Text as="span" size="medium" weight="semibold">
+							<Typography
+								variant="paragraph"
+								size="medium"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{group.resource}
-							</Typography.Text>
-							<Typography.Text as="span" size="small" color="muted">
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{group.items.length}
-							</Typography.Text>
+							</Typography>
 						</div>
 						{group.items.map((permission) => (
 							<PermissionRow

@@ -3,6 +3,7 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
@@ -301,6 +302,10 @@ export function createAggregation(
 				reduceTo: haveReduceTo
 					? queryData?.aggregations?.[0]?.reduceTo || queryData?.reduceTo
 					: undefined,
+				...(queryData?.aggregations?.[0]?.comparisonSpaceAggregationParam && {
+					comparisonSpaceAggregationParam:
+						queryData.aggregations[0].comparisonSpaceAggregationParam,
+				}),
 			},
 		];
 	}
@@ -563,9 +568,15 @@ export const prepareQueryRangePayloadV5 = (
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
 
-	switch (query.queryType) {
+	const foldedQuery = foldAISlot(query);
+
+	switch (foldedQuery.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData: data, queryFormulas, queryTraceOperator } = query.builder;
+			const {
+				queryData: data,
+				queryFormulas,
+				queryTraceOperator,
+			} = foldedQuery.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
 
@@ -627,13 +638,15 @@ export const prepareQueryRangePayloadV5 = (
 			break;
 		}
 		case EQueryType.PROM: {
-			const promQueries = reduceQueriesToObject(query[query.queryType]);
+			const promQueries = reduceQueriesToObject(
+				foldedQuery[foldedQuery.queryType],
+			);
 			queries = convertPromQueriesToV5(promQueries.queries);
 			legendMap = promQueries.legends;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
-			const chQueries = reduceQueriesToObject(query[query.queryType]);
+			const chQueries = reduceQueriesToObject(foldedQuery[foldedQuery.queryType]);
 			queries = convertClickHouseQueriesToV5(chQueries.queries);
 			legendMap = chQueries.legends;
 			break;

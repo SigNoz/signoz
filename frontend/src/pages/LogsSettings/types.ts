@@ -1,1 +1,1 @@
-export type TableLabel = { routeKey: string; label: string };
+export type TableLabel = { label: string };

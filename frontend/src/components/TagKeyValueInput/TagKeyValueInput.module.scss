@@ -18,17 +18,8 @@
 .input {
 	flex: 1;
 	min-width: 120px;
-	border: none;
-	background: transparent;
 
-	&::placeholder {
-		color: var(--l3-foreground);
-	}
-}
-
-.editInput {
-	width: 160px;
-	height: 24px;
+	--input-hover-border-color: transparent;
 }
 
 .error {

@@ -19,6 +19,8 @@ export interface TopListRow {
 	queryName: string;
 	/** Group-by key → value, the drilldown filters. */
 	labels: Record<string, string>;
+	/** Group-by keys the row has no value for; drilldown filters them as missing. */
+	missingLabels: string[];
 }
 
 export interface TopListData {

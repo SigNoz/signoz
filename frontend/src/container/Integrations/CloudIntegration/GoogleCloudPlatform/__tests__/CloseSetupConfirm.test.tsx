@@ -12,6 +12,7 @@ import {
 	GCP_CREDENTIALS_URL,
 	pendingAgentAccountResponse,
 } from './mockData';
+import { selectRegion } from './regionTestUtils';
 
 // The setup hooks import logEvent by relative path, which the jest.config
 // moduleNameMapper (keyed on the `api/common/logEvent` alias) does not
@@ -20,6 +21,14 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn(),
 }));
+
+jest.mock('@floating-ui/dom', () =>
+	jest.requireActual('./floatingUiDomMock').floatingUiDomMock(),
+);
+
+// Opening the region Combobox inside the Drawer takes seconds in jsdom: Base UI
+// walks every tabbable with getComputedStyle on each focus move.
+jest.setTimeout(20000);
 
 const onClose = jest.fn() as jest.MockedFunction<
 	ComponentProps<typeof CloudAccountSetupDrawer>['onClose']
@@ -37,11 +46,10 @@ const generateAgentCommand = async (
 		expect(screen.getByTestId('gcp-generate-command-btn')).toBeEnabled();
 	});
 	await user.type(
-		screen.getByTestId('gcp-deployment-project-id-input'),
+		screen.getByTestId('gcp-deployment-project-id-input-field'),
 		'my-deployment-project-123',
 	);
-	await user.click(screen.getByTestId('gcp-deployment-region-select'));
-	await user.click(await screen.findByText('Mumbai (asia-south1)'));
+	await selectRegion(user, 'Mumbai');
 	await user.click(screen.getByTestId('gcp-generate-command-btn'));
 	await screen.findByTestId('gcp-agent-command');
 };

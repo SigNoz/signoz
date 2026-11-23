@@ -100,8 +100,8 @@ github.com/SigNoz/expr v1.17.7-beta h1:FyZkleM5dTQ0O6muQfwGpoH5A2ohmN/XTasRCO72g
 github.com/SigNoz/expr v1.17.7-beta/go.mod h1:8/vRC7+7HBzESEqt5kKpYXxrxkr31SaO8r40VO/1IT4=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd h1:Bk43AsDYe0fhkbj57eGXx8H3ZJ4zhmQXBnrW523ktj8=
 github.com/SigNoz/govaluate v0.0.0-20240203125216-988004ccc7fd/go.mod h1:nxRcH/OEdM8QxzH37xkGzomr1O0JpYBRS6pwjsWW6Pc=
-github.com/SigNoz/signoz-otel-collector v0.144.6 h1:AgblCIDlLKGtssS4ywvyEByH9fbJ7hFqZvPvUVJKwp8=
-github.com/SigNoz/signoz-otel-collector v0.144.6/go.mod h1:YRQw6ETaq7fm8ts4Itgb6wC0bVhc0+nC6PFI0MaiH9k=
+github.com/SigNoz/signoz-otel-collector v0.144.17-rc.1 h1:B9R6ImgQ4act5aKdK7DbVxFWKGt00cSY5x9yF+g7Bzg=
+github.com/SigNoz/signoz-otel-collector v0.144.17-rc.1/go.mod h1:aOTO7iet9Ga9d3v/EkgeSZdSXEkjgVq2L0pK4tjgTEE=
 github.com/SigNoz/signoz-semantic-conventions/gen/go v0.0.2 h1:b0YEbA8sjW73bcDl9PhYrftdZ2uScWMcIu6zKwh4/9I=
 github.com/SigNoz/signoz-semantic-conventions/gen/go v0.0.2/go.mod h1:RSsdmH4/6H+EHeNPyqJ59dGdpKS0hl2p3T5g1NbehOU=
 github.com/Yiling-J/theine-go v0.6.2 h1:1GeoXeQ0O0AUkiwj2S9Jc0Mzx+hpqzmqsJ4kIC4M9AY=

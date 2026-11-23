@@ -1,16 +1,6 @@
 import { useState } from 'react';
-import {
-	Combobox,
-	ComboboxCommand,
-	ComboboxContent,
-	ComboboxCreateItem,
-	ComboboxEmpty,
-	ComboboxInput,
-	ComboboxItem,
-	ComboboxList,
-	ComboboxSeparator,
-	ComboboxTrigger,
-} from '@signozhq/ui/combobox';
+import { Combobox } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 import { Plus } from '@signozhq/icons';
 import { Skeleton } from 'antd';
 
@@ -37,103 +27,89 @@ interface MapToBillingModelSelectProps {
 
 // Searchable, server-paged dropdown for picking the billing model an unpriced
 // model maps onto. Only RULE_OPTIONS_LIMIT rules are fetched at a time; typing
-// narrows the set via the rules API rather than client-side filtering, so cmdk's
-// own filter is disabled (shouldFilter={false}). The dropdown is a pure picker —
-// choosing a rule hands it up to the confirm dialog rather than persisting a
-// selection here. The trigger only mirrors the staged pick (read from the
-// pending-mapping store) while that dialog is open, reverting on confirm/cancel.
+// narrows the set via the rules API rather than client-side filtering, so the
+// combobox's own filter is disabled (searchInputProps.filter: false). The
+// dropdown is a pure picker — choosing a rule hands it up to the confirm dialog
+// rather than persisting a selection here (`value` is pinned to undefined). The
+// trigger only mirrors the staged pick (read from the pending-mapping store, via
+// `displayValue`) while that dialog is open, reverting on confirm/cancel.
 function MapToBillingModelSelect({
 	modelName,
 	disabled,
 	onSelect,
 	onCreateNew,
 }: MapToBillingModelSelectProps): JSX.Element {
-	const [open, setOpen] = useState(false);
-	const { searchText, setSearchText, rules, rulesById, isFetching } =
-		useMapToBillingModelSearch(open);
+	// The combobox owns its open state now, so the rules fetch is gated on the
+	// first focus of the cell instead — closed rows still don't fan out requests
+	// on mount, and react-query dedupes identical query keys across rows.
+	const [hasInteracted, setHasInteracted] = useState(false);
+	const { setSearchText, rules, rulesById, isFetching } =
+		useMapToBillingModelSearch(hasInteracted);
 	const selectedLabel = usePendingMappingLabel(modelName);
 
-	const handleSelect = (ruleId: string): void => {
-		const rule = rulesById.get(ruleId);
+	const items: ComboboxItemType[] = rules.map((rule) => ({
+		type: 'item',
+		value: rule.id,
+		label: getRuleOptionLabel(rule),
+		testId: `map-to-option-${rule.id}`,
+	}));
+
+	const handleChange = (ruleId: string | undefined): void => {
+		const rule = ruleId === undefined ? undefined : rulesById.get(ruleId);
 		if (rule) {
 			onSelect(rule);
 		}
-		setOpen(false);
-	};
-
-	const handleCreateNew = (): void => {
-		setOpen(false);
-		onCreateNew();
 	};
 
 	return (
-		<div className={styles.mapToCell}>
-			<Combobox open={open} onOpenChange={setOpen}>
-				<ComboboxTrigger
-					className={styles.mapToSelect}
-					disabled={disabled}
-					placeholder="Select / Create a pricing model"
-					value={selectedLabel}
-					testId={`map-to-select-${modelName}`}
-				/>
-				<ComboboxContent className={styles.mapToDropdown}>
-					<ComboboxCommand shouldFilter={false}>
-						<ComboboxInput
-							value={searchText}
-							onValueChange={setSearchText}
-							placeholder="Search billing models"
-							testId={`map-to-search-${modelName}`}
-						/>
-						<ComboboxList>
-							{rules.map((rule) => (
-								<ComboboxItem
-									key={rule.id}
-									value={rule.id}
-									onSelect={(): void => handleSelect(rule.id)}
-									data-testid={`map-to-option-${rule.id}`}
-								>
-									{getRuleOptionLabel(rule)}
-								</ComboboxItem>
-							))}
-							{isFetching && (
-								<div
-									className={styles.skeletonList}
-									data-testid={`map-to-loading-${modelName}`}
-								>
-									{SKELETON_ROW_KEYS.map((key) => (
-										<Skeleton.Input
-											key={key}
-											active
-											block
-											size="small"
-											className={styles.skeletonRow}
-										/>
-									))}
-								</div>
-							)}
-							{!isFetching && rules.length === 0 && (
-								<ComboboxEmpty>No billing models found</ComboboxEmpty>
-							)}
-						</ComboboxList>
-						{/* Kept outside ComboboxList so it stays pinned as a footer while the
-						    options scroll. Escape hatch when no existing billing model fits:
-						    define this model's own pricing rather than mapping onto another. */}
-						<ComboboxSeparator alwaysRender />
-						<div className={styles.footer}>
-							<ComboboxCreateItem
-								className={styles.createItem}
-								inputValue={modelName}
-								value={`create-pricing-${modelName}`}
-								prefix={<Plus size={14} />}
-								onSelect={handleCreateNew}
-								testId={`map-to-create-${modelName}`}
-							>
-								Create a new pricing model
-							</ComboboxCreateItem>
-						</div>
-					</ComboboxCommand>
-				</ComboboxContent>
-			</Combobox>
+		<div
+			className={styles.mapToCell}
+			onFocusCapture={(): void => setHasInteracted(true)}
+		>
+			<Combobox
+				maxWidth={280}
+				contentMaxWidth={280}
+				placeholder="Select / Create a pricing model"
+				items={items}
+				value={undefined}
+				displayValue={(): string | undefined => selectedLabel}
+				onChange={handleChange}
+				disabled={disabled}
+				disabledTooltip={undefined}
+				loading={isFetching}
+				loadingContent={
+					<div
+						className={styles.skeletonList}
+						data-testid={`map-to-loading-${modelName}`}
+					>
+						{SKELETON_ROW_KEYS.map((key) => (
+							<Skeleton.Input
+								key={key}
+								active
+								block
+								size="small"
+								className={styles.skeletonRow}
+							/>
+						))}
+					</div>
+				}
+				noContent="No billing models found"
+				searchInputProps={{
+					placeholder: 'Search billing models',
+					filter: false,
+					onChange: setSearchText,
+				}}
+				// Escape hatch when no existing billing model fits: define this
+				// model's own pricing rather than mapping onto another. Pinned under
+				// the list, so it stays put while the options scroll.
+				footerAction={{
+					label: 'Create a new pricing model',
+					prefix: <Plus size={14} />,
+					onClick: onCreateNew,
+					testId: `map-to-create-${modelName}`,
+				}}
+				testId={`map-to-select-${modelName}`}
+			/>
 		</div>
 	);
 }

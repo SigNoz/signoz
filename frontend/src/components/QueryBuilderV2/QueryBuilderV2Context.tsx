@@ -88,6 +88,9 @@ export function QueryBuilderV2Provider({
 	);
 }
 
+export const useIsInQueryBuilderV2 = (): boolean =>
+	useContext(QueryBuilderV2Context) !== undefined;
+
 export const useQueryBuilderV2Context = (): QueryBuilderV2ContextType => {
 	const context = useContext(QueryBuilderV2Context);
 	if (!context) {

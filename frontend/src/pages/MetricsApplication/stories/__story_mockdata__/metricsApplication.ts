@@ -27,6 +27,10 @@ export const METRICS_APPLICATION_TABS = [
 export type MetricsApplicationTabKey =
 	(typeof METRICS_APPLICATION_TABS)[number];
 
+export const SERVICE_MODES = ['traces', 'span-metrics'] as const;
+
+export type ServiceMode = (typeof SERVICE_MODES)[number];
+
 const OPERATION_NAMES = [
 	'POST /api/checkout',
 	'GET /api/cart',
