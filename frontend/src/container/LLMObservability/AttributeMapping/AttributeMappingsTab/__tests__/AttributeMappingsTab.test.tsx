@@ -249,13 +249,15 @@ describe('AttributeMappingsTab (integration)', () => {
 		await screen.findByTestId('group-name-group-1');
 		// The clickable Collapse header owns the expanded state; find it by the
 		// aria-expanded contract rather than any framework-internal class.
-		const header = screen
-			.getByTestId('group-expand-group-1')
-			.closest('[aria-expanded]') as HTMLElement;
-		expect(header).toHaveAttribute('aria-expanded', 'false');
+		const table = within(screen.getByTestId('mappings-table'));
+		expect(
+			table.queryByRole('button', { hidden: true, expanded: true }),
+		).not.toBeInTheDocument();
 
 		await expandGroup(user);
-		expect(header).toHaveAttribute('aria-expanded', 'true');
+		expect(
+			table.getByRole('button', { hidden: true, expanded: true }),
+		).toContainElement(screen.getByTestId('group-expand-group-1'));
 		await expect(
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toBeInTheDocument();
@@ -286,7 +288,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 		const target = await screen.findByTestId('mapper-target-mapper-1');
 		expect(target).toHaveTextContent('gen_ai.request.model');
-		const mapperRow = target.closest('tr') as HTMLElement;
+		const mapperRow = screen.getByTestId('mapper-row-mapper-1');
 		// Sources ordered by priority, highest first (see fixtures).
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');

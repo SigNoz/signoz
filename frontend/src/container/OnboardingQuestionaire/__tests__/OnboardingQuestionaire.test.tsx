@@ -109,12 +109,6 @@ function renderOptimiseNeeds(): void {
 	);
 }
 
-function sliderThumb(testId: string): HTMLInputElement {
-	return screen
-		.getByTestId(`${testId}-thumb-0`)
-		.querySelector('input') as HTMLInputElement;
-}
-
 async function completeStep1(user: User): Promise<void> {
 	await user.click(screen.getByTestId('observability-tool-item-DataDog'));
 	await user.click(screen.getByTestId('uses-otel-item-yes'));
@@ -267,7 +261,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.type(discoverInput, 'Found via Google search');
 
 			const interestCheckbox = screen.getByTestId('interest-loweringCosts');
-			expect(interestCheckbox.closest('label')).toHaveTextContent(
+			expect(interestCheckbox).toHaveAccessibleName(
 				'Lowering observability costs',
 			);
 			await user.click(interestCheckbox);
@@ -384,9 +378,9 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(screen.getByTestId('about-signoz-next'));
 
 			await screen.findByTestId('logs-per-day-slider');
-			sliderThumb('logs-per-day-slider').focus();
+			screen.getByLabelText('Logs / Day').focus();
 			await user.keyboard('{End}');
-			sliderThumb('hosts-per-day-slider').focus();
+			screen.getByLabelText(/number of hosts/i).focus();
 			await user.keyboard('{End}');
 			await user.click(screen.getByTestId('optimise-needs-next'));
 
@@ -749,7 +743,7 @@ describe('OnboardingQuestionaire Component', () => {
 			await user.click(nextButton);
 			expect(profileCalls).toBe(0);
 
-			sliderThumb('services-slider').focus();
+			screen.getByLabelText('Number of services').focus();
 			await user.keyboard('{ArrowRight}');
 
 			expect(screen.getByTestId('optimise-needs-next')).not.toHaveAttribute(

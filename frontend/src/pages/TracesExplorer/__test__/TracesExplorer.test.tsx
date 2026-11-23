@@ -310,11 +310,10 @@ describe('TracesExplorer -', () => {
 		);
 		await user.click(createDashboardBtn);
 
-		const newDashboardBtn = await screen.findByTestId(
-			'export-panel-new-dashboard',
+		const createDashboardModal = await screen.findByTestId('export-panel-dialog');
+		expect(createDashboardModal).toContainElement(
+			screen.getByTestId('export-panel-new-dashboard'),
 		);
-		const createDashboardModal = newDashboardBtn.closest('[role="dialog"]');
-		expect(createDashboardModal).toBeInTheDocument();
 
 		// assert modal content
 		expect(createDashboardModal).toContainElement(

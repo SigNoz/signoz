@@ -11,7 +11,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntime } from '../PlannedDowntime';
@@ -19,6 +19,7 @@ import { buildSchedule, createMockDowntime } from './testUtils';
 
 const SEARCH_TEST_ID = 'planned-downtime-search-field';
 const CREATE_TEST_ID = 'planned-downtime-create';
+const RESIZE_HANDLE_TITLE = 'Drag to resize column';
 
 function renderPage(role: string = USER_ROLES.ADMIN): void {
 	render(
@@ -217,18 +218,25 @@ describe('PlannedDowntime Component', () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
-		const resizable = Array.from(document.querySelectorAll('th'))
-			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
-			.map((th) => th.textContent?.trim());
-		expect(resizable).toStrictEqual([
-			'Downtime',
-			'Status',
-			'Schedule',
-			'Timezone',
-			'Repeats',
-			'Duration',
-			'Alerts Silenced',
-		]);
+		const resizableColumnIds = [
+			'name',
+			'status',
+			'window',
+			'timezone',
+			'repeats',
+			'duration',
+			'alertsSilenced',
+		];
+		resizableColumnIds.forEach((columnId) => {
+			expect(
+				within(screen.getByTestId(`tanstack-header-${columnId}`)).getByTitle(
+					RESIZE_HANDLE_TITLE,
+				),
+			).toBeInTheDocument();
+		});
+		expect(screen.getAllByTitle(RESIZE_HANDLE_TITLE)).toHaveLength(
+			resizableColumnIds.length,
+		);
 	});
 
 	it('should filter downtime schedules by name when searching', async () => {

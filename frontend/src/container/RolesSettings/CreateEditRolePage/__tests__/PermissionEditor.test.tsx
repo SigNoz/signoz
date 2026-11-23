@@ -24,13 +24,9 @@ async function addItems(user: User, text: string): Promise<void> {
 }
 
 function getBadgeCloseButton(index: number): HTMLElement {
-	const closeButton = screen
-		.getByTestId(`item-badge-factor-api-key-read-${index}`)
-		.querySelector<HTMLElement>('[data-slot="pill-close"]');
-	if (!closeButton) {
-		throw new Error(`badge ${index} has no close button`);
-	}
-	return closeButton;
+	return within(
+		screen.getByTestId(`item-badge-factor-api-key-read-${index}`),
+	).getByLabelText(/^Remove /);
 }
 
 beforeEach(() => {

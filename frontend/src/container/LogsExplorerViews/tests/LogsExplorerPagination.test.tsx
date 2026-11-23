@@ -15,7 +15,6 @@ import {
 	AllTheProviders,
 	fireEvent,
 	render,
-	RenderResult,
 	screen,
 	userEvent,
 	waitFor,
@@ -230,7 +229,6 @@ describe.skip('LogsExplorerViews Pagination', () => {
 	});
 
 	it('should fetch next page with correct payload when scrolled to end', async () => {
-		let renderResult: RenderResult;
 		// Define item height and viewport height for Virtuoso mock
 		const itemHeight = 100;
 		const viewportHeight = 500;
@@ -240,10 +238,9 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		// Calculate the scroll position needed to reach the end of the initial list
 		const totalHeight = initialItemCount * itemHeight;
 		const targetScrollTop = totalHeight - viewportHeight;
-		let scrollableElement: HTMLElement;
 
 		act(() => {
-			renderResult = render(
+			render(
 				<VirtuosoMockContext.Provider value={{ viewportHeight, itemHeight }}>
 					<LogsExplorer />
 				</VirtuosoMockContext.Provider>,
@@ -263,23 +260,15 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		verifyPayload({ payload: firstPayload, expectedOffset: 0 });
 
 		// Wait for the scrollable element to be available and simulate scrolling
-		await waitFor(async () => {
-			// Find the Virtuoso scroller element by its data-test-id
-			scrollableElement = renderResult.container.querySelector(
-				'[data-test-id="virtuoso-scroller"]',
-			) as HTMLElement;
+		const scrollableElement = await screen.findByTestId(
+			'logs-list-virtuoso-scroller',
+		);
 
-			// Ensure the element exists
-			expect(scrollableElement).not.toBeNull();
+		// Set the scrollTop property to simulate scrolling to the calculated end position
+		scrollableElement.scrollTop = targetScrollTop;
 
-			if (scrollableElement) {
-				// Set the scrollTop property to simulate scrolling to the calculated end position
-				scrollableElement.scrollTop = targetScrollTop;
-
-				act(() => {
-					fireEvent.scroll(scrollableElement);
-				});
-			}
+		act(() => {
+			fireEvent.scroll(scrollableElement);
 		});
 
 		// Verify the second page request was made

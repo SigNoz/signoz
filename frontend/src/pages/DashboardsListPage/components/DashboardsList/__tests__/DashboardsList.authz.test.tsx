@@ -1,7 +1,7 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
@@ -147,17 +147,18 @@ describe('DashboardsList - AuthZ', () => {
 				DashboardListPermission,
 			);
 			expect(
-				screen
-					.getByTestId('dashboards-filter-created-by')
-					.querySelector('input[role="combobox"]'),
+				within(screen.getByTestId('dashboards-filter-created-by')).getByLabelText(
+					'Created by',
+				),
 			).toBeDisabled();
 			expect(screen.getByLabelText('Run search')).toHaveAttribute(
 				'aria-disabled',
 				'true',
 			);
-			expect(
-				screen.getByTestId('dashboards-list-search').querySelector('.cm-content'),
-			).toHaveAttribute('contenteditable', 'false');
+			expect(screen.getByTestId('dashboards-list-search-field')).toHaveAttribute(
+				'contenteditable',
+				'false',
+			);
 		});
 
 		it('explains the list denial in a tooltip on the search box', async () => {
@@ -172,13 +173,11 @@ describe('DashboardsList - AuthZ', () => {
 				),
 			);
 
-			// Radix's content has no testid, and the table's callout carries the same
-			// words, so the reason is read off the tooltip role.
 			await user.hover(screen.getByTestId('dashboards-search-zone'));
-			await waitFor(() =>
-				expect(document.querySelector('[role="tooltip"]')).toHaveTextContent(
-					'is not authorized to perform list:dashboard:*',
-				),
+			await expect(
+				screen.findByTestId('dashboards-list-denied-tooltip'),
+			).resolves.toHaveTextContent(
+				'is not authorized to perform list:dashboard:*',
 			);
 		});
 

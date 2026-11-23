@@ -6,7 +6,13 @@ import {
 	trialConvertedToSubscriptionResponse,
 } from 'mocks-server/__mockdata__/licenses';
 import { server } from 'mocks-server/server';
-import { act, render, screen, getAppContextMock } from 'tests/test-utils';
+import {
+	act,
+	render,
+	screen,
+	getAppContextMock,
+	within,
+} from 'tests/test-utils';
 import APIError from 'types/api/error';
 import {
 	LicensePlatform,
@@ -266,20 +272,17 @@ describe('BillingContainer', () => {
 		expect(screen.getByText('billing')).toBeInTheDocument();
 		expect(screen.getByText(/\$1,278.3/i)).toBeInTheDocument();
 
-		const cellTexts = (rowName: string): string[] =>
-			Array.from(
-				screen
-					.getByText(rowName, { selector: 'td > div' })
-					.closest('tr')
-					?.querySelectorAll('td') ?? [],
-			).map((cell) => cell.textContent ?? '');
+		const cellTexts = (productIndex: number, tierIndex: number): string[] =>
+			within(screen.getByTestId(`billing-usage-row-${productIndex}${tierIndex}`))
+				.getAllByRole('cell', { hidden: true })
+				.map((cell) => cell.textContent ?? '');
 
-		expect(cellTexts('Metrics')).toStrictEqual([
+		expect(cellTexts(0, 0)).toStrictEqual([
 			'Metrics',
 			'4012 Million',
 			'0.1',
 			'$ 401.2',
 		]);
-		expect(cellTexts('Logs')).toStrictEqual(['Logs', '497 GB', '0.4', '$ 198.8']);
+		expect(cellTexts(2, 0)).toStrictEqual(['Logs', '497 GB', '0.4', '$ 198.8']);
 	});
 });

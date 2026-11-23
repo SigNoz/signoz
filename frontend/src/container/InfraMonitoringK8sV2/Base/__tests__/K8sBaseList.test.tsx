@@ -23,6 +23,7 @@ import { openInNewTab } from 'utils/navigation';
 
 import { TableColumnDef } from 'components/TanStackTableView';
 
+import { ExpandButtonWrapper } from '../../components/ExpandButtonWrapper';
 import { InfraMonitoringEntity } from '../../constants';
 import { SelectedItemParams } from '../../hooks';
 
@@ -125,6 +126,24 @@ function createTestColumns(): TableColumnDef<TestItem>[] {
 			accessorFn: (row): string => row.id,
 			cell: ({ value }): React.ReactNode => <>{value}</>,
 		},
+	];
+}
+
+function createTestColumnsWithExpand(): TableColumnDef<TestItem>[] {
+	return [
+		{
+			id: 'group',
+			header: (): React.ReactNode => 'Group',
+			accessorFn: (row): string => row.id,
+			visibilityBehavior: 'hidden-on-collapse',
+			cell: ({ isExpanded, toggleExpanded }): React.ReactNode => (
+				<ExpandButtonWrapper
+					isExpanded={isExpanded}
+					toggleExpanded={toggleExpanded}
+				/>
+			),
+		},
+		...createTestColumns(),
 	];
 }
 
@@ -426,15 +445,7 @@ describe('K8sBaseList', () => {
 				expect(screen.getByText(`PodId:${itemId}`)).toBeInTheDocument();
 			});
 
-			// Find pagination navigation and page 2 button
-			const nav = document.querySelector('nav') as HTMLElement;
-			const page2Button = Array.from(nav.querySelectorAll('button')).find(
-				(btn) => btn.textContent?.trim() === '2',
-			);
-			if (!page2Button) {
-				throw new Error('Page 2 button not found in pagination');
-			}
-			await user.click(page2Button);
+			await user.click(screen.getByTestId('pagination-page-2'));
 
 			await waitFor(() => {
 				const lastPage = onUrlUpdateMock.mock.calls
@@ -517,7 +528,7 @@ describe('K8sBaseList', () => {
 					groupBy: JSON.stringify(groupByValue),
 					page: '3',
 				},
-				tableColumns: createTestColumns(),
+				tableColumns: createTestColumnsWithExpand(),
 				getRowKey: (row): string => row.id,
 				getItemKey: (row): string => row.id,
 			});
@@ -539,12 +550,9 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should render expand icons when groupBy is set', async () => {
-			await waitFor(() => {
-				expect(screen.getByText('namespace-default')).toBeInTheDocument();
-			});
+			const row = await screen.findByTestId('row-namespace-default');
 
-			const expandButtons = document.querySelectorAll('button');
-			expect(expandButtons.length).toBeGreaterThan(0);
+			expect(within(row).getByTestId('expand-row-button')).toBeInTheDocument();
 		});
 
 		it('should render data with groupBy params', async () => {
@@ -591,7 +599,7 @@ describe('K8sBaseList', () => {
 					groupBy: JSON.stringify(groupByValue),
 					page: '3',
 				},
-				tableColumns: createTestColumns(),
+				tableColumns: createTestColumnsWithExpand(),
 				getRowKey: (row): string => row.id,
 				getItemKey: (row): string => row.id,
 			});
@@ -607,12 +615,9 @@ describe('K8sBaseList', () => {
 		});
 
 		it('should render expand icons when groupBy is set with new format', async () => {
-			await waitFor(() => {
-				expect(screen.getByText('namespace-default')).toBeInTheDocument();
-			});
+			const row = await screen.findByTestId('row-namespace-default');
 
-			const expandButtons = document.querySelectorAll('button');
-			expect(expandButtons.length).toBeGreaterThan(0);
+			expect(within(row).getByTestId('expand-row-button')).toBeInTheDocument();
 		});
 
 		it('should render data with new groupBy format', async () => {
@@ -947,8 +952,8 @@ describe('K8sBaseList', () => {
 			});
 
 			// All columns should be visible
-			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
-			expect(screen.getByTitle('Name').closest('th')).toBeInTheDocument();
+			expect(screen.getByTestId('tanstack-header-id')).toHaveTextContent('Id');
+			expect(screen.getByTestId('tanstack-header-name')).toHaveTextContent('Name');
 		});
 	});
 
@@ -991,7 +996,7 @@ describe('K8sBaseList', () => {
 			});
 
 			// Columns should be visible
-			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
+			expect(screen.getByTestId('tanstack-header-id')).toHaveTextContent('Id');
 		});
 
 		it('should show columns when grouped', async () => {
@@ -1015,7 +1020,7 @@ describe('K8sBaseList', () => {
 			});
 
 			// Id should be visible
-			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
+			expect(screen.getByTestId('tanstack-header-id')).toHaveTextContent('Id');
 		});
 	});
 
@@ -1095,8 +1100,8 @@ describe('K8sBaseList', () => {
 			});
 
 			// All columns should be visible
-			expect(screen.getByTitle('Id').closest('th')).toBeInTheDocument();
-			expect(screen.getByTitle('Name').closest('th')).toBeInTheDocument();
+			expect(screen.getByTestId('tanstack-header-id')).toHaveTextContent('Id');
+			expect(screen.getByTestId('tanstack-header-name')).toHaveTextContent('Name');
 		});
 
 		it('should render data in cells correctly', async () => {
@@ -1614,11 +1619,11 @@ describe('K8sBaseList', () => {
 			});
 
 			// Open group by dropdown using testId
-			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
-			const groupBySelect = groupByContainer.querySelector(
-				'.ant-select-selector',
-			) as Element;
-			await user.click(groupBySelect);
+			await user.click(
+				within(screen.getByTestId('k8s-table-group-by-select')).getByText(
+					'Search for attribute',
+				),
+			);
 
 			// Wait for options to load and click on the namespace option
 			const namespaceOption = await screen.findByTitle('k8s.namespace.name');
@@ -1656,11 +1661,11 @@ describe('K8sBaseList', () => {
 			});
 
 			// Open group by dropdown using testId
-			const groupByContainer = screen.getByTestId('k8s-table-group-by-select');
-			const groupBySelect = groupByContainer.querySelector(
-				'.ant-select-selector',
-			) as Element;
-			await user.click(groupBySelect);
+			await user.click(
+				within(screen.getByTestId('k8s-table-group-by-select')).getByText(
+					'Search for attribute',
+				),
+			);
 
 			// Wait for options to load and click on the namespace option
 			const namespaceOption = await screen.findByTitle('k8s.namespace.name');

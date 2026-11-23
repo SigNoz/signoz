@@ -292,8 +292,9 @@ describe('Quick Filters', () => {
 		expect(screen.getByText(QUERY_NAME)).toBeInTheDocument();
 
 		// No dropdown should be present
-		const queryText = screen.getByText(QUERY_NAME);
-		expect(queryText.closest('[role="combobox"]')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('quick-filters-query-select'),
+		).not.toBeInTheDocument();
 	});
 
 	it('should add filter data to query when checkbox is clicked', async () => {

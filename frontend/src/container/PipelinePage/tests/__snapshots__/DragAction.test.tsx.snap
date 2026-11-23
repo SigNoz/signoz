@@ -27,6 +27,7 @@ exports[`PipelinePage container test should render DragAction section 1`] = `
       data-checked=""
       data-color="primary"
       data-slot="switch"
+      data-testid="pipeline-enabled-switch"
       id="base-ui-:r2:"
       role="switch"
       tabindex="0"

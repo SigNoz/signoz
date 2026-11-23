@@ -4,12 +4,6 @@ import { USER_ROLES } from 'types/roles';
 
 import { renderListAlertRules } from './_helpers';
 
-function headerTexts(): string[] {
-	return Array.from(document.querySelectorAll('th')).map(
-		(h) => h.textContent ?? '',
-	);
-}
-
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -25,7 +19,9 @@ describe('ListAlertRules — permissions', () => {
 		).not.toBeInTheDocument();
 		expect(screen.queryByText('New Alert')).not.toBeInTheDocument();
 
-		expect(headerTexts().some((t) => t.includes('Actions'))).toBe(false);
+		expect(
+			screen.queryByTestId('tanstack-header-actions'),
+		).not.toBeInTheDocument();
 		expect(screen.queryByTestId('alert-actions')).not.toBeInTheDocument();
 	});
 
@@ -40,7 +36,9 @@ describe('ListAlertRules — permissions', () => {
 			expect(screen.getByTestId('list-alerts-new-alert-button')).toHaveTextContent(
 				'New Alert',
 			);
-			expect(headerTexts().some((t) => t.includes('Actions'))).toBe(true);
+			expect(screen.getByTestId('tanstack-header-actions')).toHaveTextContent(
+				'Actions',
+			);
 		},
 	);
 });

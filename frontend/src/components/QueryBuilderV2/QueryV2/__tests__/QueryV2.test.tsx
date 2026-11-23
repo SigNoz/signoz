@@ -6,7 +6,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	Having,
 	IBuilderQuery,
@@ -226,10 +226,8 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		const user = userEvent.setup();
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		const editor = (
-			await screen.findByTestId('query-where-clause-editor')
-		).querySelector('.cm-content') as HTMLElement;
-		editor.focus();
+		const editorWrapper = await screen.findByTestId('query-where-clause-editor');
+		within(editorWrapper).getByRole('textbox', { hidden: true }).focus();
 		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
 		expect(handleRunQueryMock).toHaveBeenCalledTimes(1);
@@ -255,10 +253,8 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		).not.toThrow();
 
 		// query list still renders from queryData, formulas block is skipped
-		expect(document.querySelector('.query-names-section')).toBeInTheDocument();
-		expect(
-			document.querySelector('.qb-formulas-container'),
-		).not.toBeInTheDocument();
+		expect(screen.getByTestId('query-names-section')).toBeInTheDocument();
+		expect(screen.queryByTestId('qb-formulas-container')).not.toBeInTheDocument();
 	});
 
 	describe('query actions menu', () => {
@@ -348,13 +344,11 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		const fxButton = document.querySelector('.function-btn') as HTMLButtonElement;
+		const fxButton = screen.getByTestId('query-functions-fx-btn');
 		expect(fxButton).toBeInTheDocument();
 		expect(fxButton).toBeDisabled();
 
-		const deleteButton = document.querySelector(
-			'.query-function-delete-btn',
-		) as HTMLButtonElement;
+		const deleteButton = screen.getByTestId('query-function-delete-btn');
 		expect(deleteButton).toBeInTheDocument();
 		await user.click(deleteButton);
 		expect(fxButton).not.toBeDisabled();

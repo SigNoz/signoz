@@ -88,13 +88,7 @@ describe('ListAlertRules — search', () => {
 		await screen.findByTestId('alert-row-rule-1-name');
 
 		setSearchDraft(QUERY);
-		const content = screen
-			.getByTestId('alert-rules-list-search')
-			.querySelector<HTMLElement>('.cm-content');
-		if (!content) {
-			throw new Error('Editor content not found');
-		}
-		content.focus();
+		screen.getByTestId('alert-rules-list-search-field').focus();
 		await user.keyboard('{Control>}{Enter}{/Control}');
 
 		await waitFor(() => {
@@ -187,9 +181,9 @@ describe('ListAlertRules — search', () => {
 		await screen.findByTestId('alert-row-rule-1-name');
 
 		await user.click(
-			screen
-				.getByTestId('alert-rules-filter-states')
-				.querySelector('input') as HTMLInputElement,
+			within(screen.getByTestId('alert-rules-filter-states')).getByLabelText(
+				'State',
+			),
 		);
 		await user.click(
 			await screen.findByTestId('alert-rules-filter-states-option-firing'),
@@ -201,7 +195,7 @@ describe('ListAlertRules — search', () => {
 		expect(requests.some((r) => r.has('states'))).toBe(false);
 		expect(getCurrentNuqsSearchParams().has('states')).toBe(false);
 
-		await user.click(document.body);
+		await user.click(screen.getByTestId('alert-rules-search-zone'));
 
 		await waitFor(() => {
 			expect(lastRequest(requests).getAll('states')).toStrictEqual([

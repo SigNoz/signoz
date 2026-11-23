@@ -1,6 +1,6 @@
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
-import { act, screen, userEvent } from 'tests/test-utils';
+import { act, screen, userEvent, within } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -31,24 +31,21 @@ describe('EntityTraces - Table Rendering', () => {
 	it('should render table with all column headers', async () => {
 		mockQueryRangeV5WithTracesResponse({ pageSize: 3 });
 
-		const { container } = renderEntityTraces();
+		renderEntityTraces();
 
-		await expect(screen.findByText('Service Name')).resolves.toBeInTheDocument();
+		await screen.findAllByTestId('serviceName');
+		const table = screen.getByTestId('entity-traces-table');
 
-		const headerTexts = Array.from(
-			container.querySelectorAll('table thead th'),
-		).map((header) => header.textContent);
-
-		expect(headerTexts).toStrictEqual(
-			expect.arrayContaining([
-				'Timestamp',
-				'Service Name',
-				'Name',
-				'Duration',
-				'HTTP Method',
-				'Status Code',
-			]),
-		);
+		[
+			'Timestamp',
+			'Service Name',
+			'Name',
+			'Duration',
+			'HTTP Method',
+			'Status Code',
+		].forEach((header) => {
+			expect(within(table).getByText(header)).toBeInTheDocument();
+		});
 	});
 
 	it('should render trace values in table cells', async () => {
@@ -150,11 +147,13 @@ describe('EntityTraces - Table Rendering', () => {
 			customTraces: [{ serviceName: 'frontend' }],
 		});
 
-		const { container } = renderEntityTraces();
+		renderEntityTraces();
 
 		await expect(screen.findByTestId('serviceName')).resolves.toBeInTheDocument();
 
-		const links = container.querySelectorAll('table a[href]');
+		const links = within(screen.getByTestId('entity-traces-row')).getAllByTestId(
+			'trace-block-link',
+		);
 
 		expect(links.length).toBeGreaterThan(0);
 		links.forEach((link) => {
@@ -194,8 +193,7 @@ describe('EntityTraces - Table Rendering', () => {
 		renderEntityTraces();
 
 		const user = userEvent.setup();
-		const cell = await screen.findByTestId('serviceName');
-		await user.click(cell.closest('tr') as HTMLElement);
+		await user.click(await screen.findByTestId('entity-traces-row'));
 
 		expect(logEvent).toHaveBeenCalledWith(
 			'Infra Monitoring: Drawer trace clicked',

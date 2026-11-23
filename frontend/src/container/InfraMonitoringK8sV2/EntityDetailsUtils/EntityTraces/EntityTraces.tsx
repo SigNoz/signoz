@@ -180,7 +180,7 @@ function EntityTracesContent({
 			{isError && !isKeyNotFound && !isLoading && <EntityError />}
 
 			{(!isError || isKeyNotFound) && traces.length > 0 && (
-				<div className={styles.entityTracesTable}>
+				<div className={styles.entityTracesTable} data-testid="entity-traces-table">
 					<div className={styles.controls}>
 						<Controls
 							totalCount={hasMore ? currentCount + 1 : currentCount}
@@ -217,6 +217,7 @@ function EntityTracesContent({
 						dataSource={traces}
 						columns={traceListColumns}
 						onRow={(): Record<string, unknown> => ({
+							'data-testid': 'entity-traces-row',
 							onClick: (): void => handleRowClick(),
 						})}
 					/>

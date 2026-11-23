@@ -247,6 +247,7 @@ function RoutingPolicyDetails({
 								}))}
 								mode="multiple"
 								placeholder="Select notification channels"
+								aria-label="Notification Channels"
 								showSearch
 								maxTagCount={3}
 								maxTagPlaceholder={(omittedValues): string =>

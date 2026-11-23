@@ -108,7 +108,7 @@ describe('Logs Explorer Tests', () => {
 
 	it('Logs Explorer default view test without data', async () => {
 		const user = userEvent.setup();
-		const { queryByText, getByTestId, queryByTestId, container } = render(
+		const { queryByText, getByTestId, queryByTestId } = render(
 			<PreferenceContextProvider>
 				<LogsExplorer />
 			</PreferenceContextProvider>,
@@ -132,14 +132,9 @@ describe('Logs Explorer Tests', () => {
 		expect(clickhouseView).not.toBeInTheDocument();
 
 		// check the presence of List View / Time Series View / Table View using class names
-		const listViewTab = container.querySelector(
-			'.list-view-tab.explorer-view-option',
-		);
-		const timeSeriesViewTab = container.querySelector('.timeseries-view-tab');
-		const tableViewTab = container.querySelector('.table-view-tab');
-		expect(listViewTab).toBeInTheDocument();
-		expect(timeSeriesViewTab).toBeInTheDocument();
-		expect(tableViewTab).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-list')).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-timeseries')).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-table')).toBeInTheDocument();
 
 		// // check the presence of old logs explorer CTA - TODO: add this once we have the header updated
 		// const oldLogsCTA = getByText('Switch to Old Logs Explorer');
@@ -147,7 +142,7 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	it('renders the tab the url panelTypes param names', () => {
-		const { container } = render(
+		render(
 			<PreferenceContextProvider>
 				<LogsExplorer />
 			</PreferenceContextProvider>,
@@ -155,10 +150,10 @@ describe('Logs Explorer Tests', () => {
 			{ initialRoute: '/logs-explorer/?panelTypes=%22graph%22' },
 		);
 
-		expect(container.querySelector('.timeseries-view-tab')).toHaveClass(
+		expect(screen.getByTestId('explorer-view-timeseries')).toHaveClass(
 			'active-tab',
 		);
-		expect(container.querySelector('.list-view-tab')).not.toHaveClass(
+		expect(screen.getByTestId('explorer-view-list')).not.toHaveClass(
 			'active-tab',
 		);
 	});

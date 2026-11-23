@@ -200,9 +200,9 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="logs-per-day-label">
 							Logs / Day
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
@@ -211,6 +211,7 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.logsPerDay}
 									testId="logs-per-day-slider"
+									aria-labelledby="logs-per-day-label"
 									marks={marks}
 									tooltip
 									formatValue={(): string => `${logsPerDayValue.toLocaleString()} GB`}
@@ -221,9 +222,9 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="hosts-per-day-label">
 							Metrics <Minus size={14} /> Number of Hosts
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
@@ -232,6 +233,7 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.hostsPerDay}
 									testId="hosts-per-day-slider"
+									aria-labelledby="hosts-per-day-label"
 									marks={hostMarks}
 									tooltip
 									formatValue={(): string => `${hostsPerDayValue.toLocaleString()}`}
@@ -242,9 +244,9 @@ function OptimiseSignozNeeds({
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="services-label">
 							Number of services
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
@@ -253,6 +255,7 @@ function OptimiseSignozNeeds({
 									max={100}
 									value={sliderValues.services}
 									testId="services-slider"
+									aria-labelledby="services-label"
 									marks={serviceMarks}
 									tooltip
 									formatValue={(): string => `${servicesValue.toLocaleString()}`}

@@ -3,13 +3,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import {
-	findByText,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
@@ -115,7 +109,7 @@ describe('PipelinePage container test', () => {
 		server.close();
 	});
 	it('should render PipelineListsView section', () => {
-		const { getByText, container } = render(
+		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
 					setActionType={jest.fn()}
@@ -134,7 +128,7 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-row')).toHaveLength(2);
 
 		expect(getByText('Apache common parser')).toBeInTheDocument();
 		expect(getByText('source = nginx')).toBeInTheDocument();
@@ -159,23 +153,17 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-edit-action')).toHaveLength(2);
 		expect(getByText('add_new_pipeline')).toBeInTheDocument();
 
 		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
+		const expandIcon = screen.getAllByTestId('pipeline-row-expand');
 		expect(expandIcon).toHaveLength(2);
 
 		await user.click(expandIcon[0]);
 
 		// assert expanded view
-		expect(
-			document.querySelector('[data-testid="pipeline-row-collapse"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('pipeline-row-collapse')).toBeInTheDocument();
 		expect(getByText('add_new_processor')).toBeInTheDocument();
 		expect(getByText('grok use common asd')).toBeInTheDocument();
 		expect(getByText('rename auth')).toBeInTheDocument();
@@ -197,50 +185,35 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-edit-action')).toHaveLength(2);
 
 		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
+		const expandIcon = screen.getAllByTestId('pipeline-row-expand');
 		expect(expandIcon).toHaveLength(2);
 		await user.click(expandIcon[0]);
 
-		const switchToggle = document.querySelector(
-			'.ant-table-expanded-row [role="switch"]',
-		);
+		const [switchToggle] = within(
+			screen.getByTestId('pipeline-expand-view'),
+		).getAllByTestId('pipeline-enabled-switch');
 
 		expect(switchToggle).toBeChecked();
-		await user.click(switchToggle as HTMLElement);
+		await user.click(switchToggle);
 		expect(switchToggle).not.toBeChecked();
 
-		const deleteBtns = document.querySelectorAll(
-			'.ant-table-expanded-row [data-testid="pipeline-delete-action"]',
-		);
+		const deleteBtns = within(
+			screen.getByTestId('pipeline-expand-view'),
+		).getAllByTestId('pipeline-delete-action');
 
 		expect(deleteBtns).toHaveLength(3);
 
 		// delete pipeline
-		await user.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0]);
 
-		let deleteConfirmationModal;
-
-		await waitFor(async () => {
-			deleteConfirmationModal = document.querySelector('.ant-modal-wrap');
-			expect(deleteConfirmationModal).toBeInTheDocument();
-		});
-
-		await user.click(
-			(deleteConfirmationModal as unknown as HTMLElement)?.querySelector(
-				'.ant-modal-confirm-btns .ant-btn-primary',
-			) as HTMLElement,
-		);
+		await user.click(await screen.findByTestId('pipeline-alert-ok'));
 
 		expect(
-			document.querySelectorAll(
-				'.ant-table-expanded-row [data-testid="pipeline-delete-action"]',
+			within(screen.getByTestId('pipeline-expand-view')).getAllByTestId(
+				'pipeline-delete-action',
 			),
 		).toHaveLength(2);
 	});
@@ -263,58 +236,36 @@ describe('PipelinePage container test', () => {
 		const addNewPipelineBtn = getByText('add_new_pipeline');
 		expect(addNewPipelineBtn).toBeInTheDocument();
 
-		const switchToggle = document.querySelectorAll('[role="switch"]');
+		const switchToggle = screen.getAllByTestId('pipeline-enabled-switch');
 
 		expect(switchToggle[0]).not.toBeChecked();
-		await user.click(switchToggle[0] as HTMLElement);
+		await user.click(switchToggle[0]);
 		expect(switchToggle[0]).toBeChecked();
 
 		// view pipeline
-		const viewBtn = document.querySelectorAll(
-			'[data-testid="pipeline-preview-action"]',
-		);
-		await user.click(viewBtn[0] as HTMLElement);
+		const viewBtn = screen.getAllByTestId('pipeline-preview-action');
+		await user.click(viewBtn[0]);
 
-		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
-		expect(viewPipelineModal).toBeInTheDocument();
+		const viewPipelineModal = screen.getByTestId('pipeline-preview-modal');
 
 		await expect(
-			findByText(
-				viewPipelineModal as unknown as HTMLElement,
-				'Simulate Processing',
-			),
-		).resolves.toBeInTheDocument();
+			within(viewPipelineModal).findByTestId('pipeline-simulate-processing'),
+		).resolves.toHaveTextContent('Simulate Processing');
 
-		await user.click(
-			viewPipelineModal?.querySelector(
-				'button[class*="ant-modal-close"]',
-			) as HTMLElement,
-		);
+		await user.click(within(viewPipelineModal).getByLabelText('Close'));
 
-		const deleteBtns = document.querySelectorAll(
-			'[data-testid="pipeline-delete-action"]',
-		);
+		const deleteBtns = screen.getAllByTestId('pipeline-delete-action');
 
 		// delete pipeline
-		await user.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0]);
 
-		await waitFor(() =>
-			expect(document.querySelector('.delete-pipeline')).toBeInTheDocument(),
-		);
+		await expect(
+			screen.findByText('delete_pipeline : Apache common parser?'),
+		).resolves.toBeInTheDocument();
 
-		await waitFor(() =>
-			expect(
-				document.querySelector('.delete-pipeline-ok-text'),
-			).toBeInTheDocument(),
-		);
+		await user.click(screen.getByTestId('pipeline-alert-ok'));
 
-		await user.click(
-			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
-		);
-
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-delete-action"]'),
-		).toHaveLength(1);
+		expect(screen.getAllByTestId('pipeline-delete-action')).toHaveLength(1);
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
@@ -392,7 +343,9 @@ describe('PipelinePage container test', () => {
 
 		// Open Filter input to trigger suggestions
 		const filterSelect = screen.getByTestId('qb-search-select');
-		await user.click(filterSelect.querySelector('input') as HTMLInputElement);
+		await user.click(
+			within(filterSelect).getByRole('combobox', { hidden: true }),
+		);
 
 		await expect(
 			screen.findByText('otelServiceName'),

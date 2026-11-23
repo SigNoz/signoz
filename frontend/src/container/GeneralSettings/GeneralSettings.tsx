@@ -617,7 +617,10 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<div className="retention-row">
+					<div
+						className="retention-row"
+						data-testid={`${category.type}-retention-row`}
+					>
 						<span className="retention-row-label">
 							{category.icon}
 							{category.name}

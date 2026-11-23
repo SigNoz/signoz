@@ -1,6 +1,6 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { IDiskType } from 'types/api/disks/getDisks';
 import {
 	PayloadPropsLogs,
@@ -93,10 +93,7 @@ const mockDisksWithoutS3: IDiskType[] = [
 	},
 ];
 
-const getLogsRow = (): HTMLElement => {
-	const logsLabel = screen.getByText('Logs');
-	return logsLabel.closest('.retention-row') as HTMLElement;
-};
+const getLogsRow = (): HTMLElement => screen.getByTestId('logs-retention-row');
 
 describe('GeneralSettings - S3 Logs Retention', () => {
 	beforeEach(() => {
@@ -126,27 +123,24 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(logsRow).toBeInTheDocument();
 
 			// Find all inputs in the Logs row - there should be 2 (total retention + S3)
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(2);
-
-			// The second input is the S3 retention field
-			const s3Input = inputs[1] as HTMLInputElement;
-
-			// Find the S3 dropdown (next sibling of the S3 input)
-			const s3Dropdown = s3Input
-				?.closest('.retention-row-controls')
-				?.querySelectorAll('.ant-select-selector')[1] as HTMLElement;
-			expect(s3Dropdown).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-total-retention-field'),
+			).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-s3-retention-field'),
+			).toBeInTheDocument();
 
 			// Click the S3 dropdown to open it
-			await user.click(s3Dropdown);
+			await user.click(
+				within(screen.getByTestId('logs-s3-retention-unit')).getByTitle('Days'),
+			);
 
 			// Wait for dropdown options to appear and verify only "Days" is available
-			await waitFor(() => {
-				const dropdownOptions = document.querySelectorAll('.ant-select-item');
-				expect(dropdownOptions).toHaveLength(1);
-				expect(dropdownOptions[0]).toHaveTextContent('Days');
-			});
+			const dropdownOptions = await screen.findAllByTestId(
+				'logs-s3-retention-unit-option',
+			);
+			expect(dropdownOptions).toHaveLength(1);
+			expect(dropdownOptions[0]).toHaveTextContent('Days');
 		});
 
 		it('should send correct API payload for S3 retention', async () => {
@@ -163,7 +157,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			const s3Input = getLogsRow().querySelectorAll('input[type="number"]')[1];
+			const s3Input = screen.getByTestId('logs-s3-retention-field');
 
 			// Change S3 retention value to 5 days
 			await user.clear(s3Input);
@@ -203,8 +197,12 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Verify S3 field is visible
 			const logsRow = getLogsRow();
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(2); // Total + S3
+			expect(
+				within(logsRow).getByTestId('logs-total-retention-field'),
+			).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-s3-retention-field'),
+			).toBeInTheDocument();
 		});
 	});
 
@@ -227,26 +225,25 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(logsRow).toBeInTheDocument();
 
 			// Only 1 input should be visible (total retention, no S3)
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(1);
+			expect(
+				within(logsRow).queryByTestId('logs-s3-retention-field'),
+			).not.toBeInTheDocument();
 
 			// Change total retention value
-			const totalInput = inputs[0] as HTMLInputElement;
+			const totalInput = within(logsRow).getByTestId('logs-total-retention-field');
 
 			// First, change the dropdown to Days (it defaults to Months)
-			const totalDropdown = logsRow.querySelector(
-				'.ant-select-selector',
-			) as HTMLElement;
-			await user.click(totalDropdown);
+			await user.click(
+				within(screen.getByTestId('logs-total-retention-unit')).getByTitle(
+					'Months',
+				),
+			);
 
 			// Find and click the Days option
-			const daysOption = await waitFor(() => {
-				const option = Array.from(
-					document.querySelectorAll('.ant-select-item'),
-				).find((opt) => opt.textContent?.includes('Days'));
-				expect(option).toBeInTheDocument();
-				return option as HTMLElement;
-			});
+			const [daysOption] = await screen.findAllByTestId(
+				'logs-total-retention-unit-option',
+			);
+			expect(daysOption).toHaveTextContent('Days');
 			await user.click(daysOption);
 
 			// Now change the value
@@ -287,21 +284,19 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			const logsRow = getLogsRow();
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-
 			// Total retention: 30 days = 1 month (displays as 1 Month)
-			const totalInput = inputs[0] as HTMLInputElement;
-			expect(totalInput.value).toBe('1');
+			expect(screen.getByTestId('logs-total-retention-field')).toHaveValue(1);
 
 			// S3 retention: 24 days
-			const s3Input = inputs[1] as HTMLInputElement;
-			expect(s3Input.value).toBe('24');
+			expect(screen.getByTestId('logs-s3-retention-field')).toHaveValue(24);
 
 			// Verify dropdowns: total shows Months, S3 shows Days
-			const dropdowns = logsRow.querySelectorAll('.ant-select-selection-item');
-			expect(dropdowns[0]).toHaveTextContent('Months');
-			expect(dropdowns[1]).toHaveTextContent('Days');
+			expect(screen.getByTestId('logs-total-retention-unit')).toHaveTextContent(
+				'Months',
+			);
+			expect(screen.getByTestId('logs-s3-retention-unit')).toHaveTextContent(
+				'Days',
+			);
 		});
 	});
 
@@ -330,8 +325,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Find the total retention input
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			const totalInput = inputs[0] as HTMLInputElement;
+			const totalInput = within(logsRow).getByTestId('logs-total-retention-field');
 
 			// Change total retention value to trigger button enable
 			await user.clear(totalInput);

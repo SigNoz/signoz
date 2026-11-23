@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
@@ -52,10 +52,10 @@ function renderDetails(
 	);
 }
 
-function channelsSelectInput(): HTMLInputElement {
-	return screen
-		.getByTestId(CHANNELS_SELECT)
-		.querySelector('input') as HTMLInputElement;
+function channelsSelectInput(): HTMLElement {
+	return within(screen.getByTestId(CHANNELS_SELECT)).getByLabelText(
+		'Notification Channels',
+	);
 }
 
 describe('RoutingPolicyDetails', () => {
@@ -189,11 +189,7 @@ describe('RoutingPolicyDetails', () => {
 		const saveButton = screen.getByTestId(SAVE_BUTTON);
 		expect(saveButton).toHaveTextContent(SAVE_BUTTON_TEXT);
 		expect(saveButton).toBeDisabled();
-		expect(saveButton.querySelector('svg')).toBeInTheDocument();
-		expect(saveButton.querySelector('svg')).toHaveAttribute(
-			'data-icon',
-			'loading',
-		);
+		expect(within(saveButton).getByLabelText('loading')).toBeInTheDocument();
 	});
 
 	it('submit should not be called when inputs are invalid', async () => {

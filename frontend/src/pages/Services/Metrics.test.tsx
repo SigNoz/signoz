@@ -1,4 +1,4 @@
-import { render, screen } from 'tests/test-utils';
+import { render, screen, within } from 'tests/test-utils';
 
 import Metrics from '.';
 
@@ -11,18 +11,15 @@ describe('Services', () => {
 
 		expect(screen.getByTestId('resource-environment-filter')).toBeInTheDocument();
 
-		const columnHeaders = Array.from(
-			document.querySelectorAll('th'),
-			(header) => header.textContent,
-		);
-		expect(columnHeaders).toStrictEqual(
-			expect.arrayContaining([
-				expect.stringMatching(/application/i),
-				expect.stringMatching(/p99 latency \(in ms\)/i),
-				expect.stringMatching(/error rate \(% of total\)/i),
-				expect.stringMatching(/operations per second/i),
-			]),
-		);
+		const table = within(screen.getByTestId('services-table'));
+		[
+			'Application',
+			'P99 latency (in ms)',
+			'Error Rate (% of total)',
+			'Operations Per Second',
+		].forEach((columnTitle) => {
+			expect(table.getByText(columnTitle)).toBeInTheDocument();
+		});
 	});
 
 	// TODO: Fix this test
