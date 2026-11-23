@@ -37,7 +37,6 @@
 .param {
 	display: flex;
 	gap: 6px;
-	font-size: 12px;
 	line-height: 1.4;
 }
 
@@ -52,7 +51,7 @@
 
 .paramVal {
 	color: var(--l1-foreground);
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-base-400-font-family);
 	word-break: break-all;
 }
 

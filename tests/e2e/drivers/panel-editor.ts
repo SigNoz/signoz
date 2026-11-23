@@ -7,6 +7,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { PanelKind } from './dashboard-spec';
 
 import { EDITOR_ROOT } from './dashboards';
+import { inputField } from './input';
 import { driver } from './kit';
 import { newPanelDriver } from './panel-editor/picker';
 import { type QueryPane, queryPaneAt } from './panel-editor/query';
@@ -137,7 +138,7 @@ export function editorDriver(page: Page): PanelEditor {
 
 	const editor: PanelEditor = {
 		root: () => page.locator(EDITOR_ROOT),
-		title: () => byTestId('title'),
+		title: () => inputField(page, 'panel-editor-v2-title'),
 		description: () => byTestId('description'),
 		saveButton: () => byTestId('save'),
 		unsavedBadge: () => byTestId('unsaved-badge'),

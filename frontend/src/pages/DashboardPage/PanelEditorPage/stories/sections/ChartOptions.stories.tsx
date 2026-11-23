@@ -23,6 +23,7 @@ import {
 	pickLogScale,
 	stackBars,
 } from '../__story_mockdata__/chartOptions.play';
+import { enterInvalidDisconnectThreshold } from '../__story_mockdata__/panelEditor.play';
 
 import PanelEditorPage from '../../PanelEditorPage';
 
@@ -88,6 +89,11 @@ export const LegendRight: Story = {
 /** Chart appearance: line style, interpolation, fill and points. */
 export const ChartAppearance: Story = {
 	play: openChartAppearance,
+};
+
+/** Disconnect-values in threshold mode, with an invalid duration showing the inline error. */
+export const ChartAppearanceDisconnectThreshold: Story = {
+	play: enterInvalidDisconnectThreshold,
 };
 
 /** Dashed lines under a gradient fill, with the points drawn. */

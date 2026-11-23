@@ -123,13 +123,24 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccounts, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID))
+	params := new(serviceaccounttypes.ListServiceAccountsParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if err := params.Validate(); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccounts, total, err := handler.module.List(ctx, valuer.MustNewUUID(claims.OrgID), params)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	render.Success(rw, http.StatusOK, serviceAccounts)
+	render.Success(rw, http.StatusOK, serviceaccounttypes.NewListableServiceAccount(serviceAccounts, total))
 }
 
 func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {

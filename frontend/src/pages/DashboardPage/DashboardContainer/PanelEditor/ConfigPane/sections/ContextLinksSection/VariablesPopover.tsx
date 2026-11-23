@@ -1,9 +1,9 @@
-// Uses Popover (not DropdownMenu): DropdownMenuTrigger preventDefaults pointerdown,
-// which steals input focus and dismisses on every keystroke. PopoverAnchor is a passive
-// positioning element that leaves the wrapped input fully interactive.
-import { ReactNode, useRef, useState } from 'react';
+// Driven by a handle, not a trigger: the thing that opens this is the input taking focus, and a
+// trigger press would steal that focus and dismiss the popup on every keystroke. The handle
+// anchors the suggestions to the input's row while the caret stays where the user put it.
+import { KeyboardEvent, ReactNode, useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Popover, PopoverAnchor, PopoverContent } from '@signozhq/ui/popover';
+import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';
 
 import type { VariableItem } from './types';
@@ -13,6 +13,7 @@ import styles from './VariablesPopover.module.scss';
 interface VariablesPopoverRenderProps {
 	setIsOpen: (open: boolean) => void;
 	setCursorPosition: (position: number | null) => void;
+	onInputKeyDown: (event: KeyboardEvent<HTMLElement>) => void;
 }
 
 interface VariablesPopoverProps {
@@ -25,60 +26,57 @@ interface VariablesPopoverProps {
 /**
  * Autocomplete for context-link variables. Wraps an input (via the render-prop) and
  * shows the available `{{variables}}` grouped by source; picking one inserts it at the
- * tracked cursor. The consumer drives `setIsOpen` (on focus) and `setCursorPosition`.
+ * tracked cursor. The consumer drives `setIsOpen` (on focus) and `setCursorPosition`, and
+ * passes `onInputKeyDown` to the input so `Esc` closes the suggestions and not the dialog.
  */
 function VariablesPopover({
 	variables,
 	onVariableSelect,
 	children,
 }: VariablesPopoverProps): JSX.Element {
-	const [isOpen, setIsOpen] = useState(false);
 	const [cursorPosition, setCursorPosition] = useState<number | null>(null);
+	const [isSuggesting, setIsSuggesting] = useState(false);
 	const anchorRef = useRef<HTMLDivElement>(null);
+	const suggestions = usePopoverHandle(setIsSuggesting);
 
-	const handleOpenChange = (open: boolean): void => {
-		// Accept "close" events (outside-click, Esc) but ignore opens — opening is driven
-		// by the input's onFocus in the consumer.
+	const setIsOpen = (open: boolean): void => {
 		if (!open) {
-			setIsOpen(false);
+			suggestions.close();
+			return;
+		}
+		if (anchorRef.current) {
+			suggestions.showAt(anchorRef.current);
 		}
 	};
 
-	// Keep the popover open while the pointer/focus is inside the anchored input.
-	const keepOpenIfInsideAnchor = (event: {
-		target: EventTarget | null;
-	}): void => {
-		const target = event.target as Node | null;
-		if (
-			target &&
-			anchorRef.current?.contains(target) &&
-			'preventDefault' in event
-		) {
-			(event as Event).preventDefault();
+	// Focus stays in the input, so its Esc would also reach the dialog around it.
+	const onInputKeyDown = (event: KeyboardEvent<HTMLElement>): void => {
+		if (event.key === 'Escape' && isSuggesting) {
+			event.stopPropagation();
+			suggestions.close();
 		}
 	};
 
 	return (
 		<div className={styles.container}>
-			<Popover open={isOpen} onOpenChange={handleOpenChange} modal={false}>
-				<PopoverAnchor asChild>
-					<div className={styles.anchor} ref={anchorRef}>
-						{children({ setIsOpen, setCursorPosition })}
-					</div>
-				</PopoverAnchor>
-				<PopoverContent
-					align="start"
-					sideOffset={4}
-					// Render inside the anchor (not a body portal): the editor lives in a modal
-					// DialogWrapper, and radix's modal sets pointer-events:none on everything
-					// portalled outside it, which would make the suggestions unclickable.
-					withPortal={false}
-					className={styles.content}
-					onOpenAutoFocus={(e): void => e.preventDefault()}
-					onCloseAutoFocus={(e): void => e.preventDefault()}
-					onInteractOutside={keepOpenIfInsideAnchor}
-					onFocusOutside={keepOpenIfInsideAnchor}
-				>
+			<div className={styles.anchor} ref={anchorRef}>
+				{children({ setIsOpen, setCursorPosition, onInputKeyDown })}
+			</div>
+			<Popover
+				side="bottom"
+				align="start"
+				handle={suggestions}
+				// The caret belongs to the input the suggestions are for, on the way in and out.
+				initialFocus={false}
+				finalFocus={false}
+				// Matches the field it belongs to. Both, because the default max width would
+				// otherwise clamp a wide field's suggestions to 25rem.
+				width="var(--anchor-width)"
+				maxWidth="var(--anchor-width)"
+				maxHeight={300}
+				aria-label="Insert a variable"
+			>
+				<div className={styles.content}>
 					{variables.length === 0 ? (
 						<div className={styles.empty}>No variables available</div>
 					) : (
@@ -98,22 +96,38 @@ function VariablesPopover({
 									testId={`context-link-variable-${v.name}`}
 									onClick={(): void => {
 										onVariableSelect(`{{${v.name}}}`, cursorPosition ?? undefined);
-										setIsOpen(false);
+										suggestions.close();
 									}}
 								>
 									<div className={styles.row}>
-										<Typography.Text
-											className={styles.name}
-										>{`{{${v.name}}}`}</Typography.Text>
-										<Typography.Text className={styles.source}>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											display="inline-block"
+											minWidth={0}
+											textOverflow="ellipsis"
+										>{`{{${v.name}}}`}</Typography>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="tertiary"
+											as="span"
+											display="inline-block"
+											minWidth={0}
+											textOverflow="ellipsis"
+										>
 											{v.source}
-										</Typography.Text>
+										</Typography>
 									</div>
 								</Button>
 							</span>
 						))
 					)}
-				</PopoverContent>
+				</div>
 			</Popover>
 		</div>
 	);

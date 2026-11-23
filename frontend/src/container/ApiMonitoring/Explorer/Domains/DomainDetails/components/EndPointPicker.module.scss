@@ -1,18 +1,4 @@
 .picker {
 	width: 460px;
 	max-width: 100%;
-
-	// Popover fits its longest option by default; match the trigger so long URLs truncate.
-	[data-slot='combobox-content'] {
-		--popover-width: var(--radix-popover-trigger-width);
-	}
-}
-
-.option {
-	display: block;
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }

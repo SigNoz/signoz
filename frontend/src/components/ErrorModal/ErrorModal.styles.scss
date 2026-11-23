@@ -1,22 +1,16 @@
+// The mask of the error modal blurs the page and any dialog under it, so a dialog's
+// own backdrop would dim the page a second time.
+body:has(.error-modal__wrap:not([style*='display: none'])) {
+	--dialog-backdrop-color: transparent;
+	--alert-dialog-backdrop-color: transparent;
+}
+
 .error-modal {
 	&__trigger {
 		width: fit-content;
 		display: flex;
 		align-items: center;
-		gap: 4px;
-		border-radius: 20px;
-		background: color-mix(in srgb, var(--danger-background) 20%, transparent);
-		padding-left: 3px;
-		padding-right: 8px;
 		cursor: pointer;
-		span {
-			color: var(--danger-background);
-			font-size: 10px;
-			font-weight: 500;
-			line-height: 20px; /* 200% */
-			letter-spacing: 0.4px;
-			text-transform: uppercase;
-		}
 	}
 	&__wrap {
 		background: linear-gradient(
@@ -65,7 +59,6 @@
 			&__value {
 				padding: 4px 8px;
 				font-size: 12px;
-				font-style: normal;
 				font-weight: 500;
 				line-height: 16px;
 				letter-spacing: 0.48px;

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Skeleton } from '@signozhq/ui/skeleton';
 import { Typography } from '@signozhq/ui/typography';
@@ -41,17 +41,10 @@ function SavedViewsList({
 	const saveNewView = useSaveNewView(createView);
 	const { createdByMe, createdByOthers, isLoading, isError, refetch } =
 		useSavedViewsList(source, search);
-	const {
-		copyViewLink,
-		copyViewId,
-		renameView,
-		deleteView,
-		isRenaming,
-		isDeleting,
-	} = useSavedViewRowActions(source);
+	const { copyViewLink, copyViewId, renameView, deleteView, isRenaming } =
+		useSavedViewRowActions(source);
 	const [pendingAction, setPendingAction] =
 		useState<PendingSavedViewAction | null>(null);
-	const listRef = useRef<HTMLDivElement>(null);
 	const hoverCard = useSavedViewHoverCard();
 	const {
 		onRowEnter: onHoverCardRowEnter,
@@ -65,15 +58,7 @@ function SavedViewsList({
 
 	const rowHover = useMemo<SavedViewsListRowHoverProps>(
 		() => ({
-			onRowEnter: (viewId, row): void => {
-				const listTop = listRef.current?.getBoundingClientRect().top ?? 0;
-				const rowRect = row.getBoundingClientRect();
-				onHoverCardRowEnter({
-					viewId,
-					anchorTop: rowRect.top - listTop,
-					anchorHeight: rowRect.height,
-				});
-			},
+			onRowEnter: onHoverCardRowEnter,
 			onRowLeave: onHoverCardRowLeave,
 			onMenuOpen: closeHoverCard,
 		}),
@@ -112,7 +97,7 @@ function SavedViewsList({
 		return (
 			<div className={styles.loading} data-testid="saved-views-list-loading">
 				{Array.from({ length: SAVED_VIEWS_LIST_LOADING_ROWS }, (_, index) => (
-					<Skeleton.Input key={index} active size="small" block />
+					<Skeleton.Input key={index} size="sm" />
 				))}
 			</div>
 		);
@@ -121,9 +106,16 @@ function SavedViewsList({
 	if (isError) {
 		return (
 			<div className={styles.state} data-testid="saved-views-list-error">
-				<Typography.Text className={styles.stateText}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Could not load views
-				</Typography.Text>
+				</Typography>
 				<Button
 					variant="outlined"
 					color="secondary"
@@ -151,7 +143,6 @@ function SavedViewsList({
 
 	return (
 		<div
-			ref={listRef}
 			className={styles.list}
 			onScrollCapture={closeHoverCard}
 			data-testid="saved-views-list"
@@ -181,10 +172,9 @@ function SavedViewsList({
 				/>
 			)}
 			<SavedViewHoverCard
-				target={hoverCard.target}
+				handle={hoverCard.handle}
 				onCardEnter={hoverCard.onCardEnter}
 				onCardLeave={hoverCard.onCardLeave}
-				onClose={closeHoverCard}
 			/>
 			{pendingAction?.key === 'editDetails' && (
 				<SaveViewModal
@@ -199,11 +189,8 @@ function SavedViewsList({
 			)}
 			{pendingAction?.key === 'delete' && (
 				<DeleteSavedViewDialog
-					isDeleting={isDeleting}
 					onCancel={closePendingAction}
-					onConfirm={(): void => {
-						void handleDelete();
-					}}
+					onConfirm={handleDelete}
 				/>
 			)}
 		</div>

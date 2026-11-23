@@ -48,8 +48,6 @@
 	border-radius: var(--radius-2);
 	padding: 8px;
 	font-size: 12px;
-	font-style: normal;
-	font-weight: 400;
 	line-height: 20px; /* 153.846% */
 	letter-spacing: -0.065px;
 	font-feature-settings: 'zero' on;
@@ -60,7 +58,7 @@
 		border-radius: var(--radius-3);
 		background: var(--l3-background-60);
 		color: var(--l1-foreground);
-		font-size: var(--periscope-font-size-base);
+		font-size: var(--paragraph-base-400-font-size);
 	}
 
 	.assistant & {
@@ -246,7 +244,7 @@
 	}
 
 	code {
-		font-family: 'Geist Mono', 'Fira Code', monospace;
+		font-family: var(--code-small-400-font-family);
 		font-size: 11.5px;
 		border-radius: var(--radius-2);
 		padding: 1px 4px;

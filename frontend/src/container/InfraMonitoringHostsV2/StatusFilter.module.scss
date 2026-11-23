@@ -2,14 +2,14 @@
 	display: flex;
 	align-items: center;
 
+	// The group butts up against the status label, so its left corners stay square.
 	--toggle-group-border-radius: 0px 2px 2px 0px;
-	--toggle-group-button-font-size: var(--periscope-font-size-base);
 }
 
 .statusLabel {
 	min-width: max-content;
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--periscope-font-weight-regular);
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: 18px;
 
 	border-radius: 2px 0px 0px 2px;

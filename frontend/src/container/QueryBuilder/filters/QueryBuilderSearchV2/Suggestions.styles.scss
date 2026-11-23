@@ -1,24 +1,12 @@
-.text {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 20px;
-	letter-spacing: -0.07px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.dot {
-	height: 5px;
-	width: 5px;
-	border-radius: 50%;
-	background-color: var(--l3-background);
-	flex-shrink: 0;
-}
-
 .option {
+	.dot {
+		height: 5px;
+		width: 5px;
+		border-radius: 50%;
+		background-color: var(--l3-background);
+		flex-shrink: 0;
+	}
+
 	.container {
 		display: flex;
 		align-items: center;
@@ -32,6 +20,7 @@
 			gap: 8px;
 
 			.value {
+				color: var(--l2-foreground);
 				overflow: hidden;
 				text-overflow: ellipsis;
 				white-space: nowrap;
@@ -63,7 +52,6 @@
 				justify-content: center;
 				gap: 4px;
 				border-radius: 50px;
-				text-transform: capitalize;
 				white-space: nowrap;
 
 				&.tag {
@@ -78,15 +66,6 @@
 					.dot {
 						background-color: var(--bg-sienna-400);
 					}
-					.text {
-						color: var(--bg-sienna-400);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 18px; /* 150% */
-						letter-spacing: -0.06px;
-					}
 				}
 
 				&.resource {
@@ -96,15 +75,6 @@
 
 					.dot {
 						background-color: var(--bg-aqua-400);
-					}
-					.text {
-						color: var(--bg-aqua-400);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 18px; /* 150% */
-						letter-spacing: -0.06px;
 					}
 				}
 
@@ -119,15 +89,6 @@
 
 					.dot {
 						background-color: var(--bg-robin-400);
-					}
-					.text {
-						color: var(--bg-robin-400);
-						font-family: Inter;
-						font-size: 12px;
-						font-style: normal;
-						font-weight: 400;
-						line-height: 18px; /* 150% */
-						letter-spacing: -0.06px;
 					}
 				}
 			}
@@ -149,28 +110,9 @@
 			align-items: center;
 			gap: 8px;
 
-			.OPERATOR {
+			.value {
 				color: var(--l2-foreground);
-				font-family: 'Space Mono';
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-				text-transform: uppercase;
-				width: 100%;
-			}
-
-			.VALUE {
-				color: var(--l2-foreground);
-				font-family: 'Space Mono';
-				font-size: 14px;
-				font-style: normal;
-				font-weight: 500;
-				line-height: 20px; /* 142.857% */
-				letter-spacing: -0.07px;
-				text-transform: uppercase;
-				width: 100%;
+				min-width: 0;
 			}
 		}
 

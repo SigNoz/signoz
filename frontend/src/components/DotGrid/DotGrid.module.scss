@@ -17,8 +17,8 @@
 	position: absolute;
 	left: var(--spacing-6);
 	bottom: var(--spacing-1);
-	font-family: var(--font-mono, monospace);
-	font-size: var(--periscope-font-size-small);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--paragraph-small-400-font-size);
 	letter-spacing: 0.34em;
 	text-transform: uppercase;
 	white-space: nowrap;

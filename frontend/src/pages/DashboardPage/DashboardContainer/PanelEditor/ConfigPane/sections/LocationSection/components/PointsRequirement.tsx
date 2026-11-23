@@ -1,5 +1,7 @@
+import { SolidAlertTriangle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
+import { Typography } from '@signozhq/ui/typography';
 
 import styles from '../LocationSection.module.scss';
 
@@ -29,12 +31,21 @@ function PointsRequirement({
 
 	return (
 		<Callout
-			type="warning"
-			size="small"
-			showIcon
-			title="Points need latitude and longitude columns"
+			color="warning"
+			size="sm"
+			icon={<SolidAlertTriangle />}
 			testId="geo-location-points-requirement"
 		>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="medium"
+				color="inherit"
+				as="p"
+				textOverflow="wrap"
+			>
+				Points need latitude and longitude columns
+			</Typography>
 			{onAddGroupBy ? (
 				<div className={styles.alternative}>
 					<span>Add {keys} to Group By.</span>

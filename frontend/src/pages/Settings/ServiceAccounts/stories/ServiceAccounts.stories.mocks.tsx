@@ -22,7 +22,7 @@ import {
 	serviceAccountDetailResponse,
 	serviceAccountKeysResponse,
 	serviceAccountSaveError,
-	serviceAccountsResponse,
+	serviceAccountsPage,
 } from './__story_mockdata__/serviceAccounts';
 
 import {
@@ -47,6 +47,25 @@ export const accountsLoadError = rest.get(
 	handleInternalServerError,
 );
 
+export const queryRejected = rest.get(
+	'http://localhost/api/v1/service_accounts',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(400),
+			ctx.json({
+				status: 'error',
+				error: {
+					code: 'service_account_list_filter_invalid',
+					type: 'invalid_input',
+					message: 'invalid filter query: unknown key "owner"',
+					url: '',
+					errors: [],
+					suggestions: [],
+				},
+			}),
+		),
+);
+
 export const keysLoadingForever = rest.get(
 	'http://localhost/api/v1/service_accounts/:id/keys',
 	(_req, res, ctx) => res(ctx.delay('infinite')),
@@ -56,7 +75,8 @@ export const serviceAccountsMocks = defineStoryMocks({
 	controls: {
 		accounts: countControl('Active accounts', {
 			group: LIST,
-			description: 'The table paginates past 20.',
+			description:
+				'The table paginates past 20. Search, the status filter and paging are answered the way the API does, one page at a time.',
 			value: 5,
 			max: ACTIVE_ACCOUNT_MAX,
 		}),
@@ -118,8 +138,8 @@ export const serviceAccountsMocks = defineStoryMocks({
 	handlers: (values, response) => [
 		rest.get(
 			'http://localhost/api/v1/service_accounts',
-			response.json(() =>
-				serviceAccountsResponse(values.accounts, values.deleted),
+			response.json((req) =>
+				serviceAccountsPage(values.accounts, values.deleted, req.url.searchParams),
 			),
 		),
 

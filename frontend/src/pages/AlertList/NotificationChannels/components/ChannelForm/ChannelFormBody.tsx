@@ -38,7 +38,7 @@ function ChannelFormBody({
 		onTest,
 		isSaving,
 		isTesting,
-	} = useChannelFormState({ draft, target, onDone });
+	} = useChannelFormState({ draft, target, onDone, readOnly });
 
 	const onDiscard = (): void => {
 		if (!isDirty) {
@@ -48,7 +48,17 @@ function ChannelFormBody({
 
 		confirmDelete({
 			title: (
-				<Typography.Title level={5}>{t('discard_changes_title')}</Typography.Title>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="bold"
+					color="inherit"
+					as="h5"
+					marginY={4}
+					textOverflow="wrap"
+				>
+					{t('discard_changes_title')}
+				</Typography>
 			),
 			content: t('discard_changes_body'),
 			confirmText: t('button_discard_confirm'),

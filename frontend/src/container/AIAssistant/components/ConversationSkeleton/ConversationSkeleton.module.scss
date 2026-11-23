@@ -55,16 +55,14 @@
 // A bar in the middle of a 20px line, the height of the text it stands in for.
 .line {
 	margin-block: 5px;
-	--skeleton-input-height: 10px;
-	--skeleton-input-width: 100%;
-	--skeleton-input-min-width: 0;
-	--skeleton-input-border-radius: var(--radius-1);
+	--skeleton-input-sm-height: 10px;
+	--skeleton-border-radius: var(--radius-1);
 	--skeleton-background: color-mix(
 		in srgb,
 		var(--l1-foreground),
 		transparent 92%
 	);
-	--skeleton-shimmer-color: color-mix(
+	--skeleton-active-band-color: color-mix(
 		in srgb,
 		var(--l1-foreground),
 		transparent 92%

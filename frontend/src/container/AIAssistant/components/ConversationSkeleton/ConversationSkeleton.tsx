@@ -49,18 +49,20 @@ export default function ConversationSkeleton(): JSX.Element {
 				>
 					{row.role === 'user' ? (
 						<div className={styles.userBubble} style={{ width: `${row.width}%` }}>
-							<Skeleton.Input active className={styles.line} />
+							<div className={styles.line}>
+								<Skeleton.Input active size="sm" />
+							</div>
 						</div>
 					) : (
 						<div className={styles.reply}>
 							{row.lines.map((width, lineIdx) => (
-								<Skeleton.Input
+								<div
 									// eslint-disable-next-line react/no-array-index-key
 									key={lineIdx}
-									active
 									className={styles.line}
-									style={{ width: `${width}%` }}
-								/>
+								>
+									<Skeleton.Input active size="sm" width={`${width}%`} />
+								</div>
 							))}
 						</div>
 					)}

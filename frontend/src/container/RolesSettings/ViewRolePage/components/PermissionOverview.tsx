@@ -79,9 +79,19 @@ function PermissionOverview({
 	if (isError || !permissions) {
 		return (
 			<div className={styles.container} data-testid="permission-overview-error">
-				<Typography.Text className={styles.errorText} align="center" color="danger">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="danger"
+					as="p"
+					display="inline-block"
+					align="center"
+					padding={4}
+					textOverflow="wrap"
+				>
 					Failed to load permissions
-				</Typography.Text>
+				</Typography>
 			</div>
 		);
 	}

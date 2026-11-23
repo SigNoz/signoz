@@ -61,7 +61,13 @@ describe('CeleryTaskGraphGrid worker count', () => {
 		);
 
 		const { minTime, maxTime } = store.getState().globalTime;
-		expect(requests).toStrictEqual([
+		expect(
+			requests.filter((request) =>
+				request.compositeQuery?.queries?.some(
+					(query) => (query.spec as { signal?: string }).signal === 'metrics',
+				),
+			),
+		).toStrictEqual([
 			{
 				schemaVersion: 'v1',
 				start: Math.floor(minTime / 1e6),

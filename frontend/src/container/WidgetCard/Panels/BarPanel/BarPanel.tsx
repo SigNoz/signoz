@@ -36,6 +36,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 		groupByPerQuery,
 		enableDrillDown = false,
+		onClickHandler,
 	} = props;
 	const uPlotRef = useRef<uPlot | null>(null);
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,7 @@ function BarPanel(props: PanelWrapperProps): JSX.Element {
 		widget,
 		queryResponse,
 		enableDrillDown,
+		onClickHandler,
 	});
 
 	const config = useMemo(() => {

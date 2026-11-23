@@ -10,6 +10,7 @@ import { authToken } from './api';
 import { ADMIN } from './auth';
 import { buildDashboard, createViaApi, deleteViaApi } from './dashboards';
 import { SAMPLE_POD, seedPodMetricsViaSeeder } from './infra/pods';
+import { inputField } from './input';
 import { driver, kit, seeded } from './kit';
 import { logsExplorerDriver } from './logs/explorer';
 import {
@@ -392,7 +393,7 @@ export function routingDriver(page: Page): Routing {
 				await routing.roles.nameInput().fill(name);
 				await expect(page.getByText('Unsaved changes')).toBeVisible();
 			},
-			nameInput: () => page.getByTestId('role-name-input'),
+			nameInput: () => inputField(page, 'role-name-input'),
 			cancel: async () => {
 				await page.getByTestId('cancel-button').click();
 			},

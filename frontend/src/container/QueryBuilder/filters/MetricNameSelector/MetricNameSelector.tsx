@@ -283,9 +283,16 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 				isFetching ? (
 					<Spin size="small" />
 				) : isError ? (
-					<Typography.Text color="danger" style={{ fontSize: 12 }}>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						Failed to load metrics
-					</Typography.Text>
+					</Typography>
 				) : null
 			}
 			data-testid={dataTestId}
