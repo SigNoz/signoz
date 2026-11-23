@@ -23,10 +23,14 @@ export const definition: PanelDefinition<'signoz/DistributionPanel'> = {
 	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedQueryTypesKindMap: {
-		// Only metrics carry a bucket axis; the request rejects the other signals.
+		// Logs and traces bucket the field named as the aggregation.
 		[EQueryType.QUERY_BUILDER]: {
 			kind: QueryTypeKind.SIGNAL,
-			signals: [TelemetrytypesSignalDTO.metrics],
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
 		},
 		[EQueryType.CLICKHOUSE]: { kind: QueryTypeKind.SIGNAL_LESS },
 		[EQueryType.PROM]: { kind: QueryTypeKind.SIGNAL_LESS },
@@ -35,6 +39,8 @@ export const definition: PanelDefinition<'signoz/DistributionPanel'> = {
 	queryBuilderFields: {
 		[QueryBuilderField.Functions]: { state: 'hidden' },
 		[QueryBuilderField.Having]: { state: 'hidden' },
+		// The request takes one builder query and has no case for a trace operator.
+		[QueryBuilderField.TraceOperator]: { state: 'hidden' },
 	},
 	// No width-derived step: there is no time axis, and a histogram's counts do not
 	// depend on the step.

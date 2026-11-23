@@ -38,7 +38,7 @@ export function toDistributionFieldText(key: TelemetryFieldKey): string {
 
 /**
  * Numeric keys grouped by context, each one once. `trace.*` keys are per-trace
- * aggregates, which a heatmap cannot bucket. A saved field the keys do not carry
+ * aggregates, which a heatmap or distribution cannot bucket. A saved field the keys do not carry
  * leads as its own item, so the combobox can still show it.
  */
 export function toDistributionFieldOptions(

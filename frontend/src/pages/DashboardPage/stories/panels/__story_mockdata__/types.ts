@@ -20,7 +20,7 @@ import type {
 	DISTRIBUTION_X_RANGES,
 	GAPS,
 	HEATMAP_COUNT_RANGES,
-	HEATMAP_SOURCES,
+	BUCKET_SOURCES,
 	PANEL_KINDS,
 	PANEL_RESULTS,
 	PIE_SLICES,
@@ -39,7 +39,7 @@ export type PanelUnit = (typeof UNITS)[number];
 
 export type HeatmapCountRange = (typeof HEATMAP_COUNT_RANGES)[number];
 
-export type HeatmapSource = (typeof HEATMAP_SOURCES)[number];
+export type BucketSource = (typeof BUCKET_SOURCES)[number];
 
 export type BucketWidth = (typeof BUCKET_WIDTHS)[number];
 
@@ -68,7 +68,7 @@ export interface PanelArgs {
 	palette: HeatmapPalette;
 	heatmapScale: HeatmapYScale;
 	heatmapCounts: HeatmapCountRange;
-	heatmapSource: HeatmapSource;
+	bucketSource: BucketSource;
 	bucketWidth: BucketWidth;
 	textSample: TextSample;
 	textAlign: TextAlign;

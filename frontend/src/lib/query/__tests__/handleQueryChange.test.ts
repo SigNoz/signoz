@@ -139,16 +139,19 @@ describe('handleQueryChange trace operator', () => {
 		expect(result.builder.queryTraceOperator).toStrictEqual([]);
 	});
 
-	// A heatmap request takes one builder query and rejects a trace operator.
-	it('drops the trace operator when switching to a heatmap', () => {
-		const result = handleQueryChange(
-			PANEL_TYPES.HEATMAP,
-			queryWithTraceOperator(),
-			PANEL_TYPES.TIME_SERIES,
-		);
+	// A heatmap or distribution request takes one builder query and rejects a trace operator.
+	it.each([PANEL_TYPES.HEATMAP, PANEL_TYPES.DISTRIBUTION] as const)(
+		'drops the trace operator when switching to a %s',
+		(panelType) => {
+			const result = handleQueryChange(
+				panelType,
+				queryWithTraceOperator(),
+				PANEL_TYPES.TIME_SERIES,
+			);
 
-		expect(result.builder.queryTraceOperator).toStrictEqual([]);
-	});
+			expect(result.builder.queryTraceOperator).toStrictEqual([]);
+		},
+	);
 
 	it('keeps the trace operator when switching to a table', () => {
 		const result = handleQueryChange(

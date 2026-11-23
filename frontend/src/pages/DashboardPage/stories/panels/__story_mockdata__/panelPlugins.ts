@@ -37,7 +37,7 @@ import {
 import {
 	comparisonThresholds,
 	labelThresholds,
-	eventHeatmapQuery,
+	bucketQuery,
 	logQuery,
 	metricQuery,
 	tableThresholds,
@@ -137,9 +137,10 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					},
 				},
 				queries: [
-					args.heatmapSource === 'metrics'
-						? metricQuery(RequestType.heatmap, { grouped: true, heatmap: true })
-						: eventHeatmapQuery(args.heatmapSource),
+					bucketQuery(args.bucketSource, RequestType.heatmap, {
+						grouped: true,
+						heatmap: true,
+					}),
 				],
 			};
 		case 'Distribution':
@@ -165,7 +166,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					},
 				},
 				queries: [
-					metricQuery(RequestType.distribution, {
+					bucketQuery(args.bucketSource, RequestType.distribution, {
 						grouped: true,
 						histogram: true,
 					}),

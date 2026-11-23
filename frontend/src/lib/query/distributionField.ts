@@ -1,10 +1,11 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import type {
 	IBuilderQuery,
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import type { LogAggregation, TraceAggregation } from 'types/api/v5/queryRange';
+
+import { isBucketCountingPanelType } from './bucketCountingPanelTypes';
 
 import {
 	ALIAS,
@@ -20,7 +21,7 @@ const NUMERIC_FIELD_CALL = new RegExp(
 	`^\\s*(?:avg|sum|min|max|p\\d{2})\\(\\s*([^\\s(),]+)\\s*\\)(?:\\s+as\\s+(${ALIAS}))?\\s*$`,
 );
 
-/** The percentile a field or histogram metric gets when it leaves a heatmap. */
+/** The percentile a field or histogram metric gets when it leaves a heatmap or distribution. */
 export const DEFAULT_PERCENTILE = 'p90';
 
 type FieldAggregation = TraceAggregation | LogAggregation;
@@ -41,7 +42,7 @@ export function aggregatesDistributionField(
 	panelType: string | null | undefined,
 	dataSource: DataSource,
 ): boolean {
-	return panelType === PANEL_TYPES.HEATMAP && isLogsOrTraces(dataSource);
+	return isBucketCountingPanelType(panelType) && isLogsOrTraces(dataSource);
 }
 
 /**
@@ -78,7 +79,7 @@ export function getDistributionFieldPlaceholder(
 }
 
 /**
- * Logs and traces heatmaps bucket a field; any function aggregation is
+ * Logs and traces heatmaps and distributions bucket a field; any function aggregation is
  * rejected, so a numeric `fn(field)` keeps its field and anything else leaves
  * the field for the user to pick.
  */
@@ -109,7 +110,7 @@ export function toDistributionAggregation(query: IBuilderQuery): IBuilderQuery {
 	);
 }
 
-/** Picks `field` as the heatmap's aggregation; a sort on the old field follows it. */
+/** Picks `field` as the aggregation; a sort on the old field follows it. */
 export function setDistributionField(
 	query: IBuilderQuery,
 	field: string,

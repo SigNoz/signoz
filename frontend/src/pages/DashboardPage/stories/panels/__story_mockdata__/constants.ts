@@ -55,15 +55,15 @@ export const HEATMAP_Y_SCALES = Object.values(HeatmapYScale);
 
 export const HEATMAP_COUNT_RANGES = ['auto', 'fixed'] as const;
 
-export const HEATMAP_SOURCES = [
+export const BUCKET_SOURCES = [
 	'metrics',
 	'logs',
 	'traces',
 	'no field',
 ] as const;
 
-/** The field a logs or traces heatmap buckets. */
-export const HEATMAP_FIELDS = {
+/** The field a logs or traces heatmap or distribution buckets. */
+export const BUCKET_FIELDS = {
 	logs: 'attribute.queue_depth',
 	traces: 'duration_nano',
 } as const;

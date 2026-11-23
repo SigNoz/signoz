@@ -286,7 +286,7 @@ export function createAggregation(
 		];
 	}
 
-	// A heatmap buckets the field the user names; count() would be rejected as one.
+	// A heatmap or distribution buckets the field the user names; count() would be rejected as one.
 	// Elsewhere a field is not an aggregation, so it falls back to count().
 	const isDistributionField = aggregatesDistributionField(
 		panelType,

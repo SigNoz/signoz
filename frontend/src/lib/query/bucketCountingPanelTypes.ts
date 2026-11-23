@@ -6,7 +6,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
  * count aggregation a histogram metric gets.
  */
 export function isBucketCountingPanelType(
-	panelType: PANEL_TYPES | null | undefined,
+	panelType: string | null | undefined,
 ): boolean {
 	return (
 		panelType === PANEL_TYPES.HEATMAP || panelType === PANEL_TYPES.DISTRIBUTION

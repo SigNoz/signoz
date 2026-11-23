@@ -80,8 +80,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
 	'signoz/HeatmapPanel': [metrics, logs, traces],
-	// A distribution needs a bucket axis, which only a metric carries.
-	'signoz/DistributionPanel': [metrics],
+	'signoz/DistributionPanel': [metrics, logs, traces],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/GeoMapPanel': [metrics, logs, traces],
 	'signoz/TopListPanel': [metrics, logs, traces],
@@ -207,6 +206,7 @@ const HIDES_TRACE_OPERATOR: PanelKind[] = [
 	'signoz/ScatterPlotPanel',
 	'signoz/GeoMapPanel',
 	'signoz/HeatmapPanel',
+	'signoz/DistributionPanel',
 ];
 
 describe('panel capabilities guard', () => {

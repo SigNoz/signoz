@@ -329,7 +329,7 @@ export function extractLegendMap(
 /**
  * Fetch gate. False with no queries, when every metrics builder query lacks a metric name —
  * skipping a guaranteed 400 (V1 parity: `validateMetricNameForMetricsDataSource`) — or when a
- * logs/traces heatmap names no field to bucket.
+ * logs/traces heatmap or distribution names no field to bucket.
  */
 export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	const envelopes = toQueryEnvelopes(queries);
@@ -342,7 +342,8 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 		.map((envelope) => envelope.spec as QuerySpecView);
 
 	if (
-		queries[0].kind === Querybuildertypesv5RequestTypeDTO.heatmap &&
+		(queries[0].kind === Querybuildertypesv5RequestTypeDTO.heatmap ||
+			queries[0].kind === Querybuildertypesv5RequestTypeDTO.distribution) &&
 		builderSpecs.some(
 			(spec) =>
 				!spec.disabled &&

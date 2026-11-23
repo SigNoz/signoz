@@ -230,6 +230,7 @@ export const expectDistributionTooltip = async (
 	if (
 		args.kind !== 'Distribution' ||
 		args.dataState !== 'loaded' ||
+		args.bucketSource === 'no field' ||
 		!hasData(args)
 	) {
 		return;

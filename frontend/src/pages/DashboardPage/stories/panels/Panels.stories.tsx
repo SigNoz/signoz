@@ -115,19 +115,19 @@ export const HeatmapLog: Story = {
 
 /** A traces heatmap bucketing each span's `duration_nano`. */
 export const HeatmapTraces: Story = {
-	args: { kind: 'Heatmap', heatmapSource: 'traces' },
+	args: { kind: 'Heatmap', bucketSource: 'traces' },
 	play: playPanel,
 };
 
 /** A logs heatmap bucketing the `attribute.queue_depth` log field. */
 export const HeatmapLogs: Story = {
-	args: { kind: 'Heatmap', heatmapSource: 'logs' },
+	args: { kind: 'Heatmap', bucketSource: 'logs' },
 	play: playPanel,
 };
 
 /** A traces heatmap with no field to bucket: the panel waits for one instead of querying. */
 export const HeatmapNoField: Story = {
-	args: { kind: 'Heatmap', heatmapSource: 'no field' },
+	args: { kind: 'Heatmap', bucketSource: 'no field' },
 	play: playPanel,
 };
 
@@ -165,6 +165,32 @@ export const DistributionClampedLog: Story = {
 		stack: StackMode.normal,
 		distributionXRange: 'clamped',
 		yScale: 'log',
+	},
+	play: playPanel,
+};
+
+/** A traces distribution bucketing each span's `duration_nano`. */
+export const DistributionTraces: Story = {
+	args: {
+		kind: 'Distribution',
+		stack: StackMode.normal,
+		bucketSource: 'traces',
+	},
+	play: playPanel,
+};
+
+/** A logs distribution bucketing the `attribute.queue_depth` log field. */
+export const DistributionLogs: Story = {
+	args: { kind: 'Distribution', stack: StackMode.normal, bucketSource: 'logs' },
+	play: playPanel,
+};
+
+/** A traces distribution with no field to bucket: the panel waits for one instead of querying. */
+export const DistributionNoField: Story = {
+	args: {
+		kind: 'Distribution',
+		stack: StackMode.normal,
+		bucketSource: 'no field',
 	},
 	play: playPanel,
 };

@@ -187,14 +187,16 @@ export function usePanelKindChange({
 						: transformed,
 					newKind,
 				);
-				const isHeatmap = newKind === 'signoz/HeatmapPanel';
+				const isBucketCounting = isBucketCountingPanelType(newPanelType);
 				const converted = {
 					...ordered,
 					queryData: ordered.queryData.map(
-						isHeatmap ? toDistributionAggregation : fromDistributionAggregation,
+						isBucketCounting
+							? toDistributionAggregation
+							: fromDistributionAggregation,
 					),
 				};
-				return isBucketCountingPanelType(newPanelType)
+				return isBucketCounting
 					? withSingleHeatmapQuery(converted)
 					: withPercentileHistogramAggregation(converted);
 			};

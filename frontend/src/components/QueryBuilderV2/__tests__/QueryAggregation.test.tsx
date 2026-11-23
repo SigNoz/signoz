@@ -74,6 +74,8 @@ describe('QueryAggregationOptions on a heatmap', () => {
 	it.each([
 		[PANEL_TYPES.HEATMAP, DataSource.TRACES, true],
 		[PANEL_TYPES.HEATMAP, DataSource.METRICS, false],
+		[PANEL_TYPES.DISTRIBUTION, DataSource.LOGS, true],
+		[PANEL_TYPES.DISTRIBUTION, DataSource.METRICS, false],
 		[PANEL_TYPES.TIME_SERIES, DataSource.TRACES, false],
 	])(
 		'%s over %s renders the field picker: %s',

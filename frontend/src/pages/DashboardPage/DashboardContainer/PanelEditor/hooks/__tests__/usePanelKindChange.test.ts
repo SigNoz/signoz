@@ -301,27 +301,30 @@ describe('usePanelKindChange', () => {
 		expect(persisted.builder.queryFormulas).toStrictEqual([]);
 	});
 
-	it('keeps the field of a traces function aggregation when switching to a Heatmap panel', () => {
-		const setSpec = jest.fn();
-		mockUseQueryBuilder.mockReturnValue(
-			builderState(fakeQuery('ts-current', 'builder')),
-		);
-		mockRebuildBuilder.mockReturnValue(tracesBuilder('p99(duration_nano)'));
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps the field of a traces function aggregation when switching to %s',
+		(kind) => {
+			const setSpec = jest.fn();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState(fakeQuery('ts-current', 'builder')),
+			);
+			mockRebuildBuilder.mockReturnValue(tracesBuilder('p99(duration_nano)'));
 
-		const { result } = renderHook(() =>
-			usePanelKindChange({
-				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
-				panelType: PANEL_TYPES.TIME_SERIES,
-				setSpec,
-			}),
-		);
-		act(() => result.current.onChangePanelKind('signoz/HeatmapPanel'));
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec,
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
 
-		const [persisted] = mockToPerses.mock.calls[0] as [Query];
-		expect(persisted.builder.queryData[0].aggregations).toMatchObject([
-			{ expression: 'duration_nano' },
-		]);
-	});
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			expect(persisted.builder.queryData[0].aggregations).toMatchObject([
+				{ expression: 'duration_nano' },
+			]);
+		},
+	);
 
 	it('wraps a traces heatmap field in a function when switching to a TimeSeries panel', () => {
 		const setSpec = jest.fn();

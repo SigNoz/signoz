@@ -11,7 +11,7 @@ export type OrderByFilterProps = {
 	entityVersion?: string;
 	isNewQueryV2?: boolean;
 	placeholder?: string;
-	/** A logs or traces heatmap aggregates a field, which Order by then offers. */
+	/** A logs or traces heatmap or distribution aggregates a field, which Order by then offers. */
 	panelType?: PANEL_TYPES;
 };
 

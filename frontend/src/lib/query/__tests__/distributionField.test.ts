@@ -1,8 +1,9 @@
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
+	aggregatesDistributionField,
 	getDistributionFieldPlaceholder,
 	setDistributionField,
 	toDistributionAggregation,
@@ -15,6 +16,17 @@ const queryOf = (
 ): IBuilderQuery => ({
 	...(initialQueriesMap[dataSource].builder.queryData[0] as IBuilderQuery),
 	aggregations: expressions.map((expression) => ({ expression })),
+});
+
+describe('aggregatesDistributionField', () => {
+	it.each([
+		[PANEL_TYPES.HEATMAP, DataSource.TRACES, true],
+		[PANEL_TYPES.DISTRIBUTION, DataSource.LOGS, true],
+		[PANEL_TYPES.DISTRIBUTION, DataSource.METRICS, false],
+		[PANEL_TYPES.HISTOGRAM, DataSource.TRACES, false],
+	])('%s over %s → %s', (panelType, dataSource, expected) => {
+		expect(aggregatesDistributionField(panelType, dataSource)).toBe(expected);
+	});
 });
 
 describe('getDistributionFieldPlaceholder', () => {

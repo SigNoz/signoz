@@ -26,14 +26,14 @@ import {
 
 import {
 	CHART_THRESHOLD_VALUE,
-	HEATMAP_FIELDS,
+	BUCKET_FIELDS,
 	NUMBER_THRESHOLD_VALUE,
 	QUERY_NAME,
 	TABLE_THRESHOLD_VALUE,
 	TABLE_VALUE_COLUMN,
 	THRESHOLD_COLOR,
 } from './constants';
-import type { HeatmapSource, TextSample } from './types';
+import type { BucketSource, TextSample } from './types';
 
 export const labelThresholds = (
 	on: boolean,
@@ -157,9 +157,10 @@ export const logQuery = (): DashboardtypesQueryDTO => {
 	};
 };
 
-/** `no field` is a traces heatmap whose field was cleared: it saves with no aggregation. */
-export const eventHeatmapQuery = (
-	source: Exclude<HeatmapSource, 'metrics'>,
+/** `no field` is a traces query whose field was cleared: it saves with no aggregation. */
+export const eventBucketQuery = (
+	source: Exclude<BucketSource, 'metrics'>,
+	requestType: typeof RequestType.heatmap | typeof RequestType.distribution,
 ): DashboardtypesQueryDTO => {
 	const groupBy = [{ name: 'service.name' }];
 	const legend = '{{service.name}}';
@@ -172,7 +173,7 @@ export const eventHeatmapQuery = (
 			? {
 					name: QUERY_NAME,
 					signal: LogSignal.logs,
-					aggregations: [{ expression: HEATMAP_FIELDS.logs }],
+					aggregations: [{ expression: BUCKET_FIELDS.logs }],
 					groupBy,
 					legend,
 					bucketOptions,
@@ -181,17 +182,27 @@ export const eventHeatmapQuery = (
 					name: QUERY_NAME,
 					signal: TraceSignal.traces,
 					aggregations:
-						source === 'traces' ? [{ expression: HEATMAP_FIELDS.traces }] : [],
+						source === 'traces' ? [{ expression: BUCKET_FIELDS.traces }] : [],
 					groupBy,
 					legend,
 					bucketOptions,
 				};
 
 	return {
-		kind: RequestType.heatmap,
+		kind: requestType,
 		spec: {
 			name: QUERY_NAME,
 			plugin: { kind: BuilderQueryKind['signoz/BuilderQuery'], spec },
 		},
 	};
 };
+
+/** A heatmap or distribution query over the chosen source. */
+export const bucketQuery = (
+	source: BucketSource,
+	requestType: typeof RequestType.heatmap | typeof RequestType.distribution,
+	metricOptions: MetricQueryOptions,
+): DashboardtypesQueryDTO =>
+	source === 'metrics'
+		? metricQuery(requestType, metricOptions)
+		: eventBucketQuery(source, requestType);

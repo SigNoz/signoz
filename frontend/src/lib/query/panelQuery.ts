@@ -178,7 +178,7 @@ export function rebuildBuilderForPanelType(
 		queryTraceOperator:
 			newPanelType === PANEL_TYPES.LIST ||
 			newPanelType === PANEL_TYPES.SCATTER ||
-			newPanelType === PANEL_TYPES.HEATMAP
+			isBucketCountingPanelType(newPanelType)
 				? []
 				: builder.queryTraceOperator,
 	};

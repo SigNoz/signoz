@@ -33,7 +33,7 @@ import {
 	HEATMAP_COUNT_RANGES,
 	HEATMAP_FIXED_COUNTS,
 	HEATMAP_PALETTES,
-	HEATMAP_SOURCES,
+	BUCKET_SOURCES,
 	HEATMAP_Y_SCALES,
 	LEGEND_POSITIONS,
 	LINE_STYLES,
@@ -66,7 +66,7 @@ import type {
 	DistributionXRange,
 	Gaps,
 	HeatmapCountRange,
-	HeatmapSource,
+	BucketSource,
 	PanelArgs,
 	PanelKind,
 	PanelResult,
@@ -157,11 +157,11 @@ export const panelsMocks = defineStoryMocks({
 				'Dashed p50, p90 and p99 markers across the Distribution panel.',
 			value: true,
 		}),
-		heatmapSource: choiceControl<HeatmapSource>('Heatmap source', {
+		bucketSource: choiceControl<BucketSource>('Bucket source', {
 			group: PANEL,
 			description:
-				'The signal the heatmap buckets: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
-			options: HEATMAP_SOURCES,
+				'The signal the Heatmap and Distribution panels bucket: a metric, a log field (`attribute.queue_depth`), a span field (`duration_nano`), or a traces query whose field was cleared, which the panel does not run.',
+			options: BUCKET_SOURCES,
 			value: 'metrics',
 		}),
 		bucketWidth: choiceControl<BucketWidth>('Histogram bucket width', {

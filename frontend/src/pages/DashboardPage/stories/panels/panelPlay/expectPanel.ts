@@ -63,7 +63,10 @@ export const expectPanel = async (
 
 	await within(root).findByText(PANEL_NAME[args.kind], {}, PANEL_LOAD);
 
-	if (args.kind === 'Heatmap' && args.heatmapSource === 'no field') {
+	if (
+		(args.kind === 'Heatmap' || args.kind === 'Distribution') &&
+		args.bucketSource === 'no field'
+	) {
 		await within(root).findByTestId('panel-no-query', {}, PANEL_LOAD);
 		await expect(findPlot(root)).toBeUndefined();
 		return;
