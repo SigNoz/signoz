@@ -64,6 +64,39 @@ def test_fields_values_name_resolution(
     assert response.json()["data"]["complete"] is complete
 
 
+@pytest.mark.parametrize(
+    "name,logs,string_values,number_values",
+    [
+        pytest.param("service.name", [{"resources": {"service.name": "r-svc"}}, {"attributes": {"service.name": "a-svc"}}], ["r-svc", "a-svc"], [], id="resource_and_attribute"),
+        pytest.param("severity_text", [{"severity_text": "WARN"}, {"severity_text": "WARN", "attributes": {"severity_text": "a-sev"}}], ["WARN", "a-sev"], [], id="log_field_and_attribute"),
+        pytest.param("log.level", [{"attributes": {"log.level": "a-loglevel"}}, {"attributes": {"level": "a-level"}}], ["a-loglevel"], [], id="prefixed_attribute_not_bare_attribute"),
+        pytest.param("resource.foo", [{"attributes": {"resource.foo": "a-resfoo"}}], ["a-resfoo"], [], id="resource_prefixed_attribute_only"),
+        pytest.param("code", [{"attributes": {"code": "a-code"}}, {"attributes": {"code": 42}}], ["a-code"], [42], id="string_and_number_attribute"),
+    ],
+)
+def test_fields_values_every_reading(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    name: str,
+    logs: list[dict],
+    string_values: list[str],
+    number_values: list[float],
+) -> None:
+    """Values cover every key the name can mean, even ones a filter on the name does not read."""
+    now = datetime.now(tz=UTC)
+    insert_logs([Logs(timestamp=now, **log) for log in logs])
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = get_field_values(signoz, token, {"signal": "logs", "name": name})
+
+    assert response.status_code == HTTPStatus.OK
+    values = response.json()["data"]["values"]
+    assert values.get("stringValues", []) == string_values
+    assert values.get("numberValues", []) == number_values
+
+
 @pytest.mark.parametrize("name", ["latency", "latency:number", "latency:int64", "latency:float64"])
 def test_fields_values_number_search_text(
     signoz: types.SigNoz,
