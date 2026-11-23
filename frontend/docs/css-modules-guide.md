@@ -9,12 +9,12 @@
 - [ ] No deep class nesting (max 3 class levels; pseudo-classes/elements and parent-reference selectors like `&.active`, `&#bar` are not counted)
 - [ ] No hardcoded colors - use `--l1/l2/l3-*` semantic tokens (not `--bg-*` primitives)
 - [ ] No magic numbers - use `--spacing-*` tokens
-- [ ] Typography uses `--periscope-font-size-*` or `--font-size-*` tokens
-- [ ] @signozhq/ui overrides use CSS variables, not direct class overrides
-- [ ] Global escapes only for third-party overrides
+- [ ] Typography uses `--{variant}-{size}-{weight}-*` text style tokens (see Typography)
+- [ ] No overrides of `@signozhq/ui` components (see below)
+- [ ] Global escapes only for third-party overrides (`@signozhq/ui` is not third-party)
 - [ ] No ID selectors
 - [ ] No bare element selectors
-- [ ] Keyframes use `:local(@keyframes name)` to avoid global collisions
+- [ ] Keyframes are declared in the module with plain `@keyframes name` (already local)
 
 ## Config (vite.config.ts)
 
@@ -77,7 +77,7 @@ css: {
 
 // BAD: Nesting creates separate classes you might not expect
 .button {
-  .icon { }  // -> styles.icon (separate class, not scoped under .button)
+  .icon { }  // -> styles.icon, but the rule is `.button .icon`: it only matches inside .button
 }
 
 // GOOD: Flat structure
@@ -289,87 +289,31 @@ Use L1/L2/L3 semantic tokens - they handle light/dark theme automatically.
 - L2 = elevated surfaces (cards, panels)
 - L3 = nested/inset elements
 
-## Overriding @signozhq/ui Components
+## @signozhq/ui Components
 
-Components expose CSS variables for customization.
+Don't override them. That covers setting a component's `--<component>-*` CSS variables, targeting its classes or `data-*` attributes through `:global(...)`, and restyling it with `className` or `style`. An override keeps working until the component changes, then breaks with no type error or lint warning, and the screen drifts from every other one using that component.
 
-You can ensure they exist by looking at ./node_modules/@signozhq/ui/dist.
-Never write a override without confirm it exists.
-
-Override via:
-
-### Method 1: CSS Variables (Preferred)
-
-Each component exposes `--<component>-<property>` variables:
+- Use the component's props (`variant`, `color`, `size`, ...) for how it looks.
+- Put layout (position, margin, width inside a flex or grid parent) on a wrapper element you own.
+- If the component can't do what the design needs, file a [UI suggestion](https://github.com/SigNoz/uforge-pod/issues/new?template=ui-suggestion.yml) in `SigNoz/uforge-pod` and ship with the component as it renders until the suggestion is decided. Link the issue in the PR.
 
 ```scss
-// Override Button
-.customButton {
-  --button-background: var(--success-background);
-  --button-border-radius: var(--radius-2);
-  --button-padding: var(--spacing-4) var(--spacing-8);
-  --button-font-size: var(--label-base-400-font-size);
+// BAD: Restyling the component
+.saveButton {
+  --button-primary-background-color: var(--success-background);
 }
 
-// Override Input
-.customInput {
-  --input-height: 2.5rem;
-  --input-border-color: var(--l2-border);
-  --input-padding: var(--spacing-2) var(--spacing-6);
-  --input-placeholder-color: var(--l3-foreground);
+.toolbar :global([data-variant="outlined"]) {
+  --button-variant-outlined-border: 1px solid var(--accent-primary);
 }
 
-// Override nested parts
-.customInput {
-  --input-prefix-padding: 0 var(--spacing-4) 0 var(--spacing-6);
-  --input-suffix-color: var(--accent-primary);
+// GOOD: Layout on your own wrapper, looks from props
+.toolbarActions {
+  display: flex;
+  gap: var(--spacing-4);
+  margin-left: auto;
 }
 ```
-
-### Method 2: Data Attributes
-
-Components use data attributes for variants/states. Target them for state-specific overrides:
-
-```scss
-// Target variant
-.wrapper :global([data-variant="outlined"]) {
-  --button-border-color: var(--accent-primary);
-}
-
-// Target size
-.wrapper :global([data-size="sm"]) {
-  --button-font-size: var(--label-small-400-font-size);
-}
-
-// Target color
-.wrapper :global([data-color="destructive"]) {
-  --button-background: var(--danger-background);
-}
-
-// Target state (Radix patterns)
-.popover :global([data-state="open"]) {
-  opacity: 1;
-}
-
-.tooltip :global([data-side="top"]) {
-  margin-bottom: var(--spacing-2);
-}
-```
-
-### Common Component CSS Variables
-
-**Button:**
-- `--button-background`, `--button-border-radius`, `--button-padding`
-- `--button-font-size`, `--button-height`, `--button-gap`
-- `--button-hover-background`, `--button-disabled-opacity`
-
-**Input:**
-- `--input-height`, `--input-border-color`, `--input-background`
-- `--input-padding`, `--input-font-size`, `--input-placeholder-color`
-- `--input-focus-outline-color`, `--input-hover-border-color`
-- `--input-prefix-*`, `--input-suffix-*` for adornments
-
-**General pattern:** `--<component>-<property>` or `--<component>-<state>-<property>`
 
 ## Good Patterns
 
@@ -434,17 +378,11 @@ Components use data attributes for variants/states. Target them for state-specif
 
 ### Keyframes (Local Scoping)
 
-Without `:local()`, keyframe names are global and can clash across modules:
+CSS Modules scope `@keyframes` like classes: the build renames `fadeIn` to `_fadeIn_<hash>` and rewrites every `animation` in the same module that names it. Don't wrap it in `:local(...)`; Sass rejects `:local(@keyframes fadeIn)` with `expected selector`.
 
 ```scss
-// BAD: Global keyframe - can conflict with other modules
+// GOOD: Local to this module
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-// GOOD: Locally scoped keyframe
-:local(@keyframes fadeIn) {
   from { opacity: 0; }
   to { opacity: 1; }
 }
@@ -452,6 +390,9 @@ Without `:local()`, keyframe names are global and can clash across modules:
 .modal {
   animation: fadeIn 200ms ease;
 }
+
+// BAD: Doesn't compile
+:local(@keyframes fadeIn) { }
 ```
 
 ## JS Import Patterns

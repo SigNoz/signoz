@@ -29,7 +29,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--spacing-6);
-	font-size: var(--font-size-sm);
+	font-size: var(--label-base-500-font-size);
 	font-weight: 500;
 }
 
@@ -37,7 +37,7 @@
 .subtitle {
 	padding-left: calc(12px + var(--spacing-3));
 	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-size: var(--paragraph-small-400-font-size);
 	color: var(--muted-foreground);
 }
 
@@ -58,7 +58,7 @@
 .code {
 	flex-shrink: 0;
 	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-size: var(--paragraph-small-400-font-size);
 	color: var(--muted-foreground);
 }
 
@@ -100,7 +100,7 @@
 	align-items: center;
 	gap: var(--spacing-2);
 	font-family: var(--font-mono);
-	font-size: var(--font-size-xs);
+	font-size: var(--paragraph-small-400-font-size);
 	letter-spacing: -0.01em;
 	font-variant-numeric: tabular-nums;
 }
