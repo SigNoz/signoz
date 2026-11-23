@@ -60,7 +60,7 @@ export const NoIngestion: Story = {
  * create actions are gone or locked and the legacy editor role is too.
  */
 export const ViewerAccess: Story = {
-	args: { access: 'viewer', permissions: ['list:rule', 'read:rule'] },
+	args: { access: 'viewer' },
 };
 
 /** Widgets stuck in their loading state, shell included. */

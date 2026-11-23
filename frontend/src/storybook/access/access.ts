@@ -84,9 +84,10 @@ export type AccessPreset = (typeof ACCESS_PRESETS)[number];
 /**
  * The legacy roles only differ in authz for the resources the backend already
  * covers: an admin manages roles, service accounts and API keys, while editor
- * and viewer are telemetry readers and differ through `user.role` alone. A
- * viewer also lists and reads the alerting resources, as the backend's managed
- * viewer role does. The presets go away with the roles; the permission list
+ * and viewer are telemetry readers and differ through `user.role` alone. On the
+ * alerting resources they follow the backend's managed roles: an editor manages
+ * rules and downtimes, links channels and reads routing policies; a viewer lists
+ * and reads them all. The presets go away with the roles; the permission list
  * does not.
  */
 const ADMIN_PERMISSIONS = [
@@ -107,9 +108,27 @@ const VIEWER_ALERTING_READS = [
 	'read:notification-channel',
 ];
 
+const EDITOR_ALERTING = [
+	...['rule', 'planned-maintenance'].flatMap((resource) =>
+		['list', 'read', 'create', 'update', 'delete', 'attach', 'detach'].map(
+			(verb) => `${verb}:${resource}`,
+		),
+	),
+	'list:notification-channel',
+	'read:notification-channel',
+	'attach:notification-channel',
+	'detach:notification-channel',
+	'list:route-policy',
+	'read:route-policy',
+];
+
 const PRESET_PERMISSIONS: Record<AccessPreset, readonly string[]> = {
 	admin: ADMIN_PERMISSIONS,
-	editor: [LEGACY_ROLE_PERMISSIONS[USER_ROLES.EDITOR], ...TELEMETRY_READS],
+	editor: [
+		LEGACY_ROLE_PERMISSIONS[USER_ROLES.EDITOR],
+		...TELEMETRY_READS,
+		...EDITOR_ALERTING,
+	],
 	viewer: [
 		LEGACY_ROLE_PERMISSIONS[USER_ROLES.VIEWER],
 		...TELEMETRY_READS,
