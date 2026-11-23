@@ -382,8 +382,10 @@ func (counts *msteamsMigrationCounts) add(outcome msteamsTemplateOutcome) bool {
 // migrateMSTeamsReceiver reports the outcome of the receiver's first msteams notifier, the only one a channel carries.
 func migrateMSTeamsReceiver(receiver map[string]json.RawMessage) (map[string]msteamsTemplateOutcome, error) {
 	configsRaw, ok := receiver[msteamsConfigsKey]
+	outcomes := make(map[string]msteamsTemplateOutcome)
+
 	if !ok || string(configsRaw) == "null" {
-		return nil, nil
+		return outcomes, nil
 	}
 
 	configs := make([]map[string]json.RawMessage, 0)
@@ -391,7 +393,6 @@ func migrateMSTeamsReceiver(receiver map[string]json.RawMessage) (map[string]mst
 		return nil, err
 	}
 
-	var outcomes map[string]msteamsTemplateOutcome
 	changed := false
 	for i, config := range configs {
 		configOutcomes, err := migrateMSTeamsFields(config)
@@ -615,7 +616,7 @@ func separateMSTeamsParagraphs(masked string, actions []string) string {
 
 		content, list := classifyMSTeamsLine(line, actions)
 		nextContent, nextList := classifyMSTeamsLine(lines[i+1], actions)
-		if content && nextContent && !(list && nextList) {
+		if content && nextContent && (!list || !nextList) {
 			separated = append(separated, "")
 		}
 	}
