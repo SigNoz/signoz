@@ -119,6 +119,8 @@ def test_summary_ai_trace(
     assert summary["totalErrorSpansCount"] == 1
     assert summary["hasMissingSpans"] is False
 
+    assert summary["ai"]["modelCallCount"] == 2
+    assert summary["ai"]["toolCallCount"] == 1
     assert summary["ai"]["tokens"] == {"input": 150, "output": 25, "cacheRead": 7, "cacheWrite": 0, "reasoning": 0}
     assert summary["ai"]["totalCost"] == pytest.approx(0.01)
 
@@ -195,6 +197,8 @@ def test_summary_ai_trace_across_json_rollout(
     assert summary["totalSpansCount"] == 3
     assert summary["rootServiceEntryPoint"] == "long agent run"
     assert summary["rootSpanStatusCode"] == "200"
+    assert summary["ai"]["modelCallCount"] == 2
+    assert summary["ai"]["toolCallCount"] == 0
     assert summary["ai"]["tokens"] == {"input": 150, "output": 25, "cacheRead": 0, "cacheWrite": 0, "reasoning": 0}
     assert summary["ai"]["totalCost"] == pytest.approx(0.03)
 

@@ -5,12 +5,12 @@ import (
 )
 
 type SpanPercentileRequest struct {
-	DurationNano       int64             `json:"spanDuration"`
-	Name               string            `json:"name"`
-	ServiceName        string            `json:"serviceName"`
-	ResourceAttributes map[string]string `json:"resourceAttributes"`
-	Start              uint64            `json:"start"`
-	End                uint64            `json:"end"`
+	DurationNano       int64             `json:"spanDuration" required:"true" description:"The span's duration, in nanoseconds."`
+	Name               string            `json:"name" required:"true"`
+	ServiceName        string            `json:"serviceName" required:"true"`
+	ResourceAttributes map[string]string `json:"resourceAttributes" nullable:"true" description:"Narrows the compared spans to those with these resource attributes."`
+	Start              uint64            `json:"start" required:"true" description:"The start of the time range, in milliseconds since the Unix epoch."`
+	End                uint64            `json:"end" required:"true" description:"The end of the time range, in milliseconds since the Unix epoch."`
 }
 
 func (req *SpanPercentileRequest) Validate() error {

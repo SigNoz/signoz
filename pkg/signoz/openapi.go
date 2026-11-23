@@ -39,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -115,6 +116,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ web.Web }{},
 		struct{ quickfilter.Module }{},
 		struct{ quickfilter.Handler }{},
+		struct{ spanpercentile.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

@@ -394,6 +394,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			web,
 			modules.QuickFilter,
 			handlers.QuickFilter,
+			handlers.SpanPercentile,
 		),
 	)
 }

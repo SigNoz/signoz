@@ -410,8 +410,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 
 	router.HandleFunc("/api/v1/register", am.OpenAccess(aH.registerUser)).Methods(http.MethodPost)
 
-	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
-
 	// Query Filter Analyzer api used to extract metric names and grouping columns from a query
 	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }

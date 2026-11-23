@@ -474,7 +474,12 @@ const traceAiSummary = (
 	const sum = (key: string): number =>
 		aiSpans.reduce((total, span) => total + numberAttribute(span, key), 0);
 
+	const countWith = (key: string): number =>
+		aiSpans.filter(({ template }) => key in template.attributes).length;
+
 	return {
+		modelCallCount: countWith('gen_ai.request.model'),
+		toolCallCount: countWith('gen_ai.tool.name'),
 		tokens: {
 			input: sum('gen_ai.usage.input_tokens'),
 			output: sum('gen_ai.usage.output_tokens'),

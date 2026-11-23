@@ -12667,22 +12667,83 @@ components:
       type: object
     Sigv4SigV4Config:
       type: object
+    SpanpercentiletypesPercentilePosition:
+      properties:
+        description:
+          type: string
+        percentile:
+          description: The share of the spans, 0 to 100, that were no slower than
+            this one.
+          format: double
+          type: number
+      required:
+      - percentile
+      - description
+      type: object
+    SpanpercentiletypesPercentileStats:
+      properties:
+        p50:
+          description: In nanoseconds.
+          format: double
+          type: number
+        p90:
+          description: In nanoseconds.
+          format: double
+          type: number
+        p99:
+          description: In nanoseconds.
+          format: double
+          type: number
+      required:
+      - p50
+      - p90
+      - p99
+      type: object
+    SpanpercentiletypesSpanPercentileRequest:
+      properties:
+        end:
+          description: The end of the time range, in milliseconds since the Unix epoch.
+          minimum: 0
+          type: integer
+        name:
+          type: string
+        resourceAttributes:
+          additionalProperties:
+            type: string
+          description: Narrows the compared spans to those with these resource attributes.
+          nullable: true
+          type: object
+        serviceName:
+          type: string
+        spanDuration:
+          description: The span's duration, in nanoseconds.
+          format: int64
+          type: integer
+        start:
+          description: The start of the time range, in milliseconds since the Unix
+            epoch.
+          minimum: 0
+          type: integer
+      required:
+      - spanDuration
+      - name
+      - serviceName
+      - start
+      - end
+      type: object
+    SpanpercentiletypesSpanPercentileResponse:
+      properties:
+        percentiles:
+          $ref: '#/components/schemas/SpanpercentiletypesPercentileStats'
+        position:
+          $ref: '#/components/schemas/SpanpercentiletypesPercentilePosition'
+      required:
+      - percentiles
+      - position
+      type: object
     SpantypesEvent:
       properties:
         attributeMap:
-          additionalProperties: {}
-          type: object
-        isError:
-          type: boolean
-        name:
-          type: string
-        timeUnixNano:
-          minimum: 0
-          type: integer
-      type: object
-    SpantypesEventV2:
-      properties:
-        attributes:
           additionalProperties: {}
           type: object
         isError:
@@ -12885,13 +12946,6 @@ components:
           nullable: true
           type: array
       type: object
-    SpantypesLink:
-      properties:
-        spanId:
-          type: string
-        traceId:
-          type: string
-      type: object
     SpantypesOtelSpanRef:
       properties:
         refType:
@@ -12989,6 +13043,23 @@ components:
           nullable: true
           type: array
       type: object
+    SpantypesSameNameSiblingStats:
+      properties:
+        errorSpanCount:
+          minimum: 0
+          type: integer
+        ownTimeNano:
+          description: The own time of the group's spans, added up.
+          minimum: 0
+          type: integer
+        spanCount:
+          minimum: 0
+          type: integer
+      required:
+      - spanCount
+      - ownTimeNano
+      - errorSpanCount
+      type: object
     SpantypesScope:
       properties:
         attributes:
@@ -12998,6 +13069,69 @@ components:
           type: string
         version:
           type: string
+      type: object
+    SpantypesSpan:
+      properties:
+        attributes:
+          additionalProperties: {}
+          type: object
+        durationNano:
+          minimum: 0
+          type: integer
+        events:
+          items:
+            $ref: '#/components/schemas/SpantypesEvent'
+          type: array
+        hasError:
+          type: boolean
+        kindString:
+          type: string
+        name:
+          type: string
+        parentSpanId:
+          type: string
+        references:
+          description: The parent as a CHILD_OF reference and each span link as a
+            FOLLOWS_FROM one.
+          items:
+            $ref: '#/components/schemas/SpantypesOtelSpanRef'
+          type: array
+        resource:
+          additionalProperties:
+            type: string
+          type: object
+        responseStatusCode:
+          description: The HTTP or gRPC status code of the response; empty when the
+            span has none.
+          type: string
+        spanId:
+          type: string
+        statusCodeString:
+          type: string
+        statusMessage:
+          type: string
+        timeUnixMilli:
+          description: The start time, in milliseconds since the Unix epoch.
+          minimum: 0
+          type: integer
+        traceId:
+          type: string
+      required:
+      - spanId
+      - traceId
+      - parentSpanId
+      - name
+      - kindString
+      - timeUnixMilli
+      - durationNano
+      - hasError
+      - statusCodeString
+      - statusMessage
+      - responseStatusCode
+      - resource
+      - attributes
+      - events
+      - references
       type: object
     SpantypesSpanAggregation:
       properties:
@@ -13031,6 +13165,85 @@ components:
       - span_count
       - execution_time_percentage
       - duration
+      type: string
+    SpantypesSpanDetail:
+      properties:
+        ancestors:
+          description: Every span above this one, the parent first and a root last;
+            empty for a root and when the parent span is missing. Each holds service.name
+            as its only resource attribute, and no attributes or events.
+          items:
+            $ref: '#/components/schemas/SpantypesSpan'
+          type: array
+        span:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpan'
+          description: The span with every attribute, resource attribute and event.
+        treeStats:
+          $ref: '#/components/schemas/SpantypesSpanTreeStats'
+        unmarkedFailureReason:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesUnmarkedFailureReason'
+          description: Present for a span that failed without the error flag.
+      required:
+      - span
+      - treeStats
+      - ancestors
+      type: object
+    SpantypesSpanList:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/SpantypesSpanListItem'
+          type: array
+        total:
+          description: The number of spans the request matches, over all pages.
+          minimum: 0
+          type: integer
+        warnings:
+          description: Why the request may have returned less than expected, such
+            as a search key that is not known or a selected field that no returned
+            span has.
+          items:
+            type: string
+          type: array
+      required:
+      - total
+      - items
+      type: object
+    SpantypesSpanListItem:
+      properties:
+        matches:
+          description: Where the searched words were found; omitted when the search
+            has no words.
+          items:
+            $ref: '#/components/schemas/SpantypesSpanTextMatch'
+          type: array
+        parent:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpan'
+          description: The direct parent; omitted for a root, when the parent span
+            is missing, and when the request gives parentSpanId.
+        span:
+          $ref: '#/components/schemas/SpantypesSpan'
+        treeStats:
+          $ref: '#/components/schemas/SpantypesSpanTreeStats'
+        unmarkedFailureReason:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesUnmarkedFailureReason'
+          description: Present for a span that failed without the error flag.
+      required:
+      - span
+      - treeStats
+      type: object
+    SpantypesSpanListView:
+      enum:
+      - all
+      - errors
+      - unmarked_failures
+      - slowest
+      - expensive
+      - links
       type: string
     SpantypesSpanMapper:
       properties:
@@ -13183,90 +13396,6 @@ components:
           nullable: true
           type: object
       type: object
-    SpantypesSpanRecord:
-      properties:
-        attributes:
-          additionalProperties: {}
-          type: object
-        events:
-          items:
-            $ref: '#/components/schemas/SpantypesEventV2'
-          type: array
-        links:
-          items:
-            $ref: '#/components/schemas/SpantypesLink'
-          type: array
-        resource:
-          additionalProperties:
-            type: string
-          type: object
-        spanId:
-          type: string
-        statusCode:
-          type: string
-        statusMessage:
-          type: string
-        truncated:
-          items:
-            $ref: '#/components/schemas/SpantypesTruncatedField'
-          type: array
-      required:
-      - spanId
-      - statusCode
-      - statusMessage
-      - attributes
-      - resource
-      - events
-      - links
-      - truncated
-      type: object
-    SpantypesSpanSummary:
-      properties:
-        childCount:
-          minimum: 0
-          type: integer
-        durationNano:
-          minimum: 0
-          type: integer
-        hasError:
-          type: boolean
-        kind:
-          type: string
-        level:
-          minimum: 0
-          type: integer
-        name:
-          type: string
-        ownTimeNano:
-          minimum: 0
-          type: integer
-        parentSpanId:
-          type: string
-        responseStatusCode:
-          type: string
-        serviceName:
-          type: string
-        spanId:
-          type: string
-        startOffsetNano:
-          minimum: 0
-          type: integer
-        subtreeSpanCount:
-          minimum: 0
-          type: integer
-      required:
-      - spanId
-      - name
-      - serviceName
-      - kind
-      - startOffsetNano
-      - durationNano
-      - ownTimeNano
-      - hasError
-      - level
-      - childCount
-      - subtreeSpanCount
-      type: object
     SpantypesSpanTextMatch:
       properties:
         field:
@@ -13276,6 +13405,40 @@ components:
       required:
       - field
       - snippet
+      type: object
+    SpantypesSpanTreeStats:
+      properties:
+        childCount:
+          minimum: 0
+          type: integer
+        errorAncestorCount:
+          description: The number of ancestors in a row, from the parent up, that
+            carry the error flag.
+          minimum: 0
+          type: integer
+        level:
+          description: The depth in the trace; 0 for a root.
+          minimum: 0
+          type: integer
+        ownTimeNano:
+          description: The duration minus the time the span's children cover.
+          minimum: 0
+          type: integer
+        sameNameSiblings:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSameNameSiblingStats'
+          description: The spans with this span's name under the same parent, this
+            span included; omitted when it is the only one.
+        subtreeSpanCount:
+          description: The number of spans below this one, at any depth.
+          minimum: 0
+          type: integer
+      required:
+      - level
+      - childCount
+      - subtreeSpanCount
+      - ownTimeNano
+      - errorAncestorCount
       type: object
     SpantypesThreadSpan:
       properties:
@@ -13343,7 +13506,7 @@ components:
       - formattedOutput
       - formatterWarnings
       type: object
-    SpantypesTraceAIIdentity:
+    SpantypesTraceAISummary:
       properties:
         modelCallCount:
           minimum: 0
@@ -13358,15 +13521,6 @@ components:
       required:
       - modelCallCount
       - toolCallCount
-      - tokens
-      type: object
-    SpantypesTraceAISummary:
-      properties:
-        tokens:
-          $ref: '#/components/schemas/SpantypesTraceAITokens'
-        totalCost:
-          type: number
-      required:
       - tokens
       type: object
     SpantypesTraceAITokens:
@@ -13393,163 +13547,40 @@ components:
       - cacheWrite
       - reasoning
       type: object
-    SpantypesTraceErrorItem:
-      properties:
-        errorAncestorCount:
-          minimum: 0
-          type: integer
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        statusMessage:
-          type: string
-      required:
-      - span
-      - statusMessage
-      - errorAncestorCount
-      type: object
-    SpantypesTraceErrorList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceErrorItem'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - items
-      type: object
-    SpantypesTraceExpensiveItem:
-      properties:
-        cost:
-          type: number
-        inputTokens:
-          minimum: 0
-          type: integer
-        outputTokens:
-          minimum: 0
-          type: integer
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-      required:
-      - span
-      - inputTokens
-      - outputTokens
-      type: object
-    SpantypesTraceExpensiveList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceExpensiveItem'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - items
-      type: object
-    SpantypesTraceIdentity:
-      properties:
-        ai:
-          $ref: '#/components/schemas/SpantypesTraceAIIdentity'
-        durationNano:
-          minimum: 0
-          type: integer
-        errorSpanCount:
-          minimum: 0
-          type: integer
-        hasMissingSpans:
-          type: boolean
-        root:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        rootCount:
-          minimum: 0
-          type: integer
-        serviceCount:
-          minimum: 0
-          type: integer
-        services:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceServiceStats'
-          type: array
-        spanCount:
-          minimum: 0
-          type: integer
-        startTimestampMillis:
-          minimum: 0
-          type: integer
-        traceId:
-          type: string
-      required:
-      - traceId
-      - startTimestampMillis
-      - durationNano
-      - spanCount
-      - errorSpanCount
-      - rootCount
-      - hasMissingSpans
-      - serviceCount
-      - services
-      type: object
-    SpantypesTraceLinkItem:
-      properties:
-        linkCount:
-          minimum: 0
-          type: integer
-        links:
-          items:
-            $ref: '#/components/schemas/SpantypesLink'
-          type: array
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-      required:
-      - span
-      - linkCount
-      - links
-      type: object
-    SpantypesTraceLinkList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceLinkItem'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - items
-      type: object
     SpantypesTraceOverview:
       properties:
         errors:
-          $ref: '#/components/schemas/SpantypesTraceErrorList'
+          $ref: '#/components/schemas/SpantypesSpanList'
         expensive:
-          $ref: '#/components/schemas/SpantypesTraceExpensiveList'
-        identity:
-          $ref: '#/components/schemas/SpantypesTraceIdentity'
+          $ref: '#/components/schemas/SpantypesSpanList'
         links:
-          $ref: '#/components/schemas/SpantypesTraceLinkList'
+          $ref: '#/components/schemas/SpantypesSpanList'
+        services:
+          description: Every service of the trace, highest own time first.
+          items:
+            $ref: '#/components/schemas/SpantypesTraceServiceStats'
+          type: array
         slowest:
-          $ref: '#/components/schemas/SpantypesTraceSlowestList'
+          $ref: '#/components/schemas/SpantypesSpanList'
+        summary:
+          $ref: '#/components/schemas/SpantypesGettableTraceSummary'
         tree:
-          $ref: '#/components/schemas/SpantypesTraceTree'
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanList'
+          description: The top levels of the trace, picked level by level and listed
+            in tree order. It is not a page of the span list; its total is the number
+            of spans in the trace.
         unmarkedFailures:
-          $ref: '#/components/schemas/SpantypesTraceUnmarkedFailureList'
+          $ref: '#/components/schemas/SpantypesSpanList'
+      required:
+      - summary
+      - services
+      - errors
+      - unmarkedFailures
+      - expensive
+      - links
+      - slowest
+      - tree
       type: object
     SpantypesTraceServiceStats:
       properties:
@@ -13557,6 +13588,7 @@ components:
           minimum: 0
           type: integer
         ownTimeNano:
+          description: The own time of the service's spans, added up.
           minimum: 0
           type: integer
         serviceName:
@@ -13569,200 +13601,6 @@ components:
       - spanCount
       - errorSpanCount
       - ownTimeNano
-      type: object
-    SpantypesTraceSlowestItem:
-      properties:
-        errorSpanCount:
-          minimum: 0
-          type: integer
-        ownTimeNano:
-          minimum: 0
-          type: integer
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        spanCount:
-          minimum: 0
-          type: integer
-      required:
-      - span
-      - spanCount
-      - ownTimeNano
-      - errorSpanCount
-      type: object
-    SpantypesTraceSlowestList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceSlowestItem'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - items
-      type: object
-    SpantypesTraceSpanDetail:
-      properties:
-        ancestorCount:
-          minimum: 0
-          type: integer
-        ancestors:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanSummary'
-          type: array
-        descendants:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceSpanLevel'
-          type: array
-        percentile:
-          $ref: '#/components/schemas/SpantypesTraceSpanPercentile'
-        record:
-          $ref: '#/components/schemas/SpantypesSpanRecord'
-        summary:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-      required:
-      - summary
-      - record
-      - ancestors
-      - ancestorCount
-      - descendants
-      type: object
-    SpantypesTraceSpanLevel:
-      properties:
-        level:
-          minimum: 0
-          type: integer
-        spans:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanSummary'
-          type: array
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - level
-      - total
-      - spans
-      type: object
-    SpantypesTraceSpanList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceSpanMatch'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-        warnings:
-          items:
-            type: string
-          type: array
-      required:
-      - total
-      - items
-      type: object
-    SpantypesTraceSpanMatch:
-      properties:
-        matches:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanTextMatch'
-          type: array
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-      required:
-      - span
-      - matches
-      type: object
-    SpantypesTraceSpanPercentile:
-      properties:
-        p50Nano:
-          minimum: 0
-          type: integer
-        p90Nano:
-          minimum: 0
-          type: integer
-        p99Nano:
-          minimum: 0
-          type: integer
-        position:
-          format: double
-          type: number
-        windowMinutes:
-          minimum: 0
-          type: integer
-      required:
-      - p50Nano
-      - p90Nano
-      - p99Nano
-      - position
-      - windowMinutes
-      type: object
-    SpantypesTraceTree:
-      properties:
-        complete:
-          type: boolean
-        records:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanRecord'
-          type: array
-        spans:
-          items:
-            $ref: '#/components/schemas/SpantypesSpanSummary'
-          type: array
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - complete
-      - spans
-      type: object
-    SpantypesTraceUnmarkedFailureItem:
-      properties:
-        parent:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-        reason:
-          $ref: '#/components/schemas/SpantypesUnmarkedFailureReason'
-        span:
-          $ref: '#/components/schemas/SpantypesSpanSummary'
-      required:
-      - span
-      - reason
-      type: object
-    SpantypesTraceUnmarkedFailureList:
-      properties:
-        items:
-          items:
-            $ref: '#/components/schemas/SpantypesTraceUnmarkedFailureItem'
-          type: array
-        nextCursor:
-          type: string
-        total:
-          minimum: 0
-          type: integer
-      required:
-      - total
-      - items
-      type: object
-    SpantypesTruncatedField:
-      properties:
-        field:
-          type: string
-        length:
-          minimum: 0
-          type: integer
-      required:
-      - field
-      - length
       type: object
     SpantypesUnmarkedFailureReason:
       enum:
@@ -19436,6 +19274,71 @@ paths:
       tags:
       - spanmapper
       x-signoz-stability: alpha
+  /api/v1/span_percentile:
+    post:
+      deprecated: false
+      description: Places a span's duration among the spans of the same name and service,
+        and the same resource attributes when given, that started in the time range.
+      operationId: GetSpanPercentile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpanpercentiletypesSpanPercentileRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpanpercentiletypesSpanPercentileResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get percentile of a span duration
+      tags:
+      - spanpercentile
+      x-signoz-stability: alpha
   /api/v1/stats:
     get:
       deprecated: false
@@ -19792,25 +19695,31 @@ paths:
       tags:
       - tracedetail
       x-signoz-stability: alpha
-  /api/v1/traces/{traceID}/inspect:
+  /api/v1/traces/{traceID}/overview:
     get:
       deprecated: false
-      description: 'Returns the overview of a trace of any size: its identity with
-        per-service totals, the spans where each error started, the failures not marked
-        as errors, the slowest spans by own time, the most expensive gen_ai spans,
-        the spans that link to other spans, and the top of the span tree. A small
-        trace also returns each span''s full record. Every list carries its total
-        and a nextCursor when more items follow.'
-      operationId: InspectTrace
+      description: 'Returns the trace summary plus the spans to look at, for a trace
+        of any size: per-service totals, the first spans of the errors, unmarked failures,
+        expensive, links and slowest span lists, and the top levels of the span tree.
+        The summary is the one the trace summary route returns. Read more of a list
+        from the span list with the view of the same name, and the spans below a span
+        with parentSpanId.'
+      operationId: GetTraceOverview
       parameters:
-      - description: The nextCursor of one list of the overview; returns the next
-          page of that list and nothing else.
+      - description: The number of spans in each of errors, unmarkedFailures, expensive,
+          links and slowest, at most 1000; 10 when not given.
         in: query
-        name: cursor
+        name: limit
         schema:
-          description: The nextCursor of one list of the overview; returns the next
-            page of that list and nothing else.
-          type: string
+          description: The number of spans in each of errors, unmarkedFailures, expensive,
+            links and slowest, at most 1000; 10 when not given.
+          type: integer
+      - description: The number of spans in tree, at most 1000; 50 when not given.
+        in: query
+        name: treeLimit
+        schema:
+          description: The number of spans in tree, at most 1000; 50 when not given.
+          type: integer
       - in: path
         name: traceID
         required: true
@@ -19866,55 +19775,85 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: Inspect a trace
+      summary: Get overview of a trace
       tags:
       - tracedetail
-      x-signoz-stability: alpha
-  /api/v1/traces/{traceID}/inspect/spans:
+      x-signoz-stability: development
+  /api/v1/traces/{traceID}/spans:
     get:
       deprecated: false
-      description: Returns the spans of a trace that match a search, each with its
-        direct parent and where the words were found. Without a search it returns
-        every span in tree order, or with under one span and the spans below it.
-      operationId: InspectTraceSpans
+      description: Returns a page of the spans of a trace, each with its tree stats
+        and direct parent. view picks the spans and their order; search and parentSpanId
+        narrow them; selectFields names the attributes to fill. Values are returned
+        whole.
+      operationId: ListTraceSpans
       parameters:
-      - description: 'Returns the spans that match, earliest first: words, a filter
-          expression, or both, such as worldpay AND has_error = true. Words match
-          the span name, status message, attributes, resource attributes and events,
-          ignoring case. Without it every span is returned, in tree order.'
+      - description: 'Which spans are returned and in what order; all when not given.
+          all: every span in tree order, a span followed by the spans below it. errors:
+          the error spans with no error span among their children, in start order.
+          unmarked_failures: the spans without the error flag that have a 4xx response,
+          a gRPC status other than OK or an exception event, in start order. slowest:
+          the longest span of each group of same-name spans under one parent, by the
+          group''s own time. expensive: the gen_ai spans by cost, or by tokens when
+          no span has a cost; each carries its gen_ai token and cost attributes. links:
+          the spans that link to other spans, in start order. A view is formed over
+          the whole trace; search and parentSpanId only filter it.'
+        in: query
+        name: view
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanListView'
+          description: 'Which spans are returned and in what order; all when not given.
+            all: every span in tree order, a span followed by the spans below it.
+            errors: the error spans with no error span among their children, in start
+            order. unmarked_failures: the spans without the error flag that have a
+            4xx response, a gRPC status other than OK or an exception event, in start
+            order. slowest: the longest span of each group of same-name spans under
+            one parent, by the group''s own time. expensive: the gen_ai spans by cost,
+            or by tokens when no span has a cost; each carries its gen_ai token and
+            cost attributes. links: the spans that link to other spans, in start order.
+            A view is formed over the whole trace; search and parentSpanId only filter
+            it.'
+      - description: 'Keeps only the spans that match: words, a filter expression,
+          or both, such as worldpay AND has_error = true. Words match the span name,
+          status message, attributes, resource attributes and events, ignoring case.'
         in: query
         name: search
         schema:
-          description: 'Returns the spans that match, earliest first: words, a filter
-            expression, or both, such as worldpay AND has_error = true. Words match
-            the span name, status message, attributes, resource attributes and events,
-            ignoring case. Without it every span is returned, in tree order.'
+          description: 'Keeps only the spans that match: words, a filter expression,
+            or both, such as worldpay AND has_error = true. Words match the span name,
+            status message, attributes, resource attributes and events, ignoring case.'
           type: string
-      - description: A span ID; returns that span and every span below it. Cannot
-          be combined with search.
+      - description: Keeps only the direct children of this span.
         in: query
-        name: under
+        name: parentSpanId
         schema:
-          description: A span ID; returns that span and every span below it. Cannot
-            be combined with search.
+          description: Keeps only the direct children of this span.
           type: string
-      - description: Page size, at most 1000; when not given, 20 with search and 400
-          without. A page holds fewer spans when it would pass the response size limit.
+      - description: Names of the attributes and resource attributes to fill on each
+          span, such as http.route or resource.k8s.pod.name. service.name is always
+          filled.
+        in: query
+        name: selectFields
+        schema:
+          description: Names of the attributes and resource attributes to fill on
+            each span, such as http.route or resource.k8s.pod.name. service.name is
+            always filled.
+          items:
+            type: string
+          type: array
+      - description: The number of spans to skip; 0 when not given.
+        in: query
+        name: offset
+        schema:
+          description: The number of spans to skip; 0 when not given.
+          type: integer
+      - description: Page size, at most 1000; 50 when not given.
         in: query
         name: limit
         schema:
-          description: Page size, at most 1000; when not given, 20 with search and
-            400 without. A page holds fewer spans when it would pass the response
-            size limit.
+          description: Page size, at most 1000; 50 when not given.
           type: integer
-      - description: The nextCursor of an earlier response to the same request; returns
-          the next page.
-        in: query
-        name: cursor
-        schema:
-          description: The nextCursor of an earlier response to the same request;
-            returns the next page.
-          type: string
       - in: path
         name: traceID
         required: true
@@ -19927,7 +19866,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesTraceSpanList'
+                    $ref: '#/components/schemas/SpantypesSpanList'
                   status:
                     type: string
                 required:
@@ -19970,38 +19909,18 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: Search or list the spans of a trace
+      summary: List spans of a trace
       tags:
       - tracedetail
-      x-signoz-stability: alpha
-  /api/v1/traces/{traceID}/inspect/spans/{spanID}:
+      x-signoz-stability: development
+  /api/v1/traces/{traceID}/spans/{spanID}:
     get:
       deprecated: false
-      description: 'Returns one span in full: its summary and record, its nearest
-        ancestors with the root, the spans below it level by level, and where its
-        duration sits among recent spans of the same name and service. Long values
-        are cut and listed in truncated; selectFields returns named attributes without
-        the cut.'
-      operationId: InspectTraceSpan
+      description: Returns one span with every attribute, resource attribute and event,
+        its tree stats, and the spans above it up to a root. Values are returned whole.
+        The spans below it come from the span list with parentSpanId.
+      operationId: GetTraceSpan
       parameters:
-      - description: The number of levels of ancestors and of descendants returned,
-          1 to 10; 2 when not given. The root span is always returned.
-        in: query
-        name: depth
-        schema:
-          description: The number of levels of ancestors and of descendants returned,
-            1 to 10; 2 when not given. The root span is always returned.
-          type: integer
-      - description: Attribute names returned without the 500 character cut; the record
-          then holds only these attributes.
-        in: query
-        name: selectFields
-        schema:
-          description: Attribute names returned without the 500 character cut; the
-            record then holds only these attributes.
-          items:
-            type: string
-          type: array
       - in: path
         name: traceID
         required: true
@@ -20019,7 +19938,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesTraceSpanDetail'
+                    $ref: '#/components/schemas/SpantypesSpanDetail'
                   status:
                     type: string
                 required:
@@ -20027,12 +19946,6 @@ paths:
                 - data
                 type: object
           description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
         "401":
           content:
             application/json:
@@ -20062,15 +19975,17 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: Inspect a span of a trace
+      summary: Get span of a trace
       tags:
       - tracedetail
-      x-signoz-stability: alpha
+      x-signoz-stability: development
   /api/v1/traces/{traceID}/summary:
     get:
       deprecated: false
-      description: Returns the trace's time range, root span, span and error counts,
-        and whether any spans are missing. AI traces also include token and cost totals.
+      description: 'Returns the totals of a trace and no spans: its time range, root
+        span, span and error counts, and whether any spans are missing. AI traces
+        also include model and tool call counts, and token and cost totals. For the
+        spans to look at, use the trace overview.'
       operationId: GetTraceSummary
       parameters:
       - in: path

@@ -36,6 +36,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/spanmapper"
+	"github.com/SigNoz/signoz/pkg/modules/spanpercentile"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -101,6 +102,7 @@ type provider struct {
 	savedViewHandler           savedview.Handler
 	quickFilterModule          quickfilter.Module
 	quickFilterHandler         quickfilter.Handler
+	spanPercentileHandler      spanpercentile.Handler
 }
 
 func NewFactory(
@@ -153,6 +155,7 @@ func NewFactory(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	spanPercentileHandler spanpercentile.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -208,6 +211,7 @@ func NewFactory(
 			web,
 			quickFilterModule,
 			quickFilterHandler,
+			spanPercentileHandler,
 		)
 	})
 }
@@ -265,6 +269,7 @@ func newProvider(
 	web web.Web,
 	quickFilterModule quickfilter.Module,
 	quickFilterHandler quickfilter.Handler,
+	spanPercentileHandler spanpercentile.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -317,6 +322,7 @@ func newProvider(
 		savedViewHandler:           savedViewHandler,
 		quickFilterModule:          quickFilterModule,
 		quickFilterHandler:         quickFilterHandler,
+		spanPercentileHandler:      spanPercentileHandler,
 	}
 
 	provider.authzMiddleware = middleware.NewAuthZ(settings.Logger(), orgGetter, authzService)
@@ -525,6 +531,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addQuickFilterRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addSpanPercentileRoutes(router); err != nil {
 		return err
 	}
 
