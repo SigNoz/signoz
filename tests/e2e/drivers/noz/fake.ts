@@ -153,29 +153,36 @@ export async function installFakeAssistant(page: Page): Promise<FakeAssistant> {
 		const url = new URL(route.request().url());
 		const method = route.request().method();
 		const path = assistantPath(url) ?? '';
-		const [, resource, id, sub] = path.split('/');
+		const [, resource, id, sub, ...extra] = path.split('/');
 		const thread = id ? threads.get(id) : undefined;
+		const is = (verb: string, segment?: string): boolean =>
+			method === verb && sub === segment && extra.length === 0;
 
-		if (resource === 'threads' && !id && method === 'POST') {
+		if (resource === 'threads' && !id && is('POST')) {
 			return json(route, createThread());
 		}
-		if (resource === 'threads' && !id && method === 'GET') {
+		if (resource === 'threads' && !id && is('GET')) {
 			return json(route, listThreads(url));
 		}
-		if (resource === 'threads' && thread && !sub && method === 'GET') {
+		if (resource === 'threads' && thread && is('GET')) {
 			return json(route, thread);
 		}
-		if (resource === 'threads' && thread && sub === 'messages') {
+		if (resource === 'threads' && thread && is('POST', 'messages')) {
 			return postMessage(route, thread);
 		}
-		if (resource === 'executions' && id && executions.has(id)) {
+		if (
+			resource === 'executions' &&
+			id &&
+			executions.has(id) &&
+			is('GET', 'events')
+		) {
 			return route.fulfill({
 				status: 200,
 				contentType: 'text/event-stream',
 				body: sse(executions.get(id) ?? []),
 			});
 		}
-		if (resource === 'empty-state') {
+		if (resource === 'empty-state' && id === 'chips' && is('GET')) {
 			const chips: ChipsResponseDTO = { chips: [] };
 			return json(route, chips);
 		}
