@@ -13798,12 +13798,13 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 export interface SpanpercentiletypesPercentilePositionDTO {
 	/**
 	 * @type string
+	 * @description The position in words, for example: slower than 98.4% of spans.
 	 */
 	description: string;
 	/**
 	 * @type number
 	 * @format double
-	 * @description The share of the spans, 0 to 100, that were no slower than this one.
+	 * @description Share of the compared spans, 0 to 100, that were no slower than this one.
 	 */
 	percentile: number;
 }
@@ -13812,31 +13813,31 @@ export interface SpanpercentiletypesPercentileStatsDTO {
 	/**
 	 * @type number
 	 * @format double
-	 * @description In nanoseconds.
+	 * @description 50th percentile of the compared spans' durations, in nanoseconds.
 	 */
 	p50: number;
 	/**
 	 * @type number
 	 * @format double
-	 * @description In nanoseconds.
+	 * @description 90th percentile of the compared spans' durations, in nanoseconds.
 	 */
 	p90: number;
 	/**
 	 * @type number
 	 * @format double
-	 * @description In nanoseconds.
+	 * @description 99th percentile of the compared spans' durations, in nanoseconds.
 	 */
 	p99: number;
 }
 
 /**
- * Narrows the compared spans to those with these resource attributes.
+ * Compares only against spans that have these resource attributes.
  */
 export type SpanpercentiletypesSpanPercentileRequestDTOResourceAttributesAnyOf =
 	{ [key: string]: string };
 
 /**
- * Narrows the compared spans to those with these resource attributes.
+ * Compares only against spans that have these resource attributes.
  * @nullable
  */
 export type SpanpercentiletypesSpanPercentileRequestDTOResourceAttributes = SpanpercentiletypesSpanPercentileRequestDTOResourceAttributesAnyOf | null;
@@ -13845,7 +13846,7 @@ export interface SpanpercentiletypesSpanPercentileRequestDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The end of the time range, in milliseconds since the Unix epoch.
+	 * @description End of the time range to compare against, in milliseconds since the Unix epoch.
 	 */
 	end: number;
 	/**
@@ -13854,7 +13855,7 @@ export interface SpanpercentiletypesSpanPercentileRequestDTO {
 	name: string;
 	/**
 	 * @type object,null
-	 * @description Narrows the compared spans to those with these resource attributes.
+	 * @description Compares only against spans that have these resource attributes.
 	 */
 	resourceAttributes?: SpanpercentiletypesSpanPercentileRequestDTOResourceAttributes;
 	/**
@@ -13864,13 +13865,13 @@ export interface SpanpercentiletypesSpanPercentileRequestDTO {
 	/**
 	 * @type integer
 	 * @format int64
-	 * @description The span's duration, in nanoseconds.
+	 * @description Duration of the span to place, in nanoseconds.
 	 */
 	spanDuration: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The start of the time range, in milliseconds since the Unix epoch.
+	 * @description Start of the time range to compare against, in milliseconds since the Unix epoch.
 	 */
 	start: number;
 }
@@ -14253,12 +14254,14 @@ export interface SpantypesTraceAISummaryDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of model call spans: spans with gen_ai.request.model.
 	 */
 	modelCallCount: number;
 	tokens: SpantypesTraceAITokensDTO;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of tool call spans: spans with gen_ai.tool.name.
 	 */
 	toolCallCount: number;
 	/**
@@ -14692,45 +14695,58 @@ export interface SpantypesSameNameSiblingStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of spans in the group that are marked as errors.
 	 */
 	errorSpanCount: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The own time of the group's spans, added up.
+	 * @description Total own time of the group, in nanoseconds.
 	 */
 	ownTimeNano: number;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of spans in the group, this span included.
 	 */
 	spanCount: number;
 }
 
+/**
+ * Span attributes. A span read by ID has all of them; a span in a list has only the selected ones; an ancestor has none.
+ */
 export type SpantypesSpanDTOAttributes = { [key: string]: unknown };
 
+/**
+ * Resource attributes. Always includes service.name. A span read by ID has all of them; a span in a list also has the selected ones.
+ */
 export type SpantypesSpanDTOResource = { [key: string]: string };
 
 export interface SpantypesSpanDTO {
 	/**
 	 * @type object
+	 * @description Span attributes. A span read by ID has all of them; a span in a list has only the selected ones; an ancestor has none.
 	 */
 	attributes: SpantypesSpanDTOAttributes;
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Duration, in nanoseconds.
 	 */
 	durationNano: number;
 	/**
 	 * @type array
+	 * @description Span events. A span read by ID has all of them; a span in a list and an ancestor have none.
 	 */
 	events: SpantypesEventDTO[];
 	/**
 	 * @type boolean
+	 * @description Whether the span is marked as an error.
 	 */
 	hasError: boolean;
 	/**
 	 * @type string
+	 * @description Span kind, for example Server, Client or Internal.
 	 */
 	kindString: string;
 	/**
@@ -14739,20 +14755,22 @@ export interface SpantypesSpanDTO {
 	name: string;
 	/**
 	 * @type string
+	 * @description ID of the parent span. Empty for a root.
 	 */
 	parentSpanId: string;
 	/**
 	 * @type array
-	 * @description The parent as a CHILD_OF reference and each span link as a FOLLOWS_FROM one.
+	 * @description References to other spans: the parent as CHILD_OF, and each span link as FOLLOWS_FROM.
 	 */
 	references: SpantypesOtelSpanRefDTO[];
 	/**
 	 * @type object
+	 * @description Resource attributes. Always includes service.name. A span read by ID has all of them; a span in a list also has the selected ones.
 	 */
 	resource: SpantypesSpanDTOResource;
 	/**
 	 * @type string
-	 * @description The HTTP or gRPC status code of the response; empty when the span has none.
+	 * @description HTTP or gRPC status code of the response, for example 404. Empty when the span has none.
 	 */
 	responseStatusCode: string;
 	/**
@@ -14761,16 +14779,18 @@ export interface SpantypesSpanDTO {
 	spanId: string;
 	/**
 	 * @type string
+	 * @description OpenTelemetry status code of the span.
 	 */
 	statusCodeString: string;
 	/**
 	 * @type string
+	 * @description Status message, usually the error text. Empty when the span has none.
 	 */
 	statusMessage: string;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The start time, in milliseconds since the Unix epoch.
+	 * @description Start time, in milliseconds since the Unix epoch.
 	 */
 	timeUnixMilli: number;
 	/**
@@ -14783,34 +14803,35 @@ export interface SpantypesSpanTreeStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of direct children.
 	 */
 	childCount: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of ancestors in a row, from the parent up, that carry the error flag.
+	 * @description Number of ancestors in a row, starting at the parent, that are marked as errors. On an error span it shows how far up the error spread.
 	 */
 	errorAncestorCount: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The depth in the trace; 0 for a root.
+	 * @description Depth in the trace: 0 for a root, 1 for its children, and so on.
 	 */
 	level: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The duration minus the time the span's children cover.
+	 * @description Time spent in the span itself, in nanoseconds: its duration minus the time its children cover.
 	 */
 	ownTimeNano: number;
 	/**
-	 * @description The spans with this span's name under the same parent, this span included; omitted when it is the only one.
+	 * @description Totals for the spans that share this span's name and parent, this span included. Omitted when no other span does.
 	 */
 	sameNameSiblings?: SpantypesSameNameSiblingStatsDTO;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of spans below this one, at any depth.
+	 * @description Number of spans below this one, at any depth.
 	 */
 	subtreeSpanCount: number;
 }
@@ -14823,16 +14844,19 @@ export enum SpantypesUnmarkedFailureReasonDTO {
 export interface SpantypesSpanDetailDTO {
 	/**
 	 * @type array
-	 * @description Every span above this one, the parent first and a root last; empty for a root and when the parent span is missing. Each holds service.name as its only resource attribute, and no attributes or events.
+	 * @description The spans above this one, the parent first and the root last. Empty for a root and for a span whose parent is missing. Each includes service.name, no other attributes, and no events.
 	 */
 	ancestors: SpantypesSpanDTO[];
 	/**
-	 * @description The span with every attribute, resource attribute and event.
+	 * @description The span with all its attributes, resource attributes and events.
 	 */
 	span: SpantypesSpanDTO;
+	/**
+	 * @description Numbers computed from the span's place in the trace.
+	 */
 	treeStats: SpantypesSpanTreeStatsDTO;
 	/**
-	 * @description Present for a span that failed without the error flag.
+	 * @description Why the span counts as failed although it is not marked as an error. Omitted for every other span.
 	 */
 	unmarkedFailureReason?: SpantypesUnmarkedFailureReasonDTO;
 }
@@ -14840,10 +14864,12 @@ export interface SpantypesSpanDetailDTO {
 export interface SpantypesSpanTextMatchDTO {
 	/**
 	 * @type string
+	 * @description Where the word was found: name, statusMessage, attributes.<name>, resource.<name> or events[<index>].
 	 */
 	field: string;
 	/**
 	 * @type string
+	 * @description The word with some of the text around it.
 	 */
 	snippet: string;
 }
@@ -14851,17 +14877,16 @@ export interface SpantypesSpanTextMatchDTO {
 export interface SpantypesSpanListItemDTO {
 	/**
 	 * @type array
-	 * @description Where the searched words were found; omitted when the search has no words.
+	 * @description Where the search words were found, up to three places. A list does not return all attributes or any events, so this is how to see why a span matched. Omitted when the search has no words.
 	 */
 	matches?: SpantypesSpanTextMatchDTO[];
-	/**
-	 * @description The direct parent; omitted for a root, when the parent span is missing, and when the request gives parentSpanId.
-	 */
-	parent?: SpantypesSpanDTO;
 	span: SpantypesSpanDTO;
+	/**
+	 * @description Numbers computed from the span's place in the trace.
+	 */
 	treeStats: SpantypesSpanTreeStatsDTO;
 	/**
-	 * @description Present for a span that failed without the error flag.
+	 * @description Why the span counts as failed although it is not marked as an error. Omitted for every other span.
 	 */
 	unmarkedFailureReason?: SpantypesUnmarkedFailureReasonDTO;
 }
@@ -14869,17 +14894,18 @@ export interface SpantypesSpanListItemDTO {
 export interface SpantypesSpanListDTO {
 	/**
 	 * @type array
+	 * @description The spans of this page.
 	 */
 	items: SpantypesSpanListItemDTO[];
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The number of spans the request matches, over all pages.
+	 * @description Number of spans that match the request, across all pages.
 	 */
 	total: number;
 	/**
 	 * @type array
-	 * @description Why the request may have returned less than expected, such as a search key that is not known or a selected field that no returned span has.
+	 * @description Reasons the result may be incomplete, for example a search key that is not known or a selected field that no returned span has. Omitted when there are none.
 	 */
 	warnings?: string[];
 }
@@ -14896,12 +14922,13 @@ export interface SpantypesTraceServiceStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of spans of the service that are marked as errors.
 	 */
 	errorSpanCount: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description The own time of the service's spans, added up.
+	 * @description Total own time of the service's spans, in nanoseconds.
 	 */
 	ownTimeNano: number;
 	/**
@@ -14911,25 +14938,44 @@ export interface SpantypesTraceServiceStatsDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
+	 * @description Number of spans of the service.
 	 */
 	spanCount: number;
 }
 
 export interface SpantypesTraceOverviewDTO {
+	/**
+	 * @description The spans where an error started. First page of the errors view of the span list.
+	 */
 	errors: SpantypesSpanListDTO;
+	/**
+	 * @description The most expensive gen_ai spans. First page of the expensive view of the span list. Empty for a trace without gen_ai spans.
+	 */
 	expensive: SpantypesSpanListDTO;
+	/**
+	 * @description Spans that link to other spans. First page of the links view of the span list.
+	 */
 	links: SpantypesSpanListDTO;
 	/**
 	 * @type array
-	 * @description Every service of the trace, highest own time first.
+	 * @description Totals for each service of the trace, highest own time first.
 	 */
 	services: SpantypesTraceServiceStatsDTO[];
+	/**
+	 * @description Where the time went, same-name siblings counted as one. First page of the slowest view of the span list.
+	 */
 	slowest: SpantypesSpanListDTO;
+	/**
+	 * @description Totals of the trace. The same object the trace summary route returns.
+	 */
 	summary: SpantypesGettableTraceSummaryDTO;
 	/**
-	 * @description The top levels of the trace, picked level by level and listed in tree order. It is not a page of the span list; its total is the number of spans in the trace.
+	 * @description The top levels of the trace, chosen level by level and listed in tree order. Not a page of the span list. Its total is the number of spans in the trace.
 	 */
 	tree: SpantypesSpanListDTO;
+	/**
+	 * @description Spans that failed without being marked as errors. First page of the unmarked_failures view of the span list.
+	 */
 	unmarkedFailures: SpantypesSpanListDTO;
 }
 
@@ -16389,12 +16435,12 @@ export type GetTraceOverviewPathParameters = {
 export type GetTraceOverviewParams = {
 	/**
 	 * @type integer
-	 * @description The number of spans in each of errors, unmarkedFailures, expensive, links and slowest, at most 1000; 10 when not given.
+	 * @description Number of spans in each of the errors, unmarkedFailures, expensive, links and slowest lists. Default: 10. Maximum: 1000.
 	 */
 	limit?: number;
 	/**
 	 * @type integer
-	 * @description The number of spans in tree, at most 1000; 50 when not given.
+	 * @description Number of spans in tree. Default: 50. Maximum: 1000.
 	 */
 	treeLimit?: number;
 };
@@ -16412,32 +16458,32 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description Which spans are returned and in what order; all when not given. all: every span in tree order, a span followed by the spans below it. errors: the error spans with no error span among their children, in start order. unmarked_failures: the spans without the error flag that have a 4xx response, a gRPC status other than OK or an exception event, in start order. slowest: the longest span of each group of same-name spans under one parent, by the group's own time. expensive: the gen_ai spans by cost, or by tokens when no span has a cost; each carries its gen_ai token and cost attributes. links: the spans that link to other spans, in start order. A view is formed over the whole trace; search and parentSpanId only filter it.
+	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the gen_ai spans by cost, or by tokens when none has a cost; each includes its gen_ai token and cost attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Keeps only the spans that match: words, a filter expression, or both, such as worldpay AND has_error = true. Words match the span name, status message, attributes, resource attributes and events, ignoring case.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events.
 	 */
 	search?: string;
 	/**
 	 * @type string
-	 * @description Keeps only the direct children of this span.
+	 * @description Returns only the direct children of this span.
 	 */
 	parentSpanId?: string;
 	/**
 	 * @type array
-	 * @description Names of the attributes and resource attributes to fill on each span, such as http.route or resource.k8s.pod.name. service.name is always filled.
+	 * @description Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings.
 	 */
 	selectFields?: string[];
 	/**
 	 * @type integer
-	 * @description The number of spans to skip; 0 when not given.
+	 * @description Number of spans to skip. Default: 0.
 	 */
 	offset?: number;
 	/**
 	 * @type integer
-	 * @description Page size, at most 1000; 50 when not given.
+	 * @description Number of spans to return. Default: 50. Maximum: 1000.
 	 */
 	limit?: number;
 };

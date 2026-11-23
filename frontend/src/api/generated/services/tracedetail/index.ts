@@ -282,7 +282,7 @@ export const invalidateGetTraceOverview = async (
 };
 
 /**
- * Returns a page of the spans of a trace, each with its tree stats and direct parent. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.
+ * Returns a page of the spans of a trace, each with its tree stats. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.
  * @summary List spans of a trace
  */
 export const listTraceSpans = (

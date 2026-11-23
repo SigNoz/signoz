@@ -33,8 +33,8 @@ type GettableTraceSummary struct {
 
 // TraceAISummary is present when any span carries a gen_ai gate key.
 type TraceAISummary struct {
-	ModelCallCount uint64        `json:"modelCallCount" required:"true"`
-	ToolCallCount  uint64        `json:"toolCallCount" required:"true"`
+	ModelCallCount uint64        `json:"modelCallCount" required:"true" description:"Number of model call spans: spans with gen_ai.request.model."`
+	ToolCallCount  uint64        `json:"toolCallCount" required:"true" description:"Number of tool call spans: spans with gen_ai.tool.name."`
 	Tokens         TraceAITokens `json:"tokens" required:"true"`
 	// TotalCost is omitted when no span carries a cost attribute.
 	TotalCost *float64 `json:"totalCost,omitempty" nullable:"false"`

@@ -127,7 +127,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "ListTraceSpans",
 			Tags:                []string{"tracedetail"},
 			Summary:             "List spans of a trace",
-			Description:         "Returns a page of the spans of a trace, each with its tree stats and direct parent. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.",
+			Description:         "Returns a page of the spans of a trace, each with its tree stats. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.",
 			RequestQuery:        new(spantypes.ListTraceSpansParams),
 			Response:            new(spantypes.SpanList),
 			ResponseContentType: "application/json",
