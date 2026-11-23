@@ -19,7 +19,7 @@ from fixtures.metrics import Metrics
         pytest.param({"name": "attribute.key", "limit": 1}, ["attr-prefixed"], False, id="exact_match_wins_the_limit"),
         pytest.param({"name": "attribute.attribute.key"}, ["attr-prefixed"], True, id="double_prefix_reaches_prefixed_stored_name"),
         pytest.param({"name": "log.severity_text"}, ["attr-severity", "WARN"], True, id="log_prefix_matches_attribute_then_log_field"),
-        pytest.param({"name": "resource.service.name"}, ["svc-resource"], True, id="resource_prefix_is_always_context"),
+        pytest.param({"name": "resource.service.name"}, ["attr-resource", "svc-resource"], True, id="resource_prefix_matches_exact_then_stripped"),
         pytest.param({"name": "attribute.resource.service.name"}, ["attr-resource"], True, id="only_first_prefix_is_context"),
         pytest.param({"name": "key", "fieldContext": "attribute"}, ["attr-plain"], True, id="explicit_context_single_lookup"),
         pytest.param({"name": "attribute.key", "fieldContext": "attribute"}, ["attr-prefixed"], True, id="explicit_context_name_not_parsed"),
@@ -38,7 +38,7 @@ def test_fields_values_name_resolution(
     expected: list[str],
     complete: bool,
 ) -> None:
-    """A prefixed name returns values of the name as written first, then with the prefix stripped. `resource.` is always a context."""
+    """A prefixed name returns values of the name as written first, then with the prefix stripped."""
     insert_logs(
         [
             Logs(

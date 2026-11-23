@@ -18,7 +18,7 @@ from fixtures.metadata import AttributesMetadata, get_field_values
         pytest.param({"name": "attribute.key", "limit": 1}, ["rel-prefixed"], False, id="exact_match_wins_the_limit"),
         pytest.param({"name": "attribute.key", "searchText": "plain"}, ["rel-plain"], True, id="search_text_filters_both_lookups"),
         pytest.param({"name": "attribute.attribute.key"}, ["rel-prefixed"], True, id="double_prefix_reaches_prefixed_stored_name"),
-        pytest.param({"name": "resource.region"}, ["rel-region"], True, id="resource_prefix_is_always_context"),
+        pytest.param({"name": "resource.region"}, ["rel-attr-region", "rel-region"], True, id="resource_prefix_matches_exact_then_stripped"),
         pytest.param({"name": "key", "fieldContext": "attribute"}, ["rel-plain"], True, id="explicit_context_single_lookup"),
         pytest.param({"name": "attribute.key", "fieldContext": "attribute"}, ["rel-prefixed"], True, id="explicit_context_name_not_parsed"),
     ],

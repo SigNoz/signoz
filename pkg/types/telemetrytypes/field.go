@@ -252,7 +252,7 @@ type FieldValueSelector struct {
 	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
 	Limit         int    `json:"limit" description:"Maximum number of values to return."`
 
-	// nameAsWritten is set when a context other than resource was parsed from the name's prefix.
+	// nameAsWritten is set when FieldContext was parsed from the name's prefix.
 	nameAsWritten string
 }
 
@@ -281,7 +281,7 @@ type GettableFieldValues struct {
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name other than resource. also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`
+	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`
 	ExistingQuery string `query:"existingQuery" description:"Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it."`
 }
 
@@ -350,8 +350,7 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 		key.normalizeContext()
 		// Only apply inferred context if it is valid for the current signal
 		if isContextValidForSignal(key.FieldContext, keySelector.Signal) {
-			// resource is a keyword prefix, never part of a stored name.
-			if key.FieldContext != FieldContextUnspecified && key.FieldContext != FieldContextResource {
+			if key.FieldContext != FieldContextUnspecified {
 				fieldValueSelector.nameAsWritten = nameWithContext
 			}
 		} else {

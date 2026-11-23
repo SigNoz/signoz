@@ -437,11 +437,11 @@ func TestNewFieldValueSelectorFromPostableFieldValueParams(t *testing.T) {
 		expectedLookups  []TelemetryFieldKey
 	}{
 		{
-			name:            "ResourcePrefix_AlwaysContext_SingleLookup",
+			name:            "ResourcePrefix_ExactThenStripped",
 			params:          PostableFieldValueParams{PostableFieldKeysParams: PostableFieldKeysParams{Signal: SignalLogs}, Name: "resource.service.name"},
 			expectedName:    "service.name",
 			expectedContext: FieldContextResource,
-			expectedLookups: []TelemetryFieldKey{{Name: "service.name", FieldContext: FieldContextResource}},
+			expectedLookups: []TelemetryFieldKey{{Name: "resource.service.name", FieldContext: FieldContextUnspecified}, {Name: "service.name", FieldContext: FieldContextResource}},
 		},
 		{
 			name:            "AttributePrefix_Parsed",
@@ -534,7 +534,7 @@ func TestNewFieldValueSelectorFromPostableFieldValueParams(t *testing.T) {
 			expectedName:     "host.name",
 			expectedContext:  FieldContextResource,
 			expectedDataType: FieldDataTypeString,
-			expectedLookups:  []TelemetryFieldKey{{Name: "host.name", FieldContext: FieldContextResource}},
+			expectedLookups:  []TelemetryFieldKey{{Name: "resource.host.name", FieldContext: FieldContextUnspecified, FieldDataType: FieldDataTypeString}, {Name: "host.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString}},
 		},
 		{
 			name:             "DataTypeSuffix_WithInvalidContext",
@@ -574,7 +574,7 @@ func TestNewFieldValueSelectorFromPostableFieldValueParams(t *testing.T) {
 			expectedName:    "k8s.pod.name",
 			expectedContext: FieldContextResource,
 			expectedValue:   "attribute.x",
-			expectedLookups: []TelemetryFieldKey{{Name: "k8s.pod.name", FieldContext: FieldContextResource}},
+			expectedLookups: []TelemetryFieldKey{{Name: "resource.k8s.pod.name", FieldContext: FieldContextUnspecified}, {Name: "k8s.pod.name", FieldContext: FieldContextResource}},
 		},
 	}
 
