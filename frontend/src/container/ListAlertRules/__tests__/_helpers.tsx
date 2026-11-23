@@ -121,8 +121,6 @@ export async function runSearchQuery(user: User, value: string): Promise<void> {
 /** A permission-gated button is inert until its check answers. */
 export async function waitForAuthZButton(testId: string): Promise<HTMLElement> {
 	const button = await screen.findByTestId(testId);
-	await waitFor(() => expect(button).toHaveAttribute('aria-disabled', 'false'), {
-		timeout: 5000,
-	});
+	await waitFor(() => expect(button).toHaveAttribute('aria-disabled', 'false'));
 	return button;
 }

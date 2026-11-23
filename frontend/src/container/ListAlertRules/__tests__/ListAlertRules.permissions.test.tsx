@@ -1,7 +1,9 @@
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
-	setupAuthzAllow,
-	setupAuthzDeny,
-	setupAuthzDenyAll,
+	mockUseAuthZDenyAll,
+	mockUseAuthZDeny,
+	mockUseAuthZGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
 import {
 	buildRuleDeletePermission,
@@ -34,31 +36,30 @@ async function openFirstRowMenu(): Promise<void> {
 /** Waits for the row's check, then reports whether it ended up disabled. */
 async function isRowDisabled(testId: string): Promise<boolean> {
 	const item = await screen.findByTestId(testId);
-	await waitFor(() => expect(item).not.toHaveAttribute('data-loading'), {
-		timeout: 5000,
-	});
+	await waitFor(() => expect(item).not.toHaveAttribute('data-loading'));
 	return item.hasAttribute('data-disabled');
 }
 
-// Rendering the list, opening a row menu and waiting on its permission check
-// outlasts the 5s default when the full suite runs in parallel.
-jest.setTimeout(15_000);
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+
+const deny = (...permissions: BrandedPermission[]): void => {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
+};
 
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		deny();
 	});
 
 	it('enables New Alert and every row action with every permission', async () => {
 		renderListAlertRules();
 
-		await waitFor(
-			() =>
-				expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
-					'aria-disabled',
-					'false',
-				),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
+				'aria-disabled',
+				'false',
+			),
 		);
 		await openFirstRowMenu();
 		for (const action of ['toggle', 'edit', 'edit-new-tab', 'clone', 'delete']) {
@@ -67,15 +68,14 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('disables New Alert without create and names it', async () => {
-		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
+		deny(RuleCreatePermission);
+		renderListAlertRules();
 
-		await waitFor(
-			() =>
-				expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
-					'data-denied-permissions',
-					RuleCreatePermission,
-				),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
+				'data-denied-permissions',
+				RuleCreatePermission,
+			),
 		);
 		expect(screen.getByTestId(NEW_ALERT)).toHaveAttribute(
 			'aria-disabled',
@@ -92,40 +92,40 @@ describe('ListAlertRules — permissions', () => {
 				),
 			),
 		);
-		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
+		deny(RuleCreatePermission);
+		renderListAlertRules();
 
-		await waitFor(
-			() =>
-				expect(screen.getByTestId('add-alert')).toHaveAttribute(
-					'data-denied-permissions',
-					RuleCreatePermission,
-				),
-			{ timeout: 5000 },
+		await waitFor(() =>
+			expect(screen.getByTestId('add-alert')).toHaveAttribute(
+				'data-denied-permissions',
+				RuleCreatePermission,
+			),
 		);
 	});
 
 	it('shows a permission callout instead of the table without list', async () => {
-		renderListAlertRules({ authz: setupAuthzDenyAll() });
+		jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDenyAll);
+		renderListAlertRules();
 
-		await expect(
-			screen.findByText('list:rule:*', undefined, { timeout: 5000 }),
-		).resolves.toBeInTheDocument();
+		await expect(screen.findByText('list:rule:*')).resolves.toBeInTheDocument();
 		expect(screen.queryByText('High CPU Alert')).not.toBeInTheDocument();
 	});
 
 	it('keeps the table while listing is allowed', async () => {
-		renderListAlertRules({ authz: setupAuthzAllow(RuleListPermission) });
+		jest
+			.mocked(useAuthZ)
+			.mockImplementation(mockUseAuthZGrantByPrefix(RuleListPermission));
+		renderListAlertRules();
 
 		await expect(
-			screen.findByText('High CPU Alert', undefined, { timeout: 5000 }),
+			screen.findByText('High CPU Alert'),
 		).resolves.toBeInTheDocument();
 		expect(screen.queryByText('list:rule:*')).not.toBeInTheDocument();
 	});
 
 	it('locks toggle and both edits without update; clone and delete stay', async () => {
-		renderListAlertRules({
-			authz: setupAuthzDeny(buildRuleUpdatePermission(RULE_ID)),
-		});
+		deny(buildRuleUpdatePermission(RULE_ID));
+		renderListAlertRules();
 
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-toggle')).resolves.toBe(true);
@@ -136,9 +136,8 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks edit and clone without read on the rule', async () => {
-		renderListAlertRules({
-			authz: setupAuthzDeny(buildRuleReadPermission(RULE_ID)),
-		});
+		deny(buildRuleReadPermission(RULE_ID));
+		renderListAlertRules();
 
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-edit')).resolves.toBe(true);
@@ -147,7 +146,8 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks clone without create', async () => {
-		renderListAlertRules({ authz: setupAuthzDeny(RuleCreatePermission) });
+		deny(RuleCreatePermission);
+		renderListAlertRules();
 
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-clone')).resolves.toBe(true);
@@ -155,9 +155,8 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks delete without delete on the rule', async () => {
-		renderListAlertRules({
-			authz: setupAuthzDeny(buildRuleDeletePermission(RULE_ID)),
-		});
+		deny(buildRuleDeletePermission(RULE_ID));
+		renderListAlertRules();
 
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-delete')).resolves.toBe(true);

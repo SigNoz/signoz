@@ -221,3 +221,30 @@ export function mockUseAuthZGrantByPrefix(
 		};
 	};
 }
+
+/** `useAuthZ` that grants everything except the permissions listed. */
+export function mockUseAuthZDeny(
+	...denied: BrandedPermission[]
+): (
+	permissions: BrandedPermission[],
+	options?: UseAuthZOptions,
+) => UseAuthZResult {
+	const deniedSet = new Set(denied);
+	return (permissions, _options) => {
+		const isGranted = (permission: BrandedPermission): boolean =>
+			!deniedSet.has(permission);
+		const deniedPermissions = permissions.filter((p) => !isGranted(p));
+		return {
+			isLoading: false,
+			isFetching: false,
+			error: null,
+			permissions: Object.fromEntries(
+				permissions.map((p) => [p, { isGranted: isGranted(p) }]),
+			) as UseAuthZResult['permissions'],
+			allowed: deniedPermissions.length === 0,
+			deniedPermissions,
+			isGranted,
+			refetchPermissions: jest.fn(),
+		};
+	};
+}
