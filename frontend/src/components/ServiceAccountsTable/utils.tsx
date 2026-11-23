@@ -47,23 +47,13 @@ export function StatusBadge({ status }: { status: string }): JSX.Element {
 	);
 }
 
-export function ServiceAccountsEmptyState({
-	searchQuery,
-}: {
-	searchQuery: string;
-}): JSX.Element {
+export function ServiceAccountsEmptyState(): JSX.Element {
 	return (
 		<div className="sa-empty-state">
 			<ScanSearch size={24} className="sa-empty-state__icon" />
-			{searchQuery ? (
-				<p className="sa-empty-state__text">
-					No results for <strong>{searchQuery}</strong>
-				</p>
-			) : (
-				<p className="sa-empty-state__text">
-					No service accounts. Start by creating one to manage keys.
-				</p>
-			)}
+			<p className="sa-empty-state__text">
+				No service accounts. Start by creating one to manage keys.
+			</p>
 		</div>
 	);
 }
@@ -74,7 +64,6 @@ export const columns: ColumnsType<ServiceAccountRow> = [
 		dataIndex: 'name',
 		key: 'name',
 		className: 'sa-name-column',
-		sorter: (a, b): number => a.email.localeCompare(b.email),
 		render: (_, record): JSX.Element => (
 			<NameEmailCell name={record.name} email={record.email} />
 		),
@@ -86,9 +75,6 @@ export const columns: ColumnsType<ServiceAccountRow> = [
 		width: 120,
 		align: 'right' as const,
 		className: 'sa-status-cell',
-		sorter: (a, b): number =>
-			(a.status?.toUpperCase() === 'ACTIVE' ? 0 : 1) -
-			(b.status?.toUpperCase() === 'ACTIVE' ? 0 : 1),
 		render: (status: string): JSX.Element => <StatusBadge status={status} />,
 	},
 ];

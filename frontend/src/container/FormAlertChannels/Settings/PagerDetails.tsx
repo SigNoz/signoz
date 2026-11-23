@@ -11,7 +11,11 @@ const { TextArea } = AntdInput;
 const serialize = (details?: Record<string, string>): string =>
 	details && Object.keys(details).length > 0 ? JSON.stringify(details) : '';
 
-function PagerDetails(): JSX.Element {
+interface PagerDetailsProps {
+	readOnly: boolean;
+}
+
+function PagerDetails({ readOnly }: PagerDetailsProps): JSX.Element {
 	const { t } = useTranslation('channels');
 	const { getValues, setValue } = useFormContext<ChannelSpecFormValues>();
 
@@ -48,6 +52,7 @@ function PagerDetails(): JSX.Element {
 				value={text}
 				onChange={(event): void => onChange(event.target.value)}
 				data-testid="pager-additional-details-textarea"
+				disabled={readOnly}
 			/>
 		</FormField>
 	);

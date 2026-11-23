@@ -168,11 +168,20 @@ function TopErrors({
 											className="empty-state-svg"
 										/>
 
-										<Typography.Text className="no-filtered-endpoints-message">
-											{showStatusCodeErrors
-												? 'Please disable "Status Message Exists" toggle to see all errors'
-												: 'This query had no results. Edit your query and try again!'}
-										</Typography.Text>
+										<div className="no-filtered-endpoints-message">
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="p"
+												textOverflow="wrap"
+											>
+												{showStatusCodeErrors
+													? 'Please disable "Status Message Exists" toggle to see all errors'
+													: 'This query had no results. Edit your query and try again!'}
+											</Typography>
+										</div>
 									</div>
 								</div>
 							),

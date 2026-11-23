@@ -1,14 +1,13 @@
-import { DrawerProps } from 'antd';
+import { MouseEventHandler } from 'react';
 import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
 
 import { VIEWS } from './constants';
-import { MouseEventHandler } from 'react';
 
 export type LogDetailProps = {
 	log: ILog | null;
-	selectedTab: VIEWS;
+	selectedTab?: VIEWS;
 	handleChangeSelectedView?: ChangeViewFunctionType;
 	isListViewPanel?: boolean;
 	listViewPanelSelectedFields?: IField[] | null;
@@ -16,10 +15,19 @@ export type LogDetailProps = {
 	onNavigateLog?: (log: ILog) => void;
 	onScrollToLog?: (logId: string) => void;
 	handleOpenInExplorer?: MouseEventHandler;
-	getContainer?: DrawerProps['getContainer'];
 	onApplyLogFilter?: (expression: string) => void;
-} & Pick<DrawerProps, 'onClose'>;
+	onClose: () => void;
+};
 
-export type LogDetailInnerProps = LogDetailProps & {
-	log: NonNullable<LogDetailProps['log']>;
+export type LogDetailBodyProps = Pick<
+	LogDetailProps,
+	| 'selectedTab'
+	| 'isListViewPanel'
+	| 'handleChangeSelectedView'
+	| 'onApplyLogFilter'
+	| 'onClose'
+> & {
+	log: ILog;
+	onPrev: () => void;
+	onNext: () => void;
 };

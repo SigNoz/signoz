@@ -14,9 +14,9 @@ import {
 	openDeleteViewConfirm,
 	openDisabledRuleActions,
 	openQuerySuggestions,
-	openRenameViewPopover,
+	openRenameViewDialog,
 	openRowActions,
-	openSaveViewPopover,
+	openSaveViewDialog,
 	openStatesFilter,
 	toggleAlert,
 } from './__story_mockdata__/alertRules.play';
@@ -48,7 +48,7 @@ type Story = StoryObj<AlertRulesArgs>;
 
 /**
  * Every alert rule the org has configured, with the state each one evaluated to
- * on its last run and the severity it fires at.
+ * on its last run and the thresholds it fires at.
  */
 export const Default: Story = {};
 
@@ -64,7 +64,7 @@ export const NoMatchingRules: Story = {
 	},
 };
 
-/** The query the list was asked for does not parse: the server's message sits under the search box. */
+/** The query the list was asked for does not parse: the Invalid query state, with the server's message, replaces the list. */
 export const InvalidQuery: Story = {
 	args: { invalidQuery: 'rule_list_filter_invalid' },
 	parameters: {
@@ -120,14 +120,14 @@ export const RailCollapsed: Story = {
 	args: { railCollapsed: true },
 };
 
-/** The popover that names the current filters as a new saved view. */
-export const SaveViewPopover: Story = {
-	play: openSaveViewPopover,
+/** The dialog that names the current filters as a new saved view. */
+export const SaveView: Story = {
+	play: openSaveViewDialog,
 };
 
-/** A saved view's rename popover, opened from its row. */
-export const RenameViewPopover: Story = {
-	play: openRenameViewPopover,
+/** A saved view's rename dialog, opened from its row. */
+export const RenameView: Story = {
+	play: openRenameViewDialog,
 };
 
 /** Deleting a saved view asks first, because every teammate loses it too. */

@@ -35,6 +35,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		onToggleModelHandler,
 		groupByPerQuery,
 		enableDrillDown = false,
+		onClickHandler,
 	} = props;
 	const graphRef = useRef<HTMLDivElement>(null);
 	const [minTimeScale, setMinTimeScale] = useState<number>();
@@ -68,6 +69,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 		widget,
 		queryResponse,
 		enableDrillDown,
+		onClickHandler,
 	});
 
 	const chartData = useMemo(() => {

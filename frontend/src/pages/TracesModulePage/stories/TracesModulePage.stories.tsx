@@ -5,9 +5,16 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 
 import { type TracesArgs, tracesMocks } from './TracesModulePage.stories.mocks';
 import {
+	cancelQuery,
 	dirtyQuickFiltersSettings,
 	loadNextListPage,
+	openAddToDashboard,
+	openColumnHeaderMenu,
+	openCreateFunnel,
+	openPageSize,
 	openQuickFiltersSettings,
+	openRenameFunnel,
+	showCreateFunnelNameError,
 	showRootSpansNextPage,
 	suggestBooleanValues,
 	suggestFilterKeys,
@@ -67,6 +74,22 @@ export const ListNextPage: Story = {
 	play: loadNextListPage,
 };
 
+/** The Trace view's page size menu, open over the rows a page can show. */
+export const PageSizeOpen: Story = {
+	args: { view: ExplorerViews.TRACE },
+	play: openPageSize,
+};
+
+/** A spans list column's header menu, open on its Remove column action. */
+export const ColumnHeaderMenu: Story = {
+	play: openColumnHeaderMenu,
+};
+
+/** The dashboard picker the toolbar's Add to dashboard action opens. */
+export const AddToDashboardDialog: Story = {
+	play: openAddToDashboard,
+};
+
 /** The charted view of the same trace query. */
 export const Timeseries: Story = {
 	args: { view: ExplorerViews.TIMESERIES },
@@ -82,6 +105,31 @@ export const Funnels: Story = {
 	args: { tab: 'funnels' },
 };
 
+/** The Funnels tab with none saved: the empty state and its New funnel action. */
+export const FunnelsEmpty: Story = {
+	args: { tab: 'funnels', funnels: 0 },
+};
+
+/** The create dialog after the backend turned down a name already on the list. */
+export const CreateFunnelNameError: Story = {
+	args: { tab: 'funnels' },
+	// The deliberate 400 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: showCreateFunnelNameError,
+};
+
+/** The name field for a funnel that does not exist yet. */
+export const CreateFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openCreateFunnel,
+};
+
+/** The rename field for a funnel already on the list. */
+export const RenameFunnel: Story = {
+	args: { tab: 'funnels' },
+	play: openRenameFunnel,
+};
+
 /**
  * A fresh workspace: nothing ingested in the window and no quick filters
  * configured yet, so the table and the filter panel both show their empty
@@ -94,6 +142,12 @@ export const NoTraces: Story = {
 /** The list mid-query, with the cancel action the toolbar offers while it runs. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
+};
+
+/** The running query cancelled from the toolbar, which swaps the list for the cancelled notice. */
+export const QueryCancelled: Story = {
+	args: { dataState: 'loading' },
+	play: cancelQuery,
 };
 
 /** A query response carrying the backend's warning details. */
@@ -115,17 +169,6 @@ export const QuickFiltersSettings: Story = {
 
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
 

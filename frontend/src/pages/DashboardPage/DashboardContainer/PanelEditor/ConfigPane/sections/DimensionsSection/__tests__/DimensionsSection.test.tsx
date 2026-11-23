@@ -125,8 +125,9 @@ describe('DimensionsSection', () => {
 		);
 
 		await user.click(screen.getByTestId('panel-editor-v2-dimension-colorBy'));
-		await user.click(
-			await screen.findByRole('option', { name: 'k8s.namespace.name' }),
+		await user.type(
+			await screen.findByTestId('panel-editor-v2-dimension-colorBy-search'),
+			'k8s.namespace.name{Enter}',
 		);
 
 		expect(onChange).toHaveBeenLastCalledWith({

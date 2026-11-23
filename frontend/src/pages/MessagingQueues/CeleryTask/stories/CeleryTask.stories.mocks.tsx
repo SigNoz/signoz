@@ -3,18 +3,19 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
-import { queryRangeV5ScalarTableResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import { queryRangeV5ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
-	attributeValuesResponse,
-	queryRangeV3ForRequest,
+	attributeValues,
+	LABEL_VALUES,
 	timeRangeState,
 } from '../../stories/__story_mockdata__/messagingQueues';
 import {
@@ -61,56 +62,41 @@ export const celeryTaskMocks = defineStoryMocks({
 			max: 6,
 		}),
 	},
-	handlers: (values, response) => {
-		const queryRange = response.json(async (req) => {
-			const body = (await req.json()) as QueryRangePayload;
+	handlers: (values, response) => [
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(async (req) => {
+				const body = (await req.json()) as Querybuildertypesv5QueryRangeRequestDTO;
 
-			return (
-				celeryStateCountResponse(body, values.tasks, values.health) ??
-				queryRangeV3ForRequest(
-					body,
-					groupsByWorker(body) ? values.workers : values.series,
-				)
-			);
-		});
+				return (
+					celeryStateCountResponse(body, values.tasks, values.health) ??
+					queryRangeV5ForRequest(body, {
+						count: groupsByWorker(body) ? values.workers : values.series,
+						labelValues: LABEL_VALUES,
+					})
+				);
+			}),
+		),
 
-		return [
-			rest.post('http://localhost/api/v3/query_range', queryRange),
-			rest.post('http://localhost/api/v4/query_range', queryRange),
-			rest.post(
-				'http://localhost/api/v5/query_range',
-				response.json(() =>
-					queryRangeV5ScalarTableResponse({
-						groupBy: ['worker'],
-						aggregations: ['A'],
-						rows: (
-							attributeValuesResponse('worker', '').data.stringAttributeValues ?? []
-						)
-							.slice(0, values.workers)
-							.map((worker) => [worker, 12]),
-					}),
-				),
-			),
+		rest.get(
+			'http://localhost/api/v1/fields/values',
+			response.json((req) => {
+				const name = req.url.searchParams.get('name') ?? '';
+				const found = attributeValues(
+					name,
+					req.url.searchParams.get('searchText') ?? '',
+				);
 
-			rest.get(
-				'http://localhost/api/v1/fields/values',
-				response.json((req) => {
-					const name = req.url.searchParams.get('name') ?? '';
-					const found =
-						attributeValuesResponse(
-							name,
-							req.url.searchParams.get('searchText') ?? '',
-						).data.stringAttributeValues ?? [];
-
-					return fieldValuesResponse(
-						name === 'worker' ? found.slice(0, values.workers) : found,
-					);
-				}),
-			),
-		];
-	},
+				return fieldValuesResponse(
+					name === 'worker' ? found.slice(0, values.workers) : found,
+				);
+			}),
+		),
+	],
 	config: () => ({
 		route: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		reduxState: timeRangeState(),
 	}),
 });
+
+export type CeleryTaskArgs = PageStoryArgs<typeof celeryTaskMocks>;

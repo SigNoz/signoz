@@ -117,7 +117,7 @@ export function ViewRolePageHeaderActions({
 	return (
 		<div className={styles.viewRolePageActions}>
 			{renderDeleteButton()}
-			<Divider type="vertical" />
+			<Divider orientation="vertical" />
 			{renderUpdateButton()}
 		</div>
 	);

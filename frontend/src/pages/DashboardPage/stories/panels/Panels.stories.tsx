@@ -190,9 +190,48 @@ export const ListPaginated: Story = {
 	play: playListPaginated,
 };
 
+/**
+ * Logs carrying 24 attributes each, a column apiece: every row stays one line
+ * high, the body truncated rather than wrapped.
+ */
+export const ListWideRows: Story = {
+	args: { kind: 'List', listWideRows: true },
+	play: playPanel,
+};
+
 /** A Markdown runbook: heading, list, link and code block. */
 export const Text: Story = {
 	args: { kind: 'Text' },
+	play: playPanel,
+};
+
+/** The busiest services by calls, highest first, each bar scaled to the top row. */
+export const TopList: Story = {
+	args: { kind: 'TopList' },
+	play: playPanel,
+};
+
+/** The top list numbered by position, with each row's share of the listed total. */
+export const TopListRankAndShare: Story = {
+	args: { kind: 'TopList', showRank: true, showShare: true },
+	play: playPanel,
+};
+
+/** Rows above the threshold drawn in its colour instead of the bar colour. */
+export const TopListThresholds: Story = {
+	args: { kind: 'TopList', thresholds: true },
+	play: playPanel,
+};
+
+/** Shares of a p99, which does not add up across services, flagged in the panel header. */
+export const TopListShareOfP99: Story = {
+	args: { kind: 'TopList', showShare: true, topListAggregation: 'p99' },
+	play: playPanel,
+};
+
+/** The top list's query matched nothing. */
+export const TopListNoData: Story = {
+	args: { kind: 'TopList', result: 'empty' },
 	play: playPanel,
 };
 

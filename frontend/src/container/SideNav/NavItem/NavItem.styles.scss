@@ -66,12 +66,6 @@
 		align-self: stretch;
 		color: var(--l1-foreground);
 
-		font-family: Inter;
-		font-size: 13px;
-		font-style: normal;
-		font-weight: 300;
-		line-height: 18px;
-
 		background: transparent;
 
 		transition: 0.08s all ease;
@@ -89,9 +83,6 @@
 			text-overflow: ellipsis;
 
 			color: var(--l1-foreground);
-			font-family: Inter;
-			font-size: 13px;
-			font-style: normal;
 			font-weight: 300;
 			line-height: normal;
 			letter-spacing: 0.14px;

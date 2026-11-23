@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react';
 import { ArrowRightLeft, Undo2 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import type { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import type { EQueryType } from 'types/common/dashboard';
 
 import PanelTypeBrowser from '../../../PanelsAndSectionsLayout/Panel/PanelTypeSelectionModal/components/PanelTypeBrowser/PanelTypeBrowser';
 import { getPanelDefinition } from '../../../Panels/registry';
 import type { PanelKind } from '../../../Panels/types/panelKind';
-import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';
 import ConfigField from '../controls/ConfigField/ConfigField';
 
 import styles from './PanelTypeSwitcher.module.scss';
@@ -97,23 +96,22 @@ function PanelTypeSwitcher({
 					Revert to {getPanelDefinition(originalPanelKind).displayName}
 				</Button>
 			)}
-			<DrawerWrapper
+			<Drawer
+				type="task"
+				stack="overlay"
 				open={isOpen}
-				onOpenChange={setIsOpen}
+				onClose={(): void => setIsOpen(false)}
 				title="Change panel type"
-				subTitle="Pick a visualization for this panel."
-				direction="right"
+				description="Pick a visualization for this panel."
 				width="wide"
 				testId="panel-type-switcher-drawer"
-				drawerContentProps={JS_DRIVEN_SLIDE}
-				drawerDescriptionProps={{ className: styles.drawerBody }}
 			>
 				<PanelTypeBrowser
 					selectedKind={panelKind}
 					onSelect={handleSelect}
 					getDisabledReason={getDisabledReason}
 				/>
-			</DrawerWrapper>
+			</Drawer>
 		</ConfigField>
 	);
 }

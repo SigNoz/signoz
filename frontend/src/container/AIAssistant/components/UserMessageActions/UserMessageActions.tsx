@@ -49,7 +49,7 @@ export default function UserMessageActions({
 					onClick={handleCopy}
 					aria-label={copied ? 'Copied' : 'Copy message'}
 				>
-					{copied ? <Check size={12} /> : <Copy size={12} />}
+					{copied ? <Check size={14} /> : <Copy size={14} />}
 				</Button>
 			</Tooltip>
 		</div>

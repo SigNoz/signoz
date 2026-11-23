@@ -8,9 +8,6 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 6px;
-
-		font-size: 14px;
-		line-height: 18px;
 	}
 
 	.api-module-right-section {
@@ -42,16 +39,12 @@
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
-				font-weight: 500;
 				font-size: 12px;
 				line-height: 18px;
 				border-bottom: none;
 
 				color: var(--l2-foreground);
-				font-family: Inter;
 				font-size: 11px;
-				font-style: normal;
-				font-weight: 600;
 				line-height: 18px;
 				/* 163.636% */
 				letter-spacing: 0.44px;
@@ -69,7 +62,6 @@
 
 			.ant-table-cell {
 				padding: 12px;
-				font-size: 13px;
 				line-height: 20px;
 				color: var(--l1-foreground);
 				border-bottom: none;
@@ -104,10 +96,6 @@
 				);
 			}
 
-			.ant-table-cell:first-child {
-				text-align: justify;
-			}
-
 			.ant-table-cell:nth-child(2) {
 				padding-left: 16px;
 				padding-right: 16px;
@@ -115,10 +103,6 @@
 
 			.ant-table-cell:nth-child(n + 3) {
 				padding-right: 24px;
-			}
-
-			.column-header-right {
-				text-align: right;
 			}
 
 			.ant-table-tbody > tr > td {
@@ -181,19 +165,14 @@
 
 		.no-domain-title {
 			color: var(--l1-foreground);
-			font-family: Inter;
 			font-size: 14px;
-			font-style: normal;
 			font-weight: 500;
 			line-height: 20px; /* 142.857% */
 		}
 
 		.no-domain-subtitle {
 			color: var(--l2-foreground);
-			font-family: Inter;
 			font-size: 14px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: 20px; /* 142.857% */
 
 			.attribute {

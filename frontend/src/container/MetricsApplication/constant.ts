@@ -85,6 +85,7 @@ export enum WidgetKeys {
 	HasError = 'hasError',
 	Address = 'address',
 	DurationNano = 'durationNano',
+	SpanDurationNano = 'duration_nano',
 	StatusCode = 'status.code',
 	Operation = 'operation',
 	OperationName = 'operationName',

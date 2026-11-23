@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 // eslint-disable-next-line no-restricted-imports -- global time still lives in redux
 import { useSelector } from 'react-redux';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { useReplaceVariables } from 'api/generated/services/querier';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
@@ -12,6 +12,7 @@ import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types
 import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getPanelQueryType';
 import { useDashboardEventMeta } from 'pages/DashboardPage/DashboardContainer/hooks/useDashboardEventMeta';
 import { buildQueryRangeRequest } from 'pages/DashboardPage/DashboardContainer/queryV5/buildQueryRangeRequest';
+import { foldAISlot } from 'lib/query/builderSlot';
 import { envelopesToQuery } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { selectResolvedVariables } from 'pages/DashboardPage/DashboardContainer/store/slices/variableSelectionSlice';
 import { useDashboardStore } from 'pages/DashboardPage/DashboardContainer/store/useDashboardStore';
@@ -81,9 +82,8 @@ export function useCreateAlertFromPanel(): (
 				{ data: request },
 				{
 					onSuccess: (response) => {
-						const query = envelopesToQuery(
-							response.data.compositeQuery?.queries ?? [],
-							panelType,
+						const query = foldAISlot(
+							envelopesToQuery(response.data.compositeQuery?.queries ?? [], panelType),
 						);
 						const unit = readPanelUnit(panel.spec.plugin);
 						const url = buildAlertUrl(
@@ -95,7 +95,8 @@ export function useCreateAlertFromPanel(): (
 						safeNavigate(url, { newTab: true });
 					},
 					onError: () => {
-						toast.error(SOMETHING_WENT_WRONG, {
+						toast.danger(SOMETHING_WENT_WRONG, {
+							action: { label: 'Dismiss' },
 							description: 'Failed to create alert from panel',
 						});
 					},

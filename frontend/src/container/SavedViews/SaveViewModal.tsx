@@ -1,7 +1,7 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { Check, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 
@@ -11,6 +11,7 @@ import { SaveViewModalProps } from './types';
 import styles from './SaveViewModal.module.scss';
 
 const NAME_INPUT_ID = 'save-view-name';
+const FORM_ID = 'save-view-form';
 
 function SaveViewModal({
 	mode,
@@ -20,6 +21,7 @@ function SaveViewModal({
 	onSave,
 }: SaveViewModalProps): JSX.Element {
 	const [name, setName] = useState(initialName);
+	const nameInputRef = useRef<HTMLInputElement>(null);
 	const displayName = name.trim();
 
 	const handleSave = async (): Promise<void> => {
@@ -37,17 +39,14 @@ function SaveViewModal({
 	};
 
 	return (
-		<DialogWrapper
+		<Dialog
 			open
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onClose();
-				}
-			}}
+			onClose={onClose}
 			title={SAVE_VIEW_MODAL_TITLE[mode]}
 			testId="save-view-modal"
-			footer={
-				<div className={styles.footer}>
+			initialFocus={nameInputRef}
+			footerSuffix={
+				<>
 					<Button
 						variant="outlined"
 						color="secondary"
@@ -62,35 +61,43 @@ function SaveViewModal({
 						variant="solid"
 						color="primary"
 						size="md"
+						type="submit"
+						form={FORM_ID}
 						prefix={<Check size={14} />}
 						loading={isSaving}
 						disabled={!displayName}
 						disabledTooltip="Enter a view name"
-						onClick={(): void => {
-							void handleSave();
-						}}
 						testId="save-view-submit"
 					>
 						Save view
 					</Button>
-				</div>
+				</>
 			}
 		>
-			<form className={styles.field} onSubmit={handleSubmit}>
+			<form id={FORM_ID} className={styles.field} onSubmit={handleSubmit}>
 				<label htmlFor={NAME_INPUT_ID}>
-					<Typography.Text className={styles.label}>Enter view name</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="small"
+						weight="regular"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
+						Enter view name
+					</Typography>
 				</label>
 				<Input
+					ref={nameInputRef}
 					id={NAME_INPUT_ID}
 					placeholder="Eg. payments-view"
 					value={name}
 					onChange={(event): void => setName(event.target.value)}
-					autoFocus
 					autoComplete="off"
 					testId="save-view-name"
 				/>
 			</form>
-		</DialogWrapper>
+		</Dialog>
 	);
 }
 

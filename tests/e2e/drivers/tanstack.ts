@@ -293,12 +293,12 @@ export function tanstackDriver(
 		},
 
 		gotoPage: async (pageNumber) => {
-			// The pagination component exposes no testids; its buttons are reachable
-			// by accessible name. Scoped to the bar so a number elsewhere on the page
-			// cannot resolve into a strict-mode violation.
+			// The test id of the bar depends on the table, so the page buttons are
+			// reached by accessible name. Scoped to the bar so a number elsewhere on
+			// the page cannot resolve into a strict-mode violation.
 			await driver
 				.paginationBar()
-				.getByRole('button', { name: String(pageNumber), exact: true })
+				.getByRole('button', { name: `Page ${pageNumber}`, exact: true })
 				.click();
 			await expect(page).toHaveURL(new RegExp(`page=${pageNumber}\\b`));
 		},

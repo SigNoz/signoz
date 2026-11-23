@@ -86,24 +86,35 @@ function VariableSelector({
 			className={styles.variableItem}
 			data-testid={`variable-${variable.name}`}
 		>
-			<Typography.Text className={styles.variableName}>
-				<span className={styles.name} title={`$${variable.name}`}>
-					${variable.name}
-				</span>
-				{hasTooltip ? (
-					<Tooltip
-						title={
-							<VariableTooltip
-								description={variable.description}
-								dependsOn={dependsOn}
-								usedBy={usedBy}
-							/>
-						}
-					>
-						<Info className={styles.infoIcon} size={12} />
-					</Tooltip>
-				) : null}
-			</Typography.Text>
+			<div className={styles.variableName}>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="p"
+					display="flex"
+					gap={2}
+					textOverflow="wrap"
+				>
+					<span className={styles.name} title={`$${variable.name}`}>
+						${variable.name}
+					</span>
+					{hasTooltip ? (
+						<Tooltip
+							title={
+								<VariableTooltip
+									description={variable.description}
+									dependsOn={dependsOn}
+									usedBy={usedBy}
+								/>
+							}
+						>
+							<Info className={styles.infoIcon} size={12} />
+						</Tooltip>
+					) : null}
+				</Typography>
+			</div>
 
 			<div className={styles.variableValue}>{renderControl()}</div>
 

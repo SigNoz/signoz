@@ -7,6 +7,7 @@ import {
 	saveAsPreviousQuery,
 } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { LEGEND } from 'constants/global';
 import {
 	ATTRIBUTE_TYPES,
@@ -488,13 +489,15 @@ export const useQueryOperations: UseQueryOperations = ({
 		],
 	);
 
+	const activeQueryCount = getActiveBuilder(currentQuery).queryData.length;
+
 	const handleDeleteQuery = useCallback(() => {
-		if (currentQuery.builder.queryData.length > 1) {
+		if (activeQueryCount > 1) {
 			removeQueryBuilderEntityByIndex('queryData', index);
 		}
 		setLastUsedQuery(0);
 	}, [
-		currentQuery.builder.queryData.length,
+		activeQueryCount,
 		setLastUsedQuery,
 		removeQueryBuilderEntityByIndex,
 		index,

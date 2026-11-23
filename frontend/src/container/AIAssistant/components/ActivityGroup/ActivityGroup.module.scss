@@ -1,23 +1,24 @@
-// Collapsed activity summary — one row that hides the underlying
-// thinking + tool-call steps. Reuses the same quiet treatment as
-// ThinkingStep / ToolCallStep so it sits flush in the assistant bubble.
+@use '../../_shimmer' as *;
+
+// The row a run of thinking + tool-call steps folds behind: the running step, then a summary.
 .activityGroup {
 	width: 100%;
-	font-size: 12px;
 }
 
 .activityHeader {
 	display: flex;
 	align-items: center;
-	gap: 8px;
-	padding: 4px 0;
+	gap: 3px;
+	width: fit-content;
+	max-width: 100%;
+	padding: 0;
 	background: transparent;
 	border: none;
+	font: inherit;
 	cursor: pointer;
-	color: var(--l3-foreground);
+	color: var(--l2-foreground);
 	user-select: none;
 	transition: color 0.12s ease;
-	width: 100%;
 	text-align: left;
 
 	&:hover {
@@ -25,31 +26,15 @@
 	}
 }
 
-.sparkleIcon {
-	flex-shrink: 0;
-	color: var(--accent-primary);
-
-	&.iconPulsing {
-		animation: activityGroupPulse 1.4s ease-in-out infinite;
-	}
-}
-
-@keyframes activityGroupPulse {
-	0%,
-	100% {
-		opacity: 0.55;
-	}
-	50% {
-		opacity: 1;
-	}
-}
-
 .activitySummary {
-	flex: 1;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-weight: 400;
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-medium);
+	line-height: 18px;
+	letter-spacing: -0.005em;
 }
 
 .toggleChevron {
@@ -60,5 +45,27 @@
 .activityBody {
 	display: flex;
 	flex-direction: column;
-	padding: 2px 0 4px;
+	padding: var(--spacing-2) 0;
+}
+
+.soloBody {
+	padding: var(--spacing-2) 0 var(--spacing-2) var(--spacing-4);
+}
+
+.soloThought {
+	margin: 0;
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.005em;
+	color: var(--l2-foreground);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+// While Noz works, the row names the step it's on.
+.live .activitySummary {
+	font-size: var(--periscope-font-size-base);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-20);
+	@include shimmer-text(var(--l3-foreground), var(--l1-foreground));
 }

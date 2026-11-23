@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
-import { Empty, Select, Skeleton, Tooltip } from 'antd';
+import { Select, Skeleton, Tooltip } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import { Typography } from '@signozhq/ui/typography';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -193,7 +194,17 @@ function MetricsTreemap({
 		>
 			<div className="metrics-treemap-title">
 				<div className="metrics-treemap-title-left">
-					<Typography.Title level={4}>Proportion View</Typography.Title>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h4"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						Proportion View
+					</Typography>
 					<Tooltip
 						title="The treemap displays the proportion of samples/timeseries in the selected time range. Each tile represents a unique metric, and its size indicates the percentage of samples/timeseries it contributes to the total."
 						placement="right"

@@ -53,9 +53,16 @@ export function PlannedDowntimeDeleteModal(
 				</Button>,
 			]}
 		>
-			<Typography.Text className="delete-text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{`Are you sure you want to delete - ${downtimeSchedule} schedule? Deleting a schedule is irreversible and cannot be undone.`}
-			</Typography.Text>
+			</Typography>
 		</Modal>
 	);
 }

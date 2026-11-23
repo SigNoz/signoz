@@ -39,6 +39,22 @@ describe('AllAttributes', () => {
 		expect(screen.getByText('value3')).toBeInTheDocument();
 	});
 
+	it('cuts a long attribute key and value at one line with an ellipsis', () => {
+		render(
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
+		);
+
+		expect(
+			screen.getByText('attribute1').getAttribute('data-text-overflow'),
+		).toBe('ellipsis');
+		expect(screen.getByText('value1').getAttribute('data-text-overflow')).toBe(
+			'ellipsis',
+		);
+	});
+
 	it('handles empty attributes array', () => {
 		useGetMetricAttributesMock.mockReturnValue({
 			...getMockMetricAttributesData({

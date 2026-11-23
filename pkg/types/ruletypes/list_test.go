@@ -27,8 +27,8 @@ func TestListRulesParamsValidate(t *testing.T) {
 		},
 		{
 			name:      "ExplicitValues_Kept",
-			params:    ListRulesParams{ListFilter: ListFilter{Sort: ListSortSeverity, Order: ListOrderAsc}, Limit: 50, Offset: 100},
-			wantSort:  ListSortSeverity,
+			params:    ListRulesParams{ListFilter: ListFilter{Sort: ListSortThresholds, Order: ListOrderAsc}, Limit: 50, Offset: 100},
+			wantSort:  ListSortThresholds,
 			wantOrder: ListOrderAsc,
 			wantLimit: 50,
 		},

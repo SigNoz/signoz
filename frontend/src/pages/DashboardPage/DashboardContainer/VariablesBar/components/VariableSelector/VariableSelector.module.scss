@@ -53,13 +53,10 @@
 }
 
 .variableName {
-	--typography-text-display: flex;
 	position: absolute;
 	top: -3px;
 	left: 4px;
 	z-index: 1;
-	align-items: center;
-	gap: 5px;
 	// Equal left/right inset: left:8px in, and 8px reserved on the right (16 total),
 	// so a truncated name + info icon has matching space on both sides.
 	max-width: calc(100% - 10px);
@@ -67,10 +64,6 @@
 	padding: 0 2px;
 	background-color: var(--l1-background);
 	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 11px;
-	font-weight: 500;
-	line-height: 14px;
 }
 
 .name {

@@ -1,20 +1,15 @@
 import type { ReactNode } from 'react';
-import {
-	ResizableHandle,
-	ResizablePanel,
-	ResizablePanelGroup,
-	useDefaultLayout,
-} from '@signozhq/ui/resizable';
+import { Resizable, type ResizableSizeType } from '@signozhq/ui/resizable';
 
 import layoutStorage from '../layoutStorage';
 
 import styles from '../PanelEditor.module.scss';
 
-/** A resizable pane's bounds, in the percentage strings `ResizablePanel` takes. */
+/** A resizable pane's bounds, in the percentage strings `Resizable` items take. */
 interface PaneSize {
-	minSize: string;
-	maxSize: string;
-	defaultSize: string;
+	minSize: ResizableSizeType;
+	maxSize: ResizableSizeType;
+	defaultSize: ResizableSizeType;
 }
 
 /** How the left column divides between the preview and the editor pane. */
@@ -64,51 +59,53 @@ function PanelEditorLayout({
 	config,
 	split,
 }: PanelEditorLayoutProps): JSX.Element {
-	const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-		id: 'panel-editor-v2',
-		storage: layoutStorage,
-	});
-	const {
-		defaultLayout: mainDefaultLayout,
-		onLayoutChanged: onMainLayoutChanged,
-	} = useDefaultLayout({
-		id: 'panel-editor-v2-main',
-		storage: layoutStorage,
-	});
-
 	return (
 		<div className={styles.page} data-testid="panel-editor-v2">
 			{header}
-			<ResizablePanelGroup
-				id="panel-editor-v2"
+			<Resizable
 				orientation="horizontal"
-				defaultLayout={defaultLayout}
-				onLayoutChanged={onLayoutChanged}
-			>
-				<ResizablePanel minSize="75%" maxSize="80%" defaultSize="80%">
-					<div className={styles.left}>
-						<ResizablePanelGroup
-							id="panel-editor-v2-main"
-							orientation="vertical"
-							defaultLayout={mainDefaultLayout}
-							onLayoutChanged={onMainLayoutChanged}
-						>
-							<ResizablePanel {...split.preview}>{preview}</ResizablePanel>
-							<ResizableHandle withHandle className={styles.handle} />
-							<ResizablePanel {...split.editor}>{editor}</ResizablePanel>
-						</ResizablePanelGroup>
-					</div>
-				</ResizablePanel>
-				<ResizableHandle withHandle className={styles.handle} />
-				<ResizablePanel
-					minSize="20%"
-					maxSize="25%"
-					defaultSize="20%"
-					className={styles.right}
-				>
-					{config}
-				</ResizablePanel>
-			</ResizablePanelGroup>
+				storageKey="panel-editor-v2"
+				storage={layoutStorage}
+				testId="panel-editor-v2-split"
+				items={[
+					{
+						value: 'main',
+						label: 'Preview and editor',
+						minSize: '75%',
+						maxSize: '80%',
+						defaultSize: '80%',
+						children: (
+							<Resizable
+								orientation="vertical"
+								storageKey="panel-editor-v2-main"
+								storage={layoutStorage}
+								items={[
+									{
+										value: 'preview',
+										label: 'Panel preview',
+										...split.preview,
+										children: preview,
+									},
+									{
+										value: 'editor',
+										label: 'Panel editor',
+										...split.editor,
+										children: editor,
+									},
+								]}
+							/>
+						),
+					},
+					{
+						value: 'config',
+						label: 'Panel configuration',
+						minSize: '20%',
+						maxSize: '25%',
+						defaultSize: '20%',
+						children: <div className={styles.right}>{config}</div>,
+					},
+				]}
+			/>
 		</div>
 	);
 }

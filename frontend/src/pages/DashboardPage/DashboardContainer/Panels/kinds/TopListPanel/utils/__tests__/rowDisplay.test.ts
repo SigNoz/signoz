@@ -70,6 +70,7 @@ describe('getTooltipContent', () => {
 		share: 0.25,
 		queryName: 'A',
 		labels: { 'service.name': 'checkout' },
+		missingLabels: [],
 		...overrides,
 	});
 	const options = {

@@ -1,4 +1,4 @@
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import ServicesApplication from 'container/ServiceApplication';
 
 function Metrics(): JSX.Element {

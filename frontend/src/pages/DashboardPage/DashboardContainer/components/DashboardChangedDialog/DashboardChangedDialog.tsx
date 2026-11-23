@@ -1,11 +1,9 @@
 import { RotateCcw } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import logEvent from 'api/common/logEvent';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 
 import { useDashboardStore } from '../../store/useDashboardStore';
-import styles from './DashboardChangedDialog.module.scss';
 
 interface DashboardChangedDialogProps {
 	open: boolean;
@@ -36,48 +34,21 @@ function DashboardChangedDialog({
 		onDismiss();
 	};
 
-	const footer = (
-		<div className={styles.footer}>
-			<Button
-				size="md"
-				variant="solid"
-				color="secondary"
-				onClick={handleDismiss}
-				testId="dashboard-changed-dismiss"
-			>
-				Dismiss
-			</Button>
-			<Button
-				size="md"
-				variant="solid"
-				color="primary"
-				prefix={<RotateCcw size={12} />}
-				onClick={handleReload}
-				testId="dashboard-changed-reload"
-			>
-				Reload
-			</Button>
-		</div>
-	);
-
 	return (
-		<DialogWrapper
+		<AlertDialog
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					onDismiss();
-				}
-			}}
 			title="Dashboard updated elsewhere"
-			width="narrow"
-			showCloseButton={false}
-			footer={footer}
+			color="primary"
+			confirmText="Reload"
+			confirmIcon={<RotateCcw size={12} />}
+			cancelText="Dismiss"
+			onConfirm={handleReload}
+			onCancel={handleDismiss}
+			testId="dashboard-changed"
 		>
-			<div className={styles.body}>
-				This dashboard was changed in another tab or by another user. Reload to see
-				the latest version.
-			</div>
-		</DialogWrapper>
+			This dashboard was changed in another tab or by another user. Reload to see
+			the latest version.
+		</AlertDialog>
 	);
 }
 

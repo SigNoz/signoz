@@ -10,7 +10,16 @@ export default function MeterLoading(): JSX.Element {
 		<div className={styles.loadingMeter}>
 			<div className={styles.loadingMeterContent}>
 				<img className={styles.loadingGif} src={loadingPlaneUrl} alt="wait-icon" />
-				<Typography>Retrieving your {DataSource.METRICS}</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Retrieving your {DataSource.METRICS}
+				</Typography>
 			</div>
 		</div>
 	);

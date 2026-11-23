@@ -4,7 +4,6 @@ import { Input, Spin } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
-import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
 import {
 	AddColumnItem,
@@ -24,7 +23,16 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 
 	return (
 		<AddColumnWrapper direction="vertical">
-			<FieldTitle>{t('options_menu.addColumn')}</FieldTitle>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{t('options_menu.addColumn')}
+			</Typography>
 
 			<Input.Group compact>
 				<AddColumnSelect
@@ -47,7 +55,16 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 
 			{config.value?.map(({ name }) => (
 				<AddColumnItem direction="horizontal" key={name}>
-					<Typography>{name}</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{name}
+					</Typography>
 					<DeleteOutlinedIcon
 						size="md"
 						onClick={(): void => config.onRemove(name)}

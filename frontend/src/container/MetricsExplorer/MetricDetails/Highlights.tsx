@@ -58,9 +58,16 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 					data-testid="metric-highlights-error-state"
 				>
 					<Info size={16} color={Color.BG_CHERRY_500} />
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Something went wrong while fetching metric highlights
-					</Typography.Text>
+					</Typography>
 					<Button
 						type="link"
 						size="large"
@@ -78,26 +85,61 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	return (
 		<div className="metric-details-content-grid">
 			<div className="labels-row">
-				<Typography.Text color="muted" className="metric-details-grid-label">
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					SAMPLES
-				</Typography.Text>
-				<Typography.Text color="muted" className="metric-details-grid-label">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					TIME SERIES
-				</Typography.Text>
-				<Typography.Text color="muted" className="metric-details-grid-label">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="small"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					LAST RECEIVED
-				</Typography.Text>
+				</Typography>
 			</div>
 			<div className="values-row">
 				{isLoadingMetricHighlights ? (
 					<div className="metric-highlights-loading-inline">
 						<Spin size="small" />
-						<Typography.Text color="muted">Loading metric stats</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
+							Loading metric stats
+						</Typography>
 					</div>
 				) : (
 					<>
-						<Typography.Text
-							className="metric-details-grid-value"
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
 							data-testid="metric-highlights-data-points"
 						>
 							<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
@@ -107,9 +149,14 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 									)}
 								</span>
 							</Tooltip>
-						</Typography.Text>
-						<Typography.Text
-							className="metric-details-grid-value"
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
 							data-testid="metric-highlights-time-series-total"
 						>
 							<Tooltip
@@ -118,15 +165,20 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 							>
 								<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
 							</Tooltip>
-						</Typography.Text>
-						<Typography.Text
-							className="metric-details-grid-value"
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
 							data-testid="metric-highlights-last-received"
 						>
 							<Tooltip title={lastReceivedTooltipText}>
 								<span>{lastReceivedText}</span>
 							</Tooltip>
-						</Typography.Text>
+						</Typography>
 					</>
 				)}
 			</div>

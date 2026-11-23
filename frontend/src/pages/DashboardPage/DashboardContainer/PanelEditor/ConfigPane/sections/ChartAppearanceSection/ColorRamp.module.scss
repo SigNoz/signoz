@@ -14,7 +14,7 @@
 	display: flex;
 	justify-content: space-between;
 	gap: 8px;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	color: var(--l2-foreground);
 }
@@ -73,7 +73,7 @@
 
 .cardName {
 	overflow: hidden;
-	font-family: 'Geist Mono', monospace;
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
