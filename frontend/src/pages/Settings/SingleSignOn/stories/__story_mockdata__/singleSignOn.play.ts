@@ -6,6 +6,7 @@
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
+	canEditDisplayName,
 	listsDomains,
 	type SingleSignOnArgs,
 } from '../SingleSignOn.stories.mocks';
@@ -141,11 +142,15 @@ export const updateDisplayName = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
+	if (!canEditDisplayName(args)) {
+		return;
+	}
 	const input = await within(canvasElement).findByLabelText(
 		/display name/i,
 		undefined,
 		untilLoaded,
 	);
+	await waitFor(() => expect(input).toBeEnabled(), untilLoaded);
 
 	await userEvent.clear(input);
 	await userEvent.type(input, 'Night Watch');

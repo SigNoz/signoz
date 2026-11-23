@@ -4,8 +4,10 @@
  */
 
 import ROUTES from 'constants/routes';
+import { buildOrganizationUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/organization.permissions';
 import { rest } from 'msw';
 
+import { grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -125,6 +127,9 @@ export const singleSignOnMocks = defineStoryMocks({
 });
 
 export type SingleSignOnArgs = PageStoryArgs<typeof singleSignOnMocks>;
+
+export const canEditDisplayName = (args: SingleSignOnArgs): boolean =>
+	grantsAll(args, buildOrganizationUpdatePermission('*'));
 
 /** Rows come from the domains handler, which State can hold back or fail. */
 export const listsDomains = (args: SingleSignOnArgs): boolean =>
