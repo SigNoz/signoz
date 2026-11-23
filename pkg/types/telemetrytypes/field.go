@@ -252,7 +252,7 @@ type FieldValueSelector struct {
 	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
 	Limit         int    `json:"limit" description:"Maximum number of values to return."`
 
-	// nameAsWritten is set when FieldContext was parsed from the name's prefix.
+	// nameAsWritten is set when a context other than resource was parsed from the name's prefix.
 	nameAsWritten string
 }
 
@@ -449,7 +449,6 @@ func (key *TelemetryFieldKey) normalizeContext() {
 			}
 		}
 	}
-
 }
 
 // withName returns a copy looking up name in any context.
