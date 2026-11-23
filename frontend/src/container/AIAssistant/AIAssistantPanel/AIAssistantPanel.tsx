@@ -29,6 +29,8 @@ const PANEL_HEIGHT = 601;
 const PANEL_MIN_WIDTH = 380;
 const PANEL_MIN_HEIGHT = 500;
 const PANEL_MARGIN = 8;
+// Screen the default size was designed for; larger screens scale the panel up, keeping its shape.
+const DESIGN_SCREEN = { width: 1440, height: 900 };
 const PANEL_RESIZE_EDGES = {
 	top: true,
 	right: true,
@@ -100,14 +102,25 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		0,
 		window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
 	);
-	const panelHeight = Math.min(PANEL_HEIGHT, availableHeight);
+	const scale = Math.max(
+		1,
+		Math.min(
+			window.innerWidth / DESIGN_SCREEN.width,
+			window.innerHeight / DESIGN_SCREEN.height,
+		),
+	);
+	const panelWidth = Math.round(PANEL_WIDTH * scale);
+	const panelHeight = Math.min(
+		Math.round(PANEL_HEIGHT * scale),
+		availableHeight,
+	);
 
 	return (
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
 				isOpen
 				className={styles.panel}
-				width={PANEL_WIDTH}
+				width={panelWidth}
 				height={panelHeight}
 				minWidth={PANEL_MIN_WIDTH}
 				minHeight={Math.min(PANEL_MIN_HEIGHT, availableHeight)}
@@ -115,7 +128,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				keepInViewport
 				avoid={PANEL_AVOID}
 				defaultPosition={{
-					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
+					x: window.innerWidth - panelWidth - PANEL_MARGIN,
 					y: PANEL_MARGIN + availableHeight - panelHeight,
 				}}
 			>
