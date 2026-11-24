@@ -17,6 +17,7 @@ import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
+import { WAIT_FOR_SAVE, WAIT_FOR_TEST_NOTIFICATION } from './constants';
 import { useAlertRuleSaveChecks } from './useAlertRuleSaveChecks';
 import { buildCreateAlertRulePayload, validateCreateAlertState } from './utils';
 
@@ -55,16 +56,13 @@ function Footer(): JSX.Element {
 	// telemetry the rule queries, is refused by the server; name it in place.
 	const [forbiddenMessage, setForbiddenMessage] = useState<string>();
 	const handleApiError = useCallback(
-		(error: unknown): void => {
-			const apiError = convertToApiError(
-				error as AxiosError<RenderErrorResponseDTO>,
-			);
-			const message = getAuthZForbiddenMessage(apiError);
+		(error: AxiosError<RenderErrorResponseDTO>): void => {
+			const message = getAuthZForbiddenMessage(error);
 			if (message) {
 				setForbiddenMessage(message);
 				return;
 			}
-			showErrorModal(apiError as APIError);
+			showErrorModal(convertToApiError(error) as APIError);
 		},
 		[showErrorModal],
 	);
@@ -199,14 +197,14 @@ function Footer(): JSX.Element {
 	const saveBlockedReason =
 		alertValidationMessage ||
 		(isTestingAlertRule
-			? 'Wait for the test notification to finish'
+			? WAIT_FOR_TEST_NOTIFICATION
 			: isResolvingChannels
 				? AUTHZ_LOADING_TOOLTIP
 				: undefined);
 	const testBlockedReason =
 		alertValidationMessage ||
 		(isSavingAlertRule
-			? 'Wait for the alert rule to finish saving'
+			? WAIT_FOR_SAVE
 			: isResolvingChannels
 				? AUTHZ_LOADING_TOOLTIP
 				: undefined);
@@ -254,9 +252,7 @@ function Footer(): JSX.Element {
 			{forbiddenMessage && <PermissionDeniedCallout message={forbiddenMessage} />}
 			<Button
 				disabledTooltip={
-					isTestingAlertRule
-						? 'Wait for the test notification to finish'
-						: 'Wait for the alert rule to finish saving'
+					isTestingAlertRule ? WAIT_FOR_TEST_NOTIFICATION : WAIT_FOR_SAVE
 				}
 				size="md"
 				variant="solid"

@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
 import type { AuthZSelectOption } from 'lib/authz/components/AuthZSelect/types';
-import {
-	buildNotificationChannelAttachPermission,
-	buildNotificationChannelDetachPermission,
-} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import { buildNotificationChannelLinkPermissions } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type { LinkPermissions } from 'lib/authz/hooks/useLinkPickerAccess/types';
 import { useLinkPickerAccess } from 'lib/authz/hooks/useLinkPickerAccess/useLinkPickerAccess';
@@ -33,11 +30,6 @@ export interface UseChannelPickerAccessReturn {
 }
 
 const NO_NAMES: string[] = [];
-
-const buildChannelPermissions = (id: string): LinkPermissions => ({
-	attach: buildNotificationChannelAttachPermission(id),
-	detach: buildNotificationChannelDetachPermission(id),
-});
 
 /**
  * The options of a channel picker, each disabled with the reason when the
@@ -69,7 +61,7 @@ export function useChannelPickerAccess({
 			linkedIds,
 			exemptIds,
 			optionIds,
-			buildItemPermissions: buildChannelPermissions,
+			buildItemPermissions: buildNotificationChannelLinkPermissions,
 		});
 
 	const options = useMemo(

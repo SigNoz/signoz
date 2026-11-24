@@ -35,7 +35,7 @@ export const createMockAlertContextState = (
 	updateAlertRule: jest.fn(),
 	isEditMode: false,
 	ruleId: '',
-	savedChannels: [],
+	savedChannelNames: [],
 	...overrides,
 });
 

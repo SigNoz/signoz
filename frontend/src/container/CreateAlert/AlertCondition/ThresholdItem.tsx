@@ -24,8 +24,11 @@ function ThresholdItem({
 	isAnomaly = false,
 }: ThresholdItemProps): JSX.Element {
 	const { thresholdState, notificationSettings } = useCreateAlertState();
-	const { getChannelAccess, onPickerVisibleChange } =
-		useAlertRuleChannelAccess(channels);
+	const { options: channelOptions, onPickerVisibleChange } =
+		useAlertRuleChannelAccess(
+			channels,
+			`threshold-${threshold.label}-channel-option`,
+		);
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -187,17 +190,7 @@ function ThresholdItem({
 								}
 								data-testid="threshold-notification-channel-select"
 								style={{ width: 350 }}
-								options={channels.map((channel) => {
-									const { disabled, reason } = getChannelAccess(channel);
-									return {
-										value: channel.name,
-										label: channel.name,
-										disabled,
-										title: reason ?? channel.name,
-										'aria-disabled': disabled,
-										'data-testid': `threshold-${threshold.label}-channel-option-${channel.id}`,
-									};
-								})}
+								options={channelOptions}
 								onDropdownVisibleChange={onPickerVisibleChange}
 								mode="multiple"
 								placeholder="Select notification channels"

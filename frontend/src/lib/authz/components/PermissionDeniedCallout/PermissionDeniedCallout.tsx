@@ -44,36 +44,27 @@ function PermissionDeniedCallout({
 				icon={<SolidAlertCircle />}
 				testId="permission-denied-callout"
 			>
-				{message ? (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="secondary"
-						as="span"
-						textOverflow="wrap"
-					>
-						{message}
-					</Typography>
-				) : (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="secondary"
-						as="span"
-						textOverflow="wrap"
-					>
-						<code className={styles.permissionCode}>user/{user.id}</code> is not
-						authorized to perform{' '}
-						{formattedPermissions.map((perm, idx) => (
-							<span key={perm}>
-								<code className={styles.permissionCode}>{perm}</code>
-								{idx < formattedPermissions.length - 1 && ', '}
-							</span>
-						))}
-					</Typography>
-				)}
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
+					{message ?? (
+						<>
+							<code className={styles.permission}>user/{user.id}</code> is not
+							authorized to perform{' '}
+							{formattedPermissions.map((perm, idx) => (
+								<span key={perm}>
+									<code className={styles.permission}>{perm}</code>
+									{idx < formattedPermissions.length - 1 && ', '}
+								</span>
+							))}
+						</>
+					)}
+				</Typography>
 			</Callout>
 		</div>
 	);

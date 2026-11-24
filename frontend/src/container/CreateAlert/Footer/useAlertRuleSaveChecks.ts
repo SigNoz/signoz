@@ -19,7 +19,7 @@ export interface UseAlertRuleSaveChecksReturn {
  * backend skips too.
  */
 export function useAlertRuleSaveChecks(): UseAlertRuleSaveChecksReturn {
-	const { thresholdState, savedChannels, isEditMode, ruleId } =
+	const { thresholdState, savedChannelNames, isEditMode, ruleId } =
 		useCreateAlertState();
 	const { data: channels, isLoading } = useChannelOptions();
 
@@ -37,12 +37,19 @@ export function useAlertRuleSaveChecks(): UseAlertRuleSaveChecksReturn {
 		return {
 			saveChecks: getRuleSaveChecks({
 				ruleId: isEditMode ? ruleId : undefined,
-				savedChannelIds: toIds(savedChannels),
+				savedChannelIds: toIds(savedChannelNames),
 				selectedChannelIds,
 			}),
 			testChecks: getRuleCreateChecks(selectedChannelIds),
 			isResolvingChannels:
-				isLoading && (selectedChannels.length > 0 || savedChannels.length > 0),
+				isLoading && (selectedChannels.length > 0 || savedChannelNames.length > 0),
 		};
-	}, [channels, selectedChannels, savedChannels, isEditMode, ruleId, isLoading]);
+	}, [
+		channels,
+		selectedChannels,
+		savedChannelNames,
+		isEditMode,
+		ruleId,
+		isLoading,
+	]);
 }

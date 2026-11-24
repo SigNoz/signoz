@@ -54,8 +54,7 @@ export interface ICreateAlertContextProps {
 	>;
 	isEditMode: boolean;
 	ruleId: string;
-	/** Names of the channels the saved rule notifies; empty for a new rule. */
-	savedChannels: string[];
+	savedChannelNames: string[];
 }
 
 export interface ICreateAlertProviderProps {

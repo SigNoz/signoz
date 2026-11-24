@@ -319,7 +319,7 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
-	const savedChannels = useMemo(
+	const savedChannelNames = useMemo(
 		() =>
 			isEditMode && initialAlertState
 				? [
@@ -364,7 +364,7 @@ export function CreateAlertProvider(
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
 			ruleId: ruleId || '',
-			savedChannels,
+			savedChannelNames,
 		}),
 		[
 			createAlertState,
@@ -384,7 +384,7 @@ export function CreateAlertProvider(
 			isUpdatingAlertRule,
 			isEditMode,
 			ruleId,
-			savedChannels,
+			savedChannelNames,
 		],
 	);
 
