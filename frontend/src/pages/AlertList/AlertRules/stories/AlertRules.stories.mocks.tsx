@@ -13,6 +13,8 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+
 import { grantsAll } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import type { RuleAction, RuleViewCtx } from 'container/ListAlertRules/types';
@@ -367,6 +369,10 @@ export const canRunRowAction = (
 			grantsAll(args, ...getRuleActionChecks(first.id)[action]))
 	);
 };
+
+/** Whether New Alert, in the header or on the empty page, is open: granted, or the check failed open. */
+export const canCreateRule = (args: AlertRulesArgs): boolean =>
+	args.authzState === 'error' || grantsAll(args, RuleCreatePermission);
 
 export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
 	args.view === DEFAULT_RULE_VIEW &&

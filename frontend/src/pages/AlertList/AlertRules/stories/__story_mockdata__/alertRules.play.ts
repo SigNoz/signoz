@@ -12,6 +12,7 @@ import {
 	listedRules,
 	listsSavedViews,
 	runRowAction,
+	canCreateRule,
 	showsNoRulesPage,
 	untilLoaded,
 } from '../AlertRules.stories.mocks';
@@ -302,19 +303,32 @@ export const expectListDenied = async ({
 
 export const expectNewAlertLocked = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	// The empty page swaps the header's New Alert for its own button.
+	if (showsNoRulesPage(args) || canCreateRule(args)) {
+		return;
+	}
 	await expectButtonDenied(canvasElement, 'list-alerts-new-alert-button');
 };
 
 export const expectEmptyStateCreateLocked = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (!showsNoRulesPage(args) || canCreateRule(args)) {
+		return;
+	}
 	await expectButtonDenied(canvasElement, 'add-alert');
 };
 
 export const expectNewAlertOpen = async ({
 	canvasElement,
+	args,
 }: PlayContext): Promise<void> => {
+	if (showsNoRulesPage(args) || !canCreateRule(args)) {
+		return;
+	}
 	await expectLocked(
 		await within(canvasElement).findByTestId(
 			'list-alerts-new-alert-button',
