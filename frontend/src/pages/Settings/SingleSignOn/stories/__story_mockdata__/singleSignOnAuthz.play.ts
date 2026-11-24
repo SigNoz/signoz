@@ -71,22 +71,22 @@ export const expectDisplayNameDenied = async ({
 			untilLoaded,
 		);
 		await expect(
-			within(canvasElement).queryByRole('textbox', { name: /display name/i }),
+			within(canvasElement).queryByTestId('org-display-name-input-field'),
 		).toBeNull();
 		return;
 	}
 	const denied = !canEditDisplayName(args);
 	await expectDenied(
-		await within(canvasElement).findByLabelText(
-			'Display name',
+		await within(canvasElement).findByTestId(
+			'org-display-name-input-field',
 			undefined,
 			untilLoaded,
 		),
 		denied,
 	);
 	if (!denied) {
-		const input = await within(canvasElement).findByLabelText(
-			'Display name',
+		const input = await within(canvasElement).findByTestId(
+			'org-display-name-input-field',
 			undefined,
 			untilLoaded,
 		);

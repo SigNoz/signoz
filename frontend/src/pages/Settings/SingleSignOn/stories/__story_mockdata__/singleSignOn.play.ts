@@ -149,8 +149,8 @@ export const updateDisplayName = async ({
 	if (!canEditDisplayName(args)) {
 		return;
 	}
-	const input = await within(canvasElement).findByLabelText(
-		/display name/i,
+	const input = await within(canvasElement).findByTestId(
+		'org-display-name-input-field',
 		undefined,
 		untilLoaded,
 	);
@@ -272,14 +272,14 @@ export const expectViewerAccess = async ({
 		await waitFor(
 			() =>
 				expect(
-					within(canvasElement).queryByRole('textbox', { name: /display name/i }),
+					within(canvasElement).queryByTestId('org-display-name-input-field'),
 				).toBeNull(),
 			untilLoaded,
 		);
 		return;
 	}
-	const input = await within(canvasElement).findByLabelText(
-		'Display name',
+	const input = await within(canvasElement).findByTestId(
+		'org-display-name-input-field',
 		undefined,
 		untilLoaded,
 	);

@@ -312,7 +312,7 @@ export function settingsDriver(page: Page): Settings {
 
 		org: {
 			goto: () => settings.shell.goto('/settings/org-settings'),
-			nameInput: () => page.getByLabel('Display name'),
+			nameInput: () => page.getByTestId('org-display-name-input-field'),
 			rename: async (name) => {
 				await settings.org.nameInput().fill(name);
 				const saved = page.waitForResponse(

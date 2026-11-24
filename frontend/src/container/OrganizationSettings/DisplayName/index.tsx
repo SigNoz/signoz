@@ -121,6 +121,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 									<Input
 										{...field}
 										id="displayName"
+										testId="org-display-name-input"
 										size="lg"
 										placeholder={t('signoz')}
 										status={fieldState.error ? 'danger' : undefined}

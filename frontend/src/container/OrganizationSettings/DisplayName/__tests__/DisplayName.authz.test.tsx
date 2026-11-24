@@ -60,7 +60,7 @@ describe('DisplayName — authz', () => {
 			'data-denied-permissions',
 			expect.stringContaining('update'),
 		);
-		expect(screen.getByLabelText('Display name')).toBeDisabled();
+		expect(screen.getByTestId('org-display-name-input-field')).toBeDisabled();
 	});
 
 	it('shows the denial instead of the form and skips the fetch when read is denied', async () => {
