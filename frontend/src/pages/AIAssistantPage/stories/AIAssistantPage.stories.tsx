@@ -124,6 +124,11 @@ export const AwaitingApproval: Story = {
 	args: { agent: 'awaiting-approval', contents: BRIEF },
 };
 
+/** A delete awaiting approval: nothing to compare, so the summary sits beside Reject and Approve. */
+export const AwaitingDeleteApproval: Story = {
+	args: { agent: 'awaiting-approval', approvalDiff: false, contents: BRIEF },
+};
+
 /** The agent asking for the details it needs, one field per detail. */
 export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },

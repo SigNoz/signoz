@@ -475,6 +475,18 @@ const pendingApproval = (): ApprovalSummaryDTO => ({
 	createdAt: new Date(Date.now() - 30_000).toISOString(),
 });
 
+/** A delete leaves nothing to compare, so it carries no diff. */
+const pendingDeleteApproval = (): ApprovalSummaryDTO => ({
+	approvalId: 'approval-delete-checkout-alert',
+	executionId: EXECUTION_ID,
+	sourceMessageId: MESSAGE_IDS.final,
+	state: ApprovalStateDTO.pending,
+	actionType: ApprovalActionTypeDTO.delete,
+	resourceType: 'alert',
+	summary: 'Delete the muted Checkout p50 alert.',
+	createdAt: new Date(Date.now() - 30_000).toISOString(),
+});
+
 const pendingClarification = (): ClarificationSummaryDTO => ({
 	clarificationId: 'clarification-alert-scope',
 	executionId: EXECUTION_ID,
@@ -541,8 +553,10 @@ const pendingClarification = (): ClarificationSummaryDTO => ({
 export const threadDetailResponse = (
 	parts: readonly ThreadPart[],
 	agent: AgentState,
+	approvalDiff = true,
 ): ThreadDetailResponseDTO => {
 	const messages = stamped(turnsFor(parts));
+	const approval = approvalDiff ? pendingApproval() : pendingDeleteApproval();
 
 	return {
 		threadId: THREAD_ID,
@@ -554,7 +568,7 @@ export const threadDetailResponse = (
 		// `activeExecutionId` would reconnect the stream and overwrite the seeded
 		// one, so the streaming state is left to the store.
 		activeExecutionId: null,
-		pendingApproval: agent === 'awaiting-approval' ? pendingApproval() : null,
+		pendingApproval: agent === 'awaiting-approval' ? approval : null,
 		pendingClarification:
 			agent === 'awaiting-clarification' ? pendingClarification() : null,
 	};

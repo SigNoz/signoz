@@ -120,7 +120,10 @@ export const test = withThing(withTanstack(kit));
 
 Worker-scoped seeds use `seeded()`, which runs on a throwaway admin page and
 tears down after. Drivers reuse each other by calling the factory directly,
-never by reaching for another fixture.
+never by reaching for another fixture. Before adding a `goto` or a locator,
+grep `drivers/` for one: `shellDriver` owns the side nav and home page, and a
+feature driver's `goto` also waits for its page to load, which a raw
+`page.goto` skips.
 
 - A method is navigation or a locator, never a scenario. A method that exists
   for one spec belongs in that spec; a flag that switches behaviour is two
@@ -141,6 +144,15 @@ never by reaching for another fixture.
 - Never `test.slow()` in a driver: it triples the remaining budget on every
   call and compounds in loops. Use `allowFor(floor)`. Budgets and their
   measurements are in [`docs/flake-notes.md`](docs/flake-notes.md).
+- A fake stands in for a service the stack does not run (`drivers/noz/fake.ts`).
+  Install it with `page.route` before the first `goto`, type it from the
+  service's contract (S5), and answer only the methods and paths the real
+  service serves. Anything else gets a 404, so a client change the real API
+  would reject fails the spec.
+- Import from `frontend/` by relative path and only types
+  (`export type * from '../../../frontend/src/…'`), as `drivers/schemas.ts`
+  does. CI installs only `tests/e2e`, so a package the frontend file imports
+  needs an e2e devDependency and a `paths` entry in `tsconfig.json`.
 
 ## Moving a test down a layer
 

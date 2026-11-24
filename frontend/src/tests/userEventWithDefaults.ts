@@ -7,7 +7,8 @@ const actual = jest.requireActual<UserEventModule>(
 );
 const userEvent = actual.default;
 
-// The pointer-events check walks getComputedStyle up the tree on every action.
+// Base UI popups sit inside an inline `pointer-events: none`, and the stylesheet
+// that turns it back on never loads in jsdom.
 const DEFAULTS = {
 	pointerEventsCheck: actual.PointerEventsCheckLevel.Never,
 };

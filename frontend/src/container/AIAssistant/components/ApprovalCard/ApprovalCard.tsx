@@ -79,7 +79,7 @@ export default function ApprovalCard({
 	}
 
 	return (
-		<div className={styles.card}>
+		<div className={cx(styles.card, { [styles.inline]: !approval.diff })}>
 			<div className={styles.header}>
 				<Shield size={16} className={styles.shieldIcon} />
 				<span className={styles.headerLabel}>Action requires approval</span>
@@ -177,27 +177,25 @@ export default function ApprovalCard({
 			<div className={styles.actions}>
 				<Button
 					disabledTooltip="Wait for the response to finish"
-					color="primary"
-					variant="solid"
-					size="md"
-					width="100%"
-					onClick={handleApprove}
-					disabled={isStreaming}
-					prefix={<Check />}
-				>
-					Approve
-				</Button>
-				<Button
-					disabledTooltip="Wait for the response to finish"
 					variant="outlined"
 					size="md"
-					width="100%"
 					color="secondary"
 					onClick={handleReject}
 					disabled={isStreaming}
 					prefix={<X />}
 				>
 					Reject
+				</Button>
+				<Button
+					disabledTooltip="Wait for the response to finish"
+					color="primary"
+					variant="solid"
+					size="md"
+					onClick={handleApprove}
+					disabled={isStreaming}
+					prefix={<Check />}
+				>
+					Approve
 				</Button>
 			</div>
 		</div>
