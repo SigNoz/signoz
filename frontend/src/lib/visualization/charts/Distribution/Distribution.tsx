@@ -190,6 +190,14 @@ export default function Distribution({
 		],
 	);
 
+	const drawnGroupLabels = useMemo(
+		() =>
+			drawn.sourceIndexes.map((source) =>
+				source === null ? undefined : series[source].groupLabels,
+			),
+		[drawn, series],
+	);
+
 	const renderTooltip = useCallback(
 		(args: TooltipRenderArgs): React.ReactNode => (
 			<DistributionTooltip
@@ -199,13 +207,14 @@ export default function Distribution({
 				xAxis={xAxis}
 				layout={layout}
 				labels={drawn.labels}
+				groupLabels={drawnGroupLabels}
 				colors={drawn.colors}
 				counts={drawn.counts}
 				formatBound={formatBound}
 				renderTooltipFooter={renderTooltipFooter}
 			/>
 		),
-		[xAxis, layout, drawn, formatBound, renderTooltipFooter],
+		[xAxis, layout, drawn, drawnGroupLabels, formatBound, renderTooltipFooter],
 	);
 
 	const handleClick = useDistributionBarClick({

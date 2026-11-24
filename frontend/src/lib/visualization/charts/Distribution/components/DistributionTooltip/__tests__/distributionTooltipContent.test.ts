@@ -15,28 +15,34 @@ describe('formatPercent', () => {
 describe('resolveGroupColumn', () => {
 	it('names the column after a shared single key and shows its values', () => {
 		const column = resolveGroupColumn([
-			'{service.name="cart"}',
-			'{service.name="checkout"}',
+			{ 'service.name': 'cart' },
+			{ 'service.name': 'checkout' },
 		]);
 
 		expect(column.heading).toBe('service.name');
-		expect(column.format('{service.name="cart"}')).toBe('cart');
+		expect(column.format('cart service', 0)).toBe('cart');
+		expect(column.format('checkout service', 1)).toBe('checkout');
 	});
 
-	it('keeps full labels for several keys or mixed labels', () => {
-		const several = resolveGroupColumn(['{env="prod", service.name="cart"}']);
-		const mixed = resolveGroupColumn(['{service.name="cart"}', 'Other']);
+	it('keeps Other under the shared key, with its own label', () => {
+		const column = resolveGroupColumn([{ 'service.name': 'cart' }, undefined]);
+
+		expect(column.heading).toBe('service.name');
+		expect(column.format('Other', 1)).toBe('Other');
+	});
+
+	it('keeps full labels for several keys or none', () => {
+		const several = resolveGroupColumn([{ env: 'prod', 'service.name': 'cart' }]);
+		const ungrouped = resolveGroupColumn([{}]);
 
 		expect(several.heading).toBe('Group');
-		expect(several.format('{env="prod", service.name="cart"}')).toBe(
-			'{env="prod", service.name="cart"}',
-		);
-		expect(mixed.heading).toBe('Group');
+		expect(several.format('prod cart', 0)).toBe('prod cart');
+		expect(ungrouped.heading).toBe('Group');
 	});
 });
 
 describe('buildDistributionTooltipRows', () => {
-	it('gives each drawn group, in legend order, its count, share and cumulative share', () => {
+	it('gives each drawn group, in legend order, its count and share', () => {
 		const rows = buildDistributionTooltipRows({
 			labels: ['cart', 'checkout'],
 			colors: ['#f00', '#0f0'],
@@ -56,7 +62,6 @@ describe('buildDistributionTooltipRows', () => {
 				color: '#f00',
 				count: 6,
 				share: 0.6,
-				cumulativeShare: 0.8,
 				isHovered: true,
 			},
 			{
@@ -65,7 +70,6 @@ describe('buildDistributionTooltipRows', () => {
 				color: '#0f0',
 				count: 0,
 				share: 0,
-				cumulativeShare: 0.5,
 				isHovered: false,
 			},
 		]);

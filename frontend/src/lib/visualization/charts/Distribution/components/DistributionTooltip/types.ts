@@ -14,14 +14,13 @@ export interface DistributionTooltipRow {
 	count: number;
 	/** Of the group's own total over the range. */
 	share: number;
-	/** Of the group's total, at or below this bucket. */
-	cumulativeShare: number;
 	isHovered: boolean;
 }
 
 export interface DistributionGroupColumn {
 	heading: string;
-	format: (label: string) => string;
+	/** The display label of the drawn group at `index`. */
+	format: (label: string, index: number) => string;
 }
 
 export interface DistributionTooltipProps extends Pick<
@@ -31,6 +30,8 @@ export interface DistributionTooltipProps extends Pick<
 	xAxis: DistributionXAxis;
 	layout: DistributionBarsLayout;
 	labels: string[];
+	/** Each drawn group's group-by values; `undefined` for Other. */
+	groupLabels: (Record<string, string> | undefined)[];
 	colors: string[];
 	/** `counts[series][bucket]`. */
 	counts: number[][];

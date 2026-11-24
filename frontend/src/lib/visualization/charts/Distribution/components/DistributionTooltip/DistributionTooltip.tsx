@@ -26,6 +26,7 @@ export default function DistributionTooltip({
 	xAxis,
 	layout,
 	labels,
+	groupLabels,
 	colors,
 	counts,
 	formatBound,
@@ -56,7 +57,10 @@ export default function DistributionTooltip({
 		};
 	}, [left, top, uPlotInstance, xAxis, layout]);
 
-	const groupColumn = useMemo(() => resolveGroupColumn(labels), [labels]);
+	const groupColumn = useMemo(
+		() => resolveGroupColumn(groupLabels),
+		[groupLabels],
+	);
 
 	const rows = useMemo(
 		() =>
@@ -116,9 +120,6 @@ export default function DistributionTooltip({
 					</span>
 					<span>Count</span>
 					<span>% Total</span>
-					<span data-testid="distribution-tooltip-cumulative-heading">
-						{bucket.isOverflow ? 'All' : `≤ ${formatBound(bucket.upper)}`}
-					</span>
 				</div>
 				{rows.map((row) => (
 					<div
@@ -140,9 +141,6 @@ export default function DistributionTooltip({
 						</span>
 						<span className={ItemStyles.uplotTooltipItemValue}>
 							{formatPercent(row.share)}
-						</span>
-						<span className={ItemStyles.uplotTooltipItemValue}>
-							{formatPercent(row.cumulativeShare)}
 						</span>
 					</div>
 				))}

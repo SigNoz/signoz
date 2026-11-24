@@ -39,6 +39,7 @@ function renderTooltip(uPlotInstance: uPlot): void {
 			xAxis={xAxis}
 			layout={layout}
 			labels={['{service.name="cart"}', '{service.name="checkout"}']}
+			groupLabels={[{ 'service.name': 'cart' }, { 'service.name': 'checkout' }]}
 			colors={['#f00', '#0f0']}
 			counts={counts}
 			formatBound={(value): string => `${value} ms`}
@@ -58,15 +59,12 @@ describe('DistributionTooltip', () => {
 		);
 	});
 
-	it('heads the columns with the group-by key and the bucket bound', () => {
+	it('heads the group column with the group-by key', () => {
 		renderTooltip(plotAt(1.5, 2));
 
 		expect(
 			screen.getByTestId('distribution-tooltip-group-heading'),
 		).toHaveTextContent('service.name');
-		expect(
-			screen.getByTestId('distribution-tooltip-cumulative-heading'),
-		).toHaveTextContent('≤ 20 ms');
 	});
 
 	it('lists every group in legend order, the hovered one active', () => {
@@ -74,9 +72,9 @@ describe('DistributionTooltip', () => {
 
 		const rows = screen.getAllByTestId('distribution-tooltip-row');
 		expect(rows).toHaveLength(2);
-		expect(rows[0]).toHaveTextContent('cart457%71%');
+		expect(rows[0]).toHaveTextContent(/^cart457%$/);
 		expect(rows[0]).toHaveAttribute('data-is-active', 'true');
-		expect(rows[1]).toHaveTextContent('checkout675%75%');
+		expect(rows[1]).toHaveTextContent(/^checkout675%$/);
 		expect(rows[1]).toHaveAttribute('data-is-active', 'false');
 	});
 

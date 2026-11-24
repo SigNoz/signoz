@@ -60,7 +60,7 @@
 // One grid for the heading and every row, so their columns line up.
 .rows {
 	display: grid;
-	grid-template-columns: 12px minmax(0, 1fr) repeat(3, auto);
+	grid-template-columns: 12px minmax(0, 1fr) repeat(2, auto);
 	column-gap: var(--spacing-6);
 	row-gap: var(--spacing-1);
 	align-content: start;
