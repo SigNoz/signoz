@@ -61,6 +61,41 @@ export const dirtySettings = async (context: PlayContext): Promise<void> => {
 	await screen.findByRole('button', { name: 'Save changes' });
 };
 
+/**
+ * Nested tooltips on one trigger merge into a single stacked tooltip, so a
+ * duplicate shows as the title repeated inside it, not as a second tooltip.
+ */
+export const hoverTruncatedTitle = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	const title = args.config?.[0]?.title;
+	if (!title) {
+		return;
+	}
+
+	const [label] = await within(canvasElement).findAllByText(
+		title,
+		{},
+		UNTIL_LOADED,
+	);
+	// A hover before the text is measured finds no tooltip to open.
+	await waitFor(() => expect(label).toHaveAttribute('data-truncated'));
+	await userEvent.hover(label);
+
+	const tooltip = await waitFor(async () => {
+		const match = screen
+			.queryAllByRole('tooltip')
+			.find((element) => element.textContent?.includes(title));
+
+		await expect(match).toBeVisible();
+
+		return match as HTMLElement;
+	});
+
+	await expect(tooltip.textContent?.split(title)).toHaveLength(2);
+};
+
 export const openQueryPicker = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {

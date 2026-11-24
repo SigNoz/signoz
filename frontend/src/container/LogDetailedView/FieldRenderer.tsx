@@ -1,5 +1,4 @@
 import { Divider } from '@signozhq/ui/divider';
-import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
 import { TagContainer, TagLabel, TagValue } from './FieldRenderer.styles';
@@ -15,18 +14,16 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 		<span className="field-renderer-container">
 			{dataType && newField && logType ? (
 				<>
-					<Tooltip title={newField} side="left">
-						<Typography
-							variant="code"
-							size="base"
-							weight="regular"
-							color="primary"
-							as="p"
-							textOverflow="ellipsis"
-						>
-							{newField}{' '}
-						</Typography>
-					</Tooltip>
+					<Typography
+						variant="code"
+						size="base"
+						weight="regular"
+						color="primary"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{newField}{' '}
+					</Typography>
 
 					<div className="tags">
 						<TagContainer>
