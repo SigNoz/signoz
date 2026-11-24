@@ -17,9 +17,9 @@ const PENDING: LinkAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
 
 /**
  * Access to each option of a picker that links items to an owner, such as
- * channels to a routing policy. A linked item is asked for `detach` up front,
- * since its tag can be removed without opening the picker; every other item is
- * asked for `attach` once the picker opens. A failed request fails open for its
+ * channels to a routing policy. A linked item, and the owner's `detach`, are
+ * asked up front, since a tag can be removed without opening the picker; every
+ * other item, and the owner's `attach`, once the picker opens. A failed request fails open for its
  * own checks only.
  */
 export function useLinkPickerAccess({
@@ -46,18 +46,18 @@ export function useLinkPickerAccess({
 	const upfrontChecks = useMemo(
 		() => [
 			...ownerChecks,
-			...(owner ? [owner.attach, owner.detach] : []),
+			...(owner && linkedIds.length > 0 ? [owner.detach] : []),
 			...linkedIds.map((id) => buildItemPermissions(id).detach),
 		],
 		[ownerChecks, owner, linkedIds, buildItemPermissions],
 	);
-	const pickerChecks = useMemo(
-		() =>
-			optionIds
-				.filter((id) => !linked.has(id))
-				.map((id) => buildItemPermissions(id).attach),
-		[optionIds, linked, buildItemPermissions],
-	);
+	const pickerChecks = useMemo(() => {
+		const unlinked = optionIds.filter((id) => !linked.has(id));
+		return [
+			...(owner && unlinked.length > 0 ? [owner.attach] : []),
+			...unlinked.map((id) => buildItemPermissions(id).attach),
+		];
+	}, [optionIds, linked, owner, buildItemPermissions]);
 	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
 
 	const upfront = useAuthZ(upfrontChecks, {
