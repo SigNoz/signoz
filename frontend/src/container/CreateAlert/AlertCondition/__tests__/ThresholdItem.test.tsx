@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';

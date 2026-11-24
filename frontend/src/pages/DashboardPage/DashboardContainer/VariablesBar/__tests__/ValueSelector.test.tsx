@@ -1,5 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen, userEvent, within } from 'tests/test-utils';
 
 import type { VariableSelection } from '../selectionTypes';
 import ValueSelector from '../components/selectors/ValueSelector';

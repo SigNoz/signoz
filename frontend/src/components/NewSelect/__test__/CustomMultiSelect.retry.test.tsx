@@ -5,7 +5,7 @@ import {
 	RenderResult,
 	screen,
 	waitFor,
-} from '@testing-library/react';
+} from 'tests/test-utils';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 

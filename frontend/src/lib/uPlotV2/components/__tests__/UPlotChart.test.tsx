@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from 'tests/test-utils';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 

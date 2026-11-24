@@ -3,16 +3,13 @@
  * Use jest.isolateModules to re-import storage with a fresh DOM state each time.
  */
 
-type StorageModule = typeof import('../storage');
+import { addBaseTag, removeBaseTags } from 'tests/baseTag';
 
-const storageBaseTags: HTMLBaseElement[] = [];
+type StorageModule = typeof import('../storage');
 
 function loadStorageModule(href?: string): StorageModule {
 	if (href !== undefined) {
-		const base = document.createElement('base');
-		base.setAttribute('href', href);
-		document.head.append(base);
-		storageBaseTags.push(base);
+		addBaseTag(href);
 	}
 	let mod!: StorageModule;
 	jest.isolateModules(() => {
@@ -23,7 +20,7 @@ function loadStorageModule(href?: string): StorageModule {
 }
 
 afterEach(() => {
-	storageBaseTags.splice(0).forEach((base) => base.remove());
+	removeBaseTags();
 	localStorage.clear();
 });
 

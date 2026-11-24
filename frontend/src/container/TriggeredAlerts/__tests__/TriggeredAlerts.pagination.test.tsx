@@ -1,8 +1,7 @@
-import userEvent from '@testing-library/user-event';
 import { triggeredAlertsPaginationFixture } from 'mocks-server/__mockdata__/triggered_alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor, within } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderTriggeredAlerts } from './_helpers';

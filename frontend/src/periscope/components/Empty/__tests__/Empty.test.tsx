@@ -12,7 +12,9 @@ const TEST_ID = 'empty';
 const IMAGE_URL = 'https://example.com/empty.svg';
 
 function partsOf(root: HTMLElement): string[] {
-	return Array.from(root.children).map((child) => child.className);
+	return within(root)
+		.getAllByTestId(/^empty-(image|description|footer)$/)
+		.map((part) => part.className);
 }
 
 describe('Empty', () => {

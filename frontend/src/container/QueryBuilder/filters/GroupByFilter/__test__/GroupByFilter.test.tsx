@@ -1,9 +1,15 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import { IBuilderQuery } from '../../../../../types/api/queryBuilder/queryBuilderData';
 import { DataSource } from '../../../../../types/common/queryBuilder';

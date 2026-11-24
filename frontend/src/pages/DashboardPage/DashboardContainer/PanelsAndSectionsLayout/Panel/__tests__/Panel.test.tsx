@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	TEXT_BACKGROUND_PAIRS,

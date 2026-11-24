@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 import {
 	MetricsexplorertypesListMetricDTO,
 	MetrictypesTypeDTO,

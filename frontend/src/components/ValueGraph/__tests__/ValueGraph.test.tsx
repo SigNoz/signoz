@@ -1,5 +1,4 @@
-import { screen } from '@testing-library/react';
-import { render } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import ValueGraph from '../index';
 import { getBackgroundColorAndThresholdCheck } from '../utils';

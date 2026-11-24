@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from 'tests/test-utils';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';

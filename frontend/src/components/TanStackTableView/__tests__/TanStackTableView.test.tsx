@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
 import TanStackTable from '../index';

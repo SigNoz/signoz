@@ -1,5 +1,11 @@
-import userEvent from '@testing-library/user-event';
-import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import MarkdownContent from '../components/MarkdownContent/MarkdownContent';
 import { loadLanguage } from '../../../utils/syntaxLanguages';

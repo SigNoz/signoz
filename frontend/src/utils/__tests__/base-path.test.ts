@@ -3,16 +3,13 @@
  * module with a fresh DOM state using jest.isolateModules + require.
  */
 
-type BasePath = typeof import('../basePath');
+import { addBaseTag, removeBaseTags } from 'tests/baseTag';
 
-const basePathTags: HTMLBaseElement[] = [];
+type BasePath = typeof import('../basePath');
 
 function loadModule(href?: string): BasePath {
 	if (href !== undefined) {
-		const base = document.createElement('base');
-		base.setAttribute('href', href);
-		document.head.append(base);
-		basePathTags.push(base);
+		addBaseTag(href);
 	}
 
 	let mod!: BasePath;
@@ -24,7 +21,7 @@ function loadModule(href?: string): BasePath {
 }
 
 afterEach(() => {
-	basePathTags.splice(0).forEach((base) => base.remove());
+	removeBaseTags();
 });
 
 describe('at basePath="/"', () => {

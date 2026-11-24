@@ -1,4 +1,4 @@
-import { render, screen, userEvent, within } from 'tests/test-utils';
+import { act, render, screen, userEvent, within } from 'tests/test-utils';
 
 import OverflowInputToolTip from './OverflowInputToolTip';
 
@@ -21,9 +21,26 @@ function mockOverflow(clientWidth: number, scrollWidth: number): void {
 	});
 }
 
+const ANTD_TOOLTIP_OPEN_DELAY_MS = 100;
+
+async function hoverPastOpenDelay(element: HTMLElement): Promise<void> {
+	jest.useFakeTimers();
+	const user = userEvent.setup({
+		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+	});
+	await user.hover(element);
+	act(() => {
+		jest.advanceTimersByTime(ANTD_TOOLTIP_OPEN_DELAY_MS * 2);
+	});
+}
+
 describe('OverflowInputToolTip', () => {
 	beforeEach(() => {
 		jest.restoreAllMocks();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {
@@ -44,7 +61,7 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Short text" />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
 		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});
@@ -54,7 +71,7 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Long but input not clamped" />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
 		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});
@@ -73,7 +90,7 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Overflowing!" disabled />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
 		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});

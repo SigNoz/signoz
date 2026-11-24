@@ -8,18 +8,15 @@ import {
 	screen,
 	userEvent,
 	waitFor,
-	within,
 } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
+import { findQueryEditorTextbox } from './queryEditorTextbox';
 
 const EDITOR_TEST_ID = 'query-where-clause-editor';
-
-const findEditorContent = async (): Promise<HTMLElement> =>
-	within(await screen.findByTestId(EDITOR_TEST_ID)).getByRole('textbox');
 
 // Mock DOM APIs that CodeMirror needs
 beforeAll(() => {
@@ -98,7 +95,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Find the CodeMirror editor contenteditable element
-		const editor = await findEditorContent();
+		const editor = await findQueryEditorTextbox();
 
 		// Focus and type into the editor
 		await userEvent.click(editor);
@@ -138,7 +135,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize
-		const editor = await findEditorContent();
+		const editor = await findQueryEditorTextbox();
 		await userEvent.click(editor);
 		await userEvent.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
 
@@ -195,7 +192,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize
-		const editor = await findEditorContent();
+		const editor = await findQueryEditorTextbox();
 		await userEvent.click(editor);
 		await userEvent.type(editor, SAMPLE_STATUS_QUERY);
 
@@ -242,7 +239,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		const editor = await findEditorContent();
+		const editor = await findQueryEditorTextbox();
 		await waitFor(() => expect(editor.textContent).toBe(SAMPLE_STATUS_QUERY));
 
 		await userEvent.click(screen.getByTestId('query-search-run-button'));
@@ -325,7 +322,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		const editor = await findEditorContent();
+		const editor = await findQueryEditorTextbox();
 		await waitFor(() => expect(editor.textContent).toBe(SAMPLE_STATUS_QUERY));
 
 		await userEvent.click(screen.getByTestId('query-search-run-button'));
@@ -352,7 +349,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize and the expression to be set
-		const editorContent = await findEditorContent();
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
 				// CodeMirror may render the text in multiple ways, check if it contains our expression
@@ -389,7 +386,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize with the initial expression
-		const editorContent = await findEditorContent();
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
 				const textContent = editorContent.textContent || '';
@@ -451,7 +448,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		const editorContent = await findEditorContent();
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
 				expect(editorContent.textContent || '').toBe(initialExpression);

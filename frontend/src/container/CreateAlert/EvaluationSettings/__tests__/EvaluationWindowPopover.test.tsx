@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import { EvaluationWindowState } from 'container/CreateAlert/context/types';
 
 import {

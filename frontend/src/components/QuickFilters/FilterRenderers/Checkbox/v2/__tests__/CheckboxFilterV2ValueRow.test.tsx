@@ -1,9 +1,13 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import { BadgeConfig } from '../itemRules';
 import { CheckedState } from '../../../../types';
 import { CheckboxFilterV2ValueRow } from '../CheckboxFilterV2ValueRow';
+
+type OnOnlyOrAllClick = ComponentProps<
+	typeof CheckboxFilterV2ValueRow
+>['onOnlyOrAllClick'];
 
 describe('CheckboxFilterV2ValueRow', () => {
 	const defaultProps = {
@@ -111,7 +115,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('does not call onOnlyOrAllClick when disabled + clicked', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = jest.fn() as jest.MockedFunction<OnOnlyOrAllClick>;
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -127,7 +131,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('does not call onOnlyOrAllClick on keydown when disabled', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = jest.fn() as jest.MockedFunction<OnOnlyOrAllClick>;
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -181,7 +185,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('calls onOnlyOrAllClick on value text click', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = jest.fn() as jest.MockedFunction<OnOnlyOrAllClick>;
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -196,7 +200,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 
 		it('calls onOnlyOrAllClick on Enter key', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = jest.fn() as jest.MockedFunction<OnOnlyOrAllClick>;
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -204,19 +208,17 @@ describe('CheckboxFilterV2ValueRow', () => {
 				/>,
 			);
 
-			const valueButton = screen.getByTestId('checkbox-value-button-production');
 			await user.tab();
 			await user.tab();
-			if (valueButton && document.activeElement === valueButton) {
-				await user.keyboard('{Enter}');
-			}
+			expect(screen.getByTestId('checkbox-value-button-production')).toHaveFocus();
+			await user.keyboard('{Enter}');
 
-			expect(onOnlyOrAllClick).toHaveBeenCalled();
+			expect(onOnlyOrAllClick).toHaveBeenCalledTimes(1);
 		});
 
 		it('calls onOnlyOrAllClick on Space key', async () => {
 			const user = userEvent.setup();
-			const onOnlyOrAllClick = jest.fn();
+			const onOnlyOrAllClick = jest.fn() as jest.MockedFunction<OnOnlyOrAllClick>;
 			render(
 				<CheckboxFilterV2ValueRow
 					{...defaultProps}
@@ -224,14 +226,12 @@ describe('CheckboxFilterV2ValueRow', () => {
 				/>,
 			);
 
-			const valueButton = screen.getByTestId('checkbox-value-button-production');
 			await user.tab();
 			await user.tab();
-			if (valueButton && document.activeElement === valueButton) {
-				await user.keyboard(' ');
-			}
+			expect(screen.getByTestId('checkbox-value-button-production')).toHaveFocus();
+			await user.keyboard(' ');
 
-			expect(onOnlyOrAllClick).toHaveBeenCalled();
+			expect(onOnlyOrAllClick).toHaveBeenCalledTimes(1);
 		});
 
 		it('shows Toggle button', () => {

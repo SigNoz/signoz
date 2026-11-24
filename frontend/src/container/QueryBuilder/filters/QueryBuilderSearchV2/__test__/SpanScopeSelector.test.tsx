@@ -5,7 +5,7 @@ import {
 	RenderResult,
 	screen,
 	within,
-} from '@testing-library/react';
+} from 'tests/test-utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import {

@@ -1,7 +1,6 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';

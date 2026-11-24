@@ -1,6 +1,5 @@
 import React from 'react';
-import { render, RenderResult, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, RenderResult, screen, userEvent } from 'tests/test-utils';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 

@@ -1,8 +1,6 @@
 import { Box } from '@signozhq/icons';
-import { screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { act, render, waitFor } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import {
 	InfraMonitoringEntity,

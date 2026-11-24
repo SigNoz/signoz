@@ -1,5 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DashboardtypesStackModeDTO,
 	DashboardtypesTimePreferenceDTO,

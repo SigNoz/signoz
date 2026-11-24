@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 

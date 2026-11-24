@@ -91,20 +91,20 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		const { formatOnChange } = setup();
 
 		// Assert initial selection
-		expect(screen.getAllByTestId('format-option-check')).toHaveLength(1);
+		expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
 		expect(
 			within(screen.getByTestId('format-option-table')).getByTestId(
-				'format-option-check',
+				'format-check-icon',
 			),
 		).toBeInTheDocument();
 
 		// Change selection to 'Raw'
 		fireEvent.click(screen.getByTestId('format-option-raw'));
 		await waitFor(() => {
-			expect(screen.getAllByTestId('format-option-check')).toHaveLength(1);
+			expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
 			expect(
 				within(screen.getByTestId('format-option-raw')).getByTestId(
-					'format-option-check',
+					'format-check-icon',
 				),
 			).toBeInTheDocument();
 		});

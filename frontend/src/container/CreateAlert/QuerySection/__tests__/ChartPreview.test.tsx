@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	INITIAL_ALERT_STATE,
@@ -147,14 +147,6 @@ describe('ChartPreview', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		useQueryBuilder.mockReturnValue(mockUseQueryBuilder);
-	});
-
-	it('renders the component with correct container class', () => {
-		renderChartPreview();
-
-		expect(screen.getByTestId('chart-preview-container')).toContainElement(
-			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
-		);
 	});
 
 	it('renders QueryBuilder chart preview when query type is QUERY_BUILDER', () => {

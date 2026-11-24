@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from 'tests/test-utils';
 
 import getLocal from '../../../api/browser/localstorage/get';
 import AppLoading from '../AppLoading';

@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';

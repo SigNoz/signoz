@@ -1,5 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import CustomSelect from '../CustomSelect';
 

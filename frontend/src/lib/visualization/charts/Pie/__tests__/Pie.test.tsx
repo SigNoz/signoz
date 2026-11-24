@@ -1,11 +1,10 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
 import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import Pie from 'lib/visualization/charts/Pie/Pie';
-import { userEvent } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 
 jest.mock('hooks/useDimensions', () => ({
 	useResizeObserver: jest.fn().mockReturnValue({ width: 400, height: 300 }),
@@ -263,7 +262,9 @@ describe('Pie', () => {
 
 			await hoverOther();
 
-			expect(tooltipList().children).toHaveLength(12);
+			expect(
+				within(tooltipList()).getAllByTestId('uplot-tooltip-item'),
+			).toHaveLength(12);
 			expect(within(tooltipList()).getByText('svc-11')).toBeInTheDocument();
 			expect(
 				screen.getByText('Click to pin, then pick a series'),

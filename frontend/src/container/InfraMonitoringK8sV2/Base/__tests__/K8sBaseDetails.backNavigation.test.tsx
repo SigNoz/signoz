@@ -1,8 +1,13 @@
-import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import logEvent from 'api/common/logEvent';
-import { act, render, waitFor } from 'tests/test-utils';
+import {
+	act,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,

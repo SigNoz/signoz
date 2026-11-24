@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import type { ColumnType } from 'antd/es/table';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 

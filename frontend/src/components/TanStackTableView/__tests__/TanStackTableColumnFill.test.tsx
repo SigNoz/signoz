@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, within } from 'tests/test-utils';
 
 import type { TableColumnDef } from '../types';
 import { defaultColumns, renderTanStackTable, type TestRow } from './testUtils';

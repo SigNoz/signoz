@@ -1,7 +1,6 @@
 import type React from 'react';
-import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { render, screen, within } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	resolveExtremeColor,

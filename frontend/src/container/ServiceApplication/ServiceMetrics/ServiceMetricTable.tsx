@@ -102,7 +102,11 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-metric-table-container" data-testid="services-table">
+		<div
+			className="service-metric-table-container"
+			data-testid="services-table"
+			aria-busy={isLoading}
+		>
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography

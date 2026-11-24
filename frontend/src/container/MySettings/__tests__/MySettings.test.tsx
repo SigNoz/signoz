@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import MySettingsContainer from 'container/MySettings';
 import useActiveLicenseKey from 'hooks/useActiveLicenseKey/useActiveLicenseKey';
 import {
@@ -12,6 +11,7 @@ import {
 	fireEvent,
 	render,
 	screen,
+	userEvent,
 	waitFor,
 	within,
 } from 'tests/test-utils';

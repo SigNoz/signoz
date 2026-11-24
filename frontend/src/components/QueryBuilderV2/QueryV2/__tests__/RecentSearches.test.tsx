@@ -19,6 +19,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { RECENTS_DISPLAY_CAP, RECENTS_SECTION } from '../QuerySearch/constants';
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
+import { findQueryEditorTextbox } from './queryEditorTextbox';
 
 const EDITOR_TEST_ID = 'query-where-clause-editor';
 
@@ -101,9 +102,7 @@ async function renderAndFocus(
 ): Promise<HTMLElement> {
 	renderLogsSearch(onChange);
 
-	const editor = within(
-		await screen.findByTestId(EDITOR_TEST_ID, undefined, { timeout: 2000 }),
-	).getByRole('textbox');
+	const editor = await findQueryEditorTextbox();
 
 	await userEvent.click(editor);
 	return editor;
@@ -250,7 +249,7 @@ describe('QuerySearch recent searches', () => {
 		await waitFor(
 			() => {
 				expect(
-					within(screen.getByTestId(EDITOR_TEST_ID)).queryByRole('listbox'),
+					within(screen.getByTestId(EDITOR_TEST_ID)).queryByLabelText('Completions'),
 				).not.toBeInTheDocument();
 			},
 			{ timeout: 2000 },

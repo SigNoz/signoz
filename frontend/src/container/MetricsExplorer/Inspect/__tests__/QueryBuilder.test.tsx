@@ -1,8 +1,7 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import * as metricsService from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';

@@ -1,8 +1,9 @@
+import { findQueryEditorTextbox } from 'components/QueryBuilderV2/QueryV2/__tests__/queryEditorTextbox';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { cleanup, render, screen, waitFor, within } from 'tests/test-utils';
+import { cleanup, render, screen, waitFor } from 'tests/test-utils';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query, QueryState } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
@@ -15,7 +16,6 @@ import { explorerViewToPanelType } from 'utils/explorerUtils';
 
 import LogExplorerQuerySection from './index';
 
-const EDITOR_TEST_ID = 'query-where-clause-editor';
 const QUERY_AGGREGATION_TEST_ID = 'query-aggregation-container';
 const QUERY_ADDON_TEST_ID = 'query-add-ons';
 
@@ -187,9 +187,7 @@ const createMockQuery = (filterExpression?: string): Query => ({
 const verifyCodeMirrorContent = async (
 	expectedFilterExpression: string,
 ): Promise<void> => {
-	const editorContent = within(
-		await screen.findByTestId(EDITOR_TEST_ID),
-	).getByRole('textbox');
+	const editorContent = await findQueryEditorTextbox();
 	await waitFor(
 		() => {
 			expect(editorContent.textContent || '').toBe(expectedFilterExpression);

@@ -173,7 +173,7 @@ function OptionsMenu({
 										{item.label}
 
 										{selectedItem === item.key && (
-											<Check size={12} data-testid="format-option-check" />
+											<Check size={12} data-testid="format-check-icon" />
 										)}
 									</div>
 								</div>

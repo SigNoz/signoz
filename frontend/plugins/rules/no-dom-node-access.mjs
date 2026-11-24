@@ -7,8 +7,10 @@
  *   container.querySelector('.row')
  *   screen.getByText('Name').closest('tr')
  *   cell.parentElement
+ *   list.children
  *
- * `children` is left alone because data trees in tests use the same name.
+ * A non-DOM `children` read (a data tree, React props) disables the rule on
+ * that line with a reason.
  */
 
 const QUERY_METHODS = new Set([
@@ -33,6 +35,7 @@ const TRAVERSAL_PROPERTIES = new Set([
 	'nextElementSibling',
 	'previousElementSibling',
 	'childNodes',
+	'children',
 ]);
 
 export default {

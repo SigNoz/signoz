@@ -2,17 +2,16 @@
  * `utils/basePath` reads the base path at import time, so every case loads the
  * module, and the test router it drives, in isolation with a fresh DOM.
  */
+import { addBaseTag, removeBaseTags } from 'tests/baseTag';
+
 type NavigationModule = typeof import('../navigation');
 type TestRouterModule = typeof import('tests/router-utils');
 
 let release: (() => void) | undefined;
-let base: HTMLBaseElement | undefined;
 
 function loadNavigation(baseHref?: string): NavigationModule {
 	if (baseHref !== undefined) {
-		base = document.createElement('base');
-		base.setAttribute('href', baseHref);
-		document.head.append(base);
+		addBaseTag(baseHref);
 	}
 
 	let mod!: NavigationModule;
@@ -45,8 +44,7 @@ beforeEach(() => {
 afterEach(() => {
 	release?.();
 	release = undefined;
-	base?.remove();
-	base = undefined;
+	removeBaseTags();
 });
 
 describe('navigate', () => {

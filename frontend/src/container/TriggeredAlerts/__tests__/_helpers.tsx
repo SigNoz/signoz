@@ -1,13 +1,19 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, RenderResult } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import { onNuqsUrlUpdate, resetNuqsState } from 'tests/nuqs-helpers';
 import { TestRouter } from 'tests/router';
-import { act, getAppContextMock, userEvent } from 'tests/test-utils';
+import {
+	act,
+	getAppContextMock,
+	RenderResult,
+	screen,
+	userEvent,
+} from 'tests/test-utils';
 
 export const SEARCH_INPUT = 'triggered-alerts-search-input-field';
 // The 300 ms search debounce plus the URL write that follows it.

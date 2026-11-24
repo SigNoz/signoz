@@ -111,10 +111,10 @@ describe('ServicesUsingMetrics', () => {
 		mockTopLevelOperations({});
 		render(<ServicesUsingMetrics />);
 
-		await waitFor(() =>
-			expect(
-				within(table()).queryAllByTestId(/^services-table-row-/),
-			).toHaveLength(0),
+		await waitFor(() => expect(table()).toHaveAttribute('aria-busy', 'false'));
+		expect(within(table()).queryAllByTestId(/^services-table-row-/)).toHaveLength(
+			0,
 		);
+		expect(within(table()).getByText('No data')).toBeInTheDocument();
 	});
 });

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';

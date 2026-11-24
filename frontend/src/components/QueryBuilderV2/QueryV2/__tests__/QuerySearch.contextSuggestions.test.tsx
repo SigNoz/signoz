@@ -5,6 +5,8 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
+import { findCompletionOption } from './findCompletionOption';
+import { findQueryEditorTextbox } from './queryEditorTextbox';
 
 const EDITOR_TEST_ID = 'query-where-clause-editor';
 
@@ -109,9 +111,7 @@ async function renderAndType(text: string): Promise<HTMLElement> {
 		/>,
 	);
 
-	const editor = within(await screen.findByTestId(EDITOR_TEST_ID)).getByRole(
-		'textbox',
-	);
+	const editor = await findQueryEditorTextbox();
 	await userEvent.click(editor);
 	await userEvent.type(editor, text);
 	return editor;
@@ -125,17 +125,13 @@ async function typeKeyThenEnterOperatorContext(
 ): Promise<void> {
 	const editor = await renderAndType(key);
 
-	await waitFor(() => {
-		expect(visibleOptionLabels()).toContain(expectedKeyLabel);
-	});
+	await findCompletionOption(EDITOR_TEST_ID, expectedKeyLabel);
 
 	// skipClick: a click would reset the caret to position 0 under the mocked
 	// DOM rects; we need the space appended at the end of the typed key.
 	await userEvent.type(editor, ' ', { skipClick: true });
 
-	await waitFor(() => {
-		expect(visibleOptionLabels()).toContain('=');
-	});
+	await findCompletionOption(EDITOR_TEST_ID, '=');
 }
 
 function visibleOptionLabels(): string[] {
@@ -148,9 +144,7 @@ describe('QuerySearch context-prefixed key suggestions', () => {
 	it('shows one deduped suggestion per key name in normal mode', async () => {
 		await renderAndType('statu');
 
-		await waitFor(() => {
-			expect(visibleOptionLabels()).toContain('status.code');
-		});
+		await findCompletionOption(EDITOR_TEST_ID, 'status.code');
 
 		const statusOptions = visibleOptionLabels().filter(
 			(label) => label === 'status.code',
@@ -161,9 +155,7 @@ describe('QuerySearch context-prefixed key suggestions', () => {
 	it('shows context-scoped suggestions for a complete context prefix', async () => {
 		await renderAndType('attribute.');
 
-		await waitFor(() => {
-			expect(visibleOptionLabels()).toContain('attribute.status.code');
-		});
+		await findCompletionOption(EDITOR_TEST_ID, 'attribute.status.code');
 
 		const labels = visibleOptionLabels();
 		// Literal key name match ranks first

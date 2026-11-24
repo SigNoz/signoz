@@ -22,7 +22,7 @@ jest.mock('../TanStackTableStateContext', () => ({
 	useClearRowHovered: (_rowId: string): (() => void) => mockClearRowHovered,
 }));
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import TanStackCustomTableRow from '../TanStackCustomTableRow';
 import type { FlatItem, TableRowContext } from '../types';

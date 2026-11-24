@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 import * as alertState from 'container/CreateAlert/context';
 
 import AdvancedOptions from '../AdvancedOptions';

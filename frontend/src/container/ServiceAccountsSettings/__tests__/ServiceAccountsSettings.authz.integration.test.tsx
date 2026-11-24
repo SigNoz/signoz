@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import { EditorView } from '@uiw/react-codemirror';
 import {
 	reflectedValues,
@@ -16,6 +15,7 @@ import {
 	fireEvent,
 	render,
 	screen,
+	userEvent,
 	waitFor,
 	within,
 } from 'tests/test-utils';

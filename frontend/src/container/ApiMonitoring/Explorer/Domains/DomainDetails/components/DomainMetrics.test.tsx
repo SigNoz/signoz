@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from 'tests/test-utils';
 import { TraceAggregation } from 'api/v5/v5';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';

@@ -4,9 +4,10 @@ import {
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+	within,
+} from 'tests/test-utils';
 
 import CustomMultiSelect from '../CustomMultiSelect';
 
@@ -185,18 +186,14 @@ describe('CustomMultiSelect Component', () => {
 		// Type into search box - the combobox is the search input
 		fireEvent.change(selectElement, { target: { value: '2' } });
 
-		// Wait for the dropdown filtering to happen
-		await waitFor(() => {
-			// Check that the dropdown is present
-			expect(
-				screen.getByTestId('custom-multiselect-dropdown'),
-			).toBeInTheDocument();
-
-			// Verify Option 2 is visible in the dropdown
-			expect(screen.getByTestId('option-item-option2')).toHaveTextContent(
-				'Option 2',
-			);
-		});
+		await waitFor(() =>
+			expect(screen.queryByTestId('option-item-option1')).not.toBeInTheDocument(),
+		);
+		expect(
+			within(screen.getByTestId('custom-multiselect-dropdown'))
+				.getAllByTestId(/^option-item-/)
+				.map((option) => option.dataset.testid),
+		).toStrictEqual(['option-item-2', 'option-item-option2']);
 	});
 
 	it('renders grouped options correctly', async () => {

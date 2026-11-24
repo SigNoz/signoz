@@ -1,5 +1,4 @@
-import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 

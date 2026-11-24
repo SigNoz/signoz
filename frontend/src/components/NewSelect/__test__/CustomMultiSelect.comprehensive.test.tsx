@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import CustomMultiSelect from '../CustomMultiSelect';
+import type { CustomMultiSelectProps } from '../types';
 
 // Mock scrollIntoView which isn't available in JSDOM
 window.HTMLElement.prototype.scrollIntoView = jest.fn();
@@ -48,6 +49,26 @@ const mockGroupedOptions = [
 		],
 	},
 ];
+
+function StatefulMultiSelect({
+	initialValue,
+	onChange,
+}: {
+	initialValue: string[];
+	onChange: CustomMultiSelectProps['onChange'];
+}): JSX.Element {
+	const [value, setValue] = useState<string[] | string>(initialValue);
+	return (
+		<CustomMultiSelect
+			options={mockOptions}
+			value={value}
+			onChange={(next, option): void => {
+				onChange?.(next, option);
+				setValue(next);
+			}}
+		/>
+	);
+}
 
 describe('CustomMultiSelect - Comprehensive Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
@@ -1047,10 +1068,9 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 	describe('Advanced Keyboard Navigation (AKN)', () => {
 		it('AKN-01: Shift + Arrow + Del chip deletion', async () => {
 			renderWithVirtuoso(
-				<CustomMultiSelect
-					options={mockOptions}
+				<StatefulMultiSelect
+					initialValue={['frontend', 'backend', 'database']}
 					onChange={mockOnChange}
-					value={['frontend', 'backend', 'database']}
 				/>,
 			);
 
@@ -1085,8 +1105,9 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			// Verify the chip was deleted
 			await waitFor(() => {
 				// Check that the backend chip is no longer present
-				const [backendChip] = screen.getAllByTestId(/^selected-tag-/);
-				expect(backendChip).not.toHaveTextContent('backend');
+				expect(
+					screen.queryByTestId('selected-tag-backend'),
+				).not.toBeInTheDocument();
 
 				// Verify onChange was called with the updated value (without backend)
 				expect(mockOnChange).toHaveBeenCalledWith(

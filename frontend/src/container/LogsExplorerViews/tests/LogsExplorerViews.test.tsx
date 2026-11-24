@@ -143,9 +143,7 @@ describe('LogsExplorerViews -', () => {
 
 		// Test that the menu items are present
 		const expectedMenuItemsCount = 3;
-		const menuItems = within(formatMenu).getAllByTestId(
-			/^format-option-(?!check$)/,
-		);
+		const menuItems = within(formatMenu).getAllByTestId(/^format-option-/);
 		expect(menuItems).toHaveLength(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing

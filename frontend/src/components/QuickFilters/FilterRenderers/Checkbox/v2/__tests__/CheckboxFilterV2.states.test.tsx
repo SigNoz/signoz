@@ -1,7 +1,5 @@
-import { screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { server, rest } from 'mocks-server/server';
-import { render } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import { QuickFiltersSource } from '../../../../types';
 

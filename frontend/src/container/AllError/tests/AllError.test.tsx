@@ -1,12 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
-import {
-	fireEvent,
-	render,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from 'tests/test-utils';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';

@@ -1,7 +1,12 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
-import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 

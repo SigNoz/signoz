@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import { PieSlice } from 'lib/visualization/charts/types';
 import PieArc from 'lib/visualization/charts/Pie/components/PieArc/PieArc';

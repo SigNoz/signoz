@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import { mockAppLocation } from 'tests/router-mocks';
 
 import AlertList from '../index';

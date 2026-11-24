@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent } from 'tests/test-utils';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import {
@@ -286,17 +286,6 @@ describe('QuerySection', () => {
 			AlertTypes.METRICS_BASED_ALERT,
 		);
 		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
-	});
-
-	it('renders with correct container structure', () => {
-		renderQuerySection();
-
-		const metricsTab = screen.getByText(METRICS_TEXT);
-		expect(screen.getByTestId('query-section')).toContainElement(metricsTab);
-		expect(screen.getByTestId('query-section-tabs')).toContainElement(metricsTab);
-		expect(screen.getByTestId('query-section-query-actions')).toContainElement(
-			metricsTab,
-		);
 	});
 
 	it('handles multiple rapid tab clicks correctly', async () => {

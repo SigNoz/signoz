@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { fireEvent, screen } from 'tests/test-utils';
 import dayjs from 'dayjs';
 import { mockAppLocation } from 'tests/router-mocks';
 import * as timeUtils from 'utils/timeUtils';

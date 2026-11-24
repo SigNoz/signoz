@@ -11,12 +11,9 @@ await ruleTester({
 			code: "within(screen.getByTestId('row')).getByText('Name');",
 		},
 		{
-			name: 'children of a data tree',
-			code: 'expect(tree.children).toHaveLength(2);',
-		},
-		{
 			name: 'a query method that is not called',
-			code: 'jest.spyOn(document, "querySelector");\nconst q = Element.prototype.closest;',
+			code:
+				'jest.spyOn(document, "querySelector");\nconst q = Element.prototype.closest;',
 		},
 		{
 			name: 'computed access',
@@ -43,6 +40,16 @@ await ruleTester({
 			name: 'traversal property',
 			code: 'expect(cell.parentElement).toBeVisible();',
 			errors: [{ message: message('parentElement'), line: 1, column: 13 }],
+		},
+		{
+			name: 'children of a DOM node',
+			code: "expect(screen.getByTestId('list').children).toHaveLength(2);",
+			errors: [{ message: message('children'), line: 1, column: 35 }],
+		},
+		{
+			name: 'children of a data tree',
+			code: 'expect(tree.children).toHaveLength(2);',
+			errors: [{ message: message('children'), line: 1, column: 13 }],
 		},
 		{
 			name: 'document lookup by id',

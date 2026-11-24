@@ -2,8 +2,7 @@ import React, { MutableRefObject } from 'react';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render as rtlRender, screen, userEvent } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';

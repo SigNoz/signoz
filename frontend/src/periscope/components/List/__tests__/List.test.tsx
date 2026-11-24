@@ -38,13 +38,11 @@ describe('List', () => {
 		expect(item.tagName).toBe('LI');
 		expect(item.className).toBe('item');
 		expect(items.className).toBe('items');
-		expect(Array.from(items.children)).toStrictEqual([
+		expect(within(items).getAllByTestId(/^item-/)).toStrictEqual([
 			item,
 			screen.getByTestId('item-b'),
 		]);
-		expect(
-			Array.from(screen.getByTestId('list-container').children),
-		).toStrictEqual([items]);
+		expect(screen.getByTestId('list-container')).toContainElement(items);
 		expect(screen.getByTestId('item-b')).toHaveTextContent('Beta');
 	});
 
@@ -74,14 +72,9 @@ describe('List', () => {
 	it('wraps header and footer around the content', () => {
 		render(<List data-testid={TEST_ID} header="Head" footer="Foot" />);
 
-		const parts = Array.from(screen.getByTestId(TEST_ID).children);
-		expect(parts.map((part) => part.className)).toStrictEqual([
-			'header',
-			'nestedLoading',
-			'footer',
-		]);
-		expect(parts[0]).toHaveTextContent('Head');
-		expect(parts[2]).toHaveTextContent('Foot');
+		expect(screen.getByText('Head').className).toBe('header');
+		expect(screen.getByText('Foot').className).toBe('footer');
+		expect(screen.getByTestId(TEST_ID)).toHaveTextContent(/^HeadNo dataFoot$/);
 	});
 
 	it('shows the default empty state, or locale.emptyText, without data', () => {
@@ -104,9 +97,9 @@ describe('List', () => {
 		);
 
 		expect(screen.queryByTestId('list-empty')).not.toBeInTheDocument();
-		expect(
-			Array.from(screen.getByTestId('list-container').children),
-		).toStrictEqual([screen.getByTestId('child')]);
+		expect(screen.getByTestId('list-container')).toContainElement(
+			screen.getByTestId('child'),
+		);
 	});
 
 	it('passes native props through and forwards its ref', async () => {
@@ -186,9 +179,11 @@ describe('List.Item', () => {
 
 		const withExtra = screen.getByTestId('with-extra');
 		expect(withExtra.className).toBe('item');
-		expect(
-			Array.from(withExtra.children).map((child) => child.className),
-		).toStrictEqual(['itemMain', 'itemExtra']);
+		expect(within(withExtra).getByTestId('list-item-main').className).toBe(
+			'itemMain',
+		);
+		expect(within(withExtra).getByText('Extra').className).toBe('itemExtra');
+		expect(withExtra).toHaveTextContent(/^BodyEditExtra$/);
 		expect(
 			within(within(withExtra).getByTestId('list-item-main')).getByRole('list'),
 		).toHaveTextContent('Edit');
@@ -202,12 +197,10 @@ describe('List.Item', () => {
 			</List.Item>,
 		);
 
-		const children = Array.from(screen.getByTestId('item').children);
-		expect(children.map((child) => child.tagName)).toStrictEqual([
-			'SPAN',
-			'UL',
-			'B',
-		]);
+		const item = screen.getByTestId('item');
+		expect(within(item).queryByTestId('list-item-main')).not.toBeInTheDocument();
+		expect(within(item).getByText('Extra').tagName).toBe('B');
+		expect(item).toHaveTextContent(/^BodyEditExtra$/);
 	});
 
 	it('forwards its ref to the li', () => {
@@ -249,7 +242,7 @@ describe('List.Item.Meta', () => {
 		render(<List.Item.Meta data-testid="meta" avatar={<i>A</i>} />);
 
 		const meta = screen.getByTestId('meta');
-		expect(meta.children).toHaveLength(1);
+		expect(meta).toHaveTextContent(/^A$/);
 		expect(
 			within(meta).queryByTestId('list-item-meta-content'),
 		).not.toBeInTheDocument();
