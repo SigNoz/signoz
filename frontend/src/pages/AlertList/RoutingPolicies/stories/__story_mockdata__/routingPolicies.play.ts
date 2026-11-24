@@ -267,13 +267,16 @@ export const expectNoChannelCreateLink = async (
 	context: PlayContext,
 ): Promise<void> => {
 	await openNewPolicy(context);
-	// The channel check answers with Save's; until then the picker reads as denied.
-	await expectLocked(await screen.findByTestId('routing-policy-save'), false);
-	await userEvent.click(
-		within(await screen.findByTestId('routing-policy-channels-select')).getByRole(
+	const picker = (): HTMLElement =>
+		within(screen.getByTestId('routing-policy-channels-select')).getByRole(
 			'combobox',
-		),
+		);
+	// The picker is disabled until the channels load.
+	await waitFor(
+		() => expect(picker()).not.toHaveAttribute('disabled'),
+		untilLoaded,
 	);
+	await userEvent.click(picker());
 	await screen.findByText(
 		'Please ask your admin to create one.',
 		undefined,

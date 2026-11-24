@@ -1,15 +1,38 @@
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as appHooks from 'providers/App/App';
 import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
+import {
+	buildNotificationChannelAttachPermission,
+	buildNotificationChannelDetachPermission,
+	NotificationChannelCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import type {
+	BrandedPermission,
+	UseAuthZResult,
+} from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
+import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
+
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
 jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+
+const deny = (...permissions: BrandedPermission[]): void => {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
+};
+
+beforeEach(() => {
+	deny();
+});
 
 jest.mock('uplot', () => {
 	const paths = {
@@ -371,5 +394,107 @@ describe('ThresholdItem', () => {
 		// Should render channels selector without selected values
 		const channelSelectors = screen.getAllByRole('combobox');
 		expect(channelSelectors).toHaveLength(2); // Should have both unit and channel selectors
+	});
+
+	describe('authz', () => {
+		const RULE_ID = 'rule-1';
+		const option = (channelId: string): Promise<HTMLElement> =>
+			screen.findByTestId(
+				`threshold-${TEST_CONSTANTS.CRITICAL_LABEL}-channel-option-${channelId}`,
+			);
+		const openPicker = async (): Promise<void> => {
+			await userEvent
+				.setup()
+				.click(
+					within(
+						screen.getByTestId('threshold-notification-channel-select'),
+					).getByRole('combobox'),
+				);
+		};
+		const editing = (savedChannels: string[]): void => {
+			jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+				createMockAlertContextState({
+					isEditMode: true,
+					ruleId: RULE_ID,
+					savedChannels,
+				}),
+			);
+		};
+
+		afterEach(() => {
+			jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
+				createMockAlertContextState({
+					setThresholdState: mockSetThresholdState,
+					setAlertState: mockSetAlertState,
+				}),
+			);
+		});
+
+		it('disables a channel the user cannot attach, naming the permission', async () => {
+			const attach = buildNotificationChannelAttachPermission(
+				TEST_CONSTANTS.CHANNEL_2,
+			);
+			deny(attach);
+			renderThresholdItem();
+			await openPicker();
+
+			const denied = await option(TEST_CONSTANTS.CHANNEL_2);
+			expect(denied).toHaveAttribute('aria-disabled', 'true');
+			expect(denied.title).toContain(formatPermission(attach));
+			await expect(option(TEST_CONSTANTS.CHANNEL_3)).resolves.toHaveAttribute(
+				'aria-disabled',
+				'false',
+			);
+		});
+
+		it('locks a saved channel the user cannot detach', async () => {
+			const detach = buildNotificationChannelDetachPermission(
+				TEST_CONSTANTS.CHANNEL_1,
+			);
+			deny(detach);
+			editing([TEST_CONSTANTS.EMAIL_CHANNEL_NAME]);
+			renderThresholdItem();
+			await openPicker();
+
+			const saved = await option(TEST_CONSTANTS.CHANNEL_1);
+			expect(saved).toHaveAttribute('aria-disabled', 'true');
+			expect(saved.title).toContain(formatPermission(detach));
+		});
+
+		it('keeps channels disabled while their check is pending', async () => {
+			jest.mocked(useAuthZ).mockReturnValue({
+				...mockUseAuthZDeny()([]),
+				isLoading: true,
+				permissions: null,
+			} as UseAuthZResult);
+			renderThresholdItem();
+			await openPicker();
+
+			const pending = await option(TEST_CONSTANTS.CHANNEL_2);
+			expect(pending).toHaveAttribute('aria-disabled', 'true');
+			expect(pending).toHaveAttribute('title', 'Checking permissions');
+		});
+
+		it('offers to create a channel with notification-channel:create', async () => {
+			renderThresholdItem({ channels: [] });
+			await openPicker();
+
+			await expect(
+				screen.findByTestId('channels-not-found-create'),
+			).resolves.toBeInTheDocument();
+		});
+
+		it('asks for an admin without notification-channel:create', async () => {
+			deny(NotificationChannelCreatePermission);
+			renderThresholdItem({ channels: [] });
+			await openPicker();
+
+			await expect(
+				screen.findByText('Please ask your admin to create one.'),
+			).resolves.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('channels-not-found-create'),
+			).not.toBeInTheDocument();
+		});
 	});
 });

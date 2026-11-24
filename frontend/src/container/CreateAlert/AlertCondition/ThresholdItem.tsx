@@ -3,13 +3,13 @@ import { Input } from '@signozhq/ui/input';
 import { Button, Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
+import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
 import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
-import { NotificationChannelsNotFoundContent } from './utils';
+import { useAlertRuleChannelAccess } from './useAlertRuleChannelAccess';
 
 function ThresholdItem({
 	threshold,
@@ -23,8 +23,9 @@ function ThresholdItem({
 	isLoadingChannels,
 	isAnomaly = false,
 }: ThresholdItemProps): JSX.Element {
-	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
+	const { getChannelAccess, onPickerVisibleChange } =
+		useAlertRuleChannelAccess(channels);
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -186,11 +187,18 @@ function ThresholdItem({
 								}
 								data-testid="threshold-notification-channel-select"
 								style={{ width: 350 }}
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-									'data-testid': `threshold-notification-channel-option-${threshold.label}`,
-								}))}
+								options={channels.map((channel) => {
+									const { disabled, reason } = getChannelAccess(channel);
+									return {
+										value: channel.name,
+										label: channel.name,
+										disabled,
+										title: reason,
+										'aria-disabled': disabled,
+										'data-testid': `threshold-${threshold.label}-channel-option-${channel.id}`,
+									};
+								})}
+								onDropdownVisibleChange={onPickerVisibleChange}
 								mode="multiple"
 								placeholder="Select notification channels"
 								showSearch
@@ -205,10 +213,7 @@ function ThresholdItem({
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isLoadingChannels}
 								notFoundContent={
-									<NotificationChannelsNotFoundContent
-										user={user}
-										refreshChannels={refreshChannels}
-									/>
+									<NotificationChannelsNotFound onRefresh={refreshChannels} />
 								}
 							/>
 						</>
