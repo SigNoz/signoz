@@ -101,6 +101,7 @@ export interface Settings {
 	org: {
 		goto(): Promise<void>;
 		nameInput(): Locator;
+		nameFrame(): Locator;
 		rename(name: string): Promise<void>;
 		apiName(): Promise<string>;
 		setApiName(name: string): Promise<void>;
@@ -313,6 +314,7 @@ export function settingsDriver(page: Page): Settings {
 		org: {
 			goto: () => settings.shell.goto('/settings/org-settings'),
 			nameInput: () => page.getByTestId('org-display-name-input-field'),
+			nameFrame: () => page.getByTestId('org-display-name-input'),
 			rename: async (name) => {
 				await settings.org.nameInput().fill(name);
 				const saved = page.waitForResponse(

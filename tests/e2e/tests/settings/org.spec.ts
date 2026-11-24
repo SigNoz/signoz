@@ -45,7 +45,7 @@ test.describe('settings — organization', () => {
 			await guestSettings.org.goto();
 
 			await expect(guestSettings.org.nameInput()).toBeDisabled();
-			await expect(guestSettings.org.nameInput()).toHaveAttribute(
+			await expect(guestSettings.org.nameFrame()).toHaveAttribute(
 				'data-denied-permissions',
 				/update/,
 			);
