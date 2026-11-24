@@ -205,46 +205,6 @@
 					}
 				}
 			}
-
-			.recovery-threshold-input-group {
-				display: flex;
-				align-items: center;
-				gap: 0;
-				margin-left: 28px;
-
-				.recovery-threshold-label {
-					pointer-events: none;
-					cursor: default;
-				}
-
-				.recovery-threshold-btn {
-					pointer-events: none;
-					cursor: default;
-					color: var(--muted-foreground);
-					background-color: var(--surface-2) !important;
-					border: 1px solid var(--l1-border);
-					border-radius: 4px;
-					display: flex;
-					align-items: center;
-					justify-content: center;
-				}
-
-				.ant-input {
-					background-color: var(--surface-2);
-					border: 1px solid var(--l1-border);
-					color: var(--l1-foreground);
-					height: 32px;
-
-					&:hover {
-						border-color: var(--l1-border);
-					}
-
-					&:focus {
-						border-color: var(--l1-border);
-						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-					}
-				}
-			}
 		}
 	}
 
@@ -275,15 +235,10 @@
 				gap: 4px;
 			}
 		}
-
-		.ant-typography {
-			color: var(--accent-primary);
-		}
 	}
 }
 
-.condensed-alert-threshold-container,
-.condensed-anomaly-threshold-container {
+.condensed-alert-threshold-container {
 	width: 100%;
 }
 

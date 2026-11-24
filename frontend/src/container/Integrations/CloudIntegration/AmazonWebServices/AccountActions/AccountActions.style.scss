@@ -56,47 +56,11 @@
 		width: 300px;
 	}
 
-	&__new-account-button-skeleton {
-		width: 180px;
-		margin-right: 8px;
-	}
-
-	&__account-settings-button-skeleton {
-		width: 140px;
-	}
-
 	&__action-buttons {
 		display: flex;
 		align-items: center;
 		gap: 20px;
 		padding-right: 8px;
-	}
-
-	&__action-button {
-		border-radius: 2px;
-		cursor: pointer;
-		padding: 8px 17px;
-
-		&.primary {
-			background: var(--primary-background);
-			border: none;
-			color: var(--primary-foreground);
-		}
-
-		&.secondary {
-			display: flex;
-			align-items: center;
-			border: 1px solid var(--l1-border);
-			border-radius: 2px;
-			background: var(--l1-background);
-			box-shadow: none;
-			color: var(--l1-foreground);
-
-			&:hover {
-				border-color: var(--l1-border);
-				color: var(--l1-foreground);
-			}
-		}
 	}
 }
 

@@ -9,21 +9,6 @@
 		flex-direction: column;
 		gap: 16px;
 
-		.loading-integration-details {
-			display: flex;
-			flex-direction: column;
-			gap: 16px;
-
-			.skeleton-1 {
-				height: 125px;
-				width: 100%;
-			}
-			.skeleton-2 {
-				height: 250px;
-				width: 100%;
-			}
-		}
-
 		.integration-connection-header {
 			display: flex;
 			flex-direction: column;
@@ -122,13 +107,6 @@
 				border: 1px solid rgba(37, 225, 146, 0.1);
 				background: rgba(37, 225, 146, 0.1);
 				color: var(--callout-success-title);
-			}
-
-			.connectionFailed {
-				border-radius: 4px;
-				border: 1px solid rgba(218, 85, 101, 0.2);
-				background: rgba(218, 85, 101, 0.06);
-				color: var(--callout-error-title);
 			}
 
 			.noDataSinceLong {
@@ -444,13 +422,6 @@
 			border: 1px solid rgba(37, 225, 146, 0.1);
 			background: rgba(37, 225, 146, 0.1);
 			color: var(--callout-success-title);
-		}
-
-		.connectionFailed {
-			border-radius: 4px;
-			border: 1px solid rgba(218, 85, 101, 0.2);
-			background: rgba(218, 85, 101, 0.06);
-			color: var(--callout-error-title);
 		}
 
 		.noDataSinceLong {

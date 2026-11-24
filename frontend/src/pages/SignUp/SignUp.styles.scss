@@ -48,22 +48,8 @@
 			}
 		}
 
-		.signup-error-callout,
 		.signup-info-callout {
 			margin-top: 24px;
-		}
-
-		.signup-error-callout {
-			background: color-mix(in srgb, var(--danger-background) 10%, transparent);
-			border: 1px solid
-				color-mix(in srgb, var(--danger-background) 20%, transparent);
-			border-radius: 4px;
-			animation: horizontal-shaking 300ms ease-out;
-		}
-
-		.signup-info-message {
-			color: var(--l2-foreground);
-			margin: 24px 0 0 0;
 		}
 
 		.signup-form-actions {

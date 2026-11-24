@@ -18,18 +18,6 @@
 		letter-spacing: -0.07px;
 	}
 
-	&__input {
-		height: 32px;
-		background: var(--l2-background);
-		border-color: var(--l1-border);
-		color: var(--l1-foreground);
-		box-shadow: none;
-
-		&::placeholder {
-			color: var(--l3-foreground);
-		}
-	}
-
 	&__datepicker {
 		width: 100%;
 		height: 32px;
@@ -99,12 +87,5 @@
 		letter-spacing: 0.48px;
 		text-transform: uppercase;
 		margin-bottom: var(--spacing-4);
-	}
-
-	&__learn-more {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--spacing-1);
-		color: var(--primary);
 	}
 }

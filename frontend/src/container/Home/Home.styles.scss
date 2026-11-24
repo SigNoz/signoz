@@ -212,24 +212,6 @@
 		align-items: center;
 		gap: 16px;
 
-		.ant-typography {
-			color: var(--l2-foreground);
-			font-variant-numeric: lining-nums tabular-nums slashed-zero;
-			font-feature-settings:
-				'dlig' on,
-				'salt' on;
-			font-family: Inter;
-			font-size: 11px !important;
-			font-style: normal;
-		}
-
-		.workspace-region {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 8px;
-		}
-
 		.workspace-url {
 			display: flex;
 			flex-direction: row;
@@ -246,13 +228,6 @@
 				letter-spacing: 0.12px;
 				color: var(--foreground);
 			}
-		}
-
-		.workspace-timezone {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 8px;
 		}
 	}
 }

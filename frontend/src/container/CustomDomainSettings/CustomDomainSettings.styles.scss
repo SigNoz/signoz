@@ -43,15 +43,6 @@
 		justify-content: space-between;
 		padding: var(--padding-3);
 		gap: var(--spacing-6);
-
-		.custom-domain-edit-button {
-			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
-
-			&:hover {
-				background: var(--l3-background-hover);
-			}
-		}
 	}
 
 	.custom-domain-card-info {
@@ -126,57 +117,8 @@
 	flex-direction: column;
 }
 
-.workspace-url-dropdown-header {
-	color: var(--l2-foreground);
-	padding: 0 var(--padding-3) var(--padding-2);
-}
-
-.workspace-url-dropdown-divider {
-	height: 1px;
-	background: var(--l1-border);
-	margin-bottom: var(--margin-1);
-}
-
-.workspace-url-dropdown-item {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--spacing-4);
-	padding: 5px var(--padding-3);
-	cursor: pointer;
-	transition: background 0.15s ease;
-
-	&:hover {
-		background: var(--l1-background-hover);
-
-		.workspace-url-dropdown-item-external {
-			opacity: 1;
-		}
-	}
-
-	&--active {
-		background: var(--l1-background-hover);
-	}
-}
-
-.workspace-url-dropdown-item-external {
-	color: var(--l2-foreground);
-	flex-shrink: 0;
-	opacity: 0.5;
-	transition: opacity 0.15s ease;
-}
-
 .workspace-url-dropdown-item-label {
 	color: var(--l2-foreground);
-
-	.workspace-url-dropdown-item--active & {
-		color: var(--l1-foreground);
-	}
-}
-
-.workspace-url-dropdown-item-check {
-	color: var(--l1-foreground);
-	flex-shrink: 0;
 }
 
 .edit-workspace-modal-content {

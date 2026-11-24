@@ -101,82 +101,10 @@
 				display: flex;
 				flex-direction: column;
 				gap: 8px;
-
-				.ant-typography {
-					display: flex;
-					gap: 4px;
-					align-items: center;
-				}
 			}
 
 			.ant-select {
 				width: 300px;
-			}
-		}
-
-		.re-notification-container {
-			display: flex;
-			flex-direction: column;
-			gap: 16px;
-			background-color: var(--l2-background);
-			border: 1px solid var(--l1-border);
-			padding: 16px;
-			margin-top: 16px;
-
-			.advanced-option-item {
-				display: flex;
-				justify-content: space-between;
-				align-items: flex-start;
-				gap: 16px;
-
-				.advanced-option-item-left-content {
-					display: flex;
-					flex-direction: column;
-					gap: 6px;
-				}
-			}
-
-			.border-bottom {
-				border-bottom: 1px solid var(--l1-border);
-				width: 100%;
-				margin-left: -16px;
-				margin-right: -32px;
-			}
-
-			.re-notification-condition {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				flex-wrap: nowrap;
-
-				.ant-typography {
-					color: var(--l2-foreground);
-					white-space: nowrap;
-				}
-
-				.ant-select {
-					width: 200px;
-					height: 32px;
-					flex-shrink: 0;
-					.ant-select-selector {
-						border: 1px solid var(--l1-border);
-
-						&:hover {
-							border-color: var(--l1-border);
-						}
-
-						&:focus {
-							border-color: var(--l1-border);
-							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
-						}
-					}
-				}
-
-				.ant-input {
-					width: 200px;
-					flex-shrink: 0;
-					border: 1px solid var(--l1-border);
-				}
 			}
 		}
 	}

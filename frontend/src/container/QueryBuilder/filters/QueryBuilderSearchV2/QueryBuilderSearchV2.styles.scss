@@ -46,10 +46,6 @@
 			gap: 6px;
 			padding: 12px 0px 8px 14px;
 
-			.operator-for-text {
-				color: var(--l3-foreground);
-			}
-
 			.operator-for-value {
 				display: flex;
 				align-items: center;
@@ -186,10 +182,6 @@
 			margin-left: 12px;
 			gap: 4px;
 		}
-	}
-
-	.search-bar {
-		width: 100%;
 	}
 
 	// Custom tagRender drops antd's tag margins.

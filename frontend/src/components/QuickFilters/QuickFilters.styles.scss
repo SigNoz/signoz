@@ -97,12 +97,6 @@
 			flex-shrink: 0;
 			justify-content: flex-end;
 
-			.divider-filter {
-				width: 1px;
-				height: 14px;
-				background: var(--l1-background);
-			}
-
 			> [aria-expanded='true'] {
 				--button-variant-ghost-background-color: var(--l2-background);
 			}

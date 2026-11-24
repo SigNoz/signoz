@@ -103,7 +103,6 @@
 							}
 						}
 
-						.table-view-title-header,
 						.table-view-values-header {
 							overflow-x: auto;
 							white-space: nowrap;
@@ -162,10 +161,6 @@
 
 						.selected-step {
 							color: var(--bg-sakura-500);
-
-							.ant-typography {
-								color: var(--bg-sakura-500);
-							}
 						}
 
 						.inspect-metrics-input-group {
@@ -173,10 +168,6 @@
 							align-items: center;
 							justify-content: space-between;
 							gap: 4px;
-
-							.ant-typography {
-								min-width: 130px;
-							}
 
 							.ant-select {
 								flex-grow: 1;
@@ -286,11 +277,6 @@
 							display: flex;
 							align-items: center;
 							gap: 4px;
-							.ant-typography {
-								display: flex;
-								align-items: center;
-								gap: 4px;
-							}
 						}
 					}
 				}
@@ -377,20 +363,6 @@
 				display: flex;
 				align-items: center;
 				gap: 8px;
-
-				.ant-typography {
-					width: 400px;
-					margin-top: 4px;
-					align-items: center;
-					display: flex;
-					gap: 8px;
-					overflow-x: auto;
-					white-space: nowrap;
-					-webkit-overflow-scrolling: touch;
-					scrollbar-width: thin;
-					scrollbar-color: #ccc transparent;
-					text-overflow: ellipsis;
-				}
 			}
 		}
 
@@ -411,30 +383,11 @@
 			display: flex;
 			gap: 8px;
 			align-items: center;
-
-			.footer-text {
-				white-space: nowrap;
-			}
-
-			.footer-divider {
-				flex: 1;
-				border-top: 1px dashed var(--l1-border);
-				margin: 0 8px;
-			}
 		}
 	}
 }
 
 .expanded-view {
-	.expanded-view-header {
-		.ant-typography {
-			display: flex;
-			align-items: center;
-			justify-content: flex-start;
-			gap: 8px;
-		}
-	}
-
 	.graph-popover {
 		z-index: 2;
 		position: initial;

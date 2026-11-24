@@ -11,11 +11,6 @@
 		gap: 8px;
 		margin-bottom: 16px;
 
-		.ant-typography {
-			margin-top: 0;
-			margin-bottom: 0;
-		}
-
 		.lucide-info {
 			cursor: pointer;
 		}
@@ -121,14 +116,6 @@
 				font-family: var(--code-base-600-font-family);
 				font-weight: 600;
 				letter-spacing: -0.07px;
-			}
-
-			.status-cell {
-				.active-tag {
-					color: var(--bg-forest-500);
-					padding: 4px 8px;
-					border-radius: 4px;
-				}
 			}
 
 			.ant-table-tbody > tr:hover > td {

@@ -67,21 +67,6 @@
 	color: var(--bg-cherry-400) !important;
 }
 
-.info-text {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 4px;
-	cursor: default;
-	color: var(--l2-foreground) !important;
-}
-
-.info-text:hover {
-	&.ant-btn-text {
-		background-color: unset !important;
-	}
-}
-
 .date-time-popover__footer {
 	border-top: 1px solid var(--l1-border);
 	padding: 8px 14px;

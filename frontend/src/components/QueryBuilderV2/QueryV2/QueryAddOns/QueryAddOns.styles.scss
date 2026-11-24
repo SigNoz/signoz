@@ -35,16 +35,6 @@
 	display: flex;
 	align-items: center;
 	gap: 16px;
-
-	.compass-button {
-		width: 30px;
-		height: 30px;
-
-		border-radius: 2px;
-		border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-		background: var(--l3-background);
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-	}
 }
 
 .having-filter-container {

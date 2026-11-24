@@ -42,11 +42,5 @@
 		&--run {
 			background-color: var(--primary-background);
 		}
-		&--updating {
-			display: flex;
-			align-items: center;
-			gap: 4px;
-			color: var(--l2-foreground);
-		}
 	}
 }

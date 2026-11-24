@@ -141,10 +141,6 @@
 		border-radius: 4px;
 		padding: 6px 24px 6px 12px;
 		width: max-content;
-
-		.configure-option-Info-text {
-			color: var(--l2-foreground);
-		}
 	}
 
 	.row-panel {
@@ -156,11 +152,6 @@
 		align-items: center;
 		height: 48px !important;
 		width: 100%;
-
-		.ant-typography {
-			font-size: 14px;
-			font-weight: 500;
-		}
 
 		.row-panel-section {
 			display: flex;

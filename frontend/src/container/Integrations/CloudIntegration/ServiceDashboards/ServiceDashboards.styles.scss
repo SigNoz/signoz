@@ -83,26 +83,6 @@
 					text-align: left;
 				}
 			}
-
-			.aws-service-dashboard-item-open-new-tab {
-				display: inline-flex;
-				align-items: center;
-				justify-content: center;
-				flex-shrink: 0;
-				padding: 4px;
-				border: none;
-				border-radius: 4px;
-				background: transparent;
-				color: var(--l2-foreground);
-				cursor: pointer;
-				opacity: 0.8;
-				margin-top: 1px;
-
-				&:hover {
-					background: var(--secondary);
-					color: var(--l1-foreground);
-				}
-			}
 		}
 	}
 }
