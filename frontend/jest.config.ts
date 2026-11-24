@@ -69,6 +69,9 @@ const config: Config.InitialOptions = {
 	testEnvironment: '<rootDir>/jest.environment.cjs',
 	// Local only: the default (cores - 1) workers exhaust RAM when several runs overlap.
 	...(process.env.CI ? {} : { maxWorkers: 4, workerIdleMemoryLimit: '1GB' }),
+	...(process.env.GITHUB_STEP_SUMMARY
+		? { reporters: ['default', '<rootDir>/scripts/slow-test-reporter.js'] }
+		: {}),
 	coverageThreshold: {
 		global: {
 			statements: 80,
