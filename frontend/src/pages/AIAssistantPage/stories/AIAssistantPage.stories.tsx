@@ -10,7 +10,12 @@ import {
 	aiAssistantMocks,
 	longActionTooltipHandlers,
 } from './AIAssistantPage.stories.mocks';
-import type { ThreadPart } from './__story_mockdata__/aiAssistant';
+import {
+	BRIEF,
+	COMMITMENTS,
+	INTERACTIVE,
+	QUESTIONS,
+} from './__story_mockdata__/aiAssistant';
 import {
 	copyConversationLink,
 	expandActivity,
@@ -37,7 +42,7 @@ const pageStory = storyMocks(aiAssistantMocks, { layout: 'app' });
  * Route: `/ai-assistant/:conversationId`.
  */
 const meta = {
-	title: 'Pages/Noz',
+	title: 'Pages/Noz/Overview',
 	tags: ['play'],
 	component: AIAssistantPage,
 	// The conversation id is in the pathname, so the page renders under its own
@@ -53,24 +58,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<AIAssistantArgs>;
-
-/** The blocks the agent renders as cards the user answers in place. */
-const INTERACTIVE: ThreadPart[] = [
-	'question',
-	'checkboxes',
-	'confirm',
-	'suggested-action',
-];
-
-const QUESTIONS: ThreadPart[] = ['question', 'checkboxes'];
-
-const COMMITMENTS: ThreadPart[] = ['confirm', 'suggested-action'];
-
-/**
- * Two short exchanges and nothing else, so the state the story is about sits in
- * the first screen rather than under a scroll.
- */
-const BRIEF: ThreadPart[] = [];
 
 /** A thread mid-investigation, with the earlier ones beside it. */
 export const Default: Story = {};

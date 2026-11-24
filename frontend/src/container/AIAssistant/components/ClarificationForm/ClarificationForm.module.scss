@@ -1,4 +1,6 @@
 .clarification {
+	// The modal and panel portal outside the layout's border-box reset.
+	box-sizing: border-box;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: var(--spacing-6);

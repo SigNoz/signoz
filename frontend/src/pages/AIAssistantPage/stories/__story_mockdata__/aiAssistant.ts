@@ -56,6 +56,24 @@ export const THREAD_PARTS = [
 
 export type ThreadPart = (typeof THREAD_PARTS)[number];
 
+/** The blocks the agent renders as cards the user answers in place. */
+export const INTERACTIVE: ThreadPart[] = [
+	'question',
+	'checkboxes',
+	'confirm',
+	'suggested-action',
+];
+
+export const QUESTIONS: ThreadPart[] = ['question', 'checkboxes'];
+
+export const COMMITMENTS: ThreadPart[] = ['confirm', 'suggested-action'];
+
+/**
+ * Two short exchanges and nothing else, so the state the story is about sits in
+ * the first screen rather than under a scroll.
+ */
+export const BRIEF: ThreadPart[] = [];
+
 /** What the agent is doing when the thread opens. */
 export const AGENT_STATES = [
 	'idle',
