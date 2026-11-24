@@ -460,12 +460,15 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			const existingPair = queryPairsMap.get(
 				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
 			);
-			const hasBothBounds = Array.isArray(value) && value.length === 2;
+			const rewritesRange =
+				Array.isArray(value) &&
+				value.length === 2 &&
+				!isEqual(formatValuesForFilter(existingPair?.valueList ?? []), value);
 			if (
 				existingPair &&
 				existingPair.position?.valueStart &&
 				existingPair.position?.valueEnd &&
-				(hasBothBounds || !isRangeOperator(op))
+				(rewritesRange || !isRangeOperator(op))
 			) {
 				const formattedValue = formatValueForExpression(value, op);
 				// replace the value with the new value

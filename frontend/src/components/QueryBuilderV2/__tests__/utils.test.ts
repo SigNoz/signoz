@@ -1700,6 +1700,8 @@ describe('formatValueForExpression', () => {
 			"a BETWEEN 1 AND 10 AND b = '2'",
 			"a NOT BETWEEN 1 AND 10 AND b = '2'",
 			"k BETWEEN 'x' AND $hi",
+			'a between 1 and 10',
+			'a BETWEEN 1 AND b',
 		])('keeps the clause through filters and back: %s', (expression) => {
 			const items = convertExpressionToFilters(expression);
 
@@ -1711,23 +1713,25 @@ describe('formatValueForExpression', () => {
 			).toBe(expression);
 		});
 
-		it('keeps both bounds when an older filter item holds only the lower one', () => {
-			const expression = 'a BETWEEN 1 AND 10';
+		it.each([
+			[1, 'a BETWEEN 1 AND 10'],
+			[[5, 50], 'a BETWEEN 5 AND 50'],
+		])('applies a filter value of %j to the range', (value, expected) => {
 			const items = [
 				{
 					id: '1',
 					key: { key: 'a' } as BaseAutocompleteData,
 					op: 'BETWEEN',
-					value: 1,
+					value,
 				},
 			];
 
 			expect(
 				convertFiltersToExpressionWithExistingQuery(
 					{ items, op: 'AND' },
-					expression,
+					'a BETWEEN 1 AND 10',
 				).filter.expression,
-			).toBe(expression);
+			).toBe(expected);
 		});
 
 		it('drops a range clause whose upper bound is the removed variable', () => {
