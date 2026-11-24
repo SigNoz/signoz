@@ -19,6 +19,7 @@ import {
 	formatValueForExpression,
 	parseLimit,
 	removeKeysFromExpression,
+	removeVariableFromExpression,
 	sanitizeLimit,
 } from '../utils';
 
@@ -1727,6 +1728,12 @@ describe('formatValueForExpression', () => {
 					expression,
 				).filter.expression,
 			).toBe(expression);
+		});
+
+		it('drops a range clause whose upper bound is the removed variable', () => {
+			expect(
+				removeVariableFromExpression("a BETWEEN $lo AND $hi AND b = '2'", 'hi'),
+			).toBe("b = '2'");
 		});
 	});
 });

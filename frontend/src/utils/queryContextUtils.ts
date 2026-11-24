@@ -1,4 +1,5 @@
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
+import { OPERATORS } from 'constants/antlrQueryConstants';
 import { analyzeQuery } from 'parser/analyzeQuery';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
@@ -147,6 +148,37 @@ export function getCurrentValueIndexAtCursor(
 	}
 
 	return null;
+}
+
+function narrowToBetweenBoundAtCursor(
+	pair: IQueryPair,
+	cursorIndex: number,
+): IQueryPair {
+	if (pair.operator.toUpperCase() !== OPERATORS.BETWEEN) {
+		return pair;
+	}
+
+	const bounds = pair.valuesPosition ?? [];
+	const index = bounds.findIndex(
+		({ start, end }) =>
+			start !== undefined &&
+			end !== undefined &&
+			start <= cursorIndex &&
+			cursorIndex <= end + 1,
+	);
+	if (index === -1) {
+		return pair;
+	}
+
+	return {
+		...pair,
+		value: pair.valueList?.[index],
+		position: {
+			...pair.position,
+			valueStart: bounds[index].start,
+			valueEnd: bounds[index].end,
+		},
+	};
 }
 
 // Function to determine token context boundaries more precisely
@@ -595,6 +627,9 @@ export function getQueryContextAtCursor(
 		let currentPair: IQueryPair | null = null;
 		if (queryPairs.length > 0) {
 			currentPair = getCurrentQueryPair(queryPairs, query, cursorIndex);
+		}
+		if (currentPair) {
+			currentPair = narrowToBetweenBoundAtCursor(currentPair, cursorIndex);
 		}
 
 		// Determine precise context boundaries
@@ -1314,6 +1349,21 @@ function indexPastArguments(tokens: IToken[], argumentStart: number): number {
 	return index;
 }
 
+function findUpperBoundIndex(
+	tokens: IToken[],
+	afterLowerBound: number,
+): number | null {
+	const andIndex = nextVisibleIndex(tokens, afterLowerBound);
+	if (tokens[andIndex]?.type !== FilterQueryLexer.AND) {
+		return null;
+	}
+
+	const upperIndex = nextVisibleIndex(tokens, andIndex + 1);
+	return upperIndex < tokens.length && isValueToken(tokens[upperIndex].type)
+		? upperIndex
+		: null;
+}
+
 /**
  * Extracts all key-operator-value triplets from a query string
  * This is useful for getting value suggestions based on the current key and operator
@@ -1517,6 +1567,25 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 				!currentPair.value
 			) {
 				currentPair.value = token.text;
+				let valueEnd = token.stop;
+
+				const upperIndex =
+					currentPair.operator.toUpperCase() === OPERATORS.BETWEEN
+						? findUpperBoundIndex(allTokens, iterator)
+						: null;
+				if (upperIndex !== null) {
+					const upper = allTokens[upperIndex];
+					currentPair.isMultiValue = true;
+					currentPair.valueList = [token.text, upper.text];
+					currentPair.valuesPosition = [
+						{ start: token.start, end: token.stop },
+						{ start: upper.start, end: upper.stop },
+					];
+					currentPair.value = query.substring(token.start, upper.stop + 1);
+					valueEnd = upper.stop;
+					iterator = upperIndex + 1;
+				}
+
 				// Ensure we create a valid position object with all required fields
 				currentPair.position = {
 					keyStart: currentPair.position?.keyStart || 0,
@@ -1524,7 +1593,7 @@ export function extractQueryPairs(query: string): IQueryPair[] {
 					operatorStart: currentPair.position?.operatorStart || 0,
 					operatorEnd: currentPair.position?.operatorEnd || 0,
 					valueStart: token.start,
-					valueEnd: token.stop,
+					valueEnd,
 					negationStart: currentPair.position?.negationStart || 0,
 					negationEnd: currentPair.position?.negationEnd || 0,
 				};
