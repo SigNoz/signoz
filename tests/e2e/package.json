@@ -40,13 +40,13 @@
   "devDependencies": {
     "@playwright/test": "1.57.0",
     "@signozhq/noz-client": "1.13.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.20.5",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.10.2",
     "oxfmt": "0.73.0",
     "oxlint": "1.88.0",
     "oxlint-tsgolint": "7.0.2004",
-    "typescript": "^5.0.0"
+    "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=18.0.0",
