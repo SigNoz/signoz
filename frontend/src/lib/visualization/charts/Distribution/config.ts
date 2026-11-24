@@ -16,7 +16,7 @@ import {
 	MARKER_HIT_PX,
 	resolveHoveredMarker,
 } from './drawPercentileMarkers';
-import { LOG_Y_BASE, resolveNearestSeries, thinLabelledSplits } from './layout';
+import { resolveNearestSeries, thinLabelledSplits } from './layout';
 import { groupPercentileMarkers } from './percentiles';
 import {
 	DistributionBarsLayout,
@@ -43,11 +43,13 @@ const LOG_HEADROOM = 2;
 const LOG_HEADROOM_WITH_MARKERS = 6;
 
 function resolveYRange({
+	yMin,
 	yMax,
 	isLogY,
 	stack,
 	hasMarkers,
 }: {
+	yMin: number;
 	yMax: number;
 	isLogY: boolean;
 	stack: StackMode;
@@ -58,7 +60,7 @@ function resolveYRange({
 	}
 	if (isLogY) {
 		const headroom = hasMarkers ? LOG_HEADROOM_WITH_MARKERS : LOG_HEADROOM;
-		return [LOG_Y_BASE, Math.max(yMax, LOG_Y_BASE) * headroom];
+		return [yMin, Math.max(yMax, yMin) * headroom];
 	}
 	const headroom = hasMarkers ? LINEAR_HEADROOM_WITH_MARKERS : LINEAR_HEADROOM;
 	return [0, yMax > 0 ? yMax * headroom : 1];
@@ -114,6 +116,7 @@ export function buildDistributionConfig({
 		range: (): [number, number] => [xAxis.min, xAxis.max],
 	});
 	const yRange = resolveYRange({
+		yMin: layout.yMin,
 		yMax: layout.yMax,
 		isLogY,
 		stack,

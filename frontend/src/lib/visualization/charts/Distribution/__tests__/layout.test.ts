@@ -3,7 +3,6 @@ import { StackMode } from 'lib/uPlotV2/config/types';
 import {
 	clampDistributionXAxis,
 	cropDistributionXAxis,
-	LOG_Y_BASE,
 	resolveDistributionBars,
 	resolveDistributionXAxis,
 	resolveNearestSeries,
@@ -178,47 +177,41 @@ describe('resolveDistributionBars', () => {
 	});
 
 	it('starts bars at the log base and skips zero counts', () => {
-		const { rects } = resolveDistributionBars({
+		const { rects, yMin } = resolveDistributionBars({
 			xAxis,
 			counts,
 			stack: StackMode.Normal,
 			isLogY: true,
 		});
 
-		expect(rects[0].map(({ y0 }) => y0)).toStrictEqual([LOG_Y_BASE, LOG_Y_BASE]);
+		expect(yMin).toBe(0.1);
+		expect(rects[0].map(({ y0 }) => y0)).toStrictEqual([0.1, 0.1]);
 		expect(rects[0].map(({ bucketIndex }) => bucketIndex)).toStrictEqual([0, 1]);
 	});
 
-	it('skips bars whose top stays under the log base, never inverting one', () => {
-		const fractional = [
-			[0.5, 3, 0],
-			[0.25, 0.5, 2],
-		];
-		const stacked = resolveDistributionBars({
+	it.each([StackMode.Normal, StackMode.None])(
+		'draws a single observation on a log axis (%s)',
+		(stack) => {
+			const { rects } = resolveDistributionBars({
+				xAxis,
+				counts: [[1, 0, 0]],
+				stack,
+				isLogY: true,
+			});
+
+			expect(rects[0].map(({ y0, y1 }) => [y0, y1])).toStrictEqual([[0.1, 1]]);
+		},
+	);
+
+	it('puts the log base a decade under the smallest fractional count', () => {
+		const { yMin } = resolveDistributionBars({
 			xAxis,
-			counts: fractional,
+			counts: [[0.25, 3, 0]],
 			stack: StackMode.Normal,
 			isLogY: true,
 		});
-		const sideBySide = resolveDistributionBars({
-			xAxis,
-			counts: fractional,
-			stack: StackMode.None,
-			isLogY: true,
-		});
 
-		expect(
-			stacked.rects.map((rects) => rects.map(({ y0, y1 }) => [y0, y1])),
-		).toStrictEqual([
-			[[LOG_Y_BASE, 3]],
-			[
-				[3, 3.5],
-				[LOG_Y_BASE, 2],
-			],
-		]);
-		expect(
-			sideBySide.rects.map((rects) => rects.map(({ bucketIndex }) => bucketIndex)),
-		).toStrictEqual([[1], [2]]);
+		expect(yMin).toBe(0.01);
 	});
 });
 

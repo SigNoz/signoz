@@ -46,6 +46,8 @@ export interface DrawnGroups {
 export interface DistributionBarsLayout {
 	/** One list per series, in series order. */
 	rects: DistributionBarRect[][];
+	/** Where every bar starts: 0, or the log axis base. */
+	yMin: number;
 	/** Top of the tallest bar inside the axis window, for the count axis range. */
 	yMax: number;
 }

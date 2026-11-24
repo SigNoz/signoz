@@ -11,8 +11,16 @@ import {
 	DistributionXAxis,
 } from './types';
 
-/** Bottom of a log count axis: a bar has to start somewhere above zero. */
-export const LOG_Y_BASE = 1;
+/**
+ * Bottom of a log count axis: the decade below the smallest positive count, so every
+ * bar, a single observation included, starts under its top. 1 when nothing is positive.
+ */
+export function resolveLogYBase(counts: number[][]): number {
+	const smallest = Math.min(...counts.flat().filter((count) => count > 0));
+	return Number.isFinite(smallest)
+		? 10 ** (Math.floor(Math.log10(smallest)) - 1)
+		: 1;
+}
 
 /**
  * N bounds give N + 1 buckets: `≤ first`, the finite ones, and `> last`. Every bucket
@@ -112,7 +120,7 @@ export function resolveDistributionBars({
 }): DistributionBarsLayout {
 	const { rows, edges } = xAxis;
 	const rects: DistributionBarRect[][] = counts.map(() => []);
-	const base = isLogY ? LOG_Y_BASE : 0;
+	const base = isLogY ? resolveLogYBase(counts) : 0;
 	let yMax = 0;
 
 	rows.forEach((row, bucketIndex) => {
@@ -172,7 +180,7 @@ export function resolveDistributionBars({
 		});
 	});
 
-	return { rects, yMax };
+	return { rects, yMin: base, yMax };
 }
 
 /**
