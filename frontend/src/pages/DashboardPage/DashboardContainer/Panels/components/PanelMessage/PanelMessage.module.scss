@@ -40,19 +40,6 @@
 	background: var(--bg-cherry-500-transparent, rgba(231, 64, 64, 0.12));
 }
 
-.title {
-	font-size: 13px;
-	font-weight: 500;
-	color: var(--l1-foreground);
-}
-
-.description {
-	font-size: 12px;
-	color: var(--l2-foreground);
-	max-width: 280px;
-	overflow-wrap: anywhere;
-}
-
 .actions {
 	display: flex;
 	flex-wrap: wrap;

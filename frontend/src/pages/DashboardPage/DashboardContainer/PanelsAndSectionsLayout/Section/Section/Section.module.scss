@@ -10,14 +10,6 @@
 	outline-offset: 2px;
 }
 
-.dragging {
-	opacity: 0.8;
-}
-
-.deleteModal :global(.ant-modal-confirm-body) {
-	align-items: center;
-}
-
 .emptySection {
 	display: flex;
 	justify-content: center;

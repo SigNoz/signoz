@@ -9,7 +9,3 @@
 .drawerSurfaceHead {
 	composes: drawerSurfaceHead from './shared.module.scss';
 }
-
-.methodRadioDesc {
-	margin-top: var(--spacing-2);
-}

@@ -23,10 +23,6 @@
 	color: var(--text-panel-ink, inherit);
 }
 
-.badge {
-	margin-inline-end: 0;
-}
-
 // Actions sit inside the drag-handle row but opt out of dragging
 // (`panel-no-drag`); reset the grab cursor so the menu reads as clickable.
 .actions {

@@ -22,17 +22,3 @@
 	align-items: center;
 	gap: 8px;
 }
-
-.icon {
-	color: var(--l2-foreground);
-}
-
-.text {
-	color: var(--muted-foreground);
-	font-family: Inter;
-	font-size: var(--paragraph-base-400-font-size);
-	font-style: normal;
-	font-weight: var(--paragraph-base-400-font-weight);
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}

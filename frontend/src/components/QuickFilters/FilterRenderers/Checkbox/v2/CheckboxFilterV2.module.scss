@@ -32,17 +32,6 @@
 	gap: var(--spacing-4);
 }
 
-.loadingValues {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: var(--spacing-6) 0;
-}
-
-.loadingMore {
-	align-self: center;
-}
-
 .noData {
 	align-self: center;
 }
@@ -51,39 +40,4 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-}
-
-.showMoreText {
-	color: var(--accent-primary);
-	cursor: pointer;
-}
-
-.goToDocs {
-	display: flex;
-	flex-direction: column;
-	gap: 44px;
-}
-
-.goToDocsContainer {
-	display: flex;
-	flex-direction: column;
-	gap: var(--spacing-2);
-	margin-top: var(--spacing-2);
-}
-
-.goToDocsMessage {
-	color: var(--l2-foreground);
-}
-
-.goToDocsButton {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	cursor: pointer;
-	margin: 0 0 var(--spacing-2);
-	padding: 0;
-}
-
-.goToDocsButtonText {
-	color: var(--bg-robin-400);
 }

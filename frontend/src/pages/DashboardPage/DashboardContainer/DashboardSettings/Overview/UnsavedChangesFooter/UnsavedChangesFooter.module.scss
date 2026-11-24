@@ -24,15 +24,6 @@
 		color-mix(in srgb, var(--primary-background) 40%, transparent);
 }
 
-.unsavedChanges {
-	color: var(--bg-robin-400);
-	font-family: Inter;
-	font-size: 14px;
-	font-weight: 400;
-	line-height: 24px;
-	letter-spacing: -0.07px;
-}
-
 .footerActionButtons {
 	display: flex;
 	gap: 8px;

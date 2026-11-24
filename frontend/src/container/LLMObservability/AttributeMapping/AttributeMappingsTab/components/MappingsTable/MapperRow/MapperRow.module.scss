@@ -23,10 +23,6 @@
 	}
 }
 
-.targetName {
-	min-width: 0;
-}
-
 // Shorter vertical padding so the loading state reads as a compact placeholder.
 .skeletonCell {
 	composes: cell;

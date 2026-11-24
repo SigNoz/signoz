@@ -98,36 +98,10 @@
 	margin-left: 2px;
 }
 
-.select {
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	border-radius: var(--radius-2);
-	padding: 5px 8px;
-	color: var(--l1-foreground);
-	outline: none;
-	transition: border-color 0.12s;
-
-	&:focus {
-		border-color: var(--accent-primary);
-	}
-}
-
-.select {
-	cursor: pointer;
-}
-
-.radioGroup,
 .checkboxGroup {
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
-}
-
-.radioLabel,
-.radio,
-.checkbox {
-	accent-color: var(--accent-primary);
-	cursor: pointer;
 }
 
 .actions {

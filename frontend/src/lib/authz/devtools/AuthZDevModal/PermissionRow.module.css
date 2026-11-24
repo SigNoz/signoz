@@ -47,15 +47,6 @@
 	--typography-color: var(--accent-primary);
 }
 
-.separator {
-	flex: 0 0 auto;
-}
-
-.object {
-	flex: 0 1 auto;
-	min-width: 0;
-}
-
 .permissionMeta {
 	display: flex;
 	flex: 0 0 auto;

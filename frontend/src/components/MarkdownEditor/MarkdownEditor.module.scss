@@ -48,12 +48,6 @@
 	color: var(--text-sienna-400);
 }
 
-.formatLabel {
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--l1-foreground);
-}
-
 .toolbarDivider {
 	width: 1px;
 	height: 16px;
@@ -154,13 +148,6 @@
 	border-top: 1px solid var(--l1-border);
 }
 
-.statusPosition {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	color: var(--text-neutral-dark-200);
-}
-
 .statusSeparator {
 	color: var(--l1-border);
 }
@@ -172,11 +159,6 @@
 .statusCountOverLimit {
 	color: var(--text-cherry-400);
 	font-weight: 600;
-}
-
-.statusHint {
-	font-size: 11px;
-	color: var(--text-neutral-dark-200);
 }
 
 .helpContent {

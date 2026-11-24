@@ -12,19 +12,6 @@
 	position: relative;
 	overflow-y: auto;
 
-	:global(.periscope-btn) {
-		&.ghost:not(:disabled) {
-			border: none;
-			background: transparent;
-
-			&:hover {
-				background: transparent;
-				color: var(--bg-robin-500) !important;
-				font-weight: 500;
-			}
-		}
-	}
-
 	&::-webkit-scrollbar {
 		width: 8px;
 		height: 8px;

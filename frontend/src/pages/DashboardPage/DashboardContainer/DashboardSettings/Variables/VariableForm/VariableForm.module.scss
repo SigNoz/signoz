@@ -51,21 +51,6 @@
 	}
 }
 
-/* Picker row (label left, tabs right); the bottom divider separates type from
-   config. Single line — the tab row scrolls (never wraps) when narrow. */
-.typePicker {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
-	padding-bottom: 12px;
-	border-bottom: 1px solid var(--l2-border);
-
-	@media (max-width: 1440px) {
-		flex-wrap: wrap;
-	}
-}
-
 .typeContent {
 	display: flex;
 	flex-direction: column;

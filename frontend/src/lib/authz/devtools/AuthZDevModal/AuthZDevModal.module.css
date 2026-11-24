@@ -88,8 +88,3 @@
 	align-items: center;
 	gap: var(--spacing-2);
 }
-
-.count {
-	flex: 0 0 auto;
-	white-space: nowrap;
-}
