@@ -4,10 +4,18 @@
  */
 
 import { rest } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { userEvent, waitFor, within } from 'storybook/test';
 
+import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
+import {
+	buildRuleReadPermission,
+	buildRuleUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	alertRuleByIdResponse,
@@ -161,18 +169,48 @@ export const alertOverviewMocks = defineStoryMocks({
 	}),
 });
 
+type AlertOverviewArgs = PageStoryArgs<typeof alertOverviewMocks>;
+
+/** `ops-slack`, the channel the story rule notifies: the first one listed. */
+const SAVED_CHANNEL_ID = '1';
+
+const passes = (
+	args: AlertOverviewArgs,
+	...checks: Parameters<typeof grantsAll>[1][]
+): boolean => args.authzState === 'error' || grantsAll(args, ...checks);
+
+/** Whether the rule loads and the form shows: the page gates on `read`. */
+export const showsRuleForm = (args: AlertOverviewArgs): boolean =>
+	args.dataState === 'loaded' &&
+	passes(args, buildRuleReadPermission(STORY_RULE_ID));
+
+/** Saving the rule unchanged needs `update` alone. */
+export const canSaveRule = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) && passes(args, buildRuleUpdatePermission(STORY_RULE_ID));
+
+/**
+ * Testing it is checked as creating it, with its channel when the list names
+ * it; an unlisted channel is skipped, as the backend skips it.
+ */
+export const canTestRule = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) &&
+	passes(
+		args,
+		...getRuleCreateChecks(args.channels > 0 ? [SAVED_CHANNEL_ID] : []),
+	);
+
 export const clickFooterButton = async (
 	canvasElement: HTMLElement,
 	testId: string,
 ): Promise<void> => {
-	// The footer stays disabled, and remounts, until the rule has loaded.
+	// The footer stays disabled, and remounts, until the rule has loaded and its
+	// permission check has answered.
 	const button = await waitFor(
 		() => {
 			const element = within(canvasElement).getByTestId(testId);
-
-			expect(element).toBeEnabled();
-			expect(element).not.toHaveAttribute('aria-disabled', 'true');
-
+			if (element.getAttribute('aria-disabled') !== 'false') {
+				throw new Error(`${testId} is still disabled`);
+			}
 			return element;
 		},
 		{ timeout: 15_000 },
