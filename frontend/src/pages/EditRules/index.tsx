@@ -12,6 +12,11 @@ import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import EditAlert from 'container/EditAlert';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import {
+	buildRuleReadPermission,
+	buildRuleUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -98,4 +103,15 @@ function EditRules(): JSX.Element {
 	);
 }
 
-export default EditRules;
+/** Gates on `read`; `update` only decides Save, so it is warmed for the footer. */
+export default withAuthZPage<Record<string, unknown>>(EditRules, {
+	checks: (_props, router) => {
+		const ruleId = router.searchParams.get(QueryParams.ruleId);
+		return ruleId ? [buildRuleReadPermission(ruleId)] : [];
+	},
+	preloadChecks: (_props, router) => {
+		const ruleId = router.searchParams.get(QueryParams.ruleId);
+		return ruleId ? [buildRuleUpdatePermission(ruleId)] : [];
+	},
+	fallbackOnLoading: <Spinner tip="Loading Rules..." />,
+});
