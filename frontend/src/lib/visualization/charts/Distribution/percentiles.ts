@@ -1,14 +1,4 @@
-import { DistributionXAxis } from './types';
-
-export interface DistributionPercentile {
-	/** 0–100, as configured. */
-	percentile: number;
-	/** The estimate; in overflow, the last finite bound it is known to exceed. */
-	value: number;
-	/** Where the marker is drawn, in x-scale space. */
-	axisValue: number;
-	isOverflow: boolean;
-}
+import { DistributionPercentile, DistributionXAxis } from './types';
 
 /**
  * Percentiles of the summed counts, by `histogram_quantile`'s method: find the bucket

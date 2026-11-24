@@ -2,12 +2,11 @@ import { useCallback, useRef } from 'react';
 import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
-import { type DistributionBarsLayout, resolveNearestSeries } from './layout';
-import { type DrawnGroups, resolveClickedGroup } from './topGroups';
+import { resolveNearestSeries } from './layout';
+import { resolveClickedGroup } from './topGroups';
 import type {
-	DistributionBarClick,
-	DistributionSeries,
-	DistributionXAxis,
+	UseDistributionBarClickArgs,
+	UseDistributionBarClickReturn,
 } from './types';
 
 /** Resolves a plot click to the group under it; Other and empty buckets report none. */
@@ -17,13 +16,7 @@ export function useDistributionBarClick({
 	drawn,
 	series,
 	onBarClick,
-}: {
-	xAxis: DistributionXAxis;
-	layout: DistributionBarsLayout;
-	drawn: DrawnGroups;
-	series: DistributionSeries[];
-	onBarClick?: (click: DistributionBarClick) => void;
-}): ((data: ChartClickData) => void) | undefined {
+}: UseDistributionBarClickArgs): UseDistributionBarClickReturn {
 	const onBarClickRef = useRef(onBarClick);
 	onBarClickRef.current = onBarClick;
 

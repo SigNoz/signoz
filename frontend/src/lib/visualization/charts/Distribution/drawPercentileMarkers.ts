@@ -2,13 +2,14 @@ import { Color } from '@signozhq/design-tokens';
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
-import {
-	DistributionPercentile,
-	formatPercentileBadge,
-	formatPercentileValue,
-} from './percentiles';
+import { formatPercentileBadge, formatPercentileValue } from './percentiles';
+import { DistributionPercentile, PercentileMarkerHitArea } from './types';
 
 const MARKER_DASH: [number, number] = [3, 3];
+/** Opacity of a marker line that is not hovered. */
+const MARKER_IDLE_ALPHA = 0.55;
+/** Cap height as a share of the font size. */
+const CAP_HEIGHT_RATIO = 0.7;
 const MARKER_FONT_SIZE_PX = 9;
 /** Space between a badge's name and its diamond's edges. */
 const MARKER_BADGE_PADDING_PX = 2;
@@ -21,19 +22,6 @@ const MARKER_PILL_PADDING_Y_PX = 3;
 const MARKER_PILL_RADIUS_PX = 4;
 /** Height of the pill's notch pointing up at the line; also its gap from the axis. */
 const MARKER_PILL_POINTER_PX = 4;
-
-interface HitRect {
-	left: number;
-	right: number;
-	top: number;
-	bottom: number;
-}
-
-/** A drawn marker's hover targets, in CSS pixels relative to the plot. */
-export interface PercentileMarkerHitArea {
-	x: number;
-	badges: HitRect[];
-}
 
 /**
  * The marker under `(x, y)`: one whose badge it is over, else the line nearest
@@ -93,20 +81,20 @@ export function layoutMarkerLabels(
 	return rows;
 }
 
-/** A square diamond centred on `(x, y)` with half-diagonal `r`, filled then outlined. */
+/** A square diamond centred on `(x, y)` with half-diagonal `radius`, filled then outlined. */
 function drawDiamond(
 	ctx: CanvasRenderingContext2D,
 	x: number,
 	y: number,
-	r: number,
+	radius: number,
 	fill: string,
 	stroke: string,
 ): void {
 	ctx.beginPath();
-	ctx.moveTo(x, y - r);
-	ctx.lineTo(x + r, y);
-	ctx.lineTo(x, y + r);
-	ctx.lineTo(x - r, y);
+	ctx.moveTo(x, y - radius);
+	ctx.lineTo(x + radius, y);
+	ctx.lineTo(x, y + radius);
+	ctx.lineTo(x - radius, y);
 	ctx.closePath();
 	ctx.fillStyle = fill;
 	ctx.fill();
@@ -120,7 +108,7 @@ function drawDiamond(
  * emphasised and shows its value on the x axis. Returns each marker's hover targets.
  */
 export function drawPercentileMarkers(
-	u: uPlot,
+	uPlotInstance: uPlot,
 	markers: DistributionPercentile[][],
 	formatBound: (value: number) => string,
 	isDarkMode: boolean,
@@ -129,7 +117,7 @@ export function drawPercentileMarkers(
 	if (markers.length === 0) {
 		return [];
 	}
-	const { ctx, bbox } = u;
+	const { ctx, bbox } = uPlotInstance;
 	const { pxRatio } = uPlot;
 	const color = isDarkMode ? themeColors.white : themeColors.black;
 	const background = isDarkMode ? Color.BG_INK_400 : Color.BG_VANILLA_100;
@@ -144,24 +132,24 @@ export function drawPercentileMarkers(
 		const text = formatPercentileBadge(group);
 		return { text, width: ctx.measureText(text).width };
 	});
-	// One square diamond for all, fitting the widest name's box: |dx| + |dy| ≤ r at
+	// One square diamond for all, fitting the widest name's box: |dx| + |dy| ≤ radius at
 	// its corners. Cap height stands in for the text's height.
-	const r =
+	const radius =
 		(Math.max(...named.map(({ width }) => width)) +
-			MARKER_FONT_SIZE_PX * pxRatio * 0.7) /
+			MARKER_FONT_SIZE_PX * pxRatio * CAP_HEIGHT_RATIO) /
 			2 +
 		MARKER_BADGE_PADDING_PX * pxRatio;
 	const badges = markers.map((group, index) => ({
 		text: named[index].text,
-		x: u.valToPos(group[0].axisValue, 'x', true),
+		x: uPlotInstance.valToPos(group[0].axisValue, 'x', true),
 	}));
 	const rows = layoutMarkerLabels(
-		badges.map(({ x }) => ({ x: x - r, width: 2 * r })),
+		badges.map(({ x }) => ({ x: x - radius, width: 2 * radius })),
 		MARKER_BADGE_GAP_PX * pxRatio,
 	);
-	const rowStep = 2 * r + MARKER_BADGE_GAP_PX * pxRatio;
+	const rowStep = 2 * radius + MARKER_BADGE_GAP_PX * pxRatio;
 	const badgeCentres = (index: number): [number, number] => {
-		const offset = r + rows[index] * rowStep;
+		const offset = radius + rows[index] * rowStep;
 		return [bbox.top + offset, bottom - offset];
 	};
 
@@ -169,7 +157,7 @@ export function drawPercentileMarkers(
 		const { text, x } = badges[index];
 		const isHovered = index === hovered;
 
-		ctx.globalAlpha = isHovered ? 1 : 0.55;
+		ctx.globalAlpha = isHovered ? 1 : MARKER_IDLE_ALPHA;
 		ctx.strokeStyle = color;
 		ctx.lineWidth = pxRatio;
 		ctx.setLineDash(MARKER_DASH.map((dash) => dash * pxRatio));
@@ -181,7 +169,7 @@ export function drawPercentileMarkers(
 		ctx.globalAlpha = 1;
 		ctx.setLineDash([]);
 		badgeCentres(index).forEach((y) => {
-			drawDiamond(ctx, x, y, r, isHovered ? color : background, color);
+			drawDiamond(ctx, x, y, radius, isHovered ? color : background, color);
 			ctx.fillStyle = isHovered ? background : color;
 			ctx.fillText(text, x, y);
 		});
@@ -193,11 +181,11 @@ export function drawPercentileMarkers(
 		// whose notch points up at the line.
 		ctx.font = `500 ${MARKER_VALUE_FONT_SIZE_PX * pxRatio}px Inter, sans-serif`;
 		const value = formatPercentileValue(markers[index], formatBound);
-		const padX = MARKER_PILL_PADDING_X_PX * pxRatio;
-		const padY = MARKER_PILL_PADDING_Y_PX * pxRatio;
+		const pillPaddingX = MARKER_PILL_PADDING_X_PX * pxRatio;
+		const pillPaddingY = MARKER_PILL_PADDING_Y_PX * pxRatio;
 		const pointer = MARKER_PILL_POINTER_PX * pxRatio;
-		const width = ctx.measureText(value).width + 2 * padX;
-		const height = MARKER_VALUE_FONT_SIZE_PX * pxRatio + 2 * padY;
+		const width = ctx.measureText(value).width + 2 * pillPaddingX;
+		const height = MARKER_VALUE_FONT_SIZE_PX * pxRatio + 2 * pillPaddingY;
 		const left = Math.min(Math.max(x - width / 2, 0), ctx.canvas.width - width);
 		const top = bottom + 2 * pointer;
 		const notchX = Math.min(
@@ -206,7 +194,12 @@ export function drawPercentileMarkers(
 		);
 		// A halo in the chart's background hides the tick labels it overlaps.
 		ctx.fillStyle = background;
-		ctx.fillRect(left - padX, top, width + 2 * padX, height + 2 * padY);
+		ctx.fillRect(
+			left - pillPaddingX,
+			top,
+			width + 2 * pillPaddingX,
+			height + 2 * pillPaddingY,
+		);
 		ctx.fillStyle = isDarkMode ? Color.BG_SLATE_400 : Color.BG_INK_400;
 		ctx.beginPath();
 		ctx.roundRect(left, top, width, height, MARKER_PILL_RADIUS_PX * pxRatio);
@@ -232,10 +225,10 @@ export function drawPercentileMarkers(
 		return {
 			x: toPlot(x, bbox.left),
 			badges: badgeCentres(index).map((y) => ({
-				left: toPlot(x - r, bbox.left),
-				right: toPlot(x + r, bbox.left),
-				top: toPlot(y - r, bbox.top),
-				bottom: toPlot(y + r, bbox.top),
+				left: toPlot(x - radius, bbox.left),
+				right: toPlot(x + radius, bbox.left),
+				top: toPlot(y - radius, bbox.top),
+				bottom: toPlot(y + radius, bbox.top),
 			})),
 		};
 	});

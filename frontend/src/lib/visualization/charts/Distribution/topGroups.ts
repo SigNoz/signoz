@@ -1,7 +1,8 @@
+import { sum } from 'lodash-es';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { OTHER_GROUP_LABEL } from 'lib/visualization/charts/utils/otherGroup';
 
-import { DistributionSeries, DistributionXAxis } from './types';
+import { DistributionSeries, DistributionXAxis, DrawnGroups } from './types';
 
 /** Colours stop being told apart past this many stacked groups. */
 export const MAX_STACKED_GROUPS = 10;
@@ -40,22 +41,6 @@ export function resolveMaxDrawnGroups({
 		MAX_STACKED_GROUPS,
 		Math.max(1, Math.floor(narrowestPx / MIN_SIDE_BY_SIDE_BAR_PX)),
 	);
-}
-
-export interface DrawnGroups {
-	labels: string[];
-	counts: number[][];
-	colors: string[];
-	/** Each drawn group's index among the source series; `null` for Other. */
-	sourceIndexes: (number | null)[];
-	/** Visible groups summed into the Other series; 0 when none were. */
-	otherGroupCount: number;
-	/** Visible groups in all, drawn or folded. */
-	visibleGroupCount: number;
-}
-
-function sum(counts: number[]): number {
-	return counts.reduce((total, count) => total + count, 0);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { Typography } from '@signozhq/ui/typography';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
 	LegendPosition,
@@ -29,7 +30,6 @@ import { groupIntoOther, resolveMaxDrawnGroups } from './topGroups';
 import { DistributionYScale } from './types';
 import { useDistributionBarClick } from './useDistributionBarClick';
 
-import styles from './Distribution.module.scss';
 import { createBoundFormatter, prepareDistributionChartData } from './utils';
 
 /** Rough share of the panel width the plot gets, for fitting side-by-side bars. */
@@ -275,10 +275,20 @@ export default function Distribution({
 			onClick={handleClick}
 			contentFooter={
 				drawn.otherGroupCount > 0 && (
-					<div className={styles.notice} data-testid="distribution-other-notice">
+					<Typography
+						variant="paragraph"
+						as="div"
+						size="small"
+						weight="regular"
+						color="secondary"
+						textOverflow="wrap"
+						paddingX={4}
+						paddingY={2}
+						testId="distribution-other-notice"
+					>
 						Showing top {drawn.labels.length - 1} of {drawn.visibleGroupCount} groups;
 						the rest are summed into Other.
-					</div>
+					</Typography>
 				)
 			}
 			renderTooltipFooter={renderTooltipFooter}

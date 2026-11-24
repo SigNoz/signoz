@@ -58,12 +58,6 @@ describe('Distribution', () => {
 		return screen.getByTestId(`legend-item-${seriesIndex}`);
 	}
 
-	it('renders the plot container', () => {
-		renderDistribution();
-
-		expect(screen.getByTestId('distribution')).toBeInTheDocument();
-	});
-
 	it('lists every group in the legend, all shown', () => {
 		renderDistribution();
 

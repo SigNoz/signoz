@@ -14,17 +14,16 @@ import { withOpacity } from './colors';
 import {
 	drawPercentileMarkers,
 	MARKER_HIT_PX,
-	PercentileMarkerHitArea,
 	resolveHoveredMarker,
 } from './drawPercentileMarkers';
+import { LOG_Y_BASE, resolveNearestSeries, thinLabelledSplits } from './layout';
+import { groupPercentileMarkers } from './percentiles';
 import {
 	DistributionBarsLayout,
-	LOG_Y_BASE,
-	resolveNearestSeries,
-	thinLabelledSplits,
-} from './layout';
-import { DistributionPercentile, groupPercentileMarkers } from './percentiles';
-import { DistributionXAxis } from './types';
+	DistributionPercentile,
+	DistributionXAxis,
+	PercentileMarkerHitArea,
+} from './types';
 import { createBoundFormatter } from './utils';
 
 /** Minimum space between two x tick labels, in CSS pixels. */
@@ -235,9 +234,9 @@ export function buildDistributionConfig({
 		});
 	});
 
-	builder.addHook('draw', (u: uPlot): void => {
+	builder.addHook('draw', (uPlotInstance: uPlot): void => {
 		markerHitAreas = drawPercentileMarkers(
-			u,
+			uPlotInstance,
 			plotMarkers,
 			formatBound,
 			isDarkMode,
@@ -247,10 +246,10 @@ export function buildDistributionConfig({
 
 	// Registered as a hook, not a plugin, so it runs before TooltipPlugin's: the tooltip
 	// only shows for a focused series, and must find it focused when it positions.
-	builder.addHook('setCursor', (u: uPlot): void => {
-		const { left = -1, top = -1 } = u.cursor;
+	builder.addHook('setCursor', (uPlotInstance: uPlot): void => {
+		const { left = -1, top = -1 } = uPlotInstance.cursor;
 		const isOnPlot = left >= 0 && top >= 0;
-		const x = isOnPlot ? u.posToVal(left, 'x') : Number.NaN;
+		const x = isOnPlot ? uPlotInstance.posToVal(left, 'x') : Number.NaN;
 		const bucket = isOnPlot ? resolveRowIndex(xAxis.edges, x) : null;
 		const marker = isOnPlot
 			? resolveHoveredMarker(markerHitAreas, left, top, MARKER_HIT_PX)
@@ -259,7 +258,7 @@ export function buildDistributionConfig({
 		const hovered =
 			bucket === null || marker !== null
 				? null
-				: resolveNearestSeries(layout, bucket, x, u.posToVal(top, 'y'));
+				: resolveNearestSeries(layout, bucket, x, uPlotInstance.posToVal(top, 'y'));
 		// An empty bucket still gets a tooltip, as a bar chart's zero column does; with no
 		// nearest group to name, the first stands in.
 		const isEmptyBucket = bucket !== null && marker === null && hovered === null;
@@ -267,11 +266,13 @@ export function buildDistributionConfig({
 
 		if (focused !== hover.focused) {
 			hover.focused = focused;
-			u.setSeries(focused === null ? null : focused + 1, { focus: true });
+			uPlotInstance.setSeries(focused === null ? null : focused + 1, {
+				focus: true,
+			});
 		}
 		if (marker !== hover.marker) {
 			// The crosshair would cut through the marker's badges.
-			u.root
+			uPlotInstance.root
 				.querySelectorAll<HTMLElement>('.u-cursor-x, .u-cursor-y')
 				.forEach((line) => {
 					line.style.visibility = marker === null ? '' : 'hidden';
@@ -280,7 +281,7 @@ export function buildDistributionConfig({
 		if (hovered !== hover.series || marker !== hover.marker) {
 			hover.series = hovered;
 			hover.marker = marker;
-			u.redraw(true, false);
+			uPlotInstance.redraw(true, false);
 		}
 	});
 

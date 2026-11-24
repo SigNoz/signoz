@@ -28,5 +28,5 @@ export function prepareDistributionChartData(
 		...counts.map((seriesCounts) =>
 			centres.map((_, index) => seriesCounts[index] ?? 0),
 		),
-	] as unknown as uPlot.AlignedData;
+	];
 }

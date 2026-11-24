@@ -5,7 +5,11 @@ import {
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 
-import { DistributionBarRect, DistributionXAxis } from './types';
+import {
+	DistributionBarRect,
+	DistributionBarsLayout,
+	DistributionXAxis,
+} from './types';
 
 /** Bottom of a log count axis: a bar has to start somewhere above zero. */
 export const LOG_Y_BASE = 1;
@@ -88,13 +92,6 @@ export function clampDistributionXAxis(
 		min: edges[first],
 		max: edges[last + 1],
 	};
-}
-
-export interface DistributionBarsLayout {
-	/** One list per series, in series order. */
-	rects: DistributionBarRect[][];
-	/** Top of the tallest bar inside the axis window, for the count axis range. */
-	yMax: number;
 }
 
 /**

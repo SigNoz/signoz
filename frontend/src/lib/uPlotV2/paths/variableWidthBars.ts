@@ -30,14 +30,14 @@ export function createVariableWidthBarsPathBuilder({
 	getHatchPattern,
 	gapPx,
 }: {
-	getBars: (u: uPlot, seriesIdx: number) => VariableWidthBar[];
+	getBars: (uPlotInstance: uPlot, seriesIdx: number) => VariableWidthBar[];
 	fill: BarFill;
 	hatchedFill: BarFill;
 	getHatchPattern: (ctx: CanvasRenderingContext2D) => CanvasPattern | null;
 	/** Space between neighbouring bars, in CSS pixels. */
 	gapPx: number;
 }): uPlot.Series.PathBuilder {
-	return (u, seriesIdx): uPlot.Series.Paths => {
+	return (uPlotInstance, seriesIdx): uPlot.Series.Paths => {
 		const solidFill = resolveFill(fill);
 		const overflowFill = resolveFill(hatchedFill);
 		const solidPath = new Path2D();
@@ -49,11 +49,11 @@ export function createVariableWidthBarsPathBuilder({
 		const minWidthForGap = MIN_WIDTH_FOR_GAP_PX * uPlot.pxRatio;
 		let hasHatched = false;
 
-		getBars(u, seriesIdx).forEach((bar) => {
-			const left = u.valToPos(bar.x0, 'x', true);
-			const right = u.valToPos(bar.x1, 'x', true);
-			const top = u.valToPos(bar.y1, 'y', true);
-			const bottom = u.valToPos(bar.y0, 'y', true);
+		getBars(uPlotInstance, seriesIdx).forEach((bar) => {
+			const left = uPlotInstance.valToPos(bar.x0, 'x', true);
+			const right = uPlotInstance.valToPos(bar.x1, 'x', true);
+			const top = uPlotInstance.valToPos(bar.y1, 'y', true);
+			const bottom = uPlotInstance.valToPos(bar.y0, 'y', true);
 			const width = right - left;
 			const gap = width > minWidthForGap ? inset : 0;
 			const rect = [left + gap, top, width - 2 * gap, bottom - top] as const;
@@ -73,7 +73,7 @@ export function createVariableWidthBarsPathBuilder({
 			if (!isSharedFill) {
 				fills.set(overflowFill, hatchedPath);
 			}
-			const pattern = getHatchPattern(u.ctx);
+			const pattern = getHatchPattern(uPlotInstance.ctx);
 			if (pattern) {
 				fills.set(pattern, hatchedPath);
 			}

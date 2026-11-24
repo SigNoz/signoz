@@ -3,8 +3,7 @@ import type {
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
-import type { DistributionBarsLayout } from '../../layout';
-import type { DistributionXAxis } from '../../types';
+import type { DistributionBarsLayout, DistributionXAxis } from '../../types';
 
 export interface DistributionTooltipRow {
 	/** Index among the drawn series. */
