@@ -22,21 +22,21 @@ const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
 	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
 ]);
 
-/** What a heatmap cell holds, and the one space aggregation the kind offers. */
-const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
+/** What a bucket panel's cell or bar holds, and the one space aggregation it offers. */
+const BUCKET_HISTOGRAM_SPACE_AGGREGATION = 'count';
 
 /**
- * A heatmap draws against one bucket axis, so the request takes exactly one enabled
- * query and refuses a formula over the cells. It keeps the first enabled query (the
- * first when none is) and enables it, since a dropped formula may have been the only
- * output. The per-kind cache restores whatever is dropped here if the panel switches
- * back.
+ * A bucket panel (heatmap, distribution) draws against one bucket axis, so the request
+ * takes exactly one enabled query and refuses a formula over the buckets. It keeps the
+ * first enabled query (the first when none is) and enables it, since a dropped formula
+ * may have been the only output. The per-kind cache restores whatever is dropped here
+ * if the panel switches back.
  *
- * Percentiles go the same way: a histogram heatmap takes its axis from the `le` labels,
- * so a percentile draws the grid a count already draws, and the statement builder sums
- * the `le` counts either way.
+ * Percentiles go the same way: a histogram bucket panel takes its axis from the `le`
+ * labels, so a percentile draws what a count already draws, and the statement builder
+ * sums the `le` counts either way.
  */
-export function withSingleHeatmapQuery(
+export function withSingleBucketQuery(
 	builder: Query['builder'],
 ): Query['builder'] {
 	const kept =
@@ -71,15 +71,16 @@ function withoutPercentile<T extends string | undefined>(
 ): T {
 	return (
 		PERCENTILE_SPACE_AGGREGATIONS.has(spaceAggregation as SpaceAggregation)
-			? HEATMAP_HISTOGRAM_SPACE_AGGREGATION
+			? BUCKET_HISTOGRAM_SPACE_AGGREGATION
 			: spaceAggregation
 	) as T;
 }
 
 /**
  * Undoes the count above: every other kind offers a histogram metric percentiles alone,
- * so a count carried out of a heatmap would sit in the selector with no option behind
- * it. Other metric types are left alone — count is a real choice for a sum or a gauge.
+ * so a count carried out of a bucket panel would sit in the selector with no option
+ * behind it. Other metric types are left alone — count is a real choice for a sum or a
+ * gauge.
  */
 export function withPercentileHistogramAggregation(
 	builder: Query['builder'],
@@ -109,7 +110,7 @@ export function withPercentileHistogramAggregation(
 
 function withoutCount<T extends string | undefined>(spaceAggregation: T): T {
 	return (
-		spaceAggregation === HEATMAP_HISTOGRAM_SPACE_AGGREGATION
+		spaceAggregation === BUCKET_HISTOGRAM_SPACE_AGGREGATION
 			? DEFAULT_PERCENTILE
 			: spaceAggregation
 	) as T;

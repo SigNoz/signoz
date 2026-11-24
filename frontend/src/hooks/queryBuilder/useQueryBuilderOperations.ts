@@ -19,7 +19,7 @@ import {
 } from 'constants/queryBuilder';
 import {
 	metricsGaugeSpaceAggregateOperatorOptions,
-	metricsHeatmapHistogramSpaceAggregateOperatorOptions,
+	metricsBucketHistogramSpaceAggregateOperatorOptions,
 	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumSpaceAggregateOperatorOptions,
 	metricsUnknownSpaceAggregateOperatorOptions,
@@ -185,7 +185,7 @@ export const useQueryOperations: UseQueryOperations = ({
 					});
 
 			const histogramSpaceAggregationOptions = isBucketCountingPanelType(panelType)
-				? metricsHeatmapHistogramSpaceAggregateOperatorOptions
+				? metricsBucketHistogramSpaceAggregateOperatorOptions
 				: metricsHistogramSpaceAggregateOperatorOptions;
 
 			switch (aggregateAttribute?.type) {

@@ -105,7 +105,7 @@ export const getIsQueryModified = (
  * `panelTypeDataSourceFormValuesMap` the way `queryData` is, so a bucket axis has to be
  * dropped by hand. The request rejects one on any type that does not count buckets.
  */
-const withHeatmapBucketOptions = (
+const withBucketOptions = (
 	formulas: IBuilderFormula[],
 	newPanelType: keyof PartialPanelTypes,
 ): IBuilderFormula[] => {
@@ -174,7 +174,7 @@ export function rebuildBuilderForPanelType(
 
 			return tempQuery;
 		}),
-		queryFormulas: withHeatmapBucketOptions(builder.queryFormulas, newPanelType),
+		queryFormulas: withBucketOptions(builder.queryFormulas, newPanelType),
 		queryTraceOperator:
 			newPanelType === PANEL_TYPES.LIST ||
 			newPanelType === PANEL_TYPES.SCATTER ||

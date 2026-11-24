@@ -38,8 +38,8 @@ import {
 } from '../getSwitchedPluginSpec';
 import {
 	withPercentileHistogramAggregation,
-	withSingleHeatmapQuery,
-} from '../utils/heatmapQuery';
+	withSingleBucketQuery,
+} from '../utils/bucketQuery';
 
 // V1's panel-type rebuild clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
 const DEFAULT_LIST_ORDER_BY: OrderByPayload[] = [
@@ -197,7 +197,7 @@ export function usePanelKindChange({
 					),
 				};
 				return isBucketCounting
-					? withSingleHeatmapQuery(converted)
+					? withSingleBucketQuery(converted)
 					: withPercentileHistogramAggregation(converted);
 			};
 

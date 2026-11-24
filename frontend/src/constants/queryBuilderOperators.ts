@@ -528,11 +528,12 @@ export const metricsHistogramSpaceAggregateOperatorOptions: SelectOption<
 ];
 
 /**
- * A heatmap's Y axis is the `le` labels themselves, so every percentile draws the grid a
- * count already draws. Sum is also what the statement builder forces on a histogram
- * heatmap whatever is asked for, so it is the only honest option to offer.
+ * A bucket panel's (heatmap, distribution) axis is the `le` labels themselves, so every
+ * percentile draws what a count already draws. Sum is also what the statement builder
+ * forces on a histogram bucket panel whatever is asked for, so it is the only honest
+ * option to offer.
  */
-export const metricsHeatmapHistogramSpaceAggregateOperatorOptions: SelectOption<
+export const metricsBucketHistogramSpaceAggregateOperatorOptions: SelectOption<
 	string,
 	string
 >[] = [
