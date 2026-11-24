@@ -53,7 +53,7 @@ function setup(queryOverrides?: Partial<IBuilderQuery>): {
 
 // wait for dropdown and select the option instead of hitting Enter
 async function clickOption(option: Promise<HTMLElement>): Promise<void> {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	await user.click(await option);
 }
 
@@ -92,7 +92,7 @@ describe('GroupByFilter', () => {
 		expect(requests[0].get('source')).toBe('meter');
 		expect(requests[0].get('metricName')).toBe('signoz_calls_total');
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.type(groupByInput(), 'custom.attr');
 		await clickOption(screen.findByTitle('custom.attr'));
 
@@ -109,7 +109,7 @@ describe('GroupByFilter', () => {
 		]);
 		const { onChange } = setup();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(groupByInput());
 		await clickOption(screen.findByTestId('group-by-option-service.name'));
 
@@ -130,7 +130,7 @@ describe('GroupByFilter', () => {
 		]);
 		setup();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(groupByInput());
 
 		await waitFor(() =>

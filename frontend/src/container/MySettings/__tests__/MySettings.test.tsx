@@ -480,7 +480,7 @@ describe('MySettings name update and app context', () => {
 	});
 
 	it('updates the user in the app context with the new name', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const updateUser = jest.fn();
 		render(<MySettingsContainer />, undefined, {
 			appContextOverrides: { updateUser },

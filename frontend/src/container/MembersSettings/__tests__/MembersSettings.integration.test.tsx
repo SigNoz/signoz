@@ -82,7 +82,7 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');

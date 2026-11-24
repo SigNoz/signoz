@@ -348,7 +348,7 @@ describe('TooltipPlugin', () => {
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await user.click(button);
 
 			await waitFor(() => {

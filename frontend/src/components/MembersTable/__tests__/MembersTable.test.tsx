@@ -68,7 +68,7 @@ describe('MembersTable', () => {
 		const onRowClick = jest.fn() as jest.MockedFunction<
 			(member: MemberRow) => void
 		>;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<MembersTable
@@ -88,7 +88,7 @@ describe('MembersTable', () => {
 
 	it('renders DELETED badge and calls onRowClick when a deleted member row is clicked', async () => {
 		const onRowClick = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const deletedMember: MemberRow = {
 			id: 'user-del',
 			name: 'Dave Deleted',

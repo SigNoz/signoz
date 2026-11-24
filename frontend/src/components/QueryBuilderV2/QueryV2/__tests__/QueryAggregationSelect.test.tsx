@@ -116,7 +116,7 @@ async function enterAggregation(
 	queryData: IBuilderQuery = aiQuery,
 	currentQuery?: Query,
 ): Promise<void> {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	render(
 		<QueryBuilderV2Provider>
 			<QueryAggregationSelect queryData={queryData} />

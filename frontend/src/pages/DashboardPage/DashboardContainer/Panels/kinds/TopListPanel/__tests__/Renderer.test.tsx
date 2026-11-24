@@ -116,7 +116,7 @@ describe('TopListPanelRenderer', () => {
 	});
 
 	it('opens the drilldown with the clicked row', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn() as jest.MockedFunction<OnClick>;
 		renderPanel({ onClick, enableDrillDown: true });
 
@@ -134,7 +134,7 @@ describe('TopListPanelRenderer', () => {
 	});
 
 	it('anchors the drilldown under the row when opened from the keyboard', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn() as jest.MockedFunction<OnClick>;
 		renderPanel({ onClick, enableDrillDown: true });
 		const row = screen.getAllByTestId('top-list-row')[0];
@@ -152,7 +152,7 @@ describe('TopListPanelRenderer', () => {
 	});
 
 	it('does not drill down when drilldown is disabled', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn() as jest.MockedFunction<OnClick>;
 		renderPanel({ onClick });
 
@@ -162,7 +162,7 @@ describe('TopListPanelRenderer', () => {
 	});
 
 	it('moves focus between rows with the arrow keys', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderPanel({ enableDrillDown: true, onClick: jest.fn() });
 		const rows = screen.getAllByTestId('top-list-row');
 		rows[0].focus();

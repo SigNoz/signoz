@@ -183,7 +183,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onChangePanelKind = jest.fn();
 		render(
 			<VisualizationSection

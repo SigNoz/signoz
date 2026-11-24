@@ -110,7 +110,7 @@ describe('List', () => {
 	});
 
 	it('passes native props through and forwards its ref', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn();
 		const ref = createRef<HTMLDivElement>();
 		render(<List data-testid={TEST_ID} ref={ref} onClick={onClick} />);

@@ -107,7 +107,7 @@ const renderAlertCondition = (
 	);
 
 const clickText = async (text: string): Promise<void> => {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	await user.click(screen.getByText(text));
 };
 
@@ -169,7 +169,7 @@ describe('AlertCondition', () => {
 	});
 
 	it('warns in the tab tooltip that switching changes what gets saved', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderAlertCondition();
 
 		await user.hover(screen.getByText(ANOMALY_TAB_TEXT));

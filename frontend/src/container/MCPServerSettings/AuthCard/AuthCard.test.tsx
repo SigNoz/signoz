@@ -47,7 +47,7 @@ describe('AuthCard', () => {
 	});
 
 	it('calls onCopyInstanceUrl when copy button is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<AuthCard {...defaultProps} isAdmin />);
 
@@ -59,7 +59,7 @@ describe('AuthCard', () => {
 	});
 
 	it('calls onCreateServiceAccount when admin clicks the CTA', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<AuthCard {...defaultProps} isAdmin />);
 

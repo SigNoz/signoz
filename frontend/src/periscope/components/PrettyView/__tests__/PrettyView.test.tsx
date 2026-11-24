@@ -14,7 +14,7 @@ jest.mock('@signozhq/ui/toast', () => ({
 
 describe('PrettyView', () => {
 	it('keeps a nested node expanded when one of its menu actions is picked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<PrettyView
 				data={{ resource: { 'service.name': 'checkout' } }}

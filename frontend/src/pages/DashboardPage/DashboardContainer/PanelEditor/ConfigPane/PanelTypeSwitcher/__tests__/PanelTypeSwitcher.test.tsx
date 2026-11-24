@@ -41,7 +41,7 @@ async function renderSwitcher(
 	props: Partial<Parameters<typeof PanelTypeSwitcher>[0]> = {},
 ): Promise<{ onChange: jest.Mock; user: User }> {
 	// The open drawer sets `pointer-events: none` on the body.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	const onChange = jest.fn();
 	render(
 		<PanelTypeSwitcher

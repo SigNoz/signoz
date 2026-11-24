@@ -160,7 +160,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('unchecking Active on the status chip lists the deleted ones too', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
@@ -197,7 +197,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('keeps an unrun draft when the status chip changes', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
@@ -239,7 +239,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('sends the draft query only when it is run', async () => {
 		const onRequest = jest.fn() as ListRequestSpy;
 		server.use(listServiceAccountsHandler(onRequest));
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
@@ -300,7 +300,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 						),
 			),
 		);
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />
@@ -352,7 +352,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 				);
 			}),
 		);
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<NuqsTestingAdapter hasMemory rateLimitFactor={0}>
 				<ServiceAccountsSettings />

@@ -143,7 +143,7 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('shows all workspace URLs as links in the dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CustomDomainSettings />);
 
 		await screen.findByText(/custom-host\.test\.cloud/i);

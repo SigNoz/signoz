@@ -69,7 +69,7 @@ describe('OrderByFilter', () => {
 		);
 		const { onChange } = setup({});
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(orderByInput());
 
 		await waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1));

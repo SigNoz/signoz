@@ -96,7 +96,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends the debounced search term as the q param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let lastParams: URLSearchParams | null = null;
 		server.use(
 			rest.get(LLM_PRICING_ENDPOINT, (req, res, ctx) => {
@@ -116,7 +116,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('clears the search via the clear button', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -131,7 +131,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends isOverride=true when the source filter is set to User override', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let lastParams: URLSearchParams | null = null;
 		server.use(
 			rest.get(LLM_PRICING_ENDPOINT, (req, res, ctx) => {
@@ -152,7 +152,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('opens the add drawer for a manager (ADMIN)', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -176,7 +176,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('opens the edit drawer prefilled from the row action menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -194,7 +194,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('deletes a rule through the confirm dialog', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let deletedId: string | null = null;
 		setupList();
 		server.use(
@@ -238,7 +238,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends a normalized create payload when adding a rule', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let body: Record<string, unknown> | null = null;
 		setupList();
 		server.use(
@@ -279,7 +279,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends an updated payload when editing a rule', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let body: Record<string, unknown> | null = null;
 		setupList();
 		server.use(

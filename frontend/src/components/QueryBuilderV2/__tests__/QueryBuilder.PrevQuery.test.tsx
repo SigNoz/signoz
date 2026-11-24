@@ -146,7 +146,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 	});
 
 	it('savePreviousQuery=true: metrics → meter saves previous query in session storage with appropriate key and query', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<QueryBuilderV2
 				panelType={PANEL_TYPES.TABLE}
@@ -182,7 +182,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 	});
 
 	it('savePreviousQuery=false: metrics → meter does not write to sessionStorage and applies defaults', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		// render WITHOUT savePreviousQuery enabled
 		render(
 			<QueryBuilderV2
@@ -302,7 +302,7 @@ describe('DataSource change - Logs to Traces', () => {
 	});
 
 	it('updates query dataSource to TRACES saves previous query in session storage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<QueryBuilderV2
@@ -330,7 +330,7 @@ describe('DataSource change - Logs to Traces', () => {
 		);
 	});
 	it('updates query dataSource to TRACES does not saves previous query in session storage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<QueryBuilderV2

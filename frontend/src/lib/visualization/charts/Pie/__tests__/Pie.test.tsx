@@ -156,7 +156,7 @@ describe('Pie', () => {
 	});
 
 	it('hints at drill-down on a plain slice only when clickable', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const { unmount } = renderPie({ onSliceClick: mockSliceClick() });
 		await user.hover(arcGroups()[0]);
 		expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
@@ -168,7 +168,7 @@ describe('Pie', () => {
 	});
 
 	it('does not re-render the legend while the tooltip follows the cursor', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderPie();
 		const [arc] = arcGroups();
 		await user.hover(arc);
@@ -200,7 +200,7 @@ describe('Pie', () => {
 
 		let user: ReturnType<typeof userEvent.setup>;
 		beforeEach(() => {
-			user = userEvent.setup({ pointerEventsCheck: 0 });
+			user = userEvent.setup();
 		});
 
 		const hoverOther = async (testId = 'pie'): Promise<HTMLElement> => {

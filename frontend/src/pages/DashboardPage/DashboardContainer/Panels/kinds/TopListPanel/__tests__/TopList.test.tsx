@@ -45,7 +45,7 @@ const focusedRowIndex = (): string | null =>
 // Moving focus can scroll the window first, and the target row mounts a frame later.
 let user: ReturnType<typeof userEvent.setup>;
 beforeEach(() => {
-	user = userEvent.setup({ pointerEventsCheck: 0 });
+	user = userEvent.setup();
 });
 
 async function pressKey(key: string): Promise<void> {

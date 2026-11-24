@@ -161,7 +161,7 @@ const mockProps: WidgetGraphComponentProps = {
 
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const { getByTestId, findByRole, getByText } = render(
 			<MockQueryClientProvider>
 				<ErrorModalProvider>

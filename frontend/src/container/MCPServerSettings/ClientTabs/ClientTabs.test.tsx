@@ -78,7 +78,7 @@ describe('ClientTabs', () => {
 	});
 
 	it('calls onCopySnippet with client key and snippet on copy', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const cursorClient = MCP_CLIENTS.find((c) => c.key === 'cursor')!;
 
 		render(<ClientTabs {...defaultProps} activeTab="cursor" />);

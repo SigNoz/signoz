@@ -13,7 +13,7 @@ describe('YAxisUnitSelector', () => {
 
 	beforeEach(() => {
 		mockOnChange.mockClear();
-		user = userEvent.setup({ pointerEventsCheck: 0 });
+		user = userEvent.setup();
 	});
 
 	it('renders with default placeholder', () => {

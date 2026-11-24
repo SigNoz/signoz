@@ -47,7 +47,7 @@ function renderDrawer(
 	user: User;
 } {
 	// The open drawer sets `pointer-events: none` on the body.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	const onSelect = jest.fn();
 	const onClose = jest.fn();
 	render(

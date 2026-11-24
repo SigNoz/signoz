@@ -173,7 +173,7 @@ describe('MCPServerSettings', () => {
 
 	it('navigates to service accounts when admin clicks Create CTA', async () => {
 		setupGlobalConfig({ mcpUrl: MCP_URL });
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
@@ -186,7 +186,7 @@ describe('MCPServerSettings', () => {
 
 	it('copies instance URL and shows success toast', async () => {
 		setupGlobalConfig({ mcpUrl: MCP_URL });
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<MCPServerSettings />);
 
@@ -209,7 +209,7 @@ describe('MCPServerSettings', () => {
 					{ name: 'myteam', url: CUSTOM_HOST_URL, is_default: false },
 				],
 			});
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -229,7 +229,7 @@ describe('MCPServerSettings', () => {
 			setupHosts({
 				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
 			});
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -247,7 +247,7 @@ describe('MCPServerSettings', () => {
 		it('falls back to browser URL when hosts request errors', async () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupHosts({ isError: true });
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -271,7 +271,7 @@ describe('MCPServerSettings', () => {
 		it('does not copy while hosts are still loading', async () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupHosts({ isLoading: true });
-			userEvent.setup({ pointerEventsCheck: 0 });
+			userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -295,7 +295,7 @@ describe('MCPServerSettings', () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
 			setupHosts({ isLoading: false });
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 

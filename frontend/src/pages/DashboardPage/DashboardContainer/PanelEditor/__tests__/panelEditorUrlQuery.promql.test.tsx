@@ -149,7 +149,7 @@ const renderHarness = (): void => {
 
 describe('Panel editor route, PromQL panels', () => {
 	it('opens on the edited panel query, not the previously edited one', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('edit-a'));

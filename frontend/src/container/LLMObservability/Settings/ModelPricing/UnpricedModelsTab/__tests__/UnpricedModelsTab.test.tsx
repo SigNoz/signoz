@@ -69,7 +69,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -94,7 +94,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('reverts the row trigger to the placeholder when the mapping is cancelled', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -125,7 +125,7 @@ describe('UnpricedModelsTab (integration)', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -156,7 +156,7 @@ describe('UnpricedModelsTab (integration)', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -173,7 +173,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the add-cost drawer prefilled when creating pricing for a model', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);

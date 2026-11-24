@@ -236,7 +236,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('clicking span updates URL with spanId parameter', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderWithTraceProvider(
 			<Success
@@ -273,7 +273,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('clicking span duration visually selects the span', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
@@ -299,7 +299,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('both click areas produce the same visual result', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
@@ -334,7 +334,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('clicking different spans updates selection correctly', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderWithTraceProvider(<TestComponent />, undefined, {
 			initialRoute: '/trace',
@@ -358,7 +358,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('preserves existing URL parameters when selecting spans', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		// Pre-populate URL with existing parameters
 		mockUrlQuery.set('existingParam', 'existingValue');
@@ -398,7 +398,7 @@ describe('Span Click User Flows', () => {
 	});
 
 	it('keeps a tab param the router has not seen when selecting spans', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		// nuqs wrote ?tab=thread to the real URL; react-router's copy is stale.
 		__setSearchParamsGetterForTest(() => new URLSearchParams('tab=thread'));

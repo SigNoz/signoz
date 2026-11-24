@@ -221,7 +221,7 @@ describe('useViewPanel', () => {
 	// The builder context is global and outlives the modal; its fields seed themselves
 	// on mount, so a late swap leaves them on the previously-viewed panel.
 	it('seeds the builder with the opened panel before the modal renders', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-a'));
@@ -235,7 +235,7 @@ describe('useViewPanel', () => {
 	});
 
 	it("carries the opened panel's query in the URL", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-b'));
@@ -250,7 +250,7 @@ describe('useViewPanel', () => {
 	});
 
 	it('carries no query in the URL and stages nothing for a static kind', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-text'));
@@ -266,7 +266,7 @@ describe('useViewPanel', () => {
 	// The edit session commits any staged query on mount, so a staged query left over
 	// from the previous panel would make this panel's preview fetch the old query.
 	it('never lets the previous panel query reach the new panel draft', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-a'));
@@ -281,7 +281,7 @@ describe('useViewPanel', () => {
 	// The drilldown URL carries the query's own id, so a staged query with that id makes
 	// the provider skip hydration — losing the normalisation that fills `filters.items`.
 	it('still lets the provider hydrate a drilldown query from the URL', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-a'));
@@ -299,7 +299,7 @@ describe('useViewPanel', () => {
 	it.each([['open-b'], ['drilldown-b']])(
 		'never swaps one staged query for another (%s)',
 		async (trigger) => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderHarness();
 
 			await user.click(screen.getByTestId('open-a'));

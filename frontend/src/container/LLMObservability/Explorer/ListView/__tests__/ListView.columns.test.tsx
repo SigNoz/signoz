@@ -137,7 +137,7 @@ describe('ListView columns', () => {
 	});
 
 	it('refetches with the columns added or removed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderListView();
 		await waitFor(() => expect(requestedFields).toStrictEqual([DEFAULT_NAMES]));
 
@@ -159,7 +159,7 @@ describe('ListView columns', () => {
 	});
 
 	it('reorders the columns without refetching', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const queryKeyRef: MutableRefObject<QueryKey | undefined> = {
 			current: undefined,
 		};

@@ -475,7 +475,7 @@ describe('WidgetHeader', () => {
 
 	describe('Create Alerts Menu Item', () => {
 		it('renders Create Alerts menu item with external link icon when included in headerMenuList', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
 				<WidgetHeader
 					title={TEST_WIDGET_TITLE}
@@ -503,7 +503,7 @@ describe('WidgetHeader', () => {
 		});
 
 		it('Create Alerts menu item is enabled and clickable', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const mockCreateAlertsHandler = jest.fn();
 			const useCreateAlerts = jest.requireMock(
 				'hooks/queryBuilder/useCreateAlerts',

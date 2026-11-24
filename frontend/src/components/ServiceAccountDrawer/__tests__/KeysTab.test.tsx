@@ -86,7 +86,7 @@ describe('KeysTab', () => {
 	});
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 		render(
 			<NuqsTestingAdapter
@@ -121,7 +121,7 @@ describe('KeysTab', () => {
 	});
 
 	it('clicking a row sets the edit-key URL param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 
 		render(
@@ -140,7 +140,7 @@ describe('KeysTab', () => {
 	});
 
 	it('clicking revoke icon sets revoke-key URL param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 
 		render(
@@ -162,7 +162,7 @@ describe('KeysTab', () => {
 	});
 
 	it('handles successful key revocation via RevokeKeyModal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderKeysTab();
 
