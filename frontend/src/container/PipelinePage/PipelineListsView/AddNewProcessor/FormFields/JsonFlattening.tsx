@@ -65,6 +65,7 @@ function JsonFlattening({
 					<Switch
 						color="primary"
 						textPlacement="right"
+						testId="enable-paths-switch"
 						value={!!enablePaths}
 						onChange={handleEnablePathsChange}
 					/>
@@ -78,7 +79,7 @@ function JsonFlattening({
 					label="Path Prefix"
 					initialValue={selectedProcessorData?.path_prefix}
 				>
-					<Input placeholder="Path Prefix" />
+					<Input placeholder="Path Prefix" testId="path-prefix-input" />
 				</Form.Item>
 			)}
 

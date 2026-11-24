@@ -2,6 +2,7 @@ import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 
 import CloudAccountSetupDrawer from '../AddNewAccount/CloudAccountSetupDrawer';
 import {
@@ -112,11 +113,12 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
-		// A slow check-in keeps the connection in flight long enough to observe it.
+		const checkIn = holdResponse();
 		server.use(
 			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
 				checkInPayload = await req.json();
-				return res(ctx.delay(300), ctx.status(200), ctx.json(checkInResponse));
+				await checkIn.held;
+				return res(ctx.status(200), ctx.json(checkInResponse));
 			}),
 		);
 		const user = userEvent.setup();
@@ -145,7 +147,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 
 		// Switching away mid-request would let its success close the other form.
 		await waitFor(() => {
-			expect(screen.getByRole('radiogroup')).toHaveAttribute(
+			expect(screen.getByTestId('gcp-connection-method')).toHaveAttribute(
 				'aria-disabled',
 				'true',
 			);
@@ -175,11 +177,14 @@ describe('GCP CloudAccountSetupDrawer', () => {
 				data: {},
 			});
 		});
+		expect(onClose).not.toHaveBeenCalled();
+
+		checkIn.release();
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	}, 15000);
+	});
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -221,5 +226,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	}, 15000);
+	});
 });
