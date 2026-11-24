@@ -2,7 +2,10 @@ package kafkaauditor
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"log/slog"
+	"os"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"github.com/twmb/franz-go/plugin/kslog"
@@ -10,6 +13,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
@@ -39,13 +43,25 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 
 	// Acks from all in-sync replicas, idempotent writes and unbounded record retries are franz-go defaults and are kept as is.
 	// A delivery timeout or retry limit lets franz-go < v1.22.2 ack a record that was never written (twmb/franz-go#1484).
-	client, err := kgo.NewClient(
+	opts := []kgo.Opt{
 		kgo.SeedBrokers(config.Kafka.Brokers...),
 		kgo.ClientID(config.Kafka.ClientID),
 		kgo.ProducerBatchCompression(compressionCodec(config.Kafka.Compression)),
 		kgo.ProducerLinger(0),
 		kgo.WithLogger(kslog.New(settings.Logger())),
-	)
+	}
+
+	if config.Kafka.TLS.Enabled {
+		tlsConfig, err := newTLSConfig(config.Kafka.TLS)
+		if err != nil {
+			return nil, err
+		}
+
+		// franz-go sets ServerName per broker from the dialed address.
+		opts = append(opts, kgo.DialTLSConfig(tlsConfig))
+	}
+
+	client, err := kgo.NewClient(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,4 +145,31 @@ func compressionCodec(name string) kgo.CompressionCodec {
 	default:
 		return kgo.NoCompression()
 	}
+}
+
+func newTLSConfig(config auditor.TLSConfig) (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if config.CAFile != "" {
+		caPEM, err := os.ReadFile(config.CAFile)
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot read auditor::kafka::tls::ca_file")
+		}
+
+		tlsConfig.RootCAs = x509.NewCertPool()
+		if !tlsConfig.RootCAs.AppendCertsFromPEM(caPEM) {
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "auditor::kafka::tls::ca_file %q holds no PEM certificate", config.CAFile)
+		}
+	}
+
+	if config.CertFile != "" {
+		cert, err := tls.LoadX509KeyPair(config.CertFile, config.KeyFile)
+		if err != nil {
+			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "cannot load auditor::kafka::tls::cert_file and auditor::kafka::tls::key_file")
+		}
+
+		tlsConfig.Certificates = []tls.Certificate{cert}
+	}
+
+	return tlsConfig, nil
 }

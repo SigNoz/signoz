@@ -59,7 +59,7 @@
 	border: none;
 	background: none;
 	font: inherit;
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.005em;
 	color: var(--l1-foreground);
@@ -90,7 +90,7 @@ button.title {
 }
 
 .detail {
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.005em;
 	color: var(--l2-foreground);
