@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { LOGS_EXPLORER_PATH } from '../logs/explorer';
+import { logsExplorerDriver } from '../logs/explorer';
+import { shellDriver } from '../shell';
 
 import { installFakeAssistant, type FakeAssistant } from './fake';
 
@@ -31,24 +32,20 @@ export interface Noz {
 }
 
 export function nozDriver(page: Page): Noz {
-	const conversation = (): Locator => page.getByTestId('conversation-view');
+	const conversation = (): Locator => page.getByTestId('ai-conversation-view');
 	const input = (): Locator => page.getByTestId('ai-chat-input-textarea');
 
 	return {
 		enable: () => installFakeAssistant(page),
-		gotoHome: async () => {
-			await page.goto('/home');
-		},
+		gotoHome: () => shellDriver(page).home.goto(),
 		gotoNew: async () => {
 			await page.goto(NOZ_NEW_PATH);
 		},
-		gotoLogsExplorer: async () => {
-			await page.goto(LOGS_EXPLORER_PATH);
-		},
+		gotoLogsExplorer: () => logsExplorerDriver(page).goto(),
 		reload: async () => {
 			await page.reload();
 		},
-		navItem: () => page.getByTestId('nav-item-ai-assistant'),
+		navItem: () => shellDriver(page).nav.item('ai-assistant'),
 		askNozButton: () => page.getByTestId('bottom-strip-ask-noz-button'),
 		newChatButton: () => page.getByTestId('ai-assistant-new-conversation'),
 		historyItem: (threadId) =>
