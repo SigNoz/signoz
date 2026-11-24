@@ -4,7 +4,6 @@ import {
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { AxiosError } from 'axios';
 import { getAuthZForbiddenMessage } from 'lib/authz/utils/getAuthZForbiddenMessage';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
@@ -23,6 +22,12 @@ export interface AlertHistoryFilterSuggestions {
 	}>;
 	isLoadingKeys: boolean;
 }
+
+const NO_VALUE_SUGGESTIONS = {
+	stringValues: [],
+	numberValues: [],
+	complete: true,
+};
 
 export function useAlertHistoryFilterSuggestions(
 	ruleId: string | null,
@@ -75,11 +80,7 @@ export function useAlertHistoryFilterSuggestions(
 			complete: boolean;
 		}> => {
 			if (!ruleId) {
-				return {
-					stringValues: [],
-					numberValues: [],
-					complete: true,
-				};
+				return NO_VALUE_SUGGESTIONS;
 			}
 			let response: Awaited<ReturnType<typeof getRuleHistoryFilterValues>>;
 			try {
@@ -93,14 +94,10 @@ export function useAlertHistoryFilterSuggestions(
 					},
 				);
 			} catch (error) {
-				// Without read on the rule's fields there is nothing to suggest, which
-				// is not an error to show.
-				if (
-					getAuthZForbiddenMessage(
-						convertToApiError(error as AxiosError<RenderErrorResponseDTO>),
-					)
-				) {
-					return { stringValues: [], numberValues: [], complete: true };
+				// Without read on the queried telemetry there is nothing to suggest,
+				// which is not an error to show.
+				if (getAuthZForbiddenMessage(error as AxiosError<RenderErrorResponseDTO>)) {
+					return NO_VALUE_SUGGESTIONS;
 				}
 				throw error;
 			}

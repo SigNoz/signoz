@@ -52,7 +52,7 @@ function TimelineTableContent(): JSX.Element {
 	const apiError = useMemo(() => convertToApiError(error), [error]);
 	// The timeline also needs read on the queried telemetry, which only the
 	// server checks.
-	const forbiddenMessage = getAuthZForbiddenMessage(apiError);
+	const forbiddenMessage = getAuthZForbiddenMessage(error);
 
 	const { hardcodedAttributeKeys, valueSuggestionsOverride, isLoadingKeys } =
 		useAlertHistoryFilterSuggestions(ruleId ?? null);

@@ -6,7 +6,6 @@ import {
 	render,
 	renderHook,
 	screen,
-	waitFor,
 	within,
 } from 'tests/test-utils';
 
@@ -46,26 +45,15 @@ describe('Alert history - AuthZ', () => {
 		await expect(screen.findByText(DENIAL)).resolves.toBeInTheDocument();
 	});
 
-	it('shows no denial for top contributors failing otherwise', async () => {
-		let answered = false;
-		server.use(
-			rest.get(`${HISTORY}/top_contributors`, (_req, res, ctx) => {
-				answered = true;
-				return res(
-					ctx.status(500),
-					ctx.json({
-						status: 'error',
-						error: { code: 'internal', message: DENIAL },
-					}),
-				);
-			}),
-		);
+	it('shows the generic error for top contributors failing otherwise', async () => {
+		server.use(failWith('top_contributors', 500, 'internal'));
 		render(<TopContributorsRenderer totalCurrentTriggers={0} />, undefined, {
 			initialRoute: route,
 		});
 
-		await waitFor(() => expect(answered).toBe(true));
-		expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
+		const error = await screen.findByTestId('top-contributors-error');
+		// The generic error heads itself with the code; the callout does not.
+		expect(within(error).getByText('internal')).toBeInTheDocument();
 	});
 
 	it('names the telemetry the server refused in the timeline', async () => {

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { getAuthZForbiddenMessage } from 'lib/authz/utils/getAuthZForbiddenMessage';
 import { useGetAlertRuleDetailsTopContributors } from 'pages/AlertDetails/hooks';
@@ -27,10 +28,8 @@ function TopContributorsRenderer({
 	} = useGetAlertRuleDetailsTopContributors();
 	// Contributors also need read on the queried telemetry, which only the
 	// server checks.
-	const forbiddenMessage = useMemo(
-		() => getAuthZForbiddenMessage(convertToApiError(error)),
-		[error],
-	);
+	const forbiddenMessage = getAuthZForbiddenMessage(error);
+	const apiError = useMemo(() => convertToApiError(error), [error]);
 
 	// TODO(shaheer): render the DataStateRenderer inside the TopContributorsCard, it should display the title and view all
 	const adaptedData = useMemo((): AlertRuleTopContributors[] | null => {
@@ -49,6 +48,14 @@ function TopContributorsRenderer({
 
 	if (forbiddenMessage) {
 		return <PermissionDeniedCallout message={forbiddenMessage} />;
+	}
+
+	if (apiError) {
+		return (
+			<div data-testid="top-contributors-error">
+				<ErrorContent error={apiError} />
+			</div>
+		);
 	}
 
 	return (
