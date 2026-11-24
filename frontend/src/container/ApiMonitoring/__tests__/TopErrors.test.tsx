@@ -165,6 +165,7 @@ describe('TopErrors', () => {
 	});
 
 	it('handles row click correctly', async () => {
+		const user = userEvent.setup();
 		const navigateMock = jest.fn();
 		(useNavigateToExplorer as jest.Mock).mockReturnValue(navigateMock);
 
@@ -174,7 +175,7 @@ describe('TopErrors', () => {
 		const row = await screen.findByTestId(ROW_TEST_ID);
 
 		// Find and click on the table cell containing the endpoint
-		fireEvent.click(within(row).getByText('/api/test'));
+		await user.click(within(row).getByText('/api/test'));
 
 		// Check if navigateToExplorer was called with correct params
 		expect(navigateMock).toHaveBeenCalledWith({

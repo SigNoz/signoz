@@ -308,24 +308,22 @@ describe('MySettings Flows', () => {
 		});
 
 		it('Should clear password fields when modal is cancelled', async () => {
+			const user = userEvent.setup();
 			const resetPasswordButtons = screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT);
-			fireEvent.click(resetPasswordButtons[0]);
+			await user.click(resetPasswordButtons[0]);
 
-			act(() => {
-				fireEvent.change(screen.getByTestId(CURRENT_PASSWORD_TEST_ID), {
-					target: { value: 'somePassword' },
-				});
-				fireEvent.change(screen.getByTestId(NEW_PASSWORD_TEST_ID), {
-					target: { value: 'otherPassword' },
-				});
-			});
+			await user.type(
+				screen.getByTestId(CURRENT_PASSWORD_TEST_ID),
+				'somePassword',
+			);
+			await user.type(screen.getByTestId(NEW_PASSWORD_TEST_ID), 'otherPassword');
 
 			expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue(
 				'somePassword',
 			);
 
 			// Close the modal
-			fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+			await user.click(screen.getByRole('button', { name: 'Close' }));
 
 			// Reopen the modal
 			await waitFor(() => {
@@ -334,7 +332,7 @@ describe('MySettings Flows', () => {
 				).not.toBeInTheDocument();
 			});
 
-			fireEvent.click(screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT)[0]);
+			await user.click(screen.getAllByText(RESET_PASSWORD_BUTTON_TEXT)[0]);
 
 			await waitFor(() => {
 				expect(screen.getByTestId(CURRENT_PASSWORD_TEST_ID)).toHaveValue('');

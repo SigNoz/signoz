@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { render } from '@testing-library/react';
-import { fireEvent, screen } from 'tests/test-utils';
+import { fireEvent, screen, userEvent } from 'tests/test-utils';
 import dayjs from 'dayjs';
 import { mockAppLocation } from 'tests/router-mocks';
 import * as timeUtils from 'utils/timeUtils';
@@ -158,7 +158,8 @@ describe('CustomTimePicker', () => {
 		expect(onValid).not.toHaveBeenCalled();
 	});
 
-	it('treats close after change like pressing Enter (blur + chevron)', () => {
+	it('treats close after change like pressing Enter (blur + chevron)', async () => {
+		const user = userEvent.setup();
 		const onValid = jest.fn();
 		const onError = jest.fn();
 
@@ -167,12 +168,13 @@ describe('CustomTimePicker', () => {
 		const input = screen.getByRole('textbox');
 
 		// Open and change value so "changed since open" is true
-		fireEvent.focus(input);
-		fireEvent.change(input, { target: { value: '5m' } });
-		fireEvent.blur(input);
+		await user.click(input);
+		await user.clear(input);
+		await user.type(input, '5m');
+		await user.tab();
 
 		// Click the chevron (which triggers handleClose)
-		fireEvent.click(screen.getByTestId('time-picker-close-chevron'));
+		await user.click(screen.getByTestId('time-picker-close-chevron'));
 
 		// Should have applied the value (same as Enter)
 		expect(onValid).toHaveBeenCalledTimes(1);

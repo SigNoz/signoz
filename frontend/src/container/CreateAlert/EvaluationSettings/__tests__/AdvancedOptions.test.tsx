@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import * as alertState from 'container/CreateAlert/context';
 
 import AdvancedOptions from '../AdvancedOptions';
@@ -56,13 +56,14 @@ describe('AdvancedOptions', () => {
 		// expect(screen.getByText('Account for data delay')).toBeInTheDocument();
 	});
 
-	it('"Alert when data stops coming" works as expected', () => {
+	it('"Alert when data stops coming" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
-		fireEvent.click(
+		await user.click(
 			within(
 				screen.getByTestId('send-notification-if-data-is-missing-container'),
 			).getByRole('switch'),
@@ -71,7 +72,8 @@ describe('AdvancedOptions', () => {
 		const toleranceInput = screen.getByPlaceholderText(
 			'Enter tolerance limit...',
 		);
-		fireEvent.change(toleranceInput, { target: { value: '10' } });
+		await user.tripleClick(toleranceInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
@@ -82,13 +84,14 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
-	it('"Minimum data required" works as expected', () => {
+	it('"Minimum data required" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
-		fireEvent.click(
+		await user.click(
 			within(screen.getByTestId('enforce-minimum-datapoints-container')).getByRole(
 				'switch',
 			),
@@ -97,7 +100,8 @@ describe('AdvancedOptions', () => {
 		const minimumDataRequiredInput = screen.getByPlaceholderText(
 			'Enter minimum datapoints...',
 		);
-		fireEvent.change(minimumDataRequiredInput, { target: { value: '10' } });
+		await user.tripleClick(minimumDataRequiredInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS',
@@ -107,11 +111,12 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
-	it.skip('"Account for data delay" works as expected', () => {
+	it.skip('"Account for data delay" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
 		const accountForDataDelayContainer = screen.getByTestId(
 			'delay-evaluation-container',
@@ -120,10 +125,11 @@ describe('AdvancedOptions', () => {
 			ACCOUNT_FOR_DATA_DELAY_TEXT,
 		);
 
-		fireEvent.click(within(accountForDataDelayContainer).getByRole('switch'));
+		await user.click(within(accountForDataDelayContainer).getByRole('switch'));
 
 		const delayInput = screen.getByPlaceholderText('Enter delay...');
-		fireEvent.change(delayInput, { target: { value: '10' } });
+		await user.tripleClick(delayInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_DELAY_EVALUATION',

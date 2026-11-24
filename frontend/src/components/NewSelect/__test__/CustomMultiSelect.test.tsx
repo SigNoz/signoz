@@ -157,6 +157,7 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('removes a tag when clicked', async () => {
+		const user = userEvent.setup();
 		const handleChange = jest.fn();
 		renderWithVirtuoso(
 			<CustomMultiSelect
@@ -167,7 +168,7 @@ describe('CustomMultiSelect Component', () => {
 		);
 
 		// Find close button on Option 1 tag and click it
-		fireEvent.click(screen.getByLabelText('Remove tag option1'));
+		await user.click(screen.getByLabelText('Remove tag option1'));
 
 		// Verify onChange was called with remaining option
 		expect(handleChange).toHaveBeenCalledWith(
@@ -177,14 +178,15 @@ describe('CustomMultiSelect Component', () => {
 	});
 
 	it('filters options when searching', async () => {
+		const user = userEvent.setup();
 		renderWithVirtuoso(<CustomMultiSelect options={mockOptions} />);
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
-		fireEvent.mouseDown(selectElement);
+		await user.click(selectElement);
 
 		// Type into search box - the combobox is the search input
-		fireEvent.change(selectElement, { target: { value: '2' } });
+		await user.type(selectElement, '2');
 
 		await waitFor(() =>
 			expect(screen.queryByTestId('option-item-option1')).not.toBeInTheDocument(),

@@ -4,6 +4,7 @@ import {
 	render,
 	RenderResult,
 	screen,
+	userEvent,
 	waitFor,
 } from 'tests/test-utils';
 
@@ -88,6 +89,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 	});
 
 	it('should call onRetry function when retry button is clicked', async () => {
+		const user = userEvent.setup();
 		const mockOnRetry = jest.fn();
 		const errorMessage = 'Internal Server Error (500)';
 
@@ -103,7 +105,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 
 		// Open dropdown
 		const selectElement = screen.getByRole('combobox');
-		fireEvent.mouseDown(selectElement);
+		await user.click(selectElement);
 
 		// Wait for dropdown to appear
 		await waitFor(() => {
@@ -111,7 +113,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 		});
 
 		// Find and click the retry button
-		fireEvent.click(screen.getByTestId('retry-button'));
+		await user.click(screen.getByTestId('retry-button'));
 
 		// Verify onRetry was called
 		expect(mockOnRetry).toHaveBeenCalledTimes(1);

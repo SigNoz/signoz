@@ -35,12 +35,14 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		mockUpdateFormatting.mockClear();
 	});
 
-	function setup(): {
+	async function setup(): Promise<{
+		user: ReturnType<typeof userEvent.setup>;
 		getByTestId: ReturnType<typeof render>['getByTestId'];
 		formatOnChange: jest.Mock<any, any>;
 		maxLinesOnChange: jest.Mock<any, any>;
 		fontSizeOnChange: jest.Mock<any, any>;
-	} {
+	}> {
+		const user = userEvent.setup();
 		const items = [
 			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
 			{ key: 'list', label: 'Default' },
@@ -76,9 +78,10 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 		// Open the popover menu by default for each test
 		const formatButton = getByTestId('periscope-btn-format-options');
-		fireEvent.click(formatButton);
+		await user.click(formatButton);
 
 		return {
+			user,
 			getByTestId,
 			formatOnChange,
 			maxLinesOnChange,
@@ -88,7 +91,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	// Covers: opens menu, changes format selection, updates max-lines, changes font size
 	it('opens and toggles format selection', async () => {
-		const { formatOnChange } = setup();
+		const { user, formatOnChange } = await setup();
 
 		// Assert initial selection
 		expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
@@ -99,7 +102,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		).toBeInTheDocument();
 
 		// Change selection to 'Raw'
-		fireEvent.click(screen.getByTestId('format-option-raw'));
+		await user.click(screen.getByTestId('format-option-raw'));
 		await waitFor(() => {
 			expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
 			expect(
@@ -112,12 +115,12 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('increments max-lines and calls onChange', async () => {
-		const { maxLinesOnChange, getByTestId } = setup();
+		const { user, maxLinesOnChange, getByTestId } = await setup();
 
 		// Increment max lines
 		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const initial = Number(input.value);
-		fireEvent.click(screen.getByRole('button', { name: 'More lines per row' }));
+		await user.click(screen.getByRole('button', { name: 'More lines per row' }));
 
 		await waitFor(() => {
 			expect(Number(input.value)).toBe(initial + 1);
@@ -128,9 +131,8 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('clamps a typed max-lines value to 10', async () => {
-		const { maxLinesOnChange, getByTestId } = setup();
+		const { user, maxLinesOnChange, getByTestId } = await setup();
 		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
-		const user = userEvent.setup();
 
 		await user.clear(input);
 		await user.type(input, '15');
@@ -141,10 +143,9 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('stops max-lines at 10', async () => {
-		const { getByTestId } = setup();
+		const { user, getByTestId } = await setup();
 		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const increment = screen.getByRole('button', { name: 'More lines per row' });
-		const user = userEvent.setup();
 
 		for (let i = 0; i < 12; i++) {
 			await user.click(increment);
@@ -154,12 +155,12 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 	});
 
 	it('changes font size to MEDIUM and calls onChange', async () => {
-		const { fontSizeOnChange, getByTestId } = setup();
+		const { user, fontSizeOnChange, getByTestId } = await setup();
 		// Open font dropdown
-		fireEvent.click(getByTestId('font-size-select'));
+		await user.click(getByTestId('font-size-select'));
 
 		// Choose MEDIUM
-		fireEvent.click(getByTestId(`font-size-option-${FontSize.MEDIUM}`));
+		await user.click(getByTestId(`font-size-option-${FontSize.MEDIUM}`));
 
 		await waitFor(() => {
 			expect(
