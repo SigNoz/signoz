@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 import type logEvent from '../../../../../api/common/logEvent';
@@ -13,9 +13,6 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn() as jest.MockedFunction<typeof logEvent>,
 }));
-
-// The form flow drives antd selects and typing, which outruns the 5s default on CI.
-jest.setTimeout(15_000);
 
 type OnClose = ComponentProps<typeof CloudAccountSetupModal>['onClose'];
 
@@ -84,26 +81,35 @@ const mockApi = ({ failFirstPoll = false } = {}): {
 	return api;
 };
 
+type User = ReturnType<typeof userEvent.setup>;
+
+const antdSelectInput = (testId: string): HTMLElement =>
+	within(screen.getByTestId(testId)).getByRole('combobox', { hidden: true });
+
+const generateCommand = async (user: User): Promise<void> => {
+	await screen.findByTestId('azure-deployment-region-select');
+	await user.click(antdSelectInput('azure-deployment-region-select'));
+	await user.click(await screen.findByText('Australia East (australiaeast)'));
+	await user.click(antdSelectInput('azure-resource-groups-select'));
+	// antd reads the legacy keyCode on Enter, which user-event leaves at 0, so
+	// commit the tag with the select's comma separator instead.
+	await user.paste('prod-platform-rg,');
+	await user.click(screen.getByTestId('azure-generate-command-btn'));
+	await screen.findByTestId('azure-agent-command');
+};
+
 describe('Azure CloudAccountSetupModal', () => {
 	it('creates the account and shows its setup command', async () => {
 		const api = mockApi();
 		const user = userEvent.setup();
-		const onClose = mockOnClose();
 
-		render(<CloudAccountSetupModal onClose={onClose} />);
+		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
-		const [region, resourceGroups] = await screen.findAllByRole('combobox');
-		await user.click(region);
-		await user.click(await screen.findByText('Australia East (australiaeast)'));
-		await user.type(resourceGroups, 'prod-platform-rg{Enter}');
-		await user.click(screen.getByTestId('azure-generate-command-btn'));
+		await generateCommand(user);
 
-		await waitFor(() => {
-			expect(screen.getByTestId('azure-agent-command')).toHaveTextContent(
-				cliCommand,
-			);
-		});
-
+		expect(screen.getByTestId('azure-agent-command')).toHaveTextContent(
+			cliCommand,
+		);
 		expect(api.createAccountPayload).toStrictEqual({
 			config: {
 				azure: {
@@ -116,10 +122,25 @@ describe('Azure CloudAccountSetupModal', () => {
 		expect(
 			screen.queryByTestId('azure-generate-command-btn'),
 		).not.toBeInTheDocument();
-		expect(screen.queryAllByRole('combobox')).toHaveLength(0);
+		expect(
+			screen.queryByTestId('azure-deployment-region-select'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('azure-resource-groups-select'),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByText(/waiting for azure account connection/i),
 		).toBeInTheDocument();
+	});
+
+	it('asks before closing once a setup command exists', async () => {
+		mockApi();
+		const user = userEvent.setup();
+		const onClose = mockOnClose();
+
+		render(<CloudAccountSetupModal onClose={onClose} />);
+
+		await generateCommand(user);
 
 		await user.click(screen.getByTestId('azure-cancel-btn'));
 		await user.click(await screen.findByTestId('azure-continue-setup-btn'));
@@ -154,11 +175,7 @@ describe('Azure CloudAccountSetupModal', () => {
 
 		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
-		const [region, resourceGroups] = await screen.findAllByRole('combobox');
-		await user.click(region);
-		await user.click(await screen.findByText('Australia East (australiaeast)'));
-		await user.type(resourceGroups, 'prod-platform-rg{Enter}');
-		await user.click(screen.getByTestId('azure-generate-command-btn'));
+		await generateCommand(user);
 
 		await user.click(await screen.findByTestId('azure-check-connection-btn'));
 

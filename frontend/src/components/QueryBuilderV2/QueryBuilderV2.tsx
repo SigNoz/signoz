@@ -273,7 +273,10 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 					)}
 
 					{!showOnlyWhereClause && activeBuilder.queryFormulas?.length > 0 && (
-						<div className="qb-formulas-container">
+						<div
+							className="qb-formulas-container"
+							data-testid="qb-formulas-container"
+						>
 							{activeBuilder.queryFormulas.map((formula, index) => {
 								const query =
 									activeBuilder.queryData[index] || activeBuilder.queryData[0];
@@ -312,7 +315,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 				</div>
 
 				{showQueryList && (
-					<div className="query-names-section">
+					<div className="query-names-section" data-testid="query-names-section">
 						{renderedQueries.map((query) => (
 							<div key={query.queryName} className="query-name">
 								{query.queryName}

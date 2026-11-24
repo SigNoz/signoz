@@ -20,7 +20,11 @@ function AttributeMappingsTab({
 	return (
 		<div data-testid="attribute-mappings-tab">
 			{editor.isError ? (
-				<div className={styles.pageError} role="alert">
+				<div
+					className={styles.pageError}
+					role="alert"
+					data-testid="mapping-groups-error"
+				>
 					Failed to load mapping groups. Please try again.
 				</div>
 			) : (

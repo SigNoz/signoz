@@ -69,6 +69,8 @@ const config: Config.InitialOptions = {
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: '<rootDir>/jest.environment.cjs',
+	// Local only: the default (cores - 1) workers exhaust RAM when several runs overlap.
+	...(process.env.CI ? {} : { maxWorkers: 4, workerIdleMemoryLimit: '1GB' }),
 	coverageThreshold: {
 		global: {
 			statements: 80,

@@ -3,6 +3,7 @@ import {
 	RuletypesListOrderDTO,
 	RuletypesListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import type { EmptyStateCopy } from 'components/ListViews/types';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
 
@@ -45,7 +46,8 @@ const COLUMN_TO_SORT: Record<string, RuletypesListSortDTO> = {
 	updatedAt: RuletypesListSortDTO.updated_at,
 };
 
-export const DEFAULT_RULE_LIST_SORT = RuletypesListSortDTO.updated_at;
+// Status, highest rank first: firing, nodata, pending, recovering, inactive, disabled.
+export const DEFAULT_RULE_LIST_SORT = RuletypesListSortDTO.state;
 export const DEFAULT_RULE_LIST_ORDER = RuletypesListOrderDTO.desc;
 
 // `rule_list_filter_invalid`: DSL syntax / key / operator; `rule_list_invalid`: other list params.
@@ -113,4 +115,49 @@ export const DEFAULT_RULE_LIST_FILTER: RuleListFilter = {
 
 export function isDefaultRuleListFilter(filter: RuleListFilter): boolean {
 	return isSameRuleListFilter(filter, DEFAULT_RULE_LIST_FILTER);
+}
+
+interface RuleListEmptyStateArgs {
+	isFetching: boolean;
+	isError: boolean;
+	queryError: string | null;
+	hasActiveFilters: boolean;
+	total: number;
+	viewEmptyState?: EmptyStateCopy;
+	onClear: () => void;
+}
+
+interface RuleListEmptyState {
+	isEmptyDueToFilters: boolean;
+	isEmptyNoRules: boolean;
+	noResults: EmptyStateCopy;
+	// Unset for an empty view with its own copy (Recently viewed): no search to clear.
+	onClear?: () => void;
+}
+
+export function ruleListEmptyState({
+	isFetching,
+	isError,
+	queryError,
+	hasActiveFilters,
+	total,
+	viewEmptyState,
+	onClear,
+}: RuleListEmptyStateArgs): RuleListEmptyState {
+	const viewEmptyCopy =
+		hasActiveFilters || queryError ? undefined : viewEmptyState;
+	const isEmpty = !isFetching && total === 0;
+	const noResults: EmptyStateCopy = viewEmptyCopy ?? {
+		title: 'No matching alert rules',
+		description:
+			'No alert rules match your search. Try adjusting your search criteria.',
+	};
+	return {
+		isEmptyDueToFilters:
+			isEmpty && (hasActiveFilters || !!queryError || !!viewEmptyCopy),
+		isEmptyNoRules:
+			isEmpty && !isError && !queryError && !hasActiveFilters && !viewEmptyCopy,
+		noResults,
+		onClear: viewEmptyCopy ? undefined : onClear,
+	};
 }

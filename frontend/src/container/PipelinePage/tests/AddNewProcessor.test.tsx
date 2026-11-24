@@ -1,5 +1,9 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { render as customRender } from 'tests/test-utils';
+import {
+	render as customRender,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { pipelineMockData } from '../mocks/pipeline';
@@ -22,7 +26,7 @@ const selectedProcessorData = {
 // Constants for repeated text
 const ENABLE_PATHS_TEXT = 'Enable Paths';
 const ENABLE_MAPPING_TEXT = 'Enable Mapping';
-const PATH_PREFIX_LABEL = 'Path Prefix';
+const PATH_PREFIX_TEST_ID = 'path-prefix-input-field';
 
 // Helper function to render AddNewProcessor with JSON parser type
 const renderJsonProcessor = ({
@@ -71,17 +75,11 @@ describe('JSON Flattening Processor Tests', () => {
 			expect(screen.queryByText(ENABLE_MAPPING_TEXT)).not.toBeInTheDocument();
 		});
 		it('should display the form when enable flattening switch is toggled on', async () => {
+			const user = userEvent.setup();
 			renderJsonProcessor({});
 
-			// Wait for the component to render and find the enable flattening switch
-			await waitFor(() => {
-				expect(screen.getByRole('switch')).toBeInTheDocument();
-			});
-
-			// Find the enable flattening switch
-			const enableFlatteningSwitch = screen.getByRole('switch');
-			// Turn on the switch
-			fireEvent.click(enableFlatteningSwitch);
+			// Turn on the enable flattening switch
+			await user.click(await screen.findByTestId('enable-flattening-switch'));
 
 			// Verify the JSON flattening form is displayed
 			await waitFor(() => {
@@ -90,6 +88,7 @@ describe('JSON Flattening Processor Tests', () => {
 			});
 		});
 		it('should hide the form when enable flattening switch is toggled off', async () => {
+			const user = userEvent.setup();
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -97,15 +96,8 @@ describe('JSON Flattening Processor Tests', () => {
 				},
 			});
 
-			// Wait for the component to render and find the switches
-			await waitFor(() => {
-				expect(screen.getAllByRole('switch')[0]).toBeInTheDocument();
-			});
-
-			// Find the enable flattening switch
-			const enableFlatteningSwitch = screen.getAllByRole('switch')[0];
-			// Turn off the switch
-			fireEvent.click(enableFlatteningSwitch);
+			// Turn off the enable flattening switch
+			await user.click(await screen.findByTestId('enable-flattening-switch'));
 			await waitFor(() => {
 				expect(screen.queryByText(ENABLE_PATHS_TEXT)).not.toBeInTheDocument();
 				expect(screen.queryByText(ENABLE_MAPPING_TEXT)).not.toBeInTheDocument();
@@ -115,6 +107,7 @@ describe('JSON Flattening Processor Tests', () => {
 
 	describe('Enable/Disable Paths', () => {
 		it('should toggle path prefix visibility when enable paths switch is toggled', async () => {
+			const user = userEvent.setup();
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -123,34 +116,30 @@ describe('JSON Flattening Processor Tests', () => {
 				},
 			});
 
-			// Wait for the component to render and find the switches
-			await waitFor(() => {
-				expect(screen.getAllByRole('switch')[1]).toBeInTheDocument();
-			});
-
 			// In add mode, enable_paths is always true initially, so the path prefix should be visible
-			await waitFor(() => {
-				expect(screen.getByLabelText(PATH_PREFIX_LABEL)).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId(PATH_PREFIX_TEST_ID),
+			).resolves.toBeInTheDocument();
 
-			// Find the enable paths switch (second switch in the form) and turn it off
-			const enablePathsSwitch = screen.getAllByRole('switch')[1];
-			fireEvent.click(enablePathsSwitch);
+			// Turn the enable paths switch off
+			const enablePathsSwitch = screen.getByTestId('enable-paths-switch');
+			await user.click(enablePathsSwitch);
 
 			// Verify the path prefix field is now hidden
 			await waitFor(() => {
-				expect(screen.queryByLabelText(PATH_PREFIX_LABEL)).not.toBeInTheDocument();
+				expect(screen.queryByTestId(PATH_PREFIX_TEST_ID)).not.toBeInTheDocument();
 			});
 
 			// Turn the paths switch back on
-			fireEvent.click(enablePathsSwitch);
+			await user.click(enablePathsSwitch);
 
 			// Verify the path prefix field is displayed again
-			await waitFor(() => {
-				expect(screen.getByLabelText(PATH_PREFIX_LABEL)).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId(PATH_PREFIX_TEST_ID),
+			).resolves.toBeInTheDocument();
 		});
 		it('should hide path prefix when enable paths switch is turned off', async () => {
+			const user = userEvent.setup();
 			renderJsonProcessor({
 				selectedProcessorData: {
 					...selectedProcessorData,
@@ -159,23 +148,17 @@ describe('JSON Flattening Processor Tests', () => {
 				},
 			});
 
-			// Wait for the component to render and find the switches
-			await waitFor(() => {
-				expect(screen.getAllByRole('switch')[1]).toBeInTheDocument();
-			});
-
 			// Verify the path prefix is initially visible
-			await waitFor(() => {
-				expect(screen.getByLabelText(PATH_PREFIX_LABEL)).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId(PATH_PREFIX_TEST_ID),
+			).resolves.toBeInTheDocument();
 
-			// Find the enable paths switch and turn it off
-			const enablePathsSwitch = screen.getAllByRole('switch')[1];
-			fireEvent.click(enablePathsSwitch);
+			// Turn the enable paths switch off
+			await user.click(screen.getByTestId('enable-paths-switch'));
 
 			// Verify the path prefix field is now hidden
 			await waitFor(() => {
-				expect(screen.queryByLabelText(PATH_PREFIX_LABEL)).not.toBeInTheDocument();
+				expect(screen.queryByTestId(PATH_PREFIX_TEST_ID)).not.toBeInTheDocument();
 			});
 		});
 	});
@@ -226,17 +209,15 @@ describe('JSON Flattening Processor Tests', () => {
 			});
 
 			// Verify the form is displayed with existing data
-			await waitFor(() => {
-				expect(screen.getByDisplayValue('existing.prefix')).toBeInTheDocument();
-			});
+			await expect(screen.findByTestId(PATH_PREFIX_TEST_ID)).resolves.toHaveValue(
+				'existing.prefix',
+			);
 
 			// Verify flattening is enabled
-			const enableFlatteningSwitch = screen.getAllByRole('switch')[0];
-			expect(enableFlatteningSwitch).toBeChecked();
+			expect(screen.getByTestId('enable-flattening-switch')).toBeChecked();
 
 			// Verify paths is enabled
-			const enablePathsSwitch = screen.getAllByRole('switch')[1];
-			expect(enablePathsSwitch).toBeChecked();
+			expect(screen.getByTestId('enable-paths-switch')).toBeChecked();
 		});
 	});
 });
