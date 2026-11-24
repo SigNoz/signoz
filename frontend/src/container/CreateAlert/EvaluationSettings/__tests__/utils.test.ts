@@ -20,8 +20,9 @@ jest.mock('dayjs', () => {
 });
 
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
-import { EvaluationWindowState } from 'container/CreateAlert/context/types';
-import dayjs, { Dayjs } from 'dayjs';
+import type { EvaluationWindowState } from 'container/CreateAlert/context/types';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { rrulestr } from 'rrule';
 
 import { RollingWindowTimeframes } from '../types';

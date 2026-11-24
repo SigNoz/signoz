@@ -5,14 +5,14 @@ import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import type { DomainMetricsResponseRow } from 'container/ApiMonitoring/utils';
 import {
-	DomainMetricsResponseRow,
 	formatDomainMetricsDataForTable,
 	getDomainMetricsQueryPayload,
 } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import ErrorState from './ErrorState';
 

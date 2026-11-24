@@ -1,5 +1,5 @@
 import { CircleAlert } from '@signozhq/icons';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import styles from './RolesSelect.module.scss';
 

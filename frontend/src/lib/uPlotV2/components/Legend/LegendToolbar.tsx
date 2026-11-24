@@ -1,4 +1,5 @@
-import { ChangeEvent, useCallback } from 'react';
+import type { ChangeEvent } from 'react';
+import { useCallback } from 'react';
 import cx from 'classnames';
 import { Input } from 'antd';
 import { Search } from '@signozhq/icons';

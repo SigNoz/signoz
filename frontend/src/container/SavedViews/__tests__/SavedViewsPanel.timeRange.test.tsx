@@ -7,7 +7,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 import store from 'store';
 import { act, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import SavedViewsPanel from '../SavedViewsPanel';
 import { mockSavedViewsApi } from './savedViewsApiMock';

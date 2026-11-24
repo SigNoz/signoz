@@ -5,7 +5,8 @@ import { RethrowRouteError } from 'lib/router/RethrowRouteError';
 
 import { Home } from './pageComponents';
 import { RouteGate } from './RouteGate';
-import routes, { AppRoutes, LIST_LICENSES, SUPPORT_ROUTE } from './routes';
+import type { AppRoutes } from './routes';
+import routes, { LIST_LICENSES, SUPPORT_ROUTE } from './routes';
 
 /**
  * The gate is keyed by its route entry. The outlet renders the match unkeyed,

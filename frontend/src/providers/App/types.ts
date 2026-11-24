@@ -1,15 +1,18 @@
-import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
-import APIError from 'types/api/error';
-import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
-import { LicenseResModel, TrialInfo } from 'types/api/licensesV3/getActive';
-import {
+import type { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
+import type APIError from 'types/api/error';
+import type { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
+import type {
+	LicenseResModel,
+	TrialInfo,
+} from 'types/api/licensesV3/getActive';
+import type {
 	OrgPreference,
 	UserPreference,
 } from 'types/api/preferences/preference';
-import { Organization } from 'types/api/user/getOrganization';
-import { UserResponse as User } from 'types/api/user/getUser';
-import { Info } from 'types/api/v1/version/get';
-import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
+import type { Organization } from 'types/api/user/getOrganization';
+import type { UserResponse as User } from 'types/api/user/getUser';
+import type { Info } from 'types/api/v1/version/get';
+import type { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
 
 export interface IAppContext {
 	user: IUser;

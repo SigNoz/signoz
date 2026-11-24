@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { LegendAction, OnLegendAction } from 'lib/uPlotV2/components/types';
+import type { OnLegendAction } from 'lib/uPlotV2/components/types';
+import { LegendAction } from 'lib/uPlotV2/components/types';
 
 import {
 	getStoredSeriesVisibility,

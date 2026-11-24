@@ -1,7 +1,7 @@
+import type { PropsWithChildren } from 'react';
 import {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	PropsWithChildren,
 	useCallback,
 	// eslint-disable-next-line no-restricted-imports
 	useContext,
@@ -19,9 +19,10 @@ import afterLogin from 'AppRoutes/utils';
 import { ENVIRONMENT } from 'constants/env';
 import { LIVE_TAIL_HEARTBEAT_TIMEOUT } from 'constants/liveTail';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { EventListener, EventSourcePolyfill } from 'event-source-polyfill';
+import type { EventListener } from 'event-source-polyfill';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 import { useNotifications } from 'hooks/useNotifications';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { withBasePath } from 'utils/basePath';
 
 interface IEventSourceContext {

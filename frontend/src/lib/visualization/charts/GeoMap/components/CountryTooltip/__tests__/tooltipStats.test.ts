@@ -1,4 +1,4 @@
-import { GeoMapDatum } from '../../../types';
+import type { GeoMapDatum } from '../../../types';
 import { buildTooltipStats } from '../tooltipStats';
 
 const datum = (overrides: Partial<GeoMapDatum> = {}): GeoMapDatum => ({

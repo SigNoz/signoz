@@ -11,9 +11,9 @@ import { toast } from '@signozhq/ui/toast';
 import { Check, FileTerminal, Mail } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
-import { ErrorV2Resp } from 'types/api';
-import { AxiosError } from 'axios';
+import type APIError from 'types/api/error';
+import type { ErrorV2Resp } from 'types/api';
+import type { AxiosError } from 'axios';
 
 import '../MySettings.styles.scss';
 import './UserInfo.styles.scss';

@@ -1,4 +1,4 @@
-import { domainNameKey } from './constants';
+import type { domainNameKey } from './constants';
 
 export interface APIMonitoringResponseRow {
 	data: {

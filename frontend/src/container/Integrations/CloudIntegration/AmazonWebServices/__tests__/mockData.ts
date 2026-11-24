@@ -1,4 +1,4 @@
-import {
+import type {
 	GetService200,
 	ListAccounts200,
 } from 'api/generated/services/sigNoz.schemas';

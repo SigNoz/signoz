@@ -1,4 +1,5 @@
-import { ReactNode, useCallback } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback } from 'react';
 import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';

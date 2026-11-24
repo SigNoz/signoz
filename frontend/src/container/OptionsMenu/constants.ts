@@ -1,9 +1,10 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PREFERENCE_SOURCE_PAGES } from 'providers/preferences/constants';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PREFERENCE_SOURCE_PAGES } from 'providers/preferences/constants';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { FontSize, OptionsQuery } from './types';
+import type { OptionsQuery } from './types';
+import { FontSize } from './types';
 import { buildCompositeKey } from './utils';
 
 export const URL_OPTIONS = 'options';

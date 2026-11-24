@@ -1,11 +1,15 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import ContextMenu, { ClickedData } from 'periscope/components/ContextMenu';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ClickedData } from 'periscope/components/ContextMenu';
+import ContextMenu from 'periscope/components/ContextMenu';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
 import { getBaseMeta, getOperatorsByDataType } from './drilldownUtils';
 import { SUPPORTED_OPERATORS } from './menuOptions';
-import { BreakoutAttributeType } from './types';
+import type { BreakoutAttributeType } from './types';
 
 export type ContextMenuItem = ReactNode;
 

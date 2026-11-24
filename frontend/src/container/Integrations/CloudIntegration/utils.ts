@@ -1,5 +1,5 @@
 import { ONE_CLICK_INTEGRATIONS } from '../constants';
-import { IntegrationType } from '../types';
+import type { IntegrationType } from '../types';
 
 export const getAccountById = <T extends { cloud_account_id: string }>(
 	accounts: T[],

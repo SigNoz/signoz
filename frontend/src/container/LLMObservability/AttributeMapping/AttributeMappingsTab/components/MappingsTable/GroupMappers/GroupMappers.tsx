@@ -5,12 +5,12 @@ import { ArrowLeftRight, Plus, TriangleAlert } from '@signozhq/icons';
 import { useListSpanMappers } from 'api/generated/services/spanmapper';
 import { motion } from 'motion/react';
 
-import {
+import type {
 	DraftGroup,
 	DraftMapper,
 	Mapper,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
+import type { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
 import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import { COLUMN_COUNT } from '../constants';
 import MapperRow from '../MapperRow/MapperRow';

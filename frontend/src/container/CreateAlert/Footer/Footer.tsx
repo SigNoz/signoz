@@ -3,13 +3,13 @@ import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Send, X } from '@signozhq/icons';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';

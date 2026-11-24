@@ -1,21 +1,18 @@
 import { useCallback, useMemo, useRef } from 'react';
-import ChartLayout, {
-	LegendLayout,
-} from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
+import ChartLayout from 'lib/visualization/layout/ChartLayout/ChartLayout';
 import UPlotLegend from 'lib/uPlotV2/components/Legend/UPlotLegend';
-import {
-	LegendPosition,
-	TooltipRenderArgs,
-} from 'lib/uPlotV2/components/types';
+import type { TooltipRenderArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import UPlotChart from 'lib/uPlotV2/components/UPlotChart/UPlotChart';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { prepareAlignedData } from 'lib/uPlotV2/components/UPlotChart/utils';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
 import noop from 'lodash-es/noop';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { ChartWrapperProps } from 'lib/visualization/charts/types';
+import type { ChartWrapperProps } from 'lib/visualization/charts/types';
 import { useChartStacking } from 'lib/visualization/charts/ChartWrapper/useChartStacking';
 
 const TOOLTIP_WIDTH_PADDING = 120;

@@ -1,7 +1,7 @@
+import type { ReactNode } from 'react';
 import {
 	// eslint-disable-next-line no-restricted-imports
 	createContext,
-	ReactNode,
 	useCallback,
 	// eslint-disable-next-line no-restricted-imports
 	useContext,

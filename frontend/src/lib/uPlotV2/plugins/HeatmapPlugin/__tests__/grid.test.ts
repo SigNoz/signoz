@@ -1,5 +1,5 @@
 import { resolveHeatmapGrid } from '../grid';
-import { HeatmapSeries } from '../types';
+import type { HeatmapSeries } from '../types';
 
 const BUCKETS = [10, 20];
 const STEP = 60;

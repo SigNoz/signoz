@@ -2,7 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { removeKeysFromExpression } from 'components/QueryBuilderV2/utils';
 import { unquote } from 'utils/stringUtils';
 
-import { applyExpression, ExpressionFilterProps } from './types';
+import type { ExpressionFilterProps } from './types';
+import { applyExpression } from './types';
 
 interface UseHighlightErrorsReturn {
 	isHighlightErrors: boolean;

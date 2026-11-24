@@ -5,15 +5,15 @@ import { QueryParams } from 'constants/query';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { v4 as uuid } from 'uuid';
 import { useGlobalTimeQueryInvalidate } from 'store/globalTime';
 import { DataSource } from 'types/common/queryBuilder';
 
+import type { InfraMonitoringEntity } from '../constants';
 import {
 	ENTITY_FILTER_PLACEHOLDERS,
-	InfraMonitoringEntity,
 	METRIC_NAMESPACE_BY_ENTITY,
 } from '../constants';
 import { useInfraMonitoringPageListing } from '../hooks';

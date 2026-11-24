@@ -2,7 +2,7 @@ import { Check, Trash2, X } from '@signozhq/icons';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Typography } from '@signozhq/ui/typography';
 
-import { DeleteSavedViewDialogProps } from './types';
+import type { DeleteSavedViewDialogProps } from './types';
 
 function DeleteSavedViewDialog({
 	onCancel,

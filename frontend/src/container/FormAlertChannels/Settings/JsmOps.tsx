@@ -4,7 +4,7 @@ import { Input } from '@signozhq/ui/input';
 import { Input as AntdInput, Select } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 

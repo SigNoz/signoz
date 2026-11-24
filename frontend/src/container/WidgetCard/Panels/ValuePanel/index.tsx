@@ -13,7 +13,7 @@ import {
 	TitleContainer,
 	ValueContainer,
 } from 'container/WidgetCard/Panels/ValuePanel/styles';
-import { GridValueComponentProps } from 'container/WidgetCard/Panels/ValuePanel/types';
+import type { GridValueComponentProps } from 'container/WidgetCard/Panels/ValuePanel/types';
 
 function GridValueComponent({
 	data,

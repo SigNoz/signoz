@@ -6,11 +6,11 @@ import { Collapse, type CollapseProps, Skeleton } from 'antd';
 
 import MapperFormDrawer from 'container/LLMObservability/AttributeMapping/components/MapperFormDrawer/MapperFormDrawer';
 import { useMapperFormDrawer } from 'container/LLMObservability/AttributeMapping/components/MapperFormDrawer/hooks/useMapperFormDrawer';
-import {
+import type {
 	DraftGroup,
 	DraftMapper,
 } from 'container/LLMObservability/AttributeMapping/types';
-import { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
+import type { AttributeMappingEditor } from 'container/LLMObservability/AttributeMapping/hooks/useAttributeMappingEditor';
 import { useCanManageAttributeMapping } from 'container/LLMObservability/AttributeMapping/hooks/useCanManageAttributeMapping';
 import GroupHeader from './GroupHeader/GroupHeader';
 import GroupHeaderActions from './GroupHeaderActions/GroupHeaderActions';

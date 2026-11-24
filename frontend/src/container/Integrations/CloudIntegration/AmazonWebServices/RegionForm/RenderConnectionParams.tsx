@@ -1,6 +1,6 @@
 import { Input } from '@signozhq/ui/input';
 import { Form } from 'antd';
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 
 function RenderConnectionFields({
 	isConnectionParamsLoading,

@@ -1,12 +1,11 @@
 import { useQuery } from 'react-query';
-import simulatePipelineProcessing, {
-	PipelineSimulationResponse,
-} from 'api/pipeline/preview';
-import { AxiosError } from 'axios';
+import type { PipelineSimulationResponse } from 'api/pipeline/preview';
+import simulatePipelineProcessing from 'api/pipeline/preview';
+import type { AxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getBodyDisplay } from 'lib/logs/logBody';
-import { ILog } from 'types/api/logs/log';
-import { PipelineData } from 'types/api/pipeline/def';
+import type { ILog } from 'types/api/logs/log';
+import type { PipelineData } from 'types/api/pipeline/def';
 
 export interface PipelinePreviewRequest {
 	pipeline: PipelineData;

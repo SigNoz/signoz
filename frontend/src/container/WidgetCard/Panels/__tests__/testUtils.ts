@@ -1,6 +1,6 @@
 import { initialQueryState } from 'constants/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryData } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 
 export function getMockQueryData(): QueryData {

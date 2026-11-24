@@ -1,14 +1,17 @@
-import { render, RenderResult } from 'tests/test-utils';
+import type { RenderResult } from 'tests/test-utils';
+import { render } from 'tests/test-utils';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	FiltersType,
+import type {
 	IQuickFiltersConfig,
 	QuickFilterCheckboxUseFieldApis,
-	QuickFiltersSource,
 } from '../../../types';
+import { FiltersType, QuickFiltersSource } from '../../../types';
 import CheckboxFilterV2 from './CheckboxFilterV2';
 import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 import { Card } from 'antd';
 import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
@@ -19,14 +20,14 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
 import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { saveRecentQueryByExpression } from 'lib/recentQueries/saveRecentQuery';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { DataSource } from 'types/common/queryBuilder';
 import { validateQuery } from 'utils/queryValidationUtils';
 
@@ -46,7 +47,7 @@ import createQueryParams from 'lib/createQueryParams';
 import { isModifierKeyPressed } from 'utils/app';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {

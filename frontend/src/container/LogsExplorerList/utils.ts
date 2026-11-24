@@ -1,7 +1,7 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { isEmpty } from 'lodash-es';
-import { IField } from 'types/api/logs/fields';
-import {
+import type { IField } from 'types/api/logs/fields';
+import type {
 	IBuilderQuery,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';

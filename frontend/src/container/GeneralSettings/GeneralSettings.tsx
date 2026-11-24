@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { BarChart, Compass, ScrollText } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
@@ -19,19 +19,19 @@ import find from 'lodash-es/find';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import { buildLicenseReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
-import {
+import type {
 	ErrorResponse,
 	ErrorResponseV2,
 	SuccessResponse,
 	SuccessResponseV2,
 } from 'types/api';
-import {
+import type {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
 } from 'types/api/disks/getDisks';
-import APIError from 'types/api/error';
-import { TTTLType } from 'types/api/settings/common';
-import {
+import type APIError from 'types/api/error';
+import type { TTTLType } from 'types/api/settings/common';
+import type {
 	PayloadPropsLogs as GetRetentionPeriodLogsPayload,
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,

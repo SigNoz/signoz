@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import MEditor, { Monaco } from '@monaco-editor/react';
+import type { Monaco } from '@monaco-editor/react';
+import MEditor from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';

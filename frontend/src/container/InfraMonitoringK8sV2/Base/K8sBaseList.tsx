@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { Typography } from '@signozhq/ui/typography';
+import type { SortState, TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable, {
-	SortState,
-	TableColumnDef,
 	useCalculatedPageSize,
 	useHiddenColumnIds,
 	useRecoverFromEmptyPage,
@@ -12,16 +11,14 @@ import TanStackTable, {
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
-import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { openInNewTab } from 'utils/navigation';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
+import type { InfraMonitoringEntity } from '../constants';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
+import type { SelectedItemParams } from '../hooks';
 import {
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	InfraMonitoringEntity,
-} from '../constants';
-import {
-	SelectedItemParams,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringSelectedItemParams,
@@ -41,7 +38,7 @@ import K8sHeader from './K8sHeader';
 import { K8sPaginationWarning } from './K8sPaginationWarning';
 import K8sTableToolbar from './K8sTableToolbar';
 import { resetDrawerHistory } from './useDrawerHistoryStore';
-import { K8sBaseFilters } from './types';
+import type { K8sBaseFilters } from './types';
 import { getGroupedByMeta } from './utils';
 import { K8sInstrumentationChecksCallout } from './components/K8sInstrumentationChecksCallout/K8sInstrumentationChecksCallout';
 

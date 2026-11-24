@@ -1,7 +1,5 @@
-import {
-	UniversalUnitToGrafanaUnit,
-	YAxisCategoryNames,
-} from 'components/YAxisUnitSelector/constants';
+import type { YAxisCategoryNames } from 'components/YAxisUnitSelector/constants';
+import { UniversalUnitToGrafanaUnit } from 'components/YAxisUnitSelector/constants';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import { convertValue } from 'lib/getConvertedValue';

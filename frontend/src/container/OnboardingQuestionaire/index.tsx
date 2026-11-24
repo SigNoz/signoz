@@ -3,11 +3,11 @@ import { useMutation, useQuery } from 'react-query';
 import { toast } from '@signozhq/ui/toast';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { usePutProfile } from 'api/generated/services/zeus';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import updateOrgPreferenceAPI from 'api/v1/org/preferences/name/update';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
@@ -15,15 +15,13 @@ import { useNotifications } from 'hooks/useNotifications';
 import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 
-import {
-	AboutSigNozQuestions,
-	SignozDetails,
-} from './AboutSigNozQuestions/AboutSigNozQuestions';
+import type { SignozDetails } from './AboutSigNozQuestions/AboutSigNozQuestions';
+import { AboutSigNozQuestions } from './AboutSigNozQuestions/AboutSigNozQuestions';
 import InviteTeamMembers from './InviteTeamMembers/InviteTeamMembers';
-import OptimiseSignozNeeds, {
-	OptimiseSignozDetails,
-} from './OptimiseSignozNeeds/OptimiseSignozNeeds';
-import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
+import type { OptimiseSignozDetails } from './OptimiseSignozNeeds/OptimiseSignozNeeds';
+import OptimiseSignozNeeds from './OptimiseSignozNeeds/OptimiseSignozNeeds';
+import type { OrgDetails } from './OrgQuestions/OrgQuestions';
+import OrgQuestions from './OrgQuestions/OrgQuestions';
 
 import './OnboardingQuestionaire.styles.scss';
 

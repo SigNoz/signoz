@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { ColorRampResolver } from 'lib/visualization/colorRamp/colorScale';
 
-import { GeoMapColors, GeoMapDatum } from '../types';
+import type { GeoMapColors, GeoMapDatum } from '../types';
 import {
 	bubbleSizeOf,
 	createGeoMapColorResolver,

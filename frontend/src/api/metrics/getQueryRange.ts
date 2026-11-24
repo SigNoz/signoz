@@ -1,9 +1,9 @@
 import { ApiV3Instance, ApiV4Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { ENTITY_VERSION_V4 } from 'constants/app';
-import { ErrorResponse, SuccessResponse, Warning } from 'types/api';
-import {
+import type { ErrorResponse, SuccessResponse, Warning } from 'types/api';
+import type {
 	MetricRangePayloadV3,
 	QueryRangePayload,
 } from 'types/api/metrics/getQueryRange';

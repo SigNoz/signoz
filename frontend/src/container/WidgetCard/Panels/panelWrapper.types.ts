@@ -1,14 +1,14 @@
-import { Dispatch, SetStateAction } from 'react';
-import { UseQueryResult } from 'react-query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { PanelMode } from 'lib/visualization/panels/types';
-import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Widgets } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { Dispatch, SetStateAction } from 'react';
+import type { UseQueryResult } from 'react-query';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PanelMode } from 'lib/visualization/panels/types';
+import type { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 export type PanelWrapperProps = {
 	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;

@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
-import { Tabs, TabsProps } from 'antd';
+import type { TabsProps } from 'antd';
+import { Tabs } from 'antd';
 import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -10,7 +11,7 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppParams } from 'lib/router/useAppParams';
 
-import { RouteTabProps } from './types';
+import type { RouteTabProps } from './types';
 
 import styles from './RouteTab.module.scss';
 

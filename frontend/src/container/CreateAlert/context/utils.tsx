@@ -9,8 +9,8 @@ import {
 	traceAlertDefaults,
 } from 'container/CreateAlertRule/defaults';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { AlertDef } from 'types/api/alerts/def';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { CumulativeWindowTimeframes } from '../EvaluationSettings/types';
@@ -22,7 +22,7 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from './constants';
-import {
+import type {
 	AdvancedOptionsAction,
 	AdvancedOptionsState,
 	AlertState,
@@ -30,13 +30,13 @@ import {
 	AlertThresholdState,
 	CreateAlertAction,
 	CreateAlertReducerAction,
-	CreateAlertSlice,
 	CreateAlertState,
 	EvaluationWindowAction,
 	EvaluationWindowState,
 	NotificationSettingsAction,
 	NotificationSettingsState,
 } from './types';
+import { CreateAlertSlice } from './types';
 
 export const alertCreationReducer = (
 	state: AlertState,

@@ -6,7 +6,7 @@ import type uPlot from 'uplot';
 import { formatTimestampOmittingTodaysDate } from 'utils/timeUtils';
 
 import type { ExtendedSeries } from '../../../../config/types';
-import { TooltipContentItem } from '../../../types';
+import type { TooltipContentItem } from '../../../types';
 import TooltipItem from '../TooltipItem/TooltipItem';
 import TooltipPinnedBadge from '../TooltipPinnedBadge/TooltipPinnedBadge';
 

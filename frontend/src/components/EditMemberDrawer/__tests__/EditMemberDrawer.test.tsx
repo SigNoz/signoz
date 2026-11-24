@@ -29,7 +29,8 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
+import type { EditMemberDrawerProps } from '../EditMemberDrawer';
+import EditMemberDrawer from '../EditMemberDrawer';
 
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),

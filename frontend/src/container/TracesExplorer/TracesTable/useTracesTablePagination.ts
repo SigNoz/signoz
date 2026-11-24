@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-	SetPageOptions,
-	useTableParams,
-} from 'components/TanStackTableView/useTableParams';
+import type { SetPageOptions } from 'components/TanStackTableView/useTableParams';
+import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Pagination } from 'hooks/queryPagination';
+import type { Pagination } from 'hooks/queryPagination';
 
 import {
 	TRACES_TABLE_DEFAULT_LIMIT,

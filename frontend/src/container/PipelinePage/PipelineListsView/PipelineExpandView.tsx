@@ -6,17 +6,13 @@ import { CirclePlus } from '@signozhq/icons';
 import type { TableLocale } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import {
-	ActionMode,
-	ActionType,
-	PipelineData,
-	ProcessorData,
-} from 'types/api/pipeline/def';
+import type { PipelineData, ProcessorData } from 'types/api/pipeline/def';
+import { ActionMode, ActionType } from 'types/api/pipeline/def';
 
 import { tableComponents } from '../config';
 import { ModalFooterTitle } from '../styles';
 import { processorColumns } from './config';
-import { AlertMessage } from './PipelineListsView';
+import type { AlertMessage } from './PipelineListsView';
 import { FooterButton, StyledTable } from './styles';
 import DragAction from './TableComponents/DragAction';
 import ProcessorActions from './TableComponents/ProcessorActions';

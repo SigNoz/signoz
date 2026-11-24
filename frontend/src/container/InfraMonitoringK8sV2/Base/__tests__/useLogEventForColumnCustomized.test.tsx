@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import { act, renderHook } from '@testing-library/react';
-import { TableColumnDef, useColumnStore } from 'components/TanStackTableView';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import { useColumnStore } from 'components/TanStackTableView';
 
 import { InfraMonitoringEntity } from '../../constants';
 import { useInfraMonitoringTablePreferencesStore } from '../useInfraMonitoringTablePreferencesStore';

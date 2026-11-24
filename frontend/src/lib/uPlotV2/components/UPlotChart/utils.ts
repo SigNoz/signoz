@@ -1,6 +1,7 @@
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { applySpanGapsToAlignedData } from 'lib/uPlotV2/utils/dataUtils';
-import uPlot, { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
+import type uPlot from 'uplot';
 
 export function prepareAlignedData({
 	data,

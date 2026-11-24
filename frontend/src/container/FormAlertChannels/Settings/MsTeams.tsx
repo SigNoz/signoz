@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
 import { Input as AntdInput } from 'antd';
 
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 

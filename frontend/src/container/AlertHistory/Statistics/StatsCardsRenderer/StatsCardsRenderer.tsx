@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useGetAlertRuleDetailsStats } from 'pages/AlertDetails/hooks';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
-import { StatsTimeSeriesItem } from 'types/api/alerts/def';
+import type { StatsTimeSeriesItem } from 'types/api/alerts/def';
 
 import AverageResolutionCard from '../AverageResolutionCard/AverageResolutionCard';
 import StatsCard from '../StatsCard/StatsCard';

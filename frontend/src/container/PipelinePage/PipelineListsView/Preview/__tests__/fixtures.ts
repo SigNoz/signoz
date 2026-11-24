@@ -6,8 +6,9 @@ import {
 	type Querybuildertypesv5RawRowDTO,
 	type Querybuildertypesv5ScalarDataDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { rest, RestHandler } from 'msw';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { RestHandler } from 'msw';
+import { rest } from 'msw';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 function countResponse(count: number): QueryRangeV5200 {
 	const result: Querybuildertypesv5ScalarDataDTO = {

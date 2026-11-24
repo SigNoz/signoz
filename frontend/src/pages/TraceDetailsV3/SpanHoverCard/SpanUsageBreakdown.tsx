@@ -1,4 +1,5 @@
-import { formatCost, hasValue, SpanAiUsage } from '../utils/aiTraceUtils';
+import type { SpanAiUsage } from '../utils/aiTraceUtils';
+import { formatCost, hasValue } from '../utils/aiTraceUtils';
 import TokenBreakdown from '../TokenBreakdown/TokenBreakdown';
 import TraceTooltipRow from '../TraceTooltip/TraceTooltipRow';
 import TraceTooltipSection from '../TraceTooltip/TraceTooltipSection';

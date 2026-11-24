@@ -1,4 +1,4 @@
-import { GeoMapDatum, ShapeFeature } from '../types';
+import type { GeoMapDatum, ShapeFeature } from '../types';
 
 /** Values the view can't show: no member shape carries their code. */
 export function getOutsideView(

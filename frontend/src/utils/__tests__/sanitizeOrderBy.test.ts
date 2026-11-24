@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	IBuilderQuery,
 	OrderByPayload,
 } from 'types/api/queryBuilder/queryBuilderData';

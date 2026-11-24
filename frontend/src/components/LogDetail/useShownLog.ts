@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 /**
  * The log to render: `log`, or the last non-null one after `log` becomes `null`, so the drawer

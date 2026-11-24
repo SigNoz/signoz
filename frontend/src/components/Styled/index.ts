@@ -1,14 +1,16 @@
-import { HTMLAttributes } from 'react';
-import { Button, ButtonProps } from 'antd';
+import type { HTMLAttributes } from 'react';
+import type { ButtonProps } from 'antd';
+import { Button } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import type { SpaceProps } from 'periscope/components/Space/types';
 import Col from 'periscope/components/Col/Col';
 import type { ColProps } from 'periscope/components/Col/types';
 import Row from 'periscope/components/Row/Row';
 import type { RowProps } from 'periscope/components/Row/types';
-import styled, { FlattenSimpleInterpolation } from 'styled-components';
+import type { FlattenSimpleInterpolation } from 'styled-components';
+import styled from 'styled-components';
 
-import { IStyledClass } from './types';
+import type { IStyledClass } from './types';
 
 const styledClass = (props: IStyledClass): FlattenSimpleInterpolation | null =>
 	props.styledclass || null;

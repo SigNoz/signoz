@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import throttle from 'lodash-es/throttle';
 
-import { UseScrollToTop } from './types';
+import type { UseScrollToTop } from './types';
 
 function useScrollToTop(visibleOffset = 200): UseScrollToTop {
 	const [isVisible, setIsVisible] = useState<boolean>(false);

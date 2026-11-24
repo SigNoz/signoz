@@ -1,6 +1,6 @@
-import { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
-import { ServicesList } from 'types/api/metrics/getService';
-import { ServiceOverview } from 'types/api/metrics/getServiceOverview';
+import type { TopOperationList } from 'container/MetricsApplication/TopOperationsTable';
+import type { ServicesList } from 'types/api/metrics/getService';
+import type { ServiceOverview } from 'types/api/metrics/getServiceOverview';
 
 export const GET_SERVICE_LIST_SUCCESS = 'GET_SERVICE_LIST_SUCCESS';
 export const GET_SERVICE_LIST_LOADING_START = 'GET_SERVICE_LIST_LOADING_START';

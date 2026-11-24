@@ -3,10 +3,10 @@ import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
 import { Select } from '@signozhq/ui/select';
 import type { SelectItemType } from '@signozhq/ui/select';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
 	closestCenter,
 	DndContext,
-	DragEndEvent,
 	PointerSensor,
 	useSensor,
 	useSensors,
@@ -23,13 +23,13 @@ import { v4 as uuid } from 'uuid';
 import KeySearchInput from '../KeySearchInput/KeySearchInput';
 import styles from './MapperFormDrawer.module.scss';
 import SourceAttributeRow from './components/SourceAttributeRow/SourceAttributeRow';
-import {
-	FieldContext,
+import type {
 	FieldContextValue,
 	MapperDraft,
 	MapperDraftMode,
 	SourceConfig,
 } from '../../types';
+import { FieldContext } from '../../types';
 import { createEmptySource, isMapperDraftValid } from '../../utils';
 
 const FIELD_CONTEXT_OPTIONS: SelectItemType[] = [

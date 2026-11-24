@@ -1,5 +1,5 @@
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import uPlot from 'uplot';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type uPlot from 'uplot';
 
 import { syncCursorRegistry } from '../syncCursorRegistry';
 import { createSyncDisplayHook } from '../syncDisplayHook';

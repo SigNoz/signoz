@@ -1,14 +1,14 @@
 import { useCallback, useRef } from 'react';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
 import ScatterTooltip from 'lib/uPlotV2/components/Tooltip/ScatterTooltip';
-import {
+import type {
 	ScatterTooltipProps,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 import { getSeriesStroke } from 'lib/uPlotV2/plugins/ScatterPlugin/scatterPlugin';
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { ScatterChartProps } from 'lib/visualization/charts/types';
-import uPlot from 'uplot';
+import type { ScatterChartProps } from 'lib/visualization/charts/types';
+import type uPlot from 'uplot';
 
 import { getCursorHit } from './utils';
 

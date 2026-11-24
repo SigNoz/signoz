@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 
 import { useCrosshair } from '../useCrosshair';
 

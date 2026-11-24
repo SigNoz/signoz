@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import cx from 'classnames';
 
-import { AIThreadMessageProps } from '../AIThreadMessage/AIThreadMessage';
-import { ThreadSpan, ThreadView } from '../TraceDetailsThread/types';
+import type { AIThreadMessageProps } from '../AIThreadMessage/AIThreadMessage';
+import type { ThreadSpan } from '../TraceDetailsThread/types';
+import { ThreadView } from '../TraceDetailsThread/types';
 import JsonBlock from '../AIThreadMessage/JsonBlock';
 import { MessageType } from '../AIThreadMessage/types';
 import MessagesSection from './MessagesSection';

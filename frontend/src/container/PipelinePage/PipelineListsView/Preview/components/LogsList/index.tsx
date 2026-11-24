@@ -1,4 +1,4 @@
-import { KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
 import { Expand } from '@signozhq/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -6,7 +6,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import './styles.scss';
 

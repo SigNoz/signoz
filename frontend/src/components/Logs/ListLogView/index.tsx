@@ -4,9 +4,9 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
-import { FontSize } from 'container/OptionsMenu/types';
+import type { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -15,12 +15,13 @@ import { FlatLogData, getLogFieldValue } from 'lib/logs/flatLogData';
 import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
 // interfaces
-import { IField } from 'types/api/logs/fields';
-import { ILog } from 'types/api/logs/log';
+import type { IField } from 'types/api/logs/fields';
+import type { ILog } from 'types/api/logs/log';
 import { coerceToString, isScalarFieldValue } from 'utils/stringUtils';
 
 // components
-import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
+import type { AddToQueryHOCProps } from '../AddToQueryHOC';
+import AddToQueryHOC from '../AddToQueryHOC';
 import LogLinesActionButtons from '../LogLinesActionButtons/LogLinesActionButtons';
 import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from '../LogStateIndicator/utils';

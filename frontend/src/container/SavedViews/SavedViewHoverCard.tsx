@@ -4,7 +4,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import { SAVED_VIEW_HOVER_CARD_WIDTH } from './constants';
 import SavedViewHoverCardDetails from './SavedViewHoverCardDetails';
-import { SavedViewHoverCardProps } from './types';
+import type { SavedViewHoverCardProps } from './types';
 
 import styles from './SavedViewHoverCard.module.scss';
 

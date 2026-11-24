@@ -1,12 +1,14 @@
 import React from 'react';
-import { render, RenderResult, screen } from '@testing-library/react';
+import type { RenderResult } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
 import { useLegendActions } from '../../../hooks/useLegendActions';
 import UPlotLegend from '../UPlotLegend';
-import { LegendAction, LegendActionPayload, LegendPosition } from '../../types';
+import type { LegendActionPayload } from '../../types';
+import { LegendAction, LegendPosition } from '../../types';
 
 jest.mock('react-virtuoso', () => ({
 	VirtuosoGrid: ({

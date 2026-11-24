@@ -1,11 +1,13 @@
-import { KeyboardEvent, memo, MouseEvent, useCallback } from 'react';
+import type { KeyboardEvent, MouseEvent } from 'react';
+import { memo, useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 
-import { LegendAction, OnLegendAction } from '../types';
+import type { OnLegendAction } from '../types';
+import { LegendAction } from '../types';
 
 import styles from './LegendRow.module.scss';
 

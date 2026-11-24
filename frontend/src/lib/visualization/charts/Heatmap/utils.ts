@@ -1,5 +1,6 @@
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOptionsEnum } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
@@ -9,11 +10,9 @@ import {
 	formatRowLabel,
 	resolveColumnAlignedSplits,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import {
-	createHeatmapHooks,
-	HeatmapRenderOptions,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/heatmapPlugin';
-import {
+import type { HeatmapRenderOptions } from 'lib/uPlotV2/plugins/HeatmapPlugin/heatmapPlugin';
+import { createHeatmapHooks } from 'lib/uPlotV2/plugins/HeatmapPlugin/heatmapPlugin';
+import type {
 	HeatmapGrid,
 	HeatmapSeries,
 	HeatmapYAxis,

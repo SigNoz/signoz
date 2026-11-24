@@ -3,14 +3,16 @@ import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
-import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
+import type { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
-import { Control, Controller } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
 import FieldLabel from './FieldLabel';
 import FormField from './FormField';
-import { GcpSetupFormValues } from './types';
-import { SecretFieldType, validateSecretValue } from './validators';
+import type { GcpSetupFormValues } from './types';
+import type { SecretFieldType } from './validators';
+import { validateSecretValue } from './validators';
 import styles from './ConnectionSecretsFields.module.scss';
 
 type CredentialField = keyof CloudintegrationtypesCredentialsDTO;

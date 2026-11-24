@@ -1,9 +1,10 @@
-import { KeyboardEvent, memo, useMemo, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import cx from 'classnames';
 
 import { useToolCallLinks } from '../AIThreadMessage/useToolCallLinks';
 import SpanMessages from '../SpanMessages/SpanMessages';
-import { ThreadSpan, ThreadView } from './types';
+import type { ThreadSpan, ThreadView } from './types';
 import { buildToolCallIndex } from './utils';
 
 import styles from './ThreadSpanCard.module.scss';

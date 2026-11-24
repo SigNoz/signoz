@@ -1,4 +1,4 @@
-import { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
+import type { OrderByPayload } from 'types/api/queryBuilder/queryBuilderData';
 
 export const INITIAL_PAGE_SIZE = 10;
 export const INITIAL_PAGE_SIZE_SMALL_FONT = 12;

@@ -1,9 +1,7 @@
-import {
-	SavedviewtypesSavedViewSpecDTO,
-	SavedviewtypesSourceDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { SavedviewtypesSavedViewSpecDTO } from 'api/generated/services/sigNoz.schemas';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
@@ -13,9 +11,10 @@ import {
 	DEFAULT_PANEL_TYPE,
 	ensureAiRequiredColumns,
 } from 'container/LLMObservability/Explorer/constants';
-import { FontSize, LogViewMode } from 'container/OptionsMenu/types';
+import type { LogViewMode } from 'container/OptionsMenu/types';
+import { FontSize } from 'container/OptionsMenu/types';
 import getAiObservabilityLoaderConfig from 'providers/preferences/configs/aiObservabilityLoaderConfig';
-import { Preferences } from 'providers/preferences/types';
+import type { Preferences } from 'providers/preferences/types';
 
 function withColumnNames(
 	columns: TelemetryFieldKey[] | undefined,

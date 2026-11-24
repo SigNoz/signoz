@@ -1,7 +1,7 @@
+import type { ReactNode } from 'react';
 import {
 	// oxlint-disable-next-line no-restricted-imports
 	createContext,
-	ReactNode,
 	// oxlint-disable-next-line no-restricted-imports
 	useContext,
 	useState,
@@ -10,12 +10,15 @@ import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constan
 
 import get from 'api/browser/localstorage/get';
 
+import type { GlobalTimeStoreApi } from './globalTimeStore';
 import {
 	createGlobalTimeStore,
 	defaultGlobalTimeStore,
-	GlobalTimeStoreApi,
 } from './globalTimeStore';
-import { GlobalTimeProviderOptions, GlobalTimeSelectedTime } from './types';
+import type {
+	GlobalTimeProviderOptions,
+	GlobalTimeSelectedTime,
+} from './types';
 import { usePersistence } from './usePersistence';
 import { useQueryCacheSync } from './useQueryCacheSync';
 import { useUrlSync } from './useUrlSync';

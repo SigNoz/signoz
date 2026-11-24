@@ -1,7 +1,7 @@
 import { Select } from 'antd';
 import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
-import { Time } from 'container/TopNav/DateTimeSelectionV2/types';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsCountInInterval from './components/LogsCountInInterval';
 

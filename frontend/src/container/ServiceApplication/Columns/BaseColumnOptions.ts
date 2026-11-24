@@ -1,5 +1,5 @@
 import type { TableColumnsType as ColumnsType } from 'antd';
-import { ServicesList } from 'types/api/metrics/getService';
+import type { ServicesList } from 'types/api/metrics/getService';
 
 import {
 	ColumnKey,

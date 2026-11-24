@@ -1,8 +1,12 @@
 import { ApiV2Instance as axios } from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
-import { Props, Token } from 'types/api/v2/sessions/rotate/post';
+import type { AxiosError } from 'axios';
+import type {
+	ErrorV2Resp,
+	RawSuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
+import type { Props, Token } from 'types/api/v2/sessions/rotate/post';
 
 /**
  * @deprecated Use the generated `useRotateSession` hook (or `rotateSession` fetcher) from

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { EQueryType } from 'types/common/dashboard';
+import type { EQueryType } from 'types/common/dashboard';
 
 import type { SupportedQueryTypesKindMap } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelCapabilities';
 import { fitQueryToKind } from 'pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode';

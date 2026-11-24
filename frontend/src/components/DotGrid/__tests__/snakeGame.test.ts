@@ -1,4 +1,5 @@
-import { SnakeGame, startSnake, stepSnake } from '../snakeGame';
+import type { SnakeGame } from '../snakeGame';
+import { startSnake, stepSnake } from '../snakeGame';
 
 const COLS = 10;
 const ROWS = 6;

@@ -1,8 +1,9 @@
-import { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
+import type { Chart, ChartTypeRegistry, Plugin } from 'chart.js';
 import { getRelativePosition } from 'chart.js/helpers';
 
 // utils
-import { ChartEventHandler, mergeDefaultOptions } from './utils';
+import type { ChartEventHandler } from './utils';
+import { mergeDefaultOptions } from './utils';
 
 export const dragSelectPluginId = 'drag-select-plugin';
 

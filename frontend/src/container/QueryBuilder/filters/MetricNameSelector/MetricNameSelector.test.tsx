@@ -6,16 +6,14 @@ import {
 	waitFor,
 	within,
 } from '@testing-library/react';
-import {
-	MetricsexplorertypesListMetricDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import { MetricNameSelector } from './MetricNameSelector';

@@ -1,23 +1,18 @@
-import {
-	SyntheticEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import type { SyntheticEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactDragListView from 'react-drag-listview';
-import { ResizeCallbackData } from 'react-resizable';
+import type { ResizeCallbackData } from 'react-resizable';
 import { Table } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
-import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { getColumnWidth } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
 
 import ResizableHeader from './ResizableHeader';
 import { DragSpanStyle } from './styles';
-import { ResizeTableProps } from './types';
+import type { ResizeTableProps } from './types';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ResizeTable({

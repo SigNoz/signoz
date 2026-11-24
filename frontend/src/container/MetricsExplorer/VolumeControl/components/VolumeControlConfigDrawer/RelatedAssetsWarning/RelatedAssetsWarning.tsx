@@ -1,9 +1,7 @@
 import { Info } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
-import {
-	MetricreductionruletypesAffectedAssetDTO,
-	MetricreductionruletypesAssetTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import type { MetricreductionruletypesAffectedAssetDTO } from 'api/generated/services/sigNoz.schemas';
+import { MetricreductionruletypesAssetTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 

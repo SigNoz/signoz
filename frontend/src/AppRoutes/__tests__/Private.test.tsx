@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	MemoryRouter,
@@ -21,18 +21,21 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { AppContext } from 'providers/App/App';
-import { IAppContext, IUser } from 'providers/App/types';
+import type { IAppContext, IUser } from 'providers/App/types';
+import type {
+	LicenseResModel,
+	TrialInfo,
+} from 'types/api/licensesV3/getActive';
 import {
 	LicenseEvent,
 	LicensePlatform,
-	LicenseResModel,
 	LicenseState,
 	LicenseStatus,
-	TrialInfo,
 } from 'types/api/licensesV3/getActive';
-import { OrgPreference } from 'types/api/preferences/preference';
-import { ROLES, USER_ROLES } from 'types/roles';
-import { routeWithInitialAuthZSupport } from 'utils/permission';
+import type { OrgPreference } from 'types/api/preferences/preference';
+import type { ROLES } from 'types/roles';
+import { USER_ROLES } from 'types/roles';
+import type { routeWithInitialAuthZSupport } from 'utils/permission';
 
 import PrivateRoute from '../Private';
 

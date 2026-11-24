@@ -3,7 +3,7 @@ import { Select } from 'antd';
 
 // ** Types
 import { selectStyle } from '../QueryBuilderSearchV2/config';
-import { OperatorsSelectProps } from './OperatorsSelect.interfaces';
+import type { OperatorsSelectProps } from './OperatorsSelect.interfaces';
 
 export const OperatorsSelect = memo(function OperatorsSelect({
 	operators,

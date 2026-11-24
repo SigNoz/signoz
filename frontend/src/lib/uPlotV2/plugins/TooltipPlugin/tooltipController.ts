@@ -1,7 +1,7 @@
 import { isEqual } from 'lodash-es';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { TooltipControllerContext, TooltipControllerState } from './types';
+import type { TooltipControllerContext, TooltipControllerState } from './types';
 import {
 	buildTransform,
 	calculateTooltipOffset,

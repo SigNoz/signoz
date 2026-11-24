@@ -1,17 +1,19 @@
-import {
+import type {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
 	AlertmanagertypesChannelJiraAuthDTO,
 	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
-	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesChannelMSTeamsConfigDTO,
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
 	AlertmanagertypesChannelTelegramConfigDTO,
 	AlertmanagertypesChannelWebhookConfigDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import {
+	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesJiraDeploymentDTO,
 } from 'api/generated/services/sigNoz.schemas';
 

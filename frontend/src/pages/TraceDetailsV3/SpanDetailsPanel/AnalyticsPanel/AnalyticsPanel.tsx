@@ -6,7 +6,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
 import { generateColorPair } from 'pages/TraceDetailsV3/utils/generateColorPair';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
-import {
+import type {
 	SpantypesSpanAggregationDTO,
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -16,7 +16,8 @@ import {
 	AGGREGATIONS,
 	getAggregationMap as findAggregationMap,
 } from '../../utils/aggregations';
-import AnalyticsTabContent, { AnalyticsRow } from './AnalyticsTabContent';
+import type { AnalyticsRow } from './AnalyticsTabContent';
+import AnalyticsTabContent from './AnalyticsTabContent';
 
 import styles from './AnalyticsPanel.module.scss';
 

@@ -1,4 +1,4 @@
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import { LogType, SEVERITY_TEXT_TYPE } from './LogStateIndicator';
 

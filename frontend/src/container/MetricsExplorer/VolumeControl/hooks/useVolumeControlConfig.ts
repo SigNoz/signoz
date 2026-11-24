@@ -7,7 +7,7 @@ import {
 	usePreviewMetricReductionRule,
 	useUpdateMetricReductionRuleByID,
 } from 'api/generated/services/metrics';
-import {
+import type {
 	MetricreductionruletypesGettableReductionRuleDTO,
 	MetricreductionruletypesGettableReductionRulePreviewDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -16,11 +16,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 import { matchTypeForMode, modeFromRule } from '../configUtils';
-import { RuleMode } from '../types';
+import type { RuleMode } from '../types';
 
 interface UseVolumeControlConfigParams {
 	metricName: string;

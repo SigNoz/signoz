@@ -2,7 +2,7 @@ import { useState } from 'react';
 import cx from 'classnames';
 import { ChevronDown, ChevronRight } from '@signozhq/icons';
 
-import { StreamingToolCall } from '../../types';
+import type { StreamingToolCall } from '../../types';
 import ThinkingStep, { thinkingLabel } from '../ThinkingStep';
 import ToolCallStep, {
 	getToolDisplayLabel,

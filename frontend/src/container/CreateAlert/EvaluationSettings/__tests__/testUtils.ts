@@ -5,7 +5,7 @@ import {
 	INITIAL_EVALUATION_WINDOW_STATE,
 	INITIAL_NOTIFICATION_SETTINGS_STATE,
 } from 'container/CreateAlert/context/constants';
-import {
+import type {
 	EvaluationWindowState,
 	ICreateAlertContextProps,
 } from 'container/CreateAlert/context/types';

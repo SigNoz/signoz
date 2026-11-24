@@ -1,6 +1,6 @@
 import axios from 'api';
-import { AxiosResponse } from 'axios';
-import {
+import type { AxiosResponse } from 'axios';
+import type {
 	QueryKeyRequestProps,
 	QueryKeySuggestionsResponseProps,
 } from 'types/api/querySuggestions/types';

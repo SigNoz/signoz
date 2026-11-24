@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
-import { FieldError } from 'react-hook-form';
+import type { FieldError } from 'react-hook-form';
 
 import FieldLabel from './FieldLabel';
 

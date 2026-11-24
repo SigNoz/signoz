@@ -1,16 +1,16 @@
 import { Badge } from '@signozhq/ui/badge';
 
 import styles from './utils.module.scss';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	convertFiltersToExpression,
 	formatValueForExpression,
 } from 'components/QueryBuilderV2/utils';
-import { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
+import type { SelectedItemParams } from 'container/InfraMonitoringK8sV2/hooks';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import {
 	INFRA_MONITORING_ATTR_KEYS,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	InfraMonitoringEntity,
 } from 'container/InfraMonitoringK8sV2/constants';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap } from 'constants/queryBuilder';

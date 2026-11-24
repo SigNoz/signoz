@@ -2,7 +2,7 @@ import {
 	fillMissingXAxisTimestamps,
 	getXAxisTimestamps,
 } from 'lib/visualization/panels/utils';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 /**
  * Checks if a value is invalid for plotting

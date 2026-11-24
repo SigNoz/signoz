@@ -7,7 +7,7 @@ import {
 	buildSavedViewUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
 
-import { SavedViewRowActionConfig, SaveViewModalMode } from './types';
+import type { SavedViewRowActionConfig, SaveViewModalMode } from './types';
 
 export const SAVED_VIEW_SCHEMA_VERSION = SavedviewtypesSchemaVersionDTO.v2;
 

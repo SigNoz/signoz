@@ -6,7 +6,7 @@ import TooltipFooter from 'lib/visualization/panels/components/TooltipFooter';
 import { PanelMode } from 'lib/visualization/panels/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import {
 	flattenTimeSeries,
@@ -19,7 +19,7 @@ import { useTimezone } from 'providers/Timezone';
 import NoData from '../../components/NoData/NoData';
 import { useGroupByPerQuery } from '../../hooks/useGroupByPerQuery';
 import PanelStyles from '../../panel.module.scss';
-import { PanelRendererProps } from '../../types/rendererProps';
+import type { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveLegendPosition,
@@ -31,7 +31,7 @@ import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import { sortSeriesByMeanDesc } from '../../utils/sortSeriesByMean';
 
 import { buildBarChartConfig } from './utils/buildConfig';
-import { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 
 function BarPanelRenderer({
 	panelId,

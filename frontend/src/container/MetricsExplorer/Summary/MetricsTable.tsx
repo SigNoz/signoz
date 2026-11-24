@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Info, Loader } from '@signozhq/icons';
-import { Spin, Table, TablePaginationConfig, TableProps, Tooltip } from 'antd';
+import type { TablePaginationConfig, TableProps } from 'antd';
+import { Spin, Table, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
@@ -8,7 +9,7 @@ import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 
 import emptyStateUrl from '@/assets/Icons/emptyState.svg';
 
-import { MetricsListItemRowData, MetricsTableProps } from './types';
+import type { MetricsListItemRowData, MetricsTableProps } from './types';
 import { getMetricsTableColumns } from './utils';
 
 function MetricsTable({

@@ -1,14 +1,14 @@
 import { ApiV3Instance } from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError, AxiosResponse } from 'axios';
+import type { AxiosError, AxiosResponse } from 'axios';
 import { baseAutoCompleteIdKeysOrder } from 'constants/queryBuilder';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import createQueryParams from 'lib/createQueryParams';
 // ** Helpers
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 // ** Types
-import { IGetAggregateAttributePayload } from 'types/api/queryBuilder/getAggregatorAttribute';
-import {
+import type { IGetAggregateAttributePayload } from 'types/api/queryBuilder/getAggregatorAttribute';
+import type {
 	BaseAutocompleteData,
 	IQueryAutocompleteResponse,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';

@@ -1,6 +1,6 @@
 import type { Threshold } from 'lib/uPlotV2/hooks/types';
 
-import { ScatterAxisScale, type ScatterSeries } from './types';
+import type { ScatterAxisScale, ScatterSeries } from './types';
 
 const SERVICES = [
 	'frontend',

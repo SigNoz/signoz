@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FullScreenHandle } from 'react-full-screen';
+import type { FullScreenHandle } from 'react-full-screen';
 import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import type {
@@ -12,7 +12,7 @@ import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useDashboardLockPermission } from 'hooks/dashboards/useDashboardLockPermission';
 import { useToggleDashboardLock } from 'hooks/dashboards/useToggleDashboardLock';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import { useCreatePanel } from '../hooks/useCreatePanel';

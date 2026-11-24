@@ -1,4 +1,4 @@
-import {
+import type {
 	AlertmanagertypesChannelEmailConfigDTO,
 	AlertmanagertypesChannelGoogleChatConfigDTO,
 	AlertmanagertypesChannelIncidentIOConfigDTO,
@@ -10,7 +10,8 @@ import {
 	AlertmanagertypesChannelTelegramConfigDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { ChannelKind, ChannelSpecFormValues, JiraDeployment } from './types';
+import type { ChannelSpecFormValues } from './types';
+import { ChannelKind, JiraDeployment } from './types';
 
 // shared by slack and ms teams, both render the same title / description boxes
 export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> =

@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { VirtuosoGrid } from 'react-virtuoso';
 import cx from 'classnames';
-import { LegendItem } from 'lib/uPlotV2/config/types';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
 
-import { LegendAction, LegendPosition, LegendProps } from '../types';
+import type { LegendProps } from '../types';
+import { LegendAction, LegendPosition } from '../types';
 
 import { LEGEND_ITEM_EXTRA_WIDTH, MAX_LEGEND_WIDTH } from './constants';
 import LegendRow from './LegendRow';

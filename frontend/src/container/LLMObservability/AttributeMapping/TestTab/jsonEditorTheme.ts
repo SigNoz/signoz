@@ -1,5 +1,5 @@
 //TODO: This is a local theme for now, but ideally for the editor as well. Just like prettyViewer, we have a theme. We should have a theme for the editor as well.
-import { Monaco } from '@monaco-editor/react';
+import type { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 
 export const SIGNOZ_JSON_THEME_DARK = 'signoz-attr-mapping-json-dark';

@@ -1,13 +1,14 @@
-import { OperatorConfigKeys, OPERATORS_CONFIG } from 'constants/queryBuilder';
+import type { OperatorConfigKeys } from 'constants/queryBuilder';
+import { OPERATORS_CONFIG } from 'constants/queryBuilder';
 import { HAVING_FILTER_REGEXP } from 'constants/regExp';
-import { IOption } from 'hooks/useResourceAttribute/types';
+import type { IOption } from 'hooks/useResourceAttribute/types';
 import uniqWith from 'lodash-es/unionWith';
 import { parse } from 'papaparse';
-import {
+import type {
 	HavingForm,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { MetricAggregation } from 'types/api/v5/queryRange';
+import type { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { ORDERBY_FILTERS } from './OrderByFilter/config';

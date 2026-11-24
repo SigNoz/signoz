@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 // eslint-disable-next-line signoz/no-antd-components
-import { Select, SelectProps } from 'antd';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import type { SelectProps } from 'antd';
+import { Select } from 'antd';
+import type { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 
 import { getSelectOptions } from './utils';
 import styles from './ExportPanel.module.scss';

@@ -3,11 +3,11 @@ import { Popover, Tooltip } from 'antd';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import cx from 'classnames';
-import {
+import type {
 	LogViewMode,
-	FontSize,
 	OptionsMenuConfig,
 } from 'container/OptionsMenu/types';
+import { FontSize } from 'container/OptionsMenu/types';
 import {
 	Check,
 	ChevronLeft,

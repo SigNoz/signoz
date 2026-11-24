@@ -14,11 +14,11 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import AnomalyAlertEvaluationView from 'container/AnomalyAlertEvaluationView';
 import { INITIAL_CRITICAL_THRESHOLD } from 'container/CreateAlert/context/constants';
-import { Threshold } from 'container/CreateAlert/context/types';
+import type { Threshold } from 'container/CreateAlert/context/types';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
 import { getFormatNameByOptionId } from 'constants/formats/alertFormatCategories';
-import { timePreferenceType } from 'constants/timePreference';
-import {
+import type { timePreferenceType } from 'constants/timePreference';
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
@@ -35,13 +35,13 @@ import { isEmpty } from 'lodash-es';
 import { useIsAnomalyDetectionAvailable } from 'container/CreateAlert/useIsAnomalyDetectionAvailable';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
-import { AlertDef } from 'types/api/alerts/def';
-import APIError from 'types/api/error';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
+import type { AlertDef } from 'types/api/alerts/def';
+import type APIError from 'types/api/error';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 import { getTimeRange } from 'utils/getTimeRange';

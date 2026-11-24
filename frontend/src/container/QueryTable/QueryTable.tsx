@@ -4,14 +4,12 @@ import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
 import { isBuilderQueryType } from 'lib/query/builderSlot';
-import {
-	createTableColumnsFromQuery,
-	RowData,
-} from 'lib/query/createTableColumnsFromQuery';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { createTableColumnsFromQuery } from 'lib/query/createTableColumnsFromQuery';
 import ContextMenu, { useCoordinates } from 'periscope/components/ContextMenu';
 
 import useTableContextMenu from './Drilldown/useTableContextMenu';
-import { QueryTableProps } from './QueryTable.intefaces';
+import type { QueryTableProps } from './QueryTable.intefaces';
 import { createDownloadableData } from './utils';
 
 import './QueryTable.styles.scss';

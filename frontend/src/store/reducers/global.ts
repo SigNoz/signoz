@@ -1,12 +1,12 @@
 import { getDefaultOption } from 'container/TopNav/DateTimeSelectionV2/constants';
+import type { GlobalTimeAction } from 'types/actions/globalTime';
 import {
 	GLOBAL_TIME_LOADING_START,
-	GlobalTimeAction,
 	UPDATE_AUTO_REFRESH_DISABLED,
 	UPDATE_AUTO_REFRESH_INTERVAL,
 	UPDATE_TIME_INTERVAL,
 } from 'types/actions/globalTime';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 const initialState: GlobalReducer = {
 	maxTime: Date.now() * 1000000,

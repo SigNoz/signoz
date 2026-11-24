@@ -1,7 +1,10 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { cloneDeep } from 'lodash-es';
-import { OrderByPayload, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	OrderByPayload,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { parseListOrderBy } from 'utils/explorerUtils';
 
 export const getListViewQuery = (

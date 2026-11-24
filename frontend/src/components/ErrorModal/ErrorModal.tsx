@@ -4,7 +4,7 @@ import { Button, Modal } from 'antd';
 import { CircleAlert, X } from '@signozhq/icons';
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import { useAppContext } from 'providers/App/App';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import ErrorContent from './components/ErrorContent';
 

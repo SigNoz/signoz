@@ -32,12 +32,12 @@ import type {
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { LegendSeriesResolver } from '../utils/legendSeries';
+import type { Hash } from '@signozhq/icons';
 import {
 	Antenna,
 	BarChart,
 	Columns3,
 	Crosshair,
-	Hash,
 	Link2,
 	MapPin,
 	Palette,

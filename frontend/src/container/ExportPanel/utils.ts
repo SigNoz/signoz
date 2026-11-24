@@ -1,5 +1,5 @@
-import { SelectProps } from 'antd';
-import { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
+import type { SelectProps } from 'antd';
+import type { ExportDashboard } from 'hooks/dashboard/useExportDashboards';
 
 export const getSelectOptions = (
 	data: ExportDashboard[],

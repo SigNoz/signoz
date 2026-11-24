@@ -1,13 +1,12 @@
-import { ReactNode, useCallback, useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useStore } from 'zustand';
 
 import { getUserExpressionFromCombined } from '../utils';
 import { QuerySearchV2Context } from './context';
-import {
-	createExpressionStore,
-	QuerySearchV2Store,
-} from './QuerySearchV2.store';
+import type { QuerySearchV2Store } from './QuerySearchV2.store';
+import { createExpressionStore } from './QuerySearchV2.store';
 import type { StoreApi } from 'zustand';
 
 export interface QuerySearchV2ProviderProps {

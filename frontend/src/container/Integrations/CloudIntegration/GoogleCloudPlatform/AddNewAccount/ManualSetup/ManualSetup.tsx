@@ -13,7 +13,7 @@ import ConnectionMethodSelector from '../ConnectionMethodSelector';
 import SetupDrawerFooter from '../SetupDrawerFooter';
 import SetupGuideCallout from '../SetupGuideCallout';
 import { MANUAL_SETUP_GUIDE, DEFAULT_SETUP_FORM_VALUES } from '../constants';
-import { GcpSetupFormValues } from '../types';
+import type { GcpSetupFormValues } from '../types';
 import { usePrefillCredentials } from '../usePrefillCredentials';
 
 interface ManualSetupProps {

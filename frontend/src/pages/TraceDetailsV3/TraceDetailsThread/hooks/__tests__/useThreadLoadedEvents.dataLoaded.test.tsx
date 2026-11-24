@@ -3,10 +3,10 @@ import { waitFor } from 'tests/test-utils';
 import { TraceDetailsTab } from '../../../constants';
 import { TraceDetailEvents } from '../../../events';
 import { SpanDetailVariant } from '../../../SpanDetailsPanel/constants';
+import type { ThreadLoadedEventsProps } from './threadLoadedEventsTestUtils';
 import {
 	mockTraceSummaries,
 	renderThreadLoadedEvents,
-	ThreadLoadedEventsProps,
 	waitForSummary,
 } from './threadLoadedEventsTestUtils';
 

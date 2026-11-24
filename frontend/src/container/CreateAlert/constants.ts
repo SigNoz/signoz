@@ -3,10 +3,10 @@ import {
 	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
 import {
 	AlertTypes,
 	NEW_ALERT_SCHEMA_VERSION,
-	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 

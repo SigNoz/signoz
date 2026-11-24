@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { Coordinates, PopoverPosition } from './types';
+import type { Coordinates, PopoverPosition } from './types';
 
 // Custom hook for managing coordinates
 export const useCoordinates = (): {

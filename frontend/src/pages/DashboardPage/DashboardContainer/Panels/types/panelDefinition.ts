@@ -1,9 +1,9 @@
 import type { ComponentType } from 'react';
 import type { StoreApi } from 'zustand';
-import {
-	type DashboardtypesPanelDTO,
-	type DashboardtypesPanelSpecDTO,
+import type {
 	TelemetrytypesSignalDTO,
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ChartLine } from '@signozhq/icons';
 

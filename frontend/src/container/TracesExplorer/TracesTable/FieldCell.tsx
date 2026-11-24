@@ -4,7 +4,7 @@ import { Minus } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import {
 	logOpenTraceClicked,

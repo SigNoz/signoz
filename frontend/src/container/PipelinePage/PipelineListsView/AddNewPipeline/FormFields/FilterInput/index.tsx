@@ -3,10 +3,10 @@ import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { toLegacyLogsFilter } from 'utils/fieldContext';
 
-import { ProcessorFormField } from '../../../AddNewProcessor/config';
+import type { ProcessorFormField } from '../../../AddNewProcessor/config';
 import { formValidationRules } from '../../../config';
 import LogsFilterPreview from '../../../Preview/LogsFilterPreview';
 

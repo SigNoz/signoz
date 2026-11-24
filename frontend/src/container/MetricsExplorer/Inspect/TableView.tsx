@@ -4,7 +4,7 @@ import { Card, Table } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 
-import { InspectMetricsSeries, TableViewProps } from './types';
+import type { InspectMetricsSeries, TableViewProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
 function TableView({

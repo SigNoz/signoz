@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useBaseAggregateOptions from '../useBaseAggregateOptions';
 

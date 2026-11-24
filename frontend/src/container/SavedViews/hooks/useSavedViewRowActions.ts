@@ -7,12 +7,12 @@ import {
 	updateSavedView,
 	useDeleteSavedView,
 } from 'api/generated/services/saved-view';
-import {
+import type {
 	RenderErrorResponseDTO,
 	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
+import type { ErrorType } from 'api/generatedAPIInstance';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { toAPIError } from 'utils/errorUtils';
@@ -23,7 +23,7 @@ import {
 	SAVED_VIEW_TOAST_POSITION,
 } from '../constants';
 import { SavedViewEventKeys, SavedViewEvents } from '../events';
-import { UseSavedViewRowActionsResult } from '../types';
+import type { UseSavedViewRowActionsResult } from '../types';
 import { getSavedViewPath } from '../utils/getSavedViewPath';
 import { invalidateSavedViews } from '../utils/invalidateSavedViews';
 import { useSavedViewLogEvent } from './useSavedViewLogEvent';

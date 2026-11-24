@@ -1,4 +1,4 @@
-import { TTTLType } from './common';
+import type { TTTLType } from './common';
 
 export interface Props {
 	type: TTTLType;

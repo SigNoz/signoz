@@ -1,9 +1,10 @@
 import { javascriptLanguage } from '@codemirror/lang-javascript';
-import { Highlighter, highlightTree, Tag } from '@lezer/highlight';
+import type { Highlighter, Tag } from '@lezer/highlight';
+import { highlightTree } from '@lezer/highlight';
 import { copilotDarkStyle } from '@uiw/codemirror-theme-copilot';
 import { githubLightStyle } from '@uiw/codemirror-theme-github';
 
-import { HighlightedQueryPart } from '../types';
+import type { HighlightedQueryPart } from '../types';
 
 function createThemeHighlighter(styles: typeof copilotDarkStyle): Highlighter {
 	const colorByTag = new Map<Tag, string>();

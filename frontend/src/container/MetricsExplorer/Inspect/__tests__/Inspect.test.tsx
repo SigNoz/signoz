@@ -10,11 +10,11 @@ import store from 'store';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from '../constants';
 import Inspect from '../Inspect';
-import {
-	InspectionStep,
+import type {
 	InspectMetricsSeries,
 	UseInspectMetricsReturnData,
 } from '../types';
+import { InspectionStep } from '../types';
 import * as useInspectMetricsModule from '../useInspectMetrics';
 
 const queryClient = new QueryClient();

@@ -1,5 +1,5 @@
-import { StatusCodes } from 'http-status-codes';
-import { ErrorStatusCode, SuccessStatusCode } from 'types/common';
+import type { StatusCodes } from 'http-status-codes';
+import type { ErrorStatusCode, SuccessStatusCode } from 'types/common';
 
 export type ApiResponse<T> = { data: T };
 

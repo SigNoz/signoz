@@ -5,14 +5,15 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
+import type { UrlUpdateEvent } from 'nuqs/adapters/testing';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
 import { TestRouter } from 'tests/router';
 import { userEvent } from 'tests/test-utils';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { K8sCategories } from '../constants';

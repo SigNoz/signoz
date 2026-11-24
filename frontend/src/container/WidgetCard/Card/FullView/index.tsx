@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { Loader, RefreshCw, Search } from '@signozhq/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
-import { ToggleGraphProps } from 'components/Graph/types';
+import type { ToggleGraphProps } from 'components/Graph/types';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -25,19 +25,20 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
 import useDrilldown from 'container/WidgetCard/Card/FullView/useDrilldown';
 import { populateMultipleResults } from 'lib/query/populateMultipleResults';
-import { timeItems, timePreferance } from 'constants/timePreference';
+import type { timePreferance } from 'constants/timePreference';
+import { timeItems } from 'constants/timePreference';
 import PanelWrapper from 'container/WidgetCard/Panels/PanelWrapper';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useChartMutable } from 'hooks/useChartMutable';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
-import { AppState } from 'store/reducers';
-import { Warning } from 'types/api';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { Warning } from 'types/api';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -48,7 +49,7 @@ import {
 	GraphContainer,
 	TimeContainer,
 } from 'container/WidgetCard/Card/FullView/styles';
-import { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
+import type { FullViewProps } from 'container/WidgetCard/Card/FullView/types';
 
 import 'container/WidgetCard/Card/FullView/WidgetFullView.styles.scss';
 

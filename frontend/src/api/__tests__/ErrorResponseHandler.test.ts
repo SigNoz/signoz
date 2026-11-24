@@ -1,5 +1,6 @@
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError, CanceledError } from 'axios';
+import type { AxiosError } from 'axios';
+import { CanceledError } from 'axios';
 
 describe('ErrorResponseHandler', () => {
 	// axios aborts a request whose signal fired before it was sent without ever

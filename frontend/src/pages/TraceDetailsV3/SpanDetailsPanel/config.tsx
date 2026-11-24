@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import ExpandableValue from 'periscope/components/ExpandableValue';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import styles from './SpanSummary.module.scss';
 import { TraceIdField } from './TraceIdField';

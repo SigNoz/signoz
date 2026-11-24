@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useUpdateQuickFilters } from 'api/generated/services/quick-filter';
 import logEvent from 'api/common/logEvent';
-import {
+import type {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	QuickfiltertypesSourceDTO,
@@ -10,7 +10,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
-import { TelemetryFieldKey } from 'types/api/v5/queryRange';
+import type { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
 interface UseQuickFilterSettingsProps {
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;

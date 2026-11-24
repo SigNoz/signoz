@@ -5,7 +5,7 @@ import useErrorNotification from 'hooks/useErrorNotification';
 
 import { WidgetKeys } from '../../../constant';
 import ApDexMetrics from './ApDexMetrics';
-import { ApDexDataSwitcherProps } from './types';
+import type { ApDexDataSwitcherProps } from './types';
 
 function ApDexMetricsApplication({
 	handleGraphClick,

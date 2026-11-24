@@ -1,7 +1,7 @@
 import { FontSize } from 'container/OptionsMenu/types';
 import { render, renderHook, screen } from 'tests/test-utils';
-import { IField } from 'types/api/logs/fields';
-import { ILog } from 'types/api/logs/log';
+import type { IField } from 'types/api/logs/fields';
+import type { ILog } from 'types/api/logs/log';
 
 import { useLogsTableColumns } from '../useLogsTableColumns';
 

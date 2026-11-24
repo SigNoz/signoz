@@ -1,20 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import {
-	GetMetricMetadata200,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
+import type {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
 } from 'components/YAxisUnitSelector/types';
 import * as useNotificationsHooks from 'hooks/useNotifications';
 import { userEvent } from 'tests/test-utils';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 
 import Metadata from '../Metadata';
-import { MetricMetadata } from '../types';
+import type { MetricMetadata } from '../types';
 import { transformMetricMetadata } from '../utils';
 import { getMockMetricMetadataData, MOCK_METRIC_NAME } from './testUtlls';
 

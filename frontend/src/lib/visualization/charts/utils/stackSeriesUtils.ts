@@ -1,5 +1,6 @@
 import { StackMode } from 'lib/uPlotV2/config/types';
-import uPlot, { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
+import type uPlot from 'uplot';
 
 /**
  * Stack data cumulatively (top-down: first series = top, last = bottom).

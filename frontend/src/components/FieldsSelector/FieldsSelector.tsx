@@ -6,9 +6,12 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Check, TableColumnsSplit, X } from '@signozhq/icons';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { FieldKeysConfigProp } from 'api/querySuggestions/types';
-import { BuilderQueryType, TelemetryFieldKey } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import type { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import type {
+	BuilderQueryType,
+	TelemetryFieldKey,
+} from 'types/api/v5/queryRange';
+import type { DataSource } from 'types/common/queryBuilder';
 
 import AddedFields from './AddedFields';
 import OtherFields from './OtherFields';

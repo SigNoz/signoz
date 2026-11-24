@@ -1,8 +1,11 @@
-import { ReactNode } from 'react';
-import { Widgets } from 'types/api/widgets/widget';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { ReactNode } from 'react';
+import type { Widgets } from 'types/api/widgets/widget';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { IServiceName } from './Tabs/types';
+import type { IServiceName } from './Tabs/types';
 
 export interface GetWidgetQueryBuilderProps {
 	query: Widgets['query'];

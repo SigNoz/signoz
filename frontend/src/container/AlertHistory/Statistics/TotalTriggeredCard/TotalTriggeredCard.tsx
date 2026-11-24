@@ -1,4 +1,4 @@
-import { AlertRuleStats } from 'types/api/alerts/def';
+import type { AlertRuleStats } from 'types/api/alerts/def';
 
 import StatsCard from '../StatsCard/StatsCard';
 

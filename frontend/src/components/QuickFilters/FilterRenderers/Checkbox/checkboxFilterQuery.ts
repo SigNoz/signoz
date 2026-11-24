@@ -3,10 +3,8 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 	removeKeysFromExpression,
 } from 'components/QueryBuilderV2/utils';
-import {
-	IQuickFiltersConfig,
-	QuickFiltersSource,
-} from 'components/QuickFilters/types';
+import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
@@ -15,11 +13,14 @@ import {
 	getBuilderSlotKeyForQueryType,
 	replaceBuilderBySlotKey,
 } from 'lib/query/builderSlot';
-import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Query,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
 import { getKeySpellings, isKeyMatch } from './utils';
-import { CheckedState } from '../../types';
+import type { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
 export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];

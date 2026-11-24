@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
-import { RowKeyData, TableColumnDef } from './types';
+import type { RowKeyData, TableColumnDef } from './types';
 import type { ComboboxItemType } from '@signozhq/ui/combobox';
 
 export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>

@@ -12,13 +12,13 @@ import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 

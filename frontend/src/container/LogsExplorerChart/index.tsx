@@ -13,10 +13,10 @@ import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import { useTimezone } from 'providers/Timezone';
 import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
+import type { LogsExplorerChartProps } from './LogsExplorerChart.interfaces';
 import { useLogsExplorerChartConfig } from './useLogsExplorerChartConfig';
 
 import './LogsExplorerChart.styles.scss';

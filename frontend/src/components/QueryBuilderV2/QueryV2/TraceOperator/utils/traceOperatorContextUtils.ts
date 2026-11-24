@@ -1,8 +1,9 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 
-import { CharStreams, CommonTokenStream, Token } from 'antlr4';
+import type { Token } from 'antlr4';
+import { CharStreams, CommonTokenStream } from 'antlr4';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
-import { IToken } from 'types/antlrQueryTypes';
+import type { IToken } from 'types/antlrQueryTypes';
 
 // Trace Operator Context Interface
 export interface ITraceOperatorContext {

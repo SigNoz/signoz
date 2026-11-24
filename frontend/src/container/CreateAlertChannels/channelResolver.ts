@@ -1,10 +1,10 @@
-import { TFunction } from 'i18next';
+import type { TFunction } from 'i18next';
 import { get, set } from 'lodash-es';
 import type { FieldErrors, Resolver } from 'react-hook-form';
 import type { $ZodIssue } from 'zod/v4/core';
 
 import { channelNameSchema } from './schemas/shared';
-import { ChannelFormValues, ChannelKind } from './types';
+import type { ChannelFormValues, ChannelKind } from './types';
 import { CHANNEL_SCHEMAS } from './validation';
 
 const toFieldErrors = (

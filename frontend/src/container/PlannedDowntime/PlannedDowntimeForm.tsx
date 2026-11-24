@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Info } from '@signozhq/icons';
+import type { FormInstance, SelectProps } from 'antd';
 import {
 	Button,
 	DatePicker,
 	Form,
-	FormInstance,
 	Input,
 	Modal,
 	Select,
-	SelectProps,
 	Spin,
 	Tooltip,
 } from 'antd';
@@ -24,9 +23,9 @@ import type {
 	AlertmanagertypesPlannedMaintenanceDTO,
 	AlertmanagertypesPostablePlannedMaintenanceDTO,
 	AlertmanagertypesRecurrenceDTO,
+	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ModalButtonWrapper } from 'container/PipelinePage/PipelineListsView/styles';
 import dayjs from 'dayjs';
@@ -35,7 +34,7 @@ import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
 
 import 'dayjs/locale/en';

@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import Uplot from 'components/Uplot';
 import { useResizeObserver } from 'hooks/useDimensions';
-import { AlertRuleStats } from 'types/api/alerts/def';
+import type { AlertRuleStats } from 'types/api/alerts/def';
 
 type Props = {
 	timeSeries: AlertRuleStats['currentTriggersSeries']['values'];

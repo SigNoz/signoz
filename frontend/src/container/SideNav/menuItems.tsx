@@ -43,11 +43,8 @@ import {
 	Brain,
 } from '@signozhq/icons';
 
-import {
-	SecondaryMenuItemKey,
-	SettingsNavSection,
-	SidebarItem,
-} from './sideNav.types';
+import type { SettingsNavSection, SidebarItem } from './sideNav.types';
+import { SecondaryMenuItemKey } from './sideNav.types';
 import { Style } from '@signozhq/design-tokens';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';

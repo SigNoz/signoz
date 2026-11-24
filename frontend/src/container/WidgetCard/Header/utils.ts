@@ -1,6 +1,6 @@
 import type { DropdownActionItemType } from '@signozhq/ui/dropdown';
 
-import { MenuItem } from 'container/WidgetCard/Header/types';
+import type { MenuItem } from 'container/WidgetCard/Header/types';
 
 export const generateMenuList = (
 	actions: MenuItem[],

@@ -5,7 +5,7 @@
 
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { groupByKey, queryWith } from '../QueryBuilderV2.stories.mocks';
 

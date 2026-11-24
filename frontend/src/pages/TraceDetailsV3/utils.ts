@@ -1,13 +1,10 @@
 import type { SpantypesWaterfallSpanDTO } from 'api/generated/services/sigNoz.schemas';
 import { pick } from 'lodash-es';
-import { SpanV3 } from 'types/api/trace/getTraceV3';
+import type { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { COLOR_BY_OPTIONS } from './constants';
-import {
-	ColorPair,
-	generateColorPair,
-	RESERVED_ERROR,
-} from './utils/generateColorPair';
+import type { ColorPair } from './utils/generateColorPair';
+import { generateColorPair, RESERVED_ERROR } from './utils/generateColorPair';
 
 /** Like `||`, but keeps `0` and `false`. */
 const valueOrUndefined = <T>(value: T): T | undefined =>

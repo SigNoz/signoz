@@ -1,6 +1,6 @@
 import { Plus } from '@signozhq/icons';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { QueryButton } from 'container/QueryBuilder/rawQueryEditors/styles';

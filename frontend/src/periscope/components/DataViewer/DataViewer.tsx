@@ -1,9 +1,11 @@
-import { CSSProperties, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import logEvent from 'api/common/logEvent';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { JsonView } from 'periscope/components/JsonView';
-import { PrettyView, PrettyViewProps } from 'periscope/components/PrettyView';
+import type { PrettyViewProps } from 'periscope/components/PrettyView';
+import { PrettyView } from 'periscope/components/PrettyView';
 
 import './DataViewer.styles.scss';
 

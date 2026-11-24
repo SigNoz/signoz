@@ -1,14 +1,13 @@
+import type { Dispatch, SetStateAction } from 'react';
 import {
-	Dispatch,
-	SetStateAction,
 	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useRef,
 	useState,
 } from 'react';
-import { LegendItem } from 'lib/uPlotV2/config/types';
-import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import type { LegendItem } from 'lib/uPlotV2/config/types';
+import type { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
 
 /**

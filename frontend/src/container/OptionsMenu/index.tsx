@@ -9,7 +9,7 @@ import AddColumnField from './AddColumnField';
 import FormatField from './FormatField';
 import MaxLinesField from './MaxLinesField';
 import { OptionsContainer, OptionsContentWrapper } from './styles';
-import { OptionsMenuConfig } from './types';
+import type { OptionsMenuConfig } from './types';
 import useOptionsMenu from './useOptionsMenu';
 
 interface OptionsMenuProps {

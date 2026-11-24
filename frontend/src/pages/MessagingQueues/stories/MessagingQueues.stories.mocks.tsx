@@ -5,7 +5,7 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { MessagingQueueHealthCheckService } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import type { MessagingQueueHealthCheckService } from 'pages/MessagingQueues/MessagingQueuesUtils';
 
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';

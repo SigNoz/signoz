@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import styles from './RoutingPolicies.module.scss';
-import { RoutingPolicy } from './types';
+import type { RoutingPolicy } from './types';
 
 interface RoutingPolicyActionsMenuProps {
 	routingPolicy: RoutingPolicy;

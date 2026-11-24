@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
-import { TooltipRenderArgs } from '../../components/types';
+import type { TooltipRenderArgs } from '../../components/types';
 import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import {

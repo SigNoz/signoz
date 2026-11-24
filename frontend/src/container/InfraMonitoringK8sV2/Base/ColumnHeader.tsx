@@ -3,7 +3,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 
 import styles from './ColumnHeader.module.scss';
 import cx from 'classnames';
-import { MouseEventHandler } from 'react';
+import type { MouseEventHandler } from 'react';
 import { DOCS_BASE_URL } from 'constants/app';
 
 const DOCS_ROOT = `${DOCS_BASE_URL}/docs`;

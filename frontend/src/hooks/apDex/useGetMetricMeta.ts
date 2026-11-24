@@ -1,7 +1,8 @@
-import { useQuery, UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
+import { useQuery } from 'react-query';
 import { getMetricMeta } from 'api/metrics/ApDex/getMetricMeta';
-import { AxiosError, AxiosResponse } from 'axios';
-import { MetricMetaProps } from 'types/api/metrics/getApDex';
+import type { AxiosError, AxiosResponse } from 'axios';
+import type { MetricMetaProps } from 'types/api/metrics/getApDex';
 
 export const useGetMetricMeta = (
 	metricName: string,

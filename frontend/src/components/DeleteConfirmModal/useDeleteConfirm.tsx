@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Modal } from 'antd';
 import { CircleAlert } from '@signozhq/icons';
 

@@ -1,22 +1,24 @@
-import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
+import type { HTMLAttributes } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Plus, Trash2, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/toast';
-import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Modal, Table } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useDeleteAuthDomain,
 	useListAuthDomains,
 } from 'api/generated/services/authdomains';
-import {
+import type {
 	AuthtypesGettableAuthDomainDTO,
 	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import CreateEdit from './CreateEdit/CreateEdit';

@@ -1,12 +1,9 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { LogViewMode } from 'container/OptionsMenu/types';
+import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
-import { FontSize } from 'container/OptionsMenu/types';
-import { FormattingOptions } from 'providers/preferences/types';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { FormattingOptions } from 'providers/preferences/types';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import logsLoaderConfig from '../configs/logsLoaderConfig';
 

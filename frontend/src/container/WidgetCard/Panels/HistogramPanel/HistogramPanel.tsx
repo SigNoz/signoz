@@ -1,12 +1,10 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
+import type { PanelWrapperProps } from 'container/WidgetCard/Panels/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
-import {
-	IRenderTooltipFooterArgs,
-	LegendPosition,
-} from 'lib/uPlotV2/components/types';
-import uPlot from 'uplot';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
+import type uPlot from 'uplot';
 
 import Histogram from 'lib/visualization/charts/Histogram/Histogram';
 import ChartManager from 'lib/visualization/components/ChartManager/ChartManager';

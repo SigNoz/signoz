@@ -1,12 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import {
-	Query as ReactQuery,
-	useIsFetching,
-	useQueryClient,
-} from 'react-query';
+import type { Query as ReactQuery } from 'react-query';
+import { useIsFetching, useQueryClient } from 'react-query';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { Widgets } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Widgets } from 'types/api/widgets/widget';
 
 interface UseWidgetQueriesReturn {
 	isFetching: boolean;

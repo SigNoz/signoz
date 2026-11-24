@@ -1,9 +1,9 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import createQueryParams from 'lib/createQueryParams';
-import { ErrorResponse, SuccessResponse } from 'types/api';
-import { PayloadProps, Props } from 'types/api/errors/getNextPrevId';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
+import type { PayloadProps, Props } from 'types/api/errors/getNextPrevId';
 
 const getErrorCounts = async (
 	props: Props,

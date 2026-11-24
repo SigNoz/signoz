@@ -1,7 +1,8 @@
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -30,13 +31,13 @@ import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
 // interfaces
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 import { StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 import { getAbsoluteUrl } from 'utils/basePath';
 
-import { LiveLogsListProps } from './types';
+import type { LiveLogsListProps } from './types';
 
 import './LiveLogsList.styles.scss';
 

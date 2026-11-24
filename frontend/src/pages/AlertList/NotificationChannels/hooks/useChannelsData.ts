@@ -1,9 +1,9 @@
 import { useListNotificationChannels } from 'api/generated/services/channels';
-import {
+import type {
 	AlertmanagertypesChannelKindDTO,
 	AlertmanagertypesChannelListOrderDTO,
-	AlertmanagertypesChannelListSortDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { AlertmanagertypesChannelListSortDTO } from 'api/generated/services/sigNoz.schemas';
 import type { SortState } from 'components/TanStackTableView';
 
 import { KIND_FILTER_ALL } from '../constants';

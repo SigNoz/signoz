@@ -1,7 +1,7 @@
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { StatusFilterValue } from 'container/InfraMonitoringK8sV2/hooks';
 import {
-	StatusFilterValue,
 	useInfraMonitoringPageListing,
 	useInfraMonitoringStatusFilter,
 } from 'container/InfraMonitoringK8sV2/hooks';

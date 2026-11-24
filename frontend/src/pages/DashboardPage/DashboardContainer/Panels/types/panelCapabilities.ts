@@ -1,4 +1,4 @@
-import { EQueryType } from 'types/common/dashboard';
+import type { EQueryType } from 'types/common/dashboard';
 import {
 	Querybuildertypesv5RequestTypeDTO,
 	type TelemetrytypesSignalDTO,

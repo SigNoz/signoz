@@ -1,6 +1,6 @@
 import { listViewInitialTraceQuery } from 'constants/queryBuilder';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export function getTraceExportQuery(traceId: string): Query {
 	const [baseQueryData] = listViewInitialTraceQuery.builder.queryData;

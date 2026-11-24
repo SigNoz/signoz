@@ -1,5 +1,5 @@
-import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import {
+import type { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
 	AWSCloudAccountConfig,
 	AWSServiceConfig,
 } from './CloudIntegration/AmazonWebServices/types';

@@ -1,7 +1,8 @@
 // Driven by a handle, not a trigger: the thing that opens this is the input taking focus, and a
 // trigger press would steal that focus and dismiss the popup on every keystroke. The handle
 // anchors the suggestions to the input's row while the caret stays where the user put it.
-import { KeyboardEvent, ReactNode, useRef, useState } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
 import { Typography } from '@signozhq/ui/typography';

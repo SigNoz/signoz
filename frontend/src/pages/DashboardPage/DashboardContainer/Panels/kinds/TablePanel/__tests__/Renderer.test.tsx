@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
-import {
-	type DashboardtypesTablePanelSpecDTO,
-	type QueryRangeV5200,
+import type {
+	DashboardtypesTablePanelSpecDTO,
+	QueryRangeV5200,
 } from 'api/generated/services/sigNoz.schemas';
 import { PanelMode } from 'lib/visualization/panels/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

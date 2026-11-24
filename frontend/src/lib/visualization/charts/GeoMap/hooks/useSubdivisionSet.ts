@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { loadSubdivisions, SubdivisionSet } from '../geo/subdivisions';
-import { SubdivisionCountry } from '../types';
+import type { SubdivisionSet } from '../geo/subdivisions';
+import { loadSubdivisions } from '../geo/subdivisions';
+import type { SubdivisionCountry } from '../types';
 
 export type SubdivisionStatus = 'idle' | 'loading' | 'ready' | 'failed';
 

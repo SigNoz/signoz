@@ -1,4 +1,4 @@
-import { PipelineSimulationRequest } from 'api/pipeline/preview';
+import type { PipelineSimulationRequest } from 'api/pipeline/preview';
 import { pipelineMockData } from 'container/PipelinePage/mocks/pipeline';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';

@@ -25,7 +25,7 @@ import getStep from 'lib/getStep';
 import { navigate } from 'lib/router/navigation';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
-import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
+import type { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 

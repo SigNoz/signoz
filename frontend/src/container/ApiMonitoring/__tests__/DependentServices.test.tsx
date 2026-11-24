@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { getFormattedDependentServicesData } from 'container/ApiMonitoring/utils';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 
 import DependentServices from '../Explorer/Domains/DomainDetails/components/DependentServices';
 import ErrorState from '../Explorer/Domains/DomainDetails/components/ErrorState';

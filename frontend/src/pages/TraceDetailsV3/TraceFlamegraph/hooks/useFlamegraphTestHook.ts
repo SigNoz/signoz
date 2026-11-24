@@ -1,6 +1,7 @@
-import { MutableRefObject, useEffect } from 'react';
+import type { MutableRefObject } from 'react';
+import { useEffect } from 'react';
 
-import { SpanRect } from '../types';
+import type { SpanRect } from '../types';
 
 /**
  * E2E test hook for the canvas flamegraph. The flamegraph is `<canvas>`, so

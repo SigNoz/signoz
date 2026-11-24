@@ -1,6 +1,6 @@
+import type { Options, UseQueryStateReturn } from 'nuqs';
 import {
 	createParser,
-	Options,
 	parseAsArrayOf,
 	parseAsInteger,
 	parseAsJson,
@@ -8,7 +8,6 @@ import {
 	parseAsStringEnum,
 	useQueryState,
 	useQueryStates,
-	UseQueryStateReturn,
 } from 'nuqs';
 import {
 	InframonitoringtypesContainerStatusDTO,
@@ -16,7 +15,7 @@ import {
 	InframonitoringtypesPodStatusDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { useCallback, useMemo } from 'react';
-import {
+import type {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
@@ -26,7 +25,8 @@ import {
 	DEFAULT_K8S_CATEGORY,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 } from './constants';
-import { orderBySchema, OrderBySchemaType } from './schemas';
+import type { OrderBySchemaType } from './schemas';
+import { orderBySchema } from './schemas';
 
 export type StatusFilterValue = 'active' | 'inactive';
 

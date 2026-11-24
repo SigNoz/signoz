@@ -1,6 +1,6 @@
-import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
-import { PreferenceSlice } from '../types';
+import type { PreferenceSlice } from '../types';
 import { isPreferenceSourcePage } from '../utils';
 import { usePreferenceContext } from './PreferenceContextProvider';
 

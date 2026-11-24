@@ -1,4 +1,5 @@
-import { Table, TableColumnProps as ColumnProps, Tooltip } from 'antd';
+import type { TableColumnProps as ColumnProps } from 'antd';
+import { Table, Tooltip } from 'antd';
 import Empty from 'periscope/components/Empty/Empty';
 
 import solidInfoCircleUrl from '@/assets/Icons/solid-info-circle.svg';

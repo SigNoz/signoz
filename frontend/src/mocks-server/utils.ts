@@ -1,4 +1,4 @@
-import { ResponseResolver, restContext, RestRequest } from 'msw';
+import type { ResponseResolver, restContext, RestRequest } from 'msw';
 
 export const createErrorResponse =
 	(

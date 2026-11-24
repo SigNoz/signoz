@@ -1,16 +1,15 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { LogViewMode } from 'container/OptionsMenu/types';
+import type { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import {
 	defaultLogsSelectedColumns,
 	defaultOptionsQuery,
 } from 'container/OptionsMenu/constants';
-import { FontSize } from 'container/OptionsMenu/types';
-import {
+import type {
 	FormattingOptions,
-	PreferenceMode,
 	Preferences,
 } from 'providers/preferences/types';
+import { PreferenceMode } from 'providers/preferences/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import getLogsUpdaterConfig from '../configs/logsUpdaterConfig';

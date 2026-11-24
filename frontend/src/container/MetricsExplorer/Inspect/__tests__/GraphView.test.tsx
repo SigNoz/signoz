@@ -4,10 +4,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
-import { AlignedData } from 'uplot';
+import type { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
-import { InspectMetricsSeries } from '../types';
+import type { InspectMetricsSeries } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,

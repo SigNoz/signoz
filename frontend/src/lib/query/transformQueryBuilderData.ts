@@ -1,5 +1,5 @@
 import { OPERATORS } from 'constants/queryBuilder';
-import { Having } from 'types/api/queryBuilder/queryBuilderData';
+import type { Having } from 'types/api/queryBuilder/queryBuilderData';
 
 export const transformHavingToStringValue = (having: Having[]): string[] => {
 	const result: string[] = having.map((item) => {

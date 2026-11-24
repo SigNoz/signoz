@@ -1,10 +1,5 @@
-import React, {
-	ChangeEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { ChangeEvent } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { navigate } from 'lib/router/navigation';
 import { Plus, Search } from '@signozhq/icons';
@@ -42,7 +37,7 @@ import {
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
 import { getPlannedDowntimeColumns } from './table.config';
-import { DowntimeSchedulesTableData } from './types';
+import type { DowntimeSchedulesTableData } from './types';
 import usePlannedDowntimeTable from './usePlannedDowntimeTable';
 
 import './PlannedDowntime.styles.scss';

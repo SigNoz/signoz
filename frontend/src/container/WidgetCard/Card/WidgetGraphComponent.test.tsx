@@ -17,7 +17,7 @@ import {
 	MENUITEM_KEYS_VS_LABELS,
 	MenuItemKeys,
 } from 'container/WidgetCard/Header/contants';
-import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
+import type { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import WidgetGraphComponent from 'container/WidgetCard/Card/WidgetGraphComponent';
 
 mockAppLocation({

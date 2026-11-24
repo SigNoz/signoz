@@ -1,4 +1,4 @@
-import { TTTLType } from './common';
+import type { TTTLType } from './common';
 
 export type TStatus = '' | 'pending' | 'failed' | 'success';
 export interface PayloadPropsMetrics {

@@ -3,11 +3,8 @@ import { Button } from '@signozhq/ui/button';
 import { Drawer } from '@signozhq/ui/drawer';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 
-import {
-	ActiveViewEnum,
-	IntegrationModalProps,
-	ModalStateEnum,
-} from '../../../HeroSection/types';
+import type { IntegrationModalProps } from '../../../HeroSection/types';
+import { ActiveViewEnum, ModalStateEnum } from '../../../HeroSection/types';
 import CloseSetupConfirm from '../../CloseSetupConfirm/CloseSetupConfirm';
 import { useCloseSetupConfirm } from '../../CloseSetupConfirm/useCloseSetupConfirm';
 import { RegionForm } from '../RegionForm/RegionForm';

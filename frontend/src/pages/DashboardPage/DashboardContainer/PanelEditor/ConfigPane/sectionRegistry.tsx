@@ -1,15 +1,15 @@
 import type { ComponentType } from 'react';
 import {
+	type DashboardtypesGeoMapSettingsDTO,
+	type DashboardtypesLinkDTO,
+	type DashboardtypesHistogramBucketsDTO,
+	type DashboardtypesLegendDTO,
+	type DashboardtypesPanelSpecDTO,
+	type DashboardtypesScatterPlotAxesDTO,
+	type DashboardtypesScatterPlotDimensionsDTO,
 	type DashboardtypesGeoMapChartAppearanceDTO,
 	DashboardtypesGeoMapLayerDTO,
 	type DashboardtypesGeoMapLocationDTO,
-	DashboardtypesGeoMapSettingsDTO,
-	DashboardtypesLinkDTO,
-	DashboardtypesHistogramBucketsDTO,
-	DashboardtypesLegendDTO,
-	DashboardtypesPanelSpecDTO,
-	DashboardtypesScatterPlotAxesDTO,
-	DashboardtypesScatterPlotDimensionsDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	SectionKind,

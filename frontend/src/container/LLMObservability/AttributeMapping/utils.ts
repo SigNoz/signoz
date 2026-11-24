@@ -1,4 +1,4 @@
-import {
+import type {
 	SpantypesPostableSpanMapperDTO,
 	SpantypesPostableSpanMapperGroupDTO,
 	SpantypesSpanMapperGroupConditionKeyDTO,
@@ -7,19 +7,17 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { v4 as uuid } from 'uuid';
 
-import {
+import type {
 	ConditionKey,
 	DraftGroup,
 	DraftMapper,
-	FieldContext,
 	GroupDraft,
 	Mapper,
 	MapperDraft,
 	MapperGroup,
-	MapperOperation,
-	MapperOrigin,
 	SourceConfig,
 } from './types';
+import { FieldContext, MapperOperation, MapperOrigin } from './types';
 
 // Client-side id for not-yet-persisted rows. Prefixed so it never collides
 // with a server UUID and is easy to spot in logs.

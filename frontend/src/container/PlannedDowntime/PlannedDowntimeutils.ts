@@ -1,4 +1,4 @@
-import { UseMutateAsyncFunction } from 'react-query';
+import type { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
@@ -8,13 +8,14 @@ import type {
 	AlertmanagertypesScheduleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import dayjs, { Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { isEmpty } from 'lodash-es';
 
 import type { DowntimeAlertOption } from './types';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
 

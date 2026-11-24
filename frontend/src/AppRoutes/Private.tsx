@@ -1,4 +1,5 @@
-import { ReactChild, useCallback, useMemo } from 'react';
+import type { ReactChild } from 'react';
+import { useCallback, useMemo } from 'react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { useListUsers } from 'api/generated/services/users';
@@ -13,7 +14,7 @@ import { Redirect } from 'lib/router/Redirect';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
-import { OrgPreference } from 'types/api/preferences/preference';
+import type { OrgPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
 import { isSignozAdminEmail } from 'utils/app';
 import {

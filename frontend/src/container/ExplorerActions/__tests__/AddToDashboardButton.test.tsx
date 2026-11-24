@@ -4,7 +4,7 @@ import {
 	getExportQueryData as getLogsExportQuery,
 	getQueryByPanelType as getLogsQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
-import { OptionsQuery } from 'container/OptionsMenu/types';
+import type { OptionsQuery } from 'container/OptionsMenu/types';
 import {
 	getExportQueryData as getTracesExportQuery,
 	getQueryByPanelType as getTracesQueryByPanelType,
@@ -13,7 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { buildExportPanelLink } from 'pages/DashboardPage/DashboardContainer/PanelEditor/newPanelRoute';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import AddToDashboardButton from '../AddToDashboardButton';

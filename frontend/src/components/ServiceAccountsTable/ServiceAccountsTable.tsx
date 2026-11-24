@@ -6,7 +6,7 @@ import {
 	SA_QUERY_PARAMS,
 } from 'container/ServiceAccountsSettings/constants';
 import { SERVICE_ACCOUNTS_DEFAULT_QUERY } from 'container/ServiceAccountsSettings/list.config';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
 import {

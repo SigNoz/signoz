@@ -8,7 +8,7 @@ import { useAppContext } from 'providers/App/App';
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
 import { normalizeOperator } from '../utils';
-import { ThresholdItemProps } from './types';
+import type { ThresholdItemProps } from './types';
 import { NotificationChannelsNotFoundContent } from './utils';
 
 function ThresholdItem({

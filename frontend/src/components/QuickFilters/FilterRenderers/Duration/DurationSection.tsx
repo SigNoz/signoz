@@ -1,12 +1,5 @@
-import {
-	ChangeEventHandler,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useState,
-} from 'react';
+import type { ChangeEventHandler, Dispatch, SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Input } from 'antd';
 import { Slider, type SliderRangeValue } from '@signozhq/ui/slider';
 import { getMs } from 'utils/timeUtils';
@@ -14,7 +7,8 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 
 import { traceFilterKeys } from 'constants/traceFilterKeys';
 
-import { addFilter, FilterType } from './utils';
+import type { FilterType } from './utils';
+import { addFilter } from './utils';
 
 interface DurationProps {
 	selectedFilters: FilterType | undefined;

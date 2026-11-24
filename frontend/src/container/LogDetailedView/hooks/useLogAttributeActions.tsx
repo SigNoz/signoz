@@ -2,18 +2,18 @@ import { useCallback, useMemo } from 'react';
 import { CircleMinus, CirclePlus, Layers, RefreshCw } from '@signozhq/icons';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import {
+import type {
 	ChangeViewFunctionType,
 	ICurrentQueryData,
 } from 'hooks/useHandleExplorerTabChange';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import {
+import type {
 	FieldContext,
 	PrettyViewAction,
 	VisibleActionsConfig,
 } from 'periscope/components/PrettyView/PrettyView';
 import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { LogDetailsAction } from '../constants';
 import {

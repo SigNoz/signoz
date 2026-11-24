@@ -1,26 +1,29 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type {
+	Completion,
+	CompletionContext,
+	CompletionResult,
+} from '@codemirror/autocomplete';
 import {
 	autocompletion,
 	closeCompletion,
-	Completion,
-	CompletionContext,
 	completionKeymap,
-	CompletionResult,
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import { EditorState, RangeSetBuilder, Transaction } from '@codemirror/state';
+import type { Transaction } from '@codemirror/state';
+import { EditorState, RangeSetBuilder } from '@codemirror/state';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
+import type { ViewUpdate } from '@uiw/react-codemirror';
 import CodeMirror, {
 	Decoration,
 	EditorView,
 	keymap,
 	ViewPlugin,
-	ViewUpdate,
 } from '@uiw/react-codemirror';
 import { Button, Popover, Tooltip } from 'antd';
 import { TelemetrytypesFieldDataTypeDTO } from 'api/generated/services/sigNoz.schemas';
@@ -29,7 +32,7 @@ import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Info, TriangleAlert } from '@signozhq/icons';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	DATA_SOURCE_TO_SIGNAL,
 	TracesAggregatorOperator,

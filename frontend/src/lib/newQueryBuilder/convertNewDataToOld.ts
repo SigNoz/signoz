@@ -1,9 +1,9 @@
 /* eslint-disable sonarjs/no-identical-functions */
-import {
+import type {
 	MetricRangePayloadProps,
 	MetricRangePayloadV3,
 } from 'types/api/metrics/getQueryRange';
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 export const convertNewDataToOld = (
 	newData: MetricRangePayloadV3,

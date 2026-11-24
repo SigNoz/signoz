@@ -1,5 +1,5 @@
 import { grey } from '@ant-design/colors';
-import { Chart } from 'chart.js';
+import type { Chart } from 'chart.js';
 
 export const emptyGraph = {
 	id: 'emptyChart',

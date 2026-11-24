@@ -1,9 +1,10 @@
 import Feature from 'ol/Feature';
 import { renderHook } from 'tests/test-utils';
 
-import { GeoMapShapes, getCountryShapes } from '../../geo/shapes';
+import type { GeoMapShapes } from '../../geo/shapes';
+import { getCountryShapes } from '../../geo/shapes';
 import { useOlLayers } from '../useOlLayers';
-import { OlLayers } from '../useOlMap';
+import type { OlLayers } from '../useOlMap';
 import { createFakeOlMap } from './fakeOlMap';
 import { DATA, FILLS, PALETTE, setup, styleOf, VALUES } from './olLayersSetup';
 

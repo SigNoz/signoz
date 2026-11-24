@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { useThemeConfig } from 'hooks/useDarkMode';
 import { NotificationProvider } from 'hooks/useNotifications';

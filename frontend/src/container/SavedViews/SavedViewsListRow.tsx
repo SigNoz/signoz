@@ -4,7 +4,7 @@ import { Undo2 } from '@signozhq/icons';
 import SavedViewsRowButton from './SavedViewsRowButton';
 import SavedViewsRowLink from './SavedViewsRowLink';
 import SavedViewsRowMenu from './SavedViewsRowMenu';
-import { SavedViewsListRowProps } from './types';
+import type { SavedViewsListRowProps } from './types';
 
 import styles from './SavedViewsList.module.scss';
 

@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
-import {
+import type {
 	GraphPopoverOptions,
-	InspectionStep,
 	MetricInspectionOptions,
 	TimeSeriesLabelProps,
 } from './types';
+import { InspectionStep } from './types';
 import { formatTimestampToFullDateTime } from './utils';
 
 function TimeSeriesLabel({

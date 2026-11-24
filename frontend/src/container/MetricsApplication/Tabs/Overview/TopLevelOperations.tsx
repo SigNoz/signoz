@@ -5,8 +5,8 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import Graph from 'container/WidgetCard/Card';
 import { SERVICE_DETAIL_DRILLDOWN_ENABLED } from 'container/MetricsApplication/constant';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { Widgets } from 'types/api/widgets/widget';
+import type { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import type { Widgets } from 'types/api/widgets/widget';
 
 function TopLevelOperation({
 	name,

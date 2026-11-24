@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { IQuickFiltersConfig } from 'components/QuickFilters/types';
+import type { IQuickFiltersConfig } from 'components/QuickFilters/types';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 

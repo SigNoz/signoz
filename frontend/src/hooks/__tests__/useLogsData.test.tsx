@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AllTheProviders } from 'tests/test-utils';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { useLogsData } from '../useLogsData';
 

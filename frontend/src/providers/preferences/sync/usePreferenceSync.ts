@@ -1,18 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGetSavedView } from 'api/generated/services/saved-view';
-import { TelemetryFieldKey } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { TelemetryFieldKey } from 'api/v5/v5';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { getViewColumnsAndFormatting } from 'container/SavedViews/utils/getViewColumnsAndFormatting';
 
 import { getPanelDefaults } from '../loader/getPanelDefaults';
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
-import {
+import type {
 	FormattingOptions,
-	PreferenceMode,
 	Preferences,
 	PreferenceSourcePage,
 } from '../types';
+import { PreferenceMode } from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 export function usePreferenceSync({

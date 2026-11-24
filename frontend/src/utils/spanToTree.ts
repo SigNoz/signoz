@@ -1,5 +1,9 @@
 import { cloneDeep } from 'lodash-es';
-import { ITraceForest, ITraceTree, Span } from 'types/api/trace/getTraceItem';
+import type {
+	ITraceForest,
+	ITraceTree,
+	Span,
+} from 'types/api/trace/getTraceItem';
 
 const getSpanReferences = (
 	rawReferences: string[] = [],

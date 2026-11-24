@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import useUpdatedQuery from 'container/WidgetCard/hooks/useResolveQuery';
 

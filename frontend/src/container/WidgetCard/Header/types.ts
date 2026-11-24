@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import type { DropdownActionItemType } from '@signozhq/ui/dropdown';
 
-import { MenuItemKeys } from 'container/WidgetCard/Header/contants';
+import type { MenuItemKeys } from 'container/WidgetCard/Header/contants';
 
 export type MenuItem = DropdownActionItemType & {
 	value: MenuItemKeys;

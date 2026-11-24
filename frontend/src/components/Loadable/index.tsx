@@ -1,4 +1,5 @@
-import { ComponentType, lazy, LazyExoticComponent } from 'react';
+import type { ComponentType, LazyExoticComponent } from 'react';
+import { lazy } from 'react';
 import { lazyRetry } from 'utils/lazyWithRetries';
 
 function Loadable(importPath: {

@@ -10,7 +10,8 @@ import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	InfraMonitoringEntity,
 } from '../../constants';
-import EntityOverview, { EntityOverviewProps } from './EntityOverview';
+import type { EntityOverviewProps } from './EntityOverview';
+import EntityOverview from './EntityOverview';
 import { overviewMocks } from './EntityOverview.stories.mocks';
 
 import drawerStyles from '../entityDetails.module.scss';

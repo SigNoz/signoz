@@ -5,7 +5,7 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { toast } from '@signozhq/ui/toast';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import logEvent from 'api/common/logEvent';
 import { createDashboardV2 } from 'api/generated/services/dashboard';
@@ -13,7 +13,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { DashboardListEvents } from 'pages/DashboardsListPage/constants/events';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import TagKeyValueInput from 'components/TagKeyValueInput/TagKeyValueInput';
 
 import { keyValueStringsToTags } from '../../utils/helpers';

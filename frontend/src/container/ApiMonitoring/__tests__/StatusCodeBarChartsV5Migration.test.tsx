@@ -13,7 +13,7 @@
  * - stepInterval: 60 → null
  * - Grouped by response_status_code
  */
-import { TraceAggregation } from 'api/v5/v5';
+import type { TraceAggregation } from 'api/v5/v5';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 
 describe('StatusCodeBarCharts - V5 Migration Validation', () => {

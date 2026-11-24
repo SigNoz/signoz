@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
+import type { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';

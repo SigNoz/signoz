@@ -4,25 +4,16 @@ import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Loader, Search } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import {
-	Button,
-	Input,
-	InputRef,
-	Spin,
-	TableColumnsType,
-	TableColumnType,
-	Tooltip,
-} from 'antd';
+import type { InputRef, TableColumnsType, TableColumnType } from 'antd';
+import { Button, Input, Spin, Tooltip } from 'antd';
 import Space from 'periscope/components/Space/Space';
 import Flex from 'periscope/components/Flex/Flex';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
 import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
-import {
-	getQueueOverview,
-	QueueOverviewResponse,
-} from 'api/messagingQueues/celery/getQueueOverview';
+import type { QueueOverviewResponse } from 'api/messagingQueues/celery/getQueueOverview';
+import { getQueueOverview } from 'api/messagingQueues/celery/getQueueOverview';
 import { ResizeTable } from 'components/ResizeTable';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -30,8 +21,8 @@ import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';
 
 import './CeleryOverviewTable.styles.scss';

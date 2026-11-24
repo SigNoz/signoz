@@ -1,16 +1,13 @@
+import type { AuthtypesTransactionGroupDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AuthtypesRelationDTO,
-	AuthtypesTransactionGroupDTO,
 	CoretypesKindDTO,
 	CoretypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { AuthZResource, AuthZVerb } from 'lib/authz/hooks/useAuthZ/types';
 
-import {
-	ActionConfig,
-	PermissionScope,
-	ResourcePermissions,
-} from '../../types';
+import type { ActionConfig, ResourcePermissions } from '../../types';
+import { PermissionScope } from '../../types';
 import {
 	createEmptyRolePermissions,
 	transformResourcePermissionsToTransactionGroups,

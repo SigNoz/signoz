@@ -1,4 +1,4 @@
-import { DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
 
 export interface IGetAggregateAttributePayload {
 	aggregateOperator: string;

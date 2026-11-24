@@ -13,7 +13,7 @@ import {
 	formatScheduleDuration,
 	formatWindow,
 } from './PlannedDowntimeutils';
-import { DowntimeSchedulesTableData } from './types';
+import type { DowntimeSchedulesTableData } from './types';
 
 const STATUS_BADGE: Record<
 	AlertmanagertypesMaintenanceStatusDTO,

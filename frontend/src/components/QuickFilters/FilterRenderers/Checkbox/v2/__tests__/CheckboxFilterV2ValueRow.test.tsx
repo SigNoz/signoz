@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { BadgeConfig } from '../itemRules';
-import { CheckedState } from '../../../../types';
+import type { BadgeConfig } from '../itemRules';
+import type { CheckedState } from '../../../../types';
 import { CheckboxFilterV2ValueRow } from '../CheckboxFilterV2ValueRow';
 
 describe('CheckboxFilterV2ValueRow', () => {

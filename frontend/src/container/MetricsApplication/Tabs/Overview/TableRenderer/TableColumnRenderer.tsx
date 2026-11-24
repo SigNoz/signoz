@@ -1,7 +1,7 @@
-import { ReactNode } from 'react';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { ReactNode } from 'react';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
 
-import { TableRendererProps } from '../../types';
+import type { TableRendererProps } from '../../types';
 
 export const getTableColumnRenderer = ({
 	columnName,

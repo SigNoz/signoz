@@ -1,4 +1,5 @@
-import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import {
 	DOT_RADIUS,
@@ -9,12 +10,13 @@ import {
 	TRAIL_MIN_STEP,
 	TRAIL_RADIUS,
 } from './dotGridField';
-import { drawAuroraDots, drawDot, gameFloor, TrailPoint } from './drawDots';
+import type { TrailPoint } from './drawDots';
+import { drawAuroraDots, drawDot, gameFloor } from './drawDots';
+import type { SnakeGame } from './snakeGame';
 import {
 	KONAMI_CODE,
 	SNAKE_DIRECTIONS,
 	SNAKE_STEP_MS,
-	SnakeGame,
 	startSnake,
 	stepSnake,
 } from './snakeGame';

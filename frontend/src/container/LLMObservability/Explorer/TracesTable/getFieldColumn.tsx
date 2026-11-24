@@ -1,4 +1,4 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 

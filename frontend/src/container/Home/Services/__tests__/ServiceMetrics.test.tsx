@@ -1,4 +1,4 @@
-import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
+import type { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
 import {
 	Querybuildertypesv5ColumnTypeDTO,
 	Querybuildertypesv5RequestTypeDTO,

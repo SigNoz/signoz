@@ -1,13 +1,14 @@
 import { useCallback, useMemo } from 'react';
-import { QueryKey, useInfiniteQuery } from 'react-query';
+import type { QueryKey } from 'react-query';
+import { useInfiniteQuery } from 'react-query';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { useKeepRowsForSameQuery } from 'container/TracesExplorer/TracesTable/useKeepRowsForSameQuery';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { Warning } from 'types/api';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Warning } from 'types/api';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getListLimit, getNextPageOffset, transformSpanRows } from './utils';
 

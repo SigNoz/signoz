@@ -1,10 +1,10 @@
 import { resolveHeatmapYAxis } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
-import {
-	HeatmapAxisScale,
+import type {
 	HeatmapGrid,
 	HeatmapSeries,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+import { HeatmapAxisScale } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type uPlot from 'uplot';
 
 import { PrecisionOptionsEnum } from 'components/Graph/types';

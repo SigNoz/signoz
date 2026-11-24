@@ -1,7 +1,7 @@
-import { QueryFunction } from 'types/api/v5/queryRange';
+import type { QueryFunction } from 'types/api/v5/queryRange';
 
 import { INITIAL_CRITICAL_THRESHOLD } from '../../context/constants';
-import { Threshold } from '../../context/types';
+import type { Threshold } from '../../context/types';
 
 import { getSmallestDeviation, syncAnomalyFunction } from '../utils';
 

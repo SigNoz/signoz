@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import type { UseQueryResult } from 'react-query';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { isBuilderQueryType } from 'lib/query/builderSlot';
-import { ContextLinksData } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { ContextLinksData } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { isValidQueryName } from './drilldownUtils';
-import useAggregateDrilldown, { AggregateData } from './useAggregateDrilldown';
+import type { AggregateData } from './useAggregateDrilldown';
+import useAggregateDrilldown from './useAggregateDrilldown';
 
 interface UseGraphContextMenuProps {
 	widgetId?: string;

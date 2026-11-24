@@ -1,7 +1,8 @@
 import uPlot from 'uplot';
 
-import { ExtendedSeries } from '../config/types';
-import { BarRect, measureBar } from '../utils/barRect';
+import type { ExtendedSeries } from '../config/types';
+import type { BarRect } from '../utils/barRect';
+import { measureBar } from '../utils/barRect';
 
 const DEFAULT_POINT_SIZE = 5;
 const RING_GAP = 3;

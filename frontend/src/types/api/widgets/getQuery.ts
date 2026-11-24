@@ -1,4 +1,4 @@
-import { ILog } from '../logs/log';
+import type { ILog } from '../logs/log';
 
 export interface PayloadProps {
 	status: 'success' | 'error';

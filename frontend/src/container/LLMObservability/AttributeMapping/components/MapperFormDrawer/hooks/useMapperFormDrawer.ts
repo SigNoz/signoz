@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { DraftMapper, MapperDraft, MapperDraftMode } from '../../../types';
+import type { DraftMapper, MapperDraft, MapperDraftMode } from '../../../types';
 import { EMPTY_MAPPER_DRAFT, mapperDraftFromNode } from '../../../utils';
 
 interface UseMapperFormDrawerResult {

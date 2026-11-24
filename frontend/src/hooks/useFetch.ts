@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import type { ErrorResponse, SuccessResponse } from 'types/api';
 
 function useFetch<PayloadProps, FunctionParams>(
 	functions: {

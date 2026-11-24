@@ -3,7 +3,7 @@ import { Button } from '@signozhq/ui/button';
 import { ButtonGroup } from '@signozhq/ui/button-group';
 import { ChevronDown, ChevronUp, CornerUpRight } from '@signozhq/icons';
 import { useGetTraceSummary } from 'api/generated/services/tracedetail';
-import { HeaderAction } from 'components/DetailsPanel';
+import type { HeaderAction } from 'components/DetailsPanel';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import type { UseRowNavigationResult } from 'components/TanStackTableView/useRowNavigation';
 import {
@@ -11,7 +11,7 @@ import {
 	OpenTraceSource,
 } from 'container/TracesExplorer/events';
 import { getTraceLink } from 'container/TracesExplorer/ListView/utils';
-import { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
+import type { TracesTableRow } from 'container/TracesExplorer/TracesTable/getFieldColumn';
 import { SpanDetailVariant } from 'pages/TraceDetailsV3/SpanDetailsPanel/constants';
 import SpanDetailsPanel from 'pages/TraceDetailsV3/SpanDetailsPanel/SpanDetailsPanel';
 import { openInNewTab } from 'utils/navigation';

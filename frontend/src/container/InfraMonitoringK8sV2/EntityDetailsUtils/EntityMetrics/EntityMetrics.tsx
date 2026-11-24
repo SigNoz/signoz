@@ -1,29 +1,25 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { UseQueryResult } from 'react-query';
+import type { UseQueryResult } from 'react-query';
 import { Skeleton } from 'antd';
 import cx from 'classnames';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import TimeSeries from 'lib/visualization/charts/TimeSeries/TimeSeries';
-import {
-	IRenderTooltipFooterArgs,
-	LegendPosition,
-} from 'lib/uPlotV2/components/types';
-import {
-	InfraMonitoringEntity,
-	VIEW_TYPES,
-} from 'container/InfraMonitoringK8sV2/constants';
+import type { IRenderTooltipFooterArgs } from 'lib/uPlotV2/components/types';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import { VIEW_TYPES } from 'container/InfraMonitoringK8sV2/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useMultiIntersectionObserver } from 'hooks/useMultiIntersectionObserver';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { useTimezone } from 'providers/Timezone';
-import { SuccessResponse } from 'types/api';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { SuccessResponse } from 'types/api';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { getMetricsExplorerUrl } from 'utils/explorerUtils';
 
 import { getDrawerDurationMs } from 'container/InfraMonitoringK8sV2/Base/useDrawerLifecycleStore';
-import { K8sDetailsWidgetInfo } from 'container/InfraMonitoringK8sV2/Base/types';
+import type { K8sDetailsWidgetInfo } from 'container/InfraMonitoringK8sV2/Base/types';
 
 import { buildEntityMetricsChartConfig } from './configBuilder';
 import ChartHeader from './ChartHeader';

@@ -1,16 +1,16 @@
-import { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import type { UpdateMetricMetadataMutationBody } from 'api/generated/services/metrics';
+import type { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import {
-	GetMetricMetadata200,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
+import type { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
 import { initialQueriesMap, toAttributeType } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import { MetricMetadata, MetricMetadataFormState } from './types';
+import type { MetricMetadata, MetricMetadataFormState } from './types';
 
 export function formatTimestampToReadableDate(
 	timestamp: number | string | undefined,

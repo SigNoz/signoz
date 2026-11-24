@@ -30,12 +30,12 @@ import type {
 import { useQueryService } from 'hooks/useQueryService';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
-import { MessageAttachment } from '../../types';
+import type { MessageAttachment } from '../../types';
 import { useVariant } from '../../VariantContext';
-import { MessageContext } from '../../../../api/ai-assistant/chat';
+import type { MessageContext } from '../../../../api/ai-assistant/chat';
 import { ArrowUp, AtSign, Square, TriangleAlert, X } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
@@ -44,13 +44,13 @@ import ContextPickerEmptyState from './ContextPickerEmptyState';
 import ContextPill from './ContextPill/ContextPill';
 import EdgeSweep from './EdgeSweep/EdgeSweep';
 import NozPeek from './NozPeek/NozPeek';
+import type { ContextCategory } from './contextPicker';
 import {
 	AUTO_CONTEXT_ICONS,
 	CONTEXT_CATEGORIES,
 	CONTEXT_CATEGORY_ICONS,
 	CONTEXT_CATEGORY_SINGULAR,
 	CONTEXT_TYPE_LABELS,
-	ContextCategory,
 } from './contextPicker';
 
 interface ChatInputProps {

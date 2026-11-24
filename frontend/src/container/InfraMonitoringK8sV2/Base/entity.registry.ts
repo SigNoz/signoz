@@ -1,6 +1,6 @@
 import { K8sCategories } from '../constants';
-import { SelectedItemParams } from '../hooks';
-import { K8sEntityConfig, K8sEntityData } from './entity.config.types';
+import type { SelectedItemParams } from '../hooks';
+import type { K8sEntityConfig, K8sEntityData } from './entity.config.types';
 
 import { podEntityConfig } from '../Pods/entity.config';
 import { nodeEntityConfig } from '../Nodes/entity.config';

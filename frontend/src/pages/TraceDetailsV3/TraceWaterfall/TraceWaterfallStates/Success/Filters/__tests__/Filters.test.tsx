@@ -2,7 +2,7 @@ import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+import type { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import Filters from '../Filters';
 

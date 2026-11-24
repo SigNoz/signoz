@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import {
+import type {
 	DashboardtypesQueryDTO,
 	Querybuildertypesv5BuilderQuerySpecDTO,
 	Querybuildertypesv5CompositeQueryDTO,
@@ -9,7 +9,7 @@ import {
 	fromPerses,
 	toPerses,
 } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
-import { ClickedData } from 'periscope/components/ContextMenu';
+import type { ClickedData } from 'periscope/components/ContextMenu';
 
 import { getGroupContextMenuConfig } from '../contextConfig';
 import {

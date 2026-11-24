@@ -1,9 +1,9 @@
-import { MouseEvent } from 'react';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
-import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
-import { FontSize } from 'container/OptionsMenu/types';
-import { IField } from 'types/api/logs/fields';
-import { ILog } from 'types/api/logs/log';
+import type { MouseEvent } from 'react';
+import type { VIEW_TYPES } from 'components/LogDetail/constants';
+import type { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import type { FontSize } from 'container/OptionsMenu/types';
+import type { IField } from 'types/api/logs/fields';
+import type { ILog } from 'types/api/logs/log';
 
 export interface RawLogViewProps {
 	isActiveLog?: boolean;

@@ -8,13 +8,13 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { getToastText } from '@/storybook/play/toastText';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import type { membersMocks } from '../Members.stories.mocks';
 import {
 	canInvite,
 	clickWhenEnabled,
 	closeRoles,
 	findInviteRoleTriggers,
 	MEMBERS_PAGE_SIZE,
-	membersMocks,
 	offersRole,
 	openMember,
 	openResetLink,

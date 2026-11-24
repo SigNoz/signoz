@@ -13,9 +13,10 @@ import {
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
-import { AlertTypes, PostableAlertRuleV2 } from './alertTypes';
-import { ICompositeMetricQuery } from './compositeQuery';
-import { Labels } from './def';
+import type { PostableAlertRuleV2 } from './alertTypes';
+import { AlertTypes } from './alertTypes';
+import type { ICompositeMetricQuery } from './compositeQuery';
+import type { Labels } from './def';
 
 function toRuleTypeDTO(ruleType: string | undefined): RuletypesRuleTypeDTO {
 	switch (ruleType) {

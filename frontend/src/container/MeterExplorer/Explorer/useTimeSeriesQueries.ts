@@ -5,17 +5,17 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
+import type {
 	CustomTimeType,
 	Time,
 } from 'container/TopNav/DateTimeSelectionV2/types';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { SuccessResponse } from 'types/api';
+import type { SuccessResponse } from 'types/api';
 import APIError from 'types/api/error';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 interface UseTimeSeriesQueriesProps {

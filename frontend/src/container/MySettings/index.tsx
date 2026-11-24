@@ -6,13 +6,13 @@ import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import useThemeMode, { useIsDarkMode, useSystemTheme } from 'hooks/useDarkMode';
 import { useNotifications } from 'hooks/useNotifications';
 import { MonitorCog, Moon, Sun } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
-import { UserPreference } from 'types/api/preferences/preference';
+import type { UserPreference } from 'types/api/preferences/preference';
 import { showErrorNotification } from 'utils/error';
 
 import LicenseSection from './LicenseSection';

@@ -1,6 +1,5 @@
+import type { IIntervalUnit, Interval } from 'components/TimelineV2/utils';
 import {
-	IIntervalUnit,
-	Interval,
 	INTERVAL_UNITS,
 	resolveTimeFromInterval,
 } from 'components/TimelineV2/utils';

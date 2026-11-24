@@ -1,5 +1,6 @@
 import { memo, useCallback, useRef, useState } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import type { VirtuosoHandle } from 'react-virtuoso';
+import { Virtuoso } from 'react-virtuoso';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { ArrowDown } from '@signozhq/icons';
@@ -13,7 +14,7 @@ import logEvent from 'api/common/logEvent';
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
-import { Message, StreamingEventItem } from '../../types';
+import type { Message, StreamingEventItem } from '../../types';
 import { useVariant } from '../../VariantContext';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';

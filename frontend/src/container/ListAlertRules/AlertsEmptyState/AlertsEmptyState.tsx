@@ -8,7 +8,7 @@ import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
-import { DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
 import { isModifierKeyPressed } from 'utils/app';
 
 import alertEmojiUrl from '@/assets/Icons/alert_emoji.svg';

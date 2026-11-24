@@ -2,7 +2,7 @@ import { getAIObservabilityFieldsValues } from 'api/generated/services/ai-observ
 import { getFieldsValues } from 'api/generated/services/fields';
 import type { BuilderQueryType } from 'types/api/v5/queryRange';
 
-import { FieldValuesConfig, FieldValuesResponse } from './types';
+import type { FieldValuesConfig, FieldValuesResponse } from './types';
 
 export const getFieldValueSuggestions = (
 	fieldValuesConfig: FieldValuesConfig,

@@ -1,4 +1,4 @@
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
 import type { ExtendedSeries } from '../../config/types';
 import { syncCursorRegistry } from './syncCursorRegistry';

@@ -1,6 +1,6 @@
-import { UseMutateAsyncFunction } from 'react-query';
+import type { UseMutateAsyncFunction } from 'react-query';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import {
+import type {
 	ApDexPayloadAndSettingsProps,
 	SetApDexPayloadProps,
 } from 'types/api/metrics/getApDex';

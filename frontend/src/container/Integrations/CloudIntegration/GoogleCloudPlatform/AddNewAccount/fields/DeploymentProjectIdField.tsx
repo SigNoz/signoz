@@ -1,9 +1,10 @@
 import { Input } from '@signozhq/ui/input';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
-import { Control, Controller } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
+import { Controller } from 'react-hook-form';
 
 import FormField from '../FormField';
-import { GcpSetupFormValues } from '../types';
+import type { GcpSetupFormValues } from '../types';
 
 import styles from './Fields.module.scss';
 

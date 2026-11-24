@@ -1,5 +1,5 @@
 import { themeColors } from 'constants/theme';
-import { Span } from 'types/api/trace/getTraceItem';
+import type { Span } from 'types/api/trace/getTraceItem';
 
 import spans from './__fixtures__/getRandomColor';
 import { colors, spanServiceNameToColorMapping } from './getRandomColor';

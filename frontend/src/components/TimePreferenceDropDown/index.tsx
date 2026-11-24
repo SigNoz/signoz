@@ -1,12 +1,14 @@
-import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ChevronDown, Globe } from '@signozhq/icons';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Button } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import TimeItems, {
+import type {
 	timePreferance,
 	timePreferenceType,
 } from 'constants/timePreference';
+import TimeItems from 'constants/timePreference';
 
 import { menuItems } from './config';
 

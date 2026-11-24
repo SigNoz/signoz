@@ -1,4 +1,4 @@
-import { Chart, ChartType, Plugin } from 'chart.js';
+import type { Chart, ChartType, Plugin } from 'chart.js';
 import { Events } from 'constants/events';
 import { colors } from 'lib/getRandomColor';
 import { get } from 'lodash-es';

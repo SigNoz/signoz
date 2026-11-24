@@ -1,20 +1,20 @@
-import { QueryProps } from 'container/QueryBuilder/type';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type { QueryProps } from 'container/QueryBuilder/type';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
-import {
+import type {
 	BaseBuilderQuery,
 	LogBuilderQuery,
 	MetricBuilderQuery,
 	QueryFunction,
 	TraceBuilderQuery,
 } from 'types/api/v5/queryRange';
-import { DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
 
-import { SelectOption } from './select';
+import type { SelectOption } from './select';
 
 type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> & {
 	isForTraceOperator?: boolean;

@@ -1,7 +1,7 @@
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { SavedViewSourcePage } from '../types';
+import type { SavedViewSourcePage } from '../types';
 
 // The AI assistant names a view's source by DataSource (the signal), the api
 // keys views by source page.

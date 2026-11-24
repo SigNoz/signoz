@@ -1,4 +1,4 @@
-import { TelemetryFieldKey } from 'api/v5/v5';
+import type { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultOptionsQuery } from 'container/OptionsMenu/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

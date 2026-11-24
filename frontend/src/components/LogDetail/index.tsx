@@ -1,6 +1,6 @@
 import { Drawer } from '@signozhq/ui/drawer';
 
-import { LogDetailProps } from './LogDetail.interfaces';
+import type { LogDetailProps } from './LogDetail.interfaces';
 import LogDetailBody from './LogDetailBody';
 import LogActions from './LogDetailsHeader/LogActions';
 import LogNavigation from './LogDetailsHeader/LogNavigation';

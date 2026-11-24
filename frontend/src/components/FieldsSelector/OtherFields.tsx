@@ -4,15 +4,16 @@ import { Skeleton } from 'antd';
 import cx from 'classnames';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
-import { FieldKeysConfigProp } from 'api/querySuggestions/types';
+import type { FieldKeysConfigProp } from 'api/querySuggestions/types';
 import { useFieldKeysSuggestion } from 'hooks/querySuggestions/useFieldKeysSuggestion';
-import {
+import type {
 	BuilderQueryType,
 	FieldContext,
 	SignalType,
 	TelemetryFieldKey,
 } from 'types/api/v5/queryRange';
-import { DATA_SOURCE_TO_SIGNAL, DataSource } from 'types/common/queryBuilder';
+import type { DataSource } from 'types/common/queryBuilder';
+import { DATA_SOURCE_TO_SIGNAL } from 'types/common/queryBuilder';
 import { mergeExtraFields } from 'utils/extraFields';
 
 import styles from './FieldsSelector.module.scss';

@@ -1,4 +1,5 @@
-import { ReactElement, ReactNode, useEffect, useState } from 'react';
+import type { ReactElement, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes, useInRouterContext } from 'react-router';
 import { HostRouter } from 'lib/router/HostRouter';
 

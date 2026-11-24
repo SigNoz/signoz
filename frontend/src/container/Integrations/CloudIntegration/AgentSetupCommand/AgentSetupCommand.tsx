@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import CodeBlock from 'components/CodeBlock/CodeBlock';
 

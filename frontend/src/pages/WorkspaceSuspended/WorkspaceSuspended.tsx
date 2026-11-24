@@ -15,7 +15,7 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
 import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { getBaseUrl } from 'utils/basePath';
 

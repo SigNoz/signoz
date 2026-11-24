@@ -1,8 +1,8 @@
 import axios from 'api';
 import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
-import {
+import type { AxiosError } from 'axios';
+import type { ErrorV2Resp, SuccessResponseV2 } from 'types/api';
+import type {
 	ApDexPayloadAndSettingsProps,
 	PayloadProps,
 } from 'types/api/metrics/getApDex';

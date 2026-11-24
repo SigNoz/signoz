@@ -4,8 +4,8 @@ import cx from 'classnames';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import HttpStatusBadge from 'components/HttpStatusBadge/HttpStatusBadge';
 
+import type { AiTokenCounts } from '../utils/aiTraceUtils';
 import {
-	AiTokenCounts,
 	formatCost,
 	formatTokens,
 	getTotalInputTokens,

@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import {
+import type {
 	CloudintegrationtypesAccountDTO,
 	CloudintegrationtypesCredentialsDTO,
-	CloudintegrationtypesGCPConnectionMethodDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
+import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
+import type { GcpSetupFormValues } from 'container/Integrations/CloudIntegration/GoogleCloudPlatform/AddNewAccount/types';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';
 import { ModalStateEnum } from 'container/Integrations/HeroSection/types';
 

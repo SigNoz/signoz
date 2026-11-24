@@ -5,12 +5,12 @@ import {
 } from 'constants/queryBuilder';
 import { getPaginationQueryDataV2 } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import type {
 	IBuilderQuery,
 	Query,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { Filter } from 'types/api/v5/queryRange';
+import type { Filter } from 'types/api/v5/queryRange';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
 

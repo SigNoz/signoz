@@ -1,11 +1,12 @@
-import { RefObject, useMemo } from 'react';
+import type { RefObject } from 'react';
+import { useMemo } from 'react';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import { sortByColumn } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 
-import { DowntimeAlertOption, DowntimeSchedulesTableData } from './types';
+import type { DowntimeAlertOption, DowntimeSchedulesTableData } from './types';
 
 export const PLANNED_DOWNTIME_QUERY_PARAMS = {
 	orderBy: 'orderBy',

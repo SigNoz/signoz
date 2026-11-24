@@ -13,9 +13,9 @@ import {
 	toPanelType,
 	type PanelKind,
 } from 'pages/DashboardPage/DashboardContainer/Panels/types/panelKind';
-import { AppState } from 'store/reducers';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 
 interface UseResolvedDrilldownQueryArgs {
 	/** Panel's perses queries — the substitution source (carries the `$var` refs). */

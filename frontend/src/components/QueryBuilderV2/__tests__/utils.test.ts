@@ -1,10 +1,8 @@
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';

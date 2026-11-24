@@ -1,13 +1,13 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { ServicesList } from 'types/api/metrics/getService';
+import type { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import type { ServicesList } from 'types/api/metrics/getService';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
 import { serviceMetricsQuery } from './ServiceMetrics/ServiceMetricsQuery';
-import {
+import type {
 	GetQueryRangeRequestDataProps,
 	GetServiceListFromQueryProps,
 } from './types';

@@ -9,7 +9,7 @@ import type {
 	DashboardtypesJSONPatchOperationDTO,
 	GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { applyJsonPatch } from '../optimistic/applyJsonPatch';
 import { useDashboardStore } from '../store/useDashboardStore';

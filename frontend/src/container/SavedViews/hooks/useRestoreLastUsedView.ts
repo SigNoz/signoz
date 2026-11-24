@@ -4,7 +4,7 @@ import { QueryParams } from 'constants/query';
 import { useGetSavedViewParams } from 'hooks/saveViews/useGetSavedViewParams';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
-import { UseRestoreLastUsedViewArgs } from '../types';
+import type { UseRestoreLastUsedViewArgs } from '../types';
 import { useLastUsedView } from './useLastUsedView';
 
 export function useRestoreLastUsedView({

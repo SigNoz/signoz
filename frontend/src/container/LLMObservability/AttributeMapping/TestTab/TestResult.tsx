@@ -1,15 +1,11 @@
 import { Badge } from '@signozhq/ui/badge';
-import { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas';
+import type { SpantypesSpanMapperTestSpanDTO } from 'api/generated/services/sigNoz.schemas';
 import { useMemo } from 'react';
 
-import {
-	AttrChangeStatus,
-	AttrDiffEntry,
-	diffAttributeMaps,
-	formatAttributeValue,
-} from './testPayload';
+import type { AttrChangeStatus, AttrDiffEntry } from './testPayload';
+import { diffAttributeMaps, formatAttributeValue } from './testPayload';
 import styles from './TestTab.module.scss';
-import { TestTabAttributes, TestTabResource } from './useTestSpanMapper';
+import type { TestTabAttributes, TestTabResource } from './useTestSpanMapper';
 
 interface TestResultProps {
 	index: number;

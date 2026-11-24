@@ -5,7 +5,8 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import type { ErrorType } from 'api/generatedAPIInstance';
 
 import { SA_LIST_INVALID_ERROR_CODES, SA_PAGE_SIZE } from './constants';
-import { ServiceAccountRow, toServiceAccountRow } from './utils';
+import type { ServiceAccountRow } from './utils';
+import { toServiceAccountRow } from './utils';
 
 interface UseServiceAccountsDataArgs {
 	query: string;

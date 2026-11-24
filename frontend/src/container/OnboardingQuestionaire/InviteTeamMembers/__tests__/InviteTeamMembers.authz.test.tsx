@@ -1,4 +1,4 @@
-import { InviteMembersProps } from 'components/InviteMembers/types';
+import type { InviteMembersProps } from 'components/InviteMembers/types';
 import type { useRoles } from 'components/RolesSelect/RolesSelect';
 import type { useNotifications } from 'hooks/useNotifications';
 import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';

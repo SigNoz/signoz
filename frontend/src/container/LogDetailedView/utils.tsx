@@ -2,12 +2,15 @@ import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
-import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
+import type {
+	ILog,
+	ILogAggregateAttributesResources,
+} from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
 import { typeToArrayTypeMapper } from './config';
-import { AnyObject, IFieldAttributes } from './LogDetailedView.types';
+import type { AnyObject, IFieldAttributes } from './LogDetailedView.types';
 
 const convertInstance = new Convert();
 

@@ -1,9 +1,7 @@
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
-import {
-	ApiMonitoringParams,
-	useApiMonitoringParams,
-} from 'container/ApiMonitoring/queryParams';
+import type { ApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
+import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { getHostsQuickFiltersConfig } from 'container/InfraMonitoringHostsV2/utils';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -19,7 +17,8 @@ import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import '@testing-library/jest-dom';
 
 import QuickFilters from '../QuickFilters';
-import { IQuickFiltersConfig, QuickFiltersSource } from '../types';
+import type { IQuickFiltersConfig } from '../types';
+import { QuickFiltersSource } from '../types';
 import { QuickFiltersConfig, QuickFiltersFieldApis } from './constants';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({

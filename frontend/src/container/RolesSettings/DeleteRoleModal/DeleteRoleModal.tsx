@@ -2,7 +2,7 @@ import { SolidAlertCircle, Trash2 } from '@signozhq/icons';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import styles from './DeleteRoleModal.module.scss';
 import { Callout } from '@signozhq/ui/callout';
 

@@ -3,7 +3,7 @@ import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
 import { getChartManagerColumns } from 'lib/visualization/components/ChartManager/getChartMangerColumns';
-import { ExtendedChartDataset } from 'lib/visualization/components/ChartManager/utils';
+import type { ExtendedChartDataset } from 'lib/visualization/components/ChartManager/utils';
 
 const createMockDataset = (
 	index: number,

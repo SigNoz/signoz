@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { renderHook } from 'tests/test-utils';
 import { TestRouter } from 'tests/router';
 

@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useAppLocation } from 'lib/router/useAppLocation';
-import { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
+import type { Querybuildertypesv5QueryWarnDataDTO } from 'api/generated/services/sigNoz.schemas';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
+import type { SortState, TableColumnDef } from 'components/TanStackTableView';
 import TanStackTable, {
-	SortState,
-	TableColumnDef,
 	TanStackTableStateProvider,
 } from 'components/TanStackTableView';
 import { CornerDownRight } from '@signozhq/icons';
@@ -19,19 +18,17 @@ import { useGlobalTimeStore } from 'store/globalTime';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime/utils';
 import { parseAsJsonNoValidate } from 'utils/nuqsParsers';
 
+import type { InfraMonitoringEntity } from '../constants';
+import { INFRA_MONITORING_K8S_PARAMS_KEYS } from '../constants';
+import type { SelectedItemParams } from '../hooks';
 import {
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	InfraMonitoringEntity,
-} from '../constants';
-import {
-	SelectedItemParams,
 	useInfraMonitoringGroupBy,
 	useInfraMonitoringOrderBy,
 	useInfraMonitoringPageListing,
 	useInfraMonitoringSelectedItemParams,
 } from '../hooks';
 import { resetDrawerHistory } from './useDrawerHistoryStore';
-import { K8sBaseFilters } from './types';
+import type { K8sBaseFilters } from './types';
 import { useLogEventForColumnCustomized } from './useLogEventForColumnCustomized';
 import { useInfraMonitoringFontSize } from './useInfraMonitoringTablePreferencesStore';
 

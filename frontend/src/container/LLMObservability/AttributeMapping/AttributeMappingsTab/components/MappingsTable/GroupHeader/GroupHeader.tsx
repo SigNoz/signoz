@@ -2,7 +2,7 @@ import { Info } from '@signozhq/icons';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 
-import { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
+import type { DraftGroup } from 'container/LLMObservability/AttributeMapping/types';
 
 import ConditionsTooltip from './ConditionsTooltip';
 import styles from './GroupHeader.module.scss';

@@ -17,8 +17,8 @@ import {
 	ScrollText,
 } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { EQueryType } from 'types/common/dashboard';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { EQueryType } from 'types/common/dashboard';
 
 import { useCreateAlertState } from '../context';
 import Stepper from '../Stepper';

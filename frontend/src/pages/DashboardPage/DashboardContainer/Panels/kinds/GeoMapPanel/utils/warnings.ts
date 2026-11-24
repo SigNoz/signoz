@@ -1,4 +1,4 @@
-import { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas';
+import type { DashboardtypesGeoMapLocationModeDTO } from 'api/generated/services/sigNoz.schemas';
 import { getLoadedSubdivisions } from 'lib/visualization/charts/GeoMap/geo/subdivisionCache';
 import type { PanelStatusDetail } from 'pages/DashboardPage/DashboardContainer/PanelsAndSectionsLayout/Panel/PanelStatus/types';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';

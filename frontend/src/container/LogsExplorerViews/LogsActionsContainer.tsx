@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';

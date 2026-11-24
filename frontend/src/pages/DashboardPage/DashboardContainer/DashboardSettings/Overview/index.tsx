@@ -9,7 +9,7 @@ import logEvent from 'api/common/logEvent';
 import { isEqual } from 'lodash-es';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 
 import { useOptimisticPatch } from '../../hooks/useOptimisticPatch';
 import CrossPanelSync from './CrossPanelSync/CrossPanelSync';

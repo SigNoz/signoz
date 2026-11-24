@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { SolidAlertCircle } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';

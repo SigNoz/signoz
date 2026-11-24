@@ -1,7 +1,6 @@
-import AIThreadMessage, {
-	AIThreadMessageProps,
-} from '../AIThreadMessage/AIThreadMessage';
-import { ThreadMessage } from '../AIThreadMessage/types';
+import type { AIThreadMessageProps } from '../AIThreadMessage/AIThreadMessage';
+import AIThreadMessage from '../AIThreadMessage/AIThreadMessage';
+import type { ThreadMessage } from '../AIThreadMessage/types';
 import { ThreadView } from '../TraceDetailsThread/types';
 import JsonBlock from '../AIThreadMessage/JsonBlock';
 

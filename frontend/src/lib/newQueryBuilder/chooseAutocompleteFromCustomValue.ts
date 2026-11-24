@@ -2,12 +2,10 @@ import {
 	baseAutoCompleteIdKeysOrder,
 	initialAutocompleteData,
 } from 'constants/queryBuilder';
-import { MetricsType } from 'container/MetricsApplication/constant';
+import type { MetricsType } from 'container/MetricsApplication/constant';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 const getDataTypeForCustomValue = (dataType?: string): DataTypes => {
 	if (dataType === 'number') {

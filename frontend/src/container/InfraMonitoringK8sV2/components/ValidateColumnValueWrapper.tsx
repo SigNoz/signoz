@@ -1,7 +1,5 @@
-import {
-	getInvalidValueTooltipText,
-	InfraMonitoringEntity,
-} from '../constants';
+import type { InfraMonitoringEntity } from '../constants';
+import { getInvalidValueTooltipText } from '../constants';
 import { TextNoData } from './TextNoData';
 import TanStackTable from 'components/TanStackTableView';
 

@@ -1,4 +1,4 @@
-import { TagFilter } from '../queryBuilder/queryBuilderData';
+import type { TagFilter } from '../queryBuilder/queryBuilderData';
 
 export enum LatencyOptions {
 	P99 = 'p99',

@@ -1,4 +1,4 @@
-import { QueryData } from 'types/api/widgets/getQuery';
+import type { QueryData } from 'types/api/widgets/getQuery';
 
 export type LiveLogsListChartProps = {
 	className?: string;

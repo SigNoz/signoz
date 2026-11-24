@@ -5,12 +5,14 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from '@signozhq/icons';
 
-import {
-	FieldContext,
+import type {
 	FieldContextValue,
-	MapperOperation,
 	MapperOperationValue,
 	SourceConfig,
+} from 'container/LLMObservability/AttributeMapping/types';
+import {
+	FieldContext,
+	MapperOperation,
 } from 'container/LLMObservability/AttributeMapping/types';
 import KeySearchInput from '../../../KeySearchInput/KeySearchInput';
 import styles from './SourceAttributeRow.module.scss';

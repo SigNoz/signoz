@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { MetricNameSelector } from 'container/QueryBuilder/filters';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
-import { MetricNameSearchProps } from './types';
+import type { MetricNameSearchProps } from './types';
 
 function MetricNameSearch({
 	currentMetricName,

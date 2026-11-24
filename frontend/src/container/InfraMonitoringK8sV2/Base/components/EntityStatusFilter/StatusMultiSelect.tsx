@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { CustomMultiSelect } from 'components/NewSelect';
 import OverflowValuesTooltip from 'components/OverflowValuesTooltip/OverflowValuesTooltip';
-import { OptionData } from 'components/NewSelect/types';
+import type { OptionData } from 'components/NewSelect/types';
 import { findOptionLabel } from 'components/NewSelect/utils';
-import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import type { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { useInfraMonitoringPageListing } from 'container/InfraMonitoringK8sV2/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 

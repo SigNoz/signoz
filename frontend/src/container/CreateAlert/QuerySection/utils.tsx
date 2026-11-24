@@ -1,8 +1,8 @@
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
+import type { AlertDef } from 'types/api/alerts/def';
 
-import { AlertThresholdState } from '../context/types';
+import type { AlertThresholdState } from '../context/types';
 import { buildInitialAlertDef } from '../context/utils';
 
 export function buildAlertDefForChartPreview({

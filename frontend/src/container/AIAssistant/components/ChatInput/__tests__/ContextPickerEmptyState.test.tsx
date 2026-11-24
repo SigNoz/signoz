@@ -1,6 +1,6 @@
 import { render, screen, userEvent } from 'tests/test-utils';
 
-import { ContextCategory } from '../contextPicker';
+import type { ContextCategory } from '../contextPicker';
 import ContextPickerEmptyState from '../ContextPickerEmptyState';
 
 function renderEmptyState(

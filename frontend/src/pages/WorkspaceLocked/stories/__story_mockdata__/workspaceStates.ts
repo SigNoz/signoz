@@ -5,7 +5,7 @@
 
 import type { IAppContext } from 'providers/App/types';
 import { createAppContextMock } from 'tests/fixtures/appContextMock';
-import { LicenseState } from 'types/api/licensesV3/getActive';
+import type { LicenseState } from 'types/api/licensesV3/getActive';
 import { USER_ROLES } from 'types/roles';
 
 const { activeLicense, trialInfo } = createAppContextMock(USER_ROLES.ADMIN);

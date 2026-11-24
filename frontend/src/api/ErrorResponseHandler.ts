@@ -1,6 +1,7 @@
-import { AxiosError, AxiosResponse, isCancel } from 'axios';
-import { ErrorResponse } from 'types/api';
-import { ErrorStatusCode } from 'types/common';
+import type { AxiosError, AxiosResponse } from 'axios';
+import { isCancel } from 'axios';
+import type { ErrorResponse } from 'types/api';
+import type { ErrorStatusCode } from 'types/common';
 
 export function ErrorResponseHandler(error: AxiosError): ErrorResponse {
 	const { response, request } = error;

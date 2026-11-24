@@ -1,6 +1,7 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { Loader } from '@signozhq/icons';
-import { Spin, SpinProps } from 'antd';
+import type { SpinProps } from 'antd';
+import { Spin } from 'antd';
 
 import { SpinerStyle } from './styles';
 

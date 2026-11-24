@@ -6,21 +6,24 @@ import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
 import { HAVING_OPERATORS, initialHavingValues } from 'constants/queryBuilder';
 import { HavingFilterTag } from 'container/QueryBuilder/components';
-import { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
+import type { HavingTagRenderProps } from 'container/QueryBuilder/components/HavingFilterTag/HavingFilterTag.interfaces';
 // ** Hooks
 import { useTagValidation } from 'hooks/queryBuilder/useTagValidation';
 import {
 	transformFromStringToHaving,
 	transformHavingToStringValue,
 } from 'lib/query/transformQueryBuilderData';
-import { Having, HavingForm } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	Having,
+	HavingForm,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 import { useSelectPopupContainer } from 'utils/selectPopupContainer';
 
 import { getHavingObject, isValidHavingValue } from '../utils';
 // ** Types
-import { HavingFilterProps } from './HavingFilter.interfaces';
+import type { HavingFilterProps } from './HavingFilter.interfaces';
 
 export function HavingFilter({
 	entityVersion,

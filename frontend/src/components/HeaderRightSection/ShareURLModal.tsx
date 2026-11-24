@@ -14,8 +14,8 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import { Check, Info, Link2 } from '@signozhq/icons';
-import { AppState } from 'store/reducers';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import type { AppState } from 'store/reducers';
+import type { GlobalReducer } from 'types/reducer/globalTime';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 const routesToBeSharedWithTime = [

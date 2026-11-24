@@ -14,9 +14,9 @@ import { toPanelType } from 'pages/DashboardPage/DashboardContainer/Panels/types
 import { resolveSignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/getBuilderQueries';
 import { buildViewPanelSpec } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/buildViewPanelSpec';
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
-import {
-	type PanelQueryTimeOverride,
-	type UsePanelQueryResult,
+import type {
+	PanelQueryTimeOverride,
+	UsePanelQueryResult,
 } from 'pages/DashboardPage/DashboardContainer/hooks/usePanelQuery';
 import type { EQueryType } from 'types/common/dashboard';
 

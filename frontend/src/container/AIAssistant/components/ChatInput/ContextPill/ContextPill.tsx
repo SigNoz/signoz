@@ -1,5 +1,6 @@
 import { Button } from '@signozhq/ui/button';
-import { Package, X } from '@signozhq/icons';
+import type { Package } from '@signozhq/icons';
+import { X } from '@signozhq/icons';
 
 import styles from './ContextPill.module.scss';
 

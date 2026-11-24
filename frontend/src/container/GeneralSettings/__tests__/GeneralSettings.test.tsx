@@ -1,8 +1,8 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
-import { IDiskType } from 'types/api/disks/getDisks';
-import {
+import type { IDiskType } from 'types/api/disks/getDisks';
+import type {
 	PayloadPropsLogs,
 	PayloadPropsMetrics,
 	PayloadPropsTraces,

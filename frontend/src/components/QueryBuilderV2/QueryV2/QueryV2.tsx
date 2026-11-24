@@ -1,23 +1,18 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import {
-	ForwardedRef,
-	forwardRef,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
+import type { ForwardedRef } from 'react';
+import { forwardRef, useCallback, useMemo, useState } from 'react';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
-import { QueryProps } from 'container/QueryBuilder/type';
+import type { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
 import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from '@signozhq/icons';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { HandleChangeQueryDataV5 } from 'types/common/operations.types';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { HandleChangeQueryDataV5 } from 'types/common/operations.types';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderField } from '../queryBuilderFields.types';

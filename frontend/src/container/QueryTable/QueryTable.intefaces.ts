@@ -1,13 +1,12 @@
-import { ReactNode } from 'react';
-import type { TableColumnsType as ColumnsType } from 'antd';
-import { TableProps } from 'antd';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DownloadOptions } from 'container/Download/Download.types';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { ContextLinksData } from 'types/api/widgets/widget';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { ReactNode } from 'react';
+import type { TableColumnsType as ColumnsType, TableProps } from 'antd';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { DownloadOptions } from 'container/Download/Download.types';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { ContextLinksData } from 'types/api/widgets/widget';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryDataV3 } from 'types/api/widgets/getQuery';
 
 export type QueryTableProps = Omit<
 	TableProps<RowData>,

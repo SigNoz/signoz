@@ -9,11 +9,11 @@ import {
 	useUpdateMyOrganization,
 } from 'api/generated/services/orgs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
-import { IUser } from 'providers/App/types';
+import type { IUser } from 'providers/App/types';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import type APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 

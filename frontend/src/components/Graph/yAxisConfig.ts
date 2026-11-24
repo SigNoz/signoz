@@ -1,16 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { formattedValueToString, getValueFormat } from '@grafana/data';
 import * as Sentry from '@sentry/react';
-import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
+import type { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { isUniversalUnit } from 'components/YAxisUnitSelector/utils';
 import { isNaN } from 'lodash-es';
 
 import { formatUniversalUnit } from '../YAxisUnitSelector/formatter';
-import {
-	DEFAULT_SIGNIFICANT_DIGITS,
-	PrecisionOption,
-	PrecisionOptionsEnum,
-} from './types';
+import type { PrecisionOption } from './types';
+import { DEFAULT_SIGNIFICANT_DIGITS, PrecisionOptionsEnum } from './types';
 import { formatDecimalWithLeadingZeros } from './utils';
 
 /**

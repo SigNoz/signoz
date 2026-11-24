@@ -7,8 +7,8 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
-import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
-import {
+import type { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
+import type {
 	IBuilderQuery,
 	Query,
 	TagFilter,

@@ -1,10 +1,10 @@
-import { ReactNode } from 'react';
-import { TableColumnsType as ColumnsType } from 'antd';
+import type { ReactNode } from 'react';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
-import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { Widgets } from 'types/api/widgets/widget';
-import { IField } from 'types/api/logs/fields';
+import type { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import type { RowData } from 'lib/query/createTableColumnsFromQuery';
+import type { Widgets } from 'types/api/widgets/widget';
+import type { IField } from 'types/api/logs/fields';
 
 export const getLogPanelColumnsList = (
 	selectedLogFields: Widgets['selectedLogFields'],

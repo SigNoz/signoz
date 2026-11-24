@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
-import { ILog } from 'types/api/logs/log';
+import type { ILog } from 'types/api/logs/log';
 
 import styles from './LogHighlights.module.scss';
 import TraceIdField from './TraceIdField';

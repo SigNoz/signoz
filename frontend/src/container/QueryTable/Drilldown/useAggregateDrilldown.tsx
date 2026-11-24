@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
-import { UseQueryResult } from 'react-query';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { ContextLinksData } from 'types/api/widgets/widget';
-import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { UseQueryResult } from 'react-query';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { ContextLinksData } from 'types/api/widgets/widget';
+import type { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { getTimeRange } from 'utils/getTimeRange';
 
-import { ContextMenuItem } from './contextConfig';
-import { FilterData, getQueryData } from './drilldownUtils';
+import type { ContextMenuItem } from './contextConfig';
+import type { FilterData } from './drilldownUtils';
+import { getQueryData } from './drilldownUtils';
 import useBaseAggregateOptions from './useBaseAggregateOptions';
 import useBreakout from './useBreakout';
 

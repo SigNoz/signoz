@@ -1,4 +1,4 @@
-import { Props as GetDBOverViewProps } from './getDBOverview';
+import type { Props as GetDBOverViewProps } from './getDBOverview';
 
 export type Props = GetDBOverViewProps;
 

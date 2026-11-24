@@ -6,7 +6,7 @@ import {
 } from 'api/generated/services/tracedetail';
 import type { GetTraceThreadParams } from 'api/generated/services/sigNoz.schemas';
 
-import { ThreadSpan } from '../types';
+import type { ThreadSpan } from '../types';
 import { isNotFoundError, toThreadSpan } from '../utils';
 
 const THREAD_PAGE_LIMIT = 100;

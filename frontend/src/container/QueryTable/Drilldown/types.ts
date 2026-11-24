@@ -1,9 +1,9 @@
-import { ReactNode } from 'react';
-import {
+import type { ReactNode } from 'react';
+import type {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export type ContextMenuItem = ReactNode;
 

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { QuerySearchV2Provider } from 'components/QueryBuilderV2';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { onNuqsUrlUpdate } from 'tests/nuqs-helpers';

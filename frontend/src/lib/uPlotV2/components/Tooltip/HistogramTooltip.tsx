@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { HistogramTooltipProps, TooltipContentItem } from '../types';
+import type { HistogramTooltipProps, TooltipContentItem } from '../types';
 import Tooltip from './Tooltip';
 import { buildTooltipContent } from './utils';
 

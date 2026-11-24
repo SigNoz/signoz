@@ -1,6 +1,6 @@
 import ROUTES from 'constants/routes';
 
-import { CustomTimeType, Option, Time, TimeFrame } from './types';
+import type { CustomTimeType, Option, Time, TimeFrame } from './types';
 
 export const DEFAULT_TIME_RANGE = '30m';
 

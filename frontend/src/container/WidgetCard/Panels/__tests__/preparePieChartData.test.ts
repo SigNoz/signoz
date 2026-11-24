@@ -1,6 +1,6 @@
 import { themeColors } from 'constants/theme';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { QueryData, QueryDataV3 } from 'types/api/widgets/getQuery';
 
 import { preparePieChartData } from 'container/WidgetCard/Panels/preparePieChartData';
 

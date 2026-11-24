@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
 import { Check, Zap } from '@signozhq/icons';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { getTagToken } from './utils';
 import { DropdownState } from './QueryBuilderSearchV2';

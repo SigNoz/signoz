@@ -1,7 +1,7 @@
 import { useGetSavedView } from 'api/generated/services/saved-view';
+import type { SavedviewtypesSavedViewDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	SavedviewtypesPanelTypeDTO,
-	SavedviewtypesSavedViewDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,7 +15,8 @@ import { renderHook } from 'tests/test-utils';
 
 import { usePreferenceLoader } from '../loader/usePreferenceLoader';
 import { usePreferenceSync } from '../sync/usePreferenceSync';
-import { PreferenceMode, Preferences } from '../types';
+import type { Preferences } from '../types';
+import { PreferenceMode } from '../types';
 import { usePreferenceUpdater } from '../updater/usePreferenceUpdater';
 
 jest.mock('api/generated/services/saved-view');

@@ -18,7 +18,7 @@ import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
-import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import type { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 

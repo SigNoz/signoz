@@ -1,4 +1,5 @@
-import { FunnelStepData, LatencyOptions } from 'types/api/traceFunnels';
+import type { FunnelStepData } from 'types/api/traceFunnels';
+import { LatencyOptions } from 'types/api/traceFunnels';
 import { v4 } from 'uuid';
 
 export const createInitialStepsData = (): FunnelStepData[] => [

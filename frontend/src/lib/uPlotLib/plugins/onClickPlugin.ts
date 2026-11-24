@@ -1,6 +1,6 @@
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import type { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 function isSeriesValueValid(seriesValue: number | undefined | null): boolean {
 	return (

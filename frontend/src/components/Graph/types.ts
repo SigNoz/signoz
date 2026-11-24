@@ -1,5 +1,5 @@
-import { ForwardedRef, ReactNode } from 'react';
-import {
+import type { ForwardedRef, ReactNode } from 'react';
+import type {
 	ActiveElement,
 	Chart,
 	ChartData,
@@ -9,11 +9,11 @@ import {
 	TimeUnit,
 } from 'chart.js';
 
-import {
+import type {
 	dragSelectPluginId,
 	DragSelectPluginOptions,
 } from './Plugin/DragSelect';
-import {
+import type {
 	intersectionCursorPluginId,
 	IntersectionCursorPluginOptions,
 } from './Plugin/IntersectionCursor';

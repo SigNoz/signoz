@@ -5,14 +5,14 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
-import {
+import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
+import type {
 	AutocompleteType,
 	BaseAutocompleteData,
-	DataTypes,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
 	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
@@ -24,6 +24,7 @@ import {
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import type { QueryBuilderData } from 'types/common/queryBuilder';
 import {
 	BoolOperators,
 	DataSource,
@@ -31,12 +32,11 @@ import {
 	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
-	QueryBuilderData,
 	ReduceOperators,
 	StringOperators,
 	TracesAggregatorOperator,
 } from 'types/common/queryBuilder';
-import { SelectOption } from 'types/common/select';
+import type { SelectOption } from 'types/common/select';
 import { v4 as uuid } from 'uuid';
 
 import {

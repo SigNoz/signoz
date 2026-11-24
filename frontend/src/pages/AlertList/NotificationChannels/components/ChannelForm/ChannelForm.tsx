@@ -7,7 +7,7 @@ import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/pe
 
 import ChannelFormBody from './ChannelFormBody';
 import styles from './ChannelForm.module.scss';
-import { ChannelKind } from 'container/CreateAlertChannels/types';
+import type { ChannelKind } from 'container/CreateAlertChannels/types';
 
 import { useChannelDraft } from './useChannelDraft';
 

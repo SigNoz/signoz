@@ -1,18 +1,13 @@
-import {
-	ChangeEvent,
-	Dispatch,
-	SetStateAction,
-	useEffect,
-	useRef,
-	useState,
-} from 'react';
+import type { ChangeEvent, Dispatch, SetStateAction } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
-import { Input, InputRef, Popover, Tooltip } from 'antd';
+import type { InputRef } from 'antd';
+import { Input, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { QueryParams } from 'constants/query';
-import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
+import type { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,
 	Options,
@@ -27,7 +22,8 @@ import { ChevronDown, ChevronUp, ZoomOut } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
-import { TimeRangeValidationResult, validateTimeRange } from 'utils/timeUtils';
+import type { TimeRangeValidationResult } from 'utils/timeUtils';
+import { validateTimeRange } from 'utils/timeUtils';
 
 import CustomTimePickerPopoverContent from './CustomTimePickerPopoverContent';
 

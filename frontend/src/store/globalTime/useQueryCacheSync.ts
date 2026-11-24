@@ -3,7 +3,7 @@ import { useQueryClient } from 'react-query';
 
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 
-import { GlobalTimeStoreApi } from './globalTimeStore';
+import type { GlobalTimeStoreApi } from './globalTimeStore';
 
 /**
  * Used to keep lastRefreshTimestamp in sync after every react query refresh.

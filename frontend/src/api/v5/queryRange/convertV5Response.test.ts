@@ -1,5 +1,5 @@
-import { SuccessResponse } from 'types/api';
-import {
+import type { SuccessResponse } from 'types/api';
+import type {
 	MetricRangePayloadV5,
 	QueryBuilderFormula,
 	QueryRangeRequestV5,

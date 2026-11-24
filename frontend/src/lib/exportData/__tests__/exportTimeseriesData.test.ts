@@ -1,5 +1,5 @@
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { TimeSeries, TimeSeriesData } from 'types/api/v5/queryRange';
 
 import { exportTimeseriesData } from '../exportTimeseriesData';
 

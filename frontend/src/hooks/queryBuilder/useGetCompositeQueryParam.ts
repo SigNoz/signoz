@@ -8,13 +8,14 @@ import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { isPlainObject } from 'lodash-es';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import {
-	NormalizedQuery,
-	normalizeCompositeQuery,
-} from './normalizeCompositeQuery';
+import type { NormalizedQuery } from './normalizeCompositeQuery';
+import { normalizeCompositeQuery } from './normalizeCompositeQuery';
 
 function toExpressionQuery(query: IBuilderQuery): IBuilderQuery {
 	const existingExpression = query.filter?.expression || '';

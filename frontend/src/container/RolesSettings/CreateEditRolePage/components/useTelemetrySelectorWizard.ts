@@ -1,12 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import type {
+	QueryTypeId,
+	QueryTypeOption,
+	SelectorValidation,
+} from './TelemetrySelectorWizard.constants';
 import {
 	ANY_RESOURCE_VALUE,
 	DEFAULT_GRANT_KEY,
 	DEFAULT_QUERY_TYPE,
-	QueryTypeId,
-	QueryTypeOption,
-	SelectorValidation,
 } from './TelemetrySelectorWizard.constants';
 import {
 	buildSelector,

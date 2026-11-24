@@ -1,6 +1,7 @@
 import { FilePenLine } from '@signozhq/icons';
-import { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
-import TanStackTable, { TableColumnDef } from 'components/TanStackTableView';
+import type { InframonitoringtypesNamespaceRecordDTO } from 'api/generated/services/sigNoz.schemas';
+import type { TableColumnDef } from 'components/TanStackTableView';
+import TanStackTable from 'components/TanStackTableView';
 import { ExpandButtonWrapper } from 'container/InfraMonitoringK8sV2/components';
 
 import ColumnHeader from '../Base/ColumnHeader';
@@ -13,7 +14,7 @@ import {
 	INFRA_MONITORING_ATTR_KEYS,
 	InfraMonitoringEntity,
 } from '../constants';
-import { SelectedItemParams } from '../hooks';
+import type { SelectedItemParams } from '../hooks';
 
 export function getK8sNamespaceRowKey(
 	namespace: InframonitoringtypesNamespaceRecordDTO,

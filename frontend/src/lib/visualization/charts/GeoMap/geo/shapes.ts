@@ -1,6 +1,6 @@
-import { CountryFeature, GeoMapView, ShapeFeature } from '../types';
+import type { CountryFeature, GeoMapView, ShapeFeature } from '../types';
 import { COUNTRIES, getCountryName } from './countries';
-import { SubdivisionSet } from './subdivisions';
+import type { SubdivisionSet } from './subdivisions';
 import { isMember as isCountryMember } from './views';
 
 /** What a view draws, and which of those shapes carry data and take input. */

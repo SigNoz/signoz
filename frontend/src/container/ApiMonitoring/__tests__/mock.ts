@@ -1,5 +1,5 @@
 import { domainNameKey } from '../constants';
-import { APIMonitoringResponseColumn } from '../types';
+import type { APIMonitoringResponseColumn } from '../types';
 
 export const APIMonitoringColumnsMock: APIMonitoringResponseColumn[] = [
 	{

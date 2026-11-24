@@ -1,6 +1,6 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource } from 'types/common/queryBuilder';
+import type { PANEL_TYPES } from 'constants/queryBuilder';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
+import type { DataSource } from 'types/common/queryBuilder';
 
 import AddToDashboardButton from './AddToDashboardButton';
 import CreateAlertButton from './CreateAlertButton';

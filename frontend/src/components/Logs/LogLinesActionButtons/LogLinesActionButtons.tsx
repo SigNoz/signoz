@@ -1,4 +1,5 @@
-import { memo, MouseEventHandler } from 'react';
+import type { MouseEventHandler } from 'react';
+import { memo } from 'react';
 import { Link, TextSelect } from '@signozhq/icons';
 import { Button, Tooltip } from 'antd';
 

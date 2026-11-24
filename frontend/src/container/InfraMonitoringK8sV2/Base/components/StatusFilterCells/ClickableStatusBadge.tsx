@@ -1,7 +1,8 @@
 import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
 import TanStackTable from 'components/TanStackTableView';
 
-import { StatusFilterKind, useStatusFilter } from './useStatusFilter';
+import type { StatusFilterKind } from './useStatusFilter';
+import { useStatusFilter } from './useStatusFilter';
 
 import styles from './ClickableStatusBadge.module.scss';
 

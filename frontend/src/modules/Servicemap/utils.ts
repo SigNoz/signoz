@@ -10,7 +10,7 @@ import {
 	uniqBy,
 } from 'lodash-es';
 
-import { graphDataType } from './ServiceMap';
+import type { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;

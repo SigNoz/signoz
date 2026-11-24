@@ -7,7 +7,7 @@ import type {
 	RenderErrorResponseDTO,
 	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';

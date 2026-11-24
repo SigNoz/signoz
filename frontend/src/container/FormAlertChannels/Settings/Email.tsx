@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useFormContext } from 'react-hook-form';
 import { Input } from '@signozhq/ui/input';
-import { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
+import type { ChannelSpecFormValues } from '../../CreateAlertChannels/types';
 import FormCard from '../FormCard';
 import FormField from '../FormField';
 

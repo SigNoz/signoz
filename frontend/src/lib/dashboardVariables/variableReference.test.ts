@@ -1,5 +1,8 @@
 import { initialQueryBuilderFormValues } from 'constants/queryBuilder';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
+import type {
+	IBuilderQuery,
+	Query,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import {

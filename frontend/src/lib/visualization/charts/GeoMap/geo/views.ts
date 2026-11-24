@@ -1,6 +1,6 @@
 import type { MultiPolygon, Position } from 'geojson';
 
-import {
+import type {
 	CountryFeature,
 	GeoMapDatum,
 	GeoMapProjection,
