@@ -164,6 +164,7 @@ export const useGetAlertRuleDetailsStats =
 
 type GetAlertRuleDetailsTopContributorsProps = GetAlertRuleDetailsApiProps & {
 	data: GetRuleHistoryTopContributors200 | undefined;
+	error: AxiosError<RenderErrorResponseDTO> | null;
 };
 
 export const useGetAlertRuleDetailsTopContributors =
@@ -172,7 +173,7 @@ export const useGetAlertRuleDetailsTopContributors =
 
 		const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-		const { isLoading, isRefetching, isError, data } =
+		const { isLoading, isRefetching, isError, data, error } =
 			useGetRuleHistoryTopContributors(
 				{ id: ruleId || '' },
 				{ start: startTime, end: endTime },
@@ -185,7 +186,15 @@ export const useGetAlertRuleDetailsTopContributors =
 				},
 			);
 
-		return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
+		return {
+			isLoading,
+			isRefetching,
+			isError,
+			data,
+			error: error as AxiosError<RenderErrorResponseDTO> | null,
+			isValidRuleId,
+			ruleId,
+		};
 	};
 
 type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
