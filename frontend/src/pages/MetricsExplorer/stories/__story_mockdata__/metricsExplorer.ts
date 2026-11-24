@@ -226,7 +226,7 @@ export const drawerMetricName = (type: DrawerMetricType): string =>
  * The metrics the explorer plots, in the order the query builder adds them.
  * Their units differ, which is what makes the page force one chart per query.
  */
-export const EXPLORER_METRICS = [
+const EXPLORER_METRICS = [
 	'container_cpu_utilization',
 	'k8s.pod.memory.usage',
 	'http.server.request.count',

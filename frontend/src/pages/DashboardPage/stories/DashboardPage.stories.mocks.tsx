@@ -73,7 +73,7 @@ const DATA = 'Dashboard · panels';
 const SHARING = 'Dashboard · sharing';
 const REQUESTS = 'Dashboard · requests';
 
-export const dashboardRoute = (): string =>
+const dashboardRoute = (): string =>
 	buildRoutePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const tooltipRoute = (): string =>
@@ -399,7 +399,7 @@ const SEARCHABLE_PANELS: readonly PanelId[] = ['top-endpoints', 'recent-logs'];
  * The page mounts on `read`. A check that fails rather than denies still
  * renders it.
  */
-export const showsDashboard = (args: DashboardPageArgs): boolean =>
+const showsDashboard = (args: DashboardPageArgs): boolean =>
 	!args.notFound &&
 	(args.authzState === 'error' ||
 		grantsAll(args, buildDashboardReadPermission(STORY_DASHBOARD_ID)));

@@ -29,31 +29,6 @@
 			}
 		}
 
-		.explore-tabs {
-			margin: 15px 0;
-			.tab {
-				background-color: var(--l1-background);
-				border-color: var(--l1-border);
-				width: 180px;
-				padding: 16px 0;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-			}
-
-			.tab:first-of-type {
-				border-top-left-radius: 2px;
-			}
-
-			.tab:last-of-type {
-				border-top-right-radius: 2px;
-			}
-
-			.selected-view {
-				background: var(--l1-background);
-			}
-		}
-
 		.explore-content {
 			.ant-space {
 				margin-top: 10px;
@@ -83,16 +58,10 @@
 
 	.dashboards-popover {
 		border: 1px solid var(--bg-sienna-500);
-		.ant-typography {
-			color: var(--bg-sienna-500);
-		}
 	}
 
 	.alerts-popover {
 		border: 1px solid var(--bg-sakura-500);
-		.ant-typography {
-			color: var(--bg-sakura-500);
-		}
 	}
 }
 
@@ -104,8 +73,4 @@
 	width: 100%;
 	height: 100%;
 	gap: 16px;
-
-	.no-data-text {
-		color: var(--muted-foreground);
-	}
 }

@@ -72,7 +72,7 @@ export type AgentState = (typeof AGENT_STATES)[number];
  * at most one of them: answering either block of a pair would otherwise mark
  * both. Reported as an app bug.
  */
-export const MESSAGE_IDS = {
+const MESSAGE_IDS = {
 	analysis: 'message-analysis',
 	question: 'message-question',
 	checkboxes: 'message-checkboxes',

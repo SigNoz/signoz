@@ -1,25 +1,5 @@
-import { IQueryBuilderState } from 'constants/queryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-
-export interface InitialStateI {
-	search: string;
-}
-
-export interface ContextValueI {
-	values: InitialStateI;
-	onChangeHandler: (type: IQueryBuilderState) => (value: string) => void;
-	onSubmitHandler: VoidFunction;
-}
-
-export type Option = {
-	value: string;
-	label: string;
-	selected?: boolean;
-	dataType?: string;
-	isIndexed?: boolean;
-	type?: string;
-};
 
 export type QueryProps = {
 	index: number;

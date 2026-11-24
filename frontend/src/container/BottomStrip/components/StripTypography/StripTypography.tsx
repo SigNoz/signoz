@@ -33,5 +33,4 @@ function StripTypography({
 
 StripTypography.defaultProps = { prefix: undefined };
 
-export type { StripTypographyProps };
 export default StripTypography;

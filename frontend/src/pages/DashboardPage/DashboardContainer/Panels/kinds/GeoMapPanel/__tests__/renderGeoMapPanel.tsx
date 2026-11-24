@@ -28,7 +28,7 @@ jest.mock('lib/visualization/charts/GeoMap/GeoMap', () => ({
 	},
 }));
 
-export function panelWith(
+function panelWith(
 	spec: DashboardtypesGeoMapPanelSpecDTO,
 ): DashboardtypesPanelDTO {
 	return {

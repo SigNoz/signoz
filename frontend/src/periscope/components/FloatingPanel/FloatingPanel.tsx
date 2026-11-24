@@ -9,7 +9,7 @@ import { useKeepInViewport } from './useKeepInViewport';
 
 type EnableResizing = ComponentProps<typeof Rnd>['enableResizing'];
 
-export interface FloatingPanelProps {
+interface FloatingPanelProps {
 	isOpen: boolean;
 	children: React.ReactNode;
 	defaultPosition?: { x: number; y: number };

@@ -15,7 +15,7 @@ import {
 import type { SeriesVisibilityItem } from 'lib/visualization/panels/types';
 import { updateSeriesVisibilityToLocalStorage } from 'lib/visualization/panels/utils/legendVisibilityUtils';
 import type uPlot from 'uplot';
-export interface PlotContextInitialState {
+interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;
 	id?: string;
 	shouldSaveSelectionPreference?: boolean;
@@ -34,7 +34,7 @@ export interface IPlotContext {
 	syncSeriesVisibilityToLocalStorage: () => void;
 }
 
-export const PlotContext = createContext<IPlotContext | null>(null);
+const PlotContext = createContext<IPlotContext | null>(null);
 
 /** Data series (index 0 is the x-axis) currently drawn. */
 const countShownSeries = (plot: uPlot): number =>

@@ -64,9 +64,3 @@ export interface IDetailedError {
 	offendingSymbol?: string;
 	expectedTokens?: string[];
 }
-
-export interface ASTNode {
-	type: string;
-	value?: string;
-	children?: ASTNode[];
-}

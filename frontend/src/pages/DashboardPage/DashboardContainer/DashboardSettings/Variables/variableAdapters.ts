@@ -148,10 +148,3 @@ export function formModelToDto(
 		},
 	};
 }
-
-/** Maps the V2 plugin/envelope to the four UI-facing variable types. */
-export function variableTypeOf(
-	dto: DashboardtypesVariableDTO,
-): VariableFormModel['type'] {
-	return dtoToFormModel(dto).type;
-}

@@ -15,7 +15,7 @@ import type {
 import { buildPatternMappingPayload } from 'container/LLMObservability/Settings/ModelPricing/utils';
 
 // A single row's choice: map this unpriced model onto this billing rule.
-export interface UnpricedModelMapping {
+interface UnpricedModelMapping {
 	model: UnpricedModel;
 	rule: PricingRule;
 }

@@ -7,7 +7,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 /**
- * The keys the legacy v3 query builder offers per signal, so a page that reaches
+ * The keys the query builder offers per signal, so a page that reaches
  * it without declaring its own autocomplete opens on a list that looks like the
  * product's rather than on a failed request.
  */

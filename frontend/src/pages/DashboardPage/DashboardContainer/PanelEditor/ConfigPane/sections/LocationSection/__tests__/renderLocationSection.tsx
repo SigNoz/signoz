@@ -29,12 +29,12 @@ const value = (id: string, name: string): PanelTableColumn => ({
 	isValueColumn: true,
 });
 
-export const TABLE_COLUMNS = [
+const TABLE_COLUMNS = [
 	{ key: 'A', label: 'A', name: 'count()' },
 	{ key: 'B', label: 'B', name: 'error_rate' },
 ];
 
-export function placementFor(
+function placementFor(
 	groups: string[],
 	rows: Record<string, unknown>[],
 	slice: GeoMapPlacementSlice = {},

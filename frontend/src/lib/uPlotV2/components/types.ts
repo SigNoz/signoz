@@ -87,7 +87,7 @@ export interface IRenderTooltipFooterArgs {
 	dismiss: () => void;
 }
 
-export interface BaseTooltipProps {
+interface BaseTooltipProps {
 	id: string;
 	showTooltipHeader?: boolean;
 	canPinTooltip?: boolean;

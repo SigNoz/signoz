@@ -65,10 +65,3 @@ export const DATE_TIME_FORMATS = {
 	DASH_DATETIME_UTC: 'MMM D, YYYY ⎯ HH:mm:ss (UTC Z)',
 	DASH_TIME_DATE: 'HH:mm:ss ⎯ MMM D, YYYY (UTC Z)',
 } as const;
-
-export const convert24hTo12h = (format: string): string =>
-	format
-		.replace(/\bHH:mm:ss\.SSS\b/g, 'hh:mm:ss.SSS A')
-		.replace(/\bHH:mm:ss\b/g, 'hh:mm:ss A')
-		.replace(/\bHH:mm\b/g, 'hh:mm A')
-		.replace(/\bh:mm:ss\b/g, 'h:mm:ss A');

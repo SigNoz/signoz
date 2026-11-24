@@ -36,14 +36,6 @@ $grid-columns: minmax(0, 2fr) minmax(0, 3fr);
 	touch-action: none;
 }
 
-.varName {
-	min-width: 0;
-	font-family: 'Space Mono', monospace;
-	font-size: 13px;
-	color: var(--bg-robin-400);
-	word-break: break-all;
-}
-
 .descCell {
 	position: relative;
 	min-width: 0;
@@ -82,10 +74,4 @@ $grid-columns: minmax(0, 2fr) minmax(0, 3fr);
 
 .rowActionsVisible {
 	opacity: 1;
-}
-
-.confirmText {
-	margin-right: 4px;
-	font-size: 12px;
-	color: var(--l2-foreground);
 }

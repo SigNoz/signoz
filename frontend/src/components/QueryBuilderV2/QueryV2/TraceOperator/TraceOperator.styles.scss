@@ -59,10 +59,6 @@
 		}
 	}
 
-	&-input {
-		width: 100%;
-	}
-
 	&-container {
 		flex: 1;
 		display: flex;
@@ -101,18 +97,6 @@
 			--query-builder-v2-background-color: transparent;
 			.cm-activeLine > span {
 				font-size: 12px;
-			}
-		}
-
-		&.arrow-left {
-			&::before {
-				content: '';
-				position: absolute;
-				left: -16px;
-				top: 50%;
-				height: 1px;
-				width: 16px;
-				background-color: var(--l1-border);
 			}
 		}
 

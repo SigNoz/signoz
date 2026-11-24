@@ -23,5 +23,4 @@ BlockRegistry.register('action', ActionBlock);
 
 // ─── Public exports ───────────────────────────────────────────────────────────
 
-export { BlockRegistry } from './BlockRegistry';
 export { default as RichCodeBlock } from './RichCodeBlock';

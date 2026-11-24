@@ -5,9 +5,9 @@ import { screen, userEvent } from 'tests/test-utils';
 type User = ReturnType<typeof userEvent.setup>;
 
 export const CREATE_USER_ENDPOINT = '*/api/v2/users';
-export const LIST_ROLES_ENDPOINT = '*/api/v1/roles';
+const LIST_ROLES_ENDPOINT = '*/api/v1/roles';
 
-export const MOCK_ROLES = [
+const MOCK_ROLES = [
 	{ id: 'role-admin', name: 'Admin', description: 'Admin role' },
 	{ id: 'role-editor', name: 'Editor', description: 'Editor role' },
 	{ id: 'role-viewer', name: 'Viewer', description: 'Viewer role' },

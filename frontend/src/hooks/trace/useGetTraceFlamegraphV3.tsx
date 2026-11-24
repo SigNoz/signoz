@@ -7,7 +7,7 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useQuery, UseQueryResult } from 'react-query';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 
-export interface GetTraceFlamegraphV3Props {
+interface GetTraceFlamegraphV3Props {
 	traceId: string;
 	selectedSpanId?: string;
 	selectFields?: TelemetryFieldKey[];

@@ -8,52 +8,9 @@ export type GlobalTimeSelectedTime = Time | CustomTimeRange;
 // Forward declaration to avoid circular dependency
 export type GlobalTimeStoreApiRef = StoreApi<GlobalTimeStore>;
 
-export interface IGlobalTimeStoreState {
-	/**
-	 * The selected time range, can be:
-	 * - Relative duration: '1m', '5m', '15m', '1h', '1d', etc.
-	 * - Custom range: '<minTimeUnixNano>||_||<maxTimeUnixNano>' format
-	 */
-	selectedTime: GlobalTimeSelectedTime;
-
-	/**
-	 * Whether auto-refresh is enabled.
-	 * Automatically computed: true for duration-based times, false for custom ranges.
-	 */
-	isRefreshEnabled: boolean;
-
-	/**
-	 * The refresh interval in milliseconds (e.g., 5000 for 5s, 30000 for 30s)
-	 * Only used when isRefreshEnabled is true
-	 */
-	refreshInterval: number;
-}
-
 export interface ParsedTimeRange {
 	minTime: number;
 	maxTime: number;
-}
-
-export interface IGlobalTimeStoreActions {
-	/**
-	 * Set the selected time and optionally the refresh interval.
-	 * isRefreshEnabled is automatically computed:
-	 * - Custom time ranges: always false
-	 * - Duration times with refreshInterval > 0: true
-	 * - Duration times with refreshInterval = 0: false
-	 */
-	setSelectedTime: (
-		selectedTime: GlobalTimeSelectedTime,
-		refreshInterval?: number,
-	) => void;
-
-	/**
-	 * Get the current min/max time values.
-	 * - Custom time ranges: returns exact parsed values
-	 * - isRefreshEnabled true: computes 5s-rounded values and updates store
-	 * - isRefreshEnabled false: returns lastComputedMinMax
-	 */
-	getMinMaxTime: () => ParsedTimeRange;
 }
 
 export interface GlobalTimeProviderOptions {
@@ -104,7 +61,7 @@ export interface GlobalTimeState {
 	shouldClearUrlParams: boolean;
 }
 
-export interface GlobalTimeActions {
+interface GlobalTimeActions {
 	setSelectedTime: (
 		time: GlobalTimeSelectedTime,
 		refreshInterval?: number,

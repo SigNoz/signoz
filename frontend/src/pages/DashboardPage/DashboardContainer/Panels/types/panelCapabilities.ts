@@ -49,7 +49,7 @@ export enum QueryTypeKind {
 	SIGNAL_LESS = 'signal-less',
 }
 
-export type QueryTypeCapability =
+type QueryTypeCapability =
 	| { kind: QueryTypeKind.SIGNAL; signals: TelemetrytypesSignalDTO[] }
 	| { kind: QueryTypeKind.SIGNAL_LESS };
 

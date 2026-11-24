@@ -71,17 +71,6 @@
 	color: var(--text-panel-ink, inherit);
 }
 
-.state {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 24px;
-	color: var(--l2-forground);
-	font-size: 13px;
-	text-align: center;
-}
-
 .dateTimeSelector {
 	margin-left: auto;
 }

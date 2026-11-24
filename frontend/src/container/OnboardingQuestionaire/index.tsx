@@ -27,7 +27,7 @@ import OrgQuestions, { OrgDetails } from './OrgQuestions/OrgQuestions';
 
 import './OnboardingQuestionaire.styles.scss';
 
-export const showErrorNotification = (
+const showErrorNotification = (
 	notifications: NotificationInstance,
 	err: Error,
 ): void => {

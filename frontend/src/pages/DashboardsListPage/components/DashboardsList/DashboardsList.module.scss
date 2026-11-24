@@ -36,13 +36,6 @@
 		background: var(--l1-background) !important;
 	}
 
-	:global(.ant-table-wrapper)
-		:global(.ant-table-tbody)
-		:global(.ant-table-row:last-child)
-		:global(.ant-table-cell)
-		> div {
-	}
-
 	:global(.ant-pagination-item) {
 		display: flex;
 		justify-content: center;
@@ -62,29 +55,5 @@
 	:global(.ant-pagination-item-active) > a {
 		color: var(--foreground) !important;
 		font-weight: var(--label-base-500-font-weight);
-	}
-}
-
-.subtitle {
-	color: var(--l2-foreground);
-	font-size: var(--paragraph-base-400-font-size);
-	font-style: normal;
-	font-weight: var(--paragraph-base-400-font-weight);
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}
-
-.integrationsContainer {
-	width: 100%;
-}
-
-.integrationsContent {
-	max-width: 100%;
-	width: 100%;
-
-	// The shared request banner ships a 12px margin; drop it so the banner's
-	// left edge lines up with the heading and filters above/below it.
-	:global(.request-entity-container) {
-		margin: 0;
 	}
 }

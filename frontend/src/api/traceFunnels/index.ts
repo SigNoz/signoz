@@ -150,15 +150,6 @@ export const validateFunnelSteps = async (
 	};
 };
 
-export interface UpdateFunnelStepDetailsPayload {
-	funnel_id: string;
-	steps: Array<{
-		step_name: string;
-		description: string;
-	}>;
-	updated_at: number;
-}
-
 interface UpdateFunnelDescriptionPayload {
 	funnel_id: string;
 	description: string;

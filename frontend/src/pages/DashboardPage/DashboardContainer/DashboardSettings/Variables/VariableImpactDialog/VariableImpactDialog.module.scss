@@ -4,12 +4,6 @@
 	gap: 12px;
 }
 
-.intro {
-	color: var(--l2-foreground);
-	font-size: 13px;
-	line-height: 1.5;
-}
-
 .rows {
 	display: flex;
 	flex-direction: column;
@@ -53,13 +47,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-}
-
-.fieldLabel {
-	color: var(--l2-foreground);
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
 }
 
 .textArea {

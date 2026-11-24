@@ -9,7 +9,7 @@ import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.
 
 import './InviteMembersModal.styles.scss';
 
-export interface InviteMembersModalProps {
+interface InviteMembersModalProps {
 	open: boolean;
 	onClose: () => void;
 	onComplete?: () => void;

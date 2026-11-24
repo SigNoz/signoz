@@ -4,7 +4,7 @@ const ROLE_TRIGGER_TEST_ID = /^invite-role-[0-9a-f-]{36}$/;
 
 type User = ReturnType<typeof userEvent.setup>;
 
-export function getRoleTrigger(rowIndex: number): HTMLElement {
+function getRoleTrigger(rowIndex: number): HTMLElement {
 	return screen.getAllByTestId(ROLE_TRIGGER_TEST_ID)[rowIndex];
 }
 

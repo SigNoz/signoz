@@ -13,22 +13,6 @@ export const Input = styled(InputComponent)`
 	}
 `;
 
-export const ButtonContainer = styled.div`
-	&&& {
-		display: flex;
-		justify-content: flex-end;
-		width: 50%;
-		align-items: center;
-		margin-top: 3rem;
-	}
-`;
-
-export const TextContainer = styled.div`
-	&&& {
-		min-width: 100px;
-	}
-`;
-
 export const ErrorTextContainer = styled.div`
 	&&& {
 		margin-top: 2rem;
@@ -40,17 +24,6 @@ export const ErrorTextContainer = styled.div`
 		> article {
 			margin-right: 1rem;
 		}
-	}
-`;
-
-export const ToolTipContainer = styled.div`
-	&&& {
-		margin-top: 2rem;
-		margin-bottom: 2rem;
-		display: flex;
-		align-items: center;
-		width: 50%;
-		justify-content: flex-end;
 	}
 `;
 

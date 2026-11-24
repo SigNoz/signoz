@@ -23,7 +23,6 @@ export enum DashboardDetailEvents {
 	SectionAction = 'Dashboard Detail V2: Section action',
 	SectionCollapsed = 'Dashboard Detail V2: Section collapsed',
 	SectionsReordered = 'Dashboard Detail V2: Sections reordered',
-	FirstSectionMigrationConfirmed = 'Dashboard Detail V2: First section migration confirmed',
 
 	// Panels
 	PanelAdded = 'Dashboard Detail V2: Panel added',

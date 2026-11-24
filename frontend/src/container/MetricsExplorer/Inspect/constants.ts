@@ -8,8 +8,6 @@ import {
 	TimeAggregationOptions,
 } from './types';
 
-export const INSPECT_FEATURE_FLAG_KEY = 'metrics-explorer-inspect-feature-flag';
-
 export const METRIC_TYPE_TO_COLOR_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.gauge]: Color.BG_SAKURA_500,
 	[MetrictypesTypeDTO.histogram]: Color.BG_SIENNA_500,
@@ -81,5 +79,3 @@ export const TEMPORAL_AGGREGATION_LINK =
 
 export const SPACE_AGGREGATION_LINK =
 	'https://signoz.io/docs/metrics-management/types-and-aggregation/#step-3-spatial-aggregation';
-
-export const GRAPH_CLICK_PIXEL_TOLERANCE = 10;

@@ -174,7 +174,7 @@ function TracesTableComponent({
 	);
 }
 
-export type TracesTableComponentProps = {
+type TracesTableComponentProps = {
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,
 		Error

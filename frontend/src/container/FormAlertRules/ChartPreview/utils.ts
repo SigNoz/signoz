@@ -76,7 +76,7 @@ export function covertIntoDataFormats({
 	return Number.isNaN(result) ? 0 : result;
 }
 
-export const getThresholdLabel = (
+const getThresholdLabel = (
 	optionName: string,
 	value: number,
 	unit?: string,

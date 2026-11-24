@@ -68,19 +68,19 @@ function findEventAtPosition(
 	return null;
 }
 
-export interface EventTooltipData {
+interface EventTooltipData {
 	name: string;
 	timeOffsetMs: number;
 	isError: boolean;
 	attributeMap: Record<string, string>;
 }
 
-export interface SpanPreviewRowData {
+interface SpanPreviewRowData {
 	key: string;
 	value: string;
 }
 
-export interface TooltipContent {
+interface TooltipContent {
 	serviceName: string;
 	spanName: string;
 	status: 'ok' | 'warning' | 'error';

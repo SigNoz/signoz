@@ -13,10 +13,6 @@
 		border-color: var(--l1-border);
 		margin: 16px 0;
 	}
-
-	.breadcrumb-divider {
-		margin-top: 10px;
-	}
 }
 
 .create-alert__breadcrumb {
@@ -26,16 +22,7 @@
 		align-items: center;
 	}
 
-	.breadcrumb-item {
-		color: var(--l2-foreground);
-		font-size: 14px;
-		line-height: 20px;
-		letter-spacing: 0.25px;
-		padding: 0;
-	}
-
-	.ant-breadcrumb-separator,
-	.breadcrumb-item--last {
+	.ant-breadcrumb-separator {
 		color: var(--muted-foreground);
 		font-family: var(--code-base-400-font-family);
 	}

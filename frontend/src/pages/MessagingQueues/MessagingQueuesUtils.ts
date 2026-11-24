@@ -5,7 +5,6 @@ import {
 } from 'api/messagingQueues/getConsumerLagDetails';
 import { getPartitionLatencyDetails } from 'api/messagingQueues/getPartitionLatencyDetails';
 import { getTopicThroughputDetails } from 'api/messagingQueues/getTopicThroughputDetails';
-import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetWidgetQueryBuilderProps } from 'container/MetricsApplication/types';
@@ -51,10 +50,7 @@ export const ConsumerLagDetailTitle: Record<
 	'partition-host-metric': 'Partition Host Metrics',
 };
 
-export function createWidgetFilterItem(
-	key: string,
-	value: string,
-): TagFilterItem {
+function createWidgetFilterItem(key: string, value: string): TagFilterItem {
 	const id = `${key}--string--tag--false`;
 
 	return {
@@ -163,9 +159,6 @@ export function getWidgetQuery({
 		},
 	};
 }
-
-export const convertToNanoseconds = (timestamp: number): bigint =>
-	BigInt((timestamp * 1e9).toFixed(0));
 
 export const getCustomTimeRangeWindowSweepInMS = (
 	customTimeRangeWindowForCoRelation: string | undefined,
@@ -346,42 +339,6 @@ export const getMetaDataAndAPIPerView = (
 			},
 			tableApi: getTopicThroughputDetails,
 		},
-	};
-};
-
-interface OnboardingStatusAttributeData {
-	overallStatus: string;
-	allAvailableAttributes: string[];
-	attributeDataWithError: { attributeName: string; errorMsg: string }[];
-}
-
-export const getAttributeDataFromOnboardingStatus = (
-	onboardingStatus?: OnboardingStatusResponse | null,
-): OnboardingStatusAttributeData => {
-	const allAvailableAttributes: string[] = [];
-	const attributeDataWithError: {
-		attributeName: string;
-		errorMsg: string;
-	}[] = [];
-
-	if (onboardingStatus?.data && !isEmpty(onboardingStatus?.data)) {
-		onboardingStatus.data.forEach((status) => {
-			if (status.attribute) {
-				allAvailableAttributes.push(status.attribute);
-				if (status.status === '0') {
-					attributeDataWithError.push({
-						attributeName: status.attribute,
-						errorMsg: status.error_message || '',
-					});
-				}
-			}
-		});
-	}
-
-	return {
-		overallStatus: attributeDataWithError.length ? 'error' : 'success',
-		allAvailableAttributes,
-		attributeDataWithError,
 	};
 };
 

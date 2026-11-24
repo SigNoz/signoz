@@ -14,7 +14,6 @@ import {
 	type Querybuildertypesv5TimeSeriesDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import type { Warning } from 'types/api';
-import type { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
 import type {
 	ColumnDescriptor,
 	MetricRangePayloadV5,
@@ -22,7 +21,6 @@ import type {
 	TimeSeries,
 	TimeSeriesValue,
 } from 'types/api/v5/queryRange';
-import type { Column, SeriesItem } from 'types/api/widgets/getQuery';
 
 /** Typed builders for the query_range response shapes, v5 first then v3. */
 
@@ -63,7 +61,7 @@ export const queryRangeV5ScalarResponse = (
  * An aggregation column: the query it answers for, and which of that query's
  * aggregations it is when the query asked for several.
  */
-export interface ScalarAggregationColumn {
+interface ScalarAggregationColumn {
 	queryName: string;
 	aggregationIndex?: number;
 }
@@ -224,96 +222,6 @@ export const queryRangeV5TimeSeriesResponse = (
 			})),
 		},
 		meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
-	},
-});
-
-/**
- * The v3 shapes, which the legacy dashboard path still answers on: `GridCard`
- * without a `version` prop goes to `/api/v3/query_range` or
- * `/api/v4/query_range` rather than v5.
- */
-export interface QueryRangeV3Body extends MetricRangePayloadV3 {
-	status: string;
-}
-
-export const v3Series = (
-	labels: Record<string, string>,
-	values: SeriesItem['values'],
-): SeriesItem => ({
-	labels,
-	labelsArray: Object.entries(labels).map(([key, value]) => ({ [key]: value })),
-	values,
-});
-
-/** Same wave as `timeSeriesPoints`, in the v3 spelling: values are strings. */
-export const v3TimeSeriesValues = ({
-	start,
-	end,
-	points = 30,
-	base,
-	amplitude,
-	seed = 0,
-}: TimeSeriesPointsOptions): SeriesItem['values'] =>
-	timeSeriesPoints({ start, end, points, base, amplitude, seed }).map(
-		({ timestamp, value }) => ({
-			timestamp,
-			value: String(Number(value.toFixed(4))),
-		}),
-	);
-
-export interface V3TimeSeriesResult {
-	queryName: string;
-	series: SeriesItem[];
-	legend?: string;
-}
-
-export const queryRangeV3TimeSeriesResponse = (
-	results: V3TimeSeriesResult[],
-): QueryRangeV3Body => ({
-	status: 'success',
-	data: {
-		resultType: 'matrix',
-		result: results.map(({ queryName, series, legend }) => ({
-			queryName,
-			legend,
-			series,
-			list: null,
-		})),
-	},
-});
-
-export interface V3TableResult {
-	queryName: string;
-	columns: Column[];
-	rows: Array<Record<string, string | number>>;
-}
-
-export const queryRangeV3TableResponse = (
-	results: V3TableResult[],
-): QueryRangeV3Body => ({
-	status: 'success',
-	data: {
-		resultType: 'table',
-		result: results.map(({ queryName, columns, rows }) => ({
-			queryName,
-			series: null,
-			list: null,
-			table: { columns, rows: rows.map((data) => ({ data })) },
-		})),
-	},
-});
-
-export const queryRangeV3EmptyResponse = (
-	queryNames: string[],
-): QueryRangeV3Body => ({
-	status: 'success',
-	data: {
-		resultType: 'matrix',
-		result: queryNames.map((queryName) => ({
-			queryName,
-			series: [],
-			list: null,
-		})),
 	},
 });
 

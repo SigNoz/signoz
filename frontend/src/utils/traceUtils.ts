@@ -1,11 +1,11 @@
 type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
 
-export interface IIntervalUnit {
+interface IIntervalUnit {
 	name: TTimeUnitName;
 	multiplier: number;
 }
 
-export const INTERVAL_UNITS: IIntervalUnit[] = [
+const INTERVAL_UNITS: IIntervalUnit[] = [
 	{
 		name: 'ms',
 		multiplier: 1,

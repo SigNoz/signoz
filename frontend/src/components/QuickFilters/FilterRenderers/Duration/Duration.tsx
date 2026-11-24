@@ -33,8 +33,6 @@ import { FilterType, HandleRunProps, unionTagFilterItems } from './utils';
 
 import './Duration.styles.scss';
 
-export type { FilterType };
-
 function Duration({
 	filter,
 	onFilterChange,

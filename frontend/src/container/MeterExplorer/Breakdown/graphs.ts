@@ -26,7 +26,7 @@ interface GetWidgetQueryPropsReturn extends GetWidgetQueryBuilderProps {
 	columnUnits?: Record<string, string>;
 }
 
-export const getWidgetQueryBuilder = ({
+const getWidgetQueryBuilder = ({
 	query,
 	title = '',
 	panelTypes,
@@ -52,9 +52,7 @@ export const getWidgetQueryBuilder = ({
 	fillSpans,
 });
 
-export function getWidgetQuery(
-	props: GetWidgetQueryProps,
-): GetWidgetQueryPropsReturn {
+function getWidgetQuery(props: GetWidgetQueryProps): GetWidgetQueryPropsReturn {
 	const { title, description, panelTypes, yAxisUnit, columnUnits } = props;
 	return {
 		title,

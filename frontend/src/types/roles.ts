@@ -1,8 +1,8 @@
-export type ADMIN = 'ADMIN';
-export type VIEWER = 'VIEWER';
-export type EDITOR = 'EDITOR';
-export type AUTHOR = 'AUTHOR';
-export type ANONYMOUS = 'ANONYMOUS';
+type ADMIN = 'ADMIN';
+type VIEWER = 'VIEWER';
+type EDITOR = 'EDITOR';
+type AUTHOR = 'AUTHOR';
+type ANONYMOUS = 'ANONYMOUS';
 
 export type ROLES = ADMIN | VIEWER | EDITOR | AUTHOR | ANONYMOUS;
 

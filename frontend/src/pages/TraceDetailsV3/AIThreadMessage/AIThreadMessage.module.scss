@@ -19,11 +19,6 @@
 	color: var(--l1-foreground);
 }
 
-// Typography sets size, weight and line height; the mixin adds the rest.
-.roleLabel {
-	@include paragraph-base;
-}
-
 .parts {
 	display: flex;
 	flex-direction: column;

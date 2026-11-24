@@ -42,41 +42,12 @@ export const dashboardSuccessResponse = {
 	],
 };
 
-export const dashboardEmptyState = {
-	status: 'sucsess',
-	data: [],
-};
-
 export const getDashboardById = {
 	status: 'success',
 	data: {
 		id: '1',
 		createdAt: '2022-11-16T13:29:47.064874419Z',
 		createdBy: 'integration',
-		updatedAt: '2024-05-21T06:41:30.546630961Z',
-		updatedBy: 'thor@avengers.io',
-		isLocked: true,
-		data: {
-			collapsableRowsMigrated: true,
-			description: '',
-			name: '',
-			panelMap: {},
-			tags: ['linux'],
-			title: 'thor',
-			uploadedGrafana: false,
-			uuid: '',
-			version: '',
-			variables: {},
-		},
-	},
-};
-
-export const getNonIntegrationDashboardById = {
-	status: 'success',
-	data: {
-		id: '1',
-		createdAt: '2022-11-16T13:29:47.064874419Z',
-		createdBy: 'thor',
 		updatedAt: '2024-05-21T06:41:30.546630961Z',
 		updatedBy: 'thor@avengers.io',
 		isLocked: true,

@@ -3,14 +3,10 @@ import {
 	initialQueryBuilderFormValuesMap,
 } from 'constants/queryBuilder';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
-import {
-	BaseAutocompleteData,
-	DataTypes,
-} from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
-export const defaultLiveQueryDataConfig: Partial<IBuilderQuery> = {
+const defaultLiveQueryDataConfig: Partial<IBuilderQuery> = {
 	aggregateOperator: LogsAggregatorOperator.NOOP,
 	disabled: true,
 	pageSize: 10,
@@ -23,7 +19,7 @@ type GetDefaultCompositeQueryParams = {
 	customQueryData?: Partial<IBuilderQuery>;
 };
 
-export const constructCompositeQuery = ({
+const constructCompositeQuery = ({
 	query,
 	initialQueryData,
 	customQueryData,
@@ -44,9 +40,3 @@ export const liveLogsCompositeQuery = constructCompositeQuery({
 	initialQueryData: initialQueryBuilderFormValuesMap.logs,
 	customQueryData: defaultLiveQueryDataConfig,
 });
-
-export const idObject: BaseAutocompleteData = {
-	key: 'id',
-	type: '',
-	dataType: DataTypes.String,
-};

@@ -1,15 +1,5 @@
 /// <reference types="vite/client" />
 
-declare module '*.md' {
-	const content: string;
-	export default content;
-}
-
-declare module '*.md?raw' {
-	const content: string;
-	export default content;
-}
-
 interface ImportMetaEnv {
 	readonly VITE_BASE_PATH: string;
 	readonly VITE_FRONTEND_API_ENDPOINT: string;

@@ -5,15 +5,12 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
-import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import {
-	AutocompleteType,
 	BaseAutocompleteData,
 	DataTypes,
 	LocalDataType,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
-	HavingForm,
 	IBuilderFormula,
 	IBuilderQuery,
 	IBuilderTraceOperator,
@@ -28,7 +25,6 @@ import {
 	BoolOperators,
 	DataSource,
 	LogsAggregatorOperator,
-	MeterAggregateOperator,
 	MetricAggregateOperator,
 	NumberOperators,
 	QueryBuilderData,
@@ -44,10 +40,7 @@ import {
 	meterAggregateOperatorOptions,
 	metricAggregateOperatorOptions,
 	metricsGaugeAggregateOperatorOptions,
-	metricsGaugeSpaceAggregateOperatorOptions,
-	metricsHistogramSpaceAggregateOperatorOptions,
 	metricsSumAggregateOperatorOptions,
-	metricsSumSpaceAggregateOperatorOptions,
 	tracesAggregateOperatorOptions,
 } from './queryBuilderOperators';
 
@@ -57,18 +50,11 @@ export const MAX_QUERIES = 26;
 export const TRACE_OPERATOR_QUERY_NAME = 'Trace Operator';
 
 export const idDivider = '--';
-export const selectValueDivider = '__';
 
 export const baseAutoCompleteIdKeysOrder: (keyof Omit<
 	BaseAutocompleteData,
 	'id' | 'isIndexed'
 >)[] = ['key', 'dataType', 'type'];
-
-export const autocompleteType: Record<AutocompleteType, AutocompleteType> = {
-	resource: 'resource',
-	tag: 'tag',
-	'': '',
-};
 
 export const formulasNames: string[] = Array.from(
 	Array(MAX_FORMULAS),
@@ -76,12 +62,6 @@ export const formulasNames: string[] = Array.from(
 );
 const alpha: number[] = Array.from(Array(MAX_QUERIES), (_, i) => i + 65);
 export const alphabet: string[] = alpha.map((str) => String.fromCharCode(str));
-
-export enum QueryBuilderKeys {
-	GET_AGGREGATE_ATTRIBUTE = 'GET_AGGREGATE_ATTRIBUTE',
-	GET_AGGREGATE_KEYS = 'GET_AGGREGATE_KEYS',
-	GET_ATTRIBUTE_SUGGESTIONS = 'GET_ATTRIBUTE_SUGGESTIONS',
-}
 
 export const mapOfOperators = {
 	metrics: metricAggregateOperatorOptions,
@@ -95,13 +75,6 @@ export const metricsOperatorsByType = {
 	Gauge: metricsGaugeAggregateOperatorOptions,
 };
 
-export const metricsSpaceAggregationOperatorsByType = {
-	Sum: metricsSumSpaceAggregateOperatorOptions,
-	Gauge: metricsGaugeSpaceAggregateOperatorOptions,
-	Histogram: metricsHistogramSpaceAggregateOperatorOptions,
-	ExponentialHistogram: metricsHistogramSpaceAggregateOperatorOptions,
-};
-
 export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
 	{ value: ReduceOperators.LAST, label: 'Latest of values in timeframe' },
 	{ value: ReduceOperators.SUM, label: 'Sum of values in timeframe' },
@@ -109,12 +82,6 @@ export const REDUCE_TO_VALUES: SelectOption<ReduceOperators, string>[] = [
 	{ value: ReduceOperators.MAX, label: 'Max of values in timeframe' },
 	{ value: ReduceOperators.MIN, label: 'Min of values in timeframe' },
 ];
-
-export const initialHavingValues: HavingForm = {
-	columnName: '',
-	op: '',
-	value: [],
-};
 
 export const initialAutocompleteData: BaseAutocompleteData = {
 	id: createIdFromObjectFields(
@@ -179,39 +146,6 @@ const initialQueryBuilderFormTracesValues: IBuilderQuery = {
 	dataSource: DataSource.TRACES,
 };
 
-export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
-	dataSource: DataSource.METRICS,
-	queryName: createNewBuilderItemName({ existNames: [], sourceNames: alphabet }),
-	aggregateOperator: MeterAggregateOperator.COUNT,
-	aggregateAttribute: initialAutocompleteData,
-	timeAggregation: MeterAggregateOperator.RATE,
-	spaceAggregation: MeterAggregateOperator.SUM,
-	filter: { expression: '' },
-	aggregations: [
-		{
-			metricName: '',
-			temporality: '',
-			timeAggregation: MeterAggregateOperator.AVG,
-			spaceAggregation: MeterAggregateOperator.SUM,
-			reduceTo: ReduceOperators.AVG,
-		},
-	],
-	functions: [],
-	filters: { items: [], op: 'AND' },
-	expression: createNewBuilderItemName({
-		existNames: [],
-		sourceNames: alphabet,
-	}),
-	disabled: false,
-	stepInterval: null,
-	having: [],
-	limit: null,
-	orderBy: [],
-	groupBy: [],
-	legend: '',
-	reduceTo: ReduceOperators.AVG,
-};
-
 export const initialQueryBuilderFormValuesMap: Record<
 	DataSource,
 	IBuilderQuery
@@ -251,7 +185,7 @@ export const initialClickHouseData: IClickHouseQuery = {
 	query: '',
 };
 
-export const initialQueryBuilderData: QueryBuilderData = {
+const initialQueryBuilderData: QueryBuilderData = {
 	queryData: [initialQueryBuilderFormValues],
 	queryFormulas: [],
 	queryTraceOperator: [],
@@ -342,10 +276,6 @@ export enum PANEL_TYPES {
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
-export enum PANEL_GROUP_TYPES {
-	ROW = 'row',
-}
-
 export enum ATTRIBUTE_TYPES {
 	SUM = 'Sum',
 	GAUGE = 'Gauge',
@@ -383,8 +313,6 @@ export function toAttributeType(
 	}
 	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';
 }
-
-export type IQueryBuilderState = 'search';
 
 export const QUERY_BUILDER_SEARCH_VALUES = {
 	MULTIPLY: 'MULTIPLY_VALUE',
@@ -427,18 +355,6 @@ export const INFRA_SHORT_TO_LONG_OPERATOR_MAP: Record<string, string> = {
 	NREGEX: 'NOT_REGEX',
 	NEXISTS: 'NOT_EXISTS',
 	NCONTAINS: 'NOT_CONTAINS',
-};
-
-/**
- * Maps long-form operators to short-form for InfraMonitoring API.
- */
-export const INFRA_LONG_TO_SHORT_OPERATOR_MAP: Record<string, string> = {
-	NOT_IN: 'NIN',
-	NOT_LIKE: 'NLIKE',
-	NOT_ILIKE: 'NOTILIKE',
-	NOT_REGEX: 'NREGEX',
-	NOT_EXISTS: 'NEXISTS',
-	NOT_CONTAINS: 'NCONTAINS',
 };
 
 export const QUERY_BUILDER_OPERATORS_BY_TYPES = {
@@ -525,17 +441,6 @@ export const OPERATORS_CONFIG = {
 	],
 };
 
-export const HAVING_OPERATORS: string[] = [
-	OPERATORS['='],
-	OPERATORS['!='],
-	OPERATORS.IN,
-	OPERATORS.NIN,
-	OPERATORS['>='],
-	OPERATORS['>'],
-	OPERATORS['<='],
-	OPERATORS['<'],
-];
-
 export enum PanelDisplay {
 	TIME_SERIES = 'Time Series',
 	VALUE = 'Number',
@@ -545,21 +450,6 @@ export enum PanelDisplay {
 	PIE = 'Pie',
 	HISTOGRAM = 'Histogram',
 }
-
-export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<
-	DataTypes,
-	keyof IAttributeValuesResponse
-> = {
-	[DataTypes.String]: 'stringAttributeValues',
-	[DataTypes.Float64]: 'numberAttributeValues',
-	[DataTypes.Int64]: 'numberAttributeValues',
-	[DataTypes.bool]: 'boolAttributeValues',
-	[DataTypes.ArrayFloat64]: 'numberAttributeValues',
-	[DataTypes.ArrayInt64]: 'numberAttributeValues',
-	[DataTypes.ArrayString]: 'stringAttributeValues',
-	[DataTypes.ArrayBool]: 'boolAttributeValues',
-	[DataTypes.EMPTY]: 'stringAttributeValues',
-};
 
 export const listViewInitialLogQuery: Query = {
 	...initialQueriesMap.logs,

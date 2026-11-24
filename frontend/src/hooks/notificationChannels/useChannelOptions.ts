@@ -9,7 +9,7 @@ import { range } from 'lodash-es';
 
 const PAGE_SIZE = 100;
 
-export const CHANNEL_OPTIONS_QUERY_KEY = ['notificationChannelOptions'];
+const CHANNEL_OPTIONS_QUERY_KEY = ['notificationChannelOptions'];
 
 export interface ChannelOption {
 	id: string;

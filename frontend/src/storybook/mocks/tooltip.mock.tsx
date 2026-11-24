@@ -1,4 +1,4 @@
-// The barrel is banned for the ~90 components it eagerly loads in a test run.
+// The barrel is banned for every component it eagerly loads in a test run.
 // This module stands in for the `tooltip` subpath, so importing that subpath
 // here would resolve back to itself; the barrel is the only specifier left that
 // reaches the real components, and it never runs under jest.

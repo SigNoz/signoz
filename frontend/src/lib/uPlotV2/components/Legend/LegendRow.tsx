@@ -9,7 +9,7 @@ import { LegendAction, OnLegendAction } from '../types';
 
 import styles from './LegendRow.module.scss';
 
-export interface LegendRowProps {
+interface LegendRowProps {
 	item: LegendItem;
 	/** The only series currently shown, so hiding it is refused. */
 	isOneSeriesVisible: boolean;

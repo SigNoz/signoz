@@ -5,7 +5,7 @@ import VectorSource from 'ol/source/Vector';
 import { supportsWebGL } from '../utils/webgl';
 import { OlMapHandle } from './useOlMap';
 
-export type PointsLayerStatus = 'idle' | 'loading' | 'ready' | 'unsupported';
+type PointsLayerStatus = 'idle' | 'loading' | 'ready' | 'unsupported';
 
 export interface OlPointsLayer {
 	layer: WebGLVectorLayer<VectorSource> | null;

@@ -1,4 +1,4 @@
-export const OVERFLOW_BADGE_WIDTH = 40;
+const OVERFLOW_BADGE_WIDTH = 40;
 
 /**
  * How many leading labels fit in `available` px, reserving room for the `+N` badge

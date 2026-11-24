@@ -35,7 +35,7 @@ interface AttributeCheckListProps {
 	loading: boolean;
 }
 
-export enum AttributesFilters {
+enum AttributesFilters {
 	ALL = 'all',
 	SUCCESS = 'success',
 	ERROR = 'error',

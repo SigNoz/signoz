@@ -9,7 +9,7 @@ export interface HeaderAction {
 	component: ReactNode; // check later if we can use direct btn itself or not.
 }
 
-export interface DetailsHeaderProps {
+interface DetailsHeaderProps {
 	title: string;
 	onClose: () => void;
 	actions?: HeaderAction[];

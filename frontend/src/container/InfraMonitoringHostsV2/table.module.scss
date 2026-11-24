@@ -1,14 +1,3 @@
-.entityGroupHeader {
-	padding-left: var(--spacing-5);
-	gap: var(--spacing-5);
-	display: flex;
-	align-items: center;
-}
-
-.hostnameColumnHeader {
-	display: block;
-}
-
 .progressContainer {
 	display: flex;
 	align-items: center;
@@ -16,9 +5,4 @@
 	& > div {
 		width: 100%;
 	}
-}
-
-.progressBar {
-	flex: 1;
-	margin-right: 8px;
 }

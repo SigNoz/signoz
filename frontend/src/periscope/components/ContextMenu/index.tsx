@@ -59,7 +59,7 @@ function ContextMenuHeader({ children }: ContextMenuHeaderProps): JSX.Element {
 	return <div className="context-menu-header">{children}</div>;
 }
 
-export function ContextMenu({
+function ContextMenu({
 	coordinates,
 	popoverPosition,
 	title,

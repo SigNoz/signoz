@@ -62,16 +62,6 @@ $custom-border-color: #2c3044;
 		}
 	}
 
-	.all-selected-text {
-		position: absolute;
-		left: 12px;
-		top: 50%;
-		transform: translateY(-50%);
-		color: var(--l2-foreground);
-		z-index: 1;
-		pointer-events: none;
-	}
-
 	.ant-select-selector {
 		max-height: 200px;
 		overflow: auto;
@@ -450,8 +440,7 @@ $custom-border-color: #2c3044;
 	width: 100%;
 	background-color: var(--l2-background);
 
-	.select-all-option,
-	.custom-value-option {
+	.select-all-option {
 		padding: 8px 12px;
 		border-bottom: 1px solid $custom-border-color;
 		margin-bottom: 8px;
@@ -459,16 +448,6 @@ $custom-border-color: #2c3044;
 		position: sticky;
 		top: 0;
 		z-index: 1;
-	}
-
-	.selected-values-section {
-		padding: 0 0 8px 0;
-		border-bottom: 1px solid $custom-border-color;
-		margin-bottom: 8px;
-
-		.selected-option {
-			padding: 4px 12px;
-		}
 	}
 
 	.select-group {
@@ -656,14 +635,6 @@ $custom-border-color: #2c3044;
 	font-weight: 500;
 }
 
-// Custom option styles for keyboard navigation
-.custom-option {
-	&.focused,
-	&.ant-select-item-option-active {
-		background-color: var(--l1-border) !important;
-	}
-}
-
 // Improve the sticky headers appearance
 .custom-select-dropdown-container {
 	.group-label,
@@ -744,12 +715,6 @@ $custom-border-color: #2c3044;
 .custom-multiselect-dropdown {
 	@include custom-scrollbar;
 
-	// Main content area
-	.options-container {
-		@include custom-scrollbar;
-		padding-right: 2px; // Add slight padding to prevent content touching scrollbar
-	}
-
 	// Non-sectioned options
 	.no-section-options {
 		@include nested-scrollbar;
@@ -762,11 +727,6 @@ $custom-border-color: #2c3044;
 .custom-select-dropdown-container,
 .custom-multiselect-dropdown-container {
 	@include custom-scrollbar;
-
-	// Add subtle shadow inside to indicate scrollable area
-	&.has-overflow {
-		box-shadow: inset 0 -10px 10px -10px rgba(0, 0, 0, 0.2);
-	}
 }
 
 // Light Mode Overrides
@@ -958,14 +918,9 @@ $custom-border-color: #2c3044;
 	}
 
 	.custom-multiselect-dropdown {
-		.select-all-option,
-		.custom-value-option {
+		.select-all-option {
 			border-bottom: 1px solid #f0f0f0;
 			background-color: #fafafa;
-		}
-
-		.selected-values-section {
-			border-bottom: 1px solid #f0f0f0;
 		}
 
 		.status-message {
@@ -982,13 +937,6 @@ $custom-border-color: #2c3044;
 
 	.highlight-text {
 		background-color: rgba(24, 144, 255, 0.2);
-	}
-
-	.custom-option {
-		&.focused,
-		&.ant-select-item-option-active {
-			background-color: #f5f5f5 !important;
-		}
 	}
 
 	.custom-select-dropdown-container {

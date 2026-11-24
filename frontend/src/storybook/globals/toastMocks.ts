@@ -1,6 +1,5 @@
 import { toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
-import type { StoryMockArgs } from '../controls/types';
 import { persistToasts } from '../mocks/toastsPersisted';
 
 const TOASTS = 'Toasts';
@@ -20,5 +19,3 @@ export const toastMocks = defineStoryMocks({
 	},
 	effect: ({ toastsPersist }) => persistToasts(toastsPersist),
 });
-
-export type ToastArgs = StoryMockArgs<typeof toastMocks>;

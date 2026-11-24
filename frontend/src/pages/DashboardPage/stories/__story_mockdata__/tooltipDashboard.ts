@@ -13,14 +13,14 @@ import {
 
 import { dashboardResponse, PANEL_IDS, VARIABLE_KINDS } from './dashboard';
 
-export const TOOLTIP_DASHBOARD_NAME =
+const TOOLTIP_DASHBOARD_NAME =
 	'Checkout service overview across every production region, by service and owner';
 
-export const TOOLTIP_DASHBOARD_DESCRIPTION =
+const TOOLTIP_DASHBOARD_DESCRIPTION =
 	'Traffic, errors and latency for the checkout path, broken down by service, region and deployment channel. Owned by the platform observability team; the runbook is at https://signoz.io/docs/dashboards/ and the rotation is in PagerDuty.';
 
 // Two fit beside the title; the rest fall behind the `+N` badge.
-export const TOOLTIP_DASHBOARD_TAGS = [
+const TOOLTIP_DASHBOARD_TAGS = [
 	{ key: 'env', value: 'production-eu-central-1' },
 	{ key: 'team', value: 'platform-observability' },
 	{ key: 'component', value: 'otel-collector' },
@@ -32,7 +32,7 @@ export const TOOLTIP_DASHBOARD_TAGS = [
 export const TOOLTIP_PANEL_NAME =
 	'Request rate by service, region and deployment channel, excluding synthetic traffic';
 
-export const TOOLTIP_PANEL_DESCRIPTIONS: Record<string, string> = {
+const TOOLTIP_PANEL_DESCRIPTIONS: Record<string, string> = {
 	'request-rate':
 		'Requests per second per service, taken from `signoz_calls_total` and filtered to the selected environment. Synthetic and health-check traffic is excluded, so this reads lower than the load balancer count.',
 	'error-rate':
@@ -57,59 +57,58 @@ export const TOOLTIP_WARNED_METRIC = 'signoz_apdex';
  * show: a title and a description that overflow, six tags, panel descriptions
  * that run past a line, and a panel on its own time preference.
  */
-export const tooltipDashboardDocument =
-	(): DashboardtypesGettableDashboardV2DTO => {
-		const document = dashboardResponse({
-			panels: PANEL_IDS.length,
-			sectioned: true,
-			variables: [...VARIABLE_KINDS],
-			locked: false,
-		}).data;
+const tooltipDashboardDocument = (): DashboardtypesGettableDashboardV2DTO => {
+	const document = dashboardResponse({
+		panels: PANEL_IDS.length,
+		sectioned: true,
+		variables: [...VARIABLE_KINDS],
+		locked: false,
+	}).data;
 
-		const panels = Object.fromEntries(
-			Object.entries(document.spec.panels ?? {}).map(([id, panel]) => [
-				id,
-				{
-					...panel,
-					spec: {
-						...panel.spec,
-						display: {
-							...panel.spec.display,
-							name:
-								id === 'request-rate' ? TOOLTIP_PANEL_NAME : panel.spec.display.name,
-							description:
-								TOOLTIP_PANEL_DESCRIPTIONS[id] ?? panel.spec.display.description,
-						},
-						plugin:
-							id === 'error-rate' &&
-							panel.spec.plugin.kind === TimeSeriesKind['signoz/TimeSeriesPanel']
-								? {
-										...panel.spec.plugin,
-										spec: {
-											...panel.spec.plugin.spec,
-											visualization: { timePreference: TimePreference.last_1_month },
-										},
-									}
-								: panel.spec.plugin,
+	const panels = Object.fromEntries(
+		Object.entries(document.spec.panels ?? {}).map(([id, panel]) => [
+			id,
+			{
+				...panel,
+				spec: {
+					...panel.spec,
+					display: {
+						...panel.spec.display,
+						name:
+							id === 'request-rate' ? TOOLTIP_PANEL_NAME : panel.spec.display.name,
+						description:
+							TOOLTIP_PANEL_DESCRIPTIONS[id] ?? panel.spec.display.description,
 					},
+					plugin:
+						id === 'error-rate' &&
+						panel.spec.plugin.kind === TimeSeriesKind['signoz/TimeSeriesPanel']
+							? {
+									...panel.spec.plugin,
+									spec: {
+										...panel.spec.plugin.spec,
+										visualization: { timePreference: TimePreference.last_1_month },
+									},
+								}
+							: panel.spec.plugin,
 				},
-			]),
-		) as DashboardtypesDashboardSpecDTOPanels;
-
-		return {
-			...document,
-			name: TOOLTIP_DASHBOARD_NAME,
-			tags: TOOLTIP_DASHBOARD_TAGS,
-			spec: {
-				...document.spec,
-				display: {
-					name: TOOLTIP_DASHBOARD_NAME,
-					description: TOOLTIP_DASHBOARD_DESCRIPTION,
-				},
-				panels,
 			},
-		};
+		]),
+	) as DashboardtypesDashboardSpecDTOPanels;
+
+	return {
+		...document,
+		name: TOOLTIP_DASHBOARD_NAME,
+		tags: TOOLTIP_DASHBOARD_TAGS,
+		spec: {
+			...document.spec,
+			display: {
+				name: TOOLTIP_DASHBOARD_NAME,
+				description: TOOLTIP_DASHBOARD_DESCRIPTION,
+			},
+			panels,
+		},
 	};
+};
 
 export const tooltipDashboardResponse = (): GetDashboardV2200 => ({
 	status: 'success',

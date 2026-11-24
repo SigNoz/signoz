@@ -31,7 +31,7 @@ export interface ContextLinksData {
 	linksData: ContextLinkProps[];
 }
 
-export interface IBaseWidget {
+interface IBaseWidget {
 	id: string;
 	panelTypes: PANEL_TYPES;
 	title: ReactNode;

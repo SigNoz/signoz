@@ -1,8 +1,6 @@
 import { StatusCodes } from 'http-status-codes';
 import { ErrorStatusCode, SuccessStatusCode } from 'types/common';
 
-export type ApiResponse<T> = { data: T };
-
 export interface ErrorResponse<ErrorObject = string> {
 	statusCode: ErrorStatusCode;
 	payload: null;
@@ -20,7 +18,7 @@ export interface SuccessResponse<T, P = unknown> {
 }
 
 // Standardize SuccessResponse and Error Response
-export interface AdditionalErrors {
+interface AdditionalErrors {
 	message: string;
 }
 
@@ -45,7 +43,7 @@ export interface SuccessResponseV2<T> {
 	data: T;
 }
 
-export interface AdditionalWarnings {
+interface AdditionalWarnings {
 	message: string;
 }
 

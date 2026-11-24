@@ -12,20 +12,6 @@
 	}
 }
 
-.resize-main-table {
-	.ant-table-body {
-		.ant-table-tbody {
-			.ant-table-row {
-				.ant-table-cell {
-					.ant-typography {
-						white-space: unset;
-					}
-				}
-			}
-		}
-	}
-}
-
 .logs-table,
 .traces-table {
 	.resize-table {

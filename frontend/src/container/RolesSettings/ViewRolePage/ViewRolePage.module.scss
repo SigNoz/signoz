@@ -29,10 +29,6 @@
 	gap: var(--spacing-6);
 }
 
-.unsavedText {
-	color: var(--primary);
-}
-
 .viewRolePageContent {
 	display: flex;
 	flex-direction: column;
@@ -66,12 +62,6 @@
 	letter-spacing: 0.48px;
 	text-transform: uppercase;
 	color: var(--l2-foreground);
-}
-
-.viewRolePageDivider {
-	width: 100%;
-	height: 1px;
-	background: var(--l1-border);
 }
 
 // The one grid row stretches the Tabs root to the height left on the page.

@@ -32,7 +32,7 @@ import {
 import type { RawRow } from 'types/api/v5/queryRange';
 
 /** The nine entities `entityRegistry` registers under the `category` param. */
-export const K8S_CATEGORIES = [
+const K8S_CATEGORIES = [
 	InfraMonitoringEntity.PODS,
 	InfraMonitoringEntity.NODES,
 	InfraMonitoringEntity.NAMESPACES,
@@ -44,7 +44,7 @@ export const K8S_CATEGORIES = [
 	InfraMonitoringEntity.VOLUMES,
 ] as const;
 
-export type K8sCategory = (typeof K8S_CATEGORIES)[number];
+type K8sCategory = (typeof K8S_CATEGORIES)[number];
 
 export type InfraEntity = K8sCategory | InfraMonitoringEntity.HOSTS;
 

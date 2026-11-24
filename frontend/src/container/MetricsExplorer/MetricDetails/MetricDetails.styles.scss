@@ -8,10 +8,6 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
-
-			.ant-typography {
-				font-family: var(--code-base-400-font-family);
-			}
 		}
 
 		.metric-details-header-buttons {
@@ -101,16 +97,10 @@
 
 			.dashboards-popover {
 				border: 1px solid var(--bg-sienna-500);
-				.ant-typography {
-					color: var(--bg-sienna-500);
-				}
 			}
 
 			.alerts-popover {
 				border: 1px solid var(--bg-sakura-500);
-				.ant-typography {
-					color: var(--bg-sakura-500);
-				}
 			}
 		}
 
@@ -158,11 +148,6 @@
 					}
 				}
 
-				.ant-typography {
-					font-family: var(--code-base-400-font-family);
-					color: var(--bg-robin-400);
-				}
-
 				.action-menu {
 					display: flex;
 					gap: 4px;
@@ -174,10 +159,6 @@
 						gap: 4px;
 						align-items: center;
 						align-self: flex-start;
-						.ant-typography {
-							font-family: 'Inter';
-							color: var(--l2-foreground);
-						}
 					}
 				}
 
@@ -309,50 +290,6 @@
 	.ant-select {
 		.ant-select-selector {
 			width: 200px !important;
-		}
-	}
-}
-
-.top-attributes-content {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	padding: 12px;
-	max-height: 300px;
-	overflow-y: scroll;
-	.top-attributes-item {
-		display: flex;
-		justify-content: space-between;
-
-		.top-attributes-item-progress {
-			display: flex;
-			gap: 12px;
-			height: 34px;
-			width: 100%;
-			color: var(--l1-foreground);
-			padding: 0 12px;
-			align-items: center;
-			position: relative;
-
-			.top-attributes-item-key {
-				z-index: 2;
-			}
-
-			.top-attributes-item-count {
-				background-color: var(--l1-border);
-				border-radius: 50px;
-				padding: 2px 6px;
-				color: var(--l2-foreground);
-				z-index: 2;
-			}
-
-			.top-attributes-item-progress-bar {
-				background-color: var(--l1-border);
-				height: 100%;
-				position: absolute;
-				top: 0;
-				left: 0;
-			}
 		}
 	}
 }

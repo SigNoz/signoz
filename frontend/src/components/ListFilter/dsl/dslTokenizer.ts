@@ -165,7 +165,7 @@ export const scanTerm = (text: string): TermScan => {
 	return scan;
 };
 
-export type CaretStage = 'key' | 'operator' | 'value' | 'connector' | 'none';
+type CaretStage = 'key' | 'operator' | 'value' | 'connector' | 'none';
 
 export interface CaretContext {
 	stage: CaretStage;

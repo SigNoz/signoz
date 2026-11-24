@@ -26,10 +26,7 @@ const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
 	};
 };
 
-export const getMinTimeForRelativeTimes = (
-	time: number,
-	unit: string,
-): number => {
+const getMinTimeForRelativeTimes = (time: number, unit: string): number => {
 	switch (unit) {
 		case 'm':
 			return getMinAgo({ minutes: 1 * time }).getTime();

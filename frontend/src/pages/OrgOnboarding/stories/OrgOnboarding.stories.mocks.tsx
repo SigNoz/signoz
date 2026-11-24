@@ -26,7 +26,7 @@ export const QUESTIONNAIRE_PAGES = [
 
 export type QuestionnairePage = (typeof QUESTIONNAIRE_PAGES)[number];
 
-export const PROFILE_UPDATES = ['success', 'error'] as const;
+const PROFILE_UPDATES = ['success', 'error'] as const;
 
 export type ProfileUpdate = (typeof PROFILE_UPDATES)[number];
 

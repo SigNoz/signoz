@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-export interface RowKeyDataItem<TItemKey = string> {
+interface RowKeyDataItem<TItemKey = string> {
 	/** Final unique key for the row (with dedup suffix if needed) */
 	finalKey: string;
 	/** Item key for tracking (may differ from finalKey) */

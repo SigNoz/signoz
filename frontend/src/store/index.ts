@@ -19,8 +19,6 @@ const store = createStore(
 	),
 );
 
-export type AppDispatch = typeof store.dispatch;
-
 if (window !== undefined) {
 	window.store = store;
 }

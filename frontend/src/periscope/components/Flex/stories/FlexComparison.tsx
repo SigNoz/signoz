@@ -10,7 +10,7 @@ export const LOCAL_FLEX_TEST_ID = 'flex-local';
 
 const ITEM_SIZES = [styles.itemSmall, styles.itemLarge, styles.itemMedium];
 
-export interface FlexComparisonProps extends Pick<
+interface FlexComparisonProps extends Pick<
 	FlexProps,
 	'vertical' | 'wrap' | 'justify' | 'align' | 'gap' | 'flex'
 > {

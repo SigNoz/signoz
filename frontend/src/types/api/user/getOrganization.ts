@@ -3,5 +3,3 @@ export interface Organization {
 	id: string;
 	displayName: string;
 }
-
-export type PayloadProps = Organization[];

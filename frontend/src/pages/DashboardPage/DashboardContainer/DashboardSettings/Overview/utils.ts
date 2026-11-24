@@ -4,8 +4,6 @@ import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/co
 
 import { toPickerRelativeTime } from '../../utils/dashboardDuration';
 
-export { parseKeyValueTag } from 'components/TagKeyValueInput/utils';
-
 // The tag editor is strictly key:value, so always render both sides — a
 // `key:key` tag stays `key:key` rather than collapsing to a bare `key`.
 export function tagsToStrings(tags: TagtypesPostableTagDTO[]): string[] {

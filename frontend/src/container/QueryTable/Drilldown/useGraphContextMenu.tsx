@@ -23,7 +23,7 @@ interface UseGraphContextMenuProps {
 	queryRange?: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 }
 
-export function useGraphContextMenu({
+function useGraphContextMenu({
 	widgetId = '',
 	query,
 	graphData,

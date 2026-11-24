@@ -139,19 +139,6 @@
 
 	:global(.ant-pagination-total-text) {
 		margin-right: auto;
-
-		.numbers {
-			font-family: Inter;
-			font-size: 12px;
-			color: var(--foreground);
-		}
-
-		.total {
-			font-family: Inter;
-			font-size: 12px;
-			color: var(--foreground);
-			opacity: 0.5;
-		}
 	}
 }
 

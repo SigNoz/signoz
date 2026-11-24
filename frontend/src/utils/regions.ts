@@ -3,7 +3,7 @@ export interface Region {
 	name: string;
 	subRegions: SubRegion[];
 }
-export interface SubRegion {
+interface SubRegion {
 	id: string;
 	name: string;
 	displayName: string;

@@ -6,7 +6,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import styles from './LabelTag.module.scss';
 
-export interface LabelTagProps {
+interface LabelTagProps {
 	label: string;
 	color?: BadgeColorType;
 	value?: string;

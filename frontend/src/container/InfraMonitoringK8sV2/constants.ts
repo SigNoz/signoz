@@ -186,35 +186,6 @@ export const K8sCategories = {
 /** The section the Kubernetes view opens on when a link names none. */
 export const DEFAULT_K8S_CATEGORY = K8sCategories.CONTAINERS;
 
-const dotMap = {
-	[InfraMonitoringEntity.HOSTS]:
-		INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
-	[InfraMonitoringEntity.PODS]: INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-	[InfraMonitoringEntity.NODES]: INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
-	[InfraMonitoringEntity.NAMESPACES]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-	[InfraMonitoringEntity.CLUSTERS]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_NODE_CPU_USAGE,
-	[InfraMonitoringEntity.DEPLOYMENTS]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-	[InfraMonitoringEntity.STATEFULSETS]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-	[InfraMonitoringEntity.DAEMONSETS]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_POD_CPU_USAGE,
-	[InfraMonitoringEntity.CONTAINERS]:
-		INFRA_MONITORING_ATTR_KEYS.CONTAINER_CPU_USAGE,
-	[InfraMonitoringEntity.JOBS]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_JOB_DESIRED_SUCCESSFUL_PODS,
-	[InfraMonitoringEntity.VOLUMES]:
-		INFRA_MONITORING_ATTR_KEYS.K8S_VOLUME_CAPACITY,
-};
-
-export function GetK8sEntityToAggregateAttribute(
-	category: InfraMonitoringEntity,
-): string {
-	return dotMap[category];
-}
-
 export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{

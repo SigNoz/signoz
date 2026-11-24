@@ -18,7 +18,7 @@ export interface FixtureRow {
 }
 
 /** A dataset's second metric, drawn as bubble size. */
-export interface FixtureSizeMetric {
+interface FixtureSizeMetric {
 	label: string;
 	unit: 'percent' | 'count' | 'ms';
 }

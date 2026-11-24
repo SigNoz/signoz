@@ -51,7 +51,7 @@ export interface PrepareGeoMapDataArgs extends Pick<
 	columnUnits?: Record<string, string>;
 }
 
-export interface UnmappedValue {
+interface UnmappedValue {
 	raw: string;
 	rows: number;
 }

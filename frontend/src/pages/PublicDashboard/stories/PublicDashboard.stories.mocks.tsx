@@ -36,7 +36,7 @@ import {
 const VIEWER = 'Public dashboard · viewer';
 const DATA = 'Public dashboard · panels';
 
-export const publicDashboardRoute = (): string =>
+const publicDashboardRoute = (): string =>
 	buildRoutePath(ROUTES.PUBLIC_DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const publicDashboardMocks = defineStoryMocks({

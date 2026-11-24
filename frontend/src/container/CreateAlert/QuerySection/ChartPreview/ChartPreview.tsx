@@ -17,7 +17,7 @@ import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-export interface ChartPreviewProps {
+interface ChartPreviewProps {
 	alertDef: AlertDef;
 	source?: YAxisSource;
 	isCancelled?: boolean;

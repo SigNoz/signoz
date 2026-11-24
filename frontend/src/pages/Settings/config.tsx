@@ -21,9 +21,6 @@ const BillingContainer = Loadable(
 	() => import('container/BillingContainer/BillingContainer'),
 );
 const GeneralSettings = Loadable(() => import('container/GeneralSettings'));
-const GeneralSettingsCloud = Loadable(
-	() => import('container/GeneralSettingsCloud'),
-);
 const IngestionSettings = Loadable(
 	() => import('container/IngestionSettings/IngestionSettings'),
 );
@@ -95,19 +92,6 @@ export const multiIngestionSettings = (
 export const generalSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: GeneralSettings,
-		name: (
-			<div className="periscope-tab">
-				<Backpack size={16} /> {t('routes:general').toString()}
-			</div>
-		),
-		route: ROUTES.SETTINGS,
-		key: ROUTES.SETTINGS,
-	},
-];
-
-export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: GeneralSettingsCloud,
 		name: (
 			<div className="periscope-tab">
 				<Backpack size={16} /> {t('routes:general').toString()}

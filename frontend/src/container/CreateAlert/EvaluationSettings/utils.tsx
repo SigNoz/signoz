@@ -211,7 +211,7 @@ function generateWeeklyOccurrences(
 	return occurrences;
 }
 
-export function generateDailyOccurrences(
+function generateDailyOccurrences(
 	hours: number,
 	minutes: number,
 	seconds: number,

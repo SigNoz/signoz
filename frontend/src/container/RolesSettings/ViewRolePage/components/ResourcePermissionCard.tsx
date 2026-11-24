@@ -11,7 +11,7 @@ import { getActionLabel } from './permissionDisplay.utils';
 import styles from './ResourcePermissionCard.module.scss';
 import { Typography } from '@signozhq/ui/typography';
 
-export interface ResourcePermissionCardProps {
+interface ResourcePermissionCardProps {
 	resource: ResourcePermissions;
 	isExpanded?: boolean;
 	onExpandChange?: (expanded: boolean) => void;

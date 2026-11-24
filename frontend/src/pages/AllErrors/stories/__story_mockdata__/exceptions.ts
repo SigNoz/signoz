@@ -137,11 +137,11 @@ export const EXCEPTION_CATALOGUE: ExceptionShape[] = [
 
 export const EXCEPTION_CATALOGUE_SIZE = EXCEPTION_CATALOGUE.length;
 
-export const EXCEPTION_SERVICE_NAMES = Array.from(
+const EXCEPTION_SERVICE_NAMES = Array.from(
 	new Set(EXCEPTION_CATALOGUE.map(({ serviceName }) => serviceName)),
 );
 
-export const EXCEPTION_TYPES = EXCEPTION_CATALOGUE.map(
+const EXCEPTION_TYPES = EXCEPTION_CATALOGUE.map(
 	({ exceptionType }) => exceptionType,
 );
 

@@ -4,7 +4,7 @@ import cx from 'classnames';
 
 import './OverflowInputToolTip.scss';
 
-export interface OverflowTooltipInputProps extends InputProps {
+interface OverflowTooltipInputProps extends InputProps {
 	tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
 	minAutoWidth?: number;
 	maxAutoWidth?: number;

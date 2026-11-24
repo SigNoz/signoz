@@ -11,7 +11,7 @@ export type SpanCategory =
 	| 'Jobs'
 	| 'LLM';
 
-export const SPAN_CATEGORIES: readonly SpanCategory[] = [
+const SPAN_CATEGORIES: readonly SpanCategory[] = [
 	'All',
 	'Database',
 	'Functions',

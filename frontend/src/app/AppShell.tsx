@@ -5,7 +5,7 @@ import { NotificationProvider } from 'hooks/useNotifications';
 import { CmdKProvider } from 'providers/cmdKProvider';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 
-export interface AppShellProps {
+interface AppShellProps {
 	children: ReactNode;
 	/** Mounted beside the routed content: the command palette and its siblings. */
 	overlays?: ReactNode;

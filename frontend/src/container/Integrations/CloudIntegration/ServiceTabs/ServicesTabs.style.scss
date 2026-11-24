@@ -73,20 +73,6 @@
 	}
 }
 
-.services-filter {
-	padding: 12px;
-
-	.ant-select-selector {
-		background-color: var(--l3-background) !important;
-		border: 1px solid var(--l1-border) !important;
-		color: var(--l2-foreground) !important;
-	}
-
-	.ant-select-arrow {
-		color: var(--l2-foreground);
-	}
-}
-
 .aws-services-list-view {
 	height: 100%;
 
@@ -175,11 +161,6 @@
 				}
 			}
 		}
-	}
-
-	.aws-services-list-view-main {
-		flex: 1;
-		padding: 12px;
 	}
 }
 
@@ -288,22 +269,6 @@
 					color: var(--callout-error-description);
 				}
 			}
-
-			.configure-button {
-				border-radius: 2px;
-				width: 116px;
-				box-shadow: none;
-				&--default {
-					color: var(--l2-foreground);
-					background: var(--l1-border);
-					border: 1px solid var(--l1-border);
-				}
-				&--primary {
-					background-color: var(--primary-background);
-					color: var(--l1-foreground);
-					color: var(--l1-foreground);
-				}
-			}
 		}
 	}
 
@@ -381,47 +346,6 @@
 			display: flex;
 			flex-direction: column;
 			gap: 24px;
-			&__table {
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-				.ant-table {
-					background: transparent;
-					border: 1px solid var(--l1-border);
-
-					.ant-table-thead {
-						> tr > th {
-							&::before {
-								display: none;
-							}
-							background: transparent;
-							border: none;
-							color: var(--l2-foreground);
-						}
-					}
-
-					.ant-table-tbody {
-						> tr {
-							&:nth-child(odd),
-							&:hover > td {
-								background: color-mix(
-									in srgb,
-									var(--l1-foreground) 1%,
-									transparent
-								) !important;
-							}
-
-							> td {
-								border: none;
-								color: var(--l2-foreground);
-							}
-						}
-					}
-				}
-			}
-			&__table-heading {
-				color: var(--muted-foreground);
-			}
 		}
 	}
 }

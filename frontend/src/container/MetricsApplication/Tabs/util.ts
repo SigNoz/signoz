@@ -228,7 +228,7 @@ export const handleNonInQueryRange = (tags: TagFilterItem[]): TagFilterItem[] =>
 		return tag;
 	});
 
-export function handleQueryChange(
+function handleQueryChange(
 	query: Query,
 	attributeKeys: BaseAutocompleteData,
 	serviceAttribute: string,

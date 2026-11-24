@@ -5,7 +5,6 @@ import {
 	OPERATORS,
 	QUERY_BUILDER_OPERATORS_BY_TYPES,
 } from 'constants/queryBuilder';
-import ROUTES from 'constants/routes';
 import { isApmMetric } from 'container/WidgetCard/Panels/utils';
 import {
 	applyMappingsToExpression,
@@ -41,19 +40,6 @@ export function getBaseMeta(
 	}
 	return null;
 }
-
-export const getRoute = (key: string): string => {
-	switch (key) {
-		case 'view_logs':
-			return ROUTES.LOGS_EXPLORER;
-		case 'view_metrics':
-			return ROUTES.METRICS_EXPLORER;
-		case 'view_traces':
-			return ROUTES.TRACES_EXPLORER;
-		default:
-			return '';
-	}
-};
 
 /**
  * A group-by's `dataType` comes from the field metadata, which reports a numeric as `number`
@@ -420,11 +406,3 @@ export const getViewQuery = (
 
 	return newQuery;
 };
-
-export function isDrilldownEnabled(): boolean {
-	return true;
-	// temp code
-	// if (typeof window === 'undefined') return false;
-	// const drilldownValue = window.localStorage.getItem('drilldown');
-	// return drilldownValue === 'true';
-}

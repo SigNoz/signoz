@@ -9,7 +9,7 @@ import ResourcePermissionCard from './ResourcePermissionCard';
 
 import styles from './PermissionOverview.module.scss';
 
-export interface PermissionOverviewProps {
+interface PermissionOverviewProps {
 	roleId: string;
 	expandedResources?: Set<string>;
 	onExpandedResourcesChange?: (expanded: Set<string>) => void;

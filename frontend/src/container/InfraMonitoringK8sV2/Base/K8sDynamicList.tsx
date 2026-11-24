@@ -50,5 +50,3 @@ export function K8sDynamicList({
 		</>
 	);
 }
-
-export default K8sDynamicList;

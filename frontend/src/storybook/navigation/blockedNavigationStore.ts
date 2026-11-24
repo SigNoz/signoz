@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export interface BlockedNavigation {
+interface BlockedNavigation {
 	id: number;
 	/** History method the app called, e.g. `push`, `replace`, `window.open`. */
 	via: string;

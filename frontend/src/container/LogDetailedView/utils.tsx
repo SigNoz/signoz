@@ -76,9 +76,6 @@ export const generateFieldKeyForArray = (
 	return `body.${newResultNodeKey}`;
 };
 
-export const removeObjectFromString = (str: string): string =>
-	str.replace(/\[object Object\]./g, '');
-
 // Split `str` on the first occurrence of `delimiter`
 // For example, will return `['a', 'b.c']` when splitting `'a.b.c'` at dots
 const splitOnce = (str: string, delimiter: string): string[] => {
@@ -264,7 +261,7 @@ export const getDataTypes = (value: unknown): DataTypes => {
 };
 
 // prevent html rendering in the value
-export const escapeHtml = (unsafe: string): string =>
+const escapeHtml = (unsafe: string): string =>
 	unsafe
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
@@ -285,7 +282,7 @@ export const removeEscapeCharacters = (str: string): string =>
 // example: Log [\u001B[32;1mThis is bright green\u001B[0m] is being sent as [\\u001B[32;1mThis is bright green\\u001B[0m]
 //
 // so we need to remove this escapes to render the color properly
-export const unescapeString = (str: string): string =>
+const unescapeString = (str: string): string =>
 	(str ?? '')
 		.replace(/\\n/g, '\n') // Replaces escaped newlines
 		.replace(/\\r/g, '\r') // Replaces escaped carriage returns
@@ -302,30 +299,6 @@ export const unescapeString = (str: string): string =>
 		.replace(/\\u([0-9A-Fa-f]{4})/g, (_, hex) =>
 			String.fromCharCode(parseInt(hex, 16)),
 		); // Replaces Unicode escape sequences
-
-export function findKeyPath(
-	obj: AnyObject,
-	targetKey: string,
-	currentPath = '',
-): string | null {
-	let finalPath = null;
-	Object.keys(obj).forEach((key) => {
-		const value = obj[key];
-		const newPath = currentPath ? `${currentPath}.${key}` : key;
-
-		if (key === targetKey) {
-			finalPath = newPath;
-		}
-
-		if (typeof value === 'object' && value !== null) {
-			const result = findKeyPath(value, targetKey, newPath);
-			if (result) {
-				finalPath = result;
-			}
-		}
-	});
-	return finalPath;
-}
 
 export const getSanitizedLogBody = (
 	text: string,

@@ -140,11 +140,6 @@ export interface ScaleProps {
 	asinhThreshold?: number;
 }
 
-export enum DisconnectedValuesMode {
-	Never = 'never',
-	Threshold = 'threshold',
-}
-
 /**
  * Props for configuring a series
  */
@@ -172,7 +167,7 @@ export enum LineInterpolation {
 /**
  * Props for configuring lines
  */
-export interface LineConfig {
+interface LineConfig {
 	lineColor?: string;
 	lineInterpolation?: LineInterpolation;
 	lineStyle?: LineStyle;
@@ -192,7 +187,7 @@ export enum BarAlignment {
 /**
  * Props for configuring bars
  */
-export interface BarConfig {
+interface BarConfig {
 	barAlignment?: BarAlignment;
 	barMaxWidth?: number;
 	barWidthFactor?: number;
@@ -201,7 +196,7 @@ export interface BarConfig {
 /**
  * Props for configuring points
  */
-export interface PointsConfig {
+interface PointsConfig {
 	pointColor?: string;
 	pointSize?: number;
 	showPoints?: boolean;

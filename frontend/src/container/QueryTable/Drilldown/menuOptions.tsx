@@ -35,33 +35,6 @@ export const SUPPORTED_OPERATORS = {
 /**
  * Aggregate menu options for different views
  */
-// TO REMOVE
-export const AGGREGATE_OPTIONS = [
-	{
-		key: 'view_logs',
-		icon: <ScrollText size={16} />,
-		label: 'View in Logs',
-	},
-	// {
-	// 	key: 'view_metrics',
-	// 	icon: <BarChart2 size={16} />,
-	// 	label: 'View in Metrics',
-	// },
-	{
-		key: 'view_traces',
-		icon: <DraftingCompass size={16} />,
-		label: 'View in Traces',
-	},
-	{
-		key: 'breakout',
-		icon: <ChartBar size={16} />,
-		label: 'Breakout by ..',
-	},
-];
-
-/**
- * Aggregate menu options for different views
- */
 export const getBaseContextConfig = ({
 	handleBaseDrilldown,
 	setSubMenu,

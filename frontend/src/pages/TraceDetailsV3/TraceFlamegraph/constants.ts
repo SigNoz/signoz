@@ -1,7 +1,6 @@
-export const ROW_HEIGHT = 24;
-export const SPAN_BAR_HEIGHT = 22;
-export const SPAN_BAR_Y_OFFSET = Math.floor((ROW_HEIGHT - SPAN_BAR_HEIGHT) / 2);
-export const EVENT_DOT_SIZE = 6;
+const ROW_HEIGHT = 24;
+const SPAN_BAR_HEIGHT = 22;
+const EVENT_DOT_SIZE = 6;
 
 // Span bar sizing relative to row height (used by getFlamegraphRowMetrics)
 export const SPAN_BAR_HEIGHT_RATIO = SPAN_BAR_HEIGHT / ROW_HEIGHT;

@@ -25,7 +25,7 @@ export const INTEGRATION_TYPES = {
 	GCP: 'gcp',
 };
 
-export const AWS_INTEGRATION = {
+const AWS_INTEGRATION = {
 	id: INTEGRATION_TYPES.AWS,
 	title: 'Amazon Web Services',
 	description: 'One click setup for AWS monitoring with SigNoz',
@@ -40,7 +40,7 @@ export const AWS_INTEGRATION = {
 	is_new: false,
 };
 
-export const AZURE_INTEGRATION = {
+const AZURE_INTEGRATION = {
 	id: INTEGRATION_TYPES.AZURE,
 	title: 'Microsoft Azure',
 	description: 'One click setup for Azure monitoring with SigNoz',
@@ -55,7 +55,7 @@ export const AZURE_INTEGRATION = {
 	is_new: true,
 };
 
-export const GCP_INTEGRATION = {
+const GCP_INTEGRATION = {
 	id: INTEGRATION_TYPES.GCP,
 	title: 'Google Cloud Platform',
 	description: 'Setup for GCP monitoring with SigNoz',

@@ -12,10 +12,10 @@
  * And expects:
  *   import { Typography } from '@signozhq/ui/typography'
  *   import { Button } from '@signozhq/ui/button'
- *   import { toast } from '@signozhq/ui/sonner'
+ *   import { toast } from '@signozhq/ui/toast'
  *
- * Why: the barrel eagerly require()s every component (~90 of them) along with
- * their Radix/cmdk/motion/react-day-picker dependencies. Under Jest this caused
+ * Why: the barrel eagerly require()s every component along with their
+ * Base UI/react-day-picker dependencies. Under Jest this caused
  * 5s timeouts and flaky tests after the Antd→@signozhq/ui Typography migration
  * (#11199). Subpath imports (added in @signozhq/ui@0.0.18) load only what's
  * used.
@@ -198,7 +198,7 @@ export default {
 				const report = {
 					node: node.source,
 					message:
-						"Do not import from the '@signozhq/ui' barrel. Use the matching subpath instead (e.g. '@signozhq/ui/typography', '@signozhq/ui/button', '@signozhq/ui/sonner'). The barrel eagerly loads ~90 components and slows tests substantially.",
+						"Do not import from the '@signozhq/ui' barrel. Use the matching subpath instead (e.g. '@signozhq/ui/typography', '@signozhq/ui/button', '@signozhq/ui/toast'). The barrel eagerly loads every component and slows tests substantially.",
 				};
 				if (replacement) {
 					report.fix = (fixer) => fixer.replaceText(node, replacement);

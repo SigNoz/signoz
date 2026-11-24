@@ -27,17 +27,14 @@ export const ALL_SHORTCUTS: Record<string, Record<string, string>> = {
 	'Dashboard Shortcuts': DashboardShortcuts,
 };
 
-export const ALL_SHORTCUTS_LABEL: Record<string, Record<string, string>> = {
+const ALL_SHORTCUTS_LABEL: Record<string, Record<string, string>> = {
 	'Global Shortcuts': GlobalShortcutsName,
 	'Logs Explorer Shortcuts': LogsExplorerShortcutsName,
 	'Query Builder Shortcuts': QBShortcutsName,
 	'Dashboard Shortcuts': DashboardShortcutsName,
 };
 
-export const ALL_SHORTCUTS_DESCRIPTION: Record<
-	string,
-	Record<string, string>
-> = {
+const ALL_SHORTCUTS_DESCRIPTION: Record<string, Record<string, string>> = {
 	'Global Shortcuts': GlobalShortcutsDescription,
 	'Logs Explorer Shortcuts': LogsExplorerShortcutsDescription,
 	'Query Builder Shortcuts': QBShortcutsDescription,

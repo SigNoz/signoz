@@ -28,7 +28,7 @@ function SaveConfigButton({
 		</SaveConfigWrapper>
 	);
 }
-export interface SaveConfigButtonTypes {
+interface SaveConfigButtonTypes {
 	showSaveButton: boolean;
 	onSaveConfigurationHandler: VoidFunction;
 	onCancelConfigurationHandler: VoidFunction;

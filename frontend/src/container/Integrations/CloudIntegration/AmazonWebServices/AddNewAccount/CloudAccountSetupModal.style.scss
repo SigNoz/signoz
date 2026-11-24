@@ -215,11 +215,6 @@
 			margin: 0;
 		}
 		&__include-all-regions-switch {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			color: var(--l2-foreground);
-			margin-bottom: 12px;
 			&-label {
 				background-color: transparent;
 				border: none;
@@ -237,20 +232,6 @@
 			border: 1px solid
 				color-mix(in srgb, var(--primary-background) 10%, transparent);
 			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
-		}
-		&__submit-button {
-			border-radius: 2px;
-			background: var(--primary-background);
-			color: var(--primary-foreground);
-			&-content {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-			}
-			&:disabled {
-				opacity: 0.4;
-			}
 		}
 	}
 }

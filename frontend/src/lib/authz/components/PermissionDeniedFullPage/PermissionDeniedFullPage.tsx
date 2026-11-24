@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
-export interface PermissionDeniedFullPageProps {
+interface PermissionDeniedFullPageProps {
 	/**
 	 * @deprecated Use `deniedPermissions` instead. Will be removed after authz devtools PR merges.
 	 */

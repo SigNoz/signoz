@@ -22,7 +22,7 @@ import { getKeySpellings, isKeyMatch } from './utils';
 import { CheckedState } from '../../types';
 import { SectionType } from './v2/itemRules';
 
-export const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
+const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 export const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in', 'nin'];
 
 // The operators this algebra emits, and so the only ones it may rewrite out of an
@@ -41,7 +41,7 @@ export const MANAGED_OPERATORS = [
  * prefixes, since `isKeyMatch` treats `service.name` and `resource.service.name` as
  * the same filter but expression rewrites match keys literally.
  */
-export function removeManagedClauses(expression: string, key: string): string {
+function removeManagedClauses(expression: string, key: string): string {
 	return removeKeysFromExpression(
 		expression,
 		getKeySpellings(key),

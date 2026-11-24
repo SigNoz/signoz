@@ -11,18 +11,4 @@
 	.threshold-alert-uplot-chart-container {
 		height: calc(100% - 24px);
 	}
-
-	.anomaly-alert-evaluation-view-loading-container {
-		height: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-
-	.anomaly-alert-evaluation-view-error-container {
-		height: 100%;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
 }

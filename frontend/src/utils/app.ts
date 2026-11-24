@@ -1,6 +1,5 @@
 import getLocalStorage from 'api/browser/localstorage/get';
 import { SIGNOZ_ADMIN_EMAIL } from 'constants/app';
-import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
 import dayjs from 'dayjs';
 import { getCurrentLocation } from 'lib/router/navigation';
@@ -34,9 +33,6 @@ export const checkVersionState = (
 // list of forbidden tags to remove in dompurify
 export const FORBID_DOM_PURIFY_TAGS = ['img', 'form', 'style'];
 export const FORBID_DOM_PURIFY_ATTR = ['style'];
-
-export const isFeatureKeys = (key: string): key is keyof typeof FeatureKeys =>
-	Object.keys(FeatureKeys).includes(key);
 
 export function isIngestionActive(data: any): boolean {
 	const table = get(data, 'data.newResult.data.result[0].table');

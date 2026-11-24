@@ -83,9 +83,3 @@ export const LogText = styled.div<LogTextProps>`
 			: 'white-space: nowrap;'};
 	};
 `;
-
-export const SelectedLog = styled.div`
-	display: flex;
-	width: 100%;
-	overflow: hidden;
-`;

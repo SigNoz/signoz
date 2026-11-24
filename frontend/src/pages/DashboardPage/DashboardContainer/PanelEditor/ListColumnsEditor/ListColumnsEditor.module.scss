@@ -11,12 +11,6 @@
 	align-items: center;
 }
 
-.title {
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--l2-foreground);
-}
-
 .body {
 	display: flex;
 	flex-wrap: wrap;
@@ -29,9 +23,4 @@
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-}
-
-.hint {
-	font-size: 11px;
-	color: var(--l3-foreground);
 }

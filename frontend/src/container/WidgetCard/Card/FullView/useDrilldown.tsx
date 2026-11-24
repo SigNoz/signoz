@@ -13,13 +13,13 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { Widgets } from 'types/api/widgets/widget';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
-export interface DrilldownQueryProps {
+interface DrilldownQueryProps {
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	enableDrillDown: boolean;
 }
 
-export interface UseDrilldownReturn {
+interface UseDrilldownReturn {
 	drilldownQuery: Query;
 	handleResetQuery: () => void;
 	showResetQuery: boolean;

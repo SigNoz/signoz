@@ -30,7 +30,7 @@ export function isQueryTypeAvailable(
 	return !option.metricsOnly || METRIC_RESOURCES.has(resource);
 }
 
-export function supportsKeyScoping(queryType: string): boolean {
+function supportsKeyScoping(queryType: string): boolean {
 	return getQueryTypeOption(queryType)?.supportsKeyScoping ?? false;
 }
 

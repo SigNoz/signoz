@@ -9,13 +9,6 @@ export interface DashboardDynamicColumns {
 	updatedBy: boolean;
 }
 
-export enum DynamicColumns {
-	CREATED_AT = 'createdAt',
-	CREATED_BY = 'createdBy',
-	UPDATED_AT = 'updatedAt',
-	UPDATED_BY = 'updatedBy',
-}
-
 const DEFAULT_COLUMNS: DashboardDynamicColumns = {
 	createdAt: true,
 	createdBy: true,

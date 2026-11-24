@@ -290,31 +290,6 @@ export const apiMonitoringMocks = defineStoryMocks({
 		),
 
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_keys',
-			response.json((req) => ({
-				status: 'success',
-				data: {
-					attributeKeys: groupByAttributeKeys(
-						req.url.searchParams.get('searchText') ?? '',
-					),
-				},
-			})),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
-			response.json((req) => ({
-				status: 'success',
-				data: {
-					boolAttributeValues: null,
-					numberAttributeValues: null,
-					stringAttributeValues:
-						QUICK_FILTER_VALUES[req.url.searchParams.get('attributeKey') ?? ''] ?? [],
-				},
-			})),
-		),
-
-		rest.get(
 			'http://localhost/api/v1/fields/keys',
 			response.json((req) =>
 				fieldKeysResponse(

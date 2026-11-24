@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash-es/debounce';
 
-export interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
+interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
 	(...args: Parameters<T>): ReturnType<T> | undefined;
 
 	cancel(): void;
@@ -9,7 +9,7 @@ export interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
 	flush(): ReturnType<T> | undefined;
 }
 
-export type DebounceOptions = {
+type DebounceOptions = {
 	leading?: boolean;
 	maxWait?: number;
 	trailing?: boolean;

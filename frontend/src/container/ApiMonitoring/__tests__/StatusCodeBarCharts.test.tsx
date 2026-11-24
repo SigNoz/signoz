@@ -130,13 +130,6 @@ jest.mock('antd', () => {
 				{children}
 			</div>
 		)),
-		Typography: {
-			Text: jest
-				.fn()
-				.mockImplementation(({ children }) => (
-					<div data-testid="typography-text">{children}</div>
-				)),
-		},
 		Button: {
 			...originalModule.Button,
 			Group: jest.fn().mockImplementation(({ children, className }) => (

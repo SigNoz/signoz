@@ -16,7 +16,7 @@ export type SortState = { columnName: string; order: 'asc' | 'desc' };
 /** Sets `--tanstack-plain-cell-*` on the scroll root via CSS module classes (no data attributes). */
 export type CellTypographySize = 'small' | 'medium' | 'large';
 
-export type TableCellContext<TData, TValue> = {
+type TableCellContext<TData, TValue> = {
 	row: TData;
 	value: TValue;
 	isActive: boolean;
@@ -83,7 +83,7 @@ export type FlatItem<TData> =
 	| { kind: 'row'; row: TanStackRowType<TData> }
 	| { kind: 'expansion'; row: TanStackRowType<TData> };
 
-export type RowClickContext = {
+type RowClickContext = {
 	isActive: boolean;
 };
 
@@ -125,7 +125,7 @@ export type AutoPageSizeConfig = {
 	maxPageSize?: number;
 };
 
-export type PaginationProps = {
+type PaginationProps = {
 	total: number;
 	defaultPage?: number;
 	defaultLimit?: number;
@@ -221,12 +221,4 @@ export type TanStackTableProps<TData, TItemKey = string> = {
 
 export type TanStackTableHandle = TableVirtuosoHandle & {
 	goToPage: (page: number) => void;
-};
-
-export type TableColumnsState<TData> = {
-	columns: TableColumnDef<TData>[];
-	columnSizing: ColumnSizingState;
-	onColumnSizingChange: Dispatch<SetStateAction<ColumnSizingState>>;
-	onColumnOrderChange: (cols: TableColumnDef<TData>[]) => void;
-	onRemoveColumn: (id: string) => void;
 };

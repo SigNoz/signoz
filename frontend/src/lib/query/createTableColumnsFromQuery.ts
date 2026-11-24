@@ -37,7 +37,7 @@ export type RowData = {
 	[key: string]: string | number;
 };
 
-export type DynamicColumn = {
+type DynamicColumn = {
 	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery;
 	field: string;
 	dataIndex: string;

@@ -57,7 +57,7 @@ import { prepareChartData } from 'lib/uPlotV2/utils/dataUtils';
 const CHART_PREVIEW_HEADER_HEIGHT = 48;
 const CHART_PREVIEW_CONTAINER_PADDING = 16;
 
-export interface ChartPreviewProps {
+interface ChartPreviewProps {
 	query: Query | null;
 	graphType?: PANEL_TYPES;
 	selectedTime?: timePreferenceType;

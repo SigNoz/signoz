@@ -1,5 +1,4 @@
 import { defaultStyles } from '@visx/tooltip';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const tooltipStyles = {
 	...defaultStyles,
@@ -12,34 +11,6 @@ export const tooltipStyles = {
 	justifyContent: 'center',
 	alignItems: 'center',
 	padding: '5px 10px',
-};
-
-export const getLabel = (
-	label: string,
-	query: Query,
-	queryName: string,
-	isQueryContentMultipleResult = false, // If there are more than one aggregation return by the query, this should be set to true. Default is false.
-): string => {
-	let finalQuery;
-	if (!isQueryContentMultipleResult) {
-		finalQuery = query.builder.queryData.find((q) => q.queryName === queryName);
-		if (!finalQuery) {
-			// If the query is not found in queryData, then check in queryFormulas
-			finalQuery = query.builder.queryFormulas.find(
-				(q) => q.queryName === queryName,
-			);
-		}
-	}
-	if (finalQuery) {
-		if (finalQuery.legend !== '') {
-			return finalQuery.legend;
-		}
-		if (label !== undefined) {
-			return label;
-		}
-		return queryName;
-	}
-	return label;
 };
 
 // Function to convert a hex color to RGB format
@@ -72,23 +43,6 @@ export const lightenColor = (color: string, opacity: number): string => {
 
 	// Create a new RGBA color string with the specified opacity
 	return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-};
-
-export const getTimeRangeFromUplotAxis = (
-	axis: any,
-	xValue: number,
-): { startTime: number; endTime: number } => {
-	let gap =
-		(axis as any)._splits && (axis as any)._splits.length > 1
-			? (axis as any)._splits[1] - (axis as any)._splits[0]
-			: 600; // 10 minutes in seconds
-
-	gap = Math.max(gap, 600); // Minimum gap of 10 minutes in seconds
-
-	const startTime = xValue - gap;
-	const endTime = xValue + gap;
-
-	return { startTime, endTime };
 };
 
 export const isApmMetric = (metric = ''): boolean =>

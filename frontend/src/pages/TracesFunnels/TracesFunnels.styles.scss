@@ -18,52 +18,12 @@
 		flex-direction: column;
 		gap: 16px;
 	}
-
-	&__list {
-		margin-top: 16px;
-	}
 	&__loading {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
 		.ant-skeleton-button {
 			height: 82px !important;
-		}
-	}
-}
-
-// Sort popover styles
-.sort-funnels {
-	.ant-popover-content {
-		.ant-popover-inner {
-			padding: 0;
-			background: var(--l2-background);
-			border: 1px solid var(--l1-border);
-			border-radius: 4px;
-
-			.sort-content {
-				padding: 8px;
-				min-width: 160px;
-
-				.sort-heading {
-					color: var(--l2-foreground);
-					padding: 6px 8px;
-				}
-
-				.sort-btns {
-					width: 100%;
-					color: var(--l2-foreground);
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-					padding: 6px 8px;
-
-					&:hover {
-						background: var(--l1-border);
-						border-radius: 4px;
-					}
-				}
-			}
 		}
 	}
 }

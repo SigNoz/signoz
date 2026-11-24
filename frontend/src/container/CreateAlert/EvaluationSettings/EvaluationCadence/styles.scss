@@ -11,11 +11,6 @@
 		gap: 16px;
 		padding: 16px;
 
-		.ant-typography {
-			color: var(--l1-foreground);
-			font-size: 13px;
-		}
-
 		.ant-btn-group {
 			.ant-btn {
 				border: 1px solid var(--l1-border);
@@ -132,12 +127,6 @@
 					display: flex;
 					flex-direction: column;
 					gap: 4px;
-
-					.ant-typography {
-						color: var(--l1-foreground);
-						font-size: 13px;
-						font-weight: 500;
-					}
 
 					.ant-select {
 						border: 1px solid var(--l1-border);

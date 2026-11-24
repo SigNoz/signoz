@@ -6,7 +6,7 @@
 import type { ForgotPasswordRouteState } from 'container/ForgotPassword';
 import type { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
-export const FORGOT_PASSWORD_EMAIL = 'anna@signoz.io';
+const FORGOT_PASSWORD_EMAIL = 'anna@signoz.io';
 
 const ORGS: OrgSessionContext[] = [
 	{ id: 'org-signoz', name: 'SigNoz' },

@@ -7,9 +7,9 @@ import styles from './EmptyComparison.module.scss';
 export const ANTD_EMPTY_TEST_ID = 'empty-antd';
 export const LOCAL_EMPTY_TEST_ID = 'empty-local';
 
-export type EmptyComparisonImage = 'default' | 'simple';
+type EmptyComparisonImage = 'default' | 'simple';
 
-export interface EmptyComparisonProps {
+interface EmptyComparisonProps {
 	image: EmptyComparisonImage;
 	/** Unset shows antd's default text; set, it ends with a link. */
 	description?: string;

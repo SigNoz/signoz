@@ -39,45 +39,6 @@
 	padding-bottom: var(--spacing-8);
 }
 
-.permissionEditorCollapsedSection {
-	display: flex;
-	flex-direction: column;
-}
-
-.permissionEditorCollapsedHeader {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-4);
-	width: 100%;
-	padding: var(--spacing-4) var(--spacing-6);
-	background: var(--l3-background);
-	border: 1px dashed var(--l2-border);
-	border-radius: 4px;
-	cursor: pointer;
-	transition: background 0.15s ease;
-
-	&:hover {
-		background: var(--l2-background);
-	}
-
-	&:focus {
-		outline: 2px solid var(--primary);
-		outline-offset: -2px;
-	}
-}
-
-.permissionEditorCollapsedLabel {
-	color: var(--l2-foreground);
-	flex: 1;
-	white-space: nowrap;
-	overflow: hidden;
-}
-
-.permissionEditorCollapsedCount {
-	color: var(--primary);
-	flex-shrink: 0;
-}
-
 .permissionEditorCollapseAction {
 	display: flex;
 	justify-content: flex-start;

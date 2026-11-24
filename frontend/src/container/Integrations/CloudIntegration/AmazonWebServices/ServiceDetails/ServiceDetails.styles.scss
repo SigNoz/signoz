@@ -4,24 +4,6 @@
 	width: 100%;
 	padding-top: 8px;
 
-	.aws-service-details-data-collected-content-logs,
-	.aws-service-details-data-collected-content-metrics {
-		display: flex;
-		flex-direction: row;
-		gap: 8px;
-
-		.aws-service-details-data-collected-content-title {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			gap: 8px;
-
-			color: var(--l2-foreground);
-
-			/* Bifrost (Ancient)/Content/sm */
-		}
-	}
-
 	.aws-service-details-overview {
 		display: flex;
 		flex-direction: column;
@@ -71,23 +53,6 @@
 				background: var(--l1-background);
 			}
 
-			.aws-service-details-overview-configuration-content {
-				display: flex;
-				flex-direction: column;
-				gap: 16px;
-
-				padding: 12px;
-				background: var(--l1-background);
-
-				.aws-service-details-overview-configuration-content-item {
-					display: flex;
-					flex-direction: row;
-					align-items: center;
-					justify-content: space-between;
-					gap: 8px;
-				}
-			}
-
 			.aws-service-details-overview-configuration-actions {
 				display: flex;
 				flex-direction: row;
@@ -98,23 +63,12 @@
 				border-top: 1px solid var(--l3-background);
 				background: var(--l1-background);
 			}
-
-			.aws-service-details-overview-configuration-title-text-select-all {
-				color: var(--l2-foreground);
-			}
 		}
 
 		.aws-service-details-overview-markdown {
 			padding: 12px;
 			background: var(--l1-background);
 			color: var(--l1-foreground);
-		}
-
-		.aws-service-details-actions {
-			display: flex;
-			flex-direction: row;
-			gap: 8px;
-			padding: 12px 0;
 		}
 
 		.aws-service-dashboards {

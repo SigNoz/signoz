@@ -24,7 +24,7 @@ export function useRoles(): {
 	};
 }
 
-export function getRoleOptions(
+function getRoleOptions(
 	roles: AuthtypesGettableRoleDTO[],
 	valueField: 'id' | 'name',
 ): ComboboxOptionItemType[] {
@@ -60,7 +60,7 @@ interface MultipleProps extends BaseProps {
 	onChange?: (roles: string[]) => void;
 }
 
-export type RolesSelectProps = SingleProps | MultipleProps;
+type RolesSelectProps = SingleProps | MultipleProps;
 
 function RolesSelect(props: RolesSelectProps): JSX.Element {
 	const externalRoles = props.roles;

@@ -16,7 +16,7 @@ function ModeAndConfiguration({
 	);
 }
 
-export interface ModeAndConfigurationType {
+interface ModeAndConfigurationType {
 	isActionMode: string;
 	version: string | number;
 }

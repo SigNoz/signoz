@@ -36,22 +36,3 @@
 	gap: 8px;
 	min-width: 0;
 }
-
-.name,
-.source {
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.name {
-	flex: 1 1 auto;
-	text-align: start;
-}
-
-.source {
-	color: var(--l3-foreground);
-	font-size: 12px;
-	flex: 0 1 auto;
-}

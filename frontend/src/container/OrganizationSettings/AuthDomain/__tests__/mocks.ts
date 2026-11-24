@@ -7,9 +7,7 @@ import {
 
 // API Endpoints
 export const AUTH_DOMAINS_LIST_ENDPOINT = '*/api/v2/auth_domains';
-export const AUTH_DOMAINS_CREATE_ENDPOINT = '*/api/v2/auth_domains';
 export const AUTH_DOMAINS_UPDATE_ENDPOINT = '*/api/v2/auth_domains/:id';
-export const AUTH_DOMAINS_DELETE_ENDPOINT = '*/api/v2/auth_domains/:id';
 
 // Mock Auth Domain with Google Auth
 export const mockGoogleAuthDomain: AuthtypesGettableAuthDomainDTO = {
@@ -203,19 +201,6 @@ export const mockDomainsListResponse = {
 	data: [mockGoogleAuthDomain, mockSamlAuthDomain, mockOidcAuthDomain],
 };
 
-// Mock single domain list response
-export const mockSingleDomainResponse = {
-	status: 'success',
-	data: [mockGoogleAuthDomain],
-};
-
-// Mock success responses. CreateAuthDomain returns just an Identifiable
-// (the new domain ID); clients re-Read to get the full domain.
-export const mockCreateSuccessResponse = {
-	status: 'success',
-	data: { id: mockGoogleAuthDomain.id },
-};
-
 export const mockUpdateSuccessResponse = {
 	status: 'success',
 	data: {
@@ -224,24 +209,11 @@ export const mockUpdateSuccessResponse = {
 	},
 };
 
-export const mockDeleteSuccessResponse = {
-	status: 'success',
-	data: 'Domain deleted successfully',
-};
-
 // Mock error responses
 export const mockErrorResponse = {
 	error: {
 		code: 'internal_error',
 		message: 'Failed to perform operation',
-		url: '',
-	},
-};
-
-export const mockValidationErrorResponse = {
-	error: {
-		code: 'invalid_input',
-		message: 'Domain name is required',
 		url: '',
 	},
 };

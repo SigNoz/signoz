@@ -67,39 +67,6 @@
 	border-color: var(--l1-border);
 }
 
-.filter-header {
-	padding: 16px 8px 16px 12px;
-	.filter-title {
-		display: flex;
-		gap: 6px;
-
-		.ant-typography {
-			color: var(--l2-foreground);
-		}
-	}
-
-	.sync-icon {
-		background-color: var(--l1-background);
-		border: 0;
-		box-shadow: none;
-		padding: 8px;
-	}
-
-	.arrow-icon {
-		background-color: var(--l1-background);
-		border: 0;
-		box-shadow: none;
-		padding-top: 8px;
-
-		.anticon-vertical-align-top {
-			svg {
-				width: 16px;
-				height: 16px;
-			}
-		}
-	}
-}
-
 .section-body-header {
 	display: flex;
 

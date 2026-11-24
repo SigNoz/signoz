@@ -69,13 +69,6 @@ jest.mock('antd', () => {
 					))}
 				</div>
 			)),
-		Typography: {
-			Text: jest
-				.fn()
-				.mockImplementation(({ children }) => (
-					<div data-testid="typography-text">{children}</div>
-				)),
-		},
 	};
 });
 

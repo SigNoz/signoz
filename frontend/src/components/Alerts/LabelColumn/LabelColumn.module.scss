@@ -29,33 +29,6 @@
 	min-width: 0;
 }
 
-.overflowTrigger {
-	all: unset;
-	cursor: pointer;
-}
-
-.labelPopover {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	padding: 8px;
-	max-height: 300px;
-	overflow-y: auto;
-}
-
-.labelTooltip {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	max-height: 300px;
-	overflow-y: auto;
-}
-
-.labelValue {
-	text-overflow: ellipsis;
-	overflow: hidden;
-}
-
 .tooltipContent {
 	display: flex;
 	align-items: center;

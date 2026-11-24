@@ -120,28 +120,6 @@ export function getAppContextMockState(
 	};
 }
 
-export function mockLocation(pathname: string): jest.Mock {
-	return jest.fn().mockReturnValue({
-		pathname,
-	});
-}
-
-export function mockQueryParams(
-	params: Record<string, string | null>,
-): URLSearchParams {
-	const realUrlQuery = new URLSearchParams();
-	Object.entries(params).forEach(([key, value]) => {
-		if (value !== null) {
-			realUrlQuery.set(key, value);
-		}
-	});
-
-	return Object.create(URLSearchParams.prototype, {
-		toString: { value: (): string => realUrlQuery.toString() },
-		get: { value: (key: string): string | null => realUrlQuery.get(key) },
-	});
-}
-
 export function convertRoutingPolicyToApiResponse(
 	routingPolicy: RoutingPolicy,
 ): ApiRoutingPolicy {

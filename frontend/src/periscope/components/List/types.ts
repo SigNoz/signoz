@@ -10,7 +10,7 @@ export type ListSize = 'small' | 'default' | 'large';
 
 export type ListItemLayout = 'horizontal' | 'vertical';
 
-export interface ListLocale {
+interface ListLocale {
 	/** A falsy value falls back to the default empty state. */
 	emptyText?: ReactNode;
 }

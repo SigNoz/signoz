@@ -192,7 +192,7 @@ export function useRolePermissions(
 	};
 }
 
-export interface CreateRolePayload {
+interface CreateRolePayload {
 	name: string;
 	description: string;
 	resources: ResourcePermissions[];
@@ -224,7 +224,7 @@ export function useCreateRolePermissions(): ReturnType<
 	);
 }
 
-export interface UpdateRolePermissionsPayload {
+interface UpdateRolePermissionsPayload {
 	roleId: string;
 	description: string;
 	resources: ResourcePermissions[];

@@ -227,9 +227,7 @@ export const openMember = async (
 export const roleItemTestId = (triggerTestId: string, role: string): string =>
 	`${triggerTestId}-item-role-${role}`;
 
-export const openInviteForm = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
+const openInviteForm = async (canvasElement: HTMLElement): Promise<void> => {
 	await clickWhenEnabled(
 		await within(canvasElement).findByText(
 			/invite member/i,

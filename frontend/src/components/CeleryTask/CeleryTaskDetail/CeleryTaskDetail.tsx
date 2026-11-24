@@ -18,7 +18,7 @@ import { useNavigateToExplorer } from '../useNavigateToExplorer';
 
 import './CeleryTaskDetail.style.scss';
 
-export type CeleryTaskData = {
+type CeleryTaskData = {
 	entity: string;
 	value: string | number;
 	timeRange: [number, number];

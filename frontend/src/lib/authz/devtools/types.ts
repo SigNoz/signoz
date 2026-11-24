@@ -14,11 +14,6 @@ export type ObservedPermission = {
 	lastSeen: number;
 };
 
-export type PermissionOverride = {
-	permission: BrandedPermission;
-	state: OverrideState;
-};
-
 export type AuthZDevStore = {
 	isModalOpen: boolean;
 	observed: Record<string, ObservedPermission>;

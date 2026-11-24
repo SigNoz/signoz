@@ -35,10 +35,6 @@
 
 			.brand-tagline {
 				margin-bottom: 24px;
-
-				.ant-typography {
-					color: var(--l2-foreground);
-				}
 			}
 		}
 
@@ -50,22 +46,6 @@
 			flex-direction: column;
 			padding: 32px 0px;
 			gap: 8px;
-
-			.ant-typography {
-				margin: 0;
-			}
-
-			.public-dashboard-error-message {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 8px;
-				margin-top: 12px;
-			}
-
-			.public-dashboard-error-message-icon {
-				color: var(--l2-foreground);
-			}
 		}
 	}
 }

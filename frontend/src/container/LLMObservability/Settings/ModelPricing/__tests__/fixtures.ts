@@ -66,7 +66,7 @@ export const mockRules: PricingRule[] = [
 ];
 
 // Unpriced models seen in traces with no matching pricing rule.
-export const mockUnpricedModels: UnpricedModel[] = [
+const mockUnpricedModels: UnpricedModel[] = [
 	{ modelName: 'gpt-4o-mini-2024-07-18', provider: 'openai', spanCount: 18400 },
 	{
 		modelName: 'claude-3-7-sonnet-20250219',

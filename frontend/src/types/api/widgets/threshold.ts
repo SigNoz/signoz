@@ -1,8 +1,8 @@
-import { Dispatch, ReactNode, SetStateAction } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ColumnUnit } from 'types/api/widgets/columnUnit';
 
-export type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
+type ThresholdOperators = '>' | '<' | '>=' | '<=' | '=';
 
 export type ThresholdProps = {
 	index: string;
@@ -22,22 +22,4 @@ export type ThresholdProps = {
 	tableOptions?: Array<{ value: string; label: string }>;
 	columnUnits?: ColumnUnit;
 	yAxisUnit?: string;
-};
-
-export type ShowCaseValueProps = {
-	width?: string;
-	value: ReactNode;
-	className?: string;
-};
-
-export type CustomColorProps = {
-	color: string;
-};
-
-export type ThresholdSelectorProps = {
-	yAxisUnit: string;
-	thresholds: ThresholdProps[];
-	setThresholds: Dispatch<SetStateAction<ThresholdProps[]>>;
-	selectedGraph: PANEL_TYPES;
-	columnUnits: ColumnUnit;
 };

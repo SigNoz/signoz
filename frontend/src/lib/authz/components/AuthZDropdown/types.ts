@@ -10,7 +10,7 @@ import type {
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 /** The row kinds that can be disabled, and so gated. */
-export type AuthZGateableItemType =
+type AuthZGateableItemType =
 	| DropdownActionItemType
 	| DropdownLinkItemType
 	| DropdownSubmenuItemType;

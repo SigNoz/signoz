@@ -35,13 +35,6 @@
 		display: flex;
 		align-items: center;
 
-		.wrap-word-switch {
-			display: flex;
-			gap: 8px;
-			margin-left: var(--margin-3);
-			align-items: center;
-		}
-
 		.log-switch-btn {
 			border: 1px solid var(--l1-border);
 			background-color: var(--l2-background);
@@ -53,74 +46,12 @@
 		}
 	}
 
-	.attribute-table {
-		margin-top: var(--margin-1);
-	}
-
 	.ant-collapse {
 		border: 1px solid var(--l1-border);
-	}
-
-	.collapse-content {
-		border-bottom: 1px solid var(--l1-border);
-
-		.ant-collapse-header {
-			align-items: center;
-			border-radius: 2px;
-			background-color: var(--l3-background);
-			border: 1px solid var(--l3-border);
-
-			padding: 8px;
-
-			.ant-collapse-extra {
-				display: flex;
-				align-items: center;
-
-				.action-btn {
-					display: flex;
-
-					.ant-btn {
-						background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
-					}
-				}
-			}
-		}
-
-		.ant-collapse-content {
-			padding: 0;
-			background: var(--l2-background);
-			border-top: 1px solid var(--l1-border);
-
-			.ant-collapse-content-box {
-				padding: var(--padding-2) 0 0 0;
-			}
-		}
-	}
-
-	.logs-body-content {
-		padding-top: 12px;
 	}
 
 	[data-slot='badge'] {
 		border-radius: 2px;
 		background: color-mix(in srgb, var(--bg-robin-400) 8%, transparent);
-	}
-
-	.attribute-collapse {
-		.ant-collapse-content {
-			.ant-collapse-content-box {
-				padding: 0;
-			}
-		}
-	}
-
-	.ant-table-wrapper .ant-table-cell {
-		padding: 14px 14px;
-	}
-
-	.attribute-tab-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
 	}
 }

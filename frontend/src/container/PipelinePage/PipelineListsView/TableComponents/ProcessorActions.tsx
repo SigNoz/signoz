@@ -14,7 +14,7 @@ function ProcessorActions({
 	);
 }
 
-export interface ProcessorActionsProps {
+interface ProcessorActionsProps {
 	editAction: VoidFunction;
 	deleteAction: VoidFunction;
 }

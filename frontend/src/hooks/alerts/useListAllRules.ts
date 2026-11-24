@@ -9,7 +9,7 @@ import { range } from 'lodash-es';
 // The list API clamps any larger limit to 200.
 const PAGE_SIZE = 200;
 
-export const LIST_ALL_RULES_QUERY_KEY = [...getListRulesV3QueryKey(), 'all'];
+const LIST_ALL_RULES_QUERY_KEY = [...getListRulesV3QueryKey(), 'all'];
 
 function fetchPage(offset: number): ReturnType<typeof listRulesV3> {
 	return listRulesV3({ limit: PAGE_SIZE, offset });

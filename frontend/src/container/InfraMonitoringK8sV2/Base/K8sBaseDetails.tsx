@@ -28,14 +28,7 @@ import { useDrawerLifecycleStore } from './useDrawerLifecycleStore';
 import styles from '../EntityDetailsUtils/entityDetails.module.scss';
 import { INFRA_MONITORING_DETAILS_CACHE_TIME } from 'constants/queryCacheTime';
 
-export type {
-	CustomTab,
-	CustomTabRenderProps,
-	K8sBaseDetailsProps,
-	K8sDetailsCountConfig,
-	K8sDetailsFilters,
-	K8sDetailsMetadataConfig,
-} from './types';
+export type { K8sBaseDetailsProps, K8sDetailsFilters } from './types';
 
 export default function K8sBaseDetails<T>({
 	category,

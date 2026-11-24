@@ -5,10 +5,6 @@ import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 
-export interface Props {
-	onSuccessHandler: (routes: FeatureFlagProps[]) => void;
-	isLoggedIn: boolean;
-}
 type UseGetFeatureFlag = UseQueryResult<
 	SuccessResponseV2<FeatureFlagProps[]>,
 	APIError

@@ -27,7 +27,7 @@ export interface SpanAttributeAction {
 
 // Keys that should NOT support filter/group-by actions.
 // These are system/internal/computed fields, not actual queryable attributes.
-export const NON_FILTERABLE_KEYS = new Set([
+const NON_FILTERABLE_KEYS = new Set([
 	'datetime',
 	'duration',
 	'parent_span_id',
@@ -42,7 +42,7 @@ export const NON_FILTERABLE_KEYS = new Set([
 // Keys whose entire subtree is non-queryable. Hides filter/group-by for the
 // key itself AND any descendant leaf. Used for nested data that exists on the
 // span payload but isn't queryable as a trace attribute (e.g. span events, links).
-export const NON_FILTERABLE_ANCESTOR_KEYS = new Set(['events', 'references']);
+const NON_FILTERABLE_ANCESTOR_KEYS = new Set(['events', 'references']);
 
 const shouldHideForKey = (
 	leafKey: string,

@@ -51,13 +51,13 @@ const READ_ONLY_COMPONENTS: Components = {
 };
 
 /** Absent on a read-only surface, which is what keeps the public view inert. */
-export interface MarkdownInteractive {
+interface MarkdownInteractive {
 	/** The body before interpolation — what an edit is applied to. */
 	source: string;
 	onChangeSource: (next: string) => void;
 }
 
-export interface MarkdownContentProps {
+interface MarkdownContentProps {
 	/** Variable interpolation happens upstream, before parsing. */
 	children: string;
 	interactive?: MarkdownInteractive;

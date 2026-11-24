@@ -8,12 +8,10 @@
 import { TextDecoder, TextEncoder } from 'node:util';
 
 import '@testing-library/jest-dom';
-import '@testing-library/jest-dom/extend-expect';
 import 'jest-styled-components';
 
 import { server } from './src/mocks-server/server';
 
-import './src/styles.scss';
 // Establish API mocking before all tests.
 
 // react-router@7's entry point pulls in its server-runtime cookie signing,
@@ -52,8 +50,8 @@ if (!Range.prototype.getClientRects) {
 		document.body.getBoundingClientRect();
 }
 
-// jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
-// (e.g. @signozhq/ui Select) call when opening. Stub them so those components
+// jsdom doesn't implement the Pointer Capture API, which Base UI primitives
+// (e.g. @signozhq/ui Slider and ScrollArea) call. Stub them so those components
 // can be exercised in tests.
 if (!HTMLElement.prototype.hasPointerCapture) {
 	HTMLElement.prototype.hasPointerCapture = function (): boolean {

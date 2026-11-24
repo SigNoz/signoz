@@ -15,7 +15,6 @@ export type FieldContextValue = SpantypesFieldContextDTO;
 export const MapperOperation = SpantypesSpanMapperOperationDTO;
 export type MapperOperationValue = SpantypesSpanMapperOperationDTO;
 export const MapperOrigin = SpantypesSpanMapperOriginDTO;
-export type MapperOriginValue = SpantypesSpanMapperOriginDTO;
 
 export type ConditionKey = SpantypesSpanMapperGroupConditionKeyDTO;
 

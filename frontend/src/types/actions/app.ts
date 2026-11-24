@@ -6,7 +6,7 @@ export const UPDATE_CURRENT_ERROR = 'UPDATE_CURRENT_ERROR';
 export const UPDATE_LATEST_VERSION_ERROR = 'UPDATE_LATEST_VERSION_ERROR';
 export const UPDATE_CONFIGS = 'UPDATE_CONFIGS';
 
-export interface UpdateAppVersion {
+interface UpdateAppVersion {
 	type: typeof UPDATE_CURRENT_VERSION;
 	payload: {
 		currentVersion: AppReducer['currentVersion'];
@@ -15,21 +15,21 @@ export interface UpdateAppVersion {
 	};
 }
 
-export interface UpdateLatestVersion {
+interface UpdateLatestVersion {
 	type: typeof UPDATE_LATEST_VERSION;
 	payload: {
 		latestVersion: AppReducer['latestVersion'];
 	};
 }
 
-export interface UpdateVersionError {
+interface UpdateVersionError {
 	type: typeof UPDATE_CURRENT_ERROR | typeof UPDATE_LATEST_VERSION_ERROR;
 	payload: {
 		isError: boolean;
 	};
 }
 
-export interface UpdateConfigs {
+interface UpdateConfigs {
 	type: typeof UPDATE_CONFIGS;
 	payload: {
 		configs: AppReducer['configs'];

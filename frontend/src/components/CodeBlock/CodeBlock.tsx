@@ -9,7 +9,7 @@ import SyntaxHighlighter, {
 
 import styles from './CodeBlock.module.scss';
 
-export interface CodeBlockProps {
+interface CodeBlockProps {
 	code: string;
 	language?: string;
 	className?: string;

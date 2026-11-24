@@ -3,7 +3,6 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import {
 	IBuilderFormula,
 	IBuilderQuery,
-	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
 	BaseBuilderQuery,
@@ -32,17 +31,6 @@ export type HandleChangeQueryData<T = IBuilderQuery> = <
 	key: Key,
 	value: Value,
 ) => void;
-
-export type HandleChangeTraceOperatorData<T = IBuilderTraceOperator> = <
-	Key extends keyof T,
-	Value extends T[Key],
->(
-	key: Key,
-	value: Value,
-) => void;
-
-// Legacy version for backward compatibility
-export type HandleChangeQueryDataLegacy = HandleChangeQueryData<IBuilderQuery>;
 
 // V5 version for new API
 export type HandleChangeQueryDataV5 = HandleChangeQueryData<

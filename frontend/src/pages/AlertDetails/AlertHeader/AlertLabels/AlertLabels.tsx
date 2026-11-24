@@ -3,7 +3,7 @@ import SeeMore from 'periscope/components/SeeMore';
 
 import './AlertLabels.styles.scss';
 
-export type AlertLabelsProps = {
+type AlertLabelsProps = {
 	labels: Record<string, any>;
 	initialCount?: number;
 	testId?: string;

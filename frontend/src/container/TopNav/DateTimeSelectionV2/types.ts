@@ -43,7 +43,7 @@ export type Time =
 	| OneMonth
 	| TwoMonths;
 
-export type TimeUnit = 'm' | 'h' | 'd' | 'w';
+type TimeUnit = 'm' | 'h' | 'd' | 'w';
 
 export type CustomTimeType = `${string}${TimeUnit}`;
 

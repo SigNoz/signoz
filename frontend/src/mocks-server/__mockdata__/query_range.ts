@@ -78,54 +78,6 @@ export const queryRangeSuccessResponse: QueryRangePayload = {
 	step: 0,
 };
 
-export const queryRangeForTimeSeries = {
-	status: 'success',
-	data: {
-		resultType: '',
-		result: [
-			{
-				queryName: 'A',
-				series: [
-					{
-						labels: {},
-						labelsArray: null,
-						values: [
-							{
-								timestamp: 1721378340000,
-								value: '3074',
-							},
-							{
-								timestamp: 1721378100000,
-								value: '2983',
-							},
-							{
-								timestamp: 1721378040000,
-								value: '2978',
-							},
-							{
-								timestamp: 1721378160000,
-								value: '2940',
-							},
-							{
-								timestamp: 1721377980000,
-								value: '2904',
-							},
-							{
-								timestamp: 1721378280000,
-								value: '2874',
-							},
-							{
-								timestamp: 1721378220000,
-								value: '2667',
-							},
-						],
-					},
-				],
-			},
-		],
-	},
-};
-
 export const queryRangeForListView = {
 	status: 'success',
 	data: {

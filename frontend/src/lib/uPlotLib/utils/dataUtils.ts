@@ -4,7 +4,7 @@
  * @param value - The value to check
  * @returns true if the value is invalid (should be replaced with null), false otherwise
  */
-export function isInvalidPlotValue(value: unknown): boolean {
+function isInvalidPlotValue(value: unknown): boolean {
 	// Check for null or undefined
 	if (value === null || value === undefined) {
 		return true;

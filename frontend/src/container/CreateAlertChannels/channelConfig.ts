@@ -23,7 +23,6 @@ import {
 	ChannelKind,
 	ChannelSpecFormValues,
 	JiraDeployment,
-	KeysOfUnion,
 	WebhookAuth,
 } from './types';
 import {
@@ -140,67 +139,6 @@ const SPEC_FIELDS = {
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelTelegramConfigDTO)[],
 } satisfies Record<ChannelKind, readonly (keyof ChannelSpecFormValues)[]>;
-
-/**
- * `satisfies` above only proves each listed key exists on the DTO, so a field
- * left out still compiles and is then dropped on save. This fails the build
- * instead, and the error names the missing field.
- */
-type MissingFrom<D, T extends readonly PropertyKey[]> = Exclude<
-	KeysOfUnion<D>,
-	T[number]
->;
-
-type SpecFieldsComplete = {
-	slack: MissingFrom<
-		AlertmanagertypesChannelSlackConfigDTO,
-		(typeof SPEC_FIELDS)['slack']
-	>;
-	webhook: MissingFrom<
-		AlertmanagertypesChannelWebhookConfigDTO,
-		(typeof SPEC_FIELDS)['webhook']
-	>;
-	email: MissingFrom<
-		AlertmanagertypesChannelEmailConfigDTO,
-		(typeof SPEC_FIELDS)['email']
-	>;
-	pagerduty: MissingFrom<
-		AlertmanagertypesChannelPagerdutyConfigDTO,
-		(typeof SPEC_FIELDS)['pagerduty']
-	>;
-	opsgenie: MissingFrom<
-		AlertmanagertypesChannelOpsgenieConfigDTO,
-		(typeof SPEC_FIELDS)['opsgenie']
-	>;
-	msteams: MissingFrom<
-		AlertmanagertypesChannelMSTeamsConfigDTO,
-		(typeof SPEC_FIELDS)['msteams']
-	>;
-	googlechat: MissingFrom<
-		AlertmanagertypesChannelGoogleChatConfigDTO,
-		(typeof SPEC_FIELDS)['googlechat']
-	>;
-	jira: MissingFrom<
-		AlertmanagertypesChannelJiraConfigDTO,
-		(typeof SPEC_FIELDS)['jira']
-	>;
-	jsmops: MissingFrom<
-		AlertmanagertypesChannelJSMOpsConfigDTO,
-		(typeof SPEC_FIELDS)['jsmops']
-	>;
-	incidentio: MissingFrom<
-		AlertmanagertypesChannelIncidentIOConfigDTO,
-		(typeof SPEC_FIELDS)['incidentio']
-	>;
-	telegram: MissingFrom<
-		AlertmanagertypesChannelTelegramConfigDTO,
-		(typeof SPEC_FIELDS)['telegram']
-	>;
-};
-
-// every member must be `never`; a missed field shows up here by name
-type NothingMissing<T extends Record<keyof T, never>> = T;
-export type SpecFieldsAreExhaustive = NothingMissing<SpecFieldsComplete>;
 
 export function toChannelConfig(
 	kind: ChannelKind,

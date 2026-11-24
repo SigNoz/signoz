@@ -26,9 +26,6 @@
 		"incremental": true,
 		"tsBuildInfoFile": "./node_modules/.cache/ts/tsconfig.tsbuildinfo",
 		"paths": {
-			"@constants/*": [
-				"./src/container/OnboardingContainer/constants/*"
-			],
 			"@/*": [
 				"./src/*"
 			],

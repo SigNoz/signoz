@@ -2,7 +2,6 @@ import type { DefaultOptionType } from 'antd/es/select';
 
 import {
 	BooleanFormats,
-	Category,
 	CategoryNames,
 	DataFormats,
 	DataRateFormats,
@@ -13,7 +12,7 @@ import {
 	TimeFormats,
 } from './types';
 
-export const alertsCategory = [
+const alertsCategory = [
 	{
 		name: CategoryNames.Time,
 		formats: [
@@ -114,14 +113,6 @@ export const getCategorySelectOptionByName = (
 			label: format.name,
 			value: format.id,
 		})) || [];
-
-export const getCategoryByOptionId = (id: string): Category | undefined =>
-	alertsCategory.find((category) =>
-		category.formats.some((format) => format.id === id),
-	);
-
-export const isCategoryName = (name: string): name is CategoryNames =>
-	alertsCategory.some((category) => category.name === name);
 
 const allFormats: HelperFormat[] = alertsCategory.flatMap(
 	(category: HelperCategory) => category.formats,

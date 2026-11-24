@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 // Types for the context state
-export type AggregationOption = { func: string; arg: string };
+type AggregationOption = { func: string; arg: string };
 
 interface QueryBuilderV2ContextType {
 	searchText: string;

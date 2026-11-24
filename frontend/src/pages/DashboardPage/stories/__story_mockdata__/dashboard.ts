@@ -272,9 +272,9 @@ export const VARIABLE_KINDS = ['custom', 'query', 'dynamic', 'text'] as const;
 
 export type VariableKind = (typeof VARIABLE_KINDS)[number];
 
-export const QUERY_VARIABLE_NAME = 'service';
+const QUERY_VARIABLE_NAME = 'service';
 
-export const DYNAMIC_VARIABLE_ATTRIBUTE = 'k8s.namespace.name';
+const DYNAMIC_VARIABLE_ATTRIBUTE = 'k8s.namespace.name';
 
 const VARIABLES: Record<VariableKind, DashboardtypesVariableDTO> = {
 	custom: {

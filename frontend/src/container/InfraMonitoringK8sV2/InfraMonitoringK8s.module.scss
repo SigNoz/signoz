@@ -12,19 +12,6 @@
 	position: relative;
 	overflow-y: auto;
 
-	:global(.periscope-btn) {
-		&.ghost:not(:disabled) {
-			border: none;
-			background: transparent;
-
-			&:hover {
-				background: transparent;
-				color: var(--bg-robin-500) !important;
-				font-weight: 500;
-			}
-		}
-	}
-
 	&::-webkit-scrollbar {
 		width: 8px;
 		height: 8px;
@@ -48,14 +35,6 @@
 	width: 280px;
 	min-width: 280px;
 	border-right: 1px solid var(--l1-border);
-}
-
-.quickFiltersContainerHeader {
-	padding: 8px;
-	border-bottom: 1px solid var(--l1-border);
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
 }
 
 .listContainer {

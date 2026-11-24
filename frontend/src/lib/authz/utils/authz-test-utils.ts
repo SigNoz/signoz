@@ -123,9 +123,7 @@ export function setupAuthzGrantByPrefix(...prefixes: string[]): RestHandler {
 	});
 }
 
-export function buildLicense(
-	overrides?: Partial<LicenseResModel>,
-): LicenseResModel {
+function buildLicense(overrides?: Partial<LicenseResModel>): LicenseResModel {
 	return {
 		id: 'test-license-id',
 		status: LicenseStatus.VALID,
@@ -190,34 +188,5 @@ export function mockUseAuthZDenyAll(
 		deniedPermissions: permissions,
 		isGranted: (): boolean => false,
 		refetchPermissions: jest.fn(),
-	};
-}
-
-export function mockUseAuthZGrantByPrefix(
-	...prefixes: string[]
-): (
-	permissions: BrandedPermission[],
-	options?: UseAuthZOptions,
-) => UseAuthZResult {
-	return (permissions, _options) => {
-		const denied = permissions.filter(
-			(p) => !prefixes.some((prefix) => p.startsWith(prefix)),
-		);
-		return {
-			isLoading: false,
-			isFetching: false,
-			error: null,
-			permissions: Object.fromEntries(
-				permissions.map((p) => [
-					p,
-					{ isGranted: prefixes.some((prefix) => p.startsWith(prefix)) },
-				]),
-			) as UseAuthZResult['permissions'],
-			allowed: denied.length === 0,
-			deniedPermissions: denied,
-			isGranted: (permission): boolean =>
-				prefixes.some((prefix) => permission.startsWith(prefix)),
-			refetchPermissions: jest.fn(),
-		};
 	};
 }

@@ -5,44 +5,10 @@
 	--row-control-height: 28px;
 }
 
-.row {
-	display: flex;
-	align-items: center;
-	gap: var(--spacing-2);
-	margin-bottom: var(--spacing-2);
-}
-
-.field {
-	flex: 1 1 0;
-	min-width: 0;
-	max-width: 300px;
-}
-
-.row > :not(.field) {
-	flex: 0 0 auto;
-}
-
-.heading {
-	font-size: 11px;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: var(--muted-foreground);
-}
-
 .add {
 	/* Sits with the blocks it adds to, not against the next field's label. */
 	margin-top: var(--spacing-2);
 	--button-height: var(--row-control-height);
-}
-
-@media (max-width: 720px) {
-	.row {
-		flex-wrap: wrap;
-	}
-
-	.field {
-		max-width: none;
-	}
 }
 
 /* One entry per block, every input labelled. A row of bare boxes gave no way to
@@ -68,12 +34,6 @@
 	   system gives a small control rather than letting the glyph set it. */
 	--button-height: var(--row-control-height);
 	--button-icon-size: 14px;
-}
-
-.entryIndex {
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: var(--muted-foreground);
 }
 
 .entryGrid {

@@ -4,7 +4,7 @@ import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 
-export function NameEmailCell({
+function NameEmailCell({
 	name,
 	email,
 }: {
@@ -25,7 +25,7 @@ export function NameEmailCell({
 	);
 }
 
-export function StatusBadge({ status }: { status: string }): JSX.Element {
+function StatusBadge({ status }: { status: string }): JSX.Element {
 	if (status?.toUpperCase() === 'ACTIVE') {
 		return (
 			<Badge color="success" variant="outlined">

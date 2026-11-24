@@ -11,7 +11,7 @@ import MQDetailPage from './MQDetailPage/MQDetailPage';
 
 import './MessagingQueuesMainPage.styles.scss';
 
-export const Kafka: TabRoutes = {
+const Kafka: TabRoutes = {
 	Component: MessagingQueues,
 	name: (
 		<div className="tab-item">
@@ -22,7 +22,7 @@ export const Kafka: TabRoutes = {
 	key: ROUTES.MESSAGING_QUEUES_KAFKA,
 };
 
-export const KafkaDetail: TabRoutes = {
+const KafkaDetail: TabRoutes = {
 	Component: MQDetailPage,
 	name: (
 		<div className="tab-item">
@@ -33,7 +33,7 @@ export const KafkaDetail: TabRoutes = {
 	key: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
 };
 
-export const Celery: TabRoutes = {
+const Celery: TabRoutes = {
 	Component: CeleryTask,
 	name: (
 		<div className="tab-item">
@@ -44,7 +44,7 @@ export const Celery: TabRoutes = {
 	key: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 };
 
-export const Overview: TabRoutes = {
+const Overview: TabRoutes = {
 	Component: CeleryOverview,
 	name: (
 		<div className="tab-item">

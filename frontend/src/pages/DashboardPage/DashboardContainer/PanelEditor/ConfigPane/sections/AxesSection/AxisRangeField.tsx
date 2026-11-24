@@ -5,7 +5,7 @@ import ConfigRangeInput from '../../controls/ConfigRangeInput/ConfigRangeInput';
 import { isRangeInverted } from '../../controls/ConfigRangeInput/utils';
 import { RANGE_HELP, RANGE_INVERTED_ERROR } from './options';
 
-export interface AxisBounds {
+interface AxisBounds {
 	softMin?: number | null;
 	softMax?: number | null;
 }

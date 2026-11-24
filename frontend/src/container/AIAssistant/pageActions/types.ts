@@ -1,4 +1,4 @@
-export type JSONSchemaProperty =
+type JSONSchemaProperty =
 	| { type: 'string'; description?: string; enum?: string[] }
 	| { type: 'number'; description?: string }
 	| { type: 'boolean'; description?: string }
@@ -14,7 +14,7 @@ export type JSONSchemaProperty =
 			required?: string[];
 	  };
 
-export type JSONSchemaObject = {
+type JSONSchemaObject = {
 	type: 'object';
 	properties: Record<string, JSONSchemaProperty>;
 	required?: string[];

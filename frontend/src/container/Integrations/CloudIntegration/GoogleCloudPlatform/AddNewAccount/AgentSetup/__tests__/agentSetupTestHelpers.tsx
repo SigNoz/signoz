@@ -23,15 +23,13 @@ type AgentSetupProps = ComponentProps<typeof AgentSetup>;
 export const onClose = jest.fn() as jest.MockedFunction<
 	AgentSetupProps['onClose']
 >;
-export const onConnectionMethodChange = jest.fn() as jest.MockedFunction<
+const onConnectionMethodChange = jest.fn() as jest.MockedFunction<
 	AgentSetupProps['onConnectionMethodChange']
 >;
 export const onCommandGenerated = jest.fn() as jest.MockedFunction<
 	AgentSetupProps['onCommandGenerated']
 >;
-export const onCancel = jest.fn() as jest.MockedFunction<
-	AgentSetupProps['onCancel']
->;
+const onCancel = jest.fn() as jest.MockedFunction<AgentSetupProps['onCancel']>;
 
 export const renderAgentSetup = (): void => {
 	render(

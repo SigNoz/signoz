@@ -1,7 +1,4 @@
-import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
-import Space from 'periscope/components/Space/Space';
-import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import { FontSize } from 'container/OptionsMenu/types';
 import { Info } from '@signozhq/icons';
@@ -73,12 +70,6 @@ export const InfoIconWrapper = styled(Info)`
 	height: auto;
 `;
 
-export const ExpandIconWrapper = styled(Col)`
-	color: ${blue[6]};
-	padding: 0.25rem 0.375rem;
-	cursor: pointer;
-`;
-
 export const RawLogContent = styled.div<RawLogContentProps>`
 	margin-bottom: 0;
 	font-family: 'SF Mono', monospace;
@@ -111,12 +102,4 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};
-`;
-
-export const ActionButtonsWrapper = styled(Space)`
-	position: absolute;
-	transform: translate(-50%, -50%);
-	top: 50%;
-	right: 0;
-	cursor: pointer;
 `;

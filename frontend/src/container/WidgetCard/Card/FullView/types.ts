@@ -7,18 +7,6 @@ import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Widgets } from 'types/api/widgets/widget';
 import uPlot from 'uplot';
 
-export interface DataSetProps {
-	index: number;
-	data: number | null;
-	label: string;
-	borderWidth: number;
-	spanGaps: boolean;
-	animations: boolean;
-	borderColor: string;
-	showLine: boolean;
-	pointRadius: number;
-}
-
 export interface LegendEntryProps {
 	label: string;
 	show: boolean;
@@ -28,13 +16,6 @@ export type PanelTypeAndGraphManagerVisibilityProps = Record<
 	keyof typeof PANEL_TYPES,
 	boolean
 >;
-
-export interface LabelProps {
-	labelClickedHandler: (labelIndex: number) => void;
-	labelIndex: number;
-	label: string;
-	disabled?: boolean;
-}
 
 export interface FullViewProps {
 	widget: Widgets;
@@ -52,7 +33,7 @@ export interface FullViewProps {
 	enableDrillDown?: boolean;
 }
 
-export interface GraphManagerProps extends UplotProps {
+interface GraphManagerProps extends UplotProps {
 	name: string;
 	yAxisUnit?: string;
 	onToggleModelHandler?: () => void;

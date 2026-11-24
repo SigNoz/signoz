@@ -36,5 +36,3 @@ export interface QueryKeyRequestProps {
 	metricNamespace?: string;
 	signalSource?: 'meter' | '';
 }
-
-export type SignalType = 'traces' | 'logs' | 'metrics';

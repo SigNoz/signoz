@@ -94,21 +94,9 @@
 		&__text {
 			color: var(--l2-foreground);
 			line-height: 18px;
-			.bold-text {
-				color: var(--l1-foreground);
-			}
 		}
 		&__button-wrapper {
 			margin-top: 12px;
-			.configure-alert-rule-button {
-				padding: 8px 16px;
-				border-radius: 2px;
-				background: var(--l3-background);
-				border-width: 0;
-				color: var(--l1-foreground);
-				display: flex;
-				align-items: center;
-			}
 		}
 	}
 }

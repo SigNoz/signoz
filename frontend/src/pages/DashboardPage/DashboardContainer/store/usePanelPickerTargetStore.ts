@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import type { PanelKind } from '../Panels/types/panelKind';
 
-export interface ScrollOrigin {
+interface ScrollOrigin {
 	element: HTMLElement;
 	top: number;
 }
@@ -14,7 +14,7 @@ export interface PanelPickerTarget {
 	outline: boolean;
 }
 
-export interface PanelPickerDraftSection {
+interface PanelPickerDraftSection {
 	title: string;
 	panelKind: PanelKind;
 }

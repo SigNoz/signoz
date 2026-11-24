@@ -10,7 +10,7 @@ import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import { AppLayer } from './types';
 
-export interface AppPageProvidersProps {
+interface AppPageProvidersProps {
 	children: ReactNode;
 	layout: AppLayer;
 	/** When set, replaces `QueryBuilderProvider` with a fixed context value. */

@@ -1,7 +1,7 @@
 /**
  * These prefixes are added to attribute keys based on their context.
  */
-export const FIELD_CONTEXT_PREFIXES = [
+const FIELD_CONTEXT_PREFIXES = [
 	'metric',
 	'log',
 	'span',
@@ -18,7 +18,7 @@ export const FIELD_CONTEXT_PREFIXES = [
  * Example: 'resource.service.name' -> 'service.name'
  * Example: 'attribute.http.method' -> 'http.method'
  */
-export function getKeyWithoutPrefix(key: string | undefined): string {
+function getKeyWithoutPrefix(key: string | undefined): string {
 	if (!key) {
 		return '';
 	}

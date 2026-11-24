@@ -28,7 +28,7 @@ function DeleteAction({
 	);
 }
 
-export interface DeleteActionProps {
+interface DeleteActionProps {
 	isPipelineAction: boolean;
 	deleteAction: VoidFunction;
 }

@@ -15,15 +15,8 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GraphClickProps } from 'container/WidgetCard/hooks/useGraphClickToShowButton';
 import { NavigateToExplorerPagesProps } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { LegendEntryProps } from 'container/WidgetCard/Card/FullView/types';
-import {
-	showAllDataSet,
-	showAllDataSetFromApiResponse,
-} from 'container/WidgetCard/Card/FullView/utils';
-import {
-	GetGraphVisibilityStateOnLegendClickProps,
-	GraphVisibilityLegendEntryProps,
-	ToggleGraphsVisibilityInChartProps,
-} from 'container/WidgetCard/Card/types';
+import { showAllDataSetFromApiResponse } from 'container/WidgetCard/Card/FullView/utils';
+import { GraphVisibilityLegendEntryProps } from 'container/WidgetCard/Card/types';
 
 export const getLocalStorageGraphVisibilityState = ({
 	apiResponse,
@@ -85,66 +78,6 @@ export const getLocalStorageGraphVisibilityState = ({
 	}
 
 	return visibilityStateAndLegendEntry;
-};
-
-export const getGraphVisibilityStateOnDataChange = ({
-	options,
-	isExpandedName,
-	name,
-}: GetGraphVisibilityStateOnLegendClickProps): GraphVisibilityLegendEntryProps => {
-	const visibilityStateAndLegendEntry: GraphVisibilityLegendEntryProps = {
-		graphVisibilityStates: Array(options.series.length).fill(true),
-		legendEntry: showAllDataSet(options),
-	};
-	if (getLocalStorageKey(LOCALSTORAGE.GRAPH_VISIBILITY_STATES) !== null) {
-		const legendGraphFromLocalStore = getLocalStorageKey(
-			LOCALSTORAGE.GRAPH_VISIBILITY_STATES,
-		);
-		let legendFromLocalStore: {
-			name: string;
-			dataIndex: LegendEntryProps[];
-		}[] = [];
-
-		try {
-			legendFromLocalStore = JSON.parse(legendGraphFromLocalStore || '[]');
-		} catch (error) {
-			console.error(
-				'Error parsing GRAPH_VISIBILITY_STATES from local storage',
-				error,
-			);
-		}
-
-		const newGraphVisibilityStates = Array(options.series.length).fill(true);
-		legendFromLocalStore.forEach((item) => {
-			const newName = isExpandedName ? `${name}expanded` : name;
-			if (item.name === newName) {
-				visibilityStateAndLegendEntry.legendEntry = item.dataIndex;
-				options.series.forEach((datasets, i) => {
-					if (i !== 0) {
-						const index = item.dataIndex.findIndex(
-							(dataKey) => dataKey.label === datasets.label,
-						);
-						if (index !== -1) {
-							newGraphVisibilityStates[i] = item.dataIndex[index].show;
-						}
-					}
-				});
-				visibilityStateAndLegendEntry.graphVisibilityStates =
-					newGraphVisibilityStates;
-			}
-		});
-	}
-
-	return visibilityStateAndLegendEntry;
-};
-
-export const toggleGraphsVisibilityInChart = ({
-	graphsVisibilityStates,
-	lineChartRef,
-}: ToggleGraphsVisibilityInChartProps): void => {
-	graphsVisibilityStates?.forEach((showLegendData, index) => {
-		lineChartRef?.current?.toggleGraph(index, showLegendData);
-	});
 };
 
 export const isDataAvailableByPanelType = (

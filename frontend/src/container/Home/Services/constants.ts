@@ -31,7 +31,7 @@ export const getColumns = (
 	},
 ];
 
-export enum TimeIntervalsEnum {
+enum TimeIntervalsEnum {
 	LAST_5_MINUTES = 60 * 5 * 1000, // 300000
 	LAST_15_MINUTES = 60 * 15 * 1000, // 900000
 	LAST_30_MINUTES = 60 * 30 * 1000, // 1800000

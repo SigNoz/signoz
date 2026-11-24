@@ -136,8 +136,6 @@ export const getOptions = (routes: string): Option[] => {
 	return Options;
 };
 
-export const routesToHideBreadCrumbs = [ROUTES.SUPPORT, ROUTES.ALL_DASHBOARD];
-
 export const routesToSkip = [
 	ROUTES.HOME,
 	ROUTES.SETTINGS,

@@ -122,7 +122,7 @@ async function fetchEntityData(
 	}
 }
 
-export function createCustomTabs(): K8sDetailsCustomTab<InframonitoringtypesDeploymentRecordDTO>[] {
+function createCustomTabs(): K8sDetailsCustomTab<InframonitoringtypesDeploymentRecordDTO>[] {
 	return [
 		createPodMetricsTab<InframonitoringtypesDeploymentRecordDTO>({
 			getQueryPayload: getDeploymentPodMetricsQueryPayload,

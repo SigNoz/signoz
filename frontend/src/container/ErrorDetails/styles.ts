@@ -13,11 +13,6 @@ export const DashedContainer = styled.div`
 	align-items: center;
 `;
 
-export const ButtonContainer = styled.div`
-	display: flex;
-	gap: 1rem;
-`;
-
 export const EventContainer = styled.div`
 	display: flex;
 	justify-content: space-between;

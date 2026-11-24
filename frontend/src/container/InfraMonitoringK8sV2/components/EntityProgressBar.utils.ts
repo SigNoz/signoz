@@ -238,20 +238,13 @@ export const THRESHOLDS_BY_TYPE: Record<
 	disk: DISK_THRESHOLDS,
 };
 
-export function getStrokeColorForPercent(
+function getStrokeColorForPercent(
 	type: EntityProgressBarType,
 	percent: number,
 ): string {
 	const thresholds = THRESHOLDS_BY_TYPE[type];
 	const match = thresholds.find((threshold) => threshold.matches(percent));
 	return (match ?? thresholds[thresholds.length - 1]).color;
-}
-
-export function getStrokeColor(
-	type: EntityProgressBarType,
-	value: number,
-): string {
-	return getStrokeColorForPercent(type, Number((value * 100).toFixed(1)));
 }
 
 const PROGRESS_COLOR_BY_STROKE: Record<string, ProgressColorType> = {

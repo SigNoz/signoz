@@ -11,7 +11,7 @@ import TimezoneProvider from 'providers/Timezone';
 
 import { AppLayer } from './types';
 
-export interface AppProvidersProps {
+interface AppProvidersProps {
 	children: ReactNode;
 	store: Store;
 	queryClient: QueryClient;

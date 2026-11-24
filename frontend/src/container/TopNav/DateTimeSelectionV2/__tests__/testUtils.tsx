@@ -18,7 +18,7 @@ export const queryClient = new QueryClient({
 	},
 });
 
-export const mockStore = configureStore([thunk]);
+const mockStore = configureStore([thunk]);
 
 interface WrapperProps {
 	children: React.ReactNode;

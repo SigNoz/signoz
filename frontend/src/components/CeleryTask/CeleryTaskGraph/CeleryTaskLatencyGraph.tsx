@@ -41,7 +41,7 @@ interface TabData {
 	key: string;
 }
 
-export enum CeleryTaskGraphState {
+enum CeleryTaskGraphState {
 	P99 = 'p99',
 	P95 = 'p95',
 	P90 = 'p90',

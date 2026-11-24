@@ -1,4 +1,4 @@
-export interface ConfigProps {
+interface ConfigProps {
 	enabled: boolean;
 	frontendPositionId: string;
 	components: Array<{

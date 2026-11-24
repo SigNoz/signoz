@@ -52,16 +52,6 @@
 	--input-border-radius: 0 2px 2px 0;
 }
 
-.loading {
-	flex: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	color: var(--l3-foreground);
-	font-size: var(--label-base-400-font-size);
-}
-
 // "From a template" tab: a centered browse-and-request placeholder until the
 // templates BE lands. Fixed height matches .panel so switching tabs won't resize.
 .templatesPanel {

@@ -2,9 +2,9 @@ import { useCallback, useRef, useState } from 'react';
 
 import './ResizableBox.styles.scss';
 
-export type ResizableBoxHandle = 'top' | 'right' | 'bottom' | 'left';
+type ResizableBoxHandle = 'top' | 'right' | 'bottom' | 'left';
 
-export interface ResizableBoxProps {
+interface ResizableBoxProps {
 	children: React.ReactNode;
 	// Which edge the resize handle sits on. The edge determines the axis:
 	// 'top'/'bottom' → vertical resize (height), 'left'/'right' → horizontal

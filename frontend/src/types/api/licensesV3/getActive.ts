@@ -25,7 +25,7 @@ export enum LicensePlatform {
 	CLOUD = 'cloud',
 }
 
-export type LicensePlanResModel = {
+type LicensePlanResModel = {
 	id: string;
 	name: string;
 	description: string;
@@ -34,7 +34,7 @@ export type LicensePlanResModel = {
 	updatedAt: string;
 };
 
-export type LicenseEventQueueResModel = {
+type LicenseEventQueueResModel = {
 	event: LicenseEvent;
 	status: string;
 	scheduledAt: string;

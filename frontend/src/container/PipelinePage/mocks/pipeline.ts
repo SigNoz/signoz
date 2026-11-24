@@ -2,8 +2,6 @@ import { Pipeline, PipelineData } from 'types/api/pipeline/def';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-export const configurationVersion = '1.0';
-
 export function mockPipelineFilter(
 	key: string,
 	op: string,

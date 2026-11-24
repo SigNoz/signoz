@@ -11,7 +11,7 @@ export const LOCAL_ROW_TEST_ID = 'col-local-row';
 export const ANTD_COL_TEST_ID = 'col-antd';
 export const LOCAL_COL_TEST_ID = 'col-local';
 
-export interface ColComparisonProps extends Pick<
+interface ColComparisonProps extends Pick<
 	ColProps,
 	| 'span'
 	| 'order'

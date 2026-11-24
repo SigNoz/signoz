@@ -24,7 +24,6 @@ import { quickFiltersListResponse } from 'mocks-server/__mockdata__/customQuickF
 import type { AppState } from 'store/reducers';
 import type { Warning } from 'types/api';
 import type { ILogBody } from 'types/api/logs/log';
-import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type {
 	Query,
@@ -492,28 +491,6 @@ export const logFieldValuesResponse = (
 			numberValues: matching(NUMBER_VALUES[name] ?? [], searchText),
 			relatedValues: [],
 		},
-	},
-});
-
-/**
- * The quick filters read values off the v3 autocomplete endpoint rather than
- * `/fields/values`, and it answers numbers as strings.
- */
-export const attributeValuesResponse = (
-	attributeKey: string,
-	searchText: string,
-): { status: string; data: IAttributeValuesResponse } => ({
-	status: 'success',
-	data: {
-		stringAttributeValues: matching(
-			STRING_VALUES[attributeKey] ?? [],
-			searchText,
-		),
-		numberAttributeValues: matching(
-			NUMBER_VALUES[attributeKey] ?? [],
-			searchText,
-		).map(String),
-		boolAttributeValues: null,
 	},
 });
 

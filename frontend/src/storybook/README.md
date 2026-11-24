@@ -139,8 +139,7 @@ Handlers resolve first-match-wins, in this order:
 3. the global mocks' handlers (access);
 4. `msw/appShellHandlers.ts`, the endpoints the shell hits on every route, and
    the ones whose jest fixture is too thin to show it doing its job;
-5. `msw/queryBuilderHandlers.ts`, the legacy v3 autocomplete pair, which the
-   jest handlers answer for one query and 500 for every other;
+5. `msw/queryBuilderHandlers.ts`, the query builder's keys, values and metrics;
 6. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
    runners need belongs here so jest gets it too;
 7. a catch-all for `http://localhost/api/*` that logs and answers 501, so an
@@ -376,11 +375,9 @@ play: async () => {
 it on opens every tooltip the page renders and keeps it open, which is what makes
 a page's tooltips one screenshot rather than one hover each.
 
-Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
-when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
-one is open at a time no matter how many providers the tree has. A tooltip whose
-`open` is controlled ignores the event, which is what the alias passes:
-`mocks/tooltip.mock.tsx` wraps `Tooltip` and hands it `open` while the control is on.
+Hovering cannot do this: it opens one tooltip at a time. While the control is
+on, `mocks/tooltip.mock.tsx` wraps `Tooltip` in `ForceOpenProvider` from
+`@signozhq/ui/testing`, which holds its popup open.
 
 A tooltip the page already drives, such as `SpanHoverCard`, keeps its own state:
 only the page knows what its popup is anchored to. A tooltip whose title is empty

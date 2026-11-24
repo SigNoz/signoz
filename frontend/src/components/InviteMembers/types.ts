@@ -12,7 +12,7 @@ export interface InviteResult {
 	error?: string;
 }
 
-export interface FooterRenderProps {
+interface FooterRenderProps {
 	submit: () => Promise<InviteResult[]>;
 	reset: () => void;
 	canSubmit: boolean;

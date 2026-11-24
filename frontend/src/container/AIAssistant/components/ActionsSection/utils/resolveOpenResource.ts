@@ -13,7 +13,7 @@ function readString(value: unknown): string | null {
 }
 
 /** Normalises backend resource-type strings to the taxonomy used in the UI. */
-export function normalizeResourceType(
+function normalizeResourceType(
 	resourceType: string | null | undefined,
 ): string | null {
 	if (!resourceType) {

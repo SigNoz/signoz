@@ -18,7 +18,7 @@ const BANNED_COMPONENTS = {
 		'Use @signozhq/ui/typography Typography instead of antd Typography.',
 	Switch: 'Use @signozhq/ui/switch Switch instead of antd Switch.',
 	Dropdown:
-		'Use @signozhq/ui DropdownMenuSimple (or the composable DropdownMenu primitives) from @signozhq/ui/dropdown-menu instead of antd Dropdown.',
+		'Use @signozhq/ui/dropdown Dropdown instead of antd Dropdown.',
 	Badge: 'Use @signozhq/ui/badge instead of antd Badge.',
 	Radio:
 		'Use @signozhq/ui/radio-group RadioGroup (dots) or @signozhq/ui/toggle-group ToggleGroup (segmented buttons) instead of antd Radio.',

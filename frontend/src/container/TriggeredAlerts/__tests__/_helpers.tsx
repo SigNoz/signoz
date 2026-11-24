@@ -58,15 +58,6 @@ export function renderTriggeredAlerts(
 	);
 }
 
-export async function findAlertRow(alertName: string): Promise<HTMLElement> {
-	const cell = await screen.findByText(alertName, {}, { timeout: 5000 });
-	const row = cell.closest('tr');
-	if (!row) {
-		throw new Error(`Row not found for alert "${alertName}"`);
-	}
-	return row as HTMLElement;
-}
-
 export function getTriggeredAlertRowTestId(
 	fingerprint: string,
 	column: 'name' | 'severity' | 'status',

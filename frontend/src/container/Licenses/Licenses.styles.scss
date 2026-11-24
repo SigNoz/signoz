@@ -23,29 +23,5 @@
 		display: flex;
 		flex-direction: row;
 		align-items: flex-start;
-
-		.licenses-page-content {
-			flex: 1;
-			background: var(--l1-background);
-			padding: 10px 8px;
-			overflow-y: auto;
-
-			&::-webkit-scrollbar {
-				width: 0.3rem;
-				height: 0.3rem;
-			}
-
-			&::-webkit-scrollbar-track {
-				background: transparent;
-			}
-
-			&::-webkit-scrollbar-thumb {
-				background: var(--l3-background);
-			}
-
-			&::-webkit-scrollbar-thumb:hover {
-				background: var(--l3-background);
-			}
-		}
 	}
 }

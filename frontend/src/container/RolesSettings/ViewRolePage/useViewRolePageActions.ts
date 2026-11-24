@@ -6,8 +6,8 @@ import { matchRoute } from 'lib/router/matchRoute';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
-export type ViewMode = 'list' | 'json';
-export type TabKey = 'overview';
+type ViewMode = 'list' | 'json';
+type TabKey = 'overview';
 
 const VIEW_MODES: ViewMode[] = ['list', 'json'];
 const TAB_KEYS: TabKey[] = ['overview'];

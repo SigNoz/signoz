@@ -4,8 +4,6 @@ import { Button } from '@signozhq/ui/button';
 import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { toast } from '@signozhq/ui/toast';
 
-import MessageTip from '@/components/MessageTip';
-
 export type FeedbackState =
 	| 'success-toast'
 	| 'actionable-error-toast'
@@ -15,7 +13,6 @@ export type FeedbackState =
 	| 'warning-toast'
 	| 'info-toast'
 	| 'danger-description-toast'
-	| 'inline-alert'
 	| 'confirmation'
 	| 'toast-over-confirmation';
 
@@ -118,17 +115,6 @@ function FeedbackFixture({ state }: FeedbackFixtureProps): JSX.Element {
 				>
 					Show feedback
 				</Button>
-			)}
-			{state === 'inline-alert' && (
-				<MessageTip
-					action={
-						<Button color="secondary" size="sm" variant="outlined">
-							Review settings
-						</Button>
-					}
-					message="Some collectors have not reported data in the last 15 minutes."
-					show
-				/>
 			)}
 			{(state === 'confirmation' || state === 'toast-over-confirmation') && (
 				<>

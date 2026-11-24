@@ -5,7 +5,7 @@ import { Skeleton } from 'antd';
 import { getKeySuggestions } from 'api/querySuggestions/getKeySuggestions';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import useDebounce from 'hooks/useDebounce';
-import { ContextMenu } from 'periscope/components/ContextMenu';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { MetricAggregation } from 'types/api/v5/queryRange';
 import { fieldDataTypeToDataType } from 'utils/fieldDataType';

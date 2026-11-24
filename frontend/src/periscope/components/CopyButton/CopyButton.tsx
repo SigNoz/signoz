@@ -7,7 +7,7 @@ import styles from './CopyButton.module.scss';
 import { useCopyButton } from './useCopyButton';
 import { Tooltip } from '@signozhq/ui/tooltip';
 
-export interface CopyButtonProps {
+interface CopyButtonProps {
 	/** Text written to the clipboard on click. */
 	value: string;
 	/** Icon size in px. Default 14. */

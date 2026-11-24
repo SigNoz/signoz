@@ -12,7 +12,7 @@ export enum DataTypes {
 
 export type LocalDataType = 'number' | 'string' | 'bool';
 
-export type AutocompleteType = 'tag' | 'resource' | '';
+type AutocompleteType = 'tag' | 'resource' | '';
 
 export interface BaseAutocompleteData {
 	id?: string;

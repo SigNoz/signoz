@@ -19,7 +19,7 @@ export const SIGNOZ_URL_HEADER = 'X-SigNoz-URL';
  * needs the originating SigNoz instance URL for multi-tenant deployments;
  * when omitted it falls back to its `SIGNOZ_API_URL` env var.
  */
-export const interceptorsRequestSigNozUrl = (
+const interceptorsRequestSigNozUrl = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
 	if (value.headers) {

@@ -32,7 +32,7 @@ function toChangeSpec(
 	return { from: start, to: previousEnd, insert: next.slice(start, nextEnd) };
 }
 
-export function readSnapshot(view: EditorView): EditorSnapshot {
+function readSnapshot(view: EditorView): EditorSnapshot {
 	const range = view.state.selection.main;
 	return {
 		text: view.state.doc.toString(),

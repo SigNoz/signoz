@@ -1,6 +1,5 @@
-import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
-import { ToggleGraphProps } from 'components/Graph/types';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -71,15 +70,4 @@ export interface GridCardGraphProps {
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
-}
-
-export interface GetGraphVisibilityStateOnLegendClickProps {
-	options: uPlot.Options;
-	isExpandedName: boolean;
-	name: string;
-}
-
-export interface ToggleGraphsVisibilityInChartProps {
-	graphsVisibilityStates: GraphVisibilityLegendEntryProps['graphVisibilityStates'];
-	lineChartRef: MutableRefObject<ToggleGraphProps | undefined>;
 }

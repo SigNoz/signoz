@@ -1,5 +1,0 @@
-@use '../../../../../../styles/scrollbar' as *;
-
-:global([data-testid='panel-type-drawer-body']) {
-	@include custom-scrollbar;
-}

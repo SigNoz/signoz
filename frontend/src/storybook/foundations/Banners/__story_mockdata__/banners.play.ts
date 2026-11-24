@@ -19,7 +19,7 @@ interface PlayContext {
 	args: ShellArgs;
 }
 
-export const NO_AUTH_STORAGE_KEY = 'no-auth-banner-v1';
+const NO_AUTH_STORAGE_KEY = 'no-auth-banner-v1';
 
 const NO_AUTH_BANNER = 'no-auth-banner';
 

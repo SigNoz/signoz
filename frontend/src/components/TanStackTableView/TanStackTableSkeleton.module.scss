@@ -1,14 +1,3 @@
-.headerSkeleton {
-	width: 60% !important;
-	min-width: 50px !important;
-	height: 16px !important;
-
-	:global(.ant-skeleton-input) {
-		min-width: 50px !important;
-		height: 16px !important;
-	}
-}
-
 .cellSkeleton {
 	width: 80% !important;
 	min-width: 40px !important;

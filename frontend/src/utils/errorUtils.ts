@@ -62,17 +62,6 @@ export function toAPIError(
 	});
 }
 
-export function handleApiError(
-	err: ErrorType<RenderErrorResponseDTO>,
-	showErrorFunction: (error: APIError) => void,
-): void {
-	try {
-		ErrorResponseHandlerForGeneratedAPIs(err);
-	} catch (apiError) {
-		showErrorFunction(apiError as APIError);
-	}
-}
-
 export const retryOn429 = (failureCount: number, error: unknown): boolean => {
 	if (error instanceof AxiosError && error.response?.status === 429) {
 		return failureCount < 2;

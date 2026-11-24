@@ -3,9 +3,9 @@ import type { StateCreator } from 'zustand';
 import type { DashboardStore } from '../useDashboardStore';
 
 /** Which settings-drawer tab to open. Mirrors the DashboardSettings tab keys. */
-export type SettingsTab = 'Overview' | 'Variables' | 'Publish';
+type SettingsTab = 'Overview' | 'Variables' | 'Publish';
 
-export interface SettingsRequest {
+interface SettingsRequest {
 	tab: SettingsTab;
 	/** Open the add-variable form immediately (Variables tab only). */
 	addVariable?: boolean;

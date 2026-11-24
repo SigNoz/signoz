@@ -2,7 +2,7 @@ import type { Monaco } from '@monaco-editor/react';
 import permissionsType from 'lib/authz/hooks/useAuthZ/permissions.type';
 import transactionGroupSchema from 'schemas/generated/transactionGroups.schema.json';
 
-export const TRANSACTION_GROUP_SCHEMA = transactionGroupSchema;
+const TRANSACTION_GROUP_SCHEMA = transactionGroupSchema;
 
 const SCHEMA_URI = 'inmemory://model/transaction-groups-schema.json';
 export const ROLE_PERMISSIONS_MODEL_PATH = 'role-permissions.json';

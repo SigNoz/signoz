@@ -21,11 +21,6 @@
 		border-bottom: none;
 		margin-bottom: -1px;
 
-		.prom-ql-icon {
-			height: 14px;
-			width: 14px;
-		}
-
 		.explorer-view-option {
 			display: flex;
 			align-items: center;
@@ -75,12 +70,6 @@
 	}
 }
 
-.right-toolbar {
-	display: flex;
-	align-items: center;
-	background-color: var(--bg-robin-600);
-}
-
 .right-toolbar-actions-container {
 	flex-shrink: 0;
 }
@@ -94,36 +83,4 @@
 	display: flex;
 	gap: 8px;
 	align-items: center;
-
-	.loading-btn {
-		display: flex;
-		width: 32px;
-		height: 33px;
-		padding: 4px 10px;
-		justify-content: center;
-		align-items: center;
-		gap: 6px;
-		flex-shrink: 0;
-		border-radius: 2px;
-		background: var(--l3-background);
-		box-shadow: none;
-		border: none;
-	}
-
-	.cancel-run {
-		display: flex;
-		height: 33px;
-		padding: 4px 10px;
-		justify-content: center;
-		align-items: center;
-		gap: 6px;
-		flex: 1 0 0;
-		border-radius: 2px;
-		background: var(--danger-background);
-		border: none;
-	}
-	.cancel-run:hover {
-		background-color: var(--bg-cherry-400) !important;
-		color: var(--l1-foreground) !important;
-	}
 }

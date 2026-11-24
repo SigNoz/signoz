@@ -1,8 +1,6 @@
 import { MetricreductionruletypesMatchTypeDTO } from 'api/generated/services/sigNoz.schemas';
 
-export function isKeepMode(
-	matchType: MetricreductionruletypesMatchTypeDTO,
-): boolean {
+function isKeepMode(matchType: MetricreductionruletypesMatchTypeDTO): boolean {
 	return matchType === MetricreductionruletypesMatchTypeDTO.keep;
 }
 

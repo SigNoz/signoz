@@ -51,7 +51,7 @@ import {
 
 // Derived from an actual icon component so the type stays exact (size is a
 // constrained IconSize union, not arbitrary strings) and ForwardRef-compatible.
-export type SectionIcon = typeof Hash;
+type SectionIcon = typeof Hash;
 
 export interface SectionMetadata {
 	title: string;
@@ -248,7 +248,7 @@ export interface SectionControls {
 export type ControlledSectionKind = keyof SectionControls;
 
 /** Atomic sections — no sub-controls; a kind either shows them or not. */
-export type AtomicSectionKind =
+type AtomicSectionKind =
 	| SectionKind.ContextLinks
 	| SectionKind.Columns
 	| SectionKind.TextLayout
@@ -258,9 +258,7 @@ export type AtomicSectionKind =
 	| SectionKind.Location;
 
 /** Predicate to hide a section from the current spec; returning true removes it. */
-export type SectionVisibilityPredicate = (
-	spec: DashboardtypesPanelSpecDTO,
-) => boolean;
+type SectionVisibilityPredicate = (spec: DashboardtypesPanelSpecDTO) => boolean;
 
 /**
  * What a kind declares in `kinds/<Kind>/sections.ts`: a controlled section with
@@ -310,6 +308,3 @@ export type SectionEditorProps<K extends SectionKind> = {
 } & (K extends ControlledSectionKind
 	? { controls: SectionControls[K] }
 	: unknown);
-
-export type SectionControlsOf<K extends SectionKind> =
-	K extends ControlledSectionKind ? SectionControls[K] : undefined;

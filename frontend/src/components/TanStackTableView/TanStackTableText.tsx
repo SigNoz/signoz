@@ -20,7 +20,7 @@ type WithDangerousHtml = BaseProps & {
 	dangerouslySetInnerHTML: { __html: string };
 };
 
-export type TanStackTableTextProps = WithChildren | WithDangerousHtml;
+type TanStackTableTextProps = WithChildren | WithDangerousHtml;
 
 const TanStackTableText = forwardRef<HTMLSpanElement, TanStackTableTextProps>(
 	({ children, className, dangerouslySetInnerHTML, ...rest }, ref) => (

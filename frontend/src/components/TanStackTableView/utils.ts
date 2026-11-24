@@ -4,9 +4,6 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { RowKeyData, TableColumnDef } from './types';
 import type { ComboboxItemType } from '@signozhq/ui/combobox';
 
-export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
-	column.id;
-
 const DEFAULT_MIN_WIDTH = 192; // 12rem * 16px
 
 /**

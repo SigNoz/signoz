@@ -1,6 +1,6 @@
 export type SecretFieldType = 'url' | 'text';
 
-export function isValidUrl(value: string): boolean {
+function isValidUrl(value: string): boolean {
 	try {
 		return Boolean(new URL(value));
 	} catch {

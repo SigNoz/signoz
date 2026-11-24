@@ -37,24 +37,6 @@
 			flex-direction: row;
 			align-items: center;
 			gap: 16px;
-
-			&__icon {
-				height: fit-content;
-				background-color: var(--l1-background);
-				padding: 12px;
-				border: 1px solid var(--l2-background);
-				border-radius: 6px;
-				width: 60px;
-				height: 60px;
-			}
-
-			&__title {
-				color: var(--l1-foreground);
-			}
-		}
-
-		&__description {
-			color: var(--l2-foreground);
 		}
 
 		&-title {

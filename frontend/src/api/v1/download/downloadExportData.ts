@@ -73,5 +73,3 @@ export const downloadExportData = async (
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
-
-export default downloadExportData;

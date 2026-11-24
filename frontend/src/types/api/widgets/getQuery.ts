@@ -1,10 +1,5 @@
 import { ILog } from '../logs/log';
 
-export interface PayloadProps {
-	status: 'success' | 'error';
-	result: QueryData[];
-}
-
 export type ListItem = {
 	timestamp: string;
 	data: Omit<ILog, 'timestamp' | 'span_id'>;
@@ -84,11 +79,4 @@ export interface QueryDataV3 {
 		}[];
 		columns: Column[];
 	};
-}
-
-export interface Props {
-	query: string;
-	step: string;
-	start: string;
-	end: string;
 }

@@ -33,15 +33,3 @@
 .nestedRow {
 	padding-left: var(--spacing-6);
 }
-
-.rowLabel {
-	min-width: 0;
-	overflow-wrap: anywhere;
-}
-
-.rowValue {
-	min-width: 0;
-	overflow-wrap: anywhere;
-	text-align: right;
-	font-variant-numeric: tabular-nums;
-}

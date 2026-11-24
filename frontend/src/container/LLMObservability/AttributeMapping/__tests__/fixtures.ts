@@ -16,7 +16,7 @@ export function mappersEndpoint(groupId: string): string {
 }
 export const TEST_ENDPOINT = '*/api/v1/span_mapper_groups/test';
 
-export function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
+function makeGroup(overrides: Partial<MapperGroup> = {}): MapperGroup {
 	return {
 		id: 'group-1',
 		orgId: 'org-1',

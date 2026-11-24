@@ -1,4 +1,3 @@
-import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 
@@ -15,20 +14,6 @@ function rgbaFromHexColor(hexColor: string, alphaByteHex: string): string {
 function rgbaFromHexColorOpaque(hexColor: string): string {
 	return rgbaFromHexColor(hexColor, 'ff');
 }
-
-export const getDefaultLogBackground = (
-	isReadOnly?: boolean,
-	isDarkMode?: boolean,
-): string => {
-	if (isReadOnly) {
-		return '';
-	}
-	return `&:hover {
-    background-color: ${
-					isDarkMode ? 'rgba(171, 189, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)'
-				};
-    }`;
-};
 
 export const getActiveLogBackground = (
 	isActiveLog = true,
@@ -104,15 +89,6 @@ export const getActiveLogBackground = (
 				Color.BG_VANILLA_300,
 			)} !important;`;
 	}
-};
-
-export const getHightLightedLogBackground = (
-	isHighlightedLog = true,
-): string => {
-	if (!isHighlightedLog) {
-		return '';
-	}
-	return `background-color: ${orange[3]};`;
 };
 
 export const getCustomHighlightBackground = (isHighlighted = false): string => {

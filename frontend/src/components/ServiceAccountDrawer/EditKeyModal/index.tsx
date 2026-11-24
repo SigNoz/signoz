@@ -30,7 +30,7 @@ import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
 
 import './EditKeyModal.styles.scss';
 
-export interface EditKeyModalProps {
+interface EditKeyModalProps {
 	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null;
 }
 

@@ -9,7 +9,7 @@ interface Channels {
 
 const HEX_PATTERN = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
-export function isHexColor(color: string): boolean {
+function isHexColor(color: string): boolean {
 	return HEX_PATTERN.test(color);
 }
 
@@ -57,7 +57,7 @@ export function rgbaFromHex(color: string, alpha: number): string | undefined {
 }
 
 /** WCAG 2.1 relative luminance; alpha is ignored. */
-export function relativeLuminance(color: string): number {
+function relativeLuminance(color: string): number {
 	const channels = parseHex(color);
 	if (!channels) {
 		return 0;

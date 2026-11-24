@@ -178,22 +178,6 @@
 	}
 }
 
-.sidebarResizeHandle {
-	width: 4px;
-	flex-shrink: 0;
-	cursor: col-resize;
-	user-select: none;
-	touch-action: none;
-	background: transparent;
-	transition: background 0.15s ease;
-	z-index: 1;
-
-	&:hover,
-	&:active {
-		background: rgba(35, 196, 248, 0.2);
-	}
-}
-
 .statusCol {
 	width: 50px;
 	flex-shrink: 0;

@@ -7,7 +7,7 @@ import SignozModal from '@/components/SignozModal/SignozModal';
 
 import styles from './LayeringFixture.module.scss';
 
-export type LayeringHost = 'modal' | 'drawer' | 'scrollable-panel';
+type LayeringHost = 'modal' | 'drawer' | 'scrollable-panel';
 
 interface LayeringFixtureProps {
 	host: LayeringHost;

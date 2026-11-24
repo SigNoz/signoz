@@ -12,7 +12,7 @@ import { useAppContext } from 'providers/App/App';
 
 import './LaunchChatSupport.styles.scss';
 
-export interface LaunchChatSupportProps {
+interface LaunchChatSupportProps {
 	eventName: string;
 	attributes: Record<string, unknown>;
 	message?: string;

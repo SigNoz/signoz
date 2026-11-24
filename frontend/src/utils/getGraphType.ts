@@ -10,6 +10,3 @@ export const getGraphType = (panelType: PANEL_TYPES): PANEL_TYPES => {
 	}
 	return panelType;
 };
-
-export const getGraphTypeForFormat = (panelType: PANEL_TYPES): PANEL_TYPES =>
-	panelType;

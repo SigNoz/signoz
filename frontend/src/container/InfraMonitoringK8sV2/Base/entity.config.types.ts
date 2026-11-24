@@ -9,8 +9,7 @@ export type K8sEntityListConfig<
 	TItemKey extends string | SelectedItemParams = string,
 > = Omit<K8sBaseListProps<T, TItemKey>, 'controlListPrefix' | 'leftFilters'>;
 
-export type K8sEntityDetailsConfig<T extends K8sEntityData> =
-	K8sBaseDetailsProps<T>;
+type K8sEntityDetailsConfig<T extends K8sEntityData> = K8sBaseDetailsProps<T>;
 
 export interface K8sEntityConfig<
 	T extends K8sEntityData,

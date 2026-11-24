@@ -7,7 +7,7 @@ import {
 	GetIntegrationStatusProps,
 } from 'types/api/integrations/types';
 
-export function isOneClickIntegration(integrationId: string): boolean {
+function isOneClickIntegration(integrationId: string): boolean {
 	return (
 		integrationId === INTEGRATION_TYPES.AWS ||
 		integrationId === INTEGRATION_TYPES.AZURE ||

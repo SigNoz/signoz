@@ -6,7 +6,7 @@ export type EditingState =
 	| { type: 'edit'; index: number }
 	| null;
 
-export interface PanelOption {
+interface PanelOption {
 	label: string;
 	value: string;
 }

@@ -27,7 +27,7 @@ function EditAction({
 	);
 }
 
-export interface EditActionProps {
+interface EditActionProps {
 	isPipelineAction: boolean;
 	editAction: VoidFunction;
 }

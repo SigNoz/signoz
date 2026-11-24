@@ -23,7 +23,7 @@ function shouldSendMappers(
 	return !isEqual(snap.mappers, group.mappers);
 }
 
-export function buildTestGroups(
+function buildTestGroups(
 	snapshot: DraftGroup[],
 	draft: DraftGroup[],
 ): SpantypesPostableSpanMapperTestGroupDTO[] {

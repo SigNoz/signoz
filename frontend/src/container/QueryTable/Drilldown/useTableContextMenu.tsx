@@ -26,7 +26,7 @@ interface UseTableContextMenuProps {
 	queryRangeRequest?: QueryRangeRequestV5;
 }
 
-export function useTableContextMenu({
+function useTableContextMenu({
 	widgetId = '',
 	query,
 	clickedData,

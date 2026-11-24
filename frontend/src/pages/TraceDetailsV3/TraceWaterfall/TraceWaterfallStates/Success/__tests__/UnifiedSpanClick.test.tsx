@@ -66,14 +66,6 @@ jest.mock(
 	},
 );
 
-jest.mock('pages/TraceDetailsV3/TraceWaterfall/SpanLineActionButtons', () => {
-	function SpanLineActionButtons(): null {
-		return null;
-	}
-	SpanLineActionButtons.displayName = 'SpanLineActionButtons';
-	return SpanLineActionButtons;
-});
-
 jest.mock('components/HttpStatusBadge/HttpStatusBadge', () => {
 	function HttpStatusBadge(): null {
 		return null;

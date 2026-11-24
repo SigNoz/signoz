@@ -2,10 +2,7 @@ import { TableProps } from 'antd';
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { LogsExplorerTableProps } from 'container/LogsExplorerTable/LogsExplorerTable.interfaces';
-import {
-	ThresholdOperators,
-	ThresholdProps,
-} from 'types/api/widgets/threshold';
+import { ThresholdProps } from 'types/api/widgets/threshold';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { ColumnUnit } from 'types/api/widgets/columnUnit';
@@ -36,12 +33,3 @@ export type GridTableComponentProps = {
 	hiddenColumns?: string[];
 } & Pick<LogsExplorerTableProps, 'data'> &
 	Omit<TableProps<RowData>, 'columns' | 'dataSource'>;
-
-export type RequiredThresholdProps = Omit<
-	ThresholdProps,
-	'thresholdTableOptions' | 'thresholdOperator' | 'thresholdValue'
-> & {
-	thresholdTableOptions: string;
-	thresholdOperator: ThresholdOperators;
-	thresholdValue: number;
-};

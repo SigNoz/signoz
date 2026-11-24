@@ -113,10 +113,7 @@ export function isV3PinnedAttribute(entry: string): boolean {
  * `"unknown"` so all unattributed spans share a single colour rather than
  * appearing as missing data.
  */
-export function getSpanGroupValue(
-	span: SpanV3,
-	colorByFieldName: string,
-): string {
+function getSpanGroupValue(span: SpanV3, colorByFieldName: string): string {
 	return String(getSpanAttribute(span, colorByFieldName) ?? 'unknown');
 }
 
