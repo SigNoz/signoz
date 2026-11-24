@@ -13554,11 +13554,6 @@ components:
           items:
             $ref: '#/components/schemas/SpantypesTraceServiceStats'
           type: array
-        summary:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesGettableTraceSummary'
-          description: Totals of the trace. The same object the trace summary route
-            returns.
         timeSpent:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -13570,7 +13565,6 @@ components:
           description: Spans that failed without being marked as errors. First page
             of the unmarked_failures view of the span list.
       required:
-      - summary
       - services
       type: object
     SpantypesTraceServiceStats:
@@ -19680,11 +19674,11 @@ paths:
   /api/v1/traces/{traceID}/highlights:
     get:
       deprecated: false
-      description: 'Returns the trace summary plus the spans to look at, for a trace
-        of any size: per-service totals and the first spans of each view of the span
-        list. The summary is the one the trace summary route returns. views names
-        the lists to return; without it all of them are returned. Read more of a list
-        from the span list with the view of the same name.'
+      description: 'Returns the spans to look at, for a trace of any size: per-service
+        totals and the first spans of each view of the span list. views names the
+        lists to return; without it all of them are returned. Read more of a list
+        from the span list with the view of the same name. The totals of the trace
+        come from the trace summary.'
       operationId: GetTraceHighlights
       parameters:
       - description: 'The lists to return, each named by its view. Default: all of

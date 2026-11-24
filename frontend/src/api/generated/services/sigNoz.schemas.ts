@@ -14895,10 +14895,6 @@ export interface SpantypesTraceHighlightsDTO {
 	 */
 	services: SpantypesTraceServiceStatsDTO[];
 	/**
-	 * @description Totals of the trace. The same object the trace summary route returns.
-	 */
-	summary: SpantypesGettableTraceSummaryDTO;
-	/**
 	 * @description Where the time went, same-name siblings counted as one. First page of the time_spent view of the span list.
 	 */
 	timeSpent?: SpantypesSpanListDTO;
