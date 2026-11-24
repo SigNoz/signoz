@@ -3,7 +3,6 @@ import { useMutation } from 'react-query';
 import { Check, ChevronsDown, ScrollText, X } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dialog } from '@signozhq/ui/dialog';
-import { Typography } from '@signozhq/ui/typography';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import dayjs from 'dayjs';
@@ -105,24 +104,18 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 			</div>
 			{hasScroll && (
 				<div className={styles.scrollHint}>
-					<button
-						data-testid="scroll-more-btn"
-						type="button"
-						className={styles.scrollButton}
-						onClick={scrollForMore}
-					>
-						<ChevronsDown size={14} className={styles.scrollIcon} />
-						<Typography
-							variant="paragraph"
-							size="small"
-							weight="regular"
+					<div className={styles.scrollButton}>
+						<Button
+							variant="outlined"
 							color="secondary"
-							as="span"
-							textOverflow="wrap"
+							size="sm"
+							prefix={<ChevronsDown size={14} className={styles.scrollIcon} />}
+							onClick={scrollForMore}
+							testId="scroll-more-btn"
 						>
 							Scroll for more
-						</Typography>
-					</button>
+						</Button>
+					</div>
 				</div>
 			)}
 		</Dialog>
