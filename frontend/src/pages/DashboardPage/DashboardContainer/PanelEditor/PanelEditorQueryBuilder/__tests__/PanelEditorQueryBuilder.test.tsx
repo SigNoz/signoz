@@ -167,11 +167,9 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(AI_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		expect(
-			screen
-				.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))
-				.closest('[role="tab"]'),
-		).toHaveAttribute('aria-selected', 'true');
+		expect(screen.getByRole('tab', { selected: true })).toContainElement(
+			screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)),
+		);
 		expect(lastQueryBuilderProps()).toMatchObject({
 			config: { initialDataSource: 'traces', queryVariant: 'static' },
 			showTraceOperator: false,

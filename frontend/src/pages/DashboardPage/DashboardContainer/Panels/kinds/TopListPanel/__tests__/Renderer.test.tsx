@@ -58,13 +58,8 @@ type OnClick = NonNullable<
 
 const rowLabels = (): string[] =>
 	screen
-		.getAllByTestId('top-list-row')
-		.map(
-			(row) =>
-				row.getAttribute('aria-label') ??
-				row.closest('li')?.getAttribute('aria-label') ??
-				'',
-		);
+		.getAllByTestId('top-list-item')
+		.map((item) => item.getAttribute('aria-label') ?? '');
 
 mockListLayout();
 

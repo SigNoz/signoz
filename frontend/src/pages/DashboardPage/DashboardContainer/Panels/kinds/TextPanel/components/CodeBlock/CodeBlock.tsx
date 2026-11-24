@@ -53,7 +53,7 @@ function CodeBlock({ inline, className, children }: CodeProps): JSX.Element {
 		);
 
 	return (
-		<div className={styles.codeBlock}>
+		<div data-testid="text-panel-code-block" className={styles.codeBlock}>
 			{block}
 			{/* data-md-ui: exempts the design-system button from the body's style reset. */}
 			<span data-md-ui className={styles.copyButton}>

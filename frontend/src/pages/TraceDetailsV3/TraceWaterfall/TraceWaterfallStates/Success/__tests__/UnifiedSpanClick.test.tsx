@@ -218,12 +218,10 @@ function TestComponent(): JSX.Element {
 }
 
 describe('Span Click User Flows', () => {
-	const FIRST_SPAN_TEST_ID = 'cell-0-span-1';
-	const FIRST_SPAN_DURATION_TEST_ID = 'cell-1-span-1';
-	const SECOND_SPAN_TEST_ID = 'cell-0-span-2';
-	const SECOND_SPAN_DURATION_TEST_ID = 'cell-1-span-2';
-	const SPAN_OVERVIEW_CLASS = `.${successStyles.spanOverview}`;
-	const SPAN_DURATION_CLASS = `.${successStyles.spanDuration}`;
+	const FIRST_SPAN_TEST_ID = 'span-overview-span-1';
+	const FIRST_SPAN_DURATION_TEST_ID = 'span-duration-span-1';
+	const SECOND_SPAN_TEST_ID = 'span-overview-span-2';
+	const SECOND_SPAN_DURATION_TEST_ID = 'span-duration-span-2';
 	const INTERESTED_SPAN_CLASS = successStyles.isInterested;
 
 	beforeEach(() => {
@@ -263,10 +261,7 @@ describe('Span Click User Flows', () => {
 		expect(mockUrlQuery.get('spanId')).toBeNull();
 
 		// Click on the actual span element (not the wrapper)
-		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		const spanElement = spanOverview.querySelector(
-			SPAN_OVERVIEW_CLASS,
-		) as HTMLElement;
+		const spanElement = screen.getByTestId(FIRST_SPAN_TEST_ID);
 		await user.click(spanElement);
 
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
@@ -285,28 +280,18 @@ describe('Span Click User Flows', () => {
 		});
 
 		await waitFor(() => {
-			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
-			const spanDurationElement = spanDuration.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
+			const spanDurationElement = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
 			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
-		const span2DurationElement = span2Duration.querySelector(
-			SPAN_DURATION_CLASS,
-		) as HTMLElement;
+		const span2DurationElement = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
 		await user.click(span2DurationElement);
 
 		await waitFor(() => {
-			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
-			const spanDurationElement = spanDuration.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
-			const span2Duration = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
-			const span2DurationElement = span2Duration.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
+			const spanDurationElement = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
+			const span2DurationElement = screen.getByTestId(
+				SECOND_SPAN_DURATION_TEST_ID,
+			);
 
 			expect(spanDurationElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(span2DurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
@@ -321,46 +306,27 @@ describe('Span Click User Flows', () => {
 		});
 
 		await waitFor(() => {
-			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
-			const spanOverviewElement = spanOverview.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
-			const spanDurationElement = spanDuration.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
+			const spanOverviewElement = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const spanDurationElement = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
 
 			expect(spanOverviewElement).toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(spanDurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
-		const span2Element = span2Overview.querySelector(
-			SPAN_OVERVIEW_CLASS,
-		) as HTMLElement;
+		const span2Element = screen.getByTestId(SECOND_SPAN_TEST_ID);
 		await user.click(span2Element);
 
 		await waitFor(() => {
-			const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-			const spanDuration = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
-			const spanOverviewElement = spanOverview.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
-			const spanDurationElement = spanDuration.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
+			const spanOverviewElement = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const spanDurationElement = screen.getByTestId(FIRST_SPAN_DURATION_TEST_ID);
 
 			expect(spanOverviewElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(spanDurationElement).not.toHaveClass(INTERESTED_SPAN_CLASS);
 
-			const span2OverviewSub = screen.getByTestId(SECOND_SPAN_TEST_ID);
-			const span2DurationSub = screen.getByTestId(SECOND_SPAN_DURATION_TEST_ID);
-			const span2OverviewElement = span2OverviewSub.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
-			const span2DurationElement = span2DurationSub.querySelector(
-				SPAN_DURATION_CLASS,
-			) as HTMLElement;
+			const span2OverviewElement = screen.getByTestId(SECOND_SPAN_TEST_ID);
+			const span2DurationElement = screen.getByTestId(
+				SECOND_SPAN_DURATION_TEST_ID,
+			);
 
 			expect(span2OverviewElement).toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(span2DurationElement).toHaveClass(INTERESTED_SPAN_CLASS);
@@ -375,28 +341,16 @@ describe('Span Click User Flows', () => {
 		});
 
 		await waitFor(() => {
-			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-			const span1Element = span1Overview.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
+			const span1Element = screen.getByTestId(FIRST_SPAN_TEST_ID);
 			expect(span1Element).toHaveClass(INTERESTED_SPAN_CLASS);
 		});
 
-		const span2Overview = screen.getByTestId(SECOND_SPAN_TEST_ID);
-		const span2Element = span2Overview.querySelector(
-			SPAN_OVERVIEW_CLASS,
-		) as HTMLElement;
+		const span2Element = screen.getByTestId(SECOND_SPAN_TEST_ID);
 		await user.click(span2Element);
 
 		await waitFor(() => {
-			const span1Overview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-			const span1Element = span1Overview.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
-			const span2OverviewSub = screen.getByTestId(SECOND_SPAN_TEST_ID);
-			const span2ElementSub = span2OverviewSub.querySelector(
-				SPAN_OVERVIEW_CLASS,
-			) as HTMLElement;
+			const span1Element = screen.getByTestId(FIRST_SPAN_TEST_ID);
+			const span2ElementSub = screen.getByTestId(SECOND_SPAN_TEST_ID);
 
 			expect(span1Element).not.toHaveClass(INTERESTED_SPAN_CLASS);
 			expect(span2ElementSub).toHaveClass(INTERESTED_SPAN_CLASS);
@@ -429,10 +383,7 @@ describe('Span Click User Flows', () => {
 			{ initialRoute: '/trace' },
 		);
 
-		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		const spanElement = spanOverview.querySelector(
-			SPAN_OVERVIEW_CLASS,
-		) as HTMLElement;
+		const spanElement = screen.getByTestId(FIRST_SPAN_TEST_ID);
 		await user.click(spanElement);
 
 		// Verify existing parameters are preserved and spanId is added
@@ -471,10 +422,7 @@ describe('Span Click User Flows', () => {
 			{ initialRoute: '/trace' },
 		);
 
-		const spanOverview = screen.getByTestId(FIRST_SPAN_TEST_ID);
-		const spanElement = spanOverview.querySelector(
-			SPAN_OVERVIEW_CLASS,
-		) as HTMLElement;
+		const spanElement = screen.getByTestId(FIRST_SPAN_TEST_ID);
 		await user.click(spanElement);
 
 		expect(mockSafeNavigate).toHaveBeenCalledWith(

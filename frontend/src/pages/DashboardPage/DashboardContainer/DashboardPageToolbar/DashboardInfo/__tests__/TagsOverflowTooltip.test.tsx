@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import TagsOverflowTooltip from '../TagsOverflowTooltip';
 
@@ -8,11 +8,11 @@ describe('TagsOverflowTooltip', () => {
 			<TagsOverflowTooltip tags={['production', 'team-checkout', 'tier-1']} />,
 		);
 
-		const chips = screen
-			.getByTestId('dashboard-tags-tooltip')
-			.querySelectorAll('[data-slot="badge"]');
+		const chips = within(
+			screen.getByTestId('dashboard-tags-tooltip'),
+		).getAllByTestId('dashboard-tags-tooltip-tag');
 
-		expect(Array.from(chips).map((chip) => chip.textContent)).toStrictEqual([
+		expect(chips.map((chip) => chip.textContent)).toStrictEqual([
 			'production',
 			'team-checkout',
 			'tier-1',

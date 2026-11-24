@@ -214,7 +214,7 @@ describe('TopList', () => {
 		await hover(renderedRows()[0]);
 		await screen.findByTestId('top-list-tooltip');
 
-		await user.unhover(screen.getByTestId('top-list').parentElement as Element);
+		await user.unhover(screen.getByTestId('top-list-scroller'));
 
 		expect(screen.queryByTestId('top-list-tooltip')).not.toBeInTheDocument();
 	});
@@ -278,7 +278,7 @@ describe('TopList', () => {
 
 	it('scrolls a row moved to below the view fully into it', async () => {
 		renderList(100, { clickable: true });
-		const container = screen.getByTestId('top-list').parentElement as HTMLElement;
+		const container = screen.getByTestId('top-list-scroller');
 		const rowHeight = parseInt(
 			screen.getByTestId('top-list').style.getPropertyValue('--row-height'),
 			10,
@@ -289,11 +289,11 @@ describe('TopList', () => {
 		const firstHidden = Array.from({ length: 100 }, (_, index) => index).find(
 			(index) => rowBottom(index) > container.clientHeight,
 		) as number;
-		(
-			container.querySelector(
-				`[data-row-index="${firstHidden - 1}"]`,
-			) as HTMLElement
-		).focus();
+		renderedRows()
+			.find(
+				(row) => row.getAttribute('data-row-index') === String(firstHidden - 1),
+			)
+			?.focus();
 
 		await pressKey('ArrowDown');
 
@@ -330,9 +330,9 @@ describe('TopList', () => {
 	it('positions each row in the whole list', () => {
 		renderList(100);
 
-		const [first] = renderedRows();
-		expect(first.closest('li')).toHaveAttribute('aria-posinset', '1');
-		expect(first.closest('li')).toHaveAttribute('aria-setsize', '100');
+		const [first] = screen.getAllByTestId('top-list-item');
+		expect(first).toHaveAttribute('aria-posinset', '1');
+		expect(first).toHaveAttribute('aria-setsize', '100');
 	});
 
 	it('renders rows that are not clickable as plain list items', () => {
@@ -343,7 +343,7 @@ describe('TopList', () => {
 			'DIV',
 			'DIV',
 		]);
-		expect(renderedRows()[0].closest('li')).toHaveAttribute(
+		expect(screen.getAllByTestId('top-list-item')[0]).toHaveAttribute(
 			'aria-label',
 			'service-0: 3',
 		);

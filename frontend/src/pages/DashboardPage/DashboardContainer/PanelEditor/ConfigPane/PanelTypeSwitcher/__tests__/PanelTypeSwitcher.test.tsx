@@ -56,9 +56,8 @@ async function renderSwitcher(
 }
 
 function disabledKinds(): (string | undefined)[] {
-	return Array.from(
-		document.querySelectorAll('[data-testid^="panel-type-signoz/"]'),
-	)
+	return screen
+		.queryAllByTestId(/^panel-type-signoz\//)
 		.filter((el) => el.getAttribute('aria-disabled') === 'true')
 		.map((el) => el.getAttribute('data-testid')?.replace('panel-type-', ''));
 }

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { ColumnType } from 'antd/es/table';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -84,12 +84,11 @@ describe('buildListColumns', () => {
 				signal: TelemetrytypesSignalDTO.logs,
 				formatTimestamp: fmt,
 			}) as Col[];
-			const cell = renderCell(colByKey(cols, key), 'checkout complete');
-			expect(
-				cell
-					.querySelector('[data-slot="typography"]')
-					?.getAttribute('data-text-overflow'),
-			).toBe('visible');
+			renderCell(colByKey(cols, key), 'checkout complete');
+			expect(screen.getByText('checkout complete')).toHaveAttribute(
+				'data-text-overflow',
+				'visible',
+			);
 		},
 	);
 

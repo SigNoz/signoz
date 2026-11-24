@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
 	DashboardtypesStackModeDTO,
@@ -30,7 +30,7 @@ jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 async function pickOption(triggerTestId: string, label: string): Promise<void> {
 	const user = userEvent.setup();
 	const trigger = screen.getByTestId(triggerTestId);
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
+	await user.click(within(trigger).getByRole('combobox'));
 	await user.click(await screen.findByRole('option', { name: label }));
 }
 

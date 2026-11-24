@@ -101,7 +101,7 @@ describe('ComparisonThresholdsSection', () => {
 			/>,
 		);
 
-		const row = screen.getByTestId('comparison-threshold-edit-0').closest('div');
+		const row = screen.getByTestId('comparison-threshold-view-0');
 		// Unit-aware: shows the currency symbol, never the raw unit id.
 		expect(row).toHaveTextContent('$');
 		expect(row).not.toHaveTextContent('currencyUSD');

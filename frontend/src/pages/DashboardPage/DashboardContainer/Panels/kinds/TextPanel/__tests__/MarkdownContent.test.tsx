@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'tests/test-utils';
 
 import MarkdownContent from '../components/MarkdownContent/MarkdownContent';
 import { loadLanguage } from '../../../utils/syntaxLanguages';
@@ -7,37 +7,33 @@ import { loadLanguage } from '../../../utils/syntaxLanguages';
 describe('MarkdownContent', () => {
 	describe('security', () => {
 		it('renders a script tag as literal text, never as an element', () => {
-			const { container } = render(
-				<MarkdownContent>{'<script>alert(1)</script>'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'<script>alert(1)</script>'}</MarkdownContent>);
 
-			expect(container.querySelector('script')).toBeNull();
-			expect(screen.getByTestId('markdown-content')).toHaveTextContent(
-				'<script>alert(1)</script>',
-			);
+			const content = screen.getByTestId('markdown-content');
+			expect(content.innerHTML).not.toContain('<script');
+			expect(content).toHaveTextContent('<script>alert(1)</script>');
 		});
 
 		it('renders raw HTML as text rather than markup', () => {
-			const { container } = render(
+			render(
 				<MarkdownContent>
 					{'<b>bold</b> and <img src="x" onerror="alert(1)">'}
 				</MarkdownContent>,
 			);
 
-			expect(container.querySelector('b')).toBeNull();
-			expect(container.querySelector('img')).toBeNull();
-			expect(screen.getByTestId('markdown-content')).toHaveTextContent(
-				'<b>bold</b>',
-			);
+			const content = screen.getByTestId('markdown-content');
+			expect(content.innerHTML).not.toContain('<b>');
+			expect(content.innerHTML).not.toContain('<img');
+			expect(content).toHaveTextContent('<b>bold</b>');
 		});
 
 		it('drops the anchor for a javascript: href, keeping the label as text', () => {
-			const { container } = render(
-				<MarkdownContent>{'[x](javascript:alert(1))'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'[x](javascript:alert(1))'}</MarkdownContent>);
 
 			expect(screen.queryByRole('link')).not.toBeInTheDocument();
-			expect(container.innerHTML).not.toContain('javascript');
+			expect(screen.getByTestId('markdown-content').innerHTML).not.toContain(
+				'javascript',
+			);
 			expect(screen.getByTestId('markdown-content')).toHaveTextContent('x');
 		});
 
@@ -68,7 +64,7 @@ describe('MarkdownContent', () => {
 		});
 
 		it('renders GFM tables, task lists and strikethrough', () => {
-			const { container } = render(
+			render(
 				<MarkdownContent>
 					{'| a | b |\n| --- | --- |\n| 1 | 2 |\n\n- [x] done\n\n~~gone~~'}
 				</MarkdownContent>,
@@ -76,18 +72,19 @@ describe('MarkdownContent', () => {
 
 			expect(screen.getByRole('table')).toBeInTheDocument();
 			expect(screen.getByRole('checkbox')).toBeChecked();
-			expect(container.querySelector('del')).toHaveTextContent('gone');
+			expect(screen.getByText('gone').tagName).toBe('DEL');
 		});
 
 		it('renders fenced code as a preformatted block', () => {
-			const { container } = render(
-				<MarkdownContent>{'```sh\nkubectl get pods\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```sh\nkubectl get pods\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('pre code')).toHaveTextContent(
-				'kubectl get pods',
-			);
-			expect(container.querySelectorAll('pre')).toHaveLength(1);
+			expect(
+				within(screen.getByTestId('text-panel-code-block')).getByRole('code'),
+			).toHaveTextContent('kubectl get pods');
+			expect(
+				// oxlint-disable-next-line signoz/no-dom-node-access -- counts pre elements: react-markdown nests its own pre around CodeBlock's unless MarkdownContent drops it
+				screen.getByTestId('markdown-content').querySelectorAll('pre'),
+			).toHaveLength(1);
 		});
 
 		it('renders malformed markdown as literal text instead of throwing', () => {
@@ -101,78 +98,61 @@ describe('MarkdownContent', () => {
 
 	describe('syntax highlighting', () => {
 		it('tokenises a fenced block once its language has loaded', async () => {
-			const { container } = render(
+			render(
 				<MarkdownContent>{'```js\nconst x = 1; // note\n```'}</MarkdownContent>,
 			);
 
 			await waitFor(() => {
-				expect(container.querySelector('.token.keyword')).toHaveTextContent(
-					'const',
-				);
+				expect(screen.getByText('const')).toHaveClass('token', 'keyword');
 			});
-			expect(container.querySelector('.token.number')).toHaveTextContent('1');
-			expect(container.querySelector('.token.comment')).toHaveTextContent(
-				'// note',
-			);
+			expect(screen.getByText('1')).toHaveClass('token', 'number');
+			expect(screen.getByText('// note')).toHaveClass('token', 'comment');
 		});
 
 		it('shows the source verbatim while the language is still loading', () => {
-			const { container } = render(
-				<MarkdownContent>{'```rust\nfn main() {}\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```rust\nfn main() {}\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('pre code')).toHaveTextContent(
-				'fn main() {}',
-			);
-			expect(container.querySelector('.token')).toBeNull();
+			expect(
+				screen.getByText('fn main() {}', { selector: 'code' }),
+			).toBeInTheDocument();
 		});
 
 		it('highlights a language already loaded on the first render', async () => {
 			await loadLanguage('sql');
-			const { container } = render(
-				<MarkdownContent>{'```sql\nSELECT 1\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```sql\nSELECT 1\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('.token.keyword')).toHaveTextContent(
-				'SELECT',
-			);
+			expect(screen.getByText('SELECT')).toHaveClass('token', 'keyword');
 		});
 
 		it('tags the code element with the language', () => {
-			const { container } = render(
-				<MarkdownContent>{'```python\nx = 1\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```python\nx = 1\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('code')).toHaveClass('language-python');
+			expect(screen.getByRole('code')).toHaveClass('language-python');
 		});
 
 		it('renders an unknown language verbatim', () => {
-			const { container } = render(
-				<MarkdownContent>{'```promql\nrate(foo[5m])\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```promql\nrate(foo[5m])\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('pre code')).toHaveTextContent(
-				'rate(foo[5m])',
-			);
-			expect(container.querySelector('.token')).toBeNull();
+			expect(
+				screen.getByText('rate(foo[5m])', { selector: 'code' }),
+			).toBeInTheDocument();
 		});
 
 		it('renders a fence with no language verbatim', () => {
-			const { container } = render(
-				<MarkdownContent>{'```\nplain text\n```'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'```\nplain text\n```'}</MarkdownContent>);
 
-			expect(container.querySelector('pre code')).toHaveTextContent('plain text');
-			expect(container.querySelector('.token')).toBeNull();
+			expect(
+				screen.getByText('plain text', { selector: 'code' }),
+			).toBeInTheDocument();
 		});
 
 		it('leaves inline code untokenised', () => {
-			const { container } = render(
-				<MarkdownContent>{'use `const` here'}</MarkdownContent>,
-			);
+			render(<MarkdownContent>{'use `const` here'}</MarkdownContent>);
 
-			expect(container.querySelector('pre')).toBeNull();
-			expect(container.querySelector('.token')).toBeNull();
+			expect(
+				screen.queryByTestId('text-panel-code-block'),
+			).not.toBeInTheDocument();
+			expect(screen.getByText('const', { selector: 'code' })).toBeInTheDocument();
 		});
 	});
 

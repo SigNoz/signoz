@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { VariableSelection } from '../selectionTypes';
@@ -32,10 +32,12 @@ function renderSelector(
 	);
 }
 
+const control = (): ReturnType<typeof within> =>
+	within(screen.getByTestId('variable-select-env'));
+
 async function openDropdown(): Promise<void> {
 	const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-	const control = screen.getByTestId('variable-select-env');
-	await user.click(control.querySelector('input') as HTMLInputElement);
+	await user.click(control().getByRole('combobox'));
 }
 
 /** Hovers an element and lets the tooltip's open delay elapse. */
@@ -97,9 +99,8 @@ describe('ValueSelector', () => {
 			// which carries no values at all) — the control must not read as unselected.
 			renderSelector({ value: null, allSelected: true }, [], true);
 
-			expect(
-				document.querySelector('.ant-select-selection-placeholder'),
-			).toHaveTextContent('ALL');
+			expect(control().getByText('ALL')).toBeInTheDocument();
+			expect(control().queryByText('Select value')).not.toBeInTheDocument();
 		});
 
 		it('still shows concrete values while options load', () => {
@@ -109,9 +110,7 @@ describe('ValueSelector', () => {
 				true,
 			);
 
-			expect(
-				document.querySelector('.ant-select-selection-placeholder'),
-			).toBeNull();
+			expect(control().queryByText('Select value')).not.toBeInTheDocument();
 		});
 	});
 
@@ -196,8 +195,8 @@ describe('ValueSelector', () => {
 	});
 
 	describe('clearing', () => {
-		function clearIcon(): Element | null {
-			return document.querySelector('.ant-select-clear');
+		function clearIcon(): HTMLElement | null {
+			return screen.queryByLabelText('close-circle');
 		}
 
 		it('offers no clear icon while the list is closed', () => {
@@ -243,9 +242,7 @@ describe('ValueSelector', () => {
 			await openDropdown();
 			await user.click(clearIcon() as Element);
 
-			expect(document.querySelectorAll('.ant-select-selection-item')).toHaveLength(
-				0,
-			);
+			expect(control().getByText('Select value')).toBeInTheDocument();
 			expect(onChange).not.toHaveBeenCalled();
 
 			// Closing fills in whatever the variable should hold.
@@ -281,8 +278,7 @@ describe('ValueSelector', () => {
 
 		async function openThenClose(): Promise<void> {
 			const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-			const control = screen.getByTestId('variable-select-env');
-			await user.click(control.querySelector('input') as HTMLInputElement);
+			await user.click(control().getByRole('combobox'));
 			await user.keyboard('{Escape}');
 		}
 

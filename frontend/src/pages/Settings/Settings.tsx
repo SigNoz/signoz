@@ -306,6 +306,7 @@ function SettingsPage(): JSX.Element {
 						return (
 							<div
 								key={section.key}
+								data-testid={`settings-nav-section-${section.key}`}
 								className={`settings-nav-section${
 									section.hasDivider ? ' settings-nav-section--with-divider' : ''
 								}`}

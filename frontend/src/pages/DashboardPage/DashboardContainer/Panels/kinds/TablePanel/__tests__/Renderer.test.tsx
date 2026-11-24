@@ -136,17 +136,15 @@ describe('TablePanelRenderer', () => {
 			`service-${index}`,
 			index,
 		]);
-		const { container, getByText } = renderPanel({ data: dataWith(rows) });
+		const { getAllByText, getByRole, getByText } = renderPanel({
+			data: dataWith(rows),
+		});
 
-		const countRows = (): number =>
-			container.querySelectorAll('.ant-table-tbody tr.ant-table-row').length;
+		const countRows = (): number => getAllByText(/^service-\d+$/).length;
 
 		expect(countRows()).toBe(MIN_PAGE_SIZE);
 
-		const sizeChanger = container.querySelector(
-			'.ant-pagination-options .ant-select-selector',
-		) as Element;
-		await userEvent.click(sizeChanger);
+		await userEvent.click(getByRole('combobox', { name: 'Page Size' }));
 		await userEvent.click(getByText('20 / page'));
 
 		expect(countRows()).toBe(20);
