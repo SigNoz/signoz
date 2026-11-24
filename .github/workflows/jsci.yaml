@@ -41,6 +41,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          fetch-depth: ${{ github.event_name == 'merge_group' && 1 || 0 }}
+          filter: blob:none
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -54,7 +56,19 @@ jobs:
       - name: install-frontend
         run: cd frontend && pnpm install
       - name: test
-        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+        run: |
+          cd frontend
+          # Changes to these reach every test without any test importing them.
+          RUN_ALL='^(\.github/workflows/jsci\.yaml|frontend/(jest\.(config\.ts|setup\.ts|environment\.cjs)|package\.json|pnpm-lock\.yaml|tsconfig[^/]*\.json|babel\.config\.cjs|__mocks__/|src/mocks-server/))'
+          if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null &&
+            ! git diff --name-only "$BASE_SHA...HEAD" | grep -qE "$RUN_ALL"; then
+            pnpm test --changedSince="$BASE_SHA" --passWithNoTests
+          else
+            pnpm test --shard="$SHARD"
+          fi
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
   test:
     name: test / js
