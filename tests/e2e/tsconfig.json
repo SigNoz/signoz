@@ -17,7 +17,8 @@
     "paths": {
       "@tests/*": ["./tests/*"],
       "@specs/*": ["./specs/*"],
-      // `drivers/noz/schemas.ts` reaches into `frontend/`, which CI never installs.
+      // The frontend's `sseEvent.ts`, imported by `drivers/noz/schemas.ts`, imports this package.
+      // e2e CI installs only `tests/e2e`, so resolve it here instead of `frontend/node_modules`.
       "@signozhq/noz-client": ["./node_modules/@signozhq/noz-client"]
     }
   },
