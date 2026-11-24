@@ -4,11 +4,9 @@ import {
 	buildRuleUpdatePermission,
 	RuleCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
+import { denyPermissions } from 'lib/authz/utils/authz-test-utils';
 import AlertRuleProvider from 'providers/Alert';
-import type { PostableAlertRuleV2 } from 'types/api/alerts/alertTypes';
+import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
 
 import AlertActionButtons from '../ActionButtons';
 
@@ -16,16 +14,12 @@ jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
 const RULE_ID = 'rule-1';
 
-const deny = (...permissions: BrandedPermission[]): void => {
-	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
-};
-
 const renderButtons = (): void => {
 	render(
 		<AlertRuleProvider>
 			<AlertActionButtons
 				ruleId={RULE_ID}
-				alertDetails={{ state: 'firing' } as PostableAlertRuleV2}
+				alertDetails={{ ...defaultPostableAlertRuleV2, state: 'firing' }}
 			/>
 		</AlertRuleProvider>,
 	);
@@ -43,7 +37,7 @@ const isLocked = (testId: string): boolean =>
 
 describe('AlertActionButtons - AuthZ', () => {
 	beforeEach(() => {
-		deny();
+		denyPermissions();
 	});
 
 	it('leaves every action open with every permission', async () => {
@@ -59,7 +53,7 @@ describe('AlertActionButtons - AuthZ', () => {
 	});
 
 	it('locks the enable toggle without update', () => {
-		deny(buildRuleUpdatePermission(RULE_ID));
+		denyPermissions(buildRuleUpdatePermission(RULE_ID));
 		renderButtons();
 
 		expect(screen.getByTestId('alert-actions-toggle')).toHaveAttribute(
@@ -69,7 +63,7 @@ describe('AlertActionButtons - AuthZ', () => {
 	});
 
 	it('locks clone without create, leaving delete open', async () => {
-		deny(RuleCreatePermission);
+		denyPermissions(RuleCreatePermission);
 		renderButtons();
 		await openMenu();
 
@@ -78,7 +72,7 @@ describe('AlertActionButtons - AuthZ', () => {
 	});
 
 	it('locks delete without delete on the rule', async () => {
-		deny(buildRuleDeletePermission(RULE_ID));
+		denyPermissions(buildRuleDeletePermission(RULE_ID));
 		renderButtons();
 		await openMenu();
 

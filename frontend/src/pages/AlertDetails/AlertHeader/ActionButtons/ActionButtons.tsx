@@ -38,27 +38,30 @@ function AlertActionButtons({
 	const checks = useMemo(() => getRuleActionChecks(ruleId), [ruleId]);
 	const toggleLock = useAuthZDisabled(checks.toggle);
 
-	const menuItems: AuthZDropdownItemType[] = [
-		{
-			type: 'item',
-			value: 'clone-rule',
-			label: 'Clone',
-			testId: 'alert-details-action-clone',
-			checks: checks.clone,
-			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleAlertClone,
-		},
-		{
-			type: 'item',
-			value: 'delete-rule',
-			label: 'Delete',
-			testId: 'alert-details-action-delete',
-			checks: checks.delete,
-			prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
-			onClick: handleAlertDelete,
-			danger: true,
-		},
-	];
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
+		() => [
+			{
+				type: 'item',
+				value: 'clone-rule',
+				label: 'Clone',
+				testId: 'alert-details-action-clone',
+				checks: checks.clone,
+				prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
+				onClick: handleAlertClone,
+			},
+			{
+				type: 'item',
+				value: 'delete-rule',
+				label: 'Delete',
+				testId: 'alert-details-action-delete',
+				checks: checks.delete,
+				prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
+				onClick: handleAlertDelete,
+				danger: true,
+			},
+		],
+		[checks, handleAlertClone, handleAlertDelete],
+	);
 
 	// state for immediate UI feedback rather than waiting for onSuccess of handleAlertStateTiggle to updating the alertRuleState
 	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<

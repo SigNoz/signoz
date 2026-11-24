@@ -191,7 +191,7 @@ export const useGetAlertRuleDetailsTopContributors =
 			isRefetching,
 			isError,
 			data,
-			error: error as AxiosError<RenderErrorResponseDTO> | null,
+			error,
 			isValidRuleId,
 			ruleId,
 		};
