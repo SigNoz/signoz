@@ -116,9 +116,7 @@ describe('RouteTab component', () => {
 		);
 
 		expect(screen.getByRole('tab', { name: 'Tab1' })).toBeInTheDocument();
-		expect(
-			screen.getByLabelText('loading').closest('.ant-spin')?.parentElement,
-		).toHaveStyle({ height: '100%' });
+		expect(screen.getByTestId('spinner')).toHaveStyleRule('height', '100%');
 
 		resolveTab({ default: DummyComponent1 });
 		await expect(

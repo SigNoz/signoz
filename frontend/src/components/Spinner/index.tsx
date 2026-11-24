@@ -6,7 +6,7 @@ import { SpinerStyle } from './styles';
 
 function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
 	return (
-		<SpinerStyle height={height} style={style}>
+		<SpinerStyle height={height} style={style} data-testid="spinner">
 			<Spin
 				spinning
 				size={size}
