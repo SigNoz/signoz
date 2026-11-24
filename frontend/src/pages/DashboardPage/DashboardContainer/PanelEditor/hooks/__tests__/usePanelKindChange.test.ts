@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	initialFormulaBuilderFormValues,
 	initialQueriesMap,
 	initialQueryAIWithType,
 	PANEL_TYPES,
@@ -77,6 +78,21 @@ const tracesBuilder = (expression: string): Query['builder'] => ({
 		},
 	],
 	queryFormulas: [],
+});
+
+const builderWithQueries = (
+	queries: { queryName: string; disabled: boolean }[],
+	formulas: { queryName: string; disabled: boolean }[] = [],
+): Query['builder'] => ({
+	...initialQueriesMap.metrics.builder,
+	queryData: queries.map((query) => ({
+		...initialQueriesMap.metrics.builder.queryData[0],
+		...query,
+	})),
+	queryFormulas: formulas.map((formula) => ({
+		...initialFormulaBuilderFormValues,
+		...formula,
+	})),
 });
 
 function makeSpec(
@@ -308,13 +324,15 @@ describe('usePanelKindChange', () => {
 			mockUseQueryBuilder.mockReturnValue(
 				builderState(fakeQuery('ts-current', 'builder')),
 			);
-			mockRebuildBuilder.mockReturnValue({
-				queryData: [
-					{ queryName: 'A', disabled: true },
-					{ queryName: 'B', disabled: true },
-				],
-				queryFormulas: [{ queryName: 'F1', disabled: false }],
-			} as unknown as Query['builder']);
+			mockRebuildBuilder.mockReturnValue(
+				builderWithQueries(
+					[
+						{ queryName: 'A', disabled: true },
+						{ queryName: 'B', disabled: true },
+					],
+					[{ queryName: 'F1', disabled: false }],
+				),
+			);
 
 			const { result } = renderHook(() =>
 				usePanelKindChange({
@@ -340,13 +358,12 @@ describe('usePanelKindChange', () => {
 		mockUseQueryBuilder.mockReturnValue(
 			builderState(fakeQuery('ts-current', 'builder')),
 		);
-		mockRebuildBuilder.mockReturnValue({
-			queryData: [
+		mockRebuildBuilder.mockReturnValue(
+			builderWithQueries([
 				{ queryName: 'A', disabled: true },
 				{ queryName: 'B', disabled: false },
-			],
-			queryFormulas: [],
-		} as unknown as Query['builder']);
+			]),
+		);
 
 		const { result } = renderHook(() =>
 			usePanelKindChange({
