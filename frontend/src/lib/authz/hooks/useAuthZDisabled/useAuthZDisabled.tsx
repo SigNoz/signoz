@@ -5,7 +5,7 @@ import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 
-export interface AuthZDisabled {
+export interface UseAuthZDisabledReturn {
 	disabled: boolean;
 	disabledTooltip: ReactNode;
 }
@@ -15,7 +15,9 @@ export interface AuthZDisabled {
  * `checks`: locked while the check runs and when it denies, open when the check
  * itself fails.
  */
-export function useAuthZDisabled(checks: BrandedPermission[]): AuthZDisabled {
+export function useAuthZDisabled(
+	checks: BrandedPermission[],
+): UseAuthZDisabledReturn {
 	const { user } = useAppContext();
 	const { permissions, isLoading, error } = useAuthZ(checks);
 
