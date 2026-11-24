@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -101,9 +101,9 @@ describe('ResourceAttributesFilter', () => {
 		);
 		await waitFor(() =>
 			expect(
-				screen
-					.getByTestId('resource-environment-filter')
-					.querySelector('.ant-select-selection-item'),
+				within(screen.getByTestId('resource-environment-filter')).getByTitle(
+					'production',
+				),
 			).toHaveTextContent('production'),
 		);
 	});
@@ -113,24 +113,23 @@ describe('ResourceAttributesFilter', () => {
 		renderFilter('/services');
 
 		const environmentFilter = screen.getByTestId('resource-environment-filter');
-		await user.click(
-			environmentFilter.querySelector('input') as HTMLInputElement,
-		);
+		const environmentInput = within(environmentFilter).getByRole('combobox');
+		await user.click(environmentInput);
 
 		await user.click(await screen.findByTitle('production'));
 
 		await waitFor(() =>
-			expect(
-				screen.getByTitle('staging').closest('.ant-select-dropdown'),
-			).not.toHaveClass('ant-select-dropdown-hidden'),
+			expect(environmentInput).toHaveAttribute('aria-expanded', 'true'),
 		);
 
 		await user.click(screen.getByTitle('staging'));
 
 		await waitFor(() => {
-			const selected = Array.from(
-				environmentFilter.querySelectorAll('.ant-select-selection-item-content'),
-			).map((node) => node.textContent);
+			const selected = within(environmentFilter)
+				.getAllByText(/^(production|staging)$/, {
+					selector: '.ant-select-selection-item-content',
+				})
+				.map((node) => node.textContent);
 			expect(selected).toStrictEqual(['production', 'staging']);
 		});
 	});

@@ -69,8 +69,7 @@ describe('DisplayName', () => {
 		const input = await screen.findByRole('textbox');
 		await user.clear(input);
 
-		const form = input.closest('form') as HTMLFormElement;
-		fireEvent.submit(form);
+		fireEvent.submit(screen.getByTestId('org-display-name-form'));
 
 		await waitFor(() => {
 			expect(screen.getByText(/missing display name/i)).toBeInTheDocument();

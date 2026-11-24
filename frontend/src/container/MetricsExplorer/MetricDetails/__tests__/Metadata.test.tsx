@@ -336,8 +336,7 @@ describe('Metadata', () => {
 		);
 
 		expect(screen.getByText('Metadata')).toBeInTheDocument();
-		const editButton = screen.getByText('Edit').closest('button');
-		expect(editButton).toBeDisabled();
+		expect(screen.getByTestId('metadata-edit-button')).toBeDisabled();
 	});
 
 	it('should not allow editing of unit if it is already set', async () => {

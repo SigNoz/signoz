@@ -289,13 +289,8 @@ describe('WidgetHeader', () => {
 		await userEvent.type(searchInput, 'test search');
 		expect(mockSetSearchTerm).toHaveBeenCalledWith('test search');
 
-		const closeButton = screen
-			.getByTestId(WIDGET_HEADER_SEARCH_INPUT)
-			.parentElement?.querySelector('.search-header-icons');
-		if (closeButton) {
-			await userEvent.click(closeButton);
-			expect(mockSetSearchTerm).toHaveBeenCalledWith('');
-		}
+		await userEvent.click(screen.getByTestId('widget-header-search-close'));
+		expect(mockSetSearchTerm).toHaveBeenCalledWith('');
 	});
 
 	it('shows error icon when query has error', () => {

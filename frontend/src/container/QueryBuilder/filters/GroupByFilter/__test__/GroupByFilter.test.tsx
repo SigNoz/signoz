@@ -3,7 +3,7 @@ import { fireEvent } from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import { IBuilderQuery } from '../../../../../types/api/queryBuilder/queryBuilderData';
 import { DataSource } from '../../../../../types/common/queryBuilder';
@@ -33,8 +33,8 @@ const fieldKeysBody = (
 	},
 });
 
-const groupByInput = (): HTMLInputElement =>
-	screen.getByTestId('group-by').querySelector('input') as HTMLInputElement;
+const groupByInput = (): HTMLElement =>
+	within(screen.getByTestId('group-by')).getByRole('combobox');
 
 function setup(queryOverrides?: Partial<IBuilderQuery>): {
 	onChange: jest.Mock;
@@ -52,13 +52,9 @@ function setup(queryOverrides?: Partial<IBuilderQuery>): {
 }
 
 // wait for dropdown and select the option instead of hitting Enter
-async function clickOption(label: string): Promise<void> {
+async function clickOption(option: Promise<HTMLElement>): Promise<void> {
 	const user = userEvent.setup({ pointerEventsCheck: 0 });
-	const option = await screen.findByText(
-		(content, el) =>
-			content.trim() === label && !!el?.closest('.ant-select-item-option'),
-	);
-	await user.click(option);
+	await user.click(await option);
 }
 
 describe('GroupByFilter', () => {
@@ -98,7 +94,7 @@ describe('GroupByFilter', () => {
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.type(groupByInput(), 'custom.attr');
-		await clickOption('custom.attr');
+		await clickOption(screen.findByTitle('custom.attr'));
 
 		expect(onChange).toHaveBeenCalled();
 		const emitted = onChange.mock.calls[0][0][0];
@@ -115,7 +111,7 @@ describe('GroupByFilter', () => {
 
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		await user.click(groupByInput());
-		await clickOption('service.name');
+		await clickOption(screen.findByTestId('group-by-option-service.name'));
 
 		await waitFor(() => expect(onChange).toHaveBeenCalled());
 		// Expect payload to be resolved to the exact attribute returned by MSW
@@ -138,11 +134,9 @@ describe('GroupByFilter', () => {
 		await user.click(groupByInput());
 
 		await waitFor(() =>
-			expect(
-				screen
-					.getAllByText('service.name')
-					.filter((el) => !!el.closest('.ant-select-item-option')),
-			).toHaveLength(2),
+			expect(screen.getAllByTestId('group-by-option-service.name')).toHaveLength(
+				2,
+			),
 		);
 	});
 });

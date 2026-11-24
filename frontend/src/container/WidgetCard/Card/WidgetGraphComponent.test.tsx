@@ -162,7 +162,7 @@ const mockProps: WidgetGraphComponentProps = {
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const { getByTestId, findByRole, getByText, container } = render(
+		const { getByTestId, findByRole, getByText } = render(
 			<MockQueryClientProvider>
 				<ErrorModalProvider>
 					<Provider store={store}>
@@ -190,8 +190,7 @@ describe('WidgetGraphComponent', () => {
 		expect(getByText('Test Dashboard')).toBeInTheDocument();
 
 		// check if skeleton is rendered
-		const skeleton = container.querySelector('.ant-skeleton');
-		expect(skeleton).toBeInTheDocument();
+		expect(getByTestId('widget-graph-loading')).toBeInTheDocument();
 
 		const moreOptionsButton = getByTestId('widget-header-options');
 		await user.click(moreOptionsButton);

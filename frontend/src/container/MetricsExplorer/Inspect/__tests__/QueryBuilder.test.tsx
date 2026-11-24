@@ -37,7 +37,9 @@ jest.mock(
 	'container/QueryBuilder/filters/OptionRenderer/OptionRenderer',
 	() => ({
 		__esModule: true,
-		default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
+		default: ({ value }: { value: string }): JSX.Element => (
+			<span data-testid={`metric-option-${value}`}>{value}</span>
+		),
 	}),
 );
 
@@ -155,9 +157,7 @@ describe('QueryBuilder', () => {
 		const input = within(metricNameSearch).getByRole('combobox');
 		fireEvent.change(input, { target: { value: 'test_metric_2' } });
 
-		const options = document.querySelectorAll('.ant-select-item');
-		expect(options.length).toBeGreaterThan(0);
-		await user.click(options[0] as HTMLElement);
+		await user.click(screen.getByTestId('metric-option-test_metric_2'));
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
 	});

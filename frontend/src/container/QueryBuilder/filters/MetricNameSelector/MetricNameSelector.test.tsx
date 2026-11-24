@@ -215,14 +215,15 @@ describe('MetricNameSelector', () => {
 			queryKey: ['/api/v2/metrics'],
 		});
 
-		const { container } = render(
-			<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />,
-		);
+		render(<MetricNameSelector query={makeQuery()} onChange={jest.fn()} />);
 
 		const input = screen.getByRole('combobox');
 		fireEvent.change(input, { target: { value: 'test' } });
 
-		expect(container.querySelector('.ant-spin-spinning')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-name-selector-loading')).toHaveAttribute(
+			'aria-busy',
+			'true',
+		);
 	});
 
 	it('preserves metric search text for signalSource normalization transition (undefined -> empty)', async () => {

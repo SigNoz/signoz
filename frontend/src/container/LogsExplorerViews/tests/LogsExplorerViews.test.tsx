@@ -9,7 +9,14 @@ import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { mockAppLocation } from 'tests/router-mocks';
-import { fireEvent, render, RenderResult, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	RenderResult,
+	screen,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 
@@ -132,11 +139,13 @@ describe('LogsExplorerViews -', () => {
 		// Test that the menu opens when clicked
 		fireEvent.click(queryByTestId(periscopeDownloadButtonTestId) as HTMLElement);
 		fireEvent.click(queryByTestId(periscopeFormatButtonTestId) as HTMLElement);
-		expect(document.querySelector('.menu-container')).toBeInTheDocument();
+		const formatMenu = screen.getByTestId('format-options-menu');
 
 		// Test that the menu items are present
 		const expectedMenuItemsCount = 3;
-		const menuItems = document.querySelectorAll('.menu-items .item');
+		const menuItems = within(formatMenu).getAllByTestId(
+			/^format-option-(?!check$)/,
+		);
 		expect(menuItems).toHaveLength(expectedMenuItemsCount);
 
 		// Test that the component renders without crashing

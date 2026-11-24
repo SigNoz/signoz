@@ -119,11 +119,10 @@ describe('K8sBaseDetails - trail', () => {
 		});
 
 		const close = await screen.findByTestId('drawer-wrapper-close');
+		const header = screen.getByTestId('drawer-wrapper-header');
 
-		expect(close.closest('[data-slot="drawer-header"]')).toHaveAttribute(
-			'data-close-position',
-			'start',
-		);
+		expect(header).toContainElement(close);
+		expect(header).toHaveAttribute('data-close-position', 'start');
 	});
 
 	it('lists the resources this one was opened from, root first, ending on itself', async () => {

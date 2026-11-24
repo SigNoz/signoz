@@ -81,7 +81,7 @@ describe('AuthCard', () => {
 			render(<AuthCard {...defaultProps} isAdmin isLoadingInstanceUrl />);
 
 			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
-			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+			expect(screen.getByTestId('mcp-instance-url-skeleton')).toBeInTheDocument();
 		});
 
 		it('does not render the copy button while loading', () => {

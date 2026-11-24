@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
@@ -107,12 +107,14 @@ describe('formatDataForMetricsTable', () => {
 		const descriptionElement = result[0].description as JSX.Element;
 		const { container: descriptionWrapper } = render(descriptionElement);
 		expect(descriptionWrapper.textContent).toBe('Test description');
-		expect(descriptionWrapper.querySelector('.description-tooltip')).toBeTruthy();
+		expect(screen.getByText('Test description')).toHaveClass(
+			'description-tooltip',
+		);
 
 		// Verify metric type rendering
 		const metricTypeElement = result[0].metric_type as JSX.Element;
-		const { container: metricTypeWrapper } = render(metricTypeElement);
-		expect(metricTypeWrapper.querySelector('.metric-type-renderer')).toBeTruthy();
+		render(metricTypeElement);
+		expect(screen.getByTestId('metric-type-renderer')).toBeInTheDocument();
 
 		// Verify unit rendering
 		const unitElement = result[0].unit as JSX.Element;

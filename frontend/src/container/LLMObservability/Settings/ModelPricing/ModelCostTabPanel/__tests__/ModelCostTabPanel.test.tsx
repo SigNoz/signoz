@@ -40,8 +40,9 @@ async function openRowMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	ruleId: string,
 ): Promise<void> {
-	const row = screen.getByTestId(`model-cell-name-${ruleId}`).closest('tr');
-	await user.click(within(row as HTMLElement).getByRole('button'));
+	await user.click(
+		within(screen.getByTestId(`model-cost-row-${ruleId}`)).getByRole('button'),
+	);
 }
 
 describe('ModelCostTabPanel (integration)', () => {
@@ -167,9 +168,8 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />, undefined, { role: 'VIEWER' });
 
-		const row = (
-			await screen.findByTestId('model-cell-name-rule-openai')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-openai');
+		const row = screen.getByTestId('model-cost-row-rule-openai');
 		expect(screen.queryByTestId('add-model-cost-btn')).not.toBeInTheDocument();
 		// View-only rows render no action menu (no buttons in the row).
 		expect(within(row).queryByRole('button')).not.toBeInTheDocument();
@@ -221,9 +221,8 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />);
 
-		const anthropicRow = (
-			await screen.findByTestId('model-cell-name-rule-anthropic')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-anthropic');
+		const anthropicRow = screen.getByTestId('model-cost-row-rule-anthropic');
 		expect(within(anthropicRow).getByText(/Cache Read/i)).toBeInTheDocument();
 		expect(within(anthropicRow).getByText(/Cache Write/i)).toBeInTheDocument();
 	});
@@ -232,9 +231,8 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />);
 
-		const openaiRow = (
-			await screen.findByTestId('model-cell-name-rule-openai')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-openai');
+		const openaiRow = screen.getByTestId('model-cost-row-rule-openai');
 		// mockRules gpt-4o has input cost 3 → rendered as $3.00.
 		expect(within(openaiRow).getByText('$3.00')).toBeInTheDocument();
 	});

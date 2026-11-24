@@ -46,7 +46,9 @@ describe('JsonEditor', () => {
 			await switchToJsonMode();
 
 			const jsonEditor = screen.getByTestId('json-editor');
-			expect(jsonEditor.querySelector('div')).toBeInTheDocument();
+			expect(
+				within(jsonEditor).getByTestId('json-editor-container'),
+			).toBeInTheDocument();
 		});
 	});
 

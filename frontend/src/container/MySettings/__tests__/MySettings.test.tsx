@@ -325,10 +325,7 @@ describe('MySettings Flows', () => {
 			);
 
 			// Close the modal
-			const closeButton = document.querySelector(
-				'.reset-password-modal .ant-modal-close',
-			) as HTMLElement;
-			fireEvent.click(closeButton);
+			fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
 			// Reopen the modal
 			await waitFor(() => {

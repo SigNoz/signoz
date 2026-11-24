@@ -50,6 +50,7 @@ jest.mock('utils/basePath', () => ({
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
 const CUSTOM_HOST_URL = 'https://myteam.signoz.cloud';
 const DEFAULT_HOST_URL = 'https://default.signoz.cloud';
+const SKELETON_TEST_ID = 'mcp-instance-url-skeleton';
 
 function setupLicense({
 	isCloudUser = true,
@@ -108,7 +109,7 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />);
 
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
+		expect(screen.getByRole('img', { name: 'loading' })).toBeInTheDocument();
 		expect(screen.queryByTestId('mcp-settings')).not.toBeInTheDocument();
 	});
 
@@ -264,7 +265,7 @@ describe('MCPServerSettings', () => {
 			render(<MCPServerSettings />);
 
 			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
-			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+			expect(screen.getByTestId(SKELETON_TEST_ID)).toBeInTheDocument();
 		});
 
 		it('does not copy while hosts are still loading', async () => {
@@ -298,9 +299,7 @@ describe('MCPServerSettings', () => {
 
 			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-			expect(
-				document.querySelector('.ant-skeleton-input'),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId(SKELETON_TEST_ID)).not.toBeInTheDocument();
 			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
 				'http://localhost',
 			);
@@ -331,9 +330,7 @@ describe('MCPServerSettings', () => {
 
 			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
 
-			expect(
-				document.querySelector('.ant-skeleton-input'),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId(SKELETON_TEST_ID)).not.toBeInTheDocument();
 			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
 				DEFAULT_HOST_URL,
 			);

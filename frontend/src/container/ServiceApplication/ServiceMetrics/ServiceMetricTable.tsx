@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type HTMLAttributes, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -129,6 +129,11 @@ function ServiceMetricTable({
 				dataSource={services}
 				rowKey="serviceName"
 				className="service-metrics-table"
+				onRow={(
+					record: ServicesList,
+				): HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+					'data-testid': `services-table-row-${record.serviceName}`,
+				})}
 			/>
 		</div>
 	);

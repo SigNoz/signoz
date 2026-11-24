@@ -138,7 +138,7 @@ function QuerySection(): JSX.Element {
 		: alertType;
 
 	return (
-		<div className="query-section">
+		<div className="query-section" data-testid="query-section">
 			<Stepper stepNumber={1} label="Define the query" />
 			<ChartPreview
 				alertDef={alertDef}
@@ -146,14 +146,18 @@ function QuerySection(): JSX.Element {
 				isCancelled={isCancelled}
 				onFetchingStateChange={handleFetchingStateChange}
 			/>
-			<div className="query-section-tabs">
-				<div className="query-section-query-actions">
+			<div className="query-section-tabs" data-testid="query-section-tabs">
+				<div
+					className="query-section-query-actions"
+					data-testid="query-section-query-actions"
+				>
 					{tabs.map((tab) => (
 						<Button
 							key={tab.value}
 							className={classNames('list-view-tab', 'explorer-view-option', {
 								'active-tab': activeTab === tab.value,
 							})}
+							data-testid={`query-section-tab-${tab.value}`}
 							onClick={(): void => {
 								if (isAnomalyDetection && tab.value === activeTab) {
 									return;

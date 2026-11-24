@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, RenderResult, screen } from '@testing-library/react';
+import { render, RenderResult } from '@testing-library/react';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext } from 'providers/App/App';
@@ -56,15 +56,6 @@ export function renderTriggeredAlerts(
 			</NuqsTestingAdapter>
 		</TestRouter>,
 	);
-}
-
-export async function findAlertRow(alertName: string): Promise<HTMLElement> {
-	const cell = await screen.findByText(alertName, {}, { timeout: 5000 });
-	const row = cell.closest('tr');
-	if (!row) {
-		throw new Error(`Row not found for alert "${alertName}"`);
-	}
-	return row as HTMLElement;
 }
 
 export function getTriggeredAlertRowTestId(

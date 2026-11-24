@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import * as alertState from 'container/CreateAlert/context';
 
 import AdvancedOptions from '../AdvancedOptions';
@@ -14,8 +14,6 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 const ALERT_WHEN_DATA_STOPS_COMING_TEXT = 'Alert when data stops coming';
 const MINIMUM_DATA_REQUIRED_TEXT = 'Minimum data required';
 const ACCOUNT_FOR_DATA_DELAY_TEXT = 'Account for data delay';
-const ADVANCED_OPTION_ITEM_CLASS = '.advanced-option-item';
-const SWITCH_ROLE_SELECTOR = '[role="switch"]';
 
 describe('AdvancedOptions', () => {
 	it('should render evaluation cadence and the advanced options minimized by default', () => {
@@ -64,15 +62,11 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const alertWhenDataStopsComingContainer = screen
-			.getByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const alertWhenDataStopsComingSwitch =
-			alertWhenDataStopsComingContainer?.querySelector(
-				SWITCH_ROLE_SELECTOR,
-			) as HTMLElement;
-
-		fireEvent.click(alertWhenDataStopsComingSwitch);
+		fireEvent.click(
+			within(
+				screen.getByTestId('send-notification-if-data-is-missing-container'),
+			).getByRole('switch'),
+		);
 
 		const toleranceInput = screen.getByPlaceholderText(
 			'Enter tolerance limit...',
@@ -94,14 +88,11 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const minimumDataRequiredContainer = screen
-			.getByText(MINIMUM_DATA_REQUIRED_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const minimumDataRequiredSwitch = minimumDataRequiredContainer?.querySelector(
-			SWITCH_ROLE_SELECTOR,
-		) as HTMLElement;
-
-		fireEvent.click(minimumDataRequiredSwitch);
+		fireEvent.click(
+			within(screen.getByTestId('enforce-minimum-datapoints-container')).getByRole(
+				'switch',
+			),
+		);
 
 		const minimumDataRequiredInput = screen.getByPlaceholderText(
 			'Enter minimum datapoints...',
@@ -122,14 +113,14 @@ describe('AdvancedOptions', () => {
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
 		fireEvent.click(collapse);
 
-		const accountForDataDelayContainer = screen
-			.getByText(ACCOUNT_FOR_DATA_DELAY_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const accountForDataDelaySwitch = accountForDataDelayContainer?.querySelector(
-			SWITCH_ROLE_SELECTOR,
-		) as HTMLElement;
+		const accountForDataDelayContainer = screen.getByTestId(
+			'delay-evaluation-container',
+		);
+		expect(accountForDataDelayContainer).toHaveTextContent(
+			ACCOUNT_FOR_DATA_DELAY_TEXT,
+		);
 
-		fireEvent.click(accountForDataDelaySwitch);
+		fireEvent.click(within(accountForDataDelayContainer).getByRole('switch'));
 
 		const delayInput = screen.getByPlaceholderText('Enter delay...');
 		fireEvent.change(delayInput, { target: { value: '10' } });

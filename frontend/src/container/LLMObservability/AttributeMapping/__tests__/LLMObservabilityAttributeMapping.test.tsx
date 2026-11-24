@@ -123,9 +123,9 @@ describe('LLMObservabilityAttributeMapping', () => {
 		await screen.findByTestId('attribute-mappings-tab');
 		// antd keeps a visited pane mounted and marks it aria-hidden, rather than
 		// unmounting it the way the previous tabs did.
-		expect(
-			screen.getByTestId('span-json-editor').closest('[role="tabpanel"]'),
-		).toHaveAttribute('aria-hidden', 'true');
+		const [, testPanel] = screen.getAllByRole('tabpanel', { hidden: true });
+		expect(testPanel).toContainElement(screen.getByTestId('span-json-editor'));
+		expect(testPanel).toHaveAttribute('aria-hidden', 'true');
 
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 

@@ -277,14 +277,14 @@ describe('CustomDomainSettings', () => {
 				),
 			);
 
-			const { container } = render(<CustomDomainSettings />, undefined, {
+			render(<CustomDomainSettings />, undefined, {
 				appContextOverrides: { org: [] },
 			});
 
 			await screen.findByRole('button', { name: /edit workspace link/i });
 
 			expect(
-				container.querySelector('.custom-domain-card-name-row'),
+				screen.queryByTestId('custom-domain-card-name-row'),
 			).not.toBeInTheDocument();
 		});
 	});

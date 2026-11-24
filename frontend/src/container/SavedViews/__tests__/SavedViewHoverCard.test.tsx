@@ -252,7 +252,7 @@ describe('SavedViewHoverCard', () => {
 
 			expect(card()).toBeNull();
 			expect(
-				document.querySelector('[data-radix-popper-content-wrapper]'),
+				screen.queryByRole('dialog', { name: 'Saved view preview', hidden: true }),
 			).toBeNull();
 		});
 	});

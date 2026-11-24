@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import Stepper from '../Stepper';
 import { InspectionStep } from '../types';
 
+const TIME_AGGREGATION_STEP_TEST_ID = 'inspect-step-time-aggregation';
+
 describe('Stepper', () => {
 	const mockResetInspection = jest.fn();
 
@@ -32,8 +34,9 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		const temporalStep = screen.getByText(/First, align the data by selecting a/);
-		expect(temporalStep.parentElement).toHaveClass('whats-next-checklist-item');
+		expect(screen.getByTestId(TIME_AGGREGATION_STEP_TEST_ID)).toHaveClass(
+			'whats-next-checklist-item',
+		);
 	});
 
 	it('shows temporal aggregation step as completed when on later steps', () => {
@@ -44,8 +47,9 @@ describe('Stepper', () => {
 			/>,
 		);
 
-		const temporalStep = screen.getByText(/First, align the data by selecting a/);
-		expect(temporalStep.parentElement).toHaveClass('completed-checklist-item');
+		expect(screen.getByTestId(TIME_AGGREGATION_STEP_TEST_ID)).toHaveClass(
+			'completed-checklist-item',
+		);
 	});
 
 	it('calls resetInspection when reset button is clicked', async () => {

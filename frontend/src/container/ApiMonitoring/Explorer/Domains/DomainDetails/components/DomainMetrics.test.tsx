@@ -204,10 +204,7 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 			renderComponent();
 
 			// Wait for skeletons to disappear
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
+			await screen.findByText('150');
 
 			// Verify all metric labels are displayed
 			expect(screen.getByText('EXTERNAL API')).toBeInTheDocument();
@@ -243,13 +240,8 @@ describe('DomainMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent();
 
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
 			// When no data, all values should show "-"
-			const dashValues = screen.getAllByText('-');
+			const dashValues = await screen.findAllByText('-');
 			expect(dashValues.length).toBeGreaterThan(0);
 		});
 	});

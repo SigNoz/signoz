@@ -162,7 +162,10 @@ const JsonEditor = forwardRef<JsonEditorRef, JsonEditorProps>(
 
 		return (
 			<div className={styles.jsonEditor} data-testid="json-editor">
-				<div className={styles.jsonEditorContainer}>
+				<div
+					className={styles.jsonEditorContainer}
+					data-testid="json-editor-container"
+				>
 					<div className={styles.copyButton}>
 						<Tooltip title={copied ? 'Copied!' : 'Copy JSON'}>
 							<Button

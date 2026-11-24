@@ -152,10 +152,9 @@ describe('ChartPreview', () => {
 	it('renders the component with correct container class', () => {
 		renderChartPreview();
 
-		const container = screen
-			.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID)
-			.closest('.chart-preview-container');
-		expect(container).toBeInTheDocument();
+		expect(screen.getByTestId('chart-preview-container')).toContainElement(
+			screen.getByTestId(CHART_PREVIEW_COMPONENT_TEST_ID),
+		);
 	});
 
 	it('renders QueryBuilder chart preview when query type is QUERY_BUILDER', () => {

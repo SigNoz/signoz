@@ -1,6 +1,12 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
@@ -149,11 +155,7 @@ describe('Exceptions - All Errors', () => {
 			// Wait for initial load
 			await screen.findByText(/redis timeout/i);
 
-			const nextPageItem = screen.getByTitle('Next Page');
-			const nextPageButton = nextPageItem.querySelector(
-				'button',
-			) as HTMLButtonElement;
-			fireEvent.click(nextPageButton);
+			fireEvent.click(within(screen.getByTitle('Next Page')).getByRole('button'));
 
 			await waitFor(() => {
 				const qp = new URLSearchParams(window.location.search);
@@ -170,8 +172,7 @@ describe('Exceptions - All Errors', () => {
 				<Exceptions initUrl="/exceptions?pageSize=100&offset=100&order=ascending&orderParam=serviceName" />,
 			);
 			await screen.findByText(/redis timeout/i);
-			const activeItem = document.querySelector('.ant-pagination-item-active');
-			expect(activeItem?.textContent).toBe('2');
+			expect(screen.getByTitle('2')).toHaveClass('ant-pagination-item-active');
 			const qp = new URLSearchParams(window.location.search);
 			expect(qp.get('pageSize')).toBe('100');
 			expect(qp.get('offset')).toBe('100');
@@ -183,9 +184,7 @@ describe('Exceptions - All Errors', () => {
 				<Exceptions initUrl="/exceptions?pageSize=100&offset=0&order=ascending&orderParam=serviceName" />,
 			);
 			await screen.findByText(/redis timeout/i);
-			const page3Item = screen.getByTitle('3');
-			const page3Anchor = page3Item.querySelector('a') as HTMLAnchorElement;
-			fireEvent.click(page3Anchor);
+			fireEvent.click(within(screen.getByTitle('3')).getByText('3'));
 			await waitFor(() => {
 				const qp = new URLSearchParams(window.location.search);
 				expect(qp.get('offset')).toBe('200');

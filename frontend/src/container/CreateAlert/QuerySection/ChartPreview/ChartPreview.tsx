@@ -119,7 +119,10 @@ function ChartPreview({
 	);
 
 	return (
-		<div className="chart-preview-container">
+		<div
+			className="chart-preview-container"
+			data-testid="chart-preview-container"
+		>
 			{currentQuery.queryType === EQueryType.QUERY_BUILDER &&
 				renderQBChartPreview()}
 			{currentQuery.queryType === EQueryType.PROM &&

@@ -488,7 +488,7 @@ describe('ViewRolePage - AuthZ', () => {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 			});
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('view-role-loading')).toBeInTheDocument();
 		});
 	});
 });

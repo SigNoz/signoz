@@ -6,7 +6,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 
 import ServicesUsingMetrics from './index';
 
@@ -61,9 +61,9 @@ const mockTopLevelOperations = (operations: ServiceDataProps): void => {
 const table = (): HTMLElement => screen.getByTestId('services-table');
 
 const rowCells = (service: string): (string | null)[] =>
-	Array.from(table().querySelectorAll(`tr[data-row-key="${service}"] td`)).map(
-		(cell) => cell.textContent,
-	);
+	within(screen.getByTestId(`services-table-row-${service}`))
+		.getAllByRole('cell')
+		.map((cell) => cell.textContent);
 
 describe('ServicesUsingMetrics', () => {
 	beforeEach(() => {
@@ -83,14 +83,13 @@ describe('ServicesUsingMetrics', () => {
 		mockTopLevelOperations(topLevelOperations);
 		render(<ServicesUsingMetrics />);
 
-		await waitFor(() =>
-			expect(rowCells('SampleApp')).toStrictEqual([
-				'SampleApp',
-				'100.00',
-				'2.50',
-				'50.00',
-			]),
-		);
+		await screen.findByText('100.00');
+		expect(rowCells('SampleApp')).toStrictEqual([
+			'SampleApp',
+			'100.00',
+			'2.50',
+			'50.00',
+		]);
 		expect(rowCells('TestApp')).toStrictEqual([
 			'TestApp',
 			'200.00',
@@ -103,13 +102,9 @@ describe('ServicesUsingMetrics', () => {
 		mockTopLevelOperations(topLevelOperations);
 		render(<ServicesUsingMetrics />);
 
-		await waitFor(() =>
-			expect(
-				Array.from(table().querySelectorAll('thead th')).map(
-					(cell) => cell.textContent,
-				),
-			).toContain('P99 latency (in ms)'),
-		);
+		await expect(
+			screen.findByText('P99 latency (in ms)'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders an empty list when no service has top level operations', async () => {
@@ -117,7 +112,9 @@ describe('ServicesUsingMetrics', () => {
 		render(<ServicesUsingMetrics />);
 
 		await waitFor(() =>
-			expect(table().querySelectorAll('tr[data-row-key]')).toHaveLength(0),
+			expect(
+				within(table()).queryAllByTestId(/^services-table-row-/),
+			).toHaveLength(0),
 		);
 	});
 });

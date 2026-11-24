@@ -4,6 +4,7 @@ import { screen, waitFor } from 'tests/test-utils';
 import { renderListAlertRules } from './_helpers';
 
 const COLUMN_STORAGE_KEY = '@signoz/table-columns/alert-rules-columns';
+const CREATED_AT_HEADER_TEST_ID = 'tanstack-header-createdAt';
 
 describe('ListAlertRules — columns selector', () => {
 	beforeEach(() => {
@@ -36,12 +37,11 @@ describe('ListAlertRules — columns selector', () => {
 
 		await screen.findByText('High CPU Alert');
 
-		const headers = document.querySelectorAll('th');
-		const headerTexts = Array.from(headers).map((h) => h.textContent || '');
-		expect(headerTexts.some((t) => t.includes('Created At'))).toBe(false);
-		expect(headerTexts.some((t) => t.includes('Created By'))).toBe(false);
-		expect(headerTexts.some((t) => t.includes('Updated At'))).toBe(false);
-		expect(headerTexts.some((t) => t.includes('Updated By'))).toBe(false);
+		['createdAt', 'createdBy', 'updatedAt', 'updatedBy'].forEach((columnId) => {
+			expect(
+				screen.queryByTestId(`tanstack-header-${columnId}`),
+			).not.toBeInTheDocument();
+		});
 	});
 
 	it('toggling Created At on writes to localStorage and adds the header', async () => {
@@ -50,17 +50,14 @@ describe('ListAlertRules — columns selector', () => {
 
 		await screen.findByText('High CPU Alert');
 
-		const headersBefore = Array.from(document.querySelectorAll('th')).map(
-			(h) => h.textContent ?? '',
-		);
-		expect(headersBefore.some((t) => t.includes('Created At'))).toBe(false);
+		expect(
+			screen.queryByTestId(CREATED_AT_HEADER_TEST_ID),
+		).not.toBeInTheDocument();
 
 		await user.click(screen.getByTestId('alert-columns-button'));
 		await screen.findByText('Toggle Columns');
 
-		const checkbox = document.getElementById('col-createdAt');
-		expect(checkbox).not.toBeNull();
-		await user.click(checkbox as HTMLElement);
+		await user.click(screen.getByTestId('alert-columns-button-column-createdAt'));
 
 		await waitFor(() => {
 			const stored = window.localStorage.getItem(COLUMN_STORAGE_KEY);
@@ -69,11 +66,8 @@ describe('ListAlertRules — columns selector', () => {
 			expect(parsed.hiddenColumnIds).not.toContain('createdAt');
 		});
 
-		await waitFor(() => {
-			const headersAfter = Array.from(document.querySelectorAll('th')).map(
-				(h) => h.textContent ?? '',
-			);
-			expect(headersAfter.some((t) => t.includes('Created At'))).toBe(true);
-		});
+		await expect(
+			screen.findByTestId(CREATED_AT_HEADER_TEST_ID),
+		).resolves.toHaveTextContent('Created At');
 	});
 });

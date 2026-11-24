@@ -25,7 +25,9 @@ const THRESHOLD_VIEW_TEST_ID = 'threshold-view';
 const ANOMALY_VIEW_TEST_ID = 'anomaly-view';
 const ANOMALY_TAB_TEXT = 'Anomaly';
 const THRESHOLD_TAB_TEXT = 'Threshold';
-const ACTIVE_TAB_CLASS = '.active-tab';
+const ACTIVE_TAB_CLASS = 'active-tab';
+const THRESHOLD_TAB_TEST_ID = `alert-condition-tab-${AlertTypes.METRICS_BASED_ALERT}`;
+const ANOMALY_TAB_TEST_ID = `alert-condition-tab-${AlertTypes.ANOMALY_BASED_ALERT}`;
 
 // Mock the Stepper component
 jest.mock('../../Stepper', () => ({
@@ -131,8 +133,9 @@ describe('AlertCondition', () => {
 		).not.toBeInTheDocument();
 
 		// Verify threshold tab is active by default
-		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
-		expect(thresholdTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
+		expect(screen.getByTestId(THRESHOLD_TAB_TEST_ID)).toHaveClass(
+			ACTIVE_TAB_CLASS,
+		);
 
 		// Verify both tabs are visible (METRICS_BASED_ALERT supports multiple tabs)
 		expect(screen.getByText(THRESHOLD_TAB_TEXT)).toBeInTheDocument();
@@ -250,19 +253,19 @@ describe('AlertCondition', () => {
 	it('applies active tab styling correctly', async () => {
 		renderAlertCondition();
 
-		const thresholdTab = screen.getByText(THRESHOLD_TAB_TEXT);
-		const anomalyTab = screen.getByText(ANOMALY_TAB_TEXT);
+		const thresholdTab = screen.getByTestId(THRESHOLD_TAB_TEST_ID);
+		const anomalyTab = screen.getByTestId(ANOMALY_TAB_TEST_ID);
 
 		// Threshold tab should be active by default
-		expect(thresholdTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
-		expect(anomalyTab.closest(ACTIVE_TAB_CLASS)).not.toBeInTheDocument();
+		expect(thresholdTab).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(anomalyTab).not.toHaveClass(ACTIVE_TAB_CLASS);
 
 		// Click anomaly tab
 		await clickText(ANOMALY_TAB_TEXT);
 
 		// Anomaly tab should be active now
-		expect(anomalyTab.closest(ACTIVE_TAB_CLASS)).toBeInTheDocument();
-		expect(thresholdTab.closest(ACTIVE_TAB_CLASS)).not.toBeInTheDocument();
+		expect(anomalyTab).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(thresholdTab).not.toHaveClass(ACTIVE_TAB_CLASS);
 	});
 
 	it('shows multiple tabs for METRICS_BASED_ALERT', () => {
