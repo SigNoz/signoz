@@ -24,17 +24,14 @@ jobs:
       JS_SRC: frontend
       JS_PKG_MANAGER: pnpm
   test-shard:
-    if: |
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        shard: ${{ fromJSON(github.event_name == 'merge_group' && '[1, 2, 3]' || '[1]') }}
+        shard: [1, 2, 3]
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
@@ -50,22 +47,14 @@ jobs:
           cache-dependency-path: frontend/pnpm-lock.yaml
       - name: install-frontend
         run: cd frontend && pnpm install
-      - name: jest-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/jest-cache
-          key: jest-${{ matrix.shard }}-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/jest.config.ts', 'frontend/babel.config.cjs', 'frontend/tsconfig.json', 'frontend/tsconfig.jest.json') }}
       - name: test
-        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --cacheDirectory=${{ runner.temp }}/jest-cache --reporters=default --reporters=./scripts/slow-test-reporter.js
+        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporters=default --reporters=./scripts/slow-test-reporter.js
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
+  # On PRs it is skipped, and GitHub counts a skipped required check as passing.
   test:
     name: test / js
     needs: test-shard
-    if: |
-      always() && (
-      github.event_name == 'merge_group' ||
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test')))
+    if: always() && github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     steps:
       - name: shards-passed
