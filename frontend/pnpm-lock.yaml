@@ -86,8 +86,8 @@ importers:
         specifier: 1.13.0
         version: 1.13.0(axios@1.21.1)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@signozhq/ui':
-        specifier: 0.4.0-rc.5
-        version: 0.4.0-rc.5(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        specifier: 0.4.1-rc.1
+        version: 0.4.1-rc.1(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@tanstack/react-table':
         specifier: 8.21.3
         version: 8.21.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -3258,8 +3258,8 @@ packages:
       react: ^18.2.0
       react-query: ^3.39.3
 
-  '@signozhq/ui@0.4.0-rc.5':
-    resolution: {integrity: sha512-WlJMfeDfvL2hjMpTpHhhND/tuK7X0sfXQlx6E1ZG+6E/DYHpuhYljfvW3E6/BohIlHFlTyCs/ZMl9wnV2k9Zcw==}
+  '@signozhq/ui@0.4.1-rc.1':
+    resolution: {integrity: sha512-eFj22xLmP8AkXmHITjUZw9UA3BJjeW4bYDwc86tBDzyJTm4XFZ1FVY3l4Sxz5TUkUcXbdY8xnkX1RtChXQeDPA==}
     peerDependencies:
       '@signozhq/design-tokens': '>=2.7.0'
       '@signozhq/icons': 0.3.0
@@ -12389,7 +12389,7 @@ snapshots:
       react: 18.2.0
       react-query: 3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
 
-  '@signozhq/ui@0.4.0-rc.5(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@signozhq/ui@0.4.1-rc.1(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@base-ui/react': 1.8.0(@date-fns/tz@1.4.1)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@signozhq/design-tokens': 2.8.0
