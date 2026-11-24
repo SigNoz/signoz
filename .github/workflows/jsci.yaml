@@ -24,17 +24,23 @@ jobs:
       JS_SRC: frontend
       JS_PKG_MANAGER: pnpm
   test-shard:
-    if: github.event_name == 'merge_group'
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: ${{ fromJSON(github.event_name == 'merge_group' && '[1, 2, 3]' || '[1]') }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       - name: install-pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -50,11 +56,10 @@ jobs:
       - name: test
         run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
-  # On PRs it is skipped, and GitHub counts a skipped required check as passing.
   test:
     name: test / js
     needs: test-shard
-    if: always() && github.event_name == 'merge_group'
+    if: always() && needs.test-shard.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
       - name: shards-passed
