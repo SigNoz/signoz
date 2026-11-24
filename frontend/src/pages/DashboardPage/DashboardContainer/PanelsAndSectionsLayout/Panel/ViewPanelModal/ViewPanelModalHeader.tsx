@@ -73,7 +73,6 @@ function ViewPanelModalHeader(props: ViewPanelModalHeaderProps): JSX.Element {
 	// Same capabilities-guarded options as the editor's PanelTypeSwitcher, so the two
 	// selectors disable the same kinds (e.g. List under PromQL, metrics-only kinds).
 	const panelTypeItems = usePanelTypeSelectItems({
-		fromKind: panelKind,
 		queryType: query?.queryType ?? EQueryType.QUERY_BUILDER,
 		signal: query?.signal,
 	});

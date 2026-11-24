@@ -44,12 +44,11 @@ function PanelTypeSwitcher({
 		(kind: PanelKind): string | undefined =>
 			getPanelTypeDisabledReason({
 				kind,
-				fromKind: panelKind,
 				queryType,
 				signal,
 				label: getPanelDefinition(kind).displayName,
 			}),
-		[panelKind, queryType, signal],
+		[queryType, signal],
 	);
 
 	const canRevert = !!originalPanelKind && originalPanelKind !== panelKind;
