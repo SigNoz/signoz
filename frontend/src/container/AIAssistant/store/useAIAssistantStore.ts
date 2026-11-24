@@ -7,8 +7,8 @@ import { immer } from 'zustand/middleware/immer';
 import type {
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
+import { RetryActionDTO } from '@signozhq/noz-client';
 
 import {
 	approveExecution,

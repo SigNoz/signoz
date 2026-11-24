@@ -4,7 +4,7 @@ import {
 	MessageContextDTOType,
 	MessageRoleDTO,
 	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import type {
 	MessageContext,
 	SSEEvent,
