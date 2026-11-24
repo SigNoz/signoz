@@ -1,5 +1,4 @@
 @use '../../AIAssistant/_scrollbar' as *;
-@use '../../AIAssistant/_bareInput' as *;
 
 .nozHistory {
 	display: flex;
@@ -7,12 +6,8 @@
 	flex-shrink: 0;
 }
 
-// Above the floating panel (999), below the popup chat (1050).
-:global([data-slot='popover-positioner']):has([data-noz-history]) {
-	--popover-z-index: 1000;
-}
-
 // Ease only the slide, not the first placement.
+// Popover can't ease a `showAt` move yet; drop this once @signozhq/ui can.
 :global([data-slot='popover-positioner']):has(
 	[data-noz-history][data-sliding]
 ) {
@@ -33,10 +28,9 @@
 	flex-shrink: 0;
 	align-items: center;
 	height: 44px;
-	padding: 0 var(--spacing-6);
+	padding: 0 var(--spacing-3);
 	border-bottom: 1px solid var(--l2-border);
 	caret-color: var(--accent-primary);
-	@include bare-input;
 }
 
 // Grid rows keep their height, so a long list scrolls instead of squashing them.

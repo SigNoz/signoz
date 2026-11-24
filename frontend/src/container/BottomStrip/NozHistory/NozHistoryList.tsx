@@ -34,6 +34,7 @@ function NozHistoryList({
 			<div className={styles.search}>
 				<Input
 					type="text"
+					variant="unstyled"
 					value={query}
 					onChange={(e): void => setQuery(e.target.value)}
 					placeholder="Search…"
