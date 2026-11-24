@@ -6,6 +6,9 @@
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { rest } from 'msw';
 
+import { buildRuleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -36,6 +39,22 @@ const STORY_RELATIVE_TIME = '6h';
 
 const STATISTICS = 'Alert history · statistics';
 const TIMELINE = 'Alert history · timeline';
+
+const TELEMETRY_ACCESS = ['granted', 'denied'] as const;
+type TelemetryAccess = (typeof TELEMETRY_ACCESS)[number];
+
+/** The backend's denial for a custom role without read on the queried logs. */
+export const HISTORY_TELEMETRY_DENIAL =
+	'user/story-user is not authorized to perform logs:read on resource "service.name"';
+
+const denyTelemetry: Parameters<typeof rest.get>[1] = (_req, res, ctx) =>
+	res(
+		ctx.status(403),
+		ctx.json({
+			status: 'error',
+			error: { code: 'authz_forbidden', message: HISTORY_TELEMETRY_DENIAL },
+		}),
+	);
 
 /** Every history endpoint is asked for the same window the page resolved. */
 const windowOf = (req: { url: URL }): HistoryWindow => {
@@ -72,6 +91,13 @@ export const alertHistoryMocks = defineStoryMocks({
 			value: 26,
 			max: TIMELINE_MAX,
 		}),
+		telemetryAccess: choiceControl<TelemetryAccess>('Telemetry access', {
+			group: TIMELINE,
+			description:
+				'Whether the role reads the telemetry the rule queries. `denied` answers the timeline, the top contributors and the filter suggestions with the 403 only the server can raise.',
+			options: TELEMETRY_ACCESS,
+			value: 'granted',
+		}),
 		statusWindows: countControl('Status bands', {
 			group: TIMELINE,
 			description: 'How finely the graph above the table slices the window.',
@@ -100,13 +126,15 @@ export const alertHistoryMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/rules/:id/history/top_contributors',
-			response.json(() =>
-				ruleHistoryTopContributorsResponse(
-					values.topContributors,
-					values.triggers,
-					values.relatedExplorer,
-				),
-			),
+			values.telemetryAccess === 'denied'
+				? denyTelemetry
+				: response.json(() =>
+						ruleHistoryTopContributorsResponse(
+							values.topContributors,
+							values.triggers,
+							values.relatedExplorer,
+						),
+					),
 		),
 
 		rest.get(
@@ -118,28 +146,34 @@ export const alertHistoryMocks = defineStoryMocks({
 
 		rest.get(
 			'http://localhost/api/v2/rules/:id/history/timeline',
-			response.json((req) =>
-				ruleHistoryTimelineResponse({
-					total: values.timelineEntries,
-					limit: TIMELINE_TABLE_PAGE_SIZE,
-					end: windowOf(req).end,
-					ruleId: String(req.params.id),
-					ruleName: FIRST_RULE_NAME,
-					relatedExplorer: values.relatedExplorer,
-				}),
-			),
+			values.telemetryAccess === 'denied'
+				? denyTelemetry
+				: response.json((req) =>
+						ruleHistoryTimelineResponse({
+							total: values.timelineEntries,
+							limit: TIMELINE_TABLE_PAGE_SIZE,
+							end: windowOf(req).end,
+							ruleId: String(req.params.id),
+							ruleName: FIRST_RULE_NAME,
+							relatedExplorer: values.relatedExplorer,
+						}),
+					),
 		),
 
 		rest.get(
 			'http://localhost/api/v2/rules/:id/history/filter_keys',
-			response.json(() => ruleHistoryFilterKeysResponse()),
+			values.telemetryAccess === 'denied'
+				? denyTelemetry
+				: response.json(() => ruleHistoryFilterKeysResponse()),
 		),
 
 		rest.get(
 			'http://localhost/api/v2/rules/:id/history/filter_values',
-			response.json((req) =>
-				ruleHistoryFilterValuesResponse(req.url.searchParams.get('key') ?? ''),
-			),
+			values.telemetryAccess === 'denied'
+				? denyTelemetry
+				: response.json((req) =>
+						ruleHistoryFilterValuesResponse(req.url.searchParams.get('key') ?? ''),
+					),
 		),
 
 		rest.get(
@@ -167,7 +201,10 @@ export type AlertHistoryArgs = PageStoryArgs<typeof alertHistoryMocks>;
 export const untilLoaded = { timeout: 15_000 };
 
 export const listsTimelineRows = (args: AlertHistoryArgs): boolean =>
-	args.dataState === 'loaded' && args.timelineEntries > 0;
+	args.dataState === 'loaded' &&
+	args.timelineEntries > 0 &&
+	!refusesTelemetry(args) &&
+	!deniesRuleRead(args);
 
 const POPOVER_LINK_TEST_IDS: Record<RelatedExplorer, string | null> = {
 	logs: 'alert-popover-view-logs',
@@ -179,3 +216,15 @@ const POPOVER_LINK_TEST_IDS: Record<RelatedExplorer, string | null> = {
 /** The popover link a row's actions open, or null when the rule has none and the actions are disabled. */
 export const rowActionLinkTestId = (args: AlertHistoryArgs): string | null =>
 	POPOVER_LINK_TEST_IDS[args.relatedExplorer];
+
+/** The history loads, but the page refuses the rule for want of `read`. */
+export const deniesRuleRead = (args: AlertHistoryArgs): boolean =>
+	args.dataState === 'loaded' &&
+	args.authzState === 'loaded' &&
+	!grantsAll(args, buildRuleReadPermission(STORY_RULE_ID));
+
+/** The page shows, and the server refuses what reads the queried telemetry. */
+export const refusesTelemetry = (args: AlertHistoryArgs): boolean =>
+	args.dataState === 'loaded' &&
+	args.telemetryAccess === 'denied' &&
+	!deniesRuleRead(args);
