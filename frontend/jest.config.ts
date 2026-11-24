@@ -6,6 +6,8 @@ const LOG_EVENT_MOCK_PATH = '<rootDir>/src/__tests__/logEventMock.ts';
 
 const config: Config.InitialOptions = {
 	silent: true,
+	// CI runners are slow enough that multi-step userEvent tests pass 5s.
+	testTimeout: 10000,
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
