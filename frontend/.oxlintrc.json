@@ -506,7 +506,6 @@
   "ignorePatterns": [
     "src/parser/*.ts",
     "scripts/update-registry.cjs",
-    "scripts/generate-permissions-type.cjs",
     "**/node_modules",
     "**/build",
     "**/*.typegen.ts",

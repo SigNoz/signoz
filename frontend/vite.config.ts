@@ -159,11 +159,6 @@ export default defineConfig(({ mode }): UserConfig => {
 			},
 		},
 		css: {
-			preprocessorOptions: {
-				less: {
-					javascriptEnabled: true,
-				},
-			},
 			modules: {
 				localsConvention: 'camelCaseOnly',
 			},
