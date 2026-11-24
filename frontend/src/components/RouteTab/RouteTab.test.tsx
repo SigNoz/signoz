@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import { navigate } from 'lib/router/navigation';
 import { fireEvent, render, screen } from 'tests/test-utils';
 
@@ -97,5 +98,31 @@ describe('RouteTab component', () => {
 		);
 		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(onChangeHandler).toHaveBeenCalled();
+	});
+
+	it('keeps the tab bar while a lazy tab loads', async () => {
+		let resolveTab: (module: { default: () => JSX.Element }) => void = () => {};
+		const LazyTab = lazy(
+			() =>
+				new Promise<{ default: () => JSX.Element }>((resolve) => {
+					resolveTab = resolve;
+				}),
+		);
+		render(
+			<RouteTab
+				routes={[{ ...testRoutes[0], Component: LazyTab }, testRoutes[1]]}
+				activeKey="Tab1"
+			/>,
+		);
+
+		expect(screen.getByRole('tab', { name: 'Tab1' })).toBeInTheDocument();
+		expect(
+			screen.getByLabelText('loading').closest('.ant-spin')?.parentElement,
+		).toHaveStyle({ height: '100%' });
+
+		resolveTab({ default: DummyComponent1 });
+		await expect(
+			screen.findByText('Dummy Component 1'),
+		).resolves.toBeInTheDocument();
 	});
 });

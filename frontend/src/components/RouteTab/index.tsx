@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
 import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import Spinner from 'components/Spinner';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { matchRoute } from 'lib/router/matchRoute';
 import { navigate } from 'lib/router/navigation';
@@ -59,7 +61,11 @@ function RouteTab({
 		tabKey: route,
 		children: (
 			<OverlayScrollbar>
-				<Component />
+				<Suspense
+					fallback={<Spinner size="large" tip="Loading..." height="100%" />}
+				>
+					<Component />
+				</Suspense>
 			</OverlayScrollbar>
 		),
 	}));

@@ -1,9 +1,9 @@
 import { undoExecution } from 'api/ai-assistant/chat';
-import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from '@signozhq/noz-client';
 import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';

@@ -8,7 +8,7 @@ import { ArrowDown } from '@signozhq/icons';
 import type {
 	ApprovalEventDTO,
 	ClarificationEventDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import logEvent from 'api/common/logEvent';
 
 import { AIAssistantEvents } from '../../events';
