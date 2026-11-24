@@ -4540,13 +4540,6 @@ components:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDistributionPercentiles'
           description: Percentile markers drawn across the bucket axis.
-        stack:
-          allOf:
-          - $ref: '#/components/schemas/DashboardtypesDistributionStackMode'
-          description: 'How groups combine in a bucket: normal (default) stacks them,
-            none draws them side by side, percent stacks them as shares of the bucket.'
-      required:
-      - stack
       type: object
     DashboardtypesDistributionPanelSpec:
       properties:
@@ -4557,7 +4550,7 @@ components:
         chartAppearance:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesDistributionChartAppearance'
-          description: Stacking and percentile markers.
+          description: Percentile markers.
         formatting:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
@@ -4569,8 +4562,9 @@ components:
           description: Legend placement and series colors.
         visualization:
           allOf:
-          - $ref: '#/components/schemas/DashboardtypesBasicVisualization'
-          description: The time range the bucket counts are summed over.
+          - $ref: '#/components/schemas/DashboardtypesDistributionVisualization'
+          description: The time range the bucket counts are summed over, and how groups
+            stack.
       type: object
     DashboardtypesDistributionPercentiles:
       properties:
@@ -4593,6 +4587,23 @@ components:
       - normal
       - percent
       type: string
+    DashboardtypesDistributionVisualization:
+      properties:
+        stack:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionStackMode'
+          description: 'How groups combine in a bucket: normal (default) stacks them,
+            none draws them side by side, percent stacks them as shares of the bucket.'
+        timePreference:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
+      required:
+      - stack
+      type: object
     DashboardtypesDistributionXAxis:
       properties:
         max:

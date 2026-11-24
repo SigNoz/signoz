@@ -16,6 +16,8 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
+const maxDistributionPercentiles = 5
+
 // ══════════════════════════════════════════════
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
@@ -398,11 +400,11 @@ func (c HeatmapColors) validate() error {
 }
 
 type DistributionPanelSpec struct {
-	Visualization   BasicVisualization          `json:"visualization" description:"The time range the bucket counts are summed over."`
+	Visualization   DistributionVisualization   `json:"visualization" description:"The time range the bucket counts are summed over, and how groups stack."`
 	Formatting      PanelFormatting             `json:"formatting" description:"Unit and decimal precision of the bucket bounds; counts take no unit."`
 	Axes            DistributionAxes            `json:"axes" description:"The X (bucket) axis range and Y (count) axis scale."`
 	Legend          Legend                      `json:"legend" description:"Legend placement and series colors."`
-	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Stacking and percentile markers."`
+	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Percentile markers."`
 }
 
 type DistributionAxes struct {
@@ -440,11 +442,8 @@ type DistributionYAxis struct {
 }
 
 type DistributionChartAppearance struct {
-	Stack       DistributionStackMode   `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
 	Percentiles DistributionPercentiles `json:"percentiles" description:"Percentile markers drawn across the bucket axis."`
 }
-
-const maxDistributionPercentiles = 5
 
 type DistributionPercentiles struct {
 	Enabled *bool     `json:"enabled" description:"Whether percentile markers are drawn. Null draws them."`
@@ -795,6 +794,11 @@ type BarChartVisualization struct {
 	BasicVisualization
 	FillSpans       bool `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
 	StackedBarChart bool `json:"stackedBarChart" description:"Whether the series are stacked on top of each other."`
+}
+
+type DistributionVisualization struct {
+	BasicVisualization
+	Stack DistributionStackMode `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
 }
 
 type AreaChartVisualization struct {

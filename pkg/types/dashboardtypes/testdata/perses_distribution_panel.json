@@ -16,7 +16,8 @@
           "kind": "signoz/DistributionPanel",
           "spec": {
             "visualization": {
-              "timePreference": "global_time"
+              "timePreference": "global_time",
+              "stack": "none"
             },
             "formatting": {
               "unit": "s",
@@ -35,7 +36,6 @@
               "mode": "list"
             },
             "chartAppearance": {
-              "stack": "none",
               "percentiles": {
                 "enabled": true,
                 "values": [75, 99.9]
