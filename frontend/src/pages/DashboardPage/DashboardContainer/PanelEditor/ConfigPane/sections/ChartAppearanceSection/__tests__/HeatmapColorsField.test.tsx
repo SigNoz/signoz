@@ -148,12 +148,12 @@ describe('HeatmapColorsField', () => {
 		const onChange = jest.fn();
 		render(<HeatmapColorsField value={undefined} onChange={onChange} />);
 
-		expect(screen.getByRole('slider')).toHaveAttribute(
+		expect(screen.getByRole('slider', { hidden: true })).toHaveAttribute(
 			'aria-valuenow',
 			String(DEFAULT_COLOR_STEPS),
 		);
 
-		screen.getByRole('slider').focus();
+		screen.getByRole('slider', { hidden: true }).focus();
 		await user.keyboard('{ArrowRight}');
 
 		expect(onChange).toHaveBeenLastCalledWith({
@@ -166,7 +166,7 @@ describe('HeatmapColorsField', () => {
 		const onChange = jest.fn();
 		render(<HeatmapColorsField value={{ steps: 2 }} onChange={onChange} />);
 
-		const slider = screen.getByRole('slider');
+		const slider = screen.getByRole('slider', { hidden: true });
 		expect(slider).toHaveAttribute('min', '2');
 		expect(slider).toHaveAttribute('max', '128');
 

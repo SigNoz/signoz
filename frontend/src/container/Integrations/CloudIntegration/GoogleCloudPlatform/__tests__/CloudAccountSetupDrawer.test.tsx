@@ -26,10 +26,6 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-jest.mock('@floating-ui/dom', () =>
-	jest.requireActual('./floatingUiDomMock').floatingUiDomMock(),
-);
-
 const onClose = jest.fn() as jest.MockedFunction<
 	ComponentProps<typeof CloudAccountSetupDrawer>['onClose']
 >;
