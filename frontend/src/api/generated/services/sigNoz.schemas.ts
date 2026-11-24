@@ -14931,7 +14931,6 @@ export interface SpantypesSpanListDTO {
 }
 
 export enum SpantypesSpanListViewDTO {
-	all = 'all',
 	error_origins = 'error_origins',
 	unmarked_failures = 'unmarked_failures',
 	time_spent = 'time_spent',
@@ -14968,10 +14967,6 @@ export interface SpantypesTraceHighlightsDTO {
 	 * @description The spans with the highest gen_ai cost or token usage. First page of the ai_usage view of the span list. Empty for a trace where no span carries that usage.
 	 */
 	aiUsage?: SpantypesSpanListDTO;
-	/**
-	 * @description The top of the trace in tree order. First page of the span list without a view. Returned only when asked for.
-	 */
-	all?: SpantypesSpanListDTO;
 	/**
 	 * @description The spans where an error started. First page of the error_origins view of the span list.
 	 */
@@ -16478,7 +16473,7 @@ export type GetTraceHighlightsPathParameters = {
 export type GetTraceHighlightsParams = {
 	/**
 	 * @type array
-	 * @description The lists to return, each named by its view. Default: every view except all.
+	 * @description The lists to return, each named by its view. Default: all of them.
 	 */
 	views?: SpantypesSpanListViewDTO[];
 	/**
@@ -16501,7 +16496,7 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
@@ -16552,7 +16547,7 @@ export type ListTraceSpanAncestorsPathParameters = {
 };
 export type ListTraceSpanAncestorsParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
@@ -16591,7 +16586,7 @@ export type ListTraceSpanChildrenPathParameters = {
 };
 export type ListTraceSpanChildrenParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
@@ -16630,7 +16625,7 @@ export type ListTraceSpanDescendantsPathParameters = {
 };
 export type ListTraceSpanDescendantsParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**

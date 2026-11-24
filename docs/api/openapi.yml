@@ -13291,7 +13291,6 @@ components:
       type: object
     SpantypesSpanListView:
       enum:
-      - all
       - error_origins
       - unmarked_failures
       - time_spent
@@ -13616,11 +13615,6 @@ components:
           description: The spans with the highest gen_ai cost or token usage. First
             page of the ai_usage view of the span list. Empty for a trace where no
             span carries that usage.
-        all:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpanList'
-          description: The top of the trace in tree order. First page of the span
-            list without a view. Returned only when asked for.
         errorOrigins:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -19830,17 +19824,17 @@ paths:
       description: 'Returns the trace summary plus the spans to look at, for a trace
         of any size: per-service totals and the first spans of each view of the span
         list. The summary is the one the trace summary route returns. views names
-        the lists to return; without it every view except all is returned. Read more
-        of a list from the span list with the view of the same name.'
+        the lists to return; without it all of them are returned. Read more of a list
+        from the span list with the view of the same name.'
       operationId: GetTraceHighlights
       parameters:
-      - description: 'The lists to return, each named by its view. Default: every
-          view except all.'
+      - description: 'The lists to return, each named by its view. Default: all of
+          them.'
         in: query
         name: views
         schema:
-          description: 'The lists to return, each named by its view. Default: every
-            view except all.'
+          description: 'The lists to return, each named by its view. Default: all
+            of them.'
           items:
             $ref: '#/components/schemas/SpantypesSpanListView'
           type: array
@@ -19918,33 +19912,33 @@ paths:
         Values are returned whole.'
       operationId: ListTraceSpans
       parameters:
-      - description: 'A quick filter on the spans the route covers. Without it, or
-          with all, every span the route covers is returned in the route''s own order.
-          With any other value only the spans of that kind are returned, in that kind''s
-          order. error_origins: the spans where an error started, meaning error spans
-          with no failing child, by start time. unmarked_failures: spans that failed
-          without being marked as errors (a 4xx or 5xx response, a gRPC status other
-          than OK, or an exception event), by start time. time_spent: one span for
-          each group of same-name siblings, by the group''s total own time. ai_usage:
-          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
-          none has a cost; each includes those attributes. links: the spans that link
-          to other spans, by start time.'
+      - description: 'A quick filter on the spans the route covers. Without it every
+          span the route covers is returned, in the route''s own order. With it only
+          the spans of that kind are returned, in that kind''s order. error_origins:
+          the spans where an error started, meaning error spans with no failing child,
+          by start time. unmarked_failures: spans that failed without being marked
+          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
+          event), by start time. time_spent: one span for each group of same-name
+          siblings, by the group''s total own time. ai_usage: the spans that carry
+          gen_ai token or cost usage, by cost, or by tokens when none has a cost;
+          each includes those attributes. links: the spans that link to other spans,
+          by start time.'
         in: query
         name: view
         schema:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanListView'
-          description: 'A quick filter on the spans the route covers. Without it,
-            or with all, every span the route covers is returned in the route''s own
-            order. With any other value only the spans of that kind are returned,
-            in that kind''s order. error_origins: the spans where an error started,
-            meaning error spans with no failing child, by start time. unmarked_failures:
-            spans that failed without being marked as errors (a 4xx or 5xx response,
-            a gRPC status other than OK, or an exception event), by start time. time_spent:
-            one span for each group of same-name siblings, by the group''s total own
-            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
-            or by tokens when none has a cost; each includes those attributes. links:
-            the spans that link to other spans, by start time.'
+          description: 'A quick filter on the spans the route covers. Without it every
+            span the route covers is returned, in the route''s own order. With it
+            only the spans of that kind are returned, in that kind''s order. error_origins:
+            the spans where an error started, meaning error spans with no failing
+            child, by start time. unmarked_failures: spans that failed without being
+            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
+            or an exception event), by start time. time_spent: one span for each group
+            of same-name siblings, by the group''s total own time. ai_usage: the spans
+            that carry gen_ai token or cost usage, by cost, or by tokens when none
+            has a cost; each includes those attributes. links: the spans that link
+            to other spans, by start time.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource
@@ -20118,33 +20112,33 @@ paths:
         list. The list is empty for a root, and stops where a parent was never received.'
       operationId: ListTraceSpanAncestors
       parameters:
-      - description: 'A quick filter on the spans the route covers. Without it, or
-          with all, every span the route covers is returned in the route''s own order.
-          With any other value only the spans of that kind are returned, in that kind''s
-          order. error_origins: the spans where an error started, meaning error spans
-          with no failing child, by start time. unmarked_failures: spans that failed
-          without being marked as errors (a 4xx or 5xx response, a gRPC status other
-          than OK, or an exception event), by start time. time_spent: one span for
-          each group of same-name siblings, by the group''s total own time. ai_usage:
-          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
-          none has a cost; each includes those attributes. links: the spans that link
-          to other spans, by start time.'
+      - description: 'A quick filter on the spans the route covers. Without it every
+          span the route covers is returned, in the route''s own order. With it only
+          the spans of that kind are returned, in that kind''s order. error_origins:
+          the spans where an error started, meaning error spans with no failing child,
+          by start time. unmarked_failures: spans that failed without being marked
+          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
+          event), by start time. time_spent: one span for each group of same-name
+          siblings, by the group''s total own time. ai_usage: the spans that carry
+          gen_ai token or cost usage, by cost, or by tokens when none has a cost;
+          each includes those attributes. links: the spans that link to other spans,
+          by start time.'
         in: query
         name: view
         schema:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanListView'
-          description: 'A quick filter on the spans the route covers. Without it,
-            or with all, every span the route covers is returned in the route''s own
-            order. With any other value only the spans of that kind are returned,
-            in that kind''s order. error_origins: the spans where an error started,
-            meaning error spans with no failing child, by start time. unmarked_failures:
-            spans that failed without being marked as errors (a 4xx or 5xx response,
-            a gRPC status other than OK, or an exception event), by start time. time_spent:
-            one span for each group of same-name siblings, by the group''s total own
-            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
-            or by tokens when none has a cost; each includes those attributes. links:
-            the spans that link to other spans, by start time.'
+          description: 'A quick filter on the spans the route covers. Without it every
+            span the route covers is returned, in the route''s own order. With it
+            only the spans of that kind are returned, in that kind''s order. error_origins:
+            the spans where an error started, meaning error spans with no failing
+            child, by start time. unmarked_failures: spans that failed without being
+            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
+            or an exception event), by start time. time_spent: one span for each group
+            of same-name siblings, by the group''s total own time. ai_usage: the spans
+            that carry gen_ai token or cost usage, by cost, or by tokens when none
+            has a cost; each includes those attributes. links: the spans that link
+            to other spans, by start time.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource
@@ -20255,33 +20249,33 @@ paths:
         span list. The list is empty for a span without children.
       operationId: ListTraceSpanChildren
       parameters:
-      - description: 'A quick filter on the spans the route covers. Without it, or
-          with all, every span the route covers is returned in the route''s own order.
-          With any other value only the spans of that kind are returned, in that kind''s
-          order. error_origins: the spans where an error started, meaning error spans
-          with no failing child, by start time. unmarked_failures: spans that failed
-          without being marked as errors (a 4xx or 5xx response, a gRPC status other
-          than OK, or an exception event), by start time. time_spent: one span for
-          each group of same-name siblings, by the group''s total own time. ai_usage:
-          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
-          none has a cost; each includes those attributes. links: the spans that link
-          to other spans, by start time.'
+      - description: 'A quick filter on the spans the route covers. Without it every
+          span the route covers is returned, in the route''s own order. With it only
+          the spans of that kind are returned, in that kind''s order. error_origins:
+          the spans where an error started, meaning error spans with no failing child,
+          by start time. unmarked_failures: spans that failed without being marked
+          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
+          event), by start time. time_spent: one span for each group of same-name
+          siblings, by the group''s total own time. ai_usage: the spans that carry
+          gen_ai token or cost usage, by cost, or by tokens when none has a cost;
+          each includes those attributes. links: the spans that link to other spans,
+          by start time.'
         in: query
         name: view
         schema:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanListView'
-          description: 'A quick filter on the spans the route covers. Without it,
-            or with all, every span the route covers is returned in the route''s own
-            order. With any other value only the spans of that kind are returned,
-            in that kind''s order. error_origins: the spans where an error started,
-            meaning error spans with no failing child, by start time. unmarked_failures:
-            spans that failed without being marked as errors (a 4xx or 5xx response,
-            a gRPC status other than OK, or an exception event), by start time. time_spent:
-            one span for each group of same-name siblings, by the group''s total own
-            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
-            or by tokens when none has a cost; each includes those attributes. links:
-            the spans that link to other spans, by start time.'
+          description: 'A quick filter on the spans the route covers. Without it every
+            span the route covers is returned, in the route''s own order. With it
+            only the spans of that kind are returned, in that kind''s order. error_origins:
+            the spans where an error started, meaning error spans with no failing
+            child, by start time. unmarked_failures: spans that failed without being
+            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
+            or an exception event), by start time. time_spent: one span for each group
+            of same-name siblings, by the group''s total own time. ai_usage: the spans
+            that carry gen_ai token or cost usage, by cost, or by tokens when none
+            has a cost; each includes those attributes. links: the spans that link
+            to other spans, by start time.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource
@@ -20392,33 +20386,33 @@ paths:
         returns the errors that started below the span.
       operationId: ListTraceSpanDescendants
       parameters:
-      - description: 'A quick filter on the spans the route covers. Without it, or
-          with all, every span the route covers is returned in the route''s own order.
-          With any other value only the spans of that kind are returned, in that kind''s
-          order. error_origins: the spans where an error started, meaning error spans
-          with no failing child, by start time. unmarked_failures: spans that failed
-          without being marked as errors (a 4xx or 5xx response, a gRPC status other
-          than OK, or an exception event), by start time. time_spent: one span for
-          each group of same-name siblings, by the group''s total own time. ai_usage:
-          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
-          none has a cost; each includes those attributes. links: the spans that link
-          to other spans, by start time.'
+      - description: 'A quick filter on the spans the route covers. Without it every
+          span the route covers is returned, in the route''s own order. With it only
+          the spans of that kind are returned, in that kind''s order. error_origins:
+          the spans where an error started, meaning error spans with no failing child,
+          by start time. unmarked_failures: spans that failed without being marked
+          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
+          event), by start time. time_spent: one span for each group of same-name
+          siblings, by the group''s total own time. ai_usage: the spans that carry
+          gen_ai token or cost usage, by cost, or by tokens when none has a cost;
+          each includes those attributes. links: the spans that link to other spans,
+          by start time.'
         in: query
         name: view
         schema:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanListView'
-          description: 'A quick filter on the spans the route covers. Without it,
-            or with all, every span the route covers is returned in the route''s own
-            order. With any other value only the spans of that kind are returned,
-            in that kind''s order. error_origins: the spans where an error started,
-            meaning error spans with no failing child, by start time. unmarked_failures:
-            spans that failed without being marked as errors (a 4xx or 5xx response,
-            a gRPC status other than OK, or an exception event), by start time. time_spent:
-            one span for each group of same-name siblings, by the group''s total own
-            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
-            or by tokens when none has a cost; each includes those attributes. links:
-            the spans that link to other spans, by start time.'
+          description: 'A quick filter on the spans the route covers. Without it every
+            span the route covers is returned, in the route''s own order. With it
+            only the spans of that kind are returned, in that kind''s order. error_origins:
+            the spans where an error started, meaning error spans with no failing
+            child, by start time. unmarked_failures: spans that failed without being
+            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
+            or an exception event), by start time. time_spent: one span for each group
+            of same-name siblings, by the group''s total own time. ai_usage: the spans
+            that carry gen_ai token or cost usage, by cost, or by tokens when none
+            has a cost; each includes those attributes. links: the spans that link
+            to other spans, by start time.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource

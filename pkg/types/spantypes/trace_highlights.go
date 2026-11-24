@@ -1,7 +1,7 @@
 package spantypes
 
 type GetTraceHighlightsParams struct {
-	Views []SpanListView `query:"views" description:"The lists to return, each named by its view. Default: every view except all."`
+	Views []SpanListView `query:"views" description:"The lists to return, each named by its view. Default: all of them."`
 	Limit int            `query:"limit" description:"Number of spans in each list. Default: 10. Maximum: 1000."`
 }
 
@@ -22,5 +22,4 @@ type TraceHighlights struct {
 	TimeSpent        *SpanList            `json:"timeSpent,omitempty" description:"Where the time went, same-name siblings counted as one. First page of the time_spent view of the span list."`
 	AIUsage          *SpanList            `json:"aiUsage,omitempty" description:"The spans with the highest gen_ai cost or token usage. First page of the ai_usage view of the span list. Empty for a trace where no span carries that usage."`
 	Links            *SpanList            `json:"links,omitempty" description:"Spans that link to other spans. First page of the links view of the span list."`
-	All              *SpanList            `json:"all,omitempty" description:"The top of the trace in tree order. First page of the span list without a view. Returned only when asked for."`
 }

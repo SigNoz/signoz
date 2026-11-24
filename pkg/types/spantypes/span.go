@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	SpanListViewAll              = SpanListView{valuer.NewString("all")}
 	SpanListViewErrorOrigins     = SpanListView{valuer.NewString("error_origins")}
 	SpanListViewUnmarkedFailures = SpanListView{valuer.NewString("unmarked_failures")}
 	SpanListViewTimeSpent        = SpanListView{valuer.NewString("time_spent")}
@@ -24,7 +23,7 @@ const (
 type SpanListView struct{ valuer.String }
 
 func (SpanListView) Enum() []any {
-	return []any{SpanListViewAll, SpanListViewErrorOrigins, SpanListViewUnmarkedFailures, SpanListViewTimeSpent, SpanListViewAIUsage, SpanListViewLinks}
+	return []any{SpanListViewErrorOrigins, SpanListViewUnmarkedFailures, SpanListViewTimeSpent, SpanListViewAIUsage, SpanListViewLinks}
 }
 
 // UnmarkedFailureReason says why a span without the error flag counts as a failure. It is a plain
@@ -38,7 +37,7 @@ func (UnmarkedFailureReason) Enum() []any {
 // ListTraceSpansParams is shared by every route that returns a list of spans: the route decides
 // which spans it covers, and these narrow and page them.
 type ListTraceSpansParams struct {
-	View         SpanListView `query:"view" description:"A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time."`
+	View         SpanListView `query:"view" description:"A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time."`
 	Query        string       `query:"query" description:"Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error."`
 	SelectFields []string     `query:"selectFields" description:"Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings."`
 	Offset       int          `query:"offset" description:"Number of spans to skip. Default: 0."`

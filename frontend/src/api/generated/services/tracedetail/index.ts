@@ -176,7 +176,7 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of each view of the span list. The summary is the one the trace summary route returns. views names the lists to return; without it every view except all is returned. Read more of a list from the span list with the view of the same name.
+ * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of each view of the span list. The summary is the one the trace summary route returns. views names the lists to return; without it all of them are returned. Read more of a list from the span list with the view of the same name.
  * @summary Get highlights of a trace
  */
 export const getTraceHighlights = (
