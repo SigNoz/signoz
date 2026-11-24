@@ -1,7 +1,9 @@
 import { render, screen, userEvent } from 'tests/test-utils';
 
 describe('userEvent from the harness', () => {
-	const onClick = jest.fn();
+	const onClick = jest.fn() as jest.MockedFunction<
+		React.MouseEventHandler<HTMLButtonElement>
+	>;
 
 	const renderBlockedButton = (): void => {
 		render(
