@@ -545,3 +545,73 @@ def test_create_rejects_rules_a_scalar_panel_cannot_evaluate(
             "suggestions": [],
         },
     }
+
+
+def test_create_accepts_scalar_panel_without_match_type(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_alert_rule: Callable[[dict], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    rule_id = create_alert_rule(
+        {
+            **VALID_RULE,
+            "condition": {
+                **VALID_RULE["condition"],
+                "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "op": "above", "channels": []}]},
+                "compositeQuery": {
+                    "queryType": "builder",
+                    "panelType": "value",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "validation_probe_cpu", "timeAggregation": "avg", "spaceAggregation": "max", "reduceTo": "avg"}]}}],
+                },
+            },
+        }
+    )
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"{BASE_URL}/{rule_id}"),
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert "matchType" not in response.json()["data"]["condition"]["thresholds"]["spec"][0]
+
+
+def test_create_rejects_scalar_panel_with_empty_match_type(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json={
+            **VALID_RULE,
+            "condition": {
+                **VALID_RULE["condition"],
+                "thresholds": {"kind": "basic", "spec": [{"name": "critical", "target": 90, "matchType": "", "op": "above", "channels": []}]},
+                "compositeQuery": {
+                    "queryType": "builder",
+                    "panelType": "value",
+                    "queries": [{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "aggregations": [{"metricName": "validation_probe_cpu", "timeAggregation": "avg", "spaceAggregation": "max", "reduceTo": "avg"}]}}],
+                },
+            },
+        },
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=5,
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
+    assert response.json() == {
+        "status": "error",
+        "error": {
+            "type": "invalid-input",
+            "code": "invalid_input",
+            "message": "failed to parse json: failed to unmarshal rule threshold spec: string must be omitted or non-empty",
+            "errors": [],
+            "suggestions": [],
+        },
+    }

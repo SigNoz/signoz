@@ -12836,9 +12836,9 @@ export interface RuletypesBasicRuleThresholdDTO {
 	 */
 	channels?: string[] | null;
 	/**
-	 * @description Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'.
+	 * @description Which points in the window must satisfy op. Required on graph; omitted on table and value, where the single value is compared directly. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'.
 	 */
-	matchType: RuletypesMatchTypeDTO;
+	matchType?: RuletypesMatchTypeDTO;
 	/**
 	 * @type string
 	 * @description The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold.name label and, lowercased, as the severity label; templates can read it as $threshold.name.

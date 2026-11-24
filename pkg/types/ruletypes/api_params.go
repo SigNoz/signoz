@@ -506,6 +506,14 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			if err := thresholds.validateRecoveryTargets(); err != nil {
 				errs = append(errs, err)
 			}
+			if r.RuleCondition.CompositeQuery != nil && r.RuleCondition.CompositeQuery.PanelType.GetQueryRangeRequestType() == qbtypes.RequestTypeTimeSeries {
+				for _, basicThreshold := range thresholds {
+					if basicThreshold.MatchType.IsZero() {
+						errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+							"condition.matchType: field is required for threshold %q unless panelType is table or value", basicThreshold.Name))
+					}
+				}
+			}
 		}
 	}
 

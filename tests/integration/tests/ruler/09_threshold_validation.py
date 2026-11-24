@@ -58,8 +58,12 @@ VALID_RULE = {
             {"name": "critical", "target": 90, "matchType": "0", "op": "above", "channels": []},
             'condition.matchType: unsupported value "0"; must be one of at_least_once, all_the_times, on_average, in_total, last',
         ),
+        (
+            {"name": "critical", "target": 90, "op": "above", "channels": []},
+            'condition.matchType: field is required for threshold "critical" unless panelType is table or value',
+        ),
     ],
-    ids=["null_target", "empty_op", "unknown_match_type"],
+    ids=["null_target", "empty_op", "unknown_match_type", "missing_match_type"],
 )
 def test_create_rejects_invalid_threshold(
     signoz: SigNoz,
