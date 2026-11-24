@@ -48,7 +48,7 @@ jobs:
       - name: install-frontend
         run: cd frontend && pnpm install
       - name: test
-        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }} --reporters=default --reporters=./scripts/slow-test-reporter.js
+        run: cd frontend && pnpm test --shard=${{ matrix.shard }}/${{ strategy.job-total }}
   # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
   # On PRs it is skipped, and GitHub counts a skipped required check as passing.
   test:
@@ -110,7 +110,7 @@ jobs:
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     container:
       image: mcr.microsoft.com/playwright:v1.57.0-noble
     strategy:
