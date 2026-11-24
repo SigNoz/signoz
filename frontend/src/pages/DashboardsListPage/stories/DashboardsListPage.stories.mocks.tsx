@@ -53,6 +53,7 @@ import {
 	dashboardsListResponse,
 	PIN_WRITES,
 	recentDashboardIds,
+	ROW_IMAGES,
 	ROW_MARKERS,
 	savedView,
 	seedPinnedDashboards,
@@ -61,6 +62,7 @@ import {
 	TOOLTIP_TAGS,
 	WRITE_STATES,
 	type PinWrite,
+	type RowImages,
 	type RowMarker,
 	type TemplateRequest,
 	type WriteState,
@@ -256,6 +258,13 @@ export const dashboardsListMocks = defineStoryMocks({
 			options: ROW_MARKERS,
 			value: [...ROW_MARKERS],
 		}),
+		images: choiceControl<RowImages>('Row images', {
+			group: LIST,
+			description:
+				'What each row shows beside its name: a bundled icon, or a bundled logo, which dashboard JSON can reference but the icon picker does not offer.',
+			options: ROW_IMAGES,
+			value: 'icons',
+		}),
 		columns: multiChoiceControl<DetailColumn>('Detail columns', {
 			group: LIST,
 			description: 'The optional fields on each row’s second line.',
@@ -353,6 +362,7 @@ export const dashboardsListMocks = defineStoryMocks({
 					limit: Number(req.url.searchParams.get('limit') ?? 20),
 					markers: values.markers,
 					query: req.url.searchParams.get('query') ?? '',
+					images: values.images,
 				}),
 			),
 		),
@@ -592,6 +602,7 @@ export const listedDashboards = (
 			new URL(listRoute(args.view), 'http://localhost').searchParams.get(
 				'query',
 			) ?? '',
+		images: args.images,
 	}).data.dashboards;
 
 	return view?.clientFilter

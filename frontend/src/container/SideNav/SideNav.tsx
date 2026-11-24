@@ -3,6 +3,7 @@ import {
 	MouseEvent,
 	useCallback,
 	useEffect,
+	useLayoutEffect,
 	useMemo,
 	useRef,
 	useState,
@@ -75,6 +76,7 @@ import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { buildNavUrl, getQueryString } from './helper';
 import {
+	DEFAULT_PINNED_COUNT,
 	defaultMoreMenuItems,
 	getUserSettingsDropdownMenuItems,
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
@@ -85,6 +87,7 @@ import {
 	type UserSettingsMenuKey,
 } from './menuItems';
 import NavItem from './NavItem/NavItem';
+import NavItemsSkeleton from './NavItemsSkeleton';
 import {
 	CHANGELOG_LABEL,
 	DropdownSeparator,
@@ -138,6 +141,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		featureFlags,
 		trialInfo,
 		isLoggedIn,
+		isSessionPending,
 		userPreferences,
 		isFetchingUserPreferences,
 		changelog,
@@ -307,21 +311,24 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		isEditor,
 	]);
 
-	// Track if we've done the initial sync (to avoid overwriting user actions during session)
-	const hasInitializedRef = useRef(false);
+	const [isNavReady, setIsNavReady] = useState(false);
 
-	// Sync state only on initial load when userPreferences first becomes available
-	useEffect(() => {
-		// Only sync once: when userPreferences loads for the first time
-		if (!hasInitializedRef.current && isFetchingUserPreferences === false) {
+	// Sync state only once, so user actions during the session are not overwritten:
+	// when the session has settled, so the role and the license are known, and
+	// userPreferences have loaded for the first time.
+	// A layout effect, so a session restored from the cache never paints the skeleton.
+	useLayoutEffect(() => {
+		if (!isNavReady && !isSessionPending && isFetchingUserPreferences === false) {
 			setPinnedMenuItems(computedPinnedMenuItems);
 			setSecondaryMenuItems(computedSecondaryMenuItems);
-			hasInitializedRef.current = true;
+			setIsNavReady(true);
 		}
 	}, [
 		computedPinnedMenuItems,
 		computedSecondaryMenuItems,
 		isFetchingUserPreferences,
+		isNavReady,
+		isSessionPending,
 	]);
 
 	const isChatSupportEnabled = featureFlags?.find(
@@ -1083,7 +1090,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 							{renderNavItems(primaryMenuItems)}
 						</div>
 
-						{(pinnedMenuItems.length > 0 || !isCollapsed) && (
+						{(!isNavReady || pinnedMenuItems.length > 0 || !isCollapsed) && (
 							<div
 								className={cx('shortcut-nav-items', isCollapsed && 'sidebar-collapsed')}
 								data-testid="sidenav-shortcuts"
@@ -1113,7 +1120,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 											)}
 										</div>
 
-										{pinnedMenuItems.length === 0 && (
+										{isNavReady && pinnedMenuItems.length === 0 && (
 											<div className="nav-section-subtitle">
 												You have not added any shortcuts yet.
 											</div>
@@ -1121,7 +1128,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 									</div>
 								)}
 
-								{(pinnedMenuItems.length > 0 || isCollapsed) && (
+								{!isNavReady && <NavItemsSkeleton count={DEFAULT_PINNED_COUNT} />}
+
+								{isNavReady && (pinnedMenuItems.length > 0 || isCollapsed) && (
 									<div className="nav-items-section">
 										{renderNavItems(
 											pinnedMenuItems.filter((item) => item.isEnabled),

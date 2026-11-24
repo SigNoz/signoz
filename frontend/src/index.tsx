@@ -6,6 +6,7 @@ import { AppRouterProvider } from 'app/AppRouterProvider';
 import { createAppRouter } from 'app/createAppRouter';
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
+import { persistBootQueries } from 'lib/bootQueryCache';
 import { configureOverlayScrollbars } from 'lib/configureOverlayScrollbars';
 import { NuqsAdapter } from 'nuqs/adapters/react-router/v7';
 import { AppProvider } from 'providers/App/App';
@@ -13,11 +14,12 @@ import store from 'store';
 import APIError from 'types/api/error';
 import { installTranslationResilience } from 'translation-resilience';
 
-import 'lib/monaco/setup';
+import 'lib/monaco/loader';
 
 import './ReactI18';
 
 import 'styles.scss';
+import 'lib/uPlotStylesheet';
 
 installTranslationResilience();
 configureOverlayScrollbars();
@@ -44,6 +46,8 @@ const queryClient = new QueryClient({
 		},
 	},
 });
+
+persistBootQueries(queryClient);
 
 const searchParams = (children: ReactNode): ReactNode => (
 	<NuqsAdapter>{children}</NuqsAdapter>

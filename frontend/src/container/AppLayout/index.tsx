@@ -1,5 +1,7 @@
 import {
+	lazy,
 	ReactNode,
+	Suspense,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -27,7 +29,6 @@ import getUserLatestVersion from 'api/v1/version/getLatestVersion';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
 import AppToaster from 'components/AppToaster/AppToaster';
-import ChangelogModal from 'components/ChangelogModal/ChangelogModal';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
@@ -38,8 +39,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import ROUTES from 'constants/routes';
 import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
-import AIAssistantModal from 'container/AIAssistant/AIAssistantModal';
-import AIAssistantPanel from 'container/AIAssistant/AIAssistantPanel';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import BottomStrip from 'container/BottomStrip';
 import SideNav from 'container/SideNav';
@@ -81,6 +80,7 @@ import AppReducer from 'types/reducer/app';
 import { getBaseUrl } from 'utils/basePath';
 import { showErrorNotification } from 'utils/error';
 import { eventEmitter } from 'utils/getEventEmitter';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import {
 	getFormattedDate,
 	getFormattedDateWithMinutes,
@@ -92,10 +92,24 @@ import { getRouteKey } from './utils';
 
 import './AppLayout.styles.scss';
 
+// The assistant pulls in the dashboard panel registry and the query builder, so it
+// loads only for users who have it.
+const AIAssistantModal = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantModal')),
+);
+const AIAssistantPanel = lazy(() =>
+	lazyRetry(() => import('container/AIAssistant/AIAssistantPanel')),
+);
+
+const ChangelogModal = lazy(() =>
+	lazyRetry(() => import('components/ChangelogModal/ChangelogModal')),
+);
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function AppLayout(props: AppLayoutProps): JSX.Element {
 	const {
 		isLoggedIn,
+		isSessionPending,
 		user,
 		trialInfo,
 		activeLicense,
@@ -214,7 +228,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		{
 			queryFn: getUserVersion,
 			queryKey: ['getUserVersion', user?.accessJwt],
-			enabled: isLoggedIn,
+			enabled: isLoggedIn && !isSessionPending,
 		},
 		{
 			queryFn: getUserLatestVersion,
@@ -225,7 +239,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
 				getChangelogByVersion(currentVersion, changelogForTenant),
 			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(currentVersion),
+			enabled: isLoggedIn && !isSessionPending && Boolean(currentVersion),
 		},
 	]);
 
@@ -236,6 +250,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			!changelog &&
 			!getChangelogByVersionResponse.isLoading &&
 			isLoggedIn &&
+			!isSessionPending &&
 			Boolean(currentVersion)
 		) {
 			getChangelogByVersionResponse.refetch();
@@ -276,10 +291,19 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			getUserLatestVersionResponse.refetch();
 		}
 
-		if (getUserVersionResponse.status === 'idle' && isLoggedIn) {
+		if (
+			getUserVersionResponse.status === 'idle' &&
+			isLoggedIn &&
+			!isSessionPending
+		) {
 			getUserVersionResponse.refetch();
 		}
-	}, [getUserLatestVersionResponse, getUserVersionResponse, isLoggedIn]);
+	}, [
+		getUserLatestVersionResponse,
+		getUserVersionResponse,
+		isLoggedIn,
+		isSessionPending,
+	]);
 
 	const { children } = props;
 
@@ -665,7 +689,11 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	)?.value as boolean;
 
 	// Add loading state to prevent layout shift during initial load
-	const [isSidebarLoaded, setIsSidebarLoaded] = useState(false);
+	// Already loaded when the preferences were restored from the cache, so the
+	// first paint uses the saved width instead of the localStorage fallback.
+	const [isSidebarLoaded, setIsSidebarLoaded] = useState(
+		() => !isFetchingUserPreferences,
+	);
 
 	// Get sidebar state from localStorage as fallback until preferences are loaded
 	const getSidebarStateFromLocalStorage = useCallback((): boolean => {
@@ -832,15 +860,21 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 					</div>
 
 					{isLoggedIn && isAIAssistantEnabled && (
-						<>
-							<AIAssistantPanel />
-							<AIAssistantModal />
-						</>
+						<Sentry.ErrorBoundary>
+							<Suspense fallback={null}>
+								<AIAssistantPanel />
+								<AIAssistantModal />
+							</Suspense>
+						</Sentry.ErrorBoundary>
 					)}
 				</Flex>
 
 				{showChangelogModal && changelog && (
-					<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+					<Sentry.ErrorBoundary>
+						<Suspense fallback={null}>
+							<ChangelogModal changelog={changelog} onClose={toggleChangelogModal} />
+						</Suspense>
+					</Sentry.ErrorBoundary>
 				)}
 
 				<AppToaster />

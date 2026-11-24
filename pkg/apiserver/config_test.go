@@ -68,7 +68,95 @@ func TestNewWithEnvProvider(t *testing.T) {
 				"/api/v1/health1",
 			},
 		},
+		Compression: Compression{
+			Enabled: true,
+			Level:   -1,
+		},
 	}
 
 	assert.Equal(t, expected, actual)
+}
+
+func TestCompressionWithEnvProvider(t *testing.T) {
+	testCases := []struct {
+		name     string
+		env      map[string]string
+		expected Compression
+	}{
+		{
+			name:     "Defaults",
+			env:      map[string]string{},
+			expected: Compression{Enabled: true, Level: -1},
+		},
+		{
+			name:     "Disabled",
+			env:      map[string]string{"SIGNOZ_APISERVER_COMPRESSION_ENABLED": "false"},
+			expected: Compression{Enabled: false, Level: -1},
+		},
+		{
+			name:     "Disabled_Capitalized",
+			env:      map[string]string{"SIGNOZ_APISERVER_COMPRESSION_ENABLED": "False"},
+			expected: Compression{Enabled: false, Level: -1},
+		},
+		{
+			name:     "Enabled_Level",
+			env:      map[string]string{"SIGNOZ_APISERVER_COMPRESSION_ENABLED": "true", "SIGNOZ_APISERVER_COMPRESSION_LEVEL": "9"},
+			expected: Compression{Enabled: true, Level: 9},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			for key, value := range testCase.env {
+				t.Setenv(key, value)
+			}
+
+			conf, err := config.New(
+				context.Background(),
+				config.ResolverConfig{
+					Uris:              []string{"env:"},
+					ProviderFactories: []config.ProviderFactory{envprovider.NewFactory()},
+				},
+				[]factory.ConfigFactory{NewConfigFactory()},
+			)
+			require.NoError(t, err)
+
+			actual := &Config{}
+			require.NoError(t, conf.Unmarshal("apiserver", actual))
+			assert.Equal(t, testCase.expected, actual.Compression)
+		})
+	}
+}
+
+func TestValidateCompressionLevel(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name    string
+		level   int
+		wantErr bool
+	}{
+		{name: "Default", level: -1, wantErr: false},
+		{name: "BestSpeed", level: 1, wantErr: false},
+		{name: "BestCompression", level: 9, wantErr: false},
+		{name: "Zero", level: 0, wantErr: true},
+		{name: "AboveBestCompression", level: 10, wantErr: true},
+		{name: "BelowDefault", level: -2, wantErr: true},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			conf := NewConfigFactory().New().(*Config)
+			conf.Compression.Level = testCase.level
+
+			err := conf.Validate()
+			if testCase.wantErr {
+				assert.ErrorContains(t, err, "apiserver.compression.level")
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
 }

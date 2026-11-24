@@ -317,6 +317,11 @@
             "message": "[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
           {
+            "name": "@signozhq/design-tokens",
+            "importNames": ["Style"],
+            "message": "[bundle] Style is a large object of CSS variable strings and is not tree-shaken. Write the CSS variable directly, for example 'var(--l3-foreground)'."
+          },
+          {
             "name": "react-redux",
             "message": "[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query."
           },
@@ -337,6 +342,11 @@
             "name": "api/generated/services/dashboard",
             "importNames": ["patchDashboardV2", "usePatchDashboardV2"],
             "message": "[dashboard-v2] Don't call patchDashboardV2/usePatchDashboardV2 directly — use useOptimisticPatch().patchAsync so spec edits update the react-query cache optimistically and reconcile on settle."
+          },
+          {
+            "name": "antd/lib",
+            "allowTypeImports": true,
+            "message": "[bundle] antd/lib is the CommonJS root and bundles every antd component. Import from 'antd' instead."
           },
           {
             "name": "motion/react-client",

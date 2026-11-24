@@ -53,7 +53,6 @@ const EXCLUDED_PLUGINS = [
 	'vite-plugin-checker',
 	'dev-base-path',
 	'dev-boot-data',
-	'vite-plugin-image-optimizer',
 	'vite-plugin-compression',
 ];
 
@@ -90,7 +89,7 @@ const config: StorybookConfig = {
 			build: {
 				...viteConfig.build,
 				// `vite.config.ts` sets this for the app; Storybook's builder replaces
-				// `build` wholesale, which leaves rolldown-vite on its default
+				// `build` wholesale, which leaves Vite on its default
 				// lightningcss. That one rejects `:global()` in a plain stylesheet, which
 				// the app has, and the static build dies in CSS minification.
 				cssMinify: 'esbuild',

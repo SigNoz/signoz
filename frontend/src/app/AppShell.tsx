@@ -12,9 +12,10 @@ export interface AppShellProps {
 }
 
 /**
- * The layers between a resolved session and a page. Mounted once the boot
- * fetches settle, above `PrivateRoute`, so it also covers the redirects and the
- * not-found route, and it survives every navigation.
+ * The layers between a session and a page. Mounted as soon as the user has a
+ * token, while the boot fetches are still in flight, above `PrivateRoute`, so
+ * it also covers the redirects and the not-found route, and it survives every
+ * navigation.
  *
  * A new provider belongs here if it needs the user and has to outlive the page:
  * a global overlay, a shortcut host, anything one route opens and the next one

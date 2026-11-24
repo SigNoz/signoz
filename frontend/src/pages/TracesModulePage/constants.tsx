@@ -1,13 +1,15 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import { matchRoute } from 'lib/router/matchRoute';
 import ROUTES from 'constants/routes';
 import { Compass, Cone } from '@signozhq/icons';
-import TracesExplorer from 'pages/TracesExplorer';
-import TracesFunnelDetails from 'pages/TracesFunnelDetails';
-import TracesFunnels from 'pages/TracesFunnels';
+
+const TracesExplorer = Loadable(() => import('pages/TracesExplorer'));
+const TracesFunnelDetails = Loadable(() => import('pages/TracesFunnelDetails'));
+const TracesFunnels = Loadable(() => import('pages/TracesFunnels'));
 
 export const tracesExplorer: TabRoutes = {
-	Component: (): JSX.Element => <TracesExplorer />,
+	Component: TracesExplorer,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer

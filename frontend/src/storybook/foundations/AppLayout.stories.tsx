@@ -3,6 +3,7 @@ import { changelog } from 'components/ChangelogModal/stories/__story_mockdata__/
 import ROUTES from 'constants/routes';
 
 import type { GlobalMockArgs } from '../globals';
+import { waitForChangelog } from './__story_mockdata__/appLayout.play';
 
 /** A page with a heading and nothing else, so the shell is what the story shows. */
 function PlaceholderPage(): JSX.Element {
@@ -53,4 +54,5 @@ export const Changelog: Story = {
 			appContext: { changelog, showChangelogModal: true },
 		},
 	},
+	play: waitForChangelog,
 };

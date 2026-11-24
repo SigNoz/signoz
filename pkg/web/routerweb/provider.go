@@ -1,12 +1,17 @@
 package routerweb
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"html/template"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -16,9 +21,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	assetsPathPrefix      = "/assets/"
+	immutableCacheControl = "public, max-age=31536000, immutable"
+)
+
 type provider struct {
 	config        web.Config
 	indexContents []byte
+	indexETag     string
 	fileHandler   http.Handler
 }
 
@@ -59,7 +70,8 @@ func New(ctx context.Context, settings factory.ProviderSettings, config web.Conf
 	return &provider{
 		config:        config,
 		indexContents: indexContents,
-		fileHandler:   http.FileServer(http.Dir(config.Directory)),
+		indexETag:     indexETag(indexContents),
+		fileHandler:   newPrecompressedHandler(http.Dir(config.Directory), config.Index),
 	}, nil
 }
 
@@ -85,7 +97,7 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
-			provider.serveIndex(rw)
+			provider.serveIndex(rw, req)
 			return
 		}
 
@@ -97,15 +109,27 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if fi.IsDir() {
 		// path is a directory, serve index.html
-		provider.serveIndex(rw)
+		provider.serveIndex(rw, req)
 		return
+	}
+
+	// files under /assets/ are content-hashed, so their URL changes with their content
+	if strings.HasPrefix(req.URL.Path, assetsPathPrefix) {
+		rw.Header().Set("Cache-Control", immutableCacheControl)
 	}
 
 	// otherwise, use http.FileServer to serve the static file
 	provider.fileHandler.ServeHTTP(rw, req)
 }
 
-func (provider *provider) serveIndex(rw http.ResponseWriter) {
+// The index is rendered once at startup, so a hash of it is a strong validator for the life of the process.
+func (provider *provider) serveIndex(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = rw.Write(provider.indexContents)
+	rw.Header().Set("ETag", provider.indexETag)
+	http.ServeContent(rw, req, "", time.Time{}, bytes.NewReader(provider.indexContents))
+}
+
+func indexETag(contents []byte) string {
+	sum := sha256.Sum256(contents)
+	return `"` + hex.EncodeToString(sum[:16]) + `"`
 }

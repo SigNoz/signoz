@@ -6,8 +6,6 @@ import type { Plugin, TransformResult, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
-import tsconfigPaths from 'vite-tsconfig-paths';
 import type {
 	Appcues,
 	Posthog,
@@ -15,6 +13,8 @@ import type {
 	Sentry,
 	WebSettings,
 } from 'types/generated/webSettings';
+import { injectChunkImportMap } from './vite-plugins/injectChunkImportMap';
+import { vendorChunkName } from './vite-plugins/vendorChunkName';
 
 // In dev the Go backend is not involved, so replace the [[.BaseHref]] placeholder
 // with the configured base path so relative assets resolve correctly from the Vite dev server.
@@ -76,13 +76,27 @@ function rawMarkdownPlugin(): Plugin {
 	};
 }
 
-export default defineConfig(({ mode }): UserConfig => {
+// Monaco contributions that need a provider SigNoz never registers. monaco-editor
+// declares no `sideEffects`, so its bare imports keep all of them.
+const MONACO_UNUSED_CONTRIBS = [
+	'codelens',
+	'dropOrPasteInto',
+	'gpu',
+	'inlayHints',
+	'inlineCompletions',
+	'linkedEditing',
+	'parameterHints',
+	'rename',
+	'sectionHeaders',
+	'semanticTokens',
+];
+
+export default defineConfig(({ command, mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd(), '') as ImportMetaEnv;
 	// Base path for serving the app (e.g., '/signoz/'). Defaults to '/'.
 	const basePath = env.VITE_BASE_PATH || '/';
 
 	const plugins = [
-		tsconfigPaths(),
 		rawMarkdownPlugin(),
 		devBasePathPlugin(basePath),
 		devBootDataPlugin(env),
@@ -114,7 +128,13 @@ export default defineConfig(({ mode }): UserConfig => {
 				project: env.VITE_SENTRY_PROJECT_ID,
 				// Pin the sourcemap-upload release to the same value injected as
 				// process.env.VERSION so uploaded sourcemaps resolve. Ref: platform-pod#2393
-				release: { name: env.VITE_VERSION, setCommits: { auto: true } },
+				// `inject: false`: the release string would otherwise land in every chunk
+				// and change all their hashes on each release. Sentry.init sets it.
+				release: {
+					name: env.VITE_VERSION,
+					inject: false,
+					setCommits: { auto: true },
+				},
 			}),
 		);
 	}
@@ -130,18 +150,13 @@ export default defineConfig(({ mode }): UserConfig => {
 	}
 
 	if (mode === 'production') {
-		plugins.push(
-			ViteImageOptimizer({
-				jpeg: { quality: 80 },
-				jpg: { quality: 80 },
-			}),
-		);
 		plugins.push(viteCompression());
 	}
 
 	return {
 		plugins,
 		resolve: {
+			tsconfigPaths: true,
 			alias: {
 				// @grafana/data imports bare CJS `lodash`, whose UMD footer checks for an
 				// AMD loader before assigning module.exports. Any third-party script that
@@ -149,13 +164,13 @@ export default defineConfig(({ mode }): UserConfig => {
 				// every lodash method reached through it is undefined at runtime. lodash-es
 				// is the same version, real ESM, and tree-shakes.
 				lodash: 'lodash-es',
-				'@': resolve(__dirname, './src'),
-				utils: resolve(__dirname, './src/utils'),
-				types: resolve(__dirname, './src/types'),
-				constants: resolve(__dirname, './src/constants'),
-				parser: resolve(__dirname, './src/parser'),
-				providers: resolve(__dirname, './src/providers'),
-				lib: resolve(__dirname, './src/lib'),
+				'@': resolve(import.meta.dirname, './src'),
+				utils: resolve(import.meta.dirname, './src/utils'),
+				types: resolve(import.meta.dirname, './src/types'),
+				constants: resolve(import.meta.dirname, './src/constants'),
+				parser: resolve(import.meta.dirname, './src/parser'),
+				providers: resolve(import.meta.dirname, './src/providers'),
+				lib: resolve(import.meta.dirname, './src/lib'),
 			},
 		},
 		css: {
@@ -188,6 +203,55 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			chunkImportMap: true,
+			rolldownOptions: {
+				treeshake: {
+					moduleSideEffects: [
+						{
+							test: new RegExp(
+								`monaco-editor/esm/vs/editor/contrib/(${MONACO_UNUSED_CONTRIBS.join('|')})/`,
+							),
+							sideEffects: false,
+						},
+					],
+				},
+				output: {
+					// Export aliases are renumbered whenever a chunk's exports change, which
+					// re-hashes every importer.
+					minifyInternalExports: false,
+					// Without these groups Rolldown splits the entry's static graph into ~300
+					// chunks, 324 requests on first load. `initial` keeps the app code of that
+					// graph in one chunk, so the packages around it can keep their hashes.
+					codeSplitting: {
+						groups: [
+							{
+								name: vendorChunkName,
+								debugName: 'per-package',
+								test: 'node_modules',
+								tags: ['$initial'],
+								minSize: 100 * 1024,
+								priority: 5,
+							},
+							{
+								name: 'v-misc',
+								test: 'node_modules',
+								tags: ['$initial'],
+								priority: 1,
+							},
+							{ name: 'initial', tags: ['$initial'] },
+						],
+					},
+				},
+				// `experimental.bundledDev` runs these during serve without emitting the
+				// import map.
+				plugins: command === 'build' ? [injectChunkImportMap()] : [],
+			},
+		},
+		// An iife worker runs as a sloppy script, where a function declared in a
+		// block is hoisted as a `var` over the minifier's renamed outer names (the
+		// JSON worker's validation then throws on every non-empty array).
+		worker: {
+			format: 'es',
 		},
 		server: {
 			open: true,
