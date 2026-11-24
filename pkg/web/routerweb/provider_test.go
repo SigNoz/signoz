@@ -67,7 +67,13 @@ func httpGet(t *testing.T, url string) string {
 	return string(body)
 }
 
-func sendRequest(t *testing.T, client *http.Client, method string, url string, headers map[string]string) (*http.Response, string) {
+type response struct {
+	status int
+	header http.Header
+	body   string
+}
+
+func sendRequest(t *testing.T, client *http.Client, method string, url string, headers map[string]string) response {
 	t.Helper()
 
 	req, err := http.NewRequest(method, url, nil)
@@ -92,7 +98,7 @@ func sendRequest(t *testing.T, client *http.Client, method string, url string, h
 		require.NoError(t, err)
 	}
 
-	return res, string(body)
+	return response{status: res.StatusCode, header: res.Header, body: string(body)}
 }
 
 func TestServeTemplatedIndex(t *testing.T) {
@@ -396,11 +402,11 @@ func TestServeIndexETag(t *testing.T) {
 	t.Cleanup(transport.CloseIdleConnections)
 	client := &http.Client{Transport: transport}
 
-	first, _ := sendRequest(t, client, http.MethodGet, plain+"/", nil)
-	require.Equal(t, http.StatusOK, first.StatusCode)
-	etag := first.Header.Get("ETag")
+	first := sendRequest(t, client, http.MethodGet, plain+"/", nil)
+	require.Equal(t, http.StatusOK, first.status)
+	etag := first.header.Get("ETag")
 	require.True(t, strings.HasPrefix(etag, `W/"`), "ETag must be weak, got %q", etag)
-	assert.Contains(t, first.Header.Get("Cache-Control"), "no-cache")
+	assert.Contains(t, first.header.Get("Cache-Control"), "no-cache")
 
 	strongForm := strings.TrimPrefix(etag, "W/")
 
@@ -667,16 +673,73 @@ func TestServeIndexETag(t *testing.T) {
 				headers["Accept-Encoding"] = "gzip"
 			}
 
-			res, body := sendRequest(t, client, testCase.method, base+testCase.path, headers)
+			res := sendRequest(t, client, testCase.method, base+testCase.path, headers)
 
-			assert.Equal(t, testCase.wantStatus, res.StatusCode)
-			assert.Equal(t, testCase.wantETag, res.Header.Get("ETag"))
-			assert.Empty(t, res.Header.Get("Content-Range"))
-			assert.Equal(t, testCase.wantBody, body)
+			assert.Equal(t, testCase.wantStatus, res.status)
+			assert.Equal(t, testCase.wantETag, res.header.Get("ETag"))
+			assert.Empty(t, res.header.Get("Content-Range"))
+			assert.Equal(t, testCase.wantBody, res.body)
 
 			if testCase.wantBody != "" {
-				assert.Equal(t, testCase.wantEncoding, res.Header.Get("Content-Encoding"))
+				assert.Equal(t, testCase.wantEncoding, res.header.Get("Content-Encoding"))
 			}
+		})
+	}
+}
+
+func TestServeIndexETagChangesWithIndex(t *testing.T) {
+	t.Parallel()
+
+	template, err := os.ReadFile(filepath.Join("testdata", "valid_template.html"))
+	require.NoError(t, err)
+
+	changedDirectory := t.TempDir()
+	changedTemplate := strings.Replace(string(template), "Welcome to test data!!!", "Welcome to new data!!!", 1)
+	require.NoError(t, os.WriteFile(filepath.Join(changedDirectory, "valid_template.html"), []byte(changedTemplate), 0o644))
+
+	webConfig := web.Config{Index: "valid_template.html", Directory: "testdata"}
+	sentrySettings := web.SettingsConfig{Sentry: web.SentryConfig{Enabled: true, DSN: "https://examplePublicKey@o0.ingest.sentry.io/0"}}
+
+	client := &http.Client{}
+	previous := sendRequest(t, client, http.MethodGet, startServer(t, webConfig, global.Config{})+"/", nil)
+	require.Equal(t, http.StatusOK, previous.status)
+	previousETag := previous.header.Get("ETag")
+	require.NotEmpty(t, previousETag)
+
+	testCases := []struct {
+		name         string
+		webConfig    web.Config
+		globalConfig global.Config
+		wantBody     string
+	}{
+		{
+			name:      "ChangedHTML",
+			webConfig: web.Config{Index: "valid_template.html", Directory: changedDirectory},
+			wantBody:  strings.Replace(expectedHTML("/", web.Settings{}), "Welcome to test data!!!", "Welcome to new data!!!", 1),
+		},
+		{
+			name:         "ChangedBaseHref",
+			webConfig:    webConfig,
+			globalConfig: global.Config{ExternalURL: &url.URL{Path: "/signoz"}},
+			wantBody:     expectedHTML("/signoz/", web.Settings{}),
+		},
+		{
+			name:      "ChangedSettings",
+			webConfig: web.Config{Index: "valid_template.html", Directory: "testdata", Settings: sentrySettings},
+			wantBody:  expectedHTML("/", web.Settings{Sentry: web.Sentry{Enabled: true, DSN: sentrySettings.Sentry.DSN}}),
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			base := startServer(t, testCase.webConfig, testCase.globalConfig)
+
+			res := sendRequest(t, client, http.MethodGet, base+"/", map[string]string{"If-None-Match": previousETag})
+
+			assert.Equal(t, http.StatusOK, res.status)
+			assert.NotEmpty(t, res.header.Get("ETag"))
+			assert.NotEqual(t, previousETag, res.header.Get("ETag"))
+			assert.Equal(t, testCase.wantBody, strings.TrimSuffix(res.body, "\n"))
 		})
 	}
 }
