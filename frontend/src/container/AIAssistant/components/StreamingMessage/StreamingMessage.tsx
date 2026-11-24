@@ -140,7 +140,6 @@ export default function StreamingMessage({
 	// Same frame as a finished reply, so nothing moves when the stream commits.
 	const bodyClass = cx(messageStyles.body, styles.body, {
 		[messageStyles.compact]: isCompact,
-		[messageStyles.fullPage]: variant === 'page',
 	});
 
 	// Recompute groups only when the events array identity changes. The

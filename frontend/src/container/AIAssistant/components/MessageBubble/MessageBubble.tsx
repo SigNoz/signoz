@@ -146,7 +146,6 @@ export default function MessageBubble({
 	);
 	const bodyClass = cx(styles.body, {
 		[styles.compact]: isCompact,
-		[styles.fullPage]: variant === 'page',
 	});
 
 	return (

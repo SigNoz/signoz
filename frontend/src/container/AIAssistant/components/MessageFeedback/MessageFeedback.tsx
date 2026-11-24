@@ -15,7 +15,6 @@ import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../../types';
-import { useVariant } from '../../VariantContext';
 
 import styles from './MessageFeedback.module.scss';
 
@@ -73,7 +72,6 @@ export default function MessageFeedback({
 }: MessageFeedbackProps): JSX.Element {
 	const [copied, setCopied] = useState(false);
 	const [, copyToClipboard] = useCopyToClipboard();
-	const isFullPage = useVariant() === 'page';
 	const submitMessageFeedback = useAIAssistantStore(
 		(s) => s.submitMessageFeedback,
 	);
@@ -178,7 +176,6 @@ export default function MessageFeedback({
 			<div
 				className={cx(styles.feedback, {
 					[styles.visible]: isLastAssistant,
-					[styles.fullPage]: isFullPage,
 				})}
 			>
 				<div className={styles.actions}>
