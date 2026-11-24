@@ -22,9 +22,9 @@ import type {
 	GetFlamegraphPathParameters,
 	GetTraceAggregations200,
 	GetTraceAggregationsPathParameters,
-	GetTraceOverview200,
-	GetTraceOverviewParams,
-	GetTraceOverviewPathParameters,
+	GetTraceHighlights200,
+	GetTraceHighlightsParams,
+	GetTraceHighlightsPathParameters,
 	GetTraceSpan200,
 	GetTraceSpanPathParameters,
 	GetTraceSummary200,
@@ -34,6 +34,15 @@ import type {
 	GetTraceThreadPathParameters,
 	GetWaterfallV4200,
 	GetWaterfallV4PathParameters,
+	ListTraceSpanAncestors200,
+	ListTraceSpanAncestorsParams,
+	ListTraceSpanAncestorsPathParameters,
+	ListTraceSpanChildren200,
+	ListTraceSpanChildrenParams,
+	ListTraceSpanChildrenPathParameters,
+	ListTraceSpanDescendants200,
+	ListTraceSpanDescendantsParams,
+	ListTraceSpanDescendantsPathParameters,
 	ListTraceSpans200,
 	ListTraceSpansParams,
 	ListTraceSpansPathParameters,
@@ -167,41 +176,41 @@ export const useGetTraceAggregations = <
 	return useMutation(getGetTraceAggregationsMutationOptions(options));
 };
 /**
- * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of the errors, unmarked failures, expensive, links and slowest span lists. The summary is the one the trace summary route returns. Read more of a list from the span list with the view of the same name. For the structure of the trace, use the span list: the all view is in tree order, and parentSpanId returns the children of a span.
- * @summary Get overview of a trace
+ * Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of each view of the span list. The summary is the one the trace summary route returns. views names the lists to return; without it every view except all is returned. Read more of a list from the span list with the view of the same name.
+ * @summary Get highlights of a trace
  */
-export const getTraceOverview = (
-	{ traceID }: GetTraceOverviewPathParameters,
-	params?: GetTraceOverviewParams,
+export const getTraceHighlights = (
+	{ traceID }: GetTraceHighlightsPathParameters,
+	params?: GetTraceHighlightsParams,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetTraceOverview200>({
-		url: `/api/v1/traces/${traceID}/overview`,
+	return GeneratedAPIInstance<GetTraceHighlights200>({
+		url: `/api/v1/traces/${traceID}/highlights`,
 		method: 'GET',
 		params,
 		signal,
 	});
 };
 
-export const getGetTraceOverviewQueryKey = (
-	{ traceID }: GetTraceOverviewPathParameters,
-	params?: GetTraceOverviewParams,
+export const getGetTraceHighlightsQueryKey = (
+	{ traceID }: GetTraceHighlightsPathParameters,
+	params?: GetTraceHighlightsParams,
 ) => {
 	return [
-		`/api/v1/traces/${traceID}/overview`,
+		`/api/v1/traces/${traceID}/highlights`,
 		...(params ? [params] : []),
 	] as const;
 };
 
-export const getGetTraceOverviewQueryOptions = <
-	TData = Awaited<ReturnType<typeof getTraceOverview>>,
+export const getGetTraceHighlightsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getTraceHighlights>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
-	{ traceID }: GetTraceOverviewPathParameters,
-	params?: GetTraceOverviewParams,
+	{ traceID }: GetTraceHighlightsPathParameters,
+	params?: GetTraceHighlightsParams,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getTraceOverview>>,
+			Awaited<ReturnType<typeof getTraceHighlights>>,
 			TError,
 			TData
 		>;
@@ -210,11 +219,11 @@ export const getGetTraceOverviewQueryOptions = <
 	const { query: queryOptions } = options ?? {};
 
 	const queryKey =
-		queryOptions?.queryKey ?? getGetTraceOverviewQueryKey({ traceID }, params);
+		queryOptions?.queryKey ?? getGetTraceHighlightsQueryKey({ traceID }, params);
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getTraceOverview>>> = ({
-		signal,
-	}) => getTraceOverview({ traceID }, params, signal);
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getTraceHighlights>>
+	> = ({ signal }) => getTraceHighlights({ traceID }, params, signal);
 
 	return {
 		queryKey,
@@ -222,36 +231,36 @@ export const getGetTraceOverviewQueryOptions = <
 		enabled: traceID !== null && traceID !== undefined,
 		...queryOptions,
 	} as UseQueryOptions<
-		Awaited<ReturnType<typeof getTraceOverview>>,
+		Awaited<ReturnType<typeof getTraceHighlights>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetTraceOverviewQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getTraceOverview>>
+export type GetTraceHighlightsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getTraceHighlights>>
 >;
-export type GetTraceOverviewQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetTraceHighlightsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
- * @summary Get overview of a trace
+ * @summary Get highlights of a trace
  */
 
-export function useGetTraceOverview<
-	TData = Awaited<ReturnType<typeof getTraceOverview>>,
+export function useGetTraceHighlights<
+	TData = Awaited<ReturnType<typeof getTraceHighlights>>,
 	TError = ErrorType<RenderErrorResponseDTO>,
 >(
-	{ traceID }: GetTraceOverviewPathParameters,
-	params?: GetTraceOverviewParams,
+	{ traceID }: GetTraceHighlightsPathParameters,
+	params?: GetTraceHighlightsParams,
 	options?: {
 		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof getTraceOverview>>,
+			Awaited<ReturnType<typeof getTraceHighlights>>,
 			TError,
 			TData
 		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetTraceOverviewQueryOptions(
+	const queryOptions = getGetTraceHighlightsQueryOptions(
 		{ traceID },
 		params,
 		options,
@@ -265,16 +274,16 @@ export function useGetTraceOverview<
 }
 
 /**
- * @summary Get overview of a trace
+ * @summary Get highlights of a trace
  */
-export const invalidateGetTraceOverview = async (
+export const invalidateGetTraceHighlights = async (
 	queryClient: QueryClient,
-	{ traceID }: GetTraceOverviewPathParameters,
-	params?: GetTraceOverviewParams,
+	{ traceID }: GetTraceHighlightsPathParameters,
+	params?: GetTraceHighlightsParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetTraceOverviewQueryKey({ traceID }, params) },
+		{ queryKey: getGetTraceHighlightsQueryKey({ traceID }, params) },
 		options,
 	);
 
@@ -282,7 +291,7 @@ export const invalidateGetTraceOverview = async (
 };
 
 /**
- * Returns a page of the spans of a trace, each with its tree stats. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.
+ * Returns a page of the spans of a trace, in tree order from the top: a span is followed by the spans below it. view keeps only the spans of one kind, query narrows them, and selectFields names the attributes to fill. Values are returned whole.
  * @summary List spans of a trace
  */
 export const listTraceSpans = (
@@ -397,7 +406,7 @@ export const invalidateListTraceSpans = async (
 };
 
 /**
- * Returns one span with every attribute, resource attribute and event, its tree stats, and the spans above it up to a root. Values are returned whole. The spans below it come from the span list with parentSpanId.
+ * Returns one span with every attribute, resource attribute and event. Values are returned whole. It returns only the stored span: its tree stats come with it in any span list, and the spans around it come from the children, descendants and ancestors routes.
  * @summary Get span of a trace
  */
 export const getTraceSpan = (
@@ -504,7 +513,373 @@ export const invalidateGetTraceSpan = async (
 };
 
 /**
- * Returns the totals of a trace and no spans: its time range, root span, span and error counts, and whether any spans are missing. AI traces also include model and tool call counts, and token and cost totals. For the spans to look at, use the trace overview.
+ * Returns a page of the spans above a span: the chain of parents from the span up to its root, the parent first, and nothing from other branches. The span itself is not included. It takes the same parameters as the span list. The list is empty for a root, and stops where a parent was never received.
+ * @summary List ancestors of a span
+ */
+export const listTraceSpanAncestors = (
+	{ traceID, spanID }: ListTraceSpanAncestorsPathParameters,
+	params?: ListTraceSpanAncestorsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListTraceSpanAncestors200>({
+		url: `/api/v1/traces/${traceID}/spans/${spanID}/ancestors`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListTraceSpanAncestorsQueryKey = (
+	{ traceID, spanID }: ListTraceSpanAncestorsPathParameters,
+	params?: ListTraceSpanAncestorsParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/spans/${spanID}/ancestors`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListTraceSpanAncestorsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listTraceSpanAncestors>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanAncestorsPathParameters,
+	params?: ListTraceSpanAncestorsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanAncestors>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getListTraceSpanAncestorsQueryKey({ traceID, spanID }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listTraceSpanAncestors>>
+	> = ({ signal }) =>
+		listTraceSpanAncestors({ traceID, spanID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			traceID !== null &&
+			traceID !== undefined &&
+			spanID !== null &&
+			spanID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listTraceSpanAncestors>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListTraceSpanAncestorsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listTraceSpanAncestors>>
+>;
+export type ListTraceSpanAncestorsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List ancestors of a span
+ */
+
+export function useListTraceSpanAncestors<
+	TData = Awaited<ReturnType<typeof listTraceSpanAncestors>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanAncestorsPathParameters,
+	params?: ListTraceSpanAncestorsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanAncestors>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListTraceSpanAncestorsQueryOptions(
+		{ traceID, spanID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List ancestors of a span
+ */
+export const invalidateListTraceSpanAncestors = async (
+	queryClient: QueryClient,
+	{ traceID, spanID }: ListTraceSpanAncestorsPathParameters,
+	params?: ListTraceSpanAncestorsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListTraceSpanAncestorsQueryKey({ traceID, spanID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns a page of the direct children of a span, one level below it and nothing deeper, in start order. It takes the same parameters as the span list. The list is empty for a span without children.
+ * @summary List children of a span
+ */
+export const listTraceSpanChildren = (
+	{ traceID, spanID }: ListTraceSpanChildrenPathParameters,
+	params?: ListTraceSpanChildrenParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListTraceSpanChildren200>({
+		url: `/api/v1/traces/${traceID}/spans/${spanID}/children`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListTraceSpanChildrenQueryKey = (
+	{ traceID, spanID }: ListTraceSpanChildrenPathParameters,
+	params?: ListTraceSpanChildrenParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/spans/${spanID}/children`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListTraceSpanChildrenQueryOptions = <
+	TData = Awaited<ReturnType<typeof listTraceSpanChildren>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanChildrenPathParameters,
+	params?: ListTraceSpanChildrenParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanChildren>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getListTraceSpanChildrenQueryKey({ traceID, spanID }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listTraceSpanChildren>>
+	> = ({ signal }) => listTraceSpanChildren({ traceID, spanID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			traceID !== null &&
+			traceID !== undefined &&
+			spanID !== null &&
+			spanID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listTraceSpanChildren>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListTraceSpanChildrenQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listTraceSpanChildren>>
+>;
+export type ListTraceSpanChildrenQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List children of a span
+ */
+
+export function useListTraceSpanChildren<
+	TData = Awaited<ReturnType<typeof listTraceSpanChildren>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanChildrenPathParameters,
+	params?: ListTraceSpanChildrenParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanChildren>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListTraceSpanChildrenQueryOptions(
+		{ traceID, spanID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List children of a span
+ */
+export const invalidateListTraceSpanChildren = async (
+	queryClient: QueryClient,
+	{ traceID, spanID }: ListTraceSpanChildrenPathParameters,
+	params?: ListTraceSpanChildrenParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListTraceSpanChildrenQueryKey({ traceID, spanID }, params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns a page of the spans below a span, at any depth, in tree order. It takes the same parameters as the span list, so view=error_origins returns the errors that started below the span.
+ * @summary List descendants of a span
+ */
+export const listTraceSpanDescendants = (
+	{ traceID, spanID }: ListTraceSpanDescendantsPathParameters,
+	params?: ListTraceSpanDescendantsParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<ListTraceSpanDescendants200>({
+		url: `/api/v1/traces/${traceID}/spans/${spanID}/descendants`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getListTraceSpanDescendantsQueryKey = (
+	{ traceID, spanID }: ListTraceSpanDescendantsPathParameters,
+	params?: ListTraceSpanDescendantsParams,
+) => {
+	return [
+		`/api/v1/traces/${traceID}/spans/${spanID}/descendants`,
+		...(params ? [params] : []),
+	] as const;
+};
+
+export const getListTraceSpanDescendantsQueryOptions = <
+	TData = Awaited<ReturnType<typeof listTraceSpanDescendants>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanDescendantsPathParameters,
+	params?: ListTraceSpanDescendantsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanDescendants>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getListTraceSpanDescendantsQueryKey({ traceID, spanID }, params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listTraceSpanDescendants>>
+	> = ({ signal }) =>
+		listTraceSpanDescendants({ traceID, spanID }, params, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled:
+			traceID !== null &&
+			traceID !== undefined &&
+			spanID !== null &&
+			spanID !== undefined,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof listTraceSpanDescendants>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListTraceSpanDescendantsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listTraceSpanDescendants>>
+>;
+export type ListTraceSpanDescendantsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List descendants of a span
+ */
+
+export function useListTraceSpanDescendants<
+	TData = Awaited<ReturnType<typeof listTraceSpanDescendants>>,
+	TError = ErrorType<RenderErrorResponseDTO>,
+>(
+	{ traceID, spanID }: ListTraceSpanDescendantsPathParameters,
+	params?: ListTraceSpanDescendantsParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listTraceSpanDescendants>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListTraceSpanDescendantsQueryOptions(
+		{ traceID, spanID },
+		params,
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	return withQueryKey(query, queryOptions.queryKey);
+}
+
+/**
+ * @summary List descendants of a span
+ */
+export const invalidateListTraceSpanDescendants = async (
+	queryClient: QueryClient,
+	{ traceID, spanID }: ListTraceSpanDescendantsPathParameters,
+	params?: ListTraceSpanDescendantsParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{
+			queryKey: getListTraceSpanDescendantsQueryKey({ traceID, spanID }, params),
+		},
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * Returns the totals of a trace and no spans: its time range, root span, span and error counts, and whether any spans are missing. AI traces also include model and tool call counts, and token and cost totals. For the spans to look at, use the trace highlights.
  * @summary Get summary for a trace
  */
 export const getTraceSummary = (

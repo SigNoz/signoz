@@ -14752,7 +14752,7 @@ export interface SpantypesSameNameSiblingStatsDTO {
 }
 
 /**
- * Span attributes. A span read by ID has all of them; a span in a list has only the selected ones; an ancestor has none.
+ * Span attributes. A span read by ID has all of them; a span in a list has only the selected ones.
  */
 export type SpantypesSpanDTOAttributes = { [key: string]: unknown };
 
@@ -14764,7 +14764,7 @@ export type SpantypesSpanDTOResource = { [key: string]: string };
 export interface SpantypesSpanDTO {
 	/**
 	 * @type object
-	 * @description Span attributes. A span read by ID has all of them; a span in a list has only the selected ones; an ancestor has none.
+	 * @description Span attributes. A span read by ID has all of them; a span in a list has only the selected ones.
 	 */
 	attributes: SpantypesSpanDTOAttributes;
 	/**
@@ -14772,22 +14772,22 @@ export interface SpantypesSpanDTO {
 	 * @minimum 0
 	 * @description Duration, in nanoseconds.
 	 */
-	durationNano: number;
+	duration_nano: number;
 	/**
 	 * @type array
-	 * @description Span events. A span read by ID has all of them; a span in a list and an ancestor have none.
+	 * @description Span events. A span read by ID has all of them; a span in a list has none.
 	 */
 	events: SpantypesEventDTO[];
 	/**
 	 * @type boolean
 	 * @description Whether the span is marked as an error.
 	 */
-	hasError: boolean;
+	has_error: boolean;
 	/**
 	 * @type string
 	 * @description Span kind, for example Server, Client or Internal.
 	 */
-	kindString: string;
+	kind_string: string;
 	/**
 	 * @type string
 	 */
@@ -14796,7 +14796,7 @@ export interface SpantypesSpanDTO {
 	 * @type string
 	 * @description ID of the parent span. Empty for a root.
 	 */
-	parentSpanId: string;
+	parent_span_id: string;
 	/**
 	 * @type array
 	 * @description References to other spans: the parent as CHILD_OF, and each span link as FOLLOWS_FROM.
@@ -14811,31 +14811,44 @@ export interface SpantypesSpanDTO {
 	 * @type string
 	 * @description HTTP or gRPC status code of the response, for example 404. Empty when the span has none.
 	 */
-	responseStatusCode: string;
+	response_status_code: string;
 	/**
 	 * @type string
 	 */
-	spanId: string;
+	span_id: string;
 	/**
 	 * @type string
 	 * @description OpenTelemetry status code of the span.
 	 */
-	statusCodeString: string;
+	status_code_string: string;
 	/**
 	 * @type string
 	 * @description Status message, usually the error text. Empty when the span has none.
 	 */
-	statusMessage: string;
+	status_message: string;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Start time, in milliseconds since the Unix epoch.
+	 * @description Start time, in nanoseconds since the Unix epoch.
 	 */
-	timeUnixMilli: number;
+	timestamp: number;
 	/**
 	 * @type string
 	 */
-	traceId: string;
+	trace_id: string;
+}
+
+export interface SpantypesSpanTextMatchDTO {
+	/**
+	 * @type string
+	 * @description Where the word was found: name, status_message, attributes.<name>, resource.<name> or events[<index>].
+	 */
+	field: string;
+	/**
+	 * @type string
+	 * @description The word with some of the text around it.
+	 */
+	snippet: string;
 }
 
 export interface SpantypesSpanTreeStatsDTO {
@@ -14881,43 +14894,10 @@ export enum SpantypesUnmarkedFailureReasonDTO {
 	grpc_status = 'grpc_status',
 	exception_event = 'exception_event',
 }
-export interface SpantypesSpanDetailDTO {
+export interface SpantypesSpanItemDTO {
 	/**
 	 * @type array
-	 * @description The spans above this one, the parent first and the root last. Empty for a root and for a span whose parent is missing. Each includes service.name, no other attributes, and no events.
-	 */
-	ancestors: SpantypesSpanDTO[];
-	/**
-	 * @description The span with all its attributes, resource attributes and events.
-	 */
-	span: SpantypesSpanDTO;
-	/**
-	 * @description Numbers computed from the span's place in the trace.
-	 */
-	treeStats: SpantypesSpanTreeStatsDTO;
-	/**
-	 * @description Why the span counts as failed although it is not marked as an error. Omitted for every other span.
-	 */
-	unmarkedFailureReason?: SpantypesUnmarkedFailureReasonDTO;
-}
-
-export interface SpantypesSpanTextMatchDTO {
-	/**
-	 * @type string
-	 * @description Where the word was found: name, statusMessage, attributes.<name>, resource.<name> or events[<index>].
-	 */
-	field: string;
-	/**
-	 * @type string
-	 * @description The word with some of the text around it.
-	 */
-	snippet: string;
-}
-
-export interface SpantypesSpanListItemDTO {
-	/**
-	 * @type array
-	 * @description Where the search words were found, up to three places. A list does not return all attributes or any events, so this is how to see why a span matched. Omitted when the search has no words.
+	 * @description Where the words of the query were found, up to three places. A list does not return all attributes or any events, so this is how to see why a span matched. Omitted when the query has no words.
 	 */
 	matches?: SpantypesSpanTextMatchDTO[];
 	span: SpantypesSpanDTO;
@@ -14936,7 +14916,7 @@ export interface SpantypesSpanListDTO {
 	 * @type array
 	 * @description The spans of this page.
 	 */
-	items: SpantypesSpanListItemDTO[];
+	items: SpantypesSpanItemDTO[];
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -14945,17 +14925,17 @@ export interface SpantypesSpanListDTO {
 	total: number;
 	/**
 	 * @type array
-	 * @description Reasons the result may be incomplete, for example a search key that is not known or a selected field that no returned span has. Omitted when there are none.
+	 * @description Reasons the result may be incomplete, for example a query key that is not known or a selected field that no returned span has. Omitted when there are none.
 	 */
 	warnings?: string[];
 }
 
 export enum SpantypesSpanListViewDTO {
 	all = 'all',
-	errors = 'errors',
+	error_origins = 'error_origins',
 	unmarked_failures = 'unmarked_failures',
-	slowest = 'slowest',
-	expensive = 'expensive',
+	time_spent = 'time_spent',
+	ai_usage = 'ai_usage',
 	links = 'links',
 }
 export interface SpantypesTraceServiceStatsDTO {
@@ -14983,36 +14963,40 @@ export interface SpantypesTraceServiceStatsDTO {
 	spanCount: number;
 }
 
-export interface SpantypesTraceOverviewDTO {
+export interface SpantypesTraceHighlightsDTO {
 	/**
-	 * @description The spans where an error started. First page of the errors view of the span list.
+	 * @description The spans with the highest gen_ai cost or token usage. First page of the ai_usage view of the span list. Empty for a trace where no span carries that usage.
 	 */
-	errors: SpantypesSpanListDTO;
+	aiUsage?: SpantypesSpanListDTO;
 	/**
-	 * @description The spans with the highest gen_ai cost or token usage. First page of the expensive view of the span list. Empty for a trace where no span carries that usage.
+	 * @description The top of the trace in tree order. First page of the span list without a view. Returned only when asked for.
 	 */
-	expensive: SpantypesSpanListDTO;
+	all?: SpantypesSpanListDTO;
+	/**
+	 * @description The spans where an error started. First page of the error_origins view of the span list.
+	 */
+	errorOrigins?: SpantypesSpanListDTO;
 	/**
 	 * @description Spans that link to other spans. First page of the links view of the span list.
 	 */
-	links: SpantypesSpanListDTO;
+	links?: SpantypesSpanListDTO;
 	/**
 	 * @type array
 	 * @description Totals for each service of the trace, highest own time first.
 	 */
 	services: SpantypesTraceServiceStatsDTO[];
 	/**
-	 * @description Where the time went, same-name siblings counted as one. First page of the slowest view of the span list.
-	 */
-	slowest: SpantypesSpanListDTO;
-	/**
 	 * @description Totals of the trace. The same object the trace summary route returns.
 	 */
 	summary: SpantypesGettableTraceSummaryDTO;
 	/**
+	 * @description Where the time went, same-name siblings counted as one. First page of the time_spent view of the span list.
+	 */
+	timeSpent?: SpantypesSpanListDTO;
+	/**
 	 * @description Spans that failed without being marked as errors. First page of the unmarked_failures view of the span list.
 	 */
-	unmarkedFailures: SpantypesSpanListDTO;
+	unmarkedFailures?: SpantypesSpanListDTO;
 }
 
 export interface SpantypesUpdatableSpanMapperDTO {
@@ -16488,10 +16472,15 @@ export type GetTraceAggregations200 = {
 	status: string;
 };
 
-export type GetTraceOverviewPathParameters = {
+export type GetTraceHighlightsPathParameters = {
 	traceID: string;
 };
-export type GetTraceOverviewParams = {
+export type GetTraceHighlightsParams = {
+	/**
+	 * @type array
+	 * @description The lists to return, each named by its view. Default: every view except all.
+	 */
+	views?: SpantypesSpanListViewDTO[];
 	/**
 	 * @type integer
 	 * @description Number of spans in each list. Default: 10. Maximum: 1000.
@@ -16499,8 +16488,8 @@ export type GetTraceOverviewParams = {
 	limit?: number;
 };
 
-export type GetTraceOverview200 = {
-	data: SpantypesTraceOverviewDTO;
+export type GetTraceHighlights200 = {
+	data: SpantypesTraceHighlightsDTO;
 	/**
 	 * @type string
 	 */
@@ -16512,19 +16501,14 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description Which spans to return, and in what order. Default: all. all: every span in tree order, a span followed by the spans below it. errors: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. slowest: one span for each group of same-name siblings, by the group's total own time. expensive: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time. The view is picked from the whole trace first; search and parentSpanId then filter it.
+	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
 	 */
-	search?: string;
-	/**
-	 * @type string
-	 * @description Returns only the direct children of this span.
-	 */
-	parentSpanId?: string;
+	query?: string;
 	/**
 	 * @type array
 	 * @description Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings.
@@ -16555,7 +16539,124 @@ export type GetTraceSpanPathParameters = {
 	spanID: string;
 };
 export type GetTraceSpan200 = {
-	data: SpantypesSpanDetailDTO;
+	data: SpantypesSpanDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListTraceSpanAncestorsPathParameters = {
+	traceID: string;
+	spanID: string;
+};
+export type ListTraceSpanAncestorsParams = {
+	/**
+	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 */
+	view?: SpantypesSpanListViewDTO;
+	/**
+	 * @type string
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 */
+	query?: string;
+	/**
+	 * @type array
+	 * @description Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings.
+	 */
+	selectFields?: string[];
+	/**
+	 * @type integer
+	 * @description Number of spans to skip. Default: 0.
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description Number of spans to return. Default: 50. Maximum: 1000.
+	 */
+	limit?: number;
+};
+
+export type ListTraceSpanAncestors200 = {
+	data: SpantypesSpanListDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListTraceSpanChildrenPathParameters = {
+	traceID: string;
+	spanID: string;
+};
+export type ListTraceSpanChildrenParams = {
+	/**
+	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 */
+	view?: SpantypesSpanListViewDTO;
+	/**
+	 * @type string
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 */
+	query?: string;
+	/**
+	 * @type array
+	 * @description Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings.
+	 */
+	selectFields?: string[];
+	/**
+	 * @type integer
+	 * @description Number of spans to skip. Default: 0.
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description Number of spans to return. Default: 50. Maximum: 1000.
+	 */
+	limit?: number;
+};
+
+export type ListTraceSpanChildren200 = {
+	data: SpantypesSpanListDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListTraceSpanDescendantsPathParameters = {
+	traceID: string;
+	spanID: string;
+};
+export type ListTraceSpanDescendantsParams = {
+	/**
+	 * @description A quick filter on the spans the route covers. Without it, or with all, every span the route covers is returned in the route's own order. With any other value only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 */
+	view?: SpantypesSpanListViewDTO;
+	/**
+	 * @type string
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 */
+	query?: string;
+	/**
+	 * @type array
+	 * @description Attributes and resource attributes to include on each span, for example http.route or resource.k8s.pod.name. Without it a span includes only service.name. A field that no returned span has is listed in warnings.
+	 */
+	selectFields?: string[];
+	/**
+	 * @type integer
+	 * @description Number of spans to skip. Default: 0.
+	 */
+	offset?: number;
+	/**
+	 * @type integer
+	 * @description Number of spans to return. Default: 50. Maximum: 1000.
+	 */
+	limit?: number;
+};
+
+export type ListTraceSpanDescendants200 = {
+	data: SpantypesSpanListDTO;
 	/**
 	 * @type string
 	 */

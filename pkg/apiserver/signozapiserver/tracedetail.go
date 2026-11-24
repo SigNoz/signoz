@@ -16,7 +16,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "GetTraceSummary",
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get summary for a trace",
-			Description:         "Returns the totals of a trace and no spans: its time range, root span, span and error counts, and whether any spans are missing. AI traces also include model and tool call counts, and token and cost totals. For the spans to look at, use the trace overview.",
+			Description:         "Returns the totals of a trace and no spans: its time range, root span, span and error counts, and whether any spans are missing. AI traces also include model and tool call counts, and token and cost totals. For the spans to look at, use the trace highlights.",
 			Response:            new(spantypes.GettableTraceSummary),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
@@ -102,15 +102,15 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/traces/{traceID}/overview", handler.New(
-		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetTraceOverview),
+	if err := router.Handle("/api/v1/traces/{traceID}/highlights", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.GetTraceHighlights),
 		handler.OpenAPIDef{
-			ID:                  "GetTraceOverview",
+			ID:                  "GetTraceHighlights",
 			Tags:                []string{"tracedetail"},
-			Summary:             "Get overview of a trace",
-			Description:         "Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of the errors, unmarked failures, expensive, links and slowest span lists. The summary is the one the trace summary route returns. Read more of a list from the span list with the view of the same name. For the structure of the trace, use the span list: the all view is in tree order, and parentSpanId returns the children of a span.",
-			RequestQuery:        new(spantypes.GetTraceOverviewParams),
-			Response:            new(spantypes.TraceOverview),
+			Summary:             "Get highlights of a trace",
+			Description:         "Returns the trace summary plus the spans to look at, for a trace of any size: per-service totals and the first spans of each view of the span list. The summary is the one the trace summary route returns. views names the lists to return; without it every view except all is returned. Read more of a list from the span list with the view of the same name.",
+			RequestQuery:        new(spantypes.GetTraceHighlightsParams),
+			Response:            new(spantypes.TraceHighlights),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -127,7 +127,7 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "ListTraceSpans",
 			Tags:                []string{"tracedetail"},
 			Summary:             "List spans of a trace",
-			Description:         "Returns a page of the spans of a trace, each with its tree stats. view picks the spans and their order; search and parentSpanId narrow them; selectFields names the attributes to fill. Values are returned whole.",
+			Description:         "Returns a page of the spans of a trace, in tree order from the top: a span is followed by the spans below it. view keeps only the spans of one kind, query narrows them, and selectFields names the attributes to fill. Values are returned whole.",
 			RequestQuery:        new(spantypes.ListTraceSpansParams),
 			Response:            new(spantypes.SpanList),
 			ResponseContentType: "application/json",
@@ -146,11 +146,68 @@ func (provider *provider) addTraceDetailRoutes(router *mux.Router) error {
 			ID:                  "GetTraceSpan",
 			Tags:                []string{"tracedetail"},
 			Summary:             "Get span of a trace",
-			Description:         "Returns one span with every attribute, resource attribute and event, its tree stats, and the spans above it up to a root. Values are returned whole. The spans below it come from the span list with parentSpanId.",
-			Response:            new(spantypes.SpanDetail),
+			Description:         "Returns one span with every attribute, resource attribute and event. Values are returned whole. It returns only the stored span: its tree stats come with it in any span list, and the spans around it come from the children, descendants and ancestors routes.",
+			Response:            new(spantypes.Span),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			Stability:           handler.StabilityDevelopment,
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/traces/{traceID}/spans/{spanID}/children", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.ListTraceSpanChildren),
+		handler.OpenAPIDef{
+			ID:                  "ListTraceSpanChildren",
+			Tags:                []string{"tracedetail"},
+			Summary:             "List children of a span",
+			Description:         "Returns a page of the direct children of a span, one level below it and nothing deeper, in start order. It takes the same parameters as the span list. The list is empty for a span without children.",
+			RequestQuery:        new(spantypes.ListTraceSpansParams),
+			Response:            new(spantypes.SpanList),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			Stability:           handler.StabilityDevelopment,
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/traces/{traceID}/spans/{spanID}/descendants", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.ListTraceSpanDescendants),
+		handler.OpenAPIDef{
+			ID:                  "ListTraceSpanDescendants",
+			Tags:                []string{"tracedetail"},
+			Summary:             "List descendants of a span",
+			Description:         "Returns a page of the spans below a span, at any depth, in tree order. It takes the same parameters as the span list, so view=error_origins returns the errors that started below the span.",
+			RequestQuery:        new(spantypes.ListTraceSpansParams),
+			Response:            new(spantypes.SpanList),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+			Stability:           handler.StabilityDevelopment,
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/traces/{traceID}/spans/{spanID}/ancestors", handler.New(
+		provider.authzMiddleware.ViewAccess(provider.traceDetailHandler.ListTraceSpanAncestors),
+		handler.OpenAPIDef{
+			ID:                  "ListTraceSpanAncestors",
+			Tags:                []string{"tracedetail"},
+			Summary:             "List ancestors of a span",
+			Description:         "Returns a page of the spans above a span: the chain of parents from the span up to its root, the parent first, and nothing from other branches. The span itself is not included. It takes the same parameters as the span list. The list is empty for a root, and stops where a parent was never received.",
+			RequestQuery:        new(spantypes.ListTraceSpansParams),
+			Response:            new(spantypes.SpanList),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 			Stability:           handler.StabilityDevelopment,
 		},

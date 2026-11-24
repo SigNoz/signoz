@@ -130,8 +130,8 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 }
 
 // These routes are registered for their place in the API spec; the implementation follows.
-func (h *handler) GetTraceOverview(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace overview is not implemented yet"))
+func (h *handler) GetTraceHighlights(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace highlights is not implemented yet"))
 }
 
 func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
@@ -140,4 +140,16 @@ func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
 
 func (h *handler) GetTraceSpan(rw http.ResponseWriter, _ *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanChildren(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span children is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanDescendants(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span descendants is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanAncestors(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span ancestors is not implemented yet"))
 }

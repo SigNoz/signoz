@@ -13139,27 +13139,27 @@ components:
         attributes:
           additionalProperties: {}
           description: Span attributes. A span read by ID has all of them; a span
-            in a list has only the selected ones; an ancestor has none.
+            in a list has only the selected ones.
           type: object
-        durationNano:
+        duration_nano:
           description: Duration, in nanoseconds.
           minimum: 0
           type: integer
         events:
           description: Span events. A span read by ID has all of them; a span in a
-            list and an ancestor have none.
+            list has none.
           items:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
-        hasError:
+        has_error:
           description: Whether the span is marked as an error.
           type: boolean
-        kindString:
+        kind_string:
           description: Span kind, for example Server, Client or Internal.
           type: string
         name:
           type: string
-        parentSpanId:
+        parent_span_id:
           description: ID of the parent span. Empty for a root.
           type: string
         references:
@@ -13174,37 +13174,37 @@ components:
           description: Resource attributes. Always includes service.name. A span read
             by ID has all of them; a span in a list also has the selected ones.
           type: object
-        responseStatusCode:
+        response_status_code:
           description: HTTP or gRPC status code of the response, for example 404.
             Empty when the span has none.
           type: string
-        spanId:
+        span_id:
           type: string
-        statusCodeString:
+        status_code_string:
           description: OpenTelemetry status code of the span.
           type: string
-        statusMessage:
+        status_message:
           description: Status message, usually the error text. Empty when the span
             has none.
           type: string
-        timeUnixMilli:
-          description: Start time, in milliseconds since the Unix epoch.
+        timestamp:
+          description: Start time, in nanoseconds since the Unix epoch.
           minimum: 0
           type: integer
-        traceId:
+        trace_id:
           type: string
       required:
-      - spanId
-      - traceId
-      - parentSpanId
+      - span_id
+      - trace_id
+      - parent_span_id
       - name
-      - kindString
-      - timeUnixMilli
-      - durationNano
-      - hasError
-      - statusCodeString
-      - statusMessage
-      - responseStatusCode
+      - kind_string
+      - timestamp
+      - duration_nano
+      - has_error
+      - status_code_string
+      - status_message
+      - response_status_code
       - resource
       - attributes
       - events
@@ -13243,61 +13243,12 @@ components:
       - execution_time_percentage
       - duration
       type: string
-    SpantypesSpanDetail:
-      properties:
-        ancestors:
-          description: The spans above this one, the parent first and the root last.
-            Empty for a root and for a span whose parent is missing. Each includes
-            service.name, no other attributes, and no events.
-          items:
-            $ref: '#/components/schemas/SpantypesSpan'
-          type: array
-        span:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpan'
-          description: The span with all its attributes, resource attributes and events.
-        treeStats:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpanTreeStats'
-          description: Numbers computed from the span's place in the trace.
-        unmarkedFailureReason:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesUnmarkedFailureReason'
-          description: Why the span counts as failed although it is not marked as
-            an error. Omitted for every other span.
-      required:
-      - span
-      - treeStats
-      - ancestors
-      type: object
-    SpantypesSpanList:
-      properties:
-        items:
-          description: The spans of this page.
-          items:
-            $ref: '#/components/schemas/SpantypesSpanListItem'
-          type: array
-        total:
-          description: Number of spans that match the request, across all pages.
-          minimum: 0
-          type: integer
-        warnings:
-          description: Reasons the result may be incomplete, for example a search
-            key that is not known or a selected field that no returned span has. Omitted
-            when there are none.
-          items:
-            type: string
-          type: array
-      required:
-      - total
-      - items
-      type: object
-    SpantypesSpanListItem:
+    SpantypesSpanItem:
       properties:
         matches:
-          description: Where the search words were found, up to three places. A list
-            does not return all attributes or any events, so this is how to see why
-            a span matched. Omitted when the search has no words.
+          description: Where the words of the query were found, up to three places.
+            A list does not return all attributes or any events, so this is how to
+            see why a span matched. Omitted when the query has no words.
           items:
             $ref: '#/components/schemas/SpantypesSpanTextMatch'
           type: array
@@ -13316,13 +13267,35 @@ components:
       - span
       - treeStats
       type: object
+    SpantypesSpanList:
+      properties:
+        items:
+          description: The spans of this page.
+          items:
+            $ref: '#/components/schemas/SpantypesSpanItem'
+          type: array
+        total:
+          description: Number of spans that match the request, across all pages.
+          minimum: 0
+          type: integer
+        warnings:
+          description: Reasons the result may be incomplete, for example a query key
+            that is not known or a selected field that no returned span has. Omitted
+            when there are none.
+          items:
+            type: string
+          type: array
+      required:
+      - total
+      - items
+      type: object
     SpantypesSpanListView:
       enum:
       - all
-      - errors
+      - error_origins
       - unmarked_failures
-      - slowest
-      - expensive
+      - time_spent
+      - ai_usage
       - links
       type: string
     SpantypesSpanMapper:
@@ -13479,7 +13452,7 @@ components:
     SpantypesSpanTextMatch:
       properties:
         field:
-          description: 'Where the word was found: name, statusMessage, attributes.<name>,
+          description: 'Where the word was found: name, status_message, attributes.<name>,
             resource.<name> or events[<index>].'
           type: string
         snippet:
@@ -13635,19 +13608,24 @@ components:
       - cacheWrite
       - reasoning
       type: object
-    SpantypesTraceOverview:
+    SpantypesTraceHighlights:
       properties:
-        errors:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpanList'
-          description: The spans where an error started. First page of the errors
-            view of the span list.
-        expensive:
+        aiUsage:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
           description: The spans with the highest gen_ai cost or token usage. First
-            page of the expensive view of the span list. Empty for a trace where no
+            page of the ai_usage view of the span list. Empty for a trace where no
             span carries that usage.
+        all:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanList'
+          description: The top of the trace in tree order. First page of the span
+            list without a view. Returned only when asked for.
+        errorOrigins:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanList'
+          description: The spans where an error started. First page of the error_origins
+            view of the span list.
         links:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -13658,16 +13636,16 @@ components:
           items:
             $ref: '#/components/schemas/SpantypesTraceServiceStats'
           type: array
-        slowest:
-          allOf:
-          - $ref: '#/components/schemas/SpantypesSpanList'
-          description: Where the time went, same-name siblings counted as one. First
-            page of the slowest view of the span list.
         summary:
           allOf:
           - $ref: '#/components/schemas/SpantypesGettableTraceSummary'
           description: Totals of the trace. The same object the trace summary route
             returns.
+        timeSpent:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanList'
+          description: Where the time went, same-name siblings counted as one. First
+            page of the time_spent view of the span list.
         unmarkedFailures:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanList'
@@ -13676,11 +13654,6 @@ components:
       required:
       - summary
       - services
-      - errors
-      - unmarkedFailures
-      - expensive
-      - links
-      - slowest
       type: object
     SpantypesTraceServiceStats:
       properties:
@@ -19851,18 +19824,26 @@ paths:
       tags:
       - tracedetail
       x-signoz-stability: alpha
-  /api/v1/traces/{traceID}/overview:
+  /api/v1/traces/{traceID}/highlights:
     get:
       deprecated: false
       description: 'Returns the trace summary plus the spans to look at, for a trace
-        of any size: per-service totals and the first spans of the errors, unmarked
-        failures, expensive, links and slowest span lists. The summary is the one
-        the trace summary route returns. Read more of a list from the span list with
-        the view of the same name. For the structure of the trace, use the span list:
-        the all view is in tree order, and parentSpanId returns the children of a
-        span.'
-      operationId: GetTraceOverview
+        of any size: per-service totals and the first spans of each view of the span
+        list. The summary is the one the trace summary route returns. views names
+        the lists to return; without it every view except all is returned. Read more
+        of a list from the span list with the view of the same name.'
+      operationId: GetTraceHighlights
       parameters:
+      - description: 'The lists to return, each named by its view. Default: every
+          view except all.'
+        in: query
+        name: views
+        schema:
+          description: 'The lists to return, each named by its view. Default: every
+            view except all.'
+          items:
+            $ref: '#/components/schemas/SpantypesSpanListView'
+          type: array
       - description: 'Number of spans in each list. Default: 10. Maximum: 1000.'
         in: query
         name: limit
@@ -19881,7 +19862,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesTraceOverview'
+                    $ref: '#/components/schemas/SpantypesTraceHighlights'
                   status:
                     type: string
                 required:
@@ -19924,62 +19905,59 @@ paths:
         - VIEWER
       - tokenizer:
         - VIEWER
-      summary: Get overview of a trace
+      summary: Get highlights of a trace
       tags:
       - tracedetail
       x-signoz-stability: development
   /api/v1/traces/{traceID}/spans:
     get:
       deprecated: false
-      description: Returns a page of the spans of a trace, each with its tree stats.
-        view picks the spans and their order; search and parentSpanId narrow them;
-        selectFields names the attributes to fill. Values are returned whole.
+      description: 'Returns a page of the spans of a trace, in tree order from the
+        top: a span is followed by the spans below it. view keeps only the spans of
+        one kind, query narrows them, and selectFields names the attributes to fill.
+        Values are returned whole.'
       operationId: ListTraceSpans
       parameters:
-      - description: 'Which spans to return, and in what order. Default: all. all:
-          every span in tree order, a span followed by the spans below it. errors:
-          the spans where an error started, meaning error spans with no failing child,
-          by start time. unmarked_failures: spans that failed without being marked
-          as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception
-          event), by start time. slowest: one span for each group of same-name siblings,
-          by the group''s total own time. expensive: the spans that carry gen_ai token
-          or cost usage, by cost, or by tokens when none has a cost; each includes
-          those attributes. links: the spans that link to other spans, by start time.
-          The view is picked from the whole trace first; search and parentSpanId then
-          filter it.'
+      - description: 'A quick filter on the spans the route covers. Without it, or
+          with all, every span the route covers is returned in the route''s own order.
+          With any other value only the spans of that kind are returned, in that kind''s
+          order. error_origins: the spans where an error started, meaning error spans
+          with no failing child, by start time. unmarked_failures: spans that failed
+          without being marked as errors (a 4xx or 5xx response, a gRPC status other
+          than OK, or an exception event), by start time. time_spent: one span for
+          each group of same-name siblings, by the group''s total own time. ai_usage:
+          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
+          none has a cost; each includes those attributes. links: the spans that link
+          to other spans, by start time.'
         in: query
         name: view
         schema:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanListView'
-          description: 'Which spans to return, and in what order. Default: all. all:
-            every span in tree order, a span followed by the spans below it. errors:
-            the spans where an error started, meaning error spans with no failing
-            child, by start time. unmarked_failures: spans that failed without being
-            marked as errors (a 4xx or 5xx response, a gRPC status other than OK,
-            or an exception event), by start time. slowest: one span for each group
-            of same-name siblings, by the group''s total own time. expensive: the
-            spans that carry gen_ai token or cost usage, by cost, or by tokens when
-            none has a cost; each includes those attributes. links: the spans that
-            link to other spans, by start time. The view is picked from the whole
-            trace first; search and parentSpanId then filter it.'
+          description: 'A quick filter on the spans the route covers. Without it,
+            or with all, every span the route covers is returned in the route''s own
+            order. With any other value only the spans of that kind are returned,
+            in that kind''s order. error_origins: the spans where an error started,
+            meaning error spans with no failing child, by start time. unmarked_failures:
+            spans that failed without being marked as errors (a 4xx or 5xx response,
+            a gRPC status other than OK, or an exception event), by start time. time_spent:
+            one span for each group of same-name siblings, by the group''s total own
+            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
+            or by tokens when none has a cost; each includes those attributes. links:
+            the spans that link to other spans, by start time.'
       - description: 'Returns only the spans that match. Takes words, a filter expression,
           or both, for example: worldpay AND has_error = true. Words are matched,
           ignoring case, against the span name, status message, attributes, resource
-          attributes and events.'
+          attributes and events. A filter expression uses the keys of a span, such
+          as kind_string or has_error.'
         in: query
-        name: search
+        name: query
         schema:
           description: 'Returns only the spans that match. Takes words, a filter expression,
             or both, for example: worldpay AND has_error = true. Words are matched,
             ignoring case, against the span name, status message, attributes, resource
-            attributes and events.'
-          type: string
-      - description: Returns only the direct children of this span.
-        in: query
-        name: parentSpanId
-        schema:
-          description: Returns only the direct children of this span.
+            attributes and events. A filter expression uses the keys of a span, such
+            as kind_string or has_error.'
           type: string
       - description: Attributes and resource attributes to include on each span, for
           example http.route or resource.k8s.pod.name. Without it a span includes
@@ -20067,9 +20045,10 @@ paths:
   /api/v1/traces/{traceID}/spans/{spanID}:
     get:
       deprecated: false
-      description: Returns one span with every attribute, resource attribute and event,
-        its tree stats, and the spans above it up to a root. Values are returned whole.
-        The spans below it come from the span list with parentSpanId.
+      description: 'Returns one span with every attribute, resource attribute and
+        event. Values are returned whole. It returns only the stored span: its tree
+        stats come with it in any span list, and the spans around it come from the
+        children, descendants and ancestors routes.'
       operationId: GetTraceSpan
       parameters:
       - in: path
@@ -20089,7 +20068,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/SpantypesSpanDetail'
+                    $ref: '#/components/schemas/SpantypesSpan'
                   status:
                     type: string
                 required:
@@ -20130,13 +20109,425 @@ paths:
       tags:
       - tracedetail
       x-signoz-stability: development
+  /api/v1/traces/{traceID}/spans/{spanID}/ancestors:
+    get:
+      deprecated: false
+      description: 'Returns a page of the spans above a span: the chain of parents
+        from the span up to its root, the parent first, and nothing from other branches.
+        The span itself is not included. It takes the same parameters as the span
+        list. The list is empty for a root, and stops where a parent was never received.'
+      operationId: ListTraceSpanAncestors
+      parameters:
+      - description: 'A quick filter on the spans the route covers. Without it, or
+          with all, every span the route covers is returned in the route''s own order.
+          With any other value only the spans of that kind are returned, in that kind''s
+          order. error_origins: the spans where an error started, meaning error spans
+          with no failing child, by start time. unmarked_failures: spans that failed
+          without being marked as errors (a 4xx or 5xx response, a gRPC status other
+          than OK, or an exception event), by start time. time_spent: one span for
+          each group of same-name siblings, by the group''s total own time. ai_usage:
+          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
+          none has a cost; each includes those attributes. links: the spans that link
+          to other spans, by start time.'
+        in: query
+        name: view
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanListView'
+          description: 'A quick filter on the spans the route covers. Without it,
+            or with all, every span the route covers is returned in the route''s own
+            order. With any other value only the spans of that kind are returned,
+            in that kind''s order. error_origins: the spans where an error started,
+            meaning error spans with no failing child, by start time. unmarked_failures:
+            spans that failed without being marked as errors (a 4xx or 5xx response,
+            a gRPC status other than OK, or an exception event), by start time. time_spent:
+            one span for each group of same-name siblings, by the group''s total own
+            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
+            or by tokens when none has a cost; each includes those attributes. links:
+            the spans that link to other spans, by start time.'
+      - description: 'Returns only the spans that match. Takes words, a filter expression,
+          or both, for example: worldpay AND has_error = true. Words are matched,
+          ignoring case, against the span name, status message, attributes, resource
+          attributes and events. A filter expression uses the keys of a span, such
+          as kind_string or has_error.'
+        in: query
+        name: query
+        schema:
+          description: 'Returns only the spans that match. Takes words, a filter expression,
+            or both, for example: worldpay AND has_error = true. Words are matched,
+            ignoring case, against the span name, status message, attributes, resource
+            attributes and events. A filter expression uses the keys of a span, such
+            as kind_string or has_error.'
+          type: string
+      - description: Attributes and resource attributes to include on each span, for
+          example http.route or resource.k8s.pod.name. Without it a span includes
+          only service.name. A field that no returned span has is listed in warnings.
+        in: query
+        name: selectFields
+        schema:
+          description: Attributes and resource attributes to include on each span,
+            for example http.route or resource.k8s.pod.name. Without it a span includes
+            only service.name. A field that no returned span has is listed in warnings.
+          items:
+            type: string
+          type: array
+      - description: 'Number of spans to skip. Default: 0.'
+        in: query
+        name: offset
+        schema:
+          description: 'Number of spans to skip. Default: 0.'
+          type: integer
+      - description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+        in: query
+        name: limit
+        schema:
+          description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+          type: integer
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: spanID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesSpanList'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List ancestors of a span
+      tags:
+      - tracedetail
+      x-signoz-stability: development
+  /api/v1/traces/{traceID}/spans/{spanID}/children:
+    get:
+      deprecated: false
+      description: Returns a page of the direct children of a span, one level below
+        it and nothing deeper, in start order. It takes the same parameters as the
+        span list. The list is empty for a span without children.
+      operationId: ListTraceSpanChildren
+      parameters:
+      - description: 'A quick filter on the spans the route covers. Without it, or
+          with all, every span the route covers is returned in the route''s own order.
+          With any other value only the spans of that kind are returned, in that kind''s
+          order. error_origins: the spans where an error started, meaning error spans
+          with no failing child, by start time. unmarked_failures: spans that failed
+          without being marked as errors (a 4xx or 5xx response, a gRPC status other
+          than OK, or an exception event), by start time. time_spent: one span for
+          each group of same-name siblings, by the group''s total own time. ai_usage:
+          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
+          none has a cost; each includes those attributes. links: the spans that link
+          to other spans, by start time.'
+        in: query
+        name: view
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanListView'
+          description: 'A quick filter on the spans the route covers. Without it,
+            or with all, every span the route covers is returned in the route''s own
+            order. With any other value only the spans of that kind are returned,
+            in that kind''s order. error_origins: the spans where an error started,
+            meaning error spans with no failing child, by start time. unmarked_failures:
+            spans that failed without being marked as errors (a 4xx or 5xx response,
+            a gRPC status other than OK, or an exception event), by start time. time_spent:
+            one span for each group of same-name siblings, by the group''s total own
+            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
+            or by tokens when none has a cost; each includes those attributes. links:
+            the spans that link to other spans, by start time.'
+      - description: 'Returns only the spans that match. Takes words, a filter expression,
+          or both, for example: worldpay AND has_error = true. Words are matched,
+          ignoring case, against the span name, status message, attributes, resource
+          attributes and events. A filter expression uses the keys of a span, such
+          as kind_string or has_error.'
+        in: query
+        name: query
+        schema:
+          description: 'Returns only the spans that match. Takes words, a filter expression,
+            or both, for example: worldpay AND has_error = true. Words are matched,
+            ignoring case, against the span name, status message, attributes, resource
+            attributes and events. A filter expression uses the keys of a span, such
+            as kind_string or has_error.'
+          type: string
+      - description: Attributes and resource attributes to include on each span, for
+          example http.route or resource.k8s.pod.name. Without it a span includes
+          only service.name. A field that no returned span has is listed in warnings.
+        in: query
+        name: selectFields
+        schema:
+          description: Attributes and resource attributes to include on each span,
+            for example http.route or resource.k8s.pod.name. Without it a span includes
+            only service.name. A field that no returned span has is listed in warnings.
+          items:
+            type: string
+          type: array
+      - description: 'Number of spans to skip. Default: 0.'
+        in: query
+        name: offset
+        schema:
+          description: 'Number of spans to skip. Default: 0.'
+          type: integer
+      - description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+        in: query
+        name: limit
+        schema:
+          description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+          type: integer
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: spanID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesSpanList'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List children of a span
+      tags:
+      - tracedetail
+      x-signoz-stability: development
+  /api/v1/traces/{traceID}/spans/{spanID}/descendants:
+    get:
+      deprecated: false
+      description: Returns a page of the spans below a span, at any depth, in tree
+        order. It takes the same parameters as the span list, so view=error_origins
+        returns the errors that started below the span.
+      operationId: ListTraceSpanDescendants
+      parameters:
+      - description: 'A quick filter on the spans the route covers. Without it, or
+          with all, every span the route covers is returned in the route''s own order.
+          With any other value only the spans of that kind are returned, in that kind''s
+          order. error_origins: the spans where an error started, meaning error spans
+          with no failing child, by start time. unmarked_failures: spans that failed
+          without being marked as errors (a 4xx or 5xx response, a gRPC status other
+          than OK, or an exception event), by start time. time_spent: one span for
+          each group of same-name siblings, by the group''s total own time. ai_usage:
+          the spans that carry gen_ai token or cost usage, by cost, or by tokens when
+          none has a cost; each includes those attributes. links: the spans that link
+          to other spans, by start time.'
+        in: query
+        name: view
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesSpanListView'
+          description: 'A quick filter on the spans the route covers. Without it,
+            or with all, every span the route covers is returned in the route''s own
+            order. With any other value only the spans of that kind are returned,
+            in that kind''s order. error_origins: the spans where an error started,
+            meaning error spans with no failing child, by start time. unmarked_failures:
+            spans that failed without being marked as errors (a 4xx or 5xx response,
+            a gRPC status other than OK, or an exception event), by start time. time_spent:
+            one span for each group of same-name siblings, by the group''s total own
+            time. ai_usage: the spans that carry gen_ai token or cost usage, by cost,
+            or by tokens when none has a cost; each includes those attributes. links:
+            the spans that link to other spans, by start time.'
+      - description: 'Returns only the spans that match. Takes words, a filter expression,
+          or both, for example: worldpay AND has_error = true. Words are matched,
+          ignoring case, against the span name, status message, attributes, resource
+          attributes and events. A filter expression uses the keys of a span, such
+          as kind_string or has_error.'
+        in: query
+        name: query
+        schema:
+          description: 'Returns only the spans that match. Takes words, a filter expression,
+            or both, for example: worldpay AND has_error = true. Words are matched,
+            ignoring case, against the span name, status message, attributes, resource
+            attributes and events. A filter expression uses the keys of a span, such
+            as kind_string or has_error.'
+          type: string
+      - description: Attributes and resource attributes to include on each span, for
+          example http.route or resource.k8s.pod.name. Without it a span includes
+          only service.name. A field that no returned span has is listed in warnings.
+        in: query
+        name: selectFields
+        schema:
+          description: Attributes and resource attributes to include on each span,
+            for example http.route or resource.k8s.pod.name. Without it a span includes
+            only service.name. A field that no returned span has is listed in warnings.
+          items:
+            type: string
+          type: array
+      - description: 'Number of spans to skip. Default: 0.'
+        in: query
+        name: offset
+        schema:
+          description: 'Number of spans to skip. Default: 0.'
+          type: integer
+      - description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+        in: query
+        name: limit
+        schema:
+          description: 'Number of spans to return. Default: 50. Maximum: 1000.'
+          type: integer
+      - in: path
+        name: traceID
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: spanID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SpantypesSpanList'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: List descendants of a span
+      tags:
+      - tracedetail
+      x-signoz-stability: development
   /api/v1/traces/{traceID}/summary:
     get:
       deprecated: false
       description: 'Returns the totals of a trace and no spans: its time range, root
         span, span and error counts, and whether any spans are missing. AI traces
         also include model and tool call counts, and token and cost totals. For the
-        spans to look at, use the trace overview.'
+        spans to look at, use the trace highlights.'
       operationId: GetTraceSummary
       parameters:
       - in: path
