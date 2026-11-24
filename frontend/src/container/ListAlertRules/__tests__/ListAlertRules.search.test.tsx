@@ -182,7 +182,7 @@ describe('ListAlertRules — search', () => {
 
 		await user.click(
 			within(screen.getByTestId('alert-rules-filter-states')).getByLabelText(
-				'State',
+				'Status',
 			),
 		);
 		await user.click(
