@@ -21,6 +21,7 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	convertBuilderQueriesToV5,
+	createAggregation,
 	mapPanelTypeToRequestType,
 	prepareQueryRangePayloadV5,
 } from './prepareQueryRangePayloadV5';
@@ -1013,5 +1014,49 @@ describe('convertBuilderQueriesToV5 builder query type', () => {
 		['an explicitly generic query', 'builder_query'],
 	])('sends builder_query for %s', (_label, builderQueryType) => {
 		expect(buildEnvelope(builderQueryType, 'trace').type).toBe('builder_query');
+	});
+});
+
+describe('createAggregation fallback', () => {
+	const logsQuery = (expression: string): Partial<IBuilderQuery> => ({
+		dataSource: DataSource.LOGS,
+		aggregations: [{ expression }],
+	});
+
+	it('sends no aggregation for a heatmap with no field', () => {
+		expect(createAggregation(logsQuery(''), PANEL_TYPES.HEATMAP)).toStrictEqual(
+			[],
+		);
+	});
+
+	it('reads a field on a heatmap and turns it into count() elsewhere', () => {
+		expect(
+			createAggregation(logsQuery('duration_nano'), PANEL_TYPES.HEATMAP),
+		).toStrictEqual([{ expression: 'duration_nano' }]);
+		expect(
+			createAggregation(logsQuery('duration_nano'), PANEL_TYPES.TIME_SERIES),
+		).toStrictEqual([{ expression: 'count()' }]);
+	});
+
+	it('still defaults other panels to count()', () => {
+		expect(
+			createAggregation(logsQuery(''), PANEL_TYPES.TIME_SERIES),
+		).toStrictEqual([{ expression: 'count()' }]);
+	});
+
+	it('sends the field of a logs heatmap query', () => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: {
+					...logsQuery('duration_nano'),
+					queryName: 'A',
+				} as IBuilderQuery,
+			},
+			mapPanelTypeToRequestType(PANEL_TYPES.HEATMAP),
+			PANEL_TYPES.HEATMAP,
+		);
+		expect((envelope.spec as LogBuilderQuery).aggregations).toStrictEqual([
+			{ expression: 'duration_nano' },
+		]);
 	});
 });

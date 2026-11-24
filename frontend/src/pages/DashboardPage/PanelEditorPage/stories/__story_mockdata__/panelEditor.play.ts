@@ -10,6 +10,7 @@ import {
 	hasClickHouseTab,
 	hasDisconnectValues,
 	hasPromQLTab,
+	openConfigSelect,
 	type PanelEditorArgs,
 	pickSegment,
 	savePanel,
@@ -110,6 +111,25 @@ export const openAIQueryBuilder = async ({
 			expect(
 				canvas.queryByTestId('metric-name-selector-0'),
 			).not.toBeInTheDocument(),
+		);
+	}
+};
+
+/** Switches a new heatmap to traces and opens its field picker. */
+export const pickHeatmapTracesField = async ({
+	args,
+}: Pick<PlayContext, 'args'>): Promise<void> => {
+	await openConfigSelect('query-data-source-selector-0');
+	await userEvent.click(await screen.findByTitle('Traces'));
+
+	await userEvent.click(
+		await screen.findByTestId('distribution-field-select', {}, EDITOR_LOAD),
+	);
+	if (args.dataState === 'loaded') {
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.retry.count',
+			{},
+			EDITOR_LOAD,
 		);
 	}
 };

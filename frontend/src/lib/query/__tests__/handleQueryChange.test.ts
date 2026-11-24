@@ -62,6 +62,28 @@ describe('handleQueryChange bucket options', () => {
 		expect(result.builder.queryFormulas[0].bucketOptions).toBeUndefined();
 	});
 
+	it.each([DataSource.LOGS, DataSource.TRACES])(
+		'keeps the axis of a %s query that stays a heatmap',
+		(dataSource) => {
+			const base = initialQueriesMap[dataSource];
+			const result = handleQueryChange(
+				PANEL_TYPES.HEATMAP,
+				{
+					...base,
+					builder: {
+						...base.builder,
+						queryData: [{ ...base.builder.queryData[0], bucketOptions }],
+					},
+				},
+				PANEL_TYPES.HEATMAP,
+			);
+
+			expect(result.builder.queryData[0].bucketOptions).toStrictEqual(
+				bucketOptions,
+			);
+		},
+	);
+
 	it('leaves the rest of the formula intact', () => {
 		const result = handleQueryChange(
 			PANEL_TYPES.TIME_SERIES,
@@ -97,6 +119,17 @@ describe('handleQueryChange trace operator', () => {
 			PANEL_TYPES.SCATTER,
 			queryWithTraceOperator(),
 			PANEL_TYPES.TABLE,
+		);
+
+		expect(result.builder.queryTraceOperator).toStrictEqual([]);
+	});
+
+	// A heatmap request takes one builder query and rejects a trace operator.
+	it('drops the trace operator when switching to a heatmap', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.HEATMAP,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TIME_SERIES,
 		);
 
 		expect(result.builder.queryTraceOperator).toStrictEqual([]);
