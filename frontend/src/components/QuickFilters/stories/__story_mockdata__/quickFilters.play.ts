@@ -8,9 +8,12 @@ import { QuickFilterManagePermissions } from 'lib/authz/hooks/useAuthZ/permissio
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { grantsAll } from '@/storybook/access/access';
+import { hoverTruncatableText } from '@/storybook/play/truncatedText';
 import type { GlobalMockArgs } from '@/storybook/globals';
 
 import type QuickFilters from '../../QuickFilters';
+import { longTitleConfig } from '../QuickFilters.stories.mocks';
+import { FiltersType } from '../../types';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -61,39 +64,24 @@ export const dirtySettings = async (context: PlayContext): Promise<void> => {
 	await screen.findByRole('button', { name: 'Save changes' });
 };
 
-/**
- * Nested tooltips on one trigger merge into a single stacked tooltip, so a
- * duplicate shows as the title repeated inside it, not as a second tooltip.
- */
 export const hoverTruncatedTitle = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	const title = args.config?.[0]?.title;
-	if (!title) {
+	const [filter] = args.config ?? [];
+	// Duration and slider sections render no title of their own.
+	if (filter?.type !== FiltersType.CHECKBOX || !filter.title) {
 		return;
 	}
 
 	const [label] = await within(canvasElement).findAllByText(
-		title,
+		filter.title,
 		{},
 		UNTIL_LOADED,
 	);
-	// A hover before the text is measured finds no tooltip to open.
-	await waitFor(() => expect(label).toHaveAttribute('data-truncated'));
-	await userEvent.hover(label);
-
-	const tooltip = await waitFor(async () => {
-		const match = screen
-			.queryAllByRole('tooltip')
-			.find((element) => element.textContent?.includes(title));
-
-		await expect(match).toBeVisible();
-
-		return match as HTMLElement;
+	await hoverTruncatableText(label, filter.title, {
+		cut: filter.title === longTitleConfig[0].title || undefined,
 	});
-
-	await expect(tooltip.textContent?.split(title)).toHaveLength(2);
 };
 
 export const openQueryPicker = async ({

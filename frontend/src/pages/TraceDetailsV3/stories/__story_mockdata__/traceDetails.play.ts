@@ -13,6 +13,7 @@ import {
 } from 'storybook/test';
 
 import { getToastText } from '@/storybook/play/toastText';
+import { hoverTruncatableText } from '@/storybook/play/truncatedText';
 
 import { SpanDetailVariant } from '../../SpanDetailsPanel/constants';
 import {
@@ -27,6 +28,7 @@ import {
 	focusSpanAttributes,
 	focusSpanEventCount,
 	focusSpanIndex,
+	LONG_EVENT_ATTRIBUTES,
 	spanIdAt,
 	spanMatchRows,
 	traceHasEvents,
@@ -351,6 +353,37 @@ export const hoverEventStacktrace = async (
 		() => expect(screen.getByRole('button', { name: 'Expand' })).toBeVisible(),
 		untilLoaded,
 	);
+};
+
+export const hoverLongEventAttributes = async (
+	context: PageContext,
+): Promise<void> => {
+	const { canvasElement, args } = context;
+
+	// The dialog panel renders outside the canvas, where the Events tab lookup misses it.
+	if (
+		!showsSpanPanel(args) ||
+		args.panelPosition === SpanDetailVariant.DIALOG ||
+		focusSpanEventCount(traceOf(args)) === 0
+	) {
+		return;
+	}
+
+	await openSpanEvents(context);
+
+	// The long texts are sized to be cut in the right-docked panel; other docks measure.
+	const longCut =
+		args.panelPosition === SpanDetailVariant.DOCKED_RIGHT || undefined;
+	const texts: [string, boolean | undefined][] = [
+		['exception.type', false],
+		[LONG_EVENT_ATTRIBUTES.endpointKey, longCut],
+		[LONG_EVENT_ATTRIBUTES.endpoint, longCut],
+		[LONG_EVENT_ATTRIBUTES.responseKey, longCut],
+	];
+	for (const [text, cut] of texts) {
+		const [label] = await within(canvasElement).findAllByText(text);
+		await hoverTruncatableText(label, text, { cut });
+	}
 };
 
 export const copyTraceId = async ({

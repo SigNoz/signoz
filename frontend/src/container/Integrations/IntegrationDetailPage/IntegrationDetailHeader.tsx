@@ -274,17 +274,23 @@ function IntegrationDetailHeader(
 									Last recieved from
 								</Typography>
 								<div className="connection-line" />
-								<Typography
-									variant="code"
-									size="small"
-									weight="regular"
-									color="main"
-									as="p"
-									maxWidth={320}
-									textOverflow="ellipsis"
+								<Tooltip
+									title={latestData.last_received_from}
+									key={latestData.last_received_from}
+									placement="right"
 								>
-									{latestData.last_received_from}
-								</Typography>
+									<Typography
+										variant="code"
+										size="small"
+										weight="regular"
+										color="main"
+										as="p"
+										maxWidth={320}
+										textOverflow="ellipsis"
+									>
+										{latestData.last_received_from}
+									</Typography>
+								</Tooltip>
 							</div>
 							<div className="data-info">
 								<Typography

@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { AxiosError } from 'axios';
 
@@ -24,18 +25,20 @@ function Error(props: IErrorProps): JSX.Element {
 					Something went wrong!
 				</Typography>
 			</span>
-			<div className={styles.value}>
-				<Typography
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					color="inherit"
-					as="p"
-					textOverflow="ellipsis"
-				>
-					{error?.message}
-				</Typography>
-			</div>
+			<Tooltip title={error?.message}>
+				<div className={styles.value} title={error?.message}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{error?.message}
+					</Typography>
+				</div>
+			</Tooltip>
 		</div>
 	);
 }
