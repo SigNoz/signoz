@@ -17,4 +17,5 @@ export const sections: SectionConfig[] = [
 		kind: SectionKind.Legend,
 		controls: { position: true, colors: resolveDistributionLegendSeries },
 	},
+	{ kind: SectionKind.ContextLinks },
 ];
