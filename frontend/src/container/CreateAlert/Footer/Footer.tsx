@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -9,6 +9,8 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Send, X } from '@signozhq/icons';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
 import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
+import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
+import { getAuthZForbiddenMessage } from 'lib/authz/utils/getAuthZForbiddenMessage';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
@@ -49,11 +51,20 @@ function Footer(): JSX.Element {
 		useAlertRuleSaveChecks();
 	const { showErrorModal } = useErrorModal();
 
+	// A permission the client could not check up front, such as reading the
+	// telemetry the rule queries, is refused by the server; name it in place.
+	const [forbiddenMessage, setForbiddenMessage] = useState<string>();
 	const handleApiError = useCallback(
 		(error: unknown): void => {
-			showErrorModal(
-				convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
+			const apiError = convertToApiError(
+				error as AxiosError<RenderErrorResponseDTO>,
 			);
+			const message = getAuthZForbiddenMessage(apiError);
+			if (message) {
+				setForbiddenMessage(message);
+				return;
+			}
+			showErrorModal(apiError as APIError);
 		},
 		[showErrorModal],
 	);
@@ -86,6 +97,7 @@ function Footer(): JSX.Element {
 	);
 
 	const handleTestNotification = useCallback((): void => {
+		setForbiddenMessage(undefined);
 		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
@@ -125,6 +137,7 @@ function Footer(): JSX.Element {
 
 	const queryClient = useQueryClient();
 	const handleSaveAlert = useCallback((): void => {
+		setForbiddenMessage(undefined);
 		const payload = buildCreateAlertRulePayload({
 			alertType,
 			basicAlertState,
@@ -238,6 +251,7 @@ function Footer(): JSX.Element {
 
 	return (
 		<div className="create-alert-v2-footer">
+			{forbiddenMessage && <PermissionDeniedCallout message={forbiddenMessage} />}
 			<Button
 				disabledTooltip={
 					isTestingAlertRule

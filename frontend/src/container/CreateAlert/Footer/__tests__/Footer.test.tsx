@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { act, fireEvent, render, screen } from 'tests/test-utils';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
@@ -23,10 +23,11 @@ import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
+const mockShowErrorModal = jest.fn();
 jest.mock('providers/ErrorModalProvider', () => ({
 	...jest.requireActual('providers/ErrorModalProvider'),
 	useErrorModal: (): { showErrorModal: jest.Mock } => ({
-		showErrorModal: jest.fn(),
+		showErrorModal: mockShowErrorModal,
 	}),
 }));
 
@@ -422,6 +423,54 @@ describe('Footer', () => {
 					'data-denied-permissions',
 				);
 			}
+		});
+	});
+
+	describe('server denials', () => {
+		const DENIAL =
+			'user/u-1 is not authorized to perform metric:read on resource "cpu"';
+		const axiosError = (status: number, code: string): unknown => ({
+			isAxiosError: true,
+			response: {
+				status,
+				data: { error: { code, message: DENIAL } },
+			},
+		});
+		const failSave = (error: unknown): void => {
+			const [, { onError }] = mockCreateAlertRule.mock.calls.at(-1);
+			act(() => onError(error));
+		};
+
+		beforeEach(() => {
+			mockCreateAlertRule.mockClear();
+			mockShowErrorModal.mockClear();
+		});
+
+		it('names a permission the server refused in a callout', () => {
+			render(<WrappedFooter />);
+			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+			failSave(axiosError(403, 'authz_forbidden'));
+
+			expect(screen.getByText(DENIAL)).toBeInTheDocument();
+			expect(mockShowErrorModal).not.toHaveBeenCalled();
+		});
+
+		it('clears the callout on the next attempt', () => {
+			render(<WrappedFooter />);
+			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+			failSave(axiosError(403, 'authz_forbidden'));
+			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+
+			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
+		});
+
+		it('keeps the error modal for every other failure', () => {
+			render(<WrappedFooter />);
+			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+			failSave(axiosError(500, 'internal'));
+
+			expect(mockShowErrorModal).toHaveBeenCalled();
+			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
 		});
 	});
 });

@@ -13,12 +13,15 @@ export interface PermissionDeniedCalloutProps {
 	 */
 	permissionName?: string;
 	deniedPermissions?: BrandedPermission[];
+	/** The server's own denial, for checks the client cannot make up front. */
+	message?: string;
 	className?: string;
 }
 
 function PermissionDeniedCallout({
 	permissionName,
 	deniedPermissions,
+	message,
 	className,
 }: PermissionDeniedCalloutProps): JSX.Element {
 	const { user } = useAppContext();
@@ -41,23 +44,36 @@ function PermissionDeniedCallout({
 				icon={<SolidAlertCircle />}
 				testId="permission-denied-callout"
 			>
-				<Typography
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					color="secondary"
-					as="span"
-					textOverflow="wrap"
-				>
-					<code className={styles.permissionCode}>user/{user.id}</code> is not
-					authorized to perform{' '}
-					{formattedPermissions.map((perm, idx) => (
-						<span key={perm}>
-							<code className={styles.permissionCode}>{perm}</code>
-							{idx < formattedPermissions.length - 1 && ', '}
-						</span>
-					))}
-				</Typography>
+				{message ? (
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						{message}
+					</Typography>
+				) : (
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
+						<code className={styles.permissionCode}>user/{user.id}</code> is not
+						authorized to perform{' '}
+						{formattedPermissions.map((perm, idx) => (
+							<span key={perm}>
+								<code className={styles.permissionCode}>{perm}</code>
+								{idx < formattedPermissions.length - 1 && ', '}
+							</span>
+						))}
+					</Typography>
+				)}
 			</Callout>
 		</div>
 	);
