@@ -5,6 +5,7 @@ import {
 	LegendPosition,
 	type TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
+import { createBucketValueFormatter } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import ChartWrapper from 'lib/visualization/charts/ChartWrapper/ChartWrapper';
@@ -30,7 +31,7 @@ import { groupIntoOther, resolveMaxDrawnGroups } from './topGroups';
 import { DistributionYScale } from './types';
 import { useDistributionBarClick } from './useDistributionBarClick';
 
-import { createBoundFormatter, prepareDistributionChartData } from './utils';
+import { prepareDistributionChartData } from './utils';
 
 /** Rough share of the panel width the plot gets, for fitting side-by-side bars. */
 const PLOT_SHARE = 0.9;
@@ -157,7 +158,7 @@ export default function Distribution({
 	);
 
 	const formatBound = useMemo(
-		() => createBoundFormatter(xAxisUnit, boundaryPrecision),
+		() => createBucketValueFormatter(xAxisUnit, boundaryPrecision),
 		[xAxisUnit, boundaryPrecision],
 	);
 

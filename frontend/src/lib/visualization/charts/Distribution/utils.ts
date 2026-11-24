@@ -1,16 +1,6 @@
-import { PrecisionOption } from 'components/Graph/types';
-import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import uPlot from 'uplot';
 
 import { DistributionXAxis } from './types';
-
-export function createBoundFormatter(
-	unit?: string,
-	decimalPrecision?: PrecisionOption,
-): (value: number) => string {
-	return (value: number): string =>
-		getToolTipValue(String(value), unit, decimalPrecision);
-}
 
 /**
  * `[bucket centres, ...counts per series]`. The series draw from the layout, so the

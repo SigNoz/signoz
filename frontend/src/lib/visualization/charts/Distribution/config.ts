@@ -6,7 +6,10 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { createVariableWidthBarsPathBuilder } from 'lib/uPlotV2/paths/variableWidthBars';
-import { resolveRowIndex } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import {
+	createBucketValueFormatter,
+	resolveRowIndex,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import { createHatchPattern } from 'lib/uPlotV2/plugins/HeatmapPlugin/paint';
 import uPlot from 'uplot';
 
@@ -24,7 +27,6 @@ import {
 	DistributionXAxis,
 	PercentileMarkerHitArea,
 } from './types';
-import { createBoundFormatter } from './utils';
 
 /** Minimum space between two x tick labels, in CSS pixels. */
 const X_LABEL_GAP_PX = 12;
@@ -107,7 +109,7 @@ export function buildDistributionConfig({
 		drag: { x: false, y: false },
 	});
 
-	const formatBound = createBoundFormatter(xAxisUnit, decimalPrecision);
+	const formatBound = createBucketValueFormatter(xAxisUnit, decimalPrecision);
 
 	builder.addScale({
 		scaleKey: 'x',
