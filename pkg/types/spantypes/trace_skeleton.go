@@ -179,6 +179,15 @@ func (skeleton *TraceSkeleton) spanID(i int32) string {
 	return skeleton.spanIDs[skeleton.idOffsets[i]:skeleton.idOffsets[i+1]]
 }
 
+func (skeleton *TraceSkeleton) position(spanID string) (int32, bool) {
+	for i := range int32(skeleton.len()) {
+		if skeleton.spanID(i) == spanID {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
 func (skeleton *TraceSkeleton) children(i int32) []int32 {
 	return skeleton.childList[skeleton.childStart[i]:skeleton.childStart[i+1]]
 }
@@ -248,8 +257,6 @@ func (skeleton *TraceSkeleton) serviceStats() []TraceServiceStats {
 
 // siblingGroup totals the spans that share a name and a parent; a root is a group of its own.
 type siblingGroup struct {
-	// longest is the position of the span with the highest duration in the group.
-	longest   int32
 	spanCount uint64
 	ownTime   uint64
 	errCount  uint64
@@ -368,16 +375,13 @@ func (skeleton *TraceSkeleton) groupSameNameSiblings() {
 	skeleton.groupOf = make([]int32, n)
 	skeleton.groups = make([]siblingGroup, 0, n)
 	addGroup := func(members []int32) {
-		group := siblingGroup{longest: members[0]}
+		group := siblingGroup{}
 		for _, i := range members {
 			skeleton.groupOf[i] = int32(len(skeleton.groups))
 			group.spanCount++
 			group.ownTime += skeleton.ownTime[i]
 			if skeleton.hasError[i] {
 				group.errCount++
-			}
-			if skeleton.durationNano[i] > skeleton.durationNano[group.longest] {
-				group.longest = i
 			}
 		}
 		skeleton.groups = append(skeleton.groups, group)

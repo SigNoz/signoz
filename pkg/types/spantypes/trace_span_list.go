@@ -2,25 +2,128 @@ package spantypes
 
 import (
 	"cmp"
-	"maps"
+	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-const spanListMaxLimit = 1000
+const (
+	SpanScopeTrace       SpanScope = "trace"
+	SpanScopeChildren    SpanScope = "children"
+	SpanScopeDescendants SpanScope = "descendants"
+	SpanScopeAncestors   SpanScope = "ancestors"
+)
+
+const (
+	spanListDefaultLimit = 50
+	spanListMaxLimit     = 1000
+)
 
 var (
-	ErrCodeTraceSpansInvalidLimit = errors.MustNewCode("trace_spans_invalid_limit")
-	ErrCodeTraceSpansInvalidView  = errors.MustNewCode("trace_spans_invalid_view")
+	ErrCodeTraceSpansInvalidLimit  = errors.MustNewCode("trace_spans_invalid_limit")
+	ErrCodeTraceSpansInvalidOffset = errors.MustNewCode("trace_spans_invalid_offset")
+	ErrCodeTraceSpansInvalidView   = errors.MustNewCode("trace_spans_invalid_view")
 )
 
-// spanPage is one page of a view by span position, before the stored data of its spans is read.
-type spanPage struct {
-	view      SpanListView
-	total     uint64
-	positions []int32
+// SpanScope says which spans of a trace a list route covers: all of them, or the ones related to one span.
+type SpanScope string
+
+type SpanListQuery struct {
+	Scope SpanScope
+	// ScopeSpanID is the span the scope is relative to. Empty when the scope is the whole trace.
+	ScopeSpanID string
+	// View is empty when every span the scope covers is wanted.
+	View         SpanListView
+	SelectFields []telemetrytypes.TelemetryFieldKey
+	Offset       int
+	Limit        int
+}
+
+// SpanListPage is one page of a span list picked from the tree, before the stored data of its spans is read.
+type SpanListPage struct {
+	skeleton *TraceSkeleton
+	view     SpanListView
+	// total counts the spans the page was cut from.
+	total        uint64
+	positions    []int32
+	selectFields []telemetrytypes.TelemetryFieldKey
+}
+
+func NewSpanListQuery(params *ListTraceSpansParams, scope SpanScope, scopeSpanID string) (*SpanListQuery, error) {
+	query := &SpanListQuery{Scope: scope, ScopeSpanID: scopeSpanID, View: params.View, Offset: params.Offset}
+	if query.View != "" {
+		if err := validateSpanListView(query.View); err != nil {
+			return nil, err
+		}
+	}
+	if strings.TrimSpace(params.Query) != "" {
+		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "query is not implemented yet")
+	}
+	if params.Offset < 0 {
+		return nil, errors.NewInvalidInputf(ErrCodeTraceSpansInvalidOffset, "offset cannot be negative, got %d", params.Offset)
+	}
+	limit, err := pageLimit("limit", params.Limit, spanListDefaultLimit)
+	if err != nil {
+		return nil, err
+	}
+	query.Limit = limit
+
+	for _, text := range params.SelectFields {
+		if text = strings.TrimSpace(text); text != "" {
+			query.SelectFields = append(query.SelectFields, newSelectField(text))
+		}
+	}
+	return query, nil
+}
+
+func NewSpanListPage(skeleton *TraceSkeleton, query *SpanListQuery) (*SpanListPage, error) {
+	scope, err := skeleton.scopePositions(query.Scope, query.ScopeSpanID)
+	if err != nil {
+		return nil, err
+	}
+	page := skeleton.page(scope, query.View, query.Offset, query.Limit)
+	page.selectFields = query.SelectFields
+	return page, nil
+}
+
+func (page *SpanListPage) SpanIDs() []string {
+	spanIDs := make([]string, 0, len(page.positions))
+	for _, i := range page.positions {
+		spanIDs = append(spanIDs, page.skeleton.spanID(i))
+	}
+	return spanIDs
+}
+
+// NewSpanList builds the page. rows holds the stored data of its spans; a span without a row keeps
+// what the tree knows. A selected field no span of the page has is reported as a warning.
+func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
+	byID := make(map[string]*StorableSpan, len(rows))
+	for i := range rows {
+		byID[rows[i].SpanID] = &rows[i]
+	}
+
+	skeleton := page.skeleton
+	list := &SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions))}
+	found := make([]bool, len(page.selectFields))
+	for _, i := range page.positions {
+		row := byID[skeleton.spanID(i)]
+		item := SpanItem{Span: skeleton.span(i, row), TreeStats: skeleton.treeStats(i), UnmarkedFailureReason: skeleton.unmarkedFailureReason(i)}
+		if page.view == SpanListViewAIUsage {
+			skeleton.setUsageAttributes(&item.Span, i)
+		}
+		item.Span.selectFields(row, page.selectFields, found)
+		list.Items = append(list.Items, item)
+	}
+	for k, field := range page.selectFields {
+		if !found[k] && len(list.Items) > 0 {
+			list.Warnings = append(list.Warnings, fmt.Sprintf("field `%s` was not found on any returned span", telemetrytypes.TelemetryFieldKeyToText(&field)))
+		}
+	}
+	return list
 }
 
 // spanListViews lists every view, in the order they are documented.
@@ -39,6 +142,41 @@ func validateSpanListView(view SpanListView) error {
 	return nil
 }
 
+// newSelectField reads a name as an attribute or a resource attribute. Any other context word is
+// the start of an attribute name, such as event.name.
+func newSelectField(text string) telemetrytypes.TelemetryFieldKey {
+	key := telemetrytypes.GetFieldKeyFromKeyText(text)
+	key.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
+		return key
+	}
+	return telemetrytypes.TelemetryFieldKey{Name: telemetrytypes.TelemetryFieldKeyToText(&key)}
+}
+
+// selectFields copies the named attributes and resource attributes from row, and marks in found
+// the fields the row has. A name without a context is looked up in both.
+func (span *Span) selectFields(row *StorableSpan, fields []telemetrytypes.TelemetryFieldKey, found []bool) {
+	if row == nil || len(fields) == 0 {
+		return
+	}
+	attributes := row.Attributes()
+	for k, field := range fields {
+		if field.FieldContext != telemetrytypes.FieldContextAttribute {
+			if value, ok := row.ResourcesString[field.Name]; ok {
+				span.Resource[field.Name] = value
+				found[k] = true
+			}
+		}
+		if field.FieldContext != telemetrytypes.FieldContextResource {
+			if value, ok := attributes[field.Name]; ok {
+				span.Attributes[field.Name] = value
+				found[k] = true
+			}
+		}
+	}
+}
+
 func pageLimit(name string, value, fallback int) (int, error) {
 	switch {
 	case value < 0 || value > spanListMaxLimit:
@@ -49,27 +187,60 @@ func pageLimit(name string, value, fallback int) (int, error) {
 	return value, nil
 }
 
-// firstPage returns the first limit spans of a view, with the size of the whole view as its total.
-func (skeleton *TraceSkeleton) firstPage(view SpanListView, limit int) *spanPage {
-	positions := skeleton.viewPositions(view)
-	return &spanPage{view: view, total: uint64(len(positions)), positions: positions[:min(limit, len(positions))]}
+// page cuts one page out of the spans of scope. A view keeps the ones of its kind, in its own order.
+func (skeleton *TraceSkeleton) page(scope []int32, view SpanListView, offset, limit int) *SpanListPage {
+	positions := scope
+	if view != "" {
+		positions = skeleton.viewPositions(view, scope)
+	}
+	page := &SpanListPage{skeleton: skeleton, view: view, total: uint64(len(positions))}
+	if offset < len(positions) {
+		page.positions = positions[offset:min(offset+limit, len(positions))]
+	}
+	return page
 }
 
-// viewPositions lists the spans of a view in the order of the view.
-func (skeleton *TraceSkeleton) viewPositions(view SpanListView) []int32 {
+// scopePositions lists the spans a scope covers, in the scope's own order.
+func (skeleton *TraceSkeleton) scopePositions(scope SpanScope, spanID string) ([]int32, error) {
+	if scope == SpanScopeTrace {
+		return skeleton.treeOrder, nil
+	}
+	span, ok := skeleton.position(spanID)
+	if !ok {
+		return nil, errors.NewNotFoundf(ErrCodeTraceSpanNotFound, "span %s not found in trace %s", spanID, skeleton.traceID)
+	}
+	switch scope {
+	case SpanScopeChildren:
+		return skeleton.children(span), nil
+	case SpanScopeDescendants:
+		// The spans below a span follow it directly in tree order.
+		at := slices.Index(skeleton.treeOrder, span)
+		return skeleton.treeOrder[at+1 : at+1+int(skeleton.descendantCount[span])], nil
+	case SpanScopeAncestors:
+		ancestors := make([]int32, 0, skeleton.level[span])
+		for parent := skeleton.parents[span]; parent != noParent; parent = skeleton.parents[parent] {
+			ancestors = append(ancestors, parent)
+		}
+		return ancestors, nil
+	}
+	return nil, errors.NewInternalf(errors.CodeInternal, "unknown span scope %q", string(scope))
+}
+
+// viewPositions lists the spans of scope that are in a view, in the order of the view.
+func (skeleton *TraceSkeleton) viewPositions(view SpanListView, scope []int32) []int32 {
 	switch view {
 	case SpanListViewErrorOrigins:
-		return skeleton.spansWhere(skeleton.errorStartsAt)
+		return skeleton.spansWhere(scope, skeleton.errorStartsAt)
 	case SpanListViewUnmarkedFailures:
-		return skeleton.spansWhere(func(i int32) bool { return skeleton.unmarkedFailureReason(i) != "" })
+		return skeleton.spansWhere(scope, func(i int32) bool { return skeleton.unmarkedFailureReason(i) != "" })
 	case SpanListViewLinks:
-		return skeleton.spansWhere(func(i int32) bool { return skeleton.hasLink[i] })
+		return skeleton.spansWhere(scope, func(i int32) bool { return skeleton.hasLink[i] })
 	case SpanListViewTimeSpent:
-		return skeleton.timeSpentSpans()
+		return skeleton.timeSpentSpans(scope)
 	case SpanListViewAIUsage:
-		return skeleton.aiUsageSpans()
+		return skeleton.aiUsageSpans(scope)
 	}
-	return skeleton.treeOrder
+	return nil
 }
 
 // errorStartsAt reports whether span i is an error span with no error span among its children.
@@ -77,34 +248,39 @@ func (skeleton *TraceSkeleton) errorStartsAt(i int32) bool {
 	return skeleton.hasError[i] && !slices.ContainsFunc(skeleton.children(i), func(child int32) bool { return skeleton.hasError[child] })
 }
 
-// spansWhere lists the spans that match, in start time order.
-func (skeleton *TraceSkeleton) spansWhere(match func(i int32) bool) []int32 {
+// spansWhere lists the spans of scope that match, in start time order.
+func (skeleton *TraceSkeleton) spansWhere(scope []int32, match func(i int32) bool) []int32 {
 	spans := make([]int32, 0)
-	for i := range int32(skeleton.len()) {
+	for _, i := range scope {
 		if match(i) {
 			spans = append(spans, i)
 		}
 	}
+	slices.Sort(spans)
 	return spans
 }
 
-// timeSpentSpans lists the longest span of each sibling group, the group with the most own time
-// first. Equal groups fall back to span order, so that every page cuts the same ranking.
-func (skeleton *TraceSkeleton) timeSpentSpans() []int32 {
-	ranked := slices.Clone(skeleton.groups)
-	slices.SortFunc(ranked, func(a, b siblingGroup) int {
-		return cmp.Or(cmp.Compare(b.ownTime, a.ownTime), cmp.Compare(a.longest, b.longest))
-	})
-	spans := make([]int32, len(ranked))
-	for k := range ranked {
-		spans[k] = ranked[k].longest
+// timeSpentSpans lists one span for each sibling group in scope, its longest there, the group with
+// the most own time first. Equal groups fall back to span order, so that every page cuts the same ranking.
+func (skeleton *TraceSkeleton) timeSpentSpans(scope []int32) []int32 {
+	longest := slices.Repeat([]int32{-1}, len(skeleton.groups))
+	for _, i := range scope {
+		group := skeleton.groupOf[i]
+		if longest[group] < 0 || skeleton.durationNano[i] > skeleton.durationNano[longest[group]] {
+			longest[group] = i
+		}
 	}
+	spans := slices.DeleteFunc(longest, func(i int32) bool { return i < 0 })
+	groupOwnTime := func(i int32) uint64 { return skeleton.groups[skeleton.groupOf[i]].ownTime }
+	slices.SortFunc(spans, func(a, b int32) int {
+		return cmp.Or(cmp.Compare(groupOwnTime(b), groupOwnTime(a)), cmp.Compare(a, b))
+	})
 	return spans
 }
 
-// aiUsageSpans lists the spans that carry gen_ai usage by cost, or by tokens when no span
-// carries a cost; equal spans fall back to span order.
-func (skeleton *TraceSkeleton) aiUsageSpans() []int32 {
+// aiUsageSpans lists the spans of scope that carry gen_ai usage by cost, or by tokens when no
+// span of the trace carries a cost; equal spans fall back to span order.
+func (skeleton *TraceSkeleton) aiUsageSpans(scope []int32) []int32 {
 	hasCost := false
 	for _, usage := range skeleton.aiUsage {
 		hasCost = hasCost || usage.Cost != nil
@@ -116,24 +292,14 @@ func (skeleton *TraceSkeleton) aiUsageSpans() []int32 {
 		}
 		return floatValue(usage.InputTokens) + floatValue(usage.OutputTokens)
 	}
-	spans := slices.Collect(maps.Keys(skeleton.aiUsage))
+	spans := skeleton.spansWhere(scope, func(i int32) bool {
+		_, ok := skeleton.aiUsage[i]
+		return ok
+	})
 	slices.SortFunc(spans, func(a, b int32) int {
 		return cmp.Or(cmp.Compare(weight(b), weight(a)), cmp.Compare(a, b))
 	})
 	return spans
-}
-
-// newSpanList builds the items of a page. rows holds the stored data of its spans by span id.
-func (skeleton *TraceSkeleton) newSpanList(page *spanPage, rows map[string]*StorableSpan) SpanList {
-	list := SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions))}
-	for _, i := range page.positions {
-		item := SpanItem{Span: skeleton.span(i, rows[skeleton.spanID(i)]), TreeStats: skeleton.treeStats(i), UnmarkedFailureReason: skeleton.unmarkedFailureReason(i)}
-		if page.view == SpanListViewAIUsage {
-			skeleton.setUsageAttributes(&item.Span, i)
-		}
-		list.Items = append(list.Items, item)
-	}
-	return list
 }
 
 // span returns span i with service.name as its only resource attribute. row adds what only the

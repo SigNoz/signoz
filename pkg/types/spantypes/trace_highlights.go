@@ -37,7 +37,7 @@ type TraceHighlightsQuery struct {
 // HighlightPages holds the spans picked for each requested list, before their stored data is read.
 type HighlightPages struct {
 	skeleton *TraceSkeleton
-	pages    []*spanPage
+	pages    []*SpanListPage
 }
 
 func NewTraceHighlightsQuery(params *GetTraceHighlightsParams) (*TraceHighlightsQuery, error) {
@@ -64,7 +64,7 @@ func NewTraceHighlightsQuery(params *GetTraceHighlightsParams) (*TraceHighlights
 func NewHighlightPages(skeleton *TraceSkeleton, query *TraceHighlightsQuery) *HighlightPages {
 	pages := &HighlightPages{skeleton: skeleton}
 	for _, view := range query.Views {
-		pages.pages = append(pages.pages, skeleton.firstPage(view, query.Limit))
+		pages.pages = append(pages.pages, skeleton.page(skeleton.treeOrder, view, 0, query.Limit))
 	}
 	return pages
 }
@@ -87,24 +87,20 @@ func (pages *HighlightPages) SpanIDs() []string {
 // NewTraceHighlights builds the highlights. rows holds the stored data of the picked spans; a span
 // without a row keeps what the skeleton knows.
 func NewTraceHighlights(pages *HighlightPages, rows []StorableSpan) *TraceHighlights {
-	byID := make(map[string]*StorableSpan, len(rows))
-	for i := range rows {
-		byID[rows[i].SpanID] = &rows[i]
-	}
 	highlights := &TraceHighlights{Services: pages.skeleton.serviceStats()}
 	for _, page := range pages.pages {
-		list := pages.skeleton.newSpanList(page, byID)
+		list := NewSpanList(page, rows)
 		switch page.view {
 		case SpanListViewErrorOrigins:
-			highlights.ErrorOrigins = &list
+			highlights.ErrorOrigins = list
 		case SpanListViewUnmarkedFailures:
-			highlights.UnmarkedFailures = &list
+			highlights.UnmarkedFailures = list
 		case SpanListViewTimeSpent:
-			highlights.TimeSpent = &list
+			highlights.TimeSpent = list
 		case SpanListViewAIUsage:
-			highlights.AIUsage = &list
+			highlights.AIUsage = list
 		case SpanListViewLinks:
-			highlights.Links = &list
+			highlights.Links = list
 		}
 	}
 	return highlights
