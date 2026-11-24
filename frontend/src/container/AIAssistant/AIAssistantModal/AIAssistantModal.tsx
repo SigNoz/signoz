@@ -144,6 +144,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 			<div
 				className={styles.backdrop}
 				role="dialog"
+				data-testid="ai-assistant-modal"
 				aria-modal="true"
 				aria-label="Noz"
 				onClick={handleBackdropClick}

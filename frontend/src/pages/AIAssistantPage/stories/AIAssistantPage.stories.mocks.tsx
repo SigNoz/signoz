@@ -259,16 +259,6 @@ export const aiAssistantMocks = defineStoryMocks({
 
 export type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
 
-export const aiAssistantModalMocks = defineStoryMocks({
-	controls: aiAssistantMocks.controls,
-	handlers: (values, response) =>
-		aiAssistantMocks.handlers?.(values, response) ?? [],
-	effect: (values) => {
-		aiAssistantMocks.effect?.(values);
-		useAIAssistantStore.setState({ isModalOpen: true });
-	},
-});
-
 /** The thread and the sidebar both come from endpoints the State control holds. */
 const loads = (args: AIAssistantArgs): boolean => args.dataState === 'loaded';
 

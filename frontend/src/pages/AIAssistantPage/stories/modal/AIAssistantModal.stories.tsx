@@ -5,7 +5,7 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
 	type AIAssistantArgs,
-	aiAssistantModalMocks,
+	aiAssistantMocks,
 	longActionTooltipHandlers,
 } from '../AIAssistantPage.stories.mocks';
 import {
@@ -24,6 +24,7 @@ import {
 	openConversationActions,
 	openHistory,
 	openLiveSteps,
+	openModal,
 	openNegativeFeedback,
 	pickContexts,
 	renameConversation,
@@ -35,7 +36,7 @@ function EmptyPage(): JSX.Element {
 	return <div />;
 }
 
-const pageStory = storyMocks(aiAssistantModalMocks, {
+const pageStory = storyMocks(aiAssistantMocks, {
 	route: ROUTES.HOME,
 	layout: 'app',
 });
@@ -59,10 +60,13 @@ export default meta;
 
 type Story = StoryObj<AIAssistantArgs>;
 
-export const Default: Story = {};
+export const Default: Story = {
+	play: openModal,
+};
 
 export const NewConversation: Story = {
 	args: { conversation: false, history: 0, archived: 0 },
+	play: openModal,
 };
 
 export const History: Story = {
@@ -71,22 +75,27 @@ export const History: Story = {
 
 export const QuestionBlocks: Story = {
 	args: { contents: QUESTIONS },
+	play: openModal,
 };
 
 export const ActionBlocks: Story = {
 	args: { contents: COMMITMENTS },
+	play: openModal,
 };
 
 export const AnsweredBlocks: Story = {
 	args: { contents: INTERACTIVE, answered: true },
+	play: openModal,
 };
 
 export const Thinking: Story = {
 	args: { agent: 'thinking', contents: BRIEF },
+	play: openModal,
 };
 
 export const Streaming: Story = {
 	args: { agent: 'streaming', contents: BRIEF },
+	play: openModal,
 };
 
 export const StreamingSteps: Story = {
@@ -106,14 +115,17 @@ export const ScrolledUp: Story = {
 
 export const AwaitingApproval: Story = {
 	args: { agent: 'awaiting-approval', contents: BRIEF },
+	play: openModal,
 };
 
 export const AwaitingDeleteApproval: Story = {
 	args: { agent: 'awaiting-approval', approvalDiff: false, contents: BRIEF },
+	play: openModal,
 };
 
 export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
+	play: openModal,
 };
 
 export const ClarificationSelectOpen: Story = {
@@ -123,6 +135,7 @@ export const ClarificationSelectOpen: Story = {
 
 export const LoadingThread: Story = {
 	args: { dataState: 'loading' },
+	play: openModal,
 };
 
 export const ActivityExpanded: Story = {
@@ -161,6 +174,7 @@ export const PickedContexts: Story = {
 
 export const SentContexts: Story = {
 	args: { contents: ['contexts'] },
+	play: openModal,
 };
 
 export const ConversationLinkCopiedToast: Story = {
@@ -170,6 +184,7 @@ export const ConversationLinkCopiedToast: Story = {
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
 	parameters: { msw: { handlers: longActionTooltipHandlers } },
+	play: openModal,
 };
 
 export const TooltipsInApprovalDiff: Story = {
