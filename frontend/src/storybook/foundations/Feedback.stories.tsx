@@ -74,11 +74,6 @@ export const DangerWithDescription: Story = {
 	play: showsDangerWithDescription,
 };
 
-/** Mutation: the inline application alert preserves its action affordance. */
-export const InlineAlert: Story = {
-	args: { state: 'inline-alert' },
-};
-
 /**
  * Interaction: verifies Escape closes the destructive confirmation. The dialog
  * drops focus on the body rather than returning it to the trigger, so the story
