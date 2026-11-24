@@ -14,7 +14,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import ExportDashboardSelect from './ExportDashboardSelect';
 import styles from './ExportPanel.module.scss';
 
-export interface ExportPanelProps {
+interface ExportPanelProps {
 	isLoading?: boolean;
 	onExport: (
 		dashboard: ExportDashboard | null,

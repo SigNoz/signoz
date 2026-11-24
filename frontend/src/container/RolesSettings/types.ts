@@ -7,7 +7,7 @@ export enum PermissionScope {
 	NONE = 'none',
 }
 
-export type ActionScope = PermissionScope;
+type ActionScope = PermissionScope;
 
 export interface ActionConfig {
 	scope: ActionScope;
@@ -28,14 +28,4 @@ export interface RolePermissionsData {
 	roleName: string;
 	roleDescription: string;
 	resources: ResourcePermissions[];
-}
-
-export interface SelectableItem {
-	id: string;
-	label: string;
-}
-
-export interface ResourceItemsResult {
-	items: SelectableItem[];
-	isLoading: boolean;
 }

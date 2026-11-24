@@ -14,8 +14,3 @@ export interface GetSpanPercentilesResponseDataProps {
 		description: string;
 	};
 }
-
-export interface GetSpanPercentilesResponsePayloadProps {
-	status: string;
-	data: GetSpanPercentilesResponseDataProps;
-}

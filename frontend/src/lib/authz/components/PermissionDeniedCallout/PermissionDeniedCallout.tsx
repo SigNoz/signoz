@@ -7,7 +7,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
-export interface PermissionDeniedCalloutProps {
+interface PermissionDeniedCalloutProps {
 	/**
 	 * @deprecated Use `deniedPermissions` instead. Will be removed after authz devtools PR merges.
 	 */

@@ -48,5 +48,3 @@ export const getQueryRangeV5 = async (
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
-
-export default getQueryRangeV5;

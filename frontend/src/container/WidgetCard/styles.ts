@@ -1,11 +1,7 @@
-import RGL, { WidthProvider } from 'react-grid-layout';
-import { Button as ButtonComponent, Card as CardComponent } from 'antd';
-import Space from 'periscope/components/Space/Space';
+import { Card as CardComponent } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'types/styledComponents';
 import styled, { css } from 'styled-components';
-
-const ReactGridLayoutComponent = WidthProvider(RGL);
 
 interface CardProps {
 	$panelType: PANEL_TYPES;
@@ -85,38 +81,5 @@ export const CardContainer = styled.div<Props>`
 				}}
 			}
 		}
-	}
-`;
-
-export const ReactGridLayout = styled(ReactGridLayoutComponent)`
-	border: 1px solid #434343;
-	margin-top: 1rem;
-	position: relative;
-	min-height: 40vh;
-	margin: 16px;
-
-	.react-grid-item.react-grid-placeholder {
-		background: grey;
-		opacity: 0.2;
-		transition-duration: 100ms;
-		z-index: 2;
-		-webkit-user-select: none;
-		-moz-user-select: none;
-		-ms-user-select: none;
-		-o-user-select: none;
-		user-select: none;
-	}
-`;
-
-export const ButtonContainer = styled(Space)`
-	display: flex;
-	justify-content: end;
-`;
-
-export const Button = styled(ButtonComponent)`
-	&&& {
-		display: flex;
-		justify-content: center;
-		align-items: center;
 	}
 `;

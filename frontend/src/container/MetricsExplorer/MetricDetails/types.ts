@@ -1,7 +1,4 @@
 import {
-	MetricsexplorertypesMetricAlertDTO,
-	MetricsexplorertypesMetricAttributeDTO,
-	MetricsexplorertypesMetricHighlightsResponseDTO,
 	MetricsexplorertypesMetricMetadataDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
@@ -50,10 +47,6 @@ export interface AllAttributesEmptyTextProps {
 	refetchAttributes: () => void;
 }
 
-export type MetricHighlight = MetricsexplorertypesMetricHighlightsResponseDTO;
-
-export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
-
 export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
 export interface MetricMetadataFormState {
 	type: MetrictypesTypeDTO;
@@ -62,8 +55,6 @@ export interface MetricMetadataFormState {
 	unit: string;
 	isMonotonic: boolean;
 }
-
-export type MetricAttribute = MetricsexplorertypesMetricAttributeDTO;
 
 export enum TableFields {
 	DESCRIPTION = 'description',

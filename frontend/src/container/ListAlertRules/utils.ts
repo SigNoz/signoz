@@ -9,8 +9,6 @@ import { dataSourceForAlertType } from 'constants/alerts';
 
 import type { AlertRule, RuleListFilter } from './types';
 
-export const ALERT_RULES_REFRESH_INTERVAL = 30_000;
-
 export const ALERT_ACTIONS = {
 	TOGGLE: 'toggle',
 	EDIT: 'edit',

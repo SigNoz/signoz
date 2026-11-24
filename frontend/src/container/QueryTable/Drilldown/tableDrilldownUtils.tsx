@@ -6,7 +6,7 @@ import { addFilterToSelectedQuery, FilterData } from './drilldownUtils';
 import { BreakoutAttributeType } from './types';
 import { AggregateData } from './useAggregateDrilldown';
 
-export const isEmptyFilterValue = (value: any): boolean =>
+const isEmptyFilterValue = (value: any): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
 
 /**

@@ -74,9 +74,9 @@ export const NO_PANEL_ACTIONS: PanelActionCapabilities = {
 	drilldown: false,
 };
 
-export type PanelIcon = typeof ChartLine;
+type PanelIcon = typeof ChartLine;
 
-export interface PanelDefinitionBase<K extends PanelKind = PanelKind> {
+interface PanelDefinitionBase<K extends PanelKind = PanelKind> {
 	kind: K;
 	displayName: string;
 	icon: PanelIcon;
@@ -118,7 +118,7 @@ export type WarningSourceStore = Pick<
  * kind without one carries no query declarations at all — no dummy capabilities,
  * no empty signal lists standing in for "not applicable".
  */
-export interface QueryPanelDefinition<
+interface QueryPanelDefinition<
 	K extends PanelKind = PanelKind,
 > extends PanelDefinitionBase<K> {
 	mode: 'query';
@@ -151,7 +151,7 @@ export interface QueryPanelDefinition<
  * pane replaces the query builder (TDD D8). No query machinery mounts for it
  * anywhere — every host forks on `mode` before touching a query hook.
  */
-export interface StaticPanelDefinition<
+interface StaticPanelDefinition<
 	K extends PanelKind = PanelKind,
 > extends PanelDefinitionBase<K> {
 	mode: 'static';

@@ -49,8 +49,6 @@ export enum FORMULA {
 	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
 }
 
-export const TOP_LEVEL_OPERATIONS = ['{{.top_level_operations}}'];
-
 export enum GraphTitle {
 	APDEX = 'Apdex',
 	LATENCY = 'Latency',

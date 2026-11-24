@@ -21,7 +21,7 @@ import ExpandableValue from '@/periscope/components/ExpandableValue/ExpandableVa
 
 import styles from './TooltipsFixture.module.scss';
 
-export type TooltipSite =
+type TooltipSite =
 	| 'authz-denied'
 	| 'chart-legend'
 	| 'expandable-value'

@@ -21,7 +21,7 @@ import {
 const MINUTE = 60 * 1000;
 
 /** The labels a rule's history is broken down by, both in the table and the filters. */
-export const HISTORY_LABEL_VALUES: Record<string, string[]> = {
+const HISTORY_LABEL_VALUES: Record<string, string[]> = {
 	'service.name': ['checkout', 'payments', 'auth', 'search'],
 	'deployment.environment': ['prod', 'staging'],
 	'host.name': ['ip-10-0-1-14', 'ip-10-0-2-31', 'ip-10-0-3-77'],

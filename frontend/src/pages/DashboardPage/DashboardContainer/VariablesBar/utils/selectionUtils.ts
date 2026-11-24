@@ -5,21 +5,6 @@ import type {
 	VariableSelectionMap,
 } from '../selectionTypes';
 
-/** A selection counts as resolved (usable as a parent value) when it's non-empty. */
-export function isResolved(selection?: VariableSelection): boolean {
-	if (!selection) {
-		return false;
-	}
-	if (selection.allSelected) {
-		return true;
-	}
-	const { value } = selection;
-	if (Array.isArray(value)) {
-		return value.length > 0;
-	}
-	return value !== '' && value !== null && value !== undefined;
-}
-
 /**
  * Whether a selection carries a value usable when scheduling a dependent
  * variable/panel fetch. Unlike {@link isResolved}, an ALL selection counts only

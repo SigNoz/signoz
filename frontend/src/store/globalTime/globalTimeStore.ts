@@ -17,7 +17,6 @@ import {
 } from './utils';
 
 export type GlobalTimeStoreApi = StoreApi<GlobalTimeStore>;
-export type IGlobalTimeStore = GlobalTimeStore;
 
 export interface CreateGlobalTimeStoreOptions extends Partial<GlobalTimeState> {
 	parentStore?: GlobalTimeStoreApiRef;

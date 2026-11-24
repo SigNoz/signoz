@@ -179,7 +179,7 @@ instance.interceptors.request.use(interceptorsRequestResponse);
 instance.interceptors.request.use(interceptorsRequestBasePath);
 instance.interceptors.response.use(interceptorsResponse, interceptorRejected);
 
-export const AxiosAlertManagerInstance = axios.create({
+const AxiosAlertManagerInstance = axios.create({
 	baseURL: `${ENVIRONMENT.baseURL}${apiAlertManager}`,
 });
 
@@ -252,5 +252,4 @@ AxiosAlertManagerInstance.interceptors.response.use(
 AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestResponse);
 AxiosAlertManagerInstance.interceptors.request.use(interceptorsRequestBasePath);
 
-export { apiV1 };
 export default instance;

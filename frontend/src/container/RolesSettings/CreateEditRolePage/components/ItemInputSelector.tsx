@@ -12,7 +12,7 @@ import styles from './ItemInputSelector.module.scss';
 const BASE_DOCS_URL =
 	'https://signoz.io/docs/manage/administrator-guide/iam/permissions/';
 
-export interface ItemInputSelectorProps {
+interface ItemInputSelectorProps {
 	placeholder: string;
 	selectedIds: string[];
 	onChange: (ids: string[]) => void;

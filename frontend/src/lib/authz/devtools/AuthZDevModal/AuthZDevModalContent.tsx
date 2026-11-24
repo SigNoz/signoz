@@ -7,7 +7,7 @@ import { PermissionRow } from './PermissionRow';
 
 import styles from './AuthZDevModal.module.css';
 
-export interface PermissionGroup {
+interface PermissionGroup {
 	resource: string;
 	items: string[];
 }

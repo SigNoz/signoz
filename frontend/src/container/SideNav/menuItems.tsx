@@ -14,14 +14,11 @@ import {
 	Bug,
 	Building2,
 	ChartArea,
-	Cloudy,
 	DraftingCompass,
-	FileKey2,
 	Github,
 	HardDrive,
 	Home,
 	Keyboard,
-	Layers2,
 	LayoutGrid,
 	ListMinus,
 	LogOut,
@@ -37,44 +34,15 @@ import {
 	Sparkles,
 	Unplug,
 	User,
-	UserPlus,
 	Users,
 	Binoculars,
 	Brain,
 } from '@signozhq/icons';
 
-import {
-	SecondaryMenuItemKey,
-	SettingsNavSection,
-	SidebarItem,
-} from './sideNav.types';
+import { SettingsNavSection, SidebarItem } from './sideNav.types';
 import { Style } from '@signozhq/design-tokens';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
-
-export const getStartedMenuItem = {
-	key: ROUTES.GET_STARTED_WITH_CLOUD,
-	label: 'Get Started',
-	icon: <Rocket size={16} style={{ transform: 'rotate(45deg)' }} />,
-};
-
-export const homeMenuItem = {
-	key: ROUTES.HOME,
-	label: 'Home',
-	icon: <Home size={16} />,
-};
-
-export const inviteMemberMenuItem = {
-	key: `${ROUTES.MEMBERS_SETTINGS}?invite=true`,
-	label: 'Invite Team Member',
-	icon: <UserPlus size={16} />,
-};
-
-export const manageLicenseMenuItem = {
-	key: ROUTES.LIST_LICENSES,
-	label: 'Manage Licenses',
-	icon: <FileKey2 size={16} />,
-};
 
 export const helpSupportMenuItem = {
 	key: ROUTES.SUPPORT,
@@ -99,115 +67,6 @@ export const aiAssistantMenuItem = {
 	isEarlyAccess: true,
 	tooltip: NOZ_TOOLTIP_TITLE,
 };
-
-export const shortcutMenuItem = {
-	key: ROUTES.SHORTCUTS,
-	label: 'Keyboard Shortcuts',
-	icon: <Layers2 size={16} />,
-};
-
-export const slackSupportMenuItem = {
-	key: SecondaryMenuItemKey.Slack,
-	label: 'Slack Support',
-	icon: <Slack size={16} />,
-};
-
-export const trySignozCloudMenuItem: SidebarItem = {
-	key: 'trySignozCloud',
-	label: 'Try Signoz Cloud',
-	icon: <Cloudy size={16} />,
-};
-
-const menuItems: SidebarItem[] = [
-	{
-		key: ROUTES.HOME,
-		label: 'Home',
-		icon: <Home size={16} />,
-		itemKey: 'home',
-	},
-	{
-		key: ROUTES.APPLICATION,
-		label: 'Services',
-		icon: <HardDrive size={16} />,
-		itemKey: 'services',
-	},
-
-	{
-		key: ROUTES.LOGS,
-		label: 'Logs',
-		icon: <ScrollText size={16} />,
-		itemKey: 'logs',
-	},
-	{
-		key: ROUTES.METRICS_EXPLORER,
-		label: 'Metrics',
-		icon: <BarChart size={16} />,
-		isNew: false,
-		itemKey: 'metrics',
-	},
-	{
-		key: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
-		label: 'Infra Monitoring',
-		icon: <Boxes size={16} />,
-		itemKey: 'infrastructure',
-	},
-	{
-		key: ROUTES.ALL_DASHBOARD,
-		label: 'Dashboards',
-		icon: <LayoutGrid size={16} />,
-		itemKey: 'dashboards',
-	},
-	{
-		key: ROUTES.MESSAGING_QUEUES_OVERVIEW,
-		label: 'Messaging Queues',
-		icon: <ListMinus size={16} />,
-		itemKey: 'messaging-queues',
-	},
-	{
-		key: ROUTES.API_MONITORING,
-		label: 'External APIs',
-		icon: <Binoculars size={16} />,
-		isNew: true,
-		itemKey: 'external-apis',
-	},
-	{
-		key: ROUTES.LIST_ALL_ALERT,
-		label: 'Alerts',
-		icon: <BellDot size={16} />,
-		itemKey: 'alerts',
-	},
-	{
-		key: ROUTES.INTEGRATIONS,
-		label: 'Integrations',
-		icon: <Unplug size={16} />,
-		itemKey: 'integrations',
-	},
-	{
-		key: ROUTES.ALL_ERROR,
-		label: 'Exceptions',
-		icon: <Bug size={16} />,
-		itemKey: 'exceptions',
-	},
-	{
-		key: ROUTES.SERVICE_MAP,
-		label: 'Service Map',
-		icon: <Route size={16} />,
-		isBeta: true,
-		itemKey: 'service-map',
-	},
-	{
-		key: ROUTES.BILLING,
-		label: 'Billing',
-		icon: <Receipt size={16} />,
-		itemKey: 'billing',
-	},
-	{
-		key: ROUTES.SETTINGS,
-		label: 'Settings',
-		icon: <Settings size={16} />,
-		itemKey: 'settings',
-	},
-];
 
 export const primaryMenuItems: SidebarItem[] = [
 	{
@@ -603,5 +462,3 @@ export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
 	// to the AI Assistant menu item's concrete key.
 	[ROUTES.AI_ASSISTANT_BASE]: AI_ASSISTANT_NAV_KEY,
 };
-
-export default menuItems;

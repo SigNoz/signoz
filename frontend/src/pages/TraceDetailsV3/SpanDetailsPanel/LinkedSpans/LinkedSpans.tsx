@@ -14,11 +14,6 @@ interface SpanReference {
 	refType: string;
 }
 
-interface LinkedSpansProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	references: any;
-}
-
 interface LinkedSpansState {
 	linkedSpans: SpanReference[];
 	count: number;
@@ -106,16 +101,3 @@ export function LinkedSpansPanel({
 		</div>
 	);
 }
-
-function LinkedSpans({ references }: LinkedSpansProps): JSX.Element {
-	const { linkedSpans, count, isOpen, toggleOpen } = useLinkedSpans(references);
-
-	return (
-		<div className={styles.root}>
-			<LinkedSpansToggle count={count} isOpen={isOpen} toggleOpen={toggleOpen} />
-			<LinkedSpansPanel linkedSpans={linkedSpans} isOpen={isOpen} />
-		</div>
-	);
-}
-
-export default LinkedSpans;

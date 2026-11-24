@@ -32,23 +32,6 @@ import '../OnboardingV2.styles.scss';
 
 const { Header } = Layout;
 
-interface OptionGroup {
-	id: string;
-	category: string;
-	items: string[];
-}
-
-export interface Question {
-	id: string;
-	title: string;
-	description: string;
-	options: OptionGroup[];
-	uiConfig?: {
-		showSearch?: boolean;
-		filterByCategory?: boolean;
-	};
-}
-
 interface Option {
 	imgUrl?: string;
 	label: string;

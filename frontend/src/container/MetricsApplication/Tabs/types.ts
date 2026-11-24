@@ -66,7 +66,7 @@ export interface LatencyProps {
 	topLevelOperationsRoute: string[];
 }
 
-export interface ApDexProps {
+interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];

@@ -14,11 +14,3 @@ export type OrderByFilterProps = {
 	/** A logs or traces heatmap aggregates a field, which Order by then offers. */
 	panelType?: PANEL_TYPES;
 };
-
-export type OrderByFilterValue = {
-	disabled?: boolean;
-	key: string;
-	label: string;
-	title?: string;
-	value: string;
-};

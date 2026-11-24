@@ -13,7 +13,7 @@ import type { RawTableRow } from 'pages/DashboardPage/DashboardContainer/queryV5
 import { rawRowToILog } from './rawRowToILog';
 
 /** Drawer state surfaced to the renderer when the panel shows logs. */
-export interface ListLogDetail {
+interface ListLogDetail {
 	activeLog: ILog | null;
 	selectedTab: VIEWS;
 	logs: ILog[];

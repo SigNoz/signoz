@@ -6,7 +6,7 @@ import { BarChart, ChartBar, Diff, Gauge } from '@signozhq/icons';
 
 import { METRIC_TYPE_VIEW_VALUES_MAP } from './constants';
 
-export function MetricTypeViewRenderer({
+function MetricTypeViewRenderer({
 	type,
 }: {
 	type: MetrictypesTypeDTO;

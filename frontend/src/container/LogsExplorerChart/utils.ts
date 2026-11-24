@@ -62,16 +62,6 @@ const SEVERITY_VARIANT_COLORS: Record<string, string> = {
 	PANIC: Color.BG_SAKURA_600,
 };
 
-// Simple function to get severity color for any component
-export function getSeverityColor(severityText: string): string {
-	const variantColor = SEVERITY_VARIANT_COLORS[severityText.trim()];
-	if (variantColor) {
-		return variantColor;
-	}
-
-	return Color.BG_ROBIN_500; // Default fallback
-}
-
 export function getColorsForSeverityLabels(
 	label: string,
 	index: number,

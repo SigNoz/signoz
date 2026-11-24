@@ -243,52 +243,6 @@ export const MOCK_KEY_SUGGESTIONS_RESPONSE = {
 	},
 };
 
-export const MOCK_KEY_SUGGESTIONS_SEARCH_RESPONSE = {
-	status: 'success',
-	data: {
-		complete: true,
-		keys: {
-			resource: [
-				{
-					name: 'service.name',
-					label: 'Service Name',
-					type: 'resource',
-					signal: 'logs',
-					fieldContext: 'resource',
-					fieldDataType: 'string',
-				},
-				{
-					name: 'deployment.environment',
-					label: 'Environment',
-					type: 'resource',
-					signal: 'logs',
-					fieldContext: 'attribute',
-					fieldDataType: 'string',
-				},
-			],
-		},
-	},
-};
-
-export const MOCK_KEY_SUGGESTIONS_SINGLE_RESPONSE = {
-	status: 'success',
-	data: {
-		complete: true,
-		keys: {
-			resource: [
-				{
-					name: 'deployment.environment',
-					label: 'Environment',
-					type: 'resource',
-					signal: 'logs',
-					fieldContext: 'resource',
-					fieldDataType: 'string',
-				},
-			],
-		},
-	},
-};
-
 export const MOCK_QUERY_RANGE_REQUEST = {
 	schemaVersion: 'v1',
 	start: 1756972732000,

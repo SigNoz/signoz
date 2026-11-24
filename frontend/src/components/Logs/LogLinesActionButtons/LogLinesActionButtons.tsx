@@ -4,7 +4,7 @@ import { Button, Tooltip } from 'antd';
 
 import './LogLinesActionButtons.styles.scss';
 
-export interface LogLinesActionButtonsProps {
+interface LogLinesActionButtonsProps {
 	handleShowContext: MouseEventHandler<HTMLElement>;
 	onLogCopy: MouseEventHandler<HTMLElement>;
 	customClassName?: string;

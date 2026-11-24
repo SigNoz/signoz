@@ -1,4 +1,3 @@
-import { AxiosError } from 'axios';
 import { Tags } from 'hooks/useResourceAttribute/types';
 
 export interface Props {
@@ -21,9 +20,3 @@ export interface ServicesList {
 }
 
 export type PayloadProps = ServicesList[];
-
-export interface QueryServiceProps {
-	data: PayloadProps | undefined;
-	error: AxiosError | null;
-	isLoading: boolean;
-}

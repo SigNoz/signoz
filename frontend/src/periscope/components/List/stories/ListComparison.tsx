@@ -13,7 +13,7 @@ import {
 export const ANTD_LIST_TEST_ID = 'list-antd';
 export const LOCAL_LIST_TEST_ID = 'list-local';
 
-export interface ListComparisonProps
+interface ListComparisonProps
 	extends
 		Pick<ListProps<FixtureItem>, 'bordered' | 'size' | 'split' | 'itemLayout'>,
 		FixtureOptions {

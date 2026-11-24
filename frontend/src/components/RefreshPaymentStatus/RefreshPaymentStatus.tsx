@@ -7,7 +7,7 @@ import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { buildLicenseUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/license.permissions';
 import { useAppContext } from 'providers/App/App';
 
-export type RefreshPaymentStatusType = 'button' | 'text';
+type RefreshPaymentStatusType = 'button' | 'text';
 
 function RefreshPaymentStatus({
 	type,

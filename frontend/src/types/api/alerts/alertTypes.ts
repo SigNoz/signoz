@@ -70,14 +70,4 @@ export interface PostableAlertRuleV2 {
 	disabled?: boolean;
 }
 
-export interface AlertRuleV2 extends PostableAlertRuleV2 {
-	schemaVersion: string;
-	state: string;
-	disabled: boolean;
-	createAt: string;
-	createBy: string;
-	updateAt: string;
-	updateBy: string;
-}
-
 export const NEW_ALERT_SCHEMA_VERSION = 'v2alpha1';

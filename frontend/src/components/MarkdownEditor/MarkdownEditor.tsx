@@ -58,7 +58,7 @@ const BASIC_SETUP: BasicSetupOptions = {
 
 const EMPTY_VARIABLES: EditorVariable[] = [];
 
-export interface MarkdownEditorProps {
+interface MarkdownEditorProps {
 	/** Seeds the document; replaced only from outside. See the sync effect. */
 	value: string;
 	onChange: (value: string) => void;

@@ -54,7 +54,7 @@ export const SETUP_STEPS = [
 
 export type SetupStep = (typeof SETUP_STEPS)[number];
 
-export const INVITE_RESULTS = ['success', 'loading', 'error'] as const;
+const INVITE_RESULTS = ['success', 'loading', 'error'] as const;
 
 const INVITE_CUSTOM_ROLES = 0;
 

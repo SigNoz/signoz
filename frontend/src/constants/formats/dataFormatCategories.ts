@@ -7,7 +7,7 @@ import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import { convertValue } from 'lib/getConvertedValue';
 
 // Function to get the category name for a given unit ID (Grafana or universal)
-export const getCategoryName = (unitId: string): YAxisCategoryNames | null => {
+const getCategoryName = (unitId: string): YAxisCategoryNames | null => {
 	const categories = getYAxisCategories(YAxisSource.DASHBOARDS);
 
 	const foundCategory = categories.find((category) =>

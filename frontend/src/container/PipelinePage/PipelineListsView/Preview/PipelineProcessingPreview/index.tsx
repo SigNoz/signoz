@@ -53,7 +53,7 @@ function PipelineProcessingPreview({
 	);
 }
 
-export interface PipelineProcessingPreviewProps {
+interface PipelineProcessingPreviewProps {
 	pipeline: PipelineData;
 }
 

@@ -8,10 +8,10 @@ const LINEAR_DISTRIBUTION: AxisDistribution = {
 };
 
 /** Orders of magnitude `auto` needs before it considers leaving linear. */
-export const AUTO_MIN_DECADES = 2;
+const AUTO_MIN_DECADES = 2;
 
 /** How many times more axis the middle half of the points must cover for `auto` to leave linear. */
-export const AUTO_SPREAD_GAIN = 2;
+const AUTO_SPREAD_GAIN = 2;
 
 function getMagnitudeRange(values: number[]): {
 	minMagnitude: number;

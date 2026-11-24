@@ -17,7 +17,6 @@ import type {
 	ErrorCodeDTO,
 	FeedbackRatingDTO,
 	MessageActionDTO,
-	MessageActionKindDTO,
 	RetryActionDTO,
 } from '@signozhq/noz-client';
 import type { MessageContext } from 'api/ai-assistant/chat';
@@ -33,9 +32,6 @@ export interface MessageAttachment {
 /** Narrowed from DTO `MessageSummaryDTO.role: string`. The UI only cares about user/assistant. */
 export type MessageRole = 'user' | 'assistant';
 
-/** String-literal view of `MessageActionKindDTO` for ergonomic comparisons in switch statements. */
-export type ActionKind = `${MessageActionKindDTO}`;
-
 /** String-literal view of `FeedbackRatingDTO` so call-sites can pass `'positive'`/`'negative'` directly. */
 export type FeedbackRating = `${FeedbackRatingDTO}`;
 
@@ -44,17 +40,17 @@ export type FeedbackRating = `${FeedbackRatingDTO}`;
 // typed discriminated union to render each block kind.
 // ---------------------------------------------------------------------------
 
-export interface TextBlock {
+interface TextBlock {
 	type: 'text';
 	content: string;
 }
 
-export interface ThinkingBlock {
+interface ThinkingBlock {
 	type: 'thinking';
 	content: string;
 }
 
-export interface ToolCallBlock {
+interface ToolCallBlock {
 	type: 'tool_call';
 	toolCallId: string;
 	toolName: string;

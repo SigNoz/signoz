@@ -25,7 +25,7 @@ function SampleLogsResponseDisplay({
 	return <LogsList logs={logs} />;
 }
 
-export interface SampleLogsResponseDisplayProps {
+interface SampleLogsResponseDisplayProps {
 	response: SampleLogsResponse;
 }
 

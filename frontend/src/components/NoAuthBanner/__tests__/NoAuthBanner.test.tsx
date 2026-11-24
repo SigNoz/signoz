@@ -1,6 +1,6 @@
 import { render, screen } from 'tests/test-utils';
 
-import { NoAuthBanner } from '../NoAuthBanner';
+import NoAuthBanner from '../NoAuthBanner';
 
 describe('NoAuthBanner', () => {
 	it('renders the no-auth message', () => {

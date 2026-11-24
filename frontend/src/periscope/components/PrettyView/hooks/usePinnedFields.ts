@@ -27,14 +27,14 @@ function saveToStorage(storageKey: string, keys: string[]): void {
 	setLocalStorageKey(storageKey, JSON.stringify(keys));
 }
 
-export interface PinnedEntry {
+interface PinnedEntry {
 	serializedKey: string;
 	displayKey: string;
 	forwardPath: (string | number)[];
 	value: unknown;
 }
 
-export interface UsePinnedFieldsReturn {
+interface UsePinnedFieldsReturn {
 	isPinned: (serializedKey: string) => boolean;
 	togglePin: (forwardPath: (string | number)[]) => void;
 	pinnedEntries: PinnedEntry[];
@@ -42,7 +42,7 @@ export interface UsePinnedFieldsReturn {
 	displayKeyToForwardPath: Record<string, (string | number)[]>;
 }
 
-export interface UsePinnedFieldsOptions {
+interface UsePinnedFieldsOptions {
 	/**
 	 * Initial / controlled list of serialized key paths.
 	 * When provided, overrides the default localStorage read.

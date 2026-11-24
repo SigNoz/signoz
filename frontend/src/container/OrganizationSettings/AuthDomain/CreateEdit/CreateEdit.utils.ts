@@ -169,7 +169,7 @@ export function prepareInitialValues(
 /**
  * Prepares Google Auth config for API payload
  */
-export function prepareGoogleAuthConfig(
+function prepareGoogleAuthConfig(
 	values: FormValues,
 ): AuthtypesGoogleConfigDTO | undefined {
 	const config = values.googleAuthConfig;

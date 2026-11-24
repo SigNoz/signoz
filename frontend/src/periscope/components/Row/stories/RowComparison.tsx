@@ -10,7 +10,7 @@ export const LOCAL_ROW_TEST_ID = 'row-local';
 
 const ITEM_SIZES = [styles.itemSmall, styles.itemLarge, styles.itemMedium];
 
-export interface RowComparisonProps extends Pick<
+interface RowComparisonProps extends Pick<
 	RowProps,
 	'gutter' | 'justify' | 'align' | 'wrap'
 > {

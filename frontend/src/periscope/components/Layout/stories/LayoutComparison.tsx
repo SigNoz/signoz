@@ -20,7 +20,7 @@ const LOCAL_PARTS: LayoutParts = {
 	Footer: Layout.Footer,
 };
 
-export type LayoutComparisonProps = LayoutFixtureOptions;
+type LayoutComparisonProps = LayoutFixtureOptions;
 
 /** Renders antd's `Layout` and ours with the same props, side by side. */
 function LayoutComparison(props: LayoutComparisonProps): JSX.Element {

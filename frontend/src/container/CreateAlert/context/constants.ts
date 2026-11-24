@@ -180,7 +180,7 @@ export const RE_NOTIFICATION_TIME_UNIT_OPTIONS = [
 	{ value: UniversalYAxisUnit.HOURS, label: 'Hours' },
 ];
 
-export const NOTIFICATION_MESSAGE_PLACEHOLDER =
+const NOTIFICATION_MESSAGE_PLACEHOLDER =
 	'This alert is fired when the defined metric (current value: {{$value}}) crosses the threshold ({{$threshold}})';
 
 export const RE_NOTIFICATION_CONDITION_OPTIONS = [

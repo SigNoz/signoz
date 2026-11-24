@@ -407,6 +407,4 @@ function Application(): JSX.Element {
 	);
 }
 
-export type ClickHandlerType = () => void;
-
 export default Application;

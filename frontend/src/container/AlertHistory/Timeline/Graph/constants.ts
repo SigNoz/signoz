@@ -15,7 +15,7 @@ export const ALERT_STATUS: Record<RuletypesAlertStateDTO, number> & {
 	muted: 5,
 };
 
-export const STATE_VS_COLOR: {
+const STATE_VS_COLOR: {
 	[key: string]: { stroke: string; fill: string };
 }[] = [
 	{},

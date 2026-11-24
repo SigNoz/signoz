@@ -15,7 +15,7 @@ import { SavedViewCreatedFrom } from './events';
 
 export type SavedViewSourcePage = DataSource | 'meter';
 
-export type SavedViewOptions = Pick<
+type SavedViewOptions = Pick<
 	OptionsQuery,
 	'selectColumns' | 'format' | 'maxLines' | 'fontSize'
 >;
@@ -187,7 +187,7 @@ export interface UseSavedViewRowActionsResult {
 }
 
 /** Carries the id of the view under the pointer. */
-export type SavedViewHoverCardHandle = PopoverHandleType<string>;
+type SavedViewHoverCardHandle = PopoverHandleType<string>;
 
 export interface UseSavedViewHoverCardResult {
 	handle: SavedViewHoverCardHandle;
@@ -234,7 +234,7 @@ export interface SavedViewsEmptyStateProps {
 	onSave: (displayName: string) => Promise<boolean>;
 }
 
-export enum PreservedViewsTypes {
+enum PreservedViewsTypes {
 	LOGS = 'logs',
 	TRACES = 'traces',
 	METRICS = 'metrics',

@@ -2,7 +2,7 @@ import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { AlignedData } from 'uplot';
 
-export interface InspectMetricsTimestampValue {
+interface InspectMetricsTimestampValue {
 	timestamp: number;
 	value: string;
 }
@@ -183,12 +183,6 @@ export interface TableViewProps {
 	setExpandedViewOptions: (options: GraphPopoverOptions | null) => void;
 	metricInspectionAppliedOptions: MetricInspectionOptions;
 	isInspectMetricsRefetching: boolean;
-}
-
-export interface TableViewDataItem {
-	title: JSX.Element;
-	values: JSX.Element;
-	key: number;
 }
 
 export interface TimeSeriesLabelProps {

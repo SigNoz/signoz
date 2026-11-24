@@ -7,7 +7,7 @@ import { isModifierKeyPressed } from 'utils/app';
 
 import styles from './BackHeader.module.scss';
 
-export interface BackHeaderProps {
+interface BackHeaderProps {
 	/** Where the page came from, named as the place rather than the action. */
 	backLabel: string;
 	backRoute: string;

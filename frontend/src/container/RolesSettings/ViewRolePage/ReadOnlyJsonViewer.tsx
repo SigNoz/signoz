@@ -17,7 +17,7 @@ import { transformResourcePermissionsToTransactionGroups } from '../hooks/useRol
 
 import styles from './ReadOnlyJsonViewer.module.scss';
 
-export interface ReadOnlyJsonViewerProps {
+interface ReadOnlyJsonViewerProps {
 	permissions: RolePermissionsData;
 }
 

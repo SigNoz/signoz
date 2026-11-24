@@ -27,7 +27,7 @@ export const processorTypes: Array<ProcessorType> = [
 
 export const DEFAULT_PROCESSOR_TYPE = processorTypes[0].value;
 
-export type ProcessorFieldOption = {
+type ProcessorFieldOption = {
 	label: string;
 	value: string;
 };

@@ -54,7 +54,7 @@ export function createDefaultPanel(
 }
 
 /** Converts a UI grid item back into the spec's grid-item DTO shape. */
-export function gridItemToDTO(item: GridItem): DashboardGridItemDTO {
+function gridItemToDTO(item: GridItem): DashboardGridItemDTO {
 	return {
 		x: item.x,
 		y: item.y,
@@ -343,7 +343,7 @@ export function renameSectionOp(
  * First-section migration: give an existing untitled (free-flowing) layout a
  * title, turning it into a section in place while preserving its panels.
  */
-export function titleUntitledSectionOp(
+function titleUntitledSectionOp(
 	layoutIndex: number,
 	title: string,
 ): DashboardtypesJSONPatchOperationDTO {

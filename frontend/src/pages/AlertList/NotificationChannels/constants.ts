@@ -3,10 +3,6 @@ import { AlertmanagertypesChannelKindDTO } from 'api/generated/services/sigNoz.s
 
 export const SEARCH_KEY = 'search';
 export const KIND_KEY = 'kind';
-export const PAGE_KEY = 'page';
-
-export const PAGE_SIZE = 20;
-export const SEARCH_DEBOUNCE_MS = 300;
 
 export const CHANNEL_KIND_LABEL: Record<
 	AlertmanagertypesChannelKindDTO,

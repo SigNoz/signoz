@@ -4,7 +4,6 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { noop } from 'lodash-es';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export const optionMenuReturn = {
@@ -115,46 +114,7 @@ export const optionMenuReturn = {
 	},
 };
 
-export const compositeQuery: Query = {
-	...initialQueriesMap.traces,
-	builder: {
-		...initialQueriesMap.traces.builder,
-		queryData: [
-			{
-				...initialQueryBuilderFormValues,
-				filters: {
-					items: [
-						{
-							id: '95564eb1',
-							key: {
-								key: 'name',
-								dataType: DataTypes.String,
-								type: 'tag',
-								id: 'name--string--tag--true',
-							},
-							op: 'in',
-							value: ['HTTP GET /customer'],
-						},
-						{
-							id: '3337951c',
-							key: {
-								key: 'serviceName',
-								dataType: DataTypes.String,
-								type: 'tag',
-								id: 'serviceName--string--tag--true',
-							},
-							op: 'in',
-							value: ['demo-app'],
-						},
-					],
-					op: 'AND',
-				},
-			},
-		],
-	},
-};
-
-export const redirectWithQueryBuilderData = jest.fn();
+const redirectWithQueryBuilderData = jest.fn();
 
 export const qbProviderValue = {
 	isDefaultQuery: jest.fn(() => false),

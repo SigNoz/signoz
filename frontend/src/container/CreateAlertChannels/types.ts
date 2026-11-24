@@ -21,12 +21,7 @@ export type ChannelKind = AlertmanagertypesChannelKindDTO;
 export const JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
 export type JiraDeployment = AlertmanagertypesJiraDeploymentDTO;
 
-export type KeysOfUnion<T> = T extends unknown ? keyof T : never;
-
-export type JiraFormSpec = Omit<
-	AlertmanagertypesChannelJiraConfigDTO,
-	'auth'
-> & {
+type JiraFormSpec = Omit<AlertmanagertypesChannelJiraConfigDTO, 'auth'> & {
 	auth?: AlertmanagertypesChannelJiraAuthDTO;
 };
 

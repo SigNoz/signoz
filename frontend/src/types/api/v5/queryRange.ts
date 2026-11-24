@@ -8,7 +8,7 @@ import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { Warning } from '..';
 
-export type Step = string | number; // Duration string (e.g., "30s") or seconds as number
+type Step = string | number; // Duration string (e.g., "30s") or seconds as number
 
 export type RequestType =
 	| 'scalar'
@@ -33,19 +33,11 @@ export type BuilderQueryType = Extract<
 	'builder_query' | 'builder_ai_query'
 >;
 
-export type OrderDirection = 'asc' | 'desc';
+type OrderDirection = 'asc' | 'desc';
 
-export type JoinType = 'inner' | 'left' | 'right' | 'full' | 'cross';
+type JoinType = 'inner' | 'left' | 'right' | 'full' | 'cross';
 
 export type SignalType = 'traces' | 'logs' | 'metrics';
-
-export type DataType = 'string' | 'number' | 'boolean' | 'array';
-
-export type FieldType =
-	| 'resource'
-	| 'attribute'
-	| 'instrumentation_library'
-	| 'span';
 
 export type FieldContext =
 	| 'metric'
@@ -91,15 +83,7 @@ export type FunctionName =
 	| 'timeShift'
 	| 'anomaly';
 
-export type Temporality = 'cumulative' | 'delta' | '';
-
-export type MetricType =
-	| 'gauge'
-	| 'sum'
-	| 'histogram'
-	| 'summary'
-	| 'exponential_histogram'
-	| '';
+type Temporality = 'cumulative' | 'delta' | '';
 
 export type TimeAggregation =
 	| 'latest'
@@ -126,7 +110,7 @@ export type SpaceAggregation =
 	| 'p99'
 	| '';
 
-export type ColumnType = 'group' | 'aggregation';
+type ColumnType = 'group' | 'aggregation';
 
 // ===================== Variable Types =====================
 
@@ -166,16 +150,16 @@ export interface OrderBy {
 	direction: OrderDirection;
 }
 
-export interface LimitBy {
+interface LimitBy {
 	keys: string[];
 	value: string;
 }
 
-export interface QueryRef {
+interface QueryRef {
 	name: string;
 }
 
-export interface FunctionArg {
+interface FunctionArg {
 	name?: string;
 	value: string | number;
 }
@@ -207,7 +191,7 @@ export interface MetricAggregation {
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 }
 
-export interface SecondaryAggregation {
+interface SecondaryAggregation {
 	stepInterval?: Step;
 	expression: string;
 	alias?: string;
@@ -255,7 +239,7 @@ export interface MetricBuilderQuery extends BaseBuilderQuery {
 	aggregations?: MetricAggregation[];
 }
 
-export interface MeterBuilderQuery extends BaseBuilderQuery {
+interface MeterBuilderQuery extends BaseBuilderQuery {
 	signal: 'metrics';
 	source: 'meter';
 	aggregations?: MetricAggregation[];
@@ -279,7 +263,7 @@ export interface QueryBuilderFormula {
 	bucketOptions?: Querybuildertypesv5BucketOptionsDTO;
 }
 
-export interface QueryBuilderJoin {
+interface QueryBuilderJoin {
 	name: string;
 	disabled?: boolean;
 	left: QueryRef;
@@ -325,7 +309,7 @@ export interface QueryEnvelope {
 		| ClickHouseQuery;
 }
 
-export interface CompositeQuery {
+interface CompositeQuery {
 	queries: QueryEnvelope[];
 }
 
@@ -353,12 +337,12 @@ export interface ExecStats {
 	stepIntervals: Record<string, number>;
 }
 
-export interface Label {
+interface Label {
 	key: TelemetryFieldKey;
 	value: any;
 }
 
-export interface Bucket {
+interface Bucket {
 	step: number;
 }
 
@@ -375,7 +359,7 @@ export interface TimeSeries {
 	values: TimeSeriesValue[];
 }
 
-export interface AggregationBucket {
+interface AggregationBucket {
 	index: number;
 	alias: string;
 	meta: Record<string, any>;
@@ -422,23 +406,23 @@ export interface DistributionData {
 }
 
 // Response data structures with results array
-export interface TimeSeriesResponseData {
+interface TimeSeriesResponseData {
 	results: TimeSeriesData[];
 }
 
-export interface ScalarResponseData {
+interface ScalarResponseData {
 	results: ScalarData[];
 }
 
-export interface RawResponseData {
+interface RawResponseData {
 	results: RawData[];
 }
 
-export interface DistributionResponseData {
+interface DistributionResponseData {
 	results: DistributionData[];
 }
 
-export type QueryRangeDataV5 =
+type QueryRangeDataV5 =
 	| TimeSeriesResponseData
 	| ScalarResponseData
 	| RawResponseData

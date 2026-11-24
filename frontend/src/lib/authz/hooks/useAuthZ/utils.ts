@@ -13,8 +13,8 @@ import {
 	ResourceType,
 } from './types';
 
-export const PermissionSeparator = '||__||';
-export const ObjectSeparator = ':';
+const PermissionSeparator = '||__||';
+const ObjectSeparator = ':';
 
 export function buildPermission<R extends AuthZRelation>(
 	relation: R,

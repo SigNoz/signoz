@@ -48,24 +48,24 @@ export const getFiltersFromResources = (
 		};
 	});
 
-export const isServiceOrEnvironmentAttribute = (key: string): boolean =>
+const isServiceOrEnvironmentAttribute = (key: string): boolean =>
 	SERVICE_AND_ENVIRONMENT_KEYS.includes(key);
 
-export const getServiceAndEnvironmentFilterItems = (
+const getServiceAndEnvironmentFilterItems = (
 	items: TagFilterItem[],
 ): TagFilterItem[] =>
 	items.filter(
 		(item) => item.key?.key && isServiceOrEnvironmentAttribute(item.key.key),
 	);
 
-export const findFirstPriorityItem = (
+const findFirstPriorityItem = (
 	items: TagFilterItem[],
 ): TagFilterItem | undefined =>
 	PRIORITY_CATEGORIES.flat()
 		.map((priorityKey) => items.find((item) => item.key?.key === priorityKey))
 		.find(Boolean);
 
-export const getFallbackItems = (items: TagFilterItem[]): TagFilterItem[] =>
+const getFallbackItems = (items: TagFilterItem[]): TagFilterItem[] =>
 	items.filter((item) => {
 		if (!item.key?.key) {
 			return false;

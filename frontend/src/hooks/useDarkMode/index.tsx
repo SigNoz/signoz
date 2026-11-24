@@ -37,7 +37,7 @@ const DARK_POPUP: ThemeConfig['token'] = {
 	colorBgElevated: 'rgba(35, 38, 46, 0.6)', // --surface-3
 };
 
-export const ThemeContext = createContext({
+const ThemeContext = createContext({
 	theme: THEME_MODE.DARK,
 	toggleTheme: (): void => {},
 	autoSwitch: false,

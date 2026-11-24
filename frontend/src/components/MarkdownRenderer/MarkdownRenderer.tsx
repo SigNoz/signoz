@@ -137,4 +137,4 @@ MarkdownRenderer.defaultProps = {
 	trackCopyAction: false,
 };
 
-export { Code, Link, MarkdownRenderer, Pre };
+export { MarkdownRenderer };

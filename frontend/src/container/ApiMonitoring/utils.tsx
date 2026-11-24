@@ -1,32 +1,24 @@
 import { ReactNode } from 'react';
 import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
-import { Badge } from '@signozhq/ui/badge';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import {
-	FiltersType,
-	IQuickFiltersConfig,
-} from 'components/QuickFilters/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { GraphClickMetaData } from 'container/WidgetCard/hooks/useNavigateToExplorerPages';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { convertNanoToMilliseconds } from 'container/MetricsExplorer/Summary/utils';
 import dayjs from 'dayjs';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { cloneDeep } from 'lodash-es';
-import { ArrowUpDown, ChevronDown, ChevronRight, Info } from '@signozhq/icons';
+import { ArrowUpDown, Info } from '@signozhq/icons';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/widgets/widget';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderQuery,
-	OrderByPayload,
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -41,11 +33,7 @@ import { v4 } from 'uuid';
 
 import { domainNameKey } from './constants';
 import { SPAN_ATTRIBUTES } from './Explorer/Domains/DomainDetails/constants';
-import {
-	APIDomainsRowData,
-	APIMonitoringResponseColumn,
-	EndPointsResponseRow,
-} from './types';
+import { APIDomainsRowData, APIMonitoringResponseColumn } from './types';
 
 function metricProgressColor(
 	percent: number,
@@ -59,7 +47,7 @@ function metricProgressColor(
 	return 'success';
 }
 
-export const isEmptyFilterValue = (value: unknown): boolean =>
+const isEmptyFilterValue = (value: unknown): boolean =>
 	value === '' || value === null || value === undefined || value === 'n/a';
 /**
  * Returns '-' if value is empty, otherwise returns value as string
@@ -67,10 +55,10 @@ export const isEmptyFilterValue = (value: unknown): boolean =>
 export const getDisplayValue = (value: unknown): string =>
 	isEmptyFilterValue(value) ? '-' : String(value);
 
-export const getDomainNameFilterExpression = (domainName: string): string =>
+const getDomainNameFilterExpression = (domainName: string): string =>
 	`${SPAN_ATTRIBUTES.SERVER_NAME} = ${formatValueForExpression(domainName)}`;
 
-export const clientKindExpression = "kind_string = 'Client'";
+const clientKindExpression = "kind_string = 'Client'";
 
 export const getHttpUrlExpression = (endPointName: string): string =>
 	endPointName
@@ -91,41 +79,7 @@ export const getDomainScopeExpression = (
 		.filter(Boolean)
 		.join(' AND ');
 
-export const ApiMonitoringQuickFiltersConfig: IQuickFiltersConfig[] = [
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Environment',
-
-		attributeKey: {
-			key: 'deployment.environment',
-			dataType: DataTypes.String,
-			type: 'resource',
-		},
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'Service Name',
-		attributeKey: {
-			key: 'service.name',
-			dataType: DataTypes.String,
-			type: 'resource',
-		},
-		defaultOpen: true,
-	},
-	{
-		type: FiltersType.CHECKBOX,
-		title: 'RPC Method',
-		attributeKey: {
-			key: 'rpc.method',
-			dataType: DataTypes.String,
-			type: 'tag',
-		},
-		defaultOpen: true,
-	},
-];
-
-export const getLastUsedRelativeTime = (lastRefresh: number): string => {
+const getLastUsedRelativeTime = (lastRefresh: number): string => {
 	const currentTime = dayjs();
 
 	const secondsDiff = currentTime.diff(lastRefresh, 'seconds');
@@ -571,258 +525,6 @@ const defaultGroupBy = [
 	// },
 ];
 
-export const getEndPointsQueryPayload = (
-	groupBy: BaseAutocompleteData[],
-	domainName: string,
-	start: number,
-	end: number,
-): GetQueryResultsProps[] => {
-	const isGroupedByAttribute = groupBy.length > 0;
-	return [
-		{
-			selectedTime: 'GLOBAL_TIME',
-			graphType: PANEL_TYPES.TABLE,
-			query: {
-				builder: {
-					queryData: [
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.String,
-								key: 'span_id',
-								type: '',
-							},
-							aggregateOperator: 'count',
-							dataSource: DataSource.TRACES,
-							disabled: false,
-							expression: 'A',
-							filters: {
-								items: [
-									{
-										id: 'ec316e57',
-										key: {
-											dataType: DataTypes.String,
-											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: '',
-										},
-										op: '=',
-										value: domainName,
-									},
-									{
-										id: '212678b9',
-										key: {
-											key: 'kind_string',
-											dataType: DataTypes.String,
-											type: '',
-										},
-										op: '=',
-										value: 'Client',
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: isGroupedByAttribute ? groupBy : defaultGroupBy,
-							having: [],
-							legend: '',
-							limit: 1000,
-							orderBy: [],
-							queryName: 'A',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'count',
-						},
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.Float64,
-								key: 'duration_nano',
-								type: '',
-							},
-							aggregateOperator: 'p99',
-							dataSource: DataSource.TRACES,
-							disabled: false,
-							expression: 'B',
-							filters: {
-								items: [
-									{
-										id: '46d57857',
-										key: {
-											dataType: DataTypes.String,
-											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: '',
-										},
-										op: '=',
-										value: domainName,
-									},
-									{
-										id: '212678b9',
-										key: {
-											key: 'kind_string',
-											dataType: DataTypes.String,
-											type: '',
-										},
-										op: '=',
-										value: 'Client',
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: isGroupedByAttribute ? groupBy : defaultGroupBy,
-							having: [],
-							legend: '',
-							limit: 1000,
-							orderBy: [],
-							queryName: 'B',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'p99',
-						},
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.String,
-								id: 'timestamp------false',
-								key: 'timestamp',
-								type: '',
-							},
-							aggregateOperator: 'max',
-							dataSource: DataSource.TRACES,
-							disabled: false,
-							expression: 'C',
-							filters: {
-								items: [
-									{
-										id: '4a237616',
-										key: {
-											dataType: DataTypes.String,
-											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: '',
-										},
-										op: '=',
-										value: domainName,
-									},
-									{
-										id: '212678b9',
-										key: {
-											key: 'kind_string',
-											dataType: DataTypes.String,
-											type: '',
-										},
-										op: '=',
-										value: 'Client',
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: isGroupedByAttribute ? groupBy : defaultGroupBy,
-							having: [],
-							legend: '',
-							limit: 1000,
-							orderBy: [],
-							queryName: 'C',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'max',
-						},
-						{
-							aggregateAttribute: {
-								dataType: DataTypes.String,
-								key: 'span_id',
-								type: '',
-							},
-							aggregateOperator: 'count',
-							dataSource: DataSource.TRACES,
-							disabled: true,
-							expression: 'D',
-							filters: {
-								items: [
-									{
-										id: 'f162de1e',
-										key: {
-											dataType: DataTypes.String,
-											key: SPAN_ATTRIBUTES.SERVER_NAME,
-											type: '',
-										},
-										op: '=',
-										value: domainName,
-									},
-									{
-										id: '3df0ac1d',
-										key: {
-											dataType: DataTypes.bool,
-											key: 'has_error',
-											type: '',
-										},
-										op: '=',
-										value: 'true',
-									},
-									{
-										id: '212678b9',
-										key: {
-											key: 'kind_string',
-											dataType: DataTypes.String,
-											type: '',
-										},
-										op: '=',
-										value: 'Client',
-									},
-								],
-								op: 'AND',
-							},
-							functions: [],
-							groupBy: isGroupedByAttribute ? groupBy : defaultGroupBy,
-							having: [],
-							legend: '',
-							limit: 1000,
-							orderBy: [],
-							queryName: 'D',
-							reduceTo: ReduceOperators.AVG,
-							spaceAggregation: 'sum',
-							stepInterval: 60,
-							timeAggregation: 'count',
-						},
-					],
-					queryFormulas: [
-						{
-							queryName: 'F1',
-							expression: '(D/A)*100',
-							disabled: false,
-							legend: 'error percentage',
-						},
-					],
-					queryTraceOperator: [],
-				},
-				clickhouse_sql: [
-					{
-						disabled: false,
-						legend: '',
-						name: 'A',
-						query: '',
-					},
-				],
-				id: '315b15fa-ff0c-442f-89f8-2bf4fb1af2f2',
-				promql: [
-					{
-						disabled: false,
-						legend: '',
-						name: 'A',
-						query: '',
-					},
-				],
-				queryType: EQueryType.QUERY_BUILDER,
-			},
-			variables: {},
-			formatForWeb: true,
-			start,
-			end,
-			step: 60,
-		},
-	];
-};
-
 function buildFilterExpression(
 	domainName: string,
 	filterExpression: string,
@@ -907,16 +609,6 @@ export const getTopErrorsQueryPayload = (
 	};
 };
 
-export interface EndPointsTableRowData {
-	key: string;
-	endpointName: string;
-	callCount: number | string;
-	latency: number | string;
-	errorRate: number | string;
-	lastUsed: string | number;
-	groupedByMeta?: Record<string, string | number>;
-}
-
 export const extractPortAndEndpoint = (
 	url: string,
 ): { port: string; endpoint: string } => {
@@ -935,258 +627,6 @@ export const extractPortAndEndpoint = (
 		// If URL parsing fails, return default values
 		return { port: '-', endpoint: url };
 	}
-};
-
-export const getEndPointsColumnsConfig = (
-	isGroupedByAttribute: boolean,
-	expandedRowKeys: React.Key[],
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-): ColumnType<EndPointsTableRowData>[] => [
-	{
-		title: (
-			<div className="endpoint-name-header">
-				{isGroupedByAttribute ? 'Endpoint group' : 'Endpoint'}
-			</div>
-		),
-		dataIndex: 'endpointName',
-		key: 'endpointName',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		className: 'column',
-		render: (text: string, record: EndPointsTableRowData): React.ReactNode => {
-			const endPointName = isGroupedByAttribute
-				? text
-				: extractPortAndEndpoint(record.endpointName).endpoint;
-			return (
-				<div className="endpoint-name-value">
-					{((): React.ReactNode => {
-						if (!isGroupedByAttribute) {
-							return null;
-						}
-						return expandedRowKeys.includes(record.key) ? (
-							<ChevronDown size={14} />
-						) : (
-							<ChevronRight size={14} />
-						);
-					})()}
-					{isGroupedByAttribute
-						? text.split(',').map((value) => (
-								<Badge
-									textTransform="none"
-									variant="solid"
-									key={value}
-									color="secondary"
-								>
-									{value === '' ? '<no-value>' : value}
-								</Badge>
-							))
-						: endPointName}
-				</div>
-			);
-		},
-	},
-	{
-		title: <div className="column-header">Port</div>,
-		dataIndex: 'port',
-		key: 'port',
-		width: 180,
-		ellipsis: true,
-		sorter: false,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: (
-			<div className="column-header">
-				Num of calls <ArrowUpDown size={14} />
-			</div>
-		),
-		dataIndex: 'callCount',
-		key: 'callCount',
-		width: 180,
-		ellipsis: true,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: (
-			<div>
-				Error <span className="round-metric-tag">%</span>
-			</div>
-		),
-		dataIndex: 'errorRate',
-		key: 'errorRate',
-		width: 120,
-		sorter: true,
-		align: 'right',
-		className: `column`,
-		render: (errorRate: number | string): React.ReactNode => (
-			<div className="progress-bar error-rate">
-				<Progress
-					percent={Number(
-						(
-							(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
-						).toFixed(1),
-					)}
-					showInfo
-					color={metricProgressColor(
-						Number(
-							(
-								(errorRate === 'n/a' || errorRate === '-' ? 0 : errorRate) as number
-							).toFixed(1),
-						),
-					)}
-				/>
-			</div>
-		),
-	},
-	{
-		title: (
-			<div>
-				Latency <span className="round-metric-tag">ms</span>
-			</div>
-		),
-		dataIndex: 'latency',
-		key: 'latency',
-		width: 120,
-		sorter: true,
-		align: 'right',
-		className: `column`,
-	},
-	{
-		title: <div>Last used</div>,
-		dataIndex: 'lastUsed',
-		key: 'lastUsed',
-		width: 120,
-		sorter: true,
-		align: 'right',
-		className: `column`,
-		// eslint-disable-next-line sonarjs/no-identical-functions
-		render: (lastUsed: string): string =>
-			lastUsed === 'n/a' || lastUsed === '-'
-				? '-'
-				: getLastUsedRelativeTime(new Date(lastUsed).getTime()),
-	},
-];
-
-export const formatEndPointsDataForTable = (
-	data: EndPointsResponseRow[] | undefined,
-	groupBy: BaseAutocompleteData[],
-	orderBy?: OrderByPayload | null,
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-): EndPointsTableRowData[] => {
-	if (!data) {
-		return [];
-	}
-	const isGroupedByAttribute = groupBy.length > 0;
-
-	let formattedData: EndPointsTableRowData[] = [];
-
-	if (!isGroupedByAttribute) {
-		formattedData = data?.map((endpoint) => {
-			const { port } = extractPortAndEndpoint(
-				(endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '',
-			);
-			return {
-				key: v4(),
-				endpointName: (endpoint.data[SPAN_ATTRIBUTES.HTTP_URL] as string) || '-',
-				port,
-				callCount:
-					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
-						? '-'
-						: endpoint.data.A,
-				latency:
-					endpoint.data.B === 'n/a' || endpoint.data.B === undefined
-						? '-'
-						: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
-				lastUsed:
-					endpoint.data.C === 'n/a' || endpoint.data.C === undefined
-						? '-'
-						: new Date(Math.floor(Number(endpoint.data.C) / 1000000)).toISOString(), // Convert from nanoseconds to milliseconds
-
-				errorRate:
-					endpoint.data.F1 === undefined || endpoint.data.F1 === 'n/a'
-						? 0
-						: Number(endpoint.data.F1),
-			};
-		});
-	} else {
-		const groupedByAttributeData = groupBy.map((attribute) => attribute.key);
-
-		formattedData = data?.map((endpoint) => {
-			const newEndpointName = groupedByAttributeData
-				.map((attribute) => endpoint.data[attribute])
-				.join(',');
-			return {
-				key: v4(),
-				endpointName: newEndpointName,
-				callCount:
-					endpoint.data.A === 'n/a' || endpoint.data.A === undefined
-						? '-'
-						: endpoint.data.A,
-				latency:
-					endpoint.data.B === 'n/a' || endpoint.data.B === undefined
-						? '-'
-						: Math.round(Number(endpoint.data.B) / 1000000), // Convert from nanoseconds to milliseconds
-				lastUsed:
-					endpoint.data.C === 'n/a' || endpoint.data.C === undefined
-						? '-'
-						: getLastUsedRelativeTime(Math.floor(Number(endpoint.data.C) / 1000000)), // Convert from nanoseconds to milliseconds
-				errorRate:
-					endpoint.data.D === 'n/a' || endpoint.data.D === undefined
-						? 0
-						: Number(endpoint.data.D),
-				groupedByMeta: groupedByAttributeData.reduce(
-					(acc, attribute) => {
-						acc[attribute] = endpoint.data[attribute] || '';
-						return acc;
-					},
-					{} as Record<string, string | number>,
-				),
-			};
-		});
-	}
-
-	// Apply sorting if orderBy is provided
-	if (orderBy) {
-		formattedData.sort((a, b) => {
-			let valueA: number | string = a[
-				orderBy.columnName as keyof EndPointsTableRowData
-			] as number | string;
-			let valueB: number | string = b[
-				orderBy.columnName as keyof EndPointsTableRowData
-			] as number | string;
-
-			// Handle special cases for each column type
-			if (
-				orderBy.columnName === 'callCount' ||
-				orderBy.columnName === 'latency' ||
-				orderBy.columnName === 'errorRate'
-			) {
-				valueA = valueA === '-' || valueA === 'n/a' ? 0 : Number(valueA);
-				valueB = valueB === '-' || valueB === 'n/a' ? 0 : Number(valueB);
-			} else if (orderBy.columnName === 'lastUsed') {
-				// confirm once the implication of this
-				valueA =
-					valueA === '-' || valueA === 'n/a'
-						? new Date(0).getTime()
-						: new Date(valueA as string).getTime();
-				valueB =
-					valueB === '-' || valueB === 'n/a'
-						? new Date(0).getTime()
-						: new Date(valueB as string).getTime();
-			}
-
-			// Apply sort direction
-			if (orderBy.order === 'asc') {
-				return valueA > valueB ? 1 : -1;
-			}
-			return valueA < valueB ? 1 : -1;
-		});
-	}
-
-	return formattedData;
 };
 
 export type TopErrorsResponseRow = ScalarData;
@@ -1332,37 +772,6 @@ export const getTopErrorsColumnsConfig =
 			className: `column`,
 		},
 	];
-
-export const createFiltersForSelectedRowData = (
-	selectedRowData: EndPointsTableRowData,
-	currentFilters?: IBuilderQuery['filters'],
-): IBuilderQuery['filters'] => {
-	const baseFilters: IBuilderQuery['filters'] = {
-		items: [...(currentFilters?.items || [])],
-		op: 'and',
-	};
-
-	if (!selectedRowData) {
-		return baseFilters;
-	}
-
-	const { groupedByMeta = {} } = selectedRowData;
-
-	// Replace for...of with Object.keys().map()
-	baseFilters.items.push(
-		...Object.keys(groupedByMeta).map((key) => ({
-			key: {
-				key,
-				type: null,
-			},
-			op: '=',
-			value: groupedByMeta[key] || '',
-			id: key,
-		})),
-	);
-
-	return baseFilters;
-};
 
 // First query payload for endpoint metrics
 // Second query payload for endpoint status code table
@@ -2312,7 +1721,7 @@ interface DependentServicesResponseRow {
 	};
 }
 
-export interface ServiceData {
+interface ServiceData {
 	serviceName: string;
 	count: number | string;
 	percentage: number | string;
@@ -2465,21 +1874,6 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 	},
 ];
 
-export const getFormattedChartData = (
-	data: MetricRangePayloadProps,
-	newLegendArray: string[],
-): MetricRangePayloadProps => {
-	const result = cloneDeep(data);
-	if (result?.data?.result) {
-		result.data.result = result?.data?.result?.map((series, index) => ({
-			...series,
-			legend: newLegendArray[index],
-		}));
-	}
-
-	return result;
-};
-
 const getStatusCodeClass = (statusCode: string): string => {
 	const code = parseInt(statusCode, 10);
 
@@ -2506,7 +1900,7 @@ const getStatusCodeClass = (statusCode: string): string => {
 	return 'Other';
 };
 
-export const groupStatusCodes = (
+const groupStatusCodes = (
 	seriesList: QueryData[],
 	aggregationType: 'sum' | 'average' = 'sum',
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -3099,40 +2493,6 @@ const getStartAndEndStatusCode = (
 			return ['', ''];
 	}
 };
-
-/**
- * Creates filter items for bar chart based on group by fields and request data
- * Used specifically for filtering status code ranges in bar charts
- * @param groupBy Array of group by fields to create filters for
- * @param requestData Data from graph click containing values to filter on
- * @returns Array of TagFilterItems with >= and < operators for status code ranges
- */
-export const createGroupByFiltersForBarChart = (
-	groupBy: BaseAutocompleteData[],
-	requestData: GraphClickMetaData,
-): TagFilterItem[] =>
-	groupBy
-		.map((gb) => {
-			const value = requestData[gb.key];
-			const [startStatusCode, endStatusCode] = getStartAndEndStatusCode(value);
-			return value
-				? [
-						{
-							id: v4(),
-							key: gb,
-							op: '>=',
-							value: startStatusCode,
-						},
-						{
-							id: v4(),
-							key: gb,
-							op: '<=',
-							value: endStatusCode,
-						},
-					]
-				: [];
-		})
-		.flat();
 
 export const getCustomFiltersForBarChart = (
 	metric:

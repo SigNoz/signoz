@@ -12,7 +12,7 @@ export type PanelTypeGroupId =
 	| 'raw'
 	| 'docs';
 
-export const PANEL_TYPE_GROUPS: { id: PanelTypeGroupId; label: string }[] = [
+const PANEL_TYPE_GROUPS: { id: PanelTypeGroupId; label: string }[] = [
 	{ id: 'trends', label: 'Trends over time' },
 	{ id: 'compare', label: 'Compare & rank' },
 	{ id: 'distributions', label: 'Distributions' },

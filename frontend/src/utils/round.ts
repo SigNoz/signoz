@@ -13,14 +13,6 @@ export function incrRoundDn(num: number, incr: number): number {
 }
 
 /**
- * Rounds a number up to the nearest multiple of incr.
- * Used for linear scale max so the axis ends on a clean tick.
- */
-export function incrRoundUp(num: number, incr: number): number {
-	return Math.ceil(num / incr) * incr;
-}
-
-/**
  * Rounds a number to the nearest multiple of 10^dec.
  * Used for decimal precision.
  */

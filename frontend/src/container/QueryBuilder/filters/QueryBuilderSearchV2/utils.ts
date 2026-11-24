@@ -5,7 +5,7 @@ import type { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { orderByValueDelimiter } from '../OrderByFilter/utils';
 
-export const tagRegexp =
+const tagRegexp =
 	/^\s*(.*?)\s*(\bIN\b|\bNOT_IN\b|\bNIN\b|\bLIKE\b|\bNOT_LIKE\b|\bNLIKE\b|\bILIKE\b|\bNOT_ILIKE\b|\bNOTILIKE\b|\bREGEX\b|\bNOT_REGEX\b|\bNREGEX\b|=|!=|\bEXISTS\b|\bNOT_EXISTS\b|\bNEXISTS\b|\bCONTAINS\b|\bNOT_CONTAINS\b|\bNCONTAINS\b|>=|>|<=|<|\bHAS\b|\bNHAS\b)\s*(.*)$/gi;
 
 export function isInNInOperator(value: string): boolean {
@@ -45,19 +45,6 @@ export function getTagToken(tag: string): ITagToken {
 		tagOperator: '',
 		tagValue: [],
 	};
-}
-
-export function isExistsNotExistsOperator(value: string): boolean {
-	const { tagOperator } = getTagToken(value);
-	return (
-		tagOperator?.trim() === OPERATORS.NOT_EXISTS ||
-		tagOperator?.trim() === OPERATORS.EXISTS ||
-		tagOperator?.trim() === 'NEXISTS'
-	);
-}
-
-export function getRemovePrefixFromKey(tag: string): string {
-	return tag?.replace(/^(tag_|resource_)/, '').trim();
 }
 
 export function getOperatorValue(op: string): string {
@@ -150,31 +137,6 @@ export function getOperatorFromValue(op: string): string {
 		default:
 			return op;
 	}
-}
-
-export function replaceStringWithMaxLength(
-	mainString: string,
-	array: string[],
-	replacementString: string,
-): string {
-	const lastSearchValue = array.pop() ?? '';
-	if (lastSearchValue === '') {
-		return `${mainString}${replacementString},`;
-	}
-	/**
-	 * We need to escape the special characters in the lastSearchValue else the
-	 * new RegExp fails with error range out of order in char class
-	 */
-	const escapedLastSearchValue = lastSearchValue.replace(
-		/[-/\\^$*+?.()|[\]{}]/g,
-		'\\$&',
-	);
-
-	const updatedString = mainString.replace(
-		new RegExp(`${escapedLastSearchValue}(?=[^${escapedLastSearchValue}]*$)`),
-		replacementString,
-	);
-	return `${updatedString},`;
 }
 
 export function checkCommaInValue(str: string): string {

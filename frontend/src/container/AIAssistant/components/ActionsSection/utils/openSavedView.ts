@@ -66,7 +66,7 @@ async function loadSavedView(
 	throw new Error('Saved view not found');
 }
 
-export function explorerRouteForSourcePage(
+function explorerRouteForSourcePage(
 	sourcePage: DataSource | string,
 ): (typeof SOURCEPAGE_VS_ROUTES)[keyof typeof SOURCEPAGE_VS_ROUTES] | null {
 	return SOURCEPAGE_VS_ROUTES[sourcePage] ?? null;

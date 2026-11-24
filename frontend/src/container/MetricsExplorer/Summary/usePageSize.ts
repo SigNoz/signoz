@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 
-export const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE = 10;
 
 /**
  * Custom hook to manage the page size for a table.

@@ -1,7 +1,3 @@
-import { Props as GetDBOverViewProps } from './getDBOverview';
-
-export type Props = GetDBOverViewProps;
-
 export interface ServiceOverview {
 	callRate: number;
 	errorRate: number;
@@ -12,5 +8,3 @@ export interface ServiceOverview {
 	p99: number;
 	timestamp: number;
 }
-
-export type PayloadProps = ServiceOverview[];

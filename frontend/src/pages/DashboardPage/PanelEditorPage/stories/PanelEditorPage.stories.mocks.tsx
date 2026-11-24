@@ -255,7 +255,7 @@ const NEW_PANEL_KINDS_WITH_SPAN_GAPS: readonly NewPanelKind[] = [
  * The page mounts on `read`. A check that fails rather than denies still
  * renders it.
  */
-export const showsEditor = (args: PanelEditorArgs): boolean =>
+const showsEditor = (args: PanelEditorArgs): boolean =>
 	args.authzState === 'error' ||
 	grantsAll(args, buildDashboardReadPermission(STORY_DASHBOARD_ID));
 

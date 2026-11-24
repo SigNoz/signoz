@@ -5,7 +5,7 @@ import { getRuleOptionLabel } from '../utils';
 
 // A model + the billing rule it's about to be mapped onto, held while the confirm
 // dialog is open.
-export interface PendingMapping {
+interface PendingMapping {
 	model: UnpricedModel;
 	rule: PricingRule;
 }

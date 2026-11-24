@@ -2,7 +2,7 @@ import { Badge } from '@signozhq/ui/badge';
 import styles from './SelectedItemsChips.module.scss';
 import { useId } from 'react';
 
-export interface SelectedItemsChipsProps {
+interface SelectedItemsChipsProps {
 	ids: string[];
 	testId?: string;
 }

@@ -10,7 +10,7 @@ import {
 	useGlobalTime,
 } from 'store/globalTime';
 
-export interface EntityDetailsTimeRange {
+interface EntityDetailsTimeRange {
 	/** Unix timestamp in seconds — the unit API payload builders expect. Multiply by 1000 for ms-based UI (modals, URL params). */
 	startTime: number;
 	/** Unix timestamp in seconds — the unit API payload builders expect. Multiply by 1000 for ms-based UI (modals, URL params). */

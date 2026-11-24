@@ -6,13 +6,7 @@
 import type { UsageDataItem } from 'store/actions';
 import type { ServicesList } from 'types/api/metrics/getService';
 
-export const USAGE_SERVICES = [
-	'frontend',
-	'checkout',
-	'cart',
-	'payment',
-	'shipping',
-];
+const USAGE_SERVICES = ['frontend', 'checkout', 'cart', 'payment', 'shipping'];
 
 /** The select is the only thing this page reads a service for. */
 export const usageServicesResponse = (): {

@@ -1,10 +1,10 @@
-export interface LimitConfig {
+interface LimitConfig {
 	size?: number;
 	count?: number; // mainly used for metrics
 	enabled?: boolean;
 }
 
-export interface LimitSettings {
+interface LimitSettings {
 	day?: LimitConfig;
 	second?: LimitConfig;
 }
@@ -30,9 +30,4 @@ export interface UpdateLimitProps {
 	limitID: string;
 	signal: string;
 	config: LimitSettings;
-}
-
-export interface LimitSuccessProps {
-	status: string;
-	response: unknown;
 }

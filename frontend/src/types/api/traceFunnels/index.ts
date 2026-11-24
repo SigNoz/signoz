@@ -6,7 +6,7 @@ export enum LatencyOptions {
 	P90 = 'p90',
 }
 
-export type LatencyOptionsType = 'p99' | 'p95' | 'p90';
+type LatencyOptionsType = 'p99' | 'p95' | 'p90';
 export interface FunnelStepData {
 	id: string;
 	step_order: number;

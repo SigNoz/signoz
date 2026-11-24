@@ -64,11 +64,6 @@ export interface MetricsTreemapInternalProps {
 	) => void;
 }
 
-export interface OrderByPayload {
-	columnName: string;
-	order: 'asc' | 'desc';
-}
-
 export interface MetricsListItemRowData {
 	key: string;
 	metric_name: React.ReactNode;

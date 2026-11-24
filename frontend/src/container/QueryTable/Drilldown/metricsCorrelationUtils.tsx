@@ -127,7 +127,7 @@ function modifyKeyVal(
 
 // Replace keys/values in an expression using provided mappings.
 // wires parsing, ordering, and reconstruction.
-export function replaceKeysAndValuesInExpression(
+function replaceKeysAndValuesInExpression(
 	expression: string,
 	mappingList: KeyValueMapping[],
 ): string {

@@ -18,7 +18,7 @@ import { isValidDashboardImage } from '../../dashboardIcons';
 import { dashboardDurationError } from '../../utils/dashboardDuration';
 import { useDashboardStore } from '../../store/useDashboardStore';
 
-export interface JsonValidity {
+interface JsonValidity {
 	valid: boolean;
 	lineCount: number;
 	/** 1-based line of the parse error, when known. */

@@ -114,4 +114,3 @@ export function ConditionalAlertPopover({
 	}
 	return <div>{children}</div>;
 }
-export default AlertPopover;

@@ -19,7 +19,7 @@ const VIEW_MODE_OPTIONS: { label: string; value: ViewMode }[] = [
 	{ label: 'JSON', value: ViewMode.Json },
 ];
 
-export interface DataViewerProps {
+interface DataViewerProps {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	data: Record<string, any>;
 	drawerKey?: string;

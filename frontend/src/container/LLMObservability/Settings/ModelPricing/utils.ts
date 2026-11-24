@@ -110,7 +110,7 @@ const buildCacheCosts = (
 	};
 };
 
-export const buildPricingPayload = (
+const buildPricingPayload = (
 	draft: DrawerDraft,
 ): LlmpricingruletypesLLMRulePricingDTO => {
 	const cache = buildCacheCosts(draft.pricing);

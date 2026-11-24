@@ -61,7 +61,7 @@ export const LOGS_REQUIRED_COLUMNS = defaultLogsSelectedColumns.map((c) =>
 
 // Drop composite-key duplicates (never legitimate — they only come from
 // corrupted state). Returns the same array reference when nothing to dedupe.
-export function dedupeColumnsByCompositeKey(
+function dedupeColumnsByCompositeKey(
 	columns: TelemetryFieldKey[],
 ): TelemetryFieldKey[] {
 	const seen = new Set<string>();

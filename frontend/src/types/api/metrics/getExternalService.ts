@@ -1,7 +1,3 @@
-import { Props as GetDBOverViewProps } from './getDBOverview';
-
-export type Props = GetDBOverViewProps;
-
 export interface ExternalService {
 	avgDuration: number;
 	callRate: number;
@@ -11,5 +7,3 @@ export interface ExternalService {
 	numErrors: number;
 	timestamp: number;
 }
-
-export type PayloadProps = ExternalService[];

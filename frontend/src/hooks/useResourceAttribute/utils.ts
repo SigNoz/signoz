@@ -33,33 +33,17 @@ export const convertMetricKeyToTrace = (key: string): string => {
 	return splittedKey.splice(1).join('.');
 };
 
-/**
- * x.y -> resource_x_y
- */
-export const convertTraceKeyToMetric = (key: string): string => {
-	const splittedKey = key.split('.');
-	return `resource_${splittedKey.join('_')}`;
-};
-
-export const convertOperatorLabelToMetricOperator = (label: string): string =>
-	OperatorConversions.find((operator) => operator.label === label)
-		?.metricValue || '';
-
-export const convertOperatorLabelToTraceOperator = (
-	label: string,
-): OperatorValues =>
+const convertOperatorLabelToTraceOperator = (label: string): OperatorValues =>
 	OperatorConversions.find((operator) => operator.label === label)
 		?.traceValue as OperatorValues;
 
-export function convertOperatorLabelForExceptions(
-	label: string,
-): OperatorValues {
+function convertOperatorLabelForExceptions(label: string): OperatorValues {
 	return CompositeQueryOperatorsConfig.find(
 		(operator) => operator.label === label,
 	)?.traceValue as OperatorValues;
 }
 
-export function formatStringValuesForTrace(
+function formatStringValuesForTrace(
 	val: TagFilterItem['value'] = [],
 ): string[] {
 	// IN QB V5 we can pass array of all (boolean, number, string) values. To make this compatible with the old version, we need to convert the array to a string array.
@@ -187,22 +171,6 @@ export const getEnvironmentTagValues = (): Promise<IOption[]> =>
 
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
-): IResourceAttribute | null => {
-	if (selectedItems.length === 3) {
-		return {
-			id: uuid().slice(0, 8),
-			tagKey: selectedItems[0] as string,
-			operator: selectedItems[1] as string,
-			tagValue: selectedItems[2] as string[],
-		};
-	}
-	return null;
-};
-
-export const updateQuery = (
-	queryKey: string,
-	selectedItems: Array<string | string[]> = [],
-	// eslint-disable-next-line sonarjs/no-identical-functions
 ): IResourceAttribute | null => {
 	if (selectedItems.length === 3) {
 		return {

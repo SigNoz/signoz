@@ -12,7 +12,7 @@ import {
 	METRIC_NAMESPACE_BY_ENTITY,
 } from '../constants';
 
-export interface GroupByOption {
+interface GroupByOption {
 	value: string;
 	label: string;
 }

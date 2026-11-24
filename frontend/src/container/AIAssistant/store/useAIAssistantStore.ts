@@ -1516,11 +1516,5 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 // Standalone imperative accessors
 export const openAIAssistant = (): void =>
 	useAIAssistantStore.getState().openDrawer();
-export const closeAIAssistant = (): void =>
-	useAIAssistantStore.getState().closeDrawer();
 export const openAIAssistantModal = (): void =>
 	useAIAssistantStore.getState().openModal();
-export const closeAIAssistantModal = (): void =>
-	useAIAssistantStore.getState().closeModal();
-export const minimizeAIAssistantModal = (): void =>
-	useAIAssistantStore.getState().minimizeModal();

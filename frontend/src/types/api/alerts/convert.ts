@@ -1,20 +1,14 @@
 import type {
-	RuletypesAlertCompositeQueryDTO,
 	RuletypesPostableRuleDTO,
 	RuletypesPostableRuleDTOLabels,
 	RuletypesRuleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	RuletypesAlertTypeDTO,
-	RuletypesPanelTypeDTO,
-	RuletypesQueryTypeDTO,
 	RuletypesRuleTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { EQueryType } from 'types/common/dashboard';
 
 import { AlertTypes, PostableAlertRuleV2 } from './alertTypes';
-import { ICompositeMetricQuery } from './compositeQuery';
 import { Labels } from './def';
 
 function toRuleTypeDTO(ruleType: string | undefined): RuletypesRuleTypeDTO {
@@ -91,40 +85,4 @@ export function fromRuleDTOToPostableRuleV2(
 	dto: RuletypesRuleDTO,
 ): PostableAlertRuleV2 {
 	return dto as unknown as PostableAlertRuleV2;
-}
-
-function toEQueryType(queryType: RuletypesQueryTypeDTO): EQueryType {
-	switch (queryType) {
-		case RuletypesQueryTypeDTO.builder:
-			return EQueryType.QUERY_BUILDER;
-		case RuletypesQueryTypeDTO.clickhouse_sql:
-			return EQueryType.CLICKHOUSE;
-		case RuletypesQueryTypeDTO.promql:
-			return EQueryType.PROM;
-		default:
-			return EQueryType.QUERY_BUILDER;
-	}
-}
-
-function toPanelType(panelType: RuletypesPanelTypeDTO): PANEL_TYPES {
-	switch (panelType) {
-		case RuletypesPanelTypeDTO.value:
-			return PANEL_TYPES.VALUE;
-		case RuletypesPanelTypeDTO.table:
-			return PANEL_TYPES.TABLE;
-		case RuletypesPanelTypeDTO.graph:
-		default:
-			return PANEL_TYPES.TIME_SERIES;
-	}
-}
-
-export function toCompositeMetricQuery(
-	dto: RuletypesAlertCompositeQueryDTO,
-): ICompositeMetricQuery {
-	return {
-		queryType: toEQueryType(dto.queryType),
-		panelType: toPanelType(dto.panelType),
-		unit: dto.unit,
-		queries: (dto.queries ?? undefined) as ICompositeMetricQuery['queries'],
-	};
 }

@@ -5,16 +5,16 @@ export interface Props {
 	ref: string;
 }
 
-export interface PasswordAuthN {
+interface PasswordAuthN {
 	provider: string;
 }
 
-export interface CallbackAuthN {
+interface CallbackAuthN {
 	provider: string;
 	url: string;
 }
 
-export interface AuthNSupport {
+interface AuthNSupport {
 	password: PasswordAuthN[];
 	callback: CallbackAuthN[];
 }

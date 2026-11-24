@@ -129,18 +129,6 @@ export const StatusPage = Loadable(
 	() => import(/* webpackChunkName: "All Status" */ 'pages/Status'),
 );
 
-export const OrganizationSettings = Loadable(
-	() => import(/* webpackChunkName: "All Settings" */ 'pages/Settings'),
-);
-
-export const IngestionSettings = Loadable(
-	() => import(/* webpackChunkName: "Ingestion Settings" */ 'pages/Settings'),
-);
-
-export const MySettings = Loadable(
-	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
-);
-
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
@@ -181,10 +169,6 @@ export const LogsIndexToFields = Loadable(
 		import(/* webpackChunkName: "LogsIndexToFields Page" */ 'pages/LogsSettings'),
 );
 
-export const BillingPage = Loadable(
-	() => import(/* webpackChunkName: "BillingPage" */ 'pages/Settings'),
-);
-
 export const SupportPage = Loadable(
 	() => import(/* webpackChunkName: "SupportPage" */ 'pages/Support'),
 );
@@ -208,10 +192,6 @@ export const WorkspaceAccessRestricted = Loadable(
 		),
 );
 
-export const ShortcutsPage = Loadable(
-	() => import(/* webpackChunkName: "ShortcutsPage" */ 'pages/Settings'),
-);
-
 export const Integrations = Loadable(
 	() =>
 		import(
@@ -230,31 +210,10 @@ export const MessagingQueuesMainPage = Loadable(
 		import(/* webpackChunkName: "MessagingQueues" */ 'pages/MessagingQueues'),
 );
 
-export const MQDetailPage = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "MQDetailPage" */ 'pages/MessagingQueues/MQDetailPage'
-		),
-);
-
 export const InfrastructureMonitoring = Loadable(
 	() =>
 		import(
 			/* webpackChunkName: "InfrastructureMonitoring" */ 'pages/InfrastructureMonitoring'
-		),
-);
-
-export const CeleryTask = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "CeleryTask" */ 'pages/Celery/CeleryTask/CeleryTask'
-		),
-);
-
-export const CeleryOverview = Loadable(
-	() =>
-		import(
-			/* webpackChunkName: "CeleryOverview" */ 'pages/Celery/CeleryOverview/CeleryOverview'
 		),
 );
 

@@ -5,7 +5,7 @@ export const SPACEKEY = ' ';
 export const ALL_SELECTED_VALUE = '__ALL__'; // Constant for the special value
 
 /** De-duplicate options by `value`, keeping the first occurrence. */
-export const uniqueOptions = (options: OptionData[]): OptionData[] => {
+const uniqueOptions = (options: OptionData[]): OptionData[] => {
 	const deduped: OptionData[] = [];
 	const seenValues = new Set<string>();
 

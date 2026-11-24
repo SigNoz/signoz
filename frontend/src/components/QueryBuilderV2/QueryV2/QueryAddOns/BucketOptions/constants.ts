@@ -14,7 +14,7 @@ import { Querybuildertypesv5BucketsKindDTO } from 'api/generated/services/sigNoz
 export const MAX_LOG_SCALE = 4;
 
 /** One band per 16x, the coarsest axis worth rendering. */
-export const MIN_LOG_SCALE = -4;
+const MIN_LOG_SCALE = -4;
 
 export const MAX_NUM_BUCKETS = 512;
 
@@ -22,7 +22,7 @@ export const DEFAULT_NUM_BUCKETS = 60;
 
 /** Every scale the request accepts, coarsest first. The bounds strip below says
  *  how coarse a given one is, so the numbers stand alone. */
-export const LOG_SCALES = Array.from(
+const LOG_SCALES = Array.from(
 	{ length: MAX_LOG_SCALE - MIN_LOG_SCALE + 1 },
 	(_, index) => MIN_LOG_SCALE + index,
 );

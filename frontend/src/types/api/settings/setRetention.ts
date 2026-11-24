@@ -20,9 +20,6 @@ export interface PropsV2 {
 		ttlDays: number;
 	}[];
 }
-export interface PayloadProps {
-	success: 'message';
-}
 
 export interface PayloadPropsV2 {
 	message: string;

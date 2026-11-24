@@ -117,23 +117,6 @@ export const useClearRowHovered = (rowId: string): (() => void) => {
 	}, [store, rowId]);
 };
 
-export const useIsTableLoading = (): boolean => {
-	const store = useContext(TanStackTableStateContext);
-	return useStore(store ?? defaultStore, (s) => s.isLoading);
-};
-
-export const useSetTableLoading = (): ((loading: boolean) => void) => {
-	const store = useContext(TanStackTableStateContext);
-	return useCallback(
-		(loading: boolean) => {
-			if (store) {
-				store.getState().setIsLoading(loading);
-			}
-		},
-		[store],
-	);
-};
-
 export function TableLoadingSync({
 	isLoading,
 	isInfiniteScrollMode,
@@ -162,22 +145,7 @@ export const useShouldShowCellSkeleton = (): boolean => {
 	);
 };
 
-export const useColumnVisibility = (): VisibilityState => {
-	const store = useContext(TanStackTableStateContext);
-	return useStore(store ?? defaultStore, (s) => s.columnVisibility);
-};
-
-export const useIsColumnVisible = (columnId: string): boolean => {
-	const store = useContext(TanStackTableStateContext);
-	return useStore(
-		store ?? defaultStore,
-		(s) => s.columnVisibility[columnId] !== false,
-	);
-};
-
-export const useSetColumnVisibility = (): ((
-	visibility: VisibilityState,
-) => void) => {
+const useSetColumnVisibility = (): ((visibility: VisibilityState) => void) => {
 	const store = useContext(TanStackTableStateContext);
 	return useCallback(
 		(visibility: VisibilityState) => {

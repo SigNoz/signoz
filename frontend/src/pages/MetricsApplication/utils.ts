@@ -4,9 +4,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { TAB_KEYS_VS_METRICS_APPLICATION_KEY } from './config';
 import { MetricsApplicationTab, OnSaveApDexSettingsProps } from './types';
 
-export const isMetricsApplicationTab = (
-	tab: string,
-): tab is MetricsApplicationTab =>
+const isMetricsApplicationTab = (tab: string): tab is MetricsApplicationTab =>
 	Object.values(MetricsApplicationTab).includes(tab as MetricsApplicationTab);
 
 export const getMetricsApplicationKey = (

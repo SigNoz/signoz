@@ -11,7 +11,7 @@ export interface FieldKeyResponse {
 /**
  * Field key data structure
  */
-export interface FieldKey {
+interface FieldKey {
 	/** Key name */
 	name?: string;
 	/** Data type of the field */

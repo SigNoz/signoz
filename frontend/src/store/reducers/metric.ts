@@ -10,7 +10,7 @@ import {
 } from 'types/actions/metrics';
 import InitialValueTypes from 'types/reducer/metrics';
 
-export const InitialValue: InitialValueTypes = {
+const InitialValue: InitialValueTypes = {
 	error: false,
 	errorMessage: '',
 	loading: true,

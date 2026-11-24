@@ -40,5 +40,3 @@ export const getFieldKeys = async (
 		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
 	}
 };
-
-export default getFieldKeys;

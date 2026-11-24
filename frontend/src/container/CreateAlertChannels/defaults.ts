@@ -13,9 +13,8 @@ import {
 import { ChannelKind, ChannelSpecFormValues, JiraDeployment } from './types';
 
 // shared by slack and ms teams, both render the same title / description boxes
-export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> =
-	{
-		text: `{{ range .Alerts -}}
+const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> = {
+	text: `{{ range .Alerts -}}
      *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
      *Summary:* {{ .Annotations.summary }}
@@ -26,7 +25,7 @@ export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO>
        {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
        {{ end }}
      {{ end }}`,
-		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+	title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
      {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
        {{" "}}(
        {{- with .CommonLabels.Remove .GroupLabels.Names }}
@@ -37,11 +36,11 @@ export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO>
        {{- end -}}
        )
      {{- end }}`,
-	};
+};
 
 // mirrors DefaultGoogleChatReceiverConfig in pkg/types/alertmanagertypes/googlechat.go,
 // which the backend applies when title / text are left empty
-export const GoogleChatInitialConfig: Partial<AlertmanagertypesChannelGoogleChatConfigDTO> =
+const GoogleChatInitialConfig: Partial<AlertmanagertypesChannelGoogleChatConfigDTO> =
 	{
 		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
 		text: `{{ range .Alerts -}}
@@ -55,12 +54,11 @@ export const GoogleChatInitialConfig: Partial<AlertmanagertypesChannelGoogleChat
 // pkg/types/alertmanagertypes/jira.go, which the backend applies when the
 // summary / description are left empty. The description is markdown here and is
 // wrapped in the ADF status panel + deep-links server-side.
-export const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> =
-	{
-		deployment: JiraDeployment.cloud,
-		issueType: 'Task',
-		summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
-		description: `{{ range .Alerts -}}
+const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> = {
+	deployment: JiraDeployment.cloud,
+	issueType: 'Task',
+	summary: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
 **Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
 {{ if .Annotations.summary }}
 **Summary:** {{ .Annotations.summary }}
@@ -68,9 +66,9 @@ export const JiraInitialConfig: Partial<AlertmanagertypesChannelJiraConfigDTO> =
 **Description:** {{ .Annotations.description }}
 {{ end }}
 {{ end }}`,
-	};
+};
 
-export const PagerInitialConfig: Partial<AlertmanagertypesChannelPagerdutyConfigDTO> =
+const PagerInitialConfig: Partial<AlertmanagertypesChannelPagerdutyConfigDTO> =
 	{
 		description: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
 	{{- if gt (len .CommonLabels) (len .GroupLabels) -}}
@@ -93,7 +91,7 @@ export const PagerInitialConfig: Partial<AlertmanagertypesChannelPagerdutyConfig
 		},
 	};
 
-export const OpsgenieInitialConfig: Partial<AlertmanagertypesChannelOpsgenieConfigDTO> =
+const OpsgenieInitialConfig: Partial<AlertmanagertypesChannelOpsgenieConfigDTO> =
 	{
 		message: '{{ .CommonLabels.alertname }}',
 		description: `{{ if gt (len .Alerts.Firing) 0 -}}
@@ -127,11 +125,10 @@ export const OpsgenieInitialConfig: Partial<AlertmanagertypesChannelOpsgenieConf
 // description are left empty. send_resolved is seeded on so JSM alerts close on
 // resolve (the backend cannot default it, see jsmops.go). priority mirrors the
 // Opsgenie template mapping severity to P1-P5.
-export const JsmOpsInitialConfig: Partial<AlertmanagertypesChannelJSMOpsConfigDTO> =
-	{
-		sendResolved: true,
-		message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
-		description: `{{ range .Alerts -}}
+const JsmOpsInitialConfig: Partial<AlertmanagertypesChannelJSMOpsConfigDTO> = {
+	sendResolved: true,
+	message: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+	description: `{{ range .Alerts -}}
 **Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }}
 
 {{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
@@ -141,16 +138,16 @@ export const JsmOpsInitialConfig: Partial<AlertmanagertypesChannelJSMOpsConfigDT
 {{ end }}{{ if .GeneratorURL }}[View in SigNoz]({{ .GeneratorURL }})
 
 {{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}`,
-		priority:
-			'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
-		tags: 'signoz-alert',
-	};
+	priority:
+		'{{ if eq (index .Alerts 0).Labels.severity "critical" }}P1{{ else if eq (index .Alerts 0).Labels.severity "warning" }}P2{{ else if eq (index .Alerts 0).Labels.severity "info" }}P3{{ else }}P4{{ end }}',
+	tags: 'signoz-alert',
+};
 
 // mirrors DefaultIncidentIOTitleTemplate / DefaultIncidentIODescriptionTemplate
 // in pkg/types/alertmanagertypes/incidentio.go, applied by the backend when
 // title / description are left empty. send_resolved is seeded on so incident.io
 // alerts resolve with the rule (the backend cannot default it).
-export const IncidentIOInitialConfig: Partial<AlertmanagertypesChannelIncidentIOConfigDTO> =
+const IncidentIOInitialConfig: Partial<AlertmanagertypesChannelIncidentIOConfigDTO> =
 	{
 		sendResolved: true,
 		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
@@ -166,10 +163,9 @@ export const IncidentIOInitialConfig: Partial<AlertmanagertypesChannelIncidentIO
 {{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ end }}`,
 	};
 
-export const EmailInitialConfig: Partial<AlertmanagertypesChannelEmailConfigDTO> =
-	{
-		sendResolved: true,
-		html: `<!--
+const EmailInitialConfig: Partial<AlertmanagertypesChannelEmailConfigDTO> = {
+	sendResolved: true,
+	html: `<!--
 	Credits: https://github.com/mailgun/transactional-email-templates
 	-->
   <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -561,13 +557,13 @@ export const EmailInitialConfig: Partial<AlertmanagertypesChannelEmailConfigDTO>
 	  </table>
 	</body>
   </html>`,
-	};
+};
 
 // prefilled values of every channel type, keyed by type so the form can apply
 // exactly one set of defaults and swap it when the type changes
 // `message` is left unset so the backend applies its own template; an empty
 // string would overwrite it.
-export const TelegramInitialConfig: Partial<AlertmanagertypesChannelTelegramConfigDTO> =
+const TelegramInitialConfig: Partial<AlertmanagertypesChannelTelegramConfigDTO> =
 	{
 		sendResolved: true,
 	};

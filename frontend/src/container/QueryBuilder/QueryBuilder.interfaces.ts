@@ -4,7 +4,7 @@ import { QueryBuilderFieldsConfig } from 'components/QueryBuilderV2/queryBuilder
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DataSource } from 'types/common/queryBuilder';
 
-export type QueryBuilderConfig =
+type QueryBuilderConfig =
 	| {
 			queryVariant: 'static';
 			initialDataSource: DataSource;
@@ -38,7 +38,7 @@ export type QueryBuilderProps = {
 	savePreviousQuery?: boolean;
 };
 
-export enum TraceView {
+enum TraceView {
 	SPANS = 'spans',
 	TRACES = 'traces',
 }

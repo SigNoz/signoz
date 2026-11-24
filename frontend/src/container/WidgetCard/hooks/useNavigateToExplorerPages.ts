@@ -11,7 +11,7 @@ import { v4 } from 'uuid';
 
 import { extractQueryNamesFromExpression } from 'container/WidgetCard/utils';
 
-export type GraphClickMetaData = {
+type GraphClickMetaData = {
 	[key: string]: string | boolean;
 	queryName: string;
 	inFocusOrNot: boolean;
@@ -62,7 +62,7 @@ const buildQueryFilters = (
 };
 
 // Main function to build filters
-export const buildFilters = (
+const buildFilters = (
 	query: Query,
 	requestData?: GraphClickMetaData,
 ): {

@@ -21,7 +21,7 @@ import {
 
 import './MetricsSelect.styles.scss';
 
-export const SOURCE_OPTIONS: SelectOption<string, string>[] = [
+const SOURCE_OPTIONS: SelectOption<string, string>[] = [
 	{ value: 'metrics', label: 'Metrics' },
 	{ value: 'meter', label: 'Meter' },
 ];

@@ -2,7 +2,6 @@
 import { CharStreams, CommonTokenStream, ParserRuleContext } from 'antlr4';
 import { cloneDeep, isEqual, sortBy } from 'lodash-es';
 import { v4 as uuid } from 'uuid';
-import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	DEPRECATED_OPERATORS_MAP,
 	OPERATORS,
@@ -28,7 +27,6 @@ import { IQueryPair } from 'types/antlrQueryTypes';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	Having,
-	IBuilderQuery,
 	Query,
 	TagFilter,
 	TagFilterItem,
@@ -772,9 +770,7 @@ export const removeKeysFromExpression = (
 const escapeRegExp = (value: string): string =>
 	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export const createVariablePlaceholderRegExp = (
-	variableName: string,
-): RegExp => {
+const createVariablePlaceholderRegExp = (variableName: string): RegExp => {
 	const escapedName = escapeRegExp(variableName);
 	// (?![\w.]) prevents $env from matching inside $environment or $env.attr
 	return new RegExp(
@@ -979,59 +975,6 @@ export const convertAggregationToExpression = ({
 		} as LogAggregation,
 	];
 };
-
-function getColId(
-	queryName: string,
-	aggregation: { alias?: string; expression?: string },
-	isMultipleAggregations: boolean,
-): string {
-	if (isMultipleAggregations && aggregation.expression) {
-		return `${queryName}.${aggregation.expression}`;
-	}
-
-	return queryName;
-}
-
-// function to give you label value for query name taking multiaggregation into account
-export function getQueryLabelWithAggregation(
-	queryData: IBuilderQuery[],
-): { label: string; value: string }[] {
-	const labels: { label: string; value: string }[] = [];
-
-	const aggregationPerQuery =
-		queryData.reduce(
-			(acc, query) => {
-				if (query.queryName && query.aggregations?.length) {
-					acc[query.queryName] = createAggregation(query).map((a: any) => ({
-						alias: a.alias,
-						expression: a.expression,
-					}));
-				}
-				return acc;
-			},
-			{} as Record<string, any>,
-		) || {};
-
-	Object.entries(aggregationPerQuery).forEach(([queryName, aggregations]) => {
-		const isMultipleAggregations = aggregations.length > 1;
-
-		aggregations.forEach((agg: any, index: number) => {
-			const columnId = getColId(queryName, agg, isMultipleAggregations);
-
-			// For display purposes, show the aggregation index for multiple aggregations
-			const displayLabel = isMultipleAggregations
-				? `${queryName}.${index}`
-				: queryName;
-
-			labels.push({
-				label: displayLabel,
-				value: columnId, // This matches the ID format used in table columns
-			});
-		});
-	});
-
-	return labels;
-}
 
 export const adjustQueryForV5 = (currentQuery: Query): Query => {
 	if (isBuilderQueryType(currentQuery.queryType)) {

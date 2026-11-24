@@ -11,7 +11,7 @@ import LabelTag from './LabelTag';
 import styles from './LabelColumn.module.scss';
 import { getVisibleCount } from './utils';
 
-export interface LabelColumnProps {
+interface LabelColumnProps {
 	labels: string[];
 	color?: BadgeColorType;
 	value?: { [key: string]: string };

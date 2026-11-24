@@ -4,7 +4,7 @@ import { Button } from '@signozhq/ui/button';
 import { Callout } from '@signozhq/ui/callout';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
 
-export interface KeyCreatedPhaseProps {
+interface KeyCreatedPhaseProps {
 	createdKey: ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO;
 	hasCopied: boolean;
 	expiryLabel: string;

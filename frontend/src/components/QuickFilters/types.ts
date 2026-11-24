@@ -9,16 +9,6 @@ export enum FiltersType {
 	DURATION = 'DURATION', // ALIAS FOR DURATION_NANO
 }
 
-export enum MinMax {
-	MIN = 'MIN',
-	MAX = 'MAX',
-}
-
-export enum SpecficFilterOperations {
-	ALL = 'ALL',
-	ONLY = 'ONLY',
-}
-
 /**
  * Missing export from signozhq/ui/checkbox, TODO(H4ad): Add and remove this type definition
  */

@@ -15,7 +15,7 @@ const SERVICES = [
 	'product-catalog',
 ];
 
-export type Shape = 'spread' | 'single' | 'sameX';
+type Shape = 'spread' | 'single' | 'sameX';
 
 export interface ScatterStoryProps {
 	groups: number;

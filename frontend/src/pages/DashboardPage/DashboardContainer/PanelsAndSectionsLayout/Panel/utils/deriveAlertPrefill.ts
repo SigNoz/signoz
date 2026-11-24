@@ -38,7 +38,7 @@ interface NormalizedPanelThreshold {
 	operator?: DashboardtypesComparisonOperatorDTO;
 }
 
-export function reduceToMatchType(
+function reduceToMatchType(
 	reduceTo: ReduceOperators | undefined,
 ): AlertThresholdMatchType | undefined {
 	switch (reduceTo) {
@@ -61,7 +61,7 @@ function readReduceTo(
 	return aggregationReduceTo || queryData.reduceTo || undefined;
 }
 
-export function uniformReduceTo(query: Query): ReduceOperators | undefined {
+function uniformReduceTo(query: Query): ReduceOperators | undefined {
 	const { queryData } = query.builder;
 	const first = queryData[0] && readReduceTo(queryData[0]);
 	if (!first) {

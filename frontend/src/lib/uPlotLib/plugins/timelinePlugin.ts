@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-export function pointWithin(
+function pointWithin(
 	px: number,
 	py: number,
 	rlft: number,
@@ -13,7 +13,7 @@ export function pointWithin(
 const MAX_OBJECTS = 10;
 const MAX_LEVELS = 4;
 
-export class Quadtree {
+class Quadtree {
 	x: number;
 
 	y: number;
@@ -149,15 +149,15 @@ function roundDec(val: number, dec: number): number {
 	return Math.round(val * 10 ** dec) / 10 ** dec;
 }
 
-export const SPACE_BETWEEN = 1;
-export const SPACE_AROUND = 2;
-export const SPACE_EVENLY = 3;
-export const inf = Infinity;
+const SPACE_BETWEEN = 1;
+const SPACE_AROUND = 2;
+const SPACE_EVENLY = 3;
+const inf = Infinity;
 
 const coord = (i: number, offs: number, iwid: number, gap: number): number =>
 	roundDec(offs + i * (iwid + gap), 6);
 
-export function distr(
+function distr(
 	numItems: number,
 	sizeFactor: number,
 	justify: number,

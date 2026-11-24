@@ -2,7 +2,7 @@ import { RadioGroup } from '@signozhq/ui/radio-group';
 
 import styles from './SegmentedControl.module.scss';
 
-export interface SegmentedControlOption<T extends string> {
+interface SegmentedControlOption<T extends string> {
 	label: string;
 	value: T;
 }

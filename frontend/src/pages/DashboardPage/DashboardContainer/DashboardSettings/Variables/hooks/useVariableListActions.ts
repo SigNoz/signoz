@@ -36,7 +36,7 @@ import type { EditingState } from '../types';
  * dialog before it is applied. `nextVariables` is the array to persist (with the
  * rename/delete already applied), before any variable-query edits.
  */
-export interface VariableImpact {
+interface VariableImpact {
 	mode: VariableImpactMode;
 	variableName: string;
 	newName?: string;

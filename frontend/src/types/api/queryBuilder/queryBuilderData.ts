@@ -54,20 +54,10 @@ export type Having = {
 	value: number | number[];
 };
 
-export type HavingForm = Omit<Having, 'value'> & {
-	value: string[];
-};
-
 export type OrderByPayload = {
 	columnName: string;
 	order: string;
 };
-
-export interface QueryFunctionProps {
-	name: string;
-	args: (string | number)[];
-	namedArgs?: Record<string, any>;
-}
 
 // Type for query builder
 export type IBuilderQuery = {

@@ -52,7 +52,7 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 	);
 }
 
-export interface PreviewActionProps {
+interface PreviewActionProps {
 	pipeline: PipelineData;
 }
 export default PreviewAction;

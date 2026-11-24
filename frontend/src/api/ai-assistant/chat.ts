@@ -40,7 +40,6 @@ import type {
 	CreateThreadResponseDTO,
 	DoneEventDTO,
 	ErrorEventDTO,
-	ExecutionStateDTO,
 	FeedbackRatingDTO,
 	ListThreadsApiV1AssistantThreadsGetArchived,
 	ListThreadsApiV1AssistantThreadsGetParams,
@@ -202,9 +201,6 @@ export type SSEEvent =
 	| (ErrorEventDTO & { type: 'error' })
 	| (ConversationEventDTO & { type: 'conversation' })
 	| (DoneEventDTO & { type: 'done' });
-
-/** String-literal view of `ExecutionStateDTO` for ergonomic comparisons. */
-export type ExecutionState = `${ExecutionStateDTO}`;
 
 // ---------------------------------------------------------------------------
 // Re-exported DTOs — the wire shape, used directly without remapping.
@@ -401,7 +397,7 @@ async function* readSSEReader(
  * Carries the HTTP status so callers can branch on rate-limit vs. other
  * failures (e.g. show a "please wait a moment" message on 429).
  */
-export class SSEStreamError extends Error {
+class SSEStreamError extends Error {
 	status: number;
 
 	constructor(status: number, statusText: string) {

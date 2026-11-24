@@ -132,7 +132,7 @@ const listOverviewColumns: APIMonitoringResponseColumn[] = [
 const domainsIn = (count: number, showIp: boolean): Domain[] =>
 	DOMAINS.filter((domain) => showIp || !domain.isIp).slice(0, count);
 
-export const domainNames = (count: number, showIp = true): string[] =>
+const domainNames = (count: number, showIp = true): string[] =>
 	domainsIn(count, showIp).map((domain) => domain.name);
 
 export const DRAWER_DOMAINS = ['healthy', 'failing', 'ip-address'] as const;
@@ -205,7 +205,7 @@ const ENDPOINT_PATHS = [
 export const ENDPOINT_MAX = ENDPOINT_PATHS.length;
 
 /** Full URLs, port included, which is what the drawer splits into endpoint and port. */
-export const endpointUrls = (domainName: string, count: number): string[] => {
+const endpointUrls = (domainName: string, count: number): string[] => {
 	const { origin = `https://${domainName}` } = domainOf(domainName);
 
 	return ENDPOINT_PATHS.slice(0, count).map((path) => `${origin}${path}`);

@@ -275,7 +275,7 @@ export function extractTraceExpressionPairs(
  * @param cursorIndex The position of the cursor in the query
  * @returns The expression pair at the cursor position, or null if not found
  */
-export function getCurrentTraceExpressionPair(
+function getCurrentTraceExpressionPair(
 	expressionPairs: ITraceExpressionPair[],
 	cursorIndex: number,
 ): ITraceExpressionPair | null {

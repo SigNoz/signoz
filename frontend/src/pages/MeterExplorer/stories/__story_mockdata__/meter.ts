@@ -79,9 +79,6 @@ const VOLUME_METRICS: Record<MeterVolume, MeterMetric> = {
 	'metric-datapoints': 'signoz.meter.metric.datapoint.count',
 };
 
-export const meterVolumeMetric = (volume: MeterVolume): MeterMetric =>
-	VOLUME_METRICS[volume];
-
 interface MeterMetricShape {
 	signal: MeterSignal;
 	/** Volume of one hourly bucket, which is what the meter aggregates over. */

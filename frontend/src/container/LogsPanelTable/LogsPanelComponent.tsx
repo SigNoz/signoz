@@ -182,7 +182,7 @@ function LogsPanelComponent({
 	);
 }
 
-export type LogsPanelComponentProps = {
+type LogsPanelComponentProps = {
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	queryResponse: UseQueryResult<
 		SuccessResponse<MetricRangePayloadProps, unknown>,

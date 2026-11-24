@@ -1,4 +1,4 @@
-export interface TelemetryFieldValues {
+interface TelemetryFieldValues {
 	StringValues?: string[];
 	NumberValues?: number[];
 	RelatedValues?: string[];

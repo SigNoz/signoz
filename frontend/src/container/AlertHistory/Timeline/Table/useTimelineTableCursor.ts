@@ -11,7 +11,7 @@ const defaultNuqsOptions: Options = {
 	history: 'push',
 };
 
-export const TIMELINE_TABLE_PARAMS = {
+const TIMELINE_TABLE_PARAMS = {
 	PAGE: 'page',
 	ORDER: 'order',
 } as const;
@@ -36,7 +36,7 @@ export const useTimelineTableOrder = (): UseQueryStateReturn<
 			.withOptions(defaultNuqsOptions),
 	);
 
-export function encodeCursor(page: number, limit: number): string | undefined {
+function encodeCursor(page: number, limit: number): string | undefined {
 	if (page <= 1) {
 		return undefined;
 	}

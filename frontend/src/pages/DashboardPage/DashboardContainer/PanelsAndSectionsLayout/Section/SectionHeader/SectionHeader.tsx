@@ -17,7 +17,7 @@ export interface SectionDragHandle {
 }
 
 /** Editable-mode section actions — present together or not at all. */
-export interface SectionHeaderActions {
+interface SectionHeaderActions {
 	onRename: () => void;
 	onAddPanel: () => void;
 	onCloneSection: () => void;

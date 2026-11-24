@@ -33,7 +33,7 @@ export interface AIFilter {
  * `value: string` field, so we split here. Other ops keep the raw string —
  * matches how the query-builder UI itself stores them.
  */
-export function valueForOp(op: string, value: string): TagFilterItem['value'] {
+function valueForOp(op: string, value: string): TagFilterItem['value'] {
 	if (op === 'IN' || op === 'NOT_IN') {
 		return value
 			.split(',')

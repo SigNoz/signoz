@@ -3,8 +3,8 @@ import permissionsType from './permissions.type';
 const ObjectSeparator = ':';
 
 type PermissionsData = typeof permissionsType.data;
-export type Resource = PermissionsData['resources'][number];
-export type ResourceName = Resource['kind'];
+type Resource = PermissionsData['resources'][number];
+type ResourceName = Resource['kind'];
 export type ResourceType = Resource['type'];
 export type AuthZVerb = Resource['allowedVerbs'][number];
 

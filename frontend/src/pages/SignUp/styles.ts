@@ -1,13 +1,5 @@
-import { CSSProperties } from 'react';
-import { Card, Form } from 'antd';
+import { Form } from 'antd';
 import styled from 'styled-components';
-
-export const FormWrapper = styled(Card)`
-	display: flex;
-	justify-content: center;
-	max-width: 432px;
-	flex: 1;
-`;
 
 export const Label = styled.label`
 	margin-bottom: 0;
@@ -17,21 +9,6 @@ export const Label = styled.label`
 	font-weight: 600;
 	line-height: 1;
 	color: var(--l1-foreground);
-`;
-
-export const ButtonContainer = styled.div`
-	margin-top: 1.8125rem;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-`;
-
-interface Props {
-	marginTop: CSSProperties['marginTop'];
-}
-
-export const MarginTop = styled.div<Props>`
-	margin-top: ${({ marginTop = 0 }): number | string => marginTop};
 `;
 
 export const FormContainer = styled(Form)`

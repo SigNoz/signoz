@@ -16,7 +16,7 @@ const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
 const DEFAULT_FONT_SIZE = 6;
 
-export const getDimensions = (
+const getDimensions = (
 	num: number,
 	highest: number,
 ): {
@@ -94,20 +94,6 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 		nodes,
 		links,
 	};
-};
-
-export const getZoomPx = (): number => {
-	const { width } = window.screen;
-	if (width < 1400) {
-		return 190;
-	}
-	if (width > 1400 && width < 1700) {
-		return 380;
-	}
-	if (width > 1700) {
-		return 470;
-	}
-	return 190;
 };
 
 const getRound2DigitsAfterDecimal = (num: number): number => {

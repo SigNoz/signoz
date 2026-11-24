@@ -33,7 +33,7 @@ const LADDER_LAST_INDEX = ZOOM_OUT_LADDER_MS.length - 1;
 const MAX_DURATION = ZOOM_OUT_LADDER_MS[LADDER_LAST_INDEX];
 const MIN_LADDER_DURATION_MS = ZOOM_OUT_LADDER_MS[0]; // 15m - below this we use 3x
 
-export const MAX_ZOOM_OUT_DURATION_MS = MAX_DURATION;
+const MAX_ZOOM_OUT_DURATION_MS = MAX_DURATION;
 
 /** Returns true when zoom out should be disabled (range at or beyond 1 month) */
 export function isZoomOutDisabled(durationMs: number): boolean {

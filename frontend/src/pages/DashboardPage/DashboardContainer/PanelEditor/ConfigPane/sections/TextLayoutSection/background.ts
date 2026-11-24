@@ -4,7 +4,6 @@ import {
 } from 'pages/DashboardPage/DashboardContainer/Panels/kinds/TextPanel/background/presets';
 import {
 	type PanelTheme,
-	type ResolvedTextBackground,
 	TextBackgroundKind,
 	type TextBackgroundPreset,
 	type TextBackgroundSelection,
@@ -29,19 +28,6 @@ const BASE_TITLES: Record<BaseSelection, string> = {
 	none: 'Transparent',
 	default: 'Default panel',
 };
-
-export function backgroundTitle(background: ResolvedTextBackground): string {
-	switch (background.kind) {
-		case TextBackgroundKind.Preset:
-			return background.preset ? PRESET_TITLES[background.preset] : 'Custom';
-		case TextBackgroundKind.Custom:
-			return `Custom ${background.surface?.toUpperCase() ?? ''}`.trim();
-		case TextBackgroundKind.None:
-			return BASE_TITLES.none;
-		default:
-			return BASE_TITLES.default;
-	}
-}
 
 const BASE_TOOLTIPS: Record<BaseSelection, string> = {
 	none: 'Transparent — no card, border or title bar',

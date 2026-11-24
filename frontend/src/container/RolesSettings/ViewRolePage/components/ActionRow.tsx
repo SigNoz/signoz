@@ -15,7 +15,7 @@ const BADGE_VARIANT_CLASS: Record<ScopeBadgeVariant, string> = {
 	[ScopeBadgeVariant.SELECTED]: styles.selectedBadgeVariant,
 };
 
-export interface ActionRowProps {
+interface ActionRowProps {
 	actionName: string;
 	actionLabel: string;
 	scope: PermissionScope;

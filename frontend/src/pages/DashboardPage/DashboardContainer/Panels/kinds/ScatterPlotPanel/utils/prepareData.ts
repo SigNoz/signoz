@@ -77,7 +77,7 @@ function getPointLabels(
  */
 export const MAX_PLOTTED_GROUPS = 10_000;
 
-export const COLOR_LABEL_SEPARATOR = ', ';
+const COLOR_LABEL_SEPARATOR = ', ';
 
 /** Quotes a value holding the separator or a quote, so distinct groups never share a label. */
 function toColorLabelPart(value: string): string {

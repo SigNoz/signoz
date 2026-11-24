@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import './TimeInput.scss';
 
-export interface TimeInputProps {
+interface TimeInputProps {
 	value?: string; // Format: "HH:MM:SS"
 	onChange?: (value: string) => void;
 	disabled?: boolean;

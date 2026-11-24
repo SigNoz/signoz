@@ -90,5 +90,3 @@ export const useCoordinates = (): {
 		setSubMenu,
 	};
 };
-
-export default useCoordinates;

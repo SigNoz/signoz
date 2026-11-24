@@ -1,7 +1,7 @@
 import type { QueryBuilderField } from '../../queryBuilderFields.types';
 
 /** Fields the add-on bar does not own: each has its own control elsewhere in the query. */
-export type NonAddOnField =
+type NonAddOnField =
 	| QueryBuilderField.Aggregation
 	| QueryBuilderField.StepInterval
 	| QueryBuilderField.Functions
@@ -11,7 +11,7 @@ export type NonAddOnField =
 
 export type AddOnField = Exclude<QueryBuilderField, NonAddOnField>;
 
-export interface AddOnSpec {
+interface AddOnSpec {
 	icon: React.ReactNode;
 	label: string;
 	/** Where the add-on's value lives on the query; a value there opens it on mount. */

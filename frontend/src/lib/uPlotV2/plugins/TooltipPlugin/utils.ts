@@ -20,7 +20,7 @@ export function isPlotInViewport(
 	);
 }
 
-export function calculateVerticalOffset(
+function calculateVerticalOffset(
 	currentOffset: number,
 	clientY: number,
 	tooltipHeight: number,
@@ -45,7 +45,7 @@ export function calculateVerticalOffset(
 	return 0;
 }
 
-export function calculateHorizontalOffset(
+function calculateHorizontalOffset(
 	currentOffset: number,
 	clientX: number,
 	tooltipWidth: number,

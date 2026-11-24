@@ -113,7 +113,7 @@ export const expectReadOnlyForm = async ({
  * Switching the mode swaps which credential fields render, so a click that
  * landed would change how many fields the form holds.
  */
-export const expectModeRadioLocked = async (
+const expectModeRadioLocked = async (
 	context: PlayContext,
 	channelType: ChannelsEditArgs['channelType'],
 	radio: RegExp,

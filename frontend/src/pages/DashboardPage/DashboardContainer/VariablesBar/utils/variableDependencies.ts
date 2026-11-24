@@ -13,7 +13,7 @@ import type {
  * dashboard-variables runtime; operates on the V2 flat variable model.
  */
 
-export type VariableGraph = Record<string, string[]>;
+type VariableGraph = Record<string, string[]>;
 
 export interface VariableDependencyData {
 	/** Topological order of variables (parents before children). */
@@ -44,9 +44,7 @@ function getDependents(
 }
 
 /** variable name → its direct dependents (children). */
-export function buildDependencies(
-	variables: VariableFormModel[],
-): VariableGraph {
+function buildDependencies(variables: VariableFormModel[]): VariableGraph {
 	const graph: VariableGraph = {};
 	variables.forEach((v) => {
 		if (v.name) {
@@ -57,7 +55,7 @@ export function buildDependencies(
 }
 
 /** Invert a child graph into a parent graph. */
-export function buildParentGraph(graph: VariableGraph): VariableGraph {
+function buildParentGraph(graph: VariableGraph): VariableGraph {
 	const parents: VariableGraph = {};
 	Object.keys(graph).forEach((node) => {
 		parents[node] = parents[node] ?? [];
@@ -123,7 +121,7 @@ function detectCycle(
 }
 
 /** Build the full dependency data (topo order, parents, transitive descendants, cycle info). */
-export function buildDependencyData(
+function buildDependencyData(
 	dependencies: VariableGraph,
 ): VariableDependencyData {
 	const inDegree: Record<string, number> = {};

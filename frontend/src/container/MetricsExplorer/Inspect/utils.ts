@@ -1,8 +1,7 @@
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { InspectMetricsSeries } from './types';
 import {
+	InspectMetricsSeries,
 	GraphPopoverData,
 	GraphPopoverOptions,
 	MetricInspectionOptions,
@@ -45,40 +44,6 @@ export function getDefaultTimeAggregationInterval(
 				1000
 			: 0;
 	return Math.max(60, reportingInterval);
-}
-
-export function applyFilters(
-	inspectMetricsTimeSeries: InspectMetricsSeries[],
-	filters: TagFilter,
-): InspectMetricsSeries[] {
-	return inspectMetricsTimeSeries.filter((series) =>
-		filters.items.every((filter) => {
-			if ((filter.key?.key || '') in series.labels) {
-				const value = series.labels[filter.key?.key ?? ''];
-				switch (filter.op) {
-					case '=':
-						return value === filter.value;
-					case '!=':
-						return value !== filter.value;
-					case 'in':
-						return (filter.value as string[]).includes(value as string);
-					case 'nin':
-						return !(filter.value as string[]).includes(value as string);
-					case 'like':
-						return value.includes(filter.value as string);
-					case 'nlike':
-						return !value.includes(filter.value as string);
-					case 'contains':
-						return value.includes(filter.value as string);
-					case 'ncontains':
-						return !value.includes(filter.value as string);
-					default:
-						return true;
-				}
-			}
-			return false;
-		}),
-	);
 }
 
 export function applyTimeAggregation(
@@ -257,7 +222,7 @@ export function applySpaceAggregation(
 	};
 }
 
-export function getSeriesIndexFromPixel(
+function getSeriesIndexFromPixel(
 	e: MouseEvent,
 	u: uPlot,
 	formattedInspectMetricsTimeSeries: uPlot.AlignedData,

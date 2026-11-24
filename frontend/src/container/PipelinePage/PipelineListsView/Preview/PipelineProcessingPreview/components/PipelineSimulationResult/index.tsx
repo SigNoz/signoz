@@ -39,7 +39,7 @@ function PipelineSimulationResult({
 	return <LogsList logs={outputLogs} />;
 }
 
-export interface PipelineSimulationResultProps {
+interface PipelineSimulationResultProps {
 	inputLogs: ILog[];
 	pipeline: PipelineData;
 }

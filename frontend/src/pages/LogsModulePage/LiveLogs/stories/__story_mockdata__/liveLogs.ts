@@ -22,7 +22,7 @@ export const LIVE_TAIL_LIMIT = 500;
 const NO_RECONNECT_MS = 24 * 60 * 60 * 1000;
 
 /** The filter the story live-tails on. See `liveLogsQuery`. */
-export const LIVE_TAIL_FILTER = "service.name = 'checkout'";
+const LIVE_TAIL_FILTER = "service.name = 'checkout'";
 
 /**
  * The query the live tail runs on, seeded from the app's own so a change to the

@@ -1,11 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import type { FilterValue } from 'components/Alerts/types';
-import {
-	filterByLabels,
-	searchByLabels,
-	sortByColumn,
-} from 'components/Alerts/utils';
+import { sortByColumn } from 'components/Alerts/utils';
 import type { SortState } from 'components/TanStackTableView/types';
 
 import { getElapsedMs } from 'utils/timeUtils';
@@ -51,9 +46,6 @@ export function sortAlerts(
 		order: 'asc',
 	});
 }
-
-export { filterByLabels as filterAlerts, searchByLabels as searchAlerts };
-export type { FilterValue };
 
 export function getRuleId(alert: Alert): string | null {
 	// Primary: labels.ruleId

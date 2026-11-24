@@ -18,14 +18,6 @@ export const TREEMAP_SQUARE_PADDING = 5;
 
 export const TREEMAP_MARGINS = { TOP: 10, LEFT: 10, RIGHT: 10, BOTTOM: 10 };
 
-export const METRIC_TYPE_VIEW_LABEL_MAP: Record<MetrictypesTypeDTO, string> = {
-	[MetrictypesTypeDTO.sum]: 'Sum',
-	[MetrictypesTypeDTO.gauge]: 'Gauge',
-	[MetrictypesTypeDTO.histogram]: 'Histogram',
-	[MetrictypesTypeDTO.summary]: 'Summary',
-	[MetrictypesTypeDTO.exponentialhistogram]: 'Exp. Histogram',
-};
-
 export const METRIC_TYPE_VIEW_VALUES_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.sum]: 'Sum',
 	[MetrictypesTypeDTO.gauge]: 'Gauge',

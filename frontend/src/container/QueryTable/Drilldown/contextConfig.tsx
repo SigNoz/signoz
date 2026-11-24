@@ -28,11 +28,6 @@ export interface GroupContextMenuConfig {
 	items?: ContextMenuItem;
 }
 
-export interface AggregateContextMenuConfig {
-	header?: string | ReactNode;
-	items?: ContextMenuItem;
-}
-
 export interface BreakoutOptionsProps {
 	queryData: IBuilderQuery;
 	onColumnClick: (groupBy: BreakoutAttributeType) => void;

@@ -1,7 +1,7 @@
 import { SPAN_ACTION } from './hooks/useSpanAttributeActions';
 
 // Action identifiers for built-in PrettyView actions (copy, pin)
-export const PRETTY_VIEW_ACTION = {
+const PRETTY_VIEW_ACTION = {
 	COPY: 'copy',
 	PIN: 'pin',
 } as const;
@@ -27,23 +27,3 @@ export enum SpanDetailVariant {
 
 // Fits the four span detail tabs without scroll arrows
 export const SPAN_DETAILS_PANEL_MIN_WIDTH = 620;
-
-export const KEY_ATTRIBUTE_KEYS: Record<string, string[]> = {
-	traces: [
-		'service.name',
-		'service.namespace',
-		'deployment.environment',
-		'timestamp',
-		'duration_nano',
-		'kind_string',
-		'status_code_string',
-		'http_method',
-		'http_url',
-		'http_host',
-		'db_name',
-		'db_operation',
-		'external_http_method',
-		'external_http_url',
-		'response_status_code',
-	],
-};

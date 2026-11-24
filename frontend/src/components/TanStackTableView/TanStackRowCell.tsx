@@ -10,7 +10,7 @@ import { useShouldShowCellSkeleton } from './TanStackTableStateContext';
 import tableStyles from './TanStackTable.module.scss';
 import skeletonStyles from './TanStackTableSkeleton.module.scss';
 
-export type TanStackRowCellProps<TData> = {
+type TanStackRowCellProps<TData> = {
 	cell: Cell<TData, unknown>;
 	hasSingleColumn: boolean;
 	isLastCell: boolean;

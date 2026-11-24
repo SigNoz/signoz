@@ -1,15 +1,5 @@
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { themeColors } from 'constants/theme';
-
-export const styles = { background: 'var(--bg-ink-300)' };
-
-export const subMenuStyles = {
-	background: 'var(--bg-ink-300)',
-	margin: '0rem',
-	width: '100%',
-	color: themeColors.gainsboro,
-};
 
 export const routeConfig: Record<string, QueryParams[]> = {
 	[ROUTES.SERVICE_METRICS]: [QueryParams.resourceAttributes],

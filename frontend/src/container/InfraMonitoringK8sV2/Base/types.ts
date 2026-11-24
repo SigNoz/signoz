@@ -36,26 +36,6 @@ export type K8sBaseFilters = {
 	};
 };
 
-export type K8sListResponse<T> = {
-	type: 'list' | 'grouped_list';
-	records: T[];
-	total: number;
-	endTimeBeforeRetention?: boolean;
-	error?: string | null;
-};
-
-/**
- * Type for table row data with required key fields.
- * Used when rendering raw data in the table.
- */
-export type K8sTableRowData<T> = T & {
-	key: string;
-	id: string;
-	itemKey: string;
-	/** Metadata about which attributes were used for grouping */
-	groupedByMeta?: Record<string, string>;
-};
-
 export interface K8sDetailsMetadataConfig<T> {
 	label: string;
 	getValue: (entity: T) => string | number;
@@ -75,13 +55,13 @@ export interface K8sDetailsWidgetInfo {
 	description?: string;
 }
 
-export type GetEntityQueryPayload<T> = (
+type GetEntityQueryPayload<T> = (
 	entity: T,
 	start: number,
 	end: number,
 ) => GetQueryResultsProps[];
 
-export interface K8sDetailsTabsConfig {
+interface K8sDetailsTabsConfig {
 	/** Declared by categories whose resources relate to others; see relations.ts */
 	showOverview?: boolean;
 	showMetrics?: boolean;
@@ -90,7 +70,7 @@ export interface K8sDetailsTabsConfig {
 	showEvents?: boolean;
 }
 
-export interface K8sDetailsCustomTabRenderProps<T> {
+interface K8sDetailsCustomTabRenderProps<T> {
 	entity: T;
 	/** Time range in seconds — see useEntityDetailsTime */
 	timeRange: { startTime: number; endTime: number };
@@ -156,4 +136,3 @@ export interface K8sBaseDetailsContentProps<T> {
 
 // Aliases for backward compatibility
 export type CustomTab<T> = K8sDetailsCustomTab<T>;
-export type CustomTabRenderProps<T> = K8sDetailsCustomTabRenderProps<T>;

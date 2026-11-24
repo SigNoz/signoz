@@ -57,14 +57,6 @@ export interface IEvaluationCadencePreviewProps {
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
-export interface TimeInputProps {
-	value?: string; // Format: "HH:MM:SS"
-	onChange?: (value: string) => void;
-	placeholder?: string;
-	disabled?: boolean;
-	className?: string;
-}
-
 export interface IEditCustomScheduleProps {
 	setIsEvaluationCadenceDetailsVisible: (isOpen: boolean) => void;
 	setIsPreviewVisible: (isOpen: boolean) => void;

@@ -1,5 +1,4 @@
 import { Layout } from 'react-grid-layout';
-import { FORMULA_REGEXP } from 'constants/regExp';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
 export type PanelMap = Record<
@@ -117,16 +116,6 @@ export function applyRowCollapse(
 
 	return { updatedLayout: updatedDashboardLayout, updatedPanelMap };
 }
-
-export const removeUndefinedValuesFromLayout = (layout: Layout[]): Layout[] =>
-	layout.map((obj) =>
-		Object.fromEntries(
-			Object.entries(obj).filter(([, value]) => value !== undefined),
-		),
-	) as Layout[];
-
-export const isFormula = (queryName: string): boolean =>
-	FORMULA_REGEXP.test(queryName);
 
 /**
  * Extracts query names from a formula expression

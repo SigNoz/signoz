@@ -31,7 +31,7 @@ export const toFieldValues = (
 ): TelemetrytypesTelemetryFieldValuesDTO =>
 	res?.data?.values ?? EMPTY_FIELD_VALUES;
 
-export const getFieldValuesQueryOptions = (
+const getFieldValuesQueryOptions = (
 	fieldValuesConfig: FieldValuesConfig,
 	builderQueryType?: BuilderQueryType,
 ): FieldValuesQueryOptions => ({

@@ -6,7 +6,7 @@ import { StripTone } from '../../types';
 
 import styles from './StripKeyValue.module.scss';
 
-export interface StripKeyValueProps {
+interface StripKeyValueProps {
 	label: string;
 	value: string | number;
 	/** Leading icon. Same shape as `Button`'s. */

@@ -10,7 +10,7 @@
  *   (e.g. `env`, `region`). Shared across every panel and driven by the dashboard's
  *   variable selectors rather than by an individual query.
  */
-export type VariableSource =
+type VariableSource =
 	| 'Global timestamp'
 	| 'Query variable'
 	| 'Dashboard variable';

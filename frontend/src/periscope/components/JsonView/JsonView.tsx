@@ -7,7 +7,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import './JsonView.styles.scss';
 
-export interface JsonViewProps {
+interface JsonViewProps {
 	data: string;
 	height?: string;
 	fontSize?: number;

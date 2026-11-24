@@ -37,8 +37,6 @@ export type MessagePart =
 	// The API's generic part is an untyped index signature, which defeats narrowing on `type`.
 	| { type: 'generic'; content?: unknown };
 
-export type MessagePartType = MessagePart['type'];
-
 export type MediaMessagePart = Extract<
 	MessagePart,
 	{ type: 'blob' | 'file' | 'uri' }

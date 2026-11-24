@@ -25,7 +25,7 @@ interface SeedBuilderForModeArgs {
 }
 
 /** A fresh builder query for `mode`: AI is traces-only, everything else follows the kind. */
-export function seedBuilderForMode({
+function seedBuilderForMode({
 	mode,
 	defaultSignal,
 	panelType,

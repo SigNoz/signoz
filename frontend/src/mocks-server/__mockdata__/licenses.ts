@@ -110,15 +110,3 @@ export const notOfTrailResponse = {
 		trialEnd: -1,
 	},
 };
-
-export const workSpaceBlockResponse = {
-	...trialConvertedToSubscriptionResponse,
-	data: {
-		...trialConvertedToSubscriptionResponse.data,
-		onTrial: false,
-		trialConvertedToSubscriptionResponse: false,
-		trialStart: -1,
-		trialEnd: -1,
-		workSpaceBlock: true,
-	},
-};

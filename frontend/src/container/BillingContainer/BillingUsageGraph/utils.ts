@@ -67,7 +67,7 @@ export const convertDataToMetricRangePayload = (
 	};
 };
 
-export function quantityDataArr(data: any, timestampArray: number[]): any[] {
+function quantityDataArr(data: any, timestampArray: number[]): any[] {
 	const { result } = data.data;
 
 	const transformedResultArr: any[] = [];
@@ -103,7 +103,7 @@ export function fillMissingValuesForQuantities(
 const formatDate = (timestamp: number): string =>
 	dayjs.unix(timestamp).format(DATE_TIME_FORMATS.US_DATE);
 
-export function csvFileName(csvData: QuantityData[]): string {
+function csvFileName(csvData: QuantityData[]): string {
 	if (!csvData.length) {
 		return `billing-usage.csv`;
 	}

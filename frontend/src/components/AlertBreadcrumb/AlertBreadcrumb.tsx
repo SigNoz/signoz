@@ -4,7 +4,7 @@ import { Divider } from '@signozhq/ui/divider';
 import styles from './AlertBreadcrumb.module.scss';
 import BreadcrumbItem, { BreadcrumbItemConfig } from './BreadcrumbItem';
 
-export interface AlertBreadcrumbProps {
+interface AlertBreadcrumbProps {
 	items: BreadcrumbItemConfig[];
 	className?: string;
 	showDivider?: boolean;

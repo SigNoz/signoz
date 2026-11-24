@@ -8,12 +8,12 @@ import { getBodyDisplay } from 'lib/logs/logBody';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
-export interface PipelinePreviewRequest {
+interface PipelinePreviewRequest {
 	pipeline: PipelineData;
 	inputLogs: ILog[];
 }
 
-export interface PipelinePreviewResponse {
+interface PipelinePreviewResponse {
 	isLoading: boolean;
 	outputLogs: ILog[];
 	isError: boolean;

@@ -22,7 +22,7 @@ import type { ResponseState } from '../runtime/responseState';
  * without anyone touching this file. Selector-scoped checks (`role:some-id`)
  * match the entry for their kind.
  */
-export const permissionCatalogue = (): string[] => {
+const permissionCatalogue = (): string[] => {
 	const entries = new Set<string>();
 
 	for (const [relation, types] of Object.entries(
@@ -61,7 +61,7 @@ const TELEMETRY_READS = CATALOGUE.filter((permission) =>
  * from these), so a caller that wants a role grants the matching permission
  * rather than setting the role directly.
  */
-export const LEGACY_ROLE_PERMISSIONS = {
+const LEGACY_ROLE_PERMISSIONS = {
 	[USER_ROLES.ADMIN]: formatPermission(IsAdminPermission),
 	[USER_ROLES.EDITOR]: formatPermission(IsEditorPermission),
 	[USER_ROLES.VIEWER]: formatPermission(IsViewerPermission),

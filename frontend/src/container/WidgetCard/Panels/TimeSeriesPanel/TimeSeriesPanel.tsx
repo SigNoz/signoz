@@ -13,7 +13,7 @@ import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
-import { ContextMenu } from 'periscope/components/ContextMenu';
+import ContextMenu from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';

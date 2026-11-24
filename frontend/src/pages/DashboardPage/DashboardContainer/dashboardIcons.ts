@@ -1,10 +1,10 @@
 import { ICON_URLS, LOGO_URLS } from './iconAssets';
 
 /** Prefix that marks a dashboard `image` as a reference to a bundled system icon. */
-export const DASHBOARD_ICON_PATH_PREFIX = '/assets/Icons/';
+const DASHBOARD_ICON_PATH_PREFIX = '/assets/Icons/';
 
 /** Prefix for a bundled logo (JSON-only; logos are never shown in the picker). */
-export const DASHBOARD_LOGO_PATH_PREFIX = '/assets/Logos/';
+const DASHBOARD_LOGO_PATH_PREFIX = '/assets/Logos/';
 
 // Each path prefix maps a reference to the asset map it resolves against.
 const PATH_LOOKUPS: { prefix: string; urls: Record<string, string> }[] = [

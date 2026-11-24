@@ -41,29 +41,22 @@ const DAY = 24 * HOUR;
 
 const ago = (ms: number): string => new Date(Date.now() - ms).toISOString();
 
-export const ALERT_SEVERITIES = [
-	'critical',
-	'error',
-	'warning',
-	'info',
-] as const;
+const ALERT_SEVERITIES = ['critical', 'error', 'warning', 'info'] as const;
 
-export type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
+type AlertSeverity = (typeof ALERT_SEVERITIES)[number];
 
 /** `mixed` spreads the seeds' own severities instead of forcing one. */
 export const SEVERITY_CHOICES = ['mixed', ...ALERT_SEVERITIES] as const;
 
 export type SeverityChoice = (typeof SEVERITY_CHOICES)[number];
 
-export const RULE_STATES = [
+const RULE_STATES = [
 	'firing',
 	'pending',
 	'inactive',
 	'disabled',
 	'nodata',
 ] as const;
-
-export type RuleState = (typeof RULE_STATES)[number];
 
 export const RULE_STATE_CHOICES = ['mixed', ...RULE_STATES] as const;
 

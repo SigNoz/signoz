@@ -64,5 +64,4 @@ export {
 	buildServiceDetailsResponse,
 	CLOUD_ACCOUNT_ID,
 	initialBuckets,
-	PROVIDER_ACCOUNT_ID,
 };

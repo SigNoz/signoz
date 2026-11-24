@@ -14,7 +14,7 @@ interface WarningContentProps {
 	warning: Warning;
 }
 
-export function WarningContent({ warning }: WarningContentProps): JSX.Element {
+function WarningContent({ warning }: WarningContentProps): JSX.Element {
 	const {
 		url: warningUrl,
 		warnings: warningMessages,

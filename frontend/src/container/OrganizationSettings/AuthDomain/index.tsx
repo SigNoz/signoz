@@ -25,7 +25,7 @@ import SSOEnforcementToggle from './SSOEnforcementToggle';
 import './AuthDomain.styles.scss';
 import '../../IngestionSettings/IngestionSettings.styles.scss';
 
-export const SSOType = new Map<string, string>([
+const SSOType = new Map<string, string>([
 	['google', 'Google Auth'],
 	['saml', 'SAML'],
 	['email_password', 'Email Password'],

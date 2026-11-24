@@ -1,5 +1,4 @@
 import getLocalStorageKey from 'api/browser/localstorage/get';
-import removeLocalStorageKey from 'api/browser/localstorage/remove';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
@@ -88,91 +87,4 @@ export const addCustomTimeRange = (
 	}
 
 	return updatedRanges;
-};
-
-/**
- * Clears all stored custom time ranges
- */
-export const clearCustomTimeRanges = (): void => {
-	try {
-		removeLocalStorageKey(LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES);
-	} catch (error) {
-		console.warn('Failed to clear custom time ranges from localStorage:', error);
-	}
-};
-
-/**
- * Removes a specific custom time range by its timestamp
- * @param timestamp - The timestamp of the range to remove
- * @returns The updated list of custom time ranges
- */
-export const removeCustomTimeRange = (timestamp: number): CustomTimeRange[] => {
-	const existingRanges = getCustomTimeRanges();
-	const updatedRanges = existingRanges.filter(
-		(range) => range.timestamp !== timestamp,
-	);
-
-	try {
-		setLocalStorageKey(
-			LOCALSTORAGE.LAST_USED_CUSTOM_TIME_RANGES,
-			JSON.stringify(updatedRanges),
-		);
-	} catch (error) {
-		console.warn('Failed to update custom time ranges in localStorage:', error);
-	}
-
-	return updatedRanges;
-};
-
-/**
- * Checks if a time range already exists in the stored list
- * @param dateTimeRange - The DateTimeRangeType to check
- * @returns True if the range already exists
- */
-export const isCustomTimeRangeExists = (
-	dateTimeRange: DateTimeRangeType,
-): boolean => {
-	if (!dateTimeRange || !dateTimeRange[0] || !dateTimeRange[1]) {
-		return false;
-	}
-
-	const [startTime, endTime] = dateTimeRange;
-	const existingRanges = getCustomTimeRanges();
-
-	return existingRanges.some(
-		(range) =>
-			range.from === startTime.toISOString() && range.to === endTime.toISOString(),
-	);
-};
-
-/**
- * Converts a CustomTimeRange to DateTimeRangeType
- * @param customRange - The CustomTimeRange to convert
- * @returns DateTimeRangeType
- */
-export const convertCustomRangeToDateTimeRange = (
-	customRange: CustomTimeRange,
-): DateTimeRangeType => [dayjs(customRange.from), dayjs(customRange.to)];
-
-/**
- * Converts a DateTimeRangeType to CustomTimeRange format
- * @param dateTimeRange - The DateTimeRangeType to convert
- * @param label - Optional label, will be auto-generated if not provided
- * @returns CustomTimeRange
- */
-export const convertDateTimeRangeToCustomRange = (
-	dateTimeRange: DateTimeRangeType,
-): CustomTimeRange | null => {
-	if (!dateTimeRange || !dateTimeRange[0] || !dateTimeRange[1]) {
-		return null;
-	}
-
-	const [startTime, endTime] = dateTimeRange;
-
-	return {
-		from: startTime.toISOString(),
-		to: endTime.toISOString(),
-
-		timestamp: Date.now(),
-	};
 };

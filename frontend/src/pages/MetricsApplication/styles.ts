@@ -31,7 +31,3 @@ export const SaveButton = styled(ButtonComponent)`
 		align-items: center;
 	}
 `;
-
-export const ExcludeErrorCodeContainer = styled.div`
-	margin: 1rem 0;
-`;

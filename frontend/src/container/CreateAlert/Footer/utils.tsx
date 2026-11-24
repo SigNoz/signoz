@@ -297,7 +297,7 @@ export function buildCreateThresholdAlertRulePayload(
 }
 
 // Build Create Anomaly Alert Rule Payload
-export function buildCreateAnomalyAlertRulePayload(
+function buildCreateAnomalyAlertRulePayload(
 	args: BuildCreateAlertRulePayloadArgs,
 ): PostableAlertRuleV2 {
 	const { thresholdState } = args;

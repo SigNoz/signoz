@@ -5,7 +5,7 @@ export type SpaceSizePreset = 'small' | 'middle' | 'large';
 /** Presets are 8px, 16px and 24px. A falsy or `NaN` number is ignored. */
 export type SpaceSize = SpaceSizePreset | number;
 
-export type SpaceDirection = 'horizontal' | 'vertical';
+type SpaceDirection = 'horizontal' | 'vertical';
 
 export type SpaceAlign = 'start' | 'end' | 'center' | 'baseline';
 

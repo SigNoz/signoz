@@ -117,15 +117,6 @@ export const getExplorerViewFromUrl = (
 	return panelTypeToExplorerView[urlPanelType];
 };
 
-/**
- * Get the explorer view for a given panel type
- * @param panelType - The panel type
- * @returns The corresponding ExplorerViews value
- */
-export const getExplorerViewForPanelType = (
-	panelType: PANEL_TYPES,
-): ExplorerViews => panelTypeToExplorerView[panelType];
-
 export interface MetricsExplorerUrlParams {
 	query: Query;
 	relativeTime?: string;

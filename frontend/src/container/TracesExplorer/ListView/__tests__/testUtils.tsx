@@ -45,7 +45,7 @@ export const listResponse = (rows: unknown[]): Record<string, unknown> => ({
 	data: { type: 'raw', data: { results: [{ queryName: 'A', rows }] } },
 });
 
-export const TRACE_SUMMARY_URL = `${BASE_URL}/api/v1/traces/:traceId/summary`;
+const TRACE_SUMMARY_URL = `${BASE_URL}/api/v1/traces/:traceId/summary`;
 export const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 
 export type TraceBounds = Record<string, { start: number; end: number }>;

@@ -91,7 +91,7 @@ const normalizePathname = (pathname: string): string =>
 		? pathname.slice(0, -1)
 		: pathname;
 
-export const isSamePagePathname = (pathname: string | undefined): boolean =>
+const isSamePagePathname = (pathname: string | undefined): boolean =>
 	!pathname ||
 	normalizePathname(pathname) === normalizePathname(currentPathname());
 

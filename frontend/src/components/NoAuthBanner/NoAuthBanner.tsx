@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { AlertStrip } from '@signozhq/ui/alert-strip';
 import { useBottomStripStore } from 'container/BottomStrip/store/useBottomStripStore';
 
-export function NoAuthBanner(): JSX.Element {
+function NoAuthBanner(): JSX.Element {
 	const bottomSlot = useBottomStripStore((s) => s.topSlot);
 
 	const banner = (

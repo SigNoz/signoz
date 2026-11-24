@@ -12,8 +12,6 @@ export const buildUserDeletePermission = (id: string): BrandedPermission =>
 	buildPermission('delete', `user:${id}`);
 const buildUserAttachPermission = (id: string): BrandedPermission =>
 	buildPermission('attach', `user:${id}`);
-export const buildUserDetachPermission = (id: string): BrandedPermission =>
-	buildPermission('detach', `user:${id}`);
 
 const PasswordCreatePermission = buildPermission('create', 'factor-password:*');
 export const PasswordListPermission = buildPermission(

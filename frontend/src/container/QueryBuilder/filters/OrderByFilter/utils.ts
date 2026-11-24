@@ -61,10 +61,6 @@ export function getLabelFromValue(arr: IOption[]): string[] {
 	});
 }
 
-export function checkIfKeyPresent(str: string, valueToCheck: string): boolean {
-	return new RegExp(`\\(${valueToCheck}\\)`).test(str);
-}
-
 export function splitOrderByFromString(str: string): OrderByPayload | null {
 	const splittedStr = str.split(' ');
 	const order = splittedStr.pop() || ORDERBY_FILTERS.ASC;

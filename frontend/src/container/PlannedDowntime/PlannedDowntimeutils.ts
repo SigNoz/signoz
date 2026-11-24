@@ -18,7 +18,7 @@ import APIError from 'types/api/error';
 
 type DateTimeString = string | null | undefined;
 
-export const getDuration = (
+const getDuration = (
 	startTime: DateTimeString,
 	endTime: DateTimeString,
 ): string => {
@@ -39,7 +39,7 @@ export const getDuration = (
 	return `${hours} hours`;
 };
 
-export const formatDateTime = (
+const formatDateTime = (
 	dateTimeString?: string | Dayjs | null,
 	timezone?: string,
 ): string => {
@@ -65,31 +65,6 @@ export const getAlertOptionsFromIds = (
 			alert.value &&
 			alertIds?.includes(alert.value as string),
 	);
-
-export const recurrenceInfo = (
-	schedule?: AlertmanagertypesScheduleDTO | null,
-): string => {
-	if (!schedule) {
-		return 'No';
-	}
-	const { startTime, endTime, timezone, recurrence } = schedule;
-	if (!recurrence) {
-		return 'No';
-	}
-
-	const { duration, repeatOn, repeatType } = recurrence;
-
-	const formattedStartTime = startTime
-		? formatDateTime(startTime, timezone)
-		: '';
-	const formattedEndTime = endTime
-		? `to ${formatDateTime(endTime, timezone)}`
-		: '';
-	const weeklyRepeatString = repeatOn ? `on ${repeatOn.join(', ')}` : '';
-	const durationString = duration ? `- Duration: ${duration}` : '';
-
-	return `Repeats - ${repeatType} ${weeklyRepeatString} from ${formattedStartTime} ${formattedEndTime} ${durationString}`;
-};
 
 export const defaultInitialValues: Partial<AlertmanagertypesPlannedMaintenanceDTO> =
 	{

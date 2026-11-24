@@ -4,7 +4,6 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
-import { IQueryPair } from 'types/antlrQueryTypes';
 
 export function isKeyToken(tokenType: number): boolean {
 	return tokenType === FilterQueryLexer.KEY;
@@ -81,17 +80,6 @@ export function isFunctionToken(tokenType: number): boolean {
 	].includes(tokenType);
 }
 
-export function isWrappedUnderQuotes(token: string): boolean {
-	if (!token) {
-		return false;
-	}
-	const sanitizedToken = token.trim();
-	return (
-		(sanitizedToken.startsWith('"') && sanitizedToken.endsWith('"')) ||
-		(sanitizedToken.startsWith("'") && sanitizedToken.endsWith("'"))
-	);
-}
-
 export function isFunctionOperator(operator: string): boolean {
 	const functionOperators = Object.values(QUERY_BUILDER_FUNCTIONS);
 
@@ -128,16 +116,4 @@ export function isNonValueOperator(operator: string): boolean {
 		return NON_VALUE_OPERATORS.includes(operatorWithoutNot);
 	}
 	return false;
-}
-
-export function isQueryPairComplete(queryPair: Partial<IQueryPair>): boolean {
-	if (!queryPair) {
-		return false;
-	}
-	// A complete query pair must have a key, an operator, and a value (or EXISTS operator)
-	if (queryPair.operator && isNonValueOperator(queryPair.operator)) {
-		return !!queryPair.key && !!queryPair.operator;
-	}
-	// For other operators, we need a value as well
-	return Boolean(queryPair.key && queryPair.operator && queryPair.value);
 }

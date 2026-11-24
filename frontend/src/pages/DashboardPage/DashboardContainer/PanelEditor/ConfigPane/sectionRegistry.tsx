@@ -48,7 +48,7 @@ type PanelSpec = DashboardtypesPanelSpecDTO;
  * The lens reads/writes over the WHOLE panel spec, so a section can target either the
  * plugin spec (`spec.plugin.spec.<key>`) or a panel-level field (e.g. `spec.links`).
  */
-export interface SectionDescriptor<K extends SectionKind> {
+interface SectionDescriptor<K extends SectionKind> {
 	Component: ComponentType<SectionEditorProps<K>>;
 	get: (spec: PanelSpec) => SectionSpecMap[K] | undefined;
 	update: (spec: PanelSpec, value: SectionSpecMap[K]) => PanelSpec;
@@ -82,7 +82,7 @@ function updatePluginSlice(
  * appear here, so ConfigPane renders exactly those and silently skips the rest. Adding
  * a section editor = one entry here + one component file.
  */
-export const SECTION_REGISTRY: {
+const SECTION_REGISTRY: {
 	[K in SectionKind]?: SectionDescriptor<K>;
 } = {
 	[SectionKind.Formatting]: {

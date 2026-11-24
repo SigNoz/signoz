@@ -19,7 +19,7 @@ function PipelineActions({
 	);
 }
 
-export interface PipelineActionsProps {
+interface PipelineActionsProps {
 	pipeline: PipelineData;
 	editAction: VoidFunction;
 	deleteAction: VoidFunction;

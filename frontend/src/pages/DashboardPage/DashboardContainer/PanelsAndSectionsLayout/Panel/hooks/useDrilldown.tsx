@@ -50,7 +50,7 @@ enum DrilldownSubMenu {
 const EMPTY_FILTERS: FilterData[] = [];
 
 /** Props the panel shell spreads onto `<ContextMenu>`. */
-export interface DrilldownContextMenuProps {
+interface DrilldownContextMenuProps {
 	coordinates: Coordinates | null;
 	popoverPosition: PopoverPosition | null;
 	items: ReactNode;

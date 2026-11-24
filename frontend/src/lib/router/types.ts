@@ -33,7 +33,7 @@ export type AppParamsResult<
 	[ParamsOrKey] extends [string] ? AppParams<ParamsOrKey> : Partial<ParamsOrKey>
 >;
 
-export interface RoutePattern {
+interface RoutePattern {
 	path: string;
 	caseSensitive: boolean;
 	end: boolean;
@@ -58,7 +58,7 @@ export interface NavigateOptions {
 export type NavigateFn = (to: To, options?: NavigateOptions) => void;
 
 /** The navigation a blocker function is asked about. */
-export interface BlockerArgs {
+interface BlockerArgs {
 	currentLocation: AppLocation;
 	nextLocation: AppLocation;
 	action: NavigationAction;

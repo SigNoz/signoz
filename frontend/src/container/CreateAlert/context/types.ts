@@ -64,13 +64,6 @@ export interface ICreateAlertProviderProps {
 	ruleId?: string;
 }
 
-export enum AlertCreationStep {
-	ALERT_DEFINITION = 0,
-	ALERT_CONDITION = 1,
-	EVALUATION_SETTINGS = 2,
-	NOTIFICATION_SETTINGS = 3,
-}
-
 export interface AlertState {
 	name: string;
 	labels: Labels;
@@ -239,7 +232,7 @@ export type EvaluationWindowAction =
 	| { type: 'SET_INITIAL_STATE_FOR_METER' }
 	| { type: 'RESET' };
 
-export type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
+type EvaluationCadenceMode = 'default' | 'custom' | 'rrule';
 
 export interface NotificationSettingsState {
 	multipleNotifications: string[] | null;

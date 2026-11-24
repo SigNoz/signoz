@@ -9,7 +9,7 @@ import { getEntityEventsQueryPayload } from './utils';
 
 export const K8S_ENTITY_EVENTS_EXPRESSION_KEY = 'k8sEntityEventsExpression';
 
-export interface EventRowData {
+interface EventRowData {
 	id: string;
 	body: ILog['body'];
 	severity_text: string;

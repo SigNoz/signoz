@@ -4,15 +4,14 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import {
 	parseAsInteger,
-	parseAsString,
 	parseAsStringLiteral,
 	useQueryState,
 	type Options,
 	type UseQueryStateReturn,
 } from 'nuqs';
 
-export const SORT_COLUMNS = Object.values(DashboardtypesListSortDTO);
-export const SORT_ORDERS = Object.values(DashboardtypesListOrderDTO);
+const SORT_COLUMNS = Object.values(DashboardtypesListSortDTO);
+const SORT_ORDERS = Object.values(DashboardtypesListOrderDTO);
 
 const opts: Options = { history: 'push' };
 
@@ -40,6 +39,3 @@ export const useSortOrder = (): UseQueryStateReturn<
 
 export const usePage = (): UseQueryStateReturn<number, number> =>
 	useQueryState('page', parseAsInteger.withDefault(1).withOptions(opts));
-
-export const useSearch = (): UseQueryStateReturn<string, string> =>
-	useQueryState('search', parseAsString.withDefault('').withOptions(opts));

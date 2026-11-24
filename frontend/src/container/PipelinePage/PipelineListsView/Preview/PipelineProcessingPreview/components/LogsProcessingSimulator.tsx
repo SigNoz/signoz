@@ -32,7 +32,7 @@ function LogsProcessingSimulator({
 	);
 }
 
-export interface LogsProcessingSimulatorProps {
+interface LogsProcessingSimulatorProps {
 	inputLogs: ILog[];
 	pipeline: PipelineData;
 }

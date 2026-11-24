@@ -26,7 +26,7 @@ export const RESERVED_PREVIEW_KEYS: ReadonlySet<string> = new Set([
 	'duration_nano',
 ]);
 
-export interface SpanPreviewRow {
+interface SpanPreviewRow {
 	key: string;
 	value: string;
 }

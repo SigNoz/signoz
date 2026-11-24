@@ -10,7 +10,7 @@ export type StoryTheme = 'dark' | 'light';
 
 export type StoryRole = ROLES;
 
-export type StoryLayout = 'app' | 'none';
+type StoryLayout = 'app' | 'none';
 
 /** What a story or a mock module may set about the tree it renders in. */
 export interface StoryOwnedConfig {

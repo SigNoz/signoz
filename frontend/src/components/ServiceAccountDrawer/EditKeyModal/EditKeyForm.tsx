@@ -20,7 +20,7 @@ import { disabledDate, formatLastObservedAt } from '../utils';
 import type { FormValues } from './types';
 import { ExpiryMode, FORM_ID } from './types';
 
-export interface EditKeyFormProps {
+interface EditKeyFormProps {
 	register: UseFormRegister<FormValues>;
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;

@@ -20,7 +20,7 @@ const NEIGHBOUR_SPAN = 2;
 /** Below this, the header needs seconds to distinguish columns. */
 const SUB_MINUTE_STEP = 60;
 
-export const NO_DATA_LABEL = 'no data';
+const NO_DATA_LABEL = 'no data';
 
 export function resolveTooltipBody(visibleCount: number): HeatmapTooltipBody {
 	// One enabled group contributes the whole cell, so there is nothing to break

@@ -11,25 +11,25 @@ export const GET_INITIAL_APPLICATION_ERROR = 'GET_INITIAL_APPLICATION_ERROR';
 export const GET_INTIAL_APPLICATION_DATA = 'GET_INTIAL_APPLICATION_DATA';
 export const RESET_INITIAL_APPLICATION_DATA = 'RESET_INITIAL_APPLICATION_DATA';
 
-export interface GetServiceList {
+interface GetServiceList {
 	type: typeof GET_SERVICE_LIST_SUCCESS;
 	payload: ServicesList[];
 }
 
-export interface GetServiceListLoading {
+interface GetServiceListLoading {
 	type:
 		| typeof GET_SERVICE_LIST_LOADING_START
 		| typeof GET_INITIAL_APPLICATION_LOADING;
 }
 
-export interface GetServiceListError {
+interface GetServiceListError {
 	type: typeof GET_SERVICE_LIST_ERROR | typeof GET_INITIAL_APPLICATION_ERROR;
 	payload: {
 		errorMessage: string;
 	};
 }
 
-export interface GetInitialApplicationData {
+interface GetInitialApplicationData {
 	type: typeof GET_INTIAL_APPLICATION_DATA;
 	payload: {
 		topOperations: TopOperationList[];
@@ -42,7 +42,7 @@ export interface GetInitialApplicationData {
 	};
 }
 
-export interface ResetInitialApplicationData {
+interface ResetInitialApplicationData {
 	type: typeof RESET_INITIAL_APPLICATION_DATA;
 }
 

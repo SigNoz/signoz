@@ -5,7 +5,7 @@ import { Typography } from '@signozhq/ui/typography';
 import { TextNoData } from './TextNoData';
 import { MouseEventHandler } from 'react';
 
-export interface StatusBreakdownItem {
+interface StatusBreakdownItem {
 	label: string;
 	value: number;
 	/** The status values this row stands for, for click-to-filter. */

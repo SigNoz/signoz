@@ -29,15 +29,6 @@ export const ProcessorTypeContainer = styled.div`
 	gap: 0.313rem;
 `;
 
-export const Container = styled.div`
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	padding: 0rem;
-	gap: 1rem;
-	width: 100%;
-`;
-
 export const FormWrapper = styled.div`
 	width: 100%;
 `;

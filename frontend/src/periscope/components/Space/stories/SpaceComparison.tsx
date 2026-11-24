@@ -11,7 +11,7 @@ export const LOCAL_SPACE_TEST_ID = 'space-local';
 
 const ITEM_SIZES = [styles.itemSmall, styles.itemLarge, styles.itemMedium];
 
-export interface SpaceComparisonProps extends Pick<
+interface SpaceComparisonProps extends Pick<
 	SpaceProps,
 	'size' | 'direction' | 'align' | 'wrap' | 'split'
 > {

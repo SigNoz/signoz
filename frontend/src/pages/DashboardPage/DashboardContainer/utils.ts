@@ -24,39 +24,6 @@ export function extractPanelIdFromRef(ref: string | undefined): string | null {
 	return ref.slice(PANEL_REF_PREFIX.length);
 }
 
-export function flattenGridLayout(
-	layouts: DashboardtypesLayoutDTO[] | undefined | null,
-	panels: Record<string, DashboardtypesPanelDTO | undefined> | undefined,
-): GridItem[] {
-	if (!layouts?.length) {
-		return [];
-	}
-
-	const items: GridItem[] = [];
-	layouts.forEach((layoutEnvelope) => {
-		if (layoutEnvelope?.kind !== 'Grid') {
-			return;
-		}
-		const gridItems = layoutEnvelope.spec?.items ?? [];
-		gridItems.forEach((item) => {
-			const id = extractPanelIdFromRef(item.content?.$ref);
-			if (!id) {
-				return;
-			}
-			items.push({
-				id,
-				x: item.x ?? 0,
-				y: item.y ?? 0,
-				width: item.width ?? 6,
-				height: item.height ?? 6,
-				panel: panels?.[id],
-			});
-		});
-	});
-
-	return items;
-}
-
 /**
  * A section corresponds to one entry in `spec.layouts`. If the Grid has a
  * `display.title`, it renders with a collapsible header; otherwise it is a

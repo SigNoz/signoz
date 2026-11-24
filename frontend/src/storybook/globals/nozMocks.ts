@@ -7,7 +7,6 @@ import { chipsResponse } from 'pages/AIAssistantPage/stories/__story_mockdata__/
 
 import { countControl, toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
-import type { StoryMockArgs } from '../controls/types';
 import { nozGlobalConfigResponse } from '../msw/__story_mockdata__/appShell';
 import { nozGlobalConfigHandler } from '../msw/appShellHandlers';
 
@@ -84,5 +83,3 @@ export const nozMocks = defineStoryMocks({
 		});
 	},
 });
-
-export type NozArgs = StoryMockArgs<typeof nozMocks>;

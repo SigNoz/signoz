@@ -23,7 +23,7 @@ function buildCreateChecks(accountId?: string): BrandedPermission[] {
 		: [];
 }
 
-export interface KeyFormPhaseProps {
+interface KeyFormPhaseProps {
 	register: UseFormRegister<FormValues>;
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;

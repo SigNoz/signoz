@@ -82,7 +82,7 @@ export function isScrollEventInPlot(
 	);
 }
 
-export function shouldShowTooltipForSync(
+function shouldShowTooltipForSync(
 	controller: TooltipControllerState,
 	syncTooltipWithDashboard: boolean,
 ): boolean {
@@ -93,13 +93,13 @@ export function shouldShowTooltipForSync(
 	);
 }
 
-export function shouldShowTooltipForInteraction(
+function shouldShowTooltipForInteraction(
 	controller: TooltipControllerState,
 ): boolean {
 	return controller.focusedSeriesIndex != null;
 }
 
-export function updateHoverState(
+function updateHoverState(
 	controller: TooltipControllerState,
 	syncTooltipWithDashboard: boolean,
 ): void {
