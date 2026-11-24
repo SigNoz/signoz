@@ -193,7 +193,7 @@ function ThresholdItem({
 										value: channel.name,
 										label: channel.name,
 										disabled,
-										title: reason,
+										title: reason ?? channel.name,
 										'aria-disabled': disabled,
 										'data-testid': `threshold-${threshold.label}-channel-option-${channel.id}`,
 									};
