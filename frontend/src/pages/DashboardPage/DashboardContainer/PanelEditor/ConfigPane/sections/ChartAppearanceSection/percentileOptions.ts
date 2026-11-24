@@ -1,3 +1,6 @@
+import type { DashboardtypesDistributionPercentilesDTO } from 'api/generated/services/sigNoz.schemas';
+import { DEFAULT_DISTRIBUTION_PERCENTILES } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
+
 import type { ConfigMultiSelectItem } from '../../controls/ConfigMultiSelect/ConfigMultiSelect';
 
 /** The save API rejects more. */
@@ -15,4 +18,14 @@ export function resolvePercentileItems(
 			value: String(percentile),
 			label: `p${percentile}`,
 		}));
+}
+
+/** Unset reads as on, at p50/p90/p99. */
+export function resolvePercentiles(
+	percentiles: DashboardtypesDistributionPercentilesDTO | undefined,
+): { enabled: boolean; values: number[] } {
+	return {
+		enabled: percentiles?.enabled ?? true,
+		values: percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES,
+	};
 }

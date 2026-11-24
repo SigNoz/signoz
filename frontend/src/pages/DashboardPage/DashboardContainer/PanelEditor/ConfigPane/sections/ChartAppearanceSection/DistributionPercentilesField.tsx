@@ -1,6 +1,5 @@
 import { isEqual } from 'lodash-es';
 import type { DashboardtypesDistributionPercentilesDTO } from 'api/generated/services/sigNoz.schemas';
-import { DEFAULT_DISTRIBUTION_PERCENTILES } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
 import ConfigMultiSelect from '../../controls/ConfigMultiSelect/ConfigMultiSelect';
@@ -10,22 +9,13 @@ import { createFieldResetter } from '../../utils/changes';
 import {
 	MAX_PERCENTILE_MARKERS,
 	resolvePercentileItems,
+	resolvePercentiles,
 } from './percentileOptions';
 
 interface DistributionPercentilesFieldProps {
 	value: DashboardtypesDistributionPercentilesDTO | undefined;
 	savedValue?: DashboardtypesDistributionPercentilesDTO;
 	onChange: (next: DashboardtypesDistributionPercentilesDTO) => void;
-}
-
-/** Unset reads as on, at p50/p90/p99. */
-function resolvePercentiles(
-	percentiles: DashboardtypesDistributionPercentilesDTO | undefined,
-): { enabled: boolean; values: number[] } {
-	return {
-		enabled: percentiles?.enabled ?? true,
-		values: percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES,
-	};
 }
 
 /** Edits `chartAppearance.percentiles`. */
