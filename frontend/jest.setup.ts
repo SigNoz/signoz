@@ -44,6 +44,14 @@ if (!document.elementFromPoint) {
 	document.elementFromPoint = (): Element | null => null;
 }
 
+// jsdom Ranges have no layout; CodeMirror measures text through them on click.
+if (!Range.prototype.getClientRects) {
+	Range.prototype.getClientRects = (): DOMRectList =>
+		document.body.getClientRects();
+	Range.prototype.getBoundingClientRect = (): DOMRect =>
+		document.body.getBoundingClientRect();
+}
+
 // jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
 // (e.g. @signozhq/ui Select) call when opening. Stub them so those components
 // can be exercised in tests.
