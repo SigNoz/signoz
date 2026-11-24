@@ -1686,6 +1686,49 @@ describe('formatValueForExpression', () => {
 			expect(pass2.filter.expression).toBe(EXPR);
 		});
 	});
+
+	describe('BETWEEN and NOT BETWEEN operators', () => {
+		it('writes the bounds as low AND high', () => {
+			expect(formatValueForExpression([1, 10], 'BETWEEN')).toBe('1 AND 10');
+			expect(formatValueForExpression(['x', '$hi'], 'not between')).toBe(
+				"'x' AND $hi",
+			);
+		});
+
+		it.each([
+			"a BETWEEN 1 AND 10 AND b = '2'",
+			"a NOT BETWEEN 1 AND 10 AND b = '2'",
+			"k BETWEEN 'x' AND $hi",
+		])('keeps the clause through filters and back: %s', (expression) => {
+			const items = convertExpressionToFilters(expression);
+
+			expect(
+				convertFiltersToExpressionWithExistingQuery(
+					{ items, op: 'AND' },
+					expression,
+				).filter.expression,
+			).toBe(expression);
+		});
+
+		it('keeps both bounds when an older filter item holds only the lower one', () => {
+			const expression = 'a BETWEEN 1 AND 10';
+			const items = [
+				{
+					id: '1',
+					key: { key: 'a' } as BaseAutocompleteData,
+					op: 'BETWEEN',
+					value: 1,
+				},
+			];
+
+			expect(
+				convertFiltersToExpressionWithExistingQuery(
+					{ items, op: 'AND' },
+					expression,
+				).filter.expression,
+			).toBe(expression);
+		});
+	});
 });
 
 describe('adjustQueryForV5', () => {

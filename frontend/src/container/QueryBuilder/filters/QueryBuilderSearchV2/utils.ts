@@ -90,6 +90,8 @@ export function getOperatorValue(op: string): string {
 			return 'contains';
 		case 'NOT_CONTAINS':
 			return 'not contains';
+		case 'NOT_BETWEEN':
+			return 'not between';
 		// Short form operators (InfraMonitoring)
 		case 'NIN':
 			return 'nin';
