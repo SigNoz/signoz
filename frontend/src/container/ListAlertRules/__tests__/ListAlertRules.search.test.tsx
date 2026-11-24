@@ -20,13 +20,9 @@ import {
 const QUERY = "name CONTAINS 'CPU'";
 
 function getSearchContent(): HTMLElement {
-	const content = screen
-		.getByTestId('alert-rules-list-search')
-		.querySelector<HTMLElement>('.cm-content');
-	if (!content) {
-		throw new Error('Search editor content not found');
-	}
-	return content;
+	return within(screen.getByTestId('alert-rules-list-search')).getByRole(
+		'textbox',
+	);
 }
 
 function lastRequest(requests: URLSearchParams[]): URLSearchParams {

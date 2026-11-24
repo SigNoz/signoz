@@ -33,8 +33,7 @@ describe('ListAlertRules — row click navigation', () => {
 		useAlertRuleViewsStore.setState({ recent: ['rule-2', 'rule-1'] });
 		renderListAlertRules();
 
-		const ruleCell = await screen.findByTestId('alert-row-rule-1-name');
-		await user.click(ruleCell.closest('td') as HTMLElement);
+		await user.click(await screen.findByTestId(RULE_NAME_CELL_TEST_ID));
 
 		await waitFor(() => {
 			expect(useAlertRuleViewsStore.getState().recent).toStrictEqual([
