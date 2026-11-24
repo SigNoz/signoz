@@ -5,6 +5,10 @@ const API = 'https://api.github.com';
 const TEST_JOB = /^test-shard \(\d+\)$|^test \/ js$/;
 const MIN_PRS = 3;
 const SLACK_LIMIT = 10;
+const MAX_ATTEMPTS = 4;
+const RETRY_BACKOFF_MS = 2000;
+const PARALLEL_RUNS = 8;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function parseFailures(log) {
 	const lines = log.split('\n').map((line) =>
@@ -68,7 +72,7 @@ export function findFlaky(failures) {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function gh(path, init = {}, attempt = 1) {
-	const retry = !init.method && attempt < 4;
+	const retry = !init.method && attempt < MAX_ATTEMPTS;
 	let response;
 	try {
 		response = await fetch(path.startsWith('http') ? path : API + path, {
@@ -83,11 +87,11 @@ async function gh(path, init = {}, attempt = 1) {
 		if (!retry) {
 			throw error;
 		}
-		await sleep(attempt * 2000);
+		await sleep(attempt * RETRY_BACKOFF_MS);
 		return gh(path, init, attempt + 1);
 	}
 	if (retry && response.status >= 500) {
-		await sleep(attempt * 2000);
+		await sleep(attempt * RETRY_BACKOFF_MS);
 		return gh(path, init, attempt + 1);
 	}
 	if (!response.ok) {
@@ -139,7 +143,7 @@ async function runFailures(repo, run) {
 		)
 	).filter((job) => TEST_JOB.test(job.name));
 	const failures = [];
-	for (const job of jobs.filter((j) => j.conclusion === 'failure')) {
+	for (const job of jobs.filter((failed) => failed.conclusion === 'failure')) {
 		const passedOnRerun = jobs.some(
 			(later) =>
 				later.name === job.name &&
@@ -173,7 +177,9 @@ async function collectFailures(repo, since) {
 	const candidates = runs.filter(
 		(run) => run.run_attempt > 1 || run.conclusion === 'failure',
 	);
-	return (await mapLimit(candidates, 8, (run) => runFailures(repo, run))).flat();
+	return (
+		await mapLimit(candidates, PARALLEL_RUNS, (run) => runFailures(repo, run))
+	).flat();
 }
 
 async function lastChange(repo, file) {
@@ -273,7 +279,7 @@ async function postToSlack(webhook, message) {
 async function main() {
 	const repo = process.env.GITHUB_REPOSITORY;
 	const days = Number(process.env.DAYS ?? 7);
-	const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
+	const since = new Date(Date.now() - days * DAY_MS).toISOString().slice(0, 10);
 	const flaky = await Promise.all(
 		findFlaky(await collectFailures(repo, since)).map(async (entry) => ({
 			...entry,

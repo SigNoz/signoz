@@ -70,7 +70,7 @@ const config: Config.InitialOptions = {
 	// Local only: the default (cores - 1) workers exhaust RAM when several runs overlap.
 	...(process.env.CI ? {} : { maxWorkers: 4, workerIdleMemoryLimit: '1GB' }),
 	...(process.env.GITHUB_STEP_SUMMARY
-		? { reporters: ['default', '<rootDir>/scripts/slow-test-reporter.js'] }
+		? { reporters: ['default', '<rootDir>/scripts/slow-test-reporter.mjs'] }
 		: {}),
 	coverageThreshold: {
 		global: {
