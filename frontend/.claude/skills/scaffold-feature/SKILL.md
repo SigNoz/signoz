@@ -99,7 +99,7 @@ is still by hand. The generator never adds a SideNav item; do that in
    CSS Modules (`docs/css-modules-guide.md`), React Query for server state (prefer
    `api/generated` hooks), nuqs for URL state, Zustand for client state, `data-testid` on
    every interactive element.
-5. **Verify** before reporting done:
+5. **Verify** at the gate in `AGENTS.md` (commit, push or PR), not after each edit; skip it while the user says `no checks`:
    ```bash
    pnpm tsgo --noEmit
    pnpm oxlint src/pages/<Feature>

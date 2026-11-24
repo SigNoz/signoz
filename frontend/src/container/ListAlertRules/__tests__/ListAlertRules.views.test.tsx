@@ -18,19 +18,6 @@ import {
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 
-// jsdom has no layout, and Floating UI's getComputedStyle walk over every
-// popover ancestor costs ~1 s per open here, enough to time out under load.
-jest.mock('@floating-ui/dom', () => ({
-	...jest.requireActual('@floating-ui/dom'),
-	autoUpdate: (): (() => void) => (): void => {},
-	computePosition: (
-		_reference: unknown,
-		_floating: unknown,
-		{ placement = 'bottom', strategy = 'absolute' } = {},
-	): Promise<unknown> =>
-		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
-}));
-
 jest.setTimeout(15_000);
 
 const VIEW_1_ORDER_BY = JSON.stringify({ columnName: 'name', order: 'asc' });
