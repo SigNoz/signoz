@@ -80,4 +80,31 @@ describe('resolvePercentileItems', () => {
 			'p99.9',
 		]);
 	});
+
+	it('offers Reset after clearing every percentile from unset saved values', async () => {
+		const onChange = jest.fn();
+		render(
+			<DistributionPercentilesField
+				value={{ enabled: true, values: [] }}
+				savedValue={{}}
+				onChange={onChange}
+			/>,
+		);
+
+		await userEvent.setup().click(screen.getByTestId('config-field-reset'));
+
+		expect(onChange).toHaveBeenCalledWith({ enabled: true, values: undefined });
+	});
+
+	it('offers no Reset when the values match the saved defaults', () => {
+		render(
+			<DistributionPercentilesField
+				value={{ values: [50, 90, 99] }}
+				savedValue={{}}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(screen.queryByTestId('config-field-reset')).not.toBeInTheDocument();
+	});
 });

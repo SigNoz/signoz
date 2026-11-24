@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash-es';
 import type { DashboardtypesDistributionPercentilesDTO } from 'api/generated/services/sigNoz.schemas';
 import { DEFAULT_DISTRIBUTION_PERCENTILES } from 'pages/DashboardPage/DashboardContainer/Panels/utils/chartAppearance/resolvers';
 
@@ -17,15 +18,25 @@ interface DistributionPercentilesFieldProps {
 	onChange: (next: DashboardtypesDistributionPercentilesDTO) => void;
 }
 
-/** Edits `chartAppearance.percentiles`; unset reads as on, at p50/p90/p99. */
+/** Unset reads as on, at p50/p90/p99. */
+function resolvePercentiles(
+	percentiles: DashboardtypesDistributionPercentilesDTO | undefined,
+): { enabled: boolean; values: number[] } {
+	return {
+		enabled: percentiles?.enabled ?? true,
+		values: percentiles?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES,
+	};
+}
+
+/** Edits `chartAppearance.percentiles`. */
 function DistributionPercentilesField({
 	value,
 	savedValue,
 	onChange,
 }: DistributionPercentilesFieldProps): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
-	const enabled = value?.enabled ?? true;
-	const values = value?.values ?? DEFAULT_DISTRIBUTION_PERCENTILES;
+	const { enabled, values } = resolvePercentiles(value);
+	const saved = resolvePercentiles(savedValue);
 
 	return (
 		<>
@@ -34,7 +45,7 @@ function DistributionPercentilesField({
 				title="Percentile markers"
 				description="Dashed lines at percentiles estimated from the bucket counts."
 				sketch={SWITCH_SKETCHES.percentiles}
-				changed={reset('enabled').changed}
+				changed={enabled !== saved.enabled}
 				value={enabled}
 				onChange={(next): void => onChange({ enabled: next, values })}
 			/>
@@ -49,7 +60,8 @@ function DistributionPercentilesField({
 								: `Up to ${MAX_PERCENTILE_MARKERS}.`}
 						</span>
 					}
-					{...reset('values')}
+					onReset={reset('values').onReset}
+					changed={!isEqual(values, saved.values)}
 				>
 					<ConfigMultiSelect
 						testId="panel-editor-v2-percentile-values"
