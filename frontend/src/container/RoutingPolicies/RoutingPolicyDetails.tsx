@@ -30,7 +30,7 @@ function RoutingPolicyDetails({
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
 	const [form] = Form.useForm();
-	const { isReadOnly, saveChecks, getChannelAccess, onPickerVisibleChange } =
+	const { isReadOnly, saveChecks, channelOptions, onPickerVisibleChange } =
 		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
 	const { isGranted } = useAuthZ(CHANNEL_CREATE_CHECKS);
 	const canCreateChannel = isGranted(NotificationChannelCreatePermission);
@@ -243,17 +243,7 @@ function RoutingPolicyDetails({
 							]}
 						>
 							<Select
-								options={channels.map((channel) => {
-									const { disabled, reason } = getChannelAccess(channel);
-									return {
-										value: channel.name,
-										label: channel.name,
-										disabled,
-										title: reason,
-										'aria-disabled': disabled,
-										'data-testid': `routing-policy-channel-option-${channel.id}`,
-									};
-								})}
+								options={channelOptions}
 								onDropdownVisibleChange={onPickerVisibleChange}
 								mode="multiple"
 								placeholder="Select notification channels"
