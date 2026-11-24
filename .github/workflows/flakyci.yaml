@@ -8,7 +8,6 @@ on:
 permissions:
   actions: read
   contents: read
-  issues: write
 
 jobs:
   jest:
@@ -23,5 +22,5 @@ jobs:
       - name: report
         env:
           GH_TOKEN: ${{ github.token }}
-          POST_ISSUE: "true"
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_FLAKY_TESTS_WEBHOOK }}
         run: node frontend/scripts/flaky-jest-report.mjs >> "$GITHUB_STEP_SUMMARY"

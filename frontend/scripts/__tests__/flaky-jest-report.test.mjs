@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findFlaky, parseFailures } from '../flaky-jest-report.mjs';
+import {
+	findFlaky,
+	parseFailures,
+	slackMessage,
+} from '../flaky-jest-report.mjs';
 
 const LOG = [
 	'2026-11-10T10:00:00.0000000Z \x1b[1mFAIL\x1b[22m src/a/A.test.tsx (12.1 s)',
@@ -53,5 +57,35 @@ test('findFlaky keeps re-run, merge queue and multi-PR failures only', () => {
 	assert.deepEqual(
 		flaky.map((entry) => entry.test),
 		['spread', 're-run', 'queue'],
+	);
+});
+
+test('slackMessage escapes test names and lists the top 10 with a link to the run', () => {
+	const entry = (index) => ({
+		file: `src/t${index}.test.tsx`,
+		test: `T${index} › shows <Empty> & more`,
+		failures: 20 - index,
+		passedOnRerun: 1,
+		mergeQueue: 0,
+		prs: new Set([1]),
+		change: { who: 'dev' },
+	});
+	const message = slackMessage(
+		'SigNoz/signoz',
+		'2026-11-17',
+		Array.from({ length: 12 }, (_, index) => entry(index)),
+		'https://github.com/SigNoz/signoz/actions/runs/1',
+	);
+
+	assert.equal(message.text, '12 flaky Jest tests since 2026-11-17');
+	const sections = message.blocks.filter((block) => block.type === 'section');
+	assert.equal(sections.length, 10);
+	assert.equal(
+		sections[0].text.text,
+		'*20 failures* <https://github.com/SigNoz/signoz/blob/main/frontend/src/t0.test.tsx|T0 › shows &lt;Empty&gt; &amp; more>\npassed on re-run (1), last changed by dev',
+	);
+	assert.equal(
+		message.blocks.at(-1).elements[0].text,
+		'<https://github.com/SigNoz/signoz/actions/runs/1|All tests and their first error line>',
 	);
 });

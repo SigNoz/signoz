@@ -2,9 +2,9 @@
 import { pathToFileURL } from 'node:url';
 
 const API = 'https://api.github.com';
-const ISSUE_TITLE = 'Flaky Jest tests: weekly report';
 const TEST_JOB = /^test-shard \(\d+\)$|^test \/ js$/;
 const MIN_PRS = 3;
+const SLACK_LIMIT = 10;
 
 export function parseFailures(log) {
 	const lines = log.split('\n').map((line) =>
@@ -181,11 +181,14 @@ async function lastChange(repo, file) {
 		await gh(`/repos/${repo}/commits?path=frontend/${file}&per_page=1`)
 	).json();
 	if (!commit) {
-		return 'unknown';
+		return null;
 	}
-	const who = commit.author?.login ?? commit.commit.author.name;
-	const when = commit.commit.author.date.slice(0, 10);
-	return `${who}, ${when}, [${commit.sha.slice(0, 7)}](${commit.html_url})`;
+	return {
+		who: commit.author?.login ?? commit.commit.author.name,
+		when: commit.commit.author.date.slice(0, 10),
+		sha: commit.sha.slice(0, 7),
+		url: commit.html_url,
+	};
 }
 
 function signal(entry) {
@@ -200,16 +203,19 @@ function signal(entry) {
 
 const cell = (text) => text.replace(/\|/g, '\\|');
 
-async function report(repo, since, flaky) {
+const changeCell = (change) =>
+	change
+		? `${change.who}, ${change.when}, [${change.sha}](${change.url})`
+		: 'unknown';
+
+function report(since, flaky) {
 	const header = `## Flaky Jest tests since ${since}`;
 	if (flaky.length === 0) {
 		return `${header}\n\nNo flaky tests found.\n`;
 	}
-	const rows = await Promise.all(
-		flaky.map(
-			async (entry) =>
-				`| ${cell(entry.test)} | \`${entry.file}\` | ${entry.failures} | ${signal(entry)} | ${cell(entry.error.slice(0, 80))} | ${await lastChange(repo, entry.file)} |`,
-		),
+	const rows = flaky.map(
+		(entry) =>
+			`| ${cell(entry.test)} | \`${entry.file}\` | ${entry.failures} | ${signal(entry)} | ${cell(entry.error.slice(0, 80))} | ${changeCell(entry.change)} |`,
 	);
 	return [
 		header,
@@ -223,37 +229,62 @@ async function report(repo, since, flaky) {
 	].join('\n');
 }
 
-async function postToIssue(repo, body) {
-	const issues = await paginate(
-		`/repos/${repo}/issues?state=open&creator=github-actions%5Bbot%5D&per_page=100`,
-	);
-	let issue = issues.find((candidate) => candidate.title === ISSUE_TITLE);
-	if (!issue) {
-		issue = await (
-			await gh(`/repos/${repo}/issues`, {
-				method: 'POST',
-				body: JSON.stringify({
-					title: ISSUE_TITLE,
-					body: 'A weekly comment lists the Jest tests that looked flaky in CI.',
-				}),
-			})
-		).json();
-	}
-	await gh(`/repos/${repo}/issues/${issue.number}/comments`, {
+// Slack mrkdwn treats these three as control characters.
+const slackEscape = (text) =>
+	text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+export function slackMessage(repo, since, flaky, runUrl) {
+	const title = `${flaky.length} flaky Jest tests since ${since}`;
+	return {
+		text: title,
+		blocks: [
+			{ type: 'header', text: { type: 'plain_text', text: title } },
+			...flaky.slice(0, SLACK_LIMIT).map((entry) => ({
+				type: 'section',
+				text: {
+					type: 'mrkdwn',
+					text: `*${entry.failures} failures* <https://github.com/${repo}/blob/main/frontend/${entry.file}|${slackEscape(entry.test)}>\n${signal(entry)}, last changed by ${slackEscape(entry.change?.who ?? 'unknown')}`,
+				},
+			})),
+			{
+				type: 'context',
+				elements: [
+					{
+						type: 'mrkdwn',
+						text: `<${runUrl}|All tests and their first error line>`,
+					},
+				],
+			},
+		],
+	};
+}
+
+async function postToSlack(webhook, message) {
+	const response = await fetch(webhook, {
 		method: 'POST',
-		body: JSON.stringify({ body }),
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(message),
 	});
+	if (!response.ok) {
+		throw new Error(`${response.status} POST Slack webhook`);
+	}
 }
 
 async function main() {
 	const repo = process.env.GITHUB_REPOSITORY;
 	const days = Number(process.env.DAYS ?? 7);
 	const since = new Date(Date.now() - days * 864e5).toISOString().slice(0, 10);
-	const flaky = findFlaky(await collectFailures(repo, since));
-	const body = await report(repo, since, flaky);
-	process.stdout.write(body);
-	if (process.env.POST_ISSUE === 'true') {
-		await postToIssue(repo, body);
+	const flaky = await Promise.all(
+		findFlaky(await collectFailures(repo, since)).map(async (entry) => ({
+			...entry,
+			change: await lastChange(repo, entry.file),
+		})),
+	);
+	process.stdout.write(report(since, flaky));
+	const webhook = process.env.SLACK_WEBHOOK_URL;
+	if (webhook && flaky.length > 0) {
+		const runUrl = `${process.env.GITHUB_SERVER_URL}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+		await postToSlack(webhook, slackMessage(repo, since, flaky, runUrl));
 	}
 }
 
