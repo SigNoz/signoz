@@ -152,7 +152,9 @@ feature driver's `goto` also waits for its page to load, which a raw
 - Import from `frontend/` by relative path and only types
   (`export type * from '../../../frontend/src/…'`), as `drivers/schemas.ts`
   does. CI installs only `tests/e2e`, so a package the frontend file imports
-  needs an e2e devDependency and a `paths` entry in `tsconfig.json`.
+  needs an e2e devDependency and a `paths` entry in `tsconfig.json`. A package
+  both `package.json` files declare has the same version in both; the
+  `shared-deps` job in `e2eci.yaml` fails otherwise.
 
 ## Moving a test down a layer
 

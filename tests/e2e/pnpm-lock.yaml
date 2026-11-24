@@ -18,8 +18,8 @@ importers:
         specifier: 1.13.0
         version: 1.13.0(axios@1.21.1)(react-query@3.39.3(react@18.3.1))(react@18.3.1)
       '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.20
+        specifier: ^22.20.5
+        version: 22.20.5
       dotenv:
         specifier: ^16.0.0
         version: 16.6.1
@@ -36,7 +36,7 @@ importers:
         specifier: 7.0.2004
         version: 7.0.2004
       typescript:
-        specifier: ^5.0.0
+        specifier: 5.9.3
         version: 5.9.3
 
 packages:
@@ -390,8 +390,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@20.19.20':
-    resolution: {integrity: sha512-2Q7WS25j4pS1cS8yw3d6buNCVJukOTeQ39bAnwR6sOJbaxvyCGebzTMypDFN82CxBLnl+lSWVdCCWbRY6y9yZQ==}
+  '@types/node@22.20.5':
+    resolution: {integrity: sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -1078,7 +1078,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@20.19.20':
+  '@types/node@22.20.5':
     dependencies:
       undici-types: 6.21.0
 

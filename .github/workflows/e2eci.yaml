@@ -67,6 +67,30 @@ jobs:
       - name: lint
         run: |
           cd tests/e2e && pnpm lint
+  # A package both manifests declare must have the same version in both.
+  # tests/e2e type-checks frontend files against its own installs.
+  shared-deps:
+    needs: changes
+    if: github.event_name != 'merge_group' && needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: compare
+        run: |
+          MISMATCHES=$(jq -rn \
+            --slurpfile frontend frontend/package.json \
+            --slurpfile e2e tests/e2e/package.json '
+              ($frontend[0] | (.dependencies // {}) + (.devDependencies // {})) as $f
+              | $e2e[0] | (.dependencies // {}) + (.devDependencies // {})
+              | to_entries[]
+              | select($f[.key] != null and $f[.key] != .value)
+              | "::error file=tests/e2e/package.json::\(.key) is \(.value) here and \($f[.key]) in frontend/package.json. Set both to the same version."
+            ')
+          if [ -n "$MISMATCHES" ]; then
+            echo "$MISMATCHES"
+            exit 1
+          fi
   test:
     strategy:
       fail-fast: false
@@ -189,7 +213,7 @@ jobs:
     # Runs for other labels must not report as e2e, or their pass would hide the real result.
     name: ${{ github.event.action == 'labeled' && github.event.label.name != 'safe-to-e2e' && 'ignored-label' || 'e2e' }}
     if: always()
-    needs: [changes, fmtlint, test]
+    needs: [changes, fmtlint, shared-deps, test]
     runs-on: ubuntu-latest
     steps:
       - name: verdict
