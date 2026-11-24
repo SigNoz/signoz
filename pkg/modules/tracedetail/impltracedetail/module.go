@@ -292,3 +292,21 @@ func (m *module) getWindowedFlamegraph(ctx context.Context, traceID, selectedSpa
 	enrichedSpans := flamegraphTrace.EnrichSelectedSpans(selectedSpans, fullSpans, selectFields)
 	return spantypes.NewGettableFlamegraphTrace(enrichedSpans, start, end, true), nil
 }
+
+func (m *module) GetTraceHighlights(ctx context.Context, traceID string, query *spantypes.TraceHighlightsQuery) (*spantypes.TraceHighlights, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	skeleton, err := m.store.GetTraceSkeleton(ctx, traceID, bounds)
+	if err != nil {
+		return nil, err
+	}
+
+	pages := spantypes.NewHighlightPages(skeleton, query)
+	rows, err := m.store.GetTraceSpanHeadersByIDs(ctx, traceID, bounds, pages.SpanIDs())
+	if err != nil {
+		return nil, err
+	}
+	return spantypes.NewTraceHighlights(pages, rows), nil
+}

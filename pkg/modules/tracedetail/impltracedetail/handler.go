@@ -129,11 +129,29 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, result)
 }
 
-// These routes are registered for their place in the API spec; the implementation follows.
-func (h *handler) GetTraceHighlights(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace highlights is not implemented yet"))
+func (h *handler) GetTraceHighlights(rw http.ResponseWriter, r *http.Request) {
+	params := new(spantypes.GetTraceHighlightsParams)
+	if err := binding.Query.BindQuery(r.URL.Query(), params); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	query, err := spantypes.NewTraceHighlightsQuery(params)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	result, err := h.module.GetTraceHighlights(r.Context(), mux.Vars(r)["traceID"], query)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
 }
 
+// These routes are registered for their place in the API spec; the implementation follows.
 func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span list is not implemented yet"))
 }

@@ -1,5 +1,11 @@
 package spantypes
 
+import (
+	"slices"
+)
+
+const highlightsDefaultLimit = 10
+
 type GetTraceHighlightsParams struct {
 	Views []SpanListView `query:"views" description:"The lists to return, each named by its view. Default: all of them."`
 	Limit int            `query:"limit" description:"Number of spans in each list. Default: 10. Maximum: 1000."`
@@ -21,4 +27,85 @@ type TraceHighlights struct {
 	TimeSpent        *SpanList           `json:"timeSpent,omitempty" description:"Where the time went, same-name siblings counted as one. First page of the time_spent view of the span list."`
 	AIUsage          *SpanList           `json:"aiUsage,omitempty" description:"The spans with the highest gen_ai cost or token usage. First page of the ai_usage view of the span list. Empty for a trace where no span carries that usage."`
 	Links            *SpanList           `json:"links,omitempty" description:"Spans that link to other spans. First page of the links view of the span list."`
+}
+
+type TraceHighlightsQuery struct {
+	Views []SpanListView
+	Limit int
+}
+
+// HighlightPages holds the spans picked for each requested list, before their stored data is read.
+type HighlightPages struct {
+	skeleton *TraceSkeleton
+	pages    []*spanPage
+}
+
+func NewTraceHighlightsQuery(params *GetTraceHighlightsParams) (*TraceHighlightsQuery, error) {
+	limit, err := pageLimit("limit", params.Limit, highlightsDefaultLimit)
+	if err != nil {
+		return nil, err
+	}
+	query := &TraceHighlightsQuery{Limit: limit}
+	for _, view := range params.Views {
+		if err := validateSpanListView(view); err != nil {
+			return nil, err
+		}
+		if !slices.Contains(query.Views, view) {
+			query.Views = append(query.Views, view)
+		}
+	}
+	if len(query.Views) == 0 {
+		query.Views = spanListViews()
+	}
+	return query, nil
+}
+
+// NewHighlightPages picks the first page of each requested view from the tree.
+func NewHighlightPages(skeleton *TraceSkeleton, query *TraceHighlightsQuery) *HighlightPages {
+	pages := &HighlightPages{skeleton: skeleton}
+	for _, view := range query.Views {
+		pages.pages = append(pages.pages, skeleton.firstPage(view, query.Limit))
+	}
+	return pages
+}
+
+// SpanIDs lists the picked spans, each once: the spans to read from the store.
+func (pages *HighlightPages) SpanIDs() []string {
+	seen := make(map[int32]struct{})
+	spanIDs := make([]string, 0)
+	for _, page := range pages.pages {
+		for _, i := range page.positions {
+			if _, ok := seen[i]; !ok {
+				seen[i] = struct{}{}
+				spanIDs = append(spanIDs, pages.skeleton.spanID(i))
+			}
+		}
+	}
+	return spanIDs
+}
+
+// NewTraceHighlights builds the highlights. rows holds the stored data of the picked spans; a span
+// without a row keeps what the skeleton knows.
+func NewTraceHighlights(pages *HighlightPages, rows []StorableSpan) *TraceHighlights {
+	byID := make(map[string]*StorableSpan, len(rows))
+	for i := range rows {
+		byID[rows[i].SpanID] = &rows[i]
+	}
+	highlights := &TraceHighlights{Services: pages.skeleton.serviceStats()}
+	for _, page := range pages.pages {
+		list := pages.skeleton.newSpanList(page, byID)
+		switch page.view {
+		case SpanListViewErrorOrigins:
+			highlights.ErrorOrigins = &list
+		case SpanListViewUnmarkedFailures:
+			highlights.UnmarkedFailures = &list
+		case SpanListViewTimeSpent:
+			highlights.TimeSpent = &list
+		case SpanListViewAIUsage:
+			highlights.AIUsage = &list
+		case SpanListViewLinks:
+			highlights.Links = &list
+		}
+	}
+	return highlights
 }

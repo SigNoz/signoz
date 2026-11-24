@@ -1,15 +1,11 @@
 package spantypes
 
-import (
-	"github.com/SigNoz/signoz/pkg/valuer"
-)
-
-var (
-	SpanListViewErrorOrigins     = SpanListView{valuer.NewString("error_origins")}
-	SpanListViewUnmarkedFailures = SpanListView{valuer.NewString("unmarked_failures")}
-	SpanListViewTimeSpent        = SpanListView{valuer.NewString("time_spent")}
-	SpanListViewAIUsage          = SpanListView{valuer.NewString("ai_usage")}
-	SpanListViewLinks            = SpanListView{valuer.NewString("links")}
+const (
+	SpanListViewErrorOrigins     SpanListView = "error_origins"
+	SpanListViewUnmarkedFailures SpanListView = "unmarked_failures"
+	SpanListViewTimeSpent        SpanListView = "time_spent"
+	SpanListViewAIUsage          SpanListView = "ai_usage"
+	SpanListViewLinks            SpanListView = "links"
 )
 
 const (
@@ -20,7 +16,8 @@ const (
 )
 
 // SpanListView keeps the spans of one kind out of the spans a route covers, in that kind's order.
-type SpanListView struct{ valuer.String }
+// It is a plain string so that a list of views binds from a repeated query parameter.
+type SpanListView string
 
 func (SpanListView) Enum() []any {
 	return []any{SpanListViewErrorOrigins, SpanListViewUnmarkedFailures, SpanListViewTimeSpent, SpanListViewAIUsage, SpanListViewLinks}
