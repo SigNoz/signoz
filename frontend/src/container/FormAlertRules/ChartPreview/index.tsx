@@ -29,6 +29,7 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import useUrlQuery from 'hooks/useUrlQuery';
 import GetMinMax from 'lib/getMinMax';
 import getTimeString from 'lib/getTimeString';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { navigate } from 'lib/router/navigation';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { isEmpty } from 'lodash-es';
@@ -157,12 +158,8 @@ function ChartPreview({
 					query.clickhouse_sql[0].query?.length > 0
 				);
 			case EQueryType.QUERY_BUILDER:
-				return (
-					query.builder.queryData.length > 0 &&
-					query.builder.queryData[0].queryName !== ''
-				);
 			case EQueryType.AI_QUERY_BUILDER: {
-				const queryData = query.builder_ai_query?.queryData ?? [];
+				const { queryData } = getActiveBuilder(query);
 				return queryData.length > 0 && queryData[0].queryName !== '';
 			}
 			default:
