@@ -3,6 +3,7 @@ package querier
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -293,4 +295,102 @@ func TestReadAsRawSkipping(t *testing.T) {
 			assert.Equal(t, testCase.wantIDs, ids)
 		})
 	}
+}
+
+func TestReadAsTimeSeriesKeepsGroupsApart(t *testing.T) {
+	ts := time.UnixMilli(1_700_000_040_000).UTC()
+	window := &qbtypes.TimeRange{From: 1_700_000_000_000, To: 1_700_000_100_000}
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "client", Type: "String"},
+		{Name: "server", Type: "String"},
+		{Name: "__result_0", Type: "Float64"},
+	}
+
+	testCases := []struct {
+		name string
+		rows [][]any
+	}{
+		{
+			name: "SwappedValues",
+			rows: [][]any{
+				{ts, "frontend", "cart", float64(10)},
+				{ts, "cart", "frontend", float64(99)},
+			},
+		},
+		{
+			name: "ValuesWithSeparator",
+			rows: [][]any{
+				{ts, "a,b", "c", float64(10)},
+				{ts, "a", "b,c", float64(99)},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			rows := cmock.NewRows(cols, testCase.rows)
+
+			data, err := readAsTimeSeries(rows, window, qbtypes.Step{Duration: time.Minute}, "A")
+			require.NoError(t, err)
+
+			require.Len(t, data.Aggregations, 1)
+			series := data.Aggregations[0].Series
+			require.Len(t, series, 2)
+			for _, s := range series {
+				require.Len(t, s.Values, 1)
+				want := float64(10)
+				if s.Labels[0].Value == testCase.rows[1][1] {
+					want = 99
+				}
+				assert.Equal(t, want, s.Values[0].Value)
+			}
+		})
+	}
+}
+
+func TestReadAsTimeSeriesMergesRowsOfOneGroup(t *testing.T) {
+	first := time.UnixMilli(1_700_000_040_000).UTC()
+	second := first.Add(time.Minute)
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "client", Type: "String"},
+		{Name: "server", Type: "String"},
+		{Name: "__result_0", Type: "Float64"},
+	}
+	rows := cmock.NewRows(cols, [][]any{
+		{first, "frontend", "cart", float64(1)},
+		{second, "frontend", "cart", float64(2)},
+	})
+
+	data, err := readAsTimeSeries(rows, &qbtypes.TimeRange{From: 1_700_000_000_000, To: 1_700_000_200_000}, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+
+	require.Len(t, data.Aggregations[0].Series, 1)
+	assert.Len(t, data.Aggregations[0].Series[0].Values, 2)
+}
+
+func TestReadAsHeatmapKeepsGroupsApart(t *testing.T) {
+	ts := time.UnixMilli(1_700_000_040_000).UTC()
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "client", Type: "String"},
+		{Name: "server", Type: "String"},
+		{Name: qbtypes.HeatmapBucketMinColumn, Type: "Float64"},
+		{Name: qbtypes.HeatmapBucketMaxColumn, Type: "Float64"},
+		{Name: "__result_0", Type: "Float64"},
+	}
+	rows := cmock.NewRows(cols, [][]any{
+		{ts, "frontend", "cart", float64(0), float64(10), float64(3)},
+		{ts, "cart", "frontend", float64(0), float64(10), float64(7)},
+	})
+
+	data, err := readAsHeatmap(rows, &qbtypes.TimeRange{From: 1_700_000_000_000, To: 1_700_000_100_000}, qbtypes.Step{Duration: time.Minute}, "A")
+	require.NoError(t, err)
+
+	require.Len(t, data.Aggregations, 1)
+	series := data.Aggregations[0].Series
+	require.Len(t, series, 2)
+	assert.Equal(t, "frontend", series[0].Labels[0].Value)
+	assert.Equal(t, "cart", series[1].Labels[0].Value)
 }
