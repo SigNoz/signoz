@@ -13834,92 +13834,6 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	name: string;
 }
 
-export interface SpanpercentiletypesPercentilePositionDTO {
-	/**
-	 * @type string
-	 * @description The position in words, for example: slower than 98.4% of spans.
-	 */
-	description: string;
-	/**
-	 * @type number
-	 * @format double
-	 * @description Share of the compared spans, 0 to 100, that were no slower than this one.
-	 */
-	percentile: number;
-}
-
-export interface SpanpercentiletypesPercentileStatsDTO {
-	/**
-	 * @type number
-	 * @format double
-	 * @description 50th percentile of the compared spans' durations, in nanoseconds.
-	 */
-	p50: number;
-	/**
-	 * @type number
-	 * @format double
-	 * @description 90th percentile of the compared spans' durations, in nanoseconds.
-	 */
-	p90: number;
-	/**
-	 * @type number
-	 * @format double
-	 * @description 99th percentile of the compared spans' durations, in nanoseconds.
-	 */
-	p99: number;
-}
-
-/**
- * Compares only against spans that have these resource attributes.
- */
-export type SpanpercentiletypesSpanPercentileRequestDTOResourceAttributesAnyOf =
-	{ [key: string]: string };
-
-/**
- * Compares only against spans that have these resource attributes.
- * @nullable
- */
-export type SpanpercentiletypesSpanPercentileRequestDTOResourceAttributes = SpanpercentiletypesSpanPercentileRequestDTOResourceAttributesAnyOf | null;
-
-export interface SpanpercentiletypesSpanPercentileRequestDTO {
-	/**
-	 * @type integer
-	 * @minimum 0
-	 * @description End of the time range to compare against, in milliseconds since the Unix epoch.
-	 */
-	end: number;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type object,null
-	 * @description Compares only against spans that have these resource attributes.
-	 */
-	resourceAttributes?: SpanpercentiletypesSpanPercentileRequestDTOResourceAttributes;
-	/**
-	 * @type string
-	 */
-	serviceName: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 * @description Duration of the span to place, in nanoseconds.
-	 */
-	spanDuration: number;
-	/**
-	 * @type integer
-	 * @minimum 0
-	 * @description Start of the time range to compare against, in milliseconds since the Unix epoch.
-	 */
-	start: number;
-}
-
-export interface SpanpercentiletypesSpanPercentileResponseDTO {
-	percentiles: SpanpercentiletypesPercentileStatsDTO;
-	position: SpanpercentiletypesPercentilePositionDTO;
-}
-
 export type SpantypesEventDTOAttributeMap = { [key: string]: unknown };
 
 export interface SpantypesEventDTO {
@@ -16405,14 +16319,6 @@ export type UpdateSpanMapperPathParameters = {
 };
 export type TestSpanMappers200 = {
 	data: SpantypesGettableSpanMapperTestDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetSpanPercentile200 = {
-	data: SpanpercentiletypesSpanPercentileResponseDTO;
 	/**
 	 * @type string
 	 */
