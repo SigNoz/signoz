@@ -1,5 +1,4 @@
 import {
-	DashboardtypesDistributionStackModeDTO,
 	DashboardtypesFillModeDTO,
 	DashboardtypesLineInterpolationDTO,
 	DashboardtypesLineStyleDTO,
@@ -100,35 +99,3 @@ export const DISCONNECT_MODE_OPTIONS: ConfigTileItem<DisconnectValuesMode>[] = [
 		drawing: TILE_DRAWINGS.gapsBreak,
 	},
 ];
-
-/** Distribution's layout of groups within a bucket. */
-export const BUCKET_STACK_OPTIONS: ConfigTileItem<DashboardtypesDistributionStackModeDTO>[] =
-	[
-		{
-			value: DashboardtypesDistributionStackModeDTO.normal,
-			label: 'Stacked',
-			drawing: TILE_DRAWINGS.barsStacked,
-		},
-		{
-			value: DashboardtypesDistributionStackModeDTO.none,
-			label: 'Side by side',
-			drawing: TILE_DRAWINGS.barsSideBySide,
-		},
-		{
-			value: DashboardtypesDistributionStackModeDTO.percent,
-			label: '100%',
-			drawing: TILE_DRAWINGS.barsPercent,
-		},
-	];
-
-export const BUCKET_STACK_HELP: Record<
-	DashboardtypesDistributionStackModeDTO,
-	string
-> = {
-	[DashboardtypesDistributionStackModeDTO.normal]:
-		'Groups sit on top of each other, so the height shows the bucket total.',
-	[DashboardtypesDistributionStackModeDTO.none]:
-		'Groups share each bucket side by side; hard to read past a few groups.',
-	[DashboardtypesDistributionStackModeDTO.percent]:
-		"Each group's share of the bucket; the y axis becomes a percentage.",
-};

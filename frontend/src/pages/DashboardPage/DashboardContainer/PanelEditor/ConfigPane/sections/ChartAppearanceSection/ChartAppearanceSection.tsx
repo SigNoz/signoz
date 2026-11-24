@@ -1,5 +1,4 @@
 import cx from 'classnames';
-import { DashboardtypesDistributionStackModeDTO } from 'api/generated/services/sigNoz.schemas';
 import { resolveFillOpacity } from 'lib/uPlotV2/utils/fillOpacity';
 import type {
 	SectionEditorProps,
@@ -22,8 +21,6 @@ import GeoMapColorsField from './GeoMapColorsField';
 import HeatmapColorsField from './HeatmapColorsField';
 import PointsFields from './PointsFields';
 import {
-	BUCKET_STACK_HELP,
-	BUCKET_STACK_OPTIONS,
 	FILL_MODE_OPTIONS,
 	FILLED_FILL_MODE_OPTIONS,
 	LINE_INTERPOLATION_HELP,
@@ -60,26 +57,9 @@ function ChartAppearanceSection({
 	>): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
 	const interpolation = value?.lineInterpolation;
-	const stack = value?.stack ?? DashboardtypesDistributionStackModeDTO.normal;
 
 	return (
 		<>
-			{controls.stack && (
-				<ConfigField
-					label="Groups in a bucket"
-					help={BUCKET_STACK_HELP[stack]}
-					{...reset('stack')}
-				>
-					<ConfigTiles
-						testId="panel-editor-v2-bucket-stack"
-						aria-label="Groups in a bucket"
-						value={stack}
-						items={BUCKET_STACK_OPTIONS}
-						onChange={(next): void => onChange({ ...value, stack: next })}
-					/>
-				</ConfigField>
-			)}
-
 			{controls.percentiles && (
 				<DistributionPercentilesField
 					value={value?.percentiles}

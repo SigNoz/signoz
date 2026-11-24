@@ -162,6 +162,40 @@ describe('VisualizationSection', () => {
 		).not.toBeInTheDocument();
 	});
 
+	it('opens the bucket stack on stacked, where a distribution starts', () => {
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: false, bucketStack: true }}
+				onChange={jest.fn()}
+			/>,
+		);
+
+		expect(
+			screen.getByText(
+				'Groups sit on top of each other, so the height shows the bucket total.',
+			),
+		).toBeInTheDocument();
+	});
+
+	it('writes the chosen bucket stack', async () => {
+		const user = userEvent.setup();
+		const onChange = jest.fn();
+		render(
+			<VisualizationSection
+				value={undefined}
+				controls={{ switchPanelKind: false, bucketStack: true }}
+				onChange={onChange}
+			/>,
+		);
+
+		await user.click(screen.getByTestId('panel-editor-v2-bucket-stack-none'));
+
+		expect(onChange).toHaveBeenCalledWith({
+			stack: DashboardtypesStackModeDTO.none,
+		});
+	});
+
 	it('toggles fill spans through onChange', async () => {
 		const user = userEvent.setup();
 		const onChange = jest.fn();

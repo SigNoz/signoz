@@ -55,3 +55,32 @@ export const STACK_MODE_HELP: Record<DashboardtypesStackModeDTO, string> = {
 	[DashboardtypesStackModeDTO.percent]:
 		'Each series shows its share of the total at every point in time.',
 };
+
+/** Distribution's layout of groups within a bucket. */
+export const BUCKET_STACK_OPTIONS: ConfigTileItem<DashboardtypesStackModeDTO>[] =
+	[
+		{
+			value: DashboardtypesStackModeDTO.normal,
+			label: 'Stacked',
+			drawing: TILE_DRAWINGS.barsStacked,
+		},
+		{
+			value: DashboardtypesStackModeDTO.none,
+			label: 'Side by side',
+			drawing: TILE_DRAWINGS.barsSideBySide,
+		},
+		{
+			value: DashboardtypesStackModeDTO.percent,
+			label: '100%',
+			drawing: TILE_DRAWINGS.barsPercent,
+		},
+	];
+
+export const BUCKET_STACK_HELP: Record<DashboardtypesStackModeDTO, string> = {
+	[DashboardtypesStackModeDTO.normal]:
+		'Groups sit on top of each other, so the height shows the bucket total.',
+	[DashboardtypesStackModeDTO.none]:
+		'Groups share each bucket side by side; hard to read past a few groups.',
+	[DashboardtypesStackModeDTO.percent]:
+		"Each group's share of the bucket; the y axis becomes a percentage.",
+};

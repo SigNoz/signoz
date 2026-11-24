@@ -148,6 +148,7 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 				plugin: {
 					kind: DistributionKind['signoz/DistributionPanel'],
 					spec: {
+						visualization: { stack: DistributionStackMode[args.stack] },
 						formatting,
 						legend,
 						axes: {
@@ -160,7 +161,6 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 							},
 						},
 						chartAppearance: {
-							stack: DistributionStackMode[args.stack],
 							percentiles: { enabled: args.percentiles, values: [50, 90, 99] },
 						},
 					},

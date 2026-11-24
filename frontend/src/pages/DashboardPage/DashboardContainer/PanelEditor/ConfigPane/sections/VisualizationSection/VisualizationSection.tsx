@@ -1,4 +1,7 @@
-import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	DashboardtypesStackModeDTO,
+	DashboardtypesTimePreferenceDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -17,6 +20,8 @@ import {
 	BAR_LAYOUT_HELP,
 	BAR_LAYOUT_OPTIONS,
 	BarLayout,
+	BUCKET_STACK_HELP,
+	BUCKET_STACK_OPTIONS,
 	STACK_MODE_HELP,
 	STACK_MODE_OPTIONS,
 } from './options';
@@ -35,7 +40,8 @@ type VisualizationSectionProps = SectionEditorProps<SectionKind.Visualization> &
 /**
  * Edits the `visualization` slice: the panel-type switcher (`switchPanelKind`, every
  * kind), the per-panel time preference, bar stacking (`stackedBarChart`, Bar only),
- * area stacking (`stack`, Area only) and gap filling (`fillSpans`). Each control is
+ * area stacking (`stack`, Area only), bucket stacking (`stack`, Distribution only)
+ * and gap filling (`fillSpans`). Each control is
  * gated by its `controls` flag, so a kind only renders — and only writes — the fields
  * its spec supports.
  */
@@ -58,6 +64,7 @@ function VisualizationSection({
 		? BarLayout.STACKED
 		: BarLayout.OVERLAP;
 	const stack = value?.stack ?? defaultValue?.stack;
+	const bucketStack = value?.stack ?? DashboardtypesStackModeDTO.normal;
 
 	return (
 		<>
@@ -133,6 +140,22 @@ function VisualizationSection({
 						aria-label="Series layout"
 						value={stack}
 						items={STACK_MODE_OPTIONS}
+						onChange={(next): void => onChange({ ...value, stack: next })}
+					/>
+				</ConfigField>
+			)}
+
+			{controls.bucketStack && (
+				<ConfigField
+					label="Groups in a bucket"
+					help={BUCKET_STACK_HELP[bucketStack]}
+					{...reset('stack')}
+				>
+					<ConfigTiles
+						testId="panel-editor-v2-bucket-stack"
+						aria-label="Groups in a bucket"
+						value={bucketStack}
+						items={BUCKET_STACK_OPTIONS}
 						onChange={(next): void => onChange({ ...value, stack: next })}
 					/>
 				</ConfigField>

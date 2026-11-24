@@ -4,11 +4,11 @@ import { resolveDistributionLegendSeries } from '../../utils/legendSeries';
 export const sections: SectionConfig[] = [
 	{
 		kind: SectionKind.Visualization,
-		controls: { switchPanelKind: true, timePreference: true },
+		controls: { switchPanelKind: true, timePreference: true, bucketStack: true },
 	},
 	{
 		kind: SectionKind.ChartAppearance,
-		controls: { stack: true, percentiles: true },
+		controls: { percentiles: true },
 	},
 	// Formats the bucket bounds; counts are plain integers and take no unit.
 	{ kind: SectionKind.Formatting, controls: { unit: true, decimals: true } },

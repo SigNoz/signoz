@@ -115,7 +115,7 @@ function DistributionPanelRenderer({
 						xMin={spec.axes?.x?.min ?? undefined}
 						xMax={spec.axes?.x?.max ?? undefined}
 						yScale={resolveDistributionYScale(spec.axes?.y?.scale)}
-						stack={resolveDistributionStackMode(spec.chartAppearance?.stack)}
+						stack={resolveDistributionStackMode(spec.visualization?.stack)}
 						xAxisUnit={spec.formatting?.unit}
 						decimalPrecision={decimalPrecision}
 						customColors={spec.legend?.customColors ?? undefined}
