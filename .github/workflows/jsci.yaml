@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: ${{ fromJSON(github.event_name == 'merge_group' && '[1, 2, 3]' || '[1]') }}
     steps:
       - name: self-checkout
         uses: actions/checkout@v4
