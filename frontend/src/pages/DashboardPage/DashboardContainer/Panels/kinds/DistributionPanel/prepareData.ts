@@ -32,7 +32,7 @@ export function prepareDistributionData({
 	legendMap: Record<string, string>;
 }): DistributionPanelData {
 	for (const result of results) {
-		const queryName = result.queryName ?? '';
+		const { queryName } = result;
 		for (const aggregation of result.aggregations ?? []) {
 			const buckets = aggregation.meta?.buckets;
 			if (!buckets?.length) {
