@@ -1,13 +1,15 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import AlertHistory from 'container/AlertHistory';
 import { AlertDetailsTab } from 'container/AlertHistory/types';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { History, Table } from '@signozhq/icons';
-import EditRules from 'pages/EditRules';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
+
+const EditRules = Loadable(() => import('pages/EditRules'));
+const AlertHistory = Loadable(() => import('container/AlertHistory'));
 
 export const useRouteTabUtils = (): { routes: TabRoutes[] } => {
 	const urlQuery = useUrlQuery();

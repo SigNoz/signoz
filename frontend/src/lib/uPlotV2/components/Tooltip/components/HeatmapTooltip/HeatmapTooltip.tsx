@@ -38,6 +38,7 @@ export default function HeatmapTooltip({
 	series,
 	visibleGroups,
 	groupColor,
+	bucketLabel,
 	yAxisUnit,
 	decimalPrecision,
 	timezone,
@@ -138,6 +139,15 @@ export default function HeatmapTooltip({
 					</span>
 					{isPinned && <TooltipPinnedBadge />}
 				</div>
+
+				{bucketLabel && (
+					<div
+						className={Styles.bucketLabel}
+						data-testid="heatmap-tooltip-bucket-label"
+					>
+						{bucketLabel}
+					</div>
+				)}
 
 				{filterLabel && (
 					<div

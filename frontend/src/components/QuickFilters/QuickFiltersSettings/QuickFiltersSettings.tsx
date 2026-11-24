@@ -84,6 +84,7 @@ function QuickFiltersSettings({
 					<Button
 						type="default"
 						onClick={handleDiscardChanges}
+						data-testid="quick-filters-settings-discard"
 						icon={<X size={16} />}
 					>
 						Discard
@@ -93,6 +94,7 @@ function QuickFiltersSettings({
 						onClick={handleSaveChanges}
 						icon={<Check size={16} />}
 						loading={isUpdatingCustomFilters}
+						data-testid="quick-filters-settings-save"
 					>
 						Save changes
 					</Button>

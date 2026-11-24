@@ -32,7 +32,7 @@ jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
 const listErrorsURL = `${ENVIRONMENT.baseURL}/api/v1/listErrors`;
 const countErrorsURL = `${ENVIRONMENT.baseURL}/api/v1/countErrors`;
 
-const listErrorsSpy = jest.fn();
+const listErrorsSpy = jest.fn() as jest.MockedFunction<(body: unknown) => void>;
 
 const lastNavigatedFilterItems = (): unknown => {
 	const { calls } = safeNavigateMock.mock;
@@ -54,7 +54,7 @@ const KEPT_FILTER_ITEMS = [
 describe('Exceptions page - run query', () => {
 	beforeEach(() => {
 		const state = store.getState();
-		(useSelector as jest.Mock).mockImplementation((selector) =>
+		jest.mocked(useSelector).mockImplementation((selector) =>
 			selector({
 				...state,
 				globalTime: { ...state.globalTime, loading: false },
@@ -88,7 +88,8 @@ describe('Exceptions page - run query', () => {
 		const user = userEvent.setup({ delay: null });
 		await renderWithFilter();
 
-		await user.click(await screen.findByRole('button', { name: /run query/i }));
+		// The button reads Cancel while the list is still fetching.
+		await user.click(await screen.findByTestId('explorer-run-query-btn'));
 
 		await waitFor(() =>
 			expect(lastNavigatedFilterItems()).toStrictEqual(KEPT_FILTER_ITEMS),
@@ -99,9 +100,9 @@ describe('Exceptions page - run query', () => {
 		const user = userEvent.setup({ delay: null });
 		await renderWithFilter();
 
-		await user.click(
-			within(screen.getByTestId('qb-search-select')).getByRole('combobox'),
-		);
+		within(screen.getByTestId('qb-search-select'))
+			.getByRole('combobox', { hidden: true })
+			.focus();
 		await user.keyboard('{Control>}{Enter}{/Control}');
 
 		await waitFor(() =>

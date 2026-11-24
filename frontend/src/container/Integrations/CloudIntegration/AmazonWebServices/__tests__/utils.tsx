@@ -1,58 +1,66 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import { render, RenderResult, screen, within } from 'tests/test-utils';
 import { IntegrationType } from 'container/Integrations/types';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
 import ServiceDetails from '../ServiceDetails/ServiceDetails';
-import { accountsResponse } from './mockData';
+import { accountsResponse, CLOUD_ACCOUNT_ID } from './mockData';
 
 /**
- * Renders ServiceDetails (inline config form). Tests must register MSW handlers
- * for GET accounts and GET service details, and mock useUrlQuery (cloudAccountId, service).
+ * Renders ServiceDetails (inline config form) for the account and service in the
+ * URL. Tests must register MSW handlers for GET accounts and GET service details.
  */
 const renderServiceDetails = (
-	_initialConfigLogsS3Buckets: Record<string, string[]> = {},
-	_serviceId = 's3sync',
+	serviceId = 's3sync',
 	type: IntegrationType = IntegrationType.AWS_SERVICES,
 ): RenderResult =>
-	render(
-		<MockQueryClientProvider>
-			<ServiceDetails type={type} />
-		</MockQueryClientProvider>,
-	);
+	render(<ServiceDetails type={type} />, undefined, {
+		initialRoute: `/?cloudAccountId=${CLOUD_ACCOUNT_ID}&service=${serviceId}`,
+	});
 
 /**
  * Asserts generic UI elements of the ServiceDetails config form (Overview tab).
  */
 const assertGenericModalElements = async (): Promise<void> => {
-	await waitFor(() => {
-		expect(screen.getByRole('switch')).toBeInTheDocument();
-		expect(screen.getByText(/log collection/i)).toBeInTheDocument();
-	});
+	await expect(
+		screen.findByTestId('cloud-service-logs-switch'),
+	).resolves.toBeInTheDocument();
+	expect(screen.getByText(/log collection/i)).toBeInTheDocument();
 };
 
 /**
- * Asserts S3 bucket selector section: title, region labels, and one combobox per region.
- * Does not assert placeholder text (antd Select may not expose it as placeholder attribute).
+ * Asserts S3 bucket selector section: title, a select per account region, and
+ * the buckets already selected in each region.
  */
 const assertS3SyncSpecificElements = async (
-	_expectedBucketsByRegion: Record<string, string[]> = {},
+	expectedBucketsByRegion: Record<string, string[]> = {},
 ): Promise<void> => {
 	const regions = accountsResponse.data.accounts[0]?.config?.aws?.regions || [];
 
-	await waitFor(() => {
-		expect(screen.getByText(/select s3 buckets by region/i)).toBeInTheDocument();
+	const selector = await screen.findByTestId('s3-buckets-selector');
+	expect(selector).toHaveTextContent(/select s3 buckets by region/i);
 
-		regions.forEach((region) => {
-			expect(screen.getByText(region)).toBeInTheDocument();
+	regions.forEach((region) => {
+		expect(selector).toHaveTextContent(region);
+		expect(screen.getByTestId(`s3-buckets-select-${region}`)).toBeInTheDocument();
+	});
+
+	Object.entries(expectedBucketsByRegion).forEach(([region, buckets]) => {
+		buckets.forEach((bucket) => {
+			expect(screen.getByTestId(`s3-buckets-select-${region}`)).toHaveTextContent(
+				bucket,
+			);
 		});
-
-		const comboboxes = screen.getAllByRole('combobox');
-		expect(comboboxes.length).toBeGreaterThanOrEqual(regions.length);
 	});
 };
+
+const bucketSelectInput = (region: string): HTMLElement =>
+	within(screen.getByTestId(`s3-buckets-select-${region}`)).getByRole(
+		'combobox',
+		{ hidden: true },
+	);
 
 export {
 	assertGenericModalElements,
 	assertS3SyncSpecificElements,
+	bucketSelectInput,
 	renderServiceDetails,
 };
