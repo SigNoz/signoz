@@ -251,10 +251,6 @@ export const aiAssistantMocks = defineStoryMocks({
 
 export type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
 
-/**
- * The same thread in the ⌘J modal over another page. The shell mounts the modal
- * once the global config turns Noz on; the store is what opens it.
- */
 export const aiAssistantModalMocks = defineStoryMocks({
 	controls: aiAssistantMocks.controls,
 	handlers: (values, response) =>

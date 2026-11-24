@@ -15,10 +15,8 @@ interface PlayContext {
 
 type Play = (context: PlayContext) => Promise<void>;
 
-/** The shell mounts the modal once the global config has answered. */
 const untilLoaded = { timeout: 15_000 };
 
-/** The modal portals to the body, outside the canvas the page's plays search. */
 const modal = (): Promise<HTMLElement> =>
 	screen.findByRole('dialog', { name: 'Noz' }, untilLoaded);
 
@@ -27,7 +25,6 @@ const inModal =
 	async (context) =>
 		play({ ...context, canvasElement: await modal() });
 
-/** Swaps the thread for the conversation list, from the header's History. */
 export const openHistory = async (): Promise<void> => {
 	const toggle = await within(await modal()).findByLabelText(
 		'Toggle conversations',
