@@ -52,6 +52,14 @@
 	font-variant-numeric: tabular-nums;
 }
 
+.bucketLabel {
+	padding: var(--spacing-2) var(--gutter) 0;
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	color: var(--muted-foreground);
+	overflow-wrap: anywhere;
+}
+
 .filter {
 	display: flex;
 	align-items: center;

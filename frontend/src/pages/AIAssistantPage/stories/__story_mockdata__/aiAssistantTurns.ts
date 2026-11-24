@@ -3,11 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { MessageSummaryDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageSummaryDTO } from '@signozhq/noz-client';
 import {
 	MessageContextDTOSource,
 	MessageContextDTOType,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import type { MessageBlock } from 'container/AIAssistant/types';
 
 /** The opening question's contexts: the thread shows the @-picked ones, not the page it was asked from. */

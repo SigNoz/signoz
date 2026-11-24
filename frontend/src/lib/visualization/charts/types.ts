@@ -142,6 +142,8 @@ export interface HeatmapChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	timezone?: Timezone;
+	/** What the bucket axis measures, shown in the tooltip header, e.g. `Traces · duration_nano`. */
+	bucketLabel?: string;
 	/** Colour bar below the grid. Default true. */
 	showVisualMap?: boolean;
 	/** Default true; hidden anyway when there is only one group. The label isolates

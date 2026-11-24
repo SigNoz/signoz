@@ -3,6 +3,7 @@ import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import TanStackTable from 'components/TanStackTableView';
@@ -182,32 +183,30 @@ function ListAlertRules(): JSX.Element {
 				deleteDescription="Views are shared across your organization, so this removes it for everyone. Alert rules are not affected."
 			/>
 			<div className={styles.main}>
-				{!isEmptyNoRules && (
-					<div className={styles.headerZone}>
-						<ListCommandHeader
-							label={activeLabel}
-							count={total}
-							isCountLoading={isFetching}
-							isModified={ruleViews.isModified}
-							testIdPrefix="alert-rules"
-							action={
-								<AlertRulesHeaderActions
-									columns={columns}
-									canAddAlert={addNewAlert}
-									onNewAlert={handleNewAlert}
-								/>
-							}
-						/>
-						<AlertRulesFilterZone
-							query={filter.query}
-							states={filter.states}
-							creatorOptions={creatorOptions}
-							source={source}
-							onQueryChange={submitQuery}
-							onStatesChange={changeStates}
-						/>
-					</div>
-				)}
+				<ListHeaderZone testId="alert-rules-header-zone">
+					<ListCommandHeader
+						label={activeLabel}
+						count={total}
+						isCountLoading={isFetching}
+						isModified={ruleViews.isModified}
+						testIdPrefix="alert-rules"
+						action={
+							<AlertRulesHeaderActions
+								columns={columns}
+								canAddAlert={addNewAlert && !isEmptyNoRules}
+								onNewAlert={handleNewAlert}
+							/>
+						}
+					/>
+					<AlertRulesFilterZone
+						query={filter.query}
+						states={filter.states}
+						creatorOptions={creatorOptions}
+						source={source}
+						onQueryChange={submitQuery}
+						onStatesChange={changeStates}
+					/>
+				</ListHeaderZone>
 
 				<div ref={containerRef} className={styles.tableContainer}>
 					{isError ? (

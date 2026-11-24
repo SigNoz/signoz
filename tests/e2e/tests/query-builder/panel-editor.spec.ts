@@ -29,6 +29,7 @@ const QUERIES = {
 const ALL = ['group_by', 'having', 'order_by', 'limit', 'legend_format'];
 const NO_HAVING = ['group_by', 'order_by', 'limit', 'legend_format'];
 const METRICS = ['having', 'order_by', 'limit', 'legend_format'];
+const HEATMAP = [...NO_HAVING, 'bucket_options'];
 
 /**
  * Add-on toggles each panel kind offers per signal. Metrics group by lives in
@@ -44,7 +45,7 @@ const ADD_ONS: Record<
 		[PanelKind.Table]: ALL,
 		[PanelKind.PieChart]: ALL,
 		[PanelKind.Number]: ['legend_format'],
-		[PanelKind.Heatmap]: NO_HAVING,
+		[PanelKind.Heatmap]: HEATMAP,
 	},
 	traces: {
 		[PanelKind.TimeSeries]: ALL,
@@ -52,7 +53,7 @@ const ADD_ONS: Record<
 		[PanelKind.Table]: ALL,
 		[PanelKind.PieChart]: ALL,
 		[PanelKind.Number]: ['legend_format'],
-		[PanelKind.Heatmap]: NO_HAVING,
+		[PanelKind.Heatmap]: HEATMAP,
 	},
 	metrics: {
 		[PanelKind.TimeSeries]: METRICS,

@@ -29,6 +29,11 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
 import { findDataTypeOfOperator } from 'lib/query/findDataTypeOfOperator';
+import {
+	aggregatesDistributionField,
+	setDistributionField,
+	toDistributionAggregation,
+} from 'lib/query/distributionField';
 import { isEmpty, isEqual } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -476,7 +481,12 @@ export const useQueryOperations: UseQueryOperations = ({
 			newQueryData = newQueryData ? newQueryData : newQuery;
 
 			setOperators(newOperators);
-			handleSetQueryData(index, newQueryData);
+			handleSetQueryData(
+				index,
+				aggregatesDistributionField(panelType, newQueryData.dataSource)
+					? toDistributionAggregation(newQueryData)
+					: newQueryData,
+			);
 		},
 		[
 			isRawQuery,
@@ -506,13 +516,18 @@ export const useQueryOperations: UseQueryOperations = ({
 	const handleChangeQueryData: HandleChangeQueryData | HandleChangeQueryDataV5 =
 		useCallback(
 			(key: string, value: any) => {
-				const newQuery = {
-					...query,
-					[key]:
-						key === LEGEND && typeof value === 'string'
-							? getFormatedLegend(value)
-							: value,
-				};
+				// A heatmap's sort names its field, so it follows a field change.
+				const newQuery =
+					key === 'aggregations' &&
+					aggregatesDistributionField(panelType, query.dataSource)
+						? setDistributionField(query, value?.[0]?.expression ?? '')
+						: {
+								...query,
+								[key]:
+									key === LEGEND && typeof value === 'string'
+										? getFormatedLegend(value)
+										: value,
+							};
 
 				if (isForTraceOperator) {
 					handleSetTraceOperatorData(index, newQuery);
@@ -523,6 +538,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			[
 				query,
 				index,
+				panelType,
 				handleSetQueryData,
 				handleSetTraceOperatorData,
 				isForTraceOperator,

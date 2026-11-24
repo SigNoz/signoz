@@ -9,6 +9,11 @@
 	@include custom-scrollbar;
 }
 
+// Without its own scroll area (View modal) it must not clip the where-clause autocomplete.
+.unclipped {
+	overflow: visible;
+}
+
 .scrollArea {
 	// Top padding lives on the sticky tab nav instead, so the nav keeps its
 	// breathing room both at rest and when pinned to the top.

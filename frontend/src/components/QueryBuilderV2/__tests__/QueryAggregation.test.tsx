@@ -8,7 +8,7 @@ import QueryAggregationOptions from '../QueryV2/QueryAggregation/QueryAggregatio
 
 jest.mock('../QueryV2/QueryAggregation/QueryAggregationSelect', () => ({
 	__esModule: true,
-	default: (): null => null,
+	default: (): JSX.Element => <div data-testid="aggregation-select" />,
 }));
 
 const queryData = initialQueriesMap.traces.builder
@@ -68,4 +68,19 @@ describe('QueryAggregationOptions step interval', () => {
 		renderFor(PANEL_TYPES.TIME_SERIES, DataSource.TRACES);
 		expect(screen.getByText('every')).toBeInTheDocument();
 	});
+});
+
+describe('QueryAggregationOptions on a heatmap', () => {
+	it.each([
+		[PANEL_TYPES.HEATMAP, DataSource.TRACES, true],
+		[PANEL_TYPES.HEATMAP, DataSource.METRICS, false],
+		[PANEL_TYPES.TIME_SERIES, DataSource.TRACES, false],
+	])(
+		'%s over %s renders the field picker: %s',
+		(panelType, dataSource, picker) => {
+			renderFor(panelType, dataSource);
+			expect(!!screen.queryByTestId('distribution-field-select')).toBe(picker);
+			expect(!!screen.queryByTestId('aggregation-select')).toBe(!picker);
+		},
+	);
 });

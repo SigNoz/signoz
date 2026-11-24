@@ -1,4 +1,4 @@
-import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { PageTypeDTO } from '@signozhq/noz-client';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { matchRoute } from 'lib/router/matchRoute';
