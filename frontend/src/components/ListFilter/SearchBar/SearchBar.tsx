@@ -1,4 +1,10 @@
-import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
+import {
+	type FocusEvent,
+	type MouseEvent,
+	useCallback,
+	useMemo,
+	useRef,
+} from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -67,6 +73,20 @@ function SearchBar({
 	const onSubmitRef = useRef(handleSubmit);
 	onSubmitRef.current = handleSubmit;
 
+	// Leaving the box runs an unrun draft, e.g. terms picked from the suggestions.
+	// A blur from switching windows or tabs does not.
+	const handleBlur = useCallback(
+		(event: FocusEvent<HTMLDivElement>): void => {
+			const stillInside = event.currentTarget.contains(
+				event.relatedTarget as Node | null,
+			);
+			if (!stillInside && dirty && !disabled && document.hasFocus()) {
+				handleSubmit();
+			}
+		},
+		[dirty, disabled, handleSubmit],
+	);
+
 	const extensions = useMemo(
 		() => [
 			dslHighlight,
@@ -127,7 +147,10 @@ function SearchBar({
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={cx(styles.field, { [styles.disabled]: disabled })}>
+			<div
+				className={cx(styles.field, { [styles.disabled]: disabled })}
+				onBlur={handleBlur}
+			>
 				<Search
 					size={12}
 					color={Color.BG_VANILLA_400}

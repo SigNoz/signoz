@@ -2,8 +2,13 @@ import { useMemo } from 'react';
 import { useAppContext } from 'providers/App/App';
 
 import type { RuleViewCtx } from './types';
+import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
 
 export function useRuleViewCtx(): RuleViewCtx {
 	const { user } = useAppContext();
-	return useMemo(() => ({ userEmail: user.email }), [user.email]);
+	const recent = useAlertRuleViewsStore((s) => s.recent);
+	return useMemo(
+		() => ({ userEmail: user.email, recent }),
+		[user.email, recent],
+	);
 }
