@@ -1,4 +1,7 @@
 
+# Vite copies public/ unhashed, and the Go server caches /assets/ as immutable
+/public/assets/
+
 # Sentry Config File
 .env.sentry-build-plugin
 .qodo

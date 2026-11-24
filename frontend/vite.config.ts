@@ -188,6 +188,15 @@ export default defineConfig(({ mode }): UserConfig => {
 			sourcemap: true,
 			outDir: 'build',
 			cssMinify: 'esbuild',
+			// The Go server caches /assets/ as immutable, so every file there must carry a content hash.
+			assetsDir: 'assets',
+			rolldownOptions: {
+				output: {
+					entryFileNames: 'assets/[name]-[hash].js',
+					chunkFileNames: 'assets/[name]-[hash].js',
+					assetFileNames: 'assets/[name]-[hash].[ext]',
+				},
+			},
 		},
 		server: {
 			open: true,
