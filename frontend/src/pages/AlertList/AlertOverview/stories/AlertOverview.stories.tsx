@@ -18,13 +18,13 @@ const pageStory = storyMocks(alertOverviewMocks, { layout: 'app' });
 
 /**
  * One rule read only: its condition, the series it evaluates against, its state
- * and the channels it notifies.
+ * and the channels it notifies. Gated on authz permissions.
  *
  * Route: `/alerts/overview?ruleId=...`.
  */
 const meta = {
-	title: 'Pages/Alerts/Overview',
-	tags: ['play'],
+	title: 'Pages/Alerts/Overview/Overview',
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
