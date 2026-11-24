@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, RenderResult } from '@testing-library/react';
+import { render, RenderResult, screen } from '@testing-library/react';
 import TriggeredAlerts from 'container/TriggeredAlerts';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { AppContext } from 'providers/App/App';

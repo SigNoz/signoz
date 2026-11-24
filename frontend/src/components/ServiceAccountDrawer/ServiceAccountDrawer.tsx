@@ -60,7 +60,7 @@ import { ServiceAccountDrawerTab } from './utils';
 
 import './ServiceAccountDrawer.styles.scss';
 
-interface ServiceAccountDrawerProps {
+export interface ServiceAccountDrawerProps {
 	onSuccess: (options?: { closeDrawer?: boolean }) => void;
 }
 
