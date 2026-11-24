@@ -33,7 +33,7 @@ import styles from './SearchBar.module.scss';
 interface Props {
 	value: string;
 	grammar: DslGrammar;
-	// Ids: `${testIdPrefix}`, `-submit`, `-dirty`.
+	// Ids: `${testIdPrefix}`, `-field` (the editable area), `-submit`, `-dirty`.
 	testIdPrefix: string;
 	onChange: (value: string) => void;
 	onSubmit: () => void;
@@ -91,6 +91,7 @@ function SearchBar({
 		() => [
 			dslHighlight,
 			editorTheme,
+			EditorView.contentAttributes.of({ 'data-testid': `${testIdPrefix}-field` }),
 			// Wrap a long query onto the next line instead of scrolling horizontally.
 			EditorView.lineWrapping,
 			// Read-only is not enough: these open the list on click and accepting an
@@ -142,7 +143,7 @@ function SearchBar({
 				]),
 			),
 		],
-		[disabled],
+		[disabled, testIdPrefix],
 	);
 
 	return (

@@ -7,7 +7,11 @@ import { AppContext } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import { onNuqsUrlUpdate, resetNuqsState } from 'tests/nuqs-helpers';
 import { TestRouter } from 'tests/router';
-import { getAppContextMock } from 'tests/test-utils';
+import { act, getAppContextMock, userEvent } from 'tests/test-utils';
+
+export const SEARCH_INPUT = 'triggered-alerts-search-input-field';
+// The 300 ms search debounce plus the URL write that follows it.
+export const SEARCH_SETTLE_MS = 1000;
 
 interface RenderOptions {
 	initialRoute?: string;
@@ -59,4 +63,15 @@ export function getTriggeredAlertRowTestId(
 	column: 'name' | 'severity' | 'status',
 ): string {
 	return `alert-row-${fingerprint}-${column}`;
+}
+
+export async function search(text: string): Promise<void> {
+	jest.useFakeTimers();
+	const user = userEvent.setup({
+		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+	});
+	await user.type(screen.getByTestId(SEARCH_INPUT), text);
+	act(() => {
+		jest.advanceTimersByTime(SEARCH_SETTLE_MS);
+	});
 }

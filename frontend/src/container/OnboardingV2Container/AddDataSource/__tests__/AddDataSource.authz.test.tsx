@@ -14,6 +14,11 @@ jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	default: (): null => null,
 }));
 
+jest.mock('../../onboarding-configs/onboarding-config-with-links', () => ({
+	__esModule: true,
+	default: [],
+}));
+
 jest.mock('components/InviteMembers/InviteMembers', () => {
 	return function MockInviteMembers(props: InviteMembersProps): JSX.Element {
 		return (

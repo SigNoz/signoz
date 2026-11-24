@@ -321,8 +321,8 @@ const createTracesResponse = ({
 						httpMethod: trace.httpMethod ?? httpMethods[index % httpMethods.length],
 						responseStatusCode:
 							trace.responseStatusCode ?? statusCodes[index % statusCodes.length],
-						traceID: `trace-id-${index}`,
-						spanID: `span-id-${index}`,
+						trace_id: `trace-id-${index}`,
+						span_id: `span-id-${index}`,
 					},
 				};
 			})
@@ -340,8 +340,8 @@ const createTracesResponse = ({
 							durationNano: 1000000 + cumulativeIndex * 100000,
 							httpMethod: httpMethods[cumulativeIndex % httpMethods.length],
 							responseStatusCode: statusCodes[cumulativeIndex % statusCodes.length],
-							traceID: `trace-id-${cumulativeIndex}`,
-							spanID: `span-id-${cumulativeIndex}`,
+							trace_id: `trace-id-${cumulativeIndex}`,
+							span_id: `span-id-${cumulativeIndex}`,
 						},
 					};
 				},

@@ -32,6 +32,7 @@ export function BlockLink({
 			to={to}
 			style={{ display: 'block' }}
 			target={openInNewTab ? '_blank' : '_self'}
+			data-testid="trace-block-link"
 		>
 			{children}
 		</AppLink>

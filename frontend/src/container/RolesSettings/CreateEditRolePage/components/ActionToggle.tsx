@@ -160,6 +160,7 @@ function ActionToggle({
 			<AlertDialog
 				open={confirmDialogOpen}
 				title="Change permission scope?"
+				testId={`action-toggle-scope-dialog-${resource}-${action}`}
 				confirmText="Change scope"
 				color="danger"
 				cancelText="Cancel"
