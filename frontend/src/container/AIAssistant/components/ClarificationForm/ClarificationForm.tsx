@@ -6,11 +6,11 @@ import { Input } from '@signozhq/ui/input';
 import { Select } from '@signozhq/ui/select';
 import type { SelectItemType } from '@signozhq/ui/select';
 import logEvent from 'api/common/logEvent';
-import { ClarificationFieldTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ClarificationFieldTypeDTO } from '@signozhq/noz-client';
 import type {
 	ClarificationEventDTO,
 	ClarificationFieldEventDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { AIAssistantEvents } from '../../events';
