@@ -375,11 +375,9 @@ play: async () => {
 it on opens every tooltip the page renders and keeps it open, which is what makes
 a page's tooltips one screenshot rather than one hover each.
 
-Hovering cannot do this. Radix dispatches a `tooltip.open` event on `document`
-when a tooltip opens, and every mounted tooltip closes itself on it, so exactly
-one is open at a time no matter how many providers the tree has. A tooltip whose
-`open` is controlled ignores the event, which is what the alias passes:
-`mocks/tooltip.mock.tsx` wraps `Tooltip` and hands it `open` while the control is on.
+Hovering cannot do this: it opens one tooltip at a time. While the control is
+on, `mocks/tooltip.mock.tsx` wraps `Tooltip` in `ForceOpenProvider` from
+`@signozhq/ui/testing`, which holds its popup open.
 
 A tooltip the page already drives, such as `SpanHoverCard`, keeps its own state:
 only the page knows what its popup is anchored to. A tooltip whose title is empty

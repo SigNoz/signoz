@@ -14,10 +14,6 @@
 	--drawer-header-padding-inline: var(--spacing-12);
 	--drawer-body-padding: var(--spacing-10) var(--spacing-12);
 	--drawer-footer-padding-inline: var(--spacing-12);
-
-	[data-slot='select-content'] {
-		width: var(--radix-select-trigger-width);
-	}
 }
 
 .body {

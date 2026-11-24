@@ -1,16 +1,13 @@
 import { toggleControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
-import type { StoryMockArgs } from '../controls/types';
 import { holdTooltipsOpen } from '../mocks/tooltipsHeldOpen';
 
 const TOOLTIPS = 'Tooltips';
 
 /**
  * Holds every tooltip the story renders open, so a page's tooltips are one
- * screenshot rather than one hover each. Radix closes the open tooltip from a
- * `document` event when the next one opens, so hovering can never hold more
- * than one; a controlled `open` ignores that event, and `mocks/tooltip.mock.tsx`
- * is what passes it.
+ * screenshot rather than one hover each. Hovering opens one at a time;
+ * `mocks/tooltip.mock.tsx` holds each popup open with `ForceOpenProvider`.
  */
 export const tooltipMocks = defineStoryMocks({
 	controls: {
@@ -23,5 +20,3 @@ export const tooltipMocks = defineStoryMocks({
 	},
 	effect: ({ tooltipsOpen }) => holdTooltipsOpen(tooltipsOpen),
 });
-
-export type TooltipArgs = StoryMockArgs<typeof tooltipMocks>;
