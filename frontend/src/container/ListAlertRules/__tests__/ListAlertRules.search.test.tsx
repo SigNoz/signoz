@@ -19,12 +19,26 @@ import {
 
 const QUERY = "name CONTAINS 'CPU'";
 
+function getSearchContent(): HTMLElement {
+	const content = screen
+		.getByTestId('alert-rules-list-search')
+		.querySelector<HTMLElement>('.cm-content');
+	if (!content) {
+		throw new Error('Search editor content not found');
+	}
+	return content;
+}
+
 function lastRequest(requests: URLSearchParams[]): URLSearchParams {
 	return requests[requests.length - 1];
 }
 
 describe('ListAlertRules — search', () => {
 	let requests: URLSearchParams[];
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
 
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
@@ -127,6 +141,43 @@ describe('ListAlertRules — search', () => {
 		await waitFor(() => {
 			expect(lastRequest(requests).get('offset')).toBe('0');
 		});
+	});
+
+	it('runs the draft when the search box loses focus', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		// jsdom reports no focus once it lands on <body>; a focused browser window does.
+		jest.spyOn(document, 'hasFocus').mockReturnValue(true);
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert');
+
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
+		await user.click(document.body);
+
+		await waitFor(() => {
+			expect(lastRequest(requests).get('query')).toBe(QUERY);
+		});
+		await waitFor(() => {
+			expect(getCurrentNuqsSearchParams().get('query')).toBe(QUERY);
+		});
+	});
+
+	it('keeps the draft unrun when focus leaves the window', async () => {
+		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		renderListAlertRules();
+
+		await screen.findByText('High CPU Alert');
+
+		await user.click(getSearchContent());
+		setSearchDraft(QUERY);
+		jest.spyOn(document, 'hasFocus').mockReturnValue(false);
+		await user.click(document.body);
+
+		expect(requests.some((r) => r.has('query'))).toBe(false);
+		expect(
+			screen.getByTestId('alert-rules-list-search-dirty'),
+		).toBeInTheDocument();
 	});
 
 	it('sends the selected states once, as repeated states= params, when the dropdown closes', async () => {
