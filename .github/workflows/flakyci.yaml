@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  jest:
+  flaky-tests:
     runs-on: ubuntu-latest
     steps:
       - name: self-checkout
@@ -23,4 +23,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_FLAKY_TESTS_WEBHOOK }}
-        run: node frontend/scripts/flaky-jest-report.mjs >> "$GITHUB_STEP_SUMMARY"
+        run: node frontend/scripts/flaky-test-report.mjs >> "$GITHUB_STEP_SUMMARY"
