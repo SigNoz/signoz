@@ -1,6 +1,5 @@
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import { OPERATORS } from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryPair, IToken } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
@@ -311,9 +310,7 @@ export function carryOverListFilters(
 	return pairs
 		.filter(
 			(pair) =>
-				supported.has(pair.key) &&
-				!negatedKeyStarts.has(pair.position.keyStart) &&
-				pair.operator.toUpperCase() !== OPERATORS.BETWEEN,
+				supported.has(pair.key) && !negatedKeyStarts.has(pair.position.keyStart),
 		)
 		.map((pair) => {
 			const end = pair.position.valueEnd ?? pair.position.operatorEnd;
