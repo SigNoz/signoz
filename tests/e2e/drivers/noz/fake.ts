@@ -30,16 +30,10 @@ export interface FakeAssistant {
 
 const ASSISTANT_PATH = '/api/v1/assistant';
 
-// Calls made before the global config loads go out with an empty base URL.
-const UNPREFIXED = /^\/(threads|executions|empty-state)(\/|$)/;
-
 /** The path under the assistant API, or `null` for any other request. */
 function assistantPath(url: URL): string | null {
 	const at = url.pathname.indexOf(`${ASSISTANT_PATH}/`);
-	if (at >= 0) {
-		return url.pathname.slice(at + ASSISTANT_PATH.length);
-	}
-	return UNPREFIXED.test(url.pathname) ? url.pathname : null;
+	return at >= 0 ? url.pathname.slice(at + ASSISTANT_PATH.length) : null;
 }
 
 const json = (route: Route, body: unknown, status = 200): Promise<void> =>
