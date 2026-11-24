@@ -1,4 +1,8 @@
 import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { buildRuleUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlert/utils';
 import { getActiveBuilder } from 'lib/query/builderSlot';
@@ -42,6 +46,16 @@ jest.mock('uplot', () => {
 });
 
 mockAppLocation({ search: '' });
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+
+const deny = (...permissions: BrandedPermission[]): void => {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
+};
+
+beforeEach(() => {
+	deny();
+});
 
 const ENTER_ALERT_RULE_NAME_PLACEHOLDER = 'Enter alert rule name';
 
@@ -141,5 +155,45 @@ describe('CreateAlertHeader', () => {
 		);
 
 		alertStateSpy.mockRestore();
+	});
+
+	describe('authz', () => {
+		const RULE_ID = 'rule-1';
+		const renderEdit = (): void => {
+			render(
+				<CreateAlertProvider
+					isEditMode
+					ruleId={RULE_ID}
+					initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+					initialAlertState={getCreateAlertLocalStateFromAlertDef(
+						defaultPostableAlertRuleV2,
+					)}
+				>
+					<CreateAlertHeader />
+				</CreateAlertProvider>,
+			);
+		};
+		const nameField = (): HTMLElement =>
+			screen.getByPlaceholderText(ENTER_ALERT_RULE_NAME_PLACEHOLDER);
+
+		it('locks renaming a saved rule without update', () => {
+			deny(buildRuleUpdatePermission(RULE_ID));
+			renderEdit();
+
+			expect(nameField()).toBeDisabled();
+		});
+
+		it('lets a saved rule be renamed with update', () => {
+			renderEdit();
+
+			expect(nameField()).toBeEnabled();
+		});
+
+		it('never locks naming a new rule', () => {
+			deny(buildRuleUpdatePermission(RULE_ID));
+			renderCreateAlertHeader();
+
+			expect(nameField()).toBeEnabled();
+		});
 	});
 });

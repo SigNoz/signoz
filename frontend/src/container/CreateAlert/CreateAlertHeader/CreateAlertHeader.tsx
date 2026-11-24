@@ -2,6 +2,8 @@ import { useCallback, useMemo } from 'react';
 import { Input } from '@signozhq/ui/input';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { buildRuleUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
@@ -12,7 +14,14 @@ import LabelsInput from './LabelsInput';
 import './styles.scss';
 
 function CreateAlertHeader(): JSX.Element {
-	const { alertState, setAlertState, isEditMode } = useCreateAlertState();
+	const { alertState, setAlertState, isEditMode, ruleId } =
+		useCreateAlertState();
+	// Renaming a saved rule is an update; a new rule is gated on its Save.
+	const renameChecks = useMemo(
+		() => (isEditMode && ruleId ? [buildRuleUpdatePermission(ruleId)] : []),
+		[isEditMode, ruleId],
+	);
+	const renameLock = useAuthZDisabled(renameChecks);
 	const alertRuleContext = useAlertRuleOptional();
 
 	const { currentQuery } = useQueryBuilder();
@@ -60,6 +69,8 @@ function CreateAlertHeader(): JSX.Element {
 							}
 						}}
 						placeholder="Enter alert rule name"
+						disabled={renameLock.disabled}
+						disabledTooltip={renameLock.disabledTooltip}
 						testId="alert-name-input"
 					/>
 				</div>
