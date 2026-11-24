@@ -34,9 +34,12 @@
 		align-items: flex-end;
 	}
 
-	// Replies have no bubble, so they use the whole column.
 	.assistant & {
 		align-items: flex-start;
+	}
+
+	// The full page's column is already narrow, so replies use all of it.
+	.assistant &.fullPage {
 		max-width: 100%;
 	}
 }
@@ -71,8 +74,8 @@
 		border-bottom-left-radius: var(--radius-2);
 	}
 
-	// Replies are plain text on the pane; errors keep their callout.
-	.assistant &:not(.error) {
+	// The full page sets replies flush on the pane; errors keep their callout.
+	.assistant .fullPage &:not(.error) {
 		padding: 0 0 0 var(--spacing-5);
 	}
 }
@@ -83,7 +86,8 @@
 	word-break: break-word;
 }
 
-// Error bubble: a subtle error-tinted callout, rendered when a turn fails.
+// Error bubble: a subtle error-tinted callout replacing the default
+// assistant background, rendered when a turn fails.
 .bubble.error {
 	.assistant & {
 		background: var(--callout-error-background);
