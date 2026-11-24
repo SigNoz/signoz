@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -164,7 +165,12 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 			break
 		}
 		text := bodyBlocks[longest].Text
-		bodyBlocks[longest].Text, _ = notify.TruncateInBytes(text, max(len(text)-(payload.Len()-maxMessageBytes), 0))
+		text, _ = notify.TruncateInBytes(text, max(len(text)-(payload.Len()-maxMessageBytes), 0))
+		if text == "" && longest > 0 {
+			bodyBlocks = slices.Delete(bodyBlocks, longest, longest+1)
+		} else {
+			bodyBlocks[longest].Text = text
+		}
 		if payload, err = encodeMessage(bodyBlocks, titleLink); err != nil {
 			return false, err
 		}

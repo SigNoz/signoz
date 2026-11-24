@@ -438,6 +438,8 @@ func TestNotifyMessageSize(t *testing.T) {
 	testCases := []struct {
 		name              string
 		text              string
+		ruleBody          string
+		alertCount        int
 		expectedTruncated bool
 		expectedWarnLogs  int
 	}{
@@ -455,7 +457,15 @@ func TestNotifyMessageSize(t *testing.T) {
 		},
 		{
 			name:              "OverLimit_EscapedCharacters_StillFits",
-			text:              strings.Repeat(`"quoted" <tag> & more `, 4000),
+			text:              strings.Repeat("request to \"checkout\" failed with a timeout after several retries\n", 4000),
+			expectedTruncated: true,
+			expectedWarnLogs:  1,
+		},
+		{
+			name:              "OverLimit_ManyRuleBodies_BlocksDropped",
+			text:              "unused channel text",
+			ruleBody:          "rule body for $alertname",
+			alertCount:        600,
 			expectedTruncated: true,
 			expectedWarnLogs:  1,
 		},
@@ -487,9 +497,16 @@ func TestNotifyMessageSize(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			_, err = notifier.Notify(notify.WithGroupKey(context.Background(), "1"), &types.Alert{
-				Alert: model.Alert{Labels: model.LabelSet{"alertname": "size"}, StartsAt: time.Now(), EndsAt: time.Now().Add(time.Hour)},
-			})
+			alerts := make([]*types.Alert, 0, max(testCase.alertCount, 1))
+			for range max(testCase.alertCount, 1) {
+				alert := &types.Alert{Alert: model.Alert{Labels: model.LabelSet{"alertname": "size"}, StartsAt: time.Now(), EndsAt: time.Now().Add(time.Hour)}}
+				if testCase.ruleBody != "" {
+					alert.Annotations = model.LabelSet{ruletypes.AnnotationBodyTemplate: model.LabelValue(testCase.ruleBody)}
+				}
+				alerts = append(alerts, alert)
+			}
+
+			_, err = notifier.Notify(notify.WithGroupKey(context.Background(), "1"), alerts...)
 			require.NoError(t, err)
 			require.NotEmpty(t, received)
 			assert.LessOrEqual(t, len(received), maxMessageBytes)
@@ -498,9 +515,20 @@ func TestNotifyMessageSize(t *testing.T) {
 			var message teamsMessage
 			require.NoError(t, json.Unmarshal(received, &message))
 			require.Len(t, message.Attachments, 1)
-			require.Len(t, message.Attachments[0].Content.Body, 2)
-			assert.Equal(t, "size check", message.Attachments[0].Content.Body[0].Text)
-			assert.Equal(t, testCase.expectedTruncated, len(message.Attachments[0].Content.Body[1].Text) < len(strings.TrimSpace(testCase.text)))
+			body := message.Attachments[0].Content.Body
+			require.NotEmpty(t, body)
+			assert.Equal(t, "size check", body[0].Text)
+			if testCase.alertCount > 1 {
+				assert.Greater(t, len(body), 1)
+				assert.Less(t, len(body), testCase.alertCount+1)
+				for _, block := range body {
+					assert.NotEmpty(t, block.Text)
+				}
+				return
+			}
+			require.Len(t, body, 2)
+			assert.NotEmpty(t, body[1].Text)
+			assert.Equal(t, testCase.expectedTruncated, len(body[1].Text) < len(strings.TrimSpace(testCase.text)))
 		})
 	}
 }
