@@ -2,7 +2,9 @@ import { EditorView } from '@uiw/react-codemirror';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { holdResponse } from 'tests/holdResponse';
 import {
+	act,
 	fireEvent,
 	render,
 	screen,
@@ -149,6 +151,49 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			screen.findByText('payment-service'),
 		).resolves.toBeInTheDocument();
 		await expect(screen.findByText('200')).resolves.toBeInTheDocument();
+	});
+
+	it('keeps the value suggestions open when the key suggestions load', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const { held, release } = holdResponse();
+		const mockedGetKeys = jest.mocked(getFieldKeySuggestions);
+		mockedGetKeys.mockClear();
+		mockedGetKeys.mockImplementationOnce(async () => {
+			await held;
+			return { status: 'success', data: { complete: true, keys: {} } };
+		});
+		jest.mocked(getFieldValueSuggestions).mockResolvedValueOnce({
+			status: 'success',
+			data: {
+				complete: true,
+				values: {
+					stringValues: ['payment-service'],
+					numberValues: [],
+					boolValues: [],
+					relatedValues: [],
+				},
+			},
+		});
+
+		render(
+			<QuerySearch
+				onChange={jest.fn()}
+				queryData={initialQueriesMap.logs.builder.queryData[0]}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		const editor = await findQueryEditorTextbox();
+		await user.click(editor);
+		await user.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
+		await screen.findByText('payment-service');
+		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled());
+
+		release();
+		// Outlasts the 10 ms timer QuerySearch uses to reopen suggestions.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+		expect(screen.getByText('payment-service')).toBeInTheDocument();
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {

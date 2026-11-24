@@ -323,7 +323,7 @@ function QuerySearch({
 				if (!editorRef.current) {
 					return;
 				}
-				if (isFocused) {
+				if (editorRef.current.hasFocus) {
 					startCompletion(editorRef.current);
 				} else {
 					closeCompletion(editorRef.current);
@@ -332,7 +332,7 @@ function QuerySearch({
 
 			return (): void => clearTimeout(timeoutId);
 		},
-		[isFocused],
+		[],
 	);
 
 	const fetchKeySuggestions = useCallback(
