@@ -11,6 +11,7 @@ import type {
 	UseLinkPickerAccessReturn,
 } from './types';
 
+const NO_CHECKS: BrandedPermission[] = [];
 const ALLOWED: LinkAccess = { disabled: false };
 const PENDING: LinkAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
 
@@ -23,7 +24,7 @@ const PENDING: LinkAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
  */
 export function useLinkPickerAccess({
 	owner,
-	ownerChecks = [],
+	ownerChecks = NO_CHECKS,
 	linkedIds,
 	optionIds,
 	buildItemPermissions,
