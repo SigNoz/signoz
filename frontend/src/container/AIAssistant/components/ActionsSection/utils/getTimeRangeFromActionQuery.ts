@@ -1,4 +1,4 @@
-import type { MessageActionDTOQuery } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTOQuery } from '@signozhq/noz-client';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 
 export interface ActionTimeRange {

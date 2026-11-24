@@ -71,6 +71,20 @@ type KafkaConfig struct {
 
 	// ShutdownTimeout bounds draining buffered events on stop; events still undelivered when it expires are dropped.
 	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
+
+	TLS TLSConfig `mapstructure:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+
+	// CAFile is the PEM bundle that verifies the server certificate. Empty uses the system roots.
+	CAFile string `mapstructure:"ca_file"`
+
+	// CertFile and KeyFile are the client certificate, presented when the server requires client auth.
+	CertFile string `mapstructure:"cert_file"`
+
+	KeyFile string `mapstructure:"key_file"`
 }
 
 // RetryConfig configures exponential backoff for the OTLP HTTP exporter.
@@ -167,6 +181,10 @@ func (c Config) Validate() error {
 
 		if c.Kafka.ShutdownTimeout <= 0 {
 			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::shutdown_timeout must be greater than 0")
+		}
+
+		if c.Kafka.TLS.Enabled && (c.Kafka.TLS.CertFile == "") != (c.Kafka.TLS.KeyFile == "") {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::kafka::tls::cert_file and auditor::kafka::tls::key_file must be set together")
 		}
 	}
 

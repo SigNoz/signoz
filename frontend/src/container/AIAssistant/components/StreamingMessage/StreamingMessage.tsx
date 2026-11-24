@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import type {
 	ApprovalEventDTO,
 	ClarificationEventDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 
 import { useVariant } from '../../VariantContext';
 import { StreamingEventItem } from '../../types';
