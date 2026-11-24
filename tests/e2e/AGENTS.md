@@ -141,6 +141,10 @@ never by reaching for another fixture.
 - Never `test.slow()` in a driver: it triples the remaining budget on every
   call and compounds in loops. Use `allowFor(floor)`. Budgets and their
   measurements are in [`docs/flake-notes.md`](docs/flake-notes.md).
+- Import from `frontend/` by relative path and only types
+  (`export type * from '../../../frontend/src/…'`), as `drivers/schemas.ts`
+  does. CI installs only `tests/e2e`, so a package the frontend file imports
+  needs an e2e devDependency and a `paths` entry in `tsconfig.json`.
 
 ## Moving a test down a layer
 
