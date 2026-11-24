@@ -28,6 +28,25 @@
 		gap: 6px;
 		padding: 6px 10px;
 	}
+
+	// No diff: the summary sits beside the buttons, which wrap under it when the card is narrow.
+	&.inline {
+		flex-flow: row wrap;
+		align-items: center;
+		justify-content: flex-end;
+
+		> .header {
+			flex-basis: 100%;
+		}
+
+		> .summary {
+			flex: 1 1 240px;
+		}
+
+		> .actions {
+			align-self: center;
+		}
+	}
 }
 
 .header {
@@ -272,10 +291,13 @@
 	flex-shrink: 0;
 }
 
+// Equal columns sized to the wider button, aligned right.
 .actions {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
 	gap: var(--spacing-6);
+	align-self: flex-end;
 }
 
 .statusIcon {
