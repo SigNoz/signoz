@@ -194,7 +194,7 @@ export default function ConversationView({
 	}
 
 	return (
-		<div className={conversationClass} data-testid="conversation-view">
+		<div className={conversationClass} data-testid="ai-conversation-view">
 			<VirtualizedMessages
 				key={conversationId}
 				conversationId={conversationId}
