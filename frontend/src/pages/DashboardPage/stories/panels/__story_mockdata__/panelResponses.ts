@@ -30,6 +30,7 @@ import {
 	HOLE,
 	LONG_TAIL_SLICES,
 	MAX_SERIES,
+	MAX_SERIES_CONTROL,
 	NUMBER_VALUE,
 	QUERY_NAME,
 	SERVICES,
@@ -94,7 +95,7 @@ export const latencyPoints = (
 
 /** The series index a service label was generated from. */
 export const serviceIndex = (label: string): number =>
-	Array.from({ length: MAX_SERIES }, (_unused, index) =>
+	Array.from({ length: MAX_SERIES_CONTROL }, (_unused, index) =>
 		serviceAt(index),
 	).indexOf(label);
 
