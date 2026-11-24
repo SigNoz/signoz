@@ -1,8 +1,7 @@
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	mockUseAuthZDenyAll,
-	mockUseAuthZDeny,
+	denyPermissions,
 	mockUseAuthZGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
 import {
@@ -42,14 +41,10 @@ async function isRowDisabled(testId: string): Promise<boolean> {
 
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
-const deny = (...permissions: BrandedPermission[]): void => {
-	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
-};
-
 describe('ListAlertRules — permissions', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
-		deny();
+		denyPermissions();
 	});
 
 	it('enables New Alert and every row action with every permission', async () => {
@@ -68,7 +63,7 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('disables New Alert without create and names it', async () => {
-		deny(RuleCreatePermission);
+		denyPermissions(RuleCreatePermission);
 		renderListAlertRules();
 
 		await waitFor(() =>
@@ -92,7 +87,7 @@ describe('ListAlertRules — permissions', () => {
 				),
 			),
 		);
-		deny(RuleCreatePermission);
+		denyPermissions(RuleCreatePermission);
 		renderListAlertRules();
 
 		await waitFor(() =>
@@ -124,7 +119,7 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks toggle and both edits without update; clone and delete stay', async () => {
-		deny(buildRuleUpdatePermission(RULE_ID));
+		denyPermissions(buildRuleUpdatePermission(RULE_ID));
 		renderListAlertRules();
 
 		await openFirstRowMenu();
@@ -136,7 +131,7 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks edit and clone without read on the rule', async () => {
-		deny(buildRuleReadPermission(RULE_ID));
+		denyPermissions(buildRuleReadPermission(RULE_ID));
 		renderListAlertRules();
 
 		await openFirstRowMenu();
@@ -146,7 +141,7 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks clone without create', async () => {
-		deny(RuleCreatePermission);
+		denyPermissions(RuleCreatePermission);
 		renderListAlertRules();
 
 		await openFirstRowMenu();
@@ -155,7 +150,7 @@ describe('ListAlertRules — permissions', () => {
 	});
 
 	it('locks delete without delete on the rule', async () => {
-		deny(buildRuleDeletePermission(RULE_ID));
+		denyPermissions(buildRuleDeletePermission(RULE_ID));
 		renderListAlertRules();
 
 		await openFirstRowMenu();

@@ -3,6 +3,7 @@ import type {
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ENVIRONMENT } from 'constants/env';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { gettableTransactionToPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import type {
 	BrandedPermission,
@@ -247,4 +248,12 @@ export function mockUseAuthZDeny(
 			refetchPermissions: jest.fn(),
 		};
 	};
+}
+
+/**
+ * Has the mocked `useAuthZ` grant everything except `permissions`. The test
+ * file must `jest.mock('lib/authz/hooks/useAuthZ/useAuthZ')`.
+ */
+export function denyPermissions(...permissions: BrandedPermission[]): void {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
 }
