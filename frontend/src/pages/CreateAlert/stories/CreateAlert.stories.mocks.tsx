@@ -14,6 +14,10 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
+import {
+	buildNotificationChannelAttachPermission,
+	NotificationChannelCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 
 import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
@@ -220,6 +224,23 @@ export const canWriteRule = (args: CreateAlertArgs): boolean =>
 	args.channels > 0 &&
 	(args.authzState === 'error' ||
 		grantsAll(args, ...getRuleCreateChecks([STORY_CHANNEL_ID])));
+
+/** Whether the picker takes the story channel: it needs `attach` on the channel. */
+export const canPickStoryChannel = (args: CreateAlertArgs): boolean =>
+	args.channels > 0 &&
+	(args.authzState === 'error' ||
+		grantsAll(args, buildNotificationChannelAttachPermission(STORY_CHANNEL_ID)));
+
+/** The checks Save and Test notification name when a rule with the story channel is refused. */
+export const deniedWriteChecks = (args: CreateAlertArgs): string =>
+	getRuleCreateChecks([STORY_CHANNEL_ID])
+		.filter((check) => !grantsAll(args, check))
+		.join(',');
+
+/** Whether an empty picker offers to create a channel. */
+export const offersChannelCreate = (args: CreateAlertArgs): boolean =>
+	args.authzState === 'error' ||
+	grantsAll(args, NotificationChannelCreatePermission);
 
 export const fillValidAlert = async (
 	canvasElement: HTMLElement,

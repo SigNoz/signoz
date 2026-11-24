@@ -19,10 +19,10 @@ const pageStory = storyMocks(createAlertMocks, { layout: 'app' });
 
 /**
  * The new rule builder with one permission missing at a time. Every story here
- * is an admin denied exactly what its name says. `create` decides Save and Test
- * notification, `attach` on rules and on each channel which channels the
- * picker can add, and `create` on channels whether the empty picker offers to
- * make one. Reading the queried telemetry is checked by the server alone.
+ * is an admin denied exactly what its name says. `create` and `attach` on rules
+ * decide Save and Test notification, `attach` on each channel which channels
+ * the picker can add, and `create` on channels whether the empty picker offers
+ * to make one. Reading the queried telemetry is checked by the server alone.
  *
  * Route: `/alerts/new`.
  */
@@ -44,10 +44,13 @@ export const NoCreate: Story = {
 	play: expectWriteLocked,
 };
 
-/** No channel can be picked: a new rule linking one needs `attach` on rules. */
+/**
+ * Channels can be picked, but Save and Test notification are locked: a new rule
+ * linking one needs `attach` on rules, which is checked on Save.
+ */
 export const NoRuleAttach: Story = {
 	args: { revoked: ['attach:rule'] },
-	play: expectChannelLocked,
+	play: expectWriteLocked,
 };
 
 /** No channel can be picked: each needs `attach` on itself as well. */

@@ -8,8 +8,11 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	canPickStoryChannel,
 	canWriteRule,
 	clickFooterButton,
+	deniedWriteChecks,
+	offersChannelCreate,
 	type createAlertMocks,
 	fillValidAlert,
 	STORY_CHANNEL_ID,
@@ -171,15 +174,19 @@ const storyChannelOption = (): Promise<HTMLElement> =>
 	);
 
 /**
- * The picker offers the channel but will not take it: a new rule linking it
- * needs `attach` on the rule and the channel. A pending option is disabled too,
- * so the denial is read from its title.
+ * The picker offers the channel but will not take it without `attach` on the
+ * channel. A pending option is disabled too, so the denial is read from its
+ * title.
  */
 export const expectChannelLocked = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (args.alertMode === 'select-type' || args.channels === 0) {
+	if (
+		args.alertMode === 'select-type' ||
+		args.channels === 0 ||
+		canPickStoryChannel(args)
+	) {
 		return;
 	}
 
@@ -192,25 +199,38 @@ export const expectChannelLocked = async ({
 	await expect(option).toHaveAttribute('aria-disabled', 'true');
 };
 
-/** A valid rule whose Save and Test notification both name `create`. */
+/**
+ * A valid rule whose Save and Test notification name exactly the checks the
+ * role is missing: `create`, or `attach` on rules, which a new rule is only
+ * asked for on Save.
+ */
 export const expectWriteLocked = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (args.alertMode === 'select-type' || args.channels === 0) {
+	if (
+		args.alertMode === 'select-type' ||
+		!canPickStoryChannel(args) ||
+		canWriteRule(args)
+	) {
 		return;
 	}
 
 	await fillValidAlert(canvasElement);
 	const canvas = within(canvasElement);
 	for (const testId of ['save-alert-rule-button', 'test-notification-button']) {
-		const button = canvas.getByTestId(testId);
 		await waitFor(
 			() =>
-				expect(button.getAttribute('data-denied-permissions')).toMatch(/create/),
+				expect(canvas.getByTestId(testId)).toHaveAttribute(
+					'data-denied-permissions',
+					deniedWriteChecks(args),
+				),
 			untilLoaded,
 		);
-		await expect(button).toHaveAttribute('aria-disabled', 'true');
+		await expect(canvas.getByTestId(testId)).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	}
 };
 
@@ -219,7 +239,11 @@ export const expectNoChannelCreateLink = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (args.alertMode === 'select-type' || args.channels > 0) {
+	if (
+		args.alertMode === 'select-type' ||
+		args.channels > 0 ||
+		offersChannelCreate(args)
+	) {
 		return;
 	}
 
