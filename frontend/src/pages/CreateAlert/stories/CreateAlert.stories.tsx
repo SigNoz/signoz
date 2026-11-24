@@ -19,13 +19,13 @@ const pageStory = storyMocks(createAlertMocks, { layout: 'app' });
 /**
  * The new rule builder: the query, the condition, the evaluation preview against
  * `query_range`, and the channels to notify. The mode control picks the alert
- * type.
+ * type. Gated on authz permissions.
  *
  * Route: `/alerts/new`.
  */
 const meta = {
-	title: 'Pages/Alerts/Create',
-	tags: ['play'],
+	title: 'Pages/Alerts/Create/Overview',
+	tags: ['authz', 'play'],
 	component: CreateAlertPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },

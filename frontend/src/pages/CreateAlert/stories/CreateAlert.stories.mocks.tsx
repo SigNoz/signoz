@@ -13,8 +13,12 @@ import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
+
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	alertFieldKeysResponse,
@@ -88,6 +92,18 @@ const FORM = 'Create alert · form';
 const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
 type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
 
+const RULE_WRITES = ['succeeds', 'telemetry-denied'] as const;
+type RuleWrite = (typeof RULE_WRITES)[number];
+
+/** The backend's denial for a custom role without read on the queried metrics. */
+export const TELEMETRY_DENIAL =
+	'user/story-user is not authorized to perform metrics:read on resource "signoz_calls_total"';
+
+const telemetryDenied = {
+	status: 'error',
+	error: { code: 'authz_forbidden', message: TELEMETRY_DENIAL },
+};
+
 export const createAlertMocks = defineStoryMocks({
 	controls: {
 		alertMode: choiceControl<AlertMode>('Alert being created', {
@@ -108,6 +124,13 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
+		ruleWrite: choiceControl<RuleWrite>('Rule write', {
+			group: FORM,
+			description:
+				'What saving or testing the rule answers. `telemetry-denied` is the 403 a custom role gets without read on the telemetry the rule queries, which only the server can check.',
+			options: RULE_WRITES,
+			value: 'succeeds',
+		}),
 		testNotification: choiceControl<TestNotification>('Test notification', {
 			group: 'Create alert · form',
 			description:
@@ -118,20 +141,24 @@ export const createAlertMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.post('http://localhost/api/v2/rules', (_req, res, ctx) =>
-			res(ctx.status(201), ctx.json({ status: 'success', data: null })),
+			values.ruleWrite === 'telemetry-denied'
+				? res(ctx.status(403), ctx.json(telemetryDenied))
+				: res(ctx.status(201), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.post('http://localhost/api/v2/rules/test', (_req, res, ctx) =>
-			res(
-				ctx.status(200),
-				ctx.json({
-					status: 'success',
-					data: {
-						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
-						message: 'Rule tested against the last 6 hours',
-					},
-				}),
-			),
+			values.ruleWrite === 'telemetry-denied'
+				? res(ctx.status(403), ctx.json(telemetryDenied))
+				: res(
+						ctx.status(200),
+						ctx.json({
+							status: 'success',
+							data: {
+								alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+								message: 'Rule tested against the last 6 hours',
+							},
+						}),
+					),
 		),
 
 		rest.get(
@@ -180,6 +207,20 @@ export const createAlertMocks = defineStoryMocks({
 
 const untilLoaded = { timeout: 15_000 };
 
+type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
+
+/** `ops-slack`, the channel `fillValidAlert` picks: the first one listed. */
+export const STORY_CHANNEL_ID = '1';
+
+/**
+ * Whether a rule notifying the story channel can be saved and tested: the
+ * channel is listed, and the checks pass or failed open.
+ */
+export const canWriteRule = (args: CreateAlertArgs): boolean =>
+	args.channels > 0 &&
+	(args.authzState === 'error' ||
+		grantsAll(args, ...getRuleCreateChecks([STORY_CHANNEL_ID])));
+
 export const fillValidAlert = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -206,9 +247,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
+	// Disabled until its permission check answers.
 	await waitFor(async () => {
-		await expect(button).toBeEnabled();
-		await expect(button).not.toHaveAttribute('aria-disabled', 'true');
-	});
+		await expect(button).toHaveAttribute('aria-disabled', 'false');
+	}, untilLoaded);
 	await userEvent.click(button);
 };

@@ -8,16 +8,19 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	canWriteRule,
 	clickFooterButton,
 	type createAlertMocks,
 	fillValidAlert,
+	STORY_CHANNEL_ID,
+	TELEMETRY_DENIAL,
 } from '../CreateAlert.stories.mocks';
 
 type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: Pick<CreateAlertArgs, 'alertMode' | 'testNotification'>;
+	args: CreateAlertArgs;
 }
 
 const untilLoaded = { timeout: 15_000 };
@@ -80,8 +83,16 @@ export const saveValidAlert = async ({
 		return;
 	}
 
+	if (!canWriteRule(args)) {
+		return;
+	}
+
 	await fillValidAlert(canvasElement);
 	await clickFooterButton(canvasElement, 'save-alert-rule-button');
+	if (args.ruleWrite === 'telemetry-denied') {
+		await screen.findByText(TELEMETRY_DENIAL, undefined, untilLoaded);
+		return;
+	}
 	await waitFor(() =>
 		expect(screen.getByText(/alert rule created successfully/i)).toBeVisible(),
 	);
@@ -96,8 +107,16 @@ export const sendTestNotification = async ({
 		return;
 	}
 
+	if (!canWriteRule(args)) {
+		return;
+	}
+
 	await fillValidAlert(canvasElement);
 	await clickFooterButton(canvasElement, 'test-notification-button');
+	if (args.ruleWrite === 'telemetry-denied') {
+		await screen.findByText(TELEMETRY_DENIAL, undefined, untilLoaded);
+		return;
+	}
 	if (args.testNotification === 'sent') {
 		await waitFor(() =>
 			expect(
@@ -127,4 +146,90 @@ export const enableRepeatNotifications = async ({
 	await waitFor(() =>
 		expect(canvas.getByTestId('repeat-notifications-time-input')).toBeVisible(),
 	);
+};
+
+const openChannelPicker = async (canvasElement: HTMLElement): Promise<void> => {
+	const canvas = within(canvasElement);
+	const picker = (): HTMLElement =>
+		within(canvas.getByTestId('threshold-notification-channel-select')).getByRole(
+			'combobox',
+		);
+	// The picker is disabled until the channels load.
+	await waitFor(
+		() => expect(picker()).not.toHaveAttribute('disabled'),
+		untilLoaded,
+	);
+	await userEvent.click(picker());
+};
+
+/** The story channel's option in the first threshold's picker. */
+const storyChannelOption = (): Promise<HTMLElement> =>
+	screen.findByTestId(
+		`threshold-critical-channel-option-${STORY_CHANNEL_ID}`,
+		undefined,
+		untilLoaded,
+	);
+
+/**
+ * The picker offers the channel but will not take it: a new rule linking it
+ * needs `attach` on the rule and the channel. A pending option is disabled too,
+ * so the denial is read from its title.
+ */
+export const expectChannelLocked = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.alertMode === 'select-type' || args.channels === 0) {
+		return;
+	}
+
+	await openChannelPicker(canvasElement);
+	const option = await storyChannelOption();
+	await waitFor(
+		() => expect(option.title).toMatch(/is not authorized/),
+		untilLoaded,
+	);
+	await expect(option).toHaveAttribute('aria-disabled', 'true');
+};
+
+/** A valid rule whose Save and Test notification both name `create`. */
+export const expectWriteLocked = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.alertMode === 'select-type' || args.channels === 0) {
+		return;
+	}
+
+	await fillValidAlert(canvasElement);
+	const canvas = within(canvasElement);
+	for (const testId of ['save-alert-rule-button', 'test-notification-button']) {
+		const button = canvas.getByTestId(testId);
+		await waitFor(
+			() =>
+				expect(button.getAttribute('data-denied-permissions')).toMatch(/create/),
+			untilLoaded,
+		);
+		await expect(button).toHaveAttribute('aria-disabled', 'true');
+	}
+};
+
+/** With no channels, the picker asks for an admin instead of offering to create one. */
+export const expectNoChannelCreateLink = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (args.alertMode === 'select-type' || args.channels > 0) {
+		return;
+	}
+
+	await openChannelPicker(canvasElement);
+	await screen.findByText(
+		'Please ask your admin to create one.',
+		undefined,
+		untilLoaded,
+	);
+	await expect(
+		screen.queryByTestId('channels-not-found-create'),
+	).not.toBeInTheDocument();
 };
