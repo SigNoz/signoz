@@ -72,7 +72,6 @@ export interface PanelArgs {
 	showRank: boolean;
 	showShare: boolean;
 	topListAggregation: TopListAggregation;
-	valueNames: boolean;
 }
 
 /** What one `query_range` call asked for, as the handler reads it. */

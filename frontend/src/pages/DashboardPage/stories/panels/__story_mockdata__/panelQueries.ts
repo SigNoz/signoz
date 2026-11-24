@@ -109,7 +109,6 @@ interface MetricQueryOptions {
 	metricName?: string;
 	spaceAggregation?: SpaceAggregation;
 	groupBy?: string;
-	legend?: string;
 }
 
 export const metricQuery = (
@@ -121,7 +120,6 @@ export const metricQuery = (
 		metricName = 'signoz_latency',
 		spaceAggregation = SpaceAggregation.p99,
 		groupBy = 'service.name',
-		legend,
 	}: MetricQueryOptions,
 ): DashboardtypesQueryDTO => {
 	const spec: MetricBuilderQuery = {
@@ -136,10 +134,7 @@ export const metricQuery = (
 		],
 		groupBy: grouped ? [{ name: groupBy }] : undefined,
 		legend:
-			legend ??
-			(grouped && requestType !== RequestType.scalar
-				? `{{${groupBy}}}`
-				: undefined),
+			grouped && requestType !== RequestType.scalar ? `{{${groupBy}}}` : undefined,
 		bucketOptions: heatmap
 			? { kind: LinearBuckets.linear, spec: { maxValue: 1000, numBuckets: 10 } }
 			: undefined,

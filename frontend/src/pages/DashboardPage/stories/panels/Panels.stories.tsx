@@ -211,12 +211,6 @@ export const GeoMapThresholds: Story = {
 	play: playPanel,
 };
 
-/** The colour bar titled by the query's legend, `p99 latency`, not `A.p99 latency`. */
-export const GeoMapValueNames: Story = {
-	args: { kind: 'GeoMap', valueNames: true },
-	play: playPanel,
-};
-
 /**
  * Logs carrying 24 attributes each, a column apiece: every row stays one line
  * high, the body truncated rather than wrapped.
