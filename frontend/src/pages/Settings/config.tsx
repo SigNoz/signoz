@@ -1,16 +1,7 @@
+import { lazy } from 'react';
+import Loadable from 'components/Loadable';
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import BillingContainer from 'container/BillingContainer/BillingContainer';
-import GeneralSettings from 'container/GeneralSettings';
-import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
-import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
-import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
-import MCPServerSettings from 'container/MCPServerSettings/MCPServerSettings';
-import MySettings from 'container/MySettings';
-import OrganizationSettings from 'container/OrganizationSettings';
-import RolesSettings from 'container/RolesSettings';
-import CreateEditRolePage from 'container/RolesSettings/CreateEditRolePage';
-import ViewRolePage from 'container/RolesSettings/ViewRolePage';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
@@ -24,9 +15,41 @@ import {
 	User,
 	Users,
 } from '@signozhq/icons';
-import MembersSettings from 'pages/MembersSettings';
-import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
-import Shortcuts from 'pages/Shortcuts';
+import { lazyRetry } from 'utils/lazyWithRetries';
+
+const BillingContainer = Loadable(
+	() => import('container/BillingContainer/BillingContainer'),
+);
+const GeneralSettings = Loadable(() => import('container/GeneralSettings'));
+const GeneralSettingsCloud = Loadable(
+	() => import('container/GeneralSettingsCloud'),
+);
+const IngestionSettings = Loadable(
+	() => import('container/IngestionSettings/IngestionSettings'),
+);
+const MultiIngestionSettings = Loadable(
+	() => import('container/IngestionSettings/MultiIngestionSettings'),
+);
+const MCPServerSettings = Loadable(
+	() => import('container/MCPServerSettings/MCPServerSettings'),
+);
+const MySettings = Loadable(() => import('container/MySettings'));
+const OrganizationSettings = Loadable(
+	() => import('container/OrganizationSettings'),
+);
+const RolesSettings = Loadable(() => import('container/RolesSettings'));
+// Loadable's prop type rejects the authz HOC's ComponentType<object>.
+const CreateEditRolePage = lazy(() =>
+	lazyRetry(() => import('container/RolesSettings/CreateEditRolePage')),
+);
+const ViewRolePage = Loadable(
+	() => import('container/RolesSettings/ViewRolePage'),
+);
+const MembersSettings = Loadable(() => import('pages/MembersSettings'));
+const ServiceAccountsSettings = Loadable(
+	() => import('pages/ServiceAccountsSettings'),
+);
+const Shortcuts = Loadable(() => import('pages/Shortcuts'));
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{

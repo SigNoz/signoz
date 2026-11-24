@@ -106,8 +106,10 @@ function QueryAddOns({
 
 		if (
 			panelType === PANEL_TYPES.HEATMAP &&
-			query.dataSource === DataSource.METRICS &&
-			!HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
+			!(
+				query.dataSource === DataSource.METRICS &&
+				HISTOGRAM_ATTRIBUTE_TYPES.has(query.aggregateAttribute?.type ?? '')
+			)
 		) {
 			addOns = [...addOns, BUCKET_OPTIONS];
 		}
@@ -436,6 +438,7 @@ function QueryAddOns({
 											onChange={handleChangeOrderByKeys}
 											isRawQuery={isRawQuery}
 											isNewQueryV2
+											panelType={panelType ?? undefined}
 											placeholder={placeholderOf(QueryBuilderField.OrderBy)}
 										/>
 									</div>

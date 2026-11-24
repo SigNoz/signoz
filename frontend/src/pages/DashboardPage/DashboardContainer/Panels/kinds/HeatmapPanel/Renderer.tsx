@@ -25,6 +25,7 @@ import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 import {
 	prepareHeatmapData,
 	resolveHeatmapStep,
+	resolveBucketLabel,
 	resolveRequestedBucketKind,
 } from './prepareData';
 
@@ -86,6 +87,11 @@ function HeatmapPanelRenderer({
 		[spec.axes?.y?.scale, data.requestPayload],
 	);
 
+	const bucketLabel = useMemo(
+		() => resolveBucketLabel(data.requestPayload),
+		[data.requestPayload],
+	);
+
 	const decimalPrecision = useMemo(
 		() => resolveDecimalPrecision(spec.formatting?.decimalPrecision),
 		[spec.formatting?.decimalPrecision],
@@ -132,6 +138,7 @@ function HeatmapPanelRenderer({
 						axisScale={axisScale}
 						yAxisUnit={spec.formatting?.unit}
 						decimalPrecision={decimalPrecision}
+						bucketLabel={bucketLabel}
 						legendPosition={legendPosition}
 						timezone={timezone}
 						isDarkMode={isDarkMode}
