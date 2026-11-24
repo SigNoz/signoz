@@ -113,13 +113,14 @@ test.describe('settings — organization', () => {
 test.describe('settings — organization as a viewer', () => {
 	test.use({ as: 'viewer' });
 
-	test('TC-05 a viewer reaches org settings with the display name locked and the domains denied', async ({
+	test('TC-05 a viewer reaches org settings with the display name and the domains denied', async ({
 		settings,
 	}) => {
 		await settings.org.goto();
 
 		await expect(settings.org.authDomainTitle()).toBeVisible();
 		await expect(settings.org.deniedMessage()).toBeVisible();
-		await expect(settings.org.nameInput()).toBeDisabled();
+		await expect(settings.org.nameInput()).toHaveCount(0);
+		await expect(settings.org.submitButton()).toHaveCount(0);
 	});
 });

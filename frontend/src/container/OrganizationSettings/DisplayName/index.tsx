@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
-import { Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useGetMyOrganization,
@@ -26,6 +26,7 @@ import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 import { getSubmitBlockedReason } from './utils';
 
 import './DisplayName.styles.scss';
+import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const { t } = useTranslation(['organizationsettings', 'common']);
@@ -106,46 +107,49 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		>
 			<div className="form-field">
 				<label htmlFor="displayName">Display name</label>
-				<Controller
-					name="displayName"
-					control={control}
-					rules={{ required: requireErrorMessage('Display name') }}
-					render={({ field, fieldState }): JSX.Element => (
-						<>
-							<AuthZTooltip
-								triggerClassName="org-input-disabled-tooltip-class"
-								checks={[updatePermission]}
-							>
-								<Input
-									{...field}
-									id="displayName"
-									data-testid="org-display-name-input"
-									size="large"
-									placeholder={t('signoz')}
-									status={fieldState.error ? 'error' : ''}
-								/>
-							</AuthZTooltip>
-							{fieldState.error && (
-								<div className="field-error">{fieldState.error.message}</div>
-							)}
-						</>
-					)}
-				/>
+				<AuthZGuardContent checks={[readPermission]}>
+					<Controller
+						name="displayName"
+						control={control}
+						rules={{ required: requireErrorMessage('Display name') }}
+						render={({ field, fieldState }): JSX.Element => (
+							<>
+								<AuthZTooltip
+									triggerClassName="org-input-disabled-tooltip-class"
+									checks={[updatePermission]}
+								>
+									<Input
+										{...field}
+										id="displayName"
+										size="lg"
+										placeholder={t('signoz')}
+										status={fieldState.error ? 'danger' : undefined}
+									/>
+								</AuthZTooltip>
+								{fieldState.error && (
+									<div className="field-error">{fieldState.error.message}</div>
+								)}
+							</>
+						)}
+					/>
+				</AuthZGuardContent>
 			</div>
-			<div>
-				<AuthZButton
-					size="md"
-					variant="solid"
-					color="primary"
-					type="submit"
-					loading={isLoading}
-					disabledTooltip={submitBlockedReason}
-					testId="org-display-name-submit"
-					checks={[updatePermission]}
-				>
-					Submit
-				</AuthZButton>
-			</div>
+			{canReadOrg && (
+				<div>
+					<AuthZButton
+						size="md"
+						variant="solid"
+						color="primary"
+						type="submit"
+						loading={isLoading}
+						disabledTooltip={submitBlockedReason}
+						testId="org-display-name-submit"
+						checks={[updatePermission]}
+					>
+						Submit
+					</AuthZButton>
+				</div>
+			)}
 		</form>
 	);
 }

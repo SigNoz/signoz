@@ -60,18 +60,23 @@ describe('DisplayName — authz', () => {
 			'data-denied-permissions',
 			expect.stringContaining('update'),
 		);
-		expect(screen.getByTestId('org-display-name-input')).toBeDisabled();
+		expect(screen.getByLabelText('Display name')).toBeDisabled();
 	});
 
-	it('does not fetch the organization when read is denied', async () => {
+	it('shows the denial instead of the form and skips the fetch when read is denied', async () => {
 		server.use(setupAuthzDeny(buildOrganizationReadPermission(ORG_ID)));
 		const fetch = useOrgFetchHandler();
 
 		renderWithoutSavedName();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('org-display-name-input')).toBeEnabled(),
-		);
+		await expect(
+			screen.findByText(/is not authorized/i),
+		).resolves.toBeInTheDocument();
+		expect(screen.getByText(/read:organization/i)).toBeInTheDocument();
+		expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('org-display-name-submit'),
+		).not.toBeInTheDocument();
 		expect(fetch.calls()).toBe(0);
 	});
 

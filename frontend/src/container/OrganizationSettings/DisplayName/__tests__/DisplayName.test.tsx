@@ -36,7 +36,7 @@ describe('DisplayName', () => {
 	it('renders form pre-filled with org displayName from context', async () => {
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByTestId('org-display-name-input');
+		const input = await screen.findByLabelText('Display name');
 		expect(input).toHaveValue('Pentagon');
 
 		await waitFor(() =>
@@ -54,7 +54,7 @@ describe('DisplayName', () => {
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByTestId('org-display-name-input');
+		const input = await screen.findByLabelText('Display name');
 		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 		await user.type(input, 'New Org Name');
@@ -76,7 +76,7 @@ describe('DisplayName', () => {
 
 		render(<DisplayName {...defaultProps} />);
 
-		const input = await screen.findByTestId('org-display-name-input');
+		const input = await screen.findByLabelText('Display name');
 		await waitFor(() => expect(input).toBeEnabled());
 		await user.clear(input);
 

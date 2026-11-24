@@ -9,6 +9,7 @@ import { expectDenied } from './singleSignOnAuthz';
 import {
 	canDeleteDomain,
 	canEditDisplayName,
+	canReadDisplayName,
 	canListDomains,
 	listsDomains,
 	type SingleSignOnArgs,
@@ -261,14 +262,24 @@ export const expectViewerAccess = async ({
 		return;
 	}
 	if (!canListDomains(args)) {
-		await within(canvasElement).findByText(
+		await within(canvasElement).findAllByText(
 			/is not authorized/i,
 			undefined,
 			untilLoaded,
 		);
 	}
-	const input = await within(canvasElement).findByTestId(
-		'org-display-name-input',
+	if (!canReadDisplayName(args)) {
+		await waitFor(
+			() =>
+				expect(
+					within(canvasElement).queryByRole('textbox', { name: /display name/i }),
+				).toBeNull(),
+			untilLoaded,
+		);
+		return;
+	}
+	const input = await within(canvasElement).findByLabelText(
+		'Display name',
 		undefined,
 		untilLoaded,
 	);

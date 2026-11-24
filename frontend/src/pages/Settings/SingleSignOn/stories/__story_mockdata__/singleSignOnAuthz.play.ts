@@ -3,13 +3,14 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { expectDenied } from './singleSignOnAuthz';
 import {
 	canDeleteDomain,
 	canEditDisplayName,
 	canListDomains,
+	canReadDisplayName,
 	listsDomains,
 	type SingleSignOnArgs,
 } from '../SingleSignOn.stories.mocks';
@@ -63,18 +64,29 @@ export const expectDisplayNameDenied = async ({
 	if (args.authzState !== 'loaded') {
 		return;
 	}
+	if (!canReadDisplayName(args)) {
+		await within(canvasElement).findByText(
+			/read:organization/i,
+			undefined,
+			untilLoaded,
+		);
+		await expect(
+			within(canvasElement).queryByRole('textbox', { name: /display name/i }),
+		).toBeNull();
+		return;
+	}
 	const denied = !canEditDisplayName(args);
 	await expectDenied(
-		await within(canvasElement).findByTestId(
-			'org-display-name-input',
+		await within(canvasElement).findByLabelText(
+			'Display name',
 			undefined,
 			untilLoaded,
 		),
 		denied,
 	);
 	if (!denied) {
-		const input = await within(canvasElement).findByTestId(
-			'org-display-name-input',
+		const input = await within(canvasElement).findByLabelText(
+			'Display name',
 			undefined,
 			untilLoaded,
 		);

@@ -8,7 +8,10 @@ import {
 	AuthDomainListPermission,
 	buildAuthDomainDeletePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/auth-domain.permissions';
-import { buildOrganizationUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/organization.permissions';
+import {
+	buildOrganizationReadPermission,
+	buildOrganizationUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/organization.permissions';
 import { rest } from 'msw';
 
 import { grantsAll } from '@/storybook/access/access';
@@ -132,7 +135,11 @@ export const singleSignOnMocks = defineStoryMocks({
 
 export type SingleSignOnArgs = PageStoryArgs<typeof singleSignOnMocks>;
 
+export const canReadDisplayName = (args: SingleSignOnArgs): boolean =>
+	grantsAll(args, buildOrganizationReadPermission('*'));
+
 export const canEditDisplayName = (args: SingleSignOnArgs): boolean =>
+	canReadDisplayName(args) &&
 	grantsAll(args, buildOrganizationUpdatePermission('*'));
 
 export const canListDomains = (args: SingleSignOnArgs): boolean =>
