@@ -1,4 +1,5 @@
 import { StackMode } from 'lib/uPlotV2/config/types';
+import { OTHER_GROUP_LABEL } from 'lib/visualization/charts/utils/otherGroup';
 
 import { DistributionSeries, DistributionXAxis } from './types';
 
@@ -6,7 +7,6 @@ import { DistributionSeries, DistributionXAxis } from './types';
 export const MAX_STACKED_GROUPS = 10;
 /** Narrowest a side-by-side bar may get, in CSS pixels. */
 const MIN_SIDE_BY_SIDE_BAR_PX = 3;
-export const OTHER_GROUP_LABEL = 'Other';
 
 /**
  * How many series fit: a fixed cap when stacked, and side by side as many as keep

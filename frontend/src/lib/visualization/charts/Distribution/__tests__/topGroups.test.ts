@@ -1,11 +1,11 @@
 import { StackMode } from 'lib/uPlotV2/config/types';
+import { OTHER_GROUP_LABEL } from 'lib/visualization/charts/utils/otherGroup';
 
 import { resolveDistributionXAxis } from '../layout';
 import {
 	groupIntoOther,
 	resolveClickedGroup,
 	MAX_STACKED_GROUPS,
-	OTHER_GROUP_LABEL,
 	resolveMaxDrawnGroups,
 } from '../topGroups';
 

@@ -12,7 +12,9 @@ import { DistributionChartProps } from 'lib/visualization/charts/types';
 import { useLegendVisibility } from 'lib/visualization/hooks/useLegendVisibility';
 import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLayout';
 
-import { resolveOtherColor, resolveSeriesColor } from './colors';
+import { resolveOtherColor } from 'lib/visualization/charts/utils/otherGroup';
+
+import { resolveSeriesColor } from './colors';
 import DistributionTooltip from './components/DistributionTooltip/DistributionTooltip';
 import { buildDistributionConfig } from './config';
 import {
