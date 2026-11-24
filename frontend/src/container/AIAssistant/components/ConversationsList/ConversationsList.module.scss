@@ -56,7 +56,7 @@
 	--button-border-radius: 3px;
 	--button-justify-content: flex-start;
 	--button-gap: var(--spacing-4);
-	--button-font-weight: var(--font-weight-normal);
+	--button-font-weight: var(--label-base-400-font-weight);
 	--button-variant-outlined-background-color: var(--l2-background);
 	--button-variant-outlined-border: 1px solid var(--l1-border);
 	--button-variant-outlined-color: var(--l2-foreground);
@@ -144,8 +144,8 @@
 .groupLabel {
 	display: block;
 	padding: 0 0 7px;
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-semibold);
+	font-size: var(--label-small-600-font-size);
+	font-weight: var(--label-small-600-font-weight);
 	line-height: 1;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;

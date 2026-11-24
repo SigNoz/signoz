@@ -87,9 +87,9 @@ describe('Dashboard settings - default time range', () => {
 
 		await user.click(await screen.findByTestId('dashboard-default-time-range'));
 
-		expect(
-			await screen.findByRole('option', { name: 'Default (Last 30 minutes)' }),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByRole('option', { name: 'Default (Last 30 minutes)' }),
+		).resolves.toBeInTheDocument();
 		expect(
 			screen.queryByRole('option', { name: 'Last 30 minutes', exact: true }),
 		).not.toBeInTheDocument();

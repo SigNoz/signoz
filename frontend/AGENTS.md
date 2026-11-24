@@ -28,7 +28,7 @@ You are operating within a constrained context window and strict system prompts.
 - UI primitives come from `@signozhq/ui` (subpath imports) and icons from `@signozhq/icons`. No new `antd` component or direct icon library (`lucide-react`) where `@signozhq/ui` has an equivalent; `signoz/no-antd-components` enforces part of this list.
   - Exception: a control added beside `antd` siblings of the same kind (a tab in an `antd` tab strip) matches them until that surface migrates. Say so in the PR.
   - When `@signozhq/ui` or `@signozhq/icons` lacks what you need, say so in the PR before reaching for another library.
-- Before styling a `@signozhq/ui` component, check its props in `node_modules/@signozhq/ui/dist/<component>/*.d.ts` for `className`/`style` support; some omit them. Avoid overriding the component's CSS vars unless explicitly needed.
+- Never override a `@signozhq/ui` component's styles: no `--<component>-*` CSS variables, no `:global` class or `data-*` selectors, no restyling through `className`/`style`. Use its props, and put layout on a wrapper you own. When it can't do what the design needs, file a UI suggestion in `SigNoz/uforge-pod` (`ui-suggestion.yml` template) and link it in the PR.
 - When writing code that could need authorization checks, read ./src/lib/authz/README.md
   - A flow that gains a request also gates on that request's permission: a rename that now reads the view first needs `read` as well as `update`.
 - Identity keys (legend groups, color groups, CSV headers, React keys) come from structured values, never from joined display text: `['us, east', 'prod']` and `['us', 'east, prod']` both join to `us, east, prod`.
