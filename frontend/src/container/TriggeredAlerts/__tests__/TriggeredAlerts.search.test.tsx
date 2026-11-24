@@ -1,24 +1,15 @@
 import { act, screen, userEvent } from 'tests/test-utils';
 
-import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
-
-const SEARCH_INPUT = 'triggered-alerts-search-input-field';
-// The 300 ms search debounce plus the URL write that follows it.
-const SEARCH_SETTLE_MS = 1000;
+import {
+	getTriggeredAlertRowTestId,
+	renderTriggeredAlerts,
+	search,
+	SEARCH_INPUT,
+	SEARCH_SETTLE_MS,
+} from './_helpers';
 
 function nameCell(fingerprint: string): HTMLElement | null {
 	return screen.queryByTestId(getTriggeredAlertRowTestId(fingerprint, 'name'));
-}
-
-async function search(text: string): Promise<void> {
-	jest.useFakeTimers();
-	const user = userEvent.setup({
-		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
-	});
-	await user.type(screen.getByTestId(SEARCH_INPUT), text);
-	act(() => {
-		jest.advanceTimersByTime(SEARCH_SETTLE_MS);
-	});
 }
 
 describe('TriggeredAlerts — search', () => {

@@ -1,10 +1,11 @@
 import { pickRole } from 'components/InviteMembers/__tests__/roleSelectUtils';
+import { enterInviteEmail } from 'components/InviteMembers/__tests__/testUtils';
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { IAppContext } from 'providers/App/types';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import {
 	AboutSigNozQuestions,
@@ -23,6 +24,9 @@ jest.mock('lib/router/navigation', () => ({
 
 const mockNavigate = jest.mocked(navigate);
 
+const mockNotificationSuccess = jest.fn() as jest.MockedFunction<
+	NotificationInstance['success']
+>;
 const mockNotificationError = jest.fn() as jest.MockedFunction<
 	NotificationInstance['error']
 >;
@@ -30,7 +34,7 @@ const mockNotificationError = jest.fn() as jest.MockedFunction<
 jest.mock('hooks/useNotifications', () => ({
 	useNotifications: (): unknown => ({
 		notifications: {
-			success: jest.fn(),
+			success: mockNotificationSuccess,
 			error: mockNotificationError,
 			warning: jest.fn(),
 			info: jest.fn(),
@@ -152,6 +156,7 @@ describe('OnboardingQuestionaire Component', () => {
 	});
 
 	afterEach(() => {
+		jest.useRealTimers();
 		server.resetHandlers();
 	});
 
@@ -465,39 +470,39 @@ describe('OnboardingQuestionaire Component', () => {
 
 		it('moves on once the invites are sent', async () => {
 			jest.useFakeTimers();
-			try {
-				const user = userEvent.setup({
-					advanceTimers: (ms) => jest.advanceTimersByTime(ms),
-				});
-				const onNext = jest.fn() as jest.MockedFunction<() => void>;
-				let inviteCalls = 0;
-				server.use(
-					rest.post(CREATE_USER_ENDPOINT, (_, res, ctx) => {
-						inviteCalls += 1;
-						return res(ctx.status(201), ctx.json({ data: { id: 'user-123' } }));
-					}),
-				);
+			const user = userEvent.setup({
+				advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+			});
+			const onNext = jest.fn() as jest.MockedFunction<() => void>;
+			let inviteCalls = 0;
+			server.use(
+				rest.post(CREATE_USER_ENDPOINT, (_, res, ctx) => {
+					inviteCalls += 1;
+					return res(ctx.status(201), ctx.json({ data: { id: 'user-123' } }));
+				}),
+			);
 
-				render(<InviteTeamMembers isLoading={false} onNext={onNext} />);
+			render(<InviteTeamMembers isLoading={false} onNext={onNext} />);
 
-				await user.type(
-					screen.getAllByPlaceholderText('e.g. john@signoz.io')[0],
-					'alice@signoz.io',
-				);
-				await pickRole(user, 0, 'role-viewer');
-				const sendInvites = screen.getByTestId('send-invites-button');
-				await waitFor(() =>
-					expect(sendInvites).not.toHaveAttribute('aria-disabled', 'true'),
-				);
-				await user.click(sendInvites);
+			await enterInviteEmail(user, 0, 'alice@signoz.io');
+			await pickRole(user, 0, 'role-viewer');
+			const sendInvites = screen.getByTestId('send-invites-button');
+			await waitFor(() =>
+				expect(sendInvites).not.toHaveAttribute('aria-disabled', 'true'),
+			);
+			await user.click(sendInvites);
 
-				await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1), {
-					timeout: 2000,
-				});
-				expect(inviteCalls).toBe(1);
-			} finally {
-				jest.useRealTimers();
-			}
+			await waitFor(() =>
+				expect(mockNotificationSuccess).toHaveBeenCalledWith({
+					message: 'Invites sent successfully!',
+				}),
+			);
+			expect(onNext).not.toHaveBeenCalled();
+			act(() => {
+				jest.advanceTimersByTime(1000);
+			});
+			expect(onNext).toHaveBeenCalledTimes(1);
+			expect(inviteCalls).toBe(1);
 		});
 
 		it('shows an error and stops loading when saving onboarding fails', async () => {

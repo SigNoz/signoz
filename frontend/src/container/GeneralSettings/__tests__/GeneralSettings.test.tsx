@@ -136,11 +136,15 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			);
 
 			// Wait for dropdown options to appear and verify only "Days" is available
-			const dropdownOptions = await screen.findAllByTestId(
-				'logs-s3-retention-unit-option',
-			);
-			expect(dropdownOptions).toHaveLength(1);
-			expect(dropdownOptions[0]).toHaveTextContent('Days');
+			await expect(
+				screen.findByTestId('logs-s3-retention-unit-option-day'),
+			).resolves.toHaveTextContent('Days');
+			expect(
+				screen.queryByTestId('logs-s3-retention-unit-option-hr'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('logs-s3-retention-unit-option-month'),
+			).not.toBeInTheDocument();
 		});
 
 		it('should send correct API payload for S3 retention', async () => {
@@ -240,11 +244,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			);
 
 			// Find and click the Days option
-			const [daysOption] = await screen.findAllByTestId(
-				'logs-total-retention-unit-option',
+			await user.click(
+				await screen.findByTestId('logs-total-retention-unit-option-day'),
 			);
-			expect(daysOption).toHaveTextContent('Days');
-			await user.click(daysOption);
 
 			// Now change the value
 			await user.clear(totalInput);

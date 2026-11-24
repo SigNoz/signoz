@@ -6,6 +6,7 @@ import {
 	rest,
 	server,
 } from 'mocks-server/server';
+import { holdResponse } from 'tests/holdResponse';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
@@ -64,29 +65,16 @@ const multiOrgProps: ForgotPasswordRouteState = {
 	orgs: mockMultipleOrgs,
 };
 
-function mockForgot(): {
-	forgotCalls: () => number;
-	holdResponse: () => () => void;
-} {
+function mockForgot(held?: Promise<void>): { forgotCalls: () => number } {
 	let calls = 0;
-	let pending: Promise<void> = Promise.resolve();
 	server.use(
 		rest.post(FORGOT_PASSWORD_ENDPOINT, async (_req, res, ctx) => {
 			calls += 1;
-			await pending;
+			await held;
 			return res(ctx.status(200), ctx.json({ status: 'success' }));
 		}),
 	);
-	return {
-		forgotCalls: (): number => calls,
-		holdResponse: (): (() => void) => {
-			let release: () => void = () => {};
-			pending = new Promise((resolve) => {
-				release = resolve;
-			});
-			return release;
-		},
-	};
+	return { forgotCalls: (): number => calls };
 }
 
 describe('ForgotPassword Component', () => {
@@ -354,7 +342,8 @@ describe('ForgotPassword Component', () => {
 		it('shows loading state during API call', async () => {
 			const user = userEvent.setup();
 
-			mockForgot().holdResponse();
+			const response = holdResponse();
+			mockForgot(response.held);
 
 			render(<ForgotPassword {...defaultProps} />);
 
@@ -365,12 +354,14 @@ describe('ForgotPassword Component', () => {
 			await expect(
 				screen.findByText(/sending\.\.\./i),
 			).resolves.toBeInTheDocument();
+			response.release();
 		});
 
 		it('disables submit button during loading', async () => {
 			const user = userEvent.setup();
 
-			mockForgot().holdResponse();
+			const response = holdResponse();
+			mockForgot(response.held);
 
 			render(<ForgotPassword {...defaultProps} />);
 
@@ -380,6 +371,7 @@ describe('ForgotPassword Component', () => {
 			await waitFor(() => {
 				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
+			response.release();
 		});
 	});
 
@@ -462,8 +454,8 @@ describe('ForgotPassword Component', () => {
 
 		it('does not send again on Enter while the first request is loading', async () => {
 			const user = userEvent.setup();
-			const { forgotCalls, holdResponse } = mockForgot();
-			const releaseResponse = holdResponse();
+			const response = holdResponse();
+			const { forgotCalls } = mockForgot(response.held);
 
 			render(<ForgotPassword {...defaultProps} />);
 
@@ -475,7 +467,7 @@ describe('ForgotPassword Component', () => {
 			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			await user.keyboard('{enter}');
 
-			releaseResponse();
+			response.release();
 			await expect(
 				screen.findByText(/check your email/i),
 			).resolves.toBeInTheDocument();

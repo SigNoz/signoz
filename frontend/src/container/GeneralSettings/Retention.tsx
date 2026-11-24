@@ -86,7 +86,7 @@ function Retention({
 		<Option
 			key={option.value}
 			value={option.value}
-			data-testid={`${testId}-unit-option`}
+			data-testid={`${testId}-unit-option-${option.value}`}
 		>
 			{option.key}
 		</Option>

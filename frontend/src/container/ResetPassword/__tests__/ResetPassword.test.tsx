@@ -1,6 +1,7 @@
 import ROUTES from 'constants/routes';
 import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
+import { holdResponse } from 'tests/holdResponse';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ResetPassword from '../index';
@@ -43,32 +44,19 @@ async function enterPassword(
 	await user.paste(value);
 }
 
-function mockReset(): {
-	resetCalls: () => number;
-	holdResponse: () => () => void;
-} {
+function mockReset(held?: Promise<void>): { resetCalls: () => number } {
 	let calls = 0;
-	let pending: Promise<void> = Promise.resolve();
 	server.use(
 		rest.post(RESET_PASSWORD_ENDPOINT, async (_req, res, ctx) => {
 			calls += 1;
-			await pending;
+			await held;
 			return res(
 				ctx.status(200),
 				ctx.json({ status: 'success', message: 'Password reset successfully' }),
 			);
 		}),
 	);
-	return {
-		resetCalls: (): number => calls,
-		holdResponse: (): (() => void) => {
-			let release: () => void = () => {};
-			pending = new Promise((resolve) => {
-				release = resolve;
-			});
-			return release;
-		},
-	};
+	return { resetCalls: (): number => calls };
 }
 
 describe('ResetPassword Component', () => {
@@ -368,7 +356,8 @@ describe('ResetPassword Component', () => {
 		it('disables submit button during password reset', async () => {
 			const user = userEvent.setup();
 
-			mockReset().holdResponse();
+			const response = holdResponse();
+			mockReset(response.held);
 
 			render(<ResetPassword version="1.0.0" />, undefined, {
 				initialRoute: '/password-reset?token=reset-token-123',
@@ -392,6 +381,7 @@ describe('ResetPassword Component', () => {
 			await waitFor(() => {
 				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
+			response.release();
 		});
 	});
 
@@ -447,8 +437,8 @@ describe('ResetPassword Component', () => {
 
 		it('does not reset again on Enter while the first reset is loading', async () => {
 			const user = userEvent.setup();
-			const { resetCalls, holdResponse } = mockReset();
-			const releaseResponse = holdResponse();
+			const response = holdResponse();
+			const { resetCalls } = mockReset(response.held);
 
 			render(<ResetPassword version="1.0.0" />, undefined, {
 				initialRoute: '/password-reset?token=reset-token-123',
@@ -465,7 +455,7 @@ describe('ResetPassword Component', () => {
 			});
 			await user.keyboard('{enter}');
 
-			releaseResponse();
+			response.release();
 			await waitFor(() => {
 				expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 			});

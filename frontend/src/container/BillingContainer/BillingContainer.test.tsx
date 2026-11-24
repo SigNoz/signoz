@@ -13,6 +13,7 @@ import {
 	getAppContextMock,
 	within,
 } from 'tests/test-utils';
+import { REAL_TIMER_APIS } from 'tests/realTimerApis';
 import APIError from 'types/api/error';
 import {
 	LicensePlatform,
@@ -67,22 +68,7 @@ describe('BillingContainer', () => {
 		beforeEach(() => {
 			jest.useFakeTimers({
 				now: new Date('2023-10-20'),
-				doNotFake: [
-					'hrtime',
-					'nextTick',
-					'performance',
-					'queueMicrotask',
-					'requestAnimationFrame',
-					'cancelAnimationFrame',
-					'requestIdleCallback',
-					'cancelIdleCallback',
-					'setImmediate',
-					'clearImmediate',
-					'setInterval',
-					'clearInterval',
-					'setTimeout',
-					'clearTimeout',
-				],
+				doNotFake: REAL_TIMER_APIS,
 			});
 		});
 

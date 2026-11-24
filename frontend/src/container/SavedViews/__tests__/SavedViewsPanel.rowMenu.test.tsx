@@ -5,6 +5,7 @@ import ROUTES from 'constants/routes';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NANO_SECOND_MULTIPLIER } from 'store/globalTime';
+import { holdResponse } from 'tests/holdResponse';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import SavedViewsHeader from '../SavedViewsHeader';
@@ -265,13 +266,23 @@ describe('SavedViewsPanel row menu', () => {
 
 	it('ignores Enter while the stored view loads', async () => {
 		const user = userEvent.setup();
-		const requests = mockSavedViewsApi([errors, slow], { getDelay: 100 });
+		const storedView = holdResponse();
+		const requests = mockSavedViewsApi([errors, slow], {
+			getHeld: storedView.held,
+		});
 		renderPanel();
 
 		await chooseFromRowMenu(user, 'Slow spans', 'Edit details');
 		const name = screen.getByTestId('save-view-name-field');
 		await user.type(name, ' 2{enter}');
+		await waitFor(() =>
+			expect(screen.getByTestId('save-view-submit')).toHaveAttribute(
+				'aria-busy',
+				'true',
+			),
+		);
 		await user.keyboard('{Enter}');
+		storedView.release();
 
 		await waitFor(() =>
 			expect(toast.success).toHaveBeenCalledWith(

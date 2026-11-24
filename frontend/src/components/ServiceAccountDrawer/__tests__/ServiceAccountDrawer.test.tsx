@@ -7,7 +7,9 @@ import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
-import ServiceAccountDrawer from '../ServiceAccountDrawer';
+import ServiceAccountDrawer, {
+	ServiceAccountDrawerProps,
+} from '../ServiceAccountDrawer';
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
@@ -100,7 +102,9 @@ describe('ServiceAccountDrawer', () => {
 	});
 
 	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
-		const onSuccess = jest.fn();
+		const onSuccess = jest.fn() as jest.MockedFunction<
+			ServiceAccountDrawerProps['onSuccess']
+		>;
 		const updateSpy = jest.fn();
 		const user = userEvent.setup();
 
@@ -424,7 +428,9 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		const user = userEvent.setup({
 			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
 		});
-		const onSuccess = jest.fn();
+		const onSuccess = jest.fn() as jest.MockedFunction<
+			ServiceAccountDrawerProps['onSuccess']
+		>;
 		let roleAddCallCount = 0;
 
 		// First call → 429, second call → 201

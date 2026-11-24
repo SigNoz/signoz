@@ -31,7 +31,11 @@ import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetails
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
 import { isKeyNotFoundError, selectedEntityTracesColumns } from '../utils';
-import { K8S_ENTITY_TRACES_EXPRESSION_KEY, useEntityTraces } from './hooks';
+import {
+	K8S_ENTITY_TRACES_EXPRESSION_KEY,
+	TraceRow,
+	useEntityTraces,
+} from './hooks';
 import { getTraceListColumns } from './traceListColumns';
 import { getEntityTracesQueryPayload } from './utils';
 
@@ -216,8 +220,8 @@ function EntityTracesContent({
 						loading={isFetching && traces.length === 0}
 						dataSource={traces}
 						columns={traceListColumns}
-						onRow={(): Record<string, unknown> => ({
-							'data-testid': 'entity-traces-row',
+						onRow={(record: TraceRow): Record<string, unknown> => ({
+							'data-testid': `entity-traces-row-${String(record.data.span_id)}`,
 							onClick: (): void => handleRowClick(),
 						})}
 					/>

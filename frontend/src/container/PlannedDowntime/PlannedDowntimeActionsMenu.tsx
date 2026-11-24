@@ -58,7 +58,6 @@ function PlannedDowntimeActionsMenu({
 					color="secondary"
 					size="sm"
 					icon
-					testId={`downtime-actions-${downtime.id}`}
 					aria-label={`Actions for ${downtime.name}`}
 				>
 					<Ellipsis size={16} />

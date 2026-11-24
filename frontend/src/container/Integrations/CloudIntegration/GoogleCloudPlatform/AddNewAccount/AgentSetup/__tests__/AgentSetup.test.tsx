@@ -1,5 +1,6 @@
 import { screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
+import { holdResponse } from 'tests/holdResponse';
 
 import {
 	DEPLOYMENT_PROJECT_ID,
@@ -163,13 +164,10 @@ describe('GCP AgentSetup form', () => {
 	});
 
 	it('locks the connection method and keeps the submitted project while the command is generating', async () => {
-		let releaseCreate = (): void => {};
-		const createHeld = new Promise<void>((resolve) => {
-			releaseCreate = resolve;
-		});
+		const create = holdResponse();
 		server.use(
 			rest.post(GCP_ACCOUNTS_URL, async (_req, res, ctx) => {
-				await createHeld;
+				await create.held;
 				return res(ctx.status(201), ctx.json(createAgentAccountResponse));
 			}),
 		);
@@ -191,7 +189,7 @@ describe('GCP AgentSetup form', () => {
 		);
 		await user.type(projectInput, '-edited');
 		expect(projectInput).toHaveValue(`${DEPLOYMENT_PROJECT_ID}-edited`);
-		releaseCreate();
+		create.release();
 
 		const commands = await screen.findByTestId('gcp-agent-command');
 		expect(commands).toHaveTextContent(`signed in to ${DEPLOYMENT_PROJECT_ID}.`);

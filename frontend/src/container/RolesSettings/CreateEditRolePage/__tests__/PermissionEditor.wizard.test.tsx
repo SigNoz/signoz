@@ -7,7 +7,7 @@ import { AuthZResource } from 'lib/authz/hooks/useAuthZ/types';
 import { PermissionScope } from '../../types';
 import ActionToggle from '../components/ActionToggle';
 import TelemetrySelectorWizard from '../components/TelemetrySelectorWizard';
-import { expandResourceCard, renderCreateRolePage } from './testUtils';
+import { selectOnlySelected } from './testUtils';
 
 type User = ReturnType<typeof userEvent.setup>;
 type OnAdd = ComponentProps<typeof TelemetrySelectorWizard>['onAdd'];
@@ -22,17 +22,6 @@ beforeEach(() => {
 afterEach(() => {
 	server.resetHandlers();
 });
-
-async function selectOnlySelected(user: User, resource: string): Promise<void> {
-	await renderCreateRolePage();
-	await expandResourceCard(resource);
-
-	await user.click(
-		screen.getByTestId(
-			`action-toggle-scope-${resource}-read-button-only_selected`,
-		),
-	);
-}
 
 async function openWizard(
 	user: User,

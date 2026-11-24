@@ -7,6 +7,7 @@ import ROUTES from 'constants/routes';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 import { act, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -206,12 +207,13 @@ describe('SavedViewsHeader saving', () => {
 		it('ignores Enter while the view is being saved', async () => {
 			const user = userEvent.setup();
 			let creates = 0;
+			const create = holdResponse();
 			mockSavedViewsApi([]);
 			server.use(
-				rest.post(API, (_req, res, ctx) => {
+				rest.post(API, async (_req, res, ctx) => {
 					creates += 1;
+					await create.held;
 					return res(
-						ctx.delay(200),
 						ctx.status(201),
 						ctx.json({ status: 'success', data: { id: 'view-new' } }),
 					);
@@ -223,6 +225,7 @@ describe('SavedViewsHeader saving', () => {
 			await submitName(user, 'Slow checkout');
 			await waitFor(() => expect(creates).toBe(1));
 			await user.type(screen.getByTestId('save-view-name-field'), '{enter}');
+			create.release();
 
 			await waitFor(() => expect(isModalOpen()).toBe(false));
 			expect(creates).toBe(1);

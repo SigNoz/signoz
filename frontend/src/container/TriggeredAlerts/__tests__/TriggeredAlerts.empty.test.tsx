@@ -5,11 +5,14 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { act, screen, userEvent } from 'tests/test-utils';
 
-import { getTriggeredAlertRowTestId, renderTriggeredAlerts } from './_helpers';
+import {
+	getTriggeredAlertRowTestId,
+	renderTriggeredAlerts,
+	search,
+	SEARCH_SETTLE_MS,
+} from './_helpers';
 
 const HIGH_CPU_NAME = getTriggeredAlertRowTestId('fp-critical-1', 'name');
-// The 300 ms search debounce plus the URL write that follows it.
-const SEARCH_SETTLE_MS = 1000;
 const NO_MATCH_SEARCH = 'this-matches-nothing-xyz';
 
 describe('TriggeredAlerts — empty / error states', () => {
@@ -99,15 +102,7 @@ describe('TriggeredAlerts — empty / error states', () => {
 
 		await screen.findByTestId(HIGH_CPU_NAME);
 
-		jest.useFakeTimers();
-		const user = userEvent.setup({
-			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
-		});
-		const input = screen.getByTestId('triggered-alerts-search-input-field');
-		await user.type(input, NO_MATCH_SEARCH);
-		act(() => {
-			jest.advanceTimersByTime(SEARCH_SETTLE_MS);
-		});
+		await search(NO_MATCH_SEARCH);
 
 		expect(screen.getByTestId('no-results-empty-state')).toBeInTheDocument();
 		expect(screen.getByTestId('no-results-title')).toHaveTextContent(

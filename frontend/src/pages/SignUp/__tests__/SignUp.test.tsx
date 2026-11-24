@@ -1,5 +1,6 @@
 import afterLogin from 'AppRoutes/utils';
 import { rest, server } from 'mocks-server/server';
+import { holdResponse } from 'tests/holdResponse';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SignupResponse } from 'types/api/v1/register/post';
 import { Token } from 'types/api/v2/sessions/email_password/post';
@@ -258,16 +259,12 @@ describe('SignUp Component - Regular Signup', () => {
 	});
 
 	describe('Enter key submission', () => {
-		function mockSignup(): {
-			registerCalls: () => number;
-			holdResponse: () => () => void;
-		} {
+		function mockSignup(held?: Promise<void>): { registerCalls: () => number } {
 			let calls = 0;
-			let pending: Promise<void> = Promise.resolve();
 			server.use(
 				rest.post(REGISTER_ENDPOINT, async (_req, res, ctx) => {
 					calls += 1;
-					await pending;
+					await held;
 					return res(
 						ctx.status(200),
 						ctx.json({ data: mockSignupResponse, status: 'success' }),
@@ -280,16 +277,7 @@ describe('SignUp Component - Regular Signup', () => {
 					),
 				),
 			);
-			return {
-				registerCalls: (): number => calls,
-				holdResponse: (): (() => void) => {
-					let release: () => void = () => {};
-					pending = new Promise((resolve) => {
-						release = resolve;
-					});
-					return release;
-				},
-			};
+			return { registerCalls: (): number => calls };
 		}
 
 		it('submits once on Enter in the confirm password field', async () => {
@@ -339,8 +327,8 @@ describe('SignUp Component - Regular Signup', () => {
 
 		it('does not submit again on Enter while the first submit is loading', async () => {
 			const user = userEvent.setup();
-			const { registerCalls, holdResponse } = mockSignup();
-			const releaseResponse = holdResponse();
+			const response = holdResponse();
+			const { registerCalls } = mockSignup(response.held);
 
 			render(<SignUp />, undefined, { initialRoute: '/signup' });
 
@@ -361,7 +349,7 @@ describe('SignUp Component - Regular Signup', () => {
 			// The password inputs are disabled while loading; the email input is not.
 			await user.type(screen.getByTestId('signup-email-field'), '{enter}');
 
-			releaseResponse();
+			response.release();
 			await waitFor(() => {
 				expect(mockAfterLogin).toHaveBeenCalled();
 			});

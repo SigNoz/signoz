@@ -10,52 +10,20 @@ import { Form } from 'antd';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import RoleMappingSection from '../CreateEdit/Providers/components/RoleMappingSection';
+import { captureUpdatePayload } from './createEditTestUtils';
 import {
-	AUTH_DOMAINS_UPDATE_ENDPOINT,
 	mockDomainWithDirectRoleAttribute,
 	mockDomainWithRoleMapping,
 	mockSamlAuthDomain,
-	mockUpdateSuccessResponse,
 } from './mocks';
 
 // TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The @signozhq/ui Button uses Radix Slot and has CSS infinite animations that
 // prevent form.validateFields() from resolving inside act(). Replacing with a
 // simple native button avoids the issue.
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
-	Button: ({
-		children,
-		onClick,
-		loading,
-		disabled,
-		'aria-label': ariaLabel,
-		prefix,
-		suffix,
-		testId,
-	}: {
-		children?: React.ReactNode;
-		onClick?: React.MouseEventHandler<HTMLButtonElement>;
-		loading?: boolean;
-		disabled?: boolean;
-		'aria-label'?: string;
-		prefix?: React.ReactNode;
-		suffix?: React.ReactNode;
-		testId?: string;
-	}) => (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled || loading}
-			aria-label={ariaLabel}
-			data-testid={testId}
-		>
-			{prefix}
-			{children}
-			{suffix}
-		</button>
-	),
-}));
+jest.mock('@signozhq/ui/button', () =>
+	jest.requireActual('./createEditTestUtils').buttonModuleMock(),
+);
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
@@ -86,17 +54,6 @@ function mockRoles(
 		}),
 	);
 	return { count: (): number => requested };
-}
-
-function captureUpdatePayload(): { get: () => any } {
-	let payload: unknown = null;
-	server.use(
-		rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
-			payload = await req.json();
-			return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
-		}),
-	);
-	return { get: (): any => payload };
 }
 
 const expandRoleMapping = (user: User): Promise<void> =>
@@ -234,8 +191,8 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
-		expect(payload.get().roleMapping.defaultRole).toBe(viewerRole.name);
-		expect(payload.get().roleMapping.defaultRole).not.toBe(viewerRole.id);
+		expect(payload.get()?.roleMapping?.defaultRole).toBe(viewerRole.name);
+		expect(payload.get()?.roleMapping?.defaultRole).not.toBe(viewerRole.id);
 	});
 
 	it('still defaults to signoz-viewer when the roles fetch returns empty', async () => {
@@ -262,7 +219,7 @@ describe('CreateEdit — role mapping uses API roles', () => {
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
 		// The Form.Item initialValue (signoz-viewer) survives an empty roles list.
-		expect(payload.get().roleMapping.defaultRole).toBe(viewerRole.name);
+		expect(payload.get()?.roleMapping?.defaultRole).toBe(viewerRole.name);
 	});
 
 	it('loads a stored role mapping by role name and round-trips it on save', async () => {
@@ -295,8 +252,8 @@ describe('CreateEdit — role mapping uses API roles', () => {
 
 		await waitFor(() => expect(payload.get()).not.toBeNull());
 
-		expect(payload.get().roleMapping.defaultRole).toBe(editorRole.name);
-		expect(payload.get().roleMapping.groupMappings).toStrictEqual({
+		expect(payload.get()?.roleMapping?.defaultRole).toBe(editorRole.name);
+		expect(payload.get()?.roleMapping?.groupMappings).toStrictEqual({
 			'admin-group': 'signoz-admin',
 			'dev-team': 'signoz-editor',
 			viewers: 'signoz-viewer',

@@ -123,11 +123,7 @@ describe('RoutingPolicyDetails', () => {
 		await user.paste(NEW_DESCRIPTION);
 
 		await user.click(channelsSelectInput());
-		await user.click(
-			await screen.findByText('Channel 1', {
-				selector: '.ant-select-item-option-content',
-			}),
-		);
+		await user.click(await screen.findByTitle('Channel 1'));
 
 		await user.click(screen.getByTestId(SAVE_BUTTON));
 

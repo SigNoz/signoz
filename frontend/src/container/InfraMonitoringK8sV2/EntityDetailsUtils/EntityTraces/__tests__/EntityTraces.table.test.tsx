@@ -151,9 +151,9 @@ describe('EntityTraces - Table Rendering', () => {
 
 		await expect(screen.findByTestId('serviceName')).resolves.toBeInTheDocument();
 
-		const links = within(screen.getByTestId('entity-traces-row')).getAllByTestId(
-			'trace-block-link',
-		);
+		const links = within(
+			screen.getByTestId('entity-traces-row-span-id-0'),
+		).getAllByTestId('trace-block-link');
 
 		expect(links.length).toBeGreaterThan(0);
 		links.forEach((link) => {
@@ -193,7 +193,7 @@ describe('EntityTraces - Table Rendering', () => {
 		renderEntityTraces();
 
 		const user = userEvent.setup();
-		await user.click(await screen.findByTestId('entity-traces-row'));
+		await user.click(await screen.findByTestId('entity-traces-row-span-id-0'));
 
 		expect(logEvent).toHaveBeenCalledWith(
 			'Infra Monitoring: Drawer trace clicked',

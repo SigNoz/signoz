@@ -43,6 +43,7 @@ The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/fron
 - One behaviour per test, rendering the smallest component that owns it; each test under 500 ms (`pnpm jest <file> --verbose`).
 - Never call `*ByRole` inside `waitFor`; never raise a timeout to make a slow test pass.
 - Use MSW to mock network calls; large JSON goes in `mocks-server/__mockdata__`.
+- To test a loading state, hold the response with `holdResponse()` from `tests/holdResponse`: await `held` in the handler and call `release()` before the test ends. Never time it with `ctx.delay`.
 - Keep tests type-safe (`jest.MockedFunction<T>`, avoid `any`).
 - Find elements by test ID (`getByTestId`, `findByTestId`); role or text only for markup the app doesn't own.
 - Pin time only when asserting relative dates; avoid global fake timers otherwise.

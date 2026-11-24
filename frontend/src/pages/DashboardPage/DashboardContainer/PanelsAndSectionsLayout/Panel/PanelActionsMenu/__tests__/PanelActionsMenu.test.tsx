@@ -108,11 +108,16 @@ function renderMenu(): void {
 
 const MENU_TEST_ID = 'panel-actions-panel-1';
 
-async function openSubmenu(value: string): Promise<void> {
-	await userEvent.click(screen.getByTestId(MENU_TEST_ID));
-	await userEvent.click(
-		await screen.findByTestId(`${MENU_TEST_ID}-item-${value}`),
-	);
+type User = ReturnType<typeof userEvent.setup>;
+
+// skipHover: simulated pointer travel fires pointerleave on the subtrigger and
+// Base UI's safe-polygon math (zero rects in jsdom) closes the submenu.
+const setupUser = (): User => userEvent.setup({ skipHover: true });
+
+async function openSubmenu(user: User, value: string): Promise<void> {
+	await user.click(screen.getByTestId(MENU_TEST_ID));
+	(await screen.findByTestId(`${MENU_TEST_ID}-item-${value}`)).focus();
+	await user.keyboard('{ArrowRight}');
 }
 
 describe('PanelActionsMenu submenus', () => {
@@ -124,13 +129,14 @@ describe('PanelActionsMenu submenus', () => {
 		['Download as PNG', 'png'],
 		['Download as SVG', 'svg'],
 	])('"%s" downloads the panel image as %s', async (label, format) => {
+		const user = setupUser();
 		renderMenu();
-		await openSubmenu('download');
+		await openSubmenu(user, 'download');
 		const row = await screen.findByTestId(
 			`${MENU_TEST_ID}-item-download-${format}`,
 		);
 		expect(row).toHaveTextContent(label);
-		await userEvent.click(row);
+		await user.click(row);
 
 		expect(mockDownloadImage).toHaveBeenCalledTimes(1);
 		expect(mockDownloadImage).toHaveBeenCalledWith('panel-1', 'Requests', format);
@@ -138,11 +144,12 @@ describe('PanelActionsMenu submenus', () => {
 	});
 
 	it('"Download as CSV" exports the table data, not an image', async () => {
+		const user = setupUser();
 		renderMenu();
-		await openSubmenu('download');
+		await openSubmenu(user, 'download');
 		const row = await screen.findByTestId(`${MENU_TEST_ID}-item-download-csv`);
 		expect(row).toHaveTextContent('Download as CSV');
-		await userEvent.click(row);
+		await user.click(row);
 
 		expect(mockDownloadCsv).toHaveBeenCalledTimes(1);
 		expect(mockDownloadImage).not.toHaveBeenCalled();
@@ -154,16 +161,18 @@ describe('PanelActionsMenu submenus', () => {
 	])(
 		'Move to "%s" moves the panel to layout %s',
 		async (label, target, value) => {
+			const user = setupUser();
 			renderMenu();
-			await openSubmenu('move');
+			await openSubmenu(user, 'move');
 
 			const row = await screen.findByTestId(`${MENU_TEST_ID}-item-${value}`);
 			expect(row).toHaveTextContent(label);
+			// The panel already sits in "A".
 			expect(
 				screen.queryByTestId(`${MENU_TEST_ID}-item-move-1`),
 			).not.toBeInTheDocument();
 
-			await userEvent.click(row);
+			await user.click(row);
 
 			expect(mockMovePanel).toHaveBeenCalledTimes(1);
 			expect(mockMovePanel).toHaveBeenCalledWith({

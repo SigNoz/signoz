@@ -17,40 +17,9 @@ import {
 } from './mocks';
 
 // @signozhq/ui/button internal effects block form.validateFields() in tests
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
-	Button: ({
-		children,
-		onClick,
-		loading,
-		disabled,
-		'aria-label': ariaLabel,
-		prefix,
-		suffix,
-		testId,
-	}: {
-		children?: React.ReactNode;
-		onClick?: React.MouseEventHandler<HTMLButtonElement>;
-		loading?: boolean;
-		disabled?: boolean;
-		'aria-label'?: string;
-		prefix?: React.ReactNode;
-		suffix?: React.ReactNode;
-		testId?: string;
-	}) => (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled || loading}
-			aria-label={ariaLabel}
-			data-testid={testId}
-		>
-			{prefix}
-			{children}
-			{suffix}
-		</button>
-	),
-}));
+jest.mock('@signozhq/ui/button', () =>
+	jest.requireActual('./createEditTestUtils').buttonModuleMock(),
+);
 
 type SavedPayload = {
 	config: {

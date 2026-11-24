@@ -1,7 +1,7 @@
-import type { Config } from '@jest/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { REAL_TIMER_APIS } from 'tests/realTimerApis';
 import { screen } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
@@ -96,23 +96,6 @@ const mockListPages = (
 
 // Tall enough that the mocked virtuoso renders every row and reaches the end.
 const FULL_HEIGHT = 200 * 54;
-
-const REAL_TIMER_APIS: Config.FakeableAPI[] = [
-	'hrtime',
-	'nextTick',
-	'performance',
-	'queueMicrotask',
-	'requestAnimationFrame',
-	'cancelAnimationFrame',
-	'requestIdleCallback',
-	'cancelIdleCallback',
-	'setImmediate',
-	'clearImmediate',
-	'setInterval',
-	'clearInterval',
-	'setTimeout',
-	'clearTimeout',
-];
 
 describe('Traces ListView - infinite scroll', () => {
 	afterEach(() => {

@@ -2,18 +2,16 @@ import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
-import { expandResourceCard, renderCreateRolePage } from './testUtils';
+import {
+	expandResourceCard,
+	renderCreateRolePage,
+	selectOnlySelected,
+} from './testUtils';
 
 type User = ReturnType<typeof userEvent.setup>;
 
 const getScopeButton = (scope: 'none' | 'all' | 'only_selected'): HTMLElement =>
 	screen.getByTestId(`action-toggle-scope-factor-api-key-read-button-${scope}`);
-
-async function chooseOnlySelected(user: User): Promise<void> {
-	await renderCreateRolePage();
-	await expandResourceCard('factor-api-key');
-	await user.click(getScopeButton('only_selected'));
-}
 
 async function addItems(user: User, text: string): Promise<void> {
 	await user.click(
@@ -201,7 +199,7 @@ describe('PermissionEditor', () => {
 	describe('Only Selected scope', () => {
 		it('shows item input selector when Only Selected is chosen', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			expect(
 				screen.getByTestId('item-input-selector-factor-api-key-read'),
@@ -210,7 +208,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when typed and Enter pressed', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'api-key-001');
 
@@ -219,7 +217,7 @@ describe('PermissionEditor', () => {
 
 		it('adds item when Add button clicked', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await user.click(
 				screen.getByTestId('item-input-selector-input-factor-api-key-read-field'),
@@ -236,7 +234,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by comma', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'key-a, key-b, key-c');
 
@@ -247,7 +245,7 @@ describe('PermissionEditor', () => {
 
 		it('adds multiple items separated by space', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'key-x key-y key-z');
 
@@ -258,7 +256,7 @@ describe('PermissionEditor', () => {
 
 		it('does not add duplicate items', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'same-key');
 			await addItems(user, 'same-key');
@@ -269,7 +267,7 @@ describe('PermissionEditor', () => {
 
 		it('removes item when X clicked', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'removable-key');
 
@@ -283,7 +281,7 @@ describe('PermissionEditor', () => {
 
 		it('names each badge close button after the item it removes', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'key-one key-two');
 
@@ -301,7 +299,7 @@ describe('PermissionEditor', () => {
 
 		it('cuts long badge values with an ellipsis so the full value shows on hover', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'a-very-long-api-key-identifier-000001');
 
@@ -313,7 +311,7 @@ describe('PermissionEditor', () => {
 
 		it('moves focus to the previous badge when closed with the keyboard', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'key-one key-two');
 
@@ -333,7 +331,7 @@ describe('PermissionEditor', () => {
 
 		it('does not steal focus when a badge is closed with the mouse', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'key-one key-two');
 
@@ -353,7 +351,7 @@ describe('PermissionEditor', () => {
 
 		it('shows Add button disabled when input is empty', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			const addBtn = screen.getByTestId(
 				'item-input-selector-add-btn-factor-api-key-read',
@@ -365,7 +363,7 @@ describe('PermissionEditor', () => {
 	describe('scope change confirmation dialog', () => {
 		it('shows confirm dialog when leaving Only Selected with items', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'will-be-cleared');
 
@@ -378,7 +376,7 @@ describe('PermissionEditor', () => {
 
 		it('clears items when confirmed', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'to-be-cleared');
 
@@ -397,7 +395,7 @@ describe('PermissionEditor', () => {
 
 		it('keeps items when cancelled', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 
 			await addItems(user, 'preserved-key');
 
@@ -420,7 +418,7 @@ describe('PermissionEditor', () => {
 
 		it('does not show dialog when leaving Only Selected with no items', async () => {
 			const user = userEvent.setup();
-			await chooseOnlySelected(user);
+			await selectOnlySelected(user, 'factor-api-key');
 			await user.click(getScopeButton('all'));
 
 			expect(

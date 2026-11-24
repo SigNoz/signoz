@@ -2,6 +2,7 @@ import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 
 import CloudAccountSetupDrawer from '../AddNewAccount/CloudAccountSetupDrawer';
 import {
@@ -112,14 +113,11 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
-		let releaseCheckIn = (): void => {};
-		const checkInHeld = new Promise<void>((resolve) => {
-			releaseCheckIn = resolve;
-		});
+		const checkIn = holdResponse();
 		server.use(
 			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
 				checkInPayload = await req.json();
-				await checkInHeld;
+				await checkIn.held;
 				return res(ctx.status(200), ctx.json(checkInResponse));
 			}),
 		);
@@ -181,7 +179,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(onClose).not.toHaveBeenCalled();
 
-		releaseCheckIn();
+		checkIn.release();
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);

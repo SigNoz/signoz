@@ -1,68 +1,24 @@
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { rest, server } from 'mocks-server/server';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
+import { captureUpdatePayload } from './createEditTestUtils';
 import {
-	AUTH_DOMAINS_UPDATE_ENDPOINT,
 	mockDomainWithRoleMapping,
 	mockGoogleAuthWithWorkspaceGroups,
-	mockUpdateSuccessResponse,
 } from './mocks';
 
 // TODO: https://github.com/SigNoz/platform-pod/issues/2602
 // The real @signozhq/ui/button has internal effects that prevent form.validateFields()
 // from resolving inside act(). Mirror the pattern from SSOEnforcementToggle.test.tsx
 // which mocks @signozhq/ui/switch for the same reason.
-jest.mock('@signozhq/ui/button', () => ({
-	...jest.requireActual('@signozhq/ui/button'),
-	Button: ({
-		children,
-		onClick,
-		loading,
-		disabled,
-		'aria-label': ariaLabel,
-		prefix,
-		suffix,
-		testId,
-	}: {
-		children?: React.ReactNode;
-		onClick?: React.MouseEventHandler<HTMLButtonElement>;
-		loading?: boolean;
-		disabled?: boolean;
-		'aria-label'?: string;
-		prefix?: React.ReactNode;
-		suffix?: React.ReactNode;
-		testId?: string;
-	}) => (
-		<button
-			type="button"
-			onClick={onClick}
-			disabled={disabled || loading}
-			aria-label={ariaLabel}
-			data-testid={testId}
-		>
-			{prefix}
-			{children}
-			{suffix}
-		</button>
-	),
-}));
-
-function capturePayload(): { get: () => unknown } {
-	let payload: unknown = null;
-	server.use(
-		rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, async (req, res, ctx) => {
-			payload = await req.json();
-			return res(ctx.status(200), ctx.json(mockUpdateSuccessResponse));
-		}),
-	);
-	return { get: (): unknown => payload };
-}
+jest.mock('@signozhq/ui/button', () =>
+	jest.requireActual('./createEditTestUtils').buttonModuleMock(),
+);
 
 describe('CreateEdit — save payload correctness', () => {
 	it('sends groupMappings: {} when all group mappings are deleted', async () => {
 		const user = userEvent.setup();
-		const payload = capturePayload();
+		const payload = captureUpdatePayload();
 
 		render(
 			<CreateEdit
@@ -91,7 +47,7 @@ describe('CreateEdit — save payload correctness', () => {
 
 	it('sends domainToAdminEmail: {} when all domain mappings are deleted', async () => {
 		const user = userEvent.setup();
-		const payload = capturePayload();
+		const payload = captureUpdatePayload();
 
 		render(
 			<CreateEdit

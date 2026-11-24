@@ -7,6 +7,7 @@ import {
 } from 'mocks-server/__mockdata__/alert_rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
 import {
 	getAppContextMock,
@@ -587,13 +588,10 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('keeps a query run while the linked views are still loading', async () => {
-			let releaseViews = (): void => {};
-			const viewsReleased = new Promise<void>((resolve) => {
-				releaseViews = resolve;
-			});
+			const views = holdResponse();
 			server.use(
 				rest.get('http://localhost/api/v2/rule_views', async (_, res, ctx) => {
-					await viewsReleased;
+					await views.held;
 					return res(
 						ctx.status(200),
 						ctx.json({ data: { views: ruleViewsFixture }, status: 'success' }),
@@ -605,7 +603,7 @@ describe('ListAlertRules — saved views rail', () => {
 
 			await runSearchQuery(user, 'foo');
 			await waitFor(() => expect(urlParam('query')).toBe('foo'));
-			releaseViews();
+			views.release();
 
 			await screen.findByTestId('alert-rules-view-save-changes');
 			await urlSettled();
