@@ -119,6 +119,11 @@ export const AwaitingApproval: Story = {
 	play: openPanel,
 };
 
+export const AwaitingDeleteApproval: Story = {
+	args: { agent: 'awaiting-approval', approvalDiff: false, contents: BRIEF },
+	play: openPanel,
+};
+
 export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 	play: openPanel,

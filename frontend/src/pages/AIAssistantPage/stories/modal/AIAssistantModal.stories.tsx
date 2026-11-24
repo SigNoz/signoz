@@ -108,6 +108,10 @@ export const AwaitingApproval: Story = {
 	args: { agent: 'awaiting-approval', contents: BRIEF },
 };
 
+export const AwaitingDeleteApproval: Story = {
+	args: { agent: 'awaiting-approval', approvalDiff: false, contents: BRIEF },
+};
+
 export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
 };
