@@ -302,6 +302,68 @@ describe('usePanelKindChange', () => {
 	});
 
 	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps the first enabled query, enabled, when switching to %s',
+		(kind) => {
+			const setSpec = jest.fn();
+			mockUseQueryBuilder.mockReturnValue(
+				builderState(fakeQuery('ts-current', 'builder')),
+			);
+			mockRebuildBuilder.mockReturnValue({
+				queryData: [
+					{ queryName: 'A', disabled: true },
+					{ queryName: 'B', disabled: true },
+				],
+				queryFormulas: [{ queryName: 'F1', disabled: false }],
+			} as unknown as Query['builder']);
+
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec,
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
+
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			expect(
+				persisted.builder.queryData.map(({ queryName, disabled }) => ({
+					queryName,
+					disabled,
+				})),
+			).toStrictEqual([{ queryName: 'A', disabled: false }]);
+		},
+	);
+
+	it('prefers an enabled query over a disabled one ahead of it', () => {
+		const setSpec = jest.fn();
+		mockUseQueryBuilder.mockReturnValue(
+			builderState(fakeQuery('ts-current', 'builder')),
+		);
+		mockRebuildBuilder.mockReturnValue({
+			queryData: [
+				{ queryName: 'A', disabled: true },
+				{ queryName: 'B', disabled: false },
+			],
+			queryFormulas: [],
+		} as unknown as Query['builder']);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec,
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/DistributionPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.builder.queryData.map((qd) => qd.queryName)).toStrictEqual([
+			'B',
+		]);
+	});
+
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
 		'keeps the field of a traces function aggregation when switching to %s',
 		(kind) => {
 			const setSpec = jest.fn();

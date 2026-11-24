@@ -27,8 +27,10 @@ const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
 
 /**
  * A heatmap draws against one bucket axis, so the request takes exactly one enabled
- * query and refuses a formula over the cells. The per-kind cache restores whatever is
- * dropped here if the panel switches back.
+ * query and refuses a formula over the cells. It keeps the first enabled query (the
+ * first when none is) and enables it, since a dropped formula may have been the only
+ * output. The per-kind cache restores whatever is dropped here if the panel switches
+ * back.
  *
  * Percentiles go the same way: a histogram heatmap takes its axis from the `le` labels,
  * so a percentile draws the grid a count already draws, and the statement builder sums
@@ -37,8 +39,10 @@ const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
 export function withSingleHeatmapQuery(
 	builder: Query['builder'],
 ): Query['builder'] {
-	const [first] = builder.queryData;
-	if (!first) {
+	const kept =
+		builder.queryData.find((queryData) => !queryData.disabled) ??
+		builder.queryData[0];
+	if (!kept) {
 		return builder;
 	}
 
@@ -46,9 +50,10 @@ export function withSingleHeatmapQuery(
 		...builder,
 		queryData: [
 			{
-				...first,
-				spaceAggregation: withoutPercentile(first.spaceAggregation),
-				aggregations: first.aggregations?.map((aggregation) => ({
+				...kept,
+				disabled: false,
+				spaceAggregation: withoutPercentile(kept.spaceAggregation),
+				aggregations: kept.aggregations?.map((aggregation) => ({
 					...aggregation,
 					spaceAggregation: withoutPercentile(
 						(aggregation as MetricAggregation).spaceAggregation,
