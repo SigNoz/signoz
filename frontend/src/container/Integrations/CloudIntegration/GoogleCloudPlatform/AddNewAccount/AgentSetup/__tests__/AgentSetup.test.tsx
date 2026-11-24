@@ -59,7 +59,9 @@ describe('GCP AgentSetup form', () => {
 		expect(
 			screen.queryByTestId('gcp-account-name-input'),
 		).not.toBeInTheDocument();
-		expect(document.querySelector('#gcp-project-ids-select')).toBeNull();
+		expect(
+			screen.queryByTestId('gcp-project-ids-select'),
+		).not.toBeInTheDocument();
 		expect(screen.getByTestId('gcp-setup-guide-callout')).toHaveTextContent(
 			'SigNoz integration sets up everything needed',
 		);
@@ -161,10 +163,15 @@ describe('GCP AgentSetup form', () => {
 	});
 
 	it('locks the connection method and keeps the submitted project while the command is generating', async () => {
+		let releaseCreate = (): void => {};
+		const createHeld = new Promise<void>((resolve) => {
+			releaseCreate = resolve;
+		});
 		server.use(
-			rest.post(GCP_ACCOUNTS_URL, (_req, res, ctx) =>
-				res(ctx.delay(300), ctx.status(201), ctx.json(createAgentAccountResponse)),
-			),
+			rest.post(GCP_ACCOUNTS_URL, async (_req, res, ctx) => {
+				await createHeld;
+				return res(ctx.status(201), ctx.json(createAgentAccountResponse));
+			}),
 		);
 		const user = userEvent.setup();
 		renderAgentSetup();
@@ -173,16 +180,18 @@ describe('GCP AgentSetup form', () => {
 		await user.click(screen.getByTestId('gcp-generate-command-btn'));
 
 		await waitFor(() => {
-			expect(screen.getByRole('radiogroup')).toHaveAttribute(
+			expect(screen.getByTestId('gcp-connection-method')).toHaveAttribute(
 				'aria-disabled',
 				'true',
 			);
 		});
 
-		await user.type(
-			screen.getByTestId('gcp-deployment-project-id-input-field'),
-			'-edited',
+		const projectInput = screen.getByTestId(
+			'gcp-deployment-project-id-input-field',
 		);
+		await user.type(projectInput, '-edited');
+		expect(projectInput).toHaveValue(`${DEPLOYMENT_PROJECT_ID}-edited`);
+		releaseCreate();
 
 		const commands = await screen.findByTestId('gcp-agent-command');
 		expect(commands).toHaveTextContent(`signed in to ${DEPLOYMENT_PROJECT_ID}.`);

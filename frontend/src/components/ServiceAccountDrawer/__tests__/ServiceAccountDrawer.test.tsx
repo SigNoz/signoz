@@ -9,10 +9,6 @@ import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
-// Picking a role in the Combobox inside the Drawer takes seconds in jsdom, and
-// the 429 retry waits another second on top.
-jest.setTimeout(20000);
-
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
