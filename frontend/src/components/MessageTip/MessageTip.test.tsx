@@ -35,13 +35,13 @@ describe('MessageTip', () => {
 	// taken from antd docs
 	// https://github.com/ant-design/ant-design/blob/master/components/alert/__tests__/index.test.tsx
 	it('custom action', () => {
-		const { container } = render(
+		const { asFragment } = render(
 			<MessageTip
 				show
 				message="Success Tips"
 				action={<button type="button">Close</button>}
 			/>,
 		);
-		expect(container.firstChild).toMatchSnapshot();
+		expect(asFragment()).toMatchSnapshot();
 	});
 });

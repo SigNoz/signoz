@@ -129,7 +129,7 @@ describe('MembersTable', () => {
 	});
 
 	it('hides pagination when total does not exceed pageSize', () => {
-		const { container } = render(
+		render(
 			<MembersTable
 				{...defaultProps}
 				data={mockActiveMembers}
@@ -139,12 +139,12 @@ describe('MembersTable', () => {
 		);
 
 		expect(
-			container.querySelector('.members-table-pagination'),
+			screen.queryByTestId('members-pagination-total'),
 		).not.toBeInTheDocument();
 	});
 
 	it('shows pagination when total exceeds pageSize', () => {
-		const { container } = render(
+		render(
 			<MembersTable
 				{...defaultProps}
 				data={mockActiveMembers}
@@ -153,11 +153,8 @@ describe('MembersTable', () => {
 			/>,
 		);
 
-		expect(
-			container.querySelector('.members-table-pagination'),
-		).toBeInTheDocument();
-		expect(
-			container.querySelector('.members-pagination-total'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('members-pagination-total')).toHaveTextContent(
+			'of 25',
+		);
 	});
 });

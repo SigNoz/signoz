@@ -204,9 +204,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 				/>,
 			);
 
-			const valueButton = screen
-				.getByText('production')
-				.closest('[role="button"]');
+			const valueButton = screen.getByTestId('checkbox-value-button-production');
 			await user.tab();
 			await user.tab();
 			if (valueButton && document.activeElement === valueButton) {
@@ -226,9 +224,7 @@ describe('CheckboxFilterV2ValueRow', () => {
 				/>,
 			);
 
-			const valueButton = screen
-				.getByText('production')
-				.closest('[role="button"]');
+			const valueButton = screen.getByTestId('checkbox-value-button-production');
 			await user.tab();
 			await user.tab();
 			if (valueButton && document.activeElement === valueButton) {

@@ -31,11 +31,9 @@ describe('CheckboxFilterV2 - states', () => {
 			);
 
 			expect(screen.getByTestId('checkbox-filter-v2')).toBeInTheDocument();
-			await waitFor(() => {
-				expect(
-					screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId('checkbox-filter-skeleton'),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('shows skeleton when initially closed filter is opened for the first time', async () => {
@@ -54,7 +52,7 @@ describe('CheckboxFilterV2 - states', () => {
 
 			// Filter starts closed - no skeleton, no content
 			expect(
-				screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
+				screen.queryByTestId('checkbox-filter-skeleton'),
 			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('checkbox-filter-empty'),
@@ -65,11 +63,9 @@ describe('CheckboxFilterV2 - states', () => {
 			await user.click(header);
 
 			// Should show skeleton while loading, NOT "No values found"
-			await waitFor(() => {
-				expect(
-					screen.getByTestId('checkbox-filter-v2').querySelector('.ant-skeleton'),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByTestId('checkbox-filter-skeleton'),
+			).resolves.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('checkbox-filter-empty'),
 			).not.toBeInTheDocument();

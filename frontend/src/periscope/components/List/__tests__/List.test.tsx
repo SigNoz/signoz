@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import List from '../List';
 
@@ -33,12 +33,18 @@ describe('List', () => {
 
 		const list = screen.getByTestId(TEST_ID);
 		const item = screen.getByTestId('item-a');
+		const items = within(list).getByRole('list');
 		expect(list.className).toBe('list split');
 		expect(item.tagName).toBe('LI');
 		expect(item.className).toBe('item');
-		expect(item.parentElement?.className).toBe('items');
-		expect(item.parentElement?.parentElement?.className).toBe('container');
-		expect(list.querySelectorAll('li')).toHaveLength(2);
+		expect(items.className).toBe('items');
+		expect(Array.from(items.children)).toStrictEqual([
+			item,
+			screen.getByTestId('item-b'),
+		]);
+		expect(
+			Array.from(screen.getByTestId('list-container').children),
+		).toStrictEqual([items]);
 		expect(screen.getByTestId('item-b')).toHaveTextContent('Beta');
 	});
 
@@ -80,12 +86,14 @@ describe('List', () => {
 
 	it('shows the default empty state, or locale.emptyText, without data', () => {
 		const { rerender } = render(<List data-testid={TEST_ID} />);
-		const list = screen.getByTestId(TEST_ID);
-		expect(list.querySelector('.emptyText')).toHaveTextContent('No data');
-		expect(list.querySelector('.emptyText svg')).toBeInTheDocument();
+		const emptyText = screen.getByTestId('list-empty');
+		expect(emptyText).toHaveTextContent('No data');
+		expect(
+			within(emptyText).getByTestId('empty-simple-image'),
+		).toBeInTheDocument();
 
 		rerender(<List data-testid={TEST_ID} locale={{ emptyText: 'Nothing' }} />);
-		expect(list.querySelector('.emptyText')).toHaveTextContent(/^Nothing$/);
+		expect(screen.getByTestId('list-empty')).toHaveTextContent(/^Nothing$/);
 	});
 
 	it('renders children instead of the empty state', () => {
@@ -95,11 +103,10 @@ describe('List', () => {
 			</List>,
 		);
 
-		const list = screen.getByTestId(TEST_ID);
-		expect(list.querySelector('.emptyText')).toBeNull();
-		expect(screen.getByTestId('child').parentElement?.className).toBe(
-			'container',
-		);
+		expect(screen.queryByTestId('list-empty')).not.toBeInTheDocument();
+		expect(
+			Array.from(screen.getByTestId('list-container').children),
+		).toStrictEqual([screen.getByTestId('child')]);
 	});
 
 	it('passes native props through and forwards its ref', async () => {
@@ -123,19 +130,22 @@ describe('List.Item', () => {
 			</List.Item>,
 		);
 
-		const actionList = screen.getByTestId('item').querySelector('.itemAction');
-		const actions = Array.from(actionList?.children ?? []);
+		const actionList = within(screen.getByTestId('item')).getByRole('list');
+		const actions = within(actionList).getAllByRole('listitem');
+		expect(actionList.className).toBe('itemAction');
 		expect(actions.map((action) => action.textContent)).toStrictEqual([
 			'Edit',
 			'Delete',
 			'More',
 		]);
-		expect(actions.map((action) => !!action.querySelector('em'))).toStrictEqual([
-			true,
-			true,
-			false,
-		]);
-		expect(actions[0].querySelector('em')?.className).toBe('itemActionSplit');
+		expect(
+			actions.map(
+				(action) => !!within(action).queryByTestId('list-item-action-split'),
+			),
+		).toStrictEqual([true, true, false]);
+		expect(
+			within(actions[0]).getByTestId('list-item-action-split').className,
+		).toBe('itemActionSplit');
 	});
 
 	it('omits the action list when actions is empty', () => {
@@ -145,7 +155,9 @@ describe('List.Item', () => {
 			</List.Item>,
 		);
 
-		expect(screen.getByTestId('item').querySelector('ul')).toBeNull();
+		expect(
+			within(screen.getByTestId('item')).queryByRole('list'),
+		).not.toBeInTheDocument();
 	});
 
 	it('drops flex layout when text sits beside other children', () => {
@@ -177,9 +189,9 @@ describe('List.Item', () => {
 		expect(
 			Array.from(withExtra.children).map((child) => child.className),
 		).toStrictEqual(['itemMain', 'itemExtra']);
-		expect(withExtra.querySelector('.itemMain .itemAction')).toHaveTextContent(
-			'Edit',
-		);
+		expect(
+			within(within(withExtra).getByTestId('list-item-main')).getByRole('list'),
+		).toHaveTextContent('Edit');
 		expect(screen.getByTestId('without-extra').className).toBe('item itemNoFlex');
 	});
 
@@ -220,13 +232,17 @@ describe('List.Item.Meta', () => {
 
 		const meta = screen.getByTestId('meta');
 		expect(meta.className).toBe('itemMeta custom');
-		expect(meta.querySelector('.itemMetaAvatar')).toHaveTextContent('A');
-		const title = meta.querySelector('.itemMetaContent > .itemMetaTitle');
-		expect(title?.tagName).toBe('H4');
-		expect(title).toHaveTextContent('Title');
-		expect(meta.querySelector('.itemMetaDescription')).toHaveTextContent(
-			'Description',
+		expect(within(meta).getByTestId('list-item-meta-avatar')).toHaveTextContent(
+			'A',
 		);
+		const title = within(
+			within(meta).getByTestId('list-item-meta-content'),
+		).getByRole('heading', { level: 4 });
+		expect(title.className).toBe('itemMetaTitle');
+		expect(title).toHaveTextContent('Title');
+		expect(
+			within(meta).getByTestId('list-item-meta-description'),
+		).toHaveTextContent('Description');
 	});
 
 	it('omits the content block without a title or description', () => {
@@ -234,6 +250,8 @@ describe('List.Item.Meta', () => {
 
 		const meta = screen.getByTestId('meta');
 		expect(meta.children).toHaveLength(1);
-		expect(meta.querySelector('.itemMetaContent')).toBeNull();
+		expect(
+			within(meta).queryByTestId('list-item-meta-content'),
+		).not.toBeInTheDocument();
 	});
 });

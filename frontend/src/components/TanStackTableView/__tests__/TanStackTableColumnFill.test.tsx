@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 
 import type { TableColumnDef } from '../types';
 import { defaultColumns, renderTanStackTable, type TestRow } from './testUtils';
@@ -14,38 +14,35 @@ const actionsColumn: TableColumnDef<TestRow> = {
 	width: { fixed: '96px', passLastColumnFill: true },
 };
 
-const colWidths = (container: HTMLElement): string[] =>
-	Array.from(container.querySelectorAll('colgroup col')).map(
-		(col) => (col as HTMLElement).style.width,
-	);
+const colWidths = (): string[] =>
+	screen.getAllByTestId('tanstack-col').map((col) => col.style.width);
 
-const isResizable = (headerText: string): boolean =>
+const isResizable = (columnId: string): boolean =>
 	Boolean(
-		screen
-			.getByText(headerText)
-			.closest('th')
-			?.querySelector('[title="Drag to resize column"]'),
+		within(screen.getByTestId(`tanstack-header-${columnId}`)).queryByTitle(
+			'Drag to resize column',
+		),
 	);
 
 describe('TanStackTable column fill', () => {
 	it('fills and locks the last column by default', () => {
-		const { container } = renderTanStackTable();
+		renderTanStackTable();
 
-		expect(colWidths(container).at(-1)).toBe('100%');
-		expect(isResizable('Name')).toBe(true);
-		expect(isResizable('Value')).toBe(false);
+		expect(colWidths().at(-1)).toBe('100%');
+		expect(isResizable('name')).toBe(true);
+		expect(isResizable('value')).toBe(false);
 	});
 
 	it('hands the fill to the previous column when the last passes it on', () => {
-		const { container } = renderTanStackTable({
+		renderTanStackTable({
 			props: { columns: [...defaultColumns, actionsColumn] },
 		});
 
-		const widths = colWidths(container);
+		const widths = colWidths();
 		expect(widths.at(-2)).toBe('100%');
 		expect(widths.at(-1)).toBe('96px');
-		expect(isResizable('Name')).toBe(true);
-		expect(isResizable('Value')).toBe(false);
-		expect(isResizable('Actions')).toBe(false);
+		expect(isResizable('name')).toBe(true);
+		expect(isResizable('value')).toBe(false);
+		expect(isResizable('actions')).toBe(false);
 	});
 });

@@ -42,13 +42,13 @@ describe('GlobalTimeStoreAdapter', () => {
 			globalTime: createGlobalTimeState(),
 		});
 
-		const { container } = render(
+		const { asFragment } = render(
 			<Provider store={store}>
 				<GlobalTimeStoreAdapter />
 			</Provider>,
 		);
 
-		expect(container.firstChild).toBeNull();
+		expect(asFragment().hasChildNodes()).toBe(false);
 	});
 
 	it('should sync relative time from Redux to Zustand store', () => {

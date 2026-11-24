@@ -29,9 +29,6 @@ const mockOptions = [
 	{ label: 'Option 3', value: 'option3' },
 ];
 
-// CSS selector for retry button
-const RETRY_BUTTON_SELECTOR = '[data-testid="retry-button"]';
-
 describe('CustomMultiSelect - Retry Functionality', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -61,8 +58,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 		});
 
 		// Check that retry button (ReloadOutlined icon) is present
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).toBeInTheDocument();
+		expect(screen.getByTestId('retry-button')).toBeInTheDocument();
 	});
 
 	it('should show retry button when 4xx error occurs and error message is displayed (current behavior)', async () => {
@@ -88,8 +84,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 			expect(screen.getByText(errorMessage)).toBeInTheDocument();
 		});
 
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).not.toBeInTheDocument();
+		expect(screen.queryByTestId('retry-button')).not.toBeInTheDocument();
 	});
 
 	it('should call onRetry function when retry button is clicked', async () => {
@@ -116,10 +111,7 @@ describe('CustomMultiSelect - Retry Functionality', () => {
 		});
 
 		// Find and click the retry button
-		const retryButton = document.querySelector(RETRY_BUTTON_SELECTOR);
-		expect(retryButton).toBeInTheDocument();
-
-		fireEvent.click(retryButton as Element);
+		fireEvent.click(screen.getByTestId('retry-button'));
 
 		// Verify onRetry was called
 		expect(mockOnRetry).toHaveBeenCalledTimes(1);

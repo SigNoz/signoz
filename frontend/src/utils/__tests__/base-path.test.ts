@@ -5,11 +5,14 @@
 
 type BasePath = typeof import('../basePath');
 
+const basePathTags: HTMLBaseElement[] = [];
+
 function loadModule(href?: string): BasePath {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
 		document.head.append(base);
+		basePathTags.push(base);
 	}
 
 	let mod!: BasePath;
@@ -21,9 +24,7 @@ function loadModule(href?: string): BasePath {
 }
 
 afterEach(() => {
-	for (const el of document.head.querySelectorAll('base')) {
-		el.remove();
-	}
+	basePathTags.splice(0).forEach((base) => base.remove());
 });
 
 describe('at basePath="/"', () => {

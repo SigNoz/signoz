@@ -80,9 +80,9 @@ describe('KeysTab', () => {
 	it('renders loading state', async () => {
 		renderKeysTab({ isLoading: true });
 		// Wait for authz to complete, then check for skeleton
-		await waitFor(() => {
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('keys-tab-loading'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
@@ -130,12 +130,7 @@ describe('KeysTab', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		const row = (await screen.findByText('Production Key')).closest('tr');
-		if (!row) {
-			throw new Error('Row not found');
-		}
-
-		await user.click(row);
+		await user.click(await screen.findByTestId('keys-tab-row-key-1'));
 
 		expect(onUrlUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({

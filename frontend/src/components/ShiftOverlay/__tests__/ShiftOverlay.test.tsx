@@ -42,15 +42,15 @@ const baseActions: CmdAction[] = [
 
 describe('ShiftOverlay', () => {
 	it('renders nothing when not visible', () => {
-		const { container } = render(
+		render(
 			<ShiftOverlay visible={false} actions={baseActions} userRole="ADMIN" />,
 		);
 
-		expect(container.firstChild).toBeNull();
+		expect(screen.queryByTestId('shift-overlay')).not.toBeInTheDocument();
 	});
 
 	it('renders nothing when no navigation shortcuts exist', () => {
-		const { container } = render(
+		render(
 			<ShiftOverlay
 				visible
 				actions={[
@@ -65,13 +65,13 @@ describe('ShiftOverlay', () => {
 			/>,
 		);
 
-		expect(container.firstChild).toBeNull();
+		expect(screen.queryByTestId('shift-overlay')).not.toBeInTheDocument();
 	});
 
 	it('renders navigation shortcuts in a portal', () => {
 		render(<ShiftOverlay visible actions={baseActions} userRole="ADMIN" />);
 
-		expect(document.body.querySelector('.shift-overlay')).toBeInTheDocument();
+		expect(screen.getByTestId('shift-overlay')).toBeInTheDocument();
 
 		expect(screen.getByText('Traces')).toBeInTheDocument();
 		expect(screen.getByText('Metrics')).toBeInTheDocument();

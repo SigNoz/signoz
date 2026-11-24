@@ -6,18 +6,21 @@ import {
 import { EditorView } from '@uiw/react-codemirror';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as recentQueriesStore from 'lib/recentQueries/recentQueriesStore';
-import { fireEvent, render, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { RECENTS_DISPLAY_CAP, RECENTS_SECTION } from '../QuerySearch/constants';
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
-const CM_ROOT_SELECTOR = '.cm-editor';
-const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
-const TOOLTIP_SELECTOR = '.cm-tooltip-autocomplete';
-const COMPLETION_LABEL_SELECTOR = '.cm-completionLabel';
-const DELETE_BUTTON_SELECTOR = '.cm-recent-delete';
+const EDITOR_TEST_ID = 'query-where-clause-editor';
 
 const FRONTEND_FILTER = "service.name = 'frontend'";
 const STATUS_CODE_FILTER = "http.status_code = '500'";
@@ -68,7 +71,7 @@ function saveLogsRecent(expression: string): void {
 }
 
 function getEditorView(): EditorView | null {
-	const root = document.querySelector<HTMLElement>(CM_ROOT_SELECTOR);
+	const root = screen.queryByTestId(EDITOR_TEST_ID);
 	return root ? EditorView.findFromDOM(root) : null;
 }
 
@@ -98,14 +101,9 @@ async function renderAndFocus(
 ): Promise<HTMLElement> {
 	renderLogsSearch(onChange);
 
-	const editor = await waitFor(
-		() => {
-			const element = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(element).toBeInTheDocument();
-			return element as HTMLElement;
-		},
-		{ timeout: 2000 },
-	);
+	const editor = within(
+		await screen.findByTestId(EDITOR_TEST_ID, undefined, { timeout: 2000 }),
+	).getByRole('textbox');
 
 	await userEvent.click(editor);
 	return editor;
@@ -235,9 +233,7 @@ describe('QuerySearch recent searches', () => {
 		await openRecents();
 
 		const option = await waitForPopupElement(() =>
-			Array.from(
-				document.querySelectorAll<HTMLElement>(COMPLETION_LABEL_SELECTOR),
-			).find((element) => element.textContent === FRONTEND_FILTER),
+			screen.queryByText(FRONTEND_FILTER),
 		);
 		// fireEvent: userEvent's pointerdown blurs the editor, closing the popup before CM's mousedown apply.
 		fireEvent.mouseDown(option);
@@ -253,7 +249,9 @@ describe('QuerySearch recent searches', () => {
 
 		await waitFor(
 			() => {
-				expect(document.querySelector(TOOLTIP_SELECTOR)).not.toBeInTheDocument();
+				expect(
+					within(screen.getByTestId(EDITOR_TEST_ID)).queryByRole('listbox'),
+				).not.toBeInTheDocument();
 			},
 			{ timeout: 2000 },
 		);
@@ -266,7 +264,7 @@ describe('QuerySearch recent searches', () => {
 		await openRecents();
 
 		const deleteButton = await waitForPopupElement(() =>
-			document.querySelector<HTMLElement>(DELETE_BUTTON_SELECTOR),
+			screen.queryByTestId('query-search-recent-delete'),
 		);
 
 		// fireEvent: the button preventDefaults pointerdown, which makes userEvent.click drop the mouse chain.

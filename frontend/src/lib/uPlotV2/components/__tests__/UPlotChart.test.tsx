@@ -134,10 +134,10 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			const noDataContainer = screen
-				.getByText('No Data')
-				.closest('.uplot-no-data');
-			expect(noDataContainer).toHaveStyle({ width: '750px', height: '350px' });
+			expect(screen.getByTestId('uplot-no-data')).toHaveStyle({
+				width: '750px',
+				height: '350px',
+			});
 		});
 
 		it('does not create a uPlot instance', () => {

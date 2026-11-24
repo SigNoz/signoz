@@ -24,16 +24,14 @@ function getPanelBox(): {
 	width: number;
 	height: number;
 } {
-	const panel = document.querySelector<HTMLElement>('.floating-panel');
+	const panel = screen.getByTestId('floating-panel');
 	const [, x, y] =
-		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(
-			panel?.style.transform ?? '',
-		) ?? [];
+		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(panel.style.transform) ?? [];
 	return {
 		x: Number(x),
 		y: Number(y),
-		width: parseFloat(panel?.style.width ?? ''),
-		height: parseFloat(panel?.style.height ?? ''),
+		width: parseFloat(panel.style.width),
+		height: parseFloat(panel.style.height),
 	};
 }
 

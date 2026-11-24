@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import CustomSelect from '../CustomSelect';
@@ -93,11 +99,12 @@ describe('CustomSelect Component', () => {
 		// Dropdown should only show Option 2
 		await waitFor(() => {
 			// Check that the dropdown is present
-			const dropdownElement = document.querySelector('.custom-select-dropdown');
+			const dropdownElement = screen.getByTestId('custom-select-dropdown');
 			expect(dropdownElement).toBeInTheDocument();
 
 			// Use a simple approach to verify filtering
-			const allOptionsInDropdown = document.querySelectorAll('.option-item');
+			const allOptionsInDropdown =
+				within(dropdownElement).queryAllByTestId(/^option-item-/);
 			let foundOption2 = false;
 
 			allOptionsInDropdown.forEach((option) => {

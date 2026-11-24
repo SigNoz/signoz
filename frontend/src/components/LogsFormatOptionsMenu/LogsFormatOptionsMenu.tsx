@@ -128,7 +128,9 @@ function OptionsMenu({
 							>
 								<span className="menu-row">
 									{size}
-									{fontSizeValue === size && <Check size={14} />}
+									{fontSizeValue === size && (
+										<Check size={14} data-testid="font-size-option-check" />
+									)}
 								</span>
 							</Button>
 						))}
@@ -156,7 +158,7 @@ function OptionsMenu({
 						</Button>
 					</div>
 					<div className="horizontal-line" />
-					<div className="menu-container">
+					<div className="menu-container" data-testid="format-options-menu">
 						<div className="title">FORMAT</div>
 
 						<div className="menu-items">
@@ -170,7 +172,9 @@ function OptionsMenu({
 									<div className={cx('item-label')}>
 										{item.label}
 
-										{selectedItem === item.key && <Check size={12} />}
+										{selectedItem === item.key && (
+											<Check size={12} data-testid="format-option-check" />
+										)}
 									</div>
 								</div>
 							))}

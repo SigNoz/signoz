@@ -1597,7 +1597,10 @@ function QuerySearch({
 					{showScopeChip && <ScopeChip expression={initialExpression ?? ''} />}
 					{isScopedFilter && !showScopeChip ? (
 						<Tooltip title={initialExpression || ''} placement="left">
-							<div className="query-search-initial-scope-label">
+							<div
+								className="query-search-initial-scope-label"
+								data-testid="query-search-initial-scope-label"
+							>
 								<Filter
 									size={14}
 									style={{

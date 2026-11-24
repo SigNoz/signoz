@@ -114,16 +114,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				{ timeout: 5000 },
 			);
 
-			// Find input by class name
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
 			// Type partial match that doesn't exist exactly
-			if (searchInput) {
-				await user.type(searchInput, 'fro');
-			}
+			await user.type(combobox, 'fro');
 
 			// Verify the component renders without crashing
 			expect(combobox).toBeInTheDocument();
@@ -141,30 +133,20 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'frontend');
-			}
+			await user.type(combobox, 'frontend');
 
 			// Should show the Frontend option in dropdown for exact match
 			await waitFor(() => {
 				// Check for highlighted "frontend" text
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('Frontend');
 
 				// Frontend option should be visible in dropdown - use a simpler approach
-				const optionLabels = document.querySelectorAll('.option-label-text');
-				const hasFrontendOption = Array.from(optionLabels).some((label) =>
-					label.textContent?.includes('Frontend'),
+				expect(screen.getByTestId('option-item-frontend')).toHaveTextContent(
+					'Frontend',
 				);
-				expect(hasFrontendOption).toBe(true);
 			});
 
 			// Press Enter to select the exact match
@@ -188,49 +170,31 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'end');
-			}
+			await user.type(combobox, 'end');
 
 			// Should filter to show only Frontend and Backend with highlighted "end"
 			await waitFor(() => {
 				// Check for highlighted "end" text in the options
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('end');
 
 				// Check that Frontend and Backend options are present with highlighted text
-				const optionLabels = document.querySelectorAll('.option-label-text');
-				const hasFrontendOption = Array.from(optionLabels).some(
-					(label) =>
-						label.textContent?.includes('Front') &&
-						label.textContent?.includes('end'),
+				expect(screen.getByTestId('option-item-frontend')).toHaveTextContent(
+					'Frontend',
 				);
-				const hasBackendOption = Array.from(optionLabels).some(
-					(label) =>
-						label.textContent?.includes('Back') && label.textContent?.includes('end'),
+				expect(screen.getByTestId('option-item-backend')).toHaveTextContent(
+					'Backend',
 				);
-
-				expect(hasFrontendOption).toBe(true);
-				expect(hasBackendOption).toBe(true);
 
 				// Other options should be filtered out
-				const hasDatabaseOption = Array.from(optionLabels).some((label) =>
-					label.textContent?.includes('Database'),
-				);
-				const hasApiGatewayOption = Array.from(optionLabels).some((label) =>
-					label.textContent?.includes('API Gateway'),
-				);
-
-				expect(hasDatabaseOption).toBe(false);
-				expect(hasApiGatewayOption).toBe(false);
+				expect(
+					screen.queryByTestId('option-item-database'),
+				).not.toBeInTheDocument();
+				expect(
+					screen.queryByTestId('option-item-api-gateway'),
+				).not.toBeInTheDocument();
 			});
 		});
 
@@ -246,15 +210,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				// Type comma-separated values
-				await user.type(searchInput, 'test1, test2, test3');
-			}
+			// Type comma-separated values
+			await user.type(combobox, 'test1, test2, test3');
 
 			// Press Enter to create the comma-separated chips
 			await user.keyboard('{Enter}');
@@ -294,14 +251,13 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const dropdown = document.querySelector('.custom-multiselect-dropdown');
-				expect(dropdown).toBeInTheDocument();
-
-				const options = dropdown?.querySelectorAll('.option-label-text') || [];
-				const optionTexts = Array.from(options).map((el) => el.textContent);
+				expect(
+					screen.getByTestId('custom-multiselect-dropdown'),
+				).toBeInTheDocument();
 
 				// Database should be at the top (after ALL option if present)
-				expect(optionTexts[0]).toBe('Database');
+				const [firstOption] = screen.getAllByTestId(/^option-item-/);
+				expect(firstOption).toBe(screen.getByTestId('option-item-database'));
 			});
 		});
 
@@ -319,30 +275,20 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 
 			// Find and type in search input
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'front');
-			}
+			await user.type(combobox, 'front');
 
 			// Should filter to show only options containing 'front' and highlight search term
 			await waitFor(() => {
 				// Check for highlighted text within the Frontend option
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('Front');
 
 				// Should show Frontend option (highlighted) - use a simpler approach
-				const optionLabels = document.querySelectorAll('.option-label-text');
-				const hasFrontendOption = Array.from(optionLabels).some((label) =>
-					label.textContent?.includes('Frontend'),
+				expect(screen.getByTestId('option-item-frontend')).toHaveTextContent(
+					'Frontend',
 				);
-				expect(hasFrontendOption).toBe(true);
 
 				// Backend and Database should not be visible
 				expect(screen.queryByText('Backend')).not.toBeInTheDocument();
@@ -362,21 +308,13 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'end');
-			}
+			await user.type(combobox, 'end');
 
 			// Should highlight matching text in options
 			await waitFor(() => {
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('end');
 			});
 		});
@@ -393,14 +331,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'nonexistent');
-			}
+			await user.type(combobox, 'nonexistent');
 
 			// Should show custom value option when no matches found
 			await waitFor(() => {
@@ -411,13 +342,11 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.queryByText('API Gateway')).not.toBeInTheDocument();
 
 				// Should show custom value option
-				const customOptions = screen.getAllByText('nonexistent');
-				const customOption = customOptions.find((option) => {
-					const optionItem = option.closest('.option-item');
-					const badge = optionItem?.querySelector('.option-badge');
-					return badge?.textContent === 'Custom';
-				});
-				expect(customOption).toBeInTheDocument();
+				const customOption = screen.getByTestId('option-item-nonexistent');
+				expect(customOption).toHaveTextContent('nonexistent');
+				expect(within(customOption).getByTestId('option-badge')).toHaveTextContent(
+					'Custom',
+				);
 			});
 		});
 	});
@@ -445,23 +374,19 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// First option should be active
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
+				const activeOption = screen.getByTestId('option-item-frontend');
 				expect(activeOption).toHaveClass('active');
 				expect(activeOption).toHaveAttribute('role', 'option');
-				// The active option should be an option in the dropdown
-				expect(activeOption?.textContent).toBeTruthy();
 			});
 
 			// Arrow up should go to previous option (goes back to ALL)
 			await user.keyboard('{ArrowUp}');
 
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
+				const activeOption = screen.getByTestId('all-option');
 				expect(activeOption).toHaveClass('active');
 				expect(activeOption).toHaveAttribute('role', 'option');
-				expect(activeOption?.textContent).toContain('ALL');
+				expect(activeOption).toHaveTextContent('ALL');
 			});
 		});
 
@@ -499,19 +424,14 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Should navigate to first option in dropdown
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
-				expect(activeOption).toHaveClass('active');
-				expect(activeOption?.textContent).toBeTruthy();
+				expect(screen.getByTestId('option-item-frontend')).toHaveClass('active');
 			});
 
 			// Tab again to move to next option
 			await user.tab();
 
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
-				expect(activeOption?.textContent).toContain('Backend');
+				expect(screen.getByTestId('option-item-backend')).toHaveClass('active');
 			});
 		});
 
@@ -558,10 +478,9 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Should have an active chip
 			await waitFor(() => {
-				const activeChip = document.querySelector(
-					'.ant-select-selection-item-active',
+				expect(screen.getByTestId('selected-tag-database')).toHaveClass(
+					'ant-select-selection-item-active',
 				);
-				expect(activeChip).toBeInTheDocument();
 			});
 
 			// Delete the active chip
@@ -575,11 +494,9 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Verify that the active chip (backend) is highlighted for deletion
 			await waitFor(() => {
-				const activeChip = document.querySelector(
-					'.ant-select-selection-item-active',
+				expect(screen.getByTestId('selected-tag-backend')).toHaveClass(
+					'ant-select-selection-item-active',
 				);
-				expect(activeChip).toBeInTheDocument();
-				expect(activeChip).toHaveTextContent('backend');
 			});
 		});
 	});
@@ -688,9 +605,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			);
 
 			await user.click(screen.getByRole('combobox'));
-			const backendRow = (await screen.findByText('Backend')).closest(
-				'[role="option"]',
-			) as HTMLElement;
+			const backendRow = await screen.findByTestId('option-item-backend');
 			mockOnChange.mockClear();
 			await user.click(within(backendRow).getByRole('checkbox'));
 
@@ -726,9 +641,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			);
 
 			await user.click(screen.getByRole('combobox'));
-			const backendRow = (await screen.findByText('Backend')).closest(
-				'[role="option"]',
-			) as HTMLElement;
+			const backendRow = await screen.findByTestId('option-item-backend');
 			mockOnChange.mockClear();
 			await user.click(within(backendRow).getByText('Toggle'));
 
@@ -751,8 +664,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Database')).toBeInTheDocument();
 				expect(screen.getByText('API Gateway')).toBeInTheDocument();
 
-				const loadingFooter = document.querySelector('.navigation-loading');
-				expect(loadingFooter).toBeInTheDocument();
+				expect(screen.getByTestId('navigation-loading')).toBeInTheDocument();
 				expect(screen.getByText('Refreshing values...')).toBeInTheDocument();
 			});
 		});
@@ -770,8 +682,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const errorFooter = document.querySelector('.navigation-error');
-				expect(errorFooter).toBeInTheDocument();
+				expect(screen.getByTestId('navigation-error')).toBeInTheDocument();
 				expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 			});
 		});
@@ -813,21 +724,17 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			await waitFor(() => {
 				// All chips should be selected (have selected class)
-				const selectedChips = document.querySelectorAll(
-					'.ant-select-selection-item-selected',
-				);
+				const selectedChips = screen
+					.getAllByTestId(/^selected-tag-/)
+					.filter((chip) =>
+						chip.classList.contains('ant-select-selection-item-selected'),
+					);
 				expect(selectedChips.length).toBeGreaterThan(0);
 
 				// Verify that all expected chips are present AND selected
-				const frontendChip = screen
-					.getByText('frontend')
-					.closest('.ant-select-selection-item');
-				const backendChip = screen
-					.getByText('backend')
-					.closest('.ant-select-selection-item');
-				const databaseChip = screen
-					.getByText('database')
-					.closest('.ant-select-selection-item');
+				const frontendChip = screen.getByTestId('selected-tag-frontend');
+				const backendChip = screen.getByTestId('selected-tag-backend');
+				const databaseChip = screen.getByTestId('selected-tag-database');
 
 				expect(frontendChip).toHaveClass('ant-select-selection-item-selected');
 				expect(backendChip).toHaveClass('ant-select-selection-item-selected');
@@ -850,11 +757,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				/>,
 			);
 
-			const clearButton = document.querySelector('.ant-select-clear');
-			if (clearButton) {
-				await user.click(clearButton as Element);
-				expect(mockOnChange).toHaveBeenCalledWith([], []);
-			}
+			await user.click(screen.getByLabelText('close-circle'));
+			expect(mockOnChange).toHaveBeenCalledWith([], []);
 		});
 
 		it('CA-03: Individual chip removal', async () => {
@@ -867,12 +771,10 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			);
 
 			// Find and click the close button on a chip
-			const removeButtons = document.querySelectorAll(
-				'.ant-select-selection-item-remove',
-			);
+			const removeButtons = screen.getAllByLabelText(/^Remove tag /);
 			expect(removeButtons).toHaveLength(2);
 
-			await user.click(removeButtons[1] as Element);
+			await user.click(removeButtons[1]);
 
 			// Should call onChange with one item removed
 			expect(mockOnChange).toHaveBeenCalledWith(
@@ -911,9 +813,10 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			await waitFor(() => {
 				// Dropdown should be hidden (not completely removed from DOM)
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-				expect(dropdown).toHaveStyle('pointer-events: none');
+				expect(
+					screen.getByTestId('custom-multiselect-dropdown'),
+				).toBeInTheDocument();
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 
@@ -951,14 +854,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'custom-input');
-			}
+			await user.type(combobox, 'custom-input');
 
 			// Press Enter in input field
 			await user.keyboard('{Enter}');
@@ -984,18 +880,11 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'search-text');
-			}
+			await user.type(combobox, 'search-text');
 
 			// Verify search text is in input
 			await waitFor(() => {
-				expect(searchInput).toHaveValue('search-text');
+				expect(combobox).toHaveValue('search-text');
 			});
 
 			// Press Escape to close dropdown
@@ -1003,9 +892,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close and search text should be cleared
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
-				expect(searchInput).toHaveValue('');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
+				expect(combobox).toHaveValue('');
 			});
 		});
 	});
@@ -1029,8 +917,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(allOption).toBeInTheDocument();
 
 				// Check for divider after ALL option
-				const divider = document.querySelector('.divider');
-				expect(divider).toBeInTheDocument();
+				expect(screen.getByTestId('all-option-divider')).toBeInTheDocument();
 			});
 		});
 
@@ -1086,8 +973,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			await waitFor(() => {
 				// Should show navigation footer
-				const footer = document.querySelector('.navigation-footer');
-				expect(footer).toBeInTheDocument();
+				expect(screen.getByTestId('navigation-footer')).toBeInTheDocument();
 
 				// Should show navigation hint
 				expect(screen.getByText('to navigate')).toBeInTheDocument();
@@ -1176,12 +1062,10 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Should have an active chip - verify initial chip
 			await waitFor(() => {
-				const activeChip = document.querySelector(
-					'.ant-select-selection-item-active',
-				);
-				expect(activeChip).toBeInTheDocument();
 				// Verify we're on the last chip (database)
-				expect(activeChip?.textContent).toContain('database');
+				expect(screen.getByTestId('selected-tag-database')).toHaveClass(
+					'ant-select-selection-item-active',
+				);
 			});
 
 			// Use Shift + Arrow to navigate to previous chip
@@ -1189,12 +1073,10 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Verify we're on a different chip (backend)
 			await waitFor(() => {
-				const activeChip = document.querySelector(
-					'.ant-select-selection-item-active',
-				);
-				expect(activeChip).toBeInTheDocument();
 				// Verify we moved to the previous chip (backend)
-				expect(activeChip?.textContent).toContain('backend');
+				expect(screen.getByTestId('selected-tag-backend')).toHaveClass(
+					'ant-select-selection-item-active',
+				);
 			});
 
 			// Use Del to delete the active chip
@@ -1203,8 +1085,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			// Verify the chip was deleted
 			await waitFor(() => {
 				// Check that the backend chip is no longer present
-				const backendChip = document.querySelector('.ant-select-selection-item');
-				expect(backendChip?.textContent).not.toContain('backend');
+				const [backendChip] = screen.getAllByTestId(/^selected-tag-/);
+				expect(backendChip).not.toHaveTextContent('backend');
 
 				// Verify onChange was called with the updated value (without backend)
 				expect(mockOnChange).toHaveBeenCalledWith(
@@ -1235,9 +1117,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close - check for hidden state
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
 				// The dropdown should be hidden with the hidden class
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 	});
@@ -1256,32 +1137,20 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('ALL')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'front');
-			}
+			await user.type(combobox, 'front');
 
 			// Should show highlighted options with correct order
 			await waitFor(() => {
 				// Check for highlighted text
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('front');
 
 				// Get all option items to check the order
-				const optionItems = document.querySelectorAll('.option-item');
-				const optionTexts = Array.from(optionItems)
-					.map((item) => {
-						const labelElement = item.querySelector('.option-label-text');
-						return labelElement?.textContent?.trim();
-					})
-					.filter(Boolean);
+				const optionTexts = screen
+					.getAllByTestId(/^option-item-/)
+					.map((item) => item.textContent?.trim());
 
 				// Custom value "front" should appear first (above Frontend)
 				// The text should contain "front"
@@ -1325,12 +1194,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			});
 
 			// Now type something and press Enter to save
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			if (searchInput) {
-				await user.type(searchInput, 'custom-value');
-			}
+			await user.type(combobox, 'custom-value');
 
 			// Press Enter to save (should create custom value)
 			await user.keyboard('{Enter}');
@@ -1364,11 +1228,8 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				/>,
 			);
 
-			const clearButton = document.querySelector('.ant-select-clear');
-			expect(clearButton).toBeInTheDocument();
-
 			// Click clear button
-			await user.click(clearButton as Element);
+			await user.click(screen.getByLabelText('close-circle'));
 
 			// Should call onChange immediately (no loading state in this component)
 			expect(mockOnChangeWithDelay).toHaveBeenCalledWith([], []);
@@ -1426,19 +1287,13 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			const combobox = screen.getByRole('combobox');
 			await user.click(combobox);
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
 			// Type a long search value
-			if (searchInput) {
-				const longSearchValue = 'a'.repeat(50); // Reduced length to avoid timeout
-				await user.type(searchInput, longSearchValue);
-			}
+			const longSearchValue = 'a'.repeat(50); // Reduced length to avoid timeout
+			await user.type(combobox, longSearchValue);
 
 			// Should not overflow or break layout
 			await waitFor(() => {
+				// oxlint-disable-next-line signoz/no-dom-node-access -- antd's search wrapper has no test hook; the test reads its computed overflow
 				const searchContainer = document.querySelector(
 					'.ant-select-selection-search',
 				);
@@ -1469,25 +1324,16 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				// Test regex pattern
-				await user.type(searchInput, '.*test.*');
-			}
+			// Test regex pattern
+			await user.type(combobox, '.*test.*');
 
 			// Should create custom value for regex pattern
 			await waitFor(() => {
-				const regexOptions = screen.getAllByText('.*test.*');
-				const regexOption = regexOptions.find((option) => {
-					const optionItem = option.closest('.option-item');
-					const badge = optionItem?.querySelector('.option-badge');
-					return badge?.textContent === 'Custom';
-				});
-				expect(regexOption).toBeInTheDocument();
+				const regexOption = screen.getByTestId('option-item-.*test.*');
+				expect(regexOption).toHaveTextContent('.*test.*');
+				expect(within(regexOption).getByTestId('option-badge')).toHaveTextContent(
+					'Custom',
+				);
 			});
 
 			// Press Enter to create the regex value
@@ -1570,8 +1416,7 @@ describe('CustomMultiSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Escape}');
 
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 	});

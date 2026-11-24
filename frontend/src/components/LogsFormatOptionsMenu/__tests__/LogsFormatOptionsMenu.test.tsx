@@ -5,6 +5,7 @@ import {
 	screen,
 	userEvent,
 	waitFor,
+	within,
 } from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
@@ -36,7 +37,6 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	function setup(): {
 		getByTestId: ReturnType<typeof render>['getByTestId'];
-		findItemByLabel: (label: string) => Element | undefined;
 		formatOnChange: jest.Mock<any, any>;
 		maxLinesOnChange: jest.Mock<any, any>;
 		fontSizeOnChange: jest.Mock<any, any>;
@@ -78,14 +78,8 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		const formatButton = getByTestId('periscope-btn-format-options');
 		fireEvent.click(formatButton);
 
-		const getMenuItems = (): Element[] =>
-			Array.from(document.querySelectorAll('.menu-items .item'));
-		const findItemByLabel = (label: string): Element | undefined =>
-			getMenuItems().find((el) => (el.textContent || '').includes(label));
-
 		return {
 			getByTestId,
-			findItemByLabel,
 			formatOnChange,
 			maxLinesOnChange,
 			fontSizeOnChange,
@@ -94,20 +88,25 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	// Covers: opens menu, changes format selection, updates max-lines, changes font size
 	it('opens and toggles format selection', async () => {
-		const { findItemByLabel, formatOnChange } = setup();
+		const { formatOnChange } = setup();
 
 		// Assert initial selection
-		const columnItem = findItemByLabel('Column') as Element;
-		expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
-		expect(columnItem.querySelector('svg')).toBeInTheDocument();
+		expect(screen.getAllByTestId('format-option-check')).toHaveLength(1);
+		expect(
+			within(screen.getByTestId('format-option-table')).getByTestId(
+				'format-option-check',
+			),
+		).toBeInTheDocument();
 
 		// Change selection to 'Raw'
-		const rawItem = findItemByLabel('Raw') as Element;
-		fireEvent.click(rawItem as HTMLElement);
+		fireEvent.click(screen.getByTestId('format-option-raw'));
 		await waitFor(() => {
-			const rawEl = findItemByLabel('Raw') as Element;
-			expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
-			expect(rawEl.querySelector('svg')).toBeInTheDocument();
+			expect(screen.getAllByTestId('format-option-check')).toHaveLength(1);
+			expect(
+				within(screen.getByTestId('format-option-raw')).getByTestId(
+					'format-option-check',
+				),
+			).toBeInTheDocument();
 		});
 		expect(formatOnChange).toHaveBeenCalledWith('raw');
 	});
@@ -164,10 +163,14 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 		await waitFor(() => {
 			expect(
-				getByTestId(`font-size-option-${FontSize.MEDIUM}`).querySelector('svg'),
+				within(getByTestId(`font-size-option-${FontSize.MEDIUM}`)).getByTestId(
+					'font-size-option-check',
+				),
 			).toBeInTheDocument();
 			expect(
-				getByTestId(`font-size-option-${FontSize.SMALL}`).querySelector('svg'),
+				within(getByTestId(`font-size-option-${FontSize.SMALL}`)).queryByTestId(
+					'font-size-option-check',
+				),
 			).not.toBeInTheDocument();
 		});
 		await waitFor(() => {
@@ -212,16 +215,16 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		renderWithOnOpen(undefined, 'table');
 
 		expect(
-			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
-		).toBeNull();
+			screen.queryByTestId('periscope-btn-edit-columns'),
+		).not.toBeInTheDocument();
 	});
 
 	it('does not render "Edit columns" row when format is not table', () => {
 		renderWithOnOpen(jest.fn(), 'raw');
 
 		expect(
-			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
-		).toBeNull();
+			screen.queryByTestId('periscope-btn-edit-columns'),
+		).not.toBeInTheDocument();
 	});
 
 	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
@@ -233,7 +236,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		expect(onOpenColumns).toHaveBeenCalledTimes(1);
 		await waitFor(() => {
 			// Popover content unmounts on close.
-			expect(document.querySelector('.menu-container')).toBeNull();
+			expect(screen.queryByTestId('format-option-table')).not.toBeInTheDocument();
 		});
 	});
 });

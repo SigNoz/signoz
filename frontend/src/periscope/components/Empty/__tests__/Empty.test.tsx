@@ -1,5 +1,5 @@
 import { Empty as AntdEmpty } from 'antd';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, within } from 'tests/test-utils';
 
 import Empty from '../Empty';
 
@@ -23,14 +23,18 @@ describe('Empty', () => {
 		expect(el.className).toBe('empty custom');
 		expect(el).toHaveAttribute('title', 'hint');
 		expect(partsOf(el)).toStrictEqual(['image', 'description']);
-		expect(el.querySelector('.image svg')).toHaveAttribute('width', '184');
-		expect(el.querySelector('.description')).toHaveTextContent(/^No data$/);
+		expect(
+			within(screen.getByTestId('empty-image')).getByTestId('empty-default-image'),
+		).toHaveAttribute('width', '184');
+		expect(screen.getByTestId('empty-description')).toHaveTextContent(
+			/^No data$/,
+		);
 	});
 
 	it('themes the default image through its class, not inline style', () => {
 		render(<Empty data-testid={TEST_ID} />);
 
-		const svg = screen.getByTestId(TEST_ID).querySelector('svg');
+		const svg = screen.getByTestId('empty-default-image');
 		expect(svg).toHaveAttribute('class', 'defaultImage');
 		expect(svg).not.toHaveAttribute('style');
 	});
@@ -40,8 +44,12 @@ describe('Empty', () => {
 
 		const el = screen.getByTestId(TEST_ID);
 		expect(el.className).toBe('empty normal');
-		expect(el.querySelector('svg')).toHaveAttribute('width', '64');
+		expect(screen.getByTestId('empty-simple-image')).toHaveAttribute(
+			'width',
+			'64',
+		);
 		expect(
+			// oxlint-disable-next-line signoz/no-dom-node-access -- the theming contract is which SVG nodes carry classes
 			Array.from(el.querySelectorAll('svg [class]')).map((node) => [
 				node.tagName,
 				node.getAttribute('class'),
@@ -52,6 +60,7 @@ describe('Empty', () => {
 			['path', 'simpleContent'],
 		]);
 		expect(
+			// oxlint-disable-next-line signoz/no-dom-node-access -- the theming contract is that no SVG node paints with fill or stroke attributes
 			el.querySelectorAll('svg [stroke], ellipse[fill], path[fill]'),
 		).toHaveLength(0);
 	});
@@ -67,17 +76,18 @@ describe('Empty', () => {
 	it('keeps the default variant for a custom image node', () => {
 		render(<Empty data-testid={TEST_ID} image={<span>custom</span>} />);
 
-		const el = screen.getByTestId(TEST_ID);
-		expect(el.className).toBe('empty');
-		expect(el.querySelector('.image')?.innerHTML).toBe('<span>custom</span>');
+		expect(screen.getByTestId(TEST_ID).className).toBe('empty');
+		expect(screen.getByTestId('empty-image').innerHTML).toBe(
+			'<span>custom</span>',
+		);
 	});
 
 	it('renders a string image as an img named after a string description', () => {
 		const { rerender } = render(
 			<Empty data-testid={TEST_ID} image={IMAGE_URL} description="Nothing" />,
 		);
-		const img = (): HTMLImageElement | null =>
-			screen.getByTestId(TEST_ID).querySelector('img');
+		const img = (): HTMLElement =>
+			within(screen.getByTestId('empty-image')).getByRole('img');
 		expect(img()).toHaveAttribute('src', IMAGE_URL);
 		expect(img()).toHaveAttribute('alt', 'Nothing');
 
@@ -97,9 +107,9 @@ describe('Empty', () => {
 		expect(partsOf(screen.getByTestId(TEST_ID))).toStrictEqual(['image']);
 
 		rerender(<Empty data-testid={TEST_ID} description={<em>Custom</em>} />);
-		expect(
-			screen.getByTestId(TEST_ID).querySelector('.description')?.innerHTML,
-		).toBe('<em>Custom</em>');
+		expect(screen.getByTestId('empty-description').innerHTML).toBe(
+			'<em>Custom</em>',
+		);
 	});
 
 	it('wraps children in a footer and styles the image wrapper', () => {
@@ -109,9 +119,12 @@ describe('Empty', () => {
 			</Empty>,
 		);
 
-		const el = screen.getByTestId(TEST_ID);
-		expect(partsOf(el)).toStrictEqual(['image', 'description', 'footer']);
-		expect(el.querySelector<HTMLElement>('.image')?.style.height).toBe('60px');
-		expect(el.querySelector('.footer')).toHaveTextContent('Retry');
+		expect(partsOf(screen.getByTestId(TEST_ID))).toStrictEqual([
+			'image',
+			'description',
+			'footer',
+		]);
+		expect(screen.getByTestId('empty-image').style.height).toBe('60px');
+		expect(screen.getByTestId('empty-footer')).toHaveTextContent('Retry');
 	});
 });

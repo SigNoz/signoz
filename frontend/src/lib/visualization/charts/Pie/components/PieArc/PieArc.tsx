@@ -75,12 +75,13 @@ export default function PieArc({
 	return (
 		<g
 			data-pie-arc=""
+			data-testid="pie-arc"
 			onMouseEnter={(event): void => onHover(slice, event)}
 			onMouseMove={(event): void => onHover(slice, event)}
 			onMouseLeave={onLeave}
 			onClick={(event): void => onClick?.(slice, event)}
 		>
-			<path d={arcPath} fill={fill} />
+			<path d={arcPath} fill={fill} data-testid="pie-arc-path" />
 			{shouldShowLabel && (
 				<>
 					<line

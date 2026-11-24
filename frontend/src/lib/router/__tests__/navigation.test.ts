@@ -6,10 +6,11 @@ type NavigationModule = typeof import('../navigation');
 type TestRouterModule = typeof import('tests/router-utils');
 
 let release: (() => void) | undefined;
+let base: HTMLBaseElement | undefined;
 
 function loadNavigation(baseHref?: string): NavigationModule {
 	if (baseHref !== undefined) {
-		const base = document.createElement('base');
+		base = document.createElement('base');
 		base.setAttribute('href', baseHref);
 		document.head.append(base);
 	}
@@ -44,9 +45,8 @@ beforeEach(() => {
 afterEach(() => {
 	release?.();
 	release = undefined;
-	for (const element of document.head.querySelectorAll('base')) {
-		element.remove();
-	}
+	base?.remove();
+	base = undefined;
 });
 
 describe('navigate', () => {

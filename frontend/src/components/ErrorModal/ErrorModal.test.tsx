@@ -171,6 +171,7 @@ it('should close the modal when the onCancel event is triggered', async () => {
 	await waitFor(() => {
 		expect(screen.getByText('An error occurred')).toBeInTheDocument();
 	});
+	const modal = screen.getByRole('dialog');
 
 	// Trigger the onCancel event
 	await user.click(screen.getByTestId('close-button'));
@@ -180,8 +181,6 @@ it('should close the modal when the onCancel event is triggered', async () => {
 
 	await waitFor(() => {
 		// check if the modal is not visible
-		const modal = document.getElementsByClassName('ant-modal');
-		const style = window.getComputedStyle(modal[0]);
-		expect(style.display).toBe('none');
+		expect(modal).toHaveStyle({ display: 'none' });
 	});
 });

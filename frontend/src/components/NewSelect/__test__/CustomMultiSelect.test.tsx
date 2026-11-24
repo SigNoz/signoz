@@ -166,10 +166,7 @@ describe('CustomMultiSelect Component', () => {
 		);
 
 		// Find close button on Option 1 tag and click it
-		const closeButtons = document.querySelectorAll(
-			'.ant-select-selection-item-remove',
-		);
-		fireEvent.click(closeButtons[0]);
+		fireEvent.click(screen.getByLabelText('Remove tag option1'));
 
 		// Verify onChange was called with remaining option
 		expect(handleChange).toHaveBeenCalledWith(
@@ -185,32 +182,20 @@ describe('CustomMultiSelect Component', () => {
 		const selectElement = screen.getByRole('combobox');
 		fireEvent.mouseDown(selectElement);
 
-		// Type into search box - get input directly
-		const inputElement = selectElement.querySelector('input');
-		if (inputElement) {
-			fireEvent.change(inputElement, { target: { value: '2' } });
-		}
+		// Type into search box - the combobox is the search input
+		fireEvent.change(selectElement, { target: { value: '2' } });
 
 		// Wait for the dropdown filtering to happen
 		await waitFor(() => {
 			// Check that the dropdown is present
-			const dropdownElement = document.querySelector(
-				'.custom-multiselect-dropdown',
-			);
-			expect(dropdownElement).toBeInTheDocument();
+			expect(
+				screen.getByTestId('custom-multiselect-dropdown'),
+			).toBeInTheDocument();
 
 			// Verify Option 2 is visible in the dropdown
-			const options = document.querySelectorAll('.option-label-text');
-			let foundOption2 = false;
-
-			options.forEach((option) => {
-				const text = option.textContent || '';
-				if (text.includes('Option 2')) {
-					foundOption2 = true;
-				}
-			});
-
-			expect(foundOption2).toBe(true);
+			expect(screen.getByTestId('option-item-option2')).toHaveTextContent(
+				'Option 2',
+			);
 		});
 	});
 

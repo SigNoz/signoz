@@ -92,7 +92,9 @@ describe('LabelColumn', () => {
 		renderWithProviders(<LabelColumn labels={labels} />);
 
 		const isHidden = (label: string): boolean =>
-			screen.getByTestId(`label-tag-${label}`).closest('.overflowed') !== null;
+			screen
+				.getByTestId(`label-tag-container-${label}`)
+				.classList.contains('overflowed');
 
 		expect(labels.filter(isHidden)).toStrictEqual(['team', 'owner', 'version']);
 		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');

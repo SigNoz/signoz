@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 
@@ -158,9 +158,9 @@ describe('getChartManagerColumns', () => {
 			  ) => JSX.Element)
 			| undefined;
 		expect(renderFn).toBeDefined();
-		const { container } = render(renderFn!(null, tableDataSet[1], 1));
+		render(renderFn!(null, tableDataSet[1], 1));
 
-		const checkbox = container.querySelector('[role="checkbox"]');
+		const checkbox = screen.getByRole('checkbox');
 		expect(checkbox).toBeInTheDocument();
 		expect(checkbox).toHaveAttribute('data-checked'); // graphVisibilityState[1] is true
 	});

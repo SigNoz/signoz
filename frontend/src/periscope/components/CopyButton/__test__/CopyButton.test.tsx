@@ -49,8 +49,8 @@ describe('CopyButton', () => {
 	});
 
 	it('shows the copied state after clicking and reverts after the reset window', async () => {
-		const { container } = render(<CopyButton value="hello" testId="copy" />);
-		const iconStack = container.querySelector('[data-copied]') as HTMLElement;
+		render(<CopyButton value="hello" testId="copy" />);
+		const iconStack = screen.getByTestId('copy-button-icon-stack');
 
 		expect(iconStack).toHaveAttribute('data-copied', 'false');
 

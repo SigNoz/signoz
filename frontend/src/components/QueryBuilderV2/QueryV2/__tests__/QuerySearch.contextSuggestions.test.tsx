@@ -1,13 +1,12 @@
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import { render, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
 
-const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
-const CM_OPTION_SELECTOR = '.cm-tooltip-autocomplete .cm-completionLabel';
+const EDITOR_TEST_ID = 'query-where-clause-editor';
 
 beforeAll(() => {
 	mockCodeMirrorDomApis();
@@ -110,11 +109,9 @@ async function renderAndType(text: string): Promise<HTMLElement> {
 		/>,
 	);
 
-	await waitFor(() => {
-		expect(document.querySelector(CM_EDITOR_SELECTOR)).toBeInTheDocument();
-	});
-
-	const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+	const editor = within(await screen.findByTestId(EDITOR_TEST_ID)).getByRole(
+		'textbox',
+	);
 	await userEvent.click(editor);
 	await userEvent.type(editor, text);
 	return editor;
@@ -142,9 +139,9 @@ async function typeKeyThenEnterOperatorContext(
 }
 
 function visibleOptionLabels(): string[] {
-	return Array.from(document.querySelectorAll(CM_OPTION_SELECTOR)).map(
-		(el) => el.textContent ?? '',
-	);
+	return within(screen.getByTestId(EDITOR_TEST_ID))
+		.queryAllByRole('option')
+		.map((el) => el.textContent ?? '');
 }
 
 describe('QuerySearch context-prefixed key suggestions', () => {

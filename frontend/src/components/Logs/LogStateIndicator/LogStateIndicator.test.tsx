@@ -1,46 +1,39 @@
-import { render } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
 
 import LogStateIndicator from './LogStateIndicator';
 
 describe('LogStateIndicator', () => {
 	it('renders correctly with default props', () => {
-		const { container } = render(
-			<LogStateIndicator severityText="INFO" fontSize={FontSize.MEDIUM} />,
+		render(<LogStateIndicator severityText="INFO" fontSize={FontSize.MEDIUM} />);
+		const indicator = screen.getByTestId('log-state-indicator');
+		expect(indicator).toHaveClass('log-state-indicator');
+		expect(indicator).not.toHaveClass('isActive');
+		expect(within(indicator).getByTestId('log-state-indicator-line')).toHaveClass(
+			'severity-info-0',
 		);
-		const indicator = container.firstChild as HTMLElement;
-		expect(indicator.classList.contains('log-state-indicator')).toBe(true);
-		expect(indicator.classList.contains('isActive')).toBe(false);
-		expect(container.querySelector('.line')).toBeTruthy();
-		expect(
-			container.querySelector('.line')?.classList.contains('severity-info-0'),
-		).toBe(true);
 	});
 
 	it('renders correctly with different types', () => {
-		const { container: containerInfo } = render(
+		const { rerender } = render(
 			<LogStateIndicator severityText="INFO" fontSize={FontSize.MEDIUM} />,
 		);
-		expect(
-			containerInfo.querySelector('.line')?.classList.contains('severity-info-0'),
-		).toBe(true);
+		expect(screen.getByTestId('log-state-indicator-line')).toHaveClass(
+			'severity-info-0',
+		);
 
-		const { container: containerWarning } = render(
+		rerender(
 			<LogStateIndicator severityText="WARNING" fontSize={FontSize.MEDIUM} />,
 		);
-		expect(
-			containerWarning
-				.querySelector('.line')
-				?.classList.contains('severity-warn-0'),
-		).toBe(true);
+		expect(screen.getByTestId('log-state-indicator-line')).toHaveClass(
+			'severity-warn-0',
+		);
 
-		const { container: containerError } = render(
+		rerender(
 			<LogStateIndicator severityText="ERROR" fontSize={FontSize.MEDIUM} />,
 		);
-		expect(
-			containerError
-				.querySelector('.line')
-				?.classList.contains('severity-error-0'),
-		).toBe(true);
+		expect(screen.getByTestId('log-state-indicator-line')).toHaveClass(
+			'severity-error-0',
+		);
 	});
 });

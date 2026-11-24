@@ -9,7 +9,7 @@ import {
 import { ENVIRONMENT } from 'constants/env';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import type {
 	IBuilderQuery,
 	Query,
@@ -125,12 +125,9 @@ async function enterAggregation(
 		{ queryBuilderOverrides: currentQuery && { currentQuery } },
 	);
 
-	const content = (
-		await screen.findByTestId(EDITOR_TEST_ID)
-	).querySelector<HTMLElement>('.cm-content');
-	if (!content) {
-		throw new Error('CodeMirror content element not rendered');
-	}
+	const content = within(await screen.findByTestId(EDITOR_TEST_ID)).getByRole(
+		'textbox',
+	);
 	await user.click(content);
 	// Typed keys drop under load: a re-render's dispatch discards DOM input CodeMirror hasn't read yet.
 	await user.paste(text);
@@ -138,10 +135,10 @@ async function enterAggregation(
 }
 
 function suggestionLabels(): string[] {
-	return Array.from(
-		screen.getByTestId(EDITOR_TEST_ID).querySelectorAll('.cm-completionLabel'),
-		(label) => label.textContent ?? '',
-	).sort();
+	return within(screen.getByTestId(EDITOR_TEST_ID))
+		.queryAllByRole('option')
+		.map((option) => option.textContent ?? '')
+		.sort();
 }
 
 describe('QueryAggregationSelect field suggestions for an AI query', () => {

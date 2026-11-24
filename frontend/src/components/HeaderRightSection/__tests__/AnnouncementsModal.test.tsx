@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 
 import AnnouncementsModal from '../AnnouncementsModal';
 
@@ -12,15 +12,14 @@ describe('AnnouncementsModal', () => {
 	it('should have proper structure and classes', () => {
 		render(<AnnouncementsModal />);
 
-		const container = screen
-			.getByText('Announcements')
-			.closest('.announcements-modal-container');
-		expect(container).toBeInTheDocument();
+		const container = screen.getByTestId('announcements-modal');
+		expect(container).toHaveClass('announcements-modal-container');
 
-		const headerContainer = screen
-			.getByText('Announcements')
-			.closest('.announcements-modal-container-header');
-		expect(headerContainer).toBeInTheDocument();
+		const headerContainer = within(container).getByTestId(
+			'announcements-modal-header',
+		);
+		expect(headerContainer).toHaveClass('announcements-modal-container-header');
+		expect(headerContainer).toHaveTextContent('Announcements');
 	});
 
 	it('should render without any errors', () => {

@@ -171,11 +171,7 @@ describe('CustomTimePicker', () => {
 		fireEvent.blur(input);
 
 		// Click the chevron (which triggers handleClose)
-		const chevron = document.querySelector(
-			'.time-input-suffix-icon-badge',
-		) as HTMLElement;
-
-		fireEvent.click(chevron);
+		fireEvent.click(screen.getByTestId('time-picker-close-chevron'));
 
 		// Should have applied the value (same as Enter)
 		expect(onValid).toHaveBeenCalledTimes(1);

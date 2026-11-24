@@ -5,11 +5,14 @@
 
 type StorageModule = typeof import('../storage');
 
+const storageBaseTags: HTMLBaseElement[] = [];
+
 function loadStorageModule(href?: string): StorageModule {
 	if (href !== undefined) {
 		const base = document.createElement('base');
 		base.setAttribute('href', href);
 		document.head.append(base);
+		storageBaseTags.push(base);
 	}
 	let mod!: StorageModule;
 	jest.isolateModules(() => {
@@ -20,7 +23,7 @@ function loadStorageModule(href?: string): StorageModule {
 }
 
 afterEach(() => {
-	document.head.querySelectorAll('base').forEach((el) => el.remove());
+	storageBaseTags.splice(0).forEach((base) => base.remove());
 	localStorage.clear();
 });
 
