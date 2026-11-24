@@ -260,7 +260,7 @@ describe('BillingContainer', () => {
 
 		const cellTexts = (productIndex: number, tierIndex: number): string[] =>
 			within(screen.getByTestId(`billing-usage-row-${productIndex}${tierIndex}`))
-				.getAllByRole('cell', { hidden: true })
+				.getAllByRole('cell')
 				.map((cell) => cell.textContent ?? '');
 
 		expect(cellTexts(0, 0)).toStrictEqual([

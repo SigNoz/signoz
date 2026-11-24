@@ -227,7 +227,7 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
 		const editorWrapper = await screen.findByTestId('query-where-clause-editor');
-		within(editorWrapper).getByRole('textbox', { hidden: true }).focus();
+		within(editorWrapper).getByRole('textbox').focus();
 		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
 		expect(handleRunQueryMock).toHaveBeenCalledTimes(1);
