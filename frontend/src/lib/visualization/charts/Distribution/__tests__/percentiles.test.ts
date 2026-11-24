@@ -94,4 +94,12 @@ describe('percentile marker groups', () => {
 			'p90, p99 > 40 ms',
 		);
 	});
+
+	it('keeps an estimate ending at the overflow edge apart from the overflow', () => {
+		const p90AtEdge = { ...p90, isOverflow: false };
+
+		expect(formatPercentileValue([p90AtEdge, p99], formatBound)).toBe(
+			'p90 ≈ 40 ms, p99 > 40 ms',
+		);
+	});
 });

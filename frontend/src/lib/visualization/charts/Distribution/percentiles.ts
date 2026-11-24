@@ -96,15 +96,24 @@ export function formatPercentileBadge(group: DistributionPercentile[]): string {
 
 /**
  * `p99 ≈ 412 ms` for an estimate; `p90, p99 > 5 s` where only the overflow bound is
- * known. A group shares one spot, so one value and overflow flag.
+ * known. A group shares one spot, but an estimate ending at the overflow edge keeps
+ * its own sign: `p90 ≈ 5 s, p99 > 5 s`.
  */
 export function formatPercentileValue(
 	group: DistributionPercentile[],
 	formatBound: (value: number) => string,
 ): string {
-	const names = group
-		.map(({ percentile }) => formatPercentileName(percentile))
+	return [false, true]
+		.map((isOverflow) =>
+			group.filter((marker) => marker.isOverflow === isOverflow),
+		)
+		.filter((members) => members.length > 0)
+		.map((members) => {
+			const names = members
+				.map(({ percentile }) => formatPercentileName(percentile))
+				.join(', ');
+			const [{ value, isOverflow }] = members;
+			return `${names} ${isOverflow ? '>' : '≈'} ${formatBound(value)}`;
+		})
 		.join(', ');
-	const [{ value, isOverflow }] = group;
-	return `${names} ${isOverflow ? '>' : '≈'} ${formatBound(value)}`;
 }
