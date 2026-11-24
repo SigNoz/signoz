@@ -106,8 +106,8 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				<div className={styles.scrollHint}>
 					<div className={styles.scrollButton}>
 						<Button
-							variant="outlined"
-							color="secondary"
+							variant="solid"
+							color="primary"
 							size="sm"
 							prefix={<ChevronsDown size={14} className={styles.scrollIcon} />}
 							onClick={scrollForMore}
