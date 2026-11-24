@@ -7,12 +7,15 @@ import { AxiosError } from 'axios';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Send, X } from '@signozhq/icons';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import { AUTHZ_LOADING_TOOLTIP } from 'lib/authz/components/constants';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { toPostableRuleDTO } from 'types/api/alerts/convert';
 import APIError from 'types/api/error';
 import { isModifierKeyPressed } from 'utils/app';
 
 import { useCreateAlertState } from '../context';
+import { useAlertRuleSaveChecks } from './useAlertRuleSaveChecks';
 import { buildCreateAlertRulePayload, validateCreateAlertState } from './utils';
 
 import './styles.scss';
@@ -42,6 +45,8 @@ function Footer(): JSX.Element {
 	} = useCreateAlertState();
 	const { currentQuery } = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const { saveChecks, testChecks, isResolvingChannels } =
+		useAlertRuleSaveChecks();
 	const { showErrorModal } = useErrorModal();
 
 	const handleApiError = useCallback(
@@ -178,56 +183,57 @@ function Footer(): JSX.Element {
 	const isSavingAlertRule = isCreatingAlertRule || isUpdatingAlertRule;
 	const disableButtons = isSavingAlertRule || isTestingAlertRule;
 
+	const saveBlockedReason =
+		alertValidationMessage ||
+		(isTestingAlertRule
+			? 'Wait for the test notification to finish'
+			: isResolvingChannels
+				? AUTHZ_LOADING_TOOLTIP
+				: undefined);
+	const testBlockedReason =
+		alertValidationMessage ||
+		(isSavingAlertRule
+			? 'Wait for the alert rule to finish saving'
+			: isResolvingChannels
+				? AUTHZ_LOADING_TOOLTIP
+				: undefined);
+
 	const saveAlertButton = useMemo(
 		() => (
-			<Button
-				disabledTooltip={
-					alertValidationMessage || 'Wait for the test notification to finish'
-				}
+			<AuthZButton
+				checks={saveChecks}
+				disabledTooltip={saveBlockedReason}
 				size="md"
 				variant="solid"
 				color="primary"
 				onClick={handleSaveAlert}
-				disabled={isTestingAlertRule || Boolean(alertValidationMessage)}
 				loading={isSavingAlertRule}
 				prefix={<Check data-testid="save-alert-rule-check-icon" size={14} />}
 				testId="save-alert-rule-button"
 			>
 				Save Alert Rule
-			</Button>
+			</AuthZButton>
 		),
-		[
-			alertValidationMessage,
-			handleSaveAlert,
-			isSavingAlertRule,
-			isTestingAlertRule,
-		],
+		[saveChecks, saveBlockedReason, handleSaveAlert, isSavingAlertRule],
 	);
 
 	const testAlertButton = useMemo(
 		() => (
-			<Button
-				disabledTooltip={
-					alertValidationMessage || 'Wait for the alert rule to finish saving'
-				}
+			<AuthZButton
+				checks={testChecks}
+				disabledTooltip={testBlockedReason}
 				size="md"
 				variant="solid"
 				color="secondary"
 				onClick={handleTestNotification}
-				disabled={isSavingAlertRule || Boolean(alertValidationMessage)}
 				loading={isTestingAlertRule}
 				prefix={<Send data-testid="test-notification-send-icon" size={14} />}
 				testId="test-notification-button"
 			>
 				Test Notification
-			</Button>
+			</AuthZButton>
 		),
-		[
-			alertValidationMessage,
-			handleTestNotification,
-			isSavingAlertRule,
-			isTestingAlertRule,
-		],
+		[testChecks, testBlockedReason, handleTestNotification, isTestingAlertRule],
 	);
 
 	return (

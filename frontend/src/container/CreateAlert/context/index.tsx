@@ -319,6 +319,20 @@ export function CreateAlertProvider(
 		handleAlertTypeChange(AlertTypes.METRICS_BASED_ALERT);
 	}, [handleAlertTypeChange]);
 
+	const savedChannels = useMemo(
+		() =>
+			isEditMode && initialAlertState
+				? [
+						...new Set(
+							initialAlertState.threshold.thresholds.flatMap(
+								(threshold) => threshold.channels,
+							),
+						),
+					]
+				: [],
+		[isEditMode, initialAlertState],
+	);
+
 	const { mutate: createAlertRule, isLoading: isCreatingAlertRule } =
 		useCreateRule();
 
@@ -350,6 +364,7 @@ export function CreateAlertProvider(
 			isUpdatingAlertRule,
 			isEditMode: isEditMode || false,
 			ruleId: ruleId || '',
+			savedChannels,
 		}),
 		[
 			createAlertState,
@@ -369,6 +384,7 @@ export function CreateAlertProvider(
 			isUpdatingAlertRule,
 			isEditMode,
 			ruleId,
+			savedChannels,
 		],
 	);
 

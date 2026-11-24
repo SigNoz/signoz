@@ -1,9 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from 'container/CreateAlert/context/types';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
+
+import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
+import { buildNotificationChannelAttachPermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import {
+	buildRuleUpdatePermission,
+	RuleCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
 
 import * as createAlertState from '../../context';
 import Footer from '../Footer';
@@ -14,10 +24,30 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
 jest.mock('providers/ErrorModalProvider', () => ({
+	...jest.requireActual('providers/ErrorModalProvider'),
 	useErrorModal: (): { showErrorModal: jest.Mock } => ({
 		showErrorModal: jest.fn(),
 	}),
 }));
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+jest.mock('hooks/notificationChannels/useChannelOptions');
+
+const CHANNELS = [
+	{ id: 'ch-test', name: 'test-channel' },
+	{ id: 'ch-other', name: 'other-channel' },
+];
+
+const deny = (...permissions: BrandedPermission[]): void => {
+	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
+};
+
+const mockChannels = (isLoading = false): void => {
+	jest.mocked(useChannelOptions).mockReturnValue({
+		data: isLoading ? [] : CHANNELS,
+		isLoading,
+	} as unknown as ReturnType<typeof useChannelOptions>);
+};
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: jest.fn(),
@@ -95,6 +125,8 @@ describe('Footer', () => {
 		useSafeNavigate.mockReturnValue({
 			safeNavigate: jest.fn(),
 		});
+		deny();
+		mockChannels();
 	});
 
 	it('should render the component with 3 buttons', () => {
@@ -303,5 +335,93 @@ describe('Footer', () => {
 		expect(
 			screen.getByRole('button', { name: /save alert rule/i }),
 		).toHaveAttribute('aria-busy', 'true');
+	});
+
+	describe('authz', () => {
+		const RULE_ID = 'rule-1';
+		const SAVE = 'save-alert-rule-button';
+		const TEST = 'test-notification-button';
+
+		const renderEdit = (savedChannels: string[]): void => {
+			jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValue({
+				...mockAlertContextState,
+				isEditMode: true,
+				ruleId: RULE_ID,
+				savedChannels,
+			});
+			render(<WrappedFooter />);
+		};
+
+		afterEach(() => {
+			jest
+				.spyOn(createAlertState, 'useCreateAlertState')
+				.mockReturnValue(mockAlertContextState);
+		});
+
+		it('locks Save and Test without create, naming it', () => {
+			deny(RuleCreatePermission);
+			render(<WrappedFooter />);
+
+			for (const testId of [SAVE, TEST]) {
+				expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
+				expect(screen.getByTestId(testId)).toHaveAttribute(
+					'data-denied-permissions',
+					RuleCreatePermission,
+				);
+			}
+		});
+
+		it('locks Save without attach on a picked channel', () => {
+			const attach = buildNotificationChannelAttachPermission('ch-test');
+			deny(attach);
+			render(<WrappedFooter />);
+
+			expect(screen.getByTestId(SAVE)).toHaveAttribute(
+				'data-denied-permissions',
+				attach,
+			);
+		});
+
+		it('saves an edit with update alone when the channels are unchanged', () => {
+			deny(buildNotificationChannelAttachPermission('ch-test'));
+			renderEdit(['test-channel']);
+
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false');
+		});
+
+		it('locks Save on an edit without update, leaving Test open', () => {
+			const update = buildRuleUpdatePermission(RULE_ID);
+			deny(update);
+			renderEdit(['test-channel']);
+
+			expect(screen.getByTestId(SAVE)).toHaveAttribute(
+				'data-denied-permissions',
+				update,
+			);
+			expect(screen.getByTestId(TEST)).toHaveAttribute('aria-disabled', 'false');
+		});
+
+		it('needs attach on a channel the edit adds', () => {
+			const attach = buildNotificationChannelAttachPermission('ch-test');
+			deny(attach);
+			renderEdit(['other-channel']);
+
+			expect(screen.getByTestId(SAVE)).toHaveAttribute(
+				'data-denied-permissions',
+				expect.stringContaining(attach),
+			);
+		});
+
+		it('keeps Save and Test locked while the channel list loads', () => {
+			mockChannels(true);
+			render(<WrappedFooter />);
+
+			for (const testId of [SAVE, TEST]) {
+				expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
+				expect(screen.getByTestId(testId)).not.toHaveAttribute(
+					'data-denied-permissions',
+				);
+			}
+		});
 	});
 });
