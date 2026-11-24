@@ -3,7 +3,8 @@
   "entry": [
     "scripts/**/*.{mjs,cjs}",
     "src/storybook/mocks/*.mock.{ts,tsx}",
-    "src/**/__tests__/floatingUiDomMock.ts"
+    "src/**/__tests__/floatingUiDomMock.ts",
+    "src/tests/userEventWithDefaults.ts"
   ],
   "project": ["src/**/*.ts", "src/**/*.tsx"],
   "ignore": [
