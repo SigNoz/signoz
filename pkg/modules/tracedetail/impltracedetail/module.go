@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
@@ -309,4 +310,19 @@ func (m *module) GetTraceHighlights(ctx context.Context, traceID string, query *
 		return nil, err
 	}
 	return spantypes.NewTraceHighlights(pages, rows), nil
+}
+
+func (m *module) GetTraceSpan(ctx context.Context, traceID string, spanID string) (*spantypes.Span, error) {
+	bounds, err := m.store.GetTraceBounds(ctx, traceID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := m.store.GetTraceSpansByIDs(ctx, traceID, bounds.Start, bounds.End, []string{spanID})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, errors.NewNotFoundf(spantypes.ErrCodeTraceSpanNotFound, "span %s not found in trace %s", spanID, traceID)
+	}
+	return spantypes.NewSpan(traceID, &rows[0]), nil
 }

@@ -1,5 +1,11 @@
 package spantypes
 
+import (
+	"maps"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+)
+
 const (
 	SpanListViewErrorOrigins     SpanListView = "error_origins"
 	SpanListViewUnmarkedFailures SpanListView = "unmarked_failures"
@@ -14,6 +20,8 @@ const (
 	UnmarkedFailureGRPCStatus     UnmarkedFailureReason = "grpc_status"
 	UnmarkedFailureExceptionEvent UnmarkedFailureReason = "exception_event"
 )
+
+var ErrCodeTraceSpanNotFound = errors.MustNewCode("trace_span_not_found")
 
 // SpanListView keeps the spans of one kind out of the spans a route covers, in that kind's order.
 // It is a plain string so that a list of views binds from a repeated query parameter.
@@ -60,6 +68,30 @@ type Span struct {
 	Attributes         map[string]any    `json:"attributes" required:"true" nullable:"false" description:"Span attributes. A span read by ID has all of them; a span in a list has only the selected ones."`
 	Events             []Event           `json:"events" required:"true" nullable:"false" description:"Span events. A span read by ID has all of them; a span in a list has none."`
 	References         []OtelSpanRef     `json:"references" required:"true" nullable:"false" description:"References to other spans: the parent as CHILD_OF, and each span link as FOLLOWS_FROM."`
+}
+
+// NewSpan returns the span with everything row stores on it: all attributes, resource attributes
+// and events.
+func NewSpan(traceID string, row *StorableSpan) *Span {
+	span := &Span{
+		SpanID:             row.SpanID,
+		TraceID:            traceID,
+		ParentSpanID:       row.ParentSpanID,
+		Name:               row.Name,
+		KindString:         row.SpanKind,
+		Timestamp:          uint64(row.StartTime.UnixNano()),
+		DurationNano:       row.DurationNano,
+		HasError:           row.HasError,
+		StatusCodeString:   row.StatusCodeString,
+		StatusMessage:      row.StatusMessage,
+		ResponseStatusCode: row.ResponseStatusCode,
+		Resource:           map[string]string{"service.name": row.ServiceName},
+		Attributes:         row.Attributes(),
+		Events:             row.UnmarshalledEvents(),
+		References:         row.UnmarshalledRefs(),
+	}
+	maps.Copy(span.Resource, row.ResourcesString)
+	return span
 }
 
 type SameNameSiblingStats struct {
