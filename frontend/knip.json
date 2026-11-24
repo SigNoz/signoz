@@ -1,7 +1,17 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "scripts/**/*.{mjs,cjs}",
+    "src/storybook/mocks/*.mock.{ts,tsx}",
+    "src/**/__tests__/floatingUiDomMock.ts"
+  ],
   "project": ["src/**/*.ts", "src/**/*.tsx"],
-  "ignore": ["src/api/generated/**/*.ts", "src/typings/*.ts"],
+  "ignore": [
+    "src/api/generated/**/*.ts",
+    "src/typings/*.ts",
+    "src/constants/generated/semconvFamilies.gen.ts",
+    ".storybook/public/**"
+  ],
   "ignoreDependencies": [
     "@typescript/native-preview"
   ]
