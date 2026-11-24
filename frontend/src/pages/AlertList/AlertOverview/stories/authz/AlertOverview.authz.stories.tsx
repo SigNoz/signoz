@@ -22,7 +22,7 @@ const pageStory = storyMocks(alertOverviewMocks, { layout: 'app' });
 /**
  * One rule's page with one permission missing at a time. Every story here is an
  * admin denied exactly what its name says. `read` decides whether the page opens,
- * `update` the enable toggle, the name and Save, `create` Clone and Test
+ * `update` the enable toggle, the name, the labels and Save, `create` Clone and Test
  * notification, `delete` Delete, and `detach` whether a channel the rule
  * notifies can be taken off it.
  *
@@ -46,7 +46,7 @@ export const NoRead: Story = {
 	play: expectRuleDenied,
 };
 
-/** The rule reads, but cannot be turned off, renamed or saved. */
+/** The rule reads, but cannot be turned off, renamed, relabelled or saved. */
 export const NoUpdate: Story = {
 	args: { revoked: ['update:rule'] },
 	play: expectUpdateLocked,

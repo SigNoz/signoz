@@ -139,7 +139,7 @@ export const expectRuleDenied = async ({
 	await screen.findByText(/read:rule:/);
 };
 
-/** The toggle, the name and Save are locked; the rest of the header is not. */
+/** The toggle, the name, the labels and Save are locked. */
 export const expectUpdateLocked = async ({
 	canvasElement,
 	args,
@@ -158,6 +158,7 @@ export const expectUpdateLocked = async ({
 		untilLoaded,
 	);
 	await expect(canvas.getByTestId('alert-name-input-field')).toBeDisabled();
+	await expect(canvas.getByTestId('alert-add-label-button')).toBeDisabled();
 	await expectDenied(canvasElement, 'save-alert-rule-button', /update/);
 };
 

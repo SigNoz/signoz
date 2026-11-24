@@ -1,8 +1,6 @@
 import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { buildRuleUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
+import { denyPermissions } from 'lib/authz/utils/authz-test-utils';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlert/utils';
 import { getActiveBuilder } from 'lib/query/builderSlot';
@@ -49,12 +47,8 @@ mockAppLocation({ search: '' });
 
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
-const deny = (...permissions: BrandedPermission[]): void => {
-	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
-};
-
 beforeEach(() => {
-	deny();
+	denyPermissions();
 });
 
 const ENTER_ALERT_RULE_NAME_PLACEHOLDER = 'Enter alert rule name';
@@ -176,21 +170,23 @@ describe('CreateAlertHeader', () => {
 		const nameField = (): HTMLElement =>
 			screen.getByPlaceholderText(ENTER_ALERT_RULE_NAME_PLACEHOLDER);
 
-		it('locks renaming a saved rule without update', () => {
-			deny(buildRuleUpdatePermission(RULE_ID));
+		it('locks renaming and relabelling a saved rule without update', () => {
+			denyPermissions(buildRuleUpdatePermission(RULE_ID));
 			renderEdit();
 
 			expect(nameField()).toBeDisabled();
+			expect(screen.getByTestId('alert-add-label-button')).toBeDisabled();
 		});
 
-		it('lets a saved rule be renamed with update', () => {
+		it('lets a saved rule be renamed and relabelled with update', () => {
 			renderEdit();
 
 			expect(nameField()).toBeEnabled();
+			expect(screen.getByTestId('alert-add-label-button')).toBeEnabled();
 		});
 
 		it('never locks naming a new rule', () => {
-			deny(buildRuleUpdatePermission(RULE_ID));
+			denyPermissions(buildRuleUpdatePermission(RULE_ID));
 			renderCreateAlertHeader();
 
 			expect(nameField()).toBeEnabled();

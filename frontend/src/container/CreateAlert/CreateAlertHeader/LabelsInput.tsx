@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
+import { Tooltip } from '@signozhq/ui/tooltip';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -8,6 +9,8 @@ function LabelsInput({
 	labels,
 	onLabelsChange,
 	validateLabelsKey,
+	disabled = false,
+	disabledTooltip,
 }: LabelsInputProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [inputState, setInputState] = useState<LabelInputState>({
@@ -119,6 +122,18 @@ function LabelsInput({
 		}
 	}, [inputState]);
 
+	const addButton = (
+		<button
+			className="labels-input__add-button"
+			type="button"
+			disabled={disabled}
+			onClick={handleAddLabelsClick}
+			data-testid="alert-add-label-button"
+		>
+			+ Add labels
+		</button>
+	);
+
 	return (
 		<div className="labels-input">
 			{Object.keys(labels).length > 0 && (
@@ -134,6 +149,8 @@ function LabelsInput({
 								type="button"
 								className="labels-input__remove-button"
 								aria-label={`Remove label ${key}`}
+								data-testid={`label-remove-${key}`}
+								disabled={disabled}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
 								<X size="md" />
@@ -144,14 +161,14 @@ function LabelsInput({
 			)}
 
 			{!isAdding ? (
-				<button
-					className="labels-input__add-button"
-					type="button"
-					onClick={handleAddLabelsClick}
-					data-testid="alert-add-label-button"
-				>
-					+ Add labels
-				</button>
+				disabled ? (
+					// A disabled button gets no hover, so the span carries the tooltip.
+					<Tooltip title={disabledTooltip}>
+						<span>{addButton}</span>
+					</Tooltip>
+				) : (
+					addButton
+				)
 			) : (
 				<div className="labels-input__input-container">
 					<input

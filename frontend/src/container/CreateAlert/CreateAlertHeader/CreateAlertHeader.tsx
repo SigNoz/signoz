@@ -16,12 +16,13 @@ import './styles.scss';
 function CreateAlertHeader(): JSX.Element {
 	const { alertState, setAlertState, isEditMode, ruleId } =
 		useCreateAlertState();
-	// Renaming a saved rule is an update; a new rule is gated on its Save.
-	const renameChecks = useMemo(
+	// Renaming or relabelling a saved rule is an update; a new rule is gated on
+	// its Save.
+	const updateChecks = useMemo(
 		() => (isEditMode && ruleId ? [buildRuleUpdatePermission(ruleId)] : []),
 		[isEditMode, ruleId],
 	);
-	const renameLock = useAuthZDisabled(renameChecks);
+	const updateLock = useAuthZDisabled(updateChecks);
 	const alertRuleContext = useAlertRuleOptional();
 
 	const { currentQuery } = useQueryBuilder();
@@ -69,8 +70,8 @@ function CreateAlertHeader(): JSX.Element {
 							}
 						}}
 						placeholder="Enter alert rule name"
-						disabled={renameLock.disabled}
-						disabledTooltip={renameLock.disabledTooltip}
+						disabled={updateLock.disabled}
+						disabledTooltip={updateLock.disabledTooltip}
 						testId="alert-name-input"
 					/>
 				</div>
@@ -80,6 +81,8 @@ function CreateAlertHeader(): JSX.Element {
 						setAlertState({ type: 'SET_ALERT_LABELS', payload: labels })
 					}
 					validateLabelsKey={validateLabelsKey}
+					disabled={updateLock.disabled}
+					disabledTooltip={updateLock.disabledTooltip}
 				/>
 			</div>
 		</div>
