@@ -1,8 +1,6 @@
 import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
-import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
-import * as appHooks from 'providers/App/App';
 import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
 import {
@@ -10,28 +8,22 @@ import {
 	buildNotificationChannelDetachPermission,
 	NotificationChannelCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
-import type {
-	BrandedPermission,
-	UseAuthZResult,
-} from 'lib/authz/hooks/useAuthZ/types';
+import type { UseAuthZResult } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
-import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
+import {
+	denyPermissions,
+	mockUseAuthZDeny,
+} from 'lib/authz/utils/authz-test-utils';
 
 import * as context from '../../context';
 import ThresholdItem from '../ThresholdItem';
 import { ThresholdItemProps } from '../types';
 
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
-
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
 
-const deny = (...permissions: BrandedPermission[]): void => {
-	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
-};
-
 beforeEach(() => {
-	deny();
+	denyPermissions();
 });
 
 jest.mock('uplot', () => {
@@ -411,12 +403,12 @@ describe('ThresholdItem', () => {
 					).getByRole('combobox'),
 				);
 		};
-		const editing = (savedChannels: string[]): void => {
+		const editing = (savedChannelNames: string[]): void => {
 			jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
 				createMockAlertContextState({
 					isEditMode: true,
 					ruleId: RULE_ID,
-					savedChannels,
+					savedChannelNames,
 				}),
 			);
 		};
@@ -434,7 +426,7 @@ describe('ThresholdItem', () => {
 			const attach = buildNotificationChannelAttachPermission(
 				TEST_CONSTANTS.CHANNEL_2,
 			);
-			deny(attach);
+			denyPermissions(attach);
 			renderThresholdItem();
 			await openPicker();
 
@@ -451,7 +443,7 @@ describe('ThresholdItem', () => {
 			const detach = buildNotificationChannelDetachPermission(
 				TEST_CONSTANTS.CHANNEL_1,
 			);
-			deny(detach);
+			denyPermissions(detach);
 			editing([TEST_CONSTANTS.EMAIL_CHANNEL_NAME]);
 			renderThresholdItem();
 			await openPicker();
@@ -485,7 +477,7 @@ describe('ThresholdItem', () => {
 		});
 
 		it('asks for an admin without notification-channel:create', async () => {
-			deny(NotificationChannelCreatePermission);
+			denyPermissions(NotificationChannelCreatePermission);
 			renderThresholdItem({ channels: [] });
 			await openPicker();
 

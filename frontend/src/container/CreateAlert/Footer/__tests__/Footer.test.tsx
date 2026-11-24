@@ -1,25 +1,25 @@
-import { act, fireEvent, render, screen } from 'tests/test-utils';
+import type { AxiosError } from 'axios';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
 } from 'container/CreateAlert/context/types';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
-
 import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
 import { buildNotificationChannelAttachPermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import {
 	buildRuleUpdatePermission,
 	RuleCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { mockUseAuthZDeny } from 'lib/authz/utils/authz-test-utils';
+import { denyPermissions } from 'lib/authz/utils/authz-test-utils';
 
+import type { ICreateAlertContextProps } from '../../context/types';
 import * as createAlertState from '../../context';
 import Footer from '../Footer';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 
-// Mock the hooks used by Footer component
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
 }));
@@ -30,40 +30,26 @@ jest.mock('providers/ErrorModalProvider', () => ({
 		showErrorModal: mockShowErrorModal,
 	}),
 }));
-
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-jest.mock('hooks/notificationChannels/useChannelOptions');
 
+const { useQueryBuilder } = jest.requireMock(
+	'hooks/queryBuilder/useQueryBuilder',
+);
+
+const CHANNELS_URL = 'http://localhost/api/v2/notification_channels';
 const CHANNELS = [
-	{ id: 'ch-test', name: 'test-channel' },
-	{ id: 'ch-other', name: 'other-channel' },
+	{ id: 'ch-test', displayName: 'test-channel' },
+	{ id: 'ch-other', displayName: 'other-channel' },
 ];
 
-const deny = (...permissions: BrandedPermission[]): void => {
-	jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDeny(...permissions));
-};
-
-const mockChannels = (isLoading = false): void => {
-	jest.mocked(useChannelOptions).mockReturnValue({
-		data: isLoading ? [] : CHANNELS,
-		isLoading,
-	} as unknown as ReturnType<typeof useChannelOptions>);
-};
-
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: jest.fn(),
-}));
+const SAVE = 'save-alert-rule-button';
+const TEST = 'test-notification-button';
+const DISCARD = 'discard-alert-rule-button';
 
 const mockCreateAlertRule = jest.fn();
 const mockTestAlertRule = jest.fn();
 const mockUpdateAlertRule = jest.fn();
 const mockDiscardAlertRule = jest.fn();
-
-// Import the mocked hooks
-const { useQueryBuilder } = jest.requireMock(
-	'hooks/queryBuilder/useQueryBuilder',
-);
-const { useSafeNavigate } = jest.requireMock('hooks/useSafeNavigate');
 
 const mockAlertContextState = createMockAlertContextState({
 	createAlertRule: mockCreateAlertRule,
@@ -95,19 +81,52 @@ const mockAlertContextState = createMockAlertContextState({
 	},
 });
 
-const WrappedFooter = (): JSX.Element => (
-	<MockQueryClientProvider>
-		<Footer />
-	</MockQueryClientProvider>
-);
+const withState = (overrides: Partial<ICreateAlertContextProps>): void => {
+	jest
+		.spyOn(createAlertState, 'useCreateAlertState')
+		.mockReturnValue({ ...mockAlertContextState, ...overrides });
+};
 
-jest
-	.spyOn(createAlertState, 'useCreateAlertState')
-	.mockReturnValue(mockAlertContextState);
+const withoutChannels = (
+	routingPolicies: boolean,
+): Partial<ICreateAlertContextProps> => ({
+	notificationSettings: {
+		...mockAlertContextState.notificationSettings,
+		routingPolicies,
+	},
+	thresholdState: {
+		...mockAlertContextState.thresholdState,
+		thresholds: [
+			{ ...mockAlertContextState.thresholdState.thresholds[0], channels: [] },
+		],
+	},
+});
 
-const SAVE_ALERT_RULE_TEXT = 'Save Alert Rule';
-const TEST_NOTIFICATION_TEXT = 'Test Notification';
-const DISCARD_TEXT = 'Discard';
+/** Reads the channel list the footer reads, so a test knows it has loaded. */
+function ChannelsProbe(): JSX.Element {
+	const { data } = useChannelOptions();
+	return <output data-testid="channels-probe">{data.length}</output>;
+}
+
+const renderFooter = async (): Promise<void> => {
+	render(
+		<>
+			<ChannelsProbe />
+			<Footer />
+		</>,
+	);
+	await waitFor(() =>
+		expect(screen.getByTestId('channels-probe')).toHaveTextContent(
+			String(CHANNELS.length),
+		),
+	);
+};
+
+const user = (): ReturnType<typeof userEvent.setup> =>
+	userEvent.setup({ pointerEventsCheck: 0 });
+
+const lockOf = (testId: string): string | null =>
+	screen.getByTestId(testId).getAttribute('aria-disabled');
 
 describe('Footer', () => {
 	beforeEach(() => {
@@ -122,260 +141,141 @@ describe('Footer', () => {
 				queryType: 'builder',
 			},
 		});
-
-		useSafeNavigate.mockReturnValue({
-			safeNavigate: jest.fn(),
-		});
-		deny();
-		mockChannels();
+		denyPermissions();
+		withState({});
+		server.use(
+			rest.get(CHANNELS_URL, (_req, res, ctx) =>
+				res(
+					ctx.json({
+						status: 'success',
+						data: { channels: CHANNELS, total: CHANNELS.length },
+					}),
+				),
+			),
+		);
 	});
 
-	it('should render the component with 3 buttons', () => {
-		render(<WrappedFooter />);
-		expect(screen.getByText(SAVE_ALERT_RULE_TEXT)).toBeInTheDocument();
-		expect(screen.getByText(TEST_NOTIFICATION_TEXT)).toBeInTheDocument();
-		expect(screen.getByText(DISCARD_TEXT)).toBeInTheDocument();
+	afterEach(() => {
+		jest.clearAllMocks();
+		server.resetHandlers();
 	});
 
-	it('discard action works correctly', () => {
-		render(<WrappedFooter />);
-		fireEvent.click(screen.getByText(DISCARD_TEXT));
+	it('should render the component with 3 buttons', async () => {
+		await renderFooter();
+		expect(screen.getByTestId(SAVE)).toBeInTheDocument();
+		expect(screen.getByTestId(TEST)).toBeInTheDocument();
+		expect(screen.getByTestId(DISCARD)).toBeInTheDocument();
+	});
+
+	it('discard action works correctly', async () => {
+		await renderFooter();
+		await user().click(screen.getByTestId(DISCARD));
 		expect(mockDiscardAlertRule).toHaveBeenCalled();
 	});
 
-	it('save alert rule action works correctly', () => {
-		render(<WrappedFooter />);
-		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+	it('save alert rule action works correctly', async () => {
+		await renderFooter();
+		await user().click(screen.getByTestId(SAVE));
 		expect(mockCreateAlertRule).toHaveBeenCalled();
 	});
 
-	it('update alert rule action works correctly', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isEditMode: true,
-		});
-		render(<WrappedFooter />);
-		fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+	it('update alert rule action works correctly', async () => {
+		withState({ isEditMode: true });
+		await renderFooter();
+		await user().click(screen.getByTestId(SAVE));
 		expect(mockUpdateAlertRule).toHaveBeenCalled();
 	});
 
-	it('test notification action works correctly', () => {
-		render(<WrappedFooter />);
-		fireEvent.click(screen.getByText(TEST_NOTIFICATION_TEXT));
+	it('test notification action works correctly', async () => {
+		await renderFooter();
+		await user().click(screen.getByTestId(TEST));
 		expect(mockTestAlertRule).toHaveBeenCalled();
 	});
 
-	it('all buttons are disabled when creating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isCreatingAlertRule: true,
-		});
-		render(<WrappedFooter />);
+	it.each([
+		['creating', { isCreatingAlertRule: true }],
+		['updating', { isUpdatingAlertRule: true }],
+		['testing', { isTestingAlertRule: true }],
+	])('all buttons are disabled when %s alert rule', async (_label, state) => {
+		withState(state);
+		await renderFooter();
 
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
-			'aria-disabled',
-			'true',
-		);
+		expect(lockOf(SAVE)).toBe('true');
+		expect(lockOf(TEST)).toBe('true');
+		expect(lockOf(DISCARD)).toBe('true');
 	});
 
-	it('all buttons are disabled when updating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isUpdatingAlertRule: true,
+	it('create and test buttons are disabled when alert name is missing', async () => {
+		withState({
+			alertState: { ...mockAlertContextState.alertState, name: '' },
 		});
-		render(<WrappedFooter />);
+		await renderFooter();
 
-		// Target the button elements directly instead of the text spans inside them
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
-			'aria-disabled',
-			'true',
-		);
+		expect(lockOf(SAVE)).toBe('true');
+		expect(lockOf(TEST)).toBe('true');
 	});
 
-	it('all buttons are disabled when testing alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isTestingAlertRule: true,
-		});
-		render(<WrappedFooter />);
+	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', async () => {
+		withState(withoutChannels(false));
+		await renderFooter();
 
-		// Target the button elements directly instead of the text spans inside them
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(screen.getByRole('button', { name: /discard/i })).toHaveAttribute(
-			'aria-disabled',
-			'true',
-		);
+		expect(lockOf(SAVE)).toBe('true');
+		expect(lockOf(TEST)).toBe('true');
 	});
 
-	it('create and test buttons are disabled when alert name is missing', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			alertState: {
-				...mockAlertContextState.alertState,
-				name: '',
-			},
-		});
-		render(<WrappedFooter />);
+	it('buttons are enabled even with no notification channels when routing policies are enabled', async () => {
+		withState(withoutChannels(true));
+		await renderFooter();
 
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-disabled', 'true');
+		expect(lockOf(SAVE)).toBe('false');
+		expect(lockOf(TEST)).toBe('false');
+		expect(lockOf(DISCARD)).toBe('false');
 	});
 
-	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			notificationSettings: {
-				...mockAlertContextState.notificationSettings,
-				routingPolicies: false,
-			},
-			thresholdState: {
-				...mockAlertContextState.thresholdState,
-				thresholds: [
-					{
-						...mockAlertContextState.thresholdState.thresholds[0],
-						channels: [],
-					},
-				],
-			},
-		});
+	it('should show loading state on test notification button when testing alert rule', async () => {
+		withState({ isTestingAlertRule: true });
+		await renderFooter();
 
-		render(<WrappedFooter />);
-
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-disabled', 'true');
+		expect(screen.getByTestId(TEST)).toHaveAttribute('aria-busy', 'true');
 	});
 
-	it('buttons are enabled even with no notification channels when routing policies are enabled', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			notificationSettings: {
-				...mockAlertContextState.notificationSettings,
-				routingPolicies: true,
-			},
-			thresholdState: {
-				...mockAlertContextState.thresholdState,
-				thresholds: [
-					{
-						...mockAlertContextState.thresholdState.thresholds[0],
-						channels: [],
-					},
-				],
-			},
-		});
+	it.each([
+		['updating', { isUpdatingAlertRule: true }],
+		['creating', { isCreatingAlertRule: true }],
+	])(
+		'should show loading state on save alert rule button when %s alert rule',
+		async (_label, state) => {
+			withState(state);
+			await renderFooter();
 
-		render(<WrappedFooter />);
-
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).not.toHaveAttribute('aria-disabled', 'true');
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).not.toHaveAttribute('aria-disabled', 'true');
-		expect(screen.getByRole('button', { name: /discard/i })).not.toHaveAttribute(
-			'aria-disabled',
-			'true',
-		);
-	});
-
-	it('should show loading state on test notification button when testing alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isTestingAlertRule: true,
-		});
-		render(<WrappedFooter />);
-
-		expect(
-			screen.getByRole('button', { name: /test notification/i }),
-		).toHaveAttribute('aria-busy', 'true');
-	});
-
-	it('should show loading state on save alert rule button when updating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isUpdatingAlertRule: true,
-		});
-		render(<WrappedFooter />);
-
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-busy', 'true');
-	});
-
-	it('should show loading state on save alert rule button when creating alert rule', () => {
-		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
-			...mockAlertContextState,
-			isCreatingAlertRule: true,
-		});
-		render(<WrappedFooter />);
-
-		expect(
-			screen.getByRole('button', { name: /save alert rule/i }),
-		).toHaveAttribute('aria-busy', 'true');
-	});
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-busy', 'true');
+		},
+	);
 
 	describe('authz', () => {
 		const RULE_ID = 'rule-1';
-		const SAVE = 'save-alert-rule-button';
-		const TEST = 'test-notification-button';
 
-		const renderEdit = (savedChannels: string[]): void => {
-			jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValue({
-				...mockAlertContextState,
-				isEditMode: true,
-				ruleId: RULE_ID,
-				savedChannels,
-			});
-			render(<WrappedFooter />);
+		const editing = (savedChannelNames: string[]): void => {
+			withState({ isEditMode: true, ruleId: RULE_ID, savedChannelNames });
 		};
 
-		afterEach(() => {
-			jest
-				.spyOn(createAlertState, 'useCreateAlertState')
-				.mockReturnValue(mockAlertContextState);
-		});
-
-		it('locks Save and Test without create, naming it', () => {
-			deny(RuleCreatePermission);
-			render(<WrappedFooter />);
+		it('locks Save and Test without create, naming it', async () => {
+			denyPermissions(RuleCreatePermission);
+			await renderFooter();
 
 			for (const testId of [SAVE, TEST]) {
-				expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
+				expect(lockOf(testId)).toBe('true');
 				expect(screen.getByTestId(testId)).toHaveAttribute(
 					'data-denied-permissions',
-					RuleCreatePermission,
+					expect.stringContaining(RuleCreatePermission),
 				);
 			}
 		});
 
-		it('locks Save without attach on a picked channel', () => {
+		it('locks Save without attach on a picked channel', async () => {
 			const attach = buildNotificationChannelAttachPermission('ch-test');
-			deny(attach);
-			render(<WrappedFooter />);
+			denyPermissions(attach);
+			await renderFooter();
 
 			expect(screen.getByTestId(SAVE)).toHaveAttribute(
 				'data-denied-permissions',
@@ -383,29 +283,32 @@ describe('Footer', () => {
 			);
 		});
 
-		it('saves an edit with update alone when the channels are unchanged', () => {
-			deny(buildNotificationChannelAttachPermission('ch-test'));
-			renderEdit(['test-channel']);
+		it('saves an edit with update alone when the channels are unchanged', async () => {
+			denyPermissions(buildNotificationChannelAttachPermission('ch-test'));
+			editing(['test-channel']);
+			await renderFooter();
 
-			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false');
+			expect(lockOf(SAVE)).toBe('false');
 		});
 
-		it('locks Save on an edit without update, leaving Test open', () => {
+		it('locks Save on an edit without update, leaving Test open', async () => {
 			const update = buildRuleUpdatePermission(RULE_ID);
-			deny(update);
-			renderEdit(['test-channel']);
+			denyPermissions(update);
+			editing(['test-channel']);
+			await renderFooter();
 
 			expect(screen.getByTestId(SAVE)).toHaveAttribute(
 				'data-denied-permissions',
 				update,
 			);
-			expect(screen.getByTestId(TEST)).toHaveAttribute('aria-disabled', 'false');
+			expect(lockOf(TEST)).toBe('false');
 		});
 
-		it('needs attach on a channel the edit adds', () => {
+		it('needs attach on a channel the edit adds', async () => {
 			const attach = buildNotificationChannelAttachPermission('ch-test');
-			deny(attach);
-			renderEdit(['other-channel']);
+			denyPermissions(attach);
+			editing(['other-channel']);
+			await renderFooter();
 
 			expect(screen.getByTestId(SAVE)).toHaveAttribute(
 				'data-denied-permissions',
@@ -414,11 +317,13 @@ describe('Footer', () => {
 		});
 
 		it('keeps Save and Test locked while the channel list loads', () => {
-			mockChannels(true);
-			render(<WrappedFooter />);
+			server.use(
+				rest.get(CHANNELS_URL, (_req, res, ctx) => res(ctx.delay('infinite'))),
+			);
+			render(<Footer />);
 
 			for (const testId of [SAVE, TEST]) {
-				expect(screen.getByTestId(testId)).toHaveAttribute('aria-disabled', 'true');
+				expect(lockOf(testId)).toBe('true');
 				expect(screen.getByTestId(testId)).not.toHaveAttribute(
 					'data-denied-permissions',
 				);
@@ -429,45 +334,48 @@ describe('Footer', () => {
 	describe('server denials', () => {
 		const DENIAL =
 			'user/u-1 is not authorized to perform metric:read on resource "cpu"';
-		const axiosError = (status: number, code: string): unknown => ({
-			isAxiosError: true,
-			response: {
-				status,
-				data: { error: { code, message: DENIAL } },
-			},
-		});
-		const failSave = (error: unknown): void => {
+		const axiosError = (
+			status: number,
+			code: string,
+		): AxiosError<RenderErrorResponseDTO> =>
+			({
+				isAxiosError: true,
+				response: {
+					status,
+					data: { status: 'error', error: { code, message: DENIAL } },
+				},
+			}) as AxiosError<RenderErrorResponseDTO>;
+		const failSave = async (
+			error: AxiosError<RenderErrorResponseDTO>,
+		): Promise<void> => {
 			const [, { onError }] = mockCreateAlertRule.mock.calls.at(-1);
-			act(() => onError(error));
+			await act(async () => {
+				onError(error);
+			});
 		};
 
-		beforeEach(() => {
-			mockCreateAlertRule.mockClear();
-			mockShowErrorModal.mockClear();
-		});
-
-		it('names a permission the server refused in a callout', () => {
-			render(<WrappedFooter />);
-			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
-			failSave(axiosError(403, 'authz_forbidden'));
+		it('names a permission the server refused in a callout', async () => {
+			await renderFooter();
+			await user().click(screen.getByTestId(SAVE));
+			await failSave(axiosError(403, 'authz_forbidden'));
 
 			expect(screen.getByText(DENIAL)).toBeInTheDocument();
 			expect(mockShowErrorModal).not.toHaveBeenCalled();
 		});
 
-		it('clears the callout on the next attempt', () => {
-			render(<WrappedFooter />);
-			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
-			failSave(axiosError(403, 'authz_forbidden'));
-			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
+		it('clears the callout on the next attempt', async () => {
+			await renderFooter();
+			await user().click(screen.getByTestId(SAVE));
+			await failSave(axiosError(403, 'authz_forbidden'));
+			await user().click(screen.getByTestId(SAVE));
 
 			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
 		});
 
-		it('keeps the error modal for every other failure', () => {
-			render(<WrappedFooter />);
-			fireEvent.click(screen.getByText(SAVE_ALERT_RULE_TEXT));
-			failSave(axiosError(500, 'internal'));
+		it('keeps the error modal for every other failure', async () => {
+			await renderFooter();
+			await user().click(screen.getByTestId(SAVE));
+			await failSave(axiosError(500, 'internal'));
 
 			expect(mockShowErrorModal).toHaveBeenCalled();
 			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();

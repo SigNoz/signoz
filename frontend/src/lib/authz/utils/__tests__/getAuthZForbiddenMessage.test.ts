@@ -1,25 +1,34 @@
-import APIError from 'types/api/error';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AxiosError } from 'axios';
 
 import { getAuthZForbiddenMessage } from '../getAuthZForbiddenMessage';
 
-const apiError = (httpStatusCode: number, code: string): APIError =>
-	new APIError({
-		httpStatusCode,
-		error: { code, message: 'denied', url: '', errors: [] },
-	});
+const axiosError = (
+	status: number,
+	code: string,
+): AxiosError<RenderErrorResponseDTO> =>
+	({
+		isAxiosError: true,
+		response: {
+			status,
+			data: { status: 'error', error: { code, message: 'denied' } },
+		},
+	}) as AxiosError<RenderErrorResponseDTO>;
 
 describe('getAuthZForbiddenMessage', () => {
 	it('returns the message of a refused permission check', () => {
-		expect(getAuthZForbiddenMessage(apiError(403, 'authz_forbidden'))).toBe(
+		expect(getAuthZForbiddenMessage(axiosError(403, 'authz_forbidden'))).toBe(
 			'denied',
 		);
 	});
 
-	it('ignores other 403s and other errors', () => {
-		expect(getAuthZForbiddenMessage(apiError(403, 'forbidden'))).toBeUndefined();
+	it('ignores other 403s, other errors and no error', () => {
 		expect(
-			getAuthZForbiddenMessage(apiError(500, 'authz_forbidden')),
+			getAuthZForbiddenMessage(axiosError(403, 'forbidden')),
 		).toBeUndefined();
-		expect(getAuthZForbiddenMessage(undefined)).toBeUndefined();
+		expect(
+			getAuthZForbiddenMessage(axiosError(500, 'authz_forbidden')),
+		).toBeUndefined();
+		expect(getAuthZForbiddenMessage(null)).toBeUndefined();
 	});
 });
