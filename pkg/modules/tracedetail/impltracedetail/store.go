@@ -657,7 +657,8 @@ func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, tr
 }
 
 // spanTextCondition matches text, ignoring case, in the span name, status message, attributes,
-// resource attributes and events. Attributes are read from the JSON column when filled, the legacy maps otherwise.
+// resource attributes and events. Attributes and resource attributes are read from their JSON
+// column when it is filled, the legacy maps otherwise.
 func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 	needle := sb.Var(text)
 	in := func(haystack string) string {
@@ -666,10 +667,9 @@ func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 	anyOf := func(array, element string) string {
 		return fmt.Sprintf("arrayExists(x -> %s, %s)", in(element), array)
 	}
-	legacyMaps := []string{
-		anyOf("mapKeys(attributes_string)", "x"), anyOf("mapValues(attributes_string)", "x"),
-		anyOf("mapKeys(attributes_number)", "x"), anyOf("mapValues(attributes_number)", "toString(x)"),
-		anyOf("mapKeys(attributes_bool)", "x"), anyOf("mapValues(attributes_bool)", "toString(x)"),
+	// A JSON column nests a dotted name, so names are matched as paths and values in the text.
+	jsonOrMaps := func(column string, maps ...string) string {
+		return fmt.Sprintf("if(notEmpty(%s), %s OR %s, %s)", column, anyOf("JSONAllPaths("+column+")", "x"), in("toJSONString("+column+")"), strings.Join(maps, " OR "))
 	}
 	// An event is a JSON string: only its name and attributes are matched, not its timestamp.
 	event := fmt.Sprintf(
@@ -679,9 +679,13 @@ func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 	return "(" + strings.Join([]string{
 		in("name"),
 		in("status_message"),
-		// The JSON column nests a dotted name, so names are matched as paths and values in the text.
-		fmt.Sprintf("if(notEmpty(attributes), %s OR %s, %s)", anyOf("JSONAllPaths(attributes)", "x"), in("toJSONString(attributes)"), strings.Join(legacyMaps, " OR ")),
-		anyOf("mapKeys(resources_string)", "x"), anyOf("mapValues(resources_string)", "x"),
+		jsonOrMaps(
+			"attributes",
+			anyOf("mapKeys(attributes_string)", "x"), anyOf("mapValues(attributes_string)", "x"),
+			anyOf("mapKeys(attributes_number)", "x"), anyOf("mapValues(attributes_number)", "toString(x)"),
+			anyOf("mapKeys(attributes_bool)", "x"), anyOf("mapValues(attributes_bool)", "toString(x)"),
+		),
+		jsonOrMaps("resource", anyOf("mapKeys(resources_string)", "x"), anyOf("mapValues(resources_string)", "x")),
 		event,
 	}, " OR ") + ")"
 }
