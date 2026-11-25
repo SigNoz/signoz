@@ -30,6 +30,10 @@ const colHasExceptionEvent = `(NOT has_error AND arrayExists(e -> position(e, '"
 // The collector writes a span link as a FOLLOWS_FROM reference; the parent is a CHILD_OF one.
 const colHasLink = `(position(links, '"refType":"FOLLOWS_FROM"') > 0) AS has_link`
 
+// Empty for the usual value, one reference to the parent, which the tree rebuilds from the two ids.
+// \x7B and \x7D are the braces: the driver reads a brace in a query as a query parameter.
+const colOtherReferences = `multiIf(links = concat('[\x7B"traceId":"', trace_id, '","spanId":"', parent_span_id, '","refType":"CHILD_OF"\x7D]'), '', links = '', '[]', links) AS other_references`
+
 var genAIUsageValues = []struct{ key, alias string }{
 	{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
 	{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
@@ -544,7 +548,8 @@ func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bound
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"DISTINCT ON (span_id) span_id", "parent_span_id", "timestamp", "duration_nano", "has_error",
-		"name", colServiceName, "kind_string", "response_status_code", colHasExceptionEvent, colHasLink,
+		"name", colServiceName, "kind_string", "response_status_code", "status_code_string", "status_message",
+		colHasExceptionEvent, colHasLink, colOtherReferences,
 	)
 	sb.SelectMore(genAIUsageJSONColumns()...)
 	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
@@ -569,7 +574,8 @@ func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bound
 	// Scanning into one reused list of fields, not ScanStruct, keeps the per-row cost to the strings.
 	fields := []any{
 		&span.SpanID, &span.ParentSpanID, &span.StartTime, &span.DurationNano, &span.HasError,
-		&span.Name, &span.ServiceName, &span.KindString, &span.ResponseStatusCode, &span.HasExceptionEvent, &span.HasLink,
+		&span.Name, &span.ServiceName, &span.KindString, &span.ResponseStatusCode, &span.StatusCodeString, &span.StatusMessage,
+		&span.HasExceptionEvent, &span.HasLink, &span.OtherReferences,
 		&span.AIUsage.InputTokens, &span.AIUsage.OutputTokens, &span.AIUsage.CacheReadTokens,
 		&span.AIUsage.CacheWriteTokens, &span.AIUsage.ReasoningTokens, &span.AIUsage.Cost,
 	}
@@ -590,32 +596,6 @@ func (s *traceStore) GetTraceSkeleton(ctx context.Context, traceID string, bound
 		return nil, spantypes.ErrTraceNotFound
 	}
 	return builder.Build(), nil
-}
-
-func (s *traceStore) GetTraceSpanHeadersByIDs(ctx context.Context, traceID string, bounds *spantypes.TraceBounds, spanIDs []string) ([]spantypes.StorableSpan, error) {
-	if len(spanIDs) == 0 {
-		return []spantypes.StorableSpan{}, nil
-	}
-	ids := make([]any, len(spanIDs))
-	for i, id := range spanIDs {
-		ids[i] = id
-	}
-	sb := sqlbuilder.NewSelectBuilder()
-	sb.Select("DISTINCT ON (span_id) span_id", "parent_span_id", "status_code_string", "status_message", "links as references")
-	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
-	sb.Where(
-		sb.E("trace_id", traceID),
-		sb.In("span_id", ids...),
-		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
-		sb.LE("ts_bucket_start", bounds.End.Unix()),
-	)
-	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-
-	var spans []spantypes.StorableSpan
-	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &spans, query, args...); err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace span headers")
-	}
-	return spans, nil
 }
 
 // genAIUsageJSONColumns reads the token and cost usage of a span from the JSON attributes column

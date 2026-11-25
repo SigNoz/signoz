@@ -255,21 +255,11 @@ func TestGetThreadSpans(t *testing.T) {
 }
 
 func TestGetTraceSkeleton(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String) AS input_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String) AS output_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String) AS cache_read_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String) AS cache_write_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String) AS reasoning_tokens_value, toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC"
+	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, timestamp, duration_nano, has_error, name, resource_string_service$$name, kind_string, response_status_code, status_code_string, status_message, (NOT has_error AND arrayExists(e -> position(e, '\"isError\":true') > 0, events)) AS has_exception_event, (position(links, '\"refType\":\"FOLLOWS_FROM\"') > 0) AS has_link, multiIf(links = concat('[\\x7B\"traceId\":\"', trace_id, '\",\"spanId\":\"', parent_span_id, '\",\"refType\":\"CHILD_OF\"\\x7D]'), '', links = '', '[]', links) AS other_references, toFloat64OrNull(attributes.`gen_ai.usage.input_tokens`::String) AS input_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.output_tokens`::String) AS output_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_read.input_tokens`::String) AS cache_read_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.cache_creation.input_tokens`::String) AS cache_write_tokens_value, toFloat64OrNull(attributes.`gen_ai.usage.reasoning.output_tokens`::String) AS reasoning_tokens_value, toFloat64OrNull(attributes.`signoz.gen_ai.usage.tokens.cost`::String) AS total_cost_value FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? ORDER BY timestamp ASC, name ASC, span_id ASC"
 	s := newTestStore(sqlmock.QueryMatcherEqual)
 	s.Mock().ExpectQuery(expectedSQL).WithArgs(testTraceID, testStart.Unix()-1800, testEnd.Unix()).WillReturnRows(cmock.NewRows(nil, nil))
 
 	_, _ = s.Store().GetTraceSkeleton(context.Background(), testTraceID, testBounds)
-
-	assert.NoError(t, s.Mock().ExpectationsWereMet())
-}
-
-func TestGetTraceSpanHeadersByIDs(t *testing.T) {
-	expectedSQL := "SELECT DISTINCT ON (span_id) span_id, parent_span_id, status_code_string, status_message, links as references FROM signoz_traces.distributed_signoz_index_v3 WHERE trace_id = ? AND span_id IN (?, ?) AND ts_bucket_start >= ? AND ts_bucket_start <= ?"
-	s := newTestStore(sqlmock.QueryMatcherEqual)
-	s.Mock().ExpectSelect(expectedSQL).WillReturnRows(cmock.NewRows(nil, nil))
-
-	_, _ = s.Store().GetTraceSpanHeadersByIDs(context.Background(), testTraceID, testBounds, []string{"span-a", "span-b"})
 
 	assert.NoError(t, s.Mock().ExpectationsWereMet())
 }

@@ -67,12 +67,12 @@ func TestNewSpanList_OnlyAIUsageCarriesUsageAttributes(t *testing.T) {
 	value := func(v float64) *float64 { return &v }
 	skeleton := checkoutSkeleton(map[string]*AISpanUsage{"q1": {InputTokens: value(120), OutputTokens: value(30), Cost: value(0.02)}})
 
-	usage := skeleton.newSpanList(skeleton.firstPage(SpanListViewAIUsage, 50), nil)
+	usage := skeleton.newSpanList(skeleton.firstPage(SpanListViewAIUsage, 50))
 	require.Len(t, usage.Items, 1)
 	assert.Equal(t, map[string]any{"gen_ai.usage.input_tokens": 120.0, "gen_ai.usage.output_tokens": 30.0, "signoz.gen_ai.usage.tokens.cost": 0.02}, usage.Items[0].Span.Attributes)
 
 	// The same span in any other list carries no attributes.
-	for _, item := range skeleton.newSpanList(skeleton.firstPage("", 50), nil).Items {
+	for _, item := range skeleton.newSpanList(skeleton.firstPage("", 50)).Items {
 		assert.Empty(t, item.Span.Attributes, item.Span.SpanID)
 	}
 }
