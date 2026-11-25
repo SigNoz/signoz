@@ -217,11 +217,11 @@ func TestTraceSkeletonTreeStats(t *testing.T) {
 	assert.Equal(t, uint32(0), skeleton.treeStats(positionOf(t, skeleton, "evict")).ErrorAncestorCount)
 }
 
-func TestTraceSkeletonUnmarkedFailureReason(t *testing.T) {
+func TestTraceSkeletonUnmarkedFailureKind(t *testing.T) {
 	testCases := []struct {
 		name     string
 		spec     skeletonSpec
-		expected UnmarkedFailureReason
+		expected UnmarkedFailureKind
 	}{
 		{name: "HTTP400_LowestClientError", spec: skeletonSpec{statusCode: "400"}, expected: UnmarkedFailureHTTP4xx},
 		{name: "HTTP499_HighestClientError", spec: skeletonSpec{statusCode: "499"}, expected: UnmarkedFailureHTTP4xx},
@@ -244,7 +244,7 @@ func TestTraceSkeletonUnmarkedFailureReason(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCase.spec.id = "span"
 			skeleton := buildSkeleton(testCase.spec)
-			assert.Equal(t, testCase.expected, skeleton.unmarkedFailureReason(0))
+			assert.Equal(t, testCase.expected, skeleton.unmarkedFailureKind(0))
 		})
 	}
 }

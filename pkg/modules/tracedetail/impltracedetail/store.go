@@ -162,7 +162,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 		"argMinIf(root_name, (span_start_ns, root_name), is_root) AS root_entry_point",
 		"argMinIf(root_status_code, (span_start_ns, root_name), is_root) AS root_span_status_code",
 		"countIf(is_gen_ai) AS gen_ai_span_count",
-		"countIf(is_model_call) AS model_call_count",
+		"countIf(is_llm_call) AS llm_call_count",
 		"countIf(is_tool_call) AS tool_call_count",
 		"toUInt64(coalesce(sum(input_tokens_value), 0)) AS input_tokens",
 		"toUInt64(coalesce(sum(output_tokens_value), 0)) AS output_tokens",
@@ -177,7 +177,7 @@ func (s *traceStore) GetTraceStats(ctx context.Context, orgID valuer.UUID, trace
 	var stats spantypes.TraceStats
 	err = s.telemetryStore.ClickhouseDB().QueryRow(ctx, query, args...).Scan(
 		&stats.StartNs, &stats.EndNs, &stats.TotalSpans, &stats.TotalErrorSpans, &stats.HasMissingSpans,
-		&stats.RootServiceName, &stats.RootEntryPoint, &stats.RootSpanStatusCode, &stats.GenAISpanCount, &stats.ModelCallCount, &stats.ToolCallCount,
+		&stats.RootServiceName, &stats.RootEntryPoint, &stats.RootSpanStatusCode, &stats.GenAISpanCount, &stats.LLMCallCount, &stats.ToolCallCount,
 		&stats.Tokens.Input, &stats.Tokens.Output, &stats.Tokens.CacheRead, &stats.Tokens.CacheWrite, &stats.Tokens.Reasoning,
 		&stats.TotalCost,
 	)
@@ -203,7 +203,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	if err != nil {
 		return nil, err
 	}
-	isModelCall, err := s.anyExistsCondition(ctx, q, []string{aiobservabilitytypes.GenAIRequestModel}, keys, sb)
+	isLLMCall, err := s.anyExistsCondition(ctx, q, []string{aiobservabilitytypes.GenAIRequestModel}, keys, sb)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (s *traceStore) genAISpanColumns(ctx context.Context, orgID valuer.UUID, bo
 	if err != nil {
 		return nil, err
 	}
-	columns := []string{isGenAI + " AS is_gen_ai", isModelCall + " AS is_model_call", isToolCall + " AS is_tool_call"}
+	columns := []string{isGenAI + " AS is_gen_ai", isLLMCall + " AS is_llm_call", isToolCall + " AS is_tool_call"}
 
 	for _, value := range genAIUsageValues {
 		// lookup by number, the type metadata stores numeric attributes under; float64 is only the output cast

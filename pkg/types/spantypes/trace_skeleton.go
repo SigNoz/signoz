@@ -183,9 +183,9 @@ func (skeleton *TraceSkeleton) children(i int32) []int32 {
 	return skeleton.childList[skeleton.childStart[i]:skeleton.childStart[i+1]]
 }
 
-// unmarkedFailureReason is set for a span that failed without the error flag. The response status
-// column holds an HTTP status or a gRPC status.
-func (skeleton *TraceSkeleton) unmarkedFailureReason(i int32) UnmarkedFailureReason {
+// unmarkedFailureKind is set for a span that reports a failure without the error flag. The response
+// status column holds an HTTP status or a gRPC status.
+func (skeleton *TraceSkeleton) unmarkedFailureKind(i int32) UnmarkedFailureKind {
 	if skeleton.hasError[i] {
 		return ""
 	}

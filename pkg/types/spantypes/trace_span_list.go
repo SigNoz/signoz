@@ -61,7 +61,7 @@ func (skeleton *TraceSkeleton) viewPositions(view SpanListView) []int32 {
 	case SpanListViewErrorOrigins:
 		return skeleton.spansWhere(skeleton.errorStartsAt)
 	case SpanListViewUnmarkedFailures:
-		return skeleton.spansWhere(func(i int32) bool { return skeleton.unmarkedFailureReason(i) != "" })
+		return skeleton.spansWhere(func(i int32) bool { return skeleton.unmarkedFailureKind(i) != "" })
 	case SpanListViewLinks:
 		return skeleton.spansWhere(func(i int32) bool { return skeleton.hasLink[i] })
 	case SpanListViewTimeSpent:
@@ -127,7 +127,7 @@ func (skeleton *TraceSkeleton) aiUsageSpans() []int32 {
 func (skeleton *TraceSkeleton) newSpanList(page *spanPage, rows map[string]*StorableSpan) SpanList {
 	list := SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions))}
 	for _, i := range page.positions {
-		item := SpanItem{Span: skeleton.span(i, rows[skeleton.spanID(i)]), TreeStats: skeleton.treeStats(i), UnmarkedFailureReason: skeleton.unmarkedFailureReason(i)}
+		item := SpanItem{Span: skeleton.span(i, rows[skeleton.spanID(i)]), TreeStats: skeleton.treeStats(i), UnmarkedFailureKind: skeleton.unmarkedFailureKind(i)}
 		if page.view == SpanListViewAIUsage {
 			skeleton.setUsageAttributes(&item.Span, i)
 		}
@@ -144,7 +144,7 @@ func (skeleton *TraceSkeleton) span(i int32, row *StorableSpan) Span {
 		TraceID:            skeleton.traceID,
 		Name:               skeleton.stringTable[skeleton.names[i]],
 		KindString:         skeleton.stringTable[skeleton.kinds[i]],
-		Timestamp:          uint64(skeleton.startNano[i]),
+		TimeUnix:           uint64(skeleton.startNano[i] / 1_000_000),
 		DurationNano:       skeleton.durationNano[i],
 		HasError:           skeleton.hasError[i],
 		ResponseStatusCode: skeleton.stringTable[skeleton.statusCodes[i]],
