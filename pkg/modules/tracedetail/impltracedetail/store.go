@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
@@ -70,6 +71,10 @@ type spanCountRow struct {
 type spanDurationRow struct {
 	FieldValue string `ch:"field_value"`
 	TotalNs    uint64 `ch:"total_ns"`
+}
+
+type spanIDRow struct {
+	SpanID string `ch:"span_id"`
 }
 
 type traceStore struct {
@@ -616,6 +621,89 @@ func (s *traceStore) GetTraceSpanHeadersByIDs(ctx context.Context, traceID strin
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error querying trace span headers")
 	}
 	return spans, nil
+}
+
+func (s *traceStore) SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *spantypes.TraceBounds, query string) (*spantypes.SpanSearch, error) {
+	selectors := querybuilder.QueryStringToKeysSelectors(query)
+	for _, selector := range selectors {
+		selector.Signal = telemetrytypes.SignalTraces
+		selector.SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
+	}
+	keys, _, err := s.metadataStore.GetKeysMulti(ctx, orgID, querybuilder.ExpandKeySelectorsForFamilies(ctx, orgID, s.flagger, selectors))
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error fetching query field keys")
+	}
+
+	search := &spantypes.SpanSearch{}
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT span_id")
+	sb.From(fmt.Sprintf("%s.%s", spantypes.TraceDB, spantypes.TraceTable))
+	sb.Where(
+		sb.E("trace_id", traceID),
+		sb.GE("ts_bucket_start", bounds.Start.Unix()-1800),
+		sb.LE("ts_bucket_start", bounds.End.Unix()),
+	)
+	prepared, err := querybuilder.PrepareWhereClause(query, querybuilder.FilterExprVisitorOpts{
+		Context:   ctx,
+		Query:     querybuilder.NewQueryInfo(ctx, orgID, s.flagger, telemetrytypes.SignalTraces, nil, uint64(bounds.Start.UnixNano()), uint64(bounds.End.UnixNano())),
+		Storage:   s.storage,
+		FieldKeys: keys,
+		Builder:   sb,
+		FullTextCondition: func(sb *sqlbuilder.SelectBuilder, text string) string {
+			search.Words = append(search.Words, text)
+			return spanTextCondition(sb, text)
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !prepared.IsEmpty() {
+		sb.AddWhereClause(prepared.WhereClause)
+	}
+	search.Warnings = prepared.Warnings
+	stmt, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+	// toJSONString writes a slash as \/ by default, which hides a word such as api/v1.
+	stmt += " SETTINGS output_format_json_escape_forward_slashes = 0"
+
+	var rows []spanIDRow
+	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &rows, stmt, args...); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error searching trace spans")
+	}
+	search.SpanIDs = make([]string, len(rows))
+	for i, row := range rows {
+		search.SpanIDs[i] = row.SpanID
+	}
+	return search, nil
+}
+
+// spanTextCondition matches text, ignoring case, in the span name, status message, attributes,
+// resource attributes and events. Attributes are read from the JSON column when filled, the legacy maps otherwise.
+func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
+	needle := sb.Var(text)
+	in := func(haystack string) string {
+		return fmt.Sprintf("positionCaseInsensitiveUTF8(%s, %s) > 0", haystack, needle)
+	}
+	anyOf := func(array, element string) string {
+		return fmt.Sprintf("arrayExists(x -> %s, %s)", in(element), array)
+	}
+	legacyMaps := []string{
+		anyOf("mapKeys(attributes_string)", "x"), anyOf("mapValues(attributes_string)", "x"),
+		anyOf("mapKeys(attributes_number)", "x"), anyOf("mapValues(attributes_number)", "toString(x)"),
+		anyOf("mapKeys(attributes_bool)", "x"), anyOf("mapValues(attributes_bool)", "toString(x)"),
+	}
+	// An event is a JSON string: only its name and attributes are matched, not its timestamp.
+	event := fmt.Sprintf(
+		"arrayExists(e -> %s OR arrayExists(x -> %s OR %s, JSONExtractKeysAndValues(e, 'attributeMap', 'String')), events)",
+		in("JSONExtractString(e, 'name')"), in("x.1"), in("x.2"),
+	)
+	return "(" + strings.Join([]string{
+		in("name"),
+		in("status_message"),
+		// The JSON column nests a dotted name, so names are matched as paths and values in the text.
+		fmt.Sprintf("if(notEmpty(attributes), %s OR %s, %s)", anyOf("JSONAllPaths(attributes)", "x"), in("toJSONString(attributes)"), strings.Join(legacyMaps, " OR ")),
+		anyOf("mapKeys(resources_string)", "x"), anyOf("mapValues(resources_string)", "x"),
+		event,
+	}, " OR ") + ")"
 }
 
 // genAIUsageJSONColumns reads the token and cost usage of a span from the JSON attributes column

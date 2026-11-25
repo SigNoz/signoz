@@ -185,6 +185,115 @@ def test_list_trace_spans_select_fields(
     assert missing["warnings"] == ["field `not.there` was not found on any returned span"]
 
 
+@pytest.mark.parametrize("attribute_backend", ["map", "json"])
+def test_list_trace_spans_query(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    attribute_backend: str,
+) -> None:
+    """Attributes are written to one layout only, so a read from the wrong column finds nothing."""
+    now = get_attribute_backend_now(signoz, attribute_backend).replace(second=0, microsecond=0)
+    write_mode = "json_only" if attribute_backend == "json" else "legacy_only"
+    trace_id = TraceIdGenerator.trace_id()
+    resources = {"service.name": f"td-spans-query-{attribute_backend}", "k8s.pod.name": "checkout-0"}
+    names = ("root", "by_name", "by_status", "by_attribute", "by_event", "unrelated")
+    ids = {name: TraceIdGenerator.span_id() for name in names}
+    start = now - timedelta(seconds=10)
+
+    def span(key: str, parent: str, name: str, offset_ms: int, **kwargs) -> Traces:
+        return Traces(timestamp=start + timedelta(milliseconds=offset_ms), duration=timedelta(milliseconds=5), trace_id=trace_id, span_id=ids[key], parent_span_id=ids[parent] if parent else "", name=name, resources=resources, attribute_write_mode=write_mode, **kwargs)
+
+    # POST /checkout
+    # ├─ call worldpay                the word is in the name
+    # ├─ charge_card                  error, the word is in the status message
+    # │  └─ POST /v1/payments         the word is in an attribute
+    # ├─ notify                       the word is in an event
+    # └─ render_receipt               error, the word is nowhere
+    insert_traces(
+        [
+            span("root", "", "POST /checkout", 0, kind=TracesKind.SPAN_KIND_SERVER, attributes={"http.route": "/checkout"}),
+            span("by_name", "root", "call worldpay", 10),
+            span("by_status", "root", "charge_card", 20, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="Worldpay declined the card"),
+            span("by_attribute", "by_status", "POST /v1/payments", 30, attributes={"payment.provider": "worldpay", "http.response.status_code": 402, "order.id": 1234567, "payment.retried": True, "url.full": "https://pay.example.com/v1/charges"}),
+            span("by_event", "root", "notify", 40, events=[TracesEvent("retry", start, {"reason": "worldpay timeout"})]),
+            span("unrelated", "root", "render_receipt", 50, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="template missing"),
+        ]
+    )
+    spans_url = signoz.self.host_configs["8080"].get(f"/api/v1/traces/{trace_id}/spans")
+    headers = {"authorization": f"Bearer {get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)}"}
+
+    # a word is found wherever it occurs, ignoring case; the list keeps its own order
+    response = requests.get(spans_url, params={"query": "worldpay"}, headers=headers, timeout=10)
+    assert response.status_code == HTTPStatus.OK, response.text
+    found = response.json()["data"]
+    assert found["total"] == 4
+    assert [item["span"]["span_id"] for item in found["items"]] == [ids[name] for name in ("by_name", "by_status", "by_attribute", "by_event")]
+    assert {item["span"]["span_id"]: [match["field"] for match in item["matches"]] for item in found["items"]} == {
+        ids["by_name"]: ["name"],
+        ids["by_status"]: ["status_message"],
+        ids["by_attribute"]: ["attributes.payment.provider"],
+        ids["by_event"]: ["events[0]"],
+    }
+    assert found["items"][1]["matches"][0]["snippet"] == "Worldpay declined the card"
+    # the attributes read to locate the word are not returned
+    assert all(item["span"]["attributes"] == {} for item in found["items"])
+    assert "warnings" not in found
+
+    # offset and limit page the matches
+    page = requests.get(spans_url, params={"query": "worldpay", "limit": 3, "offset": 3}, headers=headers, timeout=10).json()["data"]
+    assert page["total"] == 4
+    assert [item["span"]["span_id"] for item in page["items"]] == [ids["by_event"]]
+
+    # a filter expression has no words to show
+    failed = requests.get(spans_url, params={"query": "has_error = true"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["span_id"] for item in failed["items"]] == [ids["by_status"], ids["unrelated"]]
+    assert all("matches" not in item for item in failed["items"])
+
+    by_attribute = requests.get(spans_url, params={"query": "payment.provider = 'worldpay'"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["span_id"] for item in by_attribute["items"]] == [ids["by_attribute"]]
+
+    both = requests.get(spans_url, params={"query": "worldpay AND has_error = true"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["span_id"] for item in both["items"]] == [ids["by_status"]]
+
+    # a query narrows the spans a route covers, and a view narrows them further
+    children = requests.get(f"{spans_url}/{ids['root']}/children", params={"query": "worldpay"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["span_id"] for item in children["items"]] == [ids[name] for name in ("by_name", "by_status", "by_event")]
+    origins = requests.get(spans_url, params={"query": "worldpay", "view": "error_origins"}, headers=headers, timeout=10).json()["data"]
+    assert [item["span"]["span_id"] for item in origins["items"]] == [ids["by_status"]]
+
+    # a word is also found in an attribute's name and in a resource attribute
+    by_key = requests.get(spans_url, params={"query": "payment.provider"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["span_id"], item["matches"][0]["field"]) for item in by_key["items"]] == [(ids["by_attribute"], "attributes.payment.provider")]
+    by_resource = requests.get(spans_url, params={"query": "td-spans-query"}, headers=headers, timeout=10).json()["data"]
+    assert by_resource["total"] == 6
+    assert {item["matches"][0]["field"] for item in by_resource["items"]} == {"resource.service.name"}
+
+    # a number and a bool are matched as they are written
+    by_number = requests.get(spans_url, params={"query": "1234567"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["span_id"], item["matches"]) for item in by_number["items"]] == [(ids["by_attribute"], [{"field": "attributes.order.id", "snippet": "1234567"}])]
+    by_bool = requests.get(spans_url, params={"query": "true"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["span_id"], item["matches"][0]["field"]) for item in by_bool["items"]] == [(ids["by_attribute"], "attributes.payment.retried")]
+
+    # a slash inside a value is matched as written
+    by_url = requests.get(spans_url, params={"query": "'example.com/v1'"}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["span_id"], item["matches"][0]["field"]) for item in by_url["items"]] == [(ids["by_attribute"], "attributes.url.full")]
+
+    # of an event only the name and the attributes are matched, not the labels it is stored with
+    assert requests.get(spans_url, params={"query": "retry"}, headers=headers, timeout=10).json()["data"]["total"] == 1
+    assert requests.get(spans_url, params={"query": "attributeMap"}, headers=headers, timeout=10).json()["data"] == {"total": 0, "items": []}
+
+    assert requests.get(spans_url, params={"query": "stripe"}, headers=headers, timeout=10).json()["data"] == {"total": 0, "items": []}
+
+    unknown_key = requests.get(spans_url, params={"query": "no.such.key = 'x'"}, headers=headers, timeout=10).json()["data"]
+    assert unknown_key["total"] == 0
+    assert "no.such.key" in unknown_key["warnings"][0]
+
+    broken = requests.get(spans_url, params={"query": "has_error ="}, headers=headers, timeout=10)
+    assert broken.status_code == HTTPStatus.BAD_REQUEST, broken.text
+
+
 def test_list_trace_spans_rejects_invalid_requests(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument

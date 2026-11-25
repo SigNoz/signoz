@@ -43,6 +43,8 @@ type TraceStore interface {
 	GetTraceSkeleton(ctx context.Context, traceID string, bounds *TraceBounds) (*TraceSkeleton, error)
 	// GetTraceSpanHeadersByIDs reads only the parent id, status and references of the spans.
 	GetTraceSpanHeadersByIDs(ctx context.Context, traceID string, bounds *TraceBounds, spanIDs []string) ([]StorableSpan, error)
+	// SearchTraceSpans returns every span of the trace that matches query: words, a filter expression, or both.
+	SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, query string) (*SpanSearch, error)
 
 	GetSpanCountByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)
 	GetSpanDurationByField(ctx context.Context, traceID string, bounds *TraceBounds, fieldKey telemetrytypes.TelemetryFieldKey) (map[string]uint64, error)

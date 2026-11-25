@@ -13,6 +13,7 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value.
@@ -1459,6 +1460,50 @@ func TestVisitComparison_FullText(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestVisitComparison_FullTextCondition covers a caller without a full-text column that compiles
+// free-text terms itself, as the search inside one trace does.
+func TestVisitComparison_FullTextCondition(t *testing.T) {
+	testCases := []struct {
+		name          string
+		expr          string
+		expectedSQL   string
+		expectedTerms []string
+	}{
+		{name: "BareWord", expr: "hello", expectedSQL: "WHERE text_cond", expectedTerms: []string{"hello"}},
+		{name: "QuotedPhrase", expr: "'hello world'", expectedSQL: "WHERE text_cond", expectedTerms: []string{"hello world"}},
+		{name: "WordAndAttribute", expr: "hello AND a = 'a'", expectedSQL: "WHERE (text_cond AND a_cond)", expectedTerms: []string{"hello"}},
+		{name: "NotWord", expr: "NOT hello", expectedSQL: "WHERE NOT (text_cond)", expectedTerms: []string{"hello"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, opts := visitComparisonOpts(t)
+			opts.FullTextColumn = nil
+			terms := []string{}
+			opts.FullTextCondition = func(_ *sqlbuilder.SelectBuilder, text string) string {
+				terms = append(terms, text)
+				return "text_cond"
+			}
+
+			result, err := PrepareWhereClause(testCase.expr, opts)
+
+			require.NoError(t, err)
+			sql, _ := result.WhereClause.Build()
+			assert.Equal(t, testCase.expectedSQL, sql)
+			assert.Equal(t, testCase.expectedTerms, terms)
+		})
+	}
+
+	t.Run("NoColumnAndNoCondition_IsAnError", func(t *testing.T) {
+		_, opts := visitComparisonOpts(t)
+		opts.FullTextColumn = nil
+
+		_, err := PrepareWhereClause("hello", opts)
+
+		assert.Error(t, err)
+	})
 }
 
 // TestVisitComparison_AllVariable covers the __all__ dynamic variable.
