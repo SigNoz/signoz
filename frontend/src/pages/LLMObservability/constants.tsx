@@ -1,15 +1,27 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import LLMObservabilityAttributeMapping from 'container/LLMObservability/AttributeMapping/LLMObservabilityAttributeMapping';
-import ExplorerPage from 'container/LLMObservability/Explorer/Explorer';
-import OverviewPage from 'container/LLMObservability/Overview/Overview';
-import LLMObservabilityModelPricing from 'container/LLMObservability/Settings/ModelPricing/LLMObservabilityModelPricing';
 import {
 	ArrowRightLeft,
 	BarChart,
 	CircleDollarSign,
 	Compass,
 } from '@signozhq/icons';
+
+const OverviewPage = Loadable(
+	() => import('container/LLMObservability/Overview/Overview'),
+);
+const ExplorerPage = Loadable(
+	() => import('container/LLMObservability/Explorer/Explorer'),
+);
+const LLMObservabilityModelPricing = Loadable(
+	() =>
+		import('container/LLMObservability/Settings/ModelPricing/LLMObservabilityModelPricing'),
+);
+const LLMObservabilityAttributeMapping = Loadable(
+	() =>
+		import('container/LLMObservability/AttributeMapping/LLMObservabilityAttributeMapping'),
+);
 
 export const Overview: TabRoutes = {
 	Component: OverviewPage,
