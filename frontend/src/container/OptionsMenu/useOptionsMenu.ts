@@ -172,17 +172,6 @@ const useOptionsMenu = ({
 		{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
 	);
 
-	// const {
-	// 	data: searchedAttributesData,
-	// 	isFetching: isSearchedAttributesFetching,
-	// } = useGetAggregateKeys(
-	// 	{
-	// 		...initialQueryParams,
-	// 		searchText: debouncedSearchText,
-	// 	},
-	// 	{ queryKey: [debouncedSearchText, isFocused], enabled: isFocused },
-	// );
-
 	const searchedAttributeKeys: TelemetryFieldKey[] = useMemo(() => {
 		const searchedAttributesDataList = Object.values(
 			searchedAttributesDataV5?.data.data.keys || {},

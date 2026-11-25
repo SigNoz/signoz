@@ -169,7 +169,7 @@ const normalizeDataType = (
 	dataType && Object.values(DataTypes).includes(dataType) ? dataType : undefined;
 
 // Append a filter item (filter-in / filter-out) to a query-data item. The autocomplete
-// key is fabricated locally (empty source list), so no click-time getAggregateKeys fetch.
+// key is fabricated locally (empty source list), so no click-time key lookup.
 export const getFilterQueryData = (
 	item: IBuilderQuery,
 	target: Pick<LogFilterTarget, 'fieldKey' | 'dataType' | 'metricsType'>,
