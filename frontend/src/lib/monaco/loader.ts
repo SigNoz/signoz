@@ -1,4 +1,5 @@
 import { loader } from '@monaco-editor/react';
+import { lazyRetry } from 'utils/lazyWithRetries';
 
 type LoaderInit = typeof loader.init;
 type CancelableMonaco = ReturnType<LoaderInit>;
@@ -16,9 +17,12 @@ let monacoLoaded: Promise<void> | undefined;
 // components call `loader.init()` on mount; handing the loader the bundled instance
 // before the original init runs keeps it from fetching Monaco from the CDN.
 loader.init = (): CancelableMonaco => {
-	monacoLoaded ??= import('./setup').then(({ monaco }) =>
-		loader.config({ monaco }),
-	);
+	monacoLoaded ??= lazyRetry(() => import('./setup'))
+		.then(({ monaco }) => loader.config({ monaco }))
+		.catch((error) => {
+			monacoLoaded = undefined;
+			throw error;
+		});
 	let canceled = false;
 	const promise = monacoLoaded.then(() => {
 		if (canceled) {
