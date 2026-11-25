@@ -22,7 +22,7 @@ func checkoutSkeleton(usage map[string]*AISpanUsage) *TraceSkeleton {
 	)
 }
 
-func TestTraceSkeletonFirstPage_Ranking(t *testing.T) {
+func TestTraceSkeletonPage_Ranking(t *testing.T) {
 	value := func(v float64) *float64 { return &v }
 
 	testCases := []struct {
@@ -56,23 +56,32 @@ func TestTraceSkeletonFirstPage_Ranking(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			skeleton := checkoutSkeleton(testCase.usage)
-			page := skeleton.firstPage(testCase.view, 50)
+			page := skeleton.page(skeleton.treeOrder, testCase.view, 0, 50)
 			assert.Equal(t, testCase.expected, spanIDsOf(skeleton, page.positions))
 			assert.Equal(t, uint64(len(testCase.expected)), page.total)
 		})
 	}
 }
 
+func TestTraceSkeletonPage_CutsTheViewOfTheGivenSpans(t *testing.T) {
+	skeleton := checkoutSkeleton(nil)
+
+	// Among the children of root: the two SELECTs as one, then pay, then auth.
+	page := skeleton.page(skeleton.children(positionOf(t, skeleton, "root")), SpanListViewTimeSpent, 1, 5)
+	assert.Equal(t, []string{"pay", "auth"}, spanIDsOf(skeleton, page.positions))
+	assert.Equal(t, uint64(3), page.total)
+}
+
 func TestNewSpanList_OnlyAIUsageCarriesUsageAttributes(t *testing.T) {
 	value := func(v float64) *float64 { return &v }
 	skeleton := checkoutSkeleton(map[string]*AISpanUsage{"q1": {InputTokens: value(120), OutputTokens: value(30), Cost: value(0.02)}})
 
-	usage := skeleton.newSpanList(skeleton.firstPage(SpanListViewAIUsage, 50))
+	usage := NewSpanList(skeleton.page(skeleton.treeOrder, SpanListViewAIUsage, 0, 50))
 	require.Len(t, usage.Items, 1)
 	assert.Equal(t, map[string]any{"gen_ai.usage.input_tokens": 120.0, "gen_ai.usage.output_tokens": 30.0, "signoz.gen_ai.usage.tokens.cost": 0.02}, usage.Items[0].Span.Attributes)
 
 	// The same span in any other list carries no attributes.
-	for _, item := range skeleton.newSpanList(skeleton.firstPage("", 50)).Items {
+	for _, item := range NewSpanList(skeleton.page(skeleton.treeOrder, "", 0, 50)).Items {
 		assert.Empty(t, item.Span.Attributes, item.Span.SpanID)
 	}
 }
