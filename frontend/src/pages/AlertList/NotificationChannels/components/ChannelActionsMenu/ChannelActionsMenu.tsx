@@ -84,6 +84,7 @@ function ChannelActionsMenu({
 				type: 'item',
 				value: 'delete',
 				label: 'Delete',
+				testId: `channel-actions-${channel.id}-delete`,
 				prefix: <Trash2 size={14} />,
 				checks: [deletePermission],
 				danger: true,

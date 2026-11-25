@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import { YAxisCategoryNames } from '../constants';
 import { UniversalYAxisUnit, YAxisSource } from '../types';
@@ -13,7 +12,7 @@ describe('YAxisUnitSelector', () => {
 
 	beforeEach(() => {
 		mockOnChange.mockClear();
-		user = userEvent.setup({ pointerEventsCheck: 0 });
+		user = userEvent.setup();
 	});
 
 	it('renders with default placeholder', () => {

@@ -66,6 +66,7 @@ function FloatingPanel({
 			minHeight={keepInViewport ? Math.min(minHeight, viewport.height) : minHeight}
 			className={`floating-panel ${className || ''}`}
 			enableResizing={enableResizing}
+			data-testid="floating-panel"
 		>
 			<div className="floating-panel__inner">{children}</div>
 		</Rnd>,

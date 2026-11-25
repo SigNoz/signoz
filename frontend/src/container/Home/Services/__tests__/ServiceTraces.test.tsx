@@ -1,6 +1,6 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, within } from 'tests/test-utils';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import ServiceTraces from '../ServiceTraces';
@@ -34,12 +34,11 @@ describe('Home ServiceTraces', () => {
 			/>,
 		);
 
-		await waitFor(() =>
-			expect(
-				Array.from(
-					screen.getByTestId('home-services-table').querySelectorAll('tbody tr td'),
-				).map((cell) => cell.textContent),
-			).toStrictEqual(['SampleApp', '148.25', '1.80', '12.40']),
-		);
+		const row = await screen.findByTestId('home-services-row-SampleApp');
+		expect(
+			within(row)
+				.getAllByRole('cell')
+				.map((cell) => cell.textContent),
+		).toStrictEqual(['SampleApp', '148.25', '1.80', '12.40']);
 	});
 });

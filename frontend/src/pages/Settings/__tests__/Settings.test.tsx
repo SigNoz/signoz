@@ -144,14 +144,14 @@ describe('SettingsPage nav sections', () => {
 
 	describe('section structure', () => {
 		it('renders items in correct sections for cloud admin', () => {
-			const { container } = render(<SettingsPage />, undefined, {
+			render(<SettingsPage />, undefined, {
 				role: USER_ROLES.ADMIN,
 				appContextOverrides: getCloudAdminOverrides(),
 				initialRoute: '/settings',
 			});
 
-			const sidenav = within(container).getByTestId('settings-page-sidenav');
-			const sections = sidenav.querySelectorAll('.settings-nav-section');
+			const sidenav = screen.getByTestId('settings-page-sidenav');
+			const sections = within(sidenav).getAllByTestId(/^settings-nav-section-/);
 
 			// Should have at least 2 sections (general + identity-access) for cloud admin
 			expect(sections.length).toBeGreaterThanOrEqual(2);

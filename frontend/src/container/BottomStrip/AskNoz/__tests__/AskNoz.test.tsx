@@ -94,7 +94,7 @@ describe('AskNoz', () => {
 
 	describe('what it does', () => {
 		it('opens the drawer on click', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const { getByTestId } = render(<AskNoz />);
 
 			await user.click(getByTestId(BUTTON));
@@ -103,7 +103,7 @@ describe('AskNoz', () => {
 		});
 
 		it('closes the open drawer on the same chat instead of starting a new one', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			mockStore({ isDrawerOpen: true });
 			const { getByTestId } = render(<AskNoz />);
 
@@ -115,7 +115,7 @@ describe('AskNoz', () => {
 		});
 
 		it('reports the open as coming from the strip', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const { getByTestId } = render(<AskNoz />);
 
 			await user.click(getByTestId(BUTTON));

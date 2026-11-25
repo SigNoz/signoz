@@ -186,7 +186,7 @@ describe('AIAssistantPage', () => {
 	});
 
 	it('minimizes back to the page it was expanded from after the URL has moved on', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		useAIAssistantStore.setState({
 			conversations: {
 				first: { id: 'first', messages: [], createdAt: 1, updatedAt: 1 },

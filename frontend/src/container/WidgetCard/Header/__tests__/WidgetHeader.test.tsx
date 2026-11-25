@@ -2,8 +2,7 @@ import React, { MutableRefObject } from 'react';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render as rtlRender, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render as rtlRender, screen, userEvent } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { AppContext } from 'providers/App/App';
@@ -289,13 +288,8 @@ describe('WidgetHeader', () => {
 		await userEvent.type(searchInput, 'test search');
 		expect(mockSetSearchTerm).toHaveBeenCalledWith('test search');
 
-		const closeButton = screen
-			.getByTestId(WIDGET_HEADER_SEARCH_INPUT)
-			.parentElement?.querySelector('.search-header-icons');
-		if (closeButton) {
-			await userEvent.click(closeButton);
-			expect(mockSetSearchTerm).toHaveBeenCalledWith('');
-		}
+		await userEvent.click(screen.getByTestId('widget-header-search-close'));
+		expect(mockSetSearchTerm).toHaveBeenCalledWith('');
 	});
 
 	it('shows error icon when query has error', () => {
@@ -480,7 +474,7 @@ describe('WidgetHeader', () => {
 
 	describe('Create Alerts Menu Item', () => {
 		it('renders Create Alerts menu item with external link icon when included in headerMenuList', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
 				<WidgetHeader
 					title={TEST_WIDGET_TITLE}
@@ -508,7 +502,7 @@ describe('WidgetHeader', () => {
 		});
 
 		it('Create Alerts menu item is enabled and clickable', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const mockCreateAlertsHandler = jest.fn();
 			const useCreateAlerts = jest.requireMock(
 				'hooks/queryBuilder/useCreateAlerts',

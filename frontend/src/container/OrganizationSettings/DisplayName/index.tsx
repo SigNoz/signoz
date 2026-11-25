@@ -81,6 +81,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	return (
 		<form
 			className="display-name-form"
+			data-testid="org-display-name-form"
 			onSubmit={handleSubmit(onSubmit)}
 			autoComplete="off"
 		>

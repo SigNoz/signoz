@@ -53,7 +53,7 @@ describe('SideNav settings dropdown', () => {
 	});
 
 	it('disables the workspace item with its reason when the workspace is blocked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<SideNav isPinned />, undefined, {
 			appContextOverrides: { trialInfo: BLOCKED_TRIAL_INFO },
@@ -73,7 +73,7 @@ describe('SideNav settings dropdown', () => {
 	});
 
 	it('keeps the workspace item enabled when the workspace is not blocked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<SideNav isPinned />);
 		await openSettingsMenu(user);
@@ -86,7 +86,7 @@ describe('SideNav settings dropdown', () => {
 	});
 
 	it('signs out from the logout item', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<SideNav isPinned />);
 		await openSettingsMenu(user);
@@ -97,7 +97,7 @@ describe('SideNav settings dropdown', () => {
 	});
 
 	it('opens a settings link in a new tab on a modifier click', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<SideNav isPinned />);
 		await openSettingsMenu(user);

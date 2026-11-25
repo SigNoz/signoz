@@ -20,7 +20,7 @@ describe('EmptyState', () => {
 	});
 
 	it('sends a suggestion when it is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onSend = jest.fn();
 		mockChips.mockReturnValue({
 			chips: [{ id: 'slow_queries', text: 'Find slow database queries' }],

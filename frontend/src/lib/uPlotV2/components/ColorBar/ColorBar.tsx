@@ -56,7 +56,11 @@ export default function ColorBar({
 	if (isVertical) {
 		return (
 			<div className={Styles.vertical} data-testid={testId}>
-				<div className={Styles.track} style={{ background: gradient }}>
+				<div
+					className={Styles.track}
+					style={{ background: gradient }}
+					data-testid={`${testId}-track`}
+				>
 					{clampedMarker !== null && (
 						<span
 							className={Styles.marker}
@@ -77,7 +81,11 @@ export default function ColorBar({
 		<div className={Styles.container} data-testid={testId}>
 			{label && <span className={Styles.caption}>{label}</span>}
 			<span className={Styles.label}>{minLabel}</span>
-			<div className={Styles.track} style={{ background: gradient }}>
+			<div
+				className={Styles.track}
+				style={{ background: gradient }}
+				data-testid={`${testId}-track`}
+			>
 				{clampedMarker !== null && (
 					<span
 						className={Styles.marker}
