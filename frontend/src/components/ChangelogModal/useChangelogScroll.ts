@@ -45,7 +45,7 @@ export function useChangelogScroll(): UseChangelogScrollReturn {
 
 	// The dialog body owns the scroll; a second scroller inside it shows two scrollbars.
 	const contentRef = useCallback((node: HTMLDivElement | null): void => {
-		setContent(node?.closest<HTMLElement>('[data-slot="dialog-body"]') ?? node);
+		setContent(node?.closest<HTMLElement>('[data-slot="dialog-body"]') ?? null);
 	}, []);
 
 	return { contentRef, hasScroll, scrollForMore };
