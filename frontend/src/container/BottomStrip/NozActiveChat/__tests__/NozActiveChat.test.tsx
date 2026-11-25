@@ -258,6 +258,22 @@ describe('NozActiveChat', () => {
 			expect(openTabs()).toStrictEqual(['b']);
 		});
 
+		it('keeps a closed chat out when the strip remounts while Noz still waits in it', async () => {
+			const user = userEvent.setup();
+			seed({
+				conversations: [chat('a', 'Alpha')],
+				tabs: ['a'],
+				streams: { a: awaitingApproval },
+			});
+			const { unmount } = render(<NozActiveChat />);
+
+			await user.click(screen.getByTestId(`${TABS}-a-close`));
+			unmount();
+			render(<NozActiveChat />);
+
+			expect(openTabs()).toStrictEqual([]);
+		});
+
 		it('closing a tab removes it and dismisses its unseen reply', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			seed({

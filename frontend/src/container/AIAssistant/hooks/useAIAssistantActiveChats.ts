@@ -41,6 +41,9 @@ export function useAIAssistantActiveChats(
 	const openTab = useAIAssistantOpenConversationsStore((s) => s.open);
 	const closeTab = useAIAssistantOpenConversationsStore((s) => s.close);
 	const pruneTabs = useAIAssistantOpenConversationsStore((s) => s.prune);
+	const openNewlyAwaiting = useAIAssistantOpenConversationsStore(
+		(s) => s.openNewlyAwaiting,
+	);
 
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const unreadReplyIds = useAIAssistantStore((s) => s.unreadReplyIds);
@@ -119,13 +122,9 @@ export function useAIAssistantActiveChats(
 	}, [unreadReplyIds]);
 
 	// Only a chat that starts waiting joins, so closing one already waiting sticks.
-	const seenAwaitingThreadIdsRef = useRef<readonly string[]>([]);
 	useEffect(() => {
-		awaitingThreadIds
-			.filter((threadId) => !seenAwaitingThreadIdsRef.current.includes(threadId))
-			.forEach((threadId) => openTab(threadId));
-		seenAwaitingThreadIdsRef.current = awaitingThreadIds;
-	}, [awaitingThreadIds, openTab]);
+		openNewlyAwaiting(awaitingThreadIds);
+	}, [awaitingThreadIds, openNewlyAwaiting]);
 
 	// Before the first successful fetch, a missing thread may only be unloaded.
 	useEffect(() => {

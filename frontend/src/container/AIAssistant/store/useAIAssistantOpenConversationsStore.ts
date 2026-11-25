@@ -11,10 +11,14 @@ export const AI_ASSISTANT_OPEN_CONVERSATIONS_STORAGE_KEY =
 interface AIAssistantOpenConversationsState {
 	/** Thread ids of the open tabs, oldest first. */
 	threadIds: string[];
+	/** Waiting chats already given a tab. Not saved: the waiting state is lost on reload too. */
+	seenAwaitingThreadIds: readonly string[];
 	/** Past the cap, drops the oldest tab. */
 	open: (threadId: string) => void;
 	close: (threadId: string) => void;
 	prune: (staleThreadIds: readonly string[]) => void;
+	/** Opens a tab only for a chat that started waiting since the last call. */
+	openNewlyAwaiting: (awaitingThreadIds: readonly string[]) => void;
 }
 
 export const useAIAssistantOpenConversationsStore =
@@ -22,6 +26,7 @@ export const useAIAssistantOpenConversationsStore =
 		persist(
 			(set, get) => ({
 				threadIds: [],
+				seenAwaitingThreadIds: [],
 
 				open: (threadId): void => {
 					const { threadIds } = get();
@@ -42,6 +47,14 @@ export const useAIAssistantOpenConversationsStore =
 					set({
 						threadIds: get().threadIds.filter((id) => !staleThreadIds.includes(id)),
 					});
+				},
+
+				openNewlyAwaiting: (awaitingThreadIds): void => {
+					const { seenAwaitingThreadIds, open } = get();
+					awaitingThreadIds
+						.filter((threadId) => !seenAwaitingThreadIds.includes(threadId))
+						.forEach((threadId) => open(threadId));
+					set({ seenAwaitingThreadIds: awaitingThreadIds });
 				},
 			}),
 			{
