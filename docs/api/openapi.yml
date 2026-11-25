@@ -13182,9 +13182,9 @@ components:
           allOf:
           - $ref: '#/components/schemas/SpantypesSpanTreeStats'
           description: Numbers computed from the span's place in the trace.
-        unmarkedFailureReason:
+        unmarkedFailureKind:
           allOf:
-          - $ref: '#/components/schemas/SpantypesUnmarkedFailureReason'
+          - $ref: '#/components/schemas/SpantypesUnmarkedFailureKind'
           description: 'Why the span is in the unmarked_failures list: a 4xx or 5xx
             response (http_4xx, http_5xx), a gRPC status other than OK (grpc_status),
             or an exception event (exception_event). Omitted for every other span.'
@@ -13594,7 +13594,7 @@ components:
       - errorSpanCount
       - ownTimeNano
       type: object
-    SpantypesUnmarkedFailureReason:
+    SpantypesUnmarkedFailureKind:
       enum:
       - http_4xx
       - http_5xx

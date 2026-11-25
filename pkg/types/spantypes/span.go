@@ -9,10 +9,10 @@ const (
 )
 
 const (
-	UnmarkedFailureHTTP4xx        UnmarkedFailureReason = "http_4xx"
-	UnmarkedFailureHTTP5xx        UnmarkedFailureReason = "http_5xx"
-	UnmarkedFailureGRPCStatus     UnmarkedFailureReason = "grpc_status"
-	UnmarkedFailureExceptionEvent UnmarkedFailureReason = "exception_event"
+	UnmarkedFailureHTTP4xx        UnmarkedFailureKind = "http_4xx"
+	UnmarkedFailureHTTP5xx        UnmarkedFailureKind = "http_5xx"
+	UnmarkedFailureGRPCStatus     UnmarkedFailureKind = "grpc_status"
+	UnmarkedFailureExceptionEvent UnmarkedFailureKind = "exception_event"
 )
 
 // SpanListView keeps the spans of one kind out of the spans a route covers, in that kind's order.
@@ -23,11 +23,11 @@ func (SpanListView) Enum() []any {
 	return []any{SpanListViewErrorOrigins, SpanListViewUnmarkedFailures, SpanListViewTimeSpent, SpanListViewAIUsage, SpanListViewLinks}
 }
 
-// UnmarkedFailureReason says why a span without the error flag counts as a failure. It is a plain
-// string so that omitempty leaves it out: the response encoder does not omit a zero struct.
-type UnmarkedFailureReason string
+// UnmarkedFailureKind says why a span without the error flag is in the unmarked_failures list. It is
+// a plain string so that omitempty leaves it out: the response encoder does not omit a zero struct.
+type UnmarkedFailureKind string
 
-func (UnmarkedFailureReason) Enum() []any {
+func (UnmarkedFailureKind) Enum() []any {
 	return []any{UnmarkedFailureHTTP4xx, UnmarkedFailureHTTP5xx, UnmarkedFailureGRPCStatus, UnmarkedFailureExceptionEvent}
 }
 
@@ -85,10 +85,10 @@ type SpanTextMatch struct {
 
 // SpanItem is an item of every span list: a span, with what the trace says about it.
 type SpanItem struct {
-	Span                  Span                  `json:"span" required:"true"`
-	TreeStats             SpanTreeStats         `json:"treeStats" required:"true" description:"Numbers computed from the span's place in the trace."`
-	UnmarkedFailureReason UnmarkedFailureReason `json:"unmarkedFailureReason,omitempty" description:"Why the span is in the unmarked_failures list: a 4xx or 5xx response (http_4xx, http_5xx), a gRPC status other than OK (grpc_status), or an exception event (exception_event). Omitted for every other span."`
-	Matches               []SpanTextMatch       `json:"matches,omitempty" nullable:"false" description:"Where the words of the query were found, up to three places. A list does not return all attributes or any events, so this is how to see why a span matched. Omitted when the query has no words."`
+	Span                Span                `json:"span" required:"true"`
+	TreeStats           SpanTreeStats       `json:"treeStats" required:"true" description:"Numbers computed from the span's place in the trace."`
+	UnmarkedFailureKind UnmarkedFailureKind `json:"unmarkedFailureKind,omitempty" description:"Why the span is in the unmarked_failures list: a 4xx or 5xx response (http_4xx, http_5xx), a gRPC status other than OK (grpc_status), or an exception event (exception_event). Omitted for every other span."`
+	Matches             []SpanTextMatch     `json:"matches,omitempty" nullable:"false" description:"Where the words of the query were found, up to three places. A list does not return all attributes or any events, so this is how to see why a span matched. Omitted when the query has no words."`
 }
 
 type SpanList struct {

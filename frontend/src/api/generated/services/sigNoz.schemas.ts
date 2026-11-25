@@ -14802,7 +14802,7 @@ export interface SpantypesSpanTreeStatsDTO {
 	subtreeSpanCount: number;
 }
 
-export enum SpantypesUnmarkedFailureReasonDTO {
+export enum SpantypesUnmarkedFailureKindDTO {
 	http_4xx = 'http_4xx',
 	http_5xx = 'http_5xx',
 	grpc_status = 'grpc_status',
@@ -14822,7 +14822,7 @@ export interface SpantypesSpanItemDTO {
 	/**
 	 * @description Why the span is in the unmarked_failures list: a 4xx or 5xx response (http_4xx, http_5xx), a gRPC status other than OK (grpc_status), or an exception event (exception_event). Omitted for every other span.
 	 */
-	unmarkedFailureReason?: SpantypesUnmarkedFailureReasonDTO;
+	unmarkedFailureKind?: SpantypesUnmarkedFailureKindDTO;
 }
 
 export interface SpantypesSpanListDTO {
