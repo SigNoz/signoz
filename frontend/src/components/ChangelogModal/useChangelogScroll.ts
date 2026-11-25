@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-interface UseChangelogScrollResult {
+const SCROLL_STEP_PX = 600;
+const MIN_OVERFLOW_PX = 24;
+const BOTTOM_TOLERANCE_PX = 8;
+
+interface UseChangelogScrollReturn {
 	contentRef: (node: HTMLDivElement | null) => void;
 	hasScroll: boolean;
 	scrollForMore: () => void;
 }
 
-export function useChangelogScroll(): UseChangelogScrollResult {
+export function useChangelogScroll(): UseChangelogScrollReturn {
 	const [content, setContent] = useState<HTMLElement | null>(null);
 	const [hasScroll, setHasScroll] = useState(false);
 
@@ -15,8 +19,9 @@ export function useChangelogScroll(): UseChangelogScrollResult {
 			return;
 		}
 		const { scrollHeight, clientHeight, scrollTop } = content;
-		const isAtBottom = scrollHeight - clientHeight - scrollTop <= 8;
-		setHasScroll(scrollHeight > clientHeight + 24 && !isAtBottom); // 24px - buffer height to show show more
+		const isAtBottom =
+			scrollHeight - clientHeight - scrollTop <= BOTTOM_TOLERANCE_PX;
+		setHasScroll(scrollHeight > clientHeight + MIN_OVERFLOW_PX && !isAtBottom);
 	}, [content]);
 
 	useEffect(() => {
@@ -33,7 +38,7 @@ export function useChangelogScroll(): UseChangelogScrollResult {
 
 	const scrollForMore = useCallback((): void => {
 		content?.scrollTo({
-			top: content.scrollTop + 600, // Scroll 600px from the current position
+			top: content.scrollTop + SCROLL_STEP_PX,
 			behavior: 'smooth',
 		});
 	}, [content]);
