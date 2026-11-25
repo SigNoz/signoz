@@ -720,13 +720,16 @@ func TestDistributionPanelSpecDefaults(t *testing.T) {
 			assert.Nil(t, spec.Axes.X.Min)
 			assert.Nil(t, spec.Axes.X.Max)
 			assert.Equal(t, "linear", spec.Axes.Y.Scale.ValueOrDefault())
-			assert.Equal(t, "normal", spec.Visualization.Stack.ValueOrDefault())
 			assert.Nil(t, spec.ChartAppearance.Percentiles.Enabled)
 			assert.Nil(t, spec.ChartAppearance.Percentiles.Values)
 
+			storedVisualization, err := json.Marshal(spec.Visualization)
+			require.NoError(t, err)
+			assert.Contains(t, string(storedVisualization), `"stack":"normal"`)
+
 			stored, err := json.Marshal(spec.ChartAppearance)
 			require.NoError(t, err)
-			assert.Equal(t, `{"percentiles":{"enabled":null,"values":null}}`, string(stored))
+			assert.Equal(t, `{"percentiles":{"enabled":true,"values":[50,90,99]}}`, string(stored))
 		})
 	}
 }
@@ -737,9 +740,9 @@ func TestDistributionPanelSpecPercentileValues(t *testing.T) {
 		spec                    string
 		expectedPercentilesJSON string
 	}{
-		{name: "Disabled_ValuesStayNull", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedPercentilesJSON: `{"enabled":false,"values":null}`},
-		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[]}`},
-		{name: "NullValues_Accepted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":null,"values":null}`},
+		{name: "Disabled_ValuesDefaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedPercentilesJSON: `{"enabled":false,"values":[50,90,99]}`},
+		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[]}`},
+		{name: "NullValues_Defaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[50,90,99]}`},
 	}
 
 	for _, testCase := range testCases {
@@ -805,7 +808,7 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 		{
 			name:            "Stack_Empty",
 			spec:            `{"visualization": {"stack": ""}}`,
-			expectedMessage: "invalid distribution stack mode",
+			expectedMessage: "invalid stack mode",
 		},
 		{
 			name:            "Percentiles_UnknownField",
