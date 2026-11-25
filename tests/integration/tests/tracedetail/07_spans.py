@@ -169,7 +169,7 @@ def test_list_trace_spans_select_fields(
     assert [item["span"]["attributes"] for item in selected["items"]] == [{"http.route": "/checkout"}, {}, {"payment.provider": "worldpay", "db.statement": long_statement}, {}]
     assert all(item["span"]["resource"] == resources for item in selected["items"])
     assert all(item["span"]["events"] == [] for item in selected["items"])
-    assert selected["items"][2]["unmarkedFailureReason"] == "http_4xx"
+    assert selected["items"][2]["unmarkedFailureKind"] == "http_4xx"
     assert "warnings" not in selected
 
     # a context picks one side: an attribute name is not looked up in the resource

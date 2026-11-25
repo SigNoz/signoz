@@ -303,13 +303,7 @@ func (m *module) GetTraceHighlights(ctx context.Context, traceID string, query *
 	if err != nil {
 		return nil, err
 	}
-
-	pages := spantypes.NewHighlightPages(skeleton, query)
-	rows, err := m.store.GetTraceSpanHeadersByIDs(ctx, traceID, bounds, pages.SpanIDs())
-	if err != nil {
-		return nil, err
-	}
-	return spantypes.NewTraceHighlights(pages, rows), nil
+	return spantypes.NewTraceHighlights(skeleton, query), nil
 }
 
 func (m *module) GetTraceSpan(ctx context.Context, traceID string, spanID string) (*spantypes.Span, error) {
@@ -352,11 +346,9 @@ func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID 
 	var rows []spantypes.StorableSpan
 	if page.ReadsAttributes() {
 		rows, err = m.store.GetTraceSpansByIDs(ctx, traceID, bounds.Start, bounds.End, page.SpanIDs())
-	} else {
-		rows, err = m.store.GetTraceSpanHeadersByIDs(ctx, traceID, bounds, page.SpanIDs())
-	}
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 	return spantypes.NewSpanList(page, rows), nil
 }

@@ -41,8 +41,6 @@ type TraceStore interface {
 	GetThreadCursor(ctx context.Context, traceID string, bounds *TraceBounds, spanID string) (*ThreadCursor, error)
 
 	GetTraceSkeleton(ctx context.Context, traceID string, bounds *TraceBounds) (*TraceSkeleton, error)
-	// GetTraceSpanHeadersByIDs reads only the parent id, status and references of the spans.
-	GetTraceSpanHeadersByIDs(ctx context.Context, traceID string, bounds *TraceBounds, spanIDs []string) ([]StorableSpan, error)
 	// SearchTraceSpans returns every span of the trace that matches query: words, a filter expression, or both.
 	SearchTraceSpans(ctx context.Context, orgID valuer.UUID, traceID string, bounds *TraceBounds, query string) (*SpanSearch, error)
 

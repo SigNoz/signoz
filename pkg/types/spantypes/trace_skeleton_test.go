@@ -15,6 +15,7 @@ type skeletonSpec struct {
 	hasLink                   bool
 	usage                     *AISpanUsage
 	statusCode                string
+	references                string
 }
 
 // buildSkeleton adds the spans in the given order, which stands for the store's start time order.
@@ -22,17 +23,20 @@ func buildSkeleton(specs ...skeletonSpec) *TraceSkeleton {
 	builder := NewTraceSkeletonBuilder("trace", len(specs))
 	for _, spec := range specs {
 		span := &SkeletonSpan{
-			SpanID:             spec.id,
-			ParentSpanID:       spec.parent,
-			StartTime:          time.Unix(100, 0).Add(time.Duration(spec.startMs) * time.Millisecond),
-			DurationNano:       uint64(spec.durationMs) * uint64(time.Millisecond),
-			HasError:           spec.hasError,
-			Name:               spec.name,
-			ServiceName:        spec.service,
-			KindString:         "Internal",
-			ResponseStatusCode: spec.statusCode,
-			HasExceptionEvent:  spec.hasException,
-			HasLink:            spec.hasLink,
+			Span: Span{
+				SpanID:             spec.id,
+				ParentSpanID:       spec.parent,
+				DurationNano:       uint64(spec.durationMs) * uint64(time.Millisecond),
+				HasError:           spec.hasError,
+				Name:               spec.name,
+				KindString:         "Internal",
+				ResponseStatusCode: spec.statusCode,
+			},
+			StartTime:         time.Unix(100, 0).Add(time.Duration(spec.startMs) * time.Millisecond),
+			ServiceName:       spec.service,
+			HasExceptionEvent: spec.hasException,
+			HasLink:           spec.hasLink,
+			OtherReferences:   spec.references,
 		}
 		if spec.usage != nil {
 			span.AIUsage = *spec.usage
@@ -217,11 +221,11 @@ func TestTraceSkeletonTreeStats(t *testing.T) {
 	assert.Equal(t, uint32(0), skeleton.treeStats(positionOf(t, skeleton, "evict")).ErrorAncestorCount)
 }
 
-func TestTraceSkeletonUnmarkedFailureReason(t *testing.T) {
+func TestTraceSkeletonUnmarkedFailureKind(t *testing.T) {
 	testCases := []struct {
 		name     string
 		spec     skeletonSpec
-		expected UnmarkedFailureReason
+		expected UnmarkedFailureKind
 	}{
 		{name: "HTTP400_LowestClientError", spec: skeletonSpec{statusCode: "400"}, expected: UnmarkedFailureHTTP4xx},
 		{name: "HTTP499_HighestClientError", spec: skeletonSpec{statusCode: "499"}, expected: UnmarkedFailureHTTP4xx},
@@ -244,7 +248,7 @@ func TestTraceSkeletonUnmarkedFailureReason(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			testCase.spec.id = "span"
 			skeleton := buildSkeleton(testCase.spec)
-			assert.Equal(t, testCase.expected, skeleton.unmarkedFailureReason(0))
+			assert.Equal(t, testCase.expected, skeleton.unmarkedFailureKind(0))
 		})
 	}
 }
@@ -286,6 +290,38 @@ func TestTraceSkeletonParentLoop(t *testing.T) {
 			skeleton := buildSkeleton(testCase.specs...)
 			assert.Equal(t, testCase.expectedRoots, spanIDsOf(skeleton, skeleton.roots))
 			assert.Equal(t, testCase.expectedTreeOrder, spanIDsOf(skeleton, skeleton.treeOrder))
+		})
+	}
+}
+
+func TestTraceSkeletonSpan_ParentAndReferences(t *testing.T) {
+	skeleton := buildSkeleton(
+		skeletonSpec{id: "root"},
+		skeletonSpec{id: "child", parent: "root"},
+		skeletonSpec{id: "linked", parent: "root", references: `[{"traceId":"trace","spanId":"root","refType":"CHILD_OF"},{"traceId":"other","spanId":"far","refType":"FOLLOWS_FROM"}]`},
+		skeletonSpec{id: "orphan", parent: "gone"},
+		// a and b are each other's parent; a, the earliest, becomes a root.
+		skeletonSpec{id: "a", parent: "b"},
+		skeletonSpec{id: "b", parent: "a"},
+	)
+
+	testCases := []struct {
+		name         string
+		spanID       string
+		parentSpanID string
+		references   []OtelSpanRef
+	}{
+		{name: "NoStoredReferences_RebuiltFromTheParent", spanID: "child", parentSpanID: "root", references: []OtelSpanRef{{TraceId: "trace", SpanId: "root", RefType: "CHILD_OF"}}},
+		{name: "StoredReferences_ReturnedAsStored", spanID: "linked", parentSpanID: "root", references: []OtelSpanRef{{TraceId: "trace", SpanId: "root", RefType: "CHILD_OF"}, {TraceId: "other", SpanId: "far", RefType: "FOLLOWS_FROM"}}},
+		{name: "MissingParent_KeepsTheStoredParentID", spanID: "orphan", parentSpanID: "gone", references: []OtelSpanRef{{TraceId: "trace", SpanId: "gone", RefType: "CHILD_OF"}}},
+		{name: "ParentLoop_KeepsTheStoredParentID", spanID: "a", parentSpanID: "b", references: []OtelSpanRef{{TraceId: "trace", SpanId: "b", RefType: "CHILD_OF"}}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			span := skeleton.span(positionOf(t, skeleton, testCase.spanID))
+			assert.Equal(t, testCase.parentSpanID, span.ParentSpanID)
+			assert.Equal(t, testCase.references, span.References)
 		})
 	}
 }
