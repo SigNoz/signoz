@@ -13,22 +13,23 @@ import { ArrowRight, ArrowUpRight, Plus } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { isModifierKeyPressed } from 'utils/app';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
-import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import {
 	RuleCreatePermission,
 	RuleListPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { withAuthZContent } from 'lib/authz/components/withAuthZ/withAuthZContent';
 
 import beaconUrl from '@/assets/Icons/beacon.svg';
 
 import { getItemIcon } from '../constants';
+import AlertRulesDenied from './AlertRulesDenied';
+import AlertRulesLoading from './AlertRulesLoading';
 import { useHomeAlertRules } from './useHomeAlertRules';
 
 const LIST_CHECKS = [RuleListPermission];
 const CREATE_CHECKS = [RuleCreatePermission];
 
-export default function AlertRules({
+function AlertRules({
 	onUpdateChecklistDoneItem,
 	loadingUserPreferences,
 }: {
@@ -42,11 +43,6 @@ export default function AlertRules({
 	const { rules: alertRules, isError, isLoading } = useHomeAlertRules();
 	const rulesExist = alertRules.length > 0;
 
-	const listCheck = useAuthZ(LIST_CHECKS);
-	const isListDenied =
-		!listCheck.isLoading &&
-		!listCheck.error &&
-		!listCheck.isGranted(RuleListPermission);
 	const { safeNavigate } = useSafeNavigate();
 	const handleCreateAlertRule = useCallback(
 		(e: React.MouseEvent): void => {
@@ -176,24 +172,8 @@ export default function AlertRules({
 		</div>
 	);
 
-	if (isListDenied) {
-		return (
-			<Card className="dashboards-list-card home-data-card">
-				<Card.Content>
-					<PermissionDeniedCallout deniedPermissions={LIST_CHECKS} />
-				</Card.Content>
-			</Card>
-		);
-	}
-
 	if (isLoading) {
-		return (
-			<Card className="dashboards-list-card home-data-card loading-card">
-				<Card.Content>
-					<Skeleton active />
-				</Card.Content>
-			</Card>
-		);
+		return <AlertRulesLoading />;
 	}
 
 	if (isError) {
@@ -242,3 +222,12 @@ export default function AlertRules({
 		</Card>
 	);
 }
+
+export default withAuthZContent(AlertRules, {
+	checks: LIST_CHECKS,
+	preloadChecks: CREATE_CHECKS,
+	fallback: ({ deniedPermissions }) => (
+		<AlertRulesDenied deniedPermissions={deniedPermissions} />
+	),
+	fallbackOnLoading: <AlertRulesLoading />,
+});

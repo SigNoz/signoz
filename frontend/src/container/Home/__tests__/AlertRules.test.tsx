@@ -151,6 +151,16 @@ describe('Home alert rules - authz', () => {
 		expect(screen.queryByTestId(/^home-alert-rule-/)).not.toBeInTheDocument();
 	});
 
+	it('does not request rules without list', async () => {
+		const requestedStates = serveRules([burning]);
+		server.use(setupAuthzDenyAll());
+		renderAlertRules();
+
+		await screen.findByText('list:rule:*');
+
+		expect(requestedStates).toStrictEqual([]);
+	});
+
 	it('locks Create Alert Rule without create', async () => {
 		serveRules([]);
 		server.use(setupAuthzDeny(RuleCreatePermission));
