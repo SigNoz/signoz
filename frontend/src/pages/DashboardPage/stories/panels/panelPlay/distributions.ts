@@ -21,7 +21,6 @@ import {
 import {
 	distributionCounts,
 	heatmapCellCounts,
-	serviceAt,
 } from '../__story_mockdata__/panelResponses';
 
 import { hasData, PANEL_LOAD, type PanelPlayArgs } from './args';
@@ -200,12 +199,16 @@ const expectTooltipFor = async (
 		PANEL_LOAD,
 	);
 	// The hovered group sits above the divider. The list below runs largest first, one row
-	// a drawn group named by its service alone, or over Other the groups Other sums.
+	// a drawn group, or over Other the groups Other sums.
 	const active = within(tooltip).getByTestId('distribution-tooltip-active');
 	const isOverOther = (active.textContent ?? '').startsWith('Other');
-	const rows = within(
-		within(tooltip).getByTestId('uplot-tooltip-list'),
-	).getAllByTestId('uplot-tooltip-item-content');
+	// A lone group collapses into the row above the divider, as in the time-series tooltip.
+	const list = within(tooltip).queryByTestId('uplot-tooltip-list');
+	if (!list) {
+		await expect(drawnGroups).toBe(1);
+		return;
+	}
+	const rows = within(list).getAllByTestId('uplot-tooltip-item-content');
 	const listed = isOverOther ? args.series - (drawnGroups - 1) : drawnGroups;
 	// The list renders only the rows in view, so a longer one is checked in part.
 	const isWhollyRendered = listed <= TOOLTIP_ROWS_IN_VIEW;
@@ -222,12 +225,13 @@ const expectTooltipFor = async (
 		),
 	);
 	await expect(rowCounts).toStrictEqual([...rowCounts].sort((a, b) => b - a));
-	for (const row of rows) {
-		await expect(row).not.toHaveTextContent('service.name');
-	}
-	if (isWhollyRendered && drawnGroups === args.series) {
+	// Rows carry each series' full label, as the legend and time-series tooltip do.
+	if (isWhollyRendered && !isOverOther) {
 		await expect([...rowLabels].sort()).toStrictEqual(
-			Array.from({ length: args.series }, (_, group) => serviceAt(group)).sort(),
+			plot.series
+				.slice(1)
+				.map((series) => String(series.label))
+				.sort(),
 		);
 	}
 };
