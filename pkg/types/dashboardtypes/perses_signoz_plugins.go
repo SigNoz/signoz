@@ -18,6 +18,9 @@ import (
 
 const maxDistributionPercentiles = 5
 
+// What an unset chartAppearance.percentiles.values is written as.
+var defaultDistributionPercentiles = []float64{50, 90, 99}
+
 // ══════════════════════════════════════════════
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
@@ -458,7 +461,7 @@ func (percentiles DistributionPercentiles) MarshalJSON() ([]byte, error) {
 		percentiles.Enabled = &enabled
 	}
 	if percentiles.Values == nil {
-		percentiles.Values = []float64{50, 90, 99}
+		percentiles.Values = slices.Clone(defaultDistributionPercentiles)
 	}
 	return json.Marshal(alias(percentiles))
 }
