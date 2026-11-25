@@ -21,26 +21,7 @@ const (
 	UnmarkedFailureExceptionEvent UnmarkedFailureKind = "exception_event"
 )
 
-var (
-	ErrCodeTraceSpanNotFound = errors.MustNewCode("trace_span_not_found")
-
-	// optionalSpanFields pairs each field of a span that is left out when empty with its stored
-	// value, by the name a query knows the field by.
-	optionalSpanFields = map[string]func(span *Span, row *StorableSpan) (*string, string){
-		"http_method": func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPMethod, row.HTTPMethod },
-		"http_url":    func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPURL, row.HTTPURL },
-		"http_host":   func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPHost, row.HTTPHost },
-		"external_http_method": func(span *Span, row *StorableSpan) (*string, string) {
-			return &span.ExternalHTTPMethod, row.ExternalHTTPMethod
-		},
-		"external_http_url": func(span *Span, row *StorableSpan) (*string, string) {
-			return &span.ExternalHTTPURL, row.ExternalHTTPURL
-		},
-		"db_name":      func(span *Span, row *StorableSpan) (*string, string) { return &span.DBName, row.DBName },
-		"db_operation": func(span *Span, row *StorableSpan) (*string, string) { return &span.DBOperation, row.DBOperation },
-		"trace_state":  func(span *Span, row *StorableSpan) (*string, string) { return &span.TraceState, row.TraceState },
-	}
-)
+var ErrCodeTraceSpanNotFound = errors.MustNewCode("trace_span_not_found")
 
 // SpanListView keeps the spans of one kind out of the spans a route covers, in that kind's order.
 // It is a plain string so that a list of views binds from a repeated query parameter.
@@ -117,13 +98,17 @@ func NewSpan(traceID string, row *StorableSpan) *Span {
 		Attributes:         row.Attributes(),
 		Events:             row.UnmarshalledEvents(),
 		References:         row.UnmarshalledRefs(),
+		HTTPMethod:         row.HTTPMethod,
+		HTTPURL:            row.HTTPURL,
+		HTTPHost:           row.HTTPHost,
+		ExternalHTTPMethod: row.ExternalHTTPMethod,
+		ExternalHTTPURL:    row.ExternalHTTPURL,
+		DBName:             row.DBName,
+		DBOperation:        row.DBOperation,
+		TraceState:         row.TraceState,
 		Scope:              NewScope(row.Scope.Flatten()),
 	}
 	maps.Copy(span.Resource, row.ResourcesString)
-	for _, field := range optionalSpanFields {
-		target, value := field(span, row)
-		*target = value
-	}
 	return span
 }
 
