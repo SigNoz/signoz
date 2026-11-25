@@ -21,7 +21,26 @@ const (
 	UnmarkedFailureExceptionEvent UnmarkedFailureKind = "exception_event"
 )
 
-var ErrCodeTraceSpanNotFound = errors.MustNewCode("trace_span_not_found")
+var (
+	ErrCodeTraceSpanNotFound = errors.MustNewCode("trace_span_not_found")
+
+	// optionalSpanFields pairs each field of a span that is left out when empty with its stored
+	// value, by the name a query knows the field by.
+	optionalSpanFields = map[string]func(span *Span, row *StorableSpan) (*string, string){
+		"http_method": func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPMethod, row.HTTPMethod },
+		"http_url":    func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPURL, row.HTTPURL },
+		"http_host":   func(span *Span, row *StorableSpan) (*string, string) { return &span.HTTPHost, row.HTTPHost },
+		"external_http_method": func(span *Span, row *StorableSpan) (*string, string) {
+			return &span.ExternalHTTPMethod, row.ExternalHTTPMethod
+		},
+		"external_http_url": func(span *Span, row *StorableSpan) (*string, string) {
+			return &span.ExternalHTTPURL, row.ExternalHTTPURL
+		},
+		"db_name":      func(span *Span, row *StorableSpan) (*string, string) { return &span.DBName, row.DBName },
+		"db_operation": func(span *Span, row *StorableSpan) (*string, string) { return &span.DBOperation, row.DBOperation },
+		"trace_state":  func(span *Span, row *StorableSpan) (*string, string) { return &span.TraceState, row.TraceState },
+	}
+)
 
 // SpanListView keeps the spans of one kind out of the spans a route covers, in that kind's order.
 // It is a plain string so that a list of views binds from a repeated query parameter.
@@ -64,6 +83,15 @@ type Span struct {
 	StatusCodeString   string            `json:"status_code_string" required:"true" description:"OpenTelemetry status code of the span."`
 	StatusMessage      string            `json:"status_message" required:"true" description:"Status message, usually the error text. Empty when the span has none."`
 	ResponseStatusCode string            `json:"response_status_code" required:"true" description:"HTTP or gRPC status code of the response, for example 404. Empty when the span has none."`
+	HTTPMethod         string            `json:"http_method,omitempty" description:"HTTP request method. Left out when the span has none, and in a list unless selected."`
+	HTTPURL            string            `json:"http_url,omitempty" description:"HTTP request URL. Left out when the span has none, and in a list unless selected."`
+	HTTPHost           string            `json:"http_host,omitempty" description:"HTTP host or server address. Left out when the span has none, and in a list unless selected."`
+	ExternalHTTPMethod string            `json:"external_http_method,omitempty" description:"HTTP request method of an outgoing call. Left out when the span has none, and in a list unless selected."`
+	ExternalHTTPURL    string            `json:"external_http_url,omitempty" description:"Host of the URL of an outgoing call. Left out when the span has none, and in a list unless selected."`
+	DBName             string            `json:"db_name,omitempty" description:"Database name. Left out when the span has none, and in a list unless selected."`
+	DBOperation        string            `json:"db_operation,omitempty" description:"Database operation. Left out when the span has none, and in a list unless selected."`
+	TraceState         string            `json:"trace_state,omitempty" description:"W3C trace state. Left out when the span has none, and in a list unless selected."`
+	Scope              Scope             `json:"scope,omitempty" description:"Instrumentation scope. Left out when the span has none, and in a list unless selected."`
 	Resource           map[string]string `json:"resource" required:"true" nullable:"false" description:"Resource attributes. Always includes service.name. A span read by ID has all of them; a span in a list also has the selected ones."`
 	Attributes         map[string]any    `json:"attributes" required:"true" nullable:"false" description:"Span attributes. A span read by ID has all of them; a span in a list has only the selected ones."`
 	Events             []Event           `json:"events" required:"true" nullable:"false" description:"Span events. A span read by ID has all of them; a span in a list has none."`
@@ -89,8 +117,13 @@ func NewSpan(traceID string, row *StorableSpan) *Span {
 		Attributes:         row.Attributes(),
 		Events:             row.UnmarshalledEvents(),
 		References:         row.UnmarshalledRefs(),
+		Scope:              NewScope(row.Scope.Flatten()),
 	}
 	maps.Copy(span.Resource, row.ResourcesString)
+	for _, field := range optionalSpanFields {
+		target, value := field(span, row)
+		*target = value
+	}
 	return span
 }
 
