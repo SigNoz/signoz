@@ -208,13 +208,17 @@ const expectTooltipFor = async (
 		await expect(drawnGroups).toBe(1);
 		return;
 	}
-	const rows = within(list).getAllByTestId('uplot-tooltip-item-content');
 	const listed = isOverOther ? args.series - (drawnGroups - 1) : drawnGroups;
 	// The list renders only the rows in view, so a longer one is checked in part.
 	const isWhollyRendered = listed <= TOOLTIP_ROWS_IN_VIEW;
-	if (isWhollyRendered) {
-		await expect(rows).toHaveLength(listed);
-	}
+	// Virtuoso draws one row, measures it, then the rest.
+	let rows: HTMLElement[] = [];
+	await waitFor(async () => {
+		rows = within(list).getAllByTestId('uplot-tooltip-item-content');
+		if (isWhollyRendered) {
+			await expect(rows).toHaveLength(listed);
+		}
+	}, PANEL_LOAD);
 	// The label span carries the full label as its title; the count follows it.
 	const rowLabels = rows.map(
 		(row) => row.querySelector('[title]')?.getAttribute('title') ?? '',
