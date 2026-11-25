@@ -131,7 +131,7 @@ describe('RolesSettings', () => {
 
 		render(<RolesSettings />);
 
-		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(screen.getByTestId('roles-list-loading')).toBeInTheDocument();
 	});
 
 	it('shows error state when API fails', async () => {
@@ -198,7 +198,7 @@ describe('RolesSettings', () => {
 		).not.toBeInTheDocument();
 
 		// Rows must not carry the clickable class or button role
-		const rows = document.querySelectorAll('.roles-table-row');
+		const rows = screen.getAllByTestId(/^role-row-/);
 		rows.forEach((row) => {
 			expect(row).not.toHaveClass('roles-table-row--clickable');
 			expect(row.getAttribute('role')).not.toBe('button');

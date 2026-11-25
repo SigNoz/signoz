@@ -52,7 +52,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('selects a view by id', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const props = renderRail();
 
 		await user.click(screen.getByTestId(`${PREFIX}-view-view-2`));
@@ -61,7 +61,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('filters views by name and says when none match', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderRail();
 		const search = screen.getByTestId(`${PREFIX}-view-search-field`);
 
@@ -109,7 +109,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('offers save, save as and reset for a modified custom view', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onViewSaved = jest.fn();
 		const props = renderRail({
 			activeViewId: 'view-1',
@@ -138,7 +138,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('saves the current filters as a named view from the dialog', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onViewSaved = jest.fn();
 		const props = renderRail({ onViewSaved });
 
@@ -164,7 +164,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('opens the save dialog empty again after a cancel', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const props = renderRail({ isModified: true });
 
 		await user.click(screen.getByTestId(`${PREFIX}-view-save-as-new`));
@@ -183,7 +183,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('renames a custom view from a dialog filled with its name', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onViewRenamed = jest.fn();
 		const props = renderRail({ onViewRenamed });
 
@@ -206,7 +206,7 @@ describe('ViewsRail', () => {
 	});
 
 	it('refills the rename dialog with the name of the view it opens for', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const props = renderRail();
 
 		await user.click(screen.getByTestId(`${PREFIX}-view-rename-view-1`));

@@ -1,5 +1,5 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import RoutingPolicyList from '../RoutingPolicyList';
 import { getRoutingPolicyColumns } from '../table.config';
@@ -68,8 +68,9 @@ describe('RoutingPolicyList', () => {
 		renderList();
 
 		await screen.findByText(MOCK_ROUTING_POLICY_1.name);
-		const resizable = Array.from(document.querySelectorAll('th'))
-			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
+		const resizable = screen
+			.getAllByRole('columnheader')
+			.filter((th) => within(th).queryByTitle('Drag to resize column'))
 			.map((th) => th.textContent?.trim());
 		expect(resizable).toStrictEqual(['Routing Policy', 'Channels', 'Expression']);
 	});

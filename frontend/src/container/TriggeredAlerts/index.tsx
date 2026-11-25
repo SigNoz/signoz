@@ -229,6 +229,7 @@ function TriggeredAlerts(): JSX.Element {
 						isLoading={isFetching}
 						getRowKey={(row): string => row.groupKey}
 						getItemKey={(row): string => row.groupKey}
+						getRowTestId={(row): string => `triggered-alerts-group-${row.groupKey}`}
 						renderExpandedRow={renderExpandedRow}
 						getRowCanExpand={(): boolean => true}
 						columnStorageKey="triggered-alerts-grouped-columns"

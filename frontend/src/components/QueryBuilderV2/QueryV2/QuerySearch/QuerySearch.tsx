@@ -317,23 +317,20 @@ function QuerySearch({
 		500,
 	);
 
-	const toggleSuggestions = useCallback(
-		(timeout?: number) => {
-			const timeoutId = setTimeout(() => {
-				if (!editorRef.current) {
-					return;
-				}
-				if (isFocused) {
-					startCompletion(editorRef.current);
-				} else {
-					closeCompletion(editorRef.current);
-				}
-			}, timeout);
+	const toggleSuggestions = useCallback((timeout?: number) => {
+		const timeoutId = setTimeout(() => {
+			if (!editorRef.current) {
+				return;
+			}
+			if (editorRef.current.hasFocus) {
+				startCompletion(editorRef.current);
+			} else {
+				closeCompletion(editorRef.current);
+			}
+		}, timeout);
 
-			return (): void => clearTimeout(timeoutId);
-		},
-		[isFocused],
-	);
+		return (): void => clearTimeout(timeoutId);
+	}, []);
 
 	const fetchKeySuggestions = useCallback(
 		async (searchText?: string): Promise<void> => {
@@ -1597,7 +1594,10 @@ function QuerySearch({
 					{showScopeChip && <ScopeChip expression={initialExpression ?? ''} />}
 					{isScopedFilter && !showScopeChip ? (
 						<Tooltip title={initialExpression || ''} placement="left">
-							<div className="query-search-initial-scope-label">
+							<div
+								className="query-search-initial-scope-label"
+								data-testid="query-search-initial-scope-label"
+							>
 								<Filter
 									size={14}
 									style={{

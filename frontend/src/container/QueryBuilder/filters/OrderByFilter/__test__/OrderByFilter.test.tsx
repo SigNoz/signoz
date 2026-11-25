@@ -1,7 +1,7 @@
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -19,8 +19,8 @@ const fieldKeysBody = (names: string[]): Record<string, unknown> => ({
 	},
 });
 
-const orderByInput = (): HTMLInputElement =>
-	screen.getByTestId('order-by').querySelector('input') as HTMLInputElement;
+const orderByInput = (): HTMLElement =>
+	within(screen.getByTestId('order-by')).getByRole('combobox');
 
 function setup(query: Partial<IBuilderQuery>): { onChange: jest.Mock } {
 	const onChange = jest.fn();
@@ -69,7 +69,7 @@ describe('OrderByFilter', () => {
 		);
 		const { onChange } = setup({});
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(orderByInput());
 
 		await waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1));

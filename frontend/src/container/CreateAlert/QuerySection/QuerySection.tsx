@@ -154,6 +154,7 @@ function QuerySection(): JSX.Element {
 							className={classNames('list-view-tab', 'explorer-view-option', {
 								'active-tab': activeTab === tab.value,
 							})}
+							data-testid={`query-section-tab-${tab.value}`}
 							onClick={(): void => {
 								if (isAnomalyDetection && tab.value === activeTab) {
 									return;

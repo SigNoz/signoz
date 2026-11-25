@@ -36,6 +36,7 @@ function ConnectionMethodSelector({
 			<RadioGroup
 				color="primary"
 				textOverflow="wrap"
+				testId="gcp-connection-method"
 				value={value}
 				onChange={(next): void =>
 					onChange(next as CloudintegrationtypesGCPConnectionMethodDTO)

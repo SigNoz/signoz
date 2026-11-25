@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type HTMLAttributes, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -102,7 +102,11 @@ function ServiceMetricTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-metric-table-container" data-testid="services-table">
+		<div
+			className="service-metric-table-container"
+			data-testid="services-table"
+			aria-busy={isLoading}
+		>
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
 					<Typography
@@ -129,6 +133,11 @@ function ServiceMetricTable({
 				dataSource={services}
 				rowKey="serviceName"
 				className="service-metrics-table"
+				onRow={(
+					record: ServicesList,
+				): HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+					'data-testid': `services-table-row-${record.serviceName}`,
+				})}
 			/>
 		</div>
 	);

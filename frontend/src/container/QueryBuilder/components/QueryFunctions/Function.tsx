@@ -109,6 +109,7 @@ export default function Function({
 
 			<Button
 				className="periscope-btn query-function-delete-btn"
+				data-testid="query-function-delete-btn"
 				disabled={disableRemoveFunction}
 				onClick={(): void => {
 					handleDeleteFunction(funcData, index);

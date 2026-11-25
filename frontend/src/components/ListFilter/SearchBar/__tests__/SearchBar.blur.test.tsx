@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import type { DslGrammar } from '../../dsl/types';
 import SearchBar from '../SearchBar';
@@ -40,9 +40,7 @@ function renderSearchBar(props: { dirty: boolean; disabled?: boolean }): {
 }
 
 function searchContent(): HTMLElement {
-	return screen
-		.getByTestId('list-search')
-		.querySelector('.cm-content') as HTMLElement;
+	return within(screen.getByTestId('list-search')).getByRole('textbox');
 }
 
 describe('SearchBar — run on blur', () => {

@@ -34,7 +34,7 @@ describe('InvalidQueryState', () => {
 	});
 
 	it('runs the callback, then opens support', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onContactSupport = jest.fn();
 		render(
 			<InvalidQueryState

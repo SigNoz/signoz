@@ -131,6 +131,7 @@ const ServicesListTable = memo(
 					pagination={false}
 					className="services-table"
 					onRow={(record: ServicesList): Record<string, unknown> => ({
+						'data-testid': `home-services-row-${record.serviceName}`,
 						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>

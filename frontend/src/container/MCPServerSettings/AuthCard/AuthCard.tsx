@@ -37,7 +37,9 @@ function AuthCard({
 			<div className="mcp-auth-card__field">
 				<span className="mcp-auth-card__field-label">SigNoz Instance URL</span>
 				{isLoadingInstanceUrl ? (
-					<Skeleton.Input active size="small" />
+					<div data-testid="mcp-instance-url-skeleton">
+						<Skeleton.Input active size="small" />
+					</div>
 				) : (
 					<div className="mcp-auth-card__endpoint-value">
 						<span data-testid="mcp-instance-url">{instanceUrl}</span>

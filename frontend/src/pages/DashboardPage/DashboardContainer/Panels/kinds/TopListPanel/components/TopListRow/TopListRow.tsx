@@ -149,6 +149,7 @@ function TopListRow({
 
 	return (
 		<li
+			data-testid="top-list-item"
 			className={styles.item}
 			aria-setsize={count}
 			aria-posinset={index + 1}

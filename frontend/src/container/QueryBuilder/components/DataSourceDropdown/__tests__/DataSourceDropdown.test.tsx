@@ -1,5 +1,5 @@
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { DataSourceDropdown } from '../DataSourceDropdown';
@@ -8,8 +8,7 @@ const TEST_ID = 'query-data-source-selector';
 
 async function openDropdown(): Promise<void> {
 	const user = userEvent.setup();
-	const trigger = screen.getByTestId(TEST_ID);
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
+	await user.click(within(screen.getByTestId(TEST_ID)).getByRole('combobox'));
 }
 
 describe('DataSourceDropdown', () => {

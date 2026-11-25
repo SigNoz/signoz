@@ -77,7 +77,13 @@ export const openApprovalDiff = async ({
 	canvasElement,
 	args,
 }: PlayContext): Promise<void> => {
-	if (!(showsThread(args) && args.agent === 'awaiting-approval')) {
+	if (
+		!(
+			showsThread(args) &&
+			args.agent === 'awaiting-approval' &&
+			args.approvalDiff
+		)
+	) {
 		return;
 	}
 

@@ -25,7 +25,11 @@ function StripKeyValue({
 	return (
 		<span className={styles.keyValue}>
 			{prefix && (
-				<span className={cx(styles.prefix, tone && styles[tone])} data-tone={tone}>
+				<span
+					className={cx(styles.prefix, tone && styles[tone])}
+					data-tone={tone}
+					data-testid={`strip-key-value-prefix-${label}`}
+				>
 					{prefix}
 				</span>
 			)}

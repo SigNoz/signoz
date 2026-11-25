@@ -49,7 +49,12 @@ function OverflowInputToolTip({
 
 	return (
 		<>
-			<span ref={mirrorRef} aria-hidden className="overflow-input-mirror" />
+			<span
+				ref={mirrorRef}
+				aria-hidden
+				className="overflow-input-mirror"
+				data-testid="overflow-input-mirror"
+			/>
 			<Tooltip title={tooltipTitle} placement={tooltipPlacement}>
 				<Input
 					{...rest}

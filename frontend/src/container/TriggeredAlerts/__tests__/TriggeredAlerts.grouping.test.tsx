@@ -1,5 +1,4 @@
-import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import { renderTriggeredAlerts } from './_helpers';
 
@@ -65,22 +64,18 @@ describe('TriggeredAlerts — group by', () => {
 		// against design changes that add other buttons to the row.
 		const expandToggles = screen.getAllByTestId('group-expand-toggle');
 		expect(expandToggles.length).toBeGreaterThan(0);
-		const frontendGroupBadge = screen.getByText('service:frontend');
-		const frontendRow = frontendGroupBadge.closest('tr');
-		expect(frontendRow).not.toBeNull();
-		const frontendToggle = (frontendRow as HTMLElement).querySelector(
-			'[data-testid="group-expand-toggle"]',
-		) as HTMLElement | null;
-		expect(frontendToggle).not.toBeNull();
+		const frontendRow = screen.getByTestId('triggered-alerts-group-frontend');
+		expect(within(frontendRow).getByText('service:frontend')).toBeInTheDocument();
+		const frontendToggle = within(frontendRow).getByTestId('group-expand-toggle');
 
-		await user.click(frontendToggle as HTMLElement);
+		await user.click(frontendToggle);
 
 		await waitFor(() =>
 			expect(screen.getByText('High CPU Usage')).toBeInTheDocument(),
 		);
 		expect(screen.getByText('Disk Slow')).toBeInTheDocument();
 
-		await user.click(frontendToggle as HTMLElement);
+		await user.click(frontendToggle);
 
 		await waitFor(() =>
 			expect(screen.queryByText('High CPU Usage')).not.toBeInTheDocument(),

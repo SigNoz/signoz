@@ -92,6 +92,7 @@ function ThresholdItem({
 				<div className="threshold-indicator">
 					<div
 						className="threshold-dot"
+						data-testid="threshold-dot"
 						style={{ backgroundColor: threshold.color }}
 					/>
 				</div>

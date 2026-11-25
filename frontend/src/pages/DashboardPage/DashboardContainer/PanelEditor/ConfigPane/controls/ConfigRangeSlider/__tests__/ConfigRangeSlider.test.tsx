@@ -25,7 +25,7 @@ describe('ConfigRangeSlider', () => {
 		);
 
 		expect(
-			within(screen.getByTestId('range')).getAllByRole('slider'),
+			within(screen.getByTestId('range')).getAllByRole('slider', { hidden: true }),
 		).toHaveLength(2);
 		expect(screen.getByText('4–24 px')).toBeInTheDocument();
 	});
@@ -46,6 +46,7 @@ describe('ConfigRangeSlider', () => {
 
 		const [, maxThumb] = within(screen.getByTestId('range')).getAllByRole(
 			'slider',
+			{ hidden: true },
 		);
 		maxThumb.focus();
 		await user.keyboard('{ArrowRight}');

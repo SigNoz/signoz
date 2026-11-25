@@ -74,8 +74,7 @@ function Harness({
 }
 
 const getView = (): EditorView => {
-	const dom = document.querySelector('.cm-editor');
-	const view = dom ? EditorView.findFromDOM(dom as HTMLElement) : null;
+	const view = EditorView.findFromDOM(screen.getByTestId('markdown-editor'));
 	if (!view) {
 		throw new Error('editor view not mounted');
 	}
@@ -151,11 +150,9 @@ describe('MarkdownEditor', () => {
 		render(<Harness initialValue={'## Runbook\nowner {{team}}'} />);
 
 		await waitFor(() => {
-			expect(document.querySelector('.cm-md-heading')).toBeInTheDocument();
+			expect(screen.getByText('## Runbook')).toHaveClass('cm-md-heading');
 		});
-		expect(document.querySelector('.cm-md-variable')).toHaveTextContent(
-			'{{team}}',
-		);
+		expect(screen.getByText('{{team}}')).toHaveClass('cm-md-variable');
 	});
 
 	describe('uncontrolled document', () => {

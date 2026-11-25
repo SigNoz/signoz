@@ -1,10 +1,9 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { mockAppLocation } from 'tests/router-mocks';
 
 import AlertList from '../index';
 
 const ALERTS_PATH = '/alerts';
-const TAB_SELECTOR = '.ant-tabs-tab';
 const LIST_ALERT_RULES_TEXT = 'List Alert Rules Component';
 const TRIGGERED_ALERTS_TEXT = 'Triggered Alerts';
 const ALERT_RULES_TEXT = 'Alert Rules';
@@ -85,12 +84,8 @@ const mockQueryParams = (params: Record<string, string | null>): void => {
 	});
 };
 
-const clickTab = (tabText: string): void => {
-	const tab = screen.getByText(tabText).closest(TAB_SELECTOR);
-	if (tab) {
-		fireEvent.click(tab);
-	}
-};
+const clickTab = (tabText: string): Promise<void> =>
+	userEvent.setup().click(screen.getByRole('tab', { name: tabText }));
 
 describe('AlertList', () => {
 	beforeEach(() => {
@@ -138,35 +133,35 @@ describe('AlertList', () => {
 			expect(screen.getByText(LIST_ALERT_RULES_TEXT)).toBeInTheDocument();
 		});
 
-		it('should navigate to TriggeredAlerts tab when clicked', () => {
+		it('should navigate to TriggeredAlerts tab when clicked', async () => {
 			mockQueryParams({ tab: 'AlertRules' });
 			mockLocation(ALERTS_PATH);
 
 			render(<AlertList />);
 
-			clickTab(TRIGGERED_ALERTS_TEXT);
+			await clickTab(TRIGGERED_ALERTS_TEXT);
 
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=TriggeredAlerts');
 		});
 
-		it('should navigate to AlertRules tab when clicked', () => {
+		it('should navigate to AlertRules tab when clicked', async () => {
 			mockQueryParams({ tab: 'TriggeredAlerts' });
 			mockLocation(ALERTS_PATH);
 
 			render(<AlertList />);
 
-			clickTab(ALERT_RULES_TEXT);
+			await clickTab(ALERT_RULES_TEXT);
 
 			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
 		});
 
-		it('should navigate to Configuration tab with default channels subTab when clicked', () => {
+		it('should navigate to Configuration tab with default channels subTab when clicked', async () => {
 			mockQueryParams({ tab: 'AlertRules' });
 			mockLocation(ALERTS_PATH);
 
 			render(<AlertList />);
 
-			clickTab(CONFIGURATION_TEXT);
+			await clickTab(CONFIGURATION_TEXT);
 
 			expect(mockSafeNavigate).toHaveBeenCalledWith(
 				`/alerts?tab=Configuration&subTab=${CHANNELS_SUB_TAB}`,

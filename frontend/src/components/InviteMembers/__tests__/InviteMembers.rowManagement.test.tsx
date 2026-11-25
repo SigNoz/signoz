@@ -15,7 +15,7 @@ describe('InviteMembers - Row Management', () => {
 	});
 
 	it('adds a row when "Add another" is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<InviteMembers initialRowCount={2} />);
 
@@ -27,7 +27,7 @@ describe('InviteMembers - Row Management', () => {
 	});
 
 	it('removes a row when trash button is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<InviteMembers initialRowCount={3} />);
 
@@ -40,7 +40,7 @@ describe('InviteMembers - Row Management', () => {
 	});
 
 	it('respects minRows constraint when removing rows', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<InviteMembers initialRowCount={2} minRows={2} />);
 
@@ -62,7 +62,7 @@ describe('InviteMembers - Row Management', () => {
 	});
 
 	it('cannot remove rows below minRows=1 default', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<InviteMembers initialRowCount={2} />);
 
@@ -76,7 +76,7 @@ describe('InviteMembers - Row Management', () => {
 	});
 
 	it('preserves data in other rows when removing one', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<InviteMembers initialRowCount={3} />);
 

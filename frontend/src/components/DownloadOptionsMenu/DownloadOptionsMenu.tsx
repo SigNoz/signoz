@@ -176,6 +176,7 @@ export default function DownloadOptionsMenu({
 			arrow={false}
 			open={isPopoverOpen}
 			onOpenChange={setIsPopoverOpen}
+			destroyTooltipOnHide
 			rootClassName="download-popover"
 		>
 			<Tooltip title="Download" placement="top">
