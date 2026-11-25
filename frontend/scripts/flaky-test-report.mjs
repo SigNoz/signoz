@@ -13,7 +13,7 @@ import {
 	parsePlaywright,
 	parsePlaywrightReport,
 } from './test-log-parsers.mjs';
-import { report, slackMessage } from './flaky-test-format.mjs';
+import { report, slackMessages } from './flaky-test-format.mjs';
 
 const MIN_PRS = 3;
 const PARALLEL_RUNS = 8;
@@ -219,9 +219,11 @@ async function main() {
 	);
 	process.stdout.write(report(since, SUITES, flaky));
 	const webhook = process.env.SLACK_WEBHOOK_URL;
-	if (webhook && flaky.length > 0) {
+	if (webhook) {
 		const runUrl = `${process.env.GITHUB_SERVER_URL}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-		await postToSlack(webhook, slackMessage(repo, since, flaky, runUrl));
+		for (const message of slackMessages(repo, since, SUITES, flaky, runUrl)) {
+			await postToSlack(webhook, message);
+		}
 	}
 }
 

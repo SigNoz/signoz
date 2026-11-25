@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { slackMessage } from '../flaky-test-format.mjs';
+import { slackMessages } from '../flaky-test-format.mjs';
 import { findFlaky, prOf } from '../flaky-test-report.mjs';
 import { rateLimitWait } from '../github-api.mjs';
 import {
@@ -199,9 +199,10 @@ test('rateLimitWait waits for retry-after or the hourly reset, and nothing else'
 	assert.equal(rateLimitWait(response(500, {}), now), null);
 });
 
-test('slackMessage escapes test names and lists the top 10 with a link to the run', () => {
-	const entry = (index) => ({
-		suite: index === 0 ? E2E : JEST,
+test('slackMessages posts each suite on its own, escaped, top 10 with a link to the run', () => {
+	const STORYBOOK = { name: 'Storybook', root: 'frontend/' };
+	const entry = (suite, index) => ({
+		suite,
 		file: `src/t${index}.test.tsx`,
 		test: `T${index} › shows <Empty> & more`,
 		failures: 20 - index,
@@ -211,26 +212,34 @@ test('slackMessage escapes test names and lists the top 10 with a link to the ru
 		prs: new Set([1]),
 		change: { who: 'dev' },
 	});
-	const message = slackMessage(
+	const messages = slackMessages(
 		'SigNoz/signoz',
 		'2026-11-17',
-		Array.from({ length: 12 }, (_, index) => entry(index)),
+		[JEST, STORYBOOK, E2E],
+		[
+			...Array.from({ length: 12 }, (_, index) => entry(JEST, index)),
+			entry(E2E, 0),
+		],
 		'https://github.com/SigNoz/signoz/actions/runs/1',
 	);
 
-	assert.equal(message.text, '12 flaky tests since 2026-11-17');
-	const sections = message.blocks.filter((block) => block.type === 'section');
-	assert.equal(sections.length, 10);
+	assert.deepEqual(
+		messages.map((message) => message.text),
+		['12 flaky Jest tests since 2026-11-17', '1 flaky E2E test since 2026-11-17'],
+	);
+	const sections = (message) =>
+		message.blocks.filter((block) => block.type === 'section');
+	assert.equal(sections(messages[0]).length, 10);
 	assert.equal(
-		sections[0].text.text,
-		'E2E, *20 failures* <https://github.com/SigNoz/signoz/blob/main/tests/e2e/src/t0.test.tsx|T0 › shows &lt;Empty&gt; &amp; more>\npassed on re-run (1), last changed by dev',
+		sections(messages[0])[0].text.text,
+		'*20 failures* <https://github.com/SigNoz/signoz/blob/main/frontend/src/t0.test.tsx|T0 › shows &lt;Empty&gt; &amp; more>\npassed on re-run (1), last changed by dev',
+	);
+	assert.match(
+		sections(messages[1])[0].text.text,
+		/blob\/main\/tests\/e2e\/src\/t0\.test\.tsx/,
 	);
 	assert.equal(
-		sections[1].text.text.split(' <')[1].split('|')[0],
-		'https://github.com/SigNoz/signoz/blob/main/frontend/src/t1.test.tsx',
-	);
-	assert.equal(
-		message.blocks.at(-1).elements[0].text,
+		messages[1].blocks.at(-1).elements[0].text,
 		'<https://github.com/SigNoz/signoz/actions/runs/1|All tests and their first error line>',
 	);
 });

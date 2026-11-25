@@ -52,8 +52,8 @@ export function report(since, suites, flaky) {
 const slackEscape = (text) =>
 	text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-export function slackMessage(repo, since, flaky, runUrl) {
-	const title = `${flaky.length} flaky tests since ${since}`;
+function slackMessage(repo, since, suite, flaky, runUrl) {
+	const title = `${flaky.length} flaky ${suite.name} ${flaky.length === 1 ? 'test' : 'tests'} since ${since}`;
 	return {
 		text: title,
 		blocks: [
@@ -62,7 +62,7 @@ export function slackMessage(repo, since, flaky, runUrl) {
 				type: 'section',
 				text: {
 					type: 'mrkdwn',
-					text: `${entry.suite.name}, *${entry.failures} failures* <https://github.com/${repo}/blob/main/${entry.suite.root}${entry.file}|${slackEscape(entry.test)}>\n${signal(entry)}, last changed by ${slackEscape(entry.change?.who ?? 'unknown')}`,
+					text: `*${entry.failures} failures* <https://github.com/${repo}/blob/main/${suite.root}${entry.file}|${slackEscape(entry.test)}>\n${signal(entry)}, last changed by ${slackEscape(entry.change?.who ?? 'unknown')}`,
 				},
 			})),
 			{
@@ -76,4 +76,11 @@ export function slackMessage(repo, since, flaky, runUrl) {
 			},
 		],
 	};
+}
+
+export function slackMessages(repo, since, suites, flaky, runUrl) {
+	return suites
+		.map((suite) => [suite, flaky.filter((entry) => entry.suite === suite)])
+		.filter(([, entries]) => entries.length > 0)
+		.map(([suite, entries]) => slackMessage(repo, since, suite, entries, runUrl));
 }
