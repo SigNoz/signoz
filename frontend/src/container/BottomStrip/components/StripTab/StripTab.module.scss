@@ -12,10 +12,6 @@
 	&.active {
 		background: var(--l3-background-hover);
 
-		.open {
-			--button-variant-ghost-color: var(--l1-foreground-hover);
-		}
-
 		.close {
 			visibility: visible;
 		}
@@ -26,11 +22,6 @@
 	display: flex;
 	flex: 1 1 auto;
 	min-width: 0;
-
-	--button-padding: 0 5.5px 0 6px;
-	--button-gap: 4px;
-	--button-variant-ghost-hover-background-color: transparent;
-	--button-focus-visible-outline: none;
 }
 
 // Over the label's end on a fade, hidden rather than removed so the label never reflows.
@@ -49,9 +40,4 @@
 		transparent
 	);
 	visibility: hidden;
-
-	--button-border-radius: 0;
-	--button-variant-ghost-color: var(--l1-foreground-hover);
-	--button-variant-ghost-hover-background-color: transparent;
-	--button-focus-visible-outline-offset: -2px;
 }
