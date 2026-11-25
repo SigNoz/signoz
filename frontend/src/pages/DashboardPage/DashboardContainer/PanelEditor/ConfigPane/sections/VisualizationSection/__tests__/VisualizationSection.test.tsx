@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DashboardtypesStackModeDTO,
@@ -181,7 +182,9 @@ describe('VisualizationSection', () => {
 
 	it('writes the chosen bucket stack', async () => {
 		const user = userEvent.setup();
-		const onChange = jest.fn();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof VisualizationSection>['onChange']
+		>;
 		render(
 			<VisualizationSection
 				value={undefined}

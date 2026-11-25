@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { DashboardtypesDistributionYScaleDTO } from 'api/generated/services/sigNoz.schemas';
 import { render, screen, userEvent } from 'tests/test-utils';
 
@@ -18,8 +19,10 @@ describe('DistributionAxesSection', () => {
 	});
 
 	it('writes the x min without dropping the max or the y scale', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onChange = jest.fn();
+		const user = userEvent.setup();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof DistributionAxesSection>['onChange']
+		>;
 		render(
 			<DistributionAxesSection
 				value={{
@@ -53,8 +56,10 @@ describe('DistributionAxesSection', () => {
 	});
 
 	it('writes the y scale', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onChange = jest.fn();
+		const user = userEvent.setup();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof DistributionAxesSection>['onChange']
+		>;
 		render(<DistributionAxesSection value={undefined} onChange={onChange} />);
 
 		await user.click(screen.getByText('Logarithmic'));

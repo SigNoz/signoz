@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import DistributionPercentilesField from '../DistributionPercentilesField';
@@ -19,7 +20,9 @@ describe('DistributionPercentilesField', () => {
 	});
 
 	it('turns markers off, keeping the values for when they come back', async () => {
-		const onChange = jest.fn();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof DistributionPercentilesField>['onChange']
+		>;
 		render(
 			<DistributionPercentilesField
 				value={{ enabled: true, values: [75] }}
@@ -28,7 +31,7 @@ describe('DistributionPercentilesField', () => {
 		);
 
 		await userEvent
-			.setup({ pointerEventsCheck: 0 })
+			.setup()
 			.click(screen.getByTestId('panel-editor-v2-percentile-markers'));
 
 		expect(onChange).toHaveBeenCalledWith({ enabled: false, values: [75] });
@@ -86,7 +89,9 @@ describe('resolvePercentileItems', () => {
 	});
 
 	it('resets cleared percentiles to the saved ones', async () => {
-		const onChange = jest.fn();
+		const onChange = jest.fn() as jest.MockedFunction<
+			ComponentProps<typeof DistributionPercentilesField>['onChange']
+		>;
 		render(
 			<DistributionPercentilesField
 				value={{ enabled: true, values: [] }}

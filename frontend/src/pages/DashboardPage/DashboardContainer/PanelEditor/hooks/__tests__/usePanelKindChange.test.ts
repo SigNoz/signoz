@@ -1,4 +1,3 @@
-import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	initialClickHouseData,
@@ -14,6 +13,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
+import { act, renderHook } from 'tests/test-utils';
 
 import { resolveQueryType } from 'pages/DashboardPage/DashboardContainer/Panels/capabilities';
 import { getBuilderQueries } from '../../../Panels/utils/getBuilderQueries';
