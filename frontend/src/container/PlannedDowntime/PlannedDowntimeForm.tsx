@@ -313,7 +313,10 @@ export function PlannedDowntimeForm(
 		setSelectedTags(newTags);
 	};
 
-	const formattedInitialValues = useMemo((): PlannedDowntimeFormData => {
+	const formattedInitialValues = useMemo((): Omit<
+		PlannedDowntimeFormData,
+		'alertRules'
+	> => {
 		const { schedule } = initialValues;
 		const initialAlertIds = initialValues.alertIds || [];
 
@@ -321,7 +324,6 @@ export function PlannedDowntimeForm(
 			name: defaultTo(initialValues.name, ''),
 			alertRuleScope:
 				isEditMode && initialAlertIds.length === 0 ? 'all' : 'specific',
-			alertRules: getAlertOptionsFromIds(initialAlertIds, alertOptions, isError),
 			startTime: schedule?.startTime
 				? dayjs(schedule.startTime).tz(schedule.timezone)
 				: null,
@@ -338,13 +340,23 @@ export function PlannedDowntimeForm(
 			timezone: schedule?.timezone as string,
 			scope: initialValues.scope || '',
 		};
-	}, [initialValues, isEditMode, alertOptions, isError]);
+	}, [initialValues, isEditMode]);
+
+	const initialAlertRules = useMemo(
+		() =>
+			getAlertOptionsFromIds(initialValues.alertIds || [], alertOptions, isError),
+		[initialValues.alertIds, alertOptions, isError],
+	);
 
 	useEffect(() => {
-		setSelectedTags(formattedInitialValues.alertRules);
 		setAlertRuleScope(formattedInitialValues.alertRuleScope);
 		form.setFieldsValue({ ...formattedInitialValues });
-	}, [form, formattedInitialValues, initialValues]);
+	}, [form, formattedInitialValues]);
+
+	useEffect(() => {
+		setSelectedTags(initialAlertRules);
+		form.setFieldValue(alertRuleFormName, initialAlertRules);
+	}, [form, initialAlertRules]);
 
 	const startTimeText = useMemo((): string => {
 		const startTime = formData.startTime;
@@ -420,7 +432,7 @@ export function PlannedDowntimeForm(
 				autoComplete="off"
 			>
 				<Form.Item label="Name" name="name" rules={requiredFieldRule}>
-					<Input placeholder="e.g. Upgrade downtime" />
+					<Input data-testid="downtime-name" placeholder="e.g. Upgrade downtime" />
 				</Form.Item>
 				<Form.Item
 					label="Starts from"

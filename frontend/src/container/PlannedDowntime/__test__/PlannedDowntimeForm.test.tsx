@@ -139,6 +139,40 @@ describe('PlannedDowntimeForm alert rule scope', () => {
 	});
 });
 
+describe('PlannedDowntimeForm seeding', () => {
+	const NEW_DOWNTIME = {};
+
+	beforeEach(() => {
+		server.use(setupAuthzAdmin());
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('keeps typed values when the parent re-renders with no rules', async () => {
+		const user = userEvent.setup();
+		const { rerender } = render(
+			<FormHarness
+				initialValues={NEW_DOWNTIME}
+				isEditMode={false}
+				alertOptions={[]}
+			/>,
+		);
+
+		await user.type(await screen.findByTestId('downtime-name'), 'Upgrade');
+		rerender(
+			<FormHarness
+				initialValues={NEW_DOWNTIME}
+				isEditMode={false}
+				alertOptions={[]}
+			/>,
+		);
+
+		expect(screen.getByTestId('downtime-name')).toHaveValue('Upgrade');
+	});
+});
+
 describe('PlannedDowntimeForm authz', () => {
 	const ID = 'd1';
 	const SAVE = 'downtime-save';

@@ -82,7 +82,7 @@ export function PlannedDowntime(): JSX.Element {
 			alertsData?.map((i) => ({
 				label: i.alert,
 				value: i.id,
-			})),
+			})) ?? [],
 		[alertsData],
 	);
 
@@ -129,7 +129,7 @@ export function PlannedDowntime(): JSX.Element {
 		setLimit,
 	} = usePlannedDowntimeTable(
 		downtimeSchedules.data?.data || [],
-		alertOptions || [],
+		alertOptions,
 		searchValue,
 	);
 
@@ -319,7 +319,7 @@ export function PlannedDowntime(): JSX.Element {
 
 			{isOpen && (
 				<PlannedDowntimeForm
-					alertOptions={alertOptions || []}
+					alertOptions={alertOptions}
 					initialValues={initialValues}
 					isError={isError}
 					isLoading={isLoading}
