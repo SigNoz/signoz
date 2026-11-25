@@ -9,7 +9,10 @@ import type {
 	UseDistributionBarClickReturn,
 } from './types';
 
-/** Resolves a plot click to the group under it; Other and empty buckets report none. */
+/**
+ * Resolves a plot click to the group under it. A click on Other pins the tooltip instead,
+ * as Pie's Other does, so one of its groups can be picked; an empty bucket reports none.
+ */
 export function useDistributionBarClick({
 	xAxis,
 	layout,
@@ -20,30 +23,39 @@ export function useDistributionBarClick({
 	const onBarClickRef = useRef(onBarClick);
 	onBarClickRef.current = onBarClick;
 
-	const handleClick = useCallback(
-		({
-			xValue,
-			yValue,
-			absoluteMouseX,
-			absoluteMouseY,
-		}: ChartClickData): void => {
+	const resolveDrawnIndex = useCallback(
+		({ xValue, yValue }: ChartClickData): number | null => {
 			const bucket = resolveRowIndex(xAxis.edges, xValue);
-			const clicked = resolveClickedGroup(
-				drawn,
-				bucket === null
-					? null
-					: resolveNearestSeries(layout, bucket, xValue, yValue),
-				series,
-			);
+			return bucket === null
+				? null
+				: resolveNearestSeries(layout, bucket, xValue, yValue);
+		},
+		[xAxis, layout],
+	);
+
+	const handleClick = useCallback(
+		(data: ChartClickData): void => {
+			const clicked = resolveClickedGroup(drawn, resolveDrawnIndex(data), series);
 			if (clicked) {
 				onBarClickRef.current?.({
 					...clicked,
-					coordinates: { x: absoluteMouseX, y: absoluteMouseY },
+					coordinates: { x: data.absoluteMouseX, y: data.absoluteMouseY },
 				});
 			}
 		},
-		[xAxis, layout, drawn, series],
+		[resolveDrawnIndex, drawn, series],
 	);
 
-	return onBarClick ? handleClick : undefined;
+	const pinOnClick = useCallback(
+		(data: ChartClickData): boolean => {
+			const drawnIndex = resolveDrawnIndex(data);
+			return drawnIndex !== null && drawn.sourceIndexes[drawnIndex] === null;
+		},
+		[resolveDrawnIndex, drawn],
+	);
+
+	return {
+		onClick: onBarClick ? handleClick : undefined,
+		pinOnClick: drawn.otherSourceIndexes.length > 0 ? pinOnClick : undefined,
+	};
 }

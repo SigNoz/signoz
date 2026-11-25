@@ -179,7 +179,7 @@ describe('DistributionTooltip', () => {
 		expect(onOtherMemberClick).toHaveBeenCalledWith(5, { x: 0, y: 0 });
 	});
 
-	it('asks for a pin before a group of Other can be picked', () => {
+	it('asks for a click on Other to pin it before a group can be picked', () => {
 		renderTooltip(overOther(), {
 			...withOther,
 			onOtherMemberClick: jest.fn(),
@@ -187,7 +187,7 @@ describe('DistributionTooltip', () => {
 
 		expect(
 			screen.getByTestId('distribution-tooltip-other-hint'),
-		).toHaveTextContent('Pin the tooltip, then click a group to drill down');
+		).toHaveTextContent('Click to pin, then pick a group to drill down');
 		expect(
 			screen.queryByTestId('uplot-tooltip-item-button'),
 		).not.toBeInTheDocument();

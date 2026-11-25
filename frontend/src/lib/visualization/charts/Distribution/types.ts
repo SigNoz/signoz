@@ -83,6 +83,8 @@ export interface UseDistributionBarClickArgs {
 	onBarClick?: (click: DistributionBarClick) => void;
 }
 
-export type UseDistributionBarClickReturn =
-	| ((data: ChartClickData) => void)
-	| undefined;
+export interface UseDistributionBarClickReturn {
+	onClick?: (data: ChartClickData) => void;
+	/** True over the Other bar, whose click pins the tooltip so a group in it can be picked. */
+	pinOnClick?: (data: ChartClickData) => boolean;
+}

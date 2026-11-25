@@ -100,6 +100,13 @@ export default function DistributionTooltip({
 	}
 
 	const canPickMember = isOtherHovered && isPinned && !!onOtherMemberClick;
+	// Pie's hints: a click on Other pins it, then a group can be picked.
+	let otherHint = onOtherMemberClick
+		? 'Click to pin, then pick a group to drill down'
+		: 'Click to pin the tooltip';
+	if (isPinned) {
+		otherHint = onOtherMemberClick ? 'Click a group to drill down' : '';
+	}
 	// As in the shared tooltip, a lone row that is the active one collapses into it.
 	const showList =
 		content.items.length > 1 ||
@@ -162,14 +169,12 @@ export default function DistributionTooltip({
 				/>
 			)}
 
-			{isOtherHovered && onOtherMemberClick && (
+			{isOtherHovered && otherHint && (
 				<div
 					className={Styles.memberHint}
 					data-testid="distribution-tooltip-other-hint"
 				>
-					{isPinned
-						? 'Click a group to drill down'
-						: 'Pin the tooltip, then click a group to drill down'}
+					{otherHint}
 				</div>
 			)}
 

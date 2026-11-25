@@ -246,7 +246,7 @@ export default function Distribution({
 		],
 	);
 
-	const handleClick = useDistributionBarClick({
+	const { onClick: handleClick, pinOnClick } = useDistributionBarClick({
 		xAxis,
 		layout,
 		drawn,
@@ -304,6 +304,7 @@ export default function Distribution({
 			decimalPrecision={decimalPrecision}
 			customTooltip={renderTooltip}
 			onClick={handleClick}
+			pinOnClick={pinOnClick}
 			contentFooter={
 				drawn.otherSourceIndexes.length > 0 && (
 					<Typography
