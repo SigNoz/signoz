@@ -39,9 +39,7 @@ const BUCKET_HISTOGRAM_SPACE_AGGREGATION = 'count';
 export function withSingleBucketQuery(
 	builder: Query['builder'],
 ): Query['builder'] {
-	const kept =
-		builder.queryData.find((queryData) => !queryData.disabled) ??
-		builder.queryData[0];
+	const [kept] = withSingleEnabledQuery(builder.queryData);
 	if (!kept) {
 		return builder;
 	}
@@ -51,7 +49,6 @@ export function withSingleBucketQuery(
 		queryData: [
 			{
 				...kept,
-				disabled: false,
 				spaceAggregation: withoutPercentile(kept.spaceAggregation),
 				aggregations: kept.aggregations?.map((aggregation) => ({
 					...aggregation,
