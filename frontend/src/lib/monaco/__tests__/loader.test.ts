@@ -16,6 +16,7 @@ describe('lazy monaco loader', () => {
 
 	it('resolves with the bundled instance without adding a CDN script', async () => {
 		await expect(loader.init()).resolves.toBe(mockMonaco);
+		// oxlint-disable-next-line signoz/no-dom-node-access -- script elements have no role to query by
 		expect(document.querySelector('script')).toBeNull();
 	});
 });
