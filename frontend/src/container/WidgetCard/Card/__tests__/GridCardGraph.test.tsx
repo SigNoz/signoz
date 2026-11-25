@@ -3,7 +3,7 @@ import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { Widgets } from 'types/api/widgets/widget';
 import { DataSource } from 'types/common/queryBuilder';
@@ -120,9 +120,9 @@ describe('GridCardGraph', () => {
 		);
 
 		await user.click(
-			(await screen.findByTestId('controls-page-size')).querySelector(
-				'.ant-select-selector',
-			) as HTMLElement,
+			within(await screen.findByTestId('controls-page-size')).getByRole(
+				'combobox',
+			),
 		);
 		await user.click(await screen.findByText('50 / page'));
 		await waitFor(() => expect(lastRequestedLimit()).toBe(50));
