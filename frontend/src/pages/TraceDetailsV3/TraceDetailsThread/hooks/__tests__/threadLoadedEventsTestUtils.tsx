@@ -27,7 +27,7 @@ const SUMMARIES: Record<string, SpantypesGettableTraceSummaryDTO> = {
 	'trace-ai': {
 		...BASE_SUMMARY,
 		ai: {
-			modelCallCount: 2,
+			llmCallCount: 2,
 			toolCallCount: 1,
 			tokens: {
 				input: 1_200,
@@ -44,7 +44,7 @@ const SUMMARIES: Record<string, SpantypesGettableTraceSummaryDTO> = {
 		endTimestampMillis: 1_500,
 		totalSpansCount: 4,
 		ai: {
-			modelCallCount: 1,
+			llmCallCount: 1,
 			toolCallCount: 0,
 			tokens: { input: 80, output: 20, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
 			totalCost: 0.0004,

@@ -14207,9 +14207,9 @@ export interface SpantypesTraceAISummaryDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Number of model call spans: spans with gen_ai.request.model.
+	 * @description Number of LLM calls: spans with gen_ai.request.model.
 	 */
-	modelCallCount: number;
+	llmCallCount: number;
 	tokens: SpantypesTraceAITokensDTO;
 	/**
 	 * @type integer
@@ -14743,9 +14743,9 @@ export interface SpantypesSpanDTO {
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description Start time, in nanoseconds since the Unix epoch.
+	 * @description Start time, in milliseconds since the Unix epoch.
 	 */
-	timestamp: number;
+	time_unix: number;
 	/**
 	 * @type string
 	 */
@@ -14755,12 +14755,12 @@ export interface SpantypesSpanDTO {
 export interface SpantypesSpanTextMatchDTO {
 	/**
 	 * @type string
-	 * @description Where the word was found: name, status_message, attributes.<name>, resource.<name> or events[<index>].
+	 * @description Where the word was found: name, status_message, an attribute as attributes.<name> (for example attributes.http.route), a resource attribute as resource.<name> (for example resource.service.name), or an event by its position as events[<index>] (for example events[0]).
 	 */
 	field: string;
 	/**
 	 * @type string
-	 * @description The word with some of the text around it.
+	 * @description The text around the word, about 40 characters on each side, for example: Worldpay declined the card.
 	 */
 	snippet: string;
 }
@@ -14820,7 +14820,7 @@ export interface SpantypesSpanItemDTO {
 	 */
 	treeStats: SpantypesSpanTreeStatsDTO;
 	/**
-	 * @description Why the span counts as failed although it is not marked as an error. Omitted for every other span.
+	 * @description Why the span is in the unmarked_failures list: a 4xx or 5xx response (http_4xx, http_5xx), a gRPC status other than OK (grpc_status), or an exception event (exception_event). Omitted for every other span.
 	 */
 	unmarkedFailureReason?: SpantypesUnmarkedFailureReasonDTO;
 }
@@ -14899,7 +14899,7 @@ export interface SpantypesTraceHighlightsDTO {
 	 */
 	timeSpent?: SpantypesSpanListDTO;
 	/**
-	 * @description Spans that failed without being marked as errors. First page of the unmarked_failures view of the span list.
+	 * @description Spans that are not marked as errors but report a 4xx or 5xx response, a gRPC status other than OK, or an exception event. First page of the unmarked_failures view of the span list.
 	 */
 	unmarkedFailures?: SpantypesSpanListDTO;
 }
@@ -16398,12 +16398,12 @@ export type ListTraceSpansPathParameters = {
 };
 export type ListTraceSpansParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. Whether a span is of a kind is decided on the whole trace, not only on the spans that matched query. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that are not marked as errors but report a 4xx or 5xx response, a gRPC status other than OK, or an exception event, by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error. When view is also given, query is applied first, and the view then keeps the spans of its kind among the ones that matched.
 	 */
 	query?: string;
 	/**
@@ -16449,12 +16449,12 @@ export type ListTraceSpanAncestorsPathParameters = {
 };
 export type ListTraceSpanAncestorsParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. Whether a span is of a kind is decided on the whole trace, not only on the spans that matched query. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that are not marked as errors but report a 4xx or 5xx response, a gRPC status other than OK, or an exception event, by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error. When view is also given, query is applied first, and the view then keeps the spans of its kind among the ones that matched.
 	 */
 	query?: string;
 	/**
@@ -16488,12 +16488,12 @@ export type ListTraceSpanChildrenPathParameters = {
 };
 export type ListTraceSpanChildrenParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. Whether a span is of a kind is decided on the whole trace, not only on the spans that matched query. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that are not marked as errors but report a 4xx or 5xx response, a gRPC status other than OK, or an exception event, by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error. When view is also given, query is applied first, and the view then keeps the spans of its kind among the ones that matched.
 	 */
 	query?: string;
 	/**
@@ -16527,12 +16527,12 @@ export type ListTraceSpanDescendantsPathParameters = {
 };
 export type ListTraceSpanDescendantsParams = {
 	/**
-	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that failed without being marked as errors (a 4xx or 5xx response, a gRPC status other than OK, or an exception event), by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
+	 * @description A quick filter on the spans the route covers. Without it every span the route covers is returned, in the route's own order. With it only the spans of that kind are returned, in that kind's order. Whether a span is of a kind is decided on the whole trace, not only on the spans that matched query. error_origins: the spans where an error started, meaning error spans with no failing child, by start time. unmarked_failures: spans that are not marked as errors but report a 4xx or 5xx response, a gRPC status other than OK, or an exception event, by start time. time_spent: one span for each group of same-name siblings, by the group's total own time. ai_usage: the spans that carry gen_ai token or cost usage, by cost, or by tokens when none has a cost; each includes those attributes. links: the spans that link to other spans, by start time.
 	 */
 	view?: SpantypesSpanListViewDTO;
 	/**
 	 * @type string
-	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error.
+	 * @description Returns only the spans that match. Takes words, a filter expression, or both, for example: worldpay AND has_error = true. Words are matched, ignoring case, against the span name, status message, attributes, resource attributes and events. A filter expression uses the keys of a span, such as kind_string or has_error. When view is also given, query is applied first, and the view then keeps the spans of its kind among the ones that matched.
 	 */
 	query?: string;
 	/**
