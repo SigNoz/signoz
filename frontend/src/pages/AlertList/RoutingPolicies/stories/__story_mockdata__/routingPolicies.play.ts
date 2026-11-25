@@ -275,5 +275,7 @@ export const expectNoChannelCreateLink = async (
 		undefined,
 		untilLoaded,
 	);
-	await expect(screen.queryByText('Create one')).not.toBeInTheDocument();
+	await expect(
+		screen.queryByTestId('channels-not-found-create'),
+	).not.toBeInTheDocument();
 };

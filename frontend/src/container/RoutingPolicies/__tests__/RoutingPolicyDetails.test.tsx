@@ -279,7 +279,9 @@ describe('RoutingPolicyDetails', () => {
 		await user.click(channelsSelectInput());
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
-		await expect(screen.findByText('Create one')).resolves.toBeInTheDocument();
+		await expect(
+			screen.findByTestId('channels-not-found-create'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('asks for an admin without notification-channel:create', async () => {
@@ -292,7 +294,9 @@ describe('RoutingPolicyDetails', () => {
 		await expect(
 			screen.findByText('Please ask your admin to create one.'),
 		).resolves.toBeInTheDocument();
-		expect(screen.queryByText('Create one')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('channels-not-found-create'),
+		).not.toBeInTheDocument();
 	});
 
 	describe('authz', () => {
@@ -315,14 +319,12 @@ describe('RoutingPolicyDetails', () => {
 
 		it('locks the channel picker without update', async () => {
 			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
-			renderDetails('edit');
+			renderDetails({ mode: 'edit' });
 
 			await waitFor(() =>
 				expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeDisabled(),
 			);
-			expect(
-				within(screen.getByTestId('routing-policy-channels')).getByRole('combobox'),
-			).toBeDisabled();
+			expect(channelsSelectInput()).toBeDisabled();
 		});
 
 		it('names update when Save is denied on edit', async () => {

@@ -2,12 +2,9 @@ import { useMemo } from 'react';
 import { Button, Form, Input, Modal, Select } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
-import ROUTES from 'constants/routes';
+import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
 import { Check, X } from '@signozhq/icons';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
-import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
-import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
-import { openInNewTab } from 'utils/navigation';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
@@ -15,8 +12,6 @@ import {
 	RoutingPolicyDetailsProps,
 } from './types';
 import { useRoutingPolicyFormPermissions } from './useRoutingPolicyFormPermissions';
-
-const CHANNEL_CREATE_CHECKS = [NotificationChannelCreatePermission];
 
 function RoutingPolicyDetails({
 	closeModal,
@@ -32,8 +27,6 @@ function RoutingPolicyDetails({
 	const [form] = Form.useForm();
 	const { isReadOnly, saveChecks, channelOptions, onPickerVisibleChange } =
 		useRoutingPolicyFormPermissions(mode, routingPolicy, channels);
-	const { isGranted } = useAuthZ(CHANNEL_CREATE_CHECKS);
-	const canCreateChannel = isGranted(NotificationChannelCreatePermission);
 
 	const initialFormState = useMemo(() => {
 		if (mode === 'edit') {
@@ -58,58 +51,6 @@ function RoutingPolicyDetails({
 			description: form.getFieldValue('description'),
 		});
 	};
-
-	const notificationChannelsNotFoundContent = (
-		<Flex justify="space-between">
-			<Flex gap={4} align="center">
-				<Typography
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					color="inherit"
-					as="span"
-					textOverflow="wrap"
-				>
-					No channels yet.
-				</Typography>
-				{canCreateChannel ? (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Create one
-						<Button
-							style={{ padding: '0 4px' }}
-							type="link"
-							onClick={(): void => {
-								openInNewTab(ROUTES.CHANNELS_NEW);
-							}}
-						>
-							here.
-						</Button>
-					</Typography>
-				) : (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Please ask your admin to create one.
-					</Typography>
-				)}
-			</Flex>
-			<Button type="text" onClick={refreshChannels}>
-				Refresh
-			</Button>
-		</Flex>
-	);
 
 	return (
 		<Modal
@@ -244,6 +185,7 @@ function RoutingPolicyDetails({
 						>
 							<Select
 								options={channelOptions}
+								popupMatchSelectWidth={false}
 								onDropdownVisibleChange={onPickerVisibleChange}
 								mode="multiple"
 								placeholder="Select notification channels"
@@ -259,7 +201,9 @@ function RoutingPolicyDetails({
 								}
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isReadOnly || isLoadingChannels}
-								notFoundContent={notificationChannelsNotFoundContent}
+								notFoundContent={
+									<NotificationChannelsNotFound onRefresh={refreshChannels} />
+								}
 								data-testid="routing-policy-channels-select"
 							/>
 						</Form.Item>
