@@ -3,6 +3,7 @@ import {
 	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
 import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import {
 	initialQueriesMap,
 	initialQueryAIWithType,
@@ -34,9 +35,9 @@ jest.mock('container/CreateAlert', () => ({
 		alertType: AlertTypes;
 	}): JSX.Element {
 		return (
-			<div>
+			<div data-testid="create-alert-mock">
 				<h1>Create Alert V2</h1>
-				<p>{alertType}</p>
+				<p data-testid="create-alert-mock-type">{alertType}</p>
 			</div>
 		);
 	},
@@ -61,6 +62,7 @@ const mockSafeNavigate = jest.fn();
 const mockDeleteUrlQuery = jest.fn();
 
 const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
+const AI_TRACES_ALERT_PARAMS = `ruleType=threshold_rule&alertType=${AlertTypes.AI_TRACES_BASED_ALERT}`;
 
 describe('CreateAlertRule', () => {
 	beforeEach(() => {
@@ -148,10 +150,9 @@ describe('CreateAlertRule', () => {
 			builder_ai_query: initialQueryAIWithType.builder_ai_query,
 		});
 		render(<CreateAlertRule />);
-		expect(screen.getByText(CREATE_ALERT_V2_TEXT)).toBeInTheDocument();
-		expect(
-			screen.getByText(AlertTypes.AI_TRACES_BASED_ALERT),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('create-alert-mock-type')).toHaveTextContent(
+			AlertTypes.AI_TRACES_BASED_ALERT,
+		);
 	});
 
 	it('should use alertType from URL over compositeQuery dataSource', () => {
@@ -231,6 +232,7 @@ describe('CreateAlertRule', () => {
 
 		it('should navigate with threshold alert params for AI traces alert', async () => {
 			const user = userEvent.setup();
+			mockToString.mockReturnValue(AI_TRACES_ALERT_PARAMS);
 			render(<CreateAlertRule />);
 			await user.click(
 				screen.getByTestId(`alert-type-card-${AlertTypes.AI_TRACES_BASED_ALERT}`),
@@ -244,7 +246,10 @@ describe('CreateAlertRule', () => {
 				QueryParams.alertType,
 				AlertTypes.AI_TRACES_BASED_ALERT,
 			);
-			expect(mockSafeNavigate).toHaveBeenCalled();
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`${ROUTES.ALERTS_NEW}?${AI_TRACES_ALERT_PARAMS}`,
+				{ newTab: false },
+			);
 		});
 
 		it('should navigate with threshold alert params for exceptions alert', () => {

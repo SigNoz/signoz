@@ -145,6 +145,7 @@ describe('MultipleNotifications', () => {
 	});
 
 	it('should list the group by fields of an AI query', async () => {
+		const user = userEvent.setup();
 		const aiBuilder = getActiveBuilder(initialQueryAIWithType);
 		const aiQuery: Query = {
 			...initialQueryAIWithType,
@@ -165,7 +166,7 @@ describe('MultipleNotifications', () => {
 
 		const select = screen.getByRole(COMBOBOX_ROLE);
 		expect(select).toHaveAttribute(ARIA_DISABLED_ATTR, FALSE);
-		await userEvent.click(select);
+		await user.click(select);
 		expect(
 			screen
 				.getAllByTestId('multiple-notifications-select-option')

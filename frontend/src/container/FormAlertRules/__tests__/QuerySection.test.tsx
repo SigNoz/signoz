@@ -76,7 +76,9 @@ describe('FormAlertRules QuerySection', () => {
 			EQueryType.AI_QUERY_BUILDER,
 		);
 
-		expect(screen.getByTestId('ai-query-builder-tab')).toBeInTheDocument();
+		expect(screen.getByTestId('ai-query-builder-tab')).toHaveTextContent(
+			'AI Query Builder',
+		);
 		expect(screen.queryByTestId('query-builder-tab')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('clickhouse-tab')).not.toBeInTheDocument();
 		expect(screen.queryByTestId('promql-tab')).not.toBeInTheDocument();
@@ -106,17 +108,25 @@ describe('FormAlertRules QuerySection', () => {
 	it('keeps the traces alert tabs without the AI tab', () => {
 		renderQuerySection(AlertTypes.TRACES_BASED_ALERT, EQueryType.QUERY_BUILDER);
 
-		expect(screen.getByTestId('query-builder-tab')).toBeInTheDocument();
-		expect(screen.getByTestId('clickhouse-tab')).toBeInTheDocument();
+		expect(screen.getByTestId('query-builder-tab')).toHaveTextContent(
+			'Query Builder',
+		);
+		expect(screen.getByTestId('clickhouse-tab')).toHaveTextContent(
+			'ClickHouse Query',
+		);
 		expect(screen.queryByTestId('ai-query-builder-tab')).not.toBeInTheDocument();
 	});
 
 	it('keeps the metrics alert tabs without the AI tab', () => {
 		renderQuerySection(AlertTypes.METRICS_BASED_ALERT, EQueryType.QUERY_BUILDER);
 
-		expect(screen.getByTestId('query-builder-tab')).toBeInTheDocument();
-		expect(screen.getByTestId('clickhouse-tab')).toBeInTheDocument();
-		expect(screen.getByTestId('promql-tab')).toBeInTheDocument();
+		expect(screen.getByTestId('query-builder-tab')).toHaveTextContent(
+			'Query Builder',
+		);
+		expect(screen.getByTestId('clickhouse-tab')).toHaveTextContent(
+			'ClickHouse Query',
+		);
+		expect(screen.getByTestId('promql-tab')).toHaveTextContent('PromQL');
 		expect(screen.queryByTestId('ai-query-builder-tab')).not.toBeInTheDocument();
 	});
 });

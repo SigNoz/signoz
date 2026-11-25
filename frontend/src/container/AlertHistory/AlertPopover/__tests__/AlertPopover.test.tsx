@@ -5,6 +5,7 @@ import { ConditionalAlertPopover } from '../AlertPopover';
 
 const AI_TRACES_LINK = 'compositeQuery=ai&startTime=1&endTime=2';
 const TRACES_LINK = 'compositeQuery=traces&startTime=1&endTime=2';
+const TRIGGER_TEST_ID = 'popover-trigger';
 
 const renderPopover = (links: {
 	relatedTracesLink?: string;
@@ -17,7 +18,9 @@ const renderPopover = (links: {
 			relatedLogsLink={links.relatedLogsLink ?? ''}
 			relatedAITracesLink={links.relatedAITracesLink ?? ''}
 		>
-			<button type="button">open</button>
+			<button type="button" data-testid={TRIGGER_TEST_ID}>
+				open
+			</button>
 		</ConditionalAlertPopover>,
 	);
 };
@@ -27,7 +30,7 @@ describe('ConditionalAlertPopover', () => {
 		const user = userEvent.setup();
 		renderPopover({ relatedAITracesLink: AI_TRACES_LINK });
 
-		await user.click(screen.getByText('open'));
+		await user.click(screen.getByTestId(TRIGGER_TEST_ID));
 
 		const link = await screen.findByTestId('alert-popover-view-ai-traces');
 		expect(link).toHaveTextContent('View AI Traces');
@@ -44,7 +47,7 @@ describe('ConditionalAlertPopover', () => {
 		const user = userEvent.setup();
 		renderPopover({ relatedTracesLink: TRACES_LINK });
 
-		await user.click(screen.getByText('open'));
+		await user.click(screen.getByTestId(TRIGGER_TEST_ID));
 
 		await expect(
 			screen.findByTestId('alert-popover-view-traces'),
@@ -61,7 +64,7 @@ describe('ConditionalAlertPopover', () => {
 		const user = userEvent.setup();
 		renderPopover({});
 
-		await user.click(screen.getByText('open'));
+		await user.click(screen.getByTestId(TRIGGER_TEST_ID));
 
 		expect(
 			screen.queryByTestId('alert-popover-view-ai-traces'),
