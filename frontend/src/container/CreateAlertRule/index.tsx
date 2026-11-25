@@ -8,6 +8,7 @@ import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import CreateAlert from 'container/CreateAlert';
+import { getInitialAlertTypeFromURL } from 'container/CreateAlert/context/utils';
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -16,7 +17,6 @@ import { AlertListTabs } from 'pages/AlertList/types';
 import { GalleryVerticalEnd, Pyramid } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
-import { ALERT_TYPE_VS_SOURCE_MAPPING } from './config';
 import { ALERT_TYPE_BREADCRUMB_TITLE } from './defaults';
 import SelectAlertType from './SelectAlertType';
 
@@ -39,19 +39,10 @@ function CreateRules(): JSX.Element {
 		}
 	}, [isTypeSelectionMode]);
 
-	const alertType = useMemo(() => {
-		if (ruleTypeFromURL === RuletypesRuleTypeDTO.anomaly_rule) {
-			return AlertTypes.ANOMALY_BASED_ALERT;
-		}
-		if (!alertTypeFromURL) {
-			const dataSource = compositeQuery?.builder.queryData?.[0]?.dataSource;
-			if (dataSource) {
-				return ALERT_TYPE_VS_SOURCE_MAPPING[dataSource];
-			}
-			return AlertTypes.METRICS_BASED_ALERT;
-		}
-		return alertTypeFromURL as AlertTypes;
-	}, [alertTypeFromURL, ruleTypeFromURL, compositeQuery?.builder.queryData]);
+	const alertType = useMemo(
+		() => getInitialAlertTypeFromURL(queryParams, compositeQuery),
+		[queryParams, compositeQuery],
+	);
 
 	const handleTabChange = useCallback(
 		(tab: string): void => {

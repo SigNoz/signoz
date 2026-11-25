@@ -1,13 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { alertHistoryMocks } from './AlertHistory.stories.mocks';
+import {
+	alertHistoryMocks,
+	type AlertHistoryArgs,
+} from './AlertHistory.stories.mocks';
+import { openRowActions } from './__story_mockdata__/alertHistory.play';
 
 import AlertList from '../../index';
-
-type AlertHistoryArgs = PageStoryArgs<typeof alertHistoryMocks>;
 
 const pageStory = storyMocks(alertHistoryMocks, { layout: 'app' });
 
@@ -19,6 +20,7 @@ const pageStory = storyMocks(alertHistoryMocks, { layout: 'app' });
  */
 const meta = {
 	title: 'Pages/Alerts/History',
+	tags: ['play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -48,4 +50,13 @@ export const NeverTriggered: Story = {
 /** A rule firing constantly, where the timeline pages rather than fits. */
 export const Noisy: Story = {
 	args: { triggers: 184, timelineEntries: 40, topContributors: 8 },
+};
+
+/**
+ * A timeline row's actions on an AI traces rule: the popover's one link opens
+ * the AI traces explorer.
+ */
+export const AITracesRowActions: Story = {
+	args: { relatedExplorer: 'ai-traces' },
+	play: openRowActions,
 };

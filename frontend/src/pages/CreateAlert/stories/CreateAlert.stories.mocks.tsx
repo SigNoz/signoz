@@ -35,6 +35,7 @@ const ALERT_MODES = [
 	'metrics',
 	'logs',
 	'traces',
+	'ai-traces',
 	'exceptions',
 	'anomaly',
 ] as const;
@@ -45,6 +46,7 @@ const ALERT_TYPE_BY_MODE: Partial<Record<AlertMode, AlertTypes>> = {
 	metrics: AlertTypes.METRICS_BASED_ALERT,
 	logs: AlertTypes.LOGS_BASED_ALERT,
 	traces: AlertTypes.TRACES_BASED_ALERT,
+	'ai-traces': AlertTypes.AI_TRACES_BASED_ALERT,
 	exceptions: AlertTypes.EXCEPTIONS_BASED_ALERT,
 	anomaly: AlertTypes.METRICS_BASED_ALERT,
 };
@@ -191,9 +193,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
-	await waitFor(() => {
-		expect(button).toBeEnabled();
-		expect(button).not.toHaveAttribute('aria-disabled', 'true');
+	await waitFor(async () => {
+		await expect(button).toBeEnabled();
+		await expect(button).not.toHaveAttribute('aria-disabled', 'true');
 	});
 	await userEvent.click(button);
 };
