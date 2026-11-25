@@ -142,13 +142,20 @@ def test_list_trace_spans_select_fields(
 
     # POST /checkout              attribute http.route
     # ├─ charge_card
-    # │  └─ POST /v1/payments     attributes payment.provider, http.response.status_code, db.statement (12 KB)
+    # │  └─ POST /v1/payments     attributes payment.provider, http.request.method, http.response.status_code, db.statement (12 KB); a scope
     # └─ notify                   one event
     insert_traces(
         [
             span(root_id, "", "POST /checkout", 0, kind=TracesKind.SPAN_KIND_SERVER, attributes={"http.route": "/checkout"}),
             span(charge_id, root_id, "charge_card", 20),
-            span(payment_id, charge_id, "POST /v1/payments", 30, attributes={"payment.provider": "worldpay", "http.response.status_code": 402, "db.statement": long_statement}),
+            span(
+                payment_id,
+                charge_id,
+                "POST /v1/payments",
+                30,
+                attributes={"payment.provider": "worldpay", "http.request.method": "POST", "http.response.status_code": 402, "db.statement": long_statement},
+                scope={"name": "payments-lib", "version": "2.0.1"},
+            ),
             span(notify_id, root_id, "notify", 40, events=[TracesEvent("retry", start, {"reason": "timeout"})]),
         ]
     )
@@ -160,6 +167,7 @@ def test_list_trace_spans_select_fields(
     assert [item["span"]["span_id"] for item in plain["items"]] == [root_id, charge_id, payment_id, notify_id]
     assert all(item["span"]["attributes"] == {} and item["span"]["events"] == [] for item in plain["items"])
     assert all(item["span"]["resource"] == {"service.name": resources["service.name"]} for item in plain["items"])
+    assert all("http_method" not in item["span"] and "scope" not in item["span"] for item in plain["items"])
     assert "warnings" not in plain
 
     # the named fields are filled where a span has them; a long value comes back whole
@@ -178,6 +186,11 @@ def test_list_trace_spans_select_fields(
     assert scoped["items"][0]["span"]["attributes"] == {"payment.provider": "worldpay"}
     assert scoped["items"][0]["span"]["resource"] == {"service.name": resources["service.name"]}
     assert scoped["warnings"] == ["field `attribute.k8s.pod.name` was not found on any returned span"]
+
+    # a field of the span itself is filled where a span has it; one a list does not return is named in warnings
+    own = requests.get(spans_url, params={"selectFields": ["http_method", "scope.name", "flags"]}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"].get("http_method"), item["span"].get("scope")) for item in own["items"]] == [(None, None), (None, None), ("POST", {"name": "payments-lib"}), (None, None)]
+    assert own["warnings"] == ["field `flags` was not found on any returned span"]
 
     # a field no span of the page has is named in warnings
     missing = requests.get(children_url, params={"selectFields": ["payment.provider", "not.there"]}, headers=headers, timeout=10).json()["data"]

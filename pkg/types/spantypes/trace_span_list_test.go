@@ -211,6 +211,7 @@ func TestNewSpanList_SelectFields(t *testing.T) {
 		SpanID:           "root",
 		AttributesString: map[string]string{"http.route": "/checkout", "env": "span-env", "name": "an attribute", "resource.type": "db"},
 		ResourcesString:  map[string]string{"env": "resource-env"},
+		HTTPMethod:       "POST",
 	}}
 
 	testCases := []struct {
@@ -218,6 +219,7 @@ func TestNewSpanList_SelectFields(t *testing.T) {
 		field      string
 		attributes map[string]any
 		resource   map[string]string
+		httpMethod string
 		warnings   []string
 	}{
 		{name: "NoContext_BothSides", field: "env", attributes: map[string]any{"env": "span-env"}, resource: map[string]string{"service.name": "web", "env": "resource-env"}},
@@ -227,8 +229,9 @@ func TestNewSpanList_SelectFields(t *testing.T) {
 		{name: "ContextWord_PartOfTheAttributeName", field: "resource.type", attributes: map[string]any{"resource.type": "db"}, resource: map[string]string{"service.name": "web"}},
 		// The span already carries its name, and the attribute called name needs attribute.name.
 		{name: "SpanField_Returned_NotReadAsAnAttribute", field: "name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}},
-		{name: "SpanField_NotReturned_Warns", field: "http_method", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `http_method` is a field of the span that a list does not return"}},
-		{name: "ScopeField_NotReturned_Warns", field: "scope.name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `scope.name` is a field of the span that a list does not return"}},
+		{name: "SpanField_Selected", field: "http_method", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, httpMethod: "POST"},
+		{name: "SpanField_EmptyOnTheSpan_Warns", field: "db_name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `db_name` was not found on any returned span"}},
+		{name: "ScopeField_EmptyOnTheSpan_Warns", field: "scope.name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `scope.name` was not found on any returned span"}},
 		{name: "Unknown_Warns", field: "nope", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `nope` was not found on any returned span"}},
 	}
 
@@ -241,6 +244,7 @@ func TestNewSpanList_SelectFields(t *testing.T) {
 			require.Len(t, list.Items, 1)
 			assert.Equal(t, testCase.attributes, list.Items[0].Span.Attributes)
 			assert.Equal(t, testCase.resource, list.Items[0].Span.Resource)
+			assert.Equal(t, testCase.httpMethod, list.Items[0].Span.HTTPMethod)
 			assert.Equal(t, testCase.warnings, list.Warnings)
 		})
 	}

@@ -3,11 +3,11 @@ package spantypes
 import (
 	"cmp"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetryschema/tracestelemetryschema"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -28,12 +28,6 @@ var (
 	ErrCodeTraceSpansInvalidLimit  = errors.MustNewCode("trace_spans_invalid_limit")
 	ErrCodeTraceSpansInvalidOffset = errors.MustNewCode("trace_spans_invalid_offset")
 	ErrCodeTraceSpansInvalidView   = errors.MustNewCode("trace_spans_invalid_view")
-
-	// returnedSpanFields are the span fields every Span carries, by the name a query knows them.
-	returnedSpanFields = []string{
-		"span_id", "trace_id", "parent_span_id", "name", "kind_string", "timestamp", "duration_nano",
-		"has_error", "status_code_string", "status_message", "response_status_code",
-	}
 )
 
 // SpanScope says which spans of a trace a list route covers: all of them, or the ones related to one span.
@@ -125,13 +119,8 @@ func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 		list.Items = append(list.Items, item)
 	}
 	for k, field := range page.selectFields {
-		text := telemetrytypes.TelemetryFieldKeyToText(&field)
-		if name, ok := spanFieldName(&field); ok {
-			if !slices.Contains(returnedSpanFields, name) {
-				list.Warnings = append(list.Warnings, fmt.Sprintf("field `%s` is a field of the span that a list does not return", text))
-			}
-		} else if !found[k] && len(list.Items) > 0 {
-			list.Warnings = append(list.Warnings, fmt.Sprintf("field `%s` was not found on any returned span", text))
+		if !found[k] && len(list.Items) > 0 {
+			list.Warnings = append(list.Warnings, fmt.Sprintf("field `%s` was not found on any returned span", telemetrytypes.TelemetryFieldKeyToText(&field)))
 		}
 	}
 	return list
@@ -160,58 +149,97 @@ func newSelectField(text string) telemetrytypes.TelemetryFieldKey {
 	return key
 }
 
-// spanFieldName returns the field of the span itself that field stands for, such as name or
-// http_method. As in the query builder, such a field is read before an attribute of the same name.
-func spanFieldName(field *telemetrytypes.TelemetryFieldKey) (string, bool) {
-	name := field.Name
-	switch field.FieldContext {
-	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextSpan:
-	case telemetrytypes.FieldContextScope:
-		name = "scope." + name
-	default:
-		return "", false
-	}
-	_, intrinsic := tracestelemetryschema.IntrinsicFields[name]
-	_, calculated := tracestelemetryschema.CalculatedFields[name]
-	return name, intrinsic || calculated
-}
-
-// selectFields copies the named attributes and resource attributes from row, and marks in found
-// the fields the row has. A name without a context is looked up in both.
+// selectFields fills span with the selected fields of row and marks in found the ones row has. A
+// name is read as a trace list query reads it: a field of the span itself first, then an attribute.
 func (span *Span) selectFields(row *StorableSpan, fields []telemetrytypes.TelemetryFieldKey, found []bool) {
 	if row == nil || len(fields) == 0 {
 		return
 	}
 	attributes := row.Attributes()
 	for k, field := range fields {
-		if _, ok := spanFieldName(&field); ok {
-			continue
-		}
-		onRow := false
-		switch field.FieldContext {
-		case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextResource:
-			if value, ok := row.ResourcesString[field.Name]; ok {
-				span.Resource[field.Name] = value
-				onRow = true
-			}
-		}
-		switch field.FieldContext {
-		case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextSpan:
-			if value, ok := attributes[field.Name]; ok {
-				span.Attributes[field.Name] = value
-				onRow = true
-			}
-		}
-		// The context word can be part of an attribute name, as in an attribute named resource.type.
-		if !onRow && field.FieldContext != telemetrytypes.FieldContextUnspecified {
-			text := telemetrytypes.TelemetryFieldKeyToText(&field)
-			if value, ok := attributes[text]; ok {
-				span.Attributes[text] = value
-				onRow = true
-			}
+		onRow, isSpanField := span.selectSpanField(row, &field)
+		if !isSpanField {
+			onRow = span.selectAttribute(row, attributes, &field)
 		}
 		found[k] = found[k] || onRow
 	}
+}
+
+// selectSpanField copies a field of the span itself from row. known is false when field does not
+// name one, and found is false when the span has no value for it.
+func (span *Span) selectSpanField(row *StorableSpan, field *telemetrytypes.TelemetryFieldKey) (found, known bool) {
+	name := field.Name
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextSpan:
+	case telemetrytypes.FieldContextScope:
+		name = "scope." + name
+	default:
+		return false, false
+	}
+
+	switch name {
+	case "span_id", "trace_id", "parent_span_id", "name", "kind_string", "timestamp", "duration_nano",
+		"has_error", "status_code_string", "status_message", "response_status_code":
+		// Every span already carries these.
+		return true, true
+	case "http_method":
+		return setString(&span.HTTPMethod, row.HTTPMethod), true
+	case "http_url":
+		return setString(&span.HTTPURL, row.HTTPURL), true
+	case "http_host":
+		return setString(&span.HTTPHost, row.HTTPHost), true
+	case "external_http_method":
+		return setString(&span.ExternalHTTPMethod, row.ExternalHTTPMethod), true
+	case "external_http_url":
+		return setString(&span.ExternalHTTPURL, row.ExternalHTTPURL), true
+	case "db_name":
+		return setString(&span.DBName, row.DBName), true
+	case "db_operation":
+		return setString(&span.DBOperation, row.DBOperation), true
+	case "trace_state":
+		return setString(&span.TraceState, row.TraceState), true
+	case "scope.name", "scope.version":
+		selected := NewSelectedScope(row.Scope.Flatten(), []string{name})
+		if len(selected) == 0 {
+			return false, true
+		}
+		if span.Scope == nil {
+			span.Scope = Scope{}
+		}
+		maps.Copy(span.Scope, selected)
+		return true, true
+	}
+	return false, false
+}
+
+// selectAttribute copies an attribute or a resource attribute from row, and reports whether row
+// has it. A name without a context is looked up in both.
+func (span *Span) selectAttribute(row *StorableSpan, attributes map[string]any, field *telemetrytypes.TelemetryFieldKey) bool {
+	found := false
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextResource:
+		if value, ok := row.ResourcesString[field.Name]; ok {
+			span.Resource[field.Name], found = value, true
+		}
+	}
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextSpan:
+		if value, ok := attributes[field.Name]; ok {
+			span.Attributes[field.Name], found = value, true
+		}
+	}
+	// The context word can be part of an attribute name, as in an attribute named resource.type.
+	if text := telemetrytypes.TelemetryFieldKeyToText(field); !found {
+		if value, ok := attributes[text]; ok {
+			span.Attributes[text], found = value, true
+		}
+	}
+	return found
+}
+
+func setString(target *string, value string) bool {
+	*target = value
+	return value != ""
 }
 
 func pageLimit(name string, value, fallback int) (int, error) {
