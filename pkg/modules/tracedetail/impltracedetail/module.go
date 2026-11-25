@@ -303,13 +303,7 @@ func (m *module) GetTraceHighlights(ctx context.Context, traceID string, query *
 	if err != nil {
 		return nil, err
 	}
-
-	pages := spantypes.NewHighlightPages(skeleton, query)
-	rows, err := m.store.GetTraceSpanHeadersByIDs(ctx, traceID, bounds, pages.SpanIDs())
-	if err != nil {
-		return nil, err
-	}
-	return spantypes.NewTraceHighlights(pages, rows), nil
+	return spantypes.NewTraceHighlights(skeleton, query), nil
 }
 
 func (m *module) GetTraceSpan(ctx context.Context, traceID string, spanID string) (*spantypes.Span, error) {

@@ -2,27 +2,29 @@ package spantypes
 
 import (
 	"cmp"
+	"encoding/json"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 )
 
-const noParent int32 = -1
+const (
+	noParent int32 = -1
+
+	refTypeChildOf = "CHILD_OF"
+)
 
 // SkeletonSpan is one row of the query a TraceSkeleton is built from.
 type SkeletonSpan struct {
-	SpanID             string
-	ParentSpanID       string
-	StartTime          time.Time
-	DurationNano       uint64
-	HasError           bool
-	Name               string
-	ServiceName        string
-	KindString         string
-	ResponseStatusCode string
-	HasExceptionEvent  bool
-	HasLink            bool
+	Span
+	// StartTime keeps the nanoseconds own time is computed from; TimeUnix is in milliseconds.
+	StartTime         time.Time
+	ServiceName       string
+	HasExceptionEvent bool
+	HasLink           bool
+	// OtherReferences is empty for a span whose only reference is the one to its parent.
+	OtherReferences string
 	// AIUsage is kept when it has a value, pointers included: every row needs its own.
 	AIUsage AISpanUsage
 }
@@ -53,11 +55,17 @@ type TraceSkeleton struct {
 	hasExceptionEvent []bool
 	hasLink           []bool
 	// Each distinct string is stored once in stringTable; these hold its index there.
-	names       []uint32
-	services    []uint32
-	kinds       []uint32
-	statusCodes []uint32
-	stringTable []string
+	names               []uint32
+	services            []uint32
+	kinds               []uint32
+	responseStatusCodes []uint32
+	statusCodeStrings   []uint32
+	statusMessages      []uint32
+	stringTable         []string
+	// references holds the stored references of a span that has more than the one to its parent.
+	references map[int32]string
+	// storedParentIDs holds the parent id of a root that has one: its parent is missing or on a loop.
+	storedParentIDs map[int32]string
 	// aiUsage holds the usage of the spans that carry any, by span position.
 	aiUsage map[int32]AISpanUsage
 
@@ -87,19 +95,23 @@ type TraceSkeletonBuilder struct {
 func NewTraceSkeletonBuilder(traceID string, sizeHint int) *TraceSkeletonBuilder {
 	return &TraceSkeletonBuilder{
 		skeleton: &TraceSkeleton{
-			traceID:           traceID,
-			idOffsets:         make([]uint32, 1, sizeHint+1),
-			parents:           make([]int32, 0, sizeHint),
-			startNano:         make([]int64, 0, sizeHint),
-			durationNano:      make([]uint64, 0, sizeHint),
-			hasError:          make([]bool, 0, sizeHint),
-			hasExceptionEvent: make([]bool, 0, sizeHint),
-			hasLink:           make([]bool, 0, sizeHint),
-			names:             make([]uint32, 0, sizeHint),
-			services:          make([]uint32, 0, sizeHint),
-			kinds:             make([]uint32, 0, sizeHint),
-			statusCodes:       make([]uint32, 0, sizeHint),
-			aiUsage:           make(map[int32]AISpanUsage),
+			traceID:             traceID,
+			idOffsets:           make([]uint32, 1, sizeHint+1),
+			parents:             make([]int32, 0, sizeHint),
+			startNano:           make([]int64, 0, sizeHint),
+			durationNano:        make([]uint64, 0, sizeHint),
+			hasError:            make([]bool, 0, sizeHint),
+			hasExceptionEvent:   make([]bool, 0, sizeHint),
+			hasLink:             make([]bool, 0, sizeHint),
+			names:               make([]uint32, 0, sizeHint),
+			services:            make([]uint32, 0, sizeHint),
+			kinds:               make([]uint32, 0, sizeHint),
+			responseStatusCodes: make([]uint32, 0, sizeHint),
+			statusCodeStrings:   make([]uint32, 0, sizeHint),
+			statusMessages:      make([]uint32, 0, sizeHint),
+			references:          make(map[int32]string),
+			storedParentIDs:     make(map[int32]string),
+			aiUsage:             make(map[int32]AISpanUsage),
 		},
 		ids:         make([]byte, 0, sizeHint*16),
 		parentIDs:   make([]string, 0, sizeHint),
@@ -112,6 +124,9 @@ func (builder *TraceSkeletonBuilder) Add(span *SkeletonSpan) {
 	if span.AIUsage.hasValue() {
 		skeleton.aiUsage[int32(len(builder.parentIDs))] = span.AIUsage
 	}
+	if span.OtherReferences != "" {
+		skeleton.references[int32(len(builder.parentIDs))] = span.OtherReferences
+	}
 	builder.ids = append(builder.ids, span.SpanID...)
 	skeleton.idOffsets = append(skeleton.idOffsets, uint32(len(builder.ids)))
 	builder.parentIDs = append(builder.parentIDs, span.ParentSpanID)
@@ -123,7 +138,9 @@ func (builder *TraceSkeletonBuilder) Add(span *SkeletonSpan) {
 	skeleton.names = append(skeleton.names, builder.intern(span.Name))
 	skeleton.services = append(skeleton.services, builder.intern(span.ServiceName))
 	skeleton.kinds = append(skeleton.kinds, builder.intern(span.KindString))
-	skeleton.statusCodes = append(skeleton.statusCodes, builder.intern(span.ResponseStatusCode))
+	skeleton.responseStatusCodes = append(skeleton.responseStatusCodes, builder.intern(span.ResponseStatusCode))
+	skeleton.statusCodeStrings = append(skeleton.statusCodeStrings, builder.intern(span.StatusCodeString))
+	skeleton.statusMessages = append(skeleton.statusMessages, builder.intern(span.StatusMessage))
 }
 
 // Build turns the added rows into the tree. The builder cannot be reused.
@@ -141,6 +158,9 @@ func (builder *TraceSkeletonBuilder) Build() *TraceSkeleton {
 		parent, ok := positions[parentID]
 		if !ok || parent == int32(i) {
 			parent = noParent
+			if parentID != "" {
+				skeleton.storedParentIDs[int32(i)] = parentID
+			}
 		}
 		skeleton.parents = append(skeleton.parents, parent)
 	}
@@ -171,6 +191,15 @@ func (builder *TraceSkeletonBuilder) Build() *TraceSkeleton {
 	return skeleton
 }
 
+// siblingGroup totals the spans that share a name and a parent; a root is a group of its own.
+type siblingGroup struct {
+	// longest is the position of the span with the highest duration in the group.
+	longest   int32
+	spanCount uint64
+	ownTime   uint64
+	errCount  uint64
+}
+
 func (skeleton *TraceSkeleton) len() int {
 	return len(skeleton.parents)
 }
@@ -183,13 +212,32 @@ func (skeleton *TraceSkeleton) children(i int32) []int32 {
 	return skeleton.childList[skeleton.childStart[i]:skeleton.childStart[i+1]]
 }
 
-// unmarkedFailureReason is set for a span that failed without the error flag. The response status
-// column holds an HTTP status or a gRPC status.
-func (skeleton *TraceSkeleton) unmarkedFailureReason(i int32) UnmarkedFailureReason {
+func (skeleton *TraceSkeleton) parentSpanID(i int32) string {
+	if parent := skeleton.parents[i]; parent != noParent {
+		return skeleton.spanID(parent)
+	}
+	return skeleton.storedParentIDs[i]
+}
+
+func (skeleton *TraceSkeleton) spanReferences(i int32) []OtelSpanRef {
+	stored, ok := skeleton.references[i]
+	if !ok {
+		return []OtelSpanRef{{TraceId: skeleton.traceID, SpanId: skeleton.parentSpanID(i), RefType: refTypeChildOf}}
+	}
+	refs := []OtelSpanRef{}
+	if err := json.Unmarshal([]byte(stored), &refs); err != nil {
+		return []OtelSpanRef{} // skip malformed values
+	}
+	return refs
+}
+
+// unmarkedFailureKind is set for a span that reports a failure without the error flag. The response
+// status column holds an HTTP status or a gRPC status.
+func (skeleton *TraceSkeleton) unmarkedFailureKind(i int32) UnmarkedFailureKind {
 	if skeleton.hasError[i] {
 		return ""
 	}
-	if code, err := strconv.Atoi(skeleton.stringTable[skeleton.statusCodes[i]]); err == nil {
+	if code, err := strconv.Atoi(skeleton.stringTable[skeleton.responseStatusCodes[i]]); err == nil {
 		switch {
 		case code >= 400 && code < 500:
 			return UnmarkedFailureHTTP4xx
@@ -244,15 +292,6 @@ func (skeleton *TraceSkeleton) serviceStats() []TraceServiceStats {
 		return cmp.Or(cmp.Compare(b.OwnTimeNano, a.OwnTimeNano), strings.Compare(a.ServiceName, b.ServiceName))
 	})
 	return services
-}
-
-// siblingGroup totals the spans that share a name and a parent; a root is a group of its own.
-type siblingGroup struct {
-	// longest is the position of the span with the highest duration in the group.
-	longest   int32
-	spanCount uint64
-	ownTime   uint64
-	errCount  uint64
 }
 
 func (usage AISpanUsage) hasValue() bool {
@@ -331,6 +370,7 @@ func (skeleton *TraceSkeleton) cutParentLoops() {
 		if reached[i] {
 			continue
 		}
+		skeleton.storedParentIDs[i] = skeleton.spanID(skeleton.parents[i])
 		skeleton.parents[i] = noParent
 		stack := []int32{i}
 		for len(stack) > 0 {

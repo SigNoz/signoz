@@ -84,7 +84,7 @@ def test_trace_highlights(
         "parent_span_id": ids["place_order"],
         "name": "charge_card",
         "kind_string": "Client",
-        "timestamp": int(start.timestamp()) * 1_000_000_000 + 20_000_000,
+        "time_unix": int(start.timestamp()) * 1_000 + 20,
         "duration_nano": 300_000_000,
         "has_error": True,
         "status_code_string": "STATUS_CODE_ERROR",
@@ -96,12 +96,12 @@ def test_trace_highlights(
         "references": [{"traceId": trace_id, "spanId": ids["place_order"], "refType": "CHILD_OF"}],
     }
     assert error["treeStats"] == {"level": 2, "childCount": 0, "subtreeSpanCount": 0, "ownTimeNano": 300_000_000, "errorAncestorCount": 2}
-    assert "unmarkedFailureReason" not in error
+    assert "unmarkedFailureKind" not in error
     assert "matches" not in error
 
     unmarked = highlights["unmarkedFailures"]
     assert unmarked["total"] == 4
-    assert [(item["span"]["span_id"], item["unmarkedFailureReason"]) for item in unmarked["items"]] == [(ids["inventory_http"], "http_4xx"), (ids["inventory_grpc"], "grpc_status"), (ids["render"], "exception_event"), (ids["notify"], "http_5xx")]
+    assert [(item["span"]["span_id"], item["unmarkedFailureKind"]) for item in unmarked["items"]] == [(ids["inventory_http"], "http_4xx"), (ids["inventory_grpc"], "grpc_status"), (ids["render"], "exception_event"), (ids["notify"], "http_5xx")]
     assert unmarked["items"][0]["span"]["response_status_code"] == "404"
 
     links = highlights["links"]
