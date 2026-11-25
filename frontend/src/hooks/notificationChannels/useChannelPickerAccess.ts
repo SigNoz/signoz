@@ -26,6 +26,8 @@ interface UseChannelPickerAccessArgs {
 	ownerChecks?: BrandedPermission[];
 	/** Channels the saved owner notifies, by name. */
 	savedChannelNames: string[];
+	/** Channels that can be added or removed with no permission check, by name. */
+	exemptChannelNames?: string[];
 	channels: ChannelOption[];
 	/** Each option's test id is `<prefix>-<channel id>`. */
 	testIdPrefix: string;
@@ -38,6 +40,8 @@ export interface UseChannelPickerAccessReturn {
 	/** Whether an owner check is denied; false while pending or failed. */
 	isOwnerDenied: (permission: BrandedPermission) => boolean;
 }
+
+const NO_NAMES: string[] = [];
 
 const buildChannelPermissions = (id: string): LinkPermissions => ({
 	attach: buildNotificationChannelAttachPermission(id),
@@ -53,6 +57,7 @@ export function useChannelPickerAccess({
 	owner,
 	ownerChecks,
 	savedChannelNames,
+	exemptChannelNames = NO_NAMES,
 	channels,
 	testIdPrefix,
 }: UseChannelPickerAccessArgs): UseChannelPickerAccessReturn {
@@ -60,6 +65,10 @@ export function useChannelPickerAccess({
 		const saved = new Set(savedChannelNames);
 		return channels.filter((c) => saved.has(c.name)).map((c) => c.id);
 	}, [savedChannelNames, channels]);
+	const exemptIds = useMemo(() => {
+		const exempt = new Set(exemptChannelNames);
+		return channels.filter((c) => exempt.has(c.name)).map((c) => c.id);
+	}, [exemptChannelNames, channels]);
 	const optionIds = useMemo(() => channels.map((c) => c.id), [channels]);
 
 	const { getAccess, onPickerVisibleChange, isOwnerDenied } =
@@ -67,6 +76,7 @@ export function useChannelPickerAccess({
 			owner,
 			ownerChecks,
 			linkedIds,
+			exemptIds,
 			optionIds,
 			buildItemPermissions: buildChannelPermissions,
 		});

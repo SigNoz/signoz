@@ -1,5 +1,8 @@
 import { act, AllTheProviders, renderHook } from 'tests/test-utils';
-import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
+import type {
+	BrandedPermission,
+	UseAuthZResult,
+} from 'lib/authz/hooks/useAuthZ/types';
 import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { mockUseAuthZGrantAll } from 'lib/authz/utils/authz-test-utils';
@@ -71,5 +74,34 @@ describe('useLinkPickerAccess', () => {
 		act(() => result.current.onPickerVisibleChange(true));
 
 		expect(requested().picker).toStrictEqual([OWNER.attach, item('b').attach]);
+	});
+
+	it('asks nothing for exempt items and always allows them', () => {
+		const denied = new Set([
+			item('a').detach,
+			item('b').attach,
+			item('c').attach,
+		]);
+		jest.mocked(useAuthZ).mockImplementation((checks) => ({
+			...mockUseAuthZGrantAll(checks),
+			permissions: Object.fromEntries(
+				checks.map((check) => [check, { isGranted: !denied.has(check) }]),
+			) as UseAuthZResult['permissions'],
+		}));
+		const { result } = renderAccess({
+			owner: OWNER,
+			linkedIds: ['a'],
+			exemptIds: ['a', 'b'],
+			optionIds: ['a', 'b', 'c'],
+		});
+		act(() => result.current.onPickerVisibleChange(true));
+
+		expect(requested()).toStrictEqual({
+			upfront: [],
+			picker: [OWNER.attach, item('c').attach],
+		});
+		expect(result.current.getAccess('a').disabled).toBe(false);
+		expect(result.current.getAccess('b').disabled).toBe(false);
+		expect(result.current.getAccess('c').disabled).toBe(true);
 	});
 });

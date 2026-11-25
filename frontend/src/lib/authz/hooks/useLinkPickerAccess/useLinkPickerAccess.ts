@@ -12,6 +12,7 @@ import type {
 } from './types';
 
 const NO_CHECKS: BrandedPermission[] = [];
+const NO_IDS: string[] = [];
 const ALLOWED: LinkAccess = { disabled: false };
 const PENDING: LinkAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
 
@@ -26,13 +27,19 @@ export function useLinkPickerAccess({
 	owner,
 	ownerChecks = NO_CHECKS,
 	linkedIds,
+	exemptIds = NO_IDS,
 	optionIds,
 	buildItemPermissions,
 }: UseLinkPickerAccessArgs): UseLinkPickerAccessReturn {
 	const { user } = useAppContext();
 	const [hasPickerOpened, setHasPickerOpened] = useState(false);
 
-	const linked = useMemo(() => new Set(linkedIds), [linkedIds]);
+	const exempt = useMemo(() => new Set(exemptIds), [exemptIds]);
+	const checkedLinkedIds = useMemo(
+		() => linkedIds.filter((id) => !exempt.has(id)),
+		[linkedIds, exempt],
+	);
+	const linked = useMemo(() => new Set(checkedLinkedIds), [checkedLinkedIds]);
 
 	const requiredFor = useCallback(
 		(id: string): BrandedPermission[] => {
@@ -46,18 +53,18 @@ export function useLinkPickerAccess({
 	const upfrontChecks = useMemo(
 		() => [
 			...ownerChecks,
-			...(owner && linkedIds.length > 0 ? [owner.detach] : []),
-			...linkedIds.map((id) => buildItemPermissions(id).detach),
+			...(owner && checkedLinkedIds.length > 0 ? [owner.detach] : []),
+			...checkedLinkedIds.map((id) => buildItemPermissions(id).detach),
 		],
-		[ownerChecks, owner, linkedIds, buildItemPermissions],
+		[ownerChecks, owner, checkedLinkedIds, buildItemPermissions],
 	);
 	const pickerChecks = useMemo(() => {
-		const unlinked = optionIds.filter((id) => !linked.has(id));
+		const unlinked = optionIds.filter((id) => !linked.has(id) && !exempt.has(id));
 		return [
 			...(owner && unlinked.length > 0 ? [owner.attach] : []),
 			...unlinked.map((id) => buildItemPermissions(id).attach),
 		];
-	}, [optionIds, linked, owner, buildItemPermissions]);
+	}, [optionIds, linked, exempt, owner, buildItemPermissions]);
 	const upfrontSet = useMemo(() => new Set(upfrontChecks), [upfrontChecks]);
 
 	const upfront = useAuthZ(upfrontChecks, {
@@ -69,6 +76,10 @@ export function useLinkPickerAccess({
 
 	const getAccess = useCallback(
 		(id: string): LinkAccess => {
+			if (exempt.has(id)) {
+				return ALLOWED;
+			}
+
 			const required = requiredFor(id).filter(
 				(permission) =>
 					!(upfrontSet.has(permission) ? upfront.error : picker.error),
@@ -88,6 +99,7 @@ export function useLinkPickerAccess({
 				: ALLOWED;
 		},
 		[
+			exempt,
 			requiredFor,
 			upfrontSet,
 			upfront.error,

@@ -21,6 +21,11 @@ export interface UseLinkPickerAccessArgs {
 	ownerChecks?: BrandedPermission[];
 	/** Items the owner already links, by id. */
 	linkedIds: string[];
+	/**
+	 * Items whose change leaves the owner's links as they are, so nothing is
+	 * asked and they are always allowed. Wins over `linkedIds`.
+	 */
+	exemptIds?: string[];
 	/** Every item the picker offers, by id. */
 	optionIds: string[];
 	buildItemPermissions: (id: string) => LinkPermissions;
