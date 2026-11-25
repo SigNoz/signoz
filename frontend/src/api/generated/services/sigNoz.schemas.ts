@@ -7289,17 +7289,21 @@ export interface DashboardtypesDistributionAxesDTO {
 	y?: DashboardtypesDistributionYAxisDTO;
 }
 
+/**
+ * @maxItems 5
+ */
+export type DashboardtypesDistributionPercentileValuesDTO = number[];
+
 export interface DashboardtypesDistributionPercentilesDTO {
 	/**
-	 * @type boolean
-	 * @description Whether percentile markers are drawn. Defaults to true.
+	 * @type boolean,null
+	 * @description Whether percentile markers are drawn. Null draws them.
 	 */
-	enabled: boolean;
+	enabled?: boolean | null;
 	/**
-	 * @type array
-	 * @description The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]; [] marks none.
+	 * @description The percentiles to mark, each greater than 0 and less than 100, at most 5, no repeats. Null or omitted marks 50, 90 and 99; [] marks none.
 	 */
-	values: number[];
+	values: DashboardtypesDistributionPercentileValuesDTO;
 }
 
 export interface DashboardtypesDistributionChartAppearanceDTO {
@@ -7309,11 +7313,16 @@ export interface DashboardtypesDistributionChartAppearanceDTO {
 	percentiles?: DashboardtypesDistributionPercentilesDTO;
 }
 
+export enum DashboardtypesDistributionStackModeDTO {
+	normal = 'normal',
+	none = 'none',
+	percent = 'percent',
+}
 export interface DashboardtypesDistributionVisualizationDTO {
 	/**
 	 * @description How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket.
 	 */
-	stack: DashboardtypesStackModeDTO;
+	stack: DashboardtypesDistributionStackModeDTO;
 	/**
 	 * @description The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window.
 	 */

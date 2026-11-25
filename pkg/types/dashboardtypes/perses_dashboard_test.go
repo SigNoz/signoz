@@ -679,25 +679,29 @@ func TestValidateDistributionDashboard(t *testing.T) {
 
 	require.IsType(t, &DistributionPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
 	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*DistributionPanelSpec)
-	require.NotNil(t, panelSpec.Axes.X.Min)
-	assert.Equal(t, 10.0, *panelSpec.Axes.X.Min)
-	assert.Nil(t, panelSpec.Axes.X.Max)
-	assert.Equal(t, "log", panelSpec.Axes.Y.Scale.ValueOrDefault())
-	assert.Equal(t, "none", panelSpec.Visualization.Stack.ValueOrDefault())
-	require.NotNil(t, panelSpec.ChartAppearance.Percentiles.Enabled)
-	assert.True(t, *panelSpec.ChartAppearance.Percentiles.Enabled)
-	assert.Equal(t, []float64{75, 99.9}, panelSpec.ChartAppearance.Percentiles.Values)
+	xMin, enabled := 10.0, true
+	assert.Equal(t, &DistributionPanelSpec{
+		Visualization:   DistributionVisualization{BasicVisualization: BasicVisualization{TimePreference: TimePreferenceGlobalTime}, Stack: DistributionStackModeNone},
+		Formatting:      PanelFormatting{Unit: "s", DecimalPrecision: PrecisionOption3},
+		Axes:            DistributionAxes{X: DistributionXAxis{Min: &xMin}, Y: DistributionYAxis{Scale: DistributionYScaleLog}},
+		Legend:          Legend{Position: LegendPositionRight, Mode: LegendModeList},
+		ChartAppearance: DistributionChartAppearance{Percentiles: DistributionPercentiles{Enabled: &enabled, Values: DistributionPercentileValues{75, 99.9}}},
+	}, panelSpec)
 
 	request, err := dashboard.GetPanelQuery(1, 2, "p1")
 	require.NoError(t, err, "building the panel's query failed")
 	assert.Equal(t, qb.RequestTypeDistribution, request.RequestType)
-	require.NoError(t, request.Validate(), "the request built from the panel is not a valid distribution request")
+	assert.NoError(t, request.Validate(), "the request built from the panel is not a valid distribution request")
 
+	// the panel read back out of storage draws the same distribution
 	stored, err := json.Marshal(spec)
 	require.NoError(t, err, "marshal dashboard failed")
-	reread, err := unmarshalDashboard(stored)
-	require.NoError(t, err, "the stored dashboard does not validate")
-	assert.Equal(t, panelSpec, reread.Panels["p1"].Spec.Plugin.Spec)
+	reread := &DashboardV2{}
+	require.NoError(t, json.Unmarshal(stored, &reread.Spec), "the stored dashboard does not validate")
+	assert.Equal(t, panelSpec, reread.Spec.Panels["p1"].Spec.Plugin.Spec)
+	rereadRequest, err := reread.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
 }
 
 func TestDistributionPanelSpecDefaults(t *testing.T) {
@@ -717,19 +721,16 @@ func TestDistributionPanelSpecDefaults(t *testing.T) {
 			require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin))
 
 			spec := plugin.Spec.(*DistributionPanelSpec)
+			assert.Equal(t, "normal", spec.Visualization.Stack.ValueOrDefault())
 			assert.Nil(t, spec.Axes.X.Min)
 			assert.Nil(t, spec.Axes.X.Max)
 			assert.Equal(t, "linear", spec.Axes.Y.Scale.ValueOrDefault())
-			assert.Nil(t, spec.ChartAppearance.Percentiles.Enabled)
-			assert.Nil(t, spec.ChartAppearance.Percentiles.Values)
+			assert.Nil(t, spec.ChartAppearance.Percentiles.Enabled, "an omitted enabled stays null so the renderer draws the markers")
+			assert.Equal(t, DistributionPercentileValues{50, 90, 99}, spec.ChartAppearance.Percentiles.Values.ValueOrDefault())
 
-			storedVisualization, err := json.Marshal(spec.Visualization)
+			stored, err := json.Marshal(spec)
 			require.NoError(t, err)
-			assert.Contains(t, string(storedVisualization), `"stack":"normal"`)
-
-			stored, err := json.Marshal(spec.ChartAppearance)
-			require.NoError(t, err)
-			assert.Equal(t, `{"percentiles":{"enabled":true,"values":[50,90,99]}}`, string(stored))
+			assert.Equal(t, `{"visualization":{"timePreference":"global_time","stack":"normal"},"formatting":{"unit":"","decimalPrecision":"2"},"axes":{"x":{"min":null,"max":null},"y":{"scale":"linear"}},"legend":{"position":"bottom","mode":"list","customColors":null},"chartAppearance":{"percentiles":{"enabled":null,"values":[50,90,99]}}}`, string(stored))
 		})
 	}
 }
@@ -741,8 +742,9 @@ func TestDistributionPanelSpecPercentileValues(t *testing.T) {
 		expectedPercentilesJSON string
 	}{
 		{name: "Disabled_ValuesDefaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedPercentilesJSON: `{"enabled":false,"values":[50,90,99]}`},
-		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[]}`},
-		{name: "NullValues_Defaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[50,90,99]}`},
+		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[]}`},
+		{name: "NullValues_Defaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[50,90,99]}`},
+		{name: "ExplicitValues_EchoedInOrder", spec: `{"chartAppearance": {"percentiles": {"enabled": true, "values": [99.9, 50]}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[99.9,50]}`},
 	}
 
 	for _, testCase := range testCases {
@@ -793,22 +795,22 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 		{
 			name:            "Percentile_Zero",
 			spec:            `{"chartAppearance": {"percentiles": {"values": [0, 50]}}}`,
-			expectedMessage: "0 is not in (0, 100)",
+			expectedMessage: "invalid percentile 0: must be greater than 0 and less than 100",
 		},
 		{
 			name:            "Percentile_Hundred",
 			spec:            `{"chartAppearance": {"percentiles": {"values": [100]}}}`,
-			expectedMessage: "100 is not in (0, 100)",
+			expectedMessage: "invalid percentile 100: must be greater than 0 and less than 100",
 		},
 		{
 			name:            "Percentile_Duplicate",
 			spec:            `{"chartAppearance": {"percentiles": {"values": [90, 90]}}}`,
-			expectedMessage: "90 is listed more than once",
+			expectedMessage: "invalid percentiles: 90 is listed more than once",
 		},
 		{
 			name:            "Stack_Empty",
 			spec:            `{"visualization": {"stack": ""}}`,
-			expectedMessage: "invalid stack mode",
+			expectedMessage: "invalid distribution stack mode \"\": must be `normal`, `none`, or `percent`",
 		},
 		{
 			name:            "Percentiles_UnknownField",
@@ -823,7 +825,12 @@ func TestDistributionPanelSpecRejections(t *testing.T) {
 		{
 			name:            "Percentiles_MoreThanFive",
 			spec:            `{"chartAppearance": {"percentiles": {"values": [10, 25, 50, 75, 90, 99]}}}`,
-			expectedMessage: "at most 5 percentiles",
+			expectedMessage: "invalid percentiles: at most 5, got 6",
+		},
+		{
+			name:            "Percentiles_NotAList",
+			spec:            `{"chartAppearance": {"percentiles": {"values": 50}}}`,
+			expectedMessage: "cannot unmarshal number into Go value of type []float64",
 		},
 	}
 
@@ -845,6 +852,14 @@ func TestDistributionPanelQueryKinds(t *testing.T) {
 		expectedAllowed bool
 	}{
 		{
+			name:            "MetricsBuilder_Allowed",
+			queryPluginKind: "signoz/BuilderQuery",
+			queryPluginSpec: `{"name": "A", "signal": "metrics", "aggregations": [
+				{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
 			name:            "PromQL_Allowed",
 			queryPluginKind: "signoz/PromQLQuery",
 			queryPluginSpec: `{"name": "A", "query": "sum by (le) (increase(signoz_latency_bucket[5m]))"}`,
@@ -854,6 +869,23 @@ func TestDistributionPanelQueryKinds(t *testing.T) {
 			name:            "ClickHouseSQL_Allowed",
 			queryPluginKind: "signoz/ClickHouseSQL",
 			queryPluginSpec: `{"name": "A", "query": "SELECT ts, bucket, value FROM cells"}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Formula_Allowed",
+			queryPluginKind: "signoz/Formula",
+			queryPluginSpec: `{"name": "F1", "expression": "A / B"}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Composite_Allowed",
+			queryPluginKind: "signoz/CompositeQuery",
+			queryPluginSpec: `{"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": true, "aggregations": [
+					{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+				]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
+			]}`,
 			expectedAllowed: true,
 		},
 		{

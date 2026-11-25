@@ -4566,27 +4566,39 @@ components:
           description: The time range the bucket counts are summed over, and how groups
             stack.
       type: object
+    DashboardtypesDistributionPercentileValues:
+      items:
+        format: double
+        type: number
+      maxItems: 5
+      type: array
+      uniqueItems: true
     DashboardtypesDistributionPercentiles:
       properties:
         enabled:
-          description: Whether percentile markers are drawn. Defaults to true.
+          description: Whether percentile markers are drawn. Null draws them.
+          nullable: true
           type: boolean
         values:
-          description: The percentiles to mark, each in (0, 100), at most 5, no duplicates.
-            Defaults to [50, 90, 99]; [] marks none.
-          items:
-            format: double
-            type: number
-          type: array
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionPercentileValues'
+          description: The percentiles to mark, each greater than 0 and less than
+            100, at most 5, no repeats. Null or omitted marks 50, 90 and 99; [] marks
+            none.
       required:
-      - enabled
       - values
       type: object
+    DashboardtypesDistributionStackMode:
+      enum:
+      - normal
+      - none
+      - percent
+      type: string
     DashboardtypesDistributionVisualization:
       properties:
         stack:
           allOf:
-          - $ref: '#/components/schemas/DashboardtypesStackMode'
+          - $ref: '#/components/schemas/DashboardtypesDistributionStackMode'
           description: 'How groups combine in a bucket: normal (default) stacks them,
             none draws them side by side, percent stacks them as shares of the bucket.'
         timePreference:

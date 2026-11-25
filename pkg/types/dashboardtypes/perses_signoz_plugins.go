@@ -16,11 +16,6 @@ import (
 	"github.com/swaggest/jsonschema-go"
 )
 
-const maxDistributionPercentiles = 5
-
-// What an unset chartAppearance.percentiles.values is written as.
-var defaultDistributionPercentiles = []float64{50, 90, 99}
-
 // ══════════════════════════════════════════════
 // SigNoz variable plugin specs
 // ══════════════════════════════════════════════
@@ -410,6 +405,8 @@ type DistributionPanelSpec struct {
 	ChartAppearance DistributionChartAppearance `json:"chartAppearance" description:"Percentile markers."`
 }
 
+// DistributionAxes has no soft bounds: X min and max hide whole buckets rather
+// than extend the axis, and Y is a count axis with its own scale.
 type DistributionAxes struct {
 	X DistributionXAxis `json:"x" description:"The bucket axis."`
 	Y DistributionYAxis `json:"y" description:"The count axis."`
@@ -449,50 +446,8 @@ type DistributionChartAppearance struct {
 }
 
 type DistributionPercentiles struct {
-	Enabled *bool     `json:"enabled" required:"true" nullable:"false" description:"Whether percentile markers are drawn. Defaults to true."`
-	Values  []float64 `json:"values" required:"true" nullable:"false" description:"The percentiles to mark, each in (0, 100), at most 5, no duplicates. Defaults to [50, 90, 99]; [] marks none."`
-}
-
-// MarshalJSON writes the defaults for whatever was left unset.
-func (percentiles DistributionPercentiles) MarshalJSON() ([]byte, error) {
-	type alias DistributionPercentiles
-	if percentiles.Enabled == nil {
-		enabled := true
-		percentiles.Enabled = &enabled
-	}
-	if percentiles.Values == nil {
-		percentiles.Values = slices.Clone(defaultDistributionPercentiles)
-	}
-	return json.Marshal(alias(percentiles))
-}
-
-func (percentiles *DistributionPercentiles) UnmarshalJSON(data []byte) error {
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	type alias DistributionPercentiles
-	var tmp alias
-	if err := dec.Decode(&tmp); err != nil {
-		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid chartAppearance.percentiles")
-	}
-	*percentiles = DistributionPercentiles(tmp)
-	return percentiles.validate()
-}
-
-func (percentiles DistributionPercentiles) validate() error {
-	if len(percentiles.Values) > maxDistributionPercentiles {
-		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: at most %d percentiles, got %d", maxDistributionPercentiles, len(percentiles.Values))
-	}
-	seen := make(map[float64]struct{}, len(percentiles.Values))
-	for _, value := range percentiles.Values {
-		if value <= 0 || value >= 100 {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: %v is not in (0, 100)", value)
-		}
-		if _, ok := seen[value]; ok {
-			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "chartAppearance.percentiles.values: %v is listed more than once", value)
-		}
-		seen[value] = struct{}{}
-	}
-	return nil
+	Enabled *bool                        `json:"enabled" description:"Whether percentile markers are drawn. Null draws them."`
+	Values  DistributionPercentileValues `json:"values" required:"true" nullable:"false" description:"The percentiles to mark, each greater than 0 and less than 100, at most 5, no repeats. Null or omitted marks 50, 90 and 99; [] marks none."`
 }
 
 type TextPanelSpec struct {
@@ -814,16 +769,7 @@ type BarChartVisualization struct {
 
 type DistributionVisualization struct {
 	BasicVisualization
-	Stack StackMode `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
-}
-
-// MarshalJSON writes Distribution's own stack default, normal, where StackMode's is none.
-func (visualization DistributionVisualization) MarshalJSON() ([]byte, error) {
-	type alias DistributionVisualization
-	if visualization.Stack.IsZero() {
-		visualization.Stack = StackModeNormal
-	}
-	return json.Marshal(alias(visualization))
+	Stack DistributionStackMode `json:"stack" required:"true" description:"How groups combine in a bucket: normal (default) stacks them, none draws them side by side, percent stacks them as shares of the bucket."`
 }
 
 type AreaChartVisualization struct {
@@ -1365,6 +1311,45 @@ func (sm *StackMode) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// DistributionStackMode repeats StackMode's values with normal as the default.
+type DistributionStackMode struct{ valuer.String }
+
+var (
+	DistributionStackModeNormal  = DistributionStackMode{valuer.NewString("normal")} // default
+	DistributionStackModeNone    = DistributionStackMode{valuer.NewString("none")}
+	DistributionStackModePercent = DistributionStackMode{valuer.NewString("percent")}
+)
+
+func (DistributionStackMode) Enum() []any {
+	return []any{DistributionStackModeNormal, DistributionStackModeNone, DistributionStackModePercent}
+}
+
+func (mode DistributionStackMode) ValueOrDefault() string {
+	if mode.IsZero() {
+		return DistributionStackModeNormal.StringValue()
+	}
+	return mode.StringValue()
+}
+
+func (mode DistributionStackMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(mode.ValueOrDefault())
+}
+
+func (mode *DistributionStackMode) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid distribution stack mode: must be a string, one of `normal`, `none`, or `percent`")
+	}
+	parsed := DistributionStackMode{valuer.NewString(v)}
+	switch parsed {
+	case DistributionStackModeNormal, DistributionStackModeNone, DistributionStackModePercent:
+		*mode = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution stack mode %q: must be `normal`, `none`, or `percent`", v)
+	}
+}
+
 // FillOpacity is the alpha of an area fill, in 0–1 because that is what the
 // chart layer consumes directly. Unlike the enums in this section it has no
 // ValueOrDefault: 0 is a legitimate value, so the kind default lives at render
@@ -1831,6 +1816,52 @@ func (scale *DistributionYScale) UnmarshalJSON(data []byte) error {
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid distribution y scale %q: must be `linear` or `log`", v)
 	}
+}
+
+const maxDistributionPercentiles = 5
+
+var defaultDistributionPercentiles = DistributionPercentileValues{50, 90, 99}
+
+// DistributionPercentileValues is the list of percentiles a distribution panel
+// marks. Nil takes the default; an empty list marks none.
+type DistributionPercentileValues []float64
+
+func (DistributionPercentileValues) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMaxItems(maxDistributionPercentiles).WithUniqueItems(true)
+	return nil
+}
+
+func (values DistributionPercentileValues) ValueOrDefault() DistributionPercentileValues {
+	if values == nil {
+		return slices.Clone(defaultDistributionPercentiles)
+	}
+	return values
+}
+
+func (values DistributionPercentileValues) MarshalJSON() ([]byte, error) {
+	return json.Marshal([]float64(values.ValueOrDefault()))
+}
+
+func (values *DistributionPercentileValues) UnmarshalJSON(data []byte) error {
+	var v []float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid percentiles: must be a list of at most %d numbers, each greater than 0 and less than 100", maxDistributionPercentiles)
+	}
+	if len(v) > maxDistributionPercentiles {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid percentiles: at most %d, got %d", maxDistributionPercentiles, len(v))
+	}
+	seen := make(map[float64]struct{}, len(v))
+	for _, value := range v {
+		if value <= 0 || value >= 100 {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid percentile %v: must be greater than 0 and less than 100", value)
+		}
+		if _, ok := seen[value]; ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid percentiles: %v is listed more than once", value)
+		}
+		seen[value] = struct{}{}
+	}
+	*values = v
+	return nil
 }
 
 type HeatmapColorScale struct{ valuer.String }
