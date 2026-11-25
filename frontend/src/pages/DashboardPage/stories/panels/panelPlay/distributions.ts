@@ -2,7 +2,7 @@ import {
 	DashboardtypesHeatmapYScaleDTO as HeatmapYScale,
 	DashboardtypesStackModeDTO as StackMode,
 } from 'api/generated/services/sigNoz.schemas';
-import { MAX_STACKED_GROUPS } from 'lib/visualization/charts/Distribution/topGroups';
+import { MAX_SIDE_BY_SIDE_GROUPS } from 'lib/visualization/charts/Distribution/topGroups';
 import {
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	getRampBottom,
@@ -120,24 +120,21 @@ export const expectDistribution = async (
 	}, PANEL_LOAD);
 	const drawn = plot as uPlot;
 
-	// Side by side fits as many groups as the panel's width allows, never more than a
-	// stack, so only a stack has an exact count to hold it to.
+	// A stack draws every group. Side by side fits as many as the panel's width allows,
+	// up to the cap, and sums the rest into Other.
 	const notice = within(root).queryByTestId('distribution-other-notice');
-	if (args.series > MAX_STACKED_GROUPS) {
-		await expect(notice).toHaveTextContent(
-			isStacked
-				? `Showing top ${MAX_STACKED_GROUPS - 1} of ${args.series} groups`
-				: `of ${args.series} groups; the rest are summed into Other.`,
-		);
-	} else if (isStacked) {
-		await expect(notice).not.toBeInTheDocument();
-	}
 	if (isStacked) {
-		await expect(drawn.series.length - 1).toBe(
-			Math.min(args.series, MAX_STACKED_GROUPS),
-		);
+		await expect(notice).not.toBeInTheDocument();
+		await expect(drawn.series.length - 1).toBe(args.series);
 	} else {
-		await expect(drawn.series.length - 1).toBeLessThanOrEqual(MAX_STACKED_GROUPS);
+		if (args.series > MAX_SIDE_BY_SIDE_GROUPS) {
+			await expect(notice).toHaveTextContent(
+				`of ${args.series} groups; the rest are summed into Other.`,
+			);
+		}
+		await expect(drawn.series.length - 1).toBeLessThanOrEqual(
+			MAX_SIDE_BY_SIDE_GROUPS,
+		);
 	}
 
 	// One slot a bucket. Clamped to 10–1000: (10, 25] is slot 2, (500, 1000] slot 7.
@@ -156,6 +153,9 @@ export const expectDistribution = async (
 		await expect(drawn.scales.y.distr).toBe(args.yScale === 'log' ? 3 : 1);
 	}
 };
+
+/** Rows the tooltip list's 300 px window always holds. */
+const TOOLTIP_ROWS_IN_VIEW = 7;
 
 /** Moves uPlot's cursor over `bucket`, low in its column, as a real pointer would. */
 const hoverBucket = (plot: uPlot, bucket: number): void => {
@@ -199,19 +199,37 @@ const expectTooltipFor = async (
 			).toHaveTextContent(total.toLocaleString()),
 		PANEL_LOAD,
 	);
-	// One row a drawn group, named by its service alone; past the cap the rest sit in
-	// Other, so only an uncapped panel has every service in legend order.
-	const rows = within(tooltip).getAllByTestId('distribution-tooltip-row');
-	await expect(rows).toHaveLength(drawnGroups);
-	for (const [group, row] of rows.entries()) {
-		if (drawnGroups === args.series) {
-			await expect(row).toHaveTextContent(serviceAt(group));
-		}
+	// The hovered group sits above the divider. The list below runs largest first, one row
+	// a drawn group named by its service alone, or over Other the groups Other sums.
+	const active = within(tooltip).getByTestId('distribution-tooltip-active');
+	const isOverOther = (active.textContent ?? '').startsWith('Other');
+	const rows = within(
+		within(tooltip).getByTestId('uplot-tooltip-list'),
+	).getAllByTestId('uplot-tooltip-item-content');
+	const listed = isOverOther ? args.series - (drawnGroups - 1) : drawnGroups;
+	// The list renders only the rows in view, so a longer one is checked in part.
+	const isWhollyRendered = listed <= TOOLTIP_ROWS_IN_VIEW;
+	if (isWhollyRendered) {
+		await expect(rows).toHaveLength(listed);
+	}
+	// The label span carries the full label as its title; the count follows it.
+	const rowLabels = rows.map(
+		(row) => row.querySelector('[title]')?.getAttribute('title') ?? '',
+	);
+	const rowCounts = rows.map((row, index) =>
+		Number(
+			(row.textContent ?? '').slice(rowLabels[index].length).replace(/,/g, ''),
+		),
+	);
+	await expect(rowCounts).toStrictEqual([...rowCounts].sort((a, b) => b - a));
+	for (const row of rows) {
 		await expect(row).not.toHaveTextContent('service.name');
 	}
-	await expect(
-		rows.filter((row) => row.dataset.isActive === 'true'),
-	).toHaveLength(1);
+	if (isWhollyRendered && drawnGroups === args.series) {
+		await expect([...rowLabels].sort()).toStrictEqual(
+			Array.from({ length: args.series }, (_, group) => serviceAt(group)).sort(),
+		);
+	}
 };
 
 /**

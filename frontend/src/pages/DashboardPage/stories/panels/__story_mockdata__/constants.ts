@@ -158,7 +158,7 @@ export const DISTRIBUTION_CLAMP = { min: 10, max: 1000 };
 /** `high` puts a quarter of each group past the last bound, over the warning's 10%. */
 export const DISTRIBUTION_OVERFLOWS = ['low', 'high'] as const;
 
-/** Groups the series control allows: past the 10 a stacked distribution draws. */
+/** Groups the series control allows: past the 10 a side-by-side distribution draws. */
 export const MAX_SERIES_CONTROL = 14;
 
 export const SERVICES = [

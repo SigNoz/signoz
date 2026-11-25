@@ -249,7 +249,7 @@ export const panelsMocks = defineStoryMocks({
 		series: countControl('Series', {
 			group: DATA,
 			description:
-				'Series on the charts, groups on the heatmap and distribution, slices on the pie, rows on the table and the top list. A stacked distribution draws 10 and sums the rest into Other.',
+				'Series on the charts, groups on the heatmap and distribution, slices on the pie, rows on the table and the top list. Side by side, a distribution draws at most 10 and sums the rest into Other.',
 			value: 4,
 			max: MAX_SERIES_CONTROL,
 		}),

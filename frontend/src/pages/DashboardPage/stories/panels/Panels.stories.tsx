@@ -204,8 +204,8 @@ export const DistributionTooltip: Story = {
 	play: playDistributionTooltip,
 };
 
-/** Fourteen services: the top nine drawn, the other five summed into Other. */
-export const DistributionOther: Story = {
+/** Fourteen services stacked: every one drawn, with no Other. */
+export const DistributionManyGroups: Story = {
 	args: { kind: 'Distribution', stack: StackMode.normal, series: 14 },
 	play: playPanel,
 };
