@@ -8,6 +8,7 @@ import {
 	render as renderWithProviders,
 	screen,
 	userEvent,
+	within,
 } from 'tests/test-utils';
 
 import AppearanceSection from '../AppearanceSection';
@@ -87,7 +88,9 @@ describe('AppearanceSection', () => {
 		);
 
 		expect(
-			screen.getByTestId('panel-editor-v2-bar-color-robin').querySelector('input'),
+			within(screen.getByTestId('panel-editor-v2-bar-color-robin')).getByRole(
+				'radio',
+			),
 		).toBeChecked();
 	});
 });

@@ -189,7 +189,10 @@ export default function CustomDomainSettings(): JSX.Element {
 			<div className="custom-domain-card-top">
 				<div className="custom-domain-card-info">
 					{!!workspaceName && (
-						<div className="custom-domain-card-name-row">
+						<div
+							className="custom-domain-card-name-row"
+							data-testid="custom-domain-card-name-row"
+						>
 							<span className="beacon" />
 							<span className="custom-domain-card-org-name">{workspaceName}</span>
 						</div>

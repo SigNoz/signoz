@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen } from 'tests/test-utils';
 
 import LabelColumn from './LabelColumn';
 
@@ -92,7 +92,9 @@ describe('LabelColumn', () => {
 		renderWithProviders(<LabelColumn labels={labels} />);
 
 		const isHidden = (label: string): boolean =>
-			screen.getByTestId(`label-tag-${label}`).closest('.overflowed') !== null;
+			screen
+				.getByTestId(`label-tag-container-${label}`)
+				.classList.contains('overflowed');
 
 		expect(labels.filter(isHidden)).toStrictEqual(['team', 'owner', 'version']);
 		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
@@ -157,8 +159,7 @@ describe('LabelColumn', () => {
 	it('should render empty when no labels provided', () => {
 		renderWithProviders(<LabelColumn labels={[]} />);
 
-		const column = screen.getByTestId('label-column');
-		expect(column.children).toHaveLength(0);
+		expect(screen.getByTestId('label-column')).toBeEmptyDOMElement();
 	});
 
 	it('should use primary color by default', () => {

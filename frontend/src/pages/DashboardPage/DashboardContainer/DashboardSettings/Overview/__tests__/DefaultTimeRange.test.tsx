@@ -45,7 +45,7 @@ function buildDashboard(
 }
 
 describe('Dashboard settings - default time range', () => {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 
 	async function selectOption(label: string): Promise<void> {
 		await user.click(screen.getByTestId('dashboard-default-time-range'));

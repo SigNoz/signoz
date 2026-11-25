@@ -136,25 +136,8 @@ export default function ClarificationForm({
 
 			<div className={styles.actions}>
 				<Button
-					disabledTooltip={
-						isStreaming
-							? 'Wait for the response to finish'
-							: 'Fill in the required fields first'
-					}
-					size="md"
-					width="100%"
-					variant="solid"
-					color="primary"
-					onClick={handleSubmit}
-					disabled={isStreaming || !isFormValid}
-					prefix={<Send />}
-				>
-					Submit
-				</Button>
-				<Button
 					disabledTooltip="Wait for the response to finish"
 					size="md"
-					width="100%"
 					variant="outlined"
 					color="secondary"
 					onClick={handleCancel}
@@ -162,6 +145,21 @@ export default function ClarificationForm({
 					prefix={<X />}
 				>
 					Cancel request
+				</Button>
+				<Button
+					disabledTooltip={
+						isStreaming
+							? 'Wait for the response to finish'
+							: 'Fill in the required fields first'
+					}
+					size="md"
+					variant="solid"
+					color="primary"
+					onClick={handleSubmit}
+					disabled={isStreaming || !isFormValid}
+					prefix={<Send />}
+				>
+					Submit
 				</Button>
 			</div>
 		</div>

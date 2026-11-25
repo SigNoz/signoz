@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from 'tests/test-utils';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 
@@ -134,10 +135,10 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			const noDataContainer = screen
-				.getByText('No Data')
-				.closest('.uplot-no-data');
-			expect(noDataContainer).toHaveStyle({ width: '750px', height: '350px' });
+			expect(screen.getByTestId('uplot-no-data')).toHaveStyle({
+				width: '750px',
+				height: '350px',
+			});
 		});
 
 		it('does not create a uPlot instance', () => {

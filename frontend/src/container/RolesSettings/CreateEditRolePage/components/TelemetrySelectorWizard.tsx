@@ -68,6 +68,7 @@ function TelemetrySelectorWizard({
 				variant="ghost"
 				color="secondary"
 				onClick={(): void => handleOpenChange(false)}
+				testId={`wizard-cancel-btn-${testId}`}
 			>
 				Cancel
 			</Button>

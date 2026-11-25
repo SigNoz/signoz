@@ -361,7 +361,7 @@ describe('QueryAddOns', () => {
 	});
 
 	it('calls handleSetQueryData when reduce-to value changes', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const query = baseQuery({
 			reduceTo: ReduceOperators.AVG,
 			aggregations: [

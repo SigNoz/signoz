@@ -50,7 +50,7 @@ function renderWithSearch(search: string): void {
 }
 
 const clickTestId = async (testId: string): Promise<void> => {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	await user.click(screen.getByTestId(testId));
 };
 

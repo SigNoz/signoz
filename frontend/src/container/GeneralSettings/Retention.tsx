@@ -80,8 +80,14 @@ function Retention({
 		}
 	}, [initialTimeUnitValue]);
 
+	const testId = `${type}-${isS3Field ? 's3' : 'total'}-retention`;
+
 	const menuItems = availableUnits.map((option) => (
-		<Option key={option.value} value={option.value}>
+		<Option
+			key={option.value}
+			value={option.value}
+			data-testid={`${testId}-unit-option-${option.value}`}
+		>
 			{option.key}
 		</Option>
 	));
@@ -139,11 +145,13 @@ function Retention({
 					disabled={isCloudUserVal}
 					disabledTooltip={undefined}
 					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
+					testId={testId}
 				/>
 				<Select
 					value={selectedTimeUnit}
 					onChange={currentSelectedOption}
 					disabled={isCloudUserVal}
+					data-testid={`${testId}-unit`}
 				>
 					{menuItems}
 				</Select>

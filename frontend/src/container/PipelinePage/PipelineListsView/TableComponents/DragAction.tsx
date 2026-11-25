@@ -12,6 +12,7 @@ function DragAction({ isEnabled, onChange }: DragActionProps): JSX.Element {
 				textPlacement="right"
 				defaultValue={isEnabled}
 				onChange={onChange}
+				testId="pipeline-enabled-switch"
 			/>
 			<GripVertical size="lg" style={holdIconStyle} />
 		</LastActionColumn>

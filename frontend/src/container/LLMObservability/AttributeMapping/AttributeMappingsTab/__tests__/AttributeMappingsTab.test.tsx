@@ -25,7 +25,7 @@ import {
 // (synchronous) so the functional tests stay synchronous; the read-only block
 // below flips it to deny-all.
 jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
-const mockedUseAuthZ = useAuthZ as jest.MockedFunction<typeof useAuthZ>;
+const mockedUseAuthZ = jest.mocked(useAuthZ);
 
 import {
 	GROUPS_ENDPOINT,
@@ -129,7 +129,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		await waitFor(() =>
 			expect(screen.getByTestId('group-name-group-1')).toBeInTheDocument(),
 		);
-		expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+		expect(screen.queryByTestId('mapping-groups-error')).not.toBeInTheDocument();
 	});
 
 	it('shows an error banner when the groups request fails', async () => {
@@ -138,7 +138,9 @@ describe('AttributeMappingsTab (integration)', () => {
 		);
 		render(<AttributeMappingsTabWithStore />);
 
-		await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
+		await expect(
+			screen.findByTestId('mapping-groups-error'),
+		).resolves.toHaveTextContent(
 			'Failed to load mapping groups. Please try again.',
 		);
 	});
@@ -177,7 +179,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it("stages a toggle of the group's enabled state via the header switch", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		render(<AttributeMappingsTabWithStore />);
 
@@ -189,8 +191,8 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('invokes onAddGroup from the toolbar button', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onAddGroup = jest.fn();
+		const user = userEvent.setup();
+		const onAddGroup = jest.fn() as jest.MockedFunction<() => void>;
 		setupGroups();
 		render(<AttributeMappingsTabWithStore onAddGroup={onAddGroup} />);
 
@@ -201,14 +203,18 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('invokes onEditGroup with the group when Edit is chosen from the actions menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onEditGroup = jest.fn();
+		const user = userEvent.setup();
+		const onEditGroup = jest.fn() as jest.MockedFunction<
+			(group: DraftGroup) => void
+		>;
 		setupGroups();
 		render(<AttributeMappingsTabWithStore onEditGroup={onEditGroup} />);
 
 		await screen.findByTestId('group-name-group-1');
 		await openGroupActionsMenu(user, 'group-1');
-		await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+		await user.click(
+			await screen.findByTestId('group-actions-group-1-item-edit'),
+		);
 
 		expect(onEditGroup).toHaveBeenCalledTimes(1);
 		expect(onEditGroup.mock.calls[0][0]).toMatchObject({
@@ -218,13 +224,15 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('stages a group removal when Delete is chosen from the actions menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		render(<AttributeMappingsTabWithStore />);
 
 		await screen.findByTestId('group-name-group-1');
 		await openGroupActionsMenu(user, 'group-1');
-		await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+		await user.click(
+			await screen.findByTestId('group-actions-group-1-item-delete'),
+		);
 
 		await waitFor(() =>
 			expect(screen.queryByTestId('group-name-group-1')).not.toBeInTheDocument(),
@@ -233,7 +241,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it("reveals a group's mappers on expand and hides them on collapse", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1' })]);
 		render(<AttributeMappingsTabWithStore />);
@@ -241,13 +249,15 @@ describe('AttributeMappingsTab (integration)', () => {
 		await screen.findByTestId('group-name-group-1');
 		// The clickable Collapse header owns the expanded state; find it by the
 		// aria-expanded contract rather than any framework-internal class.
-		const header = screen
-			.getByTestId('group-expand-group-1')
-			.closest('[aria-expanded]') as HTMLElement;
-		expect(header).toHaveAttribute('aria-expanded', 'false');
+		const table = within(screen.getByTestId('mappings-table'));
+		expect(
+			table.queryByRole('button', { expanded: true }),
+		).not.toBeInTheDocument();
 
 		await expandGroup(user);
-		expect(header).toHaveAttribute('aria-expanded', 'true');
+		expect(table.getByRole('button', { expanded: true })).toContainElement(
+			screen.getByTestId('group-expand-group-1'),
+		);
 		await expect(
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toBeInTheDocument();
@@ -261,7 +271,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it("lazily fetches and renders a group's mappers on first expand", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		setupMappers([
 			makeMapper({ id: 'mapper-1', name: 'gen_ai.request.model', enabled: true }),
@@ -278,7 +288,7 @@ describe('AttributeMappingsTab (integration)', () => {
 
 		const target = await screen.findByTestId('mapper-target-mapper-1');
 		expect(target).toHaveTextContent('gen_ai.request.model');
-		const mapperRow = target.closest('tr') as HTMLElement;
+		const mapperRow = screen.getByTestId('mapper-row-mapper-1');
 		// Sources ordered by priority, highest first (see fixtures).
 		const sources = within(mapperRow).getByTestId('mapper-sources-mapper-1');
 		expect(sources).toHaveTextContent('genai.model');
@@ -290,7 +300,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('shows the mappers error state when the mappers request fails', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		server.use(
 			rest.get(mappersEndpoint('group-1'), (_req, res, ctx) =>
@@ -308,7 +318,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('shows the mappers empty state when a group has no mappers', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		setupMappers([]);
 		render(<AttributeMappingsTabWithStore />);
@@ -322,7 +332,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('collapses extra mapper sources into a "+N more" label beyond the visible cap', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		setupMappers([
 			makeMapper({
@@ -347,7 +357,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('shows a muted placeholder when a mapper has no sources', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 		setupMappers([makeMapper({ id: 'mapper-1', config: { sources: [] } })]);
 		render(<AttributeMappingsTabWithStore />);
@@ -361,7 +371,7 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it("re-fetches an open group's mappers on save instead of showing stale rows", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupGroups();
 
 		let mappers = mockMappers;
@@ -394,9 +404,9 @@ describe('AttributeMappingsTab (integration)', () => {
 	});
 
 	it('warns and keeps the working copy when the post-save refresh fails', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		(toast.success as jest.Mock).mockClear();
-		(toast.warning as jest.Mock).mockClear();
+		const user = userEvent.setup();
+		jest.mocked(toast.success).mockClear();
+		jest.mocked(toast.warning).mockClear();
 
 		let failRefresh = false;
 		server.use(
@@ -438,7 +448,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		}
 
 		it('opens the add-mapping drawer from a group\'s "Add mapping" button', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await openGroupWithMapper(user);
 
 			expect(screen.queryByTestId('mapper-form-drawer')).not.toBeInTheDocument();
@@ -451,11 +461,13 @@ describe('AttributeMappingsTab (integration)', () => {
 		});
 
 		it('opens the edit drawer prefilled and locks the target attribute', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await openGroupWithMapper(user);
 
-			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
-			await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+			await user.click(screen.getByTestId('mapper-actions-mapper-1'));
+			await user.click(
+				await screen.findByTestId('mapper-actions-mapper-1-item-edit'),
+			);
 
 			await expect(
 				screen.findByTestId('mapper-form-drawer'),
@@ -467,7 +479,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		});
 
 		it("toggles a mapper's enabled state through the store", async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await openGroupWithMapper(user);
 
 			const toggle = screen.getByTestId('mapper-enabled-mapper-1');
@@ -481,11 +493,13 @@ describe('AttributeMappingsTab (integration)', () => {
 		});
 
 		it('removes a mapper via the row action menu', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await openGroupWithMapper(user);
 
-			await user.click(screen.getByRole('button', { name: 'Mapping actions' }));
-			await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+			await user.click(screen.getByTestId('mapper-actions-mapper-1'));
+			await user.click(
+				await screen.findByTestId('mapper-actions-mapper-1-item-delete'),
+			);
 
 			await waitFor(() =>
 				expect(
@@ -496,7 +510,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		});
 
 		it('creates a new mapping through the drawer and appends it to the group', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await openGroupWithMapper(user);
 
 			await user.click(screen.getByTestId('add-mapper-group-1'));
@@ -507,14 +521,10 @@ describe('AttributeMappingsTab (integration)', () => {
 				'true',
 			);
 
-			await user.type(
-				screen.getByTestId('mapper-form-target-field'),
-				'gen_ai.response.model',
-			);
-			await user.type(
-				screen.getByTestId('mapper-form-source-0-field'),
-				'raw.model',
-			);
+			await user.click(screen.getByTestId('mapper-form-target-field'));
+			await user.paste('gen_ai.response.model');
+			await user.click(screen.getByTestId('mapper-form-source-0-field'));
+			await user.paste('raw.model');
 
 			const create = screen.getByTestId('mapper-form-save');
 			await waitFor(() =>
@@ -561,7 +571,7 @@ describe('AttributeMappingsTab (integration)', () => {
 		});
 
 		it('renders mappers read-only: no "Add mapping" button or row actions', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			setupGroups();
 			setupMappers([makeMapper({ id: 'mapper-1', name: 'gen_ai.request.model' })]);
 			render(<AttributeMappingsTabWithStore />);
@@ -577,7 +587,7 @@ describe('AttributeMappingsTab (integration)', () => {
 				screen.queryByTestId('mapper-enabled-mapper-1'),
 			).not.toBeInTheDocument();
 			expect(
-				screen.queryByRole('button', { name: 'Mapping actions' }),
+				screen.queryByTestId('mapper-actions-mapper-1'),
 			).not.toBeInTheDocument();
 		});
 	});

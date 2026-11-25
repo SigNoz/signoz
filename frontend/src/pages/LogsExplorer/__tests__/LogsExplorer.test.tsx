@@ -5,13 +5,14 @@ import {
 	initialQueryBuilderFormValues,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { noop } from 'lodash-es';
 import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import LogsExplorer from '../index';
@@ -35,6 +36,26 @@ jest.mock(
 		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		function LogsExplorerChart() {
 			return <div>{frequencyChartContent}</div>;
+		},
+);
+
+jest.mock(
+	'components/OverlayScrollbar/OverlayScrollbar',
+	() =>
+		function MockOverlayScrollbar({
+			children,
+		}: {
+			children: React.ReactNode;
+		}): JSX.Element {
+			return <div>{children}</div>;
+		},
+);
+
+jest.mock(
+	'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch',
+	() =>
+		function MockQuerySearch(): JSX.Element {
+			return <div data-testid="mock-query-search" />;
 		},
 );
 
@@ -71,6 +92,8 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	}),
 }));
 
+const FREQUENCY_CHART_TOGGLE_TEST_ID = 'logs-frequency-chart-toggle';
+
 const logsQueryServerRequest = (): void =>
 	server.use(
 		rest.post(queryRangeURL, (req, res, ctx) =>
@@ -79,21 +102,25 @@ const logsQueryServerRequest = (): void =>
 	);
 
 describe('Logs Explorer Tests', () => {
+	beforeEach(() => {
+		localStorage.removeItem(LOCALSTORAGE.SHOW_FREQUENCY_CHART);
+	});
+
 	it('Logs Explorer default view test without data', async () => {
-		const { getByRole, queryByText, getByTestId, queryByTestId, container } =
-			render(
-				<PreferenceContextProvider>
-					<LogsExplorer />
-				</PreferenceContextProvider>,
-				undefined,
-				{
-					initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
-				},
-			);
+		const user = userEvent.setup();
+		const { queryByText, getByTestId, queryByTestId } = render(
+			<PreferenceContextProvider>
+				<LogsExplorer />
+			</PreferenceContextProvider>,
+			undefined,
+			{
+				initialRoute: '/logs-explorer/?panelType=list&selectedExplorerView=list',
+			},
+		);
 
 		// by default is hidden, toggle the chart and check it's visibility
-		const histogramToggle = getByRole('switch');
-		fireEvent.click(histogramToggle);
+		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
+		await user.click(getByTestId(FREQUENCY_CHART_TOGGLE_TEST_ID));
 		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// check the presence of search bar and query builder and absence of clickhouse
@@ -105,14 +132,9 @@ describe('Logs Explorer Tests', () => {
 		expect(clickhouseView).not.toBeInTheDocument();
 
 		// check the presence of List View / Time Series View / Table View using class names
-		const listViewTab = container.querySelector(
-			'.list-view-tab.explorer-view-option',
-		);
-		const timeSeriesViewTab = container.querySelector('.timeseries-view-tab');
-		const tableViewTab = container.querySelector('.table-view-tab');
-		expect(listViewTab).toBeInTheDocument();
-		expect(timeSeriesViewTab).toBeInTheDocument();
-		expect(tableViewTab).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-list')).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-timeseries')).toBeInTheDocument();
+		expect(screen.getByTestId('explorer-view-table')).toBeInTheDocument();
 
 		// // check the presence of old logs explorer CTA - TODO: add this once we have the header updated
 		// const oldLogsCTA = getByText('Switch to Old Logs Explorer');
@@ -120,7 +142,7 @@ describe('Logs Explorer Tests', () => {
 	});
 
 	it('renders the tab the url panelTypes param names', () => {
-		const { container } = render(
+		render(
 			<PreferenceContextProvider>
 				<LogsExplorer />
 			</PreferenceContextProvider>,
@@ -128,10 +150,10 @@ describe('Logs Explorer Tests', () => {
 			{ initialRoute: '/logs-explorer/?panelTypes=%22graph%22' },
 		);
 
-		expect(container.querySelector('.timeseries-view-tab')).toHaveClass(
+		expect(screen.getByTestId('explorer-view-timeseries')).toHaveClass(
 			'active-tab',
 		);
-		expect(container.querySelector('.list-view-tab')).not.toHaveClass(
+		expect(screen.getByTestId('explorer-view-list')).not.toHaveClass(
 			'active-tab',
 		);
 	});
@@ -173,7 +195,7 @@ describe('Logs Explorer Tests', () => {
 	it('Multiple Current Queries', async () => {
 		// mocking the query range API to return the logs
 		logsQueryServerRequest();
-		const { queryAllByText } = render(
+		render(
 			<QueryBuilderContext.Provider
 				value={{
 					isDefaultQuery: (): boolean => false,
@@ -233,14 +255,13 @@ describe('Logs Explorer Tests', () => {
 			},
 		);
 
-		const queries = queryAllByText(
-			"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
-		);
-		expect(queries).toHaveLength(1);
+		expect(screen.getAllByTestId('mock-query-search')).toHaveLength(1);
 	});
 
 	it('frequency chart visibility and switch toggle', async () => {
-		const { getByRole, queryByText } = render(
+		localStorage.setItem(LOCALSTORAGE.SHOW_FREQUENCY_CHART, 'true');
+		const user = userEvent.setup();
+		const { queryByText } = render(
 			<PreferenceContextProvider>
 				<LogsExplorer />
 			</PreferenceContextProvider>,
@@ -254,12 +275,13 @@ describe('Logs Explorer Tests', () => {
 		expect(queryByText('Frequency chart')).toBeInTheDocument();
 
 		// check the default state of the histogram toggle
-		const histogramToggle = getByRole('switch');
+		const histogramToggle = screen.getByTestId(FREQUENCY_CHART_TOGGLE_TEST_ID);
 		expect(histogramToggle).toBeInTheDocument();
 		expect(histogramToggle).toBeChecked();
+		expect(queryByText(frequencyChartContent)).toBeInTheDocument();
 
 		// toggle the chart and check it gets removed from the DOM
-		await fireEvent.click(histogramToggle);
+		await user.click(histogramToggle);
 		expect(histogramToggle).not.toBeChecked();
 		expect(queryByText(frequencyChartContent)).not.toBeInTheDocument();
 	});

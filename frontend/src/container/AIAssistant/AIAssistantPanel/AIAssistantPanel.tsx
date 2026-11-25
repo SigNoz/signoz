@@ -7,7 +7,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Plus, X } from '@signozhq/icons';
-import Noz from 'components/Noz/Noz';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
 import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
@@ -29,6 +28,8 @@ const PANEL_HEIGHT = 601;
 const PANEL_MIN_WIDTH = 380;
 const PANEL_MIN_HEIGHT = 500;
 const PANEL_MARGIN = 8;
+// Screen the default size was designed for; larger screens scale the panel up, keeping its shape.
+const DESIGN_SCREEN = { width: 1440, height: 900 };
 const PANEL_RESIZE_EDGES = {
 	top: true,
 	right: true,
@@ -100,14 +101,25 @@ export default function AIAssistantPanel(): JSX.Element | null {
 		0,
 		window.innerHeight - BOTTOM_STRIP_HEIGHT - 2 * PANEL_MARGIN,
 	);
-	const panelHeight = Math.min(PANEL_HEIGHT, availableHeight);
+	const scale = Math.max(
+		1,
+		Math.min(
+			window.innerWidth / DESIGN_SCREEN.width,
+			window.innerHeight / DESIGN_SCREEN.height,
+		),
+	);
+	const panelWidth = Math.round(PANEL_WIDTH * scale);
+	const panelHeight = Math.min(
+		Math.round(PANEL_HEIGHT * scale),
+		availableHeight,
+	);
 
 	return (
 		<VariantContext.Provider value="panel">
 			<FloatingPanel
 				isOpen
 				className={styles.panel}
-				width={PANEL_WIDTH}
+				width={panelWidth}
 				height={panelHeight}
 				minWidth={PANEL_MIN_WIDTH}
 				minHeight={Math.min(PANEL_MIN_HEIGHT, availableHeight)}
@@ -115,13 +127,12 @@ export default function AIAssistantPanel(): JSX.Element | null {
 				keepInViewport
 				avoid={PANEL_AVOID}
 				defaultPosition={{
-					x: window.innerWidth - PANEL_WIDTH - PANEL_MARGIN,
+					x: window.innerWidth - panelWidth - PANEL_MARGIN,
 					y: PANEL_MARGIN + availableHeight - panelHeight,
 				}}
 			>
 				<div className={`${styles.header} floating-panel__drag-handle`}>
-					<div className={`${styles.title} noz-wave`}>
-						<Noz size={18} />
+					<div className={styles.title}>
 						{chatTitle && (
 							<Typography
 								variant="paragraph"

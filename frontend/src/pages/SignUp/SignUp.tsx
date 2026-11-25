@@ -152,6 +152,7 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
+										testId="signup-email"
 									/>
 								</FormContainer.Item>
 							</div>
@@ -166,6 +167,7 @@ function SignUp(): JSX.Element {
 									<Input.Password
 										required
 										id="currentPassword"
+										testId="signup-password"
 										placeholder="Enter new password"
 										disabled={loading}
 										disabledTooltip="Creating your account"
@@ -189,6 +191,7 @@ function SignUp(): JSX.Element {
 									<Input.Password
 										required
 										id="confirmPassword"
+										testId="signup-confirm-password"
 										placeholder="Confirm your new password"
 										disabled={loading}
 										disabledTooltip="Creating your account"
@@ -217,6 +220,7 @@ function SignUp(): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="signup"
+							testId="signup-submit"
 							disabled={!!invalidFormReason}
 							loading={loading}
 							width="100%"

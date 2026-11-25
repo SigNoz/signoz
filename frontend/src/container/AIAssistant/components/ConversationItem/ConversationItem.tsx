@@ -167,6 +167,7 @@ export default function ConversationItem({
 	return (
 		<div
 			className={itemClass}
+			data-testid={`ai-conversation-item-${conversation.id}`}
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}

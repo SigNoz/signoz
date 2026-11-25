@@ -45,7 +45,7 @@ describe('CreateRolePage - AuthZ', () => {
 
 			renderCreatePage();
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('role-editor-loading')).toBeInTheDocument();
 		});
 	});
 

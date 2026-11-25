@@ -132,7 +132,7 @@ describe('EditRolePage - AuthZ', () => {
 
 			renderEditPage();
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('role-editor-loading')).toBeInTheDocument();
 		});
 	});
 

@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import CustomSelect from '../CustomSelect';
 
@@ -67,34 +66,19 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			// Find input by class name
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
 			// Type partial match that doesn't exist exactly
-			if (searchInput) {
-				await user.type(searchInput, 'fro');
-			}
+			await user.type(combobox, 'fro');
 
 			// Check that custom value appears in dropdown with custom tag
 			await waitFor(() => {
 				// Find the custom option with "fro" text and "Custom" badge
-				const customOptions = screen.getAllByText('fro');
-				const customOption = customOptions.find((option) => {
-					const optionItem = option.closest('.option-item');
-					const badge = optionItem?.querySelector('.option-badge');
-					return badge?.textContent === 'Custom';
-				});
-
-				expect(customOption).toBeInTheDocument();
+				const customOption = screen.getByTestId('option-item-fro');
+				expect(customOption).toHaveTextContent('fro');
 
 				// Verify it has the custom badge
-				const optionItem = customOption?.closest('.option-item');
-				const badge = optionItem?.querySelector('.option-badge');
-				expect(badge).toBeInTheDocument();
-				expect(badge?.textContent).toBe('Custom');
+				expect(within(customOption).getByTestId('option-badge')).toHaveTextContent(
+					'Custom',
+				);
 			});
 
 			// Press Enter to create the custom value
@@ -120,30 +104,20 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'frontend');
-			}
+			await user.type(combobox, 'frontend');
 
 			// Should show the Frontend option in dropdown for exact match
 			await waitFor(() => {
 				// Check for highlighted "frontend" text
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('Frontend');
 
 				// Frontend option should be visible in dropdown - use a simpler approach
-				const optionContents = document.querySelectorAll('.option-content');
-				const hasFrontendOption = Array.from(optionContents).some((content) =>
-					content.textContent?.includes('Frontend'),
+				expect(screen.getByTestId('option-item-frontend')).toHaveTextContent(
+					'Frontend',
 				);
-				expect(hasFrontendOption).toBe(true);
 			});
 
 			// Press Enter to select the exact match
@@ -174,14 +148,11 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const dropdown = document.querySelector('.custom-select-dropdown');
-				expect(dropdown).toBeInTheDocument();
-
-				const options = dropdown?.querySelectorAll('.option-content') || [];
-				const optionTexts = Array.from(options).map((el) => el.textContent);
+				expect(screen.getByTestId('custom-select-dropdown')).toBeInTheDocument();
 
 				// Database should be at the top
-				expect(optionTexts[0]).toContain('Database');
+				const [firstOption] = screen.getAllByTestId(/^option-item-/);
+				expect(firstOption).toHaveTextContent('Database');
 			});
 		});
 
@@ -197,30 +168,20 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 
 			// Find and type in search input
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'front');
-			}
+			await user.type(combobox, 'front');
 
 			// Should filter to show only options containing 'front'
 			await waitFor(() => {
 				// Check for highlighted text within the Frontend option
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('Front');
 
 				// Should show Frontend option (highlighted) - use a simpler approach
-				const optionContents = document.querySelectorAll('.option-content');
-				const hasFrontendOption = Array.from(optionContents).some((content) =>
-					content.textContent?.includes('Frontend'),
+				expect(screen.getByTestId('option-item-frontend')).toHaveTextContent(
+					'Frontend',
 				);
-				expect(hasFrontendOption).toBe(true);
 
 				// Backend and Database should not be visible
 				expect(screen.queryByText('Backend')).not.toBeInTheDocument();
@@ -238,21 +199,13 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'end');
-			}
+			await user.type(combobox, 'end');
 
 			// Should highlight matching text in options
 			await waitFor(() => {
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('end');
 			});
 		});
@@ -267,14 +220,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'nonexistent');
-			}
+			await user.type(combobox, 'nonexistent');
 
 			// Should show custom value option when no matches found
 			await waitFor(() => {
@@ -285,13 +231,11 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.queryByText('API Gateway')).not.toBeInTheDocument();
 
 				// Should show custom value option
-				const customOptions = screen.getAllByText('nonexistent');
-				const customOption = customOptions.find((option) => {
-					const optionItem = option.closest('.option-item');
-					const badge = optionItem?.querySelector('.option-badge');
-					return badge?.textContent === 'Custom';
-				});
-				expect(customOption).toBeInTheDocument();
+				const customOption = screen.getByTestId('option-item-nonexistent');
+				expect(customOption).toHaveTextContent('nonexistent');
+				expect(within(customOption).getByTestId('option-badge')).toHaveTextContent(
+					'Custom',
+				);
 			});
 		});
 	});
@@ -313,19 +257,15 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// First option should be active
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
 				// Verify it's the first option (Frontend)
-				expect(activeOption?.textContent).toContain('Backend');
+				expect(screen.getByTestId('option-item-backend')).toHaveClass('active');
 			});
 
 			// Arrow up should go to previous option
 			await user.keyboard('{ArrowUp}');
 
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
-				expect(activeOption?.textContent).toContain('Frontend');
+				expect(screen.getByTestId('option-item-frontend')).toHaveClass('active');
 			});
 		});
 
@@ -410,8 +350,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.keyboard('{Tab}');
 
 			// Should still be within dropdown context
-			const dropdown = document.querySelector('.custom-select-dropdown');
-			expect(dropdown).toBeInTheDocument();
+			expect(screen.getByTestId('custom-select-dropdown')).toBeInTheDocument();
 		});
 	});
 
@@ -453,8 +392,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const loadingFooter = document.querySelector('.navigation-loading');
-				expect(loadingFooter).toBeInTheDocument();
+				expect(screen.getByTestId('navigation-loading')).toBeInTheDocument();
 			});
 		});
 
@@ -471,8 +409,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			await user.click(combobox);
 
 			await waitFor(() => {
-				const errorFooter = document.querySelector('.navigation-error');
-				expect(errorFooter).toBeInTheDocument();
+				expect(screen.getByTestId('navigation-error')).toBeInTheDocument();
 				expect(screen.getByText('Something went wrong')).toBeInTheDocument();
 			});
 		});
@@ -605,8 +542,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(combobox).toHaveFocus();
 
 			await waitFor(() => {
-				const dropdown = document.querySelector('.custom-select-dropdown');
-				expect(dropdown).toBeInTheDocument();
+				expect(screen.getByTestId('custom-select-dropdown')).toBeInTheDocument();
 			});
 
 			// Focus should remain manageable
@@ -679,8 +615,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 
@@ -714,8 +649,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// Should navigate to first option in dropdown
 			await waitFor(() => {
-				const activeOption = document.querySelector('.option-item.active');
-				expect(activeOption).toBeInTheDocument();
+				expect(screen.getByTestId('option-item-backend')).toHaveClass('active');
 			});
 		});
 	});
@@ -732,32 +666,20 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				await user.type(searchInput, 'front');
-			}
+			await user.type(combobox, 'front');
 
 			// Should show highlighted options with correct order
 			await waitFor(() => {
 				// Check for highlighted text
-				const highlightedElements = document.querySelectorAll('.highlight-text');
-				const highlightTexts = Array.from(highlightedElements).map(
-					(el) => el.textContent,
-				);
+				const highlightTexts = screen
+					.getAllByTestId('highlight-text')
+					.map((el) => el.textContent);
 				expect(highlightTexts).toContain('front');
 
 				// Get all option items to check the order
-				const optionItems = document.querySelectorAll('.option-item');
-				const optionTexts = Array.from(optionItems)
-					.map((item) => {
-						const contentElement = item.querySelector('.option-content');
-						return contentElement?.textContent?.trim();
-					})
-					.filter(Boolean);
+				const optionTexts = screen
+					.getAllByTestId(/^option-item-/)
+					.map((item) => item.textContent?.trim());
 
 				// Custom value "front" should appear first (above Frontend)
 				// The text includes "Custom" badge, so check for "front" in the text
@@ -807,12 +729,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			});
 
 			// Now type something and press Enter to save
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			if (searchInput) {
-				await user.type(searchInput, 'custom-value');
-			}
+			await user.type(combobox, 'custom-value');
 
 			// Press Enter to save (should close dropdown)
 			await user.keyboard('{Enter}');
@@ -847,11 +764,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				/>,
 			);
 
-			const clearButton = document.querySelector('.ant-select-clear');
-			expect(clearButton).toBeInTheDocument();
-
 			// Click clear button
-			await user.click(clearButton as Element);
+			await user.click(screen.getByTestId('custom-select-clear'));
 
 			// Should call onChange immediately (no loading state in this component)
 			expect(mockOnChangeWithDelay).toHaveBeenCalledWith(undefined, undefined);
@@ -870,11 +784,8 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				/>,
 			);
 
-			const clearButton = document.querySelector('.ant-select-clear');
-			expect(clearButton).toBeInTheDocument();
-
 			// Click clear button
-			await user.click(clearButton as Element);
+			await user.click(screen.getByTestId('custom-select-clear'));
 
 			// Should clear the single selection
 			expect(mockOnChange).toHaveBeenCalledWith(undefined, undefined);
@@ -927,19 +838,13 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			const combobox = screen.getByRole('combobox');
 			await user.click(combobox);
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
 			// Type a long search value
-			if (searchInput) {
-				const longSearchValue = 'a'.repeat(100);
-				await user.type(searchInput, longSearchValue);
-			}
+			const longSearchValue = 'a'.repeat(100);
+			await user.type(combobox, longSearchValue);
 
 			// Should not overflow or break layout
 			await waitFor(() => {
+				// oxlint-disable-next-line signoz/no-dom-node-access -- antd's search wrapper has no test hook; the test reads its computed overflow
 				const searchContainer = document.querySelector(
 					'.ant-select-selection-search',
 				);
@@ -962,12 +867,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 			expect(combobox).toHaveFocus();
 
 			// Should be able to type even with loading state
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			if (searchInput) {
-				await user.type(searchInput, 'test');
-			}
+			await user.type(combobox, 'test');
 
 			// Should not be blocked by loading spinner
 			expect(combobox).not.toBeDisabled();
@@ -986,25 +886,16 @@ describe('CustomSelect - Comprehensive Tests', () => {
 				expect(screen.getByText('Frontend')).toBeInTheDocument();
 			});
 
-			const searchInput = document.querySelector(
-				'.ant-select-selection-search-input',
-			);
-			expect(searchInput).toBeInTheDocument();
-
-			if (searchInput) {
-				// Test regex pattern
-				await user.type(searchInput, '.*test.*');
-			}
+			// Test regex pattern
+			await user.type(combobox, '.*test.*');
 
 			// Should create custom value for regex pattern
 			await waitFor(() => {
-				const regexOptions = screen.getAllByText('.*test.*');
-				const regexOption = regexOptions.find((option) => {
-					const optionItem = option.closest('.option-item');
-					const badge = optionItem?.querySelector('.option-badge');
-					return badge?.textContent === 'Custom';
-				});
-				expect(regexOption).toBeInTheDocument();
+				const regexOption = screen.getByTestId('option-item-.*test.*');
+				expect(regexOption).toHaveTextContent('.*test.*');
+				expect(within(regexOption).getByTestId('option-badge')).toHaveTextContent(
+					'Custom',
+				);
 			});
 
 			// Press Enter to create the regex value
@@ -1076,8 +967,7 @@ describe('CustomSelect - Comprehensive Tests', () => {
 
 			// Dropdown should close after selection in single select
 			await waitFor(() => {
-				const dropdown = document.querySelector('.ant-select-dropdown');
-				expect(dropdown).toHaveClass('ant-select-dropdown-hidden');
+				expect(combobox).toHaveAttribute('aria-expanded', 'false');
 			});
 		});
 	});

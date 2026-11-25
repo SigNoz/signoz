@@ -1,7 +1,5 @@
 import React from 'react';
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { render } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
 import { TooltipRenderArgs } from '../../components/types';
@@ -189,6 +187,7 @@ describe('TooltipPlugin', () => {
 
 			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).not.toBeNull();
+			// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 			expect(container.parentElement).toBe(document.body);
 		});
 
@@ -207,6 +206,7 @@ describe('TooltipPlugin', () => {
 			renderAndActivateHover(config);
 
 			const container = screen.getByTestId('tooltip-plugin-container');
+			// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 			expect(container.parentElement).toBe(document.body);
 
 			const fullscreenRoot = document.createElement('div');
@@ -219,7 +219,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
-				expect(updatedContainer.parentElement).toBe(fullscreenRoot);
+				expect(fullscreenRoot).toContainElement(updatedContainer);
 			});
 
 			act(() => {
@@ -229,6 +229,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+				// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 				expect(updatedContainer.parentElement).toBe(document.body);
 			});
 
@@ -345,7 +346,7 @@ describe('TooltipPlugin', () => {
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await user.click(button);
 
 			await waitFor(() => {

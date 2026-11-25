@@ -17,7 +17,7 @@ const steps: ActivityItem[] = [
 
 describe('ActivityGroup', () => {
 	it('names the running step and opens the steps so far on request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<ActivityGroup items={steps} isLive />);
 
 		const toggle = screen.getByTestId('ai-activity-toggle');
@@ -35,7 +35,7 @@ describe('ActivityGroup', () => {
 	});
 
 	it('folds a finished run behind its step count', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<ActivityGroup items={steps} />);
 
 		const toggle = screen.getByTestId('ai-activity-toggle');

@@ -61,7 +61,14 @@ function RouteTab({
 		children: (
 			<OverlayScrollbar>
 				<Suspense
-					fallback={<Spinner size="large" tip="Loading..." height="100%" />}
+					fallback={
+						<Spinner
+							size="large"
+							tip="Loading..."
+							height="100%"
+							testId="route-tab-loading"
+						/>
+					}
 				>
 					<Component />
 				</Suspense>
@@ -72,6 +79,7 @@ function RouteTab({
 	return (
 		<Tabs
 			className={cx(styles.routeTab, className)}
+			data-testid="route-tab"
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={currentRoute?.key || activeKey}

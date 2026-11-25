@@ -255,7 +255,9 @@ function WidgetGraphComponent({
 			)}
 
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
-				<Skeleton />
+				<div data-testid="widget-graph-loading">
+					<Skeleton />
+				</div>
 			)}
 			{(queryResponse.isSuccess || widget.panelTypes === PANEL_TYPES.LIST) && (
 				<div

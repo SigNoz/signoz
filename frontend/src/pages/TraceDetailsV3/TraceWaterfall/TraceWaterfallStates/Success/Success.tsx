@@ -259,6 +259,7 @@ const SpanOverview = memo(function SpanOverview({
 				[styles.isDimmed]: isDimmed,
 			})}
 			data-span-state={spanState}
+			data-testid={`span-overview-${span.span_id}`}
 			onClick={(): void => handleSpanClick(span)}
 			onMouseEnter={(event): void =>
 				onHoverEnter(span.span_id, event.currentTarget, span)
@@ -442,6 +443,7 @@ export const SpanDuration = memo(function SpanDuration({
 				[styles.isSelectedNonMatching]: isSelectedNonMatching,
 				[styles.isDimmed]: isDimmed,
 			})}
+			data-testid={`span-duration-${span.span_id}`}
 			onClick={(): void => handleSpanClick(span)}
 		>
 			<div

@@ -272,6 +272,7 @@ function LogsExplorerList({
 			>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						data-testid="logs-list-virtuoso-scroller"
 						key={activeLogIndex || 'logs-virtuoso'}
 						ref={ref as React.Ref<VirtuosoHandle>}
 						initialTopMostItemIndex={activeLogIndex !== -1 ? activeLogIndex : 0}

@@ -1,4 +1,4 @@
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 
 import DimensionsSection from '../DimensionsSection';
 
@@ -11,7 +11,7 @@ const TABLE_COLUMNS = [
 async function pick(dimension: string, label: string): Promise<void> {
 	const user = userEvent.setup();
 	const trigger = screen.getByTestId(`panel-editor-v2-dimension-${dimension}`);
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
+	await user.click(within(trigger).getByRole('combobox'));
 	await user.click(await screen.findByRole('option', { name: label }));
 }
 

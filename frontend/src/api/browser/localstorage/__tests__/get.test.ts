@@ -17,13 +17,11 @@ function loadGetModule(href: string): GetModule {
 		// oxlint-disable-next-line typescript-eslint/no-require-imports, typescript-eslint/no-var-requires
 		mod = require('../get');
 	});
+	base.remove();
 	return mod;
 }
 
 afterEach(() => {
-	for (const el of document.head.querySelectorAll('base')) {
-		el.remove();
-	}
 	localStorage.clear();
 });
 

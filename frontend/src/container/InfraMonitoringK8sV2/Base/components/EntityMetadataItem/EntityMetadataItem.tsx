@@ -18,6 +18,7 @@ export function EntityMetadataItem({
 	value,
 	renderedValue,
 }: EntityMetadataItemProps): JSX.Element {
+	const testIdSuffix = label.toLowerCase().replace(/\s+/g, '-');
 	const handleCopy = useCallback((): void => {
 		toast.success(`${label} copied to clipboard`, { position: 'bottom-left' });
 	}, [label]);
@@ -38,7 +39,10 @@ export function EntityMetadataItem({
 			{renderedValue ?? (
 				<div className={styles.valueRow}>
 					<Tooltip title={value} side="bottom" align="start">
-						<span className={styles.value}>
+						<span
+							className={styles.value}
+							data-testid={`metadata-value-${testIdSuffix}`}
+						>
 							<Typography
 								variant="code"
 								size="small"
@@ -56,7 +60,7 @@ export function EntityMetadataItem({
 							value={value}
 							size={10}
 							ariaLabel={`Copy ${label}`}
-							testId={`copy-metadata-${label.toLowerCase().replace(/\s+/g, '-')}`}
+							testId={`copy-metadata-${testIdSuffix}`}
 							onCopy={handleCopy}
 						/>
 					)}

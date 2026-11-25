@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DashboardtypesStackModeDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -30,7 +29,7 @@ jest.mock('pages/DashboardPage/DashboardContainer/Panels/registry', () => ({
 async function pickOption(triggerTestId: string, label: string): Promise<void> {
 	const user = userEvent.setup();
 	const trigger = screen.getByTestId(triggerTestId);
-	await user.click(trigger.querySelector('.ant-select-selector') as HTMLElement);
+	await user.click(within(trigger).getByRole('combobox'));
 	await user.click(await screen.findByRole('option', { name: label }));
 }
 
@@ -183,7 +182,7 @@ describe('VisualizationSection', () => {
 	});
 
 	it('renders the type switcher and switches kind when switchPanelKind is set', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onChangePanelKind = jest.fn();
 		render(
 			<VisualizationSection

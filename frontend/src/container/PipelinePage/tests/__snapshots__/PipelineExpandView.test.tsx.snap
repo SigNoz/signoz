@@ -35,6 +35,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
       >
         <div
           class="ant-table ant-table-small"
+          data-testid="pipeline-expand-view"
         >
           <div
             class="ant-table-container"

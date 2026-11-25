@@ -13,7 +13,7 @@ const TEST_ID = 'col';
 
 describe('Col', () => {
 	it('renders a div with children and native props', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn();
 		render(
 			<Col data-testid={TEST_ID} className="custom" onClick={onClick}>

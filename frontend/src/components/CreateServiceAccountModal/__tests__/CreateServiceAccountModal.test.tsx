@@ -68,7 +68,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('submit button becomes disabled after clearing the name field', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const nameInput = await screen.findByTestId('create-sa-name-input-field');
@@ -86,7 +86,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('successful submit shows toast.success and closes modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const nameInput = await screen.findByTestId('create-sa-name-input-field');
@@ -112,7 +112,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('pressing Enter again while creating sends one request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let requests = 0;
 		server.use(
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) => {
@@ -146,7 +146,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('shows toast.error on API error and keeps modal open', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) =>
@@ -186,7 +186,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('Cancel button closes modal without submitting', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const cancelBtn = await screen.findByTestId('create-sa-cancel-btn');
@@ -217,7 +217,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('keeps the footer usable when create permission is denied', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(setupAuthzDenyAll());
 
 		renderModal();
@@ -242,7 +242,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const nameInput = await screen.findByTestId('create-sa-name-input-field');
