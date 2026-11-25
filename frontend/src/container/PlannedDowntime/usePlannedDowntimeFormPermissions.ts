@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 import type { DefaultOptionType } from 'antd/es/select';
 import type { AlertmanagertypesPlannedMaintenanceDTO } from 'api/generated/services/sigNoz.schemas';
 import {
@@ -10,12 +10,14 @@ import {
 	buildRuleAttachPermission,
 	buildRuleDetachPermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { deniedTooltip } from 'lib/authz/components/deniedTooltip';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import type {
 	LinkAccess,
 	LinkPermissions,
 } from 'lib/authz/hooks/useLinkPickerAccess/types';
 import { useLinkPickerAccess } from 'lib/authz/hooks/useLinkPickerAccess/useLinkPickerAccess';
+import { useAppContext } from 'providers/App/App';
 
 import { getDowntimeSaveChecks } from './downtimeSaveChecks';
 
@@ -30,6 +32,8 @@ interface UsePlannedDowntimeFormPermissionsArgs {
 export interface UsePlannedDowntimeFormPermissionsReturn {
 	/** Editing a schedule the user may not update. */
 	isReadOnly: boolean;
+	/** The denial a read-only control shows; set whenever editing, so a control keeps its tooltip. */
+	readOnlyReason?: ReactNode;
 	saveChecks: BrandedPermission[];
 	/** Whether a rule can be added or, if the schedule already has it, removed. */
 	getRuleAccess: (ruleId: string) => LinkAccess;
@@ -60,6 +64,7 @@ export function usePlannedDowntimeFormPermissions({
 	isAllRules,
 	selectedRules,
 }: UsePlannedDowntimeFormPermissionsArgs): UsePlannedDowntimeFormPermissionsReturn {
+	const { user } = useAppContext();
 	const scheduleId = isEditMode ? initialValues.id : undefined;
 
 	const storedIds = useMemo(
@@ -108,8 +113,14 @@ export function usePlannedDowntimeFormPermissions({
 		[scheduleId, storedIds, incomingIds],
 	);
 
+	const readOnlyReason = useMemo(
+		() => (update ? deniedTooltip([update], user.id) : undefined),
+		[update, user.id],
+	);
+
 	return {
 		isReadOnly: !!update && isOwnerDenied(update),
+		readOnlyReason,
 		saveChecks,
 		getRuleAccess: getAccess,
 		onPickerVisibleChange,

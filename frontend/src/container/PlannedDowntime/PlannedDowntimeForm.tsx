@@ -146,14 +146,19 @@ export function PlannedDowntimeForm(
 	const { notifications } = useNotifications();
 	const { showErrorModal } = useErrorModal();
 
-	const { isReadOnly, saveChecks, getRuleAccess, onPickerVisibleChange } =
-		usePlannedDowntimeFormPermissions({
-			initialValues,
-			isEditMode,
-			alertOptions,
-			isAllRules: alertRuleScope === 'all',
-			selectedRules: selectedTags,
-		});
+	const {
+		isReadOnly,
+		readOnlyReason,
+		saveChecks,
+		getRuleAccess,
+		onPickerVisibleChange,
+	} = usePlannedDowntimeFormPermissions({
+		initialValues,
+		isEditMode,
+		alertOptions,
+		isAllRules: alertRuleScope === 'all',
+		selectedRules: selectedTags,
+	});
 
 	const { user } = useAppContext();
 	const ruleList = useAuthZ(RULE_LIST_CHECKS);
@@ -544,6 +549,8 @@ export function PlannedDowntimeForm(
 						<RadioGroup
 							color="primary"
 							testId="planned-downtime-alert-scope"
+							readOnly={isReadOnly}
+							readOnlyTooltip={readOnlyReason}
 							items={[
 								{ value: 'all', label: 'All alert rules' },
 								{ value: 'specific', label: 'Specific alert rules' },

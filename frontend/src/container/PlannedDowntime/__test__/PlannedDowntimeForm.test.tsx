@@ -221,6 +221,21 @@ describe('PlannedDowntimeForm authz', () => {
 		expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'true');
 	});
 
+	it('locks the rule scope without update', async () => {
+		server.use(setupAuthzDeny(UPDATE));
+		const user = setupUser();
+		render(<FormHarness initialValues={scoped} />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('downtime-name')).toBeDisabled(),
+		);
+		await user.click(screen.getByTestId(ALL_SCOPE_TEST_ID));
+
+		expect(
+			screen.getByTestId(SPECIFIC_SCOPE_TEST_ID),
+		).toHaveAttribute('aria-checked', 'true');
+	});
+
 	it('saves an unchanged scoped schedule with update alone', async () => {
 		server.use(setupAuthzAllow(UPDATE));
 		render(<FormHarness initialValues={scoped} />);
