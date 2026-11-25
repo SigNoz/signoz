@@ -44,7 +44,7 @@ function NozHistory(): JSX.Element | null {
 	);
 	const isOpen = useAIAssistantStore((s) => s.isHistoryOpen);
 	const setHistoryOpen = useAIAssistantStore((s) => s.setHistoryOpen);
-	const { clearance, isSliding } = usePopoverAvoidance(AVOID, isOpen);
+	const { clearance } = usePopoverAvoidance(AVOID, isOpen);
 	const history = usePopoverHandle(setHistoryOpen);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const shownClearance = useRef(0);
@@ -152,8 +152,6 @@ function NozHistory(): JSX.Element | null {
 				width={269}
 				onOpenChange={handleOpenChange}
 				aria-label="Recent conversations"
-				data-noz-history=""
-				data-sliding={isSliding || undefined}
 			>
 				<NozHistoryList conversations={recent} onSelect={handleSelect} />
 			</Popover>

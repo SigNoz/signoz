@@ -41,28 +41,22 @@ describe('usePopoverAvoidance', () => {
 		window.innerWidth = originalInnerWidth;
 	});
 
-	it('opens clear of an obstacle that already shows, without sliding', () => {
+	it('opens clear of an obstacle that already shows', () => {
 		const obstacles = [createObstacle(CHAT).obstacle];
 
 		const { result } = renderHook(() => usePopoverAvoidance(obstacles, true));
 
-		expect(result.current).toStrictEqual({
-			clearance: CLEARANCE,
-			isSliding: false,
-		});
+		expect(result.current).toStrictEqual({ clearance: CLEARANCE });
 	});
 
-	it('slides aside as the obstacle shows, and back as it hides', () => {
+	it('moves aside as the obstacle shows, and back as it hides', () => {
 		const { obstacle, show } = createObstacle(null);
 		const obstacles = [obstacle];
 		const { result } = renderHook(() => usePopoverAvoidance(obstacles, true));
 
 		act(() => show(CHAT));
 
-		expect(result.current).toStrictEqual({
-			clearance: CLEARANCE,
-			isSliding: true,
-		});
+		expect(result.current).toStrictEqual({ clearance: CLEARANCE });
 
 		act(() => show(null));
 

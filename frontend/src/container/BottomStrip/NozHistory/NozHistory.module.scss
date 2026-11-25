@@ -6,16 +6,6 @@
 	flex-shrink: 0;
 }
 
-// Ease only the slide, not the first placement.
-// Popover can't ease a `showAt` move yet; drop this once @signozhq/ui can.
-:global([data-slot='popover-positioner']):has(
-	[data-noz-history][data-sliding]
-) {
-	transition:
-		top 0.2s ease,
-		left 0.2s ease;
-}
-
 .content {
 	display: flex;
 	flex-direction: column;
