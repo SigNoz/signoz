@@ -203,6 +203,21 @@ describe('resolveDistributionBars', () => {
 		},
 	);
 
+	it('finds the log base over more counts than a call takes arguments', () => {
+		const { yMin } = resolveDistributionBars({
+			xAxis,
+			counts: Array.from({ length: 300 }, (_, series) =>
+				Array.from({ length: 1000 }, (_unused, bucket) =>
+					series === 7 && bucket === 9 ? 0.5 : 2,
+				),
+			),
+			stack: StackMode.None,
+			isLogY: true,
+		});
+
+		expect(yMin).toBe(0.01);
+	});
+
 	it('puts the log base a decade under the smallest fractional count', () => {
 		const { yMin } = resolveDistributionBars({
 			xAxis,

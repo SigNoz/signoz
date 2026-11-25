@@ -16,7 +16,15 @@ import {
  * bar, a single observation included, starts under its top. 1 when nothing is positive.
  */
 export function resolveLogYBase(counts: number[][]): number {
-	const smallest = Math.min(...counts.flat().filter((count) => count > 0));
+	// A loop, not `Math.min(...)`: every group's every bucket can pass the argument limit.
+	let smallest = Number.POSITIVE_INFINITY;
+	counts.forEach((seriesCounts) =>
+		seriesCounts.forEach((count) => {
+			if (count > 0 && count < smallest) {
+				smallest = count;
+			}
+		}),
+	);
 	return Number.isFinite(smallest)
 		? 10 ** (Math.floor(Math.log10(smallest)) - 1)
 		: 1;
