@@ -168,9 +168,9 @@ describe('DistributionTooltip', () => {
 			onOtherMemberClick,
 		});
 
-		expect(
-			screen.getByTestId('distribution-tooltip-other-hint'),
-		).toHaveTextContent('Click a group to drill down');
+		expect(screen.getByTestId('grouped-tooltip-footer')).toHaveTextContent(
+			'Click a series to drilldown',
+		);
 		await userEvent
 			.setup()
 			.click(screen.getAllByTestId('uplot-tooltip-item-button')[1]);
@@ -185,9 +185,9 @@ describe('DistributionTooltip', () => {
 			onOtherMemberClick: jest.fn(),
 		});
 
-		expect(
-			screen.getByTestId('distribution-tooltip-other-hint'),
-		).toHaveTextContent('Click to pin, then pick a group to drill down');
+		expect(screen.getByTestId('grouped-tooltip-footer')).toHaveTextContent(
+			'Click to pin, then pick a series',
+		);
 		expect(
 			screen.queryByTestId('uplot-tooltip-item-button'),
 		).not.toBeInTheDocument();

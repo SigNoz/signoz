@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import cx from 'classnames';
 import TooltipItem from 'lib/uPlotV2/components/Tooltip/components/TooltipItem/TooltipItem';
 import TooltipList from 'lib/uPlotV2/components/Tooltip/components/TooltipList/TooltipList';
 import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
+import GroupedTooltipFooter from 'lib/visualization/panels/components/GroupedTooltipFooter';
 import {
 	formatRowLabel,
 	resolveRowIndex,
@@ -95,41 +96,39 @@ export default function DistributionTooltip({
 		};
 	}, [hover, labels, colors, counts, otherIndex, otherMembers, isOtherHovered]);
 
+	// The menu opens where the tooltip was, which closes first.
+	const handleMemberClick = useCallback(
+		(index: number, event: ReactMouseEvent): void => {
+			const rect = (event.currentTarget as Element)
+				.closest('[data-distribution-tooltip]')
+				?.getBoundingClientRect();
+			const member = content?.members[index];
+			dismiss();
+			if (member) {
+				onOtherMemberClick?.(member.sourceIndex, {
+					x: rect?.left ?? event.clientX,
+					y: rect?.top ?? event.clientY,
+				});
+			}
+		},
+		[content, dismiss, onOtherMemberClick],
+	);
+
 	if (!hover || !content) {
 		return null;
 	}
 
 	const canPickMember = isOtherHovered && isPinned && !!onOtherMemberClick;
-	// Pie's hints: a click on Other pins it, then a group can be picked.
-	let otherHint = onOtherMemberClick
-		? 'Click to pin, then pick a group to drill down'
-		: 'Click to pin the tooltip';
-	if (isPinned) {
-		otherHint = onOtherMemberClick ? 'Click a group to drill down' : '';
-	}
 	// As in the shared tooltip, a lone row that is the active one collapses into it.
-	const showList =
+	const shouldShowList =
 		content.items.length > 1 ||
 		(content.items.length === 1 && content.active === null);
-	// The menu opens where the tooltip was, which closes first.
-	const handleMemberClick = (index: number, event: ReactMouseEvent): void => {
-		const rect = (event.currentTarget as Element)
-			.closest('[data-testid="distribution-tooltip"]')
-			?.getBoundingClientRect();
-		const member = content.members[index];
-		dismiss();
-		if (member) {
-			onOtherMemberClick?.(member.sourceIndex, {
-				x: rect?.left ?? event.clientX,
-				y: rect?.top ?? event.clientY,
-			});
-		}
-	};
 
 	return (
 		<div
 			className={cx(Styles.container, { [Styles.pinned]: isPinned })}
 			data-pinned={isPinned}
+			data-distribution-tooltip
 			data-testid="distribution-tooltip"
 		>
 			<div className={Styles.title}>
@@ -159,9 +158,9 @@ export default function DistributionTooltip({
 				</div>
 			)}
 
-			{showList && content.active && <span className={Styles.divider} />}
+			{shouldShowList && content.active && <span className={Styles.divider} />}
 
-			{showList && (
+			{shouldShowList && (
 				<TooltipList
 					id={id}
 					content={content.items}
@@ -169,16 +168,16 @@ export default function DistributionTooltip({
 				/>
 			)}
 
-			{isOtherHovered && otherHint && (
-				<div
-					className={Styles.memberHint}
-					data-testid="distribution-tooltip-other-hint"
-				>
-					{otherHint}
-				</div>
+			{isOtherHovered ? (
+				<GroupedTooltipFooter
+					isGroup
+					isPinned={isPinned}
+					canDrilldown={!!onOtherMemberClick}
+					onUnpin={dismiss}
+				/>
+			) : (
+				renderTooltipFooter?.({ isPinned, dismiss })
 			)}
-
-			{renderTooltipFooter?.({ isPinned, dismiss })}
 		</div>
 	);
 }

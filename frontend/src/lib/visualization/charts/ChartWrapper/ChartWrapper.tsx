@@ -33,7 +33,7 @@ export default function ChartWrapper({
 	canPinTooltip = false,
 	pinKey,
 	onClick,
-	pinOnClick,
+	shouldPinOnClick,
 	syncMode,
 	syncKey,
 	syncFilterMode,
@@ -140,7 +140,7 @@ export default function ChartWrapper({
 								canPinTooltip={canPinTooltip}
 								pinKey={pinKey}
 								onClick={onClick}
-								pinOnClick={pinOnClick}
+								shouldPinOnClick={shouldPinOnClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,

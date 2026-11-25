@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
@@ -83,13 +83,19 @@ export default function Distribution({
 	);
 
 	const { xAxis, totals } = useMemo(() => {
-		const full = resolveDistributionXAxis(buckets);
-		const visibleTotals = sumVisibleCounts(counts, visible, full.rows.length);
+		const fullXAxis = resolveDistributionXAxis(buckets);
+		const visibleTotals = sumVisibleCounts(
+			counts,
+			visible,
+			fullXAxis.rows.length,
+		);
 		// An explicit max may reach past the last occupied bucket; only auto-crop without one.
-		const fitted =
-			xMax === undefined ? cropDistributionXAxis(full, visibleTotals) : full;
+		const croppedXAxis =
+			xMax === undefined
+				? cropDistributionXAxis(fullXAxis, visibleTotals)
+				: fullXAxis;
 		return {
-			xAxis: clampDistributionXAxis(fitted, xMin, xMax),
+			xAxis: clampDistributionXAxis(croppedXAxis, xMin, xMax),
 			totals: visibleTotals,
 		};
 	}, [buckets, xMin, xMax, counts, visible]);
@@ -202,18 +208,18 @@ export default function Distribution({
 		[drawn, series, colors],
 	);
 
-	const onBarClickRef = useRef(onBarClick);
-	onBarClickRef.current = onBarClick;
-	const handleOtherMemberClick = useCallback(
-		(source: number, coordinates: { x: number; y: number }): void => {
-			onBarClickRef.current?.({
-				series: series[source],
-				color: colors[source],
-				coordinates,
-			});
-		},
-		[series, colors],
-	);
+	const {
+		onClick: handleClick,
+		shouldPinOnClick,
+		onOtherMemberClick,
+	} = useDistributionBarClick({
+		xAxis,
+		layout,
+		drawn,
+		series,
+		colors,
+		onBarClick,
+	});
 
 	const renderTooltip = useCallback(
 		(args: TooltipRenderArgs): React.ReactNode => (
@@ -228,7 +234,7 @@ export default function Distribution({
 				colors={drawn.colors}
 				counts={drawn.counts}
 				otherMembers={otherMembers}
-				onOtherMemberClick={onBarClick ? handleOtherMemberClick : undefined}
+				onOtherMemberClick={onOtherMemberClick}
 				formatBound={formatBound}
 				renderTooltipFooter={renderTooltipFooter}
 			/>
@@ -239,20 +245,11 @@ export default function Distribution({
 			layout,
 			drawn,
 			otherMembers,
-			onBarClick,
-			handleOtherMemberClick,
+			onOtherMemberClick,
 			formatBound,
 			renderTooltipFooter,
 		],
 	);
-
-	const { onClick: handleClick, pinOnClick } = useDistributionBarClick({
-		xAxis,
-		layout,
-		drawn,
-		series,
-		onBarClick,
-	});
 
 	const data = useMemo(
 		() => prepareDistributionChartData(xAxis, drawn.counts),
@@ -304,7 +301,7 @@ export default function Distribution({
 			decimalPrecision={decimalPrecision}
 			customTooltip={renderTooltip}
 			onClick={handleClick}
-			pinOnClick={pinOnClick}
+			shouldPinOnClick={shouldPinOnClick}
 			contentFooter={
 				drawn.otherSourceIndexes.length > 0 && (
 					<Typography

@@ -43,7 +43,7 @@ interface BaseChartProps {
 	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
 	onClick?: (clickData: ChartClickData) => void;
 	/** With `canPinTooltip`, a click it returns true for pins the tooltip instead of calling `onClick`. */
-	pinOnClick?: (clickData: ChartClickData) => boolean;
+	shouldPinOnClick?: (clickData: ChartClickData) => boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: ChartClickData) => React.ReactNode;

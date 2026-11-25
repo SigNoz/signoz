@@ -80,11 +80,18 @@ export interface UseDistributionBarClickArgs {
 	layout: DistributionBarsLayout;
 	drawn: DrawnGroups;
 	series: DistributionSeries[];
+	/** Each source series' colour, for a group picked out of Other. */
+	colors: string[];
 	onBarClick?: (click: DistributionBarClick) => void;
 }
 
 export interface UseDistributionBarClickReturn {
 	onClick?: (data: ChartClickData) => void;
 	/** True over the Other bar, whose click pins the tooltip so a group in it can be picked. */
-	pinOnClick?: (data: ChartClickData) => boolean;
+	shouldPinOnClick?: (data: ChartClickData) => boolean;
+	/** Drills into a group summed into Other, picked from the pinned tooltip. */
+	onOtherMemberClick?: (
+		sourceIndex: number,
+		coordinates: { x: number; y: number },
+	) => void;
 }

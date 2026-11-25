@@ -15,10 +15,11 @@ const series: DistributionSeries[] = [
 	{ label: 'b', counts: [0, 2, 0, 0] },
 	{ label: 'c', counts: [0, 1, 0, 0] },
 ];
+const colors = ['#a', '#b', '#c'];
 const drawn = groupIntoOther({
 	labels: series.map(({ label }) => label),
 	counts: series.map(({ counts }) => counts),
-	colors: ['#a', '#b', '#c'],
+	colors,
 	visible: [true, true, true],
 	maxGroups: 2,
 	otherColor: '#999',
@@ -44,11 +45,11 @@ const clickAt = (xValue: number, yValue: number): ChartClickData => ({
 describe('useDistributionBarClick', () => {
 	it('pins on a click over Other, and only there', () => {
 		const { result } = renderHook(() =>
-			useDistributionBarClick({ xAxis, layout, drawn, series }),
+			useDistributionBarClick({ xAxis, layout, drawn, series, colors }),
 		);
 
-		expect(result.current.pinOnClick?.(clickAt(1.5, 6.5))).toBe(true);
-		expect(result.current.pinOnClick?.(clickAt(1.5, 2))).toBe(false);
+		expect(result.current.shouldPinOnClick?.(clickAt(1.5, 6.5))).toBe(true);
+		expect(result.current.shouldPinOnClick?.(clickAt(1.5, 2))).toBe(false);
 	});
 
 	it('drills into a drawn group, never into Other', () => {
@@ -56,7 +57,14 @@ describe('useDistributionBarClick', () => {
 			NonNullable<UseDistributionBarClickArgs['onBarClick']>
 		>;
 		const { result } = renderHook(() =>
-			useDistributionBarClick({ xAxis, layout, drawn, series, onBarClick }),
+			useDistributionBarClick({
+				xAxis,
+				layout,
+				drawn,
+				series,
+				colors,
+				onBarClick,
+			}),
 		);
 
 		result.current.onClick?.(clickAt(1.5, 6.5));
@@ -77,9 +85,34 @@ describe('useDistributionBarClick', () => {
 				layout,
 				drawn: { ...drawn, otherSourceIndexes: [] },
 				series,
+				colors,
 			}),
 		);
 
-		expect(result.current.pinOnClick).toBeUndefined();
+		expect(result.current.shouldPinOnClick).toBeUndefined();
+	});
+
+	it('drills into a group picked out of Other, with its own colour', () => {
+		const onBarClick = jest.fn() as jest.MockedFunction<
+			NonNullable<UseDistributionBarClickArgs['onBarClick']>
+		>;
+		const { result } = renderHook(() =>
+			useDistributionBarClick({
+				xAxis,
+				layout,
+				drawn,
+				series,
+				colors,
+				onBarClick,
+			}),
+		);
+
+		result.current.onOtherMemberClick?.(2, { x: 5, y: 6 });
+
+		expect(onBarClick).toHaveBeenCalledWith({
+			series: series[2],
+			color: '#c',
+			coordinates: { x: 5, y: 6 },
+		});
 	});
 });

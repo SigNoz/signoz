@@ -33,14 +33,14 @@ export function resolveHoveredMarker(
 	y: number,
 	tolerance: number,
 ): number | null {
-	const overBadge = areas.findIndex(({ badges }) =>
+	const badgeIndex = areas.findIndex(({ badges }) =>
 		badges.some(
 			(badge) =>
 				x >= badge.left && x <= badge.right && y >= badge.top && y <= badge.bottom,
 		),
 	);
-	if (overBadge !== -1) {
-		return overBadge;
+	if (badgeIndex !== -1) {
+		return badgeIndex;
 	}
 	let nearest: number | null = null;
 	let nearestDistance = tolerance;
@@ -128,19 +128,19 @@ export function drawPercentileMarkers(
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 
-	const named = markers.map((group) => {
+	const badgeLabels = markers.map((group) => {
 		const text = formatPercentileBadge(group);
 		return { text, width: ctx.measureText(text).width };
 	});
 	// One square diamond for all, fitting the widest name's box: |dx| + |dy| ≤ radius at
 	// its corners. Cap height stands in for the text's height.
 	const radius =
-		(Math.max(...named.map(({ width }) => width)) +
+		(Math.max(...badgeLabels.map(({ width }) => width)) +
 			MARKER_FONT_SIZE_PX * pxRatio * CAP_HEIGHT_RATIO) /
 			2 +
 		MARKER_BADGE_PADDING_PX * pxRatio;
 	const badges = markers.map((group, index) => ({
-		text: named[index].text,
+		text: badgeLabels[index].text,
 		x: uPlotInstance.valToPos(group[0].axisValue, 'x', true),
 	}));
 	const rows = layoutMarkerLabels(

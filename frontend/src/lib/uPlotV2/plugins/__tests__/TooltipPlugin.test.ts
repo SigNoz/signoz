@@ -622,19 +622,19 @@ describe('TooltipPlugin', () => {
 	// ---- Keyboard pin edge cases ------------------------------------------------
 
 	describe('pin on click', () => {
-		it('pins on a click pinOnClick accepts, instead of calling onClick', async () => {
+		it('pins on a click shouldPinOnClick accepts, instead of calling onClick', async () => {
 			const config = createConfigMock();
 			const onClick = jest.fn() as jest.MockedFunction<
 				NonNullable<TooltipPluginProps['onClick']>
 			>;
-			const pinOnClick = jest.fn() as jest.MockedFunction<
-				NonNullable<TooltipPluginProps['pinOnClick']>
+			const shouldPinOnClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['shouldPinOnClick']>
 			>;
-			pinOnClick.mockReturnValue(true);
+			shouldPinOnClick.mockReturnValue(true);
 			const fakePlot = renderAndActivateHover(config, undefined, {
 				canPinTooltip: true,
 				onClick,
-				pinOnClick,
+				shouldPinOnClick,
 			});
 
 			act(() => {
@@ -646,11 +646,11 @@ describe('TooltipPlugin', () => {
 					'true',
 				);
 			});
-			expect(pinOnClick).toHaveBeenCalledTimes(1);
+			expect(shouldPinOnClick).toHaveBeenCalledTimes(1);
 			expect(onClick).not.toHaveBeenCalled();
 		});
 
-		it('calls onClick for a click pinOnClick declines', () => {
+		it('calls onClick for a click shouldPinOnClick declines', () => {
 			const config = createConfigMock();
 			const onClick = jest.fn() as jest.MockedFunction<
 				NonNullable<TooltipPluginProps['onClick']>
@@ -658,7 +658,7 @@ describe('TooltipPlugin', () => {
 			const fakePlot = renderAndActivateHover(config, undefined, {
 				canPinTooltip: true,
 				onClick,
-				pinOnClick: () => false,
+				shouldPinOnClick: () => false,
 			});
 
 			act(() => {

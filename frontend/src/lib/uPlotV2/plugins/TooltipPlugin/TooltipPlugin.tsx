@@ -51,7 +51,7 @@ export default function TooltipPlugin({
 	canPinTooltip = false,
 	pinKey = DEFAULT_PIN_TOOLTIP_KEY,
 	onClick,
-	pinOnClick,
+	shouldPinOnClick,
 	portalRoot: portalRootProp,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -60,8 +60,8 @@ export default function TooltipPlugin({
 	const layoutRef = useRef<TooltipLayoutInfo>();
 	const renderRef = useRef(render);
 	renderRef.current = render;
-	const pinOnClickRef = useRef(pinOnClick);
-	pinOnClickRef.current = pinOnClick;
+	const shouldPinOnClickRef = useRef(shouldPinOnClick);
+	shouldPinOnClickRef.current = shouldPinOnClick;
 	const [portalRoot, setPortalRoot] = useState<HTMLElement>(
 		portalRootProp ??
 			(document.fullscreenElement as HTMLElement) ??
@@ -381,7 +381,7 @@ export default function TooltipPlugin({
 				controller.focusedSeriesIndex != null
 			) {
 				const clickData = buildClickData(event, plot);
-				if (canPinTooltip && pinOnClickRef.current?.(clickData)) {
+				if (canPinTooltip && shouldPinOnClickRef.current?.(clickData)) {
 					controller.clickData = clickData;
 					controller.pinned = true;
 					logEvent(Events.TOOLTIP_PINNED, {
@@ -400,7 +400,7 @@ export default function TooltipPlugin({
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
 			updateState({ hasPlot: true });
-			if (onClick || pinOnClick) {
+			if (onClick || shouldPinOnClick) {
 				overClickHandler = handleOverClick;
 				u.over.addEventListener('click', overClickHandler);
 			}

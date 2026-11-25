@@ -18,6 +18,7 @@ export function useDistributionBarClick({
 	layout,
 	drawn,
 	series,
+	colors,
 	onBarClick,
 }: UseDistributionBarClickArgs): UseDistributionBarClickReturn {
 	const onBarClickRef = useRef(onBarClick);
@@ -46,7 +47,7 @@ export function useDistributionBarClick({
 		[resolveDrawnIndex, drawn, series],
 	);
 
-	const pinOnClick = useCallback(
+	const shouldPinOnClick = useCallback(
 		(data: ChartClickData): boolean => {
 			const drawnIndex = resolveDrawnIndex(data);
 			return drawnIndex !== null && drawn.sourceIndexes[drawnIndex] === null;
@@ -54,8 +55,21 @@ export function useDistributionBarClick({
 		[resolveDrawnIndex, drawn],
 	);
 
+	const handleOtherMemberClick = useCallback(
+		(sourceIndex: number, coordinates: { x: number; y: number }): void => {
+			onBarClickRef.current?.({
+				series: series[sourceIndex],
+				color: colors[sourceIndex],
+				coordinates,
+			});
+		},
+		[series, colors],
+	);
+
 	return {
 		onClick: onBarClick ? handleClick : undefined,
-		pinOnClick: drawn.otherSourceIndexes.length > 0 ? pinOnClick : undefined,
+		onOtherMemberClick: onBarClick ? handleOtherMemberClick : undefined,
+		shouldPinOnClick:
+			drawn.otherSourceIndexes.length > 0 ? shouldPinOnClick : undefined,
 	};
 }
