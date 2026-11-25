@@ -1,21 +1,14 @@
-import { DistributionGroupColumn, DistributionTooltipRow } from './types';
+import type { TooltipContentItem } from 'lib/uPlotV2/components/types';
 
-/** `<1%` rather than `0%`, so a share that exists never reads as none. */
-export function formatPercent(share: number): string {
-	if (share > 0 && share < 0.01) {
-		return '<1%';
-	}
-	return `${Math.round(share * 100)}%`;
-}
+import { DistributionOtherMember, DistributionOtherMemberItem } from './types';
 
 /**
- * Names the group column after the one group-by key every group shares, showing just
- * its values; several keys or none keep the full labels. Other has no group labels and
- * keeps its own.
+ * Shows the value of the one group-by key every group shares instead of the full
+ * label; several keys or none keep the full labels, and so does Other.
  */
-export function resolveGroupColumn(
+export function resolveGroupLabelFormat(
 	groupLabels: (Record<string, string> | undefined)[],
-): DistributionGroupColumn {
+): (label: string, labels: Record<string, string> | undefined) => string {
 	const keys = new Set(
 		groupLabels.flatMap((group) => {
 			if (!group) {
@@ -27,16 +20,34 @@ export function resolveGroupColumn(
 	);
 	const [key] = [...keys];
 	if (keys.size !== 1 || !key) {
-		return { heading: 'Group', format: (label) => label };
+		return (label) => label;
 	}
+	return (label, labels) => labels?.[key] ?? label;
+}
+
+function toItem(
+	label: string,
+	color: string,
+	count: number,
+	isActive: boolean,
+): TooltipContentItem {
 	return {
-		heading: key,
-		format: (label, index) => groupLabels[index]?.[key] ?? label,
+		label,
+		value: count,
+		tooltipValue: count.toLocaleString(),
+		color,
+		isActive,
 	};
 }
 
-/** One row per drawn group, in legend order, with its count in `bucket`. */
-export function buildDistributionTooltipRows({
+const byValueDesc = (a: { value: number }, b: { value: number }): number =>
+	b.value - a.value;
+
+/**
+ * Every drawn group's item for `bucket`, largest first, as the time-series tooltip
+ * sorts; the hovered one is also returned as `active`.
+ */
+export function buildDistributionTooltipItems({
 	labels,
 	colors,
 	counts,
@@ -51,18 +62,43 @@ export function buildDistributionTooltipRows({
 	bucket: number;
 	hoveredSeries: number | null;
 	formatLabel: (label: string, series: number) => string;
-}): DistributionTooltipRow[] {
-	return labels.map((label, series) => {
-		const seriesCounts = counts[series] ?? [];
-		const total = seriesCounts.reduce((sum, count) => sum + count, 0);
-		const count = seriesCounts[bucket] ?? 0;
-		return {
-			seriesIndex: series,
-			label: formatLabel(label, series),
-			color: colors[series],
-			count,
-			share: total > 0 ? count / total : 0,
-			isHovered: series === hoveredSeries,
-		};
-	});
+}): { active: TooltipContentItem | null; items: TooltipContentItem[] } {
+	const items = labels.map((label, series) =>
+		toItem(
+			formatLabel(label, series),
+			colors[series],
+			counts[series]?.[bucket] ?? 0,
+			series === hoveredSeries,
+		),
+	);
+	return {
+		active: items.find((item) => item.isActive) ?? null,
+		items: [...items].sort(byValueDesc),
+	};
+}
+
+/** Every member of Other with its count in `bucket`, largest first. */
+export function buildOtherMemberItems({
+	members,
+	bucket,
+	formatLabel,
+}: {
+	members: DistributionOtherMember[];
+	bucket: number;
+	formatLabel: (
+		label: string,
+		labels: Record<string, string> | undefined,
+	) => string;
+}): DistributionOtherMemberItem[] {
+	return members
+		.map((member) => ({
+			sourceIndex: member.sourceIndex,
+			item: toItem(
+				formatLabel(member.label, member.groupLabels),
+				member.color,
+				member.counts[bucket] ?? 0,
+				false,
+			),
+		}))
+		.sort((a, b) => byValueDesc(a.item, b.item));
 }

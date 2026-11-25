@@ -37,8 +37,8 @@ export interface DrawnGroups {
 	colors: string[];
 	/** Each drawn group's index among the source series; `null` for Other. */
 	sourceIndexes: (number | null)[];
-	/** Visible groups summed into the Other series; 0 when none were. */
-	otherGroupCount: number;
+	/** Source indexes of the visible groups summed into Other, largest first; empty when none were. */
+	otherSourceIndexes: number[];
 	/** Visible groups in all, drawn or folded. */
 	visibleGroupCount: number;
 }

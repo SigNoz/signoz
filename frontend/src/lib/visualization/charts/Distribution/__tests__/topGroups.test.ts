@@ -5,7 +5,7 @@ import { resolveDistributionXAxis } from '../layout';
 import {
 	groupIntoOther,
 	resolveClickedGroup,
-	MAX_STACKED_GROUPS,
+	MAX_SIDE_BY_SIDE_GROUPS,
 	resolveMaxDrawnGroups,
 } from '../topGroups';
 
@@ -13,13 +13,19 @@ describe('resolveMaxDrawnGroups', () => {
 	// Four equal buckets plus underflow and overflow: six slots of one unit each.
 	const xAxis = resolveDistributionXAxis([1, 2, 3, 4, 5]);
 
-	it('caps stacked and percent at the fixed limit', () => {
+	it('draws every group when stacked or percent', () => {
 		expect(
 			resolveMaxDrawnGroups({ stack: StackMode.Normal, xAxis, plotWidth: 60 }),
-		).toBe(MAX_STACKED_GROUPS);
+		).toBe(Number.POSITIVE_INFINITY);
 		expect(
 			resolveMaxDrawnGroups({ stack: StackMode.Percent, xAxis, plotWidth: 60 }),
-		).toBe(MAX_STACKED_GROUPS);
+		).toBe(Number.POSITIVE_INFINITY);
+	});
+
+	it('caps side by side at the fixed limit, however wide', () => {
+		expect(
+			resolveMaxDrawnGroups({ stack: StackMode.None, xAxis, plotWidth: 6000 }),
+		).toBe(MAX_SIDE_BY_SIDE_GROUPS);
 	});
 
 	it('fits side by side so the narrowest bar stays 3 px wide', () => {
@@ -51,7 +57,7 @@ describe('groupIntoOther', () => {
 		const drawn = groupIntoOther({ ...args, maxGroups: 4 });
 
 		expect(drawn.labels).toStrictEqual(['a', 'b', 'c', 'd']);
-		expect(drawn.otherGroupCount).toBe(0);
+		expect(drawn.otherSourceIndexes).toStrictEqual([]);
 	});
 
 	it('keeps the largest, in legend order, and sums the rest exactly', () => {
@@ -61,7 +67,10 @@ describe('groupIntoOther', () => {
 		expect(drawn.sourceIndexes).toStrictEqual([1, 3, null]);
 		expect(drawn.counts[2]).toStrictEqual([3, 1]);
 		expect(drawn.colors[2]).toBe('#999');
-		expect(drawn).toMatchObject({ otherGroupCount: 2, visibleGroupCount: 4 });
+		expect(drawn).toMatchObject({
+			otherSourceIndexes: [0, 2],
+			visibleGroupCount: 4,
+		});
 	});
 
 	it('re-ranks without hidden groups, which never reach Other', () => {

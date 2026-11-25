@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import Legend from 'lib/uPlotV2/components/Legend/Legend';
 import {
@@ -199,9 +199,35 @@ export default function Distribution({
 		[drawn, series],
 	);
 
+	const otherMembers = useMemo(
+		() =>
+			drawn.otherSourceIndexes.map((source) => ({
+				sourceIndex: source,
+				label: series[source].label,
+				groupLabels: series[source].groupLabels,
+				color: colors[source],
+				counts: series[source].counts,
+			})),
+		[drawn, series, colors],
+	);
+
+	const onBarClickRef = useRef(onBarClick);
+	onBarClickRef.current = onBarClick;
+	const handleOtherMemberClick = useCallback(
+		(source: number, coordinates: { x: number; y: number }): void => {
+			onBarClickRef.current?.({
+				series: series[source],
+				color: colors[source],
+				coordinates,
+			});
+		},
+		[series, colors],
+	);
+
 	const renderTooltip = useCallback(
 		(args: TooltipRenderArgs): React.ReactNode => (
 			<DistributionTooltip
+				id={id}
 				uPlotInstance={args.uPlotInstance}
 				isPinned={args.isPinned}
 				dismiss={args.dismiss}
@@ -211,11 +237,24 @@ export default function Distribution({
 				groupLabels={drawnGroupLabels}
 				colors={drawn.colors}
 				counts={drawn.counts}
+				otherMembers={otherMembers}
+				onOtherMemberClick={onBarClick ? handleOtherMemberClick : undefined}
 				formatBound={formatBound}
 				renderTooltipFooter={renderTooltipFooter}
 			/>
 		),
-		[xAxis, layout, drawn, drawnGroupLabels, formatBound, renderTooltipFooter],
+		[
+			id,
+			xAxis,
+			layout,
+			drawn,
+			drawnGroupLabels,
+			otherMembers,
+			onBarClick,
+			handleOtherMemberClick,
+			formatBound,
+			renderTooltipFooter,
+		],
 	);
 
 	const handleClick = useDistributionBarClick({
@@ -263,7 +302,9 @@ export default function Distribution({
 			data={data}
 			width={width}
 			height={
-				drawn.otherGroupCount > 0 ? Math.max(0, height - NOTICE_HEIGHT) : height
+				drawn.otherSourceIndexes.length > 0
+					? Math.max(0, height - NOTICE_HEIGHT)
+					: height
 			}
 			legendConfig={{ position: legendPosition }}
 			showLegend={showLegend}
@@ -275,7 +316,7 @@ export default function Distribution({
 			customTooltip={renderTooltip}
 			onClick={handleClick}
 			contentFooter={
-				drawn.otherGroupCount > 0 && (
+				drawn.otherSourceIndexes.length > 0 && (
 					<Typography
 						variant="paragraph"
 						as="div"

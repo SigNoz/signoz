@@ -1,77 +1,117 @@
 import {
-	buildDistributionTooltipRows,
-	formatPercent,
-	resolveGroupColumn,
+	buildDistributionTooltipItems,
+	buildOtherMemberItems,
+	resolveGroupLabelFormat,
 } from '../distributionTooltipContent';
 
-describe('formatPercent', () => {
-	it('rounds, and never shows a real share as 0%', () => {
-		expect(formatPercent(0.256)).toBe('26%');
-		expect(formatPercent(0.004)).toBe('<1%');
-		expect(formatPercent(0)).toBe('0%');
-	});
-});
-
-describe('resolveGroupColumn', () => {
-	it('names the column after a shared single key and shows its values', () => {
-		const column = resolveGroupColumn([
+describe('resolveGroupLabelFormat', () => {
+	it('shows the value of a single key every group shares', () => {
+		const format = resolveGroupLabelFormat([
 			{ 'service.name': 'cart' },
 			{ 'service.name': 'checkout' },
 		]);
 
-		expect(column.heading).toBe('service.name');
-		expect(column.format('cart service', 0)).toBe('cart');
-		expect(column.format('checkout service', 1)).toBe('checkout');
+		expect(format('{service.name="cart"}', { 'service.name': 'cart' })).toBe(
+			'cart',
+		);
 	});
 
-	it('keeps Other under the shared key, with its own label', () => {
-		const column = resolveGroupColumn([{ 'service.name': 'cart' }, undefined]);
+	it('keeps Other, with no group labels, as it is', () => {
+		const format = resolveGroupLabelFormat([
+			{ 'service.name': 'cart' },
+			undefined,
+		]);
 
-		expect(column.heading).toBe('service.name');
-		expect(column.format('Other', 1)).toBe('Other');
+		expect(format('Other', undefined)).toBe('Other');
 	});
 
 	it('keeps full labels for several keys or none', () => {
-		const several = resolveGroupColumn([{ env: 'prod', 'service.name': 'cart' }]);
-		const ungrouped = resolveGroupColumn([{}]);
+		const several = resolveGroupLabelFormat([
+			{ env: 'prod', 'service.name': 'cart' },
+		]);
+		const ungrouped = resolveGroupLabelFormat([{}]);
 
-		expect(several.heading).toBe('Group');
-		expect(several.format('prod cart', 0)).toBe('prod cart');
-		expect(ungrouped.heading).toBe('Group');
+		expect(several('prod cart', { env: 'prod', 'service.name': 'cart' })).toBe(
+			'prod cart',
+		);
+		expect(ungrouped('{}', {})).toBe('{}');
 	});
 });
 
-describe('buildDistributionTooltipRows', () => {
-	it('gives each drawn group, in legend order, its count and share', () => {
-		const rows = buildDistributionTooltipRows({
+describe('buildDistributionTooltipItems', () => {
+	it('sorts the groups largest first and returns the hovered one as active', () => {
+		const { active, items } = buildDistributionTooltipItems({
 			labels: ['cart', 'checkout'],
 			colors: ['#f00', '#0f0'],
 			counts: [
 				[2, 6, 2],
-				[5, 0, 5],
+				[1, 8, 1],
 			],
 			bucket: 1,
 			hoveredSeries: 0,
 			formatLabel: (label) => label.toUpperCase(),
 		});
 
-		expect(rows).toStrictEqual([
+		expect(items).toStrictEqual([
 			{
-				seriesIndex: 0,
-				label: 'CART',
-				color: '#f00',
-				count: 6,
-				share: 0.6,
-				isHovered: true,
-			},
-			{
-				seriesIndex: 1,
 				label: 'CHECKOUT',
+				value: 8,
+				tooltipValue: '8',
 				color: '#0f0',
-				count: 0,
-				share: 0,
-				isHovered: false,
+				isActive: false,
 			},
+			{
+				label: 'CART',
+				value: 6,
+				tooltipValue: '6',
+				color: '#f00',
+				isActive: true,
+			},
+		]);
+		expect(active).toBe(items[1]);
+	});
+});
+
+describe('buildOtherMemberItems', () => {
+	it('lists every member of Other, largest in the bucket first', () => {
+		const members = buildOtherMemberItems({
+			members: [
+				{
+					sourceIndex: 4,
+					label: 'a',
+					groupLabels: { 'service.name': 'cart' },
+					color: '#a',
+					counts: [1, 3],
+				},
+				{
+					sourceIndex: 7,
+					label: 'b',
+					groupLabels: { 'service.name': 'ad' },
+					color: '#b',
+					counts: [0, 5],
+				},
+				{
+					sourceIndex: 9,
+					label: 'c',
+					groupLabels: { 'service.name': 'quote' },
+					color: '#c',
+					counts: [2, 0],
+				},
+			],
+			bucket: 1,
+			formatLabel: (label, groupLabels) => groupLabels?.['service.name'] ?? label,
+		});
+
+		expect(
+			members.map(({ sourceIndex, item }) => [
+				sourceIndex,
+				item.label,
+				item.value,
+			]),
+		).toStrictEqual([
+			[7, 'ad', 5],
+			[4, 'cart', 3],
+			[9, 'quote', 0],
 		]);
 	});
 });

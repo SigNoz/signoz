@@ -1,5 +1,6 @@
 import type React from 'react';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
+import { StackMode } from 'lib/uPlotV2/config/types';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import Distribution from '../Distribution';
@@ -84,8 +85,9 @@ describe('Distribution', () => {
 		expect(legendItem(CHECKOUT)).toHaveAttribute('aria-checked', 'false');
 		expect(legendItem(CART)).toHaveAttribute('aria-checked', 'true');
 	});
-	it('sums groups past the stacked cap into Other, with a notice', () => {
+	it('sums groups past the side-by-side cap into Other, with a notice', () => {
 		renderDistribution({
+			stack: StackMode.None,
 			series: Array.from({ length: 12 }, (_, index) => ({
 				label: `group-${index}`,
 				counts: [index, 1, 1, 0, 0],
@@ -97,6 +99,19 @@ describe('Distribution', () => {
 		);
 		// The legend still lists every group, so any can be isolated.
 		expect(legendItem(1)).toHaveAttribute('aria-label', 'group-0');
+	});
+
+	it('stacks every group, with no Other', () => {
+		renderDistribution({
+			series: Array.from({ length: 12 }, (_, index) => ({
+				label: `group-${index}`,
+				counts: [index, 1, 1, 0, 0],
+			})),
+		});
+
+		expect(
+			screen.queryByTestId('distribution-other-notice'),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows no notice when every group fits', () => {

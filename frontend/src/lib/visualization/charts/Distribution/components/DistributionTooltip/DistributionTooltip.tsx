@@ -1,27 +1,32 @@
 import { useMemo } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import cx from 'classnames';
+import TooltipItem from 'lib/uPlotV2/components/Tooltip/components/TooltipItem/TooltipItem';
+import TooltipList from 'lib/uPlotV2/components/Tooltip/components/TooltipList/TooltipList';
+import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
 import {
 	formatRowLabel,
 	resolveRowIndex,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
-import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
-import ItemStyles from 'lib/uPlotV2/components/Tooltip/components/TooltipItem/TooltipItem.module.scss';
 
 import { resolveNearestSeries } from '../../layout';
 import {
-	buildDistributionTooltipRows,
-	formatPercent,
-	resolveGroupColumn,
+	buildDistributionTooltipItems,
+	buildOtherMemberItems,
+	resolveGroupLabelFormat,
 } from './distributionTooltipContent';
 import { DistributionTooltipProps } from './types';
 
 import Styles from './DistributionTooltip.module.scss';
 
 /**
- * The bucket comes from the live cursor, not uPlot's `cursor.idx`: that snaps to the
- * nearest bucket centre, which on uneven widths is often the neighbour.
+ * Laid out like the time-series tooltip: the hovered group above the divider, every
+ * group below it, largest first. Over Other, the list is the groups Other sums, as
+ * on Pie. The bucket comes from the live cursor, not uPlot's `cursor.idx`: that
+ * snaps to the nearest bucket centre, which on uneven widths is often the neighbour.
  */
 export default function DistributionTooltip({
+	id,
 	uPlotInstance,
 	xAxis,
 	layout,
@@ -29,6 +34,8 @@ export default function DistributionTooltip({
 	groupLabels,
 	colors,
 	counts,
+	otherMembers,
+	onOtherMemberClick,
 	formatBound,
 	isPinned,
 	dismiss,
@@ -57,32 +64,76 @@ export default function DistributionTooltip({
 		};
 	}, [left, top, uPlotInstance, xAxis, layout]);
 
-	const groupColumn = useMemo(
-		() => resolveGroupColumn(groupLabels),
+	const formatGroupLabel = useMemo(
+		() => resolveGroupLabelFormat(groupLabels),
 		[groupLabels],
 	);
 
-	const rows = useMemo(
-		() =>
-			hover
-				? buildDistributionTooltipRows({
-						labels,
-						colors,
-						counts,
-						bucket: hover.bucket,
-						hoveredSeries: hover.series,
-						formatLabel: groupColumn.format,
-					})
-				: [],
-		[hover, labels, colors, counts, groupColumn],
-	);
+	// Other is drawn last.
+	const otherIndex = otherMembers.length > 0 ? labels.length - 1 : null;
+	const isOtherHovered = otherIndex !== null && hover?.series === otherIndex;
 
-	if (!hover) {
+	const content = useMemo(() => {
+		if (!hover) {
+			return null;
+		}
+		const { active, items } = buildDistributionTooltipItems({
+			labels,
+			colors,
+			counts,
+			bucket: hover.bucket,
+			hoveredSeries: hover.series,
+			formatLabel: (label, series) =>
+				series === otherIndex
+					? `${label} (${otherMembers.length})`
+					: formatGroupLabel(label, groupLabels[series]),
+		});
+		const total = items.reduce((sum, item) => sum + item.value, 0);
+		if (!isOtherHovered) {
+			return { active, items, total, members: [] };
+		}
+		const members = buildOtherMemberItems({
+			members: otherMembers,
+			bucket: hover.bucket,
+			formatLabel: formatGroupLabel,
+		});
+		return {
+			active,
+			items: members.map(({ item }) => item),
+			total,
+			members,
+		};
+	}, [
+		hover,
+		labels,
+		colors,
+		counts,
+		otherIndex,
+		otherMembers,
+		formatGroupLabel,
+		groupLabels,
+		isOtherHovered,
+	]);
+
+	if (!hover || !content) {
 		return null;
 	}
 
-	const bucket = xAxis.rows[hover.bucket];
-	const bucketTotal = rows.reduce((sum, row) => sum + row.count, 0);
+	const canPickMember = isOtherHovered && isPinned && !!onOtherMemberClick;
+	// The menu opens where the tooltip was, which closes first.
+	const handleMemberClick = (index: number, event: ReactMouseEvent): void => {
+		const rect = (event.currentTarget as Element)
+			.closest('[data-testid="distribution-tooltip"]')
+			?.getBoundingClientRect();
+		const member = content.members[index];
+		dismiss();
+		if (member) {
+			onOtherMemberClick?.(member.sourceIndex, {
+				x: rect?.left ?? event.clientX,
+				y: rect?.top ?? event.clientY,
+			});
+		}
+	};
 
 	return (
 		<div
@@ -95,56 +146,46 @@ export default function DistributionTooltip({
 					className={Styles.titleBucket}
 					data-testid="distribution-tooltip-range"
 				>
-					{formatRowLabel(bucket, formatBound)}
+					{formatRowLabel(xAxis.rows[hover.bucket], formatBound)}
 				</span>
 				<span className={Styles.titleSeparator} />
 				<span
 					className={Styles.titleCount}
 					data-testid="distribution-tooltip-total"
 				>
-					{bucketTotal.toLocaleString()}
+					{content.total.toLocaleString()}
 				</span>
 				{isPinned && <TooltipPinnedBadge />}
 			</div>
 
+			{content.active && (
+				<div className={Styles.activeItem}>
+					<TooltipItem
+						item={content.active}
+						isItemActive
+						containerTestId="distribution-tooltip-active"
+					/>
+				</div>
+			)}
+
 			<span className={Styles.divider} />
 
-			<div className={Styles.rows}>
-				<div className={Styles.columnHeader}>
-					<span
-						className={Styles.columnLabel}
-						title={groupColumn.heading}
-						data-testid="distribution-tooltip-group-heading"
-					>
-						{groupColumn.heading}
-					</span>
-					<span>Count</span>
-					<span>% Total</span>
+			<TooltipList
+				id={id}
+				content={content.items}
+				onItemClick={canPickMember ? handleMemberClick : undefined}
+			/>
+
+			{isOtherHovered && onOtherMemberClick && (
+				<div
+					className={Styles.memberHint}
+					data-testid="distribution-tooltip-other-hint"
+				>
+					{isPinned
+						? 'Click a group to drill down'
+						: 'Pin the tooltip, then click a group to drill down'}
 				</div>
-				{rows.map((row) => (
-					<div
-						key={row.seriesIndex}
-						className={cx(ItemStyles.uplotTooltipItem, Styles.row)}
-						data-is-active={row.isHovered}
-						data-testid="distribution-tooltip-row"
-						data-hovered={row.isHovered}
-					>
-						<span
-							className={ItemStyles.uplotTooltipItemMarker}
-							style={{ borderColor: row.color, backgroundColor: row.color }}
-						/>
-						<span className={ItemStyles.uplotTooltipItemLabel} title={row.label}>
-							{row.label}
-						</span>
-						<span className={ItemStyles.uplotTooltipItemValue}>
-							{row.count.toLocaleString()}
-						</span>
-						<span className={ItemStyles.uplotTooltipItemValue}>
-							{formatPercent(row.share)}
-						</span>
-					</div>
-				))}
-			</div>
+			)}
 
 			{renderTooltipFooter?.({ isPinned, dismiss })}
 		</div>

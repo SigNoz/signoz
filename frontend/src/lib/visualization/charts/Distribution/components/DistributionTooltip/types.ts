@@ -1,31 +1,34 @@
 import type {
 	IRenderTooltipFooterArgs,
+	TooltipContentItem,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
 
 import type { DistributionBarsLayout, DistributionXAxis } from '../../types';
 
-export interface DistributionTooltipRow {
-	/** Index among the drawn series. */
-	seriesIndex: number;
+/** A group summed into Other, listed under it. */
+export interface DistributionOtherMember {
+	/** Index among the source series. */
+	sourceIndex: number;
 	label: string;
+	groupLabels: Record<string, string> | undefined;
 	color: string;
-	count: number;
-	/** Of the group's own total over the range. */
-	share: number;
-	isHovered: boolean;
+	/** Per bucket. */
+	counts: number[];
 }
 
-export interface DistributionGroupColumn {
-	heading: string;
-	/** The display label of the drawn group at `index`. */
-	format: (label: string, index: number) => string;
+/** A member of Other as a tooltip row, with the group it drills into. */
+export interface DistributionOtherMemberItem {
+	sourceIndex: number;
+	item: TooltipContentItem;
 }
 
 export interface DistributionTooltipProps extends Pick<
 	TooltipRenderArgs,
 	'uPlotInstance' | 'isPinned' | 'dismiss'
 > {
+	/** Widget id, for the list's analytics. */
+	id: string;
 	xAxis: DistributionXAxis;
 	layout: DistributionBarsLayout;
 	labels: string[];
@@ -34,6 +37,13 @@ export interface DistributionTooltipProps extends Pick<
 	colors: string[];
 	/** `counts[series][bucket]`. */
 	counts: number[][];
+	/** The groups summed into Other, the last drawn group; empty when there is none. */
+	otherMembers: DistributionOtherMember[];
+	/** Drills into a member of Other, picked from the pinned tooltip. */
+	onOtherMemberClick?: (
+		sourceIndex: number,
+		coordinates: { x: number; y: number },
+	) => void;
 	formatBound: (value: number) => string;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 }

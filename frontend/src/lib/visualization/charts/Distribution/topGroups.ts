@@ -4,14 +4,15 @@ import { OTHER_GROUP_LABEL } from 'lib/visualization/charts/utils/otherGroup';
 
 import { DistributionSeries, DistributionXAxis, DrawnGroups } from './types';
 
-/** Colours stop being told apart past this many stacked groups. */
-export const MAX_STACKED_GROUPS = 10;
+/** Colours stop being told apart past this many groups side by side. */
+export const MAX_SIDE_BY_SIDE_GROUPS = 10;
 /** Narrowest a side-by-side bar may get, in CSS pixels. */
 const MIN_SIDE_BY_SIDE_BAR_PX = 3;
 
 /**
- * How many series fit: a fixed cap when stacked, and side by side as many as keep
- * every bar in the narrowest bucket at least `MIN_SIDE_BY_SIDE_BAR_PX` wide.
+ * How many series fit: every one when stacked, since a stack never narrows its bars;
+ * side by side, as many as keep every bar in the narrowest bucket at least
+ * `MIN_SIDE_BY_SIDE_BAR_PX` wide, up to `MAX_SIDE_BY_SIDE_GROUPS`.
  */
 export function resolveMaxDrawnGroups({
 	stack,
@@ -24,7 +25,7 @@ export function resolveMaxDrawnGroups({
 	plotWidth: number;
 }): number {
 	if (stack !== StackMode.None) {
-		return MAX_STACKED_GROUPS;
+		return Number.POSITIVE_INFINITY;
 	}
 	const span = xAxis.max - xAxis.min;
 	let narrowest = Number.POSITIVE_INFINITY;
@@ -34,11 +35,11 @@ export function resolveMaxDrawnGroups({
 		}
 	}
 	if (!(span > 0) || !Number.isFinite(narrowest)) {
-		return MAX_STACKED_GROUPS;
+		return MAX_SIDE_BY_SIDE_GROUPS;
 	}
 	const narrowestPx = (plotWidth * narrowest) / span;
 	return Math.min(
-		MAX_STACKED_GROUPS,
+		MAX_SIDE_BY_SIDE_GROUPS,
 		Math.max(1, Math.floor(narrowestPx / MIN_SIDE_BY_SIDE_BAR_PX)),
 	);
 }
@@ -73,18 +74,18 @@ export function groupIntoOther({
 			counts: visibleIndexes.map((index) => counts[index]),
 			colors: visibleIndexes.map((index) => colors[index]),
 			sourceIndexes: visibleIndexes,
-			otherGroupCount: 0,
+			otherSourceIndexes: [],
 			visibleGroupCount: visibleIndexes.length,
 		};
 	}
 
-	const keep = new Set(
-		[...visibleIndexes]
-			.sort((a, b) => sum(counts[b]) - sum(counts[a]) || a - b)
-			.slice(0, Math.max(0, maxGroups - 1)),
+	const ranked = [...visibleIndexes].sort(
+		(a, b) => sum(counts[b]) - sum(counts[a]) || a - b,
 	);
+	const keptCount = Math.max(0, maxGroups - 1);
+	const keep = new Set(ranked.slice(0, keptCount));
 	const kept = visibleIndexes.filter((index) => keep.has(index));
-	const folded = visibleIndexes.filter((index) => !keep.has(index));
+	const folded = ranked.slice(keptCount);
 	const bucketCount = Math.max(...folded.map((index) => counts[index].length));
 	const other = Array.from({ length: bucketCount }, (_, bucket) =>
 		folded.reduce((total, index) => total + (counts[index][bucket] ?? 0), 0),
@@ -95,7 +96,7 @@ export function groupIntoOther({
 		counts: [...kept.map((index) => counts[index]), other],
 		colors: [...kept.map((index) => colors[index]), otherColor],
 		sourceIndexes: [...kept, null],
-		otherGroupCount: folded.length,
+		otherSourceIndexes: folded,
 		visibleGroupCount: visibleIndexes.length,
 	};
 }
