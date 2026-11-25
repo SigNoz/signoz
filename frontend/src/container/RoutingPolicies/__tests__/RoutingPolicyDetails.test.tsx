@@ -313,6 +313,18 @@ describe('RoutingPolicyDetails', () => {
 			);
 		});
 
+		it('locks the channel picker without update', async () => {
+			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
+			renderDetails('edit');
+
+			await waitFor(() =>
+				expect(screen.getByDisplayValue(mockRoutingPolicy.name)).toBeDisabled(),
+			);
+			expect(
+				within(screen.getByTestId('routing-policy-channels')).getByRole('combobox'),
+			).toBeDisabled();
+		});
+
 		it('names update when Save is denied on edit', async () => {
 			server.use(setupAuthzDeny(buildRoutePolicyUpdatePermission(POLICY_ID)));
 			renderDetails({ mode: 'edit' });

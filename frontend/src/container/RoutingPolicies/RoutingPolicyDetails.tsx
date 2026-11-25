@@ -258,7 +258,7 @@ function RoutingPolicyDetails({
 									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
 								}
 								status={isErrorChannels ? 'error' : undefined}
-								disabled={isLoadingChannels}
+								disabled={isReadOnly || isLoadingChannels}
 								notFoundContent={notificationChannelsNotFoundContent}
 								data-testid="routing-policy-channels-select"
 							/>
