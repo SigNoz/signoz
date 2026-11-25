@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Input } from '@signozhq/ui/input';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
 
@@ -18,7 +19,7 @@ function CreateAlertHeader(): JSX.Element {
 
 	const groupByLabels = useMemo(() => {
 		const labels = new Array<string>();
-		currentQuery.builder.queryData.forEach((query) => {
+		getActiveBuilder(currentQuery).queryData.forEach((query) => {
 			query.groupBy.forEach((groupBy) => {
 				labels.push(groupBy.key);
 			});

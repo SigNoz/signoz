@@ -49,7 +49,11 @@ export const timelineTableColumns = ({
 		width: 140,
 		align: 'right',
 		render: (_, record): JSX.Element => {
-			if (!record.relatedTracesLink && !record.relatedLogsLink) {
+			if (
+				!record.relatedTracesLink &&
+				!record.relatedLogsLink &&
+				!record.relatedAITracesLink
+			) {
 				return (
 					<Tooltip title="No links available for this item">
 						<Button type="text" ghost disabled data-testid="timeline-row-actions">
@@ -63,6 +67,7 @@ export const timelineTableColumns = ({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink ?? ''}
 					relatedLogsLink={record.relatedLogsLink ?? ''}
+					relatedAITracesLink={record.relatedAITracesLink ?? ''}
 				>
 					<Button type="text" ghost data-testid="timeline-row-actions">
 						<Ellipsis className="dropdown-icon" size="md" />
