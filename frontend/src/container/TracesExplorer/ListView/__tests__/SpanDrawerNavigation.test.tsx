@@ -104,8 +104,6 @@ describe('Traces ListView - span drawer navigation', () => {
 		);
 	});
 
-	// A press in the list moves focus out of the drawer, and Base UI then walks
-	// every tabbable in it with getComputedStyle, which takes seconds in jsdom.
 	it('stays open on a press in the drawer or the list, and closes on one outside', async () => {
 		const user = userEvent.setup();
 		renderListView();
@@ -125,7 +123,7 @@ describe('Traces ListView - span drawer navigation', () => {
 		await waitFor(() =>
 			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
 		);
-	}, 30000);
+	});
 
 	it('opens the trace page in a new tab from the row icon without opening the drawer', async () => {
 		const open = jest.spyOn(window, 'open').mockImplementation(() => null);
@@ -133,9 +131,9 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup({ skipHover: true });
 		renderListView();
 
-		const row = (await screen.findByText('HTTP GET')).closest(
-			'tr',
-		) as HTMLElement;
+		const row = await screen.findByTestId(
+			`traces-table-row-${listRows[0].data.span_id}`,
+		);
 		expect(screen.queryByTestId('span-row-open-trace')).not.toBeInTheDocument();
 		await user.hover(row);
 		await user.click(await screen.findByTestId('span-row-open-trace'));
@@ -213,8 +211,10 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup({ skipHover: true });
 		renderListView();
 
-		const [first] = await screen.findAllByText('HTTP GET');
-		await user.hover(first.closest('tr') as HTMLElement);
+		const [first] = await screen.findAllByTestId(
+			`traces-table-row-${listRows[0].data.span_id}`,
+		);
+		await user.hover(first);
 
 		await expect(
 			screen.findAllByTestId('span-row-open-trace'),

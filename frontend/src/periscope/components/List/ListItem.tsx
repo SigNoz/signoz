@@ -28,7 +28,7 @@ const InternalListItem = forwardRef<HTMLLIElement, ListItemProps>(
 			>
 				{itemLayout === 'vertical' && extra ? (
 					<>
-						<div className={styles.itemMain}>
+						<div data-testid="list-item-main" className={styles.itemMain}>
 							{children}
 							{actionList}
 						</div>

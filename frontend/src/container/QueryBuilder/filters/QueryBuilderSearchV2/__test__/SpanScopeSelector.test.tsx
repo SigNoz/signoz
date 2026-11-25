@@ -5,7 +5,7 @@ import {
 	RenderResult,
 	screen,
 	within,
-} from '@testing-library/react';
+} from 'tests/test-utils';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import {
@@ -296,12 +296,7 @@ describe('SpanScopeSelector', () => {
 
 		it('should call onChange and not redirect when selecting ROOT_SPANS (from ALL_SPANS)', async () => {
 			const localQuery = createLocalQuery(); // Initially All Spans
-			const { container } = renderWithContext(
-				defaultQuery,
-				mockOnChange,
-				localQuery,
-				true,
-			);
+			renderWithContext(defaultQuery, mockOnChange, localQuery, true);
 			await expect(screen.findByText('All Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Root Spans');
@@ -309,19 +304,14 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
 			assertOnChangePayload(0, 'isRoot', []);
 			expect(
-				container.querySelector('span[title="Root Spans"]'),
+				within(screen.getByTestId('span-scope-selector')).getByTitle('Root Spans'),
 			).toBeInTheDocument();
 		});
 
 		it('should call onChange with removed scope when selecting ALL_SPANS (from ROOT_SPANS)', async () => {
 			const initialRootFilter = createSpanScopeFilter('isRoot');
 			const localQuery = createLocalQuery([initialRootFilter]);
-			const { container } = renderWithContext(
-				defaultQuery,
-				mockOnChange,
-				localQuery,
-				true,
-			);
+			renderWithContext(defaultQuery, mockOnChange, localQuery, true);
 			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('All Spans');
@@ -330,19 +320,14 @@ describe('SpanScopeSelector', () => {
 			assertOnChangePayload(0, null, []);
 
 			expect(
-				container.querySelector('span[title="All Spans"]'),
+				within(screen.getByTestId('span-scope-selector')).getByTitle('All Spans'),
 			).toBeInTheDocument();
 		});
 
 		it('should call onChange, replacing isRoot with isEntryPoint', async () => {
 			const initialRootFilter = createSpanScopeFilter('isRoot');
 			const localQuery = createLocalQuery([initialRootFilter]);
-			const { container } = renderWithContext(
-				defaultQuery,
-				mockOnChange,
-				localQuery,
-				true,
-			);
+			renderWithContext(defaultQuery, mockOnChange, localQuery, true);
 			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
@@ -350,7 +335,9 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
 			assertOnChangePayload(0, 'isEntryPoint', []);
 			expect(
-				container.querySelector('span[title="Entrypoint Spans"]'),
+				within(screen.getByTestId('span-scope-selector')).getByTitle(
+					'Entrypoint Spans',
+				),
 			).toBeInTheDocument();
 		});
 
@@ -359,12 +346,7 @@ describe('SpanScopeSelector', () => {
 			const initialRootFilter = createSpanScopeFilter('isRoot');
 			const localQuery = createLocalQuery([nonScopeItem, initialRootFilter], 'OR');
 
-			const { container } = renderWithContext(
-				defaultQuery,
-				mockOnChange,
-				localQuery,
-				true,
-			);
+			renderWithContext(defaultQuery, mockOnChange, localQuery, true);
 			await expect(screen.findByText('Root Spans')).resolves.toBeInTheDocument();
 
 			await selectOption('Entrypoint Spans');
@@ -372,7 +354,9 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
 			assertOnChangePayload(0, 'isEntryPoint', [nonScopeItem]);
 			expect(
-				container.querySelector('span[title="Entrypoint Spans"]'),
+				within(screen.getByTestId('span-scope-selector')).getByTitle(
+					'Entrypoint Spans',
+				),
 			).toBeInTheDocument();
 		});
 
@@ -386,12 +370,7 @@ describe('SpanScopeSelector', () => {
 				nonScopeItem2,
 			]);
 
-			const { container } = renderWithContext(
-				defaultQuery,
-				mockOnChange,
-				localQuery,
-				true,
-			);
+			renderWithContext(defaultQuery, mockOnChange, localQuery, true);
 			await expect(
 				screen.findByText('Entrypoint Spans'),
 			).resolves.toBeInTheDocument();
@@ -401,7 +380,7 @@ describe('SpanScopeSelector', () => {
 			expect(mockRedirectWithQueryBuilderData).not.toHaveBeenCalled();
 			assertOnChangePayload(0, null, [nonScopeItem1, nonScopeItem2]);
 			expect(
-				container.querySelector('span[title="All Spans"]'),
+				within(screen.getByTestId('span-scope-selector')).getByTitle('All Spans'),
 			).toBeInTheDocument();
 		});
 

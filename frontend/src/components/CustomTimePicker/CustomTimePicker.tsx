@@ -640,12 +640,14 @@ function CustomTimePicker({
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleClose}
+										data-testid="time-picker-close-chevron"
 									/>
 								) : (
 									<ChevronDown
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleOpen}
+										data-testid="time-picker-open-chevron"
 									/>
 								)}
 							</div>

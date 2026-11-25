@@ -1,4 +1,3 @@
-import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import {
 	GetMetricMetadata200,
@@ -10,7 +9,7 @@ import {
 	YAxisUnitSelectorProps,
 } from 'components/YAxisUnitSelector/types';
 import * as useNotificationsHooks from 'hooks/useNotifications';
-import { userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { SelectOption } from 'types/common/select';
 
 import Metadata from '../Metadata';
@@ -336,8 +335,7 @@ describe('Metadata', () => {
 		);
 
 		expect(screen.getByText('Metadata')).toBeInTheDocument();
-		const editButton = screen.getByText('Edit').closest('button');
-		expect(editButton).toBeDisabled();
+		expect(screen.getByTestId('metadata-edit-button')).toBeDisabled();
 	});
 
 	it('should not allow editing of unit if it is already set', async () => {

@@ -1,5 +1,5 @@
 import { ComponentProps } from 'react';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 import type logEvent from '../../../../../api/common/logEvent';
@@ -13,9 +13,6 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn() as jest.MockedFunction<typeof logEvent>,
 }));
-
-// The form flow drives antd selects and typing, which outruns the 5s default on CI.
-jest.setTimeout(15_000);
 
 type OnClose = ComponentProps<typeof CloudAccountSetupModal>['onClose'];
 
@@ -84,26 +81,28 @@ const mockApi = ({ failFirstPoll = false } = {}): {
 	return api;
 };
 
+type User = ReturnType<typeof userEvent.setup>;
+
+const generateCommand = async (user: User): Promise<void> => {
+	const select = await screen.findByTestId('aws-deployment-region-select');
+	await user.click(within(select).getByRole('combobox', { hidden: true }));
+	await user.click(await screen.findByText('US East (N. Virginia)'));
+	await user.click(screen.getByTestId('aws-region-us-east-1'));
+	await user.click(screen.getByTestId('aws-generate-command-btn'));
+	await screen.findByTestId('aws-agent-command');
+};
+
 describe('AWS CloudAccountSetupModal', () => {
 	it('creates the account and shows its setup command', async () => {
 		const api = mockApi();
 		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 		const user = userEvent.setup();
-		const onClose = mockOnClose();
 
-		render(<CloudAccountSetupModal onClose={onClose} />);
+		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
-		await user.click(await screen.findByRole('combobox'));
-		await user.click(await screen.findByText('US East (N. Virginia)'));
-		await user.click(await screen.findByRole('checkbox', { name: /us-east-1/i }));
-		await user.click(screen.getByTestId('aws-generate-command-btn'));
+		await generateCommand(user);
 
-		await waitFor(() => {
-			expect(screen.getByTestId('aws-agent-command')).toHaveTextContent(
-				cliCommand,
-			);
-		});
-
+		expect(screen.getByTestId('aws-agent-command')).toHaveTextContent(cliCommand);
 		expect(api.createAccountPayload).toStrictEqual({
 			config: { aws: { deploymentRegion: 'us-east-1', regions: ['us-east-1'] } },
 			credentials,
@@ -111,11 +110,25 @@ describe('AWS CloudAccountSetupModal', () => {
 		expect(
 			screen.queryByTestId('aws-generate-command-btn'),
 		).not.toBeInTheDocument();
-		expect(screen.queryAllByRole('combobox')).toHaveLength(0);
-		expect(screen.getByText(/waiting for connection/i)).toBeInTheDocument();
+		expect(
+			screen.queryByTestId('aws-deployment-region-select'),
+		).not.toBeInTheDocument();
+		expect(screen.getByTestId('cloud-connect-waiting')).toHaveTextContent(
+			/waiting for connection/i,
+		);
 		expect(openSpy).not.toHaveBeenCalled();
 
 		openSpy.mockRestore();
+	});
+
+	it('asks before closing once a setup command exists', async () => {
+		mockApi();
+		const user = userEvent.setup();
+		const onClose = mockOnClose();
+
+		render(<CloudAccountSetupModal onClose={onClose} />);
+
+		await generateCommand(user);
 
 		await user.click(screen.getByTestId('aws-cancel-btn'));
 		await user.click(await screen.findByTestId('aws-continue-setup-btn'));
@@ -150,16 +163,15 @@ describe('AWS CloudAccountSetupModal', () => {
 
 		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
-		await user.click(await screen.findByRole('combobox'));
-		await user.click(await screen.findByText('US East (N. Virginia)'));
-		await user.click(await screen.findByRole('checkbox', { name: /us-east-1/i }));
-		await user.click(screen.getByTestId('aws-generate-command-btn'));
+		await generateCommand(user);
 
 		await user.click(await screen.findByTestId('aws-check-connection-btn'));
 
 		await waitFor(() => expect(api.pollCount()).toBe(2));
 
-		await screen.findByText(/waiting for connection/i);
+		await expect(
+			screen.findByTestId('cloud-connect-waiting'),
+		).resolves.toHaveTextContent(/waiting for connection/i);
 		expect(
 			screen.queryByTestId('aws-check-connection-btn'),
 		).not.toBeInTheDocument();

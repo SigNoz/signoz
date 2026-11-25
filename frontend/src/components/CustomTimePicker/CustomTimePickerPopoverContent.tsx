@@ -1,6 +1,8 @@
 import {
 	Dispatch,
+	lazy,
 	SetStateAction,
+	Suspense,
 	useCallback,
 	useEffect,
 	useMemo,
@@ -24,14 +26,19 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
-import CalendarContainer from './CalendarContainer';
+import CalendarContainerFallback from './CalendarContainerFallback';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
+
+const CalendarContainer = lazy(() =>
+	lazyRetry(() => import('./CalendarContainer')),
+);
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -291,12 +298,16 @@ function CustomTimePickerPopoverContent({
 					)}
 				>
 					{customDateTimeVisible ? (
-						<CalendarContainer
-							dateRange={dateRange}
-							onSelectDateRange={handleSelectDateRange}
-							onCancel={handleCalendarRangeCancel}
-							onApply={handleCalendarRangeApply}
-						/>
+						<Suspense
+							fallback={<CalendarContainerFallback month={dateRange?.from} />}
+						>
+							<CalendarContainer
+								dateRange={dateRange}
+								onSelectDateRange={handleSelectDateRange}
+								onCancel={handleCalendarRangeCancel}
+								onApply={handleCalendarRangeApply}
+							/>
+						</Suspense>
 					) : (
 						<div className="time-selector-container">
 							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&

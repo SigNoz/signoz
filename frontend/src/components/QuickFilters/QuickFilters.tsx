@@ -208,6 +208,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						placeholder="Select a query"
 						searchInputProps={{ placeholder: 'Search queries' }}
 						items={queryItems}
+						testId="quick-filters-query-select"
 						value={String(validQueryIndex)}
 						onChange={(value): void => {
 							if (value !== undefined) {
@@ -318,6 +319,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						color="primary"
 						textPlacement="right"
 						value={showIP ?? true}
+						testId="quick-filters-show-ip"
 						onChange={(checked): void => {
 							void logEvent('API Monitoring: Show IP addresses clicked', {
 								showIP: checked,
@@ -375,7 +377,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	);
 
 	const filtersSkeleton = (
-		<div className="quick-filters-skeleton">
+		<div className="quick-filters-skeleton" data-testid="quick-filters-skeleton">
 			{Array.from({ length: 5 }).map((_, index) => (
 				// eslint-disable-next-line react/no-array-index-key
 				<Skeleton.Input active size="small" key={index} />

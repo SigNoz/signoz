@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	TEXT_BACKGROUND_PAIRS,
@@ -164,8 +164,8 @@ describe('Panel — authoring-mode fork', () => {
 
 		function renderPanel(target: DashboardtypesPanelDTO): HTMLElement {
 			mockGetPanelDefinition.mockReturnValueOnce(staticDefinition);
-			const { container } = render(<Panel panel={target} panelId="p1" />);
-			return container.querySelector('[data-panel-root="p1"]') as HTMLElement;
+			render(<Panel panel={target} panelId="p1" />);
+			return screen.getByTestId('panel-p1');
 		}
 
 		// The header is `headerOptions`' business alone: a transparent panel keeps its

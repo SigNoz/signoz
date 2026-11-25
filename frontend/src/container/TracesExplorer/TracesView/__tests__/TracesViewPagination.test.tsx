@@ -1,5 +1,6 @@
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
 import { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
@@ -56,11 +57,8 @@ describe('TracesView pagination', () => {
 	});
 
 	it('offers no page past the next one until that page arrives', async () => {
-		let release = (): void => {};
-		const pageTwo = new Promise<void>((resolve) => {
-			release = resolve;
-		});
-		mockPages({ 0: 20, 20: 20 }, { 20: pageTwo });
+		const pageTwo = holdResponse();
+		mockPages({ 0: 20, 20: 20 }, { 20: pageTwo.held });
 		const user = userEvent.setup();
 		renderTracesView();
 
@@ -72,7 +70,7 @@ describe('TracesView pagination', () => {
 			screen.queryByTestId(`${PAGINATION_TEST_ID}-page-3`),
 		).not.toBeInTheDocument();
 
-		release();
+		pageTwo.release();
 		await expect(
 			screen.findByTestId(`${PAGINATION_TEST_ID}-page-3`),
 		).resolves.toBeInTheDocument();

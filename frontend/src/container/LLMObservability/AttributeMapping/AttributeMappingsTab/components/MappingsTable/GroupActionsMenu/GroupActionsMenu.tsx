@@ -38,7 +38,13 @@ function GroupActionsMenu({
 	);
 
 	return (
-		<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+		<Dropdown
+			items={menuItems}
+			nativeButton
+			align="end"
+			side="bottom"
+			testId={`group-actions-${group.localId}`}
+		>
 			<Button
 				variant="ghost"
 				color="secondary"

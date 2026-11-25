@@ -1,3 +1,4 @@
+import type { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import {
 	listRolesSuccessResponse,
 	managedRoles,
@@ -15,22 +16,25 @@ import {
 	buildSADeletePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 
+import KeysTab from '../KeysTab';
+import OverviewTab from '../OverviewTab';
 import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_DELETE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_ROLES_ENDPOINT = '*/api/v1/service_account_roles';
-const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_account_roles/:id';
 
-const activeAccountResponse = {
+const account: ServiceAccountRow = {
 	id: 'sa-1',
 	name: 'CI Bot',
 	email: 'ci-bot@signoz.io',
 	status: 'ACTIVE',
 	createdAt: '2026-01-01T00:00:00Z',
 	updatedAt: '2026-01-02T00:00:00Z',
+};
+
+const activeAccountResponse = {
+	...account,
 	serviceAccountRoles: [
 		{
 			id: 'sar-admin-1',
@@ -41,93 +45,88 @@ const activeAccountResponse = {
 	],
 };
 
-function renderDrawer(
-	searchParams: Record<string, string> = { account: 'sa-1' },
-): ReturnType<typeof render> {
+function renderOverviewTab(): ReturnType<typeof render> {
 	return render(
-		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-			<ServiceAccountDrawer onSuccess={jest.fn()} />
-		</NuqsTestingAdapter>,
-	);
-}
-
-function setupBaseHandlers(): void {
-	server.use(
-		rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
-		),
-		rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ data: [] })),
-		),
-		rest.get(SA_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ data: activeAccountResponse })),
-		),
-		rest.put(SA_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-		),
-		rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
-			res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
-		),
-		rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
-			res(
-				ctx.status(201),
-				ctx.json({ status: 'success', data: { id: 'sar-new' } }),
-			),
-		),
-		rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => res(ctx.status(204))),
+		<OverviewTab
+			account={account}
+			localName="CI Bot"
+			onNameChange={jest.fn()}
+			localRoles={[]}
+			onRolesChange={jest.fn()}
+			isDisabled={false}
+			availableRoles={[]}
+		/>,
 	);
 }
 
 describe('ServiceAccountDrawer — permissions', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-		setupBaseHandlers();
-	});
-
-	afterEach(() => {
-		server.resetHandlers();
-	});
-
-	it('shows PermissionDeniedCallout inside drawer when read permission is denied', async () => {
+	it('shows PermissionDeniedCallout in the Overview tab when read permission is denied', async () => {
 		server.use(setupAuthzDenyAll());
 
-		renderDrawer();
+		renderOverviewTab();
 
-		await waitFor(() => {
-			expect(screen.getByText(/read:serviceaccount/)).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('permission-denied-callout'),
+		).resolves.toHaveTextContent('read:serviceaccount:sa-1');
 	});
 
-	it('shows drawer content when read permission is granted', async () => {
+	it('shows Overview tab content when read permission is granted', async () => {
 		server.use(setupAuthzAdmin());
 
-		renderDrawer();
+		renderOverviewTab();
 
 		await screen.findByDisplayValue('CI Bot');
-		expect(screen.queryByText(/serviceaccount:read/)).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('permission-denied-callout'),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows PermissionDeniedCallout in Keys tab when list-keys permission is denied', async () => {
 		server.use(setupAuthzDeny(APIKeyListPermission));
 
-		renderDrawer({ account: 'sa-1', tab: 'keys' });
+		render(
+			<KeysTab
+				keys={[]}
+				isLoading={false}
+				accountId="sa-1"
+				currentPage={1}
+				pageSize={15}
+				onPageChange={jest.fn()}
+			/>,
+		);
 
-		await waitFor(() => {
-			expect(screen.getByText(/list:factor-api-key/)).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('permission-denied-callout'),
+		).resolves.toHaveTextContent('list:factor-api-key:*');
 	});
 
 	it('disables Delete button when delete permission is denied', async () => {
-		server.use(setupAuthzDeny(buildSADeletePermission('sa-1')));
-
-		renderDrawer();
-		await screen.findByDisplayValue('CI Bot');
-
-		const deleteBtn = screen.getByRole('button', {
-			name: /Delete Service Account/i,
-		});
-		await waitFor(() =>
-			expect(deleteBtn).toHaveAttribute('aria-disabled', 'true'),
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: activeAccountResponse })),
+			),
+			setupAuthzDeny(buildSADeletePermission('sa-1')),
 		);
+
+		render(
+			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }} hasMemory>
+				<ServiceAccountDrawer onSuccess={jest.fn()} />
+			</NuqsTestingAdapter>,
+		);
+
+		const deleteBtn = await screen.findByTestId('sa-delete-btn');
+		await waitFor(() =>
+			expect(deleteBtn).toHaveAttribute(
+				'data-denied-permissions',
+				buildSADeletePermission('sa-1'),
+			),
+		);
+		expect(deleteBtn).toHaveAttribute('aria-disabled', 'true');
 	});
 });

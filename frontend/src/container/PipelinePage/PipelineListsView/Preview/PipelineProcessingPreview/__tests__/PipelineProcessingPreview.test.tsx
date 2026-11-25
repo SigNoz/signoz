@@ -36,7 +36,7 @@ describe('PipelineProcessingPreview', () => {
 				);
 			}),
 		);
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<PipelineProcessingPreview pipeline={pipelineMockData[0]} />);
 

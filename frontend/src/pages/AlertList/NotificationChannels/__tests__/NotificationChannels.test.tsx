@@ -76,7 +76,7 @@ describe('Notification channels list', () => {
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
 			// the table paints a loading layer over the rows until the fetch settles
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.click(screen.getByTestId('channel-actions-3'));
 			// Radix renders the menu into a portal once the trigger is activated
 			await screen.findByRole('menu', {}, FIND);

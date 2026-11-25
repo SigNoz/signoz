@@ -96,7 +96,11 @@ export default function CustomDomainEditModal({
 	const statusIcon = ((): JSX.Element | null => {
 		if (isLoading) {
 			return (
-				<LoaderCircle size={16} className="animate-spin edit-modal-status-icon" />
+				<LoaderCircle
+					size={16}
+					className="animate-spin edit-modal-status-icon"
+					data-testid="workspace-url-loading-icon"
+				/>
 			);
 		}
 

@@ -1,5 +1,3 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import {
 	AuthtypesTransactionDTO,
 	SavedviewtypesSourceDTO,
@@ -22,6 +20,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
+import { act, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS } from '../constants';
@@ -40,7 +39,6 @@ import {
 } from './savedViewsTestUtils';
 
 const PATH = ROUTES.TRACES_EXPLORER;
-const HOVER_CARD_TIMEOUT = { timeout: SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS * 3 };
 
 const errors = makeView({ id: 'view-1', displayName: 'Errors' });
 const slow = makeView({ id: 'view-2', displayName: 'Slow spans' });
@@ -76,8 +74,9 @@ const rowNamed = (name: string): HTMLElement =>
 		.find((row) => row.textContent?.includes(name)) as HTMLElement;
 
 async function openRowMenu(name: string): Promise<void> {
+	const user = userEvent.setup();
 	await screen.findAllByTestId('saved-views-row');
-	fireEvent.click(within(rowNamed(name)).getByTestId('saved-views-row-menu'));
+	await user.click(within(rowNamed(name)).getByTestId('saved-views-row-menu'));
 }
 
 // Records every check, answered by `isGranted`.
@@ -103,12 +102,15 @@ const readSelectors = (checks: AuthtypesTransactionDTO[]): string[] =>
 
 async function hoverRow(name: string): Promise<HTMLElement> {
 	await screen.findAllByTestId('saved-views-row');
-	fireEvent.mouseEnter(rowNamed(name));
-	return screen.findByTestId(
-		'saved-view-hover-card',
-		undefined,
-		HOVER_CARD_TIMEOUT,
-	);
+	jest.useFakeTimers();
+	const user = userEvent.setup({
+		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+	});
+	await user.hover(rowNamed(name));
+	act(() => {
+		jest.advanceTimersByTime(SAVED_VIEW_HOVER_CARD_OPEN_DELAY_MS);
+	});
+	return screen.findByTestId('saved-view-hover-card');
 }
 
 // Resolves once the row's check is back, so its state is final.
@@ -174,7 +176,7 @@ describe('SavedViews - AuthZ', () => {
 		await screen.findAllByTestId('saved-views-row');
 		const name = within(rowNamed('Errors')).getByTestId('saved-views-row-name');
 		expectUsable(name);
-		await userEvent.click(name);
+		await userEvent.setup().click(name);
 
 		await waitFor(() =>
 			expect(urlParam(history, QueryParams.viewKey)).toBe(
@@ -206,56 +208,66 @@ describe('SavedViews - AuthZ', () => {
 		).resolves.not.toHaveAttribute('data-disabled');
 	});
 
-	it('shows the denied callout in the hover card of a view it cannot read, without fetching it', async () => {
-		let fetches = 0;
-		mockSavedViewsApi([errors]);
-		server.use(
-			setupAuthzDeny(
-				SavedViewReadPermission,
-				buildSavedViewReadPermission(errors.id),
-			),
-			rest.get(`${API}/:id`, (_req, res, ctx) => {
-				fetches += 1;
-				return res(ctx.json({ status: 'success', data: errors }));
-			}),
-		);
-		renderPanel();
+	describe('hover card', () => {
+		afterEach(() => {
+			// useAuthZ batches checks on a timer; left pending, it blocks later checks.
+			act(() => {
+				jest.runOnlyPendingTimers();
+			});
+			jest.useRealTimers();
+		});
 
-		const card = await hoverRow('Errors');
-		await expect(
-			within(card).findByText(/not authorized/i),
-		).resolves.toBeInTheDocument();
-		expect(within(card).queryByTestId('saved-view-hover-card-query')).toBeNull();
-		expect(fetches).toBe(0);
-	});
+		it('shows the denied callout in the hover card of a view it cannot read, without fetching it', async () => {
+			let fetches = 0;
+			mockSavedViewsApi([errors]);
+			server.use(
+				setupAuthzDeny(
+					SavedViewReadPermission,
+					buildSavedViewReadPermission(errors.id),
+				),
+				rest.get(`${API}/:id`, (_req, res, ctx) => {
+					fetches += 1;
+					return res(ctx.json({ status: 'success', data: errors }));
+				}),
+			);
+			renderPanel();
 
-	it('skips the read check of the hovered view with read on every view', async () => {
-		mockSavedViewsApi([errors]);
-		const checks = recordChecks();
-		renderPanel();
+			const card = await hoverRow('Errors');
+			await expect(
+				within(card).findByText(/not authorized/i),
+			).resolves.toBeInTheDocument();
+			expect(within(card).queryByTestId('saved-view-hover-card-query')).toBeNull();
+			expect(fetches).toBe(0);
+		});
 
-		const card = await hoverRow('Errors');
+		it('skips the read check of the hovered view with read on every view', async () => {
+			mockSavedViewsApi([errors]);
+			const checks = recordChecks();
+			renderPanel();
 
-		await expect(
-			within(card).findByTestId('saved-view-hover-card-query'),
-		).resolves.toHaveTextContent('has_error = true');
-		expect(readSelectors(checks)).toStrictEqual(['*']);
-	});
+			const card = await hoverRow('Errors');
 
-	it('checks read on the hovered view without read on every view', async () => {
-		mockSavedViewsApi([errors]);
-		const checks = recordChecks(
-			(transaction) =>
-				transaction.relation !== 'read' || transaction.object.selector !== '*',
-		);
-		renderPanel();
+			await expect(
+				within(card).findByTestId('saved-view-hover-card-query'),
+			).resolves.toHaveTextContent('has_error = true');
+			expect(readSelectors(checks)).toStrictEqual(['*']);
+		});
 
-		const card = await hoverRow('Errors');
+		it('checks read on the hovered view without read on every view', async () => {
+			mockSavedViewsApi([errors]);
+			const checks = recordChecks(
+				(transaction) =>
+					transaction.relation !== 'read' || transaction.object.selector !== '*',
+			);
+			renderPanel();
 
-		await expect(
-			within(card).findByTestId('saved-view-hover-card-query'),
-		).resolves.toHaveTextContent('has_error = true');
-		expect(readSelectors(checks)).toStrictEqual(['*', errors.id]);
+			const card = await hoverRow('Errors');
+
+			await expect(
+				within(card).findByTestId('saved-view-hover-card-query'),
+			).resolves.toHaveTextContent('has_error = true');
+			expect(readSelectors(checks)).toStrictEqual(['*', errors.id]);
+		});
 	});
 
 	it('disables creating without create', async () => {
@@ -287,7 +299,7 @@ describe('SavedViews - AuthZ', () => {
 
 		const create = screen.getByTestId('saved-views-create');
 		expect(create).toHaveAttribute('aria-busy', 'true');
-		await userEvent.click(create);
+		await userEvent.setup().click(create);
 		expect(screen.queryByTestId('save-view-name-field')).toBeNull();
 	});
 
@@ -329,7 +341,9 @@ describe('SavedViews - AuthZ', () => {
 				viewKey: errors.id,
 			}),
 		);
-		await userEvent.click(await screen.findByTestId('saved-views-save-changes'));
+		await userEvent
+			.setup()
+			.click(await screen.findByTestId('saved-views-save-changes'));
 
 		await expect(
 			settledRow('saved-views-save-changes-item-update'),
@@ -354,7 +368,9 @@ describe('SavedViews - AuthZ', () => {
 				viewKey: errors.id,
 			}),
 		);
-		await userEvent.click(await screen.findByTestId('saved-views-save-changes'));
+		await userEvent
+			.setup()
+			.click(await screen.findByTestId('saved-views-save-changes'));
 
 		await expect(
 			settledRow('saved-views-save-changes-item-save-as-new'),

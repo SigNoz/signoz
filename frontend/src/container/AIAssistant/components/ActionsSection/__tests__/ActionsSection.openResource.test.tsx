@@ -29,7 +29,7 @@ describe('ActionsSection open_resource', () => {
 		'/alerts/edit?ruleId=rule-1&tab=1',
 		'/alerts/overview?ruleId=rule-1&relativeTime=6h',
 	])('disables Open alert while that alert is open at %s', async (route) => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ActionsSection actions={[OPEN_ALERT]} messageId="message-1" />,
 			undefined,
@@ -51,7 +51,7 @@ describe('ActionsSection open_resource', () => {
 	it.each(['/alerts/edit?ruleId=rule-2', '/alerts/history?ruleId=rule-1'])(
 		'opens the alert from %s',
 		async (route) => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
 				<ActionsSection actions={[OPEN_ALERT]} messageId="message-2" />,
 				undefined,

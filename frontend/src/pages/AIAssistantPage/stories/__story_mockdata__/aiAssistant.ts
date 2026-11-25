@@ -56,6 +56,24 @@ export const THREAD_PARTS = [
 
 export type ThreadPart = (typeof THREAD_PARTS)[number];
 
+/** The blocks the agent renders as cards the user answers in place. */
+export const INTERACTIVE: ThreadPart[] = [
+	'question',
+	'checkboxes',
+	'confirm',
+	'suggested-action',
+];
+
+export const QUESTIONS: ThreadPart[] = ['question', 'checkboxes'];
+
+export const COMMITMENTS: ThreadPart[] = ['confirm', 'suggested-action'];
+
+/**
+ * Two short exchanges and nothing else, so the state the story is about sits in
+ * the first screen rather than under a scroll.
+ */
+export const BRIEF: ThreadPart[] = [];
+
 /** What the agent is doing when the thread opens. */
 export const AGENT_STATES = [
 	'idle',
@@ -457,6 +475,18 @@ const pendingApproval = (): ApprovalSummaryDTO => ({
 	createdAt: new Date(Date.now() - 30_000).toISOString(),
 });
 
+/** A delete leaves nothing to compare, so it carries no diff. */
+const pendingDeleteApproval = (): ApprovalSummaryDTO => ({
+	approvalId: 'approval-delete-checkout-alert',
+	executionId: EXECUTION_ID,
+	sourceMessageId: MESSAGE_IDS.final,
+	state: ApprovalStateDTO.pending,
+	actionType: ApprovalActionTypeDTO.delete,
+	resourceType: 'alert',
+	summary: 'Delete the muted Checkout p50 alert.',
+	createdAt: new Date(Date.now() - 30_000).toISOString(),
+});
+
 const pendingClarification = (): ClarificationSummaryDTO => ({
 	clarificationId: 'clarification-alert-scope',
 	executionId: EXECUTION_ID,
@@ -523,8 +553,10 @@ const pendingClarification = (): ClarificationSummaryDTO => ({
 export const threadDetailResponse = (
 	parts: readonly ThreadPart[],
 	agent: AgentState,
+	approvalDiff = true,
 ): ThreadDetailResponseDTO => {
 	const messages = stamped(turnsFor(parts));
+	const approval = approvalDiff ? pendingApproval() : pendingDeleteApproval();
 
 	return {
 		threadId: THREAD_ID,
@@ -536,7 +568,7 @@ export const threadDetailResponse = (
 		// `activeExecutionId` would reconnect the stream and overwrite the seeded
 		// one, so the streaming state is left to the store.
 		activeExecutionId: null,
-		pendingApproval: agent === 'awaiting-approval' ? pendingApproval() : null,
+		pendingApproval: agent === 'awaiting-approval' ? approval : null,
 		pendingClarification:
 			agent === 'awaiting-clarification' ? pendingClarification() : null,
 	};

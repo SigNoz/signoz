@@ -25,7 +25,7 @@ export default function SpanLineActionButtons({
 					color="secondary"
 					onClick={onSpanCopy}
 				>
-					<Link size={14} />
+					<Link size={14} data-testid="copy-span-link-icon" />
 				</Button>
 			</Tooltip>
 		</div>

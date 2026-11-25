@@ -45,6 +45,7 @@ export default function ContextPickerEmptyState({
 	return (
 		<div
 			className={styles.contextPopoverEmpty}
+			data-testid={`ai-context-empty-${category}`}
 			style={{ '--empty-accent': CATEGORY_ACCENT[category] } as CSSProperties}
 		>
 			<span className={styles.contextPopoverEmptyIcon} aria-hidden="true">

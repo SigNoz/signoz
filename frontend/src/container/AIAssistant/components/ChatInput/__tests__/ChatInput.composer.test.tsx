@@ -26,7 +26,7 @@ describe('ChatInput composer', () => {
 	});
 
 	it('lets the user type but not send while sending is blocked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onSend = jest.fn() as jest.MockedFunction<
 			ComponentProps<typeof ChatInput>['onSend']
 		>;
