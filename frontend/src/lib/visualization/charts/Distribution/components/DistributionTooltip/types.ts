@@ -11,7 +11,6 @@ export interface DistributionOtherMember {
 	/** Index among the source series. */
 	sourceIndex: number;
 	label: string;
-	groupLabels: Record<string, string> | undefined;
 	color: string;
 	/** Per bucket. */
 	counts: number[];
@@ -32,8 +31,6 @@ export interface DistributionTooltipProps extends Pick<
 	xAxis: DistributionXAxis;
 	layout: DistributionBarsLayout;
 	labels: string[];
-	/** Each drawn group's group-by values; `undefined` for Other. */
-	groupLabels: (Record<string, string> | undefined)[];
 	colors: string[];
 	/** `counts[series][bucket]`. */
 	counts: number[][];

@@ -191,20 +191,11 @@ export default function Distribution({
 		],
 	);
 
-	const drawnGroupLabels = useMemo(
-		() =>
-			drawn.sourceIndexes.map((source) =>
-				source === null ? undefined : series[source].groupLabels,
-			),
-		[drawn, series],
-	);
-
 	const otherMembers = useMemo(
 		() =>
 			drawn.otherSourceIndexes.map((source) => ({
 				sourceIndex: source,
 				label: series[source].label,
-				groupLabels: series[source].groupLabels,
 				color: colors[source],
 				counts: series[source].counts,
 			})),
@@ -234,7 +225,6 @@ export default function Distribution({
 				xAxis={xAxis}
 				layout={layout}
 				labels={drawn.labels}
-				groupLabels={drawnGroupLabels}
 				colors={drawn.colors}
 				counts={drawn.counts}
 				otherMembers={otherMembers}
@@ -248,7 +238,6 @@ export default function Distribution({
 			xAxis,
 			layout,
 			drawn,
-			drawnGroupLabels,
 			otherMembers,
 			onBarClick,
 			handleOtherMemberClick,

@@ -13,7 +13,6 @@ import { resolveNearestSeries } from '../../layout';
 import {
 	buildDistributionTooltipItems,
 	buildOtherMemberItems,
-	resolveGroupLabelFormat,
 } from './distributionTooltipContent';
 import { DistributionTooltipProps } from './types';
 
@@ -31,7 +30,6 @@ export default function DistributionTooltip({
 	xAxis,
 	layout,
 	labels,
-	groupLabels,
 	colors,
 	counts,
 	otherMembers,
@@ -64,11 +62,6 @@ export default function DistributionTooltip({
 		};
 	}, [left, top, uPlotInstance, xAxis, layout]);
 
-	const formatGroupLabel = useMemo(
-		() => resolveGroupLabelFormat(groupLabels),
-		[groupLabels],
-	);
-
 	// Other is drawn last.
 	const otherIndex = otherMembers.length > 0 ? labels.length - 1 : null;
 	const isOtherHovered = otherIndex !== null && hover?.series === otherIndex;
@@ -84,9 +77,7 @@ export default function DistributionTooltip({
 			bucket: hover.bucket,
 			hoveredSeries: hover.series,
 			formatLabel: (label, series) =>
-				series === otherIndex
-					? `${label} (${otherMembers.length})`
-					: formatGroupLabel(label, groupLabels[series]),
+				series === otherIndex ? `${label} (${otherMembers.length})` : label,
 		});
 		const total = items.reduce((sum, item) => sum + item.value, 0);
 		if (!isOtherHovered) {
@@ -95,7 +86,6 @@ export default function DistributionTooltip({
 		const members = buildOtherMemberItems({
 			members: otherMembers,
 			bucket: hover.bucket,
-			formatLabel: formatGroupLabel,
 		});
 		return {
 			active,
@@ -103,17 +93,7 @@ export default function DistributionTooltip({
 			total,
 			members,
 		};
-	}, [
-		hover,
-		labels,
-		colors,
-		counts,
-		otherIndex,
-		otherMembers,
-		formatGroupLabel,
-		groupLabels,
-		isOtherHovered,
-	]);
+	}, [hover, labels, colors, counts, otherIndex, otherMembers, isOtherHovered]);
 
 	if (!hover || !content) {
 		return null;

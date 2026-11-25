@@ -2,29 +2,6 @@ import type { TooltipContentItem } from 'lib/uPlotV2/components/types';
 
 import { DistributionOtherMember, DistributionOtherMemberItem } from './types';
 
-/**
- * Shows the value of the one group-by key every group shares instead of the full
- * label; several keys or none keep the full labels, and so does Other.
- */
-export function resolveGroupLabelFormat(
-	groupLabels: (Record<string, string> | undefined)[],
-): (label: string, labels: Record<string, string> | undefined) => string {
-	const keys = new Set(
-		groupLabels.flatMap((group) => {
-			if (!group) {
-				return [];
-			}
-			const groupKeys = Object.keys(group);
-			return [groupKeys.length === 1 ? groupKeys[0] : ''];
-		}),
-	);
-	const [key] = [...keys];
-	if (keys.size !== 1 || !key) {
-		return (label) => label;
-	}
-	return (label, labels) => labels?.[key] ?? label;
-}
-
 function toItem(
 	label: string,
 	color: string,
@@ -81,24 +58,14 @@ export function buildDistributionTooltipItems({
 export function buildOtherMemberItems({
 	members,
 	bucket,
-	formatLabel,
 }: {
 	members: DistributionOtherMember[];
 	bucket: number;
-	formatLabel: (
-		label: string,
-		labels: Record<string, string> | undefined,
-	) => string;
 }): DistributionOtherMemberItem[] {
 	return members
 		.map((member) => ({
 			sourceIndex: member.sourceIndex,
-			item: toItem(
-				formatLabel(member.label, member.groupLabels),
-				member.color,
-				member.counts[bucket] ?? 0,
-				false,
-			),
+			item: toItem(member.label, member.color, member.counts[bucket] ?? 0, false),
 		}))
 		.sort((a, b) => byValueDesc(a.item, b.item));
 }

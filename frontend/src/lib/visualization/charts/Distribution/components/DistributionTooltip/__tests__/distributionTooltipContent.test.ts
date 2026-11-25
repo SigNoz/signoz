@@ -1,42 +1,7 @@
 import {
 	buildDistributionTooltipItems,
 	buildOtherMemberItems,
-	resolveGroupLabelFormat,
 } from '../distributionTooltipContent';
-
-describe('resolveGroupLabelFormat', () => {
-	it('shows the value of a single key every group shares', () => {
-		const format = resolveGroupLabelFormat([
-			{ 'service.name': 'cart' },
-			{ 'service.name': 'checkout' },
-		]);
-
-		expect(format('{service.name="cart"}', { 'service.name': 'cart' })).toBe(
-			'cart',
-		);
-	});
-
-	it('keeps Other, with no group labels, as it is', () => {
-		const format = resolveGroupLabelFormat([
-			{ 'service.name': 'cart' },
-			undefined,
-		]);
-
-		expect(format('Other', undefined)).toBe('Other');
-	});
-
-	it('keeps full labels for several keys or none', () => {
-		const several = resolveGroupLabelFormat([
-			{ env: 'prod', 'service.name': 'cart' },
-		]);
-		const ungrouped = resolveGroupLabelFormat([{}]);
-
-		expect(several('prod cart', { env: 'prod', 'service.name': 'cart' })).toBe(
-			'prod cart',
-		);
-		expect(ungrouped('{}', {})).toBe('{}');
-	});
-});
 
 describe('buildDistributionTooltipItems', () => {
 	it('sorts the groups largest first and returns the hovered one as active', () => {
@@ -79,27 +44,23 @@ describe('buildOtherMemberItems', () => {
 				{
 					sourceIndex: 4,
 					label: 'a',
-					groupLabels: { 'service.name': 'cart' },
 					color: '#a',
 					counts: [1, 3],
 				},
 				{
 					sourceIndex: 7,
 					label: 'b',
-					groupLabels: { 'service.name': 'ad' },
 					color: '#b',
 					counts: [0, 5],
 				},
 				{
 					sourceIndex: 9,
 					label: 'c',
-					groupLabels: { 'service.name': 'quote' },
 					color: '#c',
 					counts: [2, 0],
 				},
 			],
 			bucket: 1,
-			formatLabel: (label, groupLabels) => groupLabels?.['service.name'] ?? label,
 		});
 
 		expect(
@@ -109,9 +70,9 @@ describe('buildOtherMemberItems', () => {
 				item.value,
 			]),
 		).toStrictEqual([
-			[7, 'ad', 5],
-			[4, 'cart', 3],
-			[9, 'quote', 0],
+			[7, 'b', 5],
+			[4, 'a', 3],
+			[9, 'c', 0],
 		]);
 	});
 });

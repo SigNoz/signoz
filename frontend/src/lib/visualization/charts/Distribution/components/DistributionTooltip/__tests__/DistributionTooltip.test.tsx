@@ -64,7 +64,6 @@ function renderTooltip(
 			xAxis={xAxis}
 			layout={layout}
 			labels={['{service.name="cart"}', '{service.name="checkout"}']}
-			groupLabels={[{ 'service.name': 'cart' }, { 'service.name': 'checkout' }]}
 			colors={['#f00', '#0f0']}
 			counts={counts}
 			otherMembers={[]}
@@ -77,19 +76,16 @@ function renderTooltip(
 /** The second drawn group is Other, summing `ad` and `quote`. */
 const withOther: Partial<DistributionTooltipProps> = {
 	labels: ['{service.name="cart"}', 'Other'],
-	groupLabels: [{ 'service.name': 'cart' }, undefined],
 	otherMembers: [
 		{
 			sourceIndex: 3,
 			label: '{service.name="ad"}',
-			groupLabels: { 'service.name': 'ad' },
 			color: '#00f',
 			counts: [0, 4, 1, 0],
 		},
 		{
 			sourceIndex: 5,
 			label: '{service.name="quote"}',
-			groupLabels: { 'service.name': 'quote' },
 			color: '#ff0',
 			counts: [0, 2, 0, 1],
 		},
@@ -115,19 +111,21 @@ describe('DistributionTooltip', () => {
 		);
 	});
 
-	it('puts the hovered group above the list, which runs largest first', () => {
+	it('puts the hovered group above the list, which runs largest first, with full labels', () => {
 		renderTooltip(plotAt(1.5, 2));
 
 		expect(screen.getByTestId('distribution-tooltip-active')).toHaveTextContent(
-			'cart4',
+			'{service.name="cart"}4',
 		);
-		expect(listRows()).toStrictEqual(['checkout6', 'cart4']);
+		expect(listRows()).toStrictEqual([
+			'{service.name="checkout"}6',
+			'{service.name="cart"}4',
+		]);
 	});
 
 	it('shows a single group only above the divider, as the time-series tooltip does', () => {
 		renderTooltip(plotAt(1.5, 2), {
 			labels: ['A'],
-			groupLabels: [undefined],
 			colors: ['#f00'],
 			counts: [counts[0]],
 		});
@@ -150,7 +148,10 @@ describe('DistributionTooltip', () => {
 		expect(screen.getByTestId('distribution-tooltip-active')).toHaveTextContent(
 			'Other (2)6',
 		);
-		expect(listRows()).toStrictEqual(['ad4', 'quote2']);
+		expect(listRows()).toStrictEqual([
+			'{service.name="ad"}4',
+			'{service.name="quote"}2',
+		]);
 	});
 
 	it('drills into a group of Other picked from the pinned tooltip', async () => {
