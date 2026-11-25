@@ -298,6 +298,8 @@
     // Steers call sites to the src/lib/router facade (allowlisted in overrides below)
     "signoz/no-builder-ai-query-access": "error",
     // Steers AI slot access to lib/query/builderSlot (allowlisted in overrides below)
+    "signoz/no-monaco-stripped-features": "error",
+    // Bans Monaco features the production build strips, and monaco-editor value imports outside src/lib/monaco (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
@@ -633,6 +635,13 @@
       ],
       "rules": {
         "signoz/no-builder-ai-query-access": "off"
+      }
+    },
+    {
+      // src/lib/monaco owns the monaco-editor imports that pick the languages and workers
+      "files": ["src/lib/monaco/**"],
+      "rules": {
+        "signoz/no-monaco-stripped-features": "off"
       }
     }
   ]
