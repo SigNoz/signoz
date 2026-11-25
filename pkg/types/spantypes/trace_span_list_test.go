@@ -4,9 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 // checkoutSkeleton is one request with a failing payment call, a group of same-name queries and
@@ -280,4 +282,50 @@ func TestNewSpanListPage_AIUsage_RanksByTokensWhenNoListedSpanHasACost(t *testin
 	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "tools", View: SpanListViewAIUsage, Limit: 50}, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"fetch", "search"}, page.SpanIDs())
+}
+
+// A name is read the way the query builder reads a select field of a trace list.
+func TestNewSpanList_SelectFields(t *testing.T) {
+	skeleton := buildSkeleton(skeletonSpec{id: "root", name: "POST /checkout", service: "web"})
+	rows := []StorableSpan{{
+		SpanID:           "root",
+		AttributesString: map[string]string{"http.route": "/checkout", "env": "span-env", "name": "an attribute", "resource.type": "db"},
+		ResourcesString:  map[string]string{"env": "resource-env"},
+		HTTPMethod:       "POST",
+	}}
+
+	testCases := []struct {
+		name       string
+		field      string
+		attributes map[string]any
+		resource   map[string]string
+		httpMethod string
+		warnings   []string
+	}{
+		{name: "NoContext_BothSides", field: "env", attributes: map[string]any{"env": "span-env"}, resource: map[string]string{"service.name": "web", "env": "resource-env"}},
+		{name: "ResourceContext_OneSide", field: "resource.env", attributes: map[string]any{}, resource: map[string]string{"service.name": "web", "env": "resource-env"}},
+		{name: "AttributeContext_OneSide", field: "attribute.env", attributes: map[string]any{"env": "span-env"}, resource: map[string]string{"service.name": "web"}},
+		{name: "SpanContext_ReadsTheAttribute", field: "span.http.route", attributes: map[string]any{"http.route": "/checkout"}, resource: map[string]string{"service.name": "web"}},
+		{name: "ContextWord_PartOfTheAttributeName", field: "resource.type", attributes: map[string]any{"resource.type": "db"}, resource: map[string]string{"service.name": "web"}},
+		// The span already carries its name, and the attribute called name needs attribute.name.
+		{name: "SpanField_Returned_NotReadAsAnAttribute", field: "name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}},
+		{name: "SpanField_Selected", field: "http_method", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, httpMethod: "POST"},
+		{name: "SpanField_EmptyOnTheSpan_Warns", field: "db_name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `db_name` was not found on any returned span"}},
+		{name: "ScopeField_EmptyOnTheSpan_Warns", field: "scope.name", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `scope.name` was not found on any returned span"}},
+		{name: "Unknown_Warns", field: "nope", attributes: map[string]any{}, resource: map[string]string{"service.name": "web"}, warnings: []string{"field `nope` was not found on any returned span"}},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			page := skeleton.page(skeleton.treeOrder, "", 0, 50)
+			page.selectFields = []telemetrytypes.TelemetryFieldKey{newSelectField(testCase.field)}
+
+			list := NewSpanList(page, rows)
+			require.Len(t, list.Items, 1)
+			assert.Equal(t, testCase.attributes, list.Items[0].Span.Attributes)
+			assert.Equal(t, testCase.resource, list.Items[0].Span.Resource)
+			assert.Equal(t, testCase.httpMethod, list.Items[0].Span.HTTPMethod)
+			assert.Equal(t, testCase.warnings, list.Warnings)
+		})
+	}
 }

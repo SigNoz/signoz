@@ -173,39 +173,104 @@ func validateSpanListView(view SpanListView) error {
 	return nil
 }
 
-// newSelectField reads a name as an attribute or a resource attribute. Any other context word is
-// the start of an attribute name, such as event.name.
+// newSelectField reads a name into its context and bare name. The data type is not used.
 func newSelectField(text string) telemetrytypes.TelemetryFieldKey {
 	key := telemetrytypes.GetFieldKeyFromKeyText(text)
 	key.FieldDataType = telemetrytypes.FieldDataTypeUnspecified
-	switch key.FieldContext {
-	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
-		return key
-	}
-	return telemetrytypes.TelemetryFieldKey{Name: telemetrytypes.TelemetryFieldKeyToText(&key)}
+	return key
 }
 
-// selectFields copies the named attributes and resource attributes from row, and marks in found
-// the fields the row has. A name without a context is looked up in both.
+// selectFields fills span with the selected fields of row and marks in found the ones row has. A
+// name is read as a trace list query reads it: a field of the span itself first, then an attribute.
 func (span *Span) selectFields(row *StorableSpan, fields []telemetrytypes.TelemetryFieldKey, found []bool) {
 	if row == nil || len(fields) == 0 {
 		return
 	}
 	attributes := row.Attributes()
 	for k, field := range fields {
-		if field.FieldContext != telemetrytypes.FieldContextAttribute {
-			if value, ok := row.ResourcesString[field.Name]; ok {
-				span.Resource[field.Name] = value
-				found[k] = true
-			}
+		onRow, isSpanField := span.selectSpanField(row, &field)
+		if !isSpanField {
+			onRow = span.selectAttribute(row, attributes, &field)
 		}
-		if field.FieldContext != telemetrytypes.FieldContextResource {
-			if value, ok := attributes[field.Name]; ok {
-				span.Attributes[field.Name] = value
-				found[k] = true
-			}
+		found[k] = found[k] || onRow
+	}
+}
+
+// selectSpanField copies a field of the span itself from row. known is false when field does not
+// name one, and found is false when the span has no value for it.
+func (span *Span) selectSpanField(row *StorableSpan, field *telemetrytypes.TelemetryFieldKey) (found, known bool) {
+	name := field.Name
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextSpan:
+	case telemetrytypes.FieldContextScope:
+		name = "scope." + name
+	default:
+		return false, false
+	}
+
+	switch name {
+	case "span_id", "trace_id", "parent_span_id", "name", "kind_string", "timestamp", "duration_nano",
+		"has_error", "status_code_string", "status_message", "response_status_code":
+		// Every span already carries these.
+		return true, true
+	case "http_method":
+		return setString(&span.HTTPMethod, row.HTTPMethod), true
+	case "http_url":
+		return setString(&span.HTTPURL, row.HTTPURL), true
+	case "http_host":
+		return setString(&span.HTTPHost, row.HTTPHost), true
+	case "external_http_method":
+		return setString(&span.ExternalHTTPMethod, row.ExternalHTTPMethod), true
+	case "external_http_url":
+		return setString(&span.ExternalHTTPURL, row.ExternalHTTPURL), true
+	case "db_name":
+		return setString(&span.DBName, row.DBName), true
+	case "db_operation":
+		return setString(&span.DBOperation, row.DBOperation), true
+	case "trace_state":
+		return setString(&span.TraceState, row.TraceState), true
+	case "scope.name", "scope.version":
+		selected := NewSelectedScope(row.Scope.Flatten(), []string{name})
+		if len(selected) == 0 {
+			return false, true
+		}
+		if span.Scope == nil {
+			span.Scope = Scope{}
+		}
+		maps.Copy(span.Scope, selected)
+		return true, true
+	}
+	return false, false
+}
+
+// selectAttribute copies an attribute or a resource attribute from row, and reports whether row
+// has it. A name without a context is looked up in both.
+func (span *Span) selectAttribute(row *StorableSpan, attributes map[string]any, field *telemetrytypes.TelemetryFieldKey) bool {
+	found := false
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextResource:
+		if value, ok := row.ResourcesString[field.Name]; ok {
+			span.Resource[field.Name], found = value, true
 		}
 	}
+	switch field.FieldContext {
+	case telemetrytypes.FieldContextUnspecified, telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextSpan:
+		if value, ok := attributes[field.Name]; ok {
+			span.Attributes[field.Name], found = value, true
+		}
+	}
+	// The context word can be part of an attribute name, as in an attribute named resource.type.
+	if text := telemetrytypes.TelemetryFieldKeyToText(field); !found {
+		if value, ok := attributes[text]; ok {
+			span.Attributes[text], found = value, true
+		}
+	}
+	return found
+}
+
+func setString(target *string, value string) bool {
+	*target = value
+	return value != ""
 }
 
 // findWords returns up to three places in the span where one of the words occurs, ignoring case.
