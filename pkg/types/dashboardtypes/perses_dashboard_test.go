@@ -673,8 +673,9 @@ func TestValidateDistributionDashboard(t *testing.T) {
 	data, err := os.ReadFile("testdata/perses_distribution_panel.json")
 	require.NoError(t, err, "reading example file")
 
-	spec, err := unmarshalDashboard(data)
-	require.NoError(t, err, "unmarshal and validate failed")
+	dashboard := &DashboardV2{}
+	require.NoError(t, json.Unmarshal(data, &dashboard.Spec), "unmarshal and validate failed")
+	spec := &dashboard.Spec
 
 	require.IsType(t, &DistributionPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
 	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*DistributionPanelSpec)
@@ -687,7 +688,6 @@ func TestValidateDistributionDashboard(t *testing.T) {
 	assert.True(t, *panelSpec.ChartAppearance.Percentiles.Enabled)
 	assert.Equal(t, []float64{75, 99.9}, panelSpec.ChartAppearance.Percentiles.Values)
 
-	dashboard := &DashboardV2{Spec: *spec}
 	request, err := dashboard.GetPanelQuery(1, 2, "p1")
 	require.NoError(t, err, "building the panel's query failed")
 	assert.Equal(t, qb.RequestTypeDistribution, request.RequestType)
