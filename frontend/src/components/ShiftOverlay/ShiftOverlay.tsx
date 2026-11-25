@@ -61,7 +61,7 @@ export function ShiftOverlay({
 	}
 
 	return ReactDOM.createPortal(
-		<div className="shift-overlay">
+		<div className="shift-overlay" data-testid="shift-overlay">
 			<div className="shift-overlay__panel">
 				{navigationActions.map((action) => (
 					<Shortcut

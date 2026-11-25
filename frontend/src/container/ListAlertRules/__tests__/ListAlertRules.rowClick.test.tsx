@@ -1,9 +1,10 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
-import userEvent from '@testing-library/user-event';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
+
+const RULE_NAME_CELL_TEST_ID = 'alert-row-rule-1-name';
 
 describe('ListAlertRules — row click navigation', () => {
 	beforeEach(() => {
@@ -15,11 +16,7 @@ describe('ListAlertRules — row click navigation', () => {
 		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
-		const ruleCell = await screen.findByText('High CPU Alert');
-
-		const td = ruleCell.closest('td');
-		expect(td).not.toBeNull();
-		await user.click(td as HTMLElement);
+		await user.click(await screen.findByTestId(RULE_NAME_CELL_TEST_ID));
 
 		await waitFor(() => {
 			expect(safeNavigateMock).toHaveBeenCalled();
@@ -36,8 +33,7 @@ describe('ListAlertRules — row click navigation', () => {
 		useAlertRuleViewsStore.setState({ recent: ['rule-2', 'rule-1'] });
 		renderListAlertRules();
 
-		const ruleCell = await screen.findByTestId('alert-row-rule-1-name');
-		await user.click(ruleCell.closest('td') as HTMLElement);
+		await user.click(await screen.findByTestId(RULE_NAME_CELL_TEST_ID));
 
 		await waitFor(() => {
 			expect(useAlertRuleViewsStore.getState().recent).toStrictEqual([
@@ -51,11 +47,10 @@ describe('ListAlertRules — row click navigation', () => {
 		const user = userEvent.setup({ delay: null });
 		renderListAlertRules();
 
-		const ruleCell = await screen.findByText('High CPU Alert');
+		const ruleCell = await screen.findByTestId(RULE_NAME_CELL_TEST_ID);
 
-		const td = ruleCell.closest('td');
 		await user.keyboard('{Control>}');
-		await user.click(td as HTMLElement);
+		await user.click(ruleCell);
 		await user.keyboard('{/Control}');
 
 		await waitFor(() => {

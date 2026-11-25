@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { getPanelDefinition } from 'pages/DashboardPage/DashboardContainer/Panels/registry';
 
 import PanelTypeSwitcher from '../PanelTypeSwitcher';
@@ -41,7 +40,7 @@ async function renderSwitcher(
 	props: Partial<Parameters<typeof PanelTypeSwitcher>[0]> = {},
 ): Promise<{ onChange: jest.Mock; user: User }> {
 	// The open drawer sets `pointer-events: none` on the body.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	const onChange = jest.fn();
 	render(
 		<PanelTypeSwitcher
@@ -56,9 +55,8 @@ async function renderSwitcher(
 }
 
 function disabledKinds(): (string | undefined)[] {
-	return Array.from(
-		document.querySelectorAll('[data-testid^="panel-type-signoz/"]'),
-	)
+	return screen
+		.queryAllByTestId(/^panel-type-signoz\//)
 		.filter((el) => el.getAttribute('aria-disabled') === 'true')
 		.map((el) => el.getAttribute('data-testid')?.replace('panel-type-', ''));
 }

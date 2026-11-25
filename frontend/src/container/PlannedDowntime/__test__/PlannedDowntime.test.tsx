@@ -1,6 +1,5 @@
 import { UseQueryResult } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { fireEvent, screen } from '@testing-library/react';
 import type {
 	ListDowntimeSchedules200,
 	RenderErrorResponseDTO,
@@ -12,7 +11,7 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
-import { render, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntime } from '../PlannedDowntime';
@@ -20,6 +19,7 @@ import { buildSchedule, createMockDowntime } from './testUtils';
 
 const SEARCH_TEST_ID = 'planned-downtime-search-field';
 const CREATE_TEST_ID = 'planned-downtime-create';
+const RESIZE_HANDLE_TITLE = 'Drag to resize column';
 
 function renderPage(role: string = USER_ROLES.ADMIN): void {
 	render(
@@ -105,13 +105,6 @@ let mockUrlQuery: URLSearchParams;
 jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: (): URLSearchParams => mockUrlQuery,
-}));
-
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): { safeNavigate: jest.MockedFunction<() => void> } => ({
-		safeNavigate: mockSafeNavigate,
-	}),
 }));
 
 jest.mock('api/generated/services/downtimeschedules', () => ({
@@ -225,30 +218,36 @@ describe('PlannedDowntime Component', () => {
 		renderPage();
 
 		await screen.findByText(MOCK_DOWNTIME_1_NAME);
-		const resizable = Array.from(document.querySelectorAll('th'))
-			.filter((th) => th.querySelector('[title="Drag to resize column"]'))
-			.map((th) => th.textContent?.trim());
-		expect(resizable).toStrictEqual([
-			'Downtime',
-			'Status',
-			'Schedule',
-			'Timezone',
-			'Repeats',
-			'Duration',
-			'Alerts Silenced',
-		]);
+		const resizableColumnIds = [
+			'name',
+			'status',
+			'window',
+			'timezone',
+			'repeats',
+			'duration',
+			'alertsSilenced',
+		];
+		resizableColumnIds.forEach((columnId) => {
+			expect(
+				within(screen.getByTestId(`tanstack-header-${columnId}`)).getByTitle(
+					RESIZE_HANDLE_TITLE,
+				),
+			).toBeInTheDocument();
+		});
+		expect(screen.getAllByTitle(RESIZE_HANDLE_TITLE)).toHaveLength(
+			resizableColumnIds.length,
+		);
 	});
 
 	it('should filter downtime schedules by name when searching', async () => {
+		const user = userEvent.setup();
 		renderPage();
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_1_NAME),
 		).resolves.toBeInTheDocument();
 
-		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
-			target: { value: MOCK_DOWNTIME_1_NAME },
-		});
+		await user.type(screen.getByTestId(SEARCH_TEST_ID), MOCK_DOWNTIME_1_NAME);
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_1_NAME),
@@ -258,15 +257,14 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should filter downtime schedules with partial name match', async () => {
+		const user = userEvent.setup();
 		renderPage();
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_1_NAME),
 		).resolves.toBeInTheDocument();
 
-		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
-			target: { value: '2' },
-		});
+		await user.type(screen.getByTestId(SEARCH_TEST_ID), '2');
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_2_NAME),
@@ -276,11 +274,10 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should show no results when search term matches nothing', async () => {
+		const user = userEvent.setup();
 		renderPage();
 
-		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
-			target: { value: 'NonExistentDowntime' },
-		});
+		await user.type(screen.getByTestId(SEARCH_TEST_ID), 'NonExistentDowntime');
 
 		await expect(
 			screen.findByTestId('no-results-empty-state'),
@@ -289,14 +286,18 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('opens the delete confirmation from the row actions', async () => {
+		const user = userEvent.setup();
 		renderPage();
 
-		await userEvent.click(await screen.findByTestId('downtime-actions-1'));
-		await userEvent.click(await screen.findByText('Delete'));
+		await user.click(await screen.findByTestId('downtime-actions-1'));
+		await user.click(await screen.findByTestId('downtime-actions-1-item-delete'));
 
 		await expect(
-			screen.findByRole('button', { name: 'Delete Schedule' }),
-		).resolves.toBeInTheDocument();
+			screen.findByTestId('planned-downtime-delete-confirm'),
+		).resolves.toHaveTextContent('Delete Schedule');
+		expect(
+			screen.getByText(/delete - Mock Downtime 1 schedule\?/),
+		).toBeInTheDocument();
 	});
 
 	it('hides row actions for viewers', async () => {
@@ -308,6 +309,9 @@ describe('PlannedDowntime Component', () => {
 
 	it('preserves existing query parameters such as sort and pagination when typing in search (Bug 54)', async () => {
 		jest.useFakeTimers();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+		});
 		mockAppLocation({
 			pathname: '/alerts',
 			search:
@@ -317,9 +321,7 @@ describe('PlannedDowntime Component', () => {
 
 		renderPage();
 
-		fireEvent.change(screen.getByTestId(SEARCH_TEST_ID), {
-			target: { value: 'query' },
-		});
+		await user.type(screen.getByTestId(SEARCH_TEST_ID), 'query');
 
 		jest.advanceTimersByTime(350);
 

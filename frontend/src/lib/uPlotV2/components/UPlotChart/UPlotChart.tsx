@@ -193,6 +193,7 @@ export default function UPlotChart({
 		return (
 			<div
 				className="uplot-no-data not-found"
+				data-testid="uplot-no-data"
 				style={{
 					width: `${width}px`,
 					height: `${height}px`,

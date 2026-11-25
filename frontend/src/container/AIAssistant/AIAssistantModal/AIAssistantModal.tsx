@@ -7,7 +7,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
-import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -145,6 +144,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 			<div
 				className={styles.backdrop}
 				role="dialog"
+				data-testid="ai-assistant-modal"
 				aria-modal="true"
 				aria-label="Noz"
 				onClick={handleBackdropClick}
@@ -152,8 +152,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 				<div className={styles.modal}>
 					{/* Header */}
 					<div className={styles.header}>
-						<div className={`${styles.title} noz-wave`}>
-							<Noz size={16} />
+						<div className={styles.title}>
 							{chatTitle && (
 								<Typography
 									variant="paragraph"

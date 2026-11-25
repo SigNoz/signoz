@@ -101,7 +101,7 @@ function S3BucketsSelector({
 	}
 
 	return (
-		<div className="s3-buckets-selector">
+		<div className="s3-buckets-selector" data-testid="s3-buckets-selector">
 			<div className="s3-buckets-selector-title">Select S3 Buckets by Region</div>
 			<div className="s3-buckets-selector-content">
 				{allRegions.map((region) => {
@@ -120,6 +120,7 @@ function S3BucketsSelector({
 							</div>
 							<div className="s3-buckets-selector-region-select">
 								<Select
+									data-testid={`s3-buckets-select-${region}`}
 									mode="tags"
 									placeholder={`Enter S3 bucket names for ${region}`}
 									value={bucketsByRegion[region] || []}

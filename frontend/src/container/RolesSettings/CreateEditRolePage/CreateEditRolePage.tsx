@@ -242,14 +242,20 @@ function CreateEditRolePageContent(): JSX.Element {
 			<AuthZGuardContent
 				checks={canCheckRolePermissions ? [buildRoleReadPermission(roleName)] : []}
 				fallbackOnLoading={
-					<div className={styles.createEditRolePage}>
+					<div
+						className={styles.createEditRolePage}
+						data-testid="role-editor-loading"
+					>
 						<Skeleton active paragraph={{ rows: 8 }} />
 					</div>
 				}
 			>
 				<>
 					{isLoading && (
-						<div className={styles.createEditRolePage}>
+						<div
+							className={styles.createEditRolePage}
+							data-testid="role-editor-loading"
+						>
 							<Skeleton active paragraph={{ rows: 8 }} />
 						</div>
 					)}
@@ -356,7 +362,7 @@ function CreateEditRolePageContent(): JSX.Element {
 export default withAuthZPage(CreateEditRolePageContent, {
 	checks: authzCheckFn,
 	fallbackOnLoading: (
-		<div className={styles.createEditRolePage}>
+		<div className={styles.createEditRolePage} data-testid="role-editor-loading">
 			<Skeleton active paragraph={{ rows: 8 }} />
 		</div>
 	),

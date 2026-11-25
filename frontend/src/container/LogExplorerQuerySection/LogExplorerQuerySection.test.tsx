@@ -1,3 +1,4 @@
+import { findQueryEditorTextbox } from 'components/QueryBuilderV2/QueryV2/__tests__/queryEditorTextbox';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetPanelTypesQueryParam } from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
@@ -15,7 +16,6 @@ import { explorerViewToPanelType } from 'utils/explorerUtils';
 
 import LogExplorerQuerySection from './index';
 
-const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
 const QUERY_AGGREGATION_TEST_ID = 'query-aggregation-container';
 const QUERY_ADDON_TEST_ID = 'query-add-ons';
 
@@ -187,14 +187,10 @@ const createMockQuery = (filterExpression?: string): Query => ({
 const verifyCodeMirrorContent = async (
 	expectedFilterExpression: string,
 ): Promise<void> => {
+	const editorContent = await findQueryEditorTextbox();
 	await waitFor(
 		() => {
-			const editorContent = document.querySelector(
-				CM_EDITOR_SELECTOR,
-			) as HTMLElement;
-			expect(editorContent).toBeInTheDocument();
-			const textContent = editorContent.textContent || '';
-			expect(textContent).toBe(expectedFilterExpression);
+			expect(editorContent.textContent || '').toBe(expectedFilterExpression);
 		},
 		{ timeout: 3000 },
 	);
@@ -281,10 +277,11 @@ describe('LogExplorerQuerySection', () => {
 			},
 		);
 
-		VIEWS_TO_TEST.forEach(async (view) => {
+		for (const view of VIEWS_TO_TEST) {
 			rerender(<LogExplorerQuerySection selectedView={view} />);
+			// eslint-disable-next-line no-await-in-loop
 			await verifyCodeMirrorContent(complexFilter);
-		});
+		}
 	});
 
 	it('should render QueryAggregation and QueryAddOns when switching from LIST to TIMESERIES or TABLE view', async () => {

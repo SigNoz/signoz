@@ -1,11 +1,10 @@
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 
 import { PieChartProps, PieSlice } from 'lib/visualization/charts/types';
 import Pie from 'lib/visualization/charts/Pie/Pie';
-import { userEvent } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 
 jest.mock('hooks/useDimensions', () => ({
 	useResizeObserver: jest.fn().mockReturnValue({ width: 400, height: 300 }),
@@ -68,6 +67,11 @@ function renderPie(
 	);
 }
 
+const arcs = (testId = 'pie'): HTMLElement[] =>
+	within(screen.getByTestId(testId)).getAllByTestId('pie-arc-path');
+const arcGroups = (testId = 'pie'): HTMLElement[] =>
+	within(screen.getByTestId(testId)).getAllByTestId('pie-arc');
+
 const mockSliceClick = (): jest.MockedFunction<
 	NonNullable<PieChartProps['onSliceClick']>
 > => jest.fn();
@@ -81,8 +85,7 @@ describe('Pie', () => {
 	it('renders one arc per slice plus the legend entries and centre total', () => {
 		renderPie();
 
-		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
-		expect(svg.querySelectorAll('path')).toHaveLength(DATA.length);
+		expect(arcs()).toHaveLength(DATA.length);
 
 		const legend = screen.getByTestId('virtuoso-grid');
 		expect(within(legend).getByText('frontend')).toBeInTheDocument();
@@ -117,20 +120,19 @@ describe('Pie', () => {
 
 	it('isolates a slice when its legend row is clicked with everything showing', () => {
 		renderPie();
-		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
-		expect(svg.querySelectorAll('path')).toHaveLength(3);
+		expect(arcs()).toHaveLength(3);
 
 		fireEvent.click(screen.getByTestId('legend-item-1'));
 
 		// Nothing visible to exclude, so the click isolates: one arc left.
-		expect(svg.querySelectorAll('path')).toHaveLength(1);
+		expect(arcs()).toHaveLength(1);
 	});
 
 	it('recomputes the centre total from the slices left showing', () => {
 		renderPie();
 		// The arcs carry leader labels of their own, so read the centre text.
 		const centreTotal = (): string | null =>
-			screen.getByTestId('pie').querySelector('text > tspan')?.textContent ?? null;
+			screen.getByTestId('pie-center-value').textContent;
 		expect(centreTotal()).toBe('200');
 
 		fireEvent.click(screen.getByTestId('legend-item-0'));
@@ -140,37 +142,34 @@ describe('Pie', () => {
 
 	it('excludes a slice when its legend row is clicked with others already hidden', () => {
 		renderPie();
-		const svg = screen.getByTestId('pie').querySelector('svg') as SVGElement;
 
 		// Isolate, then add a second slice back, so nothing is isolated any more.
 		fireEvent.click(screen.getByTestId('legend-item-1'));
 		fireEvent.click(screen.getByTestId('legend-item-0'));
-		expect(svg.querySelectorAll('path')).toHaveLength(2);
+		expect(arcs()).toHaveLength(2);
 
 		fireEvent.click(screen.getByTestId('legend-item-0'));
 
 		// One slice hidden → one fewer arc drawn.
-		expect(svg.querySelectorAll('path')).toHaveLength(1);
+		expect(arcs()).toHaveLength(1);
 	});
 
 	it('hints at drill-down on a plain slice only when clickable', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const { unmount } = renderPie({ onSliceClick: mockSliceClick() });
-		const arc = (): Element =>
-			screen.getByTestId('pie').querySelectorAll('svg g g')[0];
-		await user.hover(arc());
+		await user.hover(arcGroups()[0]);
 		expect(screen.getByText('Click to drilldown')).toBeInTheDocument();
 		unmount();
 
 		renderPie();
-		await user.hover(arc());
+		await user.hover(arcGroups()[0]);
 		expect(screen.queryByTestId('pie-tooltip-footer')).toBeNull();
 	});
 
 	it('does not re-render the legend while the tooltip follows the cursor', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderPie();
-		const arc = screen.getByTestId('pie').querySelectorAll('svg g g')[0];
+		const [arc] = arcGroups();
 		await user.hover(arc);
 		const rendersAfterEnter = mockLegendRenders;
 
@@ -194,25 +193,16 @@ describe('Pie', () => {
 			{ label: 'checkout', value: 400, color: '#0000aa' },
 			...members,
 		];
-		const arcs = (testId = 'pie'): NodeListOf<SVGPathElement> =>
-			(
-				screen.getByTestId(testId).querySelector('svg') as SVGElement
-			).querySelectorAll('path');
-		const arcGroups = (testId = 'pie'): NodeListOf<SVGGElement> =>
-			(
-				screen.getByTestId(testId).querySelector('svg') as SVGElement
-			).querySelectorAll('g g');
 		const tooltipList = (): HTMLElement =>
 			screen.getByTestId('uplot-tooltip-list');
-		const tooltip = (): HTMLElement =>
-			document.querySelector('[data-pie-tooltip]') as HTMLElement;
+		const tooltip = (): HTMLElement => screen.getByTestId('pie-tooltip');
 
 		let user: ReturnType<typeof userEvent.setup>;
 		beforeEach(() => {
-			user = userEvent.setup({ pointerEventsCheck: 0 });
+			user = userEvent.setup();
 		});
 
-		const hoverOther = async (testId = 'pie'): Promise<SVGGElement> => {
+		const hoverOther = async (testId = 'pie'): Promise<HTMLElement> => {
 			const otherArc = arcGroups(testId)[3];
 			await user.hover(otherArc);
 			return otherArc;
@@ -272,7 +262,9 @@ describe('Pie', () => {
 
 			await hoverOther();
 
-			expect(tooltipList().children).toHaveLength(12);
+			expect(
+				within(tooltipList()).getAllByTestId('uplot-tooltip-item'),
+			).toHaveLength(12);
 			expect(within(tooltipList()).getByText('svc-11')).toBeInTheDocument();
 			expect(
 				screen.getByText('Click to pin, then pick a series'),

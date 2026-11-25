@@ -186,7 +186,7 @@ function EditCustomSchedule({
 	};
 
 	return (
-		<div className="edit-custom-schedule">
+		<div className="edit-custom-schedule" data-testid="edit-custom-schedule">
 			{displayText}
 			<div className="button-row">
 				<Button.Group>

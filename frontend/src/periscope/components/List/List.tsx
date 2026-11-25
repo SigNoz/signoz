@@ -41,7 +41,7 @@ function InternalList<T>(
 		);
 	} else if (!children) {
 		content = (
-			<div className={styles.emptyText}>
+			<div data-testid="list-empty" className={styles.emptyText}>
 				{locale?.emptyText || <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />}
 			</div>
 		);
@@ -63,7 +63,7 @@ function InternalList<T>(
 			>
 				{header && <div className={styles.header}>{header}</div>}
 				<div className={styles.nestedLoading}>
-					<div className={styles.container}>
+					<div data-testid="list-container" className={styles.container}>
 						{content}
 						{children}
 					</div>

@@ -189,7 +189,13 @@ function MembersTable({
 			<span className="members-pagination-range">
 				{range[0]} &#8212; {range[1]}
 			</span>
-			<span className="members-pagination-total"> of {_total}</span>
+			<span
+				className="members-pagination-total"
+				data-testid="members-pagination-total"
+			>
+				{' '}
+				of {_total}
+			</span>
 		</>
 	);
 

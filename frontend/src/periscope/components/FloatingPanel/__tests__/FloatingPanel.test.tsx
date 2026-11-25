@@ -24,16 +24,14 @@ function getPanelBox(): {
 	width: number;
 	height: number;
 } {
-	const panel = document.querySelector<HTMLElement>('.floating-panel');
+	const panel = screen.getByTestId('floating-panel');
 	const [, x, y] =
-		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(
-			panel?.style.transform ?? '',
-		) ?? [];
+		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(panel.style.transform) ?? [];
 	return {
 		x: Number(x),
 		y: Number(y),
-		width: parseFloat(panel?.style.width ?? ''),
-		height: parseFloat(panel?.style.height ?? ''),
+		width: parseFloat(panel.style.width),
+		height: parseFloat(panel.style.height),
 	};
 }
 
@@ -110,7 +108,7 @@ describe('FloatingPanel', () => {
 	});
 
 	it('keeps the grabbed point under the pointer after pushing past an edge', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setViewport(1280, 800);
 		render(
 			<FloatingPanel
@@ -216,7 +214,7 @@ describe('FloatingPanel', () => {
 		});
 
 		it('stays where the user dragged it while the obstacle showed', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const supportChat = createObstacle(SUPPORT_CHAT);
 			renderPanel([supportChat.obstacle]);
 			supportChat.show();

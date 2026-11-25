@@ -1,4 +1,4 @@
-import { render } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import { StripTone } from '../../../types';
 
@@ -17,7 +17,7 @@ describe('StripKeyValue', () => {
 	});
 
 	it('tints only the icon when the tone is set', () => {
-		const { container } = render(
+		render(
 			<StripKeyValue
 				label="Errors"
 				value={4}
@@ -27,18 +27,16 @@ describe('StripKeyValue', () => {
 		);
 
 		// The tone lands on the icon, never on the text.
-		expect(container.querySelector('[data-tone]')).toHaveAttribute(
+		expect(screen.getByTestId('strip-key-value-prefix-Errors')).toHaveAttribute(
 			'data-tone',
 			'error',
 		);
 	});
 
 	it('leaves the icon untinted by default', () => {
-		const { container } = render(
-			<StripKeyValue label="Errors" value={0} prefix={<svg />} />,
-		);
+		render(<StripKeyValue label="Errors" value={0} prefix={<svg />} />);
 
-		expect(container.querySelector('[data-tone]')).toHaveAttribute(
+		expect(screen.getByTestId('strip-key-value-prefix-Errors')).toHaveAttribute(
 			'data-tone',
 			'default',
 		);

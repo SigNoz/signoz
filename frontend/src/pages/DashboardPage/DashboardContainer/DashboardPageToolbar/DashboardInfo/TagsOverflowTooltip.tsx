@@ -13,7 +13,9 @@ function TagsOverflowTooltip({ tags }: TagsOverflowTooltipProps): JSX.Element {
 		<TooltipScrollArea>
 			<div className={styles.overflowTags} data-testid="dashboard-tags-tooltip">
 				{tags.map((tag) => (
-					<TagBadge key={tag}>{tag}</TagBadge>
+					<TagBadge key={tag} testId="dashboard-tags-tooltip-tag">
+						{tag}
+					</TagBadge>
 				))}
 			</div>
 		</TooltipScrollArea>

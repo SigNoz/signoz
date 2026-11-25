@@ -33,7 +33,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('disables save until the form is dirty', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ModelCostDrawer
 				isOpen
@@ -66,7 +66,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('shows the model id required error and does not call onSave when the name is empty', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onSave = jest.fn();
 		render(
 			<ModelCostDrawer
@@ -100,7 +100,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('calls onSave once on the happy path with valid model id and pricing', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onSave = jest.fn();
 		render(
 			<ModelCostDrawer
@@ -192,7 +192,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('adds and removes a model pattern from the editor', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ModelCostDrawer
 				isOpen
@@ -221,7 +221,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('adds a cache pricing bucket via the picker and removes it', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ModelCostDrawer
 				isOpen
@@ -249,7 +249,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('blocks save with a pricing error when an override rule has no input cost', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onSave = jest.fn();
 		render(
 			<ModelCostDrawer
@@ -280,7 +280,7 @@ describe('ModelCostDrawer (integration)', () => {
 	});
 
 	it('requires confirmation to reset an override rule back to auto', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ModelCostDrawer
 				isOpen
