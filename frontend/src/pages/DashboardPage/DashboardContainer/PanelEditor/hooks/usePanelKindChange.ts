@@ -39,6 +39,7 @@ import {
 import {
 	withPercentileHistogramAggregation,
 	withSingleBucketQuery,
+	withSingleEnabledQuery,
 } from '../utils/bucketQuery';
 
 // V1's panel-type rebuild clears orderBy for lists; re-seed the fresh-list default (timestamp desc).
@@ -259,6 +260,10 @@ export function usePanelKindChange({
 				builder: rebuildForNewKind(query.builder),
 				...(query.builder_ai_query && {
 					builder_ai_query: rebuildForNewKind(query.builder_ai_query),
+				}),
+				...(isBucketCountingPanelType(newPanelType) && {
+					promql: withSingleEnabledQuery(query.promql),
+					clickhouse_sql: withSingleEnabledQuery(query.clickhouse_sql),
 				}),
 			};
 			const signal = getBuilderQueries(currentSpec.queries)[0]

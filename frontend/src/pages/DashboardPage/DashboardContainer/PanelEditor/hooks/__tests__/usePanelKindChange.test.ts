@@ -1,9 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import {
+	initialClickHouseData,
 	initialFormulaBuilderFormValues,
 	initialQueriesMap,
 	initialQueryAIWithType,
+	initialQueryPromQLData,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { getActiveBuilder } from 'lib/query/builderSlot';
@@ -119,7 +121,13 @@ function fakeQuery(
 	queryType: string,
 	queryData: Record<string, unknown>[] = [],
 ): Query {
-	return { id, queryType, builder: { queryData } } as unknown as Query;
+	return {
+		id,
+		queryType,
+		builder: { queryData },
+		promql: [],
+		clickhouse_sql: [],
+	} as unknown as Query;
 }
 
 function builderState(currentQuery: Query): {
@@ -352,6 +360,70 @@ describe('usePanelKindChange', () => {
 			).toStrictEqual([{ queryName: 'A', disabled: false }]);
 		},
 	);
+
+	it.each(['signoz/HeatmapPanel', 'signoz/DistributionPanel'] as const)(
+		'keeps one enabled PromQL and ClickHouse query when switching to %s',
+		(kind) => {
+			mockUseQueryBuilder.mockReturnValue(
+				builderState({
+					...initialQueriesMap.metrics,
+					promql: ['A', 'B', 'C'].map((name) => ({
+						...initialQueryPromQLData,
+						name,
+						disabled: name === 'A',
+					})),
+					clickhouse_sql: ['A', 'B'].map((name) => ({
+						...initialClickHouseData,
+						name,
+						disabled: true,
+					})),
+				}),
+			);
+
+			const { result } = renderHook(() =>
+				usePanelKindChange({
+					spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+					panelType: PANEL_TYPES.TIME_SERIES,
+					setSpec: jest.fn(),
+				}),
+			);
+			act(() => result.current.onChangePanelKind(kind));
+
+			const [persisted] = mockToPerses.mock.calls[0] as [Query];
+			const summarize = (
+				queries: { name: string; disabled: boolean }[],
+			): { name: string; disabled: boolean }[] =>
+				queries.map(({ name, disabled }) => ({ name, disabled }));
+			expect(summarize(persisted.promql)).toStrictEqual([
+				{ name: 'B', disabled: false },
+			]);
+			expect(summarize(persisted.clickhouse_sql)).toStrictEqual([
+				{ name: 'A', disabled: false },
+			]);
+		},
+	);
+
+	it('leaves PromQL queries alone when switching to a non-bucket kind', () => {
+		const promql = ['A', 'B'].map((name) => ({
+			...initialQueryPromQLData,
+			name,
+		}));
+		mockUseQueryBuilder.mockReturnValue(
+			builderState({ ...initialQueriesMap.metrics, promql }),
+		);
+
+		const { result } = renderHook(() =>
+			usePanelKindChange({
+				spec: makeSpec('signoz/TimeSeriesPanel', {}, TABLE_QUERIES),
+				panelType: PANEL_TYPES.TIME_SERIES,
+				setSpec: jest.fn(),
+			}),
+		);
+		act(() => result.current.onChangePanelKind('signoz/BarChartPanel'));
+
+		const [persisted] = mockToPerses.mock.calls[0] as [Query];
+		expect(persisted.promql).toStrictEqual(promql);
+	});
 
 	it('prefers an enabled query over a disabled one ahead of it', () => {
 		const setSpec = jest.fn();

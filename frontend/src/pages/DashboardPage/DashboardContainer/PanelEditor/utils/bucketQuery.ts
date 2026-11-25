@@ -65,6 +65,17 @@ export function withSingleBucketQuery(
 	};
 }
 
+/**
+ * The PromQL and ClickHouse tabs take one enabled query on a bucket panel too: the first
+ * enabled one (the first when none is), enabled. The per-kind cache restores the rest.
+ */
+export function withSingleEnabledQuery<T extends { disabled: boolean }>(
+	queries: T[],
+): T[] {
+	const kept = queries.find((query) => !query.disabled) ?? queries[0];
+	return kept ? [{ ...kept, disabled: false }] : queries;
+}
+
 /** Cast because the substitute is a `SpaceAggregation` whichever of its callers `T` came from. */
 function withoutPercentile<T extends string | undefined>(
 	spaceAggregation: T,
