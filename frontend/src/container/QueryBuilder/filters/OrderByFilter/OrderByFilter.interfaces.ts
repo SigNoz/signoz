@@ -1,3 +1,4 @@
+import type { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	IBuilderQuery,
 	OrderByPayload,
@@ -10,6 +11,8 @@ export type OrderByFilterProps = {
 	entityVersion?: string;
 	isNewQueryV2?: boolean;
 	placeholder?: string;
+	/** A logs or traces heatmap aggregates a field, which Order by then offers. */
+	panelType?: PANEL_TYPES;
 };
 
 export type OrderByFilterValue = {

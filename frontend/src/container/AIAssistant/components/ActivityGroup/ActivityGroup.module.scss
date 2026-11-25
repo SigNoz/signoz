@@ -31,8 +31,8 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-size: var(--periscope-font-size-small);
-	font-weight: var(--font-weight-medium);
+	font-size: var(--label-small-500-font-size);
+	font-weight: var(--label-small-500-font-weight);
 	line-height: 18px;
 	letter-spacing: -0.005em;
 }
@@ -54,7 +54,7 @@
 
 .soloThought {
 	margin: 0;
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.005em;
 	color: var(--l2-foreground);
@@ -64,8 +64,8 @@
 
 // While Noz works, the row names the step it's on.
 .live .activitySummary {
-	font-size: var(--periscope-font-size-base);
-	font-weight: var(--font-weight-normal);
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: var(--line-height-20);
 	@include shimmer-text(var(--l3-foreground), var(--l1-foreground));
 }

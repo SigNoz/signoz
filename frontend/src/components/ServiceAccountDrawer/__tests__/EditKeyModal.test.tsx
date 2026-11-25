@@ -106,7 +106,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	});
 
 	it('save calls update API, shows toast, and closes modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const nameInput = await screen.findByPlaceholderText(/Enter key name/i);
@@ -125,7 +125,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	});
 
 	it('pressing Enter again while saving sends one request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let requests = 0;
 		server.use(
 			rest.put(SA_KEY_ENDPOINT, (_, res, ctx) => {
@@ -175,7 +175,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	});
 
 	it('cancel clears edit-key param and closes modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 		renderModal(mockKey, undefined, onUrlUpdate);
 
@@ -202,7 +202,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	});
 
 	it('revoke flow: clicking Revoke Key shows confirmation inside same dialog', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		await screen.findByDisplayValue('Original Key Name');
@@ -216,7 +216,7 @@ describe('EditKeyModal (URL-controlled)', () => {
 	});
 
 	it('revoke flow: confirming revoke shows toast and closes modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		await screen.findByDisplayValue('Original Key Name');

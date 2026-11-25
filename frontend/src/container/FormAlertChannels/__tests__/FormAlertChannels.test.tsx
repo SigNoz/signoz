@@ -121,6 +121,7 @@ describe('FormAlertChannels', () => {
 		);
 
 		const controls = Array.from(
+			// oxlint-disable-next-line signoz/no-dom-node-access -- sweeps every control, including password inputs, which have no role to query by
 			screen.getByTestId('channel-form-fields').querySelectorAll(CONTROLS),
 		);
 		expect(controls.length).toBeGreaterThan(0);

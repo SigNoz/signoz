@@ -86,7 +86,7 @@ describe('TooltipFooter', () => {
 		});
 
 		it('calls dismiss and logs the unpin event when the unpin button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const dismiss = jest.fn();
 
 			render(<TooltipFooter {...defaultProps} dismiss={dismiss} isPinned />);

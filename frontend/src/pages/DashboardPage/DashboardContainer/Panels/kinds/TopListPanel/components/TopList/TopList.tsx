@@ -119,6 +119,7 @@ function TopList({
 	return (
 		<div
 			ref={containerRef}
+			data-testid="top-list-scroller"
 			className={styles.container}
 			onScroll={tooltip.hide}
 			onMouseLeave={tooltip.hide}

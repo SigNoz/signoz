@@ -1,5 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -7,6 +6,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { holdResponse } from 'tests/holdResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { useActiveSavedView } from '../hooks/useActiveSavedView';
@@ -112,10 +112,12 @@ describe('SavedViewsHeader', () => {
 	});
 
 	it('shows a skeleton while the view in the url loads', async () => {
-		mockSavedViewsApi([errors], { getDelay: 150 });
+		const storedView = holdResponse();
+		mockSavedViewsApi([errors], { getHeld: storedView.held });
 		renderHeader(viewUrl(PATH, errors));
 
 		expect(screen.getByTestId('saved-views-loading')).toBeInTheDocument();
+		storedView.release();
 		await waitForView('Errors');
 		expect(screen.queryByTestId('saved-views-loading')).toBeNull();
 	});

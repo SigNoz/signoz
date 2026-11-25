@@ -258,6 +258,7 @@ function Filters({
 				color="danger"
 				value={isHighlightErrors}
 				onChange={handleToggleHighlightErrors}
+				testId="highlight-errors-switch"
 			/>
 		</div>
 	);

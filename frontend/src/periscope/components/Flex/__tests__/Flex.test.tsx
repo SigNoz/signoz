@@ -12,7 +12,7 @@ const TEST_ID = 'flex';
 
 describe('Flex', () => {
 	it('renders a flex div with children and native props', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn();
 		render(
 			<Flex data-testid={TEST_ID} className="custom" onClick={onClick}>

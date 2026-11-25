@@ -59,7 +59,7 @@ describe('TracesTable column-init race', () => {
 	});
 
 	it('does not persist empty defaults when rows land before columns', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<RaceHarness />);
 
 		expect(screen.getByText(/pending_data_placeholder/i)).toBeInTheDocument();

@@ -2,7 +2,9 @@ import { EditorView } from '@uiw/react-codemirror';
 import { getFieldKeySuggestions } from 'api/querySuggestions/getFieldKeySuggestions';
 import { getFieldValueSuggestions } from 'api/querySuggestions/getFieldValueSuggestions';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { holdResponse } from 'tests/holdResponse';
 import {
+	act,
 	fireEvent,
 	render,
 	screen,
@@ -14,8 +16,9 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import QuerySearch from '../QuerySearch/QuerySearch';
 import { mockCodeMirrorDomApis } from './codemirrorDomMocks';
+import { findQueryEditorTextbox } from './queryEditorTextbox';
 
-const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
+const EDITOR_TEST_ID = 'query-where-clause-editor';
 
 // Mock DOM APIs that CodeMirror needs
 beforeAll(() => {
@@ -75,8 +78,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// CodeMirror renders a contenteditable div, so we check for the container
-		const editorContainer = document.querySelector('.query-where-clause-editor');
-		expect(editorContainer).toBeInTheDocument();
+		expect(screen.getByTestId(EDITOR_TEST_ID)).toBeInTheDocument();
 	});
 
 	it('fetches key suggestions when typing a key (debounced)', async () => {
@@ -94,14 +96,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
 		// Find the CodeMirror editor contenteditable element
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+		const editor = await findQueryEditorTextbox();
 
 		// Focus and type into the editor
 		await userEvent.click(editor);
@@ -141,12 +137,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+		const editor = await findQueryEditorTextbox();
 		await userEvent.click(editor);
 		await userEvent.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
 
@@ -160,6 +151,49 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			screen.findByText('payment-service'),
 		).resolves.toBeInTheDocument();
 		await expect(screen.findByText('200')).resolves.toBeInTheDocument();
+	});
+
+	it('keeps the value suggestions open when the key suggestions load', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const { held, release } = holdResponse();
+		const mockedGetKeys = jest.mocked(getFieldKeySuggestions);
+		mockedGetKeys.mockClear();
+		mockedGetKeys.mockImplementationOnce(async () => {
+			await held;
+			return { status: 'success', data: { complete: true, keys: {} } };
+		});
+		jest.mocked(getFieldValueSuggestions).mockResolvedValueOnce({
+			status: 'success',
+			data: {
+				complete: true,
+				values: {
+					stringValues: ['payment-service'],
+					numberValues: [],
+					boolValues: [],
+					relatedValues: [],
+				},
+			},
+		});
+
+		render(
+			<QuerySearch
+				onChange={jest.fn()}
+				queryData={initialQueriesMap.logs.builder.queryData[0]}
+				dataSource={DataSource.LOGS}
+			/>,
+		);
+
+		const editor = await findQueryEditorTextbox();
+		await user.click(editor);
+		await user.type(editor, SAMPLE_VALUE_TYPING_INCOMPLETE);
+		await screen.findByText('payment-service');
+		await waitFor(() => expect(mockedGetKeys).toHaveBeenCalled());
+
+		release();
+		// Outlasts the 10 ms timer QuerySearch uses to reopen suggestions.
+		await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+		expect(screen.getByText('payment-service')).toBeInTheDocument();
 	});
 
 	it('fetches key suggestions on mount for LOGS', async () => {
@@ -203,12 +237,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
-
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
+		const editor = await findQueryEditorTextbox();
 		await userEvent.click(editor);
 		await userEvent.type(editor, SAMPLE_STATUS_QUERY);
 
@@ -255,11 +284,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		await waitFor(() =>
-			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
-				SAMPLE_STATUS_QUERY,
-			),
-		);
+		const editor = await findQueryEditorTextbox();
+		await waitFor(() => expect(editor.textContent).toBe(SAMPLE_STATUS_QUERY));
 
 		await userEvent.click(screen.getByTestId('query-search-run-button'));
 
@@ -268,7 +294,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 
 	it('shows the locked scope as a chip in place of the scope icon', () => {
 		const scope = "kind_string = 'Client' AND http_host = 'api.example.com'";
-		const { container } = render(
+		render(
 			<QuerySearch
 				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.traces.builder.queryData[0]}
@@ -283,12 +309,12 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		expect(chip).toHaveTextContent('+1');
 		expect(chip).not.toHaveTextContent('kind_string');
 		expect(
-			container.querySelector('.query-search-initial-scope-label'),
+			screen.queryByTestId('query-search-initial-scope-label'),
 		).not.toBeInTheDocument();
 	});
 
 	it('keeps the scope icon unless the chip is asked for', () => {
-		const { container } = render(
+		render(
 			<QuerySearch
 				onChange={jest.fn() as jest.MockedFunction<(v: string) => void>}
 				queryData={initialQueriesMap.traces.builder.queryData[0]}
@@ -301,7 +327,7 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			screen.queryByTestId('query-search-scope-chip'),
 		).not.toBeInTheDocument();
 		expect(
-			container.querySelector('.query-search-initial-scope-label'),
+			screen.getByTestId('query-search-initial-scope-label'),
 		).toBeInTheDocument();
 	});
 
@@ -341,11 +367,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
-		await waitFor(() =>
-			expect(document.querySelector(CM_EDITOR_SELECTOR)?.textContent).toBe(
-				SAMPLE_STATUS_QUERY,
-			),
-		);
+		const editor = await findQueryEditorTextbox();
+		await waitFor(() => expect(editor.textContent).toBe(SAMPLE_STATUS_QUERY));
 
 		await userEvent.click(screen.getByTestId('query-search-run-button'));
 
@@ -371,13 +394,9 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize and the expression to be set
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
-				// CodeMirror stores content in .cm-content, check the text content
-				const editorContent = document.querySelector(
-					CM_EDITOR_SELECTOR,
-				) as HTMLElement;
-				expect(editorContent).toBeInTheDocument();
 				// CodeMirror may render the text in multiple ways, check if it contains our expression
 				const textContent = editorContent.textContent || '';
 				expect(textContent).toContain('http.status_code');
@@ -412,12 +431,9 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		);
 
 		// Wait for CodeMirror to initialize with the initial expression
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
-				const editorContent = document.querySelector(
-					CM_EDITOR_SELECTOR,
-				) as HTMLElement;
-				expect(editorContent).toBeInTheDocument();
 				const textContent = editorContent.textContent || '';
 				expect(textContent).toBe(initialExpression);
 			},
@@ -477,11 +493,9 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 			/>,
 		);
 
+		const editorContent = await findQueryEditorTextbox();
 		await waitFor(
 			() => {
-				const editorContent = document.querySelector(
-					CM_EDITOR_SELECTOR,
-				) as HTMLElement;
 				expect(editorContent.textContent || '').toBe(initialExpression);
 			},
 			{ timeout: 3000 },

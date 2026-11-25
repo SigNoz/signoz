@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	Having,
 	IBuilderQuery,
@@ -146,7 +146,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 	});
 
 	it('savePreviousQuery=true: metrics → meter saves previous query in session storage with appropriate key and query', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<QueryBuilderV2
 				panelType={PANEL_TYPES.TABLE}
@@ -155,9 +155,9 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 				savePreviousQuery
 			/>,
 		);
-		const trigger = document.querySelector(
-			'.metrics-container .source-selector .ant-select-selector',
-		) as HTMLElement;
+		const trigger = within(
+			screen.getByTestId('metrics-source-selector-0'),
+		).getByRole('combobox');
 
 		await user.click(trigger);
 
@@ -182,7 +182,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 	});
 
 	it('savePreviousQuery=false: metrics → meter does not write to sessionStorage and applies defaults', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		// render WITHOUT savePreviousQuery enabled
 		render(
 			<QueryBuilderV2
@@ -193,9 +193,9 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 		);
 
 		// open Source and choose Meter
-		const trigger = document.querySelector(
-			'.metrics-container .source-selector .ant-select-selector',
-		) as HTMLElement;
+		const trigger = within(
+			screen.getByTestId('metrics-source-selector-0'),
+		).getByRole('combobox');
 		await user.click(trigger);
 		const meterOption = await screen.findByText('Meter');
 		await user.click(meterOption);
@@ -302,7 +302,7 @@ describe('DataSource change - Logs to Traces', () => {
 	});
 
 	it('updates query dataSource to TRACES saves previous query in session storage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<QueryBuilderV2
@@ -313,19 +313,12 @@ describe('DataSource change - Logs to Traces', () => {
 			/>,
 		);
 
-		const logsTrigger = document.querySelector(
-			'.query-data-source .ant-select-selector',
-		) as HTMLElement;
+		const logsTrigger = within(
+			screen.getByTestId('query-data-source-selector-0'),
+		).getByRole('combobox');
 		await user.click(logsTrigger);
 
-		const tracesContent = screen.getByText('Traces', {
-			selector: '.ant-select-item-option-content',
-		});
-
-		// click the option (prefer the option element; fallback to content)
-		await user.click(
-			(tracesContent.closest('[role="option"]') as HTMLElement) || tracesContent,
-		);
+		await user.click(screen.getByTitle('Traces'));
 
 		// verify previousQuery store saved the current LOGS snapshot before switch
 		const storeRaw = sessionStorage.getItem(PREVIOUS_QUERY_KEY);
@@ -337,7 +330,7 @@ describe('DataSource change - Logs to Traces', () => {
 		);
 	});
 	it('updates query dataSource to TRACES does not saves previous query in session storage', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<QueryBuilderV2
@@ -347,19 +340,12 @@ describe('DataSource change - Logs to Traces', () => {
 			/>,
 		);
 
-		const logsTrigger = document.querySelector(
-			'.query-data-source .ant-select-selector',
-		) as HTMLElement;
+		const logsTrigger = within(
+			screen.getByTestId('query-data-source-selector-0'),
+		).getByRole('combobox');
 		await user.click(logsTrigger);
 
-		const tracesContent = screen.getByText('Traces', {
-			selector: '.ant-select-item-option-content',
-		});
-
-		// click the option (prefer the option element; fallback to content)
-		await user.click(
-			(tracesContent.closest('[role="option"]') as HTMLElement) || tracesContent,
-		);
+		await user.click(screen.getByTitle('Traces'));
 
 		// Assert that no snapshot was written
 		const storeRaw = sessionStorage.getItem(PREVIOUS_QUERY_KEY);

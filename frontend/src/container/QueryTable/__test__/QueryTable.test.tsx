@@ -1,6 +1,6 @@
 import WidgetHeader from 'container/WidgetCard/Header';
 import { mockAppLocation } from 'tests/router-mocks';
-import { fireEvent, render } from 'tests/test-utils';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 import { EQueryType } from 'types/common/dashboard';
 
 import { QueryTable } from '../QueryTable';
@@ -18,21 +18,19 @@ jest.mock('hooks/useSafeNavigate', () => ({
 
 describe('QueryTable -', () => {
 	it('should render correctly with all the data rows', () => {
-		const { container } = render(<QueryTable {...QueryTableProps} />);
-		const tableRows = container.querySelectorAll('tr.ant-table-row');
+		render(<QueryTable {...QueryTableProps} />);
+		const tableRows = screen.getAllByTestId('query-table-row');
 		expect(tableRows).toHaveLength(QueryTableProps.queryTableData.rows.length);
 	});
 
 	it('should render correctly with searchTerm', () => {
-		const { container } = render(
-			<QueryTable {...QueryTableProps} searchTerm="frontend" />,
-		);
-		const tableRows = container.querySelectorAll('tr.ant-table-row');
+		render(<QueryTable {...QueryTableProps} searchTerm="frontend" />);
+		const tableRows = screen.getAllByTestId('query-table-row');
 		expect(tableRows).toHaveLength(3);
 	});
 
 	it('should enable drilldown cells for AI query builder queries', () => {
-		const { container } = render(
+		render(
 			<QueryTable
 				{...QueryTableProps}
 				query={{
@@ -43,7 +41,10 @@ describe('QueryTable -', () => {
 				enableDrillDown
 			/>,
 		);
-		expect(container.querySelector('.clickable-cell')).toBeInTheDocument();
+		const [firstRow] = screen.getAllByTestId('query-table-row');
+		expect(within(firstRow).getAllByRole('button')[0]).toHaveClass(
+			'clickable-cell',
+		);
 	});
 });
 

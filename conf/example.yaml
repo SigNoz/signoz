@@ -474,6 +474,14 @@ auditor:
     compression: lz4
     # The maximum time to drain buffered events on shutdown. Undelivered events are dropped after it.
     shutdown_timeout: 30s
+    tls:
+      # Whether to connect to the brokers over TLS.
+      enabled: false
+      # The PEM CA bundle that verifies broker certificates. Empty uses the system roots.
+      ca_file: ""
+      # The client certificate and key, for brokers that require client auth. Set both or neither.
+      cert_file: ""
+      key_file: ""
 
 ##################### Cloud Integration #####################
 cloudintegration:

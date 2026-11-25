@@ -4,9 +4,15 @@ import { Spin, SpinProps } from 'antd';
 
 import { SpinerStyle } from './styles';
 
-function Spinner({ size, tip, height, style }: SpinnerProps): JSX.Element {
+function Spinner({
+	size,
+	tip,
+	height,
+	style,
+	testId,
+}: SpinnerProps): JSX.Element {
 	return (
-		<SpinerStyle height={height} style={style}>
+		<SpinerStyle height={height} style={style} data-testid={testId}>
 			<Spin
 				spinning
 				size={size}
@@ -29,12 +35,14 @@ interface SpinnerProps {
 	tip?: SpinProps['tip'];
 	height?: CSSProperties['height'];
 	style?: CSSProperties;
+	testId?: string;
 }
 Spinner.defaultProps = {
 	size: undefined,
 	tip: undefined,
 	height: undefined,
 	style: {},
+	testId: undefined,
 };
 
 export default Spinner;

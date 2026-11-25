@@ -1,8 +1,7 @@
-import userEvent from '@testing-library/user-event';
 import { triggeredAlertsPaginationFixture } from 'mocks-server/__mockdata__/triggered_alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { screen, waitFor } from 'tests/test-utils';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderTriggeredAlerts } from './_helpers';
@@ -44,10 +43,9 @@ describe('TriggeredAlerts — pagination', () => {
 		await screen.findByText('Pag Alert 14');
 
 		const nav = screen.getByRole('navigation');
-		const page2 = Array.from(nav.querySelectorAll('button')).find(
-			(b) => b.textContent?.trim() === '2',
-		);
-		expect(page2).toBeDefined();
+		expect(
+			within(nav).getByRole('button', { name: 'Page 2' }),
+		).toBeInTheDocument();
 	});
 
 	it('navigates to page 2 and shows the next batch of alerts', async () => {
@@ -58,13 +56,7 @@ describe('TriggeredAlerts — pagination', () => {
 		await screen.findByText('Pag Alert 14');
 
 		const nav = screen.getByRole('navigation');
-		const page2Button = Array.from(nav.querySelectorAll('button')).find(
-			(b) => b.textContent?.trim() === '2',
-		);
-		if (!page2Button) {
-			throw new Error('Page 2 button not found');
-		}
-		await user.click(page2Button);
+		await user.click(within(nav).getByRole('button', { name: 'Page 2' }));
 
 		await waitFor(() =>
 			expect(screen.getByText('Pag Alert 0')).toBeInTheDocument(),

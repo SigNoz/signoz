@@ -1,7 +1,5 @@
 import React from 'react';
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { render } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
 import { TooltipRenderArgs } from '../../components/types';
@@ -10,6 +8,7 @@ import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import {
 	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
+	type TooltipPluginProps,
 } from '../TooltipPlugin/types';
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
@@ -189,6 +188,7 @@ describe('TooltipPlugin', () => {
 
 			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container).not.toBeNull();
+			// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 			expect(container.parentElement).toBe(document.body);
 		});
 
@@ -207,6 +207,7 @@ describe('TooltipPlugin', () => {
 			renderAndActivateHover(config);
 
 			const container = screen.getByTestId('tooltip-plugin-container');
+			// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 			expect(container.parentElement).toBe(document.body);
 
 			const fullscreenRoot = document.createElement('div');
@@ -219,7 +220,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
-				expect(updatedContainer.parentElement).toBe(fullscreenRoot);
+				expect(fullscreenRoot).toContainElement(updatedContainer);
 			});
 
 			act(() => {
@@ -229,6 +230,7 @@ describe('TooltipPlugin', () => {
 
 			await waitFor(() => {
 				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+				// oxlint-disable-next-line signoz/no-dom-node-access -- checks the portal mounts directly under document.body
 				expect(updatedContainer.parentElement).toBe(document.body);
 			});
 
@@ -345,7 +347,7 @@ describe('TooltipPlugin', () => {
 
 			const button = await screen.findByRole('button', { name: 'Dismiss' });
 
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			await user.click(button);
 
 			await waitFor(() => {
@@ -618,6 +620,57 @@ describe('TooltipPlugin', () => {
 	});
 
 	// ---- Keyboard pin edge cases ------------------------------------------------
+
+	describe('pin on click', () => {
+		it('pins on a click shouldPinOnClick accepts, instead of calling onClick', async () => {
+			const config = createConfigMock();
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
+			const shouldPinOnClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['shouldPinOnClick']>
+			>;
+			shouldPinOnClick.mockReturnValue(true);
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				shouldPinOnClick,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('tooltip-plugin-container').dataset.pinned).toBe(
+					'true',
+				);
+			});
+			expect(shouldPinOnClick).toHaveBeenCalledTimes(1);
+			expect(onClick).not.toHaveBeenCalled();
+		});
+
+		it('calls onClick for a click shouldPinOnClick declines', () => {
+			const config = createConfigMock();
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				shouldPinOnClick: () => false,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			expect(onClick).toHaveBeenCalledTimes(1);
+			expect(
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned,
+			).not.toBe('true');
+		});
+	});
 
 	describe('keyboard pin edge cases', () => {
 		it('does not pin when cursor coordinates are negative (cursor off-screen)', () => {

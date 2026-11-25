@@ -39,6 +39,7 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "1.57.0",
+    "@signozhq/noz-client": "1.13.0",
     "@types/node": "^20.0.0",
     "dotenv": "^16.0.0",
     "eslint-plugin-playwright": "^2.10.2",

@@ -45,7 +45,7 @@ function LabelTag({
 				</div>
 			}
 		>
-			<span className={className}>
+			<span className={className} data-testid={`label-tag-container-${label}`}>
 				<Badge
 					textTransform="none"
 					color={color ?? 'secondary'}

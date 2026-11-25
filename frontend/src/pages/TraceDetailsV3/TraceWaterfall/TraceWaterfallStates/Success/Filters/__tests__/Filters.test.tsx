@@ -112,9 +112,7 @@ describe('Trace waterfall Filters', () => {
 	it.each(['has_error = true', "has_error = 'true'", 'has_error = TRUE'])(
 		'reflects a committed %s on the highlight errors switch',
 		async (expression) => {
-			const toggle = screen
-				.getByTestId('highlight-errors-toggle')
-				.querySelector('[role="switch"]');
+			const toggle = screen.getByTestId('highlight-errors-switch');
 			expect(toggle).toHaveAttribute('aria-checked', 'false');
 
 			commit(expression);
@@ -128,11 +126,10 @@ describe('Trace waterfall Filters', () => {
 		commit('has_error != true');
 
 		await waitFor(() => expect(payloads).toHaveLength(1));
-		expect(
-			screen
-				.getByTestId('highlight-errors-toggle')
-				.querySelector('[role="switch"]'),
-		).toHaveAttribute('aria-checked', 'false');
+		expect(screen.getByTestId('highlight-errors-switch')).toHaveAttribute(
+			'aria-checked',
+			'false',
+		);
 	});
 
 	it('does not commit an expression that fails to parse', async () => {

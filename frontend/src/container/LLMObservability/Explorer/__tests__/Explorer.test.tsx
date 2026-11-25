@@ -75,7 +75,7 @@ describe('AI observability Explorer', () => {
 	});
 
 	it('clears the url columns of the panel being left', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const traceColumns = [{ name: 'span_count' }];
 		localStorage.setItem(
 			LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS,
@@ -104,5 +104,5 @@ describe('AI observability Explorer', () => {
 			...defaultOptionsQuery,
 			selectColumns: [],
 		});
-	}, 15_000);
+	});
 });

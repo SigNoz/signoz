@@ -79,8 +79,9 @@ export const nozMocks = defineStoryMocks({
 				state.streams[`${AWAITING_PREFIX}${index}`] = awaitingStream();
 			}
 
-			// Persisted, so a panel one story opened would still be open in the next.
+			// The store outlives a story, so a panel or modal one story opened would still be open in the next.
 			state.isDrawerOpen = false;
+			state.isModalOpen = false;
 		});
 	},
 });

@@ -15,8 +15,8 @@ import {
 	fireEvent,
 	render,
 	screen,
+	userEvent,
 	waitFor,
-	within,
 } from 'tests/test-utils';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
@@ -297,6 +297,7 @@ describe('TracesExplorer -', () => {
 	});
 
 	it('create a dashboard btn assert', async () => {
+		const user = userEvent.setup();
 		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
@@ -307,24 +308,21 @@ describe('TracesExplorer -', () => {
 		await waitFor(() =>
 			expect(createDashboardBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
-		fireEvent.click(createDashboardBtn);
+		await user.click(createDashboardBtn);
 
-		const createDashboardModal = (await screen.findByRole(
-			'dialog',
-		)) as HTMLElement;
-		expect(createDashboardModal).toBeInTheDocument();
+		const createDashboardModal = await screen.findByTestId('export-panel-dialog');
+		expect(createDashboardModal).toContainElement(
+			screen.getByTestId('export-panel-new-dashboard'),
+		);
 
 		// assert modal content
-		expect(
-			within(createDashboardModal).getByTestId('export-panel-new-dashboard'),
-		).toBeInTheDocument();
-
-		expect(
-			within(createDashboardModal).getByTestId('export-panel-export'),
-		).toBeInTheDocument();
+		expect(createDashboardModal).toContainElement(
+			screen.getByTestId('export-panel-export'),
+		);
 	});
 
 	it('create an alert btn assert', async () => {
+		const user = userEvent.setup();
 		renderWithTracesExplorerRouter(<TracesExplorer />, [
 			'/traces-explorer/?panelType=list&selectedExplorerView=list',
 		]);
@@ -333,7 +331,7 @@ describe('TracesExplorer -', () => {
 		await waitFor(() =>
 			expect(createAlertBtn).not.toHaveAttribute('aria-disabled', 'true'),
 		);
-		fireEvent.click(createAlertBtn);
+		await user.click(createAlertBtn);
 
 		expect(getCurrentLocation().pathname).toBe(ROUTES.ALERTS_NEW);
 	});

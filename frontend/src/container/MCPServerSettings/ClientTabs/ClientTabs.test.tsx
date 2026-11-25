@@ -40,17 +40,17 @@ describe('ClientTabs', () => {
 		render(<ClientTabs {...defaultProps} activeTab="cursor" />);
 
 		// The snippet is rendered inside a <pre> element; check its content
-		const snippetPre = document.querySelector('.mcp-client-tabs__snippet-pre');
-		expect(snippetPre).toBeInTheDocument();
-		expect(snippetPre?.textContent).toContain(MCP_ENDPOINT);
-		expect(snippetPre?.textContent).toContain('mcpServers');
+		const snippetPre = screen.getByTestId('mcp-client-snippet-cursor');
+		expect(snippetPre.textContent).toContain(MCP_ENDPOINT);
+		expect(snippetPre.textContent).toContain('mcpServers');
 	});
 
 	it('renders endpoint block and instructions text for clients without a snippet (Claude Desktop)', () => {
 		render(<ClientTabs {...defaultProps} activeTab="claude-desktop" />);
 
-		const snippetPre = document.querySelector('.mcp-client-tabs__snippet-pre');
-		expect(snippetPre?.textContent).toBe(MCP_ENDPOINT);
+		expect(
+			screen.getByTestId('mcp-client-snippet-claude-desktop').textContent,
+		).toBe(MCP_ENDPOINT);
 
 		expect(
 			screen.getByText(
@@ -78,7 +78,7 @@ describe('ClientTabs', () => {
 	});
 
 	it('calls onCopySnippet with client key and snippet on copy', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const cursorClient = MCP_CLIENTS.find((c) => c.key === 'cursor')!;
 
 		render(<ClientTabs {...defaultProps} activeTab="cursor" />);

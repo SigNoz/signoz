@@ -11,7 +11,7 @@ const config: Config.InitialOptions = {
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
 	collectCoverageFrom: ['src/**/*.{ts,tsx}'],
 	moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
-	modulePathIgnorePatterns: ['dist'],
+	modulePathIgnorePatterns: ['<rootDir>/dist/'],
 	moduleNameMapper: {
 		'\\.(png|jpg|jpeg|gif|svg|webp|avif|ico|bmp|tiff)$':
 			'<rootDir>/__mocks__/fileMock.ts',
@@ -67,6 +67,8 @@ const config: Config.InitialOptions = {
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: '<rootDir>/jest.environment.cjs',
+	// Local only: the default (cores - 1) workers exhaust RAM when several runs overlap.
+	...(process.env.CI ? {} : { maxWorkers: 4, workerIdleMemoryLimit: '1GB' }),
 	coverageThreshold: {
 		global: {
 			statements: 80,

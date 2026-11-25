@@ -30,10 +30,6 @@ jest.mock('@signozhq/ui/toast', () => ({
 	},
 }));
 
-jest.mock('@floating-ui/dom', () =>
-	jest.requireActual('./floatingUiDomMock').floatingUiDomMock(),
-);
-
 type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
 
 const onClose = jest.fn() as jest.MockedFunction<
@@ -94,7 +90,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('keeps save disabled until the project IDs actually change', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		expect(screen.getByTestId('gcp-update-account-btn')).toHaveAttribute(
@@ -113,7 +109,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('sends the updated project IDs while preserving the immutable deployment fields', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
@@ -156,7 +152,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('blocks the update and shows a validation error when every project ID is removed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		// Strip every tag via its remove icon; the list shrinks as we go.
@@ -192,7 +188,7 @@ describe('GCP AccountSettingsDrawer', () => {
 			),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);

@@ -237,6 +237,7 @@ function CloudAccountSetupModal({
 											className="cloud-account-setup-form__form-item"
 										>
 											<Select
+												data-testid="azure-deployment-region-select"
 												placeholder="e.g. East US"
 												options={AZURE_REGIONS.map((region) => ({
 													label: `${region.label} (${region.value})`,
@@ -267,6 +268,7 @@ function CloudAccountSetupModal({
 											className="cloud-account-setup-form__form-item"
 										>
 											<Select
+												data-testid="azure-resource-groups-select"
 												mode="tags"
 												placeholder="e.g. prod-platform-rg"
 												tokenSeparators={[',']}

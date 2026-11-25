@@ -32,7 +32,7 @@ describe('IngestionSettings', () => {
 	});
 
 	it('copies the ingestion URL and key', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<IngestionSettings />);
 
 		await user.click(await screen.findByTestId('ingestion-settings-copy-1'));
