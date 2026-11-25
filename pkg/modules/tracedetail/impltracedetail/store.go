@@ -35,6 +35,9 @@ const colHasLink = `(position(links, '"refType":"FOLLOWS_FROM"') > 0) AS has_lin
 // \x7B and \x7D are the braces: the driver reads a brace in a query as a query parameter.
 const colOtherReferences = `multiIf(links = concat('[\x7B"traceId":"', trace_id, '","spanId":"', parent_span_id, '","refType":"CHILD_OF"\x7D]'), '', links = '', '[]', links) AS other_references`
 
+// jsonTextEscaper writes a word the way ClickHouse writes it inside JSON text.
+var jsonTextEscaper = strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\r", `\r`, "\t", `\t`, "\b", `\b`, "\f", `\f`)
+
 var genAIUsageValues = []struct{ key, alias string }{
 	{aiobservabilitytypes.GenAIUsageInputTokens, "input_tokens_value"},
 	{aiobservabilitytypes.GenAIUsageOutputTokens, "output_tokens_value"},
@@ -664,12 +667,15 @@ func spanTextCondition(sb *sqlbuilder.SelectBuilder, text string) string {
 	in := func(haystack string) string {
 		return fmt.Sprintf("positionCaseInsensitiveUTF8(%s, %s) > 0", haystack, needle)
 	}
+	// JSON text holds a quote, a backslash and a line break escaped, so the word is escaped to match.
+	jsonNeedle := sb.Var(jsonTextEscaper.Replace(text))
 	anyOf := func(array, element string) string {
 		return fmt.Sprintf("arrayExists(x -> %s, %s)", in(element), array)
 	}
 	// A JSON column nests a dotted name, so names are matched as paths and values in the text.
 	jsonOrMaps := func(column string, maps ...string) string {
-		return fmt.Sprintf("if(notEmpty(%s), %s OR %s, %s)", column, anyOf("JSONAllPaths("+column+")", "x"), in("toJSONString("+column+")"), strings.Join(maps, " OR "))
+		inText := fmt.Sprintf("positionCaseInsensitiveUTF8(toJSONString(%s), %s) > 0", column, jsonNeedle)
+		return fmt.Sprintf("if(notEmpty(%s), %s OR %s, %s)", column, anyOf("JSONAllPaths("+column+")", "x"), inText, strings.Join(maps, " OR "))
 	}
 	// An event is a JSON string: only its name and attributes are matched, not its timestamp.
 	event := fmt.Sprintf(

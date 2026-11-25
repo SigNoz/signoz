@@ -209,6 +209,13 @@ func TestNewSpanListPage_TimeSpent_ShowsTheGroupByItsLongestSpanInScope(t *testi
 	assert.Equal(t, []string{"root", "q2", "row"}, page.SpanIDs())
 }
 
+func TestSnippetAround_CaseFoldingThatChangesByteLength(t *testing.T) {
+	// Lowering İ makes the text a byte longer, so a position in the lowered text does not map back.
+	snippet, ok := snippetAround("İ WORLDPay declined", "worldpay")
+	require.True(t, ok)
+	assert.Equal(t, "İ WORLDPay declined", snippet)
+}
+
 func TestFindWords(t *testing.T) {
 	long := strings.Repeat("é", 30) + "aWorldpay" + strings.Repeat("b", 60)
 	row := &StorableSpan{

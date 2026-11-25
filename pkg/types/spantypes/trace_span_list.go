@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -329,17 +330,12 @@ func attributeText(value any) string {
 
 // snippetAround returns the text around the first place word occurs in value, ignoring case.
 func snippetAround(value, word string) (string, bool) {
-	// Lowering can change the byte length of some characters; positions then no longer map back.
-	lowered := strings.ToLower(value)
-	if len(lowered) != len(value) {
-		lowered = value
-	}
-	at := strings.Index(lowered, strings.ToLower(word))
-	if at < 0 {
+	at, wordEnd, ok := indexFold(value, word)
+	if !ok {
 		return "", false
 	}
 	start := max(at-spanMatchSnippetRadius, 0)
-	end := min(at+len(word)+spanMatchSnippetRadius, len(value))
+	end := min(wordEnd+spanMatchSnippetRadius, len(value))
 	for start > 0 && !utf8.RuneStart(value[start]) {
 		start--
 	}
@@ -354,6 +350,27 @@ func snippetAround(value, word string) (string, bool) {
 		snippet += snippetMark
 	}
 	return snippet, true
+}
+
+// indexFold returns the byte range of the first place word occurs in value, ignoring case. It
+// compares character by character: lowering the whole value can change its byte length.
+func indexFold(value, word string) (start, end int, ok bool) {
+	for start = range value {
+		end = start
+		matched := true
+		for _, want := range word {
+			got, size := utf8.DecodeRuneInString(value[end:])
+			if size == 0 || unicode.ToLower(got) != unicode.ToLower(want) {
+				matched = false
+				break
+			}
+			end += size
+		}
+		if matched {
+			return start, end, true
+		}
+	}
+	return 0, 0, false
 }
 
 func pageLimit(name string, value, fallback int) (int, error) {

@@ -229,7 +229,7 @@ def test_list_trace_spans_query(
             span("root", "", "POST /checkout", 0, kind=TracesKind.SPAN_KIND_SERVER, attributes={"http.route": "/checkout"}),
             span("by_name", "root", "call worldpay", 10),
             span("by_status", "root", "charge_card", 20, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="Worldpay declined the card"),
-            span("by_attribute", "by_status", "POST /v1/payments", 30, attributes={"payment.provider": "worldpay", "http.response.status_code": 402, "order.id": 1234567, "payment.retried": True, "url.full": "https://pay.example.com/v1/charges"}),
+            span("by_attribute", "by_status", "POST /v1/payments", 30, attributes={"payment.provider": "worldpay", "http.response.status_code": 402, "order.id": 1234567, "payment.retried": True, "url.full": "https://pay.example.com/v1/charges", "gateway.reply": 'said "come back later"'}),
             span("by_event", "root", "notify", 40, events=[TracesEvent("retry", start, {"reason": "worldpay timeout"})]),
             span("unrelated", "root", "render_receipt", 50, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="template missing"),
         ]
@@ -292,6 +292,10 @@ def test_list_trace_spans_query(
     # a slash inside a value is matched as written
     by_url = requests.get(spans_url, params={"query": "'example.com/v1'"}, headers=headers, timeout=10).json()["data"]
     assert [(item["span"]["span_id"], item["matches"][0]["field"]) for item in by_url["items"]] == [(ids["by_attribute"], "attributes.url.full")]
+
+    # a quote inside a value is matched as written
+    by_quote = requests.get(spans_url, params={"query": """'said "come back later"'"""}, headers=headers, timeout=10).json()["data"]
+    assert [(item["span"]["span_id"], item["matches"][0]["field"]) for item in by_quote["items"]] == [(ids["by_attribute"], "attributes.gateway.reply")]
 
     # of an event only the name and the attributes are matched, not the labels it is stored with
     assert requests.get(spans_url, params={"query": "retry"}, headers=headers, timeout=10).json()["data"]["total"] == 1
