@@ -117,6 +117,8 @@
 	"log_based_alert_desc": "Send a notification when a condition occurs in the logs data.",
 	"traces_based_alert": "Trace-based Alert",
 	"traces_based_alert_desc": "Send a notification when a condition occurs in the traces data.",
+	"ai_traces_based_alert": "AI Trace-based Alert",
+	"ai_traces_based_alert_desc": "Send a notification when a condition occurs in AI and LLM traces.",
 	"exceptions_based_alert": "Exceptions-based Alert",
 	"exceptions_based_alert_desc": "Send a notification when a condition occurs in the exceptions data.",
 	"field_unit": "Threshold unit",

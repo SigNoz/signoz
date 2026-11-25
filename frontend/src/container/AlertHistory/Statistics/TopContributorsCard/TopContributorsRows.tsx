@@ -31,6 +31,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div>
 						<AlertLabels labels={labels} />
@@ -47,6 +48,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div className="top-contributors-progress">
 						<Progress
@@ -67,6 +69,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div
 						className="total-contribution"

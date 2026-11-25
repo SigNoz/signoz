@@ -1,4 +1,5 @@
 import { Querybuildertypesv5QueryTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { omit } from 'lodash-es';
 import type {
 	Query,
 	QueryState,
@@ -69,6 +70,24 @@ export function toSlotQuery(requestQuery: Query, slotQuery: Query): Query {
 		queryType: slotQuery.queryType,
 		builder: slotQuery.builder,
 		builder_ai_query: requestQuery.builder,
+	};
+}
+
+/** The reverse of `foldAISlot`: a builder query moves into the AI slot under the AI type, untagged. */
+export function unfoldAISlot(query: Query): Query {
+	if (query.queryType !== EQueryType.QUERY_BUILDER) {
+		return query;
+	}
+	return {
+		...query,
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder: EMPTY_BUILDER,
+		builder_ai_query: {
+			...query.builder,
+			queryData: query.builder.queryData.map((queryData) =>
+				omit(queryData, 'builderQueryType'),
+			),
+		},
 	};
 }
 

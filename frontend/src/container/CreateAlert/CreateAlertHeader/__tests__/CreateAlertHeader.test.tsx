@@ -1,11 +1,17 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { initialQueryAIWithType } from 'constants/queryBuilder';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlert/utils';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { mockAppLocation } from 'tests/router-mocks';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import * as rulesHook from '../../../../api/generated/services/rules';
+import * as createAlertContext from '../../context';
 import { CreateAlertProvider } from '../../context';
+import type { ICreateAlertContextProps } from '../../context/types';
+import { createMockAlertContextState } from '../../EvaluationSettings/__tests__/testUtils';
 import CreateAlertHeader from '../CreateAlertHeader';
 
 jest.spyOn(rulesHook, 'useCreateRule').mockReturnValue({
@@ -92,5 +98,48 @@ describe('CreateAlertHeader', () => {
 		expect(
 			screen.getByPlaceholderText(ENTER_ALERT_RULE_NAME_PLACEHOLDER),
 		).toHaveValue('TEST_ALERT');
+	});
+
+	it('should reject a label key used as a group by in an AI query', async () => {
+		const user = userEvent.setup();
+		const mockSetAlertState = jest.fn() as jest.MockedFunction<
+			ICreateAlertContextProps['setAlertState']
+		>;
+		const alertStateSpy = jest
+			.spyOn(createAlertContext, 'useCreateAlertState')
+			.mockReturnValue(
+				createMockAlertContextState({
+					alertType: AlertTypes.AI_TRACES_BASED_ALERT,
+					setAlertState: mockSetAlertState,
+				}),
+			);
+		const aiBuilder = getActiveBuilder(initialQueryAIWithType);
+		const aiQuery: Query = {
+			...initialQueryAIWithType,
+			builder_ai_query: {
+				...aiBuilder,
+				queryData: [
+					{
+						...aiBuilder.queryData[0],
+						groupBy: [{ key: 'service.name', type: 'resource' }],
+					},
+				],
+			},
+		};
+
+		render(<CreateAlertHeader />, undefined, {
+			queryBuilderOverrides: { currentQuery: aiQuery },
+		});
+		await user.click(screen.getByTestId('alert-add-label-button'));
+		await user.type(
+			screen.getByTestId('alert-add-label-input'),
+			'service.name:foo{Enter}',
+		);
+
+		expect(mockSetAlertState).not.toHaveBeenCalledWith(
+			expect.objectContaining({ type: 'SET_ALERT_LABELS' }),
+		);
+
+		alertStateSpy.mockRestore();
 	});
 });
