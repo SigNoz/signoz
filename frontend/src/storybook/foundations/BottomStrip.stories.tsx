@@ -110,10 +110,7 @@ export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
 };
 
-/**
- * A toast above the strip. The toaster pins itself to the foot of the viewport,
- * so without an offset it lands on top of Ask Noz and Support.
- */
+/** A toast in the top-right corner, where the toaster puts it, clear of the strip. */
 export const WithToast: Story = {
 	args: { noz: true, support: 'pylon' },
 	play: raiseToast,
