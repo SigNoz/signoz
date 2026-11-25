@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash-es';
 import type { DashboardtypesDistributionPercentilesDTO } from 'api/generated/services/sigNoz.schemas';
 
 import ConfigField from '../../controls/ConfigField/ConfigField';
@@ -9,11 +8,12 @@ import { createFieldResetter } from '../../utils/changes';
 import {
 	MAX_PERCENTILE_MARKERS,
 	resolvePercentileItems,
-	resolvePercentiles,
 } from './percentileOptions';
 
 interface DistributionPercentilesFieldProps {
 	value: DashboardtypesDistributionPercentilesDTO | undefined;
+	/** The new panel's seed: what the server writes for unset percentiles. */
+	defaultValue?: DashboardtypesDistributionPercentilesDTO;
 	savedValue?: DashboardtypesDistributionPercentilesDTO;
 	onChange: (next: DashboardtypesDistributionPercentilesDTO) => void;
 }
@@ -21,12 +21,13 @@ interface DistributionPercentilesFieldProps {
 /** Edits `chartAppearance.percentiles`. */
 function DistributionPercentilesField({
 	value,
+	defaultValue,
 	savedValue,
 	onChange,
 }: DistributionPercentilesFieldProps): JSX.Element {
 	const reset = createFieldResetter(value, savedValue, onChange);
-	const { enabled, values } = resolvePercentiles(value);
-	const saved = resolvePercentiles(savedValue);
+	const enabled = value?.enabled ?? defaultValue?.enabled ?? false;
+	const values = value?.values ?? defaultValue?.values ?? [];
 
 	return (
 		<>
@@ -35,7 +36,7 @@ function DistributionPercentilesField({
 				title="Percentile markers"
 				description="Dashed lines at percentiles estimated from the bucket counts."
 				sketch={SWITCH_SKETCHES.percentiles}
-				changed={enabled !== saved.enabled}
+				changed={reset('enabled').changed}
 				value={enabled}
 				onChange={(next): void => onChange({ enabled: next, values })}
 			/>
@@ -50,8 +51,7 @@ function DistributionPercentilesField({
 								: `Up to ${MAX_PERCENTILE_MARKERS}.`}
 						</span>
 					}
-					onReset={reset('values').onReset}
-					changed={!isEqual(values, saved.values)}
+					{...reset('values')}
 				>
 					<ConfigMultiSelect
 						testId="panel-editor-v2-percentile-values"

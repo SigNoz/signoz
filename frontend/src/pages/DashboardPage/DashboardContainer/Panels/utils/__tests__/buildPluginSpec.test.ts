@@ -16,6 +16,7 @@ import {
 import { DEFAULT_BAR_COLOR } from '../../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { defaultColumnsForSignal } from '../../../PanelEditor/ListColumnsEditor/selectFields';
 import { sections as areaSections } from '../../kinds/AreaChartPanel/sections';
+import { sections as distributionSections } from '../../kinds/DistributionPanel/sections';
 import { sections as geoMapSections } from '../../kinds/GeoMapPanel/sections';
 import { sections as heatmapSections } from '../../kinds/HeatmapPanel/sections';
 import { sections as listSections } from '../../kinds/ListPanel/sections';
@@ -371,6 +372,25 @@ describe('buildPluginSpec', () => {
 	});
 
 	describe('chartAppearance seed', () => {
+		it('seeds a new distribution with the stack and percentiles the server writes', () => {
+			const spec = buildPluginSpec(distributionSections);
+
+			expect(spec.visualization?.stack).toBe(DashboardtypesStackModeDTO.normal);
+			expect(spec.chartAppearance?.percentiles).toStrictEqual({
+				enabled: true,
+				values: [50, 90, 99],
+			});
+		});
+
+		it("carries a distribution's percentiles across a switch", () => {
+			const percentiles = { enabled: false, values: [75] };
+			const spec = buildPluginSpec(distributionSections, {
+				oldSpec: oldSpecWith({ chartAppearance: { percentiles } }),
+			});
+
+			expect(spec.chartAppearance?.percentiles).toStrictEqual(percentiles);
+		});
+
 		it('seeds only the declared defaulting controls', () => {
 			const sections: SectionConfig[] = [
 				{

@@ -44,6 +44,7 @@ const BUBBLE_RADIUS_BOUNDS = { min: 1, max: 64 };
  */
 function ChartAppearanceSection({
 	value,
+	defaultValue,
 	savedValue,
 	controls,
 	onChange,
@@ -63,6 +64,7 @@ function ChartAppearanceSection({
 			{controls.percentiles && (
 				<DistributionPercentilesField
 					value={value?.percentiles}
+					defaultValue={defaultValue?.percentiles}
 					savedValue={savedValue?.percentiles}
 					onChange={(percentiles): void => onChange({ ...value, percentiles })}
 				/>

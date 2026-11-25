@@ -157,7 +157,7 @@ function translateStackingForKind(
 		}
 		return {};
 	}
-	if (controls.stackMode) {
+	if (controls.stackMode || controls.bucketStack) {
 		if (old?.stack !== undefined) {
 			return { stack: old.stack };
 		}
@@ -326,6 +326,7 @@ const SECTION_SEEDS: SectionSeeds = {
 				colors,
 				bubbles,
 				labels,
+				percentiles,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -351,6 +352,13 @@ const SECTION_SEEDS: SectionSeeds = {
 			}
 			if (controls.spanGaps && spanGaps !== undefined) {
 				appearance.spanGaps = spanGaps;
+			}
+			// What the server writes for unset percentiles, so a new panel previews the same.
+			if (controls.percentiles) {
+				appearance.percentiles = percentiles ?? {
+					enabled: true,
+					values: [50, 90, 99],
+				};
 			}
 			// Seeded so the controls open on the ramp the grid is drawn with; the
 			// count bounds and step count stay unset, which reads as derived.

@@ -162,10 +162,11 @@ describe('VisualizationSection', () => {
 		).not.toBeInTheDocument();
 	});
 
-	it('opens the bucket stack on stacked, where a distribution starts', () => {
+	it("opens the bucket stack on the kind's seeded default", () => {
 		render(
 			<VisualizationSection
 				value={undefined}
+				defaultValue={{ stack: DashboardtypesStackModeDTO.normal }}
 				controls={{ switchPanelKind: false, bucketStack: true }}
 				onChange={jest.fn()}
 			/>,

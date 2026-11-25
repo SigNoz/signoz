@@ -18,7 +18,7 @@ import {
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpecDTOKind as TimeSeriesKind,
 	DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpecDTOKind as TopListKind,
 	MetrictypesSpaceAggregationDTO as SpaceAggregation,
-	DashboardtypesDistributionStackModeDTO as DistributionStackMode,
+	DashboardtypesStackModeDTO as DistributionStackMode,
 	DashboardtypesStackModeDTO as StackMode,
 	DashboardtypesTextModeDTO as TextMode,
 	Querybuildertypesv5RequestTypeDTO as RequestType,

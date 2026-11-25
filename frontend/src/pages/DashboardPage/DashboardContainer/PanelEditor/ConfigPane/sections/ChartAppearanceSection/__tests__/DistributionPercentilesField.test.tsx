@@ -4,9 +4,13 @@ import DistributionPercentilesField from '../DistributionPercentilesField';
 import { resolvePercentileItems } from '../percentileOptions';
 
 describe('DistributionPercentilesField', () => {
-	it('opens on, with the values picker shown', () => {
+	it("opens on the new panel's seed, with the values picker shown", () => {
 		render(
-			<DistributionPercentilesField value={undefined} onChange={jest.fn()} />,
+			<DistributionPercentilesField
+				value={undefined}
+				defaultValue={{ enabled: true, values: [50, 90, 99] }}
+				onChange={jest.fn()}
+			/>,
 		);
 
 		expect(
@@ -81,26 +85,29 @@ describe('resolvePercentileItems', () => {
 		]);
 	});
 
-	it('offers Reset after clearing every percentile from unset saved values', async () => {
+	it('resets cleared percentiles to the saved ones', async () => {
 		const onChange = jest.fn();
 		render(
 			<DistributionPercentilesField
 				value={{ enabled: true, values: [] }}
-				savedValue={{}}
+				savedValue={{ enabled: true, values: [50, 90, 99] }}
 				onChange={onChange}
 			/>,
 		);
 
 		await userEvent.setup().click(screen.getByTestId('config-field-reset'));
 
-		expect(onChange).toHaveBeenCalledWith({ enabled: true, values: undefined });
+		expect(onChange).toHaveBeenCalledWith({
+			enabled: true,
+			values: [50, 90, 99],
+		});
 	});
 
-	it('offers no Reset when the values match the saved defaults', () => {
+	it('offers no Reset when the values match the saved ones', () => {
 		render(
 			<DistributionPercentilesField
-				value={{ values: [50, 90, 99] }}
-				savedValue={{}}
+				value={{ enabled: true, values: [50, 90, 99] }}
+				savedValue={{ enabled: true, values: [50, 90, 99] }}
 				onChange={jest.fn()}
 			/>,
 		);

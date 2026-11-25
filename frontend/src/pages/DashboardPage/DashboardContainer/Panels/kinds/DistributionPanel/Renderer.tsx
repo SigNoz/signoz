@@ -14,9 +14,9 @@ import { PanelRendererProps } from '../../types/rendererProps';
 import {
 	resolveDecimalPrecision,
 	resolveDistributionPercentiles,
-	resolveDistributionStackMode,
 	resolveDistributionYScale,
 	resolveLegendPosition,
+	resolveStackMode,
 } from '../../utils/chartAppearance/resolvers';
 import { enrichDistributionClick } from '../../utils/drilldown/enrichDistributionClick';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
@@ -115,7 +115,7 @@ function DistributionPanelRenderer({
 						xMin={spec.axes?.x?.min ?? undefined}
 						xMax={spec.axes?.x?.max ?? undefined}
 						yScale={resolveDistributionYScale(spec.axes?.y?.scale)}
-						stack={resolveDistributionStackMode(spec.visualization?.stack)}
+						stack={resolveStackMode(spec.visualization?.stack)}
 						xAxisUnit={spec.formatting?.unit}
 						decimalPrecision={decimalPrecision}
 						customColors={spec.legend?.customColors ?? undefined}

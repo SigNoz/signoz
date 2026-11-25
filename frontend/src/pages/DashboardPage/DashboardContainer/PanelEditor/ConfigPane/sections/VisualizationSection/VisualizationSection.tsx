@@ -1,7 +1,4 @@
-import {
-	DashboardtypesStackModeDTO,
-	DashboardtypesTimePreferenceDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { DashboardtypesTimePreferenceDTO } from 'api/generated/services/sigNoz.schemas';
 import type {
 	SectionEditorProps,
 	SectionKind,
@@ -64,7 +61,6 @@ function VisualizationSection({
 		? BarLayout.STACKED
 		: BarLayout.OVERLAP;
 	const stack = value?.stack ?? defaultValue?.stack;
-	const bucketStack = value?.stack ?? DashboardtypesStackModeDTO.normal;
 
 	return (
 		<>
@@ -148,13 +144,13 @@ function VisualizationSection({
 			{controls.bucketStack && (
 				<ConfigField
 					label="Groups in a bucket"
-					help={BUCKET_STACK_HELP[bucketStack]}
+					help={stack && BUCKET_STACK_HELP[stack]}
 					{...reset('stack')}
 				>
 					<ConfigTiles
 						testId="panel-editor-v2-bucket-stack"
 						aria-label="Groups in a bucket"
-						value={bucketStack}
+						value={stack}
 						items={BUCKET_STACK_OPTIONS}
 						onChange={(next): void => onChange({ ...value, stack: next })}
 					/>

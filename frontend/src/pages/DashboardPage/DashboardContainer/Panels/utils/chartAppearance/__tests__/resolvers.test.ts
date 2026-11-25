@@ -1,6 +1,5 @@
 import {
 	DashboardtypesAreaFillModeDTO,
-	DashboardtypesDistributionStackModeDTO,
 	DashboardtypesDistributionYScaleDTO,
 	DashboardtypesHeatmapColorModeDTO,
 	DashboardtypesHeatmapColorScaleDTO,
@@ -22,7 +21,6 @@ import { DistributionYScale } from 'lib/visualization/charts/Distribution/types'
 import {
 	resolveAreaFillMode,
 	resolveDistributionPercentiles,
-	resolveDistributionStackMode,
 	resolveDistributionYScale,
 	resolveHeatmapAxisScale,
 	resolveHeatmapColors,
@@ -197,22 +195,6 @@ describe('resolveHeatmapColors', () => {
 	});
 });
 
-describe('resolveDistributionStackMode', () => {
-	it('defaults to normal, unlike the shared stack default', () => {
-		expect(resolveDistributionStackMode(undefined)).toBe(StackMode.Normal);
-		expect(resolveStackMode(undefined)).toBe(StackMode.None);
-	});
-
-	it('keeps an explicit mode', () => {
-		expect(
-			resolveDistributionStackMode(DashboardtypesDistributionStackModeDTO.none),
-		).toBe(StackMode.None);
-		expect(
-			resolveDistributionStackMode(DashboardtypesDistributionStackModeDTO.percent),
-		).toBe(StackMode.Percent);
-	});
-});
-
 describe('resolveDistributionYScale', () => {
 	it('defaults to linear', () => {
 		expect(resolveDistributionYScale(undefined)).toBe(DistributionYScale.Linear);
@@ -223,11 +205,8 @@ describe('resolveDistributionYScale', () => {
 });
 
 describe('resolveDistributionPercentiles', () => {
-	it('marks p50/p90/p99 unless the spec says otherwise', () => {
-		expect(resolveDistributionPercentiles(undefined)).toStrictEqual([50, 90, 99]);
-		expect(
-			resolveDistributionPercentiles({ enabled: true, values: null }),
-		).toStrictEqual([50, 90, 99]);
+	it('marks nothing without percentiles; the server always writes them', () => {
+		expect(resolveDistributionPercentiles(undefined)).toStrictEqual([]);
 	});
 
 	it('marks the configured percentiles, or none when turned off', () => {
