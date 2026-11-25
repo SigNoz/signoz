@@ -41,13 +41,14 @@ function DetailsLoader(): JSX.Element {
 	return (
 		<>
 			{Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-				<Skeleton.Input
+				<div
 					// eslint-disable-next-line react/no-array-index-key
 					key={i}
-					active
-					size="small"
+					data-testid="trace-details-skeleton"
 					className={styles.skeleton}
-				/>
+				>
+					<Skeleton.Input active size="small" />
+				</div>
 			))}
 		</>
 	);

@@ -182,6 +182,7 @@ export default function ServiceTraces({
 						rowKey="serviceName"
 						className="services-table"
 						onRow={(record: ServicesList): Record<string, unknown> => ({
+							'data-testid': `home-services-row-${record.serviceName}`,
 							onClick: (event: React.MouseEvent): void => {
 								void logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,

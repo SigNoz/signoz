@@ -319,12 +319,10 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 	});
 
 	it('shows skeletons instead of the metadata when the summary is absent', () => {
-		const { container } = render(
-			<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />,
-		);
+		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
 		expect(screen.queryByText(/inventory-frontend/)).not.toBeInTheDocument();
-		expect(container.querySelectorAll('.ant-skeleton-input')).toHaveLength(3);
+		expect(screen.getAllByTestId('trace-details-skeleton')).toHaveLength(3);
 	});
 });
 

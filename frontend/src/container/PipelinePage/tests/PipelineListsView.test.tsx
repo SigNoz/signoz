@@ -343,9 +343,7 @@ describe('PipelinePage container test', () => {
 
 		// Open Filter input to trigger suggestions
 		const filterSelect = screen.getByTestId('qb-search-select');
-		await user.click(
-			within(filterSelect).getByRole('combobox', { hidden: true }),
-		);
+		await user.click(within(filterSelect).getByRole('combobox'));
 
 		await expect(
 			screen.findByText('otelServiceName'),

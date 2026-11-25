@@ -167,11 +167,9 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 		mockBuilder(AI_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
-		expect(
-			screen
-				.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER))
-				.closest('[role="tab"]'),
-		).toHaveAttribute('aria-selected', 'true');
+		expect(screen.getByRole('tab', { selected: true })).toContainElement(
+			screen.getByTestId(tabId(EQueryType.AI_QUERY_BUILDER)),
+		);
 		expect(lastQueryBuilderProps()).toMatchObject({
 			config: { initialDataSource: 'traces', queryVariant: 'static' },
 			showTraceOperator: false,
@@ -179,7 +177,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 	});
 
 	it('seeds an AI traces query when switching to the AI tab', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		mockBuilder(BUILDER_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
@@ -200,7 +198,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 	});
 
 	it('keeps the builder query when returning from ClickHouse', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const logsQuery = {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: { queryData: [{ dataSource: 'logs', legend: 'kept' }] },
@@ -216,7 +214,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 	});
 
 	it('seeds a default query for the kind when leaving AI for an unused Query Builder', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		mockBuilder(AI_QUERY);
 		renderBuilder('signoz/TimeSeriesPanel');
 
@@ -229,7 +227,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 	});
 
 	it("reseeds a Query Builder query this kind can't author when leaving AI", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		mockBuilder({
 			...AI_QUERY,
 			builder: { queryData: [{ dataSource: 'metrics' }] },
@@ -243,7 +241,7 @@ describe('PanelEditorQueryBuilder AI tab', () => {
 	});
 
 	it("keeps each tab's own query across Query Builder ↔ AI round trips", async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const logsQuery = {
 			queryType: EQueryType.QUERY_BUILDER,
 			builder: { queryData: [{ dataSource: 'logs' }] },

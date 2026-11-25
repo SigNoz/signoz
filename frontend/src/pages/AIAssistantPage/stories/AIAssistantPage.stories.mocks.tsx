@@ -125,6 +125,12 @@ export const aiAssistantMocks = defineStoryMocks({
 			options: AGENT_STATES,
 			value: 'idle',
 		}),
+		approvalDiff: toggleControl('Approval diff', {
+			group: AGENT,
+			description:
+				'Off is a delete, which has nothing to compare: its summary sits beside the buttons. Shows while the agent is awaiting approval.',
+			value: true,
+		}),
 		history: countControl('Past conversations', {
 			group: CONVERSATIONS,
 			description:
@@ -170,7 +176,9 @@ export const aiAssistantMocks = defineStoryMocks({
 		...onBothBases(
 			'get',
 			'/threads/:threadId',
-			response.json(() => threadDetailResponse(values.contents, values.agent)),
+			response.json(() =>
+				threadDetailResponse(values.contents, values.agent, values.approvalDiff),
+			),
 		),
 		...onBothBases(
 			'get',

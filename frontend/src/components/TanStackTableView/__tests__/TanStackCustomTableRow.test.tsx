@@ -22,7 +22,7 @@ jest.mock('../TanStackTableStateContext', () => ({
 	useClearRowHovered: (_rowId: string): (() => void) => mockClearRowHovered,
 }));
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 
 import TanStackCustomTableRow from '../TanStackCustomTableRow';
 import type { FlatItem, TableRowContext } from '../types';
@@ -73,7 +73,7 @@ describe('TanStackCustomTableRow', () => {
 			...baseContext,
 			isRowActive: (row) => row.id === '1',
 		};
-		const { container } = render(
+		render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
@@ -84,7 +84,7 @@ describe('TanStackCustomTableRow', () => {
 				</tbody>
 			</table>,
 		);
-		expect(container.querySelector('tr')).toHaveClass('tableRowActive');
+		expect(screen.getByRole('row')).toHaveClass('tableRowActive');
 	});
 
 	it('does not apply active class when isRowActive returns false', () => {
@@ -92,7 +92,7 @@ describe('TanStackCustomTableRow', () => {
 			...baseContext,
 			isRowActive: (row) => row.id === 'other',
 		};
-		const { container } = render(
+		render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
@@ -103,7 +103,7 @@ describe('TanStackCustomTableRow', () => {
 				</tbody>
 			</table>,
 		);
-		expect(container.querySelector('tr')).not.toHaveClass('tableRowActive');
+		expect(screen.getByRole('row')).not.toHaveClass('tableRowActive');
 	});
 
 	it('renders expansion row with expansion class', () => {
@@ -111,7 +111,7 @@ describe('TanStackCustomTableRow', () => {
 			kind: 'expansion',
 			row: { original: { id: '1' }, id: '1' } as never,
 		};
-		const { container } = render(
+		render(
 			<table>
 				<tbody>
 					<TanStackCustomTableRow
@@ -122,12 +122,12 @@ describe('TanStackCustomTableRow', () => {
 				</tbody>
 			</table>,
 		);
-		expect(container.querySelector('tr')).toHaveClass('tableRowExpansion');
+		expect(screen.getByRole('row')).toHaveClass('tableRowExpansion');
 	});
 
 	describe('hover state management', () => {
 		it('calls setRowHovered on mouse enter', () => {
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -138,13 +138,13 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			fireEvent.mouseEnter(row);
 			expect(mockSetRowHovered).toHaveBeenCalled();
 		});
 
 		it('calls clearRowHovered on mouse leave', () => {
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -155,7 +155,7 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			fireEvent.mouseLeave(row);
 			expect(mockClearRowHovered).toHaveBeenCalled();
 		});
@@ -163,7 +163,7 @@ describe('TanStackCustomTableRow', () => {
 
 	describe('virtuoso integration', () => {
 		it('forwards data-index attribute to tr element', () => {
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -174,12 +174,12 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			expect(row).toHaveAttribute('data-index', '0');
 		});
 
 		it('forwards data-item-index attribute to tr element', () => {
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -190,12 +190,12 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			expect(row).toHaveAttribute('data-item-index', '0');
 		});
 
 		it('forwards data-known-size attribute to tr element', () => {
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -206,7 +206,7 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			expect(row).toHaveAttribute('data-known-size', '40');
 		});
 	});
@@ -217,7 +217,7 @@ describe('TanStackCustomTableRow', () => {
 				...baseContext,
 				getRowStyle: () => ({ backgroundColor: 'red' }),
 			};
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -228,7 +228,7 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			expect(row).toHaveStyle({ backgroundColor: 'red' });
 		});
 
@@ -237,7 +237,7 @@ describe('TanStackCustomTableRow', () => {
 				...baseContext,
 				getRowClassName: () => 'custom-row-class',
 			};
-			const { container } = render(
+			render(
 				<table>
 					<tbody>
 						<TanStackCustomTableRow
@@ -248,7 +248,7 @@ describe('TanStackCustomTableRow', () => {
 					</tbody>
 				</table>,
 			);
-			const row = container.querySelector('tr')!;
+			const row = screen.getByRole('row');
 			expect(row).toHaveClass('custom-row-class');
 		});
 	});

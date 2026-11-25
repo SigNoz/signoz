@@ -7,15 +7,15 @@ function renderEmptyState(
 	category: ContextCategory,
 	query: string,
 	onPrefill = jest.fn(),
-): { onPrefill: jest.Mock; container: HTMLElement } {
-	const { container } = render(
+): { onPrefill: jest.Mock } {
+	render(
 		<ContextPickerEmptyState
 			category={category}
 			query={query}
 			onPrefill={onPrefill}
 		/>,
 	);
-	return { onPrefill, container };
+	return { onPrefill };
 }
 
 function ctaFor(category: ContextCategory): HTMLElement {
@@ -122,9 +122,12 @@ describe('ContextPickerEmptyState', () => {
 			['Alerts', 'var(--accent-cherry)'],
 			['Services', 'var(--accent-forest)'],
 		])('maps %s to the semantic accent %s', (category, accent) => {
-			const { container } = renderEmptyState(category, '');
-			const root = container.firstChild as HTMLElement;
-			expect(root.style.getPropertyValue('--empty-accent')).toBe(accent);
+			renderEmptyState(category, '');
+			expect(
+				screen
+					.getByTestId(`ai-context-empty-${category}`)
+					.style.getPropertyValue('--empty-accent'),
+			).toBe(accent);
 		});
 	});
 

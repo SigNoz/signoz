@@ -251,13 +251,13 @@ describe('AttributeMappingsTab (integration)', () => {
 		// aria-expanded contract rather than any framework-internal class.
 		const table = within(screen.getByTestId('mappings-table'));
 		expect(
-			table.queryByRole('button', { hidden: true, expanded: true }),
+			table.queryByRole('button', { expanded: true }),
 		).not.toBeInTheDocument();
 
 		await expandGroup(user);
-		expect(
-			table.getByRole('button', { hidden: true, expanded: true }),
-		).toContainElement(screen.getByTestId('group-expand-group-1'));
+		expect(table.getByRole('button', { expanded: true })).toContainElement(
+			screen.getByTestId('group-expand-group-1'),
+		);
 		await expect(
 			screen.findByTestId('mapper-target-mapper-1'),
 		).resolves.toBeInTheDocument();

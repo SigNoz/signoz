@@ -47,7 +47,12 @@ function ClientTabs({
 						<div className="mcp-client-tabs__snippet-wrapper">
 							{snippet !== null ? (
 								<div className="mcp-client-tabs__endpoint-value mcp-client-tabs__snippet">
-									<pre className="mcp-client-tabs__snippet-pre">{snippet}</pre>
+									<pre
+										className="mcp-client-tabs__snippet-pre"
+										data-testid={`mcp-client-snippet-${client.key}`}
+									>
+										{snippet}
+									</pre>
 									<CopyIconButton
 										ariaLabel={`Copy ${client.label} config`}
 										disabled={!endpoint}
@@ -58,7 +63,10 @@ function ClientTabs({
 							) : (
 								<>
 									<div className="mcp-client-tabs__endpoint-value mcp-client-tabs__snippet">
-										<pre className="mcp-client-tabs__snippet-pre">
+										<pre
+											className="mcp-client-tabs__snippet-pre"
+											data-testid={`mcp-client-snippet-${client.key}`}
+										>
 											{endpoint || ENDPOINT_PLACEHOLDER}
 										</pre>
 										<CopyIconButton

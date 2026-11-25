@@ -22,7 +22,10 @@ function AppLoading(): JSX.Element {
 	const isDarkMode = getThemeFromStorage();
 
 	return (
-		<div className={`app-loading-container ${isDarkMode ? 'dark' : 'lightMode'}`}>
+		<div
+			className={`app-loading-container ${isDarkMode ? 'dark' : 'lightMode'}`}
+			data-testid="app-loading-container"
+		>
 			<div className="perilin-bg" />
 			<div className="app-loading-content">
 				<div className="brand">
@@ -53,7 +56,7 @@ function AppLoading(): JSX.Element {
 					</Typography>
 				</div>
 
-				<div className="loader" />
+				<div className="loader" data-testid="app-loading-loader" />
 			</div>
 		</div>
 	);

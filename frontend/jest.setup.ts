@@ -39,6 +39,19 @@ if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
 }
 
+// jsdom has no elementFromPoint; CodeMirror calls it on mousedown to place the cursor.
+if (!document.elementFromPoint) {
+	document.elementFromPoint = (): Element | null => null;
+}
+
+// jsdom Ranges have no layout; CodeMirror measures text through them on click.
+if (!Range.prototype.getClientRects) {
+	Range.prototype.getClientRects = (): DOMRectList =>
+		document.body.getClientRects();
+	Range.prototype.getBoundingClientRect = (): DOMRect =>
+		document.body.getBoundingClientRect();
+}
+
 // jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
 // (e.g. @signozhq/ui Select) call when opening. Stub them so those components
 // can be exercised in tests.
@@ -120,63 +133,8 @@ if (typeof globalThis.DOMRect === 'undefined') {
 	};
 }
 
-// Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
-// These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
-// jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),
-// causing SyntaxErrors during getComputedStyle / getByRole calls.
-const _origGetComputedStyle = window.getComputedStyle;
-window.getComputedStyle = function (
-	elt: Element,
-	pseudoElt?: string | null,
-): CSSStyleDeclaration {
-	try {
-		return _origGetComputedStyle.call(window, elt, pseudoElt);
-	} catch {
-		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
-		// see the element as visible and without animations.
-		return {
-			display: '',
-			visibility: '',
-			width: '',
-			height: '',
-			opacity: '1',
-			animationName: 'none',
-			getPropertyValue: () => '',
-		} as unknown as CSSStyleDeclaration;
-	}
-};
-
-// jsdom has no layout, and Floating UI's getComputedStyle walk over every
-// popover ancestor costs up to ~1 s per open.
-jest.mock('@floating-ui/dom', () => ({
-	...jest.requireActual('@floating-ui/dom'),
-	autoUpdate: (): (() => void) => (): void => {},
-	computePosition: (
-		_reference: unknown,
-		_floating: unknown,
-		{ placement = 'bottom', strategy = 'absolute' } = {},
-	): Promise<unknown> =>
-		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
-}));
-
 jest.mock('@testing-library/user-event', () =>
 	jest.requireActual('tests/userEventWithDefaults'),
-);
-
-// antd popups walk getComputedStyle up every ancestor to find scroll
-// containers on each open. pnpm keeps the package under antd, not at the root.
-jest.mock(
-	require.resolve('@rc-component/trigger/lib/util', {
-		paths: [require.resolve('antd')],
-	}),
-	() => ({
-		...jest.requireActual(
-			require.resolve('@rc-component/trigger/lib/util', {
-				paths: [require.resolve('antd')],
-			}),
-		),
-		collectScroller: (): HTMLElement[] => [],
-	}),
 );
 
 beforeAll(() => server.listen());

@@ -1,5 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, screen, userEvent, waitFor } from 'tests/test-utils';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';

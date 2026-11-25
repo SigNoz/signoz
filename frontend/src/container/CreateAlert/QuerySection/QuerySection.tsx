@@ -157,10 +157,10 @@ function QuerySection(): JSX.Element {
 					{tabs.map((tab) => (
 						<Button
 							key={tab.value}
-							data-testid={`alert-type-tab-${tab.value}`}
 							className={classNames('list-view-tab', 'explorer-view-option', {
 								'active-tab': activeTab === tab.value,
 							})}
+							data-testid={`query-section-tab-${tab.value}`}
 							onClick={(): void => {
 								if (isAnomalyDetection && tab.value === activeTab) {
 									return;

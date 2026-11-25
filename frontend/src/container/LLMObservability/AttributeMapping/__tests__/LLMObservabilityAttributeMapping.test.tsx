@@ -88,7 +88,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 	});
 
 	it('prompts before discarding, then reverts staged changes on confirm', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityAttributeMapping />);
 
 		const toggle = await screen.findByTestId('group-enabled-group-1');
@@ -111,7 +111,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 	});
 
 	it('keeps the sample span input when switching away from the test tab and back', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityAttributeMapping />);
 
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
@@ -123,9 +123,9 @@ describe('LLMObservabilityAttributeMapping', () => {
 		await screen.findByTestId('attribute-mappings-tab');
 		// antd keeps a visited pane mounted and marks it aria-hidden, rather than
 		// unmounting it the way the previous tabs did.
-		expect(
-			screen.getByTestId('span-json-editor').closest('[role="tabpanel"]'),
-		).toHaveAttribute('aria-hidden', 'true');
+		const [, testPanel] = screen.getAllByRole('tabpanel', { hidden: true });
+		expect(testPanel).toContainElement(screen.getByTestId('span-json-editor'));
+		expect(testPanel).toHaveAttribute('aria-hidden', 'true');
 
 		await user.click(screen.getByRole('tab', { name: 'Test' }));
 
@@ -135,7 +135,7 @@ describe('LLMObservabilityAttributeMapping', () => {
 	});
 
 	it('keeps staged changes when the discard prompt is dismissed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityAttributeMapping />);
 
 		const toggle = await screen.findByTestId('group-enabled-group-1');
