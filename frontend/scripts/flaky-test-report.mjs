@@ -1,11 +1,21 @@
 #!/usr/bin/env node
 import { pathToFileURL } from 'node:url';
 
-import { gh, mapLimit, paginate } from './github-api.mjs';
-import { parseJest, parsePlaywright } from './test-log-parsers.mjs';
+import {
+	artifactFile,
+	artifactsSince,
+	gh,
+	mapLimit,
+	paginate,
+} from './github-api.mjs';
+import {
+	parseJest,
+	parsePlaywright,
+	parsePlaywrightReport,
+} from './test-log-parsers.mjs';
+import { report, slackMessage } from './flaky-test-format.mjs';
 
 const MIN_PRS = 3;
-const SLACK_LIMIT = 10;
 const PARALLEL_RUNS = 8;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,6 +40,9 @@ const SUITES = [
 		job: /^test \(/,
 		root: 'tests/e2e/',
 		parse: parsePlaywright,
+		// Uploaded by e2eci's upload-flaky step, only for shards with a test that passed on retry.
+		artifact: { prefix: 'e2e-flaky-', file: 'results.json' },
+		parseArtifact: parsePlaywrightReport,
 	},
 ];
 
@@ -125,14 +138,47 @@ async function collectFailures(repo, since) {
 			const candidates = runs.filter(
 				(run) => run.run_attempt > 1 || run.conclusion === 'failure',
 			);
-			return (
-				await mapLimit(candidates, PARALLEL_RUNS, (run) =>
-					runFailures(repo, run, suites),
-				)
-			).flat();
+			const fromLogs = await mapLimit(candidates, PARALLEL_RUNS, (run) =>
+				runFailures(repo, run, suites),
+			);
+			const fromArtifacts = await Promise.all(
+				suites
+					.filter((suite) => suite.artifact)
+					.map((suite) => artifactFailures(repo, since, suite, runs)),
+			);
+			return [...fromLogs, ...fromArtifacts].flat(2);
 		}),
 	);
 	return failures.flat();
+}
+
+async function artifactFailures(repo, since, suite, runs) {
+	const runsById = new Map(runs.map((run) => [run.id, run]));
+	const artifacts = (await artifactsSince(repo, since)).filter(
+		(artifact) =>
+			artifact.name.startsWith(suite.artifact.prefix) &&
+			!artifact.expired &&
+			runsById.has(artifact.workflow_run.id),
+	);
+	return mapLimit(artifacts, PARALLEL_RUNS, async (artifact) => {
+		const run = runsById.get(artifact.workflow_run.id);
+		let report;
+		try {
+			report = JSON.parse(
+				await artifactFile(repo, artifact.id, suite.artifact.file),
+			);
+		} catch (error) {
+			process.stderr.write(`skipped artifact ${artifact.id}: ${error.message}\n`);
+			return [];
+		}
+		return suite.parseArtifact(report).map((failure) => ({
+			...failure,
+			suite,
+			event: run.event,
+			pr: prOf(run),
+			passedOnRerun: false,
+		}));
+	});
 }
 
 async function lastChange(repo, path) {
@@ -147,84 +193,6 @@ async function lastChange(repo, path) {
 		when: commit.commit.author.date.slice(0, 10),
 		sha: commit.sha.slice(0, 7),
 		url: commit.html_url,
-	};
-}
-
-function signal(entry) {
-	return [
-		entry.passedOnRetry && `passed on retry (${entry.passedOnRetry})`,
-		entry.passedOnRerun && `passed on re-run (${entry.passedOnRerun})`,
-		entry.mergeQueue && `merge queue (${entry.mergeQueue})`,
-		entry.prs.size >= MIN_PRS && `${entry.prs.size} PRs`,
-	]
-		.filter(Boolean)
-		.join(', ');
-}
-
-const cell = (text) => text.replace(/\|/g, '\\|');
-
-const changeCell = (change) =>
-	change
-		? `${change.who}, ${change.when}, [${change.sha}](${change.url})`
-		: 'unknown';
-
-function suiteTable(suite, flaky) {
-	const rows = flaky
-		.filter((entry) => entry.suite === suite)
-		.map(
-			(entry) =>
-				`| ${cell(entry.test)} | \`${entry.file}\` | ${entry.failures} | ${signal(entry)} | ${cell(entry.error.slice(0, 80))} | ${changeCell(entry.change)} |`,
-		);
-	if (rows.length === 0) {
-		return [`### ${suite.name}`, '', 'No flaky tests found.', ''];
-	}
-	return [
-		`### ${suite.name}`,
-		'',
-		'| Test | File | Failures | Signal | First error line | Last change |',
-		'| --- | --- | --- | --- | --- | --- |',
-		...rows,
-		'',
-	];
-}
-
-function report(since, flaky) {
-	return [
-		`## Flaky tests since ${since}`,
-		'',
-		"A test is listed when it failed and then passed on a re-run of the same commit or on Playwright's own retry, or failed on 3 or more PRs. A merge queue run counts for the PR it was merging.",
-		'',
-		...SUITES.flatMap((suite) => suiteTable(suite, flaky)),
-	].join('\n');
-}
-
-// Slack mrkdwn treats these three as control characters.
-const slackEscape = (text) =>
-	text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-export function slackMessage(repo, since, flaky, runUrl) {
-	const title = `${flaky.length} flaky tests since ${since}`;
-	return {
-		text: title,
-		blocks: [
-			{ type: 'header', text: { type: 'plain_text', text: title } },
-			...flaky.slice(0, SLACK_LIMIT).map((entry) => ({
-				type: 'section',
-				text: {
-					type: 'mrkdwn',
-					text: `${entry.suite.name}, *${entry.failures} failures* <https://github.com/${repo}/blob/main/${entry.suite.root}${entry.file}|${slackEscape(entry.test)}>\n${signal(entry)}, last changed by ${slackEscape(entry.change?.who ?? 'unknown')}`,
-				},
-			})),
-			{
-				type: 'context',
-				elements: [
-					{
-						type: 'mrkdwn',
-						text: `<${runUrl}|All tests and their first error line>`,
-					},
-				],
-			},
-		],
 	};
 }
 
@@ -249,7 +217,7 @@ async function main() {
 			change: await lastChange(repo, entry.suite.root + entry.file),
 		})),
 	);
-	process.stdout.write(report(since, flaky));
+	process.stdout.write(report(since, SUITES, flaky));
 	const webhook = process.env.SLACK_WEBHOOK_URL;
 	if (webhook && flaky.length > 0) {
 		const runUrl = `${process.env.GITHUB_SERVER_URL}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;

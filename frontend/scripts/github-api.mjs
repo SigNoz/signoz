@@ -1,6 +1,12 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 const API = 'https://api.github.com';
 const MAX_ATTEMPTS = 4;
 const RETRY_BACKOFF_MS = 2000;
+const MAX_ARTIFACT_BYTES = 64 * 1024 * 1024;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -81,4 +87,33 @@ export async function paginate(path, key) {
 		next = response.headers.get('link')?.match(/<([^>]+)>; rel="next"/)?.[1];
 	}
 	return items;
+}
+
+// The artifacts list is newest first, so paging stops at the first page that reaches past `since`.
+export async function artifactsSince(repo, since) {
+	const artifacts = [];
+	for (let page = 1; ; page += 1) {
+		const { artifacts: batch } = await (
+			await gh(`/repos/${repo}/actions/artifacts?per_page=100&page=${page}`)
+		).json();
+		artifacts.push(...batch.filter((artifact) => artifact.created_at >= since));
+		if (batch.length < 100 || batch.at(-1).created_at < since) {
+			return artifacts;
+		}
+	}
+}
+
+export async function artifactFile(repo, id, name) {
+	const dir = mkdtempSync(join(tmpdir(), 'artifact-'));
+	try {
+		const zip = join(dir, 'artifact.zip');
+		const response = await gh(`/repos/${repo}/actions/artifacts/${id}/zip`);
+		writeFileSync(zip, Buffer.from(await response.arrayBuffer()));
+		return execFileSync('unzip', ['-p', zip, name], {
+			encoding: 'utf8',
+			maxBuffer: MAX_ARTIFACT_BYTES,
+		});
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 }

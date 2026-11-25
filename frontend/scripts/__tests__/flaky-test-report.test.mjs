@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findFlaky, prOf, slackMessage } from '../flaky-test-report.mjs';
+import { slackMessage } from '../flaky-test-format.mjs';
+import { findFlaky, prOf } from '../flaky-test-report.mjs';
 import { rateLimitWait } from '../github-api.mjs';
-import { parseJest, parsePlaywright } from '../test-log-parsers.mjs';
+import {
+	parseJest,
+	parsePlaywright,
+	parsePlaywrightReport,
+} from '../test-log-parsers.mjs';
 
 const JEST_LOG = [
 	'2026-11-10T10:00:00.0000000Z \x1b[1mFAIL\x1b[22m src/a/A.test.tsx (12.1 s)',
@@ -71,7 +76,7 @@ test('parseJest reads the storybook runner file under both of its prefixes', () 
 	]);
 });
 
-test('parsePlaywright reads failed and flaky tests from the closing summary', () => {
+test('parsePlaywright reads the tests that failed every retry', () => {
 	assert.deepEqual(parsePlaywright(PLAYWRIGHT_LOG), [
 		{
 			file: 'tests/s/list.spec.ts',
@@ -79,10 +84,49 @@ test('parsePlaywright reads failed and flaky tests from the closing summary', ()
 			error: 'Error: expect(received).toEqual(expected) // deep equality',
 			retried: false,
 		},
+	]);
+});
+
+test('parsePlaywrightReport reads the tests that passed on a retry', () => {
+	const spec = (title, status, error) => ({
+		title,
+		file: 's/detail.spec.ts',
+		tests: [
+			{
+				status,
+				results: [
+					{ status: 'failed', ...(error && { error: { message: error } }) },
+				],
+			},
+		],
+	});
+	const report = {
+		config: { rootDir: '/home/runner/work/signoz/signoz/tests/e2e/tests' },
+		suites: [
+			{
+				title: 's/detail.spec.ts',
+				specs: [spec('TC-01 loads', 'expected')],
+				suites: [
+					{
+						title: 'Services, detail',
+						specs: [
+							spec(
+								'TC-04 tabs render',
+								'flaky',
+								'Error: \x1b[2mlocator.click\x1b[22m: Timeout\n  at detail.spec.ts:70',
+							),
+							spec('TC-05 failed every retry', 'unexpected', 'Error: nope'),
+						],
+					},
+				],
+			},
+		],
+	};
+	assert.deepEqual(parsePlaywrightReport(report), [
 		{
 			file: 'tests/s/detail.spec.ts',
 			test: 'Services, detail › TC-04 tabs render',
-			error: 'Error: locator.click: Timeout 15000ms exceeded.',
+			error: 'Error: locator.click: Timeout',
 			retried: true,
 		},
 	]);

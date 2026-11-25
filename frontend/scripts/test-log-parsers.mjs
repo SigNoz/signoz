@@ -46,8 +46,7 @@ export function parseJest(log) {
 }
 
 // Playwright's list reporter numbers each failure (`1) [chromium] › <file>:<line>:<col> › <title>`)
-// and closes with `N failed` and `N flaky` sections listing the same tests.
-// A flaky test failed and then passed on one of Playwright's own retries.
+// and lists the tests that failed every retry under a closing `N failed` line.
 export function parsePlaywright(log) {
 	const lines = cleanLines(log);
 	const testLine = /\[[^\]]+\] › (\S+?):\d+:\d+ › (.+?)\s*$/;
@@ -67,17 +66,45 @@ export function parsePlaywright(log) {
 			[, section] = count;
 			return;
 		}
-		const listed =
-			section === 'failed' || section === 'flaky' ? line.match(testLine) : null;
+		const listed = section === 'failed' ? line.match(testLine) : null;
 		if (listed) {
 			const [, file, title] = listed;
 			failures.push({
 				file,
 				test: title,
 				error: errors.get(`${file}\0${title}`) ?? '',
-				retried: section === 'flaky',
+				retried: false,
 			});
 		}
 	});
 	return failures;
+}
+
+// Reads Playwright's JSON report. A flaky test failed and then passed on one of
+// Playwright's own retries; spec files are relative to `config.rootDir`.
+export function parsePlaywrightReport(report) {
+	const dir = report.config.rootDir.split('/tests/e2e/')[1];
+	const flaky = [];
+	const walk = (suite, titles) => {
+		suite.specs?.forEach((spec) => {
+			if (!spec.tests.some((test) => test.status === 'flaky')) {
+				return;
+			}
+			const error = spec.tests
+				.flatMap((test) => test.results)
+				.find((result) => result.error)?.error.message;
+			flaky.push({
+				file: [dir, spec.file].filter(Boolean).join('/'),
+				test: [...titles, spec.title].join(' › '),
+				error:
+					cleanLines(error ?? '')
+						.find((line) => line.trim())
+						?.trim() ?? '',
+				retried: true,
+			});
+		});
+		suite.suites?.forEach((child) => walk(child, [...titles, child.title]));
+	};
+	report.suites.forEach((fileSuite) => walk(fileSuite, []));
+	return flaky;
 }
