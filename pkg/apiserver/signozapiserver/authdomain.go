@@ -149,7 +149,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      authDomainRoleNamesExtractor(),
+				TargetIDs:      provider.authDomainAttachedRoleNamesExtractor(),
 				TargetSelector: coretypes.IDSelector,
 			},
 			handler.AttachDetachSiblingResourceDef{
@@ -159,7 +159,7 @@ func (provider *provider) addAuthDomainRoutes(router *mux.Router) error {
 				SourceIDs:      coretypes.OneID(coretypes.PathParam("id")),
 				SourceSelector: coretypes.IDSelector,
 				TargetResource: coretypes.ResourceRole,
-				TargetIDs:      provider.authDomainStoredRoleNamesExtractor(),
+				TargetIDs:      provider.authDomainDetachedRoleNamesExtractor(),
 				TargetSelector: coretypes.IDSelector,
 			},
 		),
@@ -215,10 +215,17 @@ func authDomainRoleNamesExtractor() coretypes.ResourceIDsExtractor {
 	}}
 }
 
-// The extracted names are the roles the stored domain's mapping grants at SSO
-// login — an update replaces that mapping, so the caller must be able to detach
-// them.
-func (provider *provider) authDomainStoredRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+func (provider *provider) authDomainAttachedRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+	return provider.authDomainRoleNamesDiffExtractor(true)
+}
+
+func (provider *provider) authDomainDetachedRoleNamesExtractor() coretypes.ResourceIDsExtractor {
+	return provider.authDomainRoleNamesDiffExtractor(false)
+}
+
+// The extracted names are the roles an update adds to or removes from what the
+// stored domain's mapping grants at SSO login; retained roles need no check.
+func (provider *provider) authDomainRoleNamesDiffExtractor(attached bool) coretypes.ResourceIDsExtractor {
 	return coretypes.ResourceIDsExtractor{Phase: coretypes.PhaseRequest, Fn: func(ec coretypes.ExtractorContext) ([]string, error) {
 		if ec.Request == nil {
 			return nil, nil
@@ -244,8 +251,50 @@ func (provider *provider) authDomainStoredRoleNamesExtractor() coretypes.Resourc
 			return nil, err
 		}
 
-		return authDomainEffectiveRoleNames(authDomain.RoleMapping()), nil
+		incomingRoleNames, err := authDomainRoleNamesExtractor().Fn(ec)
+		if err != nil {
+			return nil, err
+		}
+
+		attachedRoleNames, detachedRoleNames := diffAuthDomainRoleNames(authDomainEffectiveRoleNames(authDomain.RoleMapping()), incomingRoleNames)
+		if attached {
+			return attachedRoleNames, nil
+		}
+
+		return detachedRoleNames, nil
 	}}
+}
+
+// A wildcard side covers every role, so it never diffs against individual names.
+func diffAuthDomainRoleNames(storedRoleNames, incomingRoleNames []string) (attachedRoleNames, detachedRoleNames []string) {
+	storedWildcard := slices.Contains(storedRoleNames, coretypes.WildCardSelectorString)
+	incomingWildcard := slices.Contains(incomingRoleNames, coretypes.WildCardSelectorString)
+
+	if storedWildcard && incomingWildcard {
+		return nil, nil
+	}
+
+	if incomingWildcard {
+		return []string{coretypes.WildCardSelectorString}, nil
+	}
+
+	if storedWildcard {
+		return nil, []string{coretypes.WildCardSelectorString}
+	}
+
+	for _, roleName := range incomingRoleNames {
+		if !slices.Contains(storedRoleNames, roleName) {
+			attachedRoleNames = append(attachedRoleNames, roleName)
+		}
+	}
+
+	for _, roleName := range storedRoleNames {
+		if !slices.Contains(incomingRoleNames, roleName) {
+			detachedRoleNames = append(detachedRoleNames, roleName)
+		}
+	}
+
+	return attachedRoleNames, detachedRoleNames
 }
 
 // The effective names are the roles a domain grants at SSO login: the mapped
