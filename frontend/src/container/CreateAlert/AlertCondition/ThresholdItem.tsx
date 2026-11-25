@@ -190,6 +190,7 @@ function ThresholdItem({
 									updateThreshold(threshold.id, 'channels', value)
 								}
 								data-testid="threshold-notification-channel-select"
+								popupMatchSelectWidth={false}
 								style={{ width: 350 }}
 								options={channelOptions}
 								onDropdownVisibleChange={onPickerVisibleChange}
