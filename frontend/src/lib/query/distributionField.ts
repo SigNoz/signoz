@@ -5,7 +5,7 @@ import type {
 import { DataSource } from 'types/common/queryBuilder';
 import type { LogAggregation, TraceAggregation } from 'types/api/v5/queryRange';
 
-import { isBucketCountingPanelType } from './bucketCountingPanelTypes';
+import { isBucketPanelType } from './bucketPanelTypes';
 
 import {
 	ALIAS,
@@ -42,7 +42,7 @@ export function aggregatesDistributionField(
 	panelType: string | null | undefined,
 	dataSource: DataSource,
 ): boolean {
-	return isBucketCountingPanelType(panelType) && isLogsOrTraces(dataSource);
+	return isBucketPanelType(panelType) && isLogsOrTraces(dataSource);
 }
 
 /**

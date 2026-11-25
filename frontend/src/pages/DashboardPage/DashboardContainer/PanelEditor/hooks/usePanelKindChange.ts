@@ -14,7 +14,7 @@ import {
 	toDistributionAggregation,
 } from 'lib/query/distributionField';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
-import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
+import { isBucketPanelType } from 'lib/query/bucketPanelTypes';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
@@ -188,16 +188,14 @@ export function usePanelKindChange({
 						: transformed,
 					newKind,
 				);
-				const isBucketCounting = isBucketCountingPanelType(newPanelType);
+				const isBucketPanel = isBucketPanelType(newPanelType);
 				const converted = {
 					...ordered,
 					queryData: ordered.queryData.map(
-						isBucketCounting
-							? toDistributionAggregation
-							: fromDistributionAggregation,
+						isBucketPanel ? toDistributionAggregation : fromDistributionAggregation,
 					),
 				};
-				return isBucketCounting
+				return isBucketPanel
 					? withSingleBucketQuery(converted)
 					: withPercentileHistogramAggregation(converted);
 			};
@@ -261,7 +259,7 @@ export function usePanelKindChange({
 				...(query.builder_ai_query && {
 					builder_ai_query: rebuildForNewKind(query.builder_ai_query),
 				}),
-				...(isBucketCountingPanelType(newPanelType) && {
+				...(isBucketPanelType(newPanelType) && {
 					promql: withSingleEnabledQuery(query.promql),
 					clickhouse_sql: withSingleEnabledQuery(query.clickhouse_sql),
 				}),

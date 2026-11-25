@@ -8,7 +8,7 @@ import {
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
 import { cloneDeep, isEqual, set, unset } from 'lodash-es';
-import { isBucketCountingPanelType } from 'lib/query/bucketCountingPanelTypes';
+import { isBucketPanelType } from 'lib/query/bucketPanelTypes';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -109,7 +109,7 @@ const withBucketOptions = (
 	formulas: IBuilderFormula[],
 	newPanelType: keyof PartialPanelTypes,
 ): IBuilderFormula[] => {
-	if (isBucketCountingPanelType(newPanelType)) {
+	if (isBucketPanelType(newPanelType)) {
 		return formulas;
 	}
 
@@ -178,7 +178,7 @@ export function rebuildBuilderForPanelType(
 		queryTraceOperator:
 			newPanelType === PANEL_TYPES.LIST ||
 			newPanelType === PANEL_TYPES.SCATTER ||
-			isBucketCountingPanelType(newPanelType)
+			isBucketPanelType(newPanelType)
 				? []
 				: builder.queryTraceOperator,
 	};

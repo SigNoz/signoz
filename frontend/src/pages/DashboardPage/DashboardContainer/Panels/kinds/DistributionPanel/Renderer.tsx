@@ -18,7 +18,7 @@ import {
 	resolveLegendPosition,
 	resolveStackMode,
 } from '../../utils/chartAppearance/resolvers';
-import { enrichDistributionClick } from '../../utils/drilldown/enrichDistributionClick';
+import { prepareDistributionClickData } from '../../utils/drilldown/prepareDistributionClickData';
 import { getBuilderQueries } from '../../utils/getBuilderQueries';
 import { getPanelTimeRange } from '../../utils/getPanelTimeRange';
 
@@ -68,7 +68,7 @@ function DistributionPanelRenderer({
 
 	const handleBarClick = useCallback(
 		(click: DistributionBarClick): void => {
-			const payload = enrichDistributionClick({
+			const payload = prepareDistributionClickData({
 				click,
 				queryName,
 				builderQueries,

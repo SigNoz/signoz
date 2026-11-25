@@ -11,7 +11,7 @@ import { buildAggregateData } from '../buildAggregateData';
 import { stepClickTimeRange } from '../chartClickTimeRange';
 import { enrichChartClick } from '../enrichChartClick';
 import { enrichNumberClick } from '../enrichNumberClick';
-import { enrichDistributionClick } from '../enrichDistributionClick';
+import { prepareDistributionClickData } from '../prepareDistributionClickData';
 import { enrichPieClick } from '../enrichPieClick';
 import { enrichTableClick } from '../enrichTableClick';
 import { getDataLinks } from '../getDataLinks';
@@ -417,7 +417,7 @@ describe('enrichPieClick', () => {
 	});
 });
 
-describe('enrichDistributionClick', () => {
+describe('prepareDistributionClickData', () => {
 	const click = {
 		series: {
 			label: 'cart',
@@ -429,7 +429,7 @@ describe('enrichDistributionClick', () => {
 	};
 
 	it("filters to the clicked group over the panel's whole window", () => {
-		const payload = enrichDistributionClick({
+		const payload = prepareDistributionClickData({
 			click,
 			queryName: 'A',
 			builderQueries: [
@@ -459,7 +459,7 @@ describe('enrichDistributionClick', () => {
 
 	it('returns null without a drillable query', () => {
 		expect(
-			enrichDistributionClick({ click, queryName: '', builderQueries: [] }),
+			prepareDistributionClickData({ click, queryName: '', builderQueries: [] }),
 		).toBeNull();
 	});
 });

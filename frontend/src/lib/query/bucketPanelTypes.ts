@@ -5,7 +5,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
  * `distribution`): they share the bucket axis, its query-builder options and the
  * count aggregation a histogram metric gets.
  */
-export function isBucketCountingPanelType(
+export function isBucketPanelType(
 	panelType: string | null | undefined,
 ): boolean {
 	return (

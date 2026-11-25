@@ -19,7 +19,7 @@ interface EnrichDistributionClickArgs {
  * Turns a bar click into a drilldown payload, filtered to the clicked group. `null`
  * when the bar has no drillable query.
  */
-export function enrichDistributionClick({
+export function prepareDistributionClickData({
 	click,
 	queryName,
 	builderQueries,
