@@ -14682,6 +14682,16 @@ export interface SpantypesSpanDTO {
 	 */
 	attributes: SpantypesSpanDTOAttributes;
 	/**
+	 * @type string
+	 * @description Database name. Left out when the span has none, and in a list unless selected.
+	 */
+	db_name?: string;
+	/**
+	 * @type string
+	 * @description Database operation. Left out when the span has none, and in a list unless selected.
+	 */
+	db_operation?: string;
+	/**
 	 * @type integer
 	 * @minimum 0
 	 * @description Duration, in nanoseconds.
@@ -14693,10 +14703,35 @@ export interface SpantypesSpanDTO {
 	 */
 	events: SpantypesEventDTO[];
 	/**
+	 * @type string
+	 * @description HTTP request method of an outgoing call. Left out when the span has none, and in a list unless selected.
+	 */
+	external_http_method?: string;
+	/**
+	 * @type string
+	 * @description Host of the URL of an outgoing call. Left out when the span has none, and in a list unless selected.
+	 */
+	external_http_url?: string;
+	/**
 	 * @type boolean
 	 * @description Whether the span is marked as an error.
 	 */
 	has_error: boolean;
+	/**
+	 * @type string
+	 * @description HTTP host or server address. Left out when the span has none, and in a list unless selected.
+	 */
+	http_host?: string;
+	/**
+	 * @type string
+	 * @description HTTP request method. Left out when the span has none, and in a list unless selected.
+	 */
+	http_method?: string;
+	/**
+	 * @type string
+	 * @description HTTP request URL. Left out when the span has none, and in a list unless selected.
+	 */
+	http_url?: string;
 	/**
 	 * @type string
 	 * @description Span kind, for example Server, Client or Internal.
@@ -14727,6 +14762,10 @@ export interface SpantypesSpanDTO {
 	 */
 	response_status_code: string;
 	/**
+	 * @description Instrumentation scope. Left out when the span has none, and in a list unless selected.
+	 */
+	scope?: SpantypesScopeDTO;
+	/**
 	 * @type string
 	 */
 	span_id: string;
@@ -14750,6 +14789,11 @@ export interface SpantypesSpanDTO {
 	 * @type string
 	 */
 	trace_id: string;
+	/**
+	 * @type string
+	 * @description W3C trace state. Left out when the span has none, and in a list unless selected.
+	 */
+	trace_state?: string;
 }
 
 export interface SpantypesSpanTextMatchDTO {

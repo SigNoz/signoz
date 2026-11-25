@@ -33,7 +33,7 @@ def test_get_trace_span(
         return Traces(timestamp=start + timedelta(milliseconds=offset_ms), duration=timedelta(milliseconds=duration_ms), trace_id=trace_id, span_id=span_id, parent_span_id=parent_id, name=name, resources=resources, attribute_write_mode=write_mode, **kwargs)
 
     # POST /orders          root, error, attribute http.route
-    # ├─ query_orders       error "deadlock detected", 3 attributes (one is 12 KB), 1 event, a link to another trace
+    # ├─ query_orders       error "deadlock detected", 4 attributes (one is 12 KB), a scope, 1 event, a link to another trace
     # └─ fetch_page         no attributes, no events
     #
     # flush_metrics         its parent was never received; status 404
@@ -49,7 +49,8 @@ def test_get_trace_span(
                 kind=TracesKind.SPAN_KIND_CLIENT,
                 status_code=TracesStatusCode.STATUS_CODE_ERROR,
                 status_message="deadlock detected",
-                attributes={"db.system": "postgresql", "db.statement": long_statement, "db.rows": 42},
+                attributes={"db.system": "postgresql", "db.name": "orders", "db.statement": long_statement, "db.rows": 42},
+                scope={"name": "orders-db", "version": "1.2.0"},
                 events=[TracesEvent("retry", start, {"attempt": "2"})],
                 links=[TracesLink(trace_id=other_trace_id, span_id="bbbbbbbbbbbbbbbb", ref_type=TracesRefType.REF_TYPE_FOLLOWS_FROM)],
             ),
@@ -76,8 +77,10 @@ def test_get_trace_span(
         "status_code_string": "STATUS_CODE_ERROR",
         "status_message": "deadlock detected",
         "response_status_code": "",
+        "db_name": "orders",
+        "scope": {"name": "orders-db", "version": "1.2.0"},
         "resource": resources,
-        "attributes": {"db.system": "postgresql", "db.statement": long_statement, "db.rows": 42},
+        "attributes": {"db.system": "postgresql", "db.name": "orders", "db.statement": long_statement, "db.rows": 42},
         "events": [{"name": "retry", "timeUnixNano": int(start.timestamp()) * 1_000_000_000, "attributeMap": {"attempt": "2"}}],
         "references": [{"traceId": trace_id, "spanId": root_id, "refType": "CHILD_OF"}, {"traceId": other_trace_id, "spanId": "bbbbbbbbbbbbbbbb", "refType": "FOLLOWS_FROM"}],
     }
@@ -92,6 +95,8 @@ def test_get_trace_span(
     assert plain["attributes"] == {}
     assert plain["events"] == []
     assert plain["resource"] == resources
+    assert "db_name" not in plain
+    assert "scope" not in plain
 
     # a span whose parent was never received keeps the parent's id
     orphan = requests.get(f"{spans_url}/{orphan_id}", headers=headers, timeout=10).json()["data"]
