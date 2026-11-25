@@ -8,6 +8,7 @@ import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import {
 	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
+	type TooltipPluginProps,
 } from '../TooltipPlugin/types';
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
@@ -623,8 +624,13 @@ describe('TooltipPlugin', () => {
 	describe('pin on click', () => {
 		it('pins on a click pinOnClick accepts, instead of calling onClick', async () => {
 			const config = createConfigMock();
-			const onClick = jest.fn();
-			const pinOnClick = jest.fn(() => true);
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
+			const pinOnClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['pinOnClick']>
+			>;
+			pinOnClick.mockReturnValue(true);
 			const fakePlot = renderAndActivateHover(config, undefined, {
 				canPinTooltip: true,
 				onClick,
@@ -646,7 +652,9 @@ describe('TooltipPlugin', () => {
 
 		it('calls onClick for a click pinOnClick declines', () => {
 			const config = createConfigMock();
-			const onClick = jest.fn();
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
 			const fakePlot = renderAndActivateHover(config, undefined, {
 				canPinTooltip: true,
 				onClick,

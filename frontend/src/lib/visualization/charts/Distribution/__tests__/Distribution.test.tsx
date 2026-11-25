@@ -67,7 +67,7 @@ describe('Distribution', () => {
 	});
 
 	it('isolates a group when its row is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDistribution();
 
 		await user.click(legendItem(CART));
@@ -77,7 +77,7 @@ describe('Distribution', () => {
 	});
 
 	it('hides only that group when its marker is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDistribution();
 
 		await user.click(screen.getByTestId(`legend-marker-${CHECKOUT}`));

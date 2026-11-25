@@ -36,9 +36,13 @@ function setCursorHook(drawnCounts = counts): (u: uPlot) => void {
 function plotAt(
 	left: number,
 	top: number,
-): { u: uPlot; setSeries: jest.Mock; redraw: jest.Mock } {
-	const setSeries = jest.fn();
-	const redraw = jest.fn();
+): {
+	u: uPlot;
+	setSeries: jest.MockedFunction<uPlot['setSeries']>;
+	redraw: jest.MockedFunction<uPlot['redraw']>;
+} {
+	const setSeries = jest.fn() as jest.MockedFunction<uPlot['setSeries']>;
+	const redraw = jest.fn() as jest.MockedFunction<uPlot['redraw']>;
 	const plot: Partial<uPlot> = {
 		cursor: { left, top },
 		posToVal: (position: number) => position,

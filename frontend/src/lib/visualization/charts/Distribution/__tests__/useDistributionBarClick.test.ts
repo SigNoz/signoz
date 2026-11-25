@@ -1,6 +1,6 @@
-import { renderHook } from '@testing-library/react';
 import { StackMode } from 'lib/uPlotV2/config/types';
 import type { ChartClickData } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
+import { renderHook } from 'tests/test-utils';
 
 import { resolveDistributionBars, resolveDistributionXAxis } from '../layout';
 import { groupIntoOther } from '../topGroups';
