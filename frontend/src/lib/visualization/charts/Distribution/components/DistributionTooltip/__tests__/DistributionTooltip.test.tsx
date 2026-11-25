@@ -124,6 +124,20 @@ describe('DistributionTooltip', () => {
 		expect(listRows()).toStrictEqual(['checkout6', 'cart4']);
 	});
 
+	it('shows a single group only above the divider, as the time-series tooltip does', () => {
+		renderTooltip(plotAt(1.5, 2), {
+			labels: ['A'],
+			groupLabels: [undefined],
+			colors: ['#f00'],
+			counts: [counts[0]],
+		});
+
+		expect(screen.getByTestId('distribution-tooltip-active')).toHaveTextContent(
+			'A4',
+		);
+		expect(screen.queryByTestId('uplot-tooltip-list')).not.toBeInTheDocument();
+	});
+
 	it('renders nothing off the plot', () => {
 		renderTooltip(plotAt(-1, -1));
 

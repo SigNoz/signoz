@@ -120,6 +120,10 @@ export default function DistributionTooltip({
 	}
 
 	const canPickMember = isOtherHovered && isPinned && !!onOtherMemberClick;
+	// As in the shared tooltip, a lone row that is the active one collapses into it.
+	const showList =
+		content.items.length > 1 ||
+		(content.items.length === 1 && content.active === null);
 	// The menu opens where the tooltip was, which closes first.
 	const handleMemberClick = (index: number, event: ReactMouseEvent): void => {
 		const rect = (event.currentTarget as Element)
@@ -168,13 +172,15 @@ export default function DistributionTooltip({
 				</div>
 			)}
 
-			<span className={Styles.divider} />
+			{showList && content.active && <span className={Styles.divider} />}
 
-			<TooltipList
-				id={id}
-				content={content.items}
-				onItemClick={canPickMember ? handleMemberClick : undefined}
-			/>
+			{showList && (
+				<TooltipList
+					id={id}
+					content={content.items}
+					onItemClick={canPickMember ? handleMemberClick : undefined}
+				/>
+			)}
 
 			{isOtherHovered && onOtherMemberClick && (
 				<div
