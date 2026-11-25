@@ -352,25 +352,28 @@ func snippetAround(value, word string) (string, bool) {
 	return snippet, true
 }
 
-// indexFold returns the byte range of the first place word occurs in value, ignoring case. It
-// compares character by character: lowering the whole value can change its byte length.
+// indexFold returns the byte range of the first place word occurs in value, ignoring case. The word
+// is found in the lowered text, and the position is then walked back to the original: a lowered
+// character can take fewer or more bytes.
 func indexFold(value, word string) (start, end int, ok bool) {
-	for start = range value {
-		end = start
-		matched := true
-		for _, want := range word {
-			got, size := utf8.DecodeRuneInString(value[end:])
-			if size == 0 || unicode.ToLower(got) != unicode.ToLower(want) {
-				matched = false
-				break
-			}
-			end += size
-		}
-		if matched {
-			return start, end, true
-		}
+	word = strings.ToLower(word)
+	at := strings.Index(strings.ToLower(value), word)
+	if at < 0 {
+		return 0, 0, false
 	}
-	return 0, 0, false
+	start, end = -1, len(value)
+	lowered := 0
+	for i, char := range value {
+		if lowered == at {
+			start = i
+		}
+		if lowered == at+len(word) {
+			end = i
+			break
+		}
+		lowered += utf8.RuneLen(unicode.ToLower(char))
+	}
+	return start, end, start >= 0
 }
 
 func pageLimit(name string, value, fallback int) (int, error) {
