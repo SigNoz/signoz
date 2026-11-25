@@ -67,6 +67,7 @@ function ColumnSelector<TData>({
 								<Checkbox
 									color="primary"
 									id={`col-${col.id}`}
+									testId={`${testId}-column-${col.id}`}
 									value={isVisible}
 									onChange={(): void => handleToggle(col.id, !isVisible)}
 								/>

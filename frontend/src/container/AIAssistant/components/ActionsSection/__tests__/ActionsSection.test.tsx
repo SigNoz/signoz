@@ -1,9 +1,9 @@
 import { undoExecution } from 'api/ai-assistant/chat';
-import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from '@signozhq/noz-client';
 import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -138,7 +138,7 @@ describe('ActionsSection rollback chip', () => {
 
 describe('ActionsSection apply_filter', () => {
 	it('opens the explorer in the Table view when the chip is clicked from another page', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ActionsSection
 				actions={[countByServiceAction('Open in Logs Explorer')]}
@@ -159,7 +159,7 @@ describe('ActionsSection apply_filter', () => {
 	});
 
 	it('opens the explorer on the time range that produced the answer', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<ActionsSection
 				actions={[

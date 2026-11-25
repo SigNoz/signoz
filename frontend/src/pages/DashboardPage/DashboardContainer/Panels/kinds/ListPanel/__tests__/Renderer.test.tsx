@@ -164,7 +164,7 @@ describe('ListPanelRenderer', () => {
 	});
 
 	it('swaps rows for skeletons while the next page loads (isPreviousData), keeping header + pager', () => {
-		const { getByText, queryByText, getByTestId, container } = renderPanel({
+		const { getByText, queryByText, getByTestId, getAllByTestId } = renderPanel({
 			data: dataWith([{ data: { body: 'stale row' } }]),
 			pagination: makePagination({ canNext: true }),
 			isPreviousData: true,
@@ -174,6 +174,6 @@ describe('ListPanelRenderer', () => {
 		expect(getByTestId('list-panel-pager')).toBeInTheDocument();
 		// Stale page content is replaced by skeleton bars.
 		expect(queryByText('stale row')).not.toBeInTheDocument();
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
+		expect(getAllByTestId('list-panel-skeleton')).not.toHaveLength(0);
 	});
 });

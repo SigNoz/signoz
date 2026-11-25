@@ -100,7 +100,7 @@ describe('LLMObservability (integration)', () => {
 	});
 
 	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
@@ -113,7 +113,7 @@ describe('LLMObservability (integration)', () => {
 	});
 
 	it('navigates to the attribute mapping route when that tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
@@ -126,7 +126,7 @@ describe('LLMObservability (integration)', () => {
 	});
 
 	it('navigates to the explorer route when the Explorer tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});

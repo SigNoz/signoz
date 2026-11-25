@@ -35,7 +35,11 @@ async function openMenu(): Promise<void> {
 	await screen.findByTestId('dashboard-action-rename');
 	// Rows waiting on their check show as loading, not disabled.
 	await waitFor(() => {
-		expect(document.querySelector('[data-loading]')).toBeNull();
+		expect(
+			screen
+				.getAllByTestId(/^dashboard-action-/)
+				.filter((row) => row.hasAttribute('data-loading')),
+		).toHaveLength(0);
 	});
 }
 

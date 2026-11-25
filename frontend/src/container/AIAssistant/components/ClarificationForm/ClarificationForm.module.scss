@@ -1,4 +1,6 @@
 .clarification {
+	// The modal and panel portal outside the layout's border-box reset.
+	box-sizing: border-box;
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: var(--spacing-6);
@@ -130,9 +132,12 @@
 	cursor: pointer;
 }
 
+// Equal columns sized to the wider button, aligned right.
 .actions {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
 	gap: var(--spacing-6);
 	margin-top: var(--spacing-2);
+	align-self: flex-end;
 }

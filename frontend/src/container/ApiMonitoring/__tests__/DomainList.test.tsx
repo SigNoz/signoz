@@ -63,7 +63,7 @@ describe('DomainList', () => {
 				return res(ctx.status(200), ctx.json({ data: { data: { results: [] } } }));
 			}),
 		);
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<DomainList />, undefined, {
 			initialRoute: '/api-monitoring/explorer',
 		});

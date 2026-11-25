@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
@@ -47,7 +46,7 @@ function renderDrawer(
 	user: User;
 } {
 	// The open drawer sets `pointer-events: none` on the body.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	const onSelect = jest.fn();
 	const onClose = jest.fn();
 	render(

@@ -552,6 +552,7 @@
       ],
       "rules": {
         "import/first": "off",
+        "signoz/no-dom-node-access": "error",
         // Should ignore due to mocks
         "signoz/no-navigator-clipboard": "off",
         // Tests can use navigator.clipboard directly,

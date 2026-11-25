@@ -1,5 +1,6 @@
+import { lazy } from 'react';
 import { navigate } from 'lib/router/navigation';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 
 import RouteTab from './index';
 import { RouteTabProps } from './types';
@@ -68,21 +69,19 @@ describe('RouteTab component', () => {
 	});
 
 	it('applies the layout class alongside a custom className', () => {
-		const { container } = render(
+		render(
 			<RouteTab routes={testRoutes} activeKey="Tab1" className="custom-tabs" />,
 		);
-		expect(container.querySelector('.ant-tabs')).toHaveClass(
+		expect(screen.getByTestId('route-tab')).toHaveClass(
 			'routeTab',
 			'custom-tabs',
 		);
 	});
 
 	it('renders the active tab content inside an overlay scrollbar', () => {
-		const { container } = render(
-			<RouteTab routes={testRoutes} activeKey="Tab1" />,
-		);
+		render(<RouteTab routes={testRoutes} activeKey="Tab1" />);
 		expect(
-			container.querySelector('.ant-tabs-tabpane-active > .overlay-scrollbar'),
+			within(screen.getByRole('tabpanel')).getByTestId('overlay-scrollbar'),
 		).toHaveTextContent('Dummy Component 1');
 	});
 
@@ -97,5 +96,32 @@ describe('RouteTab component', () => {
 		);
 		fireEvent.click(screen.getByRole('tab', { name: 'Tab2' }));
 		expect(onChangeHandler).toHaveBeenCalled();
+	});
+
+	it('keeps the tab bar while a lazy tab loads', async () => {
+		let resolveTab: (module: { default: () => JSX.Element }) => void = () => {};
+		const LazyTab = lazy(
+			() =>
+				new Promise<{ default: () => JSX.Element }>((resolve) => {
+					resolveTab = resolve;
+				}),
+		);
+		render(
+			<RouteTab
+				routes={[{ ...testRoutes[0], Component: LazyTab }, testRoutes[1]]}
+				activeKey="Tab1"
+			/>,
+		);
+
+		expect(screen.getByRole('tab', { name: 'Tab1' })).toBeInTheDocument();
+		expect(screen.getByTestId('route-tab-loading')).toHaveStyleRule(
+			'height',
+			'100%',
+		);
+
+		resolveTab({ default: DummyComponent1 });
+		await expect(
+			screen.findByText('Dummy Component 1'),
+		).resolves.toBeInTheDocument();
 	});
 });

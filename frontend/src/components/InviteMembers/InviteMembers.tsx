@@ -64,7 +64,10 @@ function InviteMembers({
 	const hasSuccesses = successResults.length > 0;
 
 	return (
-		<div className={cx(styles.inviteMembers, className)}>
+		<div
+			className={cx(styles.inviteMembers, className)}
+			data-testid="invite-members"
+		>
 			<div className={styles.table}>
 				{showHeader && (
 					<div className={styles.header}>

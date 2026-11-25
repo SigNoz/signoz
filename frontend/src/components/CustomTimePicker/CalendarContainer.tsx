@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { Calendar as CalendarIcon, Check, X } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 
-import { DateRange } from './CustomTimePickerPopoverContent';
+import type { DateRange } from './CustomTimePickerPopoverContent';
 
 function CalendarContainer({
 	dateRange,
@@ -50,7 +50,7 @@ function CalendarContainer({
 	};
 
 	return (
-		<div className="calendar-container">
+		<div className="calendar-container" data-testid="calendar-container">
 			<div className="calendar-container-header">
 				<CalendarIcon size={12} />
 				<div className="calendar-container-header-title">
@@ -80,6 +80,7 @@ function CalendarContainer({
 					<Button
 						type="primary"
 						className="periscope-btn secondary cancel-btn"
+						data-testid="calendar-cancel-btn"
 						onClick={onCancel}
 						icon={<X size={12} />}
 					>
@@ -88,6 +89,7 @@ function CalendarContainer({
 					<Button
 						type="primary"
 						className="periscope-btn primary apply-btn"
+						data-testid="calendar-apply-btn"
 						onClick={onApply}
 						icon={<Check size={12} />}
 					>

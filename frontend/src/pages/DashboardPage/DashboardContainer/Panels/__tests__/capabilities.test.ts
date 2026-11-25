@@ -77,8 +77,7 @@ const EXPECTED_SIGNALS: Record<PanelKind, TelemetrytypesSignalDTO[]> = {
 	'signoz/AreaChartPanel': [metrics, logs, traces],
 	'signoz/NumberPanel': [metrics, logs, traces],
 	'signoz/HistogramPanel': [metrics, logs, traces],
-	// A heatmap needs a bucket axis, which only a metric carries.
-	'signoz/HeatmapPanel': [metrics],
+	'signoz/HeatmapPanel': [metrics, logs, traces],
 	'signoz/PieChartPanel': [metrics, logs, traces],
 	'signoz/GeoMapPanel': [metrics, logs, traces],
 	'signoz/TopListPanel': [metrics, logs, traces],
@@ -196,6 +195,7 @@ const ALL_KINDS = Object.keys(EXPECTED_QUERY_TYPES) as PanelKind[];
 const HIDES_TRACE_OPERATOR: PanelKind[] = [
 	'signoz/ScatterPlotPanel',
 	'signoz/GeoMapPanel',
+	'signoz/HeatmapPanel',
 ];
 
 describe('panel capabilities guard', () => {

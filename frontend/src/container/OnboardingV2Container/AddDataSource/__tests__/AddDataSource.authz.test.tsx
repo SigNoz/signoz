@@ -14,6 +14,11 @@ jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	default: (): null => null,
 }));
 
+jest.mock('../../onboarding-configs/onboarding-config-with-links', () => ({
+	__esModule: true,
+	default: [],
+}));
+
 jest.mock('components/InviteMembers/InviteMembers', () => {
 	return function MockInviteMembers(props: InviteMembersProps): JSX.Element {
 		return (
@@ -31,7 +36,7 @@ jest.mock('components/InviteMembers/InviteMembers', () => {
 });
 
 async function openInviteModal(): Promise<HTMLElement> {
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	render(<OnboardingAddDataSource />);
 	await user.click(screen.getByTestId('invite-teammate-btn'));
 	return screen.findByTestId('onboarding-send-invites-btn');

@@ -69,16 +69,14 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		background: var(--l2-background);
 		color: var(--l1-foreground);
 		font-size: var(--paragraph-base-400-font-size);
 		border-bottom-left-radius: var(--radius-2);
 	}
 
-	// The full page shows replies as plain text on the pane; errors keep their callout.
+	// The full page sets replies flush on the pane; errors keep their callout.
 	.assistant .fullPage &:not(.error) {
 		padding: 0 0 0 var(--spacing-5);
-		background: transparent;
 	}
 }
 

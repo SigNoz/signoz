@@ -1,7 +1,12 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
-import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 
@@ -143,7 +148,7 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('shows all workspace URLs as links in the dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CustomDomainSettings />);
 
 		await screen.findByText(/custom-host\.test\.cloud/i);
@@ -277,14 +282,14 @@ describe('CustomDomainSettings', () => {
 				),
 			);
 
-			const { container } = render(<CustomDomainSettings />, undefined, {
+			render(<CustomDomainSettings />, undefined, {
 				appContextOverrides: { org: [] },
 			});
 
 			await screen.findByRole('button', { name: /edit workspace link/i });
 
 			expect(
-				container.querySelector('.custom-domain-card-name-row'),
+				screen.queryByTestId('custom-domain-card-name-row'),
 			).not.toBeInTheDocument();
 		});
 	});

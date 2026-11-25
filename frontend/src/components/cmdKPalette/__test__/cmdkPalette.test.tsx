@@ -111,7 +111,7 @@ describe('CmdKPalette', () => {
 	});
 
 	it('clicking a navigation item navigates to the correct route', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		await user.type(
@@ -148,7 +148,7 @@ describe('CmdKPalette', () => {
 	});
 
 	it('closing the palette via handleInvoke sets open to false', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
 		await user.type(
