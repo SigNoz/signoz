@@ -49,17 +49,17 @@ type FilterExprVisitorOpts struct {
 	Context context.Context
 	// Query is the request's context with the query-path flags evaluated
 	// one time. Storage answers the signal's part of every term.
-	Query          qbtypes.QueryInfo
-	Storage        qbtypes.Storage
-	Logger         *slog.Logger
-	FieldKeys      map[string][]*telemetrytypes.TelemetryFieldKey
-	Builder        *sqlbuilder.SelectBuilder
-	FullTextColumn *telemetrytypes.TelemetryFieldKey
-	// FullTextCondition compiles a free-text term for a signal without a full-text column.
-	FullTextCondition  func(sb *sqlbuilder.SelectBuilder, text string) string
+	Query              qbtypes.QueryInfo
+	Storage            qbtypes.Storage
+	Logger             *slog.Logger
+	FieldKeys          map[string][]*telemetrytypes.TelemetryFieldKey
+	Builder            *sqlbuilder.SelectBuilder
+	FullTextColumn     *telemetrytypes.TelemetryFieldKey
 	SkipResourceFilter bool
 	SkipFullTextFilter bool
 	Variables          map[string]qbtypes.VariableItem
+	// FullTextCondition compiles a free-text term for a signal without a full-text column.
+	FullTextCondition func(sb *sqlbuilder.SelectBuilder, text string) string
 }
 
 // newFilterExpressionVisitor creates a new filterExpressionVisitor.
