@@ -17,6 +17,7 @@ import {
 	LicensePlatform,
 	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
+import { UserPreference } from 'types/api/preferences/preference';
 
 import ChangelogModal from '../ChangelogModal';
 
@@ -55,6 +56,16 @@ jest.mock(
 		},
 );
 
+const seenChangelogVersion: UserPreference = {
+	name: USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
+	description: '',
+	valueType: 'string',
+	defaultValue: '',
+	allowedValues: [],
+	allowedScopes: ['user'],
+	value: 'v1.0.0',
+};
+
 const selfHostedContext: Partial<IAppContext> = {
 	activeLicense: {
 		...(getAppContextMock('ADMIN').activeLicense as LicenseResModel),
@@ -71,12 +82,7 @@ function renderChangelog(
 		undefined,
 		{
 			appContextOverrides: {
-				userPreferences: [
-					{
-						name: USER_PREFERENCES.LAST_SEEN_CHANGELOG_VERSION,
-						value: 'v1.0.0',
-					},
-				] as IAppContext['userPreferences'],
+				userPreferences: [seenChangelogVersion],
 				...appContextOverrides,
 			},
 		},
