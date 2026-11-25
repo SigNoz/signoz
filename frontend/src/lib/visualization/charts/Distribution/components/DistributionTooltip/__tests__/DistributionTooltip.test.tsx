@@ -140,8 +140,12 @@ describe('DistributionTooltip', () => {
 	});
 
 	it('drills into a group of Other picked from the pinned tooltip', async () => {
-		const dismiss = jest.fn();
-		const onOtherMemberClick = jest.fn();
+		const dismiss = jest.fn() as jest.MockedFunction<
+			DistributionTooltipProps['dismiss']
+		>;
+		const onOtherMemberClick = jest.fn() as jest.MockedFunction<
+			NonNullable<DistributionTooltipProps['onOtherMemberClick']>
+		>;
 		renderTooltip(overOther(), {
 			...withOther,
 			isPinned: true,
