@@ -1,9 +1,7 @@
-import { HelmetProvider } from 'react-helmet-async';
 import { changelog } from 'components/ChangelogModal/stories/__story_mockdata__/changelog';
-import { CmdKProvider } from 'providers/cmdKProvider';
-import { act, render, screen } from 'tests/test-utils';
+import { screen } from 'tests/test-utils';
 
-import AppLayout from '../index';
+import { flushPendingImports, renderAppLayout } from './testUtils';
 
 const mockChangelogModuleLoaded = jest.fn();
 
@@ -15,31 +13,13 @@ jest.mock('components/ChangelogModal/ChangelogModal', () => {
 	};
 });
 
-async function flushPendingImports(): Promise<void> {
-	await act(async () => {
-		await new Promise((resolve) => {
-			setTimeout(resolve, 0);
-		});
-	});
-}
-
 describe('AppLayout changelog modal', () => {
 	beforeEach(() => {
 		mockChangelogModuleLoaded.mockClear();
 	});
 
 	it('does not load the changelog modal until it opens', async () => {
-		render(
-			<HelmetProvider>
-				<CmdKProvider>
-					<AppLayout>
-						<div />
-					</AppLayout>
-				</CmdKProvider>
-			</HelmetProvider>,
-			undefined,
-			{ appContextOverrides: { changelog, showChangelogModal: false } },
-		);
+		renderAppLayout({ changelog, showChangelogModal: false });
 		await flushPendingImports();
 
 		expect(screen.queryByTestId('changelog-modal')).not.toBeInTheDocument();
@@ -47,17 +27,7 @@ describe('AppLayout changelog modal', () => {
 	});
 
 	it('loads and shows the changelog modal when it opens', async () => {
-		render(
-			<HelmetProvider>
-				<CmdKProvider>
-					<AppLayout>
-						<div />
-					</AppLayout>
-				</CmdKProvider>
-			</HelmetProvider>,
-			undefined,
-			{ appContextOverrides: { changelog, showChangelogModal: true } },
-		);
+		renderAppLayout({ changelog, showChangelogModal: true });
 
 		await expect(
 			screen.findByTestId('changelog-modal'),

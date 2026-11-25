@@ -1,10 +1,8 @@
-import { HelmetProvider } from 'react-helmet-async';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { CmdKProvider } from 'providers/cmdKProvider';
-import { act, render, screen } from 'tests/test-utils';
+import { screen } from 'tests/test-utils';
 
-import AppLayout from '../index';
+import { flushPendingImports, renderAppLayout } from './testUtils';
 
 const mockPanelModuleLoaded = jest.fn();
 const mockModalModuleLoaded = jest.fn();
@@ -29,28 +27,6 @@ jest.mock('container/AIAssistant/AIAssistantModal', () => {
 	};
 });
 
-async function flushPendingImports(): Promise<void> {
-	await act(async () => {
-		await new Promise((resolve) => {
-			setTimeout(resolve, 0);
-		});
-	});
-}
-
-function renderAppLayout(): void {
-	render(
-		<HelmetProvider>
-			<CmdKProvider>
-				<AppLayout>
-					<div data-testid="page-content" />
-				</AppLayout>
-			</CmdKProvider>
-		</HelmetProvider>,
-		undefined,
-		{ appContextOverrides: { isLoggedIn: true } },
-	);
-}
-
 describe('AppLayout AI assistant', () => {
 	beforeEach(() => {
 		mockPanelModuleLoaded.mockClear();
@@ -61,7 +37,7 @@ describe('AppLayout AI assistant', () => {
 	it('does not load the assistant for users who do not have it', async () => {
 		jest.mocked(useIsAIAssistantEnabled).mockReturnValue(false);
 
-		renderAppLayout();
+		renderAppLayout({ isLoggedIn: true });
 		await flushPendingImports();
 
 		expect(screen.getByTestId('page-content')).toBeInTheDocument();
@@ -73,7 +49,7 @@ describe('AppLayout AI assistant', () => {
 	it('loads the assistant panel and modal for users who have it', async () => {
 		jest.mocked(useIsAIAssistantEnabled).mockReturnValue(true);
 
-		renderAppLayout();
+		renderAppLayout({ isLoggedIn: true });
 
 		expect(screen.getByTestId('page-content')).toBeInTheDocument();
 		await expect(
