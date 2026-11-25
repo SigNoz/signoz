@@ -191,6 +191,15 @@ func (builder *TraceSkeletonBuilder) Build() *TraceSkeleton {
 	return skeleton
 }
 
+// siblingGroup totals the spans that share a name and a parent; a root is a group of its own.
+type siblingGroup struct {
+	// longest is the position of the span with the highest duration in the group.
+	longest   int32
+	spanCount uint64
+	ownTime   uint64
+	errCount  uint64
+}
+
 func (skeleton *TraceSkeleton) len() int {
 	return len(skeleton.parents)
 }
@@ -283,15 +292,6 @@ func (skeleton *TraceSkeleton) serviceStats() []TraceServiceStats {
 		return cmp.Or(cmp.Compare(b.OwnTimeNano, a.OwnTimeNano), strings.Compare(a.ServiceName, b.ServiceName))
 	})
 	return services
-}
-
-// siblingGroup totals the spans that share a name and a parent; a root is a group of its own.
-type siblingGroup struct {
-	// longest is the position of the span with the highest duration in the group.
-	longest   int32
-	spanCount uint64
-	ownTime   uint64
-	errCount  uint64
 }
 
 func (usage AISpanUsage) hasValue() bool {
