@@ -98,8 +98,8 @@ func (page *SpanListPage) SpanIDs() []string {
 	return spanIDs
 }
 
-// NewSpanList builds the page. rows holds the stored data of its spans; a span without a row keeps
-// what the tree knows. A selected field no span of the page has is reported as a warning.
+// NewSpanList builds the page. rows holds the stored data of its spans, read only for the selected
+// fields. A selected field no span of the page has is reported as a warning.
 func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 	byID := make(map[string]*StorableSpan, len(rows))
 	for i := range rows {
@@ -110,12 +110,11 @@ func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 	list := &SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions))}
 	found := make([]bool, len(page.selectFields))
 	for _, i := range page.positions {
-		row := byID[skeleton.spanID(i)]
-		item := SpanItem{Span: skeleton.span(i, row), TreeStats: skeleton.treeStats(i), UnmarkedFailureReason: skeleton.unmarkedFailureReason(i)}
+		item := SpanItem{Span: skeleton.span(i), TreeStats: skeleton.treeStats(i), UnmarkedFailureKind: skeleton.unmarkedFailureKind(i)}
 		if page.view == SpanListViewAIUsage {
 			skeleton.setUsageAttributes(&item.Span, i)
 		}
-		item.Span.selectFields(row, page.selectFields, found)
+		item.Span.selectFields(byID[skeleton.spanID(i)], page.selectFields, found)
 		list.Items = append(list.Items, item)
 	}
 	for k, field := range page.selectFields {
@@ -232,7 +231,7 @@ func (skeleton *TraceSkeleton) viewPositions(view SpanListView, scope []int32) [
 	case SpanListViewErrorOrigins:
 		return skeleton.spansWhere(scope, skeleton.errorStartsAt)
 	case SpanListViewUnmarkedFailures:
-		return skeleton.spansWhere(scope, func(i int32) bool { return skeleton.unmarkedFailureReason(i) != "" })
+		return skeleton.spansWhere(scope, func(i int32) bool { return skeleton.unmarkedFailureKind(i) != "" })
 	case SpanListViewLinks:
 		return skeleton.spansWhere(scope, func(i int32) bool { return skeleton.hasLink[i] })
 	case SpanListViewTimeSpent:
@@ -278,13 +277,14 @@ func (skeleton *TraceSkeleton) timeSpentSpans(scope []int32) []int32 {
 	return spans
 }
 
-// aiUsageSpans lists the spans of scope that carry gen_ai usage by cost, or by tokens when no
-// span of the trace carries a cost; equal spans fall back to span order.
+// aiUsageSpans lists the spans of scope that carry gen_ai usage by cost, or by tokens when none
+// of them carries a cost; equal spans fall back to span order.
 func (skeleton *TraceSkeleton) aiUsageSpans(scope []int32) []int32 {
-	hasCost := false
-	for _, usage := range skeleton.aiUsage {
-		hasCost = hasCost || usage.Cost != nil
-	}
+	spans := skeleton.spansWhere(scope, func(i int32) bool {
+		_, ok := skeleton.aiUsage[i]
+		return ok
+	})
+	hasCost := slices.ContainsFunc(spans, func(i int32) bool { return skeleton.aiUsage[i].Cost != nil })
 	weight := func(i int32) float64 {
 		usage := skeleton.aiUsage[i]
 		if hasCost {
@@ -292,43 +292,31 @@ func (skeleton *TraceSkeleton) aiUsageSpans(scope []int32) []int32 {
 		}
 		return floatValue(usage.InputTokens) + floatValue(usage.OutputTokens)
 	}
-	spans := skeleton.spansWhere(scope, func(i int32) bool {
-		_, ok := skeleton.aiUsage[i]
-		return ok
-	})
 	slices.SortFunc(spans, func(a, b int32) int {
 		return cmp.Or(cmp.Compare(weight(b), weight(a)), cmp.Compare(a, b))
 	})
 	return spans
 }
 
-// span returns span i with service.name as its only resource attribute. row adds what only the
-// store holds: the status, the references, and the parent id of a span whose parent is missing.
-func (skeleton *TraceSkeleton) span(i int32, row *StorableSpan) Span {
-	span := Span{
+// span returns span i with service.name as its only resource attribute.
+func (skeleton *TraceSkeleton) span(i int32) Span {
+	return Span{
 		SpanID:             skeleton.spanID(i),
 		TraceID:            skeleton.traceID,
+		ParentSpanID:       skeleton.parentSpanID(i),
 		Name:               skeleton.stringTable[skeleton.names[i]],
 		KindString:         skeleton.stringTable[skeleton.kinds[i]],
-		Timestamp:          uint64(skeleton.startNano[i]),
+		TimeUnix:           uint64(skeleton.startNano[i] / 1_000_000),
 		DurationNano:       skeleton.durationNano[i],
 		HasError:           skeleton.hasError[i],
-		ResponseStatusCode: skeleton.stringTable[skeleton.statusCodes[i]],
+		StatusCodeString:   skeleton.stringTable[skeleton.statusCodeStrings[i]],
+		StatusMessage:      skeleton.stringTable[skeleton.statusMessages[i]],
+		ResponseStatusCode: skeleton.stringTable[skeleton.responseStatusCodes[i]],
 		Resource:           map[string]string{"service.name": skeleton.stringTable[skeleton.services[i]]},
 		Attributes:         map[string]any{},
 		Events:             []Event{},
-		References:         []OtelSpanRef{},
+		References:         skeleton.spanReferences(i),
 	}
-	if parent := skeleton.parents[i]; parent != noParent {
-		span.ParentSpanID = skeleton.spanID(parent)
-	}
-	if row != nil {
-		span.ParentSpanID = row.ParentSpanID
-		span.StatusCodeString = row.StatusCodeString
-		span.StatusMessage = row.StatusMessage
-		span.References = append(span.References, row.UnmarshalledRefs()...)
-	}
-	return span
 }
 
 func (skeleton *TraceSkeleton) setUsageAttributes(span *Span, i int32) {

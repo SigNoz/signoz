@@ -174,3 +174,21 @@ func TestNewSpanListPage_TimeSpent_ShowsTheGroupByItsLongestSpanInScope(t *testi
 	require.NoError(t, err)
 	assert.Equal(t, []string{"root", "q2", "row"}, page.SpanIDs())
 }
+
+func TestNewSpanListPage_AIUsage_RanksByTokensWhenNoListedSpanHasACost(t *testing.T) {
+	value := func(v float64) *float64 { return &v }
+	// agent ─┬─ plan (cost)
+	//        └─ tools ─┬─ search (10 tokens)
+	//                  └─ fetch (100 tokens)
+	skeleton := buildSkeleton(
+		skeletonSpec{id: "agent"},
+		skeletonSpec{id: "plan", parent: "agent", usage: &AISpanUsage{Cost: value(0.5)}},
+		skeletonSpec{id: "tools", parent: "agent"},
+		skeletonSpec{id: "search", parent: "tools", usage: &AISpanUsage{InputTokens: value(10)}},
+		skeletonSpec{id: "fetch", parent: "tools", usage: &AISpanUsage{InputTokens: value(100)}},
+	)
+
+	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "tools", View: SpanListViewAIUsage, Limit: 50})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"fetch", "search"}, page.SpanIDs())
+}

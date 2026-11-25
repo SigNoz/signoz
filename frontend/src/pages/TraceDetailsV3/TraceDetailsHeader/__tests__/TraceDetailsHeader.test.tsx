@@ -190,7 +190,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 		totalSpansCount: 42,
 		totalErrorSpansCount: 0,
 		ai: {
-			modelCallCount: 2,
+			llmCallCount: 2,
 			toolCallCount: 1,
 			tokens: {
 				input: 12040,
@@ -406,7 +406,7 @@ describe('TraceDetailsHeader – tabs', () => {
 			data: {
 				...SUMMARY,
 				ai: {
-					modelCallCount: 1,
+					llmCallCount: 1,
 					toolCallCount: 0,
 					tokens: { input: 1, output: 1, cacheRead: 0, cacheWrite: 0, reasoning: 0 },
 				},

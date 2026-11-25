@@ -70,7 +70,7 @@ def test_get_trace_span(
         "parent_span_id": root_id,
         "name": "query_orders",
         "kind_string": "Client",
-        "timestamp": int(start.timestamp()) * 1_000_000_000 + 30_000_000,
+        "time_unix": int(start.timestamp()) * 1_000 + 30,
         "duration_nano": 1_000_000_000,
         "has_error": True,
         "status_code_string": "STATUS_CODE_ERROR",
