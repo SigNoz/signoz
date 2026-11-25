@@ -16,7 +16,7 @@ function Nothing(): null {
 
 describe('Space', () => {
 	it('wraps each child in an item div and passes native props', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClick = jest.fn();
 		render(
 			<Space data-testid={TEST_ID} className="custom" onClick={onClick}>

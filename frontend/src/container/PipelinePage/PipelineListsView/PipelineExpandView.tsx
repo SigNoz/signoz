@@ -227,6 +227,7 @@ function PipelineExpandView({
 	return (
 		<DndProvider backend={HTML5Backend}>
 			<StyledTable
+				data-testid="pipeline-expand-view"
 				locale={getLocales()}
 				isDarkMode={isDarkMode}
 				showHeader={false}

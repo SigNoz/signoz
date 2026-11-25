@@ -597,6 +597,11 @@ export default function BillingContainer(): JSX.Element {
 								dataSource={data}
 								pagination={false}
 								bordered={false}
+								onRow={(
+									record,
+								): React.HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+									'data-testid': `billing-usage-row-${record.key}`,
+								})}
 								components={{
 									header: {
 										cell: ({

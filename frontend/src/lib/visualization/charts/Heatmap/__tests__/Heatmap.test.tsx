@@ -1,7 +1,6 @@
 import type React from 'react';
-import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	DEFAULT_COLOR_RAMP_OPTIONS,
 	resolveExtremeColor,
@@ -109,13 +108,10 @@ describe('Heatmap', () => {
 		renderHeatmap();
 
 		const bar = screen.getByTestId('color-bar');
-		const legend = screen
-			.getByText('service.name=cart')
-			.closest('[data-legend-item-id]');
+		const legend = screen.getByRole('switch', { name: 'service.name=cart' });
 		// The bar is the scale key for the grid, so it reads before the controls.
 		expect(
-			bar.compareDocumentPosition(legend as Node) &
-				Node.DOCUMENT_POSITION_FOLLOWING,
+			bar.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy();
 	});
 
@@ -123,8 +119,8 @@ describe('Heatmap', () => {
 		renderHeatmap();
 
 		expect(
-			screen.getByTestId('color-bar').closest('.chart-layout__content'),
-		).not.toBeNull();
+			within(screen.getByTestId('chart-layout-content')).getByTestId('color-bar'),
+		).toBeInTheDocument();
 	});
 
 	it('hides the colour bar when the visual map is off', () => {
@@ -166,13 +162,7 @@ describe('Heatmap group legend', () => {
 	}
 
 	function marker(label: string): HTMLElement {
-		const element = legendItem(label).querySelector<HTMLElement>(
-			'[data-is-legend-marker]',
-		);
-		if (!element) {
-			throw new Error(`no marker for ${label}`);
-		}
-		return element;
+		return within(legendItem(label)).getByTestId(/^legend-marker-/);
 	}
 
 	it('lists the groups, with no combined-view entry', () => {

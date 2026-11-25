@@ -79,6 +79,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 					/>
 				),
 				value: `${item.id}`,
+				'data-testid': `group-by-option-${item.key}`,
 			}));
 	}, [attributeKeys, query.groupBy]);
 

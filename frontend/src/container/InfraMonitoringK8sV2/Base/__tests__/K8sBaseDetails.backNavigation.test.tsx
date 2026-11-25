@@ -1,8 +1,13 @@
-import { screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import logEvent from 'api/common/logEvent';
-import { act, render, waitFor } from 'tests/test-utils';
+import {
+	act,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
@@ -25,27 +30,6 @@ jest.mock('api/common/logEvent', () => ({
 }));
 
 const logEventMock = jest.mocked(logEvent);
-
-// The breadcrumb of the trail reads `maxWidth`, which the fallback style of
-// jest.setup.ts does not carry.
-const baseGetComputedStyle = window.getComputedStyle;
-
-beforeAll(() => {
-	window.getComputedStyle = (
-		element: Element,
-		pseudoElement?: string | null,
-	): CSSStyleDeclaration => {
-		const style = baseGetComputedStyle(element, pseudoElement);
-
-		return style.maxWidth === undefined
-			? ({ ...style, maxWidth: '' } as CSSStyleDeclaration)
-			: style;
-	};
-});
-
-afterAll(() => {
-	window.getComputedStyle = baseGetComputedStyle;
-});
 
 type TestEntity = { name: string };
 
@@ -140,11 +124,10 @@ describe('K8sBaseDetails - trail', () => {
 		});
 
 		const close = await screen.findByTestId('drawer-wrapper-close');
+		const header = screen.getByTestId('drawer-wrapper-header');
 
-		expect(close.closest('[data-slot="drawer-header"]')).toHaveAttribute(
-			'data-close-position',
-			'start',
-		);
+		expect(header).toContainElement(close);
+		expect(header).toHaveAttribute('data-close-position', 'start');
 	});
 
 	it('lists the resources this one was opened from, root first, ending on itself', async () => {

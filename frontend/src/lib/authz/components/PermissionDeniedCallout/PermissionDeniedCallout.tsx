@@ -31,8 +31,16 @@ function PermissionDeniedCallout({
 			: [];
 
 	return (
-		<div className={cx(styles.callout, className)}>
-			<Callout color="danger" size="sm" icon={<SolidAlertCircle />}>
+		<div
+			className={cx(styles.callout, className)}
+			data-testid="permission-denied-callout-wrapper"
+		>
+			<Callout
+				color="danger"
+				size="sm"
+				icon={<SolidAlertCircle />}
+				testId="permission-denied-callout"
+			>
 				<Typography
 					variant="paragraph"
 					size="base"

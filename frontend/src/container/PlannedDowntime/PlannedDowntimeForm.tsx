@@ -484,6 +484,7 @@ export function PlannedDowntimeForm(
 					>
 						<RadioGroup
 							color="primary"
+							testId="planned-downtime-alert-scope"
 							items={[
 								{ value: 'all', label: 'All alert rules' },
 								{ value: 'specific', label: 'Specific alert rules' },

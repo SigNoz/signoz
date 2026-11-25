@@ -6,8 +6,6 @@ const LOG_EVENT_MOCK_PATH = '<rootDir>/src/__tests__/logEventMock.ts';
 
 const config: Config.InitialOptions = {
 	silent: true,
-	// CI runners are slow enough that multi-step userEvent tests pass 5s.
-	testTimeout: 10000,
 	clearMocks: true,
 	coverageDirectory: 'coverage',
 	coverageReporters: ['text', 'cobertura', 'html', 'json-summary'],
@@ -69,6 +67,8 @@ const config: Config.InitialOptions = {
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],
 	moduleDirectories: ['node_modules', 'src'],
 	testEnvironment: '<rootDir>/jest.environment.cjs',
+	// Local only: the default (cores - 1) workers exhaust RAM when several runs overlap.
+	...(process.env.CI ? {} : { maxWorkers: 4, workerIdleMemoryLimit: '1GB' }),
 	coverageThreshold: {
 		global: {
 			statements: 80,

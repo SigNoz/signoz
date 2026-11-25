@@ -2,7 +2,7 @@ import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.sche
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	authzMockResponse,
@@ -80,7 +80,7 @@ describe('ServiceAccountsSettings — FGA', () => {
 
 		expect(screen.getByText('Service Accounts')).toBeInTheDocument();
 		expect(
-			screen.getByTestId('sa-list-search').querySelector('.cm-content'),
+			within(screen.getByTestId('sa-list-search')).getByRole('textbox'),
 		).toHaveAttribute('contenteditable', 'false');
 		expect(screen.getByTestId('sa-list-search-submit')).toHaveAttribute(
 			'aria-disabled',

@@ -36,7 +36,7 @@ describe('SideNav help dropdown invite entry', () => {
 	it.each([USER_ROLES.ADMIN, USER_ROLES.EDITOR, USER_ROLES.VIEWER])(
 		'shows Invite a Team Member and opens the invite modal for %s',
 		async (role) => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<SideNav isPinned />, undefined, { role });
 			await openHelpMenu(user);

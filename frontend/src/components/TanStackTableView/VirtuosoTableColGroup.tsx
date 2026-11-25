@@ -22,13 +22,14 @@ export function VirtuosoTableColGroup<TData>({
 			{visibleTanstackColumns.map((tanstackCol, index) => {
 				const colDef = columnDefsById.get(tanstackCol.id);
 				if (!colDef) {
-					return <col key={tanstackCol.id} />;
+					return <col key={tanstackCol.id} data-testid="tanstack-col" />;
 				}
 				const persistedWidth = columnSizing[tanstackCol.id];
 				const isLastColumn = index === fillColumnIndex;
 				return (
 					<col
 						key={tanstackCol.id}
+						data-testid="tanstack-col"
 						style={getColumnWidthStyle(colDef, persistedWidth, isLastColumn)}
 					/>
 				);

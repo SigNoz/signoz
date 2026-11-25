@@ -59,9 +59,9 @@ const openDropdown = (): void => {
 };
 
 const getOptionLabels = (): string[] =>
-	Array.from(document.querySelectorAll('.ant-select-item-option-content')).map(
-		(node) => node.textContent ?? '',
-	);
+	screen
+		.queryAllByTestId('list-view-order-by-option')
+		.map((node) => node.textContent ?? '');
 
 describe('ListViewOrderBy', () => {
 	beforeEach(() => {

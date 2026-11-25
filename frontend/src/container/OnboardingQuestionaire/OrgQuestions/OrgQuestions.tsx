@@ -174,6 +174,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 						<RadioGroup
 							color="primary"
 							textOverflow="visible"
+							testId="observability-tool"
 							value={observabilityTool}
 							onChange={handleObservabilityToolChange}
 							items={Object.entries(observabilityTools).map(([tool, label]) => ({
@@ -187,6 +188,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 											<Input
 												type="text"
 												placeholder="What tool do you currently use?"
+												testId="other-tool-input"
 												value={otherTool || ''}
 												autoFocus
 												onKeyDown={(e): void => e.stopPropagation()}
@@ -207,6 +209,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 							</div>
 							<RadioGroup
 								color="primary"
+								testId="migration-timeline"
 								value={migrationTimeline}
 								onChange={setMigrationTimeline}
 								items={Object.entries(migrationTimelineOptions).map(([key, label]) => ({
@@ -221,6 +224,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 						<div className="question">Do you already use OpenTelemetry?</div>
 						<RadioGroup
 							color="primary"
+							testId="uses-otel"
 							value={usesOtel === true ? 'yes' : usesOtel === false ? 'no' : null}
 							onChange={handleOtelChange}
 							items={[
@@ -240,6 +244,7 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 					disabled={isNextDisabled}
 					disabledTooltip={getNextDisabledReason()}
 					suffix={<ArrowRight size={12} />}
+					testId="org-questions-next"
 				>
 					Next
 				</Button>

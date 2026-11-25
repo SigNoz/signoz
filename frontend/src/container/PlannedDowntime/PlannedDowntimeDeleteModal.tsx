@@ -48,6 +48,7 @@ export function PlannedDowntimeDeleteModal(
 					onClick={onDeleteHandler}
 					className="delete-btn"
 					disabled={isDeleteLoading}
+					data-testid="planned-downtime-delete-confirm"
 				>
 					Delete Schedule
 				</Button>,

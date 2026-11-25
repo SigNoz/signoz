@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from 'tests/test-utils';
 import type { DefaultOptionType } from 'antd/es/select';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
@@ -92,12 +92,12 @@ const renderThresholdItem = (
 };
 
 const verifySelectorWidth = (
-	selectorIndex: number,
+	selectorTestId: string,
 	expectedWidth: string,
 ): void => {
-	const selectors = screen.getAllByRole('combobox');
-	const selector = selectors[selectorIndex];
-	expect(selector.closest('.ant-select')).toHaveStyle(`width: ${expectedWidth}`);
+	expect(screen.getByTestId(selectorTestId)).toHaveStyle(
+		`width: ${expectedWidth}`,
+	);
 };
 
 // TODO: Unskip this when recovery threshold is implemented
@@ -126,9 +126,9 @@ describe('ThresholdItem', () => {
 	it('renders threshold indicator with correct color', () => {
 		renderThresholdItem();
 
-		// Find the threshold dot by its class
-		const thresholdDot = document.querySelector('.threshold-dot');
-		expect(thresholdDot).toHaveStyle('background-color: #ff0000');
+		expect(screen.getByTestId('threshold-dot')).toHaveStyle(
+			'background-color: #ff0000',
+		);
 	});
 
 	it('renders threshold label input with correct value', () => {
@@ -337,12 +337,12 @@ describe('ThresholdItem', () => {
 
 	it('renders channels selector with correct width', () => {
 		renderThresholdItem();
-		verifySelectorWidth(1, '350px');
+		verifySelectorWidth('threshold-notification-channel-select', '350px');
 	});
 
 	it('renders unit selector with correct width', () => {
 		renderThresholdItem();
-		verifySelectorWidth(0, '150px');
+		verifySelectorWidth('threshold-unit-select', '150px');
 	});
 
 	it('handles loading channels state', () => {

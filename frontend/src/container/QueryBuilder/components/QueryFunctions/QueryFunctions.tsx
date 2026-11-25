@@ -184,6 +184,7 @@ export default function QueryFunctions({
 		>
 			<Button
 				className="periscope-btn function-btn"
+				data-testid="query-functions-fx-btn"
 				disabled={hasFunctions}
 				onClick={handleAddNewFunction}
 			>

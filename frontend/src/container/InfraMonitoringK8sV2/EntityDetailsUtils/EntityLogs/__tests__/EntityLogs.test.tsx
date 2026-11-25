@@ -2,14 +2,7 @@ import { VirtuosoMockContext } from 'react-virtuoso';
 import { mockQueryRangeV5WithLogsResponse } from '__tests__/query_range_v5.util';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import {
-	act,
-	fireEvent,
-	render,
-	RenderResult,
-	screen,
-	waitFor,
-} from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
 
 import EntityLogs from '../EntityLogs';
@@ -84,11 +77,8 @@ describe('EntityLogs', () => {
 		});
 	});
 	it('should check if k8s logs pagination flows work properly', async () => {
-		let renderResult: RenderResult;
-		let scrollableElement: HTMLElement;
-
 		act(() => {
-			renderResult = render(
+			render(
 				<NuqsTestingAdapter
 					searchParams={`${K8S_ENTITY_LOGS_EXPRESSION_KEY}=k8s.pod.name+%3D+%22x%22`}
 				>
@@ -114,19 +104,14 @@ describe('EntityLogs', () => {
 		});
 
 		await waitFor(async () => {
-			scrollableElement = renderResult.container.querySelector(
-				'[data-test-id="virtuoso-scroller"]',
-			) as HTMLElement;
+			const scrollableElement = screen.getByTestId(
+				'entity-logs-virtuoso-scroller',
+			);
+			scrollableElement.scrollTop = 99 * itemHeight;
 
-			expect(scrollableElement).not.toBeNull();
-
-			if (scrollableElement) {
-				scrollableElement.scrollTop = 99 * itemHeight;
-
-				act(() => {
-					fireEvent.scroll(scrollableElement);
-				});
-			}
+			act(() => {
+				fireEvent.scroll(scrollableElement);
+			});
 		});
 
 		await waitFor(() => {
@@ -152,19 +137,14 @@ describe('EntityLogs', () => {
 		});
 
 		await waitFor(async () => {
-			scrollableElement = renderResult.container.querySelector(
-				'[data-test-id="virtuoso-scroller"]',
-			) as HTMLElement;
+			const scrollableElement = screen.getByTestId(
+				'entity-logs-virtuoso-scroller',
+			);
+			scrollableElement.scrollTop = 199 * itemHeight;
 
-			expect(scrollableElement).not.toBeNull();
-
-			if (scrollableElement) {
-				scrollableElement.scrollTop = 199 * itemHeight;
-
-				act(() => {
-					fireEvent.scroll(scrollableElement);
-				});
-			}
+			act(() => {
+				fireEvent.scroll(scrollableElement);
+			});
 		});
 
 		await waitFor(() => {

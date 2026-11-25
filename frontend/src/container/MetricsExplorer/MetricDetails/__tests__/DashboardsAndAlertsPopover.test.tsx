@@ -1,7 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
-import { userEvent } from 'tests/test-utils';
+import { render, screen, userEvent } from 'tests/test-utils';
 
 import DashboardsAndAlertsPopover from '../DashboardsAndAlertsPopover';
 import {
@@ -56,12 +55,11 @@ describe('DashboardsAndAlertsPopover', () => {
 			}),
 		);
 
-		const { container } = render(
-			<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />,
-		);
+		render(<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />);
 		expect(
-			container.querySelector('dashboards-and-alerts-popover-container'),
-		).toBeNull();
+			screen.queryByTestId('metric-dashboards-popover'),
+		).not.toBeInTheDocument();
+		expect(screen.queryByTestId('metric-alerts-popover')).not.toBeInTheDocument();
 	});
 
 	it('renders popover with single dashboard and alert', () => {

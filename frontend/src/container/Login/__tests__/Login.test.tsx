@@ -204,7 +204,7 @@ describe('Login Component', () => {
 
 	describe('Session Context Fetching', () => {
 		it('fetches session context on next button click and enables password', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -237,7 +237,7 @@ describe('Login Component', () => {
 		});
 
 		it('handles session context API errors', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -279,7 +279,7 @@ describe('Login Component', () => {
 		});
 
 		it('auto-selects organization when only one exists', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
@@ -316,7 +316,7 @@ describe('Login Component', () => {
 
 	describe('Organization Selection', () => {
 		it('shows organization dropdown when multiple orgs exist', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -358,7 +358,7 @@ describe('Login Component', () => {
 		});
 
 		it('updates selected organization on dropdown change', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
@@ -397,7 +397,7 @@ describe('Login Component', () => {
 
 	describe('Password Authentication', () => {
 		it('shows password field when password auth is supported', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -432,7 +432,7 @@ describe('Login Component', () => {
 		});
 
 		it('enables password auth when URL parameter password=Y', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -483,7 +483,7 @@ describe('Login Component', () => {
 		});
 
 		it('shows callback login button when callback auth is supported', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -517,7 +517,7 @@ describe('Login Component', () => {
 		});
 
 		it('redirects to callback URL on button click', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			// Mock window.location.href. The rest of the shape matters: history@5
 			// re-reads `window.location` on every access, so a stub without a
@@ -577,7 +577,7 @@ describe('Login Component', () => {
 
 	describe('Password Authentication Execution', () => {
 		it('calls email/password API with correct parameters', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -628,7 +628,7 @@ describe('Login Component', () => {
 		});
 
 		it('shows error modal on authentication failure', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (_, res, ctx) =>
@@ -721,7 +721,7 @@ describe('Login Component', () => {
 
 	describe('Session Organization Warnings', () => {
 		it('shows warning modal when org has warning', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
@@ -756,7 +756,7 @@ describe('Login Component', () => {
 		});
 
 		it('shows warning modal when a warning org is selected among multiple orgs', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			// Mock multiple orgs including one with a warning
 			const mockMultiOrgWithWarning = {
@@ -816,7 +816,7 @@ describe('Login Component', () => {
 
 	describe('Form State Management', () => {
 		it('disables form fields during loading states', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
@@ -852,7 +852,7 @@ describe('Login Component', () => {
 		});
 
 		it('shows correct button text for each auth method', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(SESSIONS_CONTEXT_ENDPOINT, (req, res, ctx) =>
@@ -892,7 +892,7 @@ describe('Login Component', () => {
 
 	describe('Edge Cases', () => {
 		it('handles user with no organizations', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			const mockNoOrgs: SessionsContext = {
 				exists: false,
@@ -936,7 +936,7 @@ describe('Login Component', () => {
 		});
 
 		it('handles organization with no auth support', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			const mockNoAuthSupport: SessionsContext = {
 				exists: true,
@@ -1015,7 +1015,7 @@ describe('Login Component', () => {
 		}
 
 		it('fetches the sessions context once on Enter in the email field', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let contextCalls = 0;
 
 			server.use(
@@ -1035,7 +1035,7 @@ describe('Login Component', () => {
 
 		// Bug: the email onPressEnter calls onNextHandler without checking isEmailValid (container/Login/index.tsx:329).
 		it.skip('does not fetch the sessions context on Enter with an invalid email', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let contextCalls = 0;
 
 			server.use(
@@ -1059,7 +1059,7 @@ describe('Login Component', () => {
 		});
 
 		it('signs in once on Enter in the password field', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let loginCalls = 0;
 
 			server.use(
@@ -1090,7 +1090,7 @@ describe('Login Component', () => {
 		});
 
 		it('does not sign in on Enter while the password is empty', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let loginCalls = 0;
 
 			server.use(
@@ -1123,7 +1123,7 @@ describe('Login Component', () => {
 		});
 
 		it('does not sign in again on Enter while the first sign in is loading', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let loginCalls = 0;
 
 			server.use(
@@ -1163,7 +1163,7 @@ describe('Login Component', () => {
 		});
 
 		it('redirects to the SSO url on Enter for a callback org', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			Object.defineProperty(window, 'location', {
 				value: {

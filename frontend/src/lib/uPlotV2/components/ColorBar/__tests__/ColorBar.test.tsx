@@ -77,8 +77,7 @@ describe('ColorBar', () => {
 			/>,
 		);
 
-		const track = screen.getByTestId('scale').querySelector('div');
-		expect(track).toHaveStyle({
+		expect(screen.getByTestId('scale-track')).toHaveStyle({
 			background:
 				'linear-gradient(to right, #111111 0%, #111111 50%, #dddddd 50%, #dddddd 100%)',
 		});

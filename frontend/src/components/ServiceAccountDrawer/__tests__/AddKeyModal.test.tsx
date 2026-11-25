@@ -69,7 +69,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('"Create Key" is disabled when name is empty; enabled after typing a name', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		// The form only renders once the checks resolve, so waiting for it also
@@ -92,7 +92,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const nameInput = await screen.findByTestId('add-key-name-input-field');
@@ -109,7 +109,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('pressing Enter again while creating sends one request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let requests = 0;
 		server.use(
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) => {
@@ -137,7 +137,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderModal();
 
@@ -173,7 +173,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('keeps the footer usable when key create is denied', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(setupAuthzDenyAll());
 
 		renderModal();
@@ -208,7 +208,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('Cancel button closes the modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const cancelBtn = await screen.findByTestId('add-key-cancel-btn');

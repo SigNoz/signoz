@@ -1,6 +1,5 @@
 import React from 'react';
-import { render, RenderResult, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, RenderResult, screen, userEvent } from 'tests/test-utils';
 import { LegendItem } from 'lib/uPlotV2/config/types';
 import useLegendsSync from 'lib/uPlotV2/hooks/useLegendsSync';
 
@@ -154,20 +153,14 @@ describe('UPlotLegend', () => {
 		it('renders the marker with the series colour, filled only when shown', () => {
 			renderLegend(LegendPosition.RIGHT);
 
-			expect(
-				document.querySelector(
-					'[data-legend-item-id="0"] [data-is-legend-marker="true"]',
-				),
-			).toHaveStyle({
+			expect(screen.getByTestId('legend-marker-0')).toHaveStyle({
 				'border-color': '#ff0000',
 				'background-color': '#ff0000',
 			});
 			// Hidden series read as an empty checkbox.
-			expect(
-				document.querySelector(
-					'[data-legend-item-id="1"] [data-is-legend-marker="true"]',
-				),
-			).toHaveStyle({ 'background-color': 'transparent' });
+			expect(screen.getByTestId('legend-marker-1')).toHaveStyle({
+				'background-color': 'transparent',
+			});
 		});
 
 		it('renders all legend items in the grid by default', () => {
