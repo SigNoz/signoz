@@ -93,6 +93,7 @@ describe('Alert history navigations keep the expression', () => {
 			count: fingerprint,
 			relatedLogsLink: '',
 			relatedTracesLink: '',
+			relatedAITracesLink: '',
 		}));
 		render(
 			<>

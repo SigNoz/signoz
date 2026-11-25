@@ -1,17 +1,21 @@
-import { fireEvent, screen } from '@testing-library/react';
 import {
 	LicensePlatform,
 	LicenseResModel,
 } from 'types/api/licensesV3/getActive';
 import { QueryParams } from 'constants/query';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import {
+	initialQueriesMap,
+	initialQueryAIWithType,
+} from 'constants/queryBuilder';
 import { getAppContextMockState } from 'container/RoutingPolicies/__tests__/testUtils';
 import * as useCompositeQueryParamHooks from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import * as navigateHooks from 'hooks/useSafeNavigate';
 import * as useUrlQueryHooks from 'hooks/useUrlQuery';
 import * as appHooks from 'providers/App/App';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
+import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 
 import CreateAlertRule from '../index';
@@ -31,9 +35,9 @@ jest.mock('container/CreateAlert', () => ({
 		alertType: AlertTypes;
 	}): JSX.Element {
 		return (
-			<div>
+			<div data-testid="create-alert-mock">
 				<h1>Create Alert V2</h1>
-				<p>{alertType}</p>
+				<p data-testid="create-alert-mock-type">{alertType}</p>
 			</div>
 		);
 	},
@@ -58,6 +62,7 @@ const mockSafeNavigate = jest.fn();
 const mockDeleteUrlQuery = jest.fn();
 
 const CREATE_ALERT_V2_TEXT = 'Create Alert V2';
+const AI_TRACES_ALERT_PARAMS = `ruleType=threshold_rule&alertType=${AlertTypes.AI_TRACES_BASED_ALERT}`;
 
 describe('CreateAlertRule', () => {
 	beforeEach(() => {
@@ -136,6 +141,20 @@ describe('CreateAlertRule', () => {
 		expect(screen.getByText(AlertTypes.LOGS_BASED_ALERT)).toBeInTheDocument();
 	});
 
+	it('should open an AI traces alert for an AI query when no alertType is in the URL', () => {
+		mockGetUrlQuery.mockReturnValue(null);
+		useCompositeQueryParamSpy.mockReturnValue({
+			...initialQueriesMap.traces,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder: { ...initialQueriesMap.traces.builder, queryData: [] },
+			builder_ai_query: initialQueryAIWithType.builder_ai_query,
+		});
+		render(<CreateAlertRule />);
+		expect(screen.getByTestId('create-alert-mock-type')).toHaveTextContent(
+			AlertTypes.AI_TRACES_BASED_ALERT,
+		);
+	});
+
 	it('should use alertType from URL over compositeQuery dataSource', () => {
 		mockGetUrlQuery.mockImplementation((key: string) => {
 			if (key === QueryParams.alertType) {
@@ -209,6 +228,28 @@ describe('CreateAlertRule', () => {
 				AlertTypes.TRACES_BASED_ALERT,
 			);
 			expect(mockSafeNavigate).toHaveBeenCalled();
+		});
+
+		it('should navigate with threshold alert params for AI traces alert', async () => {
+			const user = userEvent.setup();
+			mockToString.mockReturnValue(AI_TRACES_ALERT_PARAMS);
+			render(<CreateAlertRule />);
+			await user.click(
+				screen.getByTestId(`alert-type-card-${AlertTypes.AI_TRACES_BASED_ALERT}`),
+			);
+
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.ruleType,
+				'threshold_rule',
+			);
+			expect(mockSetUrlQuery).toHaveBeenCalledWith(
+				QueryParams.alertType,
+				AlertTypes.AI_TRACES_BASED_ALERT,
+			);
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`${ROUTES.ALERTS_NEW}?${AI_TRACES_ALERT_PARAMS}`,
+				{ newTab: false },
+			);
 		});
 
 		it('should navigate with threshold alert params for exceptions alert', () => {

@@ -516,9 +516,9 @@ export function alertsDriver(page: Page): Alerts {
 			(await form.typeCard(AlertType.ANOMALY).count()) > 0,
 
 		/**
-		 * Exactly the expected set, in order: the four stock cards, plus anomaly
+		 * Exactly the expected set, in order: the five stock cards, plus anomaly
 		 * *first* when anomaly is available, because `getOptionList` unshifts it. Written
-		 * as an exact set so a fifth signal still fails here.
+		 * as an exact set so a sixth signal still fails here.
 		 */
 		expectTypeCardSet: async () => {
 			const expected = (await form.hasAnomalyCard())
