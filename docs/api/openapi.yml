@@ -13065,6 +13065,14 @@ components:
           description: Span attributes. A span read by ID has all of them; a span
             in a list has only the selected ones.
           type: object
+        db_name:
+          description: Database name. Left out when the span has none, and in a list
+            unless selected.
+          type: string
+        db_operation:
+          description: Database operation. Left out when the span has none, and in
+            a list unless selected.
+          type: string
         duration_nano:
           description: Duration, in nanoseconds.
           minimum: 0
@@ -13075,9 +13083,29 @@ components:
           items:
             $ref: '#/components/schemas/SpantypesEvent'
           type: array
+        external_http_method:
+          description: HTTP request method of an outgoing call. Left out when the
+            span has none, and in a list unless selected.
+          type: string
+        external_http_url:
+          description: Host of the URL of an outgoing call. Left out when the span
+            has none, and in a list unless selected.
+          type: string
         has_error:
           description: Whether the span is marked as an error.
           type: boolean
+        http_host:
+          description: HTTP host or server address. Left out when the span has none,
+            and in a list unless selected.
+          type: string
+        http_method:
+          description: HTTP request method. Left out when the span has none, and in
+            a list unless selected.
+          type: string
+        http_url:
+          description: HTTP request URL. Left out when the span has none, and in a
+            list unless selected.
+          type: string
         kind_string:
           description: Span kind, for example Server, Client or Internal.
           type: string
@@ -13102,6 +13130,11 @@ components:
           description: HTTP or gRPC status code of the response, for example 404.
             Empty when the span has none.
           type: string
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/SpantypesScope'
+          description: Instrumentation scope. Left out when the span has none, and
+            in a list unless selected.
         span_id:
           type: string
         status_code_string:
@@ -13116,6 +13149,10 @@ components:
           minimum: 0
           type: integer
         trace_id:
+          type: string
+        trace_state:
+          description: W3C trace state. Left out when the span has none, and in a
+            list unless selected.
           type: string
       required:
       - span_id
