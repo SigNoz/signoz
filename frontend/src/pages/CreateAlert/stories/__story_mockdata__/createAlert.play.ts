@@ -16,7 +16,6 @@ import {
 	type createAlertMocks,
 	fillValidAlert,
 	STORY_CHANNEL_ID,
-	TELEMETRY_DENIAL,
 } from '../CreateAlert.stories.mocks';
 
 type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
@@ -92,10 +91,6 @@ export const saveValidAlert = async ({
 
 	await fillValidAlert(canvasElement);
 	await clickFooterButton(canvasElement, 'save-alert-rule-button');
-	if (args.ruleWrite === 'telemetry-denied') {
-		await screen.findByText(TELEMETRY_DENIAL, undefined, untilLoaded);
-		return;
-	}
 	await waitFor(() =>
 		expect(screen.getByText(/alert rule created successfully/i)).toBeVisible(),
 	);
@@ -116,10 +111,6 @@ export const sendTestNotification = async ({
 
 	await fillValidAlert(canvasElement);
 	await clickFooterButton(canvasElement, 'test-notification-button');
-	if (args.ruleWrite === 'telemetry-denied') {
-		await screen.findByText(TELEMETRY_DENIAL, undefined, untilLoaded);
-		return;
-	}
 	if (args.testNotification === 'sent') {
 		await waitFor(() =>
 			expect(

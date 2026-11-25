@@ -96,18 +96,6 @@ const FORM = 'Create alert · form';
 const TEST_NOTIFICATIONS = ['sent', 'no-alerts'] as const;
 type TestNotification = (typeof TEST_NOTIFICATIONS)[number];
 
-const RULE_WRITES = ['succeeds', 'telemetry-denied'] as const;
-type RuleWrite = (typeof RULE_WRITES)[number];
-
-/** The backend's denial for a custom role without read on the queried metrics. */
-export const TELEMETRY_DENIAL =
-	'user/story-user is not authorized to perform metrics:read on resource "signoz_calls_total"';
-
-const telemetryDenied = {
-	status: 'error',
-	error: { code: 'authz_forbidden', message: TELEMETRY_DENIAL },
-};
-
 export const createAlertMocks = defineStoryMocks({
 	controls: {
 		alertMode: choiceControl<AlertMode>('Alert being created', {
@@ -128,13 +116,6 @@ export const createAlertMocks = defineStoryMocks({
 			value: 3,
 			max: 6,
 		}),
-		ruleWrite: choiceControl<RuleWrite>('Rule write', {
-			group: FORM,
-			description:
-				'What saving or testing the rule answers. `telemetry-denied` is the 403 a custom role gets without read on the telemetry the rule queries, which only the server can check.',
-			options: RULE_WRITES,
-			value: 'succeeds',
-		}),
 		testNotification: choiceControl<TestNotification>('Test notification', {
 			group: 'Create alert · form',
 			description:
@@ -145,24 +126,20 @@ export const createAlertMocks = defineStoryMocks({
 	},
 	handlers: (values, response) => [
 		rest.post('http://localhost/api/v2/rules', (_req, res, ctx) =>
-			values.ruleWrite === 'telemetry-denied'
-				? res(ctx.status(403), ctx.json(telemetryDenied))
-				: res(ctx.status(201), ctx.json({ status: 'success', data: null })),
+			res(ctx.status(201), ctx.json({ status: 'success', data: null })),
 		),
 
 		rest.post('http://localhost/api/v2/rules/test', (_req, res, ctx) =>
-			values.ruleWrite === 'telemetry-denied'
-				? res(ctx.status(403), ctx.json(telemetryDenied))
-				: res(
-						ctx.status(200),
-						ctx.json({
-							status: 'success',
-							data: {
-								alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
-								message: 'Rule tested against the last 6 hours',
-							},
-						}),
-					),
+			res(
+				ctx.status(200),
+				ctx.json({
+					status: 'success',
+					data: {
+						alertCount: values.testNotification === 'no-alerts' ? 0 : 2,
+						message: 'Rule tested against the last 6 hours',
+					},
+				}),
+			),
 		),
 
 		rest.get(

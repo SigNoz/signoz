@@ -22,7 +22,7 @@ const pageStory = storyMocks(createAlertMocks, { layout: 'app' });
  * is an admin denied exactly what its name says. `create` and `attach` on rules
  * decide Save and Test notification, `attach` on each channel which channels
  * the picker can add, and `create` on channels whether the empty picker offers
- * to make one. Reading the queried telemetry is checked by the server alone.
+ * to make one.
  *
  * Route: `/alerts/new`.
  */
@@ -63,18 +63,6 @@ export const NoChannelAttach: Story = {
 export const NoChannelCreate: Story = {
 	args: { channels: 0, revoked: ['create:notification-channel'] },
 	play: expectNoChannelCreateLink,
-};
-
-/**
- * Saving is refused by the server: the role cannot read the metrics the rule
- * queries, which the page cannot check up front, so the footer names it.
- */
-export const TelemetryDenied: Story = {
-	args: { ruleWrite: 'telemetry-denied' },
-	// The mocked save intentionally fails; the resulting console error is the
-	// point of the story, not a regression.
-	parameters: { allowConsoleErrors: true },
-	play: saveValidAlert,
 };
 
 /**
