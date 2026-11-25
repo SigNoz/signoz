@@ -71,10 +71,13 @@ export function usePlannedDowntimeFormPermissions({
 		() => (scheduleId ? (initialValues.alertIds ?? []) : []),
 		[scheduleId, initialValues.alertIds],
 	);
-	const incomingIds = useMemo(
-		() => (isAllRules ? [] : toIds(selectedRules)),
-		[isAllRules, selectedRules],
-	);
+	const incomingIds = useMemo(() => {
+		if (isAllRules) {
+			return [];
+		}
+		const picked = toIds(selectedRules);
+		return picked.length > 0 ? picked : undefined;
+	}, [isAllRules, selectedRules]);
 	const optionIds = useMemo(() => toIds(alertOptions), [alertOptions]);
 
 	const update = useMemo(

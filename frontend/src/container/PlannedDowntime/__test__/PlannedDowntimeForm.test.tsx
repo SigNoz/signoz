@@ -294,6 +294,20 @@ describe('PlannedDowntimeForm authz', () => {
 		);
 	});
 
+	it('needs no rule attach to create one before a rule is picked', async () => {
+		server.use(
+			setupAuthzAllow(
+				PlannedMaintenanceCreatePermission,
+				PlannedMaintenanceAttachPermission,
+			),
+		);
+		render(<FormHarness initialValues={{ alertIds: [] }} isEditMode={false} />);
+
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
+	});
+
 	it('checks unsilenced rules only once the picker opens', async () => {
 		const requested: AuthtypesTransactionDTO[] = [];
 		server.use(

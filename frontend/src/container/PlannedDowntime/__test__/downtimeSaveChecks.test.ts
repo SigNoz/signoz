@@ -42,9 +42,21 @@ describe('getDowntimeSaveChecks', () => {
 				buildRuleAttachPermission('*'),
 			]);
 		});
+
+		it('needs only create while no rule is picked', () => {
+			expect(getDowntimeSaveChecks({ storedAlertIds: [] })).toStrictEqual([
+				PlannedMaintenanceCreatePermission,
+			]);
+		});
 	});
 
 	describe('edit', () => {
+		it('needs only update while no rule is picked', () => {
+			expect(
+				getDowntimeSaveChecks({ scheduleId: ID, storedAlertIds: ['a'] }),
+			).toStrictEqual(EDIT);
+		});
+
 		it('needs only update when the rules are unchanged', () => {
 			expect(
 				getDowntimeSaveChecks({

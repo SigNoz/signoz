@@ -23,7 +23,8 @@ interface DowntimeSaveChecksInput {
 	/** Absent for a new schedule. */
 	scheduleId?: string;
 	storedAlertIds: string[];
-	incomingAlertIds: string[];
+	/** Absent while no rule is picked: Save is blocked then, so nothing is linked. */
+	incomingAlertIds?: string[];
 }
 
 const buildRulePermissions = (id: string): LinkPermissions => ({
@@ -36,13 +37,16 @@ const buildRulePermissions = (id: string): LinkPermissions => ({
  * every picked rule, or every rule when none are. An edit diffs the incoming
  * list against the stored one, both reading empty as every rule: re-saving an
  * all-rules schedule links nothing new, and switching to all rules attaches
- * `*` and detaches the old ones.
+ * `*` and detaches the old ones. With nothing picked yet, nothing is linked.
  */
 export function getDowntimeSaveChecks({
 	scheduleId,
 	storedAlertIds,
 	incomingAlertIds,
 }: DowntimeSaveChecksInput): BrandedPermission[] {
+	const savedIds = withAllRulesIfEmpty(storedAlertIds);
+	const incomingIds = incomingAlertIds && withAllRulesIfEmpty(incomingAlertIds);
+
 	return getLinkSaveChecks(
 		scheduleId
 			? {
@@ -52,8 +56,8 @@ export function getDowntimeSaveChecks({
 						detach: buildPlannedMaintenanceDetachPermission(scheduleId),
 					},
 					buildItemPermissions: buildRulePermissions,
-					savedIds: withAllRulesIfEmpty(storedAlertIds),
-					incomingIds: withAllRulesIfEmpty(incomingAlertIds),
+					savedIds,
+					incomingIds: incomingIds ?? savedIds,
 				}
 			: {
 					ownerChecks: [PlannedMaintenanceCreatePermission],
@@ -63,7 +67,7 @@ export function getDowntimeSaveChecks({
 					},
 					buildItemPermissions: buildRulePermissions,
 					savedIds: [],
-					incomingIds: withAllRulesIfEmpty(incomingAlertIds),
+					incomingIds: incomingIds ?? [],
 				},
 	);
 }
