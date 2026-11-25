@@ -28,7 +28,6 @@ export const getOptionList = (
 			selection: AlertTypes.AI_TRACES_BASED_ALERT,
 			description: t('ai_traces_based_alert_desc'),
 			isBeta: true,
-			hideSampleAlertLink: true,
 		},
 		{
 			title: t('exceptions_based_alert'),

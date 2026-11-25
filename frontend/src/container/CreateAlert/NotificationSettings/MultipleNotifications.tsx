@@ -19,14 +19,13 @@ function MultipleNotifications(): JSX.Element {
 		[notificationSettings.multipleNotifications],
 	);
 
+	const { queryData } = getActiveBuilder(currentQuery);
+
 	const spaceAggregationOptions = useMemo(() => {
-		const allGroupBys = getActiveBuilder(currentQuery).queryData.reduce<string[]>(
-			(acc, query) => {
-				const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
-				return [...acc, ...groupByKeys];
-			},
-			[],
-		);
+		const allGroupBys = queryData.reduce<string[]>((acc, query) => {
+			const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
+			return [...acc, ...groupByKeys];
+		}, []);
 		const uniqueGroupBys = [...new Set(allGroupBys)];
 		const options = uniqueGroupBys.map((key) => ({
 			label: key,
@@ -45,7 +44,7 @@ function MultipleNotifications(): JSX.Element {
 			];
 		}
 		return options;
-	}, [currentQuery, isAllOptionSelected]);
+	}, [queryData, isAllOptionSelected]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 

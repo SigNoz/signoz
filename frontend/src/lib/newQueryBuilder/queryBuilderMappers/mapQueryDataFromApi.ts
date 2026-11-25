@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { initialQueryState } from 'constants/queryBuilder';
+import { isAIQueryType } from 'lib/query/builderSlot';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import {
 	IBuilderFormula,
@@ -29,7 +30,7 @@ const toBuilderSlots = (
 	builder: Query['builder'],
 	queryType: EQueryType,
 ): Pick<Query, 'builder' | 'builder_ai_query'> =>
-	queryType === EQueryType.AI_QUERY_BUILDER
+	isAIQueryType(queryType)
 		? { builder: transformQueryBuilderDataModel({}), builder_ai_query: builder }
 		: { builder };
 
@@ -47,7 +48,7 @@ const mapQueryFromV5 = (compositeQuery: ICompositeMetricQuery): Query => {
 	> = {};
 	const promQueries: IPromQLQuery[] = [];
 	const clickhouseQueries: IClickHouseQuery[] = [];
-	const isAIQuery = compositeQuery.queryType === EQueryType.AI_QUERY_BUILDER;
+	const isAIQuery = isAIQueryType(compositeQuery.queryType);
 
 	compositeQuery.queries?.forEach((q) => {
 		const spec = q.spec as BuilderQuery | PromQuery | ClickHouseQuery;

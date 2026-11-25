@@ -50,7 +50,7 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	}
 
 	function handleSampleAlertClick(option: AlertTypes): void {
-		logEvent('Alert: Sample alert link clicked', {
+		void logEvent('Alert: Sample alert link clicked', {
 			dataSource: ALERTS_DATA_SOURCE_MAP[option],
 			link: getSampleAlertUrl(option),
 			page: 'New alert data source selection page',
@@ -59,46 +59,49 @@ function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const renderOptions = useMemo(
 		() => (
 			<>
-				{optionList.map((option: OptionType) => (
-					<AlertTypeCard
-						key={option.selection}
-						title={option.title}
-						extra={
-							option.isBeta ? (
-								<Badge
-									variant="solid"
-									color="primary"
-									testId={`alert-type-beta-${option.selection}`}
+				{optionList.map((option: OptionType) => {
+					const sampleAlertUrl = getSampleAlertUrl(option.selection);
+					return (
+						<AlertTypeCard
+							key={option.selection}
+							title={option.title}
+							extra={
+								option.isBeta ? (
+									<Badge
+										variant="solid"
+										color="primary"
+										testId={`alert-type-beta-${option.selection}`}
+									>
+										Beta
+									</Badge>
+								) : undefined
+							}
+							onClick={(e): void => {
+								onSelect(option.selection, isModifierKeyPressed(e));
+							}}
+							data-testid={`alert-type-card-${option.selection}`}
+						>
+							{option.description}{' '}
+							{sampleAlertUrl ? (
+								<Typography.Link
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									textOverflow="wrap"
+									href={sampleAlertUrl}
+									target="_blank"
+									onClick={(e): void => {
+										e.stopPropagation();
+										handleSampleAlertClick(option.selection);
+									}}
+									testId={`alert-type-sample-link-${option.selection}`}
 								>
-									Beta
-								</Badge>
-							) : undefined
-						}
-						onClick={(e): void => {
-							onSelect(option.selection, isModifierKeyPressed(e));
-						}}
-						data-testid={`alert-type-card-${option.selection}`}
-					>
-						{option.description}{' '}
-						{!option.hideSampleAlertLink && (
-							<Typography.Link
-								variant="paragraph"
-								size="base"
-								weight="regular"
-								textOverflow="wrap"
-								href={getSampleAlertUrl(option.selection)}
-								target="_blank"
-								onClick={(e): void => {
-									e.stopPropagation();
-									handleSampleAlertClick(option.selection);
-								}}
-								testId={`alert-type-sample-link-${option.selection}`}
-							>
-								Click here to see how to create a sample alert.
-							</Typography.Link>
-						)}{' '}
-					</AlertTypeCard>
-				))}
+									Click here to see how to create a sample alert.
+								</Typography.Link>
+							) : null}{' '}
+						</AlertTypeCard>
+					);
+				})}
 			</>
 		),
 		[onSelect, optionList],

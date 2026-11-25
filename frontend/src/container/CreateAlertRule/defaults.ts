@@ -218,5 +218,5 @@ export const ALERT_TYPE_BREADCRUMB_TITLE: Record<AlertTypes, string> = {
 	[AlertTypes.LOGS_BASED_ALERT]: 'Log-Based Alert',
 	[AlertTypes.TRACES_BASED_ALERT]: 'Traces-Based Alert',
 	[AlertTypes.EXCEPTIONS_BASED_ALERT]: 'Exceptions-Based Alert',
-	[AlertTypes.AI_TRACES_BASED_ALERT]: 'AI-Based Alert',
+	[AlertTypes.AI_TRACES_BASED_ALERT]: 'AI Traces-Based Alert',
 };

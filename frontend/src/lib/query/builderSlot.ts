@@ -74,14 +74,14 @@ export function toSlotQuery(requestQuery: Query, slotQuery: Query): Query {
 }
 
 /** The reverse of `foldAISlot`: a builder query moves into the AI slot under the AI type, untagged. */
-export function toAISlotQuery(query: Query): Query {
+export function unfoldAISlot(query: Query): Query {
 	if (query.queryType !== EQueryType.QUERY_BUILDER) {
 		return query;
 	}
 	return {
 		...query,
 		queryType: EQueryType.AI_QUERY_BUILDER,
-		builder: { queryData: [], queryFormulas: [], queryTraceOperator: [] },
+		builder: EMPTY_BUILDER,
 		builder_ai_query: {
 			...query.builder,
 			queryData: query.builder.queryData.map((queryData) =>
