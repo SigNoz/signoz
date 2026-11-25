@@ -26,6 +26,7 @@ function ThresholdItem({
 	const { thresholdState, notificationSettings } = useCreateAlertState();
 	const { options: channelOptions, onPickerVisibleChange } =
 		useAlertRuleChannelAccess(
+			threshold,
 			channels,
 			`threshold-${threshold.label}-channel-option`,
 		);

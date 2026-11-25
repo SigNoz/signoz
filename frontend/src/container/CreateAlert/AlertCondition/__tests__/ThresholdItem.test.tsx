@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import type { DefaultOptionType } from 'antd/es/select';
+import { INITIAL_ALERT_THRESHOLD_STATE } from 'container/CreateAlert/context/constants';
+import type { Threshold } from 'container/CreateAlert/context/types';
 import { createMockAlertContextState } from 'container/CreateAlert/EvaluationSettings/__tests__/testUtils';
 import { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
 
@@ -8,6 +10,7 @@ import {
 	buildNotificationChannelDetachPermission,
 	NotificationChannelCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+import { buildRuleDetachPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import type { UseAuthZResult } from 'lib/authz/hooks/useAuthZ/types';
 import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
@@ -390,10 +393,11 @@ describe('ThresholdItem', () => {
 
 	describe('authz', () => {
 		const RULE_ID = 'rule-1';
-		const option = (channelId: string): Promise<HTMLElement> =>
-			screen.findByTestId(
-				`threshold-${TEST_CONSTANTS.CRITICAL_LABEL}-channel-option-${channelId}`,
-			);
+		const option = (
+			channelId: string,
+			label: string = TEST_CONSTANTS.CRITICAL_LABEL,
+		): Promise<HTMLElement> =>
+			screen.findByTestId(`threshold-${label}-channel-option-${channelId}`);
 		const openPicker = async (): Promise<void> => {
 			await userEvent
 				.setup()
@@ -403,12 +407,20 @@ describe('ThresholdItem', () => {
 					).getByRole('combobox'),
 				);
 		};
-		const editing = (savedChannelNames: string[]): void => {
+		const withChannels = (
+			channels: string[],
+			overrides: Partial<Threshold> = {},
+		): Threshold => ({ ...mockThreshold, channels, ...overrides });
+		const editing = (
+			savedChannelNames: string[],
+			thresholds: Threshold[] = [mockThreshold],
+		): void => {
 			jest.spyOn(context, 'useCreateAlertState').mockReturnValue(
 				createMockAlertContextState({
 					isEditMode: true,
 					ruleId: RULE_ID,
 					savedChannelNames,
+					thresholdState: { ...INITIAL_ALERT_THRESHOLD_STATE, thresholds },
 				}),
 			);
 		};
@@ -444,13 +456,69 @@ describe('ThresholdItem', () => {
 				TEST_CONSTANTS.CHANNEL_1,
 			);
 			denyPermissions(detach);
-			editing([TEST_CONSTANTS.EMAIL_CHANNEL_NAME]);
-			renderThresholdItem();
+			const critical = withChannels([TEST_CONSTANTS.EMAIL_CHANNEL_NAME]);
+			editing([TEST_CONSTANTS.EMAIL_CHANNEL_NAME], [critical]);
+			renderThresholdItem({ threshold: critical });
 			await openPicker();
 
 			const saved = await option(TEST_CONSTANTS.CHANNEL_1);
 			expect(saved).toHaveAttribute('aria-disabled', 'true');
 			expect(saved.title).toContain(formatPermission(detach));
+		});
+
+		describe('with several thresholds', () => {
+			const EMAIL = TEST_CONSTANTS.EMAIL_CHANNEL_NAME;
+			const warningId = 'test-threshold-2';
+
+			beforeEach(() => {
+				denyPermissions(
+					buildNotificationChannelDetachPermission(TEST_CONSTANTS.CHANNEL_1),
+					buildRuleDetachPermission(RULE_ID),
+				);
+			});
+
+			it('lets a saved channel be removed while another threshold still has it', async () => {
+				const critical = withChannels([EMAIL]);
+				const warning = withChannels([EMAIL], {
+					id: warningId,
+					label: TEST_CONSTANTS.WARNING_LABEL,
+				});
+				editing([EMAIL], [critical, warning]);
+				renderThresholdItem({ threshold: critical });
+				await openPicker();
+
+				await expect(option(TEST_CONSTANTS.CHANNEL_1)).resolves.toHaveAttribute(
+					'aria-disabled',
+					'false',
+				);
+			});
+
+			it('lets a channel saved on one threshold be added to another', async () => {
+				const critical = withChannels([EMAIL]);
+				const warning = withChannels([], {
+					id: warningId,
+					label: TEST_CONSTANTS.WARNING_LABEL,
+				});
+				editing([EMAIL], [critical, warning]);
+				renderThresholdItem({ threshold: warning });
+				await openPicker();
+
+				await expect(
+					option(TEST_CONSTANTS.CHANNEL_1, TEST_CONSTANTS.WARNING_LABEL),
+				).resolves.toHaveAttribute('aria-disabled', 'false');
+			});
+
+			it('lets a saved channel that no threshold has anymore be added back', async () => {
+				const critical = withChannels([]);
+				editing([EMAIL], [critical]);
+				renderThresholdItem({ threshold: critical });
+				await openPicker();
+
+				await expect(option(TEST_CONSTANTS.CHANNEL_1)).resolves.toHaveAttribute(
+					'aria-disabled',
+					'false',
+				);
+			});
 		});
 
 		it('keeps channels disabled while their check is pending', async () => {
