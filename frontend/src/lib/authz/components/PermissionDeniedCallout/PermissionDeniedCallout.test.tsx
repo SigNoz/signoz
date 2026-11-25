@@ -27,16 +27,6 @@ describe('PermissionDeniedCallout', () => {
 		expect(screen.getByText(/update:role:admin/)).toBeInTheDocument();
 	});
 
-	it('renders the server denial when given one', () => {
-		render(
-			<PermissionDeniedCallout message="user/u-1 is not authorized to perform metric:read" />,
-		);
-
-		expect(
-			screen.getByText('user/u-1 is not authorized to perform metric:read'),
-		).toBeInTheDocument();
-	});
-
 	it('accepts an optional className', () => {
 		const deniedPermissions = [
 			buildPermission('read', buildObjectString('serviceaccount', '*')),

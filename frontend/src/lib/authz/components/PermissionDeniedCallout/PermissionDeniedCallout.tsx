@@ -13,15 +13,12 @@ export interface PermissionDeniedCalloutProps {
 	 */
 	permissionName?: string;
 	deniedPermissions?: BrandedPermission[];
-	/** The server's own denial, for checks the client cannot make up front. */
-	message?: string;
 	className?: string;
 }
 
 function PermissionDeniedCallout({
 	permissionName,
 	deniedPermissions,
-	message,
 	className,
 }: PermissionDeniedCalloutProps): JSX.Element {
 	const { user } = useAppContext();
@@ -52,18 +49,14 @@ function PermissionDeniedCallout({
 					as="span"
 					textOverflow="wrap"
 				>
-					{message ?? (
-						<>
-							<code className={styles.permission}>user/{user.id}</code> is not
-							authorized to perform{' '}
-							{formattedPermissions.map((perm, idx) => (
-								<span key={perm}>
-									<code className={styles.permission}>{perm}</code>
-									{idx < formattedPermissions.length - 1 && ', '}
-								</span>
-							))}
-						</>
-					)}
+					<code className={styles.permissionCode}>user/{user.id}</code> is not
+					authorized to perform{' '}
+					{formattedPermissions.map((perm, idx) => (
+						<span key={perm}>
+							<code className={styles.permissionCode}>{perm}</code>
+							{idx < formattedPermissions.length - 1 && ', '}
+						</span>
+					))}
 				</Typography>
 			</Callout>
 		</div>

@@ -331,54 +331,29 @@ describe('Footer', () => {
 		});
 	});
 
-	describe('server denials', () => {
-		const DENIAL =
-			'user/u-1 is not authorized to perform metric:read on resource "cpu"';
-		const axiosError = (
-			status: number,
-			code: string,
-		): AxiosError<RenderErrorResponseDTO> =>
-			({
-				isAxiosError: true,
-				response: {
-					status,
-					data: { status: 'error', error: { code, message: DENIAL } },
+	it('shows a server 403 in the error modal like any other failure', async () => {
+		const forbidden = {
+			isAxiosError: true,
+			response: {
+				status: 403,
+				data: {
+					status: 'error',
+					error: {
+						code: 'authz_forbidden',
+						message: 'user/u-1 is not authorized to perform metric:read',
+					},
 				},
-			}) as AxiosError<RenderErrorResponseDTO>;
-		const failSave = async (
-			error: AxiosError<RenderErrorResponseDTO>,
-		): Promise<void> => {
-			const [, { onError }] = mockCreateAlertRule.mock.calls.at(-1);
-			await act(async () => {
-				onError(error);
-			});
-		};
+			},
+		} as AxiosError<RenderErrorResponseDTO>;
+		mockShowErrorModal.mockClear();
+		await renderFooter();
+		await user().click(screen.getByTestId(SAVE));
 
-		it('names a permission the server refused in a callout', async () => {
-			await renderFooter();
-			await user().click(screen.getByTestId(SAVE));
-			await failSave(axiosError(403, 'authz_forbidden'));
-
-			expect(screen.getByText(DENIAL)).toBeInTheDocument();
-			expect(mockShowErrorModal).not.toHaveBeenCalled();
+		const [, { onError }] = mockCreateAlertRule.mock.calls.at(-1);
+		await act(async () => {
+			onError(forbidden);
 		});
 
-		it('clears the callout on the next attempt', async () => {
-			await renderFooter();
-			await user().click(screen.getByTestId(SAVE));
-			await failSave(axiosError(403, 'authz_forbidden'));
-			await user().click(screen.getByTestId(SAVE));
-
-			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
-		});
-
-		it('keeps the error modal for every other failure', async () => {
-			await renderFooter();
-			await user().click(screen.getByTestId(SAVE));
-			await failSave(axiosError(500, 'internal'));
-
-			expect(mockShowErrorModal).toHaveBeenCalled();
-			expect(screen.queryByText(DENIAL)).not.toBeInTheDocument();
-		});
+		expect(mockShowErrorModal).toHaveBeenCalledTimes(1);
 	});
 });
