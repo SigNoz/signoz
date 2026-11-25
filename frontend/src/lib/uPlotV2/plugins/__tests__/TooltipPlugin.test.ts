@@ -620,6 +620,50 @@ describe('TooltipPlugin', () => {
 
 	// ---- Keyboard pin edge cases ------------------------------------------------
 
+	describe('pin on click', () => {
+		it('pins on a click pinOnClick accepts, instead of calling onClick', async () => {
+			const config = createConfigMock();
+			const onClick = jest.fn();
+			const pinOnClick = jest.fn(() => true);
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				pinOnClick,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('tooltip-plugin-container').dataset.pinned).toBe(
+					'true',
+				);
+			});
+			expect(pinOnClick).toHaveBeenCalledTimes(1);
+			expect(onClick).not.toHaveBeenCalled();
+		});
+
+		it('calls onClick for a click pinOnClick declines', () => {
+			const config = createConfigMock();
+			const onClick = jest.fn();
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				pinOnClick: () => false,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			expect(onClick).toHaveBeenCalledTimes(1);
+			expect(
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned,
+			).not.toBe('true');
+		});
+	});
+
 	describe('keyboard pin edge cases', () => {
 		it('does not pin when cursor coordinates are negative (cursor off-screen)', () => {
 			const config = createConfigMock();
