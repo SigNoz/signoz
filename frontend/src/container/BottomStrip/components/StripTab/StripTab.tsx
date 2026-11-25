@@ -36,6 +36,7 @@ function StripTab({
 					color="secondary"
 					size="sm"
 					width="100%"
+					maxWidth={150.5}
 					prefix={prefix}
 					onClick={onClick}
 					aria-label={ariaLabel}

@@ -29,27 +29,8 @@
 
 	--button-padding: 0 5.5px 0 6px;
 	--button-gap: 4px;
-	--button-font-size: var(--periscope-font-size-base);
-	--button-font-weight: var(--font-weight-normal);
-	--button-size-line-height: 1;
-	--button-variant-ghost-color: var(--l2-foreground);
-	--button-variant-ghost-hover-color: var(--l1-foreground-hover);
 	--button-variant-ghost-hover-background-color: transparent;
 	--button-focus-visible-outline: none;
-
-	// The strip's mono font doesn't reach buttons; tabs use the design's Inter.
-	> button {
-		font-family: var(--font-family-inter);
-		font-feature-settings:
-			'zero' on,
-			'ss01' on,
-			'lnum' on,
-			'tnum' on;
-	}
-
-	[data-slot='button-label'] {
-		max-width: 139px;
-	}
 }
 
 // Over the label's end on a fade, hidden rather than removed so the label never reflows.
@@ -71,7 +52,6 @@
 
 	--button-border-radius: 0;
 	--button-variant-ghost-color: var(--l1-foreground-hover);
-	--button-variant-ghost-hover-color: var(--l1-foreground-hover);
 	--button-variant-ghost-hover-background-color: transparent;
 	--button-focus-visible-outline-offset: -2px;
 }
