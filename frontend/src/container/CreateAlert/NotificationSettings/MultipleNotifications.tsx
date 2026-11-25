@@ -3,6 +3,7 @@ import { Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from '@signozhq/icons';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
@@ -18,14 +19,13 @@ function MultipleNotifications(): JSX.Element {
 		[notificationSettings.multipleNotifications],
 	);
 
+	const { queryData } = getActiveBuilder(currentQuery);
+
 	const spaceAggregationOptions = useMemo(() => {
-		const allGroupBys = currentQuery.builder.queryData?.reduce<string[]>(
-			(acc, query) => {
-				const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
-				return [...acc, ...groupByKeys];
-			},
-			[],
-		);
+		const allGroupBys = queryData.reduce<string[]>((acc, query) => {
+			const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
+			return [...acc, ...groupByKeys];
+		}, []);
 		const uniqueGroupBys = [...new Set(allGroupBys)];
 		const options = uniqueGroupBys.map((key) => ({
 			label: key,
@@ -44,7 +44,7 @@ function MultipleNotifications(): JSX.Element {
 			];
 		}
 		return options;
-	}, [currentQuery.builder.queryData, isAllOptionSelected]);
+	}, [queryData, isAllOptionSelected]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 

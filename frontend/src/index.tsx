@@ -13,7 +13,7 @@ import store from 'store';
 import APIError from 'types/api/error';
 import { installTranslationResilience } from 'translation-resilience';
 
-import 'lib/monaco/setup';
+import 'lib/monaco/loader';
 
 import './ReactI18';
 

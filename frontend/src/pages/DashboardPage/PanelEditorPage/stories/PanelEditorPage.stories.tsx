@@ -13,6 +13,7 @@ import {
 	openAddColumn,
 	openAIQueryBuilder,
 	openClickHouseQuery,
+	writeClickHouseQuery,
 	openPanelTypeSwitcher,
 	openPromQLQuery,
 	pickHeatmapTracesField,
@@ -57,6 +58,11 @@ export const Default: Story = {};
 /** The ClickHouse query tab, including its info callout. */
 export const ClickHouseQuery: Story = {
 	play: openClickHouseQuery,
+};
+
+/** A ClickHouse query written into the tab's editor, highlighted as SQL. */
+export const ClickHouseQueryWritten: Story = {
+	play: writeClickHouseQuery,
 };
 
 /** The PromQL query tab, its query and legend fields empty. */
