@@ -38,6 +38,7 @@ import logEvent from 'api/common/logEvent';
 import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
+import { reportAssistantError } from '../../utils/reportAssistantError';
 
 import { getOpenResourceTarget } from './utils/getOpenResourceTarget';
 import {
@@ -464,6 +465,7 @@ export default function ActionsSection({
 			});
 			setResult(key, { state: 'success' });
 		} catch (err) {
+			reportAssistantError('openSavedView', err);
 			const message =
 				err instanceof Error ? err.message : 'Failed to open saved view';
 			setResult(key, { state: 'error', error: message });
@@ -483,6 +485,7 @@ export default function ActionsSection({
 			await call(action.actionMetadataId);
 			setResult(key, { state: 'success' });
 		} catch (err) {
+			reportAssistantError('rollbackAction', err);
 			const message = err instanceof Error ? err.message : 'Failed';
 			setResult(key, { state: 'error', error: message });
 		}

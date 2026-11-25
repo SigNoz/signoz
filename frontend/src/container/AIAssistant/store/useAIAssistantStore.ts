@@ -36,6 +36,7 @@ import {
 	MessageBlock,
 	MessageRole,
 } from '../types';
+import { reportAssistantError } from '../utils/reportAssistantError';
 import {
 	resolveAssistantError,
 	type AssistantErrorResolution,
@@ -590,7 +591,7 @@ async function streamAndFinalize(
 	conversationId: string,
 	start: () => Promise<string>,
 	fallback: string,
-	logLabel: string,
+	operation: string,
 	set: StoreSetter,
 	get: StoreGetter,
 	retry: () => Promise<void>,
@@ -605,8 +606,7 @@ async function streamAndFinalize(
 		if (err instanceof DOMException && err.name === 'AbortError') {
 			return;
 		}
-		// eslint-disable-next-line no-console
-		console.error(logLabel, err);
+		reportAssistantError(operation, err);
 		const resolution = resolveAssistantError(err, fallback);
 		finalizeStreamingError(conversationId, resolution, set, retry);
 	}
@@ -929,7 +929,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						void get().loadThread(activeThreadIdToLoad);
 					}
 				} catch (err) {
-					console.error('[AIAssistant] fetchThreads failed:', err);
+					reportAssistantError('fetchThreads', err);
 					set((s) => {
 						s.isLoadingThreads = false;
 						for (const conv of Object.values(s.conversations)) {
@@ -1015,7 +1015,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					if (err instanceof DOMException && err.name === 'AbortError') {
 						return;
 					}
-					console.error('[AIAssistant] loadThread failed:', err);
+					reportAssistantError('loadThread', err);
 					set((s) => {
 						s.isLoadingThread = false;
 					});
@@ -1068,7 +1068,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				disconnectAndCommit(id, set, get);
 				if (conv.threadId) {
 					updateThread(conv.threadId, { archived: true }).catch((err) => {
-						console.error('[AIAssistant] archiveThread failed:', err);
+						reportAssistantError('archiveThread', err);
 					});
 					set((state) => {
 						const c = state.conversations[id];
@@ -1112,7 +1112,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						});
 					})
 					.catch((err) => {
-						console.error('[AIAssistant] restoreThread failed:', err);
+						reportAssistantError('restoreThread', err);
 					});
 			},
 
@@ -1149,7 +1149,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						}
 					});
 				} catch (err) {
-					console.error('[AIAssistant] renameThread failed:', err);
+					reportAssistantError('renameThread', err);
 					set((state) => {
 						if (state.conversations[id]) {
 							state.conversations[id].title = previousTitle;
@@ -1189,7 +1189,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						try {
 							await cancelExecution(existingThreadId);
 						} catch (err) {
-							console.error('[AIAssistant] cancelExecution failed:', err);
+							reportAssistantError('cancelExecution', err);
 						}
 					}
 				}
@@ -1261,7 +1261,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						if (err instanceof DOMException && err.name === 'AbortError') {
 							return;
 						}
-						console.error('[AIAssistant] sendMessage failed:', err);
+						reportAssistantError('sendMessage', err);
 						const resolution = resolveAssistantError(
 							err,
 							'Something went wrong while fetching the response. Please try again.',
@@ -1296,7 +1296,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						conversationId,
 						() => approveExecution(approvalId),
 						'Something went wrong while processing the approval. Please try again.',
-						'[AIAssistant] approveAction failed:',
+						'approveAction',
 						set,
 						get,
 						run,
@@ -1311,7 +1311,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				try {
 					await rejectExecution(approvalId);
 				} catch (err) {
-					console.error('[AIAssistant] rejectAction failed:', err);
+					reportAssistantError('rejectAction', err);
 				}
 				set((s) => {
 					const st = s.streams[conversationId];
@@ -1331,7 +1331,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				const conv = get().conversations[conversationId];
 				if (conv?.threadId) {
 					cancelExecution(conv.threadId).catch((err) => {
-						console.error('[AIAssistant] cancelExecution failed:', err);
+						reportAssistantError('cancelExecution', err);
 					});
 				}
 			},
@@ -1366,7 +1366,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						conversationId,
 						() => regenerateMessage(messageId),
 						'Something went wrong while regenerating the response. Please try again.',
-						'[AIAssistant] regenerateAssistantMessage failed:',
+						'regenerateAssistantMessage',
 						set,
 						get,
 						run,
@@ -1398,7 +1398,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				try {
 					await submitFeedback(messageId, rating, comment);
 				} catch (err) {
-					console.error('[AIAssistant] submitMessageFeedback failed:', err);
+					reportAssistantError('submitMessageFeedback', err);
 				}
 			},
 
@@ -1424,7 +1424,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						conversationId,
 						() => clarifyExecution(clarificationId, answers),
 						'Something went wrong while processing your answers. Please try again.',
-						'[AIAssistant] submitClarification failed:',
+						'submitClarification',
 						set,
 						get,
 						run,

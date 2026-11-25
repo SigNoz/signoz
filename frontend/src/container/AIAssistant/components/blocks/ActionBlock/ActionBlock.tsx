@@ -6,6 +6,7 @@ import { Check, LoaderCircle, TriangleAlert, X, Zap } from '@signozhq/icons';
 import { PageActionRegistry } from '../../../pageActions/PageActionRegistry';
 import { AIActionBlock } from '../../../pageActions/types';
 import { useAIAssistantStore } from '../../../store/useAIAssistantStore';
+import { reportAssistantError } from '../../../utils/reportAssistantError';
 import { useMessageContext } from '../../MessageContext';
 
 import blockStyles from '../Block.module.scss';
@@ -85,6 +86,7 @@ export default function ActionBlock({
 				markBlockAnswered(messageId, `applied:${result.summary}`);
 			}
 		} catch (err) {
+			reportAssistantError('executePageAction', err);
 			const msg = err instanceof Error ? err.message : 'Unknown error';
 			setErrorMessage(msg);
 			setLocalState('error');
