@@ -1,7 +1,8 @@
-import { Color } from '@signozhq/design-tokens';
 import type { PieSlice } from 'lib/visualization/charts/types';
-
-export const OTHER_SLICE_LABEL = 'Other';
+import {
+	OTHER_GROUP_LABEL,
+	resolveOtherColor,
+} from 'lib/visualization/charts/utils/otherGroup';
 
 const MIN_SHARE = 0.01;
 const MAX_SLICES = 15;
@@ -31,9 +32,9 @@ export function groupPieSlices(
 
 	const kept = new Set(sorted.slice(0, keptCount));
 	const other: PieSlice = {
-		label: OTHER_SLICE_LABEL,
+		label: OTHER_GROUP_LABEL,
 		value: groupedMembers.reduce((sum, slice) => sum + slice.value, 0),
-		color: isDarkMode ? Color.BG_SLATE_50 : Color.BG_VANILLA_400,
+		color: resolveOtherColor(isDarkMode),
 		groupedMembers,
 	};
 	return [...slices.filter((slice) => kept.has(slice)), other];
