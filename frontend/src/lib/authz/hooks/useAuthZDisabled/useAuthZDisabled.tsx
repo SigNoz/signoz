@@ -10,6 +10,13 @@ export interface UseAuthZDisabledReturn {
 	disabledTooltip: ReactNode;
 }
 
+// The tooltip only shows while disabled. Unsetting it when allowed would
+// remount the control outside its tooltip and drop focus.
+const ALLOWED: UseAuthZDisabledReturn = {
+	disabled: false,
+	disabledTooltip: AUTHZ_LOADING_TOOLTIP,
+};
+
 /**
  * `disabled` and `disabledTooltip` for a `@signozhq/ui` control that needs
  * `checks`: locked while the check runs and when it denies, open when the check
@@ -31,6 +38,6 @@ export function useAuthZDisabled(
 				: checks.filter((check) => permissions[check]?.isGranted === false);
 		return denied.length > 0
 			? { disabled: true, disabledTooltip: deniedTooltip(denied, user.id) }
-			: { disabled: false, disabledTooltip: undefined };
+			: ALLOWED;
 	}, [isLoading, error, permissions, checks, user.id]);
 }
