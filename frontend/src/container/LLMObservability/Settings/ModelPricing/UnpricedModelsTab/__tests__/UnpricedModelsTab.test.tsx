@@ -46,7 +46,7 @@ async function selectRule(
 	await user.click(screen.getByTestId(`map-to-select-${modelName}`));
 	await screen.findByTestId(`map-to-option-${ruleId}`);
 	const index = screen
-		.getAllByRole('option')
+		.getAllByTestId(/^map-to-option-/)
 		.findIndex(
 			(option) => option.getAttribute('data-testid') === `map-to-option-${ruleId}`,
 		);

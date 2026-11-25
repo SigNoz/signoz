@@ -98,6 +98,7 @@ import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
+import 'components/LearnMore/LearnMore.styles.scss';
 import './IngestionSettings.styles.scss';
 
 const { Option } = Select;
@@ -1226,7 +1227,7 @@ function MultiIngestionSettings(): JSX.Element {
 																			icon
 																			color="secondary"
 																			aria-label={`Edit ${signalName} limit`}
-																			testId={`ingestion-limit-edit-btn-${signalName}`}
+																			testId={`edit-limit-btn-${signalName}`}
 																			disabled={
 																				!!(activeAPIKey?.id === APIKey?.id && activeSignal)
 																			}
@@ -1757,6 +1758,7 @@ function MultiIngestionSettings(): JSX.Element {
 							target="_blank"
 							className="learn-more"
 							rel="noreferrer"
+							data-testid="ingestion-keys-learn-more"
 						>
 							Learn more <ArrowUpRight size={14} />
 						</a>

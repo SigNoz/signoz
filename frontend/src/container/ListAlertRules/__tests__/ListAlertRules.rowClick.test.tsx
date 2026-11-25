@@ -1,5 +1,6 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import userEvent from '@testing-library/user-event';
+import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import { screen, waitFor } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
@@ -7,6 +8,7 @@ import { renderListAlertRules } from './_helpers';
 describe('ListAlertRules — row click navigation', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+		useAlertRuleViewsStore.setState({ recent: [] });
 	});
 
 	it('clicking a row calls safeNavigate to alerts/overview with ruleId', async () => {
@@ -27,6 +29,22 @@ describe('ListAlertRules — row click navigation', () => {
 		expect(url).toContain('/alerts/overview?');
 		expect(url).toContain('ruleId=rule-1');
 		expect(url).not.toContain('compositeQuery=');
+	});
+
+	it('records an opened rule as recently viewed, most recent first', async () => {
+		const user = userEvent.setup({ delay: null });
+		useAlertRuleViewsStore.setState({ recent: ['rule-2', 'rule-1'] });
+		renderListAlertRules();
+
+		const ruleCell = await screen.findByTestId('alert-row-rule-1-name');
+		await user.click(ruleCell.closest('td') as HTMLElement);
+
+		await waitFor(() => {
+			expect(useAlertRuleViewsStore.getState().recent).toStrictEqual([
+				'rule-1',
+				'rule-2',
+			]);
+		});
 	});
 
 	it('ctrl+click on a row navigates with newTab option', async () => {

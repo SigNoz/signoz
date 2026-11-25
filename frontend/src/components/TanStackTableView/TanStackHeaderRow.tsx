@@ -152,6 +152,7 @@ function TanStackHeaderRow<TData>({
 			style={headerCellStyle}
 			data-dark-mode={isDarkMode}
 			data-single-column={hasSingleColumn || undefined}
+			data-testid={`tanstack-header-${columnId}`}
 		>
 			<span className={headerContentClassName}>
 				{isDragColumn ? (

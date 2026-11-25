@@ -30,10 +30,6 @@ jest.mock('@signozhq/ui/toast', () => ({
 	},
 }));
 
-jest.mock('@floating-ui/dom', () =>
-	jest.requireActual('./floatingUiDomMock').floatingUiDomMock(),
-);
-
 type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
 
 const onClose = jest.fn() as jest.MockedFunction<

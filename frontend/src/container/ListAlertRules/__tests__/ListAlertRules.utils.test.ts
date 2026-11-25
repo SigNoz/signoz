@@ -33,16 +33,16 @@ const makeRule = (overrides: Partial<AlertRule>): AlertRule => ({
 });
 
 describe('toListSort', () => {
-	it('returns the default sort when orderBy is null', () => {
+	it('returns the default sort, status first, when orderBy is null', () => {
 		expect(toListSort(null)).toStrictEqual({
-			sort: RuletypesListSortDTO.updated_at,
+			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.desc,
 		});
 	});
 
 	it('returns the default sort for an unknown column', () => {
 		expect(toListSort({ columnName: 'labels', order: 'asc' })).toStrictEqual({
-			sort: RuletypesListSortDTO.updated_at,
+			sort: RuletypesListSortDTO.state,
 			order: RuletypesListOrderDTO.desc,
 		});
 	});
@@ -71,8 +71,14 @@ describe('toListSort', () => {
 describe('toOrderBy', () => {
 	it('returns null for the default sort', () => {
 		expect(
-			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.desc),
+			toOrderBy(RuletypesListSortDTO.state, RuletypesListOrderDTO.desc),
 		).toBeNull();
+	});
+
+	it('keeps the previous default, updated_at desc, as an explicit sort', () => {
+		expect(
+			toOrderBy(RuletypesListSortDTO.updated_at, RuletypesListOrderDTO.desc),
+		).toStrictEqual<SortState>({ columnName: 'updatedAt', order: 'desc' });
 	});
 
 	it('returns the column for a non-default sort', () => {

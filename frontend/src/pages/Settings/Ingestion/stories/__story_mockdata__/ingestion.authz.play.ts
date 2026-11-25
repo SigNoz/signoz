@@ -181,11 +181,7 @@ export const expectLimitUpdateDenied = async ({
 	}
 	await openFirstKey(canvasElement);
 	await userEvent.click(
-		await screen.findByTestId(
-			`ingestion-limit-edit-btn-${signal}`,
-			undefined,
-			untilLoaded,
-		),
+		await screen.findByTestId(`edit-limit-btn-${signal}`, undefined, untilLoaded),
 	);
 	const save = await screen.findByTestId(
 		'ingestion-limit-save-btn',

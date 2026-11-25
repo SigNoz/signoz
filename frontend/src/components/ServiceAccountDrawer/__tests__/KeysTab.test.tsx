@@ -176,8 +176,13 @@ describe('KeysTab', () => {
 		const revokeBtns = screen.getAllByTestId('keys-tab-revoke-btn');
 		await user.click(revokeBtns[0]);
 
-		const confirmBtn = await screen.findByRole('button', { name: /Revoke Key/i });
-		await user.click(confirmBtn);
+		await waitFor(() =>
+			expect(screen.getByTestId('revoke-key-confirm-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await user.click(screen.getByTestId('revoke-key-confirm-btn'));
 
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith('Key revoked successfully');

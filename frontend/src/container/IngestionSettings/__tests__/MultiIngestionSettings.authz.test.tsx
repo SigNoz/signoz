@@ -302,7 +302,7 @@ describe('MultiIngestionSettings authz', () => {
 
 			const user = renderPage();
 			await expandKey(user, 'Key One');
-			await user.click(screen.getByTestId('ingestion-limit-edit-btn-logs'));
+			await user.click(screen.getByTestId('edit-limit-btn-logs'));
 
 			await expect(
 				settledButton('ingestion-limit-save-btn'),
@@ -320,7 +320,7 @@ describe('MultiIngestionSettings authz', () => {
 
 			const user = renderPage();
 			await expandKey(user, 'Key One');
-			await user.click(screen.getByTestId('ingestion-limit-edit-btn-logs'));
+			await user.click(screen.getByTestId('edit-limit-btn-logs'));
 
 			await expect(
 				settledButton('ingestion-limit-save-btn'),

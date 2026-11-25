@@ -771,7 +771,11 @@ describe('EditMemberDrawer', () => {
 		it('keeps roles editable', async () => {
 			renderDrawer({ member: selfMember });
 
-			await expect(screen.findByText('Select roles')).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByTestId(
+					`member-roles-select-chip-${managedRoles[0].id}-remove`,
+				),
+			).resolves.toBeInTheDocument();
 			expect(screen.queryByTestId('member-roles-locked')).not.toBeInTheDocument();
 		});
 	});

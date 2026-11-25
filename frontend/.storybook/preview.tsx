@@ -176,6 +176,7 @@ const preview: Preview = {
 						'AI Observability',
 						['Overview', 'Explorer', 'Model Pricing', 'Attribute Mapping'],
 						'Noz',
+						['Overview', 'Modal', 'Panel'],
 						'Metering',
 						['Cost Meter', 'Usage Explorer'],
 						'Messaging Queues',
