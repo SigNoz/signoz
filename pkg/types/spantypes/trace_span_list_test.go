@@ -23,7 +23,7 @@ func checkoutSkeleton(usage map[string]*AISpanUsage) *TraceSkeleton {
 	)
 }
 
-func TestTraceSkeletonFirstPage_Ranking(t *testing.T) {
+func TestTraceSkeletonPage_Ranking(t *testing.T) {
 	value := func(v float64) *float64 { return &v }
 
 	testCases := []struct {
@@ -58,10 +58,19 @@ func TestTraceSkeletonFirstPage_Ranking(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			skeleton := checkoutSkeleton(testCase.usage)
 			page := skeleton.page(skeleton.treeOrder, testCase.view, 0, 50)
-			assert.Equal(t, testCase.expected, page.SpanIDs())
+			assert.Equal(t, testCase.expected, spanIDsOf(skeleton, page.positions))
 			assert.Equal(t, uint64(len(testCase.expected)), page.total)
 		})
 	}
+}
+
+func TestTraceSkeletonPage_CutsTheViewOfTheGivenSpans(t *testing.T) {
+	skeleton := checkoutSkeleton(nil)
+
+	// Among the children of root: the two SELECTs as one, then pay, then auth.
+	page := skeleton.page(skeleton.children(positionOf(t, skeleton, "root")), SpanListViewTimeSpent, 1, 5)
+	assert.Equal(t, []string{"pay", "auth"}, spanIDsOf(skeleton, page.positions))
+	assert.Equal(t, uint64(3), page.total)
 }
 
 func TestNewSpanList_OnlyAIUsageCarriesUsageAttributes(t *testing.T) {
