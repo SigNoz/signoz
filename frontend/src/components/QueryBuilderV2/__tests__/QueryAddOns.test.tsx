@@ -103,7 +103,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.VALUE}
@@ -127,7 +126,6 @@ describe('QueryAddOns', () => {
 					dataSource: DataSource.METRICS,
 					groupBy: ['service.name'],
 				})}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -143,7 +141,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery
 				showReduceTo={false}
 				panelType={PANEL_TYPES.LIST}
@@ -159,7 +156,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery({ limit: 5 })}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -193,7 +189,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -215,7 +210,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -237,7 +231,6 @@ describe('QueryAddOns', () => {
 			render(
 				<QueryAddOns
 					query={baseQuery()}
-					version="v5"
 					isRawQuery={false}
 					showReduceTo={false}
 					panelType={PANEL_TYPES.TOP_LIST}
@@ -311,7 +304,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={query}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -332,7 +324,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -348,7 +339,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery({ reduceTo: ReduceOperators.SUM })}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -371,7 +361,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={query}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -423,7 +412,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={query}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -447,7 +435,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={baseQuery()}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -474,7 +461,6 @@ describe('QueryAddOns', () => {
 		render(
 			<QueryAddOns
 				query={query}
-				version="v5"
 				isRawQuery={false}
 				showReduceTo={false}
 				panelType={PANEL_TYPES.TIME_SERIES}
@@ -496,7 +482,6 @@ describe('QueryAddOns', () => {
 			render(
 				<QueryAddOns
 					query={baseQuery({ dataSource: DataSource.METRICS, ...overrides })}
-					version="v5"
 					isRawQuery={false}
 					showReduceTo={false}
 					panelType={PANEL_TYPES.HEATMAP}
@@ -518,7 +503,6 @@ describe('QueryAddOns', () => {
 			render(
 				<QueryAddOns
 					query={baseQuery({ dataSource: DataSource.METRICS })}
-					version="v5"
 					isRawQuery={false}
 					showReduceTo={false}
 					panelType={PANEL_TYPES.TIME_SERIES}

@@ -117,7 +117,6 @@ function PanelEditorQueryBuilder({
 								EQueryType.QUERY_BUILDER,
 							)}
 							showTraceOperator={!isRawQuery}
-							version="v3"
 							isRawQuery={isRawQuery}
 							signalSourceChangeEnabled
 							savePreviousQuery
@@ -148,7 +147,6 @@ function PanelEditorQueryBuilder({
 							panelType={panelType}
 							fieldsConfig={panelDefinition.queryBuilderFields}
 							showTraceOperator={false}
-							version="v3"
 							isRawQuery={isRawQuery}
 							config={{
 								initialDataSource: DataSource.TRACES,

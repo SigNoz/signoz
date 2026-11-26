@@ -12,14 +12,13 @@ export const orderByValueDelimiter = '|';
 
 export const transformToOrderByStringValues = (
 	query: IBuilderQuery,
-	entityVersion?: string,
 ): IOption[] => {
 	const prepareSelectedValue: IOption[] = query.orderBy.map((item) => {
 		if (item.columnName === SIGNOZ_VALUE) {
 			return {
-				label: `${
-					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
-				}(${query.aggregateAttribute?.key || ''}) ${item.order}`,
+				label: `${query.aggregateOperator}(${
+					query.aggregateAttribute?.key || ''
+				}) ${item.order}`,
 				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
 			};
 		}

@@ -164,7 +164,6 @@ export const appendToAggregation = (
 
 export const DEFAULT_ARGS: Partial<QueryBuilderProps> = {
 	panelType: PANEL_TYPES.TIME_SERIES,
-	version: 'v3',
 };
 
 /**

@@ -40,7 +40,6 @@ export function Formula({
 		index,
 		query,
 		formula,
-		entityVersion: '',
 	});
 
 	const [isCollapse, setIsCollapsed] = useState(false);

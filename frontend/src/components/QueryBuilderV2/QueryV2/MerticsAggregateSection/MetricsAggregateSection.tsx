@@ -23,13 +23,11 @@ import './MetricsAggregateSection.styles.scss';
 const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	query,
 	index,
-	version,
 	panelType,
 	fieldsConfig,
 }: {
 	query: IBuilderQuery;
 	index: number;
-	version: string;
 	panelType: PANEL_TYPES | null;
 	fieldsConfig?: QueryBuilderFieldsConfig;
 }): JSX.Element {
@@ -46,7 +44,6 @@ const MetricsAggregateSection = memo(function MetricsAggregateSection({
 	} = useQueryOperations({
 		index,
 		query,
-		entityVersion: version,
 	});
 
 	// this function is only relevant for metrics and now operators are part of aggregations

@@ -20,7 +20,6 @@ type UseQueryOperationsParams = Pick<QueryProps, 'index' | 'query'> & {
 	isForTraceOperator?: boolean;
 	formula?: IBuilderFormula;
 	isRawQuery?: boolean;
-	entityVersion: string;
 	savePreviousQuery?: boolean;
 };
 

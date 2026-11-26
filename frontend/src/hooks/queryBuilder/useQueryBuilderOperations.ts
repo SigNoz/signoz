@@ -6,7 +6,6 @@ import {
 	removeKeyFromPreviousQuery,
 	saveAsPreviousQuery,
 } from 'components/QueryBuilderV2/QueryV2/previousQuery.utils';
-import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { LEGEND } from 'constants/global';
 import {
@@ -66,7 +65,6 @@ export const useQueryOperations: UseQueryOperations = ({
 	index,
 	formula,
 	isRawQuery = false,
-	entityVersion,
 	isForTraceOperator = false,
 	savePreviousQuery = false,
 }) => {
@@ -220,48 +218,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				aggregateAttribute: value,
 			};
 
-			if (
-				newQuery.dataSource === DataSource.METRICS &&
-				entityVersion === ENTITY_VERSION_V4
-			) {
-				if (newQuery.aggregateAttribute) {
-					handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
-				}
-
-				if (!isEditMode) {
-					if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.SUM) {
-						newQuery.aggregateOperator = MetricAggregateOperator.RATE;
-						newQuery.timeAggregation = MetricAggregateOperator.RATE;
-					} else if (newQuery.aggregateAttribute?.type === ATTRIBUTE_TYPES.GAUGE) {
-						newQuery.aggregateOperator = MetricAggregateOperator.AVG;
-						newQuery.timeAggregation = MetricAggregateOperator.AVG;
-					} else {
-						newQuery.timeAggregation = '';
-					}
-
-					newQuery.spaceAggregation = '';
-
-					// Handled query with unknown metric to avoid 400 and 500 errors
-					// With metric value typed and not available then - time - 'avg', space - 'avg'
-					// If not typed - time - 'rate', space - 'sum', op - 'count'
-					if (isEmpty(newQuery.aggregateAttribute?.type)) {
-						if (!isEmpty(newQuery.aggregateAttribute?.key)) {
-							newQuery.aggregateOperator = MetricAggregateOperator.AVG;
-							newQuery.timeAggregation = MetricAggregateOperator.AVG;
-							newQuery.spaceAggregation = MetricAggregateOperator.AVG;
-						} else {
-							newQuery.aggregateOperator = MetricAggregateOperator.COUNT;
-							newQuery.timeAggregation = MetricAggregateOperator.RATE;
-							newQuery.spaceAggregation = MetricAggregateOperator.SUM;
-						}
-					}
-				}
-			}
-
-			if (
-				newQuery.dataSource === DataSource.METRICS &&
-				entityVersion === ENTITY_VERSION_V5
-			) {
+			if (newQuery.dataSource === DataSource.METRICS) {
 				if (newQuery.aggregateAttribute) {
 					handleMetricAggregateAtributeTypes(newQuery.aggregateAttribute);
 				}
@@ -402,7 +359,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		},
 		[
 			query,
-			entityVersion,
 			handleSetQueryData,
 			index,
 			handleMetricAggregateAtributeTypes,
@@ -585,12 +541,7 @@ export const useQueryOperations: UseQueryOperations = ({
 			return;
 		}
 
-		if (
-			dataSource === DataSource.METRICS &&
-			query &&
-			query.aggregateAttribute &&
-			entityVersion === ENTITY_VERSION_V4
-		) {
+		if (dataSource === DataSource.METRICS && query && query.aggregateAttribute) {
 			handleMetricAggregateAtributeTypes(query.aggregateAttribute);
 		} else {
 			const initialOperators = getOperatorsBySourceAndPanelType({
@@ -611,7 +562,6 @@ export const useQueryOperations: UseQueryOperations = ({
 		dataSource,
 		initialDataSource,
 		panelType,
-		entityVersion,
 		query,
 		handleMetricAggregateAtributeTypes,
 	]);

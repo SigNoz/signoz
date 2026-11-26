@@ -62,7 +62,6 @@ function DomainList(): JSX.Element {
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query,
-		entityVersion: '',
 	});
 
 	const compositeData = useGetCompositeQueryParam();

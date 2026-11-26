@@ -21,22 +21,18 @@ jest.mock('../QueryV2/QueryV2', () => ({
 jest.mock('../QueryV2/QueryFooter/QueryFooter', () => (): null => null);
 
 function renderWith(currentQuery: Query): void {
-	render(
-		<QueryBuilderV2 panelType={PANEL_TYPES.TIME_SERIES} version="v3" />,
-		undefined,
-		{
-			queryBuilderOverrides: {
-				currentQuery,
-				panelType: PANEL_TYPES.TIME_SERIES,
-				initialDataSource: null,
-				handleSetConfig: jest.fn(),
-				addNewBuilderQuery: jest.fn(),
-				addNewFormula: jest.fn(),
-				addTraceOperator: jest.fn(),
-				handleRunQuery: jest.fn(),
-			},
+	render(<QueryBuilderV2 panelType={PANEL_TYPES.TIME_SERIES} />, undefined, {
+		queryBuilderOverrides: {
+			currentQuery,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			initialDataSource: null,
+			handleSetConfig: jest.fn(),
+			addNewBuilderQuery: jest.fn(),
+			addNewFormula: jest.fn(),
+			addTraceOperator: jest.fn(),
+			handleRunQuery: jest.fn(),
 		},
-	);
+	});
 }
 
 const builderWithQuery = (

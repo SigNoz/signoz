@@ -53,7 +53,6 @@ import './QueryAddOns.styles.scss';
 
 function QueryAddOns({
 	query,
-	version,
 	isRawQuery,
 	showReduceTo,
 	panelType,
@@ -62,7 +61,6 @@ function QueryAddOns({
 	isForTraceOperator = false,
 }: {
 	query: IBuilderQuery;
-	version: string;
 	isRawQuery: boolean;
 	showReduceTo: boolean;
 	panelType: PANEL_TYPES | null;
@@ -78,7 +76,6 @@ function QueryAddOns({
 	const { handleChangeQueryData } = useQueryOperations({
 		index,
 		query,
-		entityVersion: '',
 		isForTraceOperator,
 	});
 
@@ -433,7 +430,6 @@ function QueryAddOns({
 									</Tooltip>
 									<div className="input">
 										<OrderByFilter
-											entityVersion={version}
 											query={query}
 											onChange={handleChangeOrderByKeys}
 											isRawQuery={isRawQuery}

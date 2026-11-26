@@ -4,7 +4,6 @@ import {
 	MetricsexplorertypesListMetricDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -114,7 +113,6 @@ function MetricQueryHarness({ query }: { query: IBuilderQuery }): JSX.Element {
 		useQueryOperations({
 			query,
 			index: 0,
-			entityVersion: ENTITY_VERSION_V5,
 		});
 
 	return (
@@ -562,7 +560,6 @@ function StatefulMetricQueryHarness({
 		useQueryOperations({
 			query,
 			index: 0,
-			entityVersion: ENTITY_VERSION_V5,
 		});
 
 	const currentAggregation = query.aggregations?.[0] as MetricAggregation;

@@ -35,7 +35,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 	isRawQuery = false,
 	showOnlyWhereClause = false,
 	showTraceOperator = false,
-	version,
 	onSignalSourceChange,
 	signalSourceChangeEnabled = false,
 	savePreviousQuery = false,
@@ -235,7 +234,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							isMultiQueryAllowed={isMultiQueryAllowed}
 							showTraceOperator={canShowTraceOperator}
 							hasTraceOperator={hasTraceOperator}
-							version={version}
 							isAvailableToDisable={false}
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
@@ -255,7 +253,6 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								query={query}
 								fieldsConfig={fieldsConfig}
 								allowedDataSources={queryDataSources}
-								version={version}
 								isMultiQueryAllowed={isMultiQueryAllowed}
 								isAvailableToDisable={false}
 								showTraceOperator={canShowTraceOperator}

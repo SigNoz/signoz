@@ -1,5 +1,4 @@
 import { act, renderHook } from '@testing-library/react';
-import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
@@ -85,7 +84,6 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			useQueryOperations({
 				query: defaultMockQuery,
 				index: 0,
-				entityVersion: ENTITY_VERSION_V4,
 				...props,
 			}),
 		);
@@ -98,7 +96,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 	});
 
 	describe('handleChangeAggregatorAttribute', () => {
-		it('should set AVG operators when type is empty but key is present - unkown metric', () => {
+		it('defaults an unknown metric to avg over time and space', () => {
 			const result = renderHookWithProps();
 			const newAttribute: BaseAutocompleteData = {
 				key: 'new_metric',
@@ -114,14 +112,19 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				0,
 				expect.objectContaining({
 					aggregateAttribute: newAttribute,
-					aggregateOperator: MetricAggregateOperator.AVG,
-					timeAggregation: MetricAggregateOperator.AVG,
-					spaceAggregation: MetricAggregateOperator.AVG,
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.AVG,
+							metricName: 'new_metric',
+							temporality: '',
+							spaceAggregation: MetricAggregateOperator.AVG,
+						},
+					],
 				}),
 			);
 		});
 
-		it('should set COUNT/RATE/SUM operators when both type and key are empty', () => {
+		it('defaults a metric with no name or type to avg over time and sum over space', () => {
 			const result = renderHookWithProps();
 			const newAttribute: BaseAutocompleteData = {
 				key: '',
@@ -137,15 +140,20 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				0,
 				expect.objectContaining({
 					aggregateAttribute: newAttribute,
-					aggregateOperator: MetricAggregateOperator.COUNT,
-					timeAggregation: MetricAggregateOperator.RATE,
-					spaceAggregation: MetricAggregateOperator.SUM,
+					aggregations: [
+						{
+							timeAggregation: MetricAggregateOperator.AVG,
+							metricName: '',
+							temporality: '',
+							spaceAggregation: MetricAggregateOperator.SUM,
+						},
+					],
 				}),
 			);
 		});
 
 		it('should preserve aggregation operators when metric type remains the same (GAUGE to GAUGE)', () => {
-			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const result = renderHookWithProps();
 			const newAttribute: BaseAutocompleteData = {
 				key: 'new_gauge_metric',
 				dataType: DataTypes.Float64,
@@ -173,7 +181,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		});
 
 		it('should reset aggregation operators when metric type changes (GAUGE to SUM) with v5 from start', () => {
-			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const result = renderHookWithProps();
 			const newAttribute: BaseAutocompleteData = {
 				key: 'new_sum_metric',
 				dataType: DataTypes.Float64,
@@ -222,7 +230,6 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 				useQueryOperations({
 					query: sumMockQuery,
 					index: 0,
-					entityVersion: ENTITY_VERSION_V5,
 				}),
 			);
 
@@ -277,7 +284,6 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 					useQueryOperations({
 						query,
 						index: 0,
-						entityVersion: ENTITY_VERSION_V5,
 					}),
 				{
 					initialProps: { query: gaugeQuery },
@@ -333,6 +339,44 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		});
 	});
 
+	describe('time aggregation options for the metric a query holds', () => {
+		const queryWithMetric = (type: ATTRIBUTE_TYPES): IBuilderQuery => ({
+			...defaultMockQuery,
+			aggregateAttribute: {
+				key: 'held_metric',
+				dataType: DataTypes.Float64,
+				type,
+			} as BaseAutocompleteData,
+		});
+
+		it('offers rate and increase for a sum metric', () => {
+			const result = renderHookWithProps({
+				query: queryWithMetric(ATTRIBUTE_TYPES.SUM),
+			});
+
+			expect(result.current.operators.map((o) => o.value)).toStrictEqual([
+				MetricAggregateOperator.RATE,
+				MetricAggregateOperator.INCREASE,
+			]);
+		});
+
+		it('offers latest through count distinct for a gauge metric', () => {
+			const result = renderHookWithProps({
+				query: queryWithMetric(ATTRIBUTE_TYPES.GAUGE),
+			});
+
+			expect(result.current.operators.map((o) => o.value)).toStrictEqual([
+				MetricAggregateOperator.LATEST,
+				MetricAggregateOperator.SUM,
+				MetricAggregateOperator.AVG,
+				MetricAggregateOperator.MIN,
+				MetricAggregateOperator.MAX,
+				MetricAggregateOperator.COUNT,
+				MetricAggregateOperator.COUNT_DISTINCT,
+			]);
+		});
+	});
+
 	describe('spaceAggregationOptions for a histogram metric', () => {
 		const histogramQuery: IBuilderQuery = {
 			...defaultMockQuery,
@@ -376,7 +420,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		};
 
 		it('defaults the spatial aggregation to p90 on a time series panel', () => {
-			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const result = renderHookWithProps();
 			act(() => {
 				result.current.handleChangeAggregatorAttribute(histogramAttribute);
 			});
@@ -396,7 +440,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		it('defaults it to count on a heatmap panel, which offers nothing else', () => {
 			setupMockQueryBuilder('heatmap');
 
-			const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+			const result = renderHookWithProps();
 			act(() => {
 				result.current.handleChangeAggregatorAttribute(histogramAttribute);
 			});
@@ -417,7 +461,6 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			setupMockQueryBuilder('heatmap');
 
 			const result = renderHookWithProps({
-				entityVersion: ENTITY_VERSION_V5,
 				query: {
 					...defaultMockQuery,
 					bucketOptions: { kind: 'log', spec: { scale: 2 } },
@@ -438,7 +481,6 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 		it('moves the sort on the old field to the new one', () => {
 			setupMockQueryBuilder('heatmap');
 			const result = renderHookWithProps({
-				entityVersion: ENTITY_VERSION_V5,
 				query: {
 					...defaultMockQuery,
 					dataSource: DataSource.TRACES,
@@ -471,7 +513,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			(panelType, expression) => {
 				setupMockQueryBuilder(panelType);
 
-				const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+				const result = renderHookWithProps();
 				act(() => {
 					result.current.handleChangeDataSource(DataSource.TRACES);
 				});

@@ -6,7 +6,6 @@ import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -71,7 +70,6 @@ function QuerySection({
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
 			showFunctions={alertType === AlertTypes.LOGS_BASED_ALERT}
-			version={ENTITY_VERSION_V5}
 			onSignalSourceChange={handleSignalSourceChange}
 			signalSourceChangeEnabled
 		/>

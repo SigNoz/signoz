@@ -31,7 +31,6 @@ export default function TraceOperator({
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
 		query: traceOperator,
-		entityVersion: '',
 		isForTraceOperator: true,
 	});
 
@@ -116,7 +115,6 @@ export default function TraceOperator({
 							<QueryAddOns
 								index={0}
 								query={traceOperator}
-								version="v3"
 								isForTraceOperator
 								isRawQuery={false}
 								showReduceTo={false}

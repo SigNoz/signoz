@@ -149,7 +149,6 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 		render(
 			<QueryBuilderV2
 				panelType={PANEL_TYPES.TABLE}
-				version="v5"
 				signalSourceChangeEnabled
 				savePreviousQuery
 			/>,
@@ -184,11 +183,7 @@ describe('MetricsSelect - signal source switching (standalone)', () => {
 		const user = userEvent.setup();
 		// render WITHOUT savePreviousQuery enabled
 		render(
-			<QueryBuilderV2
-				panelType={PANEL_TYPES.TABLE}
-				version="v5"
-				signalSourceChangeEnabled
-			/>,
+			<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} signalSourceChangeEnabled />,
 		);
 
 		// open Source and choose Meter
@@ -306,7 +301,6 @@ describe('DataSource change - Logs to Traces', () => {
 		render(
 			<QueryBuilderV2
 				panelType={PANEL_TYPES.TABLE}
-				version="v5"
 				signalSourceChangeEnabled
 				savePreviousQuery
 			/>,
@@ -332,11 +326,7 @@ describe('DataSource change - Logs to Traces', () => {
 		const user = userEvent.setup();
 
 		render(
-			<QueryBuilderV2
-				panelType={PANEL_TYPES.TABLE}
-				version="v5"
-				signalSourceChangeEnabled
-			/>,
+			<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} signalSourceChangeEnabled />,
 		);
 
 		const logsTrigger = within(

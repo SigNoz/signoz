@@ -8,7 +8,6 @@ import {
 } from 'react';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
-import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
 import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
@@ -42,7 +41,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 		isRawQuery = false,
 		showTraceOperator = false,
 		hasTraceOperator = false,
-		version,
 		showOnlyWhereClause = false,
 		signalSource = '',
 		isMultiQueryAllowed = false,
@@ -77,7 +75,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 		index,
 		query,
 		isRawQuery,
-		entityVersion: version,
 		savePreviousQuery,
 	});
 
@@ -193,8 +190,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 									isMetricsDataSource={dataSource === DataSource.METRICS}
 									showFunctions={
 										!functions.hidden &&
-										((version && version === ENTITY_VERSION_V4) ||
-											query.dataSource === DataSource.LOGS ||
+										(query.dataSource === DataSource.LOGS ||
 											query.dataSource === DataSource.METRICS ||
 											hasQueryFunctions ||
 											false)
@@ -265,7 +261,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 									<MetricsSelect
 										query={query}
 										index={index}
-										version={ENTITY_VERSION_V5}
 										signalSource={signalSource as 'meter' | ''}
 										onSignalSourceChange={onSignalSourceChange}
 										signalSourceChangeEnabled={signalSourceChangeEnabled}
@@ -317,7 +312,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 								query={query}
 								index={index}
 								key={`metrics-aggregate-section-${query.queryName}-${query.dataSource}-${signalSource}`}
-								version="v4"
 								fieldsConfig={fieldsConfig}
 							/>
 						)}
@@ -327,7 +321,6 @@ export const QueryV2 = forwardRef(function QueryV2(
 								<QueryAddOns
 									index={index}
 									query={query}
-									version="v3"
 									isRawQuery={isRawQuery}
 									showReduceTo={showReduceTo}
 									panelType={panelType}
