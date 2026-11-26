@@ -21,7 +21,3 @@ export interface BaseAutocompleteData {
 	type: AutocompleteType | string | null;
 	isIndexed?: boolean;
 }
-
-export interface IQueryAutocompleteResponse {
-	attributeKeys: BaseAutocompleteData[] | null;
-}

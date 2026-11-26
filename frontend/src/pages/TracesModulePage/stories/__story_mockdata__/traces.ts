@@ -22,7 +22,6 @@ import type {
 	TelemetrytypesTelemetryFieldKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import type { FunnelData } from 'types/api/traceFunnels';
 import type { RawRow } from 'types/api/v5/queryRange';
 
@@ -449,21 +448,6 @@ const FIELD_VALUES: Record<string, string[]> = {
 
 export const traceFieldValues = (name: string | null): string[] =>
 	FIELD_VALUES[name ?? ''] ?? [];
-
-/**
- * The quick-filter checkboxes read values off the v3 autocomplete endpoint
- * rather than `/fields/values`, so both answer from the same catalogue.
- */
-export const traceAttributeValuesResponse = (
-	attributeKey: string | null,
-): { status: string; data: IAttributeValuesResponse } => ({
-	status: 'success',
-	data: {
-		stringAttributeValues: traceFieldValues(attributeKey),
-		numberAttributeValues: null,
-		boolAttributeValues: null,
-	},
-});
 
 const VIEW_NAMES = [
 	'Failing checkouts',

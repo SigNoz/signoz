@@ -28,7 +28,6 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { logsSavedViewsResponse } from '../../stories/__story_mockdata__/savedViews';
 import {
-	attributeValuesResponse,
 	dashboardsResponse,
 	infraMetricsResponse,
 	logFieldKeysResponse,
@@ -195,16 +194,6 @@ export const liveLogsMocks = defineStoryMocks({
 			response.json((req) =>
 				logFieldValuesResponse(
 					req.url.searchParams.get('name') ?? '',
-					req.url.searchParams.get('searchText') ?? '',
-				),
-			),
-		),
-
-		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
-			response.json((req) =>
-				attributeValuesResponse(
-					req.url.searchParams.get('attributeKey') ?? '',
 					req.url.searchParams.get('searchText') ?? '',
 				),
 			),
