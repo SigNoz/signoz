@@ -320,6 +320,7 @@ export const kit = base.extend<
 		const ctx = await browser.newContext({ baseURL });
 		const page = await ctx.newPage();
 		await use(page);
+		await page.unrouteAll({ behavior: 'ignoreErrors' });
 		await ctx.close();
 	},
 
@@ -349,6 +350,9 @@ export const kit = base.extend<
 			});
 		}
 		await use(page);
+		// A handler still inside `route.fetch` when the context closes would
+		// otherwise fail an already-passed test.
+		await page.unrouteAll({ behavior: 'ignoreErrors' });
 		await ctx.close();
 	},
 
