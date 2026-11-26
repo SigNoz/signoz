@@ -3,7 +3,7 @@ import {
 	AIAssistantEvents,
 	AIAssistantOpenSource,
 } from 'container/AIAssistant/events';
-import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
+import { openNewAIAssistantChat } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { render, userEvent } from 'tests/test-utils';
 
@@ -11,15 +11,14 @@ import AskNoz from '../AskNoz';
 
 jest.mock('hooks/useIsAIAssistantEnabled');
 jest.mock('container/AIAssistant/store/useAIAssistantStore', () => ({
-	openAIAssistant: jest.fn(),
+	openNewAIAssistantChat: jest.fn(),
 	useAIAssistantStore: jest.fn(),
 }));
 
 const mockEnabled = useIsAIAssistantEnabled as jest.MockedFunction<
 	typeof useIsAIAssistantEnabled
 >;
-const mockOpen = openAIAssistant as jest.MockedFunction<typeof openAIAssistant>;
-const mockClose = jest.fn() as jest.MockedFunction<() => void>;
+const mockOpenNew = jest.mocked(openNewAIAssistantChat);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const { useAIAssistantStore } = jest.requireMock(
@@ -40,7 +39,6 @@ function mockStore({
 		isDrawerOpen,
 		isModalOpen,
 		streams: {},
-		closeDrawer: mockClose,
 	};
 	useAIAssistantStore.mockImplementation((selector: (s: unknown) => unknown) => {
 		const picked = selector(state);
@@ -75,12 +73,12 @@ describe('AskNoz', () => {
 			expect(queryByTestId(SLOT)).not.toBeInTheDocument();
 		});
 
-		it('stays pressed while the drawer is open', () => {
+		it('stays while the drawer is open, to start another chat', () => {
 			mockStore({ isDrawerOpen: true });
 
 			const { getByTestId } = render(<AskNoz />);
 
-			expect(getByTestId(BUTTON)).toHaveAttribute('aria-pressed', 'true');
+			expect(getByTestId(BUTTON)).toHaveAttribute('aria-label', 'Ask Noz');
 		});
 
 		it('renders nothing on the Noz full page, where the drawer does not mount', () => {
@@ -93,25 +91,34 @@ describe('AskNoz', () => {
 	});
 
 	describe('what it does', () => {
-		it('opens the drawer on click', async () => {
+		it('opens the drawer on a new chat', async () => {
 			const user = userEvent.setup();
 			const { getByTestId } = render(<AskNoz />);
 
 			await user.click(getByTestId(BUTTON));
 
-			expect(mockOpen).toHaveBeenCalledTimes(1);
+			expect(mockOpenNew).toHaveBeenCalledTimes(1);
 		});
 
-		it('closes the open drawer on the same chat instead of starting a new one', async () => {
+		it('starts a new chat from the open drawer and reports it as one', async () => {
 			const user = userEvent.setup();
 			mockStore({ isDrawerOpen: true });
 			const { getByTestId } = render(<AskNoz />);
 
 			await user.click(getByTestId(BUTTON));
 
-			expect(mockClose).toHaveBeenCalledTimes(1);
-			expect(mockOpen).not.toHaveBeenCalled();
-			expect(logEvent).not.toHaveBeenCalled();
+			expect(mockOpenNew).toHaveBeenCalledTimes(1);
+			expect(logEvent).toHaveBeenCalledWith(
+				AIAssistantEvents.NewChatClicked,
+				expect.objectContaining({
+					mode: 'sidepane',
+					source: AIAssistantOpenSource.BottomStrip,
+				}),
+			);
+			expect(logEvent).not.toHaveBeenCalledWith(
+				AIAssistantEvents.Opened,
+				expect.anything(),
+			);
 		});
 
 		it('reports the open as coming from the strip', async () => {

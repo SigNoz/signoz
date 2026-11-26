@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import type { GlobalMockArgs } from '../globals';
 import {
 	openAddCardModal,
+	openNozHistory,
 	openNozPanel,
 	raiseToast,
 } from './__story_mockdata__/bottomStrip.play';
@@ -15,9 +16,9 @@ function EmptyPage(): JSX.Element {
 
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
- * build version when it puts nothing, and the shell's own Ask Noz and Support
- * on the right. Support follows the chat support the workspace has, the way
- * the floating bubble it replaces did.
+ * build version when it puts nothing, and the shell's own Ask Noz, Noz history
+ * and Support on the right. Support follows the chat support the workspace has,
+ * the way the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -69,6 +70,15 @@ export const NozAwaitingYou: Story = {
 export const NozPanel: Story = {
 	args: { noz: true, support: 'pylon' },
 	play: openNozPanel,
+};
+
+/**
+ * Recent conversations, opened from the history icon beside Ask Noz. Picking
+ * one opens it in the Noz panel; with no saved conversation the icon is gone.
+ */
+export const NozHistory: Story = {
+	args: { noz: true, nozThreads: 6, support: 'pylon' },
+	play: openNozHistory,
 };
 
 /** Every tooltip the strip carries, held open. */
