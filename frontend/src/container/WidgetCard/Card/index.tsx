@@ -12,7 +12,6 @@ import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIntersectionObserver } from 'hooks/useIntersectionObserver';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import getTimeString from 'lib/getTimeString';
-import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -149,28 +148,20 @@ function GridCardGraph({
 		};
 	});
 
-	useEffect(() => {
-		if (!isEqual(updatedQuery, requestData.query)) {
-			setRequestData((prev) => ({
-				...prev,
-				query: updatedQuery,
-			}));
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [updatedQuery]);
-
 	const isLogsQuery = useMemo(
 		() =>
-			requestData?.query?.builder?.queryData?.length > 0 &&
-			requestData?.query?.builder?.queryData?.every(
+			updatedQuery?.builder?.queryData?.length > 0 &&
+			updatedQuery?.builder?.queryData?.every(
 				(query) => query?.dataSource === DataSource.LOGS,
 			),
-		[requestData.query],
+		[updatedQuery],
 	);
 
 	const queryResponse = useGetQueryRange(
 		{
 			...requestData,
+			// List panels change only `tableParams`; the query always comes from the widget.
+			query: updatedQuery,
 			selectedTime: widget.timePreferance || 'GLOBAL_TIME',
 			globalSelectedInterval:
 				widget?.panelTypes === PANEL_TYPES.LIST && isLogsQuery
@@ -225,7 +216,7 @@ function GridCardGraph({
 						String(error.message).includes('API responded with 500'),
 					);
 					if (analyticsEvent) {
-						logEvent(analyticsEvent, {
+						void logEvent(analyticsEvent, {
 							error: error.message,
 						});
 					}

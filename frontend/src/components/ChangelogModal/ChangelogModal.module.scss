@@ -1,0 +1,25 @@
+.scrollHint {
+	position: sticky;
+	bottom: 0;
+	height: 0;
+}
+
+.scrollButton {
+	position: absolute;
+	bottom: var(--spacing-7);
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.scrollIcon {
+	animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
