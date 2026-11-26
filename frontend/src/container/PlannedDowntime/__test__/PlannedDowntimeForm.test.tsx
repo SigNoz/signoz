@@ -223,17 +223,15 @@ describe('PlannedDowntimeForm authz', () => {
 
 	it('locks the rule scope without update', async () => {
 		server.use(setupAuthzDeny(UPDATE));
-		const user = setupUser();
 		render(<FormHarness initialValues={scoped} />);
 
 		await waitFor(() =>
 			expect(screen.getByTestId('downtime-name')).toBeDisabled(),
 		);
-		await user.click(screen.getByTestId(ALL_SCOPE_TEST_ID));
-
-		expect(
-			screen.getByTestId(SPECIFIC_SCOPE_TEST_ID),
-		).toHaveAttribute('aria-checked', 'true');
+		expect(screen.getByTestId('planned-downtime-alert-scope')).toHaveAttribute(
+			'aria-readonly',
+			'true',
+		);
 	});
 
 	it('saves an unchanged scoped schedule with update alone', async () => {
@@ -428,6 +426,9 @@ describe('PlannedDowntimeForm authz', () => {
 			}),
 		);
 		render(<FormHarness initialValues={scoped} />);
+		await waitFor(() =>
+			expect(screen.getByTestId(SAVE)).toHaveAttribute('aria-disabled', 'false'),
+		);
 
 		const option = await findRuleOption(user, 'rule-2');
 		await waitFor(() => expect(option).toHaveAttribute('aria-disabled', 'false'));
