@@ -1,12 +1,12 @@
 import {
-	CONTROL_WRITES,
+	WRITING_CONTROLS,
 	DEFAULT_CONTROLS,
 	isControlVisible,
 	resolveControls,
 } from '../dashboardControls';
 import type { DashboardControlId } from '../types';
 
-const ALL_IDS = Object.keys(CONTROL_WRITES) as DashboardControlId[];
+const ALL_IDS = Object.keys(WRITING_CONTROLS) as DashboardControlId[];
 
 describe('resolveControls', () => {
 	it('shows every control when the host passes nothing', () => {
@@ -43,7 +43,7 @@ describe('resolveControls', () => {
 		ALL_IDS.forEach((id) => {
 			expect([id, isControlVisible(controls, id)]).toStrictEqual([
 				id,
-				!CONTROL_WRITES[id],
+				!WRITING_CONTROLS[id],
 			]);
 		});
 	});

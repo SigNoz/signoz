@@ -57,13 +57,16 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		[dashboard.tags],
 	);
 
-	const showTitle = useDashboardControlGroup('title');
-	const showActions = useDashboardControlGroup('dashboardActions');
-	const showToolbar = useDashboardControlGroup('toolbar');
-	const hasTitleRow = Object.values(showTitle).some(Boolean);
-	const hasActions = Object.values(showActions).some(Boolean);
-	const hasChrome =
-		hasTitleRow || hasActions || showToolbar.timeRange || showToolbar.variables;
+	const titleControls = useDashboardControlGroup('title');
+	const actionControls = useDashboardControlGroup('dashboardActions');
+	const toolbarControls = useDashboardControlGroup('toolbar');
+	const hasTitleRow = Object.values(titleControls).some(Boolean);
+	const hasActions = Object.values(actionControls).some(Boolean);
+	const hasVisibleRows =
+		hasTitleRow ||
+		hasActions ||
+		toolbarControls.timeRange ||
+		toolbarControls.variables;
 	const { showErrorModal } = useErrorModal();
 	const { patchAsync } = useOptimisticPatch();
 	const {
@@ -79,12 +82,12 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		useDashboardLockPermission({
 			dashboardId: id,
 			source: dashboard.source,
-			enabled: showTitle.lock || showActions.lock,
+			enabled: titleControls.lock || actionControls.lock,
 		});
 
 	// Public-sharing meta (deduped react-query read); drives the header globe.
 	const { isPublic, publicMeta } = usePublicDashboardMeta(id, {
-		enabled: showTitle.publicBadge,
+		enabled: titleControls.publicBadge,
 	});
 	const publicUrl = getAbsoluteUrl(publicMeta?.publicPath ?? '');
 
@@ -168,7 +171,7 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 		<section
 			className={styles.dashboardPageToolbarContainer}
 			data-testid="dashboard-page-toolbar"
-			hidden={!hasChrome}
+			hidden={!hasVisibleRows}
 		>
 			{(hasTitleRow || hasActions) && (
 				<div className={styles.dashboardInfoWithActions}>
@@ -214,15 +217,15 @@ function DashboardPageToolbar(props: DashboardPageToolbarProps): JSX.Element {
 			    variables bar's content wraps around it); the variables bar
 			    collapses to one line and, when expanded, wraps full-width under it. */}
 			<div className={styles.toolbarRow}>
-				{showToolbar.timeRange && (
+				{toolbarControls.timeRange && (
 					<div className={styles.timeCluster}>
 						<DateTimeSelectionV2
-							showAutoRefresh={showToolbar.autoRefresh}
+							showAutoRefresh={toolbarControls.autoRefresh}
 							hideShareModal
 						/>
 					</div>
 				)}
-				{showToolbar.variables ? (
+				{toolbarControls.variables ? (
 					<VariablesBar dashboard={dashboard} />
 				) : (
 					// Still mounted: the selectors seed and auto-select the values panels query with.

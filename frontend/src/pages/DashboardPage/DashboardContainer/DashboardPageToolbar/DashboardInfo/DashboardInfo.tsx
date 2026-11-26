@@ -30,7 +30,7 @@ import { useDashboardEditContext } from '../../hooks/useDashboardEditContext';
 import { useDashboardControlGroup } from '../../controls/useDashboardControlGroup';
 
 // The tag cluster keeps a fixed footprint so a long title ellipsizes around it
-// instead of collapsing the tags: show up to two tags, then a `+N` overflow badge.
+// instead of collapsing the tags: titleControls up to two tags, then a `+N` overflow badge.
 const MAX_VISIBLE_TAGS = 2;
 
 interface DashboardInfoProps {
@@ -76,10 +76,10 @@ function DashboardInfo({
 }: DashboardInfoProps): JSX.Element {
 	const { isEditable: canEdit } = useDashboardEditContext();
 	const dashboardId = useDashboardStore((s) => s.dashboardId);
-	const show = useDashboardControlGroup('title');
+	const titleControls = useDashboardControlGroup('title');
 
-	const hasTags = show.tags && tags.length > 0;
-	const hasDescription = show.description && !isEmpty(description);
+	const hasTags = titleControls.tags && tags.length > 0;
+	const hasDescription = titleControls.description && !isEmpty(description);
 
 	const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
 	const remainingTags = tags.slice(MAX_VISIBLE_TAGS);
@@ -137,11 +137,11 @@ function DashboardInfo({
 
 	return (
 		<div className={styles.dashboardInfo}>
-			{show.name && (
+			{titleControls.name && (
 				<img src={image} alt={title} className={styles.dashboardImage} />
 			)}
 
-			{show.name &&
+			{titleControls.name &&
 				(isEditing ? (
 					<div className={styles.dashboardTitleEditor} onBlur={onEditorBlur}>
 						<div className={styles.dashboardTitleInput}>
@@ -220,7 +220,7 @@ function DashboardInfo({
 				</Tooltip>
 			)}
 
-			{show.publicBadge && isPublicDashboard && (
+			{titleControls.publicBadge && isPublicDashboard && (
 				<Tooltip title="This dashboard is publicly accessible. Click to open the public page.">
 					<Button
 						type="button"
@@ -237,7 +237,7 @@ function DashboardInfo({
 				</Tooltip>
 			)}
 
-			{show.lock && showLockToggle && (
+			{titleControls.lock && showLockToggle && (
 				<Tooltip title={onToggleLock ? lockTooltip : undefined}>
 					<Button
 						disabledTooltip={lockTooltip}

@@ -16,7 +16,7 @@ export interface UseGetQueryRangeV5Args {
 	/** Unused-entry TTL; callers drop to 0 under auto-refresh to bound cache growth (V1 parity). */
 	cacheTime?: number;
 	/** Replaces the `query_range` call; the caller keys the cache for it. */
-	fetch?: (
+	runQueryRange?: (
 		requestPayload: Querybuildertypesv5QueryRangeRequestDTO,
 		signal?: AbortSignal,
 	) => Promise<QueryRangeV5200>;
@@ -54,7 +54,7 @@ export function useGetQueryRangeV5({
 	enabled,
 	keepPreviousData,
 	cacheTime,
-	fetch,
+	runQueryRange,
 }: UseGetQueryRangeV5Args): UseQueryResult<QueryRangeV5200, Error> {
 	const queryClient = useQueryClient();
 	// An errored key has no data, so it is always stale; keep it enabled so
@@ -63,7 +63,8 @@ export function useGetQueryRangeV5({
 
 	return useQuery<QueryRangeV5200, Error>({
 		queryKey,
-		queryFn: ({ signal }) => (fetch ?? queryRangeV5)(requestPayload, signal),
+		queryFn: ({ signal }) =>
+			(runQueryRange ?? queryRangeV5)(requestPayload, signal),
 		enabled: enabled || hasErrored,
 		retry: retryUnlessClientError,
 		keepPreviousData,

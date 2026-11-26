@@ -259,7 +259,7 @@ export function usePanelQuery({
 		],
 	);
 
-	const fetch = useMemo(
+	const runQueryRange = useMemo(
 		() =>
 			queryRunner
 				? (
@@ -272,7 +272,7 @@ export function usePanelQuery({
 	);
 
 	const response = useGetQueryRangeV5({
-		fetch,
+		runQueryRange,
 		requestPayload,
 		queryKey,
 		enabled: enabled && runnable && !isWaitingOnVariable,

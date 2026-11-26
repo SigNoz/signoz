@@ -5,32 +5,34 @@ import type { DashboardSection } from '../../../utils';
 import type { SectionHeaderActions } from '../SectionHeader/SectionHeader';
 import { useCloneSection } from './useCloneSection';
 
+interface UseSectionHeaderActionsArgs {
+	section: DashboardSection;
+	openPicker: (layoutIndex: number) => void;
+	openRename: () => void;
+	openDelete: () => void;
+}
+
 /** The section menu's actions, minus the ones the host hides (`sectionActions`). */
 export function useSectionHeaderActions({
 	section,
 	openPicker,
 	openRename,
 	openDelete,
-}: {
-	section: DashboardSection;
-	openPicker: (layoutIndex: number) => void;
-	openRename: () => void;
-	openDelete: () => void;
-}): SectionHeaderActions {
-	const show = useDashboardControlGroup('sectionActions');
+}: UseSectionHeaderActionsArgs): SectionHeaderActions {
+	const sectionControls = useDashboardControlGroup('sectionActions');
 	const cloneSection = useCloneSection();
 
 	return useMemo(
 		() => ({
-			onRename: show.rename ? openRename : undefined,
-			onAddPanel: show.addPanel
+			onRename: sectionControls.rename ? openRename : undefined,
+			onAddPanel: sectionControls.addPanel
 				? (): void => openPicker(section.layoutIndex)
 				: undefined,
-			onCloneSection: show.clone
+			onCloneSection: sectionControls.clone
 				? (): void => void cloneSection(section)
 				: undefined,
-			onDeleteSection: show.delete ? openDelete : undefined,
+			onDeleteSection: sectionControls.delete ? openDelete : undefined,
 		}),
-		[show, openRename, openPicker, section, cloneSection, openDelete],
+		[sectionControls, openRename, openPicker, section, cloneSection, openDelete],
 	);
 }

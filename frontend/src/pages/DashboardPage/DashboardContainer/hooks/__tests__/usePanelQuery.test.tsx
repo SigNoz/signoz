@@ -628,11 +628,11 @@ describe('usePanelQuery', () => {
 					queryCapabilities: TIME_SERIES_CAPABILITIES,
 				}),
 			);
-			const [{ queryKey, fetch, requestPayload }] =
+			const [{ queryKey, runQueryRange, requestPayload }] =
 				mockUseGetQueryRangeV5.mock.calls[0];
 
 			expect(queryKey).toContain('public:abc');
-			await fetch(requestPayload);
+			await runQueryRange(requestPayload);
 			expect(runner.run).toHaveBeenCalledWith({
 				panelId: 'p1',
 				requestPayload,
@@ -649,8 +649,8 @@ describe('usePanelQuery', () => {
 				queryCapabilities: TIME_SERIES_CAPABILITIES,
 			}),
 		);
-		const [{ fetch }] = mockUseGetQueryRangeV5.mock.calls[0];
+		const [{ runQueryRange }] = mockUseGetQueryRangeV5.mock.calls[0];
 
-		expect(fetch).toBeUndefined();
+		expect(runQueryRange).toBeUndefined();
 	});
 });

@@ -65,7 +65,7 @@ export function usePanelActionItems({
 	const panelKind = panel.spec.plugin.kind;
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
-	const show = useDashboardControlGroup('panelActions');
+	const panelControls = useDashboardControlGroup('panelActions');
 	const openPanelEditor = useOpenPanelEditor();
 	const createAlert = useCreateAlertFromPanel();
 	const { openView } = useViewPanel();
@@ -103,7 +103,7 @@ export function usePanelActionItems({
 		const editGate = { checks: editChecks, ...blockedBy(editDisabledTooltip) };
 
 		const panelGroup: AuthZDropdownItemType[] = [];
-		if (show.view && panelCapabilities.view) {
+		if (panelControls.view && panelCapabilities.view) {
 			panelGroup.push({
 				type: 'item',
 				value: 'view-panel',
@@ -112,7 +112,7 @@ export function usePanelActionItems({
 				onClick: (): void => openView(panelId, panel),
 			});
 		}
-		if (show.edit && panelCapabilities.edit) {
+		if (panelControls.edit && panelCapabilities.edit) {
 			panelGroup.push({
 				type: 'item',
 				value: 'edit-panel',
@@ -122,7 +122,7 @@ export function usePanelActionItems({
 				onClick: (): void => openPanelEditor(panelId, { panel }),
 			});
 		}
-		if (show.clone && panelCapabilities.clone) {
+		if (panelControls.clone && panelCapabilities.clone) {
 			// Needs section context to place the copy; disabled without it.
 			panelGroup.push({
 				type: 'item',
@@ -142,13 +142,13 @@ export function usePanelActionItems({
 		}
 
 		const dataGroup: AuthZDropdownItemType[] = [];
-		if (show.download && downloadItem) {
+		if (panelControls.download && downloadItem) {
 			dataGroup.push(downloadItem);
 		}
 
 		// Create Alerts opens a new tab and never mutates the dashboard, so —
 		// unlike edit/clone — it isn't gated on editability (V1 parity).
-		if (show.createAlert && panelCapabilities.createAlert) {
+		if (panelControls.createAlert && panelCapabilities.createAlert) {
 			dataGroup.push({
 				type: 'item',
 				value: 'create-alert',
@@ -158,7 +158,7 @@ export function usePanelActionItems({
 			});
 		}
 
-		const moveGroup: AuthZDropdownItemType[] = !show.move
+		const moveGroup: AuthZDropdownItemType[] = !panelControls.move
 			? []
 			: isEditable && panelActions
 				? buildMoveItems({
@@ -177,7 +177,7 @@ export function usePanelActionItems({
 						},
 					];
 
-		const deleteGroup: AuthZDropdownItemType[] = !show.delete
+		const deleteGroup: AuthZDropdownItemType[] = !panelControls.delete
 			? []
 			: [
 					{
@@ -199,7 +199,7 @@ export function usePanelActionItems({
 					: [{ type: 'separator', value: `separator-${index}` }, ...group],
 			);
 	}, [
-		show,
+		panelControls,
 		isEditable,
 		editChecks,
 		editDisabledTooltip,

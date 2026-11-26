@@ -21,8 +21,9 @@ interface UseDashboardStaleCheck {
 export function useDashboardStaleCheck(
 	dashboard: DashboardtypesGettableDashboardV2DTO,
 	refetch: () => void,
-	enabled = true,
+	options?: { enabled?: boolean },
 ): UseDashboardStaleCheck {
+	const enabled = options?.enabled ?? true;
 	const {
 		id: dashboardId,
 		updatedAt: loadedUpdatedAt,

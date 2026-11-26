@@ -81,7 +81,9 @@ function DashboardContainer({
 	// suggests them ($variable) in the panel editor and dashboards-page builder.
 	useSyncVariablesForSuggestions(dashboard);
 
-	const staleCheck = useDashboardStaleCheck(dashboard, refetch, !readOnly);
+	const staleCheck = useDashboardStaleCheck(dashboard, refetch, {
+		enabled: !readOnly,
+	});
 	const showHeader = Object.values(useDashboardControlGroup('header')).some(
 		Boolean,
 	);
