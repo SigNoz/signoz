@@ -139,9 +139,7 @@ Handlers resolve first-match-wins, in this order:
 3. the global mocks' handlers (access);
 4. `msw/appShellHandlers.ts`, the endpoints the shell hits on every route, and
    the ones whose jest fixture is too thin to show it doing its job;
-5. `msw/queryBuilderHandlers.ts`, the query builder's fields and metrics, and
-   the legacy v3 autocomplete values, which the jest handler answers for a few
-   queries and 500 for every other;
+5. `msw/queryBuilderHandlers.ts`, the query builder's fields and metrics;
 6. `src/mocks-server/handlers.ts`, the jest handlers verbatim. An endpoint both
    runners need belongs here so jest gets it too;
 7. a catch-all for `http://localhost/api/*` that logs and answers 501, so an

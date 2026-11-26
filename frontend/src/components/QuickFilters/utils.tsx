@@ -48,6 +48,8 @@ export const getFilterConfig = (
 			({
 				type: getFilterType(att),
 				title: getFilterName(att.name),
+				// TODO: nothing reads dataType/type; reduce attributeKey to { id, key }
+				// once the TagFilterItem.key readers are checked.
 				attributeKey: {
 					id: att.name,
 					key: att.name,

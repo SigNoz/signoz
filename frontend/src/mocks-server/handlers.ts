@@ -45,57 +45,6 @@ export const handlers = [
 			res(ctx.status(200), ctx.json(topLevelOperationSuccessResponse)),
 	),
 
-	rest.get(
-		'http://localhost/api/v3/autocomplete/attribute_values',
-		(req, res, ctx) => {
-			const attributeKey = req.url.searchParams.get('attributeKey');
-
-			if (attributeKey === 'serviceName') {
-				return res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							stringAttributeValues: [
-								'customer',
-								'demo-app',
-								'driver',
-								'frontend',
-								'mysql',
-								'redis',
-								'route',
-								'go-grpc-otel-server',
-								'test',
-							],
-							numberAttributeValues: null,
-							boolAttributeValues: null,
-						},
-					}),
-				);
-			}
-
-			if (attributeKey === 'name') {
-				return res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							stringAttributeValues: [
-								'HTTP GET',
-								'HTTP GET /customer',
-								'HTTP GET /dispatch',
-								'HTTP GET /route',
-							],
-							numberAttributeValues: null,
-							boolAttributeValues: null,
-						},
-					}),
-				);
-			}
-
-			return res(ctx.status(500));
-		},
-	),
 	rest.get('http://localhost/api/v2/licenses', (req, res, ctx) =>
 		res(ctx.status(200), ctx.json(licensesSuccessResponse)),
 	),

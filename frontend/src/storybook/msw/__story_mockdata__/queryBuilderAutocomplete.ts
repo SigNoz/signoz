@@ -1,4 +1,3 @@
-import type { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
 import type { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
@@ -101,22 +100,13 @@ export const attributeKeysFor = (
 		(attribute) => matches(attribute.key, searchText),
 	);
 
-export const autocompleteValuesResponse = (
-	attributeKey: string | null,
+export const attributeValuesFor = (
+	name: string | null,
 	searchText: string,
-): { status: string; data: IAttributeValuesResponse } => {
-	const normalized = (attributeKey ?? '')
-		.replace(/^resource_/, '')
-		.toLowerCase();
+): string[] => {
+	const normalized = (name ?? '').replace(/^resource_/, '').toLowerCase();
 
-	return {
-		status: 'success',
-		data: {
-			stringAttributeValues: (
-				ATTRIBUTE_VALUES[normalized] ?? DEFAULT_VALUES
-			).filter((value) => matches(value, searchText)),
-			numberAttributeValues: null,
-			boolAttributeValues: null,
-		},
-	};
+	return (ATTRIBUTE_VALUES[normalized] ?? DEFAULT_VALUES).filter((value) =>
+		matches(value, searchText),
+	);
 };

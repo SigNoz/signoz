@@ -15,14 +15,14 @@ import {
 } from './__story_mockdata__/metrics';
 import {
 	attributeKeysFor,
-	autocompleteValuesResponse,
+	attributeValuesFor,
 } from './__story_mockdata__/queryBuilderAutocomplete';
 import { QUERY_BUILDER_METRICS } from './__story_mockdata__/queryBuilderMetrics';
 
 /**
  * The v5 keys list, served from the shared per-signal fixture so the group-by
- * and order-by filters open on the product's keys. A context
- * prefix in `searchText` narrows to that context the way the backend does.
+ * and order-by filters open on the product's keys. A context prefix in
+ * `searchText` narrows to that context the way the backend does.
  */
 const fieldKeysResponseForSignal = (
 	signal: string | null,
@@ -61,24 +61,9 @@ const fieldKeysResponseForSignal = (
 };
 
 /**
- * The query shapes `src/mocks-server/handlers.ts` answers from its own fixture:
- * the cases its autocomplete values handler was written for. Everything else
- * there falls through to a 500, which is what these handlers exist to cover, so
- * those shapes are handed back rather than answered twice with different data.
- */
-const isSharedFixtureValuesQuery = (params: URLSearchParams): boolean => {
-	const attributeKey = params.get('attributeKey');
-
-	return attributeKey === 'serviceName' || attributeKey === 'name';
-};
-
-/**
- * The query builder's field keys and values, metrics list and metadata, and the
- * legacy v3 autocomplete values messaging queues still reads. The jest handler
- * answers v3 values for the queries the suite asserts on and returns 500 for
- * every other. Resolved ahead of the jest set so those get a usable list; a page
- * that wants its own data still declares it and wins over both. Returning
- * nothing hands the request on to the next matching handler.
+ * The query builder's field keys and values, metrics list and metadata, so a
+ * page that reaches the query builder opens on usable lists. A page that wants
+ * its own data still declares it and wins.
  */
 export const queryBuilderHandlers = [
 	rest.get('http://localhost/api/v1/fields/keys', (req, res, ctx) =>
@@ -116,10 +101,10 @@ export const queryBuilderHandlers = [
 				ctx.status(200),
 				ctx.json(
 					fieldValuesResponse(
-						autocompleteValuesResponse(
+						attributeValuesFor(
 							req.url.searchParams.get('name'),
 							req.url.searchParams.get('searchText') ?? '',
-						).data.stringAttributeValues ?? [],
+						),
 					),
 				),
 			),
@@ -146,24 +131,5 @@ export const queryBuilderHandlers = [
 				),
 			),
 		),
-	),
-	rest.get(
-		'http://localhost/api/v3/autocomplete/attribute_values',
-		(req, res, ctx) => {
-			if (isSharedFixtureValuesQuery(req.url.searchParams)) {
-				return undefined;
-			}
-
-			return res(
-				ctx.status(200),
-				ctx.json(
-					autocompleteValuesResponse(
-						req.url.searchParams.get('attributeKey') ??
-							req.url.searchParams.get('tagKey'),
-						req.url.searchParams.get('searchText') ?? '',
-					),
-				),
-			);
-		},
 	),
 ];

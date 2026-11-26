@@ -35,6 +35,3 @@ export const operatorTypeMapper: Record<string, OperatorType> = {
 	NEXISTS: 'NON_VALUE',
 	NCONTAINS: 'SINGLE_VALUE',
 };
-
-export const useOperatorType = (operator: string): OperatorType =>
-	operatorTypeMapper[operator] || 'NOT_VALID';
