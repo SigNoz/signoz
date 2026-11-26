@@ -13,10 +13,11 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Brain, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
+import AIQuerySection from './AIQuerySection';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 
@@ -149,6 +150,29 @@ function QuerySection({
 		},
 	];
 
+	const aiTabs = [
+		{
+			label: (
+				<Tooltip title="AI Query Builder">
+					<Button className="nav-btns" data-testid="ai-query-builder-tab">
+						<Brain size={14} />
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							AI Query Builder
+						</Typography>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.AI_QUERY_BUILDER,
+		},
+	];
+
 	useEffect(() => {
 		if (isAnomalyDetection && queryCategory !== EQueryType.QUERY_BUILDER) {
 			setQueryCategory(EQueryType.QUERY_BUILDER);
@@ -262,6 +286,7 @@ function QuerySection({
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+			case AlertTypes.AI_TRACES_BASED_ALERT:
 				return (
 					<div className="alert-tabs">
 						<Tabs
@@ -287,7 +312,7 @@ function QuerySection({
 									/>
 								</span>
 							}
-							items={tabs}
+							items={typ === AlertTypes.AI_TRACES_BASED_ALERT ? aiTabs : tabs}
 						/>
 					</div>
 				);
@@ -325,6 +350,9 @@ function QuerySection({
 		}
 		if (c === EQueryType.QUERY_BUILDER) {
 			return renderMetricUI();
+		}
+		if (c === EQueryType.AI_QUERY_BUILDER) {
+			return <AIQuerySection panelType={panelType} />;
 		}
 		return null;
 	};

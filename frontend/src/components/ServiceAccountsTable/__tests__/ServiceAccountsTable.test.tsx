@@ -54,7 +54,7 @@ describe('ServiceAccountsTable', () => {
 		const onRowClick = jest.fn() as jest.MockedFunction<
 			(row: ServiceAccountRow) => void
 		>;
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(
 			<ServiceAccountsTable

@@ -45,6 +45,7 @@ function Stepper({
 						'whats-next-checklist-item':
 							inspectionStep <= InspectionStep.TIME_AGGREGATION,
 					})}
+					data-testid="inspect-step-time-aggregation"
 				>
 					<div
 						className={classNames({

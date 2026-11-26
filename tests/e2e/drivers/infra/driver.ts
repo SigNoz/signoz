@@ -6,6 +6,7 @@ import {
 	querySearchDriver,
 	type QuerySearch,
 } from '../querysearch';
+import { logDetailDriver, type LogDetail } from '../logs/detail';
 import { resetKeys } from '../storage';
 import { columnStorageKey } from '../storage';
 import { tanstackDriver, type Tanstack } from '../tanstack';
@@ -194,6 +195,11 @@ export interface InfraDrawer {
 		start: string | null;
 		end: string | null;
 	};
+	/** The Logs tab's rows. */
+	logRows(): Locator;
+	logRow(body: string): Locator;
+	/** The log detail drawer a Logs tab row opens over this one. */
+	logDetail: LogDetail;
 }
 
 export interface Infra {
@@ -429,6 +435,9 @@ export function infraDriver(page: Page): Infra {
 		errorState: () => page.getByTestId(DRAWER_STATE.errorState),
 		eventsNotConfigured: () => page.getByTestId(DRAWER_STATE.eventsNotConfigured),
 		timePicker: () => page.getByTestId(DRAWER.timeSelection),
+		logRows: () => drawerPanel().locator('[data-testid^="logs-raw-row-"]'),
+		logRow: (body) => drawer.logRows().filter({ hasText: body }),
+		logDetail: logDetailDriver(page),
 
 		// The toggle group names each button `<bar testId>-button-<value>`.
 		tab: (view) => page.getByTestId(`${DRAWER.tabBar}-button-${view}`),

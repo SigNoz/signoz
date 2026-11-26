@@ -12,7 +12,7 @@ const serviceContext: MessageContext = {
 
 describe('ChatInput — context pills', () => {
 	it('names a page context by its type and drops it on remove', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onDismissAutoContext = jest.fn() as jest.MockedFunction<
 			NonNullable<ComponentProps<typeof ChatInput>['onDismissAutoContext']>
 		>;

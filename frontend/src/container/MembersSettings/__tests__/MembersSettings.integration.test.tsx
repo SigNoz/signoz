@@ -1,11 +1,16 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
-import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
 import {
 	AUTHZ_CHECK_URL,
 	setupAuthzAdmin,
 } from 'lib/authz/utils/authz-test-utils';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
 
@@ -82,7 +87,7 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');

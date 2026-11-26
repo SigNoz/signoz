@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 
 import './FloatingPanel.styles.scss';
-import type { FloatingObstacle } from './types';
+import type { Obstacle } from 'lib/obstacles/types';
 import { useAvoidObstacles } from './useAvoidObstacles';
 import { useKeepInViewport } from './useKeepInViewport';
 
@@ -22,7 +22,7 @@ export interface FloatingPanelProps {
 	/** Moves and shrinks the panel back into view when the window resizes. */
 	keepInViewport?: boolean;
 	/** Slides the panel clear of these while they show; keep the array stable across renders. */
-	avoid?: FloatingObstacle[];
+	avoid?: Obstacle[];
 }
 
 function FloatingPanel({
@@ -66,6 +66,7 @@ function FloatingPanel({
 			minHeight={keepInViewport ? Math.min(minHeight, viewport.height) : minHeight}
 			className={`floating-panel ${className || ''}`}
 			enableResizing={enableResizing}
+			data-testid="floating-panel"
 		>
 			<div className="floating-panel__inner">{children}</div>
 		</Rnd>,

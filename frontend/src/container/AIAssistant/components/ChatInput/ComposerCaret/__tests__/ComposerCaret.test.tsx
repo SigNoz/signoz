@@ -54,7 +54,7 @@ describe('ComposerCaret', () => {
 	});
 
 	it('draws its caret while the composer has focus', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<Composer />);
 
 		await user.click(screen.getByTestId('composer'));
@@ -63,7 +63,7 @@ describe('ComposerCaret', () => {
 	});
 
 	it('hides its caret once the composer loses focus', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<Composer />);
 		await user.click(screen.getByTestId('composer'));
 
@@ -73,7 +73,7 @@ describe('ComposerCaret', () => {
 	});
 
 	it('hides its caret while text is selected', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<Composer />);
 		const composer = screen.getByTestId<HTMLTextAreaElement>('composer');
 		await user.type(composer, 'checkout latency');
@@ -86,7 +86,7 @@ describe('ComposerCaret', () => {
 	});
 
 	it('moves its caret when code changes the text', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<Composer />);
 		await user.type(screen.getByTestId('composer'), 'checkout');
 		expect(screen.getByTestId('ai-composer-caret')).toHaveStyle({
@@ -101,7 +101,7 @@ describe('ComposerCaret', () => {
 	});
 
 	it('hides its caret once the composer scrolls it out of view', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<Composer />);
 		const composer = screen.getByTestId<HTMLTextAreaElement>('composer');
 		await user.type(composer, 'checkout latency');

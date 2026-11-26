@@ -1,0 +1,62 @@
+@use '../../AIAssistant/_scrollbar' as *;
+
+.nozHistory {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.content {
+	display: flex;
+	flex-direction: column;
+	height: 326px;
+	max-height: calc(100vh - var(--spacing-16));
+}
+
+.search {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	height: 44px;
+	padding: 0 var(--spacing-3);
+	border-bottom: 1px solid var(--l2-border);
+	caret-color: var(--accent-primary);
+}
+
+// Grid rows keep their height, so a long list scrolls instead of squashing them.
+.list {
+	display: grid;
+	align-content: start;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--spacing-6) 0 calc(var(--spacing-2) + 1px);
+	@include scrollbar(0.2rem);
+}
+
+.label {
+	padding: 0 var(--spacing-6) calc(var(--spacing-3) + 1px);
+	font-size: var(--periscope-font-size-small);
+	font-weight: var(--font-weight-semibold);
+	line-height: 1;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--l3-foreground);
+}
+
+.time {
+	margin-left: auto;
+	font-size: var(--periscope-font-size-small);
+	line-height: var(--line-height-18);
+	// Not the title's tracking, which the row sets.
+	letter-spacing: normal;
+	color: var(--l3-foreground);
+}
+
+.empty {
+	padding: 0 var(--spacing-6);
+	font-size: var(--periscope-font-size-base);
+	line-height: var(--line-height-20);
+	color: var(--l3-foreground);
+	overflow-wrap: anywhere;
+}

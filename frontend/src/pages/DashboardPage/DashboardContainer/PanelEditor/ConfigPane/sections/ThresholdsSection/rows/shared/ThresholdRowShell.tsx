@@ -43,7 +43,10 @@ function ThresholdRowShell({
 }: ThresholdRowShellProps): JSX.Element {
 	if (!isEditing) {
 		return (
-			<div className={styles.viewRow}>
+			<div
+				className={styles.viewRow}
+				data-testid={`${testIdPrefix}-view-${index}`}
+			>
 				{marker}
 				<div className={styles.viewText}>
 					<span className={styles.viewValue}>{title}</span>

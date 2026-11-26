@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Color, Style } from '@signozhq/design-tokens';
+import { Color } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -98,7 +98,7 @@ function AttributeMappingSection({
 							>
 								Email Attribute
 								<Tooltip title="The SAML attribute key that contains the user's email. Default: 'email'">
-									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+									<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -117,7 +117,7 @@ function AttributeMappingSection({
 							>
 								Name Attribute
 								<Tooltip title="The SAML attribute key that contains the user's display name. Default: 'name'">
-									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+									<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -136,7 +136,7 @@ function AttributeMappingSection({
 							>
 								Groups Attribute
 								<Tooltip title="The SAML attribute key that contains the user's group memberships. Used for role mapping. Default: 'groups'">
-									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+									<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -155,7 +155,7 @@ function AttributeMappingSection({
 							>
 								Role Attribute
 								<Tooltip title="The SAML attribute key that contains the user's role directly from the IDP. Default: 'role'">
-									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+									<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item

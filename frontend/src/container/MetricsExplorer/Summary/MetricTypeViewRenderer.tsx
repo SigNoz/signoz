@@ -53,7 +53,11 @@ export function MetricTypeViewRenderer({
 	);
 
 	return (
-		<div className="metric-type-renderer" style={metricTypeViewRendererStyle}>
+		<div
+			className="metric-type-renderer"
+			data-testid="metric-type-renderer"
+			style={metricTypeViewRendererStyle}
+		>
 			{icon}
 			<Typography
 				variant="uppercase"

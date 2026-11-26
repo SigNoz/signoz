@@ -5,6 +5,8 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { parseAggregations } from 'lib/query/aggregationExpression';
+import { aggregatesDistributionField } from 'lib/query/distributionField';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
@@ -240,32 +242,6 @@ function createBaseSpec(
 	};
 }
 
-// Utility to parse aggregation expressions with optional alias
-export function parseAggregations(
-	expression: string,
-	availableAlias?: string,
-): { expression: string; alias?: string }[] {
-	const result: { expression: string; alias?: string }[] = [];
-	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
-	// Handles quoted ('alias'), dash-separated (field-name), and unquoted values after "as" keyword
-	const regex =
-		/([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
-	let match = regex.exec(expression);
-	while (match !== null) {
-		const expr = match[1];
-		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
-		if (alias) {
-			// Remove quotes if present
-			alias = alias.replace(/^['"]|['"]$/g, '');
-			result.push({ expression: expr, alias });
-		} else {
-			result.push({ expression: expr });
-		}
-		match = regex.exec(expression);
-	}
-	return result;
-}
-
 export function createAggregation(
 	queryData: any,
 	panelType?: PANEL_TYPES,
@@ -310,18 +286,28 @@ export function createAggregation(
 		];
 	}
 
+	// A heatmap buckets the field the user names; count() would be rejected as one.
+	// Elsewhere a field is not an aggregation, so it falls back to count().
+	const isDistributionField = aggregatesDistributionField(
+		panelType,
+		queryData.dataSource,
+	);
+	const fallback = isDistributionField ? [] : [{ expression: 'count()' }];
+
 	if (queryData.aggregations?.length > 0) {
 		return queryData.aggregations.flatMap(
 			(agg: { expression: string; alias?: string }) => {
-				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
-				return isEmpty(parsedAggregations)
-					? [{ expression: 'count()' }]
-					: parsedAggregations;
+				const parsedAggregations = parseAggregations(
+					agg.expression,
+					agg?.alias,
+					isDistributionField,
+				);
+				return isEmpty(parsedAggregations) ? fallback : parsedAggregations;
 			},
 		);
 	}
 
-	return [{ expression: 'count()' }];
+	return fallback;
 }
 
 /**

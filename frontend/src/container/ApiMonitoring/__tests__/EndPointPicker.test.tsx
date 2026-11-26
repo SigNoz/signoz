@@ -65,7 +65,7 @@ describe('EndPointPicker', () => {
 	});
 
 	it('reports the picked endpoint', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup({ delay: null });
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;
@@ -83,7 +83,7 @@ describe('EndPointPicker', () => {
 	});
 
 	it('shows All endpoints when none is picked and clears through it', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup({ delay: null });
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;

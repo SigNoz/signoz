@@ -33,6 +33,7 @@ import {
 import {
 	comparisonThresholds,
 	labelThresholds,
+	eventHeatmapQuery,
 	logQuery,
 	metricQuery,
 	tableThresholds,
@@ -132,7 +133,9 @@ export const panelShape = (args: PanelArgs): PanelShape => {
 					},
 				},
 				queries: [
-					metricQuery(RequestType.heatmap, { grouped: true, heatmap: true }),
+					args.heatmapSource === 'metrics'
+						? metricQuery(RequestType.heatmap, { grouped: true, heatmap: true })
+						: eventHeatmapQuery(args.heatmapSource),
 				],
 			};
 		case 'Pie':

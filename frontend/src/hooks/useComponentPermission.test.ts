@@ -5,7 +5,6 @@ import useComponentPermission from './useComponentPermission';
 
 describe('useComponentPermission', () => {
 	const componentList: ComponentTypes[] = [
-		'current_org_settings',
 		'create_new_dashboards',
 		'import_dashboard',
 		'export_dashboard',
@@ -27,7 +26,6 @@ describe('useComponentPermission', () => {
 			useComponentPermission(componentList, 'ADMIN'),
 		);
 		const expectedResult = [
-			true, // current_org_settings
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
@@ -51,7 +49,6 @@ describe('useComponentPermission', () => {
 			useComponentPermission(componentList, 'EDITOR'),
 		);
 		const expectedResult = [
-			false, // current_org_settings
 			true, // create_new_dashboards
 			true, // import_dashboard
 			true, // export_dashboard
@@ -75,7 +72,6 @@ describe('useComponentPermission', () => {
 			useComponentPermission(componentList, 'VIEWER'),
 		);
 		const expectedResult = [
-			false, // current_org_settings
 			false, // create_new_dashboards
 			false, // import_dashboard
 			true, // export_dashboard

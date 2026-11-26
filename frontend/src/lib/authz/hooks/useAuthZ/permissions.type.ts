@@ -4,6 +4,19 @@ export default {
 	data: {
 		resources: [
 			{
+				kind: 'auth-domain',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
 				kind: 'dashboard',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
@@ -17,6 +30,24 @@ export default {
 				kind: 'factor-password',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'list', 'read'],
+			},
+			{
+				kind: 'ingestion-key',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
+				kind: 'ingestion-limit',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
 			},
 			{
 				kind: 'license',
@@ -50,6 +81,11 @@ export default {
 				kind: 'subscription',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
+				kind: 'organization',
+				type: 'organization',
+				allowedVerbs: ['read', 'update'],
 			},
 			{
 				kind: 'role',
@@ -121,12 +157,13 @@ export default {
 			list: ['metaresource', 'role', 'serviceaccount', 'user'],
 			read: [
 				'metaresource',
+				'organization',
 				'role',
 				'serviceaccount',
 				'telemetryresource',
 				'user',
 			],
-			update: ['metaresource', 'role', 'serviceaccount', 'user'],
+			update: ['metaresource', 'organization', 'role', 'serviceaccount', 'user'],
 		},
 	},
 } as const;

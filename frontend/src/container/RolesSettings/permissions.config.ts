@@ -1,5 +1,6 @@
 import {
 	Bot,
+	Building,
 	Cable,
 	ChartLine,
 	DraftingCompass,
@@ -8,6 +9,7 @@ import {
 	Grid3X3,
 	Key,
 	ListFilter,
+	LogIn,
 	Logs,
 	Receipt,
 	Shield,
@@ -164,6 +166,37 @@ export const RESOURCE_PANELS: Record<AuthZResource, ResourcePanelConfig> = {
 		selectorPlaceholder:
 			'Type password ID, separate multiple with comma or space',
 		docsAnchor: 'factor-password',
+	},
+	'ingestion-key': {
+		label: 'Ingestion Keys',
+		description: 'Keys used to send telemetry to the workspace.',
+		icon: Key,
+		selectorPlaceholder:
+			'Type ingestion key ID, separate multiple with comma or space',
+		docsAnchor: 'ingestion-key',
+	},
+	'ingestion-limit': {
+		label: 'Ingestion Limits',
+		description: 'Daily and per-second limits set on ingestion keys.',
+		icon: Gauge,
+		selectorPlaceholder:
+			'Type ingestion limit ID, separate multiple with comma or space',
+		docsAnchor: 'ingestion-limit',
+	},
+	'auth-domain': {
+		label: 'Auth Domains',
+		description: 'SSO domains and the roles they grant at sign-in.',
+		icon: LogIn,
+		selectorPlaceholder:
+			'Type auth domain ID, separate multiple with comma or space',
+		docsAnchor: 'auth-domain',
+	},
+	organization: {
+		label: 'Organization',
+		description: 'The workspace organization and its display name.',
+		icon: Building,
+		selectorPlaceholder: 'Type * to cover the workspace organization',
+		docsAnchor: 'organization',
 	},
 };
 

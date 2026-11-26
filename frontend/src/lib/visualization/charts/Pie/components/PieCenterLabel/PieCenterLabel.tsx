@@ -44,7 +44,11 @@ export default function PieCenterLabel({
 
 	return (
 		<text textAnchor="middle" dominantBaseline="central" fill={color}>
-			<tspan fontSize={numericFontSize} fontWeight="bold">
+			<tspan
+				fontSize={numericFontSize}
+				fontWeight="bold"
+				data-testid="pie-center-value"
+			>
 				{numericTotal}
 			</tspan>
 			{unitTotal && (

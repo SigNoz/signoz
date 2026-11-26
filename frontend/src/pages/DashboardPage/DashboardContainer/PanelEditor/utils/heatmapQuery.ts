@@ -1,4 +1,5 @@
 import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { DEFAULT_PERCENTILE } from 'lib/query/distributionField';
 import type {
 	IBuilderQuery,
 	Query,
@@ -20,8 +21,6 @@ const HISTOGRAM_ATTRIBUTE_TYPES = new Set<string>([
 	ATTRIBUTE_TYPES.HISTOGRAM,
 	ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
 ]);
-
-const DEFAULT_HISTOGRAM_SPACE_AGGREGATION = 'p90';
 
 /** What a heatmap cell holds, and the one space aggregation the kind offers. */
 const HEATMAP_HISTOGRAM_SPACE_AGGREGATION = 'count';
@@ -106,7 +105,7 @@ export function withPercentileHistogramAggregation(
 function withoutCount<T extends string | undefined>(spaceAggregation: T): T {
 	return (
 		spaceAggregation === HEATMAP_HISTOGRAM_SPACE_AGGREGATION
-			? DEFAULT_HISTOGRAM_SPACE_AGGREGATION
+			? DEFAULT_PERCENTILE
 			: spaceAggregation
 	) as T;
 }

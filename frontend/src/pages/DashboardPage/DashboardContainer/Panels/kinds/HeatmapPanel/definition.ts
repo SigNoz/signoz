@@ -22,10 +22,14 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	EditorPane: QueryBuilderEditorPane,
 	sections,
 	supportedQueryTypesKindMap: {
-		// Only metrics carry a bucket axis; the request rejects the other signals.
+		// Logs and traces bucket the field named as the aggregation.
 		[EQueryType.QUERY_BUILDER]: {
 			kind: QueryTypeKind.SIGNAL,
-			signals: [TelemetrytypesSignalDTO.metrics],
+			signals: [
+				TelemetrytypesSignalDTO.metrics,
+				TelemetrytypesSignalDTO.logs,
+				TelemetrytypesSignalDTO.traces,
+			],
 		},
 		[EQueryType.CLICKHOUSE]: { kind: QueryTypeKind.SIGNAL_LESS },
 		[EQueryType.PROM]: { kind: QueryTypeKind.SIGNAL_LESS },
@@ -34,6 +38,8 @@ export const definition: PanelDefinition<'signoz/HeatmapPanel'> = {
 	queryBuilderFields: {
 		[QueryBuilderField.Functions]: { state: 'hidden' },
 		[QueryBuilderField.Having]: { state: 'hidden' },
+		// The request takes one builder query and has no case for a trace operator.
+		[QueryBuilderField.TraceOperator]: { state: 'hidden' },
 	},
 	// Every timestamp is a full column of cells, so the request asks for a step interval
 	// wide enough to keep the grid legible: at raw resolution a multi-day range is tens of

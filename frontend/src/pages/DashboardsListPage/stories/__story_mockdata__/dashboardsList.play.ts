@@ -3,9 +3,10 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { expect, screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { isCloudShell } from '@/storybook/globals/appShellMocks';
+import { findMonacoEditor } from '@/storybook/play/monacoEditor';
 import { findToastText } from '@/storybook/play/toastText';
 
 import {
@@ -22,6 +23,7 @@ import {
 	pickRowAction,
 	requestTemplate,
 	retryMigration,
+	showsCreatedByTag,
 	showsWorkspaceEmpty,
 	TOAST_TIMEOUT,
 	uploadDashboardJson,
@@ -80,6 +82,38 @@ export const openCreatedByFilter = async ({
 	await screen.findAllByRole('checkbox', { checked: true });
 };
 
+// antd renders a tag's × aria-hidden.
+const tagRemove = { name: 'close', hidden: true } as const;
+
+export const removeCreatedByTag = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		!canList(args) ||
+		args.dataState !== 'loaded' ||
+		showsWorkspaceEmpty(args) ||
+		!showsCreatedByTag(args)
+	) {
+		return;
+	}
+
+	const filter = await within(canvasElement).findByTestId(
+		'dashboards-filter-created-by',
+		{},
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	await userEvent.click(
+		await within(filter).findByRole('img', tagRemove, {
+			timeout: TOAST_TIMEOUT,
+		}),
+	);
+	await waitFor(() =>
+		expect(within(filter).queryByRole('img', tagRemove)).not.toBeInTheDocument(),
+	);
+};
+
 export const openTemplateTab = async ({
 	canvasElement,
 	args,
@@ -106,6 +140,7 @@ export const importInvalidJson = async ({
 
 	await openNewDashboard(canvasElement);
 	await userEvent.click(await screen.findByText('Import JSON'));
+	await findMonacoEditor(document, '');
 	await userEvent.click(await screen.findByTestId('import-json-submit'));
 	await screen.findByText(/error loading json/i);
 	// The error modal and the toast under it carry the same message.

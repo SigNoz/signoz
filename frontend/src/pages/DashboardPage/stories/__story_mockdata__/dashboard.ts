@@ -360,6 +360,16 @@ export const DURATION_CHOICES = ['unset', '6h', '90m', '1s', '0m'] as const;
 
 export type DurationChoice = (typeof DURATION_CHOICES)[number];
 
+/** The default icon, then logos either side of the 4 KB asset inline limit, one a PNG. */
+export const DASHBOARD_IMAGES = [
+	'/assets/Icons/circus-tent',
+	'/assets/Logos/kubernetes',
+	'/assets/Logos/nginx',
+	'/assets/Logos/rails',
+] as const;
+
+export type DashboardImage = (typeof DASHBOARD_IMAGES)[number];
+
 export interface PanelQueryShape {
 	requestType: string;
 	metricName?: string;
@@ -393,6 +403,7 @@ export interface DashboardArgs {
 	variables: readonly VariableKind[];
 	locked: boolean;
 	duration?: DurationChoice;
+	image?: DashboardImage;
 }
 
 export const dashboardResponse = ({
@@ -401,6 +412,7 @@ export const dashboardResponse = ({
 	variables,
 	locked,
 	duration,
+	image = '/assets/Icons/circus-tent',
 }: DashboardArgs): GetDashboardV2200 => {
 	const kept = PANEL_IDS.slice(0, panels);
 
@@ -420,7 +432,7 @@ export const dashboardResponse = ({
 			id: STORY_DASHBOARD_ID,
 			orgId: 'storybook-org',
 			name: 'Checkout service overview',
-			image: '/assets/Icons/circus-tent',
+			image,
 			schemaVersion: 'v6',
 			source: DashboardtypesSourceDTO.user,
 			locked,

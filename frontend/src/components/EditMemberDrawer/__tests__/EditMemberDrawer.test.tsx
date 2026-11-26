@@ -273,7 +273,7 @@ describe('EditMemberDrawer', () => {
 
 	it('enables Save after editing name and calls updateUser on confirm', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockMutateAsync = jest.fn().mockResolvedValue({});
 
 		(useUpdateUser as jest.Mock).mockReturnValue({
@@ -306,7 +306,7 @@ describe('EditMemberDrawer', () => {
 
 	it('does not close the drawer after a successful save', async () => {
 		const onClose = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderDrawer({ onClose });
 
@@ -331,7 +331,7 @@ describe('EditMemberDrawer', () => {
 
 	it('adding a new role creates a user role without removing existing ones', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockSet = jest.fn().mockResolvedValue({});
 
 		(useCreateUserRole as jest.Mock).mockReturnValue({
@@ -365,7 +365,7 @@ describe('EditMemberDrawer', () => {
 
 	it('deselecting a role deletes the user role by its assignment id', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderDrawer({ onComplete });
 
@@ -392,7 +392,7 @@ describe('EditMemberDrawer', () => {
 
 	it('shows delete confirm dialog and calls deleteUser for active members', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 			mutateAsync: mockDeleteMutate.mockImplementation(() => {
@@ -553,7 +553,7 @@ describe('EditMemberDrawer', () => {
 
 	it('calls deleteUser after confirming revoke invite for invited members', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 			mutateAsync: mockDeleteMutate.mockImplementation(() => {
@@ -583,7 +583,7 @@ describe('EditMemberDrawer', () => {
 
 	it('calls updateUser when saving name change for an invited member', async () => {
 		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockMutateAsync = jest.fn().mockResolvedValue({});
 
 		(useGetUser as jest.Mock).mockReturnValue({
@@ -641,7 +641,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('shows SaveErrorItem when updateUser fails for name change', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			(useUpdateUser as jest.Mock).mockReturnValue({
 				mutateAsync: jest.fn().mockRejectedValue(new Error('server error')),
@@ -669,7 +669,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('shows API error message when deleteUser fails for active member', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 				mutateAsync: mockDeleteMutate.mockImplementation(() => {
@@ -700,7 +700,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('shows API error message when deleteUser fails for invited member', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
 				mutateAsync: mockDeleteMutate.mockImplementation(() => {
@@ -740,7 +740,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (isSelf)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderDrawer({ member: selfMember });
 
 			await user.click(screen.getByRole('button', { name: /delete member/i }));
@@ -771,7 +771,11 @@ describe('EditMemberDrawer', () => {
 		it('keeps roles editable', async () => {
 			renderDrawer({ member: selfMember });
 
-			await expect(screen.findByText('Select roles')).resolves.toBeInTheDocument();
+			await expect(
+				screen.findByTestId(
+					`member-roles-select-chip-${managedRoles[0].id}-remove`,
+				),
+			).resolves.toBeInTheDocument();
 			expect(screen.queryByTestId('member-roles-locked')).not.toBeInTheDocument();
 		});
 	});
@@ -807,7 +811,7 @@ describe('EditMemberDrawer', () => {
 				isLoading: false,
 			});
 			server.use(setupAuthzDeny(buildUserUpdatePermission(selfMember.id)));
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderDrawer({ member: selfMember });
 
 			const input = await screen.findByDisplayValue('Alice Smith');
@@ -871,7 +875,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('does not open delete confirm dialog when Delete is clicked while disabled (root)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderDrawer();
 
 			await user.click(screen.getByRole('button', { name: /delete member/i }));
@@ -882,7 +886,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('does not call createResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			renderDrawer();
 
 			await user.click(
@@ -899,7 +903,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('calls POST and opens the reset link dialog with the generated link and expiry', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			renderDrawer();
 
@@ -921,7 +925,7 @@ describe('EditMemberDrawer', () => {
 		});
 
 		it('copies the link to clipboard and shows "Copied!" on the button', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const mockToast = jest.mocked(toast);
 
 			renderDrawer();

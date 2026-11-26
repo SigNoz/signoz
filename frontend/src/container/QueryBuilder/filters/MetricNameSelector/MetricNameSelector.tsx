@@ -281,7 +281,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 			onChange={handleChange}
 			notFoundContent={
 				isFetching ? (
-					<Spin size="small" />
+					<Spin size="small" data-testid="metric-name-selector-loading" />
 				) : isError ? (
 					<Typography
 						variant="paragraph"

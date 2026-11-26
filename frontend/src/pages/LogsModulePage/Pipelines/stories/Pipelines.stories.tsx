@@ -5,6 +5,7 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import { type PipelinesArgs, pipelinesMocks } from './Pipelines.stories.mocks';
 import {
 	expandProcessors,
+	hoverPipelineFilterSuggestions,
 	openAddPipeline,
 	openAddProcessor,
 	openChangeHistory,
@@ -73,6 +74,11 @@ export const AddPipelineFilterKeys: Story = {
 /** A key and an operator typed into the filter: the values that key holds. */
 export const AddPipelineFilterValues: Story = {
 	play: suggestPipelineFilterValues,
+};
+
+/** The filter's suggestions hovered: a key that fits has no tooltip, a route cut short shows in full once. */
+export const AddPipelineFilterHover: Story = {
+	play: hoverPipelineFilterSuggestions,
 };
 
 /** The same form over an existing pipeline, filter included. */

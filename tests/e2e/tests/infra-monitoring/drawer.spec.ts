@@ -5,6 +5,7 @@ import {
 	EXPLORER_LINK,
 	expect,
 	seedDataset,
+	seedEntityLogs,
 	test,
 } from '../../drivers/infra';
 
@@ -150,5 +151,42 @@ test.describe('infra monitoring — drawer', () => {
 			BASE_ENTITY.seed.sampleItemKey,
 		);
 		await opened.close();
+	});
+
+	test('TC-08 log details steps through the Logs tab with the arrow keys and a row click', async ({
+		authedPage: page,
+		infra,
+	}, testInfo) => {
+		await seedDataset(page, BASE_ENTITY.seed.primary);
+		const [newest, , oldest] = await seedEntityLogs(
+			page,
+			BASE_ENTITY.seed.primary,
+			BASE_ENTITY,
+			BASE_ENTITY.seed.sampleName,
+			`e2e-infra-logs-w${testInfo.workerIndex}-${Date.now()}`,
+		);
+		await infra.list.goto(
+			BASE_ENTITY,
+			infra.drawer.selectedItemParams(BASE_ENTITY),
+		);
+		await infra.drawer.expectBodyReady();
+		await infra.drawer.switchTab(DRAWER_TAB.logs);
+
+		const detail = infra.drawer.logDetail;
+		await detail.open(infra.drawer.logRow(newest));
+		await expect(detail.body()).toContainText(newest);
+
+		await detail.step('ArrowDown');
+		await expect(detail.body()).not.toContainText(newest);
+		await detail.step('ArrowUp');
+		await expect(detail.body()).toContainText(newest);
+
+		// A real click on the part log details leaves uncovered: the drawer below
+		// must still take input.
+		await infra.drawer
+			.logRow(oldest)
+			.click({ position: { x: 16, y: 8 }, timeout: 5_000 });
+		await expect(detail.body()).toContainText(oldest);
+		await expect(infra.drawer.panel()).toBeVisible();
 	});
 });

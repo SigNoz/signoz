@@ -31,7 +31,7 @@ interface Props {
 	placeholder?: string;
 	// Rendered at the end of the search row (e.g. the New Dashboard action).
 	rightSlot?: ReactNode;
-	// Rendered in the filters row after the chips. A function receives the draft.
+	// Rendered in the filters row before the chips. A function receives the draft.
 	extraFilters?: ReactNode | ((api: ExtraFiltersApi) => ReactNode);
 	// Shows Clear even when the query is empty.
 	hasExtraFilters?: boolean;
@@ -81,7 +81,7 @@ function FilterZone({
 		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
-		handleClearCreatedBy,
+		handleCreatedByCommit,
 		handleClear,
 	} = useFilterZoneDraft({
 		query,
@@ -96,7 +96,7 @@ function FilterZone({
 				creatorOptions,
 				createdBy: reflected.createdBy,
 				onCreatedByChange: handleCreatedByChange,
-				onClearCreatedBy: handleClearCreatedBy,
+				onCreatedByCommit: handleCreatedByCommit,
 			}
 		: {};
 
@@ -142,6 +142,9 @@ function FilterZone({
 						className={styles.filterControls}
 						data-testid={`${testIdPrefix}-filter-zone`}
 					>
+						{typeof extraFilters === 'function'
+							? extraFilters({ draft, applyDraft, setDraft })
+							: extraFilters}
 						<FilterChips
 							{...createdByProps}
 							updated={reflected.updated}
@@ -150,9 +153,6 @@ function FilterZone({
 							onApply={run}
 							disabled={disabled}
 						/>
-						{typeof extraFilters === 'function'
-							? extraFilters({ draft, applyDraft, setDraft })
-							: extraFilters}
 						{(!isEmpty || hasExtraFilters) && (
 							<Button
 								disabledTooltip={undefined}

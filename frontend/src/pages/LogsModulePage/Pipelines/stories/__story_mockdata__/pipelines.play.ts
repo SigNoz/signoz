@@ -3,7 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
+
+import { hoverTruncatableText } from '@/storybook/play/truncatedText';
+
+import { LONG_HTTP_ROUTE } from '../../../stories/__story_mockdata__/logs';
 
 import type { PipelinesArgs } from '../Pipelines.stories.mocks';
 
@@ -142,6 +146,42 @@ export const suggestPipelineFilterValues = async ({
 	await openNewPipelineForm(canvasElement);
 	await userEvent.type(await focusPipelineFilter(), 'service.name = ');
 	await screen.findAllByText('checkout', undefined, untilLoaded);
+};
+
+/** The pipeline list behind the form can show the same text, so look only in the open list. */
+const findSuggestion = (text: string): Promise<HTMLElement> =>
+	waitFor(async () => {
+		const match = Array.from(
+			document.querySelectorAll<HTMLElement>(
+				'.ant-select-dropdown:not(.ant-select-dropdown-hidden) .option p',
+			),
+		).find((element) => element.textContent === text);
+
+		await expect(match).toBeTruthy();
+
+		return match as HTMLElement;
+	}, untilLoaded);
+
+export const hoverPipelineFilterSuggestions = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (!listsPipelines(args)) {
+		return;
+	}
+
+	await openNewPipelineForm(canvasElement);
+	const input = await focusPipelineFilter();
+	await hoverTruncatableText(await findSuggestion('http.route'), 'http.route', {
+		cut: false,
+	});
+
+	await userEvent.type(input, 'http.route = ');
+	await hoverTruncatableText(
+		await findSuggestion(LONG_HTTP_ROUTE),
+		LONG_HTTP_ROUTE,
+		{ cut: true },
+	);
 };
 
 export const openEditPipeline = async ({

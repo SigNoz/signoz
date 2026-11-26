@@ -90,7 +90,7 @@ describe('EditRolePage', () => {
 
 			renderEditPage();
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('role-editor-loading')).toBeInTheDocument();
 		});
 
 		it('shows loading title in header while fetching role data', async () => {

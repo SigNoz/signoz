@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	type HTMLAttributes,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
@@ -180,6 +186,9 @@ export function QueryTable({
 					columnWidths={columnWidths}
 					onColumnWidthsChange={onColumnWidthsChange}
 					sticky={sticky}
+					onRow={(): HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+						'data-testid': 'query-table-row',
+					})}
 					{...props}
 				/>
 			</div>

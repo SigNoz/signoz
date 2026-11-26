@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -20,6 +21,7 @@ jest.mock('@signozhq/ui/toast', () => ({
 describe('AuthDomain', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -111,7 +113,7 @@ describe('AuthDomain', () => {
 
 	describe('Add Domain', () => {
 		it('opens create modal when Add Domain button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(AUTH_DOMAINS_LIST_ENDPOINT, (_, res, ctx) =>
@@ -134,7 +136,7 @@ describe('AuthDomain', () => {
 
 	describe('Configure Domain', () => {
 		it('opens edit modal when configure action is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(AUTH_DOMAINS_LIST_ENDPOINT, (_, res, ctx) =>

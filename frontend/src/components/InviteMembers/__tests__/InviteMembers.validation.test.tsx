@@ -22,7 +22,7 @@ describe('InviteMembers - Validation', () => {
 
 	describe('email validation', () => {
 		it('shows email validation error when email is invalid and role is selected', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -46,7 +46,7 @@ describe('InviteMembers - Validation', () => {
 		});
 
 		it('shows inline error for invalid email field', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -70,7 +70,7 @@ describe('InviteMembers - Validation', () => {
 		});
 
 		it('clears validation error when email is corrected', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -104,7 +104,7 @@ describe('InviteMembers - Validation', () => {
 
 	describe('role validation', () => {
 		it('shows role validation error when role is missing', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -127,7 +127,7 @@ describe('InviteMembers - Validation', () => {
 		});
 
 		it('clears role validation error when role is selected', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -159,7 +159,7 @@ describe('InviteMembers - Validation', () => {
 
 	describe('combined validation', () => {
 		it('shows combined error when both email and role are invalid', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -186,7 +186,7 @@ describe('InviteMembers - Validation', () => {
 
 	describe('touched rows', () => {
 		it('only validates touched rows (rows with email or role)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers

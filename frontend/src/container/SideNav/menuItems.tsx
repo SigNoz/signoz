@@ -48,7 +48,6 @@ import {
 	SettingsNavSection,
 	SidebarItem,
 } from './sideNav.types';
-import { Style } from '@signozhq/design-tokens';
 import Noz from 'components/Noz/Noz';
 import { NOZ_TOOLTIP_TITLE } from 'components/Noz/Noz.constants';
 
@@ -96,7 +95,7 @@ export const aiAssistantMenuItem = {
 	label: 'Noz',
 	icon: <Noz size={16} />,
 	itemKey: 'ai-assistant',
-	isEarlyAccess: true,
+	isBeta: true,
 	tooltip: NOZ_TOOLTIP_TITLE,
 };
 
@@ -523,7 +522,7 @@ export const getUserSettingsDropdownMenuItems = ({
 			type: 'item',
 			value: 'workspace',
 			label: USER_SETTINGS_MENU_LABELS.workspace,
-			prefix: <Building2 size={14} color={Style.L1_FOREGROUND} />,
+			prefix: <Building2 size={14} color="var(--l1-foreground)" />,
 			testId: 'workspace-settings-nav-item',
 			disabled: isWorkspaceBlocked,
 			disabledTooltip: WORKSPACE_LOCKED_TOOLTIP,
@@ -533,7 +532,7 @@ export const getUserSettingsDropdownMenuItems = ({
 			type: 'item',
 			value: 'account',
 			label: USER_SETTINGS_MENU_LABELS.account,
-			prefix: <User size={14} color={Style.L1_FOREGROUND} />,
+			prefix: <User size={14} color="var(--l1-foreground)" />,
 			testId: 'account-settings-nav-item',
 			onClick: (event): void => onSelect('account', event),
 		},
@@ -544,7 +543,7 @@ export const getUserSettingsDropdownMenuItems = ({
 			type: 'item',
 			value: 'license',
 			label: USER_SETTINGS_MENU_LABELS.license,
-			prefix: <Shield size={14} color={Style.L1_FOREGROUND} />,
+			prefix: <Shield size={14} color="var(--l1-foreground)" />,
 			testId: 'manage-license-nav-item',
 			onClick: (event): void => onSelect('license', event),
 		});
@@ -554,7 +553,7 @@ export const getUserSettingsDropdownMenuItems = ({
 		type: 'item',
 		value: 'keyboard-shortcuts',
 		label: USER_SETTINGS_MENU_LABELS['keyboard-shortcuts'],
-		prefix: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
+		prefix: <Keyboard size={14} color="var(--l1-foreground)" />,
 		testId: 'keyboard-shortcuts-nav-item',
 		onClick: (event): void => onSelect('keyboard-shortcuts', event),
 	});

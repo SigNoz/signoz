@@ -25,6 +25,7 @@ import {
 import {
 	expandPanelSearch,
 	hoverJsonValidation,
+	showJsonEditor,
 	openDeleteDashboardDialog,
 	openAIQueryBuilderViewPanel,
 	openClickHouseViewPanel,
@@ -117,6 +118,11 @@ export const PanelQueryError: Story = {
  */
 export const DefaultTimeRange: Story = {
 	args: { duration: '6h' },
+};
+
+/** A dashboard whose image is a bundled logo, beside its name in the header. */
+export const Logo: Story = {
+	args: { image: '/assets/Logos/kubernetes' },
 };
 
 /** The panels mid-fetch, with the header, variable bar and grid already laid out. */
@@ -568,6 +574,14 @@ export const JsonCopiedToast: Story = {
 		await userEvent.click(screen.getByTestId('json-editor-copy'));
 		await expectToast('JSON copied to clipboard');
 	},
+};
+
+/**
+ * The JSON editor drawer over the dashboard: the stored document, the footer's
+ * validation and the copy and apply actions.
+ */
+export const JsonEditor: Story = {
+	play: showJsonEditor,
 };
 
 /**

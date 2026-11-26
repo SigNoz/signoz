@@ -1,10 +1,4 @@
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateEdit from '../CreateEdit/CreateEdit';
 import {
@@ -37,21 +31,17 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('returns to provider selection when back button is clicked', async () => {
+			const user = userEvent.setup();
+
 			render(<CreateEdit isCreate onClose={mockOnClose} />);
 
-			const configureButtons = await screen.findAllByRole('button', {
-				name: /configure/i,
-			});
-			// Use fireEvent to skip userEvent's pointer simulation and the Antd
-			// Tooltip mouseEnterDelay timers it triggers on the Configure button.
-			fireEvent.click(configureButtons[0]);
+			await user.click(screen.getByTestId('authn-provider-configure-google'));
 
 			await expect(
 				screen.findByText(/edit google authentication/i),
 			).resolves.toBeInTheDocument();
 
-			const backButton = screen.getByRole('button', { name: /back/i });
-			fireEvent.click(backButton);
+			await user.click(screen.getByTestId('auth-domain-back'));
 
 			await expect(
 				screen.findByText(/configure authentication method/i),
@@ -110,45 +100,33 @@ describe('CreateEdit Modal', () => {
 				/>,
 			);
 
-			expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
-			expect(
-				screen.queryByRole('button', { name: /back/i }),
-			).not.toBeInTheDocument();
+			expect(screen.getByTestId('auth-domain-cancel')).toHaveTextContent('Cancel');
+			expect(screen.queryByTestId('auth-domain-back')).not.toBeInTheDocument();
 		});
 	});
 
 	describe('Form Validation', () => {
 		it('shows validation error when submitting without required fields', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<CreateEdit isCreate onClose={mockOnClose} />);
 
-			const configureButtons = await screen.findAllByRole('button', {
-				name: /configure/i,
-			});
-			fireEvent.click(configureButtons[0]);
+			await user.click(screen.getByTestId('authn-provider-configure-google'));
+			await user.click(await screen.findByTestId('auth-domain-save'));
 
-			const saveButton = await screen.findByRole('button', {
-				name: /save changes/i,
-			});
-			await user.click(saveButton);
-
-			await waitFor(() => {
-				expect(screen.getByText(/domain is required/i)).toBeInTheDocument();
-			});
-		}, 15000);
+			await expect(
+				screen.findByText(/domain is required/i),
+			).resolves.toBeInTheDocument();
+		});
 	});
 
 	describe('Google Auth Provider', () => {
 		it('shows Google Auth form fields', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<CreateEdit isCreate onClose={mockOnClose} />);
 
-			const configureButtons = await screen.findAllByRole('button', {
-				name: /configure/i,
-			});
-			await user.click(configureButtons[0]);
+			await user.click(screen.getByTestId('authn-provider-configure-google'));
 
 			await waitFor(() => {
 				expect(screen.getByText(/edit google authentication/i)).toBeInTheDocument();
@@ -160,7 +138,7 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('shows workspace groups section when expanded', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<CreateEdit
@@ -170,8 +148,7 @@ describe('CreateEdit Modal', () => {
 				/>,
 			);
 
-			const workspaceHeader = screen.getByText(/google workspace groups/i);
-			await user.click(workspaceHeader);
+			await user.click(screen.getByTestId('google-auth-workspace-groups-header'));
 
 			await waitFor(() => {
 				expect(screen.getByText(/fetch groups/i)).toBeInTheDocument();
@@ -198,7 +175,7 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('shows attribute mapping section for SAML', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<CreateEdit
@@ -239,7 +216,7 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('shows claim mapping section for OIDC', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<CreateEdit
@@ -278,22 +255,19 @@ describe('CreateEdit Modal', () => {
 
 	describe('Role Mapping', () => {
 		it('shows role mapping section in provider forms', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<CreateEdit isCreate onClose={mockOnClose} />);
 
-			const configureButtons = await screen.findAllByRole('button', {
-				name: /configure/i,
-			});
-			await user.click(configureButtons[0]);
+			await user.click(screen.getByTestId('authn-provider-configure-google'));
 
-			await waitFor(() => {
-				expect(screen.getByText(/role mapping \(advanced\)/i)).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByText(/role mapping \(advanced\)/i),
+			).resolves.toBeInTheDocument();
 		});
 
 		it('expands role mapping section to show default role selector', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<CreateEdit
@@ -303,8 +277,7 @@ describe('CreateEdit Modal', () => {
 				/>,
 			);
 
-			const roleMappingHeader = screen.getByText(/role mapping \(advanced\)/i);
-			await user.click(roleMappingHeader);
+			await user.click(screen.getByTestId('role-mapping-header'));
 
 			await waitFor(() => {
 				expect(screen.getByText(/default role/i)).toBeInTheDocument();
@@ -315,7 +288,7 @@ describe('CreateEdit Modal', () => {
 		});
 
 		it('shows group mappings section when useRoleAttribute is false', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<CreateEdit
@@ -325,20 +298,21 @@ describe('CreateEdit Modal', () => {
 				/>,
 			);
 
-			const roleMappingHeader = screen.getByText(/role mapping \(advanced\)/i);
-			await user.click(roleMappingHeader);
+			await user.click(screen.getByTestId('role-mapping-header'));
 
-			await waitFor(() => {
-				expect(screen.getByText(/group to role mappings/i)).toBeInTheDocument();
-				expect(
-					screen.getByRole('button', { name: /add group mapping/i }),
-				).toBeInTheDocument();
-			});
+			await expect(
+				screen.findByText(/group to role mappings/i),
+			).resolves.toBeInTheDocument();
+			expect(screen.getByTestId('role-mapping-add')).toHaveTextContent(
+				'Add Group Mapping',
+			);
 		});
 	});
 
 	describe('Modal Actions', () => {
-		it('calls onClose when cancel button is clicked', () => {
+		it('calls onClose when cancel button is clicked', async () => {
+			const user = userEvent.setup();
+
 			render(
 				<CreateEdit
 					isCreate={false}
@@ -347,8 +321,7 @@ describe('CreateEdit Modal', () => {
 				/>,
 			);
 
-			const cancelButton = screen.getByRole('button', { name: /cancel/i });
-			fireEvent.click(cancelButton);
+			await user.click(screen.getByTestId('auth-domain-cancel'));
 
 			expect(mockOnClose).toHaveBeenCalled();
 		});

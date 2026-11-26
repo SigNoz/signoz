@@ -82,9 +82,12 @@ importers:
       '@signozhq/icons':
         specifier: 0.4.0
         version: 0.4.0
+      '@signozhq/noz-client':
+        specifier: 1.13.0
+        version: 1.13.0(axios@1.21.1)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@signozhq/ui':
-        specifier: 0.4.0-rc.5
-        version: 0.4.0-rc.5(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+        specifier: 0.4.1-rc.2
+        version: 0.4.1-rc.2(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@tanstack/react-table':
         specifier: 8.21.3
         version: 8.21.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -3262,8 +3265,15 @@ packages:
   '@signozhq/icons@0.4.0':
     resolution: {integrity: sha512-QctNvNPlQlsefFdIVmSy/P/7a1IcQ3IryKP0KPMqtoqew3q89FGUmFa5IfEJ7Z3CHhtG1zaXwBKqP72QkLyA3g==}
 
-  '@signozhq/ui@0.4.0-rc.5':
-    resolution: {integrity: sha512-WlJMfeDfvL2hjMpTpHhhND/tuK7X0sfXQlx6E1ZG+6E/DYHpuhYljfvW3E6/BohIlHFlTyCs/ZMl9wnV2k9Zcw==}
+  '@signozhq/noz-client@1.13.0':
+    resolution: {integrity: sha512-130L2xomHnQZK8ZtAst34qFz9d2rSF/JYpg9gKvJkZVS9+46CPZeTW8Va9PNS9Oa5owezVHIXZStTEbsHIxnwg==}
+    peerDependencies:
+      axios: ^1.20.0
+      react: ^18.2.0
+      react-query: ^3.39.3
+
+  '@signozhq/ui@0.4.1-rc.2':
+    resolution: {integrity: sha512-pCMRzrJ6CmGjEgAQ2B6wRRengP2sy7Y860Npr5nkCapc9NPH5jy4VO48CDv5gnKwWSKShmLHwzbiK2E1cGndKQ==}
     peerDependencies:
       '@signozhq/design-tokens': '>=2.7.0'
       '@signozhq/icons': 0.3.0
@@ -12394,7 +12404,13 @@ snapshots:
 
   '@signozhq/icons@0.4.0': {}
 
-  '@signozhq/ui@0.4.0-rc.5(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
+  '@signozhq/noz-client@1.13.0(axios@1.21.1)(react-query@3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+    dependencies:
+      axios: 1.21.1
+      react: 18.2.0
+      react-query: 3.39.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+
+  '@signozhq/ui@0.4.1-rc.2(@date-fns/tz@1.4.1)(@signozhq/design-tokens@2.8.0)(@signozhq/icons@0.4.0)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
       '@base-ui/react': 1.8.0(@date-fns/tz@1.4.1)(@types/react@18.0.26)(date-fns@4.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@signozhq/design-tokens': 2.8.0

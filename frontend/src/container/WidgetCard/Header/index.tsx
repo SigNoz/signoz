@@ -238,6 +238,7 @@ function WidgetHeader({
 								setShowGlobalSearch(false);
 							}}
 							className="search-header-icons"
+							data-testid="widget-header-search-close"
 						/>
 					}
 					key={widget.id}

@@ -19,4 +19,5 @@ export type RuleView = SavedListView<RuleListFilter>;
 
 export interface RuleViewCtx {
 	userEmail: string;
+	recent: string[];
 }

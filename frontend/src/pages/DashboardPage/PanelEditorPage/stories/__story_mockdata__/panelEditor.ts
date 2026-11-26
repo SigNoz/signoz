@@ -4,9 +4,14 @@
  */
 
 import {
+	type GetFieldsKeys200,
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
+
+import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
 
 import {
 	metricSeed,
@@ -104,3 +109,21 @@ export const EDITOR_METRICS: MetricSeed[] = [
 		MetrictypesTemporalityDTO.unspecified,
 	),
 ];
+
+/** The numeric keys a logs or traces heatmap's field picker asks for. */
+export const numericFieldKeysResponse = (): GetFieldsKeys200 => {
+	const signal = TelemetrytypesSignalDTO.traces;
+	const span = fieldKeysResponse(['duration_nano'], {
+		signal,
+		fieldContext: TelemetrytypesFieldContextDTO.span,
+	});
+	const attribute = fieldKeysResponse(['retry.count', 'http.response.size'], {
+		signal,
+		fieldContext: TelemetrytypesFieldContextDTO.attribute,
+	});
+
+	return {
+		...span,
+		data: { ...span.data, keys: { ...span.data.keys, ...attribute.data.keys } },
+	};
+};

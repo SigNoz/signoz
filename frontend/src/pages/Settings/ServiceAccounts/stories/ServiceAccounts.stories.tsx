@@ -19,6 +19,7 @@ import {
 	keyUpdatedToast,
 	openSearchSuggestions,
 	openStatusChip,
+	removeStatusTag,
 	saveFailed,
 } from './__story_mockdata__/serviceAccounts.play';
 import {
@@ -114,6 +115,14 @@ export const SearchSuggestionsNoAccounts: Story = {
 /** Interaction: the status chip is open with its three choices. */
 export const StatusChipOpen: Story = {
 	play: openStatusChip,
+};
+
+/** Deleted only, with its status tag removed by its ×: the list runs unfiltered. */
+export const StatusTagRemoved: Story = {
+	parameters: at(
+		`search=${encodeURIComponent(where('status', '=', 'deleted'))}`,
+	),
+	play: removeStatusTag,
 };
 
 /** Empty: a search that matches no account keeps the list shell and empty state. */

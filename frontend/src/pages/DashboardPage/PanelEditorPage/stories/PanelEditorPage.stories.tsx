@@ -13,8 +13,10 @@ import {
 	openAddColumn,
 	openAIQueryBuilder,
 	openClickHouseQuery,
+	writeClickHouseQuery,
 	openPanelTypeSwitcher,
 	openPromQLQuery,
+	pickHeatmapTracesField,
 	saveAndExpectToast,
 } from './__story_mockdata__/panelEditor.play';
 
@@ -56,6 +58,11 @@ export const Default: Story = {};
 /** The ClickHouse query tab, including its info callout. */
 export const ClickHouseQuery: Story = {
 	play: openClickHouseQuery,
+};
+
+/** A ClickHouse query written into the tab's editor, highlighted as SQL. */
+export const ClickHouseQueryWritten: Story = {
+	play: writeClickHouseQuery,
 };
 
 /** The PromQL query tab, its query and legend fields empty. */
@@ -186,6 +193,15 @@ export const ConfigHistogram: Story = {
 export const ConfigHeatmap: Story = {
 	args: { panel: 'new', newPanelKind: 'heatmap' },
 	play: expandConfigSections,
+};
+
+/**
+ * A new heatmap switched to traces: the aggregation becomes a picker of the
+ * signal's numeric fields.
+ */
+export const HeatmapTracesField: Story = {
+	args: { panel: 'new', newPanelKind: 'heatmap' },
+	play: pickHeatmapTracesField,
 };
 
 /** A new list panel's config pane, every section expanded. */

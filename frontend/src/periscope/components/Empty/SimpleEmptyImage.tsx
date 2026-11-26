@@ -3,6 +3,7 @@ import styles from './Empty.module.scss';
 function SimpleEmptyImage(): JSX.Element {
 	return (
 		<svg
+			data-testid="empty-simple-image"
 			width="64"
 			height="41"
 			viewBox="0 0 64 41"

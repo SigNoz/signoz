@@ -195,12 +195,9 @@ describe('QuickFilters - AuthZ', () => {
 
 			renderWithSavedList();
 
-			await waitFor(() =>
-				// eslint-disable-next-line testing-library/no-node-access
-				expect(
-					document.querySelector('.quick-filters-skeleton'),
-				).toBeInTheDocument(),
-			);
+			await expect(
+				screen.findByTestId('quick-filters-skeleton'),
+			).resolves.toBeInTheDocument();
 			expect(screen.queryByText(NOT_AUTHORIZED_TEXT)).not.toBeInTheDocument();
 			expect(screen.queryByText(FILTER_SERVICE_NAME)).not.toBeInTheDocument();
 		});

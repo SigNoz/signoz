@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { Style } from '@signozhq/design-tokens';
 import { CircleHelp, TriangleAlert } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -55,7 +54,7 @@ function ConfigureOIDCAuthnProvider({
 						<label className="authn-provider__label" htmlFor="oidc-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -77,7 +76,7 @@ function ConfigureOIDCAuthnProvider({
 						<label className="authn-provider__label" htmlFor="oidc-issuer">
 							Issuer URL
 							<Tooltip title='The URL identifier for the OIDC provider. For example: "https://accounts.google.com" or "https://login.salesforce.com".'>
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -95,7 +94,7 @@ function ConfigureOIDCAuthnProvider({
 						<label className="authn-provider__label" htmlFor="oidc-issuer-alias">
 							Issuer Alias
 							<Tooltip title="Optional: Override the issuer URL from .well-known/openid-configuration for providers like Azure or Oracle IDCS.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -110,7 +109,7 @@ function ConfigureOIDCAuthnProvider({
 						<label className="authn-provider__label" htmlFor="oidc-client-id">
 							Client ID
 							<Tooltip title="The application's client ID from your OIDC provider.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -128,7 +127,7 @@ function ConfigureOIDCAuthnProvider({
 						<label className="authn-provider__label" htmlFor="oidc-client-secret">
 							Client Secret
 							<Tooltip title="The application's client secret from your OIDC provider.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -166,7 +165,7 @@ function ConfigureOIDCAuthnProvider({
 							</Checkbox>
 						</Form.Item>
 						<Tooltip title='Whether to skip email verification. Defaults to "false"'>
-							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+							<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 						</Tooltip>
 					</div>
 
@@ -187,7 +186,7 @@ function ConfigureOIDCAuthnProvider({
 							</Checkbox>
 						</Form.Item>
 						<Tooltip title="Use the userinfo endpoint to get additional claims. Useful when providers return thin ID tokens.">
-							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+							<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 						</Tooltip>
 					</div>
 					<div className="authn-provider__callout-wrapper">
