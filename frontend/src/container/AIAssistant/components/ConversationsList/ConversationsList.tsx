@@ -4,12 +4,9 @@ import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
 import { Plus } from '@signozhq/icons';
 
-import logEvent from 'api/common/logEvent';
-
-import { AIAssistantEvents } from '../../events';
+import { useOpenConversation } from '../../hooks/useOpenConversation';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
-import { useVariant } from '../../VariantContext';
 import ConversationItem from '../ConversationItem';
 
 import styles from './ConversationsList.module.scss';
@@ -75,16 +72,12 @@ export default function ConversationsList({
 	onNewConversation,
 	showAddNewConversation = false,
 }: ConversationsListProps): JSX.Element {
-	const variant = useVariant();
 	const conversations = useAIAssistantStore((s) => s.conversations);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
 	const isLoadingThreads = useAIAssistantStore((s) => s.isLoadingThreads);
-	const setActiveConversation = useAIAssistantStore(
-		(s) => s.setActiveConversation,
-	);
-	const loadThread = useAIAssistantStore((s) => s.loadThread);
+	const openConversation = useOpenConversation();
 	const fetchThreads = useAIAssistantStore((s) => s.fetchThreads);
 	const archiveConversation = useAIAssistantStore((s) => s.archiveConversation);
 	const restoreConversation = useAIAssistantStore((s) => s.restoreConversation);
@@ -137,34 +130,12 @@ export default function ConversationsList({
 	const isSearching = trimmedQuery.length > 0;
 
 	const handleSelect = (id: string): void => {
-		const conv = conversations[id];
-		// Skip re-selecting the currently active thread — Notion-style click on
-		// the highlighted row in the history list shouldn't inflate the funnel.
-		const isReselectingActive = id === activeConversationId;
-		if (conv?.threadId && !isReselectingActive) {
-			void logEvent(AIAssistantEvents.ThreadOpenedFromHistory, {
-				threadId: conv.threadId,
-				threadAgeDays: Math.floor(
-					(Date.now() - conv.createdAt) / (24 * 60 * 60 * 1000),
-				),
-			});
-		}
-		if (conv?.threadId) {
-			// Always load from backend — refreshes messages and reconnects
-			// to active execution if the thread is still busy.
-			void loadThread(conv.threadId);
-		} else {
-			// Local-only conversation (no backend thread yet)
-			setActiveConversation(id);
-		}
+		openConversation(id);
 		onSelect?.(id);
 	};
 
-	const variantClass =
-		variant === 'page' ? styles.variantPage : styles.variantPanel;
-
 	return (
-		<div className={cx(styles.conversationsList, variantClass)}>
+		<div className={styles.conversationsList}>
 			<div className={styles.searchBar}>
 				<div className={styles.search}>
 					<Input

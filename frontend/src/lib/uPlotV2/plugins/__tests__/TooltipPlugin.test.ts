@@ -8,6 +8,7 @@ import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import {
 	DashboardCursorSync,
 	DEFAULT_PIN_TOOLTIP_KEY,
+	type TooltipPluginProps,
 } from '../TooltipPlugin/types';
 
 // Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
@@ -619,6 +620,57 @@ describe('TooltipPlugin', () => {
 	});
 
 	// ---- Keyboard pin edge cases ------------------------------------------------
+
+	describe('pin on click', () => {
+		it('pins on a click shouldPinOnClick accepts, instead of calling onClick', async () => {
+			const config = createConfigMock();
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
+			const shouldPinOnClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['shouldPinOnClick']>
+			>;
+			shouldPinOnClick.mockReturnValue(true);
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				shouldPinOnClick,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			await waitFor(() => {
+				expect(screen.getByTestId('tooltip-plugin-container').dataset.pinned).toBe(
+					'true',
+				);
+			});
+			expect(shouldPinOnClick).toHaveBeenCalledTimes(1);
+			expect(onClick).not.toHaveBeenCalled();
+		});
+
+		it('calls onClick for a click shouldPinOnClick declines', () => {
+			const config = createConfigMock();
+			const onClick = jest.fn() as jest.MockedFunction<
+				NonNullable<TooltipPluginProps['onClick']>
+			>;
+			const fakePlot = renderAndActivateHover(config, undefined, {
+				canPinTooltip: true,
+				onClick,
+				shouldPinOnClick: () => false,
+			});
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			expect(onClick).toHaveBeenCalledTimes(1);
+			expect(
+				screen.getByTestId('tooltip-plugin-container').dataset.pinned,
+			).not.toBe('true');
+		});
+	});
 
 	describe('keyboard pin edge cases', () => {
 		it('does not pin when cursor coordinates are negative (cursor off-screen)', () => {

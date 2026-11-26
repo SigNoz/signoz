@@ -181,6 +181,15 @@ export const ConversationActions: Story = {
 };
 
 /**
+ * Open chats as tabs in the strip, the one on the page current. The chat on the
+ * page reads its reply at once; the other unseen reply keeps a dot on its tab and
+ * its sidebar row.
+ */
+export const ChatTabs: Story = {
+	args: { nozChats: 4, nozUnread: 2 },
+};
+
+/**
  * The composer's context picker: the dashboards, alerts and services a question
  * can be pinned to.
  */

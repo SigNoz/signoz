@@ -163,7 +163,7 @@ describe('Pie', () => {
 
 		renderPie();
 		await user.hover(arcGroups()[0]);
-		expect(screen.queryByTestId('pie-tooltip-footer')).toBeNull();
+		expect(screen.queryByTestId('grouped-tooltip-footer')).toBeNull();
 	});
 
 	it('does not re-render the legend while the tooltip follows the cursor', async () => {
@@ -324,7 +324,7 @@ describe('Pie', () => {
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 
 			await user.click(await hoverOther());
-			await user.click(screen.getByTestId('pie-tooltip-unpin'));
+			await user.click(screen.getByTestId('grouped-tooltip-unpin'));
 			expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
 		});
 
@@ -361,7 +361,7 @@ describe('Pie', () => {
 			await user.click(await hoverOther());
 
 			expect(screen.queryByTestId('uplot-tooltip-item-button')).toBeNull();
-			expect(screen.getByTestId('pie-tooltip-unpin')).toBeInTheDocument();
+			expect(screen.getByTestId('grouped-tooltip-unpin')).toBeInTheDocument();
 		});
 	});
 });

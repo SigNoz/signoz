@@ -15,19 +15,15 @@ import {
 	QUESTIONS,
 } from '../__story_mockdata__/aiAssistant';
 import {
-	copyConversationLink,
 	expandActivity,
 	expandSingleStep,
 	openApprovalDiff,
 	openClarificationSelect,
 	openContextPicker,
-	openConversationActions,
-	openHistory,
 	openLiveSteps,
 	openModal,
 	openNegativeFeedback,
 	pickContexts,
-	renameConversation,
 	scrollToTop,
 	typeDraft,
 } from '../__story_mockdata__/aiAssistantModal.play';
@@ -43,8 +39,7 @@ const pageStory = storyMocks(aiAssistantMocks, {
 
 /**
  * Noz in the modal ⌘J opens over any page: the thread, composer and cards of the
- * Noz page, with the conversation list behind the header's History. The header
- * also starts a conversation, opens the full page, and minimizes to the panel.
+ * Noz page. The header opens the full page and minimizes to the panel.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -67,10 +62,6 @@ export const Default: Story = {
 export const NewConversation: Story = {
 	args: { conversation: false, history: 0, archived: 0 },
 	play: openModal,
-};
-
-export const History: Story = {
-	play: openHistory,
 };
 
 export const QuestionBlocks: Story = {
@@ -156,14 +147,6 @@ export const NegativeFeedback: Story = {
 	play: openNegativeFeedback,
 };
 
-export const ConversationRename: Story = {
-	play: renameConversation,
-};
-
-export const ConversationActions: Story = {
-	play: openConversationActions,
-};
-
 export const AddContext: Story = {
 	play: openContextPicker,
 };
@@ -175,10 +158,6 @@ export const PickedContexts: Story = {
 export const SentContexts: Story = {
 	args: { contents: ['contexts'] },
 	play: openModal,
-};
-
-export const ConversationLinkCopiedToast: Story = {
-	play: copyConversationLink,
 };
 
 export const Tooltips: Story = {

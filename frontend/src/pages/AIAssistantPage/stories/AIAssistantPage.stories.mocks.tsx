@@ -176,9 +176,23 @@ export const aiAssistantMocks = defineStoryMocks({
 		...onBothBases(
 			'get',
 			'/threads/:threadId',
-			response.json(() =>
-				threadDetailResponse(values.contents, values.agent, values.approvalDiff),
-			),
+			// Each thread answers as itself, so opening another one keeps its id and title.
+			response.json((req) => {
+				const threadId = String(req.params.threadId);
+				const listed = threadListResponse(
+					Math.max(1, values.history),
+					false,
+				).threads.find((thread) => thread.threadId === threadId);
+				return {
+					...threadDetailResponse(
+						values.contents,
+						values.agent,
+						values.approvalDiff,
+					),
+					threadId,
+					...(listed ? { title: listed.title } : {}),
+				};
+			}),
 		),
 		...onBothBases(
 			'get',
@@ -247,7 +261,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		useAIAssistantStore.setState({
 			conversations: { [conversation.id]: conversation },
 			activeConversationId: conversation.id,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 			isLoadingThreads: false,
 			answeredBlocks: values.answered ? answeredBlocks() : {},
 			// A stream is client state with no response behind it: the events the

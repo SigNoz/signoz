@@ -1,0 +1,61 @@
+// Same surface as the shared and heatmap tooltips.
+.container {
+	--gutter: 14px;
+	--row-inset: 6px;
+
+	font-family: 'Inter';
+	font-size: 12px;
+	background: var(--l2-background);
+	-webkit-font-smoothing: antialiased;
+	color: var(--l2-foreground);
+	border-radius: 6px;
+	border: 1px solid var(--l2-border);
+	display: flex;
+	flex-direction: column;
+	min-width: 240px;
+
+	&.pinned {
+		border-color: var(--ring);
+	}
+}
+
+.divider {
+	display: block;
+	width: 100%;
+	height: 1px;
+	background-color: var(--l2-border);
+}
+
+// Same as the heatmap tooltip's bucket row.
+.title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-2);
+	padding: var(--spacing-6) var(--gutter);
+}
+
+.titleBucket,
+.titleCount {
+	font-family: var(--font-mono);
+	font-size: var(--font-size-xs);
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--popover-foreground);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.titleSeparator {
+	flex: 1;
+	border-width: 0.5px;
+	border-style: dashed;
+	border-color: currentColor;
+	min-width: 24px;
+	opacity: 0.5;
+}
+
+// Same inset as the time-series tooltip's active row.
+.activeItem {
+	padding: 0 var(--spacing-4) var(--spacing-4);
+}

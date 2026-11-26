@@ -18,6 +18,7 @@ import {
 
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
+import { formatRelativeTime } from '../../utils/formatRelativeTime';
 
 import styles from './ConversationItem.module.scss';
 
@@ -28,32 +29,6 @@ interface ConversationItemProps {
 	onRename: (id: string, title: string) => void;
 	onArchive: (id: string) => void;
 	onRestore: (id: string) => void;
-}
-
-function formatRelativeTime(ts: number): string {
-	if (!Number.isFinite(ts)) {
-		return '';
-	}
-	const diff = Date.now() - ts;
-	const mins = Math.floor(diff / 60_000);
-	if (mins < 1) {
-		return 'now';
-	}
-	if (mins < 60) {
-		return `${mins}m`;
-	}
-	const hrs = Math.floor(mins / 60);
-	if (hrs < 24) {
-		return `${hrs}h`;
-	}
-	const days = Math.floor(hrs / 24);
-	if (days < 7) {
-		return `${days}d`;
-	}
-	return new Date(ts).toLocaleDateString(undefined, {
-		month: 'short',
-		day: 'numeric',
-	});
 }
 
 export default function ConversationItem({
@@ -73,6 +48,16 @@ export default function ConversationItem({
 	const isReplying = useAIAssistantStore((s) =>
 		Boolean(s.streams[conversation.id]?.isStreaming),
 	);
+	const hasUnreadReply = useAIAssistantStore((s) =>
+		s.unreadReplyIds.includes(conversation.id),
+	);
+	// Replying wins: the dot turns blue once that reply lands unseen.
+	let dotState: 'replying' | 'unread' | undefined;
+	if (isReplying) {
+		dotState = 'replying';
+	} else if (hasUnreadReply) {
+		dotState = 'unread';
+	}
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -171,13 +156,23 @@ export default function ConversationItem({
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}
+			aria-label={
+				dotState === 'unread' ? `Noz replied in ${displayTitle}` : undefined
+			}
 			onKeyDown={(e): void => {
 				if (e.key === 'Enter' || e.key === ' ') {
 					onSelect(conversation.id);
 				}
 			}}
 		>
-			<span className={cx(styles.dot, { [styles.isReplying]: isReplying })} />
+			<span
+				className={cx(styles.dot, {
+					[styles.isReplying]: dotState === 'replying',
+					[styles.hasUnreadReply]: dotState === 'unread',
+				})}
+				data-state={dotState}
+				data-testid={`ai-conversation-item-${conversation.id}-dot`}
+			/>
 
 			<div className={styles.body}>
 				{isEditing ? (
