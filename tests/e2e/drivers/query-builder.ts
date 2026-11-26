@@ -40,14 +40,42 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 
 	// Waits on a request the action started: a response to one already in
 	// flight (e.g. after a structural edit) would end the wait too early.
+	// An aborted request has no response and does not count: Run after a
+	// cancel re-sends the cancelled query and aborts it for the new one.
 	const firedBy = async (action: () => Promise<void>): Promise<V5Body[]> => {
 		const before = bodies.length;
-		const answered = page
-			.waitForRequest((r) => isQueryRange(r.url()) && r.method() === 'POST')
-			.then((request) => request.response());
-		await action();
-		await answered;
+		let onRequest: (request: Request) => void = () => undefined;
+		const answered = new Promise<void>((resolve) => {
+			onRequest = (request): void => {
+				if (!isQueryRange(request.url()) || request.method() !== 'POST') {
+					return;
+				}
+				void request.response().then((response) => {
+					if (response) {
+						resolve();
+					}
+				});
+			};
+		});
+		page.on('request', onRequest);
+		try {
+			await action();
+			await answered;
+		} finally {
+			page.off('request', onRequest);
+		}
 		return bodies.slice(before);
+	};
+
+	// Every explorer's content pane has a scrollbar that initialises on idle
+	// and re-parents the query editors. Keys typed across that move land at
+	// position 0.
+	const scrollbarSettled = async (): Promise<void> => {
+		await expect(
+			page
+				.getByTestId('quick-filters-layout-content')
+				.locator('[data-overlayscrollbars-viewport]'),
+		).toBeAttached();
 	};
 
 	const qb: QueryBuilderDriver = {
@@ -74,12 +102,14 @@ function queryBuilderDriver(page: Page): QueryBuilderDriver {
 					page.goto(url),
 				]);
 				await expect(qb.query('A').filter.content()).toBeVisible();
+				await scrollbarSettled();
 				return [];
 			}
 			const fired = await firedBy(async () => {
 				await page.goto(url);
 			});
 			await expect(qb.query('A').filter.content()).toBeVisible();
+			await scrollbarSettled();
 			return fired;
 		},
 		query(name) {

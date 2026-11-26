@@ -133,6 +133,30 @@ uses the same layout: `k8s.namespace.name` came out as `8s.namespace.namek`.
 the expression, and the colour checks use `toHaveCSS`, which retries, instead
 of a fixed wait for the highlighter.
 
+The query builder driver's `editorAt(...).type` does not retype, so
+`qb.openExplorer` waits for the scrollbar viewport, as
+`tracesExplorerDriver.goto` does.
+
+## The having and aggregation editors dropped keys
+
+Both editors copied the query state back into CodeMirror after every edit. When
+that copy arrived late it held an older text, replaced the newer typing and
+moved the caret to the start: `count() NOT IN [1, 2]` was sent as
+`, 2]count() NOT IN []`, and `count_distinct(service.name)` as
+`count_distinct(service)`. After #13735 removed a re-render from the quick
+filter headers, the copy arrived late often enough to fail `addons` TC-22 and
+`aggregation` TC-17 on most CI runs. `useEditorDraft` now ignores the copies of
+the editor's own edits. Keys typed while the traces explorer loads could still
+go missing (`count()` as `c()`), so `editorAt(...).type` retypes until the
+editor holds exactly the text, like `querySearch.apply`.
+
+## Run after a cancel re-sends the cancelled query
+
+Since #13735, clicking Run in the logs explorer after a cancel first re-sends
+the cancelled query, aborts it, then sends the new one. `qb.run()` returned on
+the aborted request, so `run` TC-34 read the old filter. `firedBy` now waits
+for a request that gets a response.
+
 ## Typing an expression logs parser errors
 
 `parser/analyzeQuery.ts` builds an ANTLR parser without removing the default
