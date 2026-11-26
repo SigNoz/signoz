@@ -8,6 +8,7 @@ Quick reference for permission-gating UI. All components use AND semantics: user
 Need to gate...
 ├── A button? → AuthZButton
 ├── Rows of a dropdown menu? → AuthZDropdown
+├── Options of a picker that links items (channels, rules)? → AuthZSelect, fed by useLinkPickerAccess
 ├── A @signozhq/ui control with its own disabledTooltip (Input, Switch)? → useAuthZDisabled
 ├── Any other element with tooltip on deny? → AuthZTooltip
 ├── A section inside a page? → withAuthZContent (preferred)

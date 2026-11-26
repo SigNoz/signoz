@@ -104,4 +104,33 @@ describe('useLinkPickerAccess', () => {
 		expect(result.current.getAccess('b').disabled).toBe(false);
 		expect(result.current.getAccess('c').disabled).toBe(true);
 	});
+
+	it('tells a refused item from one still being checked', () => {
+		jest.mocked(useAuthZ).mockImplementation((checks, options) => ({
+			...mockUseAuthZGrantAll(checks),
+			permissions:
+				options?.enabled === false
+					? null
+					: (Object.fromEntries(
+							checks.map((check) => [
+								check,
+								{ isGranted: check !== item('a').detach },
+							]),
+						) as UseAuthZResult['permissions']),
+		}));
+		const { result } = renderAccess({
+			owner: OWNER,
+			linkedIds: ['a'],
+			optionIds: ['a', 'b'],
+		});
+
+		expect(result.current.getAccess('a')).toMatchObject({
+			disabled: true,
+			denied: true,
+		});
+		expect(result.current.getAccess('b')).toMatchObject({
+			disabled: true,
+			denied: false,
+		});
+	});
 });

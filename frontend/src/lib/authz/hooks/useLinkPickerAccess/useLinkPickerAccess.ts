@@ -13,8 +13,12 @@ import type {
 
 const NO_CHECKS: BrandedPermission[] = [];
 const NO_IDS: string[] = [];
-const ALLOWED: LinkAccess = { disabled: false };
-const PENDING: LinkAccess = { disabled: true, reason: AUTHZ_LOADING_TOOLTIP };
+const ALLOWED: LinkAccess = { disabled: false, denied: false };
+const PENDING: LinkAccess = {
+	disabled: true,
+	reason: AUTHZ_LOADING_TOOLTIP,
+	denied: false,
+};
 
 /**
  * Access to each option of a picker that links items to an owner, such as
@@ -95,7 +99,11 @@ export function useLinkPickerAccess({
 				(permission) => !results[permission].isGranted,
 			);
 			return denied.length > 0
-				? { disabled: true, reason: formatDeniedMessage(denied, user.id) }
+				? {
+						disabled: true,
+						reason: formatDeniedMessage(denied, user.id),
+						denied: true,
+					}
 				: ALLOWED;
 		},
 		[

@@ -4,6 +4,8 @@ export interface LinkAccess {
 	disabled: boolean;
 	/** The denial, or that the check is still running. */
 	reason?: string;
+	/** A check refused it, as opposed to one still running. */
+	denied: boolean;
 }
 
 export interface LinkPermissions {
