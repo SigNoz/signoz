@@ -32,9 +32,7 @@ export function editorAt(page: Page, root: () => Locator): FilterEditor {
 			await expect(async () => {
 				await editor.clear();
 				await page.keyboard.type(text);
-				await expect
-					.poll(() => EDITOR_DOC(root()), { timeout: 1_000 })
-					.toBe(text);
+				await expect.poll(() => EDITOR_DOC(root()), { timeout: 1_000 }).toBe(text);
 			}).toPass({ timeout: 15_000 });
 		},
 		async append(text) {
