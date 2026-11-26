@@ -106,10 +106,18 @@ describe('useFilterZoneDraft', () => {
 			"created_by = 'a@x.io' AND name = 'x'",
 		);
 
-		act(() => result.current.handleClearCreatedBy());
+		act(() => result.current.handleCreatedByCommit([]));
 
 		expect(result.current.draft).toBe("name = 'x'");
 		expect(onQueryChange).toHaveBeenCalledWith("name = 'x'");
+	});
+
+	it('runs the remaining creators when one is removed', () => {
+		const { result, onQueryChange } = setup("created_by IN ['a@x.io', 'b@x.io']");
+
+		act(() => result.current.handleCreatedByCommit(['b@x.io']));
+
+		expect(onQueryChange).toHaveBeenCalledWith("created_by = 'b@x.io'");
 	});
 
 	it('empties the draft and runs the empty query on clear', () => {

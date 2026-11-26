@@ -10,9 +10,9 @@ interface Props {
 	setDraft: (newDraft: string) => void;
 }
 
-// Picks splice into the draft and run when the dropdown closes; Clear runs at
-// once. A status term the box holds with another operator shows as nothing
-// picked.
+// Picks splice into the draft and run when the dropdown closes; a tag's × or
+// Clear runs at once. A status term the box holds with another operator shows
+// as nothing picked.
 function ServiceAccountStatusFilter({
 	draft,
 	disabled,
@@ -27,7 +27,7 @@ function ServiceAccountStatusFilter({
 			testId="sa-filter-status"
 			disabled={disabled}
 			onChange={(statuses): void => setDraft(withStatuses(draft, statuses))}
-			onClear={(): void => onApplyDraft(withStatuses(draft, []))}
+			onCommit={(statuses): void => onApplyDraft(withStatuses(draft, statuses))}
 			onDropdownVisibleChange={(open): void => {
 				if (!open) {
 					onApplyDraft(draft);

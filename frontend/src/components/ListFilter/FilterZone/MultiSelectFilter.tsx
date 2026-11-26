@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ConfigProvider, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import cx from 'classnames';
@@ -20,7 +21,9 @@ interface Props {
 	placeholder: string;
 	testId: string;
 	onChange: (values: string[]) => void;
-	onClear?: () => void;
+	// A change made with the dropdown closed (a tag's ×, the clear icon) has no
+	// close to run on, so it is committed here instead of staged via onChange.
+	onCommit?: (values: string[]) => void;
 	onDropdownVisibleChange?: (open: boolean) => void;
 	disabled?: boolean;
 }
@@ -31,10 +34,25 @@ function MultiSelectFilter({
 	placeholder,
 	testId,
 	onChange,
-	onClear,
+	onCommit,
 	onDropdownVisibleChange,
 	disabled = false,
 }: Props): JSX.Element {
+	const [open, setOpen] = useState(false);
+
+	const handleChange = (next: string[]): void => {
+		if (!open && onCommit) {
+			onCommit(next);
+			return;
+		}
+		onChange(next);
+	};
+
+	const handleDropdownVisibleChange = (nextOpen: boolean): void => {
+		setOpen(nextOpen);
+		onDropdownVisibleChange?.(nextOpen);
+	};
+
 	return (
 		<ConfigProvider theme={CHECKBOX_SELECT_THEME}>
 			<Select
@@ -51,7 +69,6 @@ function MultiSelectFilter({
 				menuItemSelectedIcon={null}
 				data-testid={testId}
 				disabled={disabled}
-				onClear={onClear}
 				optionRender={(option): JSX.Element => (
 					<div
 						className={styles.checkOption}
@@ -66,8 +83,8 @@ function MultiSelectFilter({
 						<span className={styles.checkOptionLabel}>{option.label}</span>
 					</div>
 				)}
-				onChange={(next): void => onChange(next as string[])}
-				onDropdownVisibleChange={onDropdownVisibleChange}
+				onChange={(next): void => handleChange(next as string[])}
+				onDropdownVisibleChange={handleDropdownVisibleChange}
 			/>
 		</ConfigProvider>
 	);

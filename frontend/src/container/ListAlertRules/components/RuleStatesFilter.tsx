@@ -25,22 +25,18 @@ function RuleStatesFilter({
 	onChange,
 }: RuleStatesFilterProps): JSX.Element {
 	const [draft, setDraft] = useState(states);
-	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
 		setDraft(states);
 	}, [states]);
 
-	const handleChange = (next: string[]): void => {
+	const handleCommit = (next: string[]): void => {
 		setDraft(next);
-		if (!open) {
-			onChange(next);
-		}
+		onChange(next);
 	};
 
-	const handleDropdownVisibleChange = (nextOpen: boolean): void => {
-		setOpen(nextOpen);
-		if (!nextOpen && !isSameStates(draft, states)) {
+	const handleDropdownVisibleChange = (open: boolean): void => {
+		if (!open && !isSameStates(draft, states)) {
 			onChange(draft);
 		}
 	};
@@ -51,7 +47,8 @@ function RuleStatesFilter({
 			options={STATE_OPTIONS}
 			placeholder="Status"
 			testId="alert-rules-filter-states"
-			onChange={handleChange}
+			onChange={setDraft}
+			onCommit={handleCommit}
 			onDropdownVisibleChange={handleDropdownVisibleChange}
 		/>
 	);
