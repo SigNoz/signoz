@@ -28,4 +28,6 @@ until curl -sf http://127.0.0.1:6006/index.json >/dev/null 2>&1; do
 	sleep 1
 done
 
-pnpm exec test-storybook --ci --maxWorkers=2 --testTimeout 30000 "$@"
+# The first story of a heavy page compiles it on the cold dev server inside its
+# own test, which outlasts 30s on a loaded runner.
+pnpm exec test-storybook --ci --maxWorkers=2 --testTimeout 60000 "$@"
