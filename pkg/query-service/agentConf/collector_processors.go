@@ -15,8 +15,6 @@ var (
 	CodeCollectorConfigMarshalFailed   = errors.MustNewCode("collector_config_marshal_failed")
 )
 
-// loggedProcessorConfs are the processors of the SaaS collector config (SigNoz/charts-saas-v3)
-// whose config is safe to log; any other processor config can carry secrets.
 var loggedProcessorConfs = []string{
 	"batch",
 	"batch/meter",
@@ -28,10 +26,7 @@ var loggedProcessorConfs = []string{
 	"signozspanmetrics/delta",
 }
 
-// ProcessorsConfByCollectorPipeline returns, for each service pipeline, its processors in run
-// order: a single-key map with the config for log pipeline processors and loggedProcessorConfs,
-// and just the name for the rest. A processor listed twice is kept twice. Exporters, extensions and
-// receivers are left out.
+// ProcessorsConfByCollectorPipeline keeps config only for log pipeline processors and loggedProcessorConfs, since others can carry secrets.
 func ProcessorsConfByCollectorPipeline(collectorConfYaml []byte) (map[string][]byte, error) {
 	var collectorConf struct {
 		Processors map[string]any `yaml:"processors"`
