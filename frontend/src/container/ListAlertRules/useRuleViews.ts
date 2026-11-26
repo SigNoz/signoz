@@ -62,9 +62,13 @@ const toastApiError =
 	};
 
 /** Org-shared saved views for the alert rules list, backed by the rule views API. */
-export function useRuleViews(): SavedListViewsApi<RuleListFilter> {
+export function useRuleViews({
+	enabled,
+}: {
+	enabled: boolean;
+}): SavedListViewsApi<RuleListFilter> {
 	const queryClient = useQueryClient();
-	const { data, isLoading } = useListRuleViews();
+	const { data, isLoading } = useListRuleViews({ query: { enabled } });
 
 	const views = useMemo<RuleView[]>(
 		() => (data?.data?.views ?? []).map(toRuleView),

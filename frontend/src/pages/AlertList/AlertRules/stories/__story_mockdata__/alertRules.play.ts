@@ -291,14 +291,13 @@ const rowItem = (testId: string): Promise<HTMLElement> =>
 export const expectListDenied = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
-	await within(canvasElement).findByText(
-		/is not authorized/,
-		undefined,
-		untilLoaded,
-	);
+	const canvas = within(canvasElement);
+	// One callout for the table, one for the saved views.
 	await expect(
-		within(canvasElement).queryAllByTestId('alert-actions'),
-	).toHaveLength(0);
+		canvas.findAllByText(/is not authorized/, undefined, untilLoaded),
+	).resolves.toHaveLength(2);
+	await expect(canvas.getByTestId('views-rail-denied')).toBeVisible();
+	await expect(canvas.queryAllByTestId('alert-actions')).toHaveLength(0);
 };
 
 export const expectNewAlertLocked = async ({

@@ -8,14 +8,25 @@ import styles from './ViewsRailGuard.module.scss';
 interface Props {
 	/** What reading the list's saved views needs. */
 	checks: BrandedPermission[];
+	/**
+	 * Show the rail until the check denies it: while it runs, and when the check
+	 * itself fails, leaving the API to decide. For a list that renders before its
+	 * own check does.
+	 */
+	shouldRenderUntilDenied?: boolean;
 	children: ReactElement;
 }
 
-function ViewsRailGuard({ checks, children }: Props): JSX.Element {
+function ViewsRailGuard({
+	checks,
+	shouldRenderUntilDenied = false,
+	children,
+}: Props): JSX.Element {
 	return (
 		<AuthZGuardContent
 			checks={checks}
-			onFailRenderContent={false}
+			onFailRenderContent={shouldRenderUntilDenied}
+			fallbackOnLoading={shouldRenderUntilDenied ? children : undefined}
 			fallback={({ deniedPermissions }): ReactElement => (
 				<div className={styles.denied} data-testid="views-rail-denied">
 					<PermissionDeniedCallout deniedPermissions={deniedPermissions} />

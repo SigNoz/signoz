@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { type ReactElement, useCallback, useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
 import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
@@ -6,6 +6,7 @@ import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListComman
 import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
+import ViewsRailGuard from 'components/ListViews/ViewsRail/ViewsRailGuard';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
@@ -13,6 +14,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
 import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -74,13 +76,30 @@ function ListAlertRules(): JSX.Element {
 	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
-	const ruleViews = useAlertRuleViews({ filter, applyFilter });
+	const ruleList = useAuthZ(RULE_LIST_CHECKS);
+	const isRuleListDenied =
+		!ruleList.isLoading &&
+		!ruleList.error &&
+		!ruleList.isGranted(RuleListPermission);
+	const ruleViews = useAlertRuleViews({
+		filter,
+		applyFilter,
+		canListRules: !isRuleListDenied,
+	});
 
 	const railCollapsed = useAlertRuleViewsStore((s) => s.railCollapsed);
 	const setRailCollapsed = useAlertRuleViewsStore((s) => s.setRailCollapsed);
 	const toggleRail = useCallback((): void => {
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
+	const guardViewsRail = useCallback(
+		(content: ReactElement): ReactElement => (
+			<ViewsRailGuard checks={RULE_LIST_CHECKS} shouldRenderUntilDenied>
+				{content}
+			</ViewsRailGuard>
+		),
+		[],
+	);
 
 	const viewCtx = useRuleViewCtx();
 	const clientFilter = findRuleBuiltinView(ruleViews.activeViewId)?.clientFilter;
@@ -249,6 +268,7 @@ function ListAlertRules(): JSX.Element {
 				renameTestIdPrefix="rename-alert-rule-view"
 				viewNamePlaceholder="e.g. Prod alerts"
 				deleteDescription="Views are shared across your organization, so this removes it for everyone. Alert rules are not affected."
+				guard={guardViewsRail}
 			/>
 			<div className={styles.main}>
 				<ListHeaderZone testId="alert-rules-header-zone">

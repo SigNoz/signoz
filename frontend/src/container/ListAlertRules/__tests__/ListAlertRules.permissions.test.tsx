@@ -2,6 +2,7 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import {
 	mockUseAuthZDenyAll,
 	denyPermissions,
+	mockUseAuthZGrantAll,
 	mockUseAuthZGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
 import {
@@ -14,7 +15,9 @@ import {
 import {
 	alertRulesFixture,
 	listRulesV3Response,
+	ruleViewsFixture,
 } from 'mocks-server/__mockdata__/alert_rules';
+import * as rulesApi from 'api/generated/services/rules';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
@@ -104,7 +107,8 @@ describe('ListAlertRules — permissions', () => {
 		jest.mocked(useAuthZ).mockImplementation(mockUseAuthZDenyAll);
 		renderListAlertRules();
 
-		await expect(screen.findByText('list:rule:*')).resolves.toBeInTheDocument();
+		// One callout for the table, one for the saved views.
+		await expect(screen.findAllByText('list:rule:*')).resolves.toHaveLength(2);
 		expect(screen.queryByText('High CPU Alert')).not.toBeInTheDocument();
 	});
 
@@ -160,5 +164,37 @@ describe('ListAlertRules — permissions', () => {
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-delete')).resolves.toBe(true);
 		await expect(isRowDisabled('alert-actions-item-toggle')).resolves.toBe(false);
+	});
+
+	describe('saved views', () => {
+		it('shows the denial and asks for no views without list', async () => {
+			denyPermissions(RuleListPermission);
+			const listViews = jest.spyOn(rulesApi, 'useListRuleViews');
+			renderListAlertRules();
+
+			await expect(
+				screen.findByTestId('views-rail-denied'),
+			).resolves.toHaveTextContent('list:rule');
+			expect(listViews).toHaveBeenCalled();
+			for (const [options] of listViews.mock.calls) {
+				expect(options?.query?.enabled).toBe(false);
+			}
+			listViews.mockRestore();
+		});
+
+		it('still lists the views when the permission check fails', async () => {
+			jest.mocked(useAuthZ).mockImplementation((checks) => ({
+				...mockUseAuthZGrantAll(checks),
+				error: new Error('check failed'),
+				permissions: null,
+				isGranted: (): boolean => false,
+			}));
+			renderListAlertRules();
+
+			await expect(
+				screen.findByTestId(`alert-rules-view-${ruleViewsFixture[0].id}`),
+			).resolves.toBeInTheDocument();
+			expect(screen.queryByTestId('views-rail-denied')).not.toBeInTheDocument();
+		});
 	});
 });

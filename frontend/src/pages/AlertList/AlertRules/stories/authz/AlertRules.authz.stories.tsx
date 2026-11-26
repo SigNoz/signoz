@@ -40,7 +40,7 @@ export default meta;
 
 type Story = StoryObj<AlertRulesArgs>;
 
-/** A permission callout takes the table's place. */
+/** A permission callout takes the place of the table and of the saved views. */
 export const NoList: Story = {
 	args: { revoked: ['list:rule'] },
 	play: expectListDenied,
