@@ -265,9 +265,17 @@ func escapeLabelValues(alerts []*types.Alert) []*types.Alert {
 	escaped := make([]*types.Alert, 0, len(alerts))
 
 	for _, alert := range alerts {
-		copied := *alert
-		copied.Labels = escapeLabels(alert.Labels)
-		escaped = append(escaped, &copied)
+		escaped = append(escaped, &types.Alert{
+			Alert: model.Alert{
+				Labels:       escapeLabels(alert.Labels),
+				Annotations:  alert.Annotations.Clone(),
+				StartsAt:     alert.StartsAt,
+				EndsAt:       alert.EndsAt,
+				GeneratorURL: alert.GeneratorURL,
+			},
+			UpdatedAt: alert.UpdatedAt,
+			Timeout:   alert.Timeout,
+		})
 	}
 
 	return escaped

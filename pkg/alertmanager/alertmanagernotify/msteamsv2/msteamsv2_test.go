@@ -565,6 +565,63 @@ func TestEscapeMarkdown(t *testing.T) {
 	}
 }
 
+func TestEscapeLabelValues(t *testing.T) {
+	startsAt := time.Unix(1700000000, 0)
+
+	testCases := []struct {
+		name                string
+		alert               *types.Alert
+		expectedLabels      model.LabelSet
+		expectedAnnotations model.LabelSet
+	}{
+		{
+			name: "MarkdownInLabels_CopyEscaped_OriginalUntouched",
+			alert: &types.Alert{
+				Alert: model.Alert{
+					Labels:       model.LabelSet{"alertname": "a*b*c"},
+					Annotations:  model.LabelSet{"summary": "**bold**"},
+					StartsAt:     startsAt,
+					EndsAt:       startsAt.Add(time.Minute),
+					GeneratorURL: "https://signoz.test/alerts",
+				},
+				UpdatedAt: startsAt,
+				Timeout:   true,
+			},
+			expectedLabels:      model.LabelSet{"alertname": `a\*b\*c`},
+			expectedAnnotations: model.LabelSet{"summary": "**bold**"},
+		},
+		{
+			name:                "PlainLabels_CopyUnchanged_OriginalUntouched",
+			alert:               &types.Alert{Alert: model.Alert{Labels: model.LabelSet{"service": "checkout"}, Annotations: model.LabelSet{}, StartsAt: startsAt}},
+			expectedLabels:      model.LabelSet{"service": "checkout"},
+			expectedAnnotations: model.LabelSet{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			originalLabels := testCase.alert.Labels.Clone()
+			originalAnnotations := testCase.alert.Annotations.Clone()
+
+			escaped := escapeLabelValues([]*types.Alert{testCase.alert})
+			require.Len(t, escaped, 1)
+
+			assert.Equal(t, testCase.expectedLabels, escaped[0].Labels)
+			assert.Equal(t, testCase.expectedAnnotations, escaped[0].Annotations)
+			assert.Equal(t, testCase.alert.StartsAt, escaped[0].StartsAt)
+			assert.Equal(t, testCase.alert.EndsAt, escaped[0].EndsAt)
+			assert.Equal(t, testCase.alert.GeneratorURL, escaped[0].GeneratorURL)
+			assert.Equal(t, testCase.alert.UpdatedAt, escaped[0].UpdatedAt)
+			assert.Equal(t, testCase.alert.Timeout, escaped[0].Timeout)
+
+			escaped[0].Annotations["added"] = "x"
+			escaped[0].Labels["added"] = "x"
+			assert.Equal(t, originalLabels, testCase.alert.Labels)
+			assert.Equal(t, originalAnnotations, testCase.alert.Annotations)
+		})
+	}
+}
+
 func TestPrepareContentEscapesLabelValues(t *testing.T) {
 	testCases := []struct {
 		name          string
