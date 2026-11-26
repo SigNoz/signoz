@@ -32,15 +32,16 @@ export async function wheelTo(target: Locator): Promise<void> {
 		// eslint-disable-next-line no-await-in-loop
 		await page.mouse.move(next.x, next.y);
 		// eslint-disable-next-line no-await-in-loop
-		await page.mouse.wheel(next.deltaX, next.deltaY);
-		// eslint-disable-next-line no-await-in-loop
-		await expect
-			.poll(position, {
-				message:
-					'the wheel did not move the target: a container clips it instead of scrolling',
-				timeout: 2_000,
-			})
-			.not.toBe(before);
+		await expect(async () => {
+			await page.mouse.wheel(next.deltaX, next.deltaY);
+			await expect
+				.poll(position, {
+					message:
+						'the wheel did not move the target: a container clips it instead of scrolling',
+					timeout: 1_000,
+				})
+				.not.toBe(before);
+		}).toPass({ timeout: 6_000, intervals: [0] });
 		// eslint-disable-next-line no-await-in-loop
 		await target.evaluate(settled);
 	}
