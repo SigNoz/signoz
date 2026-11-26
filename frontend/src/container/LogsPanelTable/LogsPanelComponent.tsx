@@ -42,27 +42,17 @@ function LogsPanelComponent({
 	const handleChangePageSize = (value: number): void => {
 		setPageSize(value);
 		setOffset(0);
-		setRequestData((prev) => {
-			const newQueryData = {
-				...prev.query,
-				builder: {
-					...prev.query.builder,
-					queryData: prev.query.builder.queryData.map((qd, i) =>
-						i === 0 ? { ...qd, pageSize: value } : qd,
-					),
+		setRequestData((prev) => ({
+			...prev,
+			tableParams: {
+				...prev.tableParams,
+				pageSize: value,
+				pagination: {
+					limit: 0,
+					offset: 0,
 				},
-			};
-			return {
-				...prev,
-				query: newQueryData,
-				tableParams: {
-					pagination: {
-						limit: 0,
-						offset: 0,
-					},
-				},
-			};
-		});
+			},
+		}));
 	};
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
@@ -111,6 +101,7 @@ function LogsPanelComponent({
 		setRequestData((prev) => ({
 			...prev,
 			tableParams: {
+				...prev.tableParams,
 				pagination: {
 					limit: widget.query?.builder?.queryData[0]?.limit || 0,
 					offset: newOffset < 0 ? 0 : newOffset,
