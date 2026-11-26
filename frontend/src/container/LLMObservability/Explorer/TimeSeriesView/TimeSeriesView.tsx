@@ -131,7 +131,7 @@ function TimeSeriesViewContainer({
 				setWarning={setWarning}
 				allowExport
 				exportFileName="ai-traces-timeseries"
-				headerActions={<AIExplorerActions />}
+				headerActions={<AIExplorerActions panelType={PANEL_TYPES.TIME_SERIES} />}
 			/>
 		</div>
 	);

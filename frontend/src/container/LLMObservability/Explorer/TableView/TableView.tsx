@@ -106,7 +106,7 @@ function TableView({
 			{isError && error && <ErrorInPlace error={error as APIError} />}
 			{!isError && (
 				<div className="traces-table-view-header">
-					<AIExplorerActions />
+					<AIExplorerActions panelType={PANEL_TYPES.TABLE} />
 					{data && (
 						<ExportMenu
 							dataSource={DataSource.TRACES}

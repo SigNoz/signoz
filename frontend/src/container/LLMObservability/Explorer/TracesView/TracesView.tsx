@@ -192,7 +192,7 @@ function TracesView({
 		<div className={styles.container}>
 			<div className={styles.actionsContainer}>
 				<div className="trace-explorer-controls">
-					<AIExplorerActions />
+					<AIExplorerActions panelType={PANEL_TYPES.TRACE} />
 					<div className={styles.orderByContainer}>
 						<div className={styles.orderByLabel}>
 							Order by <Minus size={14} /> <ArrowUp10 size={14} />

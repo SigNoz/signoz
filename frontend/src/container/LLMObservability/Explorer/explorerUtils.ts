@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getActiveBuilder,
@@ -65,11 +66,12 @@ export const getAlertQuery = (
 export const getExportQuery = (
 	stagedQuery: Query,
 	panelType: PANEL_TYPES,
+	selectColumns: TelemetryFieldKey[] = defaultSelectedColumns,
 ): Query => {
 	const query = getAlertQuery(stagedQuery, panelType);
 	const [queryData] = getActiveBuilder(query).queryData;
 	if (panelType === PANEL_TYPES.LIST && queryData) {
-		queryData.selectColumns = defaultSelectedColumns;
+		queryData.selectColumns = selectColumns;
 	}
 	return query;
 };

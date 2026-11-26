@@ -214,7 +214,10 @@ function ListView({
 	return (
 		<div className={styles.container}>
 			<div className="trace-explorer-controls">
-				<AIExplorerActions />
+				<AIExplorerActions
+					panelType={PANEL_TYPES.LIST}
+					selectColumns={selectColumns}
+				/>
 				<div className="order-by-container">
 					<div className="order-by-label">
 						Order by <Minus size={14} /> <ArrowUp10 size={14} />

@@ -15,7 +15,7 @@ export const ExplorerActionsSource = {
 	LOGS_EXPLORER: DataSource.LOGS,
 	TRACES_EXPLORER: DataSource.TRACES,
 	METRICS_EXPLORER: DataSource.METRICS,
-	AI_OBSERVABILITY: 'ai_observability',
+	AI_OBSERVABILITY_EXPLORER: 'ai_observability',
 } as const;
 
 export type ExplorerActionsSource =
@@ -40,7 +40,7 @@ export const EXPLORER_ACTION_EVENTS: Record<
 		addToDashboard: MetricsExplorerEvents.AddToDashboardClicked,
 		exported: MetricsExplorerEvents.AddToDashboardSuccessful,
 	},
-	[ExplorerActionsSource.AI_OBSERVABILITY]: {
+	[ExplorerActionsSource.AI_OBSERVABILITY_EXPLORER]: {
 		createAlert: 'AI Observability Explorer: Create alert',
 		addToDashboard: 'AI Observability Explorer: Add to dashboard clicked',
 		exported: 'AI Observability Explorer: Add to dashboard successful',

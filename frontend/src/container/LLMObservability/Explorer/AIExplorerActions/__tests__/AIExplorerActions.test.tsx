@@ -1,5 +1,6 @@
 import { logEventMock } from '__tests__/logEventMock';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { QueryParams } from 'constants/query';
 import {
 	initialFormulaBuilderFormValues,
@@ -17,7 +18,6 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
-import { defaultSelectedColumns } from '../../ListView/configs';
 import AIExplorerActions from '../AIExplorerActions';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
@@ -27,6 +27,11 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 const mockedUseQueryBuilder = jest.mocked(useQueryBuilder);
 
 const FILTER = "gen_ai.request.model = 'gpt-4o'";
+
+const USER_COLUMNS: TelemetryFieldKey[] = [
+	{ name: 'gen_ai.request.model', fieldContext: 'attribute' },
+	{ name: 'duration_nano' },
+];
 
 function aiStagedQuery(aggregations?: IBuilderQuery['aggregations']): Query {
 	const aiBuilder = getActiveBuilder(initialQueryAIWithType);
@@ -53,6 +58,7 @@ function aiStagedQuery(aggregations?: IBuilderQuery['aggregations']): Query {
 async function exportFrom(
 	panelType: PANEL_TYPES,
 	stagedQuery: Query = aiStagedQuery(),
+	selectColumns?: TelemetryFieldKey[],
 ): Promise<void> {
 	mockedUseQueryBuilder.mockReturnValue({
 		stagedQuery,
@@ -74,7 +80,9 @@ async function exportFrom(
 	);
 	const user = userEvent.setup();
 
-	render(<AIExplorerActions />);
+	render(
+		<AIExplorerActions panelType={panelType} selectColumns={selectColumns} />,
+	);
 	await user.click(screen.getByTestId('explorer-add-to-dashboard'));
 	await user.click(await screen.findByTestId('export-panel-new-dashboard'));
 
@@ -84,14 +92,15 @@ async function exportFrom(
 async function createAlertFrom(
 	panelType: PANEL_TYPES,
 	stagedQuery: Query = aiStagedQuery(),
+	contextPanelType: PANEL_TYPES | null = panelType,
 ): Promise<Query> {
 	const navigate = mockAppNavigate();
 	mockedUseQueryBuilder.mockReturnValue({
 		stagedQuery,
-		panelType,
+		panelType: contextPanelType,
 	} as ReturnType<typeof useQueryBuilder>);
 
-	render(<AIExplorerActions />);
+	render(<AIExplorerActions panelType={panelType} />);
 	await userEvent.setup().click(screen.getByTestId('explorer-create-alert'));
 
 	expect(navigate).toHaveBeenCalledTimes(1);
@@ -122,14 +131,14 @@ describe('AIExplorerActions', () => {
 		expect(logEventMock).toHaveBeenCalledWith(
 			'AI Observability Explorer: Add to dashboard clicked',
 			{
-				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY,
+				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY_EXPLORER,
 				panelType: PANEL_TYPES.TABLE,
 			},
 		);
 		expect(logEventMock).toHaveBeenCalledWith(
 			'AI Observability Explorer: Add to dashboard successful',
 			{
-				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY,
+				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY_EXPLORER,
 				panelType: PANEL_TYPES.TABLE,
 				isNewDashboard: true,
 				dashboardName: expect.any(String),
@@ -137,8 +146,8 @@ describe('AIExplorerActions', () => {
 		);
 	});
 
-	it('list: exports an AI List panel with the list columns and no group by, having or order by', async () => {
-		await exportFrom(PANEL_TYPES.LIST);
+	it('list: exports an AI List panel with the user picked columns and no group by, having or order by', async () => {
+		await exportFrom(PANEL_TYPES.LIST, aiStagedQuery(), USER_COLUMNS);
 
 		const { panelKind, query } = exportedPanel();
 		expect(panelKind).toBe('signoz/ListPanel');
@@ -148,7 +157,7 @@ describe('AIExplorerActions', () => {
 			groupBy: [],
 			having: { expression: '' },
 			orderBy: [],
-			selectColumns: defaultSelectedColumns,
+			selectColumns: USER_COLUMNS,
 		});
 	});
 
@@ -204,10 +213,22 @@ describe('AIExplorerActions', () => {
 		expect(logEventMock).toHaveBeenCalledWith(
 			'AI Observability Explorer: Create alert',
 			{
-				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY,
+				sourcepage: ExplorerActionsSource.AI_OBSERVABILITY_EXPLORER,
 				panelType: PANEL_TYPES.TIME_SERIES,
 			},
 		);
+	});
+
+	it('create alert: the view panel type shapes the query while the query builder has none', async () => {
+		const query = await createAlertFrom(
+			PANEL_TYPES.TABLE,
+			aiStagedQuery([{ expression: 'avg(duration_nano)' }]),
+			null,
+		);
+
+		expect(getActiveBuilder(query).queryData[0].aggregations).toStrictEqual([
+			{ expression: 'avg(duration_nano)' },
+		]);
 	});
 
 	it('without a staged query: both actions are disabled and create alert goes nowhere', async () => {
@@ -217,7 +238,7 @@ describe('AIExplorerActions', () => {
 			panelType: PANEL_TYPES.LIST,
 		} as ReturnType<typeof useQueryBuilder>);
 
-		render(<AIExplorerActions />);
+		render(<AIExplorerActions panelType={PANEL_TYPES.LIST} />);
 		const createAlert = screen.getByTestId('explorer-create-alert');
 		await userEvent.setup().click(createAlert);
 
