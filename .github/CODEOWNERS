@@ -140,6 +140,7 @@ go.mod @therealpandey
 
 # e2e tests
 /tests/e2e/ @AshwinBhatkal
+/tests/e2e/affected.json @SigNoz/frontend-maintainers @AshwinBhatkal
 
 # Flagger Owners
 
