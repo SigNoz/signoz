@@ -18,6 +18,7 @@ import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
 
 import { AlertHeaderProps } from '../AlertHeader';
+import { useRuleChannelIds } from './useRuleChannelIds';
 
 import './ActionButtons.styles.scss';
 
@@ -35,7 +36,11 @@ function AlertActionButtons({
 	const { handleAlertClone } = useAlertRuleClone({ ruleId });
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 
-	const checks = useMemo(() => getRuleActionChecks(ruleId), [ruleId]);
+	const channelIds = useRuleChannelIds();
+	const checks = useMemo(
+		() => getRuleActionChecks(ruleId, channelIds),
+		[ruleId, channelIds],
+	);
 	const toggleLock = useAuthZDisabled(checks.toggle);
 
 	const menuItems = useMemo<AuthZDropdownItemType[]>(

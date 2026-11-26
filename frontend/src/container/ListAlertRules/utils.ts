@@ -6,11 +6,11 @@ import {
 import type { EmptyStateCopy } from 'components/ListViews/types';
 import type { SortState } from 'components/TanStackTableView/types';
 import { dataSourceForAlertType } from 'constants/alerts';
+import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
 import {
 	buildRuleDeletePermission,
 	buildRuleReadPermission,
 	buildRuleUpdatePermission,
-	RuleCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
@@ -25,16 +25,21 @@ export const ALERT_ACTIONS = {
 	DELETE: 'delete',
 } as const satisfies Record<string, RuleAction>;
 
-/** What each row action needs. Edit and clone open or copy the stored rule, so they also need `read`. */
+/**
+ * What each row action needs. Edit and clone open or copy the stored rule, so
+ * they also need `read`. A clone also needs `attach` on the rule collection and
+ * on each channel of the source, so pass their ids where they are known.
+ */
 export const getRuleActionChecks = (
 	ruleId: string,
+	channelIds: string[] = [],
 ): Record<RuleAction, BrandedPermission[]> => {
 	const read = buildRuleReadPermission(ruleId);
 	const update = buildRuleUpdatePermission(ruleId);
 	return {
 		toggle: [update],
 		edit: [read, update],
-		clone: [read, RuleCreatePermission],
+		clone: [read, ...getRuleCreateChecks(channelIds)],
 		delete: [buildRuleDeletePermission(ruleId)],
 	};
 };
