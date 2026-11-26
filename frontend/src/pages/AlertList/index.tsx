@@ -58,6 +58,7 @@ function AllAlertList(): JSX.Element {
 	const isChannelsNew = location.pathname === ROUTES.CHANNELS_NEW;
 	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
 	const isChannelDetails = isChannelsNew || isChannelsEdit;
+	const isDetailsView = isAlertHistory || isAlertOverview || isChannelDetails;
 
 	const getActiveTab = useCallback((): string => {
 		if (isAlertHistory || isAlertOverview) {
@@ -112,6 +113,18 @@ function AllAlertList(): JSX.Element {
 			safeNavigate(`/alerts?${queryParams.toString()}`);
 		},
 		[getActiveSubTab, safeNavigate],
+	);
+
+	// A details page shows its parent tab as active, so a click on that tab must
+	// still navigate back to the list; antd only fires onChange for a new key.
+	const handleTopTabClick = useCallback(
+		(clickedTab: string): void => {
+			if (clickedTab === getActiveTab() && !isDetailsView) {
+				return;
+			}
+			handleTopTabChange(clickedTab);
+		},
+		[getActiveTab, handleTopTabChange, isDetailsView],
 	);
 
 	const handleSubTabChange = useCallback(
@@ -222,12 +235,8 @@ function AllAlertList(): JSX.Element {
 			destroyInactiveTabPane
 			items={items}
 			activeKey={getActiveTab()}
-			onChange={handleTopTabChange}
-			className={`alerts-container ${
-				isAlertHistory || isAlertOverview || isChannelDetails
-					? 'alert-details-tabs'
-					: ''
-			}`}
+			onTabClick={handleTopTabClick}
+			className={`alerts-container ${isDetailsView ? 'alert-details-tabs' : ''}`}
 			tabBarExtraContent={
 				<HeaderRightSection
 					enableAnnouncements={false}
