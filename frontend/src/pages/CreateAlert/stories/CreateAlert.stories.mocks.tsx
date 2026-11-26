@@ -3,9 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { AlertDetectionTypes } from 'container/FormAlertRules';
 import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -28,17 +28,16 @@ import {
 /**
  * Which alert the page is building. The page reads this off the URL, so the
  * control is a route rather than a response: with no type at all it stays on
- * the picker, anomaly detection routes to the classic form, and everything else
- * opens the current one.
+ * the picker and everything else opens the form.
  */
 const ALERT_MODES = [
 	'select-type',
 	'metrics',
 	'logs',
 	'traces',
+	'ai-traces',
 	'exceptions',
 	'anomaly',
-	'classic-form',
 ] as const;
 
 type AlertMode = (typeof ALERT_MODES)[number];
@@ -47,9 +46,9 @@ const ALERT_TYPE_BY_MODE: Partial<Record<AlertMode, AlertTypes>> = {
 	metrics: AlertTypes.METRICS_BASED_ALERT,
 	logs: AlertTypes.LOGS_BASED_ALERT,
 	traces: AlertTypes.TRACES_BASED_ALERT,
+	'ai-traces': AlertTypes.AI_TRACES_BASED_ALERT,
 	exceptions: AlertTypes.EXCEPTIONS_BASED_ALERT,
 	anomaly: AlertTypes.METRICS_BASED_ALERT,
-	'classic-form': AlertTypes.METRICS_BASED_ALERT,
 };
 
 const routeFor = (mode: AlertMode): string => {
@@ -63,14 +62,10 @@ const routeFor = (mode: AlertMode): string => {
 		[QueryParams.alertType]: alertType,
 		[QueryParams.ruleType]:
 			mode === 'anomaly'
-				? AlertDetectionTypes.ANOMALY_DETECTION_ALERT
-				: AlertDetectionTypes.THRESHOLD_ALERT,
+				? RuletypesRuleTypeDTO.anomaly_rule
+				: RuletypesRuleTypeDTO.threshold_rule,
 		[QueryParams.relativeTime]: '6h',
 	});
-
-	if (mode === 'classic-form') {
-		params.set(QueryParams.showClassicCreateAlertsPage, 'true');
-	}
 
 	return `${ROUTES.ALERTS_NEW}?${params.toString()}`;
 };
@@ -178,7 +173,7 @@ export const fillValidAlert = async (
 	const canvas = within(canvasElement);
 
 	await userEvent.type(
-		await canvas.findByTestId('alert-name-input', undefined, untilLoaded),
+		await canvas.findByTestId('alert-name-input-field', undefined, untilLoaded),
 		'Toast alert',
 	);
 	const channels = await canvas.findByTestId(
@@ -198,9 +193,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
-	await waitFor(() => {
-		expect(button).toBeEnabled();
-		expect(button).not.toHaveAttribute('aria-disabled', 'true');
+	await waitFor(async () => {
+		await expect(button).toBeEnabled();
+		await expect(button).not.toHaveAttribute('aria-disabled', 'true');
 	});
 	await userEvent.click(button);
 };

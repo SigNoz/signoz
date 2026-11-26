@@ -1,15 +1,15 @@
 import type React from 'react';
-import userEvent from '@testing-library/user-event';
 import type { LegendItem } from 'lib/uPlotV2/config/types';
-import { render, screen } from 'tests/test-utils';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
-	DEFAULT_HEATMAP_COLORS,
+	DEFAULT_COLOR_RAMP_OPTIONS,
 	resolveExtremeColor,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+} from 'lib/visualization/colorRamp/colorScale';
+import { HeatmapSeries } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import {
-	HeatmapColorMode,
-	HeatmapSeries,
-} from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
+	ColorRampMode,
+	ColorRampScale,
+} from 'lib/visualization/colorRamp/types';
 
 import Heatmap from '../Heatmap';
 
@@ -74,10 +74,32 @@ describe('Heatmap', () => {
 		expect(screen.getByTestId('heatmap')).toBeInTheDocument();
 	});
 
-	it('shows the colour bar with the resolved count domain', () => {
+	it('starts the default log colour bar at its floor, not at 0', () => {
 		renderHeatmap();
 
 		expect(screen.getByTestId('color-bar')).toBeInTheDocument();
+		expect(screen.getByText('1')).toBeInTheDocument();
+		expect(screen.queryByText('0')).not.toBeInTheDocument();
+		expect(screen.getByText('1,204')).toBeInTheDocument();
+	});
+
+	it('labels an all-zero log colour bar 0 to 0, as its cells are drawn', () => {
+		renderHeatmap({
+			series: [
+				{
+					label: 'service.name=cart',
+					points: [{ timestamp: 1000, counts: [0, 0, 0, 0] }],
+				},
+			],
+		});
+
+		expect(screen.getAllByText('0')).toHaveLength(2);
+		expect(screen.queryByText('1')).not.toBeInTheDocument();
+	});
+
+	it('starts a linear colour bar at 0', () => {
+		renderHeatmap({ colors: { scale: ColorRampScale.Linear } });
+
 		expect(screen.getByText('0')).toBeInTheDocument();
 		expect(screen.getByText('1,204')).toBeInTheDocument();
 	});
@@ -86,13 +108,10 @@ describe('Heatmap', () => {
 		renderHeatmap();
 
 		const bar = screen.getByTestId('color-bar');
-		const legend = screen
-			.getByText('service.name=cart')
-			.closest('[data-legend-item-id]');
+		const legend = screen.getByRole('switch', { name: 'service.name=cart' });
 		// The bar is the scale key for the grid, so it reads before the controls.
 		expect(
-			bar.compareDocumentPosition(legend as Node) &
-				Node.DOCUMENT_POSITION_FOLLOWING,
+			bar.compareDocumentPosition(legend) & Node.DOCUMENT_POSITION_FOLLOWING,
 		).toBeTruthy();
 	});
 
@@ -100,8 +119,8 @@ describe('Heatmap', () => {
 		renderHeatmap();
 
 		expect(
-			screen.getByTestId('color-bar').closest('.chart-layout__content'),
-		).not.toBeNull();
+			within(screen.getByTestId('chart-layout-content')).getByTestId('color-bar'),
+		).toBeInTheDocument();
 	});
 
 	it('hides the colour bar when the visual map is off', () => {
@@ -111,7 +130,7 @@ describe('Heatmap', () => {
 	});
 
 	it('labels the colour bar with an explicit clamp instead of the data range', () => {
-		renderHeatmap({ colors: { minCount: 5, maxCount: 500 } });
+		renderHeatmap({ colors: { min: 5, max: 500 } });
 
 		expect(screen.getByText('5')).toBeInTheDocument();
 		expect(screen.getByText('500')).toBeInTheDocument();
@@ -143,13 +162,7 @@ describe('Heatmap group legend', () => {
 	}
 
 	function marker(label: string): HTMLElement {
-		const element = legendItem(label).querySelector<HTMLElement>(
-			'[data-is-legend-marker]',
-		);
-		if (!element) {
-			throw new Error(`no marker for ${label}`);
-		}
-		return element;
+		return within(legendItem(label)).getByTestId(/^legend-marker-/);
 	}
 
 	it('lists the groups, with no combined-view entry', () => {
@@ -198,9 +211,9 @@ describe('Heatmap group legend', () => {
 		renderHeatmap();
 		// The DOM lowercases hex; the palette is built uppercase.
 		const extreme = resolveExtremeColor({
-			options: DEFAULT_HEATMAP_COLORS,
+			options: DEFAULT_COLOR_RAMP_OPTIONS,
 			isDarkMode: true,
-			seriesColor: DEFAULT_HEATMAP_COLORS.fill,
+			seriesColor: DEFAULT_COLOR_RAMP_OPTIONS.fill,
 		}).toLowerCase();
 
 		// cart peaks at 1200 and checkout at 4, which the marker does not report.
@@ -210,7 +223,7 @@ describe('Heatmap group legend', () => {
 
 	it('gives every marker the solid fill in opacity mode', () => {
 		renderHeatmap({
-			colors: { mode: HeatmapColorMode.Opacity, fill: '#e5484d' },
+			colors: { mode: ColorRampMode.Opacity, fill: '#e5484d' },
 		});
 
 		// A partially transparent marker is hard to read against the panel.

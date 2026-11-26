@@ -4,8 +4,9 @@ import "github.com/SigNoz/signoz/pkg/valuer"
 
 // Format: the flattened llm.input_messages.N.message.* and llm.output_messages.N.message.* keys, the
 // provider-neutral copy of the conversation the OpenInference instrumentations write on LLM spans. A side
-// without them falls back to the raw provider payload the mapper moved onto gen_ai.*.messages; pipecat
-// streams the reply into output.value alone.
+// without them, or whose buckets hold no message, falls back to the raw provider payload the mapper moved
+// onto gen_ai.*.messages; pipecat streams the reply into output.value alone, LiteLLM's OpenInference mode
+// leaves the output bucket empty on a tool-calling turn.
 // https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/spec/semantic_conventions.md#L77
 // https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/spec/tool_calling.md#L37
 // https://github.com/Arize-ai/openinference/blob/12f2cc035edfb00b60b656d977f07abfb7a69900/spec/multimodal_attributes.md#L35
@@ -28,15 +29,14 @@ func (f *formatting) openInference() bool {
 		return false
 	}
 	inputLabel, outputLabel := FormatterOpenInference, FormatterOpenInference
-	if len(input) > 0 {
-		f.out.Input = inputMessages(openInferenceMessages(input))
+	if msgs := openInferenceMessages(input); len(msgs) > 0 {
+		f.out.Input = inputMessages(msgs)
 	} else if raw := attribute(f.attributes, GenAIInputMessages); raw != nil {
-		var msgs OutputMessages
 		msgs, inputLabel = f.side(decode(raw), RoleUser)
 		f.out.Input = inputMessages(msgs)
 	}
-	if len(output) > 0 {
-		f.out.Output = openInferenceMessages(output)
+	if msgs := openInferenceMessages(output); len(msgs) > 0 {
+		f.out.Output = msgs
 		if fr := finishReason(stringOf(attribute(f.attributes, openInferenceFinishReason))); fr != nil {
 			for i := range f.out.Output {
 				f.out.Output[i].FinishReason = fr

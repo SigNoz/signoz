@@ -1,7 +1,10 @@
 import { ChangeEvent, useCallback, useMemo, useState } from 'react';
-import { Col, Input, Row, Select } from 'antd';
+import { Input, Select } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
 import BucketOptions from 'components/QueryBuilderV2/QueryV2/QueryAddOns/BucketOptions/BucketOptions';
+import { parseLimit, sanitizeLimit } from 'components/QueryBuilderV2/utils';
 import { LEGEND } from 'constants/global';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 // ** Hooks
@@ -112,7 +115,11 @@ export function Formula({
 	);
 
 	return (
-		<Row gutter={[0, 15]}>
+		<Row
+			gutter={[0, 15]}
+			className="formula-row"
+			data-testid={`formula-${formula.queryName}`}
+		>
 			<QBEntityOptions
 				isCollapsed={isCollapse}
 				showFunctions={false}
@@ -126,10 +133,11 @@ export function Formula({
 
 			{!isCollapse && (
 				<Row gutter={[0, 15]} className="formula-container">
-					<Col span={24}>
+					<Col span={24} className="formula-item">
 						<Input.TextArea
 							name="expression"
 							className="formula-expression"
+							data-testid="formula-expression"
 							onChange={handleChange}
 							size="middle"
 							value={formula.expression}
@@ -137,10 +145,11 @@ export function Formula({
 							rows={2}
 						/>
 					</Col>
-					<Col span={24}>
+					<Col span={24} className="formula-item">
 						<Input
 							name="legend"
 							className="formula-legend"
+							data-testid="formula-legend"
 							onChange={handleChange}
 							size="middle"
 							value={formula.legend}
@@ -148,7 +157,7 @@ export function Formula({
 						/>
 					</Col>
 					{isQBV2 && (
-						<Col span={24}>
+						<Col span={24} className="formula-item">
 							<div className="formula-qbv2-container">
 								<div className="periscope-input-with-label">
 									<div className="label">Order By</div>
@@ -169,7 +178,8 @@ export function Formula({
 								<InputWithLabel
 									label="Limit"
 									type="number"
-									onChange={(value): void => handleChangeLimit(Number(value))}
+									onChange={(value): void => handleChangeLimit(parseLimit(value))}
+									sanitize={sanitizeLimit}
 									initialValue={formula?.limit ?? undefined}
 									placeholder="Enter limit"
 								/>
@@ -179,7 +189,7 @@ export function Formula({
 					{/* A heatmap draws its one enabled query, which is the formula when its
 					    inputs are disabled — so the formula states its own bucket axis. */}
 					{isQBV2 && panelType === PANEL_TYPES.HEATMAP && (
-						<Col span={24}>
+						<Col span={24} className="formula-item">
 							<BucketOptions
 								bucketOptions={formula.bucketOptions}
 								unit={currentQuery.unit}

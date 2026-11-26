@@ -58,6 +58,27 @@ describe('getLegend', () => {
 		expect(legendsData).toBe('alias_sum');
 	});
 
+	it('should read the AI builder slot for AI query builder queries', () => {
+		const payloadQuery = getMockQuery({
+			...mockQuery,
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			builder_ai_query: {
+				...mockQuery.builder,
+				queryData: [
+					{
+						...mockQuery.builder.queryData[0],
+						queryName: mockQueryData.queryName,
+						dataSource: DataSource.LOGS,
+						aggregations: [{ expression: "sum(bytes) as 'alias_sum'" }],
+					},
+				],
+			},
+		});
+
+		const legendsData = getLegend(mockQueryData, payloadQuery, MOCK_LABEL_NAME);
+		expect(legendsData).toBe('alias_sum');
+	});
+
 	it('should return legend when single builder query with no alias but legend set (builder)', () => {
 		const payloadQuery = getMockQuery({
 			...mockQuery,

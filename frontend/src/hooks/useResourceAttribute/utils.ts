@@ -1,23 +1,22 @@
-import {
-	getResourceAttributesTagKeys,
-	getResourceAttributesTagValues,
-} from 'api/metrics/getResourceAttributes';
+import { getFieldsKeys, getFieldsValues } from 'api/generated/services/fields';
+import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	CompositeQueryOperatorsConfig,
 	OperatorConversions,
 } from 'constants/resourceAttributes';
 import ROUTES from 'constants/routes';
-import { MetricsType } from 'container/MetricsApplication/constant';
+import { MetricsType, WidgetKeys } from 'container/MetricsApplication/constant';
 import {
 	IOption,
 	IResourceAttribute,
 	IResourceAttributeProps,
+	OperatorValues,
+	Tags,
 } from 'hooks/useResourceAttribute/types';
 import { decode } from 'js-base64';
-import history from 'lib/history';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { OperatorValues, Tags } from 'hooks/useResourceAttribute/types';
 import { v4 as uuid } from 'uuid';
 
 import { whilelistedKeys } from './config';
@@ -95,22 +94,8 @@ export const convertRawQueriesToTraceSelectedTags = (
 /* Convert resource attributes to tagFilter items for queryBuilder */
 export const resourceAttributesToTagFilterItems = (
 	queries: IResourceAttribute[],
-	isTraceDataSource = false,
-): TagFilterItem[] => {
-	if (isTraceDataSource) {
-		return convertRawQueriesToTraceSelectedTags(queries).map((e) => ({
-			id: e.Key,
-			op: e.Operator,
-			value: e.StringValues,
-			key: {
-				dataType: DataTypes.String,
-				type: MetricsType.Resource,
-				key: e.Key,
-			},
-		}));
-	}
-
-	return queries.map((res) => ({
+): TagFilterItem[] =>
+	queries.map((res) => ({
 		id: `${res.id}`,
 		key: {
 			key: res.tagKey,
@@ -120,7 +105,6 @@ export const resourceAttributesToTagFilterItems = (
 		op: `${res.operator}`,
 		value: `${res.tagValue}`.split(','),
 	}));
-};
 /* Convert resource attributes to trace filters items for queryBuilder */
 export const resourceAttributesToTracesFilterItems = (
 	queries: IResourceAttribute[],
@@ -147,18 +131,22 @@ export const OperatorSchema: IOption[] = OperatorConversions.map(
 export const getResourceDeploymentKeys = (): string =>
 	'resource_deployment.environment';
 
-export const GetTagKeys = async (): Promise<IOption[]> => {
-	const resourceDeploymentKey = getResourceDeploymentKeys();
-	const { payload } = await getResourceAttributesTagKeys({
-		metricName: 'signoz_calls_total',
-		match: 'resource_',
-	});
-	if (!payload || !payload?.data) {
+const getSpanMetricKeys = async (searchText: string): Promise<string[]> => {
+	try {
+		const { data } = await getFieldsKeys({
+			signal: TelemetrytypesSignalDTO.metrics,
+			metricName: WidgetKeys.SignozCallsTotal,
+			searchText,
+		});
+		return Object.keys(data.keys ?? {});
+	} catch {
 		return [];
 	}
+};
 
-	const keys =
-		payload.data.attributeKeys?.map((attributeKey) => attributeKey.key) || [];
+export const GetTagKeys = async (): Promise<IOption[]> => {
+	const resourceDeploymentKey = getResourceDeploymentKeys();
+	const keys = await getSpanMetricKeys('resource_');
 
 	return keys
 		.filter((tagKey: string) => tagKey !== resourceDeploymentKey)
@@ -169,56 +157,33 @@ export const GetTagKeys = async (): Promise<IOption[]> => {
 };
 
 export const getEnvironmentTagKeys = async (): Promise<IOption[]> => {
-	const { payload } = await getResourceAttributesTagKeys({
-		metricName: 'signoz_calls_total',
-		match: getResourceDeploymentKeys(),
-	});
-	if (!payload || !payload?.data) {
-		return [];
-	}
-	const keys =
-		payload.data.attributeKeys?.map((attributeKey) => attributeKey.key) || [];
+	const keys = await getSpanMetricKeys(getResourceDeploymentKeys());
 	return keys.map((tagKey: string) => ({
 		label: convertMetricKeyToTrace(tagKey),
 		value: tagKey,
 	}));
 };
 
-export const getEnvironmentTagValues = async (): Promise<IOption[]> => {
-	const { payload } = await getResourceAttributesTagValues({
-		tagKey: getResourceDeploymentKeys(),
-		metricName: 'signoz_calls_total',
-	});
-
-	if (!payload || !payload?.data) {
-		return [];
-	}
-
-	const values = payload.data.stringAttributeValues || [];
-
-	return values.map((tagValue: string) => ({
-		label: tagValue,
-		value: tagValue,
-	}));
-};
-
 export const GetTagValues = async (tagKey: string): Promise<IOption[]> => {
-	const { payload } = await getResourceAttributesTagValues({
-		tagKey,
-		metricName: 'signoz_calls_total',
-	});
+	try {
+		const { data } = await getFieldsValues({
+			signal: TelemetrytypesSignalDTO.metrics,
+			metricName: WidgetKeys.SignozCallsTotal,
+			name: tagKey,
+		});
+		const values = data.values.stringValues ?? [];
 
-	if (!payload || !payload?.data) {
+		return values.map((tagValue: string) => ({
+			label: tagValue,
+			value: tagValue,
+		}));
+	} catch {
 		return [];
 	}
-
-	const values = payload.data.stringAttributeValues || [];
-
-	return values.map((tagValue: string) => ({
-		label: tagValue,
-		value: tagValue,
-	}));
 };
+
+export const getEnvironmentTagValues = (): Promise<IOption[]> =>
+	GetTagValues(getResourceDeploymentKeys());
 
 export const createQuery = (
 	selectedItems: Array<string | string[]> = [],
@@ -252,7 +217,7 @@ export const updateQuery = (
 
 export function getResourceAttributeQueriesFromURL(): IResourceAttribute[] {
 	const resourceAttributeQuery = new URLSearchParams(
-		history.location.search,
+		getCurrentLocation().search,
 	).get('resourceAttribute');
 
 	try {

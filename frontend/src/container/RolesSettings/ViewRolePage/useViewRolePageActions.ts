@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
+import { matchRoute } from 'lib/router/matchRoute';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { parseAsStringLiteral, useQueryState } from 'nuqs';
 
@@ -24,13 +26,11 @@ interface UseViewRolePageCallbacksResult {
 }
 
 export function useViewRolePageActions(): UseViewRolePageCallbacksResult {
-	const { pathname } = useLocation();
-	const history = useHistory();
+	const { pathname } = useAppLocation();
+	const navigate = useAppNavigate();
 	const urlQuery = useUrlQuery();
 
-	const match = matchPath<{ roleId: string }>(pathname, {
-		path: ROUTES.ROLE_DETAILS,
-	});
+	const match = matchRoute<'roleId'>(pathname, ROUTES.ROLE_DETAILS);
 	const roleId = match?.params?.roleId;
 	const roleName = urlQuery.get('name') ?? '';
 
@@ -52,12 +52,12 @@ export function useViewRolePageActions(): UseViewRolePageCallbacksResult {
 		}
 
 		const updateUrl = `${ROUTES.ROLE_EDIT.replace(':roleId', roleId)}?name=${roleName}`;
-		history.push(updateUrl);
-	}, [history, roleId, roleName]);
+		navigate(updateUrl);
+	}, [navigate, roleId, roleName]);
 
 	const handleCancel = useCallback((): void => {
-		history.push(ROUTES.ROLES_SETTINGS);
-	}, [history]);
+		navigate(ROUTES.ROLES_SETTINGS);
+	}, [navigate]);
 
 	const handleModeChange = useCallback(
 		(value: string): void => {

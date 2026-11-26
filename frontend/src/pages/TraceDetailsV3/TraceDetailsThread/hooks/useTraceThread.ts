@@ -25,6 +25,8 @@ interface UseTraceThreadResult {
 	spansAboveFirstPage: number;
 	isLoading: boolean;
 	isError: boolean;
+	/** The interested span (or trace) doesn't exist; an empty thread is not this. */
+	isNotFound: boolean;
 	hasNextPage: boolean;
 	hasPreviousPage: boolean;
 	isFetchingNextPage: boolean;
@@ -99,6 +101,7 @@ export function useTraceThread({
 		spansAboveFirstPage,
 		isLoading: query.isLoading,
 		isError: query.isError,
+		isNotFound: isNotFoundError(query.error),
 		hasNextPage: !!query.hasNextPage,
 		hasPreviousPage: !!query.hasPreviousPage,
 		isFetchingNextPage: query.isFetchingNextPage,

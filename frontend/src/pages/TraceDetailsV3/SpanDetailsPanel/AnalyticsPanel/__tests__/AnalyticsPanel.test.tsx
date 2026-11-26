@@ -1,15 +1,13 @@
 import { screen } from '@testing-library/react';
 import useGetTraceAggregations from 'hooks/trace/useGetTraceAggregations';
+import { mockAppParams } from 'tests/router-mocks';
 import { render } from 'tests/test-utils';
 
 import { DEFAULT_COLOR_BY_FIELD } from '../../../constants';
 import { useTraceStore } from '../../../stores/traceStore';
 import AnalyticsPanel from '../AnalyticsPanel';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useParams: (): { id: string } => ({ id: 'trace-123' }),
-}));
+mockAppParams({ id: 'trace-123' });
 
 jest.mock('hooks/trace/useGetTraceAggregations', () => ({
 	__esModule: true,

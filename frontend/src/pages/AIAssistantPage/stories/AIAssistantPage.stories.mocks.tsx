@@ -4,11 +4,10 @@
  */
 
 import { AI_API_PATH, setAIBackendUrl } from 'api/AIAPIInstance';
-import removeSessionStorage from 'api/browser/sessionstorage/remove';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import type { ConversationStreamState } from 'container/AIAssistant/types';
 import { rest, type RequestHandler } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	choiceControl,
@@ -20,6 +19,7 @@ import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import { globalConfigResponse } from '@/storybook/msw/__story_mockdata__/appShell';
 import { dashboardsForUserResponse } from '@/storybook/msw/__story_mockdata__/dashboards';
 import type { MockResolver } from '@/storybook/msw/types';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	AGENT_STATES,
@@ -33,6 +33,7 @@ import {
 	openConversation,
 	THREAD_ID,
 	streamingState,
+	thinkingState,
 	THREAD_PARTS,
 	type ThreadPart,
 	threadDetailResponse,
@@ -52,10 +53,12 @@ const AI_BACKEND_URL = 'http://localhost';
 
 /** The analysis thread, without the turns that carry an interactive block. */
 const ANALYSIS: ThreadPart[] = [
+	'contexts',
 	'prose',
 	'table',
 	'code',
 	'activity',
+	'one-step',
 	'actions',
 	'voted',
 ];
@@ -84,6 +87,11 @@ const onBothBases = (
 	rest[method](path, resolver),
 ];
 
+const STREAMS: Partial<Record<AgentState, () => ConversationStreamState>> = {
+	thinking: thinkingState,
+	streaming: streamingState,
+};
+
 const ok: MockResolver = (_req, res, ctx) => res(ctx.status(200), ctx.json({}));
 
 const startedExecution: MockResolver = (_req, res, ctx) =>
@@ -100,7 +108,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		contents: multiChoiceControl<ThreadPart>('Thread contents', {
 			group: THREAD,
 			description:
-				'What the open thread holds. Each interactive block arrives as its own turn, and `voted` is a rating already on the last answer.',
+				'What the open thread holds. Each interactive block arrives as its own turn, `contexts` are the picks the opening question was sent with, `one-step` is the last answer working in a single step, and `voted` is a rating already on it.',
 			options: THREAD_PARTS,
 			value: ANALYSIS,
 		}),
@@ -113,9 +121,15 @@ export const aiAssistantMocks = defineStoryMocks({
 		agent: choiceControl<AgentState>('Agent', {
 			group: AGENT,
 			description:
-				'What the agent is doing when the thread opens. Both waiting states block the composer until the user answers.',
+				'What the agent is doing when the thread opens: `thinking` is a reply sent with nothing back yet. Every state but idle holds the send; the input still takes a draft.',
 			options: AGENT_STATES,
 			value: 'idle',
+		}),
+		approvalDiff: toggleControl('Approval diff', {
+			group: AGENT,
+			description:
+				'Off is a delete, which has nothing to compare: its summary sits beside the buttons. Shows while the agent is awaiting approval.',
+			value: true,
 		}),
 		history: countControl('Past conversations', {
 			group: CONVERSATIONS,
@@ -162,7 +176,9 @@ export const aiAssistantMocks = defineStoryMocks({
 		...onBothBases(
 			'get',
 			'/threads/:threadId',
-			response.json(() => threadDetailResponse(values.contents, values.agent)),
+			response.json(() =>
+				threadDetailResponse(values.contents, values.agent, values.approvalDiff),
+			),
 		),
 		...onBothBases(
 			'get',
@@ -226,6 +242,7 @@ export const aiAssistantMocks = defineStoryMocks({
 		const conversation = values.conversation
 			? openConversation()
 			: newConversation();
+		const stream = STREAMS[values.agent]?.();
 
 		useAIAssistantStore.setState({
 			conversations: { [conversation.id]: conversation },
@@ -235,11 +252,26 @@ export const aiAssistantMocks = defineStoryMocks({
 			answeredBlocks: values.answered ? answeredBlocks() : {},
 			// A stream is client state with no response behind it: the events the
 			// reducer folds into it only exist while the SSE connection is open.
-			streams:
-				values.agent === 'streaming' ? { [conversation.id]: streamingState() } : {},
+			streams: stream ? { [conversation.id]: stream } : {},
 		});
 	},
 });
+
+export type AIAssistantArgs = PageStoryArgs<typeof aiAssistantMocks>;
+
+/** The thread and the sidebar both come from endpoints the State control holds. */
+const loads = (args: AIAssistantArgs): boolean => args.dataState === 'loaded';
+
+/** Whether the open thread's messages render. */
+export const showsThread = (args: AIAssistantArgs): boolean =>
+	loads(args) && args.conversation;
+
+/** Whether the sidebar lists a conversation row, with its actions menu. */
+export const listsConversations = (args: AIAssistantArgs): boolean =>
+	loads(args) && (args.conversation || args.history > 0);
+
+/** Whether the composer takes input: only a thread still loading locks it. */
+export const composerFree = (args: AIAssistantArgs): boolean => loads(args);
 
 /**
  * An action chip's tooltip is the one text on the page the backend writes, and
@@ -272,58 +304,3 @@ export const longActionTooltipHandlers: RequestHandler[] = onBothBases(
 		);
 	},
 );
-
-/** The recognizer `.storybook/preview-head.html` installs in place of the browser's. */
-interface StorySpeechRecognition {
-	listening: {
-		hear: (transcript: string) => void;
-		onerror: ((event: { error: string }) => void) | null;
-	} | null;
-}
-
-/**
- * Clicks the composer's mic and waits for the recording to start. The composer
- * stays disabled until the thread has loaded.
- */
-export const startVoiceInput = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	const canvas = within(canvasElement);
-	const mic = await waitFor(
-		async () => {
-			const button = canvas.getByRole('button', { name: /start voice input/i });
-
-			// Depending on its version, Button disables through `disabled` or `aria-disabled`.
-			await expect(button).toBeEnabled();
-			await expect(button).not.toHaveAttribute('aria-disabled', 'true');
-
-			return button;
-		},
-		{ timeout: 15_000 },
-	);
-
-	await userEvent.click(mic);
-	await canvas.findByRole('status', { name: /recording voice input/i });
-};
-
-/** Speaks into the open recording: the words so far, still listening. */
-export const speak = (transcript: string): void => {
-	(
-		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
-	).webkitSpeechRecognition.listening?.hear(transcript);
-};
-
-/**
- * Clears the flag `ChatInput` keeps in sessionStorage after a failed recording,
- * which hides the mic for the rest of the tab, test-runner's included.
- */
-export const forgetVoiceFailure = (): void => {
-	removeSessionStorage('ai-assistant-voice-unavailable');
-};
-
-/** Fails the open recording the way the browser's recognizer reports it. */
-export const failVoiceInput = (error: 'network' | 'not-allowed'): void => {
-	(
-		window as unknown as { webkitSpeechRecognition: StorySpeechRecognition }
-	).webkitSpeechRecognition.listening?.onerror?.({ error });
-};

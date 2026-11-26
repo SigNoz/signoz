@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { Card } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { QueryParams } from 'constants/query';
 import { ViewMenuAction } from 'container/WidgetCard/config';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
 import { useGraphClickHandler } from 'container/MetricsApplication/Tabs/util';
@@ -35,8 +37,7 @@ export default function OverviewRightPanelGraph({
 	groupByFilter?: BaseAutocompleteData;
 	filters?: TagFilterItem[];
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 
@@ -48,13 +49,13 @@ export default function OverviewRightPanelGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -155,6 +156,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={requestRateWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_request_rate')}
@@ -175,6 +177,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={errorRateWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_error_rate')}
@@ -195,6 +198,7 @@ export default function OverviewRightPanelGraph({
 				</Button>
 				<GridCard
 					widget={avgLatencyWidget}
+					version={ENTITY_VERSION_V5}
 					headerMenuList={[...ViewMenuAction]}
 					onDragSelect={onDragSelect}
 					onClickHandler={handleGraphClick('Celery_avg_latency')}

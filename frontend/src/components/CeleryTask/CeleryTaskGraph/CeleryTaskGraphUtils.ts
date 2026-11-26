@@ -1,8 +1,19 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
+	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
+	type Querybuildertypesv5QueryRangeRequestDTO,
+	Querybuildertypesv5ReduceToDTO,
+	Querybuildertypesv5RequestTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
+import { getFiltersFromKeyValue } from 'pages/Celery/CeleryOverview/CeleryOverviewUtils';
 import { getWidgetQuery } from 'pages/MessagingQueues/MQDetails/MetricPage/MetricPageUtil';
 import { Widgets } from 'types/api/widgets/widget';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -31,6 +42,29 @@ export const getStepInterval = (startTime: number, endTime: number): number => {
 	return 54000; // More than a week (use monthly interval)
 };
 
+// v5 returns spans without the group-by key as an empty-label series.
+const groupByKeyExists = (key: string): TagFilterItem =>
+	getFiltersFromKeyValue(key, '', 'tag', 'exists');
+
+const latencyExpression = (type: string): string =>
+	`${type || 'p99'}(duration_nano)`;
+
+// Without a hovered series, the click data holds only `clickedTimestamp`.
+export const getClickedSeries = (
+	data?: Record<string, string>,
+	queryData?: { inFocusOrNot: boolean },
+): { entity: string; value: string } | undefined => {
+	const series = Object.entries(data || {}).find(
+		([key]) => key !== 'clickedTimestamp',
+	);
+	if (!queryData?.inFocusOrNot || !series) {
+		return undefined;
+	}
+	const [entity, value] = series;
+
+	return { entity, value };
+};
+
 // State Graphs
 export const celeryAllStateWidgetData = (
 	startTime: number,
@@ -47,11 +81,12 @@ export const celeryAllStateWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'count',
+					aggregations: [{ expression: 'count()' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [],
+						items: [groupByKeyExists('celery.state')],
 						op: 'AND',
 					},
 					functions: [],
@@ -99,11 +134,13 @@ export const celeryRetryStateWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'count',
+					aggregations: [{ expression: 'count()' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
 						items: [
+							groupByKeyExists('celery.hostname'),
 							{
 								id: uuidv4(),
 								key: {
@@ -159,11 +196,13 @@ export const celeryFailedStateWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'count',
+					aggregations: [{ expression: 'count()' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
 						items: [
+							groupByKeyExists('celery.hostname'),
 							{
 								id: uuidv4(),
 								key: {
@@ -219,11 +258,13 @@ export const celerySuccessStateWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'count',
+					aggregations: [{ expression: 'count()' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
 						items: [
+							groupByKeyExists('celery.hostname'),
 							{
 								id: uuidv4(),
 								key: {
@@ -278,11 +319,12 @@ export const celeryTasksByWorkerWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'rate',
+					aggregations: [{ expression: 'rate()' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [],
+						items: [groupByKeyExists('celery.hostname')],
 						op: 'AND',
 					},
 					functions: [],
@@ -322,8 +364,9 @@ export const celeryErrorByWorkerWidgetData = (
 					dataSource: DataSource.TRACES,
 					queryName: 'A',
 					aggregateOperator: 'count_distinct',
+					aggregations: [{ expression: 'count_distinct(span_id)' }],
 					aggregateAttribute: {
-						dataType: 'string',
+						dataType: DataTypes.String,
 						id: 'span_id--string----true',
 						key: 'span_id',
 						type: '',
@@ -333,6 +376,7 @@ export const celeryErrorByWorkerWidgetData = (
 					functions: [],
 					filters: {
 						items: [
+							groupByKeyExists('celery.hostname'),
 							{
 								id: uuidv4(),
 								key: {
@@ -365,11 +409,12 @@ export const celeryErrorByWorkerWidgetData = (
 					reduceTo: ReduceOperators.AVG,
 				},
 				{
-					dataSource: 'traces',
+					dataSource: DataSource.TRACES,
 					queryName: 'B',
 					aggregateOperator: 'count_distinct',
+					aggregations: [{ expression: 'count_distinct(span_id)' }],
 					aggregateAttribute: {
-						dataType: 'string',
+						dataType: DataTypes.String,
 						id: 'span_id--string----true',
 						key: 'span_id',
 						type: '',
@@ -378,7 +423,7 @@ export const celeryErrorByWorkerWidgetData = (
 					spaceAggregation: 'sum',
 					functions: [],
 					filters: {
-						items: [],
+						items: [groupByKeyExists('celery.hostname')],
 						op: 'AND',
 					},
 					expression: 'B',
@@ -398,12 +443,14 @@ export const celeryErrorByWorkerWidgetData = (
 					legend: '',
 					reduceTo: ReduceOperators.AVG,
 				},
+			],
+			queryFormulas: [
 				{
 					queryName: 'F1',
 					expression: '(A/B)*100',
 					disabled: false,
 					legend: '{{celery.hostname}}',
-				} as any,
+				},
 			],
 			yAxisUnit: 'percent',
 		}),
@@ -426,11 +473,12 @@ export const celeryLatencyByWorkerWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'p99',
+					aggregations: [{ expression: 'p99(duration_nano)' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [],
+						items: [groupByKeyExists('celery.hostname')],
 						op: 'AND',
 					},
 					functions: [],
@@ -523,11 +571,12 @@ export const celeryTaskLatencyWidgetData = (
 						type: '',
 					},
 					aggregateOperator: type || 'p99',
+					aggregations: [{ expression: latencyExpression(type) }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
-						items: [],
+						items: [groupByKeyExists('celery.task_name')],
 						op: 'AND',
 					},
 					functions: [],
@@ -544,7 +593,7 @@ export const celeryTaskLatencyWidgetData = (
 					limit: null,
 					orderBy: [
 						{
-							columnName: '#SIGNOZ_VALUE',
+							columnName: latencyExpression(type),
 							order: 'asc',
 						},
 					],
@@ -574,11 +623,12 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'avg',
+				aggregations: [{ expression: 'avg(duration_nano)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
 				filters: {
-					items: [],
+					items: [groupByKeyExists('celery.task_name')],
 					op: 'AND',
 				},
 				functions: [],
@@ -595,7 +645,7 @@ export const celerySlowestTasksTableWidgetData = getWidgetQueryBuilder(
 				limit: 10,
 				orderBy: [
 					{
-						columnName: '#SIGNOZ_VALUE',
+						columnName: 'avg(duration_nano)',
 						order: 'desc',
 					},
 				],
@@ -624,11 +674,13 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'avg',
+				aggregations: [{ expression: 'avg(duration_nano)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
 				filters: {
 					items: [
+						groupByKeyExists('celery.task_name'),
 						{
 							id: uuidv4(),
 							key: {
@@ -657,7 +709,7 @@ export const celeryRetryTasksTableWidgetData = getWidgetQueryBuilder(
 				limit: 10,
 				orderBy: [
 					{
-						columnName: '#SIGNOZ_VALUE',
+						columnName: 'avg(duration_nano)',
 						order: 'desc',
 					},
 				],
@@ -687,11 +739,13 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'avg',
+				aggregations: [{ expression: 'avg(duration_nano)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
 				filters: {
 					items: [
+						groupByKeyExists('celery.task_name'),
 						{
 							id: uuidv4(),
 							key: {
@@ -720,7 +774,7 @@ export const celeryFailedTasksTableWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [
 					{
-						columnName: '#SIGNOZ_VALUE',
+						columnName: 'avg(duration_nano)',
 						order: 'desc',
 					},
 				],
@@ -748,11 +802,13 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'avg',
+				aggregations: [{ expression: 'avg(duration_nano)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
 				filters: {
 					items: [
+						groupByKeyExists('celery.task_name'),
 						{
 							id: uuidv4(),
 							key: {
@@ -781,7 +837,7 @@ export const celerySuccessTasksTableWidgetData = getWidgetQueryBuilder(
 				limit: null,
 				orderBy: [
 					{
-						columnName: '#SIGNOZ_VALUE',
+						columnName: 'avg(duration_nano)',
 						order: 'desc',
 					},
 				],
@@ -815,11 +871,13 @@ export const celeryTimeSeriesTablesWidgetData = (
 						type: '',
 					},
 					aggregateOperator: 'avg',
+					aggregations: [{ expression: 'avg(duration_nano)' }],
 					dataSource: DataSource.TRACES,
 					disabled: false,
 					expression: 'A',
 					filters: {
 						items: [
+							groupByKeyExists('celery.task_name'),
 							{
 								id: uuidv4(),
 								key: {
@@ -873,6 +931,7 @@ export const celeryAllStateCountWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'count_distinct',
+				aggregations: [{ expression: 'count_distinct(span_id)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
@@ -910,6 +969,7 @@ export const celerySuccessStateCountWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'count_distinct',
+				aggregations: [{ expression: 'count_distinct(span_id)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
@@ -959,6 +1019,7 @@ export const celeryFailedStateCountWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'count_distinct',
+				aggregations: [{ expression: 'count_distinct(span_id)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
@@ -1008,6 +1069,7 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 					type: '',
 				},
 				aggregateOperator: 'count_distinct',
+				aggregations: [{ expression: 'count_distinct(span_id)' }],
 				dataSource: DataSource.TRACES,
 				disabled: false,
 				expression: 'A',
@@ -1042,3 +1104,34 @@ export const celeryRetryStateCountWidgetData = getWidgetQueryBuilder(
 		],
 	}),
 );
+
+// One row per worker that reported in the range; the card counts the rows.
+export const getCeleryWorkerCountRequest = (
+	startTime: number,
+	endTime: number,
+): Querybuildertypesv5QueryRangeRequestDTO => ({
+	schemaVersion: 'v1',
+	start: Math.floor(startTime / 1e6),
+	end: Math.floor(endTime / 1e6),
+	requestType: Querybuildertypesv5RequestTypeDTO.scalar,
+	compositeQuery: {
+		queries: [
+			{
+				type: Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query,
+				spec: {
+					name: 'A',
+					signal: MetricSignal.metrics,
+					aggregations: [
+						{
+							metricName: 'flower_task_runtime_seconds_sum',
+							timeAggregation: MetrictypesTimeAggregationDTO.count,
+							spaceAggregation: MetrictypesSpaceAggregationDTO.sum,
+							reduceTo: Querybuildertypesv5ReduceToDTO.sum,
+						},
+					],
+					groupBy: [{ name: 'worker' }],
+				},
+			},
+		],
+	},
+});

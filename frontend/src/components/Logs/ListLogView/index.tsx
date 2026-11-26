@@ -4,20 +4,20 @@ import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
-import {
-	getBodyDisplayString,
-	getSanitizedLogBody,
-} from 'container/LogDetailedView/utils';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
+import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import { useIsBodyJsonEnabled } from 'hooks/logs/useIsBodyJsonEnabled';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 // utils
-import { FlatLogData } from 'lib/logs/flatLogData';
+import { FlatLogData, getLogFieldValue } from 'lib/logs/flatLogData';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import { useTimezone } from 'providers/Timezone';
 // interfaces
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
+import { coerceToString, isScalarFieldValue } from 'utils/stringUtils';
 
 // components
 import AddToQueryHOC, { AddToQueryHOCProps } from '../AddToQueryHOC';
@@ -26,7 +26,6 @@ import LogStateIndicator from '../LogStateIndicator/LogStateIndicator';
 import { getLogIndicatorType } from '../LogStateIndicator/utils';
 // styles
 import { Container, LogContainer, LogText } from './styles';
-import { isValidLogField } from './util';
 
 import './ListLogView.styles.scss';
 
@@ -37,8 +36,9 @@ interface LogFieldProps {
 	fontSize: FontSize;
 }
 
-type LogSelectedFieldProps = Omit<LogFieldProps, 'linesPerRow'> &
-	Pick<AddToQueryHOCProps, 'onAddToQuery'>;
+type LogSelectedFieldProps = Omit<LogFieldProps, 'linesPerRow' | 'fieldValue'> &
+	Pick<AddToQueryHOCProps, 'fieldValue'> &
+	Partial<Pick<AddToQueryHOCProps, 'onAddToQuery'>>;
 
 function LogGeneralField({
 	fieldKey,
@@ -75,29 +75,54 @@ function LogSelectedField({
 	onAddToQuery,
 	fontSize,
 }: LogSelectedFieldProps): JSX.Element {
+	const fieldKeyText = (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			<span
+				style={{ color: blue[4] }}
+				className={cx('selected-log-field-key', fontSize)}
+			>
+				{fieldKey}
+			</span>
+		</Typography>
+	);
+
 	return (
 		<div className="log-selected-fields">
-			<AddToQueryHOC
-				fieldKey={fieldKey}
-				fieldValue={fieldValue}
-				onAddToQuery={onAddToQuery}
-				fontSize={fontSize}
-			>
-				<Typography.Text>
-					<span
-						style={{ color: blue[4] }}
-						className={cx('selected-log-field-key', fontSize)}
-					>
-						{fieldKey}
+			{onAddToQuery ? (
+				<AddToQueryHOC
+					fieldKey={fieldKey}
+					fieldValue={fieldValue}
+					onAddToQuery={onAddToQuery}
+					fontSize={fontSize}
+				>
+					{fieldKeyText}
+				</AddToQueryHOC>
+			) : (
+				fieldKeyText
+			)}
+			<div className={cx('selected-log-kv', fontSize)}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="p"
+					textOverflow="ellipsis"
+					maxLines={1}
+				>
+					<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
+					<span className={cx('selected-log-value', fontSize)}>
+						{coerceToString(fieldValue) || "''"}
 					</span>
-				</Typography.Text>
-			</AddToQueryHOC>
-			<Typography.Text truncate={1} className={cx('selected-log-kv', fontSize)}>
-				<span className={cx('selected-log-field-key', fontSize)}>{': '}</span>
-				<span className={cx('selected-log-value', fontSize)}>
-					{fieldValue || "''"}
-				</span>
-			</Typography.Text>
+				</Typography>
+			</div>
 		</div>
 	);
 }
@@ -130,6 +155,7 @@ function ListLogView({
 	onClearActiveLog,
 }: ListLogViewProps): JSX.Element {
 	const flattenLogData = useMemo(() => FlatLogData(logData), [logData]);
+	const isBodyJsonEnabled = useIsBodyJsonEnabled();
 
 	const { isHighlighted, isLogsExplorerPage, onLogCopy } = useCopyLogLink(
 		logData.id,
@@ -182,6 +208,7 @@ function ListLogView({
 	return (
 		<>
 			<Container
+				data-testid={`logs-list-row-${logData.id}`}
 				$isActiveLog={isHighlighted || activeLog?.id === logData.id}
 				$isDarkMode={isDarkMode}
 				$logType={logType}
@@ -194,12 +221,12 @@ function ListLogView({
 						severityText={logData.severity_text}
 						severityNumber={logData.severity_number}
 					/>
-					<div>
+					<div className="log-line-content">
 						<LogContainer fontSize={fontSize}>
 							{updatedSelecedFields.some((field) => field.name === 'body') && (
 								<LogGeneralField
 									fieldKey="Log"
-									fieldValue={getBodyDisplayString(logData.body)}
+									fieldValue={getBodyDisplay(logData.body)}
 									linesPerRow={linesPerRow}
 									fontSize={fontSize}
 								/>
@@ -221,17 +248,22 @@ function ListLogView({
 
 							{updatedSelecedFields
 								.filter((field) => !['timestamp', 'body'].includes(field.name))
-								.map((field) =>
-									isValidLogField(flattenLogData[field.name] as never) ? (
+								.map((field) => {
+									const value = getLogFieldValue(logData, field.name, isBodyJsonEnabled);
+									if (value == null) {
+										return null;
+									}
+									const queryValue = isScalarFieldValue(value) ? value : undefined;
+									return (
 										<LogSelectedField
 											key={field.name}
 											fieldKey={field.name}
-											fieldValue={flattenLogData[field.name] as never}
-											onAddToQuery={onAddToQuery}
+											fieldValue={queryValue ?? coerceToString(value)}
+											onAddToQuery={queryValue === undefined ? undefined : onAddToQuery}
 											fontSize={fontSize}
 										/>
-									) : null,
-								)}
+									);
+								})}
 						</LogContainer>
 					</div>
 				</div>

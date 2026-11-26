@@ -65,7 +65,8 @@ function SearchBar({
 				/>
 				<Input
 					type="text"
-					className="timezone-picker__input"
+					variant="unstyled"
+					noFocusRing
 					placeholder="Search timezones..."
 					value={value}
 					onChange={(e): void => onChange(e.target.value)}
@@ -88,6 +89,7 @@ function TimezoneItem({
 	return (
 		<button
 			type="button"
+			data-testid={`timezone-item-${timezone.value}`}
 			className={cx('timezone-picker__item', {
 				selected: isSelected,
 				'has-divider': timezone.hasDivider,

@@ -6,7 +6,6 @@
 import type { MessagingQueuesPayloadProps } from 'api/messagingQueues/getConsumerLagDetails';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import type { DropRateAPIResponse } from 'pages/MessagingQueues/MQDetails/DropRateView/dropRateViewUtils';
 import {
 	MessagingQueueServiceDetailType,
 	MessagingQueuesViewTypeOptions,
@@ -26,7 +25,6 @@ export const KAFKA_VIEWS = [
 	MessagingQueuesViewTypeOptions.ConsumerLag,
 	MessagingQueuesViewTypeOptions.PartitionLatency,
 	MessagingQueuesViewTypeOptions.ProducerLatency,
-	MessagingQueuesViewTypeOptions.DropRate,
 	MessagingQueuesViewTypeOptions.MetricPage,
 ] as const;
 
@@ -238,39 +236,3 @@ export const topicThroughputDetails = (count: number): KafkaTable =>
 		serviceRows(count, 2),
 		['p99', 'error_rate', 'throughput'],
 	);
-
-/** Trace ids the drop rate table lists four at a time behind a "+ n more". */
-const traceIds = (index: number): string[] =>
-	Array.from({ length: 7 }, (_u, position) => {
-		const seed = (index + 1) * 977 + position * 31;
-
-		return Array.from({ length: 4 }, (_v, chunk) =>
-			((seed * (chunk + 7) * 0x1f123bb5) % 0xffffffff)
-				.toString(16)
-				.padStart(8, '0')
-				.slice(-8),
-		).join('');
-	});
-
-export const spanEvaluationResponse = (
-	count: number,
-	timestamp: number,
-): DropRateAPIResponse['data'] => ({
-	resultType: 'list',
-	result: [
-		{
-			queryName: 'A',
-			list: Array.from({ length: count }, (_u, index) => ({
-				timestamp: new Date(timestamp).toISOString(),
-				data: {
-					producer_service: KAFKA_SERVICES[index % KAFKA_SERVICES.length],
-					consumer_service: KAFKA_SERVICES[(index + 1) % KAFKA_SERVICES.length],
-					breach_percentage: seeded(index, 0, 45),
-					breached_spans: 40 + index * 13,
-					total_spans: 4000 + index * 317,
-					top_traceIDs: traceIds(index),
-				},
-			})),
-		},
-	],
-});

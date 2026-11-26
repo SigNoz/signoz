@@ -3,7 +3,6 @@ import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
 
 interface SavedViewParams {
-	viewName: string;
 	viewKey: string;
 }
 
@@ -25,7 +24,6 @@ export const useGetSavedViewParams = (): SavedViewParams => {
 
 	return useMemo(
 		() => ({
-			viewName: parseViewParam(urlQuery.get(QueryParams.viewName)),
 			viewKey: parseViewParam(urlQuery.get(QueryParams.viewKey)),
 		}),
 		[urlQuery],

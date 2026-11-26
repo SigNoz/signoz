@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { MemoryRouter } from 'react-router-dom';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter, OnUrlUpdateFunction } from 'nuqs/adapters/testing';
 
 import { TableColumnDef } from 'components/TanStackTableView';
+import { TestRouter } from 'tests/router';
 
 import { InfraMonitoringEntity } from '../../../constants';
 import EntityOverview from '../EntityOverview';
@@ -80,7 +80,7 @@ function overviewTree(
 	onUrlUpdate?: OnUrlUpdateFunction,
 ): JSX.Element {
 	return (
-		<MemoryRouter>
+		<TestRouter>
 			<QueryClientProvider client={queryClient}>
 				<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
 					<VirtuosoMockContext.Provider
@@ -88,7 +88,6 @@ function overviewTree(
 					>
 						<EntityOverview
 							category={InfraMonitoringEntity.NODES}
-							eventEntity="node"
 							attributes={attributes}
 							entity={{ nodeName: attributes['k8s.node.name'] }}
 							entityName={attributes['k8s.node.name']}
@@ -97,7 +96,7 @@ function overviewTree(
 					</VirtuosoMockContext.Provider>
 				</NuqsTestingAdapter>
 			</QueryClientProvider>
-		</MemoryRouter>
+		</TestRouter>
 	);
 }
 
@@ -150,10 +149,8 @@ describe('EntityOverview', () => {
 	it('keeps the locked scope out of the editable filter', async () => {
 		renderOverview();
 
-		// The chip leads with the relation and counts the scope behind it
 		const chip = await screen.findByTestId('overview-locked-scope');
-		expect(chip).toHaveTextContent("k8s.node.name = 'node-1'");
-		expect(chip).toHaveTextContent('+1');
+		expect(chip).toHaveTextContent(LOCKED_EXPRESSION);
 
 		// The editor is handed the user's own expression, never the locked scope
 		const lastProps = mockQuerySearchProps.mock.calls.at(-1)?.[0];

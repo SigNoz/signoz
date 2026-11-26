@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { DataViewer } from 'periscope/components/DataViewer';
 import { ILog } from 'types/api/logs/log';
 

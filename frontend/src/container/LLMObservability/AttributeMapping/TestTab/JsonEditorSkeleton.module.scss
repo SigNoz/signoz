@@ -15,8 +15,8 @@
 	flex: 0 0 40px;
 	padding-right: var(--padding-3);
 	text-align: right;
-	font-family: 'Geist Mono', monospace;
-	font-size: var(--font-size-xs);
+	font-family: var(--code-small-400-font-family);
+	font-size: var(--code-small-400-font-size);
 	color: var(--l3-foreground);
 	opacity: 0.6;
 	user-select: none;

@@ -15,7 +15,7 @@ import (
 
 func TestSpanScopeFilterExpression(t *testing.T) {
 	// Test that span scope fields work in filter expressions
-	storage := NewStorage()
+	storage := NewStorage(nil)
 
 	tests := []struct {
 		name              string
@@ -125,7 +125,7 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 			// For now, just verify the expression parses correctly
 			// In a real implementation, we'd need to check that the resource filter
 			// is properly skipped when span scope fields are present
-			storage := NewStorage()
+			storage := NewStorage(nil)
 
 			// Prepare field keys for the test
 			fieldKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)

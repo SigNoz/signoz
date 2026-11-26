@@ -10,7 +10,7 @@ import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
@@ -92,7 +92,7 @@ function Login(): JSX.Element {
 			!versionError &&
 			!versionData.data.setupCompleted
 		) {
-			history.push(ROUTES.SIGN_UP);
+			navigate(ROUTES.SIGN_UP);
 		}
 	}, [versionData, versionLoading, versionError]);
 
@@ -231,10 +231,12 @@ function Login(): JSX.Element {
 			return;
 		}
 
-		history.push(ROUTES.FORGOT_PASSWORD, {
-			email,
-			orgId: sessionsOrgId,
-			orgs: sessionsContext.orgs,
+		navigate(ROUTES.FORGOT_PASSWORD, {
+			state: {
+				email,
+				orgId: sessionsOrgId,
+				orgs: sessionsContext.orgs,
+			},
 		});
 	}, [form, sessionsContext, sessionsOrgId]);
 
@@ -305,13 +307,31 @@ function Login(): JSX.Element {
 					<div className="login-form-emoji">
 						<img src={tvUrl} alt="TV" width="32" height="32" />
 					</div>
-					<Typography.Title level={4} className="login-form-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						align="center"
+						textOverflow="wrap"
+					>
 						Sign in to your workspace
-					</Typography.Title>
-					<Typography.Text className="login-form-description">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						maxWidth={317}
+						textOverflow="wrap"
+					>
 						Sign in to monitor, trace, and troubleshoot your applications
 						effortlessly.
-					</Typography.Text>
+					</Typography>
 				</div>
 
 				<div className="login-form-card">
@@ -356,15 +376,17 @@ function Login(): JSX.Element {
 						<ParentContainer>
 							<div className="password-label-container">
 								<Label htmlFor="Password">Password</Label>
-								<Typography.Link
-									className="forgot-password-link"
+								<Button
+									variant="link"
+									color="secondary"
+									size="md"
 									onClick={(event): void => {
 										event.preventDefault();
 										handleForgotPasswordClick();
 									}}
 								>
 									Forgot password?
-								</Typography.Link>
+								</Button>
 							</div>
 							<FormContainer.Item name="password">
 								<Input.Password

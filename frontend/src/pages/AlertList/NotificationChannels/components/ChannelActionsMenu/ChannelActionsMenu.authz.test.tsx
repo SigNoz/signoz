@@ -62,14 +62,20 @@ describe('ChannelActionsMenu - AuthZ', () => {
 		const user = userEvent.setup({ delay: null });
 		await user.click(await screen.findByTestId('channel-actions-3', {}, FIND));
 
-		const deleteRow = await screen.findByText('Delete', {}, FIND);
+		await screen.findByTestId('channel-actions-3-delete', {}, FIND);
 		// a row still waiting on its check reads as loading, not denied
 		await waitFor(
-			() => expect(document.querySelector('[data-loading]')).toBeNull(),
+			() =>
+				expect(screen.getByTestId('channel-actions-3-delete')).not.toHaveAttribute(
+					'data-loading',
+				),
 			FIND,
 		);
 		await waitFor(
-			() => expect(deleteRow.closest('[data-disabled]')).not.toBeNull(),
+			() =>
+				expect(screen.getByTestId('channel-actions-3-delete')).toHaveAttribute(
+					'data-disabled',
+				),
 			FIND,
 		);
 	});

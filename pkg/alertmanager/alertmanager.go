@@ -34,6 +34,9 @@ type Alertmanager interface {
 	// ListChannels lists all channels for the organization.
 	ListChannels(context.Context, string) ([]*alertmanagertypes.Channel, error)
 
+	// GetChannelIDsByNames resolves display names to channel ids and rejects unknown names.
+	GetChannelIDsByNames(context.Context, string, []string) ([]string, error)
+
 	// ListAllChannels lists all channels for all organizations. It is used by the legacy alertmanager only.
 	ListAllChannels(context.Context) ([]*alertmanagertypes.Channel, error)
 

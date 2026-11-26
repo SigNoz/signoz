@@ -11,11 +11,14 @@ import {
 import { rest, type RequestHandler } from 'msw';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { attributeValuesResponse } from '@/storybook/msw/__story_mockdata__/attributes';
-import { fieldKeysResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import {
+	fieldKeysResponse,
+	fieldValuesResponse,
+} from '@/storybook/msw/__story_mockdata__/fields';
 import { quickFiltersResponse } from '@/storybook/msw/__story_mockdata__/quickFilters';
 
-import { FiltersType } from '../types';
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../FilterRenderers/Checkbox/constants';
+import { FiltersType, QuickFilterCheckboxUseFieldApis } from '../types';
 
 const customFilters = [
 	{
@@ -61,13 +64,15 @@ export const checkboxConfig = [
 	},
 ];
 
-export const attributeValuesHandler = (
-	values: readonly string[],
-): RequestHandler =>
-	rest.get(
-		'http://localhost/api/v3/autocomplete/attribute_values',
-		(_req, res, ctx) =>
-			res(ctx.status(200), ctx.json(attributeValuesResponse(values))),
+export const fieldApis: QuickFilterCheckboxUseFieldApis = {
+	startUnixMilli: 1700000000000,
+	endUnixMilli: 1700003600000,
+	existingQuery: null,
+};
+
+export const fieldValuesHandler = (values: readonly string[]): RequestHandler =>
+	rest.get('http://localhost/api/v1/fields/values', (_req, res, ctx) =>
+		res(ctx.status(200), ctx.json(fieldValuesResponse(values))),
 	);
 
 export const handlers = [
@@ -82,8 +87,26 @@ export const handlers = [
 	rest.get('http://localhost/api/v1/fields/keys', (_req, res, ctx) =>
 		res(ctx.status(200), ctx.json(fieldKeysResponse(['k8s.namespace.name']))),
 	),
-	attributeValuesHandler(['checkout', 'frontend', 'payments']),
+	fieldValuesHandler(['checkout', 'frontend', 'payments']),
 ];
+
+export const noSavedFiltersHandler = rest.get(
+	'http://localhost/api/v2/quick_filters/logs',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(quickFiltersResponse(QuickfiltertypesSourceDTO.logs, [])),
+		),
+);
+
+export const noSavedTracesFiltersHandler = rest.get(
+	'http://localhost/api/v2/quick_filters/traces',
+	(_req, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json(quickFiltersResponse(QuickfiltertypesSourceDTO.traces, [])),
+		),
+);
 
 export const loadingFiltersHandlers = [
 	rest.get('http://localhost/api/v2/quick_filters/logs', (_req, res, ctx) =>
@@ -124,3 +147,9 @@ export const selectedServiceQueryBuilder = {
 		},
 	},
 };
+
+/** More values than the checkbox filter shows before Show More. */
+export const MANY_FILTER_VALUES = Array.from(
+	{ length: 2 * DEFAULT_VISIBLE_ITEMS_COUNT + 5 },
+	(_, index) => `service-${String(index + 1).padStart(2, '0')}`,
+);

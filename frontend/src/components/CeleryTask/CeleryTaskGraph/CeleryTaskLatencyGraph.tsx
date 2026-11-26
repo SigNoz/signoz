@@ -1,12 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
-import { Col, Row } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
@@ -26,7 +29,10 @@ import {
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
 import { useNavigateToExplorer } from '../useNavigateToExplorer';
-import { celeryTaskLatencyWidgetData } from './CeleryTaskGraphUtils';
+import {
+	celeryTaskLatencyWidgetData,
+	getClickedSeries,
+} from './CeleryTaskGraphUtils';
 
 import './CeleryTaskGraph.style.scss';
 
@@ -48,8 +54,7 @@ function CeleryTaskLatencyGraph({
 	queryEnabled: boolean;
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
@@ -80,13 +85,13 @@ function CeleryTaskLatencyGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const selectedFilters = useMemo(
@@ -128,13 +133,12 @@ function CeleryTaskLatencyGraph({
 
 	const onGraphClick = useCallback(
 		(type: string): OnClickPluginOpts['onClick'] =>
-			(xValue, yValue, mouseX, mouseY, data): Promise<void> => {
-				const [firstDataPoint] = Object.entries(data || {});
-				const [entity, value] = firstDataPoint;
-				setEntityData({
-					entity,
-					value,
-				});
+			(xValue, yValue, mouseX, mouseY, data, queryData): Promise<void> => {
+				const clickedSeries = getClickedSeries(data, queryData);
+				if (!clickedSeries) {
+					return Promise.resolve();
+				}
+				setEntityData(clickedSeries);
 
 				return onGraphClickHandler(xValue, yValue, mouseX, mouseY, type);
 			},
@@ -198,6 +202,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p99_latency')}
@@ -219,6 +224,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p95_latency')}
@@ -239,6 +245,7 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
+							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p90_latency')}

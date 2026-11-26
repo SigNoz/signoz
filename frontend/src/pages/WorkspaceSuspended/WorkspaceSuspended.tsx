@@ -1,7 +1,11 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
-import { Button, Col, Flex, Modal, Row, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import { updateSubscription } from 'api/generated/services/subscriptions';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
@@ -9,7 +13,7 @@ import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionManagePermissions } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
@@ -60,7 +64,7 @@ function WorkspaceSuspended(): JSX.Element {
 				!shouldSuspendWorkspace ||
 				activeLicense?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicense, activeLicense]);
@@ -74,9 +78,16 @@ function WorkspaceSuspended(): JSX.Element {
 							{t('workspaceSuspended')}
 						</span>
 						<span className="workspace-suspended__modal__header__actions">
-							<Typography.Text className="workspace-suspended__modal__title">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Got Questions?
-							</Typography.Text>
+							</Typography>
 							<Button
 								type="default"
 								shape="round"
@@ -102,12 +113,29 @@ function WorkspaceSuspended(): JSX.Element {
 							<Row justify="center" align="middle">
 								<Col>
 									<Space direction="vertical" align="center">
-										<Typography.Title level={2}>
+										<Typography
+											variant="label"
+											size="large"
+											weight="bold"
+											color="inherit"
+											as="h2"
+											marginY={4}
+											textOverflow="wrap"
+										>
 											<div className="workspace-suspended__title">{t('actionHeader')}</div>
-										</Typography.Title>
-										<Typography.Text className="workspace-suspended__details">
+										</Typography>
+										<Typography
+											variant="paragraph"
+											size="medium"
+											weight="regular"
+											color="secondary"
+											as="span"
+											display="inline-block"
+											align="center"
+											textOverflow="wrap"
+										>
 											{t('actionDescription')}
-										</Typography.Text>
+										</Typography>
 									</Space>
 								</Col>
 							</Row>

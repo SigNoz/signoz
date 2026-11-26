@@ -40,6 +40,86 @@ var (
 	SourceAiObservability = Source{valuer.NewString("ai_observability")}
 )
 
+// unsupportedFilterNames are fields whose values are (near-)unique per span or
+// log, so a quick filter on them would list nothing useful to pick from.
+var unsupportedFilterNames = map[string]struct{}{
+	// IDs and per-record values
+	"trace_id":            {},
+	"traceID":             {},
+	"span_id":             {},
+	"spanID":              {},
+	"parent_span_id":      {},
+	"parentSpanID":        {},
+	"timestamp":           {},
+	"body":                {},
+	"gen_ai.tool.call.id": {},
+
+	// Free-text payloads
+	"gen_ai.input.messages":       {},
+	"gen_ai.output.messages":      {},
+	"gen_ai.system_instructions":  {},
+	"gen_ai.prompt":               {},
+	"gen_ai.completion":           {},
+	"gen_ai.tool.call.arguments":  {},
+	"gen_ai.tool.call.result":     {},
+	"ai.prompt.messages":          {},
+	"ai.toolCall.result":          {},
+	"llm.input_messages":          {},
+	"input.value":                 {},
+	"output.value":                {},
+	"langfuse.observation.input":  {},
+	"langfuse.observation.output": {},
+	"traceloop.entity.input":      {},
+	"traceloop.entity.output":     {},
+	"final_result":                {},
+	"exception.message":           {},
+	"exception.stacktrace":        {},
+	"db.statement":                {},
+	"db.query.text":               {},
+
+	// Token counts
+	"gen_ai.usage.input_tokens":                              {},
+	"gen_ai.usage.output_tokens":                             {},
+	"gen_ai.usage.total_tokens":                              {},
+	"gen_ai.usage.prompt_tokens":                             {},
+	"gen_ai.usage.completion_tokens":                         {},
+	"gen_ai.usage.cached_input_tokens":                       {},
+	"gen_ai.usage.input_tokens.cached":                       {},
+	"gen_ai.usage.cache_read.input_tokens":                   {},
+	"gen_ai.usage.cache_read_input_tokens":                   {},
+	"gen_ai.usage.cache_creation.input_tokens":               {},
+	"gen_ai.usage.cache_creation_input_tokens":               {},
+	"gen_ai.usage.cache_write.input_tokens":                  {},
+	"gen_ai.usage.reasoning.output_tokens":                   {},
+	"gen_ai.usage.reasoning_tokens":                          {},
+	"gen_ai.usage.prompt_token_details.cached_read_tokens":   {},
+	"gen_ai.usage.completion_token_details.reasoning_tokens": {},
+	"ai.usage.inputTokens":                                   {},
+	"ai.usage.outputTokens":                                  {},
+	"ai.usage.promptTokens":                                  {},
+	"ai.usage.completionTokens":                              {},
+	"llm.token_count.prompt":                                 {},
+	"llm.token_count.completion":                             {},
+	"llm.token_count.total":                                  {},
+	"llm.token_count.prompt_details.cache_read":              {},
+	"llm.token_count.prompt_details.cache_write":             {},
+	"llm.token_count.completion_details.reasoning":           {},
+	"llm.usage.prompt_tokens":                                {},
+	"llm.usage.completion_tokens":                            {},
+	"llm.usage.total_tokens":                                 {},
+	"input_tokens":                                           {},
+	"output_tokens":                                          {},
+	"cache_read_tokens":                                      {},
+	"cache_creation_tokens":                                  {},
+
+	// Per-span costs
+	"signoz.gen_ai.usage.input_tokens.cost":             {},
+	"signoz.gen_ai.usage.output_tokens.cost":            {},
+	"signoz.gen_ai.usage.cache_read.input_tokens.cost":  {},
+	"signoz.gen_ai.usage.cache_write.input_tokens.cost": {},
+	"signoz.gen_ai.usage.tokens.cost":                   {},
+}
+
 func (Source) Enum() []any {
 	return []any{
 		SourceTraces,
@@ -184,7 +264,6 @@ func NewDefaultQuickFilter(orgID valuer.UUID) ([]*StorableQuickFilter, error) {
 		{Name: "http.method", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: "http.route", FieldContext: telemetrytypes.FieldContextAttribute, FieldDataType: telemetrytypes.FieldDataTypeString},
 		{Name: "http_url", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
-		{Name: "trace_id", FieldContext: telemetrytypes.FieldContextSpan, FieldDataType: telemetrytypes.FieldDataTypeString},
 	}
 
 	logsFilters := []telemetrytypes.TelemetryFieldKey{
@@ -262,6 +341,9 @@ func validateFilters(filters []telemetrytypes.TelemetryFieldKey) error {
 	for _, filter := range filters {
 		if filter.Name == "" {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "filter name is required")
+		}
+		if _, unsupported := unsupportedFilterNames[filter.Name]; unsupported {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "%s is not supported as a quick filter as it has too many unique values, use the search bar to filter by it instead", filter.Name)
 		}
 	}
 	return nil

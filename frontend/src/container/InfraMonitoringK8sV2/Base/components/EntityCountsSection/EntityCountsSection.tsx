@@ -3,7 +3,7 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import { Compass } from '@signozhq/icons';
 import { TextNoData } from '../../../components/TextNoData';
-import { Link } from 'react-router-dom';
+import { AppLink } from 'lib/router/AppLink';
 
 import { InfraMonitoringEntity } from '../../../constants';
 import { getDrawerDurationMs } from '../../useDrawerLifecycleStore';
@@ -56,26 +56,32 @@ export function EntityCountsSection<T>({
 					className={styles.countCard}
 					data-testid={`count-card-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
 				>
-					<Typography.Text
-						color="muted"
+					<Typography
+						variant="uppercase"
 						size="small"
 						weight="medium"
-						className={styles.countLabel}
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
 					>
 						{config.label}
-					</Typography.Text>
+					</Typography>
 					{config.getValue(entity) ? (
-						<Typography.Text
-							className={styles.countValue}
-							size="xl"
-							weight="semibold"
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+							tabularNumbers
 						>
 							{config.getValue(entity)}
-						</Typography.Text>
+						</Typography>
 					) : (
 						<TextNoData type="typography" className={styles.countValue} />
 					)}
-					<Link
+					<AppLink
 						to={buildK8sListNavigationUrl(config.targetCategory, filterExpression)}
 						onClick={(): void => handleCardNavigate(config.label)}
 						data-testid={`navigate-${config.label.toLowerCase().replace(/\s+/g, '-')}`}
@@ -95,7 +101,7 @@ export function EntityCountsSection<T>({
 								<Compass size={14} />
 							</Button>
 						</Tooltip>
-					</Link>
+					</AppLink>
 				</div>
 			))}
 		</div>

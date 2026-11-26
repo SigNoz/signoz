@@ -47,13 +47,14 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 			ID:                  "ListServiceAccounts",
 			Tags:                []string{"serviceaccount"},
 			Summary:             "List service accounts",
-			Description:         "This endpoint lists the service accounts for an organisation",
+			Description:         "Returns a page of the service accounts for an organisation. `query` is a filter expression over name, email, status, created_at and updated_at, for example `status = 'active'`; `sort`/`order` pick the ordering and `limit`/`offset` the page.",
 			Request:             nil,
+			RequestQuery:        new(serviceaccounttypes.ListServiceAccountsParams),
 			RequestContentType:  "",
-			Response:            make([]*serviceaccounttypes.ServiceAccount, 0),
+			Response:            new(serviceaccounttypes.ListableServiceAccount),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{},
+			ErrorStatusCodes:    []int{http.StatusBadRequest},
 			Deprecated:          false,
 			SecuritySchemes:     newScopedSecuritySchemes([]string{coretypes.ResourceServiceAccount.Scope(coretypes.VerbList)}),
 		},
@@ -151,7 +152,13 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		ErrorStatusCodes:    []int{http.StatusNotFound},
 		Deprecated:          false,
 		SecuritySchemes:     nil,
-	})).Methods(http.MethodPut).GetError(); err != nil {
+	}, handler.WithResourceDefs(handler.BasicResourceDef{
+		Resource: coretypes.ResourceServiceAccount,
+		Verb:     coretypes.VerbUpdate,
+		Category: coretypes.ActionCategoryAccessControl,
+		ID:       provider.claimServiceAccountIDExtractor(),
+		Selector: coretypes.IDSelector,
+	}))).Methods(http.MethodPut).GetError(); err != nil {
 		return err
 	}
 
@@ -492,5 +499,20 @@ func (provider *provider) serviceAccountIDExtractor() coretypes.ResourceIDExtrac
 		}
 
 		return serviceAccountRole.ServiceAccountID.String(), nil
+	})
+}
+
+func (provider *provider) claimServiceAccountIDExtractor() coretypes.ResourceIDExtractor {
+	return coretypes.NewResourceIDExtractor(coretypes.PhaseRequest, func(ec coretypes.ExtractorContext) (string, error) {
+		if ec.Request == nil {
+			return "", nil
+		}
+
+		claims, err := authtypes.ClaimsFromContext(ec.Request.Context())
+		if err != nil {
+			return "", err
+		}
+
+		return claims.ServiceAccountID, nil
 	})
 }

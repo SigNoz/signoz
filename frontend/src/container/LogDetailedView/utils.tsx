@@ -2,11 +2,7 @@ import * as Sentry from '@sentry/react';
 import Convert from 'ansi-to-html';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
-import {
-	ILog,
-	ILogAggregateAttributesResources,
-	ILogBody,
-} from 'types/api/logs/log';
+import { ILog, ILogAggregateAttributesResources } from 'types/api/logs/log';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FORBID_DOM_PURIFY_ATTR, FORBID_DOM_PURIFY_TAGS } from 'utils/app';
 
@@ -349,8 +345,3 @@ export const getSanitizedLogBody = (
 		return '{}';
 	}
 };
-
-// Returns a plain string for display contexts (Monaco editor, table cells, raw log row).
-export function getBodyDisplayString(body: string | ILogBody): string {
-	return typeof body === 'string' ? body : JSON.stringify(body as ILogBody);
-}

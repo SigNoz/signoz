@@ -1,4 +1,5 @@
-import { Empty, Table, TableColumnProps as ColumnProps, Tooltip } from 'antd';
+import { Table, TableColumnProps as ColumnProps, Tooltip } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 
 import solidInfoCircleUrl from '@/assets/Icons/solid-info-circle.svg';
 
@@ -10,6 +11,7 @@ interface FunnelTableProps {
 	columns: Array<ColumnProps<any>>;
 	title: string;
 	tooltip?: string;
+	testId?: string;
 }
 
 function FunnelTable({
@@ -18,9 +20,10 @@ function FunnelTable({
 	columns = [],
 	title,
 	tooltip,
+	testId,
 }: FunnelTableProps): JSX.Element {
 	return (
-		<div className="funnel-table">
+		<div className="funnel-table" data-testid={testId}>
 			<div className="funnel-table__header">
 				<div className="funnel-table__title">{title}</div>
 				<div className="funnel-table__actions">
@@ -51,6 +54,7 @@ FunnelTable.defaultProps = {
 	loading: false,
 	data: [],
 	tooltip: '',
+	testId: undefined,
 };
 
 export default FunnelTable;

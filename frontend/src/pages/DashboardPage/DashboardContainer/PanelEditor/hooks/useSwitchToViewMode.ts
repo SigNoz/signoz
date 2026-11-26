@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { DashboardtypesPanelSpecDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import type { PANEL_TYPES } from 'constants/queryBuilder';
@@ -49,7 +49,7 @@ export function useSwitchToViewMode({
 			encodeURIComponent(JSON.stringify(query)),
 		);
 		safeNavigate(
-			`${generatePath(ROUTES.DASHBOARD, { dashboardId })}?${params.toString()}`,
+			`${buildRoutePath(ROUTES.DASHBOARD, { dashboardId })}?${params.toString()}`,
 		);
 	}, [safeNavigate, urlQuery, dashboardId, panelId, panelType, query, spec]);
 }

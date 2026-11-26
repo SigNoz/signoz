@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { generatePath } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Braces,
@@ -10,11 +9,12 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import ROUTES from 'constants/routes';
 import { useNotificationChannelPermissions } from 'hooks/notificationChannels/useNotificationChannelPermissions';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { getAbsoluteUrl } from 'utils/basePath';
 
 import type { Channel } from '../../types';
@@ -66,7 +66,7 @@ function ChannelActionsMenu({
 				onClick: (): void => {
 					setCopy(
 						getAbsoluteUrl(
-							generatePath(ROUTES.CHANNELS_EDIT, { channelId: channel.id }),
+							buildRoutePath(ROUTES.CHANNELS_EDIT, { channelId: channel.id }),
 						),
 					);
 					toast.success('Link copied to clipboard');
@@ -84,6 +84,7 @@ function ChannelActionsMenu({
 				type: 'item',
 				value: 'delete',
 				label: 'Delete',
+				testId: `channel-actions-${channel.id}-delete`,
 				prefix: <Trash2 size={14} />,
 				checks: [deletePermission],
 				danger: true,

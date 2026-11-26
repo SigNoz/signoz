@@ -11,7 +11,7 @@ export const MOCK_ROUTING_POLICY_1: RoutingPolicy = {
 	description: 'description 1',
 	channels: ['Channel 1'],
 	createdAt: '2021-01-04',
-	updatedAt: undefined,
+	updatedAt: '2021-01-04',
 	createdBy: 'user1@signoz.io',
 	updatedBy: undefined,
 };
@@ -149,7 +149,7 @@ export function convertRoutingPolicyToApiResponse(
 		id: routingPolicy.id,
 		name: routingPolicy.name,
 		expression: routingPolicy.expression,
-		channels: routingPolicy.channels,
+		channels: routingPolicy.channels ?? [],
 		description: routingPolicy.description || '',
 		createdAt: routingPolicy.createdAt || '',
 		updatedAt: routingPolicy.updatedAt || '',

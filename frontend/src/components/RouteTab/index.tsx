@@ -1,13 +1,14 @@
-import {
-	generatePath,
-	matchPath,
-	useLocation,
-	useParams,
-} from 'react-router-dom';
+import { Suspense } from 'react';
 import { Tabs, TabsProps } from 'antd';
 import cx from 'classnames';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import Spinner from 'components/Spinner';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
 
 import { RouteTabProps } from './types';
 
@@ -28,21 +29,17 @@ function RouteTab({
 	routes,
 	activeKey,
 	onChangeHandler,
-	history,
 	showRightSection,
 	className,
 	...rest
 }: RouteTabProps & TabsProps): JSX.Element {
-	const params = useParams<Params>();
-	const location = useLocation();
+	const params = useAppParams<Params>();
+	const location = useAppLocation();
 
 	// Find the matching route for the current pathname
 	const currentRoute = routes.find((route) => {
 		const routePath = route.route.split('?')[0];
-		return matchPath(location.pathname, {
-			path: routePath,
-			exact: true,
-		});
+		return matchRoute(location.pathname, routePath, { exact: true });
 	});
 
 	const onChange = (activeRoute: string): void => {
@@ -53,8 +50,7 @@ function RouteTab({
 		const selectedRoute = routes.find((e) => e.key === activeRoute);
 
 		if (selectedRoute) {
-			const resolvedRoute = generatePath(selectedRoute.route, params);
-			history.push(resolvedRoute);
+			navigate(buildRoutePath(selectedRoute.route, params));
 		}
 	};
 
@@ -64,7 +60,18 @@ function RouteTab({
 		tabKey: route,
 		children: (
 			<OverlayScrollbar>
-				<Component />
+				<Suspense
+					fallback={
+						<Spinner
+							size="large"
+							tip="Loading..."
+							height="100%"
+							testId="route-tab-loading"
+						/>
+					}
+				>
+					<Component />
+				</Suspense>
 			</OverlayScrollbar>
 		),
 	}));
@@ -72,6 +79,7 @@ function RouteTab({
 	return (
 		<Tabs
 			className={cx(styles.routeTab, className)}
+			data-testid="route-tab"
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={currentRoute?.key || activeKey}

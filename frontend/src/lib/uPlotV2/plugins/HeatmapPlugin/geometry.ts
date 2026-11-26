@@ -1,3 +1,6 @@
+import { PrecisionOption } from 'components/Graph/types';
+import { getToolTipValue } from 'components/Graph/yAxisConfig';
+
 import { HeatmapAxisScale, HeatmapRow, HeatmapYAxis } from './types';
 
 /** Used when the ratio cannot be inferred, i.e. a single boundary. */
@@ -333,6 +336,15 @@ export function resolveColumnIndex(
 	}
 	const width = step > 0 ? step : Number.POSITIVE_INFINITY;
 	return xValue < timestamps[candidate] + width ? candidate : null;
+}
+
+/** Formats a bucket bound, or any value on the bucketed axis, in its unit. */
+export function createBucketValueFormatter(
+	unit?: string,
+	decimalPrecision?: PrecisionOption,
+): (value: number) => string {
+	return (value: number): string =>
+		getToolTipValue(String(value), unit, decimalPrecision);
 }
 
 /** The open-ended rows are labelled by their one real boundary; the synthetic

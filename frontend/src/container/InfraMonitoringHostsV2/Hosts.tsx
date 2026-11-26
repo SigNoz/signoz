@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -17,11 +17,10 @@ import {
 	QuickFilterChangeEventData,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { InfraMonitoringEvents } from 'constants/events';
-import { initialQueriesMap } from 'constants/queryBuilder';
 import K8sBaseDetails, {
 	K8sDetailsFilters,
 } from 'container/InfraMonitoringK8sV2/Base/K8sBaseDetails';
+import { DefaultQueryRedirect } from 'container/InfraMonitoringK8sV2/Base/DefaultQueryRedirect';
 import { K8sBaseList } from 'container/InfraMonitoringK8sV2/Base/K8sBaseList';
 import StatusFilter from 'container/InfraMonitoringHostsV2/StatusFilter';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8sV2/Base/types';
@@ -29,9 +28,6 @@ import {
 	InfraMonitoringEntity,
 	METRIC_NAMESPACE_BY_ENTITY,
 } from 'container/InfraMonitoringK8sV2/constants';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	getHostMetricsQueryPayload,
@@ -61,10 +57,6 @@ import {
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
-	const compositeQuery = useGetCompositeQueryParam();
-	const { redirectWithQueryBuilderData } = useQueryBuilder();
-	const isInitialized = useRef(false);
-
 	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
 	const { startUnixMilli, endUnixMilli } = useMemo(() => {
@@ -75,28 +67,6 @@ function Hosts(): JSX.Element {
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedTime, getMinMaxTime]);
-
-	useEffect(() => {
-		if (isInitialized.current) {
-			return;
-		}
-		isInitialized.current = true;
-
-		if (!compositeQuery) {
-			const defaultQuery = initialQueriesMap[DataSource.METRICS];
-			redirectWithQueryBuilderData({
-				...defaultQuery,
-				builder: {
-					...defaultQuery.builder,
-					queryData: defaultQuery.builder.queryData.map((query) => ({
-						...query,
-						filter: { expression: '' },
-						filters: { items: [], op: 'AND' as const },
-					})),
-				},
-			});
-		}
-	}, [compositeQuery, redirectWithQueryBuilderData]);
 
 	const handleFilterVisibilityChange = (): void => {
 		setShowFilters(!showFilters);
@@ -213,6 +183,7 @@ function Hosts(): JSX.Element {
 				className="periscope-btn ghost"
 				type="text"
 				size="small"
+				data-testid="quick-filters-toggle"
 				onClick={handleFilterVisibilityChange}
 			>
 				<Filter size={14} />
@@ -226,6 +197,7 @@ function Hosts(): JSX.Element {
 
 	return (
 		<>
+			<DefaultQueryRedirect />
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
@@ -233,17 +205,27 @@ function Hosts(): JSX.Element {
 							<OverlayScrollbar>
 								<>
 									<div className={styles.quickFiltersContainerHeader}>
-										<Typography.Text>Filters</Typography.Text>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											Filters
+										</Typography>
 										<Tooltip title="Collapse Filters">
 											<ArrowUpToLine
 												style={{ rotate: '270deg', cursor: 'pointer' }}
 												onClick={handleFilterVisibilityChange}
 												size="md"
+												data-testid="quick-filters-toggle"
 											/>
 										</Tooltip>
 									</div>
 									<QuickFilters
-										source={QuickFiltersSource.INFRA_MONITORING}
+										quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 										config={getHostsQuickFiltersConfig()}
 										handleFilterVisibilityChange={handleFilterVisibilityChange}
 										useFieldApis={{
@@ -271,7 +253,6 @@ function Hosts(): JSX.Element {
 							fetchListData={fetchListData}
 							getRowKey={getHostRowKey}
 							getItemKey={getHostItemKey}
-							eventCategory={InfraMonitoringEvents.HostEntity}
 							detailsQueryKeyPrefix="hosts"
 						/>
 					</div>
@@ -279,7 +260,6 @@ function Hosts(): JSX.Element {
 			</div>
 			<K8sBaseDetails
 				category={InfraMonitoringEntity.HOSTS}
-				eventCategory={InfraMonitoringEvents.HostEntity}
 				getSelectedItemExpression={hostGetSelectedItemExpression}
 				fetchEntityData={fetchEntityData}
 				getEntityName={hostGetEntityName}

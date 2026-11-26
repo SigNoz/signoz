@@ -1,0 +1,9 @@
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-10);
+}
+
+.footerSlot {
+	width: 100%;
+}

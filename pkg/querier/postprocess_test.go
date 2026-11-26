@@ -186,6 +186,7 @@ func TestPostProcessMetricQuery_LimitRanksByReducedValue(t *testing.T) {
 		name     string
 		reduceTo qbtypes.ReduceTo
 		order    []qbtypes.OrderBy
+		offset   int
 		expected [][]any
 	}{
 		{
@@ -211,6 +212,13 @@ func TestPostProcessMetricQuery_LimitRanksByReducedValue(t *testing.T) {
 			reduceTo: qbtypes.ReduceToMax,
 			expected: [][]any{{"payment", 40.0}, {"auth", 30.0}},
 		},
+		{
+			name:     "Max_Desc_Offset1_SkipsHighestPeak",
+			reduceTo: qbtypes.ReduceToMax,
+			order:    orderByValue(qbtypes.OrderDirectionDesc),
+			offset:   1,
+			expected: [][]any{{"auth", 30.0}, {"checkout", 10.0}},
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -220,6 +228,7 @@ func TestPostProcessMetricQuery_LimitRanksByReducedValue(t *testing.T) {
 				Aggregations: []qbtypes.MetricAggregation{{MetricName: "http_requests_total", ReduceTo: testCase.reduceTo}},
 				Order:        testCase.order,
 				Limit:        2,
+				Offset:       testCase.offset,
 			}
 			req := &qbtypes.QueryRangeRequest{RequestType: qbtypes.RequestTypeScalar}
 

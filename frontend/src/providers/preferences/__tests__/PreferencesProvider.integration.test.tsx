@@ -1,20 +1,26 @@
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { LogViewMode } from 'container/OptionsMenu/types';
+import { PANEL_TYPES } from 'constants/queryBuilder';
+import ROUTES from 'constants/routes';
+import { TRACE_VIEW_DEFAULT_COLUMNS } from 'container/LLMObservability/Explorer/constants';
+import { LogViewMode, FontSize } from 'container/OptionsMenu/types';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
 } from 'container/OptionsMenu/constants';
-import { FontSize } from 'container/OptionsMenu/types';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { usePreferenceContext } from '../context/PreferenceContextProvider';
+import { PanelColumns, PreferenceSourcePage } from '../types';
 
 const ROUTE_LOGS = '/logs';
 const ROUTE_TRACES = '/traces';
 const TESTID_LOGS = 'logs';
 const TESTID_TRACES = 'traces';
+const ROUTE_AI = '/ai-observability';
+const AI_DEFAULT_COUNT = String(TRACE_VIEW_DEFAULT_COLUMNS.length);
+const TESTID_AI = 'ai';
 
 type LogsLocalOptions = {
 	selectColumns?: TelemetryFieldKey[];
@@ -38,14 +44,13 @@ function getLocalStorageJSON<T>(key: string): T | null {
 }
 
 function Consumer({
-	dataSource,
+	sourcePage,
 	testIdPrefix,
 }: {
-	dataSource: DataSource;
+	sourcePage: PreferenceSourcePage;
 	testIdPrefix: string;
 }): JSX.Element {
-	const ctx = usePreferenceContext();
-	const slice = dataSource === DataSource.TRACES ? ctx.traces : ctx.logs;
+	const slice = usePreferenceContext()[sourcePage];
 
 	return (
 		<div>
@@ -58,9 +63,9 @@ function Consumer({
 				type="button"
 				onClick={(): void => {
 					const newCols: TelemetryFieldKey[] =
-						dataSource === DataSource.TRACES
-							? (defaultTraceSelectedColumns.slice(0, 1) as TelemetryFieldKey[])
-							: (defaultLogsSelectedColumns.slice(0, 1) as TelemetryFieldKey[]);
+						sourcePage === SavedviewtypesSourceDTO.logs
+							? (defaultLogsSelectedColumns.slice(0, 1) as TelemetryFieldKey[])
+							: (defaultTraceSelectedColumns.slice(0, 1) as TelemetryFieldKey[]);
 					slice.updateColumns(newCols);
 				}}
 			>
@@ -78,7 +83,10 @@ describe('PreferencesProvider integration', () => {
 	describe('Logs', () => {
 		it('loads defaults when no localStorage or url provided', () => {
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -101,7 +109,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -114,9 +125,12 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('direct mode updateColumns persists to localStorage', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -139,10 +153,10 @@ describe('PreferencesProvider integration', () => {
 		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
 			const viewKey = JSON.stringify('saved-view-id-1');
 			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix="logs" />,
+				<Consumer sourcePage={SavedviewtypesSourceDTO.logs} testIdPrefix="logs" />,
 				undefined,
 				{
 					initialRoute: initialEntry,
@@ -175,7 +189,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_LOGS,
@@ -194,10 +211,10 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('updateFormatting persists to localStorage in direct mode', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			function FormattingConsumer(): JSX.Element {
-				const { logs } = usePreferenceContext();
+				const logs = usePreferenceContext()[SavedviewtypesSourceDTO.logs];
 				return (
 					<button
 						data-testid="logs-update-formatting"
@@ -230,12 +247,15 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const viewKey = JSON.stringify('saved-view-id-3');
 			const initialEntry = `/logs?viewKey=${encodeURIComponent(viewKey)}`;
 
 			render(
-				<Consumer dataSource={DataSource.LOGS} testIdPrefix={TESTID_LOGS} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.logs}
+					testIdPrefix={TESTID_LOGS}
+				/>,
 				undefined,
 				{ initialRoute: initialEntry },
 			);
@@ -254,7 +274,10 @@ describe('PreferencesProvider integration', () => {
 	describe('Traces', () => {
 		it('loads defaults when no localStorage or url provided', () => {
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -273,7 +296,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -284,9 +310,12 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('direct mode updateColumns persists to localStorage', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{
 					initialRoute: ROUTE_TRACES,
@@ -306,10 +335,13 @@ describe('PreferencesProvider integration', () => {
 		it('saved view mode uses in-memory preferences (no localStorage write)', async () => {
 			const viewKey = JSON.stringify('saved-view-id-2');
 			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix="traces" />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix="traces"
+				/>,
 				undefined,
 				{
 					initialRoute: initialEntry,
@@ -338,7 +370,10 @@ describe('PreferencesProvider integration', () => {
 			});
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{ initialRoute: ROUTE_TRACES },
 			);
@@ -352,10 +387,10 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('updateFormatting is a no-op in direct mode (no localStorage write)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			function TracesFormattingConsumer(): JSX.Element {
-				const { traces } = usePreferenceContext();
+				const traces = usePreferenceContext()[SavedviewtypesSourceDTO.traces];
 				return (
 					<button
 						data-testid="traces-update-formatting"
@@ -385,12 +420,15 @@ describe('PreferencesProvider integration', () => {
 		});
 
 		it('saved view mode updates in-memory preferences (columns-len changes)', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const viewKey = JSON.stringify('saved-view-id-4');
 			const initialEntry = `/traces?viewKey=${encodeURIComponent(viewKey)}`;
 
 			render(
-				<Consumer dataSource={DataSource.TRACES} testIdPrefix={TESTID_TRACES} />,
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.traces}
+					testIdPrefix={TESTID_TRACES}
+				/>,
 				undefined,
 				{ initialRoute: initialEntry },
 			);
@@ -402,6 +440,228 @@ describe('PreferencesProvider integration', () => {
 			if (before !== after) {
 				expect(after).toBe(1);
 			}
+		});
+	});
+
+	describe('AI observability traces', () => {
+		const renderAiConsumer = (): void => {
+			render(
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.ai_observability}
+					testIdPrefix={TESTID_AI}
+				/>,
+				undefined,
+				{ initialRoute: ROUTE_AI },
+			);
+		};
+
+		it('starts with the default trace view columns', () => {
+			renderAiConsumer();
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
+				AI_DEFAULT_COUNT,
+			);
+		});
+
+		it('loads its own localStorage, not the traces list one', () => {
+			setLocalStorageJSON(LOCALSTORAGE.TRACES_LIST_OPTIONS, {
+				selectColumns: [{ name: 'traces.list.col' }],
+			});
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: [{ name: 'ai.col.a' }, { name: 'ai.col.b' }],
+			});
+
+			renderAiConsumer();
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
+		});
+
+		const URL_COLUMNS = [{ name: 'ai.url.a' }, { name: 'ai.url.b' }];
+
+		const renderAtUrl = (
+			pathname: string,
+			params: Record<string, unknown>,
+			renderConsumer: () => void,
+		): void => {
+			const search = new URLSearchParams(
+				Object.entries(params).map(([key, value]) => [key, JSON.stringify(value)]),
+			).toString();
+			const originalLocation = window.location;
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: { ...originalLocation, pathname, search: `?${search}` },
+			});
+
+			renderConsumer();
+
+			Object.defineProperty(window, 'location', {
+				writable: true,
+				value: originalLocation,
+			});
+		};
+
+		const renderAiAtUrl = (params: Record<string, unknown>): void =>
+			renderAtUrl(ROUTES.AI_OBSERVABILITY_EXPLORER, params, renderAiConsumer);
+
+		it('ignores the url options on other explorers', () => {
+			renderAtUrl(
+				ROUTE_TRACES,
+				{ options: { selectColumns: URL_COLUMNS } },
+				renderAiConsumer,
+			);
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
+				AI_DEFAULT_COUNT,
+			);
+		});
+
+		it('loads the url columns for the panel in panelTypes', () => {
+			renderAiAtUrl({
+				options: { selectColumns: URL_COLUMNS },
+				panelTypes: PANEL_TYPES.TRACE,
+			});
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
+		});
+
+		it('files the url columns under the panel in panelTypes', () => {
+			renderAiAtUrl({
+				options: { selectColumns: URL_COLUMNS },
+				panelTypes: PANEL_TYPES.LIST,
+			});
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
+				String(URL_COLUMNS.length),
+			);
+		});
+
+		it('prefers its localStorage over the url options', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: [{ name: 'ai.local.col' }],
+			});
+
+			renderAiAtUrl({
+				options: { selectColumns: URL_COLUMNS },
+				panelTypes: PANEL_TYPES.TRACE,
+			});
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+		});
+
+		it('keeps its url columns out of the traces slice', () => {
+			renderAtUrl(
+				ROUTES.AI_OBSERVABILITY_EXPLORER,
+				{
+					options: { selectColumns: URL_COLUMNS },
+					panelTypes: PANEL_TYPES.TRACE,
+				},
+				(): void => {
+					render(
+						<Consumer
+							sourcePage={SavedviewtypesSourceDTO.traces}
+							testIdPrefix={TESTID_TRACES}
+						/>,
+						undefined,
+						{ initialRoute: ROUTE_AI },
+					);
+				},
+			);
+
+			expect(screen.getByTestId('traces-columns-len')).toHaveTextContent(
+				String(defaultTraceSelectedColumns.length),
+			);
+		});
+
+		it('drops stored columns without a name or from another signal', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: [
+					{ name: 'ai.col.a' },
+					{ name: 'logs.col', signal: 'logs' },
+					{ key: 'no.name' },
+					{},
+					'not-a-column',
+				],
+			});
+
+			renderAiConsumer();
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+		});
+
+		it('ignores a stored panel that is not a list', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: 'ai.col.a',
+			});
+
+			renderAiConsumer();
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
+				AI_DEFAULT_COUNT,
+			);
+		});
+
+		it('falls back to the url options when every stored column is invalid', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: [{ name: 'logs.col', signal: 'logs' }],
+			});
+
+			renderAiAtUrl({
+				options: { selectColumns: URL_COLUMNS },
+				panelTypes: PANEL_TYPES.TRACE,
+			});
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('3');
+		});
+
+		it('loads the columns of the panel open in the url', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.TRACE]: [{ name: 'ai.trace.a' }, { name: 'ai.trace.b' }],
+				[PANEL_TYPES.LIST]: [{ name: 'ai.list.col' }],
+			});
+
+			render(
+				<Consumer
+					sourcePage={SavedviewtypesSourceDTO.ai_observability}
+					testIdPrefix={TESTID_AI}
+				/>,
+				undefined,
+				{
+					initialRoute: `${ROUTE_AI}?panelTypes=${encodeURIComponent(
+						JSON.stringify(PANEL_TYPES.LIST),
+					)}`,
+				},
+			);
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('1');
+		});
+
+		it('keeps each panel apart in its localStorage', () => {
+			setLocalStorageJSON(LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS, {
+				[PANEL_TYPES.LIST]: [{ name: 'ai.list.col' }],
+			});
+
+			renderAiConsumer();
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent(
+				AI_DEFAULT_COUNT,
+			);
+		});
+
+		it('updateColumns writes its own localStorage key in direct mode', async () => {
+			const user = userEvent.setup();
+			renderAiConsumer();
+
+			await user.click(screen.getByTestId('ai-update-columns'));
+
+			expect(screen.getByTestId('ai-columns-len')).toHaveTextContent('2');
+			expect(
+				getLocalStorageJSON<PanelColumns>(
+					LOCALSTORAGE.AI_OBSERVABILITY_PANEL_COLUMNS,
+				)?.[PANEL_TYPES.TRACE],
+			).toHaveLength(1);
+			expect(
+				getLocalStorageJSON<TracesLocalOptions>(LOCALSTORAGE.TRACES_LIST_OPTIONS),
+			).toBeNull();
 		});
 	});
 });

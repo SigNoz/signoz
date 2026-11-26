@@ -1,13 +1,22 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { dashboardMocks, openSettings } from '../DashboardPage.stories.mocks';
+import {
+	clickWhenEnabled,
+	dashboardMocks,
+	expectToast,
+	openSettings,
+} from '../DashboardPage.stories.mocks';
+import {
+	openDefaultTimeRange,
+	showDefaultTimeRange,
+} from '../__story_mockdata__/dashboard.play';
 
 import DashboardPage from '../../DashboardPage';
 
@@ -26,9 +35,7 @@ const meta = {
 	title: 'Pages/Dashboards/Detail/Settings',
 	tags: ['authz', 'play'],
 	component: DashboardPage as ComponentType<DashboardArgs>,
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD, DashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<DashboardArgs>;
@@ -49,7 +56,10 @@ export const Overview: Story = {
 export const OverviewUnsavedChanges: Story = {
 	play: async ({ canvasElement }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.type(
 			screen.getByTestId('dashboard-desc'),
 			' Owned by the platform team.',
@@ -78,6 +88,23 @@ export const OverviewTooltipSync: Story = {
 		await userEvent.click(await screen.findByRole('radio', { name: 'Tooltip' }));
 		await screen.findByText('Synced Tooltip Series');
 	},
+};
+
+/**
+ * The Default time range select open: the 30 minute default first, then the
+ * time picker's presets.
+ */
+export const OverviewDefaultTimeRangeOpen: Story = {
+	play: openDefaultTimeRange,
+};
+
+/**
+ * A dashboard stored with `1s`, which no option matches: the select shows it
+ * as an extra entry saying the dashboard opens on 1m instead.
+ */
+export const OverviewDefaultTimeRangeOffList: Story = {
+	args: { duration: '1s' },
+	play: showDefaultTimeRange,
 };
 
 /**
@@ -123,10 +150,13 @@ export const PublishPrivate: Story = {
 export const OverviewSavedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement);
-		await userEvent.type(await screen.findByTestId('dashboard-name'), ' (v2)');
+		await userEvent.type(
+			await screen.findByTestId('dashboard-name-field'),
+			' (v2)',
+		);
 		await userEvent.click(await screen.findByTestId('save-dashboard-config'));
 		if (args.dashboardPatch === 'success') {
-			await screen.findByText('Dashboard updated');
+			await expectToast('Dashboard updated');
 		}
 	},
 };
@@ -138,9 +168,9 @@ export const PublishedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-publish'));
+		await clickWhenEnabled('public-dashboard-publish');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Dashboard published successfully');
+			await expectToast('Dashboard published successfully');
 		}
 	},
 };
@@ -149,9 +179,9 @@ export const PublishedToast: Story = {
 export const PublicUpdatedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(await screen.findByTestId('public-dashboard-update'));
+		await clickWhenEnabled('public-dashboard-update');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Public dashboard updated successfully');
+			await expectToast('Public dashboard updated successfully');
 		}
 	},
 };
@@ -160,11 +190,9 @@ export const PublicUpdatedToast: Story = {
 export const UnpublishedToast: Story = {
 	play: async ({ canvasElement, args }) => {
 		await openSettings(canvasElement, 'Publish');
-		await userEvent.click(
-			await screen.findByTestId('public-dashboard-unpublish'),
-		);
+		await clickWhenEnabled('public-dashboard-unpublish');
 		if (args.publicWrite === 'success') {
-			await screen.findByText('Dashboard unpublished successfully');
+			await expectToast('Dashboard unpublished successfully');
 		}
 	},
 };
@@ -176,6 +204,6 @@ export const PublicUrlCopiedToast: Story = {
 		await userEvent.click(
 			await screen.findByRole('button', { name: 'Copy link' }),
 		);
-		await screen.findByText('Copied public dashboard URL successfully');
+		await expectToast('Copied public dashboard URL successfully');
 	},
 };

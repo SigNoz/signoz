@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { buildSAAttachPermission } from 'lib/authz/hooks/useAuthZ/permissions/service-account.permissions';
 import {
 	setupAuthzAdmin,
@@ -12,9 +12,9 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const mockCopyToClipboard = jest.fn();
@@ -69,12 +69,13 @@ describe('AddKeyModal', () => {
 	});
 
 	it('"Create Key" is disabled when name is empty; enabled after typing a name', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		// The form only renders once the checks resolve, so waiting for it also
 		// guarantees the button is no longer in its authz-loading state.
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		// The Input's testId lands on its frame; the native input is `-field`.
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const createBtn = await screen.findByTestId('add-key-submit-btn');
 
 		expect(createBtn).toHaveAttribute('aria-disabled', 'true');
@@ -91,10 +92,10 @@ describe('AddKeyModal', () => {
 	});
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>
@@ -108,7 +109,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('pressing Enter again while creating sends one request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let requests = 0;
 		server.use(
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) => {
@@ -118,8 +119,9 @@ describe('AddKeyModal', () => {
 		);
 		renderModal();
 
-		const nameInput =
-			await screen.findByTestId<HTMLInputElement>('add-key-name-input');
+		const nameInput = await screen.findByTestId<HTMLInputElement>(
+			'add-key-name-input-field',
+		);
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>
@@ -135,11 +137,11 @@ describe('AddKeyModal', () => {
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderModal();
 
-		const nameInput = await screen.findByTestId('add-key-name-input');
+		const nameInput = await screen.findByTestId('add-key-name-input-field');
 		const submitBtn = await screen.findByTestId('add-key-submit-btn');
 		await user.type(nameInput, 'Deploy Key');
 		await waitFor(() =>
@@ -149,13 +151,7 @@ describe('AddKeyModal', () => {
 
 		await screen.findByText('snz_abc123xyz456secret');
 
-		const copyBtn = screen
-			.getAllByRole('button')
-			.find((btn) => btn.querySelector('svg'));
-		if (!copyBtn) {
-			throw new Error('Copy button not found');
-		}
-		await user.click(copyBtn);
+		await user.click(screen.getByRole('button', { name: 'Copy key' }));
 
 		await waitFor(() => {
 			expect(mockCopyToClipboard).toHaveBeenCalledWith('snz_abc123xyz456secret');
@@ -177,7 +173,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('keeps the footer usable when key create is denied', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(setupAuthzDenyAll());
 
 		renderModal();
@@ -212,7 +208,7 @@ describe('AddKeyModal', () => {
 	});
 
 	it('Cancel button closes the modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const cancelBtn = await screen.findByTestId('add-key-cancel-btn');

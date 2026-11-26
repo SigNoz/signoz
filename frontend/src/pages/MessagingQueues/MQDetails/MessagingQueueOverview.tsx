@@ -1,10 +1,9 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
-import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
 import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -31,17 +30,17 @@ function ProducerLatencyTabs({
 	setOption: Dispatch<SetStateAction<ProducerLatencyOptions>>;
 }): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
-	const history = useHistory();
+	const location = useAppLocation();
 
 	return (
 		<ToggleGroup
+			testId="mq-producer-latency-toggle"
 			variant="outlined"
 			color="secondary"
 			size="sm"
 			type="single"
 			onChange={(value: string): void => {
-				setConfigDetail(urlQuery, location, history, {});
+				setConfigDetail(urlQuery, location, {});
 				setOption(value as ProducerLatencyOptions);
 			}}
 			value={option}
@@ -62,9 +61,6 @@ function ProducerLatencyTabs({
 const getTableApi = (selectedView: MessagingQueuesViewTypeOptions): any => {
 	if (selectedView === MessagingQueuesViewType.producerLatency.value) {
 		return getTopicThroughputOverview;
-	}
-	if (selectedView === MessagingQueuesViewType.dropRate.value) {
-		return getKafkaSpanEval;
 	}
 	return getPartitionLatencyOverview;
 };

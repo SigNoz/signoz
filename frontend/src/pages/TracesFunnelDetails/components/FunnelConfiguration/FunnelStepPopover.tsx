@@ -66,6 +66,7 @@ function FunnelStepActions({
 					type="text"
 					className="funnel-item__action-btn funnel-item__action-btn--delete"
 					icon={<Trash2 size={14} />}
+					data-testid="funnel-step-action-delete"
 					disabled={stepsCount <= 2 || !hasEditPermission}
 					onClick={(): void => {
 						if (stepsCount > 2) {
@@ -137,6 +138,8 @@ function FunnelStepPopover({
 						'funnel-item__action-icon--active': isPopoverOpen,
 					})}
 					size={14}
+					data-testid="funnel-step-actions"
+					aria-label="Step actions"
 				/>
 			</Popover>
 

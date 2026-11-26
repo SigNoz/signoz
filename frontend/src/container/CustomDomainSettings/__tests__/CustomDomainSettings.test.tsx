@@ -1,7 +1,12 @@
 import { GetHosts200 } from 'api/generated/services/sigNoz.schemas';
-import userEvent from '@testing-library/user-event';
 import { rest, server } from 'mocks-server/server';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 
@@ -12,11 +17,11 @@ jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
 	),
 }));
 
-const mockToastCustom = jest.fn();
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+const mockToastInfo = jest.fn();
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
-		custom: (...args: unknown[]): unknown => mockToastCustom(...args),
+		info: (...args: unknown[]): unknown => mockToastInfo(...args),
 		dismiss: jest.fn(),
 	},
 }));
@@ -55,7 +60,7 @@ describe('CustomDomainSettings', () => {
 
 	afterEach(() => {
 		server.resetHandlers();
-		mockToastCustom.mockClear();
+		mockToastInfo.mockClear();
 	});
 
 	it('renders active host URL in the trigger button', async () => {
@@ -143,7 +148,7 @@ describe('CustomDomainSettings', () => {
 	});
 
 	it('shows all workspace URLs as links in the dropdown', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CustomDomainSettings />);
 
 		await screen.findByText(/custom-host\.test\.cloud/i);
@@ -168,7 +173,7 @@ describe('CustomDomainSettings', () => {
 		expect(hrefs).toContain('https://custom-host.test.cloud');
 	});
 
-	it('calls toast.custom with new URL after successful domain update', async () => {
+	it('calls toast.info with new URL after successful domain update', async () => {
 		server.use(
 			rest.put(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({})),
@@ -184,17 +189,36 @@ describe('CustomDomainSettings', () => {
 		fireEvent.change(input, { target: { value: 'myteam' } });
 		fireEvent.click(screen.getByRole('button', { name: /apply changes/i }));
 
-		// Verify toast.custom was called
+		// Verify toast.info was called
 		await waitFor(() => {
-			expect(mockToastCustom).toHaveBeenCalledTimes(1);
+			expect(mockToastInfo).toHaveBeenCalledTimes(1);
 		});
 
 		// Render the toast element to verify its content
-		const toastRenderer = mockToastCustom.mock.calls[0][0] as (
-			id: string,
-		) => JSX.Element;
-		const { container } = render(toastRenderer('test-id'));
+		const toastElement = mockToastInfo.mock.calls[0][0] as JSX.Element;
+		const { container } = render(toastElement);
 		expect(container).toHaveTextContent(/myteam\.test\.cloud/i);
+		const options = mockToastInfo.mock.calls[0][1] as {
+			action: { label: string; onClick: () => void };
+		};
+		expect(options).toStrictEqual(
+			expect.objectContaining({
+				id: 'domain-update:https://myteam.test.cloud',
+				description: 'This may take a few minutes.',
+				timeout: 5000,
+				position: 'bottom-right',
+			}),
+		);
+
+		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+		expect(options.action.label).toBe('Visit new URL');
+		options.action.onClick();
+		expect(openSpy).toHaveBeenCalledWith(
+			'https://myteam.test.cloud',
+			'_blank',
+			'noopener,noreferrer',
+		);
+		openSpy.mockRestore();
 	});
 
 	describe('Workspace Name rendering', () => {
@@ -258,14 +282,14 @@ describe('CustomDomainSettings', () => {
 				),
 			);
 
-			const { container } = render(<CustomDomainSettings />, undefined, {
+			render(<CustomDomainSettings />, undefined, {
 				appContextOverrides: { org: [] },
 			});
 
 			await screen.findByRole('button', { name: /edit workspace link/i });
 
 			expect(
-				container.querySelector('.custom-domain-card-name-row'),
+				screen.queryByTestId('custom-domain-card-name-row'),
 			).not.toBeInTheDocument();
 		});
 	});

@@ -4,9 +4,10 @@
  */
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { authToken } from '../helpers/common';
-
+import { authToken } from './api';
+import { inputField } from './input';
 import { driver, kit, seeded } from './kit';
+import { wheelTo } from './scroll';
 
 // Search and the type filter are both served by the API, so every assertion on
 // the list is also a guard on the query the list sends.
@@ -105,9 +106,9 @@ export const CHANNEL_TYPES: ChannelType[] = [
 		],
 		edit: ['jira-project-textbox', 'E2EEDIT'],
 		spec: {
+			deployment: 'cloud',
 			site: 'https://e2e.atlassian.net',
-			email: 'e2e@signoz.test',
-			apiToken: 'e2e-api-token',
+			auth: { email: 'e2e@signoz.test', apiToken: 'e2e-api-token' },
 			project: 'E2E',
 			issueType: 'Task',
 		},
@@ -202,6 +203,7 @@ interface ChannelList {
 interface ChannelForm {
 	gotoNew(): Promise<void>;
 	name(): Locator;
+	field(testId: string): Locator;
 	pickType(label: string): Promise<void>;
 	fillField(testId: string, value: string): Promise<void>;
 	/** Saves and returns the id the API assigned, so the test can clean up. */
@@ -209,6 +211,10 @@ interface ChannelForm {
 	/** Saves an existing channel and waits for the write to land. */
 	saveEdit(): Promise<void>;
 	save(): Promise<void>;
+	/** The sticky bar holding discard, test and save. */
+	actions(): Locator;
+	/** Scrolls with the mouse wheel, which unlike scrollIntoView cannot move an overflow: hidden box. */
+	wheelToEnd(): Promise<void>;
 }
 
 /**
@@ -273,7 +279,7 @@ function channelsDriver(page: Page): Channels {
 			await page.goto(`${url.pathname}${url.search}`);
 			await expect(list.search()).toBeVisible();
 		},
-		search: () => page.getByTestId('channels-search'),
+		search: () => inputField(page, 'channels-search'),
 		rows,
 		row: (name) => rows().filter({ hasText: name }),
 		async openRowMenu(name) {
@@ -306,13 +312,15 @@ function channelsDriver(page: Page): Channels {
 			await page.goto(PATH.new);
 			await expect(form.name()).toBeVisible();
 		},
-		name: () => page.getByTestId('channel-name-textbox'),
+		name: () => inputField(page, 'channel-name-textbox'),
+		field: (testId) => inputField(page, testId),
 		async pickType(label) {
 			await page.getByTestId('channel-type-select').click();
 			await page.getByRole('option', { name: label, exact: true }).click();
 		},
 		async fillField(testId, value) {
-			await page.getByTestId(testId).fill(value);
+			await wheelTo(form.field(testId));
+			await form.field(testId).fill(value);
 		},
 		async saveAndReturnId() {
 			const [response] = await Promise.all([
@@ -333,6 +341,11 @@ function channelsDriver(page: Page): Channels {
 		},
 		async save() {
 			await page.getByTestId('save-channel-button').click();
+		},
+		actions: () => page.getByTestId('discard-channel-button').locator('..'),
+		async wheelToEnd() {
+			await page.getByTestId('channel-name-textbox').hover();
+			await page.mouse.wheel(0, 10_000);
 		},
 	};
 

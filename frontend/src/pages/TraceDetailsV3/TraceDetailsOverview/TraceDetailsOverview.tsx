@@ -7,7 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import {
 	ChartNoAxesGantt,
 	ChevronDown,
@@ -25,9 +25,11 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { ResizableBox } from 'periscope/components/ResizableBox';
-import { SpanV3, TraceDetailV3URLProps } from 'types/api/trace/getTraceV3';
+import { SpanV3 } from 'types/api/trace/getTraceV3';
 
+import { TraceDetailsTab } from '../constants';
 import { TraceDetailEventKeys, TraceDetailEvents } from '../events';
+import { useSpanDetailsOpenedEvent } from '../hooks/useSpanDetailsOpenedEvent';
 import { useSpanDetailVariant } from '../hooks/useSpanDetailVariant';
 import { useTraceDetailLogEvent } from '../hooks/useTraceDetailLogEvent';
 import NoData from '../NoData/NoData';
@@ -74,7 +76,7 @@ function TraceDetailsOverview({
 	onHasTraceDataChange,
 	dataLoadedFiredForRef,
 }: TraceDetailsOverviewProps): JSX.Element {
-	const { id: traceId } = useParams<TraceDetailV3URLProps>();
+	const { id: traceId } = useAppParams<'id'>();
 	const urlQuery = useUrlQuery();
 	const [interestedSpanId, setInterestedSpanId] = useState<IInterestedSpan>(
 		() => ({
@@ -105,6 +107,12 @@ function TraceDetailsOverview({
 	const panelState = useDetailsPanel({
 		entityId: selectedSpanId,
 		onClose: handleSpanDetailsClose,
+	});
+	useSpanDetailsOpenedEvent({
+		isOpen: panelState.isOpen,
+		spanId: selectedSpan?.span_id,
+		detailsTab: TraceDetailsTab.Overview,
+		logTraceEvent,
 	});
 
 	const allSpansRef = useRef<SpanV3[]>([]);
@@ -147,7 +155,7 @@ function TraceDetailsOverview({
 		isFetching: isFetchingTraceData,
 		error: errorFetchingTraceData,
 	} = useGetTraceV4({
-		traceId,
+		traceId: traceId || '',
 		uncollapsedSpans: queryParams.uncollapsedSpans,
 		selectedSpanId: queryParams.selectedSpanId,
 		isSelectedSpanIDUnCollapsed: queryParams.isSelectedSpanIDUnCollapsed,
@@ -199,6 +207,7 @@ function TraceDetailsOverview({
 		dataLoadedFiredForRef.current = traceId;
 		const numServices = new Set(payload.spans.map((s) => s['service.name'])).size;
 		logTraceEvent(TraceDetailEvents.DataLoaded, {
+			[TraceDetailEventKeys.DetailsTab]: TraceDetailsTab.Overview,
 			[TraceDetailEventKeys.TotalSpansCount]: totalSpansCount,
 			[TraceDetailEventKeys.NumServices]: numServices,
 			[TraceDetailEventKeys.TraceDurationMs]:

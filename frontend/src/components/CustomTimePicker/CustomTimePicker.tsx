@@ -6,7 +6,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button } from '@signozhq/ui/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
@@ -109,7 +109,7 @@ function CustomTimePicker({
 	const [inputErrorDetails, setInputErrorDetails] = useState<
 		TimeRangeValidationResult['errorDetails'] | null
 	>(null);
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const inputRef = useRef<InputRef>(null);
 	const initialInputValueOnOpenRef = useRef<string>('');
@@ -531,7 +531,7 @@ function CustomTimePicker({
 		// Use setTimeout to wait for React to update the DOM and make input editable
 		setTimeout(() => {
 			const inputElement = inputRef.current?.input;
-			if (inputElement) {
+			if (inputElement && !document.activeElement?.closest('.timezone-picker')) {
 				inputElement.focus();
 				inputElement.select();
 			}
@@ -640,12 +640,14 @@ function CustomTimePicker({
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleClose}
+										data-testid="time-picker-close-chevron"
 									/>
 								) : (
 									<ChevronDown
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleOpen}
+										data-testid="time-picker-open-chevron"
 									/>
 								)}
 							</div>

@@ -32,9 +32,6 @@ import {
 	SavedviewtypesSchemaVersionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
-import type { AllViewsProps, ViewProps } from 'types/api/saveViews/types';
-import { DataSource } from 'types/common/queryBuilder';
 
 interface MetricSeed {
 	metricName: string;
@@ -378,6 +375,13 @@ const ATTRIBUTES: { key: string; values: string[] }[] = [
 		values: ['production', 'staging'],
 	},
 	{
+		key: 'k8s.deployment.annotation.deployment.kubernetes.io/revision-history',
+		values: [
+			'arn:aws:eks:us-east-1:123456789012:cluster/checkout-production-primary',
+			'7',
+		],
+	},
+	{
 		key: 'k8s.cluster.name',
 		values: ['us-east-1-prod', 'eu-west-1-prod'],
 	},
@@ -616,6 +620,22 @@ const RULE_UPDATED_AT = '2026-08-20T09:24:00Z';
 
 const RULE_EFFECTIVE_FROM = '2026-08-20T09:29:00Z';
 
+const isPendingRule = (index: number, pending: boolean): boolean =>
+	pending && index % 4 === 0;
+
+/** Whether the drawer's metric has a rule that has not taken effect yet. */
+export const hasPendingRule = (
+	type: DrawerMetricType,
+	count: number,
+	pending: boolean,
+): boolean => {
+	const index = REDUCTION_RULES.findIndex(
+		({ metricName }) => metricName === drawerMetricName(type),
+	);
+
+	return index >= 0 && index < count && isPendingRule(index, pending);
+};
+
 const ruleOf = (
 	seed: ReductionRuleSeed,
 	index: number,
@@ -630,7 +650,7 @@ const ruleOf = (
 		labels: seed.labels,
 		// A rule takes about five minutes to take effect; until then the table
 		// badges it as pending.
-		active: !(pending && index % 4 === 0),
+		active: !isPendingRule(index, pending),
 		effectiveFrom: RULE_EFFECTIVE_FROM,
 		ingestedSeries: timeseries,
 		retainedSeries: Math.round(timeseries * (1 - seed.reduction)),
@@ -774,22 +794,6 @@ const VIEW_NAMES = [
 ];
 
 export const SAVED_VIEW_MAX = VIEW_NAMES.length;
-
-/** The jest fixture is the shape of a view; only what the list shows changes. */
-const [baseView] = explorerView.data as unknown as ViewProps[];
-
-export const metricsSavedViewsResponse = (count: number): AllViewsProps => ({
-	status: 'success',
-	data: VIEW_NAMES.slice(0, count).map((name, index) => ({
-		...baseView,
-		id: `storybook-metrics-view-${index + 1}`,
-		name,
-		sourcePage: DataSource.METRICS,
-		tags: ['metrics'],
-		createdBy: 'ada@signoz.io',
-		extraData: '{"color":"#7cd4fd"}',
-	})),
-});
 
 export const metricsSavedViewsV2Response = (
 	count: number,

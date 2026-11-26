@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-
+import { useAppParams } from 'lib/router/useAppParams';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
@@ -17,10 +16,11 @@ import { useDashboardFetch } from './DashboardContainer/hooks/useDashboardFetch'
 import styles from './DashboardPage.module.scss';
 
 function DashboardPage(): JSX.Element {
-	const { dashboardId } = useParams<{ dashboardId: string }>();
+	const { dashboardId } = useAppParams<'dashboardId'>();
 
-	const { dashboard, isLoading, isError, error, refetch } =
-		useDashboardFetch(dashboardId);
+	const { dashboard, isLoading, isError, error, refetch } = useDashboardFetch(
+		dashboardId || '',
+	);
 
 	// Fire once per dashboard load (re-fires on navigating to a different id).
 	const openedRef = useRef<string | null>(null);
@@ -46,8 +46,27 @@ function DashboardPage(): JSX.Element {
 	if (isError || !dashboard) {
 		return (
 			<div className={styles.errorState}>
-				<Typography.Title>Failed to load dashboard</Typography.Title>
-				<Typography.Text>{(error as Error)?.message}</Typography.Text>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="h1"
+					marginY={4}
+					textOverflow="wrap"
+				>
+					Failed to load dashboard
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{(error as Error)?.message}
+				</Typography>
 			</div>
 		);
 	}

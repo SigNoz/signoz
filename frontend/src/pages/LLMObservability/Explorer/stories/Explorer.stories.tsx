@@ -126,7 +126,7 @@ export const TimeSeries: Story = {
  * their empty states.
  */
 export const NoSpans: Story = {
-	args: { spans: 0, quickFilters: 0, savedViews: 0 },
+	args: { spans: 0, quickFilters: 0 },
 };
 
 /** The list mid-query, with the cancel action the toolbar offers while it runs. */
@@ -165,17 +165,6 @@ export const QuickFiltersSettings: Story = {
 
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
 

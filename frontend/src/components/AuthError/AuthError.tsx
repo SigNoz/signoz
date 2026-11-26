@@ -10,7 +10,7 @@ interface AuthErrorProps {
 
 function AuthError({ error }: AuthErrorProps): JSX.Element {
 	return (
-		<div className="auth-error-container">
+		<div className="auth-error-container" data-testid="auth-error">
 			<ErrorContent
 				error={error}
 				icon={<CircleAlert size={12} className="auth-error-icon" />}

@@ -6,6 +6,7 @@ import {
 	IBuilderQuery,
 	IBuilderTraceOperator,
 } from 'types/api/queryBuilder/queryBuilderData';
+import { aggregatesDistributionField } from 'lib/query/distributionField';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -18,6 +19,8 @@ import {
 	STEP_INTERVAL_PLACEHOLDER,
 } from '../../queryBuilderFields.utils';
 
+import { isScalarPanelType } from '../panelTypes';
+import DistributionFieldSelect from './DistributionFieldSelect';
 import QueryAggregationSelect from './QueryAggregationSelect';
 
 import './QueryAggregation.styles.scss';
@@ -45,10 +48,7 @@ function QueryAggregationOptions({
 		const isNonMetricSource =
 			dataSource === DataSource.TRACES || dataSource === DataSource.LOGS;
 
-		if (
-			isNonMetricSource &&
-			(panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.PIE)
-		) {
+		if (isNonMetricSource && isScalarPanelType(panelType)) {
 			return { hidden: true, disabled: false, pinned: false };
 		}
 
@@ -65,15 +65,21 @@ function QueryAggregationOptions({
 			data-testid="query-aggregation-container"
 		>
 			<div className="aggregation-container">
-				<QueryAggregationSelect
-					onChange={onChange}
-					queryData={queryData}
-					maxAggregations={
-						panelType === PANEL_TYPES.VALUE || panelType === PANEL_TYPES.PIE
-							? 1
-							: undefined
-					}
-				/>
+				{aggregatesDistributionField(panelType, dataSource) ? (
+					<DistributionFieldSelect queryData={queryData} onChange={onChange} />
+				) : (
+					<QueryAggregationSelect
+						onChange={onChange}
+						queryData={queryData}
+						maxAggregations={
+							panelType === PANEL_TYPES.VALUE ||
+							panelType === PANEL_TYPES.PIE ||
+							panelType === PANEL_TYPES.TOP_LIST
+								? 1
+								: undefined
+						}
+					/>
+				)}
 
 				{!stepInterval.hidden && (
 					<div className="query-aggregation-interval">

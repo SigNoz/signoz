@@ -33,16 +33,16 @@ const (
 )
 
 type TelemetryFieldKey struct {
-	Name        string `json:"name" validate:"required" required:"true"`
-	Description string `json:"description,omitempty"`
-	Unit        string `json:"unit,omitempty"`
+	Name        string `json:"name" validate:"required" required:"true" description:"The field name, such as service.name, k8s.pod.name or http.response.status_code. Dots are part of the name, and the names available depend on the signal and the data ingested."`
+	Description string `json:"description,omitempty" description:"Human-readable summary of the field, present only for well-known fields."`
+	Unit        string `json:"unit,omitempty" description:"Unit of the field values, present only for well-known fields."`
 	// signal/fieldContext/fieldDataType always serialize (empty included): the empty
 	// value is a first-class "unspecified / any" selection a client can set, so it
 	// must round-trip verbatim rather than be dropped. Their Enum()s include the
 	// empty member so the "" is a valid schema value.
-	Signal        Signal        `json:"signal"`
-	FieldContext  FieldContext  `json:"fieldContext"`
-	FieldDataType FieldDataType `json:"fieldDataType"`
+	Signal        Signal        `json:"signal" description:"The signal the field belongs to: traces, logs or metrics. Empty means any signal."`
+	FieldContext  FieldContext  `json:"fieldContext" description:"Where the field lives: resource, attribute, scope, span, trace, log, body or metric. Empty means unspecified, so the server resolves it."`
+	FieldDataType FieldDataType `json:"fieldDataType" description:"Data type of the field values: string, bool, int64, float64 or number. Empty means unspecified."`
 
 	JSONPlan     JSONAccessPlan               `json:"-"`
 	Indexes      []TelemetryFieldKeySkipIndex `json:"-"`
@@ -147,36 +147,8 @@ func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
 //	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
 func (f *TelemetryFieldKey) Normalize() {
-
-	// Step 1: Parse data type from the right (after the last ":") if not already specified
-	if f.FieldDataType == FieldDataTypeUnspecified {
-		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
-			potentialDataType := f.Name[colonIdx+1:]
-			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-				f.FieldDataType = dt
-				f.Name = f.Name[:colonIdx]
-			}
-		}
-	}
-
-	// Step 2: Parse field context from the left if not already specified
-	if f.FieldContext == FieldContextUnspecified {
-		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
-			potentialContext := f.Name[:dotIdx]
-			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-				f.Name = f.Name[dotIdx+1:]
-				f.FieldContext = fc
-
-				// Step 2a: Handle special case for log.body.* fields
-				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
-					f.FieldContext = FieldContextBody
-					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
-				}
-
-			}
-		}
-	}
-
+	f.normalizeDataType()
+	f.normalizeContext()
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
@@ -225,10 +197,10 @@ func FieldKeyToMaterializedExistsCondition(key *TelemetryFieldKey, exists bool) 
 }
 
 type TelemetryFieldValues struct {
-	StringValues  []string  `json:"stringValues,omitempty"`
-	BoolValues    []bool    `json:"boolValues,omitempty"`
-	NumberValues  []float64 `json:"numberValues,omitempty"`
-	RelatedValues []string  `json:"relatedValues,omitempty"`
+	StringValues  []string  `json:"stringValues,omitempty" description:"Distinct string values of the field, up to limit."`
+	BoolValues    []bool    `json:"boolValues,omitempty" description:"Distinct boolean values of the field."`
+	NumberValues  []float64 `json:"numberValues,omitempty" description:"Distinct numeric values of the field, up to limit."`
+	RelatedValues []string  `json:"relatedValues,omitempty" description:"Values of the field seen on data that also matches existingQuery, within the startUnixMilli and endUnixMilli bounds. Empty when existingQuery is not set."`
 }
 
 func (t *TelemetryFieldValues) NumValues() int {
@@ -236,21 +208,30 @@ func (t *TelemetryFieldValues) NumValues() int {
 }
 
 type MetricContext struct {
-	MetricName      string `json:"metricName"`
-	MetricNamespace string `json:"metricNamespace,omitempty"`
+	MetricName      string `json:"metricName" description:"Restricts keys and values to those seen on this metric. Metrics signal only."`
+	MetricNamespace string `json:"metricNamespace,omitempty" description:"Restricts keys and values to metrics in this namespace. Metrics signal only."`
 }
 
 type FieldKeySelector struct {
-	StartUnixMilli    int64                  `json:"startUnixMilli"`
-	EndUnixMilli      int64                  `json:"endUnixMilli"`
-	Signal            Signal                 `json:"signal"`
-	Source            Source                 `json:"source"`
-	FieldContext      FieldContext           `json:"fieldContext"`
-	FieldDataType     FieldDataType          `json:"fieldDataType"`
-	Name              string                 `json:"name"`
-	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType"`
-	Limit             int                    `json:"limit"`
-	MetricContext     *MetricContext         `json:"metricContext,omitempty"`
+	StartUnixMilli    int64                  `json:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Zero means no lower bound."`
+	EndUnixMilli      int64                  `json:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Zero means no upper bound."`
+	Signal            Signal                 `json:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty means every signal."`
+	Source            Source                 `json:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
+	FieldContext      FieldContext           `json:"fieldContext" description:"Restricts keys to one context such as resource or attribute. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context."`
+	FieldDataType     FieldDataType          `json:"fieldDataType" description:"Restricts keys to one data type such as string or float64. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type."`
+	Name              string                 `json:"name" description:"Key name to match; empty matches every key. Matched according to selectorMatchType."`
+	SelectorMatchType FieldSelectorMatchType `json:"selectorMatchType" description:"How name is matched: exact (case-sensitive equality) or fuzzy (case-insensitive substring, except the meter source where it is case-sensitive and % and _ act as wildcards). The API always uses fuzzy."`
+	Limit             int                    `json:"limit" description:"Maximum number of keys per signal. Intrinsic and materialized fields are added on top, and an unspecified signal applies the limit to traces, logs and metrics separately, so the result can exceed it."`
+	MetricContext     *MetricContext         `json:"metricContext,omitempty" description:"Scopes the lookup to one metric or metric namespace. Metrics signal only."`
+}
+
+func (s *FieldKeySelector) Copy() *FieldKeySelector {
+	copied := *s
+	if s.MetricContext != nil {
+		metricContext := *s.MetricContext
+		copied.MetricContext = &metricContext
+	}
+	return &copied
 }
 
 // MatchesKey reports whether a statically defined key satisfies the selector, so
@@ -260,7 +241,7 @@ func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
 		return false
 	}
 
-	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+	if s.FieldDataType != FieldDataTypeUnspecified && !sameDataTypeFamily(s.FieldDataType, key.FieldDataType) {
 		return false
 	}
 
@@ -276,38 +257,41 @@ func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
 
 type FieldValueSelector struct {
 	*FieldKeySelector
-	ExistingQuery string `json:"existingQuery"`
-	Value         string `json:"value"`
-	Limit         int    `json:"limit"`
+	ExistingQuery string `json:"existingQuery" description:"Filter expression already applied in the explorer. Used to compute relatedValues; empty disables them."`
+	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
+	Limit         int    `json:"limit" description:"Maximum number of values to return."`
+
+	// prefixedName keeps the context prefix of Name; set when FieldContext was parsed from it.
+	prefixedName string
 }
 
 type GettableFieldKeys struct {
-	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true"`
-	Complete bool                            `json:"complete" required:"true"`
+	Keys     map[string][]*TelemetryFieldKey `json:"keys" required:"true" description:"Matching keys grouped by name. A name maps to several entries when it exists in more than one context or data type."`
+	Complete bool                            `json:"complete" required:"true" description:"True when every matching key was returned; false when the result was cut off by limit."`
 }
 
 type PostableFieldKeysParams struct {
-	Signal          Signal        `query:"signal"`
-	Source          Source        `query:"source"`
-	Limit           int           `query:"limit"`
-	StartUnixMilli  int64         `query:"startUnixMilli"`
-	EndUnixMilli    int64         `query:"endUnixMilli"`
-	FieldContext    FieldContext  `query:"fieldContext"`
-	FieldDataType   FieldDataType `query:"fieldDataType"`
-	MetricName      string        `query:"metricName"`
-	MetricNamespace string        `query:"metricNamespace"`
-	SearchText      string        `query:"searchText"`
+	Signal          Signal        `query:"signal" description:"The signal to look up keys in: traces, logs or metrics. Empty searches every signal."`
+	Source          Source        `query:"source" description:"The data source within the signal. Use meter for Cost Meter metrics; empty means the default source."`
+	Limit           int           `query:"limit" description:"Maximum number of results per signal. Defaults to 1000 for keys and 50 for values. For keys, intrinsic and materialized fields are added on top, and an empty signal applies the limit to traces, logs and metrics separately, so the response can exceed it."`
+	StartUnixMilli  int64         `query:"startUnixMilli" description:"Start of the lookup window in Unix milliseconds, rounded down to a 6 hour boundary. Ignored for key lookups and meter lookups; trace and log values apply it at calendar-day granularity; metric attribute values and relatedValues apply it. Omit for no lower bound."`
+	EndUnixMilli    int64         `query:"endUnixMilli" description:"End of the lookup window in Unix milliseconds. Ignored for key lookups, trace and log value lookups and meter lookups; applied to metric attribute values and relatedValues. Omit for no upper bound."`
+	FieldContext    FieldContext  `query:"fieldContext" description:"Restricts keys to one context: resource, attribute, scope, span, trace, log, body or metric. Applied to trace and log keys; metric attribute keys ignore it. Empty means any context."`
+	FieldDataType   FieldDataType `query:"fieldDataType" description:"Restricts keys to one data type: string, bool, int64, float64 or number. Applied to trace and log keys; metric attribute keys ignore it. Empty means any type."`
+	MetricName      string        `query:"metricName" description:"Restricts keys to those seen on this metric. Metrics signal only."`
+	MetricNamespace string        `query:"metricNamespace" description:"Restricts keys to metrics in this namespace. Metrics signal only."`
+	SearchText      string        `query:"searchText" description:"Substring to match: against key names for keys, against the values of name for values. Case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. For keys, a context prefix such as resource.service.name sets fieldContext when it is empty."`
 }
 
 type GettableFieldValues struct {
-	Values   *TelemetryFieldValues `json:"values" required:"true"`
-	Complete bool                  `json:"complete" required:"true"`
+	Values   *TelemetryFieldValues `json:"values" required:"true" description:"Distinct values of the key, split by data type."`
+	Complete bool                  `json:"complete" required:"true" description:"True when every matching value was returned; false when the result was cut off by limit."`
 }
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name"`
-	ExistingQuery string `query:"existingQuery"`
+	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`
+	ExistingQuery string `query:"existingQuery" description:"Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it."`
 }
 
 func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysParams) *FieldKeySelector {
@@ -358,26 +342,35 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 }
 
 func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
-
-	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+	// SearchText filters values here, so it must not be parsed as a key.
+	keyParams := params.PostableFieldKeysParams
+	keyParams.SearchText = ""
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(keyParams)
 
 	fieldValueSelector := &FieldValueSelector{
 		FieldKeySelector: keySelector,
 	}
 
-	fieldValueSelector.Name = params.Name
-
-	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
-		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
-		if parsedFieldKey.FieldContext != FieldContextUnspecified {
-			// Only apply inferred context if it is valid for the current signal
-			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
-				fieldValueSelector.Name = parsedFieldKey.Name
-				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+	// An explicit context means the name is the stored name as is.
+	key := TelemetryFieldKey{Name: params.Name, FieldContext: keySelector.FieldContext, FieldDataType: keySelector.FieldDataType}
+	if keySelector.FieldContext == FieldContextUnspecified {
+		key.normalizeDataType()
+		prefixedName := key.Name
+		key.normalizeContext()
+		// Only apply inferred context if it is valid for the current signal
+		if isContextValidForSignal(key.FieldContext, keySelector.Signal) {
+			if key.FieldContext != FieldContextUnspecified {
+				fieldValueSelector.prefixedName = prefixedName
 			}
+		} else {
+			key.Name = prefixedName
+			key.FieldContext = FieldContextUnspecified
 		}
 	}
 
+	fieldValueSelector.Name = key.Name
+	fieldValueSelector.FieldContext = key.FieldContext
+	fieldValueSelector.FieldDataType = key.FieldDataType
 	fieldValueSelector.ExistingQuery = params.ExistingQuery
 	fieldValueSelector.Value = params.SearchText
 
@@ -388,6 +381,25 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+// NameMatchSelectors returns the lookups for the requested key, highest priority first.
+// A context parsed from the name may instead be part of the stored name (attribute.key
+// may be the attribute named attribute.key), so like the query builder both readings are
+// looked up: the prefixed name, in any context, before the name with its prefix stripped.
+func (selector *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
+	if selector.prefixedName != "" {
+		return []*FieldValueSelector{selector.withName(selector.prefixedName), selector}
+	}
+	return []*FieldValueSelector{selector}
+}
+
+func (selector *FieldValueSelector) Copy() *FieldValueSelector {
+	copied := *selector
+	if selector.FieldKeySelector != nil {
+		copied.FieldKeySelector = selector.FieldKeySelector.Copy()
+	}
+	return &copied
 }
 
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
@@ -420,4 +432,46 @@ type TelemetryFieldKeySkipIndex struct {
 	IndexType       string        `json:"indexType"`
 	IndexExpression string        `json:"indexExpression"`
 	Granularity     int           `json:"granularity"`
+}
+
+func (key *TelemetryFieldKey) normalizeDataType() {
+	// Step 1: Parse data type from the right (after the last ":") if not already specified
+	if key.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(key.Name, ":"); colonIdx != -1 {
+			potentialDataType := key.Name[colonIdx+1:]
+			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+				key.FieldDataType = dt
+				key.Name = key.Name[:colonIdx]
+			}
+		}
+	}
+}
+
+func (key *TelemetryFieldKey) normalizeContext() {
+	// Step 2: Parse field context from the left if not already specified
+	if key.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(key.Name, "."); dotIdx != -1 {
+			potentialContext := key.Name[:dotIdx]
+			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+				key.Name = key.Name[dotIdx+1:]
+				key.FieldContext = fc
+
+				// Step 2a: Handle special case for log.body.* fields
+				if key.FieldContext == FieldContextLog && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+					key.FieldContext = FieldContextBody
+					key.Name = strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+				}
+
+			}
+		}
+	}
+}
+
+// withName returns a copy looking up name in any context.
+func (selector *FieldValueSelector) withName(name string) *FieldValueSelector {
+	renamed := selector.Copy()
+	renamed.Name = name
+	renamed.FieldContext = FieldContextUnspecified
+	renamed.prefixedName = ""
+	return renamed
 }

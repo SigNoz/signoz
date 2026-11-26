@@ -80,6 +80,7 @@ function LiveLogsPauseResume(): JSX.Element {
 				onClick={onLiveButtonClick}
 				type="primary"
 				className={`periscope-btn ${isPlaying ? 'warning' : 'success'}`}
+				data-testid="live-logs-pause-resume"
 			>
 				{isPlaying ? 'Pause' : 'Resume'}
 			</Button>

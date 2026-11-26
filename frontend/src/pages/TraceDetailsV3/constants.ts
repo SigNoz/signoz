@@ -60,4 +60,4 @@ export enum TraceDetailsTab {
 }
 
 export const LLM_OBSERVABILITY_DOCS_URL =
-	'https://signoz.io/docs/llm-observability/';
+	'https://signoz.io/docs/ai-observability/';

@@ -11,7 +11,7 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, CircleAlert, KeyRound } from '@signozhq/icons';
 import { Label } from 'pages/SignUp/styles';
 
@@ -73,7 +73,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							ns: 'common',
 						}),
 					});
-					history.push(ROUTES.LOGIN);
+					navigate(ROUTES.LOGIN);
 				},
 			},
 		);
@@ -86,12 +86,28 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					<div className="reset-password-header-icon">
 						<KeyRound size={32} />
 					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						Reset Your Password
-					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						textOverflow="wrap"
+					>
 						Monitor your applications. Find what is causing issues.
-					</Typography.Text>
+					</Typography>
 					{version && (
 						<div className="reset-password-version-badge">SigNoz {version}</div>
 					)}
@@ -142,15 +158,11 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 					</div>
 
 					{showPasswordMismatchError && (
-						<Callout
-							type="error"
-							size="small"
-							showIcon
-							icon={<CircleAlert size={12} />}
-							className="reset-password-error-callout"
-						>
-							Passwords don&apos;t match. Please try again.
-						</Callout>
+						<div className="reset-password-error-callout">
+							<Callout color="danger" size="sm" icon={<CircleAlert />}>
+								Passwords don&apos;t match. Please try again.
+							</Callout>
+						</div>
 					)}
 
 					{errorMessage && !showPasswordMismatchError && (
@@ -164,6 +176,7 @@ function ResetPassword({ version }: ResetPasswordProps): JSX.Element {
 							color="primary"
 							type="submit"
 							data-attr="reset-password"
+							testId="reset-password-submit"
 							loading={isLoading}
 							disabled={!isValidPassword}
 							disabledTooltip="Enter matching passwords in both fields"

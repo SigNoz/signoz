@@ -33,6 +33,13 @@
 	flex-shrink: 0;
 }
 
+.aiDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent-primary);
+}
+
 .filterSection {
 	display: flex;
 	align-items: center;
@@ -62,11 +69,12 @@
 	align-items: center;
 	gap: 16px;
 	padding: 4px 16px 8px;
-	font-size: 13px;
 	color: var(--l2-foreground);
 }
 
 .skeleton {
+	display: flex;
+
 	:global(.ant-skeleton-input) {
 		width: 160px !important;
 		min-height: 20px !important;

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import { useQueryService } from 'hooks/useQueryService';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import history from 'lib/history';
+import { AppLink } from 'lib/router/AppLink';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight, ArrowUpRight } from '@signozhq/icons';
 import Card from 'periscope/components/Card/Card';
 import { useAppContext } from 'providers/App/App';
@@ -22,9 +22,11 @@ import { openInNewTab } from 'utils/navigation';
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { DOCS_LINKS } from '../constants';
-import { columns, TIME_PICKER_OPTIONS } from './constants';
+import { getColumns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
+
+const columns = getColumns(false);
 
 export default function ServiceTraces({
 	onUpdateChecklistDoneItem,
@@ -91,7 +93,7 @@ export default function ServiceTraces({
 			(option) => option.value === value,
 		);
 
-		logEvent('Homepage: Services time interval updated', {
+		void logEvent('Homepage: Services time interval updated', {
 			updatedTimeInterval: timeInterval?.label,
 		});
 
@@ -126,7 +128,7 @@ export default function ServiceTraces({
 								type="default"
 								className="periscope-btn secondary"
 								onClick={(): void => {
-									logEvent('Homepage: Get Started clicked', {
+									void logEvent('Homepage: Get Started clicked', {
 										source: 'Service Traces',
 									});
 
@@ -134,7 +136,7 @@ export default function ServiceTraces({
 										activeLicense &&
 										activeLicense.platform === LicensePlatform.CLOUD
 									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+										navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 									} else {
 										openInNewTab(DOCS_LINKS.ADD_DATA_SOURCE);
 									}
@@ -147,7 +149,7 @@ export default function ServiceTraces({
 								type="link"
 								className="learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: Learn more clicked', {
+									void logEvent('Homepage: Learn more clicked', {
 										source: 'Service Traces',
 									});
 									window.open(
@@ -168,7 +170,10 @@ export default function ServiceTraces({
 
 	const renderDashboardsList = useCallback(
 		() => (
-			<div className="services-list-container home-data-item-container traces-services-list">
+			<div
+				className="services-list-container home-data-item-container traces-services-list"
+				data-testid="home-services-table"
+			>
 				<div className="services-list">
 					<Table<ServicesList>
 						columns={columns}
@@ -177,8 +182,9 @@ export default function ServiceTraces({
 						rowKey="serviceName"
 						className="services-table"
 						onRow={(record: ServicesList): Record<string, unknown> => ({
+							'data-testid': `home-services-row-${record.serviceName}`,
 							onClick: (event: React.MouseEvent): void => {
-								logEvent('Homepage: Service clicked', {
+								void logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
@@ -218,7 +224,10 @@ export default function ServiceTraces({
 		<Card className="dashboards-list-card home-data-card">
 			{servicesExist && (
 				<Card.Header>
-					<div className="services-header home-data-card-header">
+					<div
+						className="services-header home-data-card-header"
+						data-testid="home-section-services"
+					>
 						Services
 						<div className="services-header-actions">
 							<Select
@@ -238,17 +247,17 @@ export default function ServiceTraces({
 			{servicesExist && (
 				<Card.Footer>
 					<div className="services-footer home-data-card-footer">
-						<Link to="/services">
+						<AppLink to="/services">
 							<Button
 								type="link"
 								className="periscope-btn link learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: All Services clicked', {});
+									void logEvent('Homepage: All Services clicked', {});
 								}}
 							>
 								All Services <ArrowRight size={12} />
 							</Button>
-						</Link>
+						</AppLink>
 					</div>
 				</Card.Footer>
 			)}

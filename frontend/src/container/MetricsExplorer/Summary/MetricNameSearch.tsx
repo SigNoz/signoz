@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-	Button,
-	Empty,
-	Input,
-	InputRef,
-	Menu,
-	MenuRef,
-	Popover,
-	Spin,
-} from 'antd';
+import { Button, Input, InputRef, Menu, MenuRef, Popover, Spin } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import {
 	getListMetricsQueryKey,
 	useListMetrics,
@@ -158,9 +150,19 @@ function MetricNameSearch({
 		if (isLoadingMetricNameFilterValues) {
 			items.push(<Spin />);
 		} else if (isErrorMetricNameFilterValues) {
-			items.push(<Empty description="Error fetching metric names" />);
+			items.push(
+				<Empty
+					className="metric-name-search-popover__empty"
+					description="Error fetching metric names"
+				/>,
+			);
 		} else if (metricNameFilterValues?.length === 0) {
-			items.push(<Empty description="No metric names found" />);
+			items.push(
+				<Empty
+					className="metric-name-search-popover__empty"
+					description="No metric names found"
+				/>,
+			);
 		} else {
 			items.push(
 				...metricNameFilterValues.map((filterValue, index) => (
@@ -204,6 +206,7 @@ function MetricNameSearch({
 					ref={inputRef}
 					onKeyDown={handleKeyDown}
 					placeholder="Search..."
+					data-testid="metric-name-search-input"
 					value={searchString}
 					onChange={handleInputChange}
 					bordered
@@ -233,6 +236,8 @@ function MetricNameSearch({
 			<Button
 				type="text"
 				shape="circle"
+				data-testid="metric-name-search-button"
+				aria-label="Search metric name"
 				onClick={(e): void => {
 					e.stopPropagation();
 				}}

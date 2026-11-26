@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useHistory } from 'react-router-dom';
 import cx from 'classnames';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
 import { AuthtypesGettableRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -32,7 +32,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 
 	const { data, isLoading, isError, error } = useListRoles();
 	const { formatTimezoneAdjustedTimestampOptional } = useTimezone();
-	const history = useHistory();
+	const navigate = useAppNavigate();
 	const urlQuery = useUrlQuery();
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -40,9 +40,9 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const setCurrentPage = useCallback(
 		(page: number): void => {
 			urlQuery.set('page', String(page));
-			history.replace({ search: urlQuery.toString() });
+			navigate({ search: urlQuery.toString() }, { replace: true });
 		},
-		[history, urlQuery],
+		[navigate, urlQuery],
 	);
 
 	const roles = useMemo(() => data?.data ?? [], [data]);
@@ -130,10 +130,10 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 		(roleId: string, roleName: string): void => {
 			if (isRolesEnabled) {
 				const url = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(url);
+				navigate(url);
 			}
 		},
-		[isRolesEnabled, history],
+		[isRolesEnabled, navigate],
 	);
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
@@ -147,7 +147,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 
 	if (isLoading) {
 		return (
-			<div className={styles.rolesListingTable}>
+			<div className={styles.rolesListingTable} data-testid="roles-list-loading">
 				<Skeleton active paragraph={{ rows: 5 }} />
 			</div>
 		);
@@ -179,6 +179,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 	const renderRow = (role: AuthtypesGettableRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
+			data-testid={`role-row-${role.name}`}
 			className={cx(styles.tableRow, {
 				[styles.tableRowClickable]: isRolesEnabled,
 			})}
@@ -270,7 +271,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 export default withAuthZContent<RolesListContentProps>(RolesListContent, {
 	checks: [RoleListPermission],
 	fallbackOnLoading: (
-		<div className={styles.rolesListingTable}>
+		<div className={styles.rolesListingTable} data-testid="roles-list-loading">
 			<Skeleton active paragraph={{ rows: 5 }} />
 		</div>
 	),

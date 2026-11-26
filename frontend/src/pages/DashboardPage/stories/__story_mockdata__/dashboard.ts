@@ -29,8 +29,6 @@ import {
 	type DashboardtypesDashboardSpecDTOPanels,
 	type DashboardtypesLayoutDTO,
 	type DashboardtypesPanelDTO,
-	type DashboardtypesGettableDashboardV2DTO,
-	type DashboardtypesJSONPatchOperationDTO,
 	type DashboardtypesQueryDTO,
 	type DashboardtypesVariableDTO,
 	type GetDashboardV2200,
@@ -38,7 +36,7 @@ import {
 	type Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO as MetricBuilderQuery,
 } from 'api/generated/services/sigNoz.schemas';
 
-import { applyJsonPatch } from '../../DashboardContainer/optimistic/applyJsonPatch';
+import { documentStore } from './documentStore';
 
 export const STORY_DASHBOARD_ID = 'storybook-dashboard-1';
 
@@ -358,6 +356,10 @@ const CYCLIC_ENVIRONMENT: DashboardtypesVariableDTO = {
 	},
 };
 
+export const DURATION_CHOICES = ['unset', '6h', '90m', '1s', '0m'] as const;
+
+export type DurationChoice = (typeof DURATION_CHOICES)[number];
+
 export interface PanelQueryShape {
 	requestType: string;
 	metricName?: string;
@@ -390,6 +392,7 @@ export interface DashboardArgs {
 	sectioned: boolean;
 	variables: readonly VariableKind[];
 	locked: boolean;
+	duration?: DurationChoice;
 }
 
 export const dashboardResponse = ({
@@ -397,6 +400,7 @@ export const dashboardResponse = ({
 	sectioned,
 	variables,
 	locked,
+	duration,
 }: DashboardArgs): GetDashboardV2200 => {
 	const kept = PANEL_IDS.slice(0, panels);
 
@@ -434,6 +438,7 @@ export const dashboardResponse = ({
 					description:
 						'Traffic, errors and latency for the checkout path, broken down by service.',
 				},
+				duration: duration === 'unset' ? undefined : duration,
 				layouts,
 				panels: Object.fromEntries(
 					kept.map((id) => [id, PANELS[id]]),
@@ -444,35 +449,13 @@ export const dashboardResponse = ({
 	};
 };
 
-/**
- * The document the page is editing. Every spec edit (a panel moved, a section
- * renamed, a variable added) travels as a JSON Patch whose response replaces
- * the cache, so the story keeps the document where the handler can apply the ops
- * to it. Reseeded whenever a control changes, which is also when the story
- * remounts.
- */
-let document: DashboardtypesGettableDashboardV2DTO | undefined;
+const store = documentStore(dashboardResponse);
 
-export const seedDashboardDocument = (args: DashboardArgs): void => {
-	document = dashboardResponse(args).data;
-};
+export const seedDashboardDocument = store.seed;
 
-const envelope = (
-	data: DashboardtypesGettableDashboardV2DTO,
-): GetDashboardV2200 => ({ status: 'success', data });
+export const currentDashboardDocument = store.current;
 
-export const currentDashboardDocument = (
-	args: DashboardArgs,
-): GetDashboardV2200 => envelope(document ?? dashboardResponse(args).data);
-
-export const patchDashboardDocument = (
-	args: DashboardArgs,
-	ops: DashboardtypesJSONPatchOperationDTO[],
-): GetDashboardV2200 => {
-	document = applyJsonPatch(document ?? dashboardResponse(args).data, ops);
-
-	return envelope(document);
-};
+export const patchDashboardDocument = store.patch;
 
 export const cyclicVariablesDashboardResponse = (): GetDashboardV2200 => {
 	const response = dashboardResponse({

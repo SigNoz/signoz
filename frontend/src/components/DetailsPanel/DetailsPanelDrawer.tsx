@@ -1,35 +1,47 @@
-import { DrawerWrapper } from '@signozhq/ui/drawer';
-
-import './DetailsPanelDrawer.styles.scss';
+import { ReactNode } from 'react';
+import { Drawer } from '@signozhq/ui/drawer';
 
 interface DetailsPanelDrawerProps {
 	isOpen: boolean;
 	onClose: () => void;
-	children: React.ReactNode;
-	className?: string;
+	title: string;
+	children: ReactNode;
+	headerSuffix?: ReactNode;
+	loading?: boolean;
+	testId?: string;
 }
 
 function DetailsPanelDrawer({
 	isOpen,
 	onClose,
+	title,
 	children,
-	className,
+	headerSuffix,
+	loading,
+	testId,
 }: DetailsPanelDrawerProps): JSX.Element {
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="inspector"
+			stack="overlay"
 			open={isOpen}
-			onOpenChange={(open): void => {
-				if (!open) {
-					onClose();
-				}
-			}}
-			direction="right"
-			showOverlay={false}
-			className={`details-panel-drawer ${className || ''}`}
+			onClose={onClose}
+			title={title}
+			width="extra-wide"
+			closePosition="start"
+			headerSuffix={headerSuffix}
+			loading={loading}
+			testId={testId}
 		>
-			<div className="details-panel-drawer__body">{children}</div>
-		</DrawerWrapper>
+			{children}
+		</Drawer>
 	);
 }
+
+DetailsPanelDrawer.defaultProps = {
+	headerSuffix: undefined,
+	loading: false,
+	testId: undefined,
+};
 
 export default DetailsPanelDrawer;

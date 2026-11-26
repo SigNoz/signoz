@@ -1,5 +1,4 @@
 import { ArrowRight, CirclePlay } from '@signozhq/icons';
-import { Flex } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { openInNewTab } from 'utils/navigation';
 
@@ -21,7 +20,8 @@ function InfoLinkText({
 	onClick,
 }: InfoLinkTextProps): JSX.Element {
 	return (
-		<Flex
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+		<div
 			onClick={(): void => {
 				onClick();
 				openInNewTab(link);
@@ -29,11 +29,22 @@ function InfoLinkText({
 			className={styles.infoLinkContainer}
 		>
 			{leftIconVisible && <CirclePlay size={16} />}
-			<Typography.Text className={styles.infoText}>{infoText}</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="small"
+				weight="medium"
+				color="primary"
+				as="span"
+				display="inline-block"
+				marginX={4}
+				textOverflow="visible"
+			>
+				{infoText}
+			</Typography>
 			{rightIconVisible && (
 				<ArrowRight size={16} style={{ transform: 'rotate(315deg)' }} />
 			)}
-		</Flex>
+		</div>
 	);
 }
 

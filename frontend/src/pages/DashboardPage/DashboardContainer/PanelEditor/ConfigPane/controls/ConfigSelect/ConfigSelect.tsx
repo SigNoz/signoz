@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
-import { Select, Tooltip } from 'antd';
+import { Select } from 'antd';
+
+import { groupOptions, toOption } from './utils';
 
 import styles from './ConfigSelect.module.scss';
 
@@ -11,6 +13,8 @@ export interface ConfigSelectItem<T extends string = string> {
 	disabled?: boolean;
 	/** Hover hint shown on the option — typically the reason a disabled item is disabled. */
 	tooltip?: string;
+	/** Heading the option is listed under; items sharing one are grouped in order. */
+	group?: string;
 }
 
 interface ConfigSelectProps<T extends string = string> {
@@ -19,6 +23,8 @@ interface ConfigSelectProps<T extends string = string> {
 	placeholder?: string;
 	items: ConfigSelectItem<T>[];
 	onChange: (value: T) => void;
+	/** Filters the items by label as the user types; for long lists. */
+	showSearch?: boolean;
 }
 
 /**
@@ -32,6 +38,7 @@ function ConfigSelect<T extends string = string>({
 	placeholder,
 	items,
 	onChange,
+	showSearch,
 }: ConfigSelectProps<T>): JSX.Element {
 	return (
 		<Select<T>
@@ -41,27 +48,14 @@ function ConfigSelect<T extends string = string>({
 			placeholder={placeholder}
 			onChange={onChange}
 			virtual={false}
-			options={items.map((item) => {
-				const content = item.icon ? (
-					<span className={styles.item}>
-						{item.icon}
-						{item.label}
-					</span>
-				) : (
-					item.label
-				);
-				return {
-					value: item.value,
-					disabled: item.disabled,
-					label: item.tooltip ? (
-						<Tooltip title={item.tooltip} placement="top">
-							<span className={styles.tooltipTrigger}>{content}</span>
-						</Tooltip>
-					) : (
-						content
-					),
-				};
-			})}
+			showSearch={showSearch}
+			filterOption={(input, option): boolean =>
+				!!items
+					.find((item) => item.value === option?.value)
+					?.label.toLowerCase()
+					.includes(input.toLowerCase())
+			}
+			options={groupOptions(items.map(toOption), items)}
 		/>
 	);
 }

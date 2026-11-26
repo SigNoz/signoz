@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Slider } from '@signozhq/ui/slider';
-import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight, Minus } from '@signozhq/icons';
 
@@ -195,87 +194,72 @@ function OptimiseSignozNeeds({
 			<div className="questions-form-container">
 				<div className="questions-form">
 					<div className="form-group">
-						<Typography.Text className="question">
+						<div className="question">
 							What does your scale approximately look like?
-						</Typography.Text>
+						</div>
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="logs-per-day-label">
 							Logs / Day
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.logsPerDay}
+									testId="logs-per-day-slider"
+									aria-labelledby="logs-per-day-label"
 									marks={marks}
-									onChange={(value): void =>
-										handleSliderChange('logsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${logsPerDayValue.toLocaleString()} GB`,
-									}}
+									tooltip
+									formatValue={(): string => `${logsPerDayValue.toLocaleString()} GB`}
+									onChange={(value): void => handleSliderChange('logsPerDay', value)}
 								/>
 							</div>
 						</div>
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="hosts-per-day-label">
 							Metrics <Minus size={14} /> Number of Hosts
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.hostsPerDay}
+									testId="hosts-per-day-slider"
+									aria-labelledby="hosts-per-day-label"
 									marks={hostMarks}
-									onChange={(value): void =>
-										handleSliderChange('hostsPerDay', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${hostsPerDayValue.toLocaleString()}`,
-									}}
+									tooltip
+									formatValue={(): string => `${hostsPerDayValue.toLocaleString()}`}
+									onChange={(value): void => handleSliderChange('hostsPerDay', value)}
 								/>
 							</div>
 						</div>
 					</div>
 
 					<div className="form-group">
-						<label className="question-slider" htmlFor="organisationName">
+						<div className="question-slider" id="services-label">
 							Number of services
-						</label>
+						</div>
 						<div className="slider-container">
 							<div>
 								<Slider
+									color="primary"
 									min={0}
 									max={100}
 									value={sliderValues.services}
+									testId="services-slider"
+									aria-labelledby="services-label"
 									marks={serviceMarks}
-									onChange={(value): void =>
-										handleSliderChange('services', value as number)
-									}
-									styles={{
-										range: {
-											backgroundColor: '#4E74F8',
-										},
-									}}
-									tooltip={{
-										formatter: (): string => `${servicesValue.toLocaleString()}`,
-									}}
+									tooltip
+									formatValue={(): string => `${servicesValue.toLocaleString()}`}
+									onChange={(value): void => handleSliderChange('services', value)}
 								/>
 							</div>
 						</div>
@@ -293,6 +277,7 @@ function OptimiseSignozNeeds({
 						disabled={isNextDisabled}
 						disabledTooltip="Set at least one of the values above"
 						suffix={<ArrowRight size={12} />}
+						testId="optimise-needs-next"
 					>
 						Next
 					</Button>
@@ -303,6 +288,7 @@ function OptimiseSignozNeeds({
 						width="100%"
 						onClick={handleWillDoLater}
 						loading={isUpdatingProfile}
+						testId="optimise-needs-do-later"
 					>
 						I&apos;ll do this later
 					</Button>

@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
-import { Col, Row } from 'antd';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -80,6 +81,7 @@ function CeleryTaskStateGraphConfig({
 			{tabs.map((tab, index) => (
 				<Col
 					key={tab.key}
+					data-testid={`celery-state-tab-${tab.key}`}
 					onClick={(): void => handleTabClick(tab.key as CeleryTaskState)}
 					className={`celery-task-states__tab ${
 						tab.key === barState ? 'celery-task-states__tab--selected' : ''
@@ -88,7 +90,10 @@ function CeleryTaskStateGraphConfig({
 				>
 					<div className="celery-task-states__label-wrapper">
 						<div className="celery-task-states__label">{tab.label}</div>
-						<div className="celery-task-states__value">
+						<div
+							className="celery-task-states__value"
+							data-testid={`celery-state-value-${tab.key}`}
+						>
 							{isLoading
 								? '-'
 								: isError

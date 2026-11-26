@@ -545,7 +545,7 @@ def test_traces_list_response_shape_values(
     now = datetime.now(tz=UTC).replace(microsecond=0)
     trace_id = TraceIdGenerator.trace_id()
 
-    def span(marker: str, *, kind: TracesKind, status_code: TracesStatusCode = TracesStatusCode.STATUS_CODE_UNSET, status_message: str = "", flags: int = 0, attributes: dict[str, Any]) -> Traces:
+    def span(marker: str, *, kind: TracesKind, status_code: TracesStatusCode = TracesStatusCode.STATUS_CODE_UNSET, status_message: str = "", flags: int = 0, attributes: dict[str, Any], scope: dict[str, Any] | None = None) -> Traces:
         return Traces(
             timestamp=now - timedelta(seconds=1),
             duration=timedelta(seconds=1),
@@ -558,10 +558,11 @@ def test_traces_list_response_shape_values(
             flags=flags,
             resources={"service.name": "shape-service", **extra_resources},
             attributes={"marker": marker, **attributes, **extra_attrs},
+            scope=scope or {},
         )
 
     spans = [
-        span("error", kind=TracesKind.SPAN_KIND_SERVER, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="boom", attributes={"str_a": "x", "num_a": 7.5, "bool_a": True}),
+        span("error", kind=TracesKind.SPAN_KIND_SERVER, status_code=TracesStatusCode.STATUS_CODE_ERROR, status_message="boom", attributes={"str_a": "x", "num_a": 7.5, "bool_a": True}, scope={"name": "io.signoz.shape", "version": "0.1.0", "attributes": {"lib.lang": "go"}}),
         span("client", kind=TracesKind.SPAN_KIND_CLIENT, attributes={"http.url": "https://api.example.com/v1/orders", "http.request.method": "GET"}),
         span("db", kind=TracesKind.SPAN_KIND_CLIENT, attributes={"db.name": "orders_db", "db.operation": "SELECT"}),
         span("host", kind=TracesKind.SPAN_KIND_PRODUCER, attributes={"server.address": "payments.internal:8080"}),
@@ -622,6 +623,7 @@ def test_traces_list_response_shape_values(
             "is_remote": span_obj.is_remote,
             "attributes": {**span_obj.attribute_string, **span_obj.attributes_number, **span_obj.attributes_bool},
             "resource": span_obj.resources_string,
+            "scope": {k: v for k, v in span_obj.scope_json.items() if v},
         }
         # `==` treats True/1 and 7.5/7.5 as equal regardless of type, so pin the
         # string/number/bool type preservation for the error span explicitly.
@@ -915,6 +917,69 @@ def test_traces_list_pagination(
     assert [row["data"]["span_id"] for row in rows] == expected_ids
 
 
+@pytest.mark.parametrize(
+    "limit,offset",
+    [
+        pytest.param(2, 0, id="first_chunk"),
+        pytest.param(2, 1, id="first_into_second_chunk"),
+        pytest.param(2, 2, id="second_chunk"),
+        pytest.param(2, 3, id="second_into_third_chunk"),
+        pytest.param(2, 4, id="third_chunk"),
+        pytest.param(4, 5, id="last_partial_page"),
+        pytest.param(2, 6, id="offset_past_end"),
+    ],
+)
+def test_traces_list_offset_across_chunks(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    limit: int,
+    offset: int,
+) -> None:
+    """
+    A 4h list runs as 1h, 2h and 1h chunks, newest first. Two spans sit in each
+    chunk, so the offset lands in, or crosses into, every chunk.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    minutes_ago = [10, 20, 90, 150, 200, 220]
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(minutes=minutes),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=f"chunked-span-{minutes}",
+                resources={"service.name": "chunked-offset-service"},
+            )
+            for minutes in minutes_ago
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(hours=4)).timestamp() * 1000),
+        end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=limit,
+                offset=offset,
+                filter_expression="service.name = 'chunked-offset-service'",
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")],
+            ).to_dict()
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    expected_names = [f"chunked-span-{minutes}" for minutes in minutes_ago][offset : offset + limit]
+    assert [row["data"]["name"] for row in get_rows(response)] == expected_names
+
+
 # ============================================================================
 # Time window
 # ============================================================================
@@ -1154,6 +1219,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
+                "scope": {k: v for k, v in x[3].scope_json.items() if v},
             },
             id="order_timestamp_full_shape",
         ),
@@ -1191,6 +1257,7 @@ def test_traces_list_span_scope(
                 "is_remote": x[3].is_remote,
                 "attributes": {**x[3].attribute_string, **x[3].attributes_number, **x[3].attributes_bool},
                 "resource": x[3].resources_string,
+                "scope": {k: v for k, v in x[3].scope_json.items() if v},
             },
             id="order_attribute_timestamp_full_shape",
         ),

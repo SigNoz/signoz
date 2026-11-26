@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
-import logEvent from 'api/common/logEvent';
 import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
@@ -20,7 +19,6 @@ import {
 	combineInitialAndUserExpression,
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { InfraMonitoringEvents } from 'constants/events';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
@@ -52,20 +50,17 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityLogsContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
 	const { timeRange } = useEntityDetailsTime();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
-	const logDetailContainerRef = useRef<HTMLDivElement>(null);
 
 	const { safeNavigate } = useSafeNavigate();
 
@@ -126,13 +121,6 @@ function EntityLogsContent({
 			if (validation.isValid) {
 				saveRecentQueryByExpression(DataSource.LOGS, newUserExpression);
 				querySearchOnRun(newUserExpression);
-
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.LogsView,
-				});
 
 				logInfraDrawerFilterCustomizedEvent(
 					category,
@@ -249,6 +237,7 @@ function EntityLogsContent({
 			<Card bordered={false} className={styles.listCard}>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						data-testid="entity-logs-virtuoso-scroller"
 						key="entity-logs-virtuoso"
 						ref={virtuosoRef}
 						data={logs}
@@ -277,16 +266,13 @@ function EntityLogsContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.LogsView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
+						testId="entity-logs-run-query-btn"
 					/>
 				</div>
 
@@ -309,22 +295,20 @@ function EntityLogsContent({
 						{renderContent}
 					</div>
 				)}
-				<div ref={logDetailContainerRef} data-log-detail-ignore="true" />
-				{selectedTab && activeLog && (
-					<LogDetail
-						log={activeLog}
-						onClose={handleCloseLogDetail}
-						logs={logs}
-						onNavigateLog={handleSetActiveLog}
-						selectedTab={selectedTab}
-						onApplyLogFilter={onApplyLogFilter}
-						onScrollToLog={handleScrollToLog}
-						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
-						getContainer={(): HTMLElement =>
-							logDetailContainerRef.current || document.body
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+					selectedTab={selectedTab}
+					onApplyLogFilter={onApplyLogFilter}
+					onScrollToLog={handleScrollToLog}
+					handleOpenInExplorer={(e): void => {
+						if (activeLog) {
+							handleOpenInExplorer(e, activeLog);
 						}
-					/>
-				)}
+					}}
+				/>
 			</div>
 		</div>
 	);

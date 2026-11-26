@@ -49,6 +49,14 @@ export type OpenView = (typeof OPEN_VIEWS)[number];
 
 export const SAVED_VIEWS_MAX = 8;
 
+export const VIEW_QUERIES = ['filtered', 'no-filters', 'multi-query'] as const;
+
+export type ViewQuery = (typeof VIEW_QUERIES)[number];
+
+export const WRITE_STATES = ['success', 'loading', 'error'] as const;
+
+export type WriteState = (typeof WRITE_STATES)[number];
+
 /** The user the story app context signs in as, so "Created by me" follows it. */
 const STORY_USER_EMAIL = createAppContextMock(USER_ROLES.ADMIN).user.email;
 
@@ -101,22 +109,31 @@ const EXPLORER_ROUTE: Record<SavedViewSource, string> = {
 	meter: ROUTES.METER_EXPLORER,
 };
 
-const queryWith = (source: SavedViewSource, expression: string): Query => {
+const queryWith = (
+	source: SavedViewSource,
+	expression: string,
+	shape: ViewQuery = 'filtered',
+): Query => {
 	const base = BASE_QUERY[source];
+	const [first] = base.builder.queryData;
+	const filtered = (queryName: string, filter: string): typeof first => ({
+		...first,
+		queryName,
+		expression: queryName,
+		filter: { expression: filter },
+		aggregations: [{ expression: 'count()' }],
+	});
 
-	return {
-		...base,
-		builder: {
-			...base.builder,
-			queryData: [
-				{
-					...base.builder.queryData[0],
-					filter: { expression },
-					aggregations: [{ expression: 'count()' }],
-				},
-			],
-		},
-	} as Query;
+	const queryData = {
+		filtered: [filtered(first.queryName, expression)],
+		'no-filters': [filtered(first.queryName, '')],
+		'multi-query': [
+			filtered('A', expression),
+			filtered('B', "deployment.environment = 'staging' AND has_error = true"),
+		],
+	}[shape];
+
+	return { ...base, builder: { ...base.builder, queryData } } as Query;
 };
 
 type Author = 'mine' | 'others';
@@ -135,6 +152,7 @@ const savedView = (
 	source: SavedViewSource,
 	author: Author,
 	index: number,
+	shape: ViewQuery = 'filtered',
 ): SavedviewtypesSavedViewDTO => {
 	const displayName = (author === 'mine' ? MY_VIEW_NAMES : OTHER_VIEW_NAMES)[
 		index
@@ -158,6 +176,7 @@ const savedView = (
 			query: queryWith(
 				source,
 				EXPRESSIONS[(index + (author === 'mine' ? 0 : 3)) % EXPRESSIONS.length],
+				shape,
 			),
 			panelType: PANEL_TYPES.LIST,
 			displayName,
@@ -169,30 +188,33 @@ const savedViews = (
 	source: SavedViewSource,
 	author: Author,
 	count: number,
+	shape: ViewQuery,
 ): SavedviewtypesSavedViewDTO[] =>
 	Array.from({ length: Math.min(count, SAVED_VIEWS_MAX) }, (_, index) =>
-		savedView(source, author, index),
+		savedView(source, author, index, shape),
 	);
 
 export const savedViewsListResponse = (
 	source: SavedViewSource,
 	createdByMe: number,
 	createdByOthers: number,
+	shape: ViewQuery = 'filtered',
 ): ListSavedViews200 => ({
 	status: 'success',
 	data: [
-		...savedViews(source, 'mine', createdByMe),
-		...savedViews(source, 'others', createdByOthers),
+		...savedViews(source, 'mine', createdByMe, shape),
+		...savedViews(source, 'others', createdByOthers, shape),
 	],
 });
 
 /** Every view the workspace has, whatever the list control trims it to. */
 export const savedViewById = (
 	id: string,
+	shape: ViewQuery = 'filtered',
 ): SavedviewtypesSavedViewDTO | undefined =>
 	SAVED_VIEW_SOURCES.flatMap((source) => [
-		...savedViews(source, 'mine', SAVED_VIEWS_MAX),
-		...savedViews(source, 'others', SAVED_VIEWS_MAX),
+		...savedViews(source, 'mine', SAVED_VIEWS_MAX, shape),
+		...savedViews(source, 'others', SAVED_VIEWS_MAX, shape),
 	]).find((view) => view.id === id);
 
 /** A view the panel itself created, owned by the story user. */
@@ -207,6 +229,18 @@ export const createdSavedView = (
 	createdAt: '2026-10-16T09:00:00Z',
 	updatedAt: '2026-10-16T09:00:00Z',
 	spec,
+});
+
+const LONG_NAME_SUFFIX = ', every environment and region, last 30 days';
+
+export const withLongName = (
+	view: SavedviewtypesSavedViewDTO,
+): SavedviewtypesSavedViewDTO => ({
+	...view,
+	spec: {
+		...view.spec,
+		displayName: `${view.spec.displayName}${LONG_NAME_SUFFIX}`,
+	},
 });
 
 export const savedViewResponse = (
@@ -257,6 +291,24 @@ export const OPEN_VIEW_ERRORS: Partial<
 	},
 };
 
+const internalError = (message: string): RenderErrorResponseDTO => ({
+	status: 'error',
+	error: {
+		code: 'internal',
+		message,
+		errors: [],
+		suggestions: [],
+		type: 'internal',
+	},
+});
+
+/** What a failed write answers with; the panel's error toast shows the message. */
+export const WRITE_ERRORS = {
+	create: internalError('Failed to create the saved view'),
+	update: internalError('Failed to update the saved view'),
+	delete: internalError('Failed to delete the saved view'),
+};
+
 const openViewId = (source: SavedViewSource, open: OpenView): string | null => {
 	if (open === 'none') {
 		return null;
@@ -282,12 +334,13 @@ const openViewId = (source: SavedViewSource, open: OpenView): string | null => {
 export const savedViewRoute = (
 	source: SavedViewSource,
 	open: OpenView,
+	shape: ViewQuery = 'filtered',
 ): string => {
 	const params = new URLSearchParams({ relativeTime: '15m' });
 	const id = openViewId(source, open);
 
 	if (id) {
-		const view = savedViewById(id);
+		const view = savedViewById(id, shape);
 		const query = view
 			? getSavedViewQuery(view)
 			: queryWith(source, EXPRESSIONS[0]);

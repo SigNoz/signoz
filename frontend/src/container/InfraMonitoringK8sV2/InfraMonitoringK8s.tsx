@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -9,15 +9,15 @@ import {
 	QuickFilterCheckboxUseFieldApis,
 	QuickFiltersSource,
 } from 'components/QuickFilters/types';
-import { initialQueriesMap } from 'constants/queryBuilder';
-import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { ArrowUpToLine, Filter } from '@signozhq/icons';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { DataSource } from 'types/common/queryBuilder';
 
 import { CategoryIcon } from './Base/categoryIcons';
+import { DefaultQueryRedirect } from './Base/DefaultQueryRedirect';
 import { K8sDynamicList } from './Base/K8sDynamicList';
+import { carryOverListFilters } from './Base/relations';
 import EntityStatusFilter from './Base/components/EntityStatusFilter/EntityStatusFilter';
 import {
 	GetClustersQuickFiltersConfig,
@@ -47,8 +47,6 @@ import {
 } from './hooks';
 
 import styles from './InfraMonitoringK8s.module.scss';
-import { InfraMonitoringEvents } from 'constants/events';
-import logEvent from 'api/common/logEvent';
 import { NANO_SECOND_MULTIPLIER, useGlobalTimeStore } from 'store/globalTime';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import {
@@ -68,9 +66,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setNodeReadinessFilter] = useInfraMonitoringNodeReadinessFilter();
 	const [, setContainerStatusFilter] = useInfraMonitoringContainerStatusFilter();
 
-	const compositeQuery = useGetCompositeQueryParam();
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const isInitialized = useRef(false);
 
 	const selectedTime = useGlobalTimeStore((state) => state.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((state) => state.getMinMaxTime);
@@ -98,35 +94,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	);
 
 	useEffect(() => {
-		if (isInitialized.current) {
-			return;
-		}
-		isInitialized.current = true;
-
-		if (!compositeQuery) {
-			const defaultQuery = initialQueriesMap[DataSource.METRICS];
-			redirectWithQueryBuilderData({
-				...defaultQuery,
-				builder: {
-					...defaultQuery.builder,
-					queryData: defaultQuery.builder.queryData.map((query) => ({
-						...query,
-						filter: { expression: '' },
-						filters: { items: [], op: 'AND' as const },
-					})),
-				},
-			});
-		}
-	}, [compositeQuery, redirectWithQueryBuilderData]);
-
-	useEffect(() => {
-		void logEvent(InfraMonitoringEvents.FilterApplied, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			page: InfraMonitoringEvents.ListPage,
-			category: selectedCategory,
-			view: InfraMonitoringEvents.QuickFiltersView,
-		});
-
 		// The category query param is a plain string; entities are validated by
 		// getEntityConfig before rendering
 		logInfraMonitoringListViewedEvent(selectedCategory as InfraMonitoringEntity);
@@ -221,6 +188,28 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const handleCategorySelect = (key: string): void => {
 		if (key !== selectedCategory) {
+			const carriedExpression = carryOverListFilters(
+				currentQuery.builder.queryData[0]?.filter?.expression || '',
+				key as InfraMonitoringEntity,
+			);
+
+			// Navigate first: a navigation drops the nuqs writes still queued.
+			redirectWithQueryBuilderData({
+				...currentQuery,
+				builder: {
+					...currentQuery.builder,
+					queryData: [
+						{
+							...(currentQuery.builder.queryData[0] || {}),
+							filter: { expression: carriedExpression },
+							filters: {
+								items: convertExpressionToFilters(carriedExpression),
+								op: 'AND' as const,
+							},
+						},
+					],
+				},
+			});
 			void setSelectedCategory(key as string);
 			void setOrderBy(null);
 			void setGroupBy(null);
@@ -229,19 +218,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			void setPodStatusFilter(null);
 			void setNodeReadinessFilter(null);
 			void setContainerStatusFilter(null);
-			redirectWithQueryBuilderData({
-				...currentQuery,
-				builder: {
-					...currentQuery.builder,
-					queryData: [
-						{
-							...(currentQuery.builder.queryData[0] || {}),
-							filter: { expression: '' },
-							filters: { items: [], op: 'AND' as const },
-						},
-					],
-				},
-			});
 		}
 	};
 
@@ -257,6 +233,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								size="sm"
 								icon
 								color="secondary"
+								testId="quick-filters-toggle"
 								onClick={handleFilterVisibilityChange}
 							>
 								<Filter size={14} />
@@ -270,6 +247,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
+			<DefaultQueryRedirect />
 			<div className={styles.infraMonitoringContainer}>
 				<div className={styles.infraContentRow}>
 					{showFilters && (
@@ -278,15 +256,23 @@ export default function InfraMonitoringK8s(): JSX.Element {
 								<>
 									<div className={styles.categorySelectorSection}>
 										<div className={styles.sectionHeader} data-type="resource">
-											<Typography.Text className={styles.sectionLabel}>
+											<Typography
+												variant="uppercase"
+												size="small"
+												weight="bold"
+												color="tertiary"
+												as="span"
+												textOverflow="visible"
+											>
 												Viewing · Resource
-											</Typography.Text>
+											</Typography>
 											<div className={styles.sectionLine} />
 											<Tooltip title="Collapse Filters">
 												<ArrowUpToLine
 													style={{ transform: 'rotate(270deg)' }}
 													onClick={handleFilterVisibilityChange}
 													size="md"
+													data-testid="quick-filters-toggle"
 												/>
 											</Tooltip>
 										</div>
@@ -305,7 +291,16 @@ export default function InfraMonitoringK8s(): JSX.Element {
 														data-testid={`category-${category.key}`}
 													>
 														{category.icon}
-														<Typography.Text>{category.label}</Typography.Text>
+														<Typography
+															variant="paragraph"
+															size="base"
+															weight="regular"
+															color="inherit"
+															as="span"
+															textOverflow="wrap"
+														>
+															{category.label}
+														</Typography>
 													</button>
 												))}
 											</div>
@@ -314,14 +309,21 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 									<div className={styles.quickFiltersSection}>
 										<div className={styles.sectionHeader} data-type="filter">
-											<Typography.Text className={styles.sectionLabel}>
+											<Typography
+												variant="uppercase"
+												size="small"
+												weight="bold"
+												color="tertiary"
+												as="span"
+												textOverflow="visible"
+											>
 												Filter by
-											</Typography.Text>
+											</Typography>
 											<div className={styles.sectionLine} />
 										</div>
 										{selectedCategoryConfig && (
 											<QuickFilters
-												source={QuickFiltersSource.INFRA_MONITORING}
+												quickFilterSource={QuickFiltersSource.INFRA_MONITORING}
 												config={selectedCategoryConfig}
 												handleFilterVisibilityChange={handleFilterVisibilityChange}
 												useFieldApis={selectedCategoryUseFieldApis}

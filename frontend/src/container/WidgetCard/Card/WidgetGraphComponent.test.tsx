@@ -1,13 +1,13 @@
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent } from 'tests/test-utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { AppProvider } from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import store from 'store';
+import { mockAppLocation } from 'tests/router-mocks';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -19,12 +19,9 @@ import {
 import { WidgetGraphComponentProps } from 'container/WidgetCard/Card/types';
 import WidgetGraphComponent from 'container/WidgetCard/Card/WidgetGraphComponent';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
-	}),
-}));
+mockAppLocation({
+	pathname: `${process.env.FRONTEND_API_ENDPOINT}/${ROUTES.DASHBOARD}/624652db-6097-42f5-bbca-e9012901db00`,
+});
 
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
@@ -163,8 +160,8 @@ const mockProps: WidgetGraphComponentProps = {
 
 describe('WidgetGraphComponent', () => {
 	it('should show correct menu items when hovering over more options while loading', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const { getByTestId, findByRole, getByText, container } = render(
+		const user = userEvent.setup();
+		const { getByTestId, findByRole, getByText } = render(
 			<MockQueryClientProvider>
 				<ErrorModalProvider>
 					<Provider store={store}>
@@ -192,8 +189,7 @@ describe('WidgetGraphComponent', () => {
 		expect(getByText('Test Dashboard')).toBeInTheDocument();
 
 		// check if skeleton is rendered
-		const skeleton = container.querySelector('.ant-skeleton');
-		expect(skeleton).toBeInTheDocument();
+		expect(getByTestId('widget-graph-loading')).toBeInTheDocument();
 
 		const moreOptionsButton = getByTestId('widget-header-options');
 		await user.click(moreOptionsButton);

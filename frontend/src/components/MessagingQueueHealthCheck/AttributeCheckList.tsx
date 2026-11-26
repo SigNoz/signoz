@@ -1,6 +1,5 @@
 import { Typography } from '@signozhq/ui/typography';
 import { ReactNode, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import {
 	OctagonAlert,
 	Bolt,
@@ -14,7 +13,7 @@ import { Modal, Select, Spin, Tooltip, Tree, TreeDataNode } from 'antd';
 import { OnboardingStatusResponse } from 'api/messagingQueues/onboarding/getOnboardingStatus';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { History } from 'history';
+import { navigate } from 'lib/router/navigation';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import {
 	KAFKA_SETUP_DOC_LINK,
@@ -45,7 +44,6 @@ export enum AttributesFilters {
 function ErrorTitleAndKey({
 	title,
 	parentTitle,
-	history,
 	isCloudUserVal,
 	errorMsg,
 	isLeaf,
@@ -53,7 +51,6 @@ function ErrorTitleAndKey({
 	title: string;
 	parentTitle: string;
 	isCloudUserVal: boolean;
-	history: History<unknown>;
 	errorMsg?: string;
 	isLeaf?: boolean;
 }): TreeDataNode {
@@ -75,7 +72,7 @@ function ErrorTitleAndKey({
 		}
 
 		if (isCloudUserVal && !!link) {
-			history.push(link);
+			navigate(link);
 		} else {
 			openInNewTab(KAFKA_SETUP_DOC_LINK);
 		}
@@ -84,9 +81,18 @@ function ErrorTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-error-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
+				<div className="tree-text">
+					<Typography
+						variant="code"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{title}
+					</Typography>
+				</div>
 				<Tooltip title={errorMsg}>
 					<div
 						className="attribute-error-warning"
@@ -125,9 +131,18 @@ function treeTitleAndKey({
 		key: `${title}-key-${uuid()}`,
 		title: (
 			<div className="attribute-success-title">
-				<Typography.Text title={title} className="tree-text" truncate={1}>
-					{title}
-				</Typography.Text>
+				<div className="tree-text">
+					<Typography
+						variant="code"
+						size="small"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+					>
+						{title}
+					</Typography>
+				</div>
 				{isLeaf && (
 					<div className="success-attribute-icon">
 						<Tooltip title="Success">
@@ -149,7 +164,6 @@ function generateTreeDataNodes(
 	response: OnboardingStatusResponse['data'],
 	parentTitle: string,
 	isCloudUserVal: boolean,
-	history: History<unknown>,
 ): TreeDataNode[] {
 	return response
 		.map((item) => {
@@ -162,7 +176,6 @@ function generateTreeDataNodes(
 						title: item.attribute,
 						errorMsg: item.error_message || '',
 						parentTitle,
-						history,
 						isCloudUserVal,
 					});
 				}
@@ -185,7 +198,6 @@ function AttributeCheckList({
 		setFilter(value);
 	};
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
-	const history = useHistory();
 
 	useEffect(() => {
 		const filteredData = onboardingStatusResponses.map((response) => {
@@ -195,7 +207,6 @@ function AttributeCheckList({
 					errorMsg: response.errorMsg,
 					isLeaf: true,
 					parentTitle: response.title,
-					history,
 					isCloudUserVal,
 				});
 			}
@@ -213,7 +224,6 @@ function AttributeCheckList({
 					filteredData,
 					response.title,
 					isCloudUserVal,
-					history,
 				),
 			};
 		});

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import history from 'lib/history';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
+import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
@@ -16,7 +17,7 @@ function TopContributorsCard({
 	topContributorsData,
 	totalCurrentTriggers,
 }: TopContributorsCardProps): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const searchParams = useMemo(() => new URLSearchParams(search), [search]);
 
 	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
@@ -27,23 +28,15 @@ function TopContributorsCard({
 
 	const isDarkMode = useIsDarkMode();
 
-	const toggleViewAllParam = (isOpen: boolean): void => {
-		if (isOpen) {
-			searchParams.set('viewAllTopContributors', 'true');
-		} else {
-			searchParams.delete('viewAllTopContributors');
-		}
-	};
-
 	const toggleViewAllDrawer = (): void => {
-		setIsViewAllVisible((prev) => {
-			const newState = !prev;
-
-			toggleViewAllParam(newState);
-
-			return newState;
-		});
-		history.push({ search: searchParams.toString() });
+		const params = getUnstableCurrentSearchParams();
+		if (isViewAllVisible) {
+			params.delete('viewAllTopContributors');
+		} else {
+			params.set('viewAllTopContributors', 'true');
+		}
+		setIsViewAllVisible(!isViewAllVisible);
+		navigate({ search: params.toString() });
 	};
 
 	return (

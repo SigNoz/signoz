@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
@@ -10,12 +10,10 @@ import {
 import { useDeleteConfirm } from 'components/DeleteConfirmModal/useDeleteConfirm';
 import ROUTES from 'constants/routes';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-
-import styles from './DashboardActions.module.scss';
 
 interface UseDeleteDashboardActionArgs {
 	dashboardId: string;
@@ -53,7 +51,7 @@ export function useDeleteDashboardAction({
 				removePreferences(dashboardId);
 				await invalidateListDashboardsForUserV2(queryClient);
 				toast.success('Dashboard deleted successfully');
-				history.replace(ROUTES.ALL_DASHBOARD);
+				navigate(ROUTES.ALL_DASHBOARD, { replace: true });
 			},
 			onError: (error: unknown): void => {
 				showErrorModal(error as APIError);
@@ -64,14 +62,29 @@ export function useDeleteDashboardAction({
 	const confirmDeleteDashboard = useCallback((): void => {
 		confirmDelete({
 			title: (
-				<Typography.Title level={5}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="bold"
+					color="inherit"
+					as="h5"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					Are you sure you want to delete the
-					<Typography.Text className={styles.deleteName}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="medium"
+						color="danger"
+						as="span"
+						textOverflow="wrap"
+					>
 						{' '}
 						{dashboardName}{' '}
-					</Typography.Text>
+					</Typography>
 					dashboard?
-				</Typography.Title>
+				</Typography>
 			),
 			content: 'This action cannot be undone.',
 			// Keeps the Delete button loading until the mutation settles, then closes.

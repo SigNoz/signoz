@@ -11,7 +11,7 @@ import Spinner from 'components/Spinner';
 import ResetPasswordContainer from 'container/ResetPassword';
 import TokenError from 'container/ResetPassword/TokenError';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -26,7 +26,7 @@ function ResetPassword(): JSX.Element {
 	useEffect(() => {
 		if (!token) {
 			void Logout();
-			history.push(ROUTES.LOGIN);
+			navigate(ROUTES.LOGIN);
 		}
 	}, [token]);
 

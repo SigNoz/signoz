@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import { Router } from 'react-router-dom';
 import { act, renderHook } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { TestRouter } from 'tests/router';
 
 import useUrlQueryData from '../useUrlQueryData';
 
@@ -22,31 +21,22 @@ describe('useUrlQueryData', () => {
 	const renderHookWithRouter = (
 		queryKey: string,
 		defaultData?: any,
-		initialEntries: string[] = ['/test'],
-	) => {
-		const history = createMemoryHistory({ initialEntries });
-
-		// Mock window.location.search to match the current route
-		Object.defineProperty(window, 'location', {
-			value: {
-				search: history.location.search,
-				pathname: history.location.pathname,
-				origin: 'http://localhost',
-			},
-			writable: true,
+		initialRoute = '/test',
+	) =>
+		renderHook(() => useUrlQueryData(queryKey, defaultData), {
+			wrapper: ({ children }) => (
+				<TestRouter initialRoute={initialRoute}>{children}</TestRouter>
+			),
 		});
-
-		return renderHook(() => useUrlQueryData(queryKey, defaultData), {
-			wrapper: ({ children }) => <Router history={history}>{children}</Router>,
-		});
-	};
 
 	describe('query parsing', () => {
 		it('should parse valid JSON query parameter', () => {
 			const testData = { name: 'test', value: 123 };
-			const { result } = renderHookWithRouter('testKey', {}, [
+			const { result } = renderHookWithRouter(
+				'testKey',
+				{},
 				`/test?testKey=${encodeURIComponent(JSON.stringify(testData))}`,
-			]);
+			);
 
 			expect(result.current.query).toBe(JSON.stringify(testData));
 			expect(result.current.queryData).toStrictEqual(testData);
@@ -62,9 +52,11 @@ describe('useUrlQueryData', () => {
 
 		it('should return default data when query parameter is empty', () => {
 			const defaultData = { default: 'value' };
-			const { result } = renderHookWithRouter('testKey', defaultData, [
+			const { result } = renderHookWithRouter(
+				'testKey',
+				defaultData,
 				'/test?testKey=',
-			]);
+			);
 
 			expect(result.current.query).toBe('');
 			expect(result.current.queryData).toStrictEqual(defaultData);
@@ -74,9 +66,11 @@ describe('useUrlQueryData', () => {
 			const defaultData = { default: 'value' };
 			const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
 
-			const { result } = renderHookWithRouter('testKey', defaultData, [
+			const { result } = renderHookWithRouter(
+				'testKey',
+				defaultData,
 				'/test?testKey=invalid-json',
-			]);
+			);
 
 			expect(result.current.query).toBe('invalid-json');
 			expect(result.current.queryData).toStrictEqual(defaultData);
@@ -96,7 +90,7 @@ describe('useUrlQueryData', () => {
 			const { result } = renderHookWithRouter(
 				'testKey',
 				defaultData,
-				['/test?testKey={"name":"test",}'], // Missing closing brace
+				'/test?testKey={"name":"test",}', // Missing closing brace
 			);
 
 			expect(result.current.query).toBe('{"name":"test",}');
@@ -122,9 +116,11 @@ describe('useUrlQueryData', () => {
 				},
 			};
 
-			const { result } = renderHookWithRouter('complexKey', {}, [
+			const { result } = renderHookWithRouter(
+				'complexKey',
+				{},
 				`/test?complexKey=${encodeURIComponent(JSON.stringify(complexData))}`,
-			]);
+			);
 
 			expect(result.current.query).toBe(JSON.stringify(complexData));
 			expect(result.current.queryData).toStrictEqual(complexData);
@@ -132,9 +128,11 @@ describe('useUrlQueryData', () => {
 
 		it('should handle primitive values', () => {
 			const stringData = 'simple string';
-			const { result } = renderHookWithRouter('stringKey', '', [
+			const { result } = renderHookWithRouter(
+				'stringKey',
+				'',
 				`/test?stringKey=${encodeURIComponent(JSON.stringify(stringData))}`,
-			]);
+			);
 
 			expect(result.current.query).toBe(JSON.stringify(stringData));
 			expect(result.current.queryData).toBe(stringData);
@@ -160,9 +158,11 @@ describe('useUrlQueryData', () => {
 		});
 
 		it('should preserve existing query parameters when adding new one', () => {
-			const { result } = renderHookWithRouter('newKey', {}, [
+			const { result } = renderHookWithRouter(
+				'newKey',
+				{},
 				'/test?existingKey=existingValue',
-			]);
+			);
 
 			const newData = { name: 'new' };
 			act(() => {
@@ -178,9 +178,11 @@ describe('useUrlQueryData', () => {
 
 		it('should update existing query parameter', () => {
 			const initialData = { name: 'old' };
-			const { result } = renderHookWithRouter('testKey', {}, [
+			const { result } = renderHookWithRouter(
+				'testKey',
+				{},
 				`/test?testKey=${encodeURIComponent(JSON.stringify(initialData))}`,
-			]);
+			);
 
 			const newData = { name: 'new', value: 789 };
 			act(() => {
@@ -279,9 +281,11 @@ describe('useUrlQueryData', () => {
 			const testData = { name: 'test with spaces', value: 'special&chars' };
 			const encodedData = encodeURIComponent(JSON.stringify(testData));
 
-			const { result } = renderHookWithRouter('testKey', {}, [
+			const { result } = renderHookWithRouter(
+				'testKey',
+				{},
 				`/test?testKey=${encodedData}`,
-			]);
+			);
 
 			expect(result.current.queryData).toStrictEqual(testData);
 		});

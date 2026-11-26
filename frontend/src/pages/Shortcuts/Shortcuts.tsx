@@ -10,10 +10,21 @@ function Shortcuts(): JSX.Element {
 		const tableData = generateTableData(shortcutSection);
 
 		return (
-			<section key={shortcutSection} className="shortcut-section">
-				<Typography.Text className="shortcut-section-heading">
+			<section
+				key={shortcutSection}
+				className="shortcut-section"
+				data-testid={`shortcut-section-${shortcutSection}`}
+			>
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{shortcutSection}
-				</Typography.Text>
+				</Typography>
 				<Table
 					columns={shortcutColumns}
 					dataSource={tableData}
@@ -26,7 +37,7 @@ function Shortcuts(): JSX.Element {
 	}
 
 	return (
-		<div className="keyboard-shortcuts">
+		<div className="keyboard-shortcuts" data-testid="keyboard-shortcuts-page">
 			{Object.keys(ALL_SHORTCUTS).map((shortcutSection) =>
 				getShortcutTable(shortcutSection),
 			)}

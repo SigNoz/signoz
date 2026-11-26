@@ -3,9 +3,9 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import type { Querybuildertypesv5QueryRangeRequestDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest } from 'msw';
 import type { MessagingQueuesViewTypeOptions } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import type { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 
 import {
 	choiceControl,
@@ -13,10 +13,13 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
+import { queryRangeV5ForRequest } from '@/storybook/msw/__story_mockdata__/queryRange';
 
 import {
-	attributeValuesResponse,
-	queryRangeV3ForRequest,
+	attributeValues,
+	LABEL_VALUES,
 	timeRangeState,
 } from '../../stories/__story_mockdata__/messagingQueues';
 import {
@@ -25,7 +28,6 @@ import {
 	kafkaDetailRoute,
 	partitionLatencyDetails,
 	partitionLatencyOverview,
-	spanEvaluationResponse,
 	topicThroughputDetails,
 	topicThroughputOverview,
 } from './__story_mockdata__/kafkaDetail';
@@ -94,33 +96,23 @@ export const kafkaDetailMocks = defineStoryMocks({
 		),
 
 		rest.post(
-			'http://localhost/api/v1/messaging-queues/kafka/span/evaluation',
-			response.json(async (req) => {
-				const body = (await req.json()) as { end: number };
-
-				return {
-					status: 'success',
-					data: spanEvaluationResponse(values.rows, body.end / 1e6),
-				};
-			}),
-		),
-
-		rest.post(
-			'http://localhost/api/v3/query_range',
+			'http://localhost/api/v5/query_range',
 			response.json(async (req) =>
-				queryRangeV3ForRequest(
-					(await req.json()) as QueryRangePayload,
-					values.series,
+				queryRangeV5ForRequest(
+					(await req.json()) as Querybuildertypesv5QueryRangeRequestDTO,
+					{ count: values.series, labelValues: LABEL_VALUES },
 				),
 			),
 		),
 
 		rest.get(
-			'http://localhost/api/v3/autocomplete/attribute_values',
+			'http://localhost/api/v1/fields/values',
 			response.json((req) =>
-				attributeValuesResponse(
-					req.url.searchParams.get('attributeKey') ?? '',
-					req.url.searchParams.get('searchText') ?? '',
+				fieldValuesResponse(
+					attributeValues(
+						req.url.searchParams.get('name') ?? '',
+						req.url.searchParams.get('searchText') ?? '',
+					),
 				),
 			),
 		),
@@ -130,3 +122,5 @@ export const kafkaDetailMocks = defineStoryMocks({
 		reduxState: timeRangeState(),
 	}),
 });
+
+export type KafkaDetailArgs = PageStoryArgs<typeof kafkaDetailMocks>;

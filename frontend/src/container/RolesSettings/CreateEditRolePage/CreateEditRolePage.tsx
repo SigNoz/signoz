@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
 import { ArrowLeft, SolidAlertTriangle } from '@signozhq/icons';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppNavigate } from 'lib/router/useAppNavigate';
+import { matchRoute } from 'lib/router/matchRoute';
 import { Button } from '@signozhq/ui/button';
-import { ConfirmDialog } from '@signozhq/ui/dialog';
+import { AlertDialog } from '@signozhq/ui/alert-dialog';
 import { Input } from '@signozhq/ui/input';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
@@ -43,12 +45,10 @@ function authzCheckFn(
 }
 
 function CreateEditRolePageContent(): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const navigate = useAppNavigate();
+	const { pathname } = useAppLocation();
 	const urlQuery = useUrlQuery();
-	const match = matchPath<{ roleId: string }>(pathname, {
-		path: ROUTES.ROLE_DETAILS,
-	});
+	const match = matchRoute<'roleId'>(pathname, ROUTES.ROLE_DETAILS);
 	const roleId = match?.params?.roleId ?? 'new';
 	const roleName = urlQuery.get('name') ?? '';
 	const [hasJsonError, setHasJsonError] = useState(false);
@@ -85,16 +85,16 @@ function CreateEditRolePageContent(): JSX.Element {
 		if (success) {
 			allowNextNavigation();
 			if (isCreateMode) {
-				history.push(ROUTES.ROLES_SETTINGS);
+				navigate(ROUTES.ROLES_SETTINGS);
 			} else {
 				const viewUrl = `${ROUTES.ROLE_DETAILS.replace(':roleId', roleId)}?name=${encodeURIComponent(roleName)}`;
-				history.push(viewUrl);
+				navigate(viewUrl);
 			}
 		}
 	}, [
 		handleSave,
 		allowNextNavigation,
-		history,
+		navigate,
 		hasJsonError,
 		isCreateMode,
 		roleId,
@@ -120,9 +120,17 @@ function CreateEditRolePageContent(): JSX.Element {
 						>
 							<ArrowLeft size={16} />
 						</Button>
-						<Typography.Title level={3}>
+						<Typography
+							variant="label"
+							size="large"
+							weight="bold"
+							color="inherit"
+							as="h3"
+							marginY={4}
+							textOverflow="wrap"
+						>
 							{isCreateMode ? 'Create Role' : 'Edit Role'}
-						</Typography.Title>
+						</Typography>
 					</div>
 				</div>
 
@@ -186,14 +194,31 @@ function CreateEditRolePageContent(): JSX.Element {
 					>
 						<ArrowLeft size={16} />
 					</Button>
-					<Typography.Title level={3}>{title}</Typography.Title>
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="inherit"
+						as="h3"
+						marginY={4}
+						textOverflow="wrap"
+					>
+						{title}
+					</Typography>
 				</div>
 
 				<div className={styles.createEditRolePageActions}>
 					{hasUnsavedChanges && (
 						<div className={styles.unsavedIndicator}>
 							<span className={styles.unsavedDot} />
-							<Typography as="span" size="base" className={styles.unsavedText}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="primary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Unsaved changes
 							</Typography>
 						</div>
@@ -217,14 +242,20 @@ function CreateEditRolePageContent(): JSX.Element {
 			<AuthZGuardContent
 				checks={canCheckRolePermissions ? [buildRoleReadPermission(roleName)] : []}
 				fallbackOnLoading={
-					<div className={styles.createEditRolePage}>
+					<div
+						className={styles.createEditRolePage}
+						data-testid="role-editor-loading"
+					>
 						<Skeleton active paragraph={{ rows: 8 }} />
 					</div>
 				}
 			>
 				<>
 					{isLoading && (
-						<div className={styles.createEditRolePage}>
+						<div
+							className={styles.createEditRolePage}
+							data-testid="role-editor-loading"
+						>
 							<Skeleton active paragraph={{ rows: 8 }} />
 						</div>
 					)}
@@ -264,7 +295,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											value={formData.name}
 											onChange={(e): void => handleFormChange('name', e.target.value)}
 											placeholder="my-custom-role"
-											data-testid="role-name-input"
+											testId="role-name-input"
 										/>
 									</div>
 								) : null}
@@ -279,7 +310,7 @@ function CreateEditRolePageContent(): JSX.Element {
 											handleFormChange('description', e.target.value)
 										}
 										placeholder="Custom role for the support team"
-										data-testid="role-description-input"
+										testId="role-description-input"
 									/>
 								</div>
 							</div>
@@ -300,28 +331,30 @@ function CreateEditRolePageContent(): JSX.Element {
 				</>
 			</AuthZGuardContent>
 
-			<ConfirmDialog
+			<AlertDialog
 				open={isBlocked}
-				onOpenChange={(next): void => {
-					if (!next) {
-						cancelNavigation();
-					}
-				}}
 				title="Discard unsaved changes?"
 				titleIcon={<SolidAlertTriangle size={14} color="#fdd600" />}
 				confirmText="Discard"
-				confirmColor="danger"
+				color="danger"
 				cancelText="Keep editing"
 				onConfirm={confirmNavigation}
 				onCancel={cancelNavigation}
 				testId="discard-changes-dialog"
 			>
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{isCreateMode
 						? 'This new role will not be created.'
 						: 'Your unsaved changes will be lost.'}
 				</Typography>
-			</ConfirmDialog>
+			</AlertDialog>
 		</div>
 	);
 }
@@ -329,7 +362,7 @@ function CreateEditRolePageContent(): JSX.Element {
 export default withAuthZPage(CreateEditRolePageContent, {
 	checks: authzCheckFn,
 	fallbackOnLoading: (
-		<div className={styles.createEditRolePage}>
+		<div className={styles.createEditRolePage} data-testid="role-editor-loading">
 			<Skeleton active paragraph={{ rows: 8 }} />
 		</div>
 	),

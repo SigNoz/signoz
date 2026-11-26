@@ -16,13 +16,12 @@ import {
 	X,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Select } from 'antd';
+import { type RefSelectProps, Select } from 'antd';
 import cx from 'classnames';
 import TextToolTip from 'components/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import TruncatedTooltip from './TruncatedTooltip';
@@ -75,7 +74,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	const isDarkMode = useIsDarkMode();
 
 	// Refs for element access and scroll behavior
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const optionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 	// Flag to track if dropdown just opened
@@ -171,7 +170,11 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
 							return part.toLowerCase() === searchQuery.toLowerCase() ? (
-								<span key={uniqueKey} className="highlight-text">
+								<span
+									key={uniqueKey}
+									className="highlight-text"
+									data-testid="highlight-text"
+								>
 									{part}
 								</span>
 							) : (
@@ -221,6 +224,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 								selected: isSelected,
 								active: isActive,
 							})}
+							data-testid={`option-item-${option.value}`}
 							onClick={(e): void => {
 								e.stopPropagation();
 								handleSelection();
@@ -242,7 +246,9 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 									{highlightMatchedText(String(option.label || ''), searchText)}
 								</span>
 								{option.type === 'custom' && (
-									<div className="option-badge">{capitalize(option.type)}</div>
+									<div className="option-badge" data-testid="option-badge">
+										{capitalize(option.type)}
+									</div>
 								)}
 							</div>
 						</div>
@@ -269,6 +275,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 		() => (
 			<X
 				size="md"
+				data-testid="custom-select-clear"
 				onClick={(e): void => {
 					e.stopPropagation();
 					if (onChange) {
@@ -529,6 +536,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			<div
 				ref={dropdownRef}
 				className="custom-select-dropdown"
+				data-testid="custom-select-dropdown"
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
 				onScroll={handleDropdownScroll}
@@ -588,7 +596,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 							</section>
 						)}
 					{loading && (
-						<div className="navigation-loading">
+						<div className="navigation-loading" data-testid="navigation-loading">
 							<div className="navigation-icons">
 								<Loader size="md" className="animate-spin" />
 							</div>
@@ -596,7 +604,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						</div>
 					)}
 					{!loading && waitingMessage && (
-						<div className="navigation-loading">
+						<div className="navigation-loading" data-testid="navigation-loading">
 							<div className="navigation-icons">
 								<Loader size="md" className="animate-spin" />
 							</div>
@@ -606,7 +614,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						</div>
 					)}
 					{errorMessage && !loading && (
-						<div className="navigation-error">
+						<div className="navigation-error" data-testid="navigation-error">
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>

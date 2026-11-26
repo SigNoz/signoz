@@ -35,10 +35,10 @@ type SavedView struct {
 	types.TimeAuditable
 	types.UserAuditable
 	OrgID         string        `json:"-"`
-	Name          string        `json:"name"`
-	Source        Source        `json:"source"`
-	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
-	Spec          SavedViewSpec `json:"spec" required:"true"`
+	Name          string        `json:"name" description:"The machine name of the view, a DNS-1123 label unique within the organization. Immutable after creation."`
+	Source        Source        `json:"source" description:"The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability."`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true" description:"The version of the spec shape. The only accepted value is v2."`
+	Spec          SavedViewSpec `json:"spec" required:"true" description:"The display name, panel type, request type, queries and column selection of the view."`
 }
 
 type StorableSavedView struct {
@@ -90,22 +90,22 @@ func NewStorableSavedView(view *SavedView) *StorableSavedView {
 }
 
 type PostableSavedView struct {
-	Name          string        `json:"name"`
-	GenerateName  bool          `json:"generateName"`
-	Source        Source        `json:"source" required:"true"`
-	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
-	Spec          SavedViewSpec `json:"spec" required:"true"`
+	Name          string        `json:"name" description:"The machine name of the view, a DNS-1123 label (lowercase letters, digits and hyphens, at most 63 characters) unique within the organization. Required unless generateName is true, in which case it must be empty."`
+	GenerateName  bool          `json:"generateName" description:"When true the server derives name from spec.displayName and appends a random suffix. Defaults to false."`
+	Source        Source        `json:"source" required:"true" description:"The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability. Builder queries inside spec must use the matching signal; meter views use signal metrics with source meter."`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true" description:"The version of the spec shape. The only accepted value is v2."`
+	Spec          SavedViewSpec `json:"spec" required:"true" description:"The display name, panel type, request type, queries and column selection of the view."`
 }
 
 type UpdatableSavedView struct {
-	Source        Source        `json:"source" required:"true"`
-	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true"`
-	Spec          SavedViewSpec `json:"spec" required:"true"`
+	Source        Source        `json:"source" required:"true" description:"The explorer page the view belongs to: traces, logs, metrics, meter or ai_observability. The machine name cannot be changed; it is identified by the id in the path."`
+	SchemaVersion SchemaVersion `json:"schemaVersion" required:"true" description:"The version of the spec shape. The only accepted value is v2."`
+	Spec          SavedViewSpec `json:"spec" required:"true" description:"The full replacement spec. Fields left out are reset, not preserved."`
 }
 
 type ListSavedViewsParams struct {
-	Source Source `query:"source"`
-	Name   string `query:"name"`
+	Source Source `query:"source" description:"Returns only the views of this explorer page: traces, logs, metrics, meter or ai_observability. Defaults to every source."`
+	Name   string `query:"name" description:"Returns only the view with this exact machine name."`
 }
 
 type Source struct {

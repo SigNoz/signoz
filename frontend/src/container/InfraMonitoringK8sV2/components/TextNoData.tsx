@@ -26,14 +26,20 @@ export const TextNoData = forwardRef<HTMLSpanElement, TextNoDataProps>(
 		}
 
 		return (
-			<Typography.Text
-				ref={ref}
-				className={className}
-				style={combinedStyle}
-				{...props}
-			>
-				-
-			</Typography.Text>
+			<span className={className} style={combinedStyle}>
+				<Typography
+					ref={ref}
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+					{...props}
+				>
+					-
+				</Typography>
+			</span>
 		);
 	},
 );

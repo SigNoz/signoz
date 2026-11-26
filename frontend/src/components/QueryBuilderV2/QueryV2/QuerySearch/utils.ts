@@ -168,6 +168,7 @@ export function renderRecentDeleteButton(
 	const btn = document.createElement('button');
 	btn.type = 'button';
 	btn.className = 'cm-recent-delete';
+	btn.dataset.testid = 'query-search-recent-delete';
 	btn.setAttribute('aria-label', 'Remove from recent searches');
 	btn.title = 'Remove from recent searches';
 	btn.textContent = '×';

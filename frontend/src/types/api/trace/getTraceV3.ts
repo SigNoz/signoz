@@ -6,10 +6,6 @@ export interface GetTraceV4PayloadProps {
 	limit?: number; // Optional limit for number of spans to fetch, default can be set in API
 }
 
-export interface TraceDetailV3URLProps {
-	id: string;
-}
-
 // Event shape — same in V2 and V3 (already camelCase from backend)
 export interface EventV3 {
 	name: string;

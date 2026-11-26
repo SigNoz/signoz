@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { matchPath, useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { matchRoute } from 'lib/router/matchRoute';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
@@ -41,7 +42,7 @@ interface ShareURLModalProps {
 
 function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 	const urlQuery = useUrlQuery();
-	const location = useLocation();
+	const location = useAppLocation();
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -75,7 +76,7 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 	const isRouteToBeSharedWithTime = useMemo(
 		() =>
 			routesToBeSharedWithTime.some((route) =>
-				matchPath(location.pathname, { path: route, exact: true }),
+				matchRoute(location.pathname, route, { exact: true }),
 			),
 		[location.pathname],
 	);
@@ -140,9 +141,16 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 			{(shareURLWithTime || isRouteToBeSharedWithTime) && (
 				<>
 					<div className="absolute-relative-time-toggler-container">
-						<Typography.Text className="absolute-relative-time-toggler-label">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Enable absolute time
-						</Typography.Text>
+						</Typography>
 
 						<div className="absolute-relative-time-toggler">
 							{!isValidateRelativeTime && (
@@ -171,9 +179,16 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 
 			{extraOption && (
 				<div className="absolute-relative-time-toggler-container">
-					<Typography.Text className="absolute-relative-time-toggler-label">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="medium"
+						color="main"
+						as="span"
+						textOverflow="wrap"
+					>
 						{extraOption.label}
-					</Typography.Text>
+					</Typography>
 					<div className="absolute-relative-time-toggler">
 						<Switch
 							color="primary"
@@ -188,12 +203,26 @@ function ShareURLModal({ extraOption }: ShareURLModalProps): JSX.Element {
 			<div className="share-link">
 				<div className="url-share-container">
 					<div className="url-share-container-header">
-						<Typography.Text className="url-share-title">
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="medium"
+							color="main"
+							as="span"
+							textOverflow="wrap"
+						>
 							Share page link
-						</Typography.Text>
-						<Typography.Text className="url-share-sub-title">
+						</Typography>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="tertiary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Share the current page link with your team member
-						</Typography.Text>
+						</Typography>
 					</div>
 
 					<Button

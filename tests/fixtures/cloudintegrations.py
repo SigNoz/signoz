@@ -49,6 +49,7 @@ class ProviderAccountSpec:
 class ProviderServiceSpec:
     provider: str
     service_id: str
+
     account_config: dict
     # id shown in parametrized test names; defaults to the provider slug.
     id: str = field(default="")

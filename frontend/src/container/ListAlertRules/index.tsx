@@ -1,28 +1,40 @@
 import { useCallback, useMemo } from 'react';
-import { Plus, Search } from '@signozhq/icons';
-import { Button } from '@signozhq/ui/button';
-import { Input } from '@signozhq/ui/input';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
-import TanStackTable, { ColumnSelector } from 'components/TanStackTableView';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
+import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
+import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
+import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
+import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
-import { useUrlSearchState } from 'hooks/useUrlSearchState';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
-import TextToolTip from 'components/TextToolTip';
-
 import { AlertsEmptyState } from './AlertsEmptyState/AlertsEmptyState';
 import { ActionsMenu } from './components';
-import { ALERT_RULES_PARAMS, useAlertRulesFilters } from './hooks';
+import AlertRulesFilterZone from './components/AlertRulesFilterZone';
+import AlertRulesHeaderActions from './components/AlertRulesHeaderActions';
 import styles from './ListAlertRules.module.scss';
 import { getAlertRuleColumns } from './table.config';
 import type { AlertRule } from './types';
 import { useAlertRulesStripInfo } from './useAlertRulesStripInfo';
 import { useAlertRulesData } from './useAlertRulesData';
+import { useAlertRulesFilterSource } from './useAlertRulesFilterSource';
 import { useAlertRulesHandlers } from './useAlertRulesHandlers';
+import { useAlertRulesListFilter } from './useAlertRulesListFilter';
+import { useAlertRuleViews } from './useAlertRuleViews';
+import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
+import {
+	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
+	RULE_BUILTIN_VIEWS,
+} from './list.config';
+import { useRuleViewCtx } from './useRuleViewCtx';
+import { ruleListEmptyState } from './utils';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',
@@ -30,24 +42,27 @@ const QUERY_PARAMS_CONFIG = {
 	limit: 'limit',
 } as const;
 
+// Client-filtered views (Recently viewed) narrow one page of the API's max size.
+const CLIENT_VIEW_LIMIT = 200;
+
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
+	const { isCloudUser } = useGetTenantLicense();
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,
 	);
 
-	const [filterValues, setFilterValues] = useAlertRulesFilters();
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	const { containerRef, calculatedPageSize } = useCalculatedPageSize({
 		rowHeight: 46,
 	});
 
-	const { orderBy, page, limit, setLimit, setPage } = useTableParams(
+	const { orderBy, page, limit, setLimit, setPage, setOrderBy } = useTableParams(
 		QUERY_PARAMS_CONFIG,
 		{
 			page: DEFAULT_PAGE,
@@ -58,39 +73,80 @@ function ListAlertRules(): JSX.Element {
 		},
 	);
 
-	const resetPageOnSearch = useCallback((): void => {
-		setPage(1);
-	}, [setPage]);
+	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
+		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
-	const { searchText, debouncedSearch, handleSearchChange, clearSearch } =
-		useUrlSearchState(ALERT_RULES_PARAMS.SEARCH, {
-			onDebouncedChange: resetPageOnSearch,
-		});
+	const ruleViews = useAlertRuleViews({ filter, applyFilter });
 
-	const { filteredRules, isFetching, isError, allRules, refetch } =
-		useAlertRulesData(orderBy, debouncedSearch, filterValues ?? []);
+	const railCollapsed = useAlertRuleViewsStore((s) => s.railCollapsed);
+	const setRailCollapsed = useAlertRuleViewsStore((s) => s.setRailCollapsed);
+	const toggleRail = useCallback((): void => {
+		setRailCollapsed(!railCollapsed);
+	}, [setRailCollapsed, railCollapsed]);
+
+	const viewCtx = useRuleViewCtx();
+	const clientFilter = findRuleBuiltinView(ruleViews.activeViewId)?.clientFilter;
+	const clientView = !!clientFilter;
+
+	const listParams = useMemo(
+		() => ({
+			query: filter.query || undefined,
+			states: filter.states.length ? filter.states : undefined,
+			sort: filter.sort,
+			order: filter.order,
+			limit: clientView ? CLIENT_VIEW_LIMIT : limit,
+			offset: clientView ? 0 : (page - 1) * limit,
+		}),
+		[filter, limit, page, clientView],
+	);
+
+	const {
+		rules: fetchedRules,
+		total: fetchedTotal,
+		labels,
+		reservedKeywords,
+		isFetching,
+		isError,
+		queryError,
+		refetch,
+	} = useAlertRulesData(listParams);
+
+	const clientRules = useMemo(
+		() => (clientFilter ? clientFilter(fetchedRules, viewCtx) : null),
+		[clientFilter, fetchedRules, viewCtx],
+	);
+	const rules = useMemo(
+		() =>
+			clientRules
+				? clientRules.slice((page - 1) * limit, page * limit)
+				: fetchedRules,
+		[clientRules, fetchedRules, page, limit],
+	);
+	const total = clientRules ? clientRules.length : fetchedTotal;
+
+	const { creatorOptions, source } = useAlertRulesFilterSource({
+		rules,
+		labels,
+		reservedKeywords,
+		userEmail: user.email,
+	});
 
 	const { handleEdit, handleNewAlert, handleRowClick, handleRowClickNewTab } =
-		useAlertRulesHandlers(allRules.length);
+		useAlertRulesHandlers(total);
 
+	const { selectView } = ruleViews;
 	const handleClearFilters = useCallback((): void => {
-		void setFilterValues(null);
-		clearSearch();
-	}, [setFilterValues, clearSearch]);
+		selectView(DEFAULT_RULE_VIEW);
+	}, [selectView]);
 
 	const columns = useMemo(
 		() => getAlertRuleColumns(formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const paginatedRules = useMemo(() => {
-		const start = (page - 1) * limit;
-		return filteredRules.slice(start, start + limit);
-	}, [filteredRules, page, limit]);
-
 	useAlertRulesStripInfo({
-		shownCount: paginatedRules.length,
-		totalCount: filteredRules.length,
+		shownCount: rules.length,
+		totalCount: total,
 	});
 
 	const columnsWithActions = useMemo(() => {
@@ -120,93 +176,119 @@ function ListAlertRules(): JSX.Element {
 		];
 	}, [action, columns, handleEdit]);
 
-	const hasActiveFilters =
-		searchText.length > 0 || (filterValues ?? []).length > 0;
-	const isEmptyDueToFilters =
-		!isFetching &&
-		filteredRules.length === 0 &&
-		hasActiveFilters &&
-		allRules.length > 0;
-	const isEmptyNoRules = !isFetching && !isError && allRules.length === 0;
+	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
+	const { isEmptyDueToFilters, isEmptyNoRules, noResults, onClear } =
+		ruleListEmptyState({
+			isFetching,
+			isError,
+			queryError,
+			hasActiveFilters,
+			total,
+			viewEmptyState: findRuleBuiltinView(ruleViews.activeViewId)?.emptyState,
+			onClear: handleClearFilters,
+		});
+
+	const activeLabel =
+		ruleViews.activeView?.name ??
+		RULE_BUILTIN_VIEWS.find((v) => v.id === ruleViews.activeViewId)?.label ??
+		'Alert rules';
 
 	return (
-		<div className={styles.container}>
-			{!isEmptyNoRules && (
-				<div className={styles.header}>
-					<div className={styles.refreshRow}>
-						<ColumnSelector
-							columns={columns}
-							storageKey="alert-rules-columns"
-							testId="alert-columns-button"
-						/>
-						{addNewAlert && (
-							<Button
-								variant="solid"
-								size="sm"
-								prefix={<Plus size={14} />}
-								onClick={handleNewAlert}
-								color="primary"
-								testId="list-alerts-new-alert-button"
-							>
-								New Alert
-							</Button>
-						)}
-						<TextToolTip
-							text="More details on how to create alerts"
-							url="https://signoz.io/docs/alerts/?utm_source=product&utm_medium=list-alerts"
-							urlText="Learn More"
-						/>
-					</div>
-				</div>
-			)}
+		<div className={styles.layout}>
+			<ViewsRail
+				activeViewId={ruleViews.activeViewId}
+				builtinViews={RULE_BUILTIN_VIEWS}
+				customViews={ruleViews.customViews}
+				customViewsLoading={ruleViews.customViewsLoading}
+				isCustomActive={ruleViews.isCustomActive}
+				isModified={ruleViews.isModified}
+				collapsed={railCollapsed}
+				onSelect={ruleViews.selectView}
+				onSave={ruleViews.saveView}
+				onSaveChanges={ruleViews.saveActiveView}
+				onReset={ruleViews.resetView}
+				onDelete={ruleViews.removeView}
+				onRename={ruleViews.renameView}
+				testIdPrefix="alert-rules"
+				saveTestIdPrefix="save-alert-rule-view"
+				renameTestIdPrefix="rename-alert-rule-view"
+				deleteDescription="Views are shared across your organization, so this removes it for everyone. Alert rules are not affected."
+			/>
+			<div className={styles.main}>
+				<ListHeaderZone testId="alert-rules-header-zone">
+					<ListCommandHeader
+						label={activeLabel}
+						count={total}
+						isCountLoading={isFetching}
+						isModified={ruleViews.isModified}
+						testIdPrefix="alert-rules"
+						action={
+							<AlertRulesHeaderActions
+								columns={columns}
+								canAddAlert={addNewAlert && !isEmptyNoRules}
+								onNewAlert={handleNewAlert}
+							/>
+						}
+					/>
+					<AlertRulesFilterZone
+						query={filter.query}
+						states={filter.states}
+						creatorOptions={creatorOptions}
+						source={source}
+						onQueryChange={submitQuery}
+						onStatesChange={changeStates}
+					/>
+				</ListHeaderZone>
 
-			{!isEmptyNoRules && (
-				<div className={styles.filtersRow}>
-					<Input
-						className={styles.searchInput}
-						placeholder="Search by Alert Name, Severity and Labels"
-						value={searchText}
-						onChange={handleSearchChange}
-						suffix={<Search size={14} className={styles.searchIcon} />}
-						testId="list-alerts-search-input"
-					/>
+				<div ref={containerRef} className={styles.tableContainer}>
+					{isError ? (
+						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+					) : isEmptyDueToFilters && queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="alert-rules"
+						/>
+					) : isEmptyDueToFilters ? (
+						<NoResultsEmptyState
+							title={noResults.title}
+							subtitle={noResults.description}
+							onClear={onClear}
+							clearButtonText="Clear Search"
+						/>
+					) : isEmptyNoRules ? (
+						<AlertsEmptyState onRefresh={refetch} />
+					) : (
+						<TanStackTable<AlertRule>
+							data={rules}
+							columns={columnsWithActions}
+							isLoading={isFetching}
+							getRowKey={(row): string => row.id ?? ''}
+							getItemKey={(row): string => row.id ?? ''}
+							columnStorageKey="alert-rules-columns"
+							enableQueryParams={QUERY_PARAMS_CONFIG}
+							onSort={changeSort}
+							onRowClick={handleRowClick}
+							onRowClickNewTab={handleRowClickNewTab}
+							pagination={{
+								total,
+								calculatedPageSize,
+								onLimitChange: setLimit,
+								showTotalCount: true,
+							}}
+							paginationClassname={styles.paginationContainer}
+							plainTextCellLineClamp={2}
+						/>
+					)}
 				</div>
-			)}
-
-			<div ref={containerRef} className={styles.tableContainer}>
-				{isError ? (
-					<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
-				) : isEmptyDueToFilters ? (
-					<NoResultsEmptyState
-						title="No matching alert rules"
-						subtitle="No alert rules match your search. Try adjusting your search criteria."
-						onClear={handleClearFilters}
-						clearButtonText="Clear Search"
-					/>
-				) : isEmptyNoRules ? (
-					<AlertsEmptyState onRefresh={refetch} />
-				) : (
-					<TanStackTable<AlertRule>
-						data={paginatedRules}
-						columns={columnsWithActions}
-						isLoading={isFetching}
-						getRowKey={(row): string => row.id ?? ''}
-						getItemKey={(row): string => row.id ?? ''}
-						columnStorageKey="alert-rules-columns"
-						enableQueryParams={QUERY_PARAMS_CONFIG}
-						onRowClick={handleRowClick}
-						onRowClickNewTab={handleRowClickNewTab}
-						pagination={{
-							total: filteredRules.length,
-							calculatedPageSize,
-							onLimitChange: setLimit,
-							showTotalCount: true,
-						}}
-						paginationClassname={styles.paginationContainer}
-						enableAlternatingRowColors
-						plainTextCellLineClamp={2}
-					/>
-				)}
+				<ListStatusBar
+					collapsed={railCollapsed}
+					onToggleCollapse={toggleRail}
+					count={rules.length}
+					total={total}
+					noun="alert rules"
+					testId="alert-rules-rail-toggle"
+				/>
 			</div>
 		</div>
 	);

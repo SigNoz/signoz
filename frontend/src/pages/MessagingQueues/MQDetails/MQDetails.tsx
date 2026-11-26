@@ -62,6 +62,7 @@ function MessagingQueuesOptions({
 
 	return (
 		<ToggleGroup
+			testId="mq-detail-type-toggle"
 			variant="outlined"
 			color="secondary"
 			size="sm"
@@ -111,7 +112,7 @@ const checkValidityOfDetailConfigs = (
 		return Boolean(configDetails?.topic && configDetails?.service_name);
 	}
 
-	return selectedView === MessagingQueuesViewType.dropRate.value;
+	return false;
 };
 
 function MessagingQueuesDetails({

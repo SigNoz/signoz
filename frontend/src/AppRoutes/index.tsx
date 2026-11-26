@@ -1,6 +1,12 @@
-import { ReactNode, Suspense, useCallback, useEffect, useState } from 'react';
-import { Route, Router, Switch } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
+import {
+	ReactNode,
+	Suspense,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
+import { Outlet } from 'react-router';
 import * as Sentry from '@sentry/react';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -9,7 +15,6 @@ import AppPageProviders from 'app/AppPageProviders';
 import AppShell from 'app/AppShell';
 import AppLoading from 'components/AppLoading/AppLoading';
 import { CmdKPalette } from 'components/cmdKPalette/cmdKPalette';
-import NotFound from 'components/NotFound';
 import { ShiftHoldOverlayController } from 'components/ShiftOverlay/ShiftHoldOverlayController';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -18,12 +23,12 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
-import { useSavedViewEnabled } from 'hooks/useSavedViewEnabled';
 import { ChatSupportState, useChatSupport } from 'hooks/useChatSupport';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { StatusCodes } from 'http-status-codes';
-import history from 'lib/history';
+import { IS_PROD } from 'lib/env';
+import { getCurrentLocation, navigate, subscribe } from 'lib/router/navigation';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
@@ -31,19 +36,19 @@ import { IUser } from 'providers/App/types';
 import { LicenseStatus } from 'types/api/licensesV3/getActive';
 import { extractDomain } from 'utils/app';
 
-import { Home } from './pageComponents';
 import PrivateRoute from './Private';
 import defaultRoutes, {
 	AppRoutes,
 	LIST_LICENSES,
 	SUPPORT_ROUTE,
 } from './routes';
-
-const appRouter = (children: ReactNode): ReactNode => (
-	<Router history={history}>
-		<CompatRouter>{children}</CompatRouter>
-	</Router>
-);
+import type { EnabledRouteKeys } from './RouteGate';
+import {
+	isInjectedScriptError,
+	isExpectedRequestFailure,
+	isThirdPartyScriptError,
+	SENTRY_IGNORE_ERRORS,
+} from './sentryFilters';
 
 const appLayout = (children: ReactNode): ReactNode => (
 	<AppLayout>{children}</AppLayout>
@@ -65,19 +70,24 @@ function App(): JSX.Element {
 		isPreflightLoading,
 	} = useAppContext();
 	const [routes, setRoutes] = useState<AppRoutes[]>(defaultRoutes);
+	const enabledRouteKeys = useMemo<EnabledRouteKeys>(
+		() => new Set(routes.map(({ key }) => key)),
+		[routes],
+	);
 	const isAIAssistantEnabled = useIsAIAssistantEnabled();
-	const isSavedViewEnabled = useSavedViewEnabled();
 	const chatSupport = useChatSupport();
 
 	const { hostname } = window.location;
-	const [pathname, setPathname] = useState(history.location.pathname);
+	// Through the facade, not the raw history: the router owns the base path
+	// now, so `history.location.pathname` would still carry it.
+	const [pathname, setPathname] = useState(getCurrentLocation().pathname);
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 
 	const [isSentryInitialized, setIsSentryInitialized] = useState(false);
 
 	useEffect(() => {
-		return history.listen((location) => {
+		return subscribe(({ location }) => {
 			setPathname(location.pathname);
 		});
 	}, []);
@@ -256,18 +266,8 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		// The bottom strip carries Support, so the floating bubble goes entirely.
-		if (
-			isSavedViewEnabled ||
-			pathname === ROUTES.ONBOARDING ||
-			pathname.startsWith('/public/dashboard/') ||
-			pathname === '/ai-assistant' ||
-			pathname.startsWith('/ai-assistant/')
-		) {
-			window.Pylon?.('hideChatBubble');
-		} else {
-			window.Pylon?.('showChatBubble');
-		}
-	}, [pathname, isSavedViewEnabled]);
+		window.Pylon?.('hideChatBubble');
+	}, [pathname]);
 
 	// Identity for the Pylon widget. Whether this user gets Pylon at all is
 	// `useChatSupport`'s call — this only fills in who they are.
@@ -322,16 +322,7 @@ function App(): JSX.Element {
 					tunnel: window.signozBootData.settings.sentry.tunnel,
 					environment: process.env.ENVIRONMENT,
 					release: process.env.VERSION,
-					// A tab that outlived a deploy requests hashed assets the new build no longer
-					// has. `lazyRetry` recovers by reloading once, so this class is not worth
-					// reporting. The stylesheet message is Vite's own; the module ones are the
-					// same failure worded differently by Chromium, Firefox and Safari.
-					ignoreErrors: [
-						/Unable to preload CSS for/,
-						/Failed to fetch dynamically imported module/,
-						/error loading dynamically imported module/,
-						/Importing a module script failed/,
-					],
+					ignoreErrors: SENTRY_IGNORE_ERRORS,
 					integrations: [
 						// Kept for the `transaction` tag used in routing, even though
 						// tracing is disabled. Ref: https://github.com/SigNoz/platform-pod/issues/2393#issuecomment-4603658055
@@ -356,6 +347,9 @@ function App(): JSX.Element {
 						if (error?.name === 'AbortError') {
 							return null;
 						}
+						if (isExpectedRequestFailure(hint?.originalException)) {
+							return null;
+						}
 						// Ignore benign Monaco cancellation errors (name 'Canceled').
 						if (error?.name === 'Canceled') {
 							return null;
@@ -363,6 +357,15 @@ function App(): JSX.Element {
 
 						// Drop the event if its level is 'warning' or 'info'
 						if (event.level === 'warning' || event.level === 'info') {
+							return null;
+						}
+
+						if (isThirdPartyScriptError(event)) {
+							return null;
+						}
+
+						// Dev serves source from /src/, so every frame would look foreign there.
+						if (IS_PROD && isInjectedScriptError(event)) {
 							return null;
 						}
 
@@ -404,7 +407,7 @@ function App(): JSX.Element {
 		// this needs to be on top of data missing error because if there is an error, data will never be loaded and it will
 		// move to indefinitive loading
 		if (userFetchError && pathname !== ROUTES.SOMETHING_WENT_WRONG) {
-			history.replace(ROUTES.SOMETHING_WENT_WRONG);
+			navigate(ROUTES.SOMETHING_WENT_WRONG, { replace: true });
 		}
 
 		// if all of the data is not set then return a spinner, this is required because there is some gap between loading states and data setting
@@ -420,7 +423,6 @@ function App(): JSX.Element {
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<AppShell
-				router={appRouter}
 				overlays={
 					isLoggedInState && (
 						<>
@@ -433,18 +435,7 @@ function App(): JSX.Element {
 				<PrivateRoute>
 					<AppPageProviders layout={appLayout}>
 						<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-							<Switch>
-								{routes.map(({ path, component, exact }) => (
-									<Route
-										key={`${path}`}
-										exact={exact}
-										path={path}
-										component={component}
-									/>
-								))}
-								<Route exact path="/" component={Home} />
-								<Route path="*" component={NotFound} />
-							</Switch>
+							<Outlet context={enabledRouteKeys} />
 						</Suspense>
 					</AppPageProviders>
 				</PrivateRoute>

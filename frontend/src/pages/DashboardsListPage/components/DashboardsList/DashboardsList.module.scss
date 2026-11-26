@@ -23,21 +23,6 @@
 	overflow-y: auto;
 }
 
-.headerZone {
-	// Sticks to the top of the scroll area so the heading + filters stay put while
-	// the results scroll beneath. Its own stacking context sits above the rows; the
-	// DSL suggestion popup (z-index 1000) still layers above everything.
-	position: sticky;
-	top: 0;
-	z-index: 5;
-	display: flex;
-	flex-direction: column;
-	gap: 14px;
-	padding: 20px 24px;
-	background: var(--l2-background);
-	border-bottom: 1px solid var(--l2-border);
-}
-
 .emptyWrap {
 	padding: 24px;
 }
@@ -66,8 +51,7 @@
 
 	:global(.ant-pagination-item) > a {
 		color: var(--l2-foreground);
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-normal);
+		font-size: var(--paragraph-base-400-font-size);
 		line-height: 20px;
 	}
 
@@ -77,62 +61,15 @@
 
 	:global(.ant-pagination-item-active) > a {
 		color: var(--foreground) !important;
-		font-weight: var(--font-weight-medium);
+		font-weight: var(--label-base-500-font-weight);
 	}
-}
-
-.commandHeader {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.headingBlock {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	min-width: 0;
-}
-
-.grow {
-	flex: 1;
-}
-
-.dirtyDot {
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: var(--warning-background);
-	flex: none;
-}
-
-.countPill {
-	padding: 2px 9px;
-	border-radius: 999px;
-	background: var(--l2-background);
-	border: 1px solid var(--l2-border);
-	color: var(--l2-foreground);
-	font-size: var(--font-size-xs);
-	font-variant-numeric: tabular-nums;
-}
-
-.title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-style: normal;
-	font-weight: var(--font-weight-medium);
-	line-height: 28px;
-	letter-spacing: -0.09px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .subtitle {
 	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
+	font-size: var(--paragraph-base-400-font-size);
 	font-style: normal;
-	font-weight: var(--font-weight-normal);
+	font-weight: var(--paragraph-base-400-font-weight);
 	line-height: 20px;
 	letter-spacing: -0.07px;
 }

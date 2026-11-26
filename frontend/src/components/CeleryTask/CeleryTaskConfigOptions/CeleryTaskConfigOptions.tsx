@@ -1,5 +1,6 @@
-import { useHistory, useLocation } from 'react-router-dom';
 import { Select, Spin } from 'antd';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Typography } from '@signozhq/ui/typography';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
@@ -16,18 +17,25 @@ import './CeleryTaskConfigOptions.styles.scss';
 function CeleryTaskConfigOptions(): JSX.Element {
 	const { handleSearch, isFetching, options } =
 		useCeleryFilterOptions('celery.task_name');
-	const history = useHistory();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const urlQuery = useUrlQuery();
 
 	return (
 		<div className="celery-task-filters">
 			<div className="celery-filters">
-				<Typography.Text style={{ whiteSpace: 'nowrap' }}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="visible"
+				>
 					Task Name
-				</Typography.Text>
+				</Typography>
 				<Select
+					data-testid="celery-task-name-select"
 					placeholder="Task Name"
 					showSearch
 					mode="multiple"
@@ -52,7 +60,7 @@ function CeleryTaskConfigOptions(): JSX.Element {
 						setQueryParamsFromOptions(
 							value,
 							urlQuery,
-							history,
+							navigate,
 							location,
 							QueryParams.taskName,
 						);

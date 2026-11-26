@@ -1,8 +1,8 @@
-import { useLocation } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import BackHeader from 'components/BackHeader/BackHeader';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
 import { NotificationChannelCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import { ChannelKind } from 'container/CreateAlertChannels/types';
@@ -12,7 +12,7 @@ import { KIND_KEY } from 'pages/AlertList/NotificationChannels/constants';
 import styles from './styles.module.scss';
 
 function ChannelsNew(): JSX.Element {
-	const requested = new URLSearchParams(useLocation().search).get('kind');
+	const requested = new URLSearchParams(useAppLocation().search).get('kind');
 	// an unknown kind in the URL falls back to the form's own default
 	const initialKind = (Object.values(ChannelKind) as string[]).includes(
 		requested ?? '',
@@ -37,7 +37,7 @@ function ChannelsNew(): JSX.Element {
 			<ChannelForm
 				initialKind={initialKind}
 				onDone={(): void => {
-					history.replace(listRoute);
+					navigate(listRoute, { replace: true });
 				}}
 			/>
 		</div>

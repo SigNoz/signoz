@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
@@ -21,7 +22,10 @@ import {
 	applyCeleryFilterOnWidgetData,
 	getFiltersFromQueryParams,
 } from '../CeleryUtils';
-import { celeryTimeSeriesTablesWidgetData } from './CeleryTaskGraphUtils';
+import {
+	celeryTimeSeriesTablesWidgetData,
+	getClickedSeries,
+} from './CeleryTaskGraphUtils';
 
 function CeleryTaskGraph({
 	widgetData,
@@ -54,8 +58,7 @@ function CeleryTaskGraph({
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 	analyticsEvent?: string;
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
@@ -83,13 +86,13 @@ function CeleryTaskGraph({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	return (
@@ -102,12 +105,20 @@ function CeleryTaskGraph({
 				widget={applyCeleryTaskFilter ? updatedWidgetData : widgetData}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
-				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
+				onClickHandler={(
+					xValue,
+					_yValue,
+					_mouseX,
+					_mouseY,
+					data,
+					queryData,
+				): void => {
+					const clickedSeries = getClickedSeries(data, queryData);
+					if (!clickedSeries) {
+						return;
+					}
+					const { entity, value } = clickedSeries;
 					const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
-
-					// Extract entity and value from data
-					const [firstDataPoint] = Object.entries(data || {});
-					const [entity, value] = firstDataPoint || [];
 
 					const widgetData = celeryTimeSeriesTablesWidgetData(
 						entity,
@@ -126,7 +137,7 @@ function CeleryTaskGraph({
 				isQueryEnabled={queryEnabled}
 				openTracesButton={openTracesButton}
 				onOpenTraceBtnClick={onOpenTraceBtnClick}
-				version={ENTITY_VERSION_V4}
+				version={ENTITY_VERSION_V5}
 				customErrorMessage={customErrorMessage}
 				start={start}
 				end={end}

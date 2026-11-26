@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Switch } from '@signozhq/ui/switch';
 import { Tabs } from '@signozhq/ui/tabs';
 import { Skeleton } from 'antd';
@@ -334,7 +334,8 @@ function ServiceDetails({
 						onError: (error) => {
 							console.error('Failed to update service config:', error);
 
-							toast.error('Failed to update service config', {
+							toast.danger('Failed to update service config', {
+								action: { label: 'Dismiss' },
 								description: error?.message,
 							});
 						},
@@ -409,6 +410,7 @@ function ServiceDetails({
 													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-logs-switch"
 													onChange={(checked): void => {
 														field.onChange(checked);
 													}}
@@ -457,6 +459,7 @@ function ServiceDetails({
 													}
 													value={field.value}
 													disabled={isUpdatingServiceConfig || isReadOnly}
+													testId="cloud-service-metrics-switch"
 													onChange={field.onChange}
 												/>
 											)}
@@ -472,6 +475,7 @@ function ServiceDetails({
 									disabledTooltip="Wait for the changes to save"
 									variant="solid"
 									color="secondary"
+									testId="cloud-service-discard-btn"
 									onClick={handleDiscard}
 									disabled={isUpdatingServiceConfig}
 									size="sm"
@@ -488,6 +492,7 @@ function ServiceDetails({
 									size="sm"
 									width={100}
 									prefix={<Save size={14} />}
+									testId="cloud-service-save-btn"
 									type="submit"
 									loading={isUpdatingServiceConfig}
 									disabled={isS3SyncBucketsMissing}
@@ -534,7 +539,6 @@ function ServiceDetails({
 				orientation="horizontal"
 				alignment="start"
 				defaultValue="overview"
-				className="aws-service-details-tabs"
 				items={[
 					{
 						children: renderOverview(),

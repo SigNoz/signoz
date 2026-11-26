@@ -50,7 +50,9 @@ def test_setup(
     [
         "signoz.workspace.key.id = 'key-a'",  # expression form, not the wire form
         "unknown_query_type/signoz.workspace.key.id/key-a",  # unsupported query type
-        "builder_query/service.name/frontend",  # service.name is not a supported grant key
+        "builder_query/service.name/frontend",  # customer keys must carry the resource prefix
+        "builder_query/attribute.service.name/frontend",  # grant keys are resource attributes only
+        "builder_query/host.name/frontend",  # host.name is not a supported grant key
         "*/signoz.workspace.key.id/key-a",  # non-prefix wildcard
         "builder_query/signoz.workspace.key.id/",  # empty value
         "builder_query/signoz.workspace.key.id",  # missing value, not a wildcard
@@ -153,7 +155,7 @@ def test_denied_message_names_resource(
         request_type="raw",
     )
     assert response.status_code == HTTPStatus.FORBIDDEN, response.text
-    assert "builder_query/signoz.workspace.key.id/key-b" in response.text
+    assert "builder_query/signoz.workspace.key.id = 'key-b'" in response.text
 
 
 def test_variables_resolve_into_gate(

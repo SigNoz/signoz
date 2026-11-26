@@ -12,3 +12,11 @@ export function defaultDisconnectDuration(stepInterval?: number): string {
 export function formatOpacity(opacity: number): string {
 	return `${Math.round(opacity * 100)}%`;
 }
+
+export function formatPointSize(size: number): string {
+	return `${size} px`;
+}
+
+export function formatPointSizeRange([min, max]: [number, number]): string {
+	return `${min}–${max} px`;
+}

@@ -32,6 +32,7 @@ export function RegionSelector({
 			<div className="select-all">
 				<Checkbox
 					color="primary"
+					testId="aws-select-all-regions"
 					value={allSelected ? true : someSelected ? 'indeterminate' : false}
 					onChange={(checked): void => handleSelectAll(checked === true)}
 				>
@@ -47,6 +48,7 @@ export function RegionSelector({
 							<Checkbox
 								color="primary"
 								key={subRegion.id}
+								testId={`aws-region-${subRegion.id}`}
 								value={selectedRegions.includes(subRegion.id)}
 								onChange={(): void => handleRegionSelect(subRegion.id)}
 							>

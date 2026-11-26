@@ -4,6 +4,7 @@ import type {
 	TouchEvent as ReactTouchEvent,
 } from 'react';
 import { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import {
 	ArrowDown,
 	ArrowUp,
@@ -13,7 +14,7 @@ import {
 	X,
 } from '@signozhq/icons';
 import { useSortable } from '@dnd-kit/sortable';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
+import { Popover } from '@signozhq/ui/popover';
 import { flexRender, Header as TanStackHeader } from '@tanstack/react-table';
 import cx from 'classnames';
 
@@ -31,7 +32,7 @@ type TanStackHeaderRowProps<TData = unknown> = {
 	onRemoveColumn?: (columnId: string) => void;
 	orderBy?: SortState | null;
 	onSort?: (sort: SortState | null) => void;
-	/** Last column cannot be resized */
+	/** The fill column and any after it cannot be resized */
 	isLastColumn?: boolean;
 };
 
@@ -89,6 +90,19 @@ function TanStackHeaderRow<TData>({
 	): void => {
 		event.preventDefault();
 		event.stopPropagation();
+		// TanStack starts the drag from the configured size, which an auto or
+		// redistributed column does not render at.
+		const renderedWidth = Math.round(
+			event.currentTarget.closest('th')?.getBoundingClientRect().width ?? 0,
+		);
+		if (header && renderedWidth > 0 && renderedWidth !== header.getSize()) {
+			flushSync(() => {
+				header.getContext().table.setColumnSizing((sizing) => ({
+					...sizing,
+					[header.column.id]: renderedWidth,
+				}));
+			});
+		}
 		resizeHandler?.(event);
 	};
 	const {
@@ -138,6 +152,7 @@ function TanStackHeaderRow<TData>({
 			style={headerCellStyle}
 			data-dark-mode={isDarkMode}
 			data-single-column={hasSingleColumn || undefined}
+			data-testid={`tanstack-header-${columnId}`}
 		>
 			<span className={headerContentClassName}>
 				{isDragColumn ? (
@@ -209,8 +224,13 @@ function TanStackHeaderRow<TData>({
 					</span>
 				)}
 				{isColumnRemovable && (
-					<Popover>
-						<PopoverTrigger asChild>
+					<Popover
+						nativeButton={false}
+						side="bottom"
+						align="end"
+						width={140}
+						aria-label={`Column actions for ${headerTitleAttr}`}
+						trigger={
 							<span
 								role="button"
 								aria-label={`Column actions for ${headerTitleAttr}`}
@@ -221,25 +241,20 @@ function TanStackHeaderRow<TData>({
 							>
 								<Ellipsis size="md" />
 							</span>
-						</PopoverTrigger>
-						<PopoverContent
-							align="end"
-							sideOffset={6}
-							className={headerStyles.tanstackColumnActionsContent}
+						}
+					>
+						<button
+							type="button"
+							className={headerStyles.tanstackRemoveColumnAction}
+							onClick={(event): void => {
+								event.preventDefault();
+								event.stopPropagation();
+								onRemoveColumn?.(column.id);
+							}}
 						>
-							<button
-								type="button"
-								className={headerStyles.tanstackRemoveColumnAction}
-								onClick={(event): void => {
-									event.preventDefault();
-									event.stopPropagation();
-									onRemoveColumn?.(column.id);
-								}}
-							>
-								<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
-								Remove column
-							</button>
-						</PopoverContent>
+							<X size="md" className={headerStyles.tanstackRemoveColumnActionIcon} />
+							Remove column
+						</button>
 					</Popover>
 				)}
 			</span>

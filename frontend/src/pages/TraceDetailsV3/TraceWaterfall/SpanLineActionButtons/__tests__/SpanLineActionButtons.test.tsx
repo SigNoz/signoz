@@ -1,6 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import SpanLineActionButtons from '../index';
@@ -60,8 +59,9 @@ describe('SpanLineActionButtons', () => {
 		expect(copyButton).toBeInTheDocument();
 
 		// Check that an icon is rendered inside the button
-		const linkIcon = copyButton.querySelector('svg');
-		expect(linkIcon).toBeInTheDocument();
+		expect(
+			within(copyButton).getByTestId('copy-span-link-icon'),
+		).toBeInTheDocument();
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {
@@ -88,8 +88,14 @@ describe('SpanLineActionButtons', () => {
 			toString: jest.fn().mockReturnValue('spanId=test-span-id'),
 		};
 		const mockPathname = '/test-path';
+		// history@5 re-reads `window.location` on every access, so the stub has
+		// to carry the fields the router reads, not just the one under test.
 		const mockLocation = {
 			origin: 'http://localhost:3000',
+			href: 'http://localhost:3000/',
+			pathname: '/',
+			search: '',
+			hash: '',
 		};
 
 		// Mock window.location

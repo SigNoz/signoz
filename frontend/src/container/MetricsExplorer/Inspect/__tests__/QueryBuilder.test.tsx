@@ -1,14 +1,12 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { fireEvent, render, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import * as metricsService from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
-import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import QueryBuilder from '../QueryBuilder';
 import {
@@ -16,13 +14,6 @@ import {
 	SpaceAggregationOptions,
 	TimeAggregationOptions,
 } from '../types';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
-	}),
-}));
 
 jest.mock('api/generated/services/metrics', () => ({
 	useListMetrics: jest.fn().mockReturnValue({
@@ -45,7 +36,9 @@ jest.mock(
 	'container/QueryBuilder/filters/OptionRenderer/OptionRenderer',
 	() => ({
 		__esModule: true,
-		default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
+		default: ({ value }: { value: string }): JSX.Element => (
+			<span data-testid={`metric-option-${value}`}>{value}</span>
+		),
 	}),
 );
 
@@ -163,9 +156,7 @@ describe('QueryBuilder', () => {
 		const input = within(metricNameSearch).getByRole('combobox');
 		fireEvent.change(input, { target: { value: 'test_metric_2' } });
 
-		const options = document.querySelectorAll('.ant-select-item');
-		expect(options.length).toBeGreaterThan(0);
-		await user.click(options[0] as HTMLElement);
+		await user.click(screen.getByTestId('metric-option-test_metric_2'));
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
 	});

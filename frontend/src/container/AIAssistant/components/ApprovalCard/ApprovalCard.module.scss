@@ -1,14 +1,26 @@
 @use '../../_scrollbar' as *;
 
 .card {
-	border: 1px solid var(--l1-border);
+	// The modal and panel portal outside the layout's border-box reset.
+	box-sizing: border-box;
+	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
-	padding: 12px;
-	background: var(--l1-background);
+	padding: var(--spacing-6);
+	background: var(--l2-background);
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--spacing-6);
 	width: 100%;
+
+	// Clear of whatever the reply shows above it.
+	&:not(:first-child) {
+		margin-top: var(--spacing-6);
+	}
+
+	// Below the header, everything lines up with the title, clear of the icon.
+	&:not(.decided) > :not(.header) {
+		margin-left: calc(16px + var(--spacing-6));
+	}
 
 	&.decided {
 		border-color: var(--l2-border);
@@ -18,12 +30,31 @@
 		gap: 6px;
 		padding: 6px 10px;
 	}
+
+	// No diff: the summary sits beside the buttons, which wrap under it when the card is narrow.
+	&.inline {
+		flex-flow: row wrap;
+		align-items: center;
+		justify-content: flex-end;
+
+		> .header {
+			flex-basis: 100%;
+		}
+
+		> .summary {
+			flex: 1 1 240px;
+		}
+
+		> .actions {
+			align-self: center;
+		}
+	}
 }
 
 .header {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--spacing-6);
 }
 
 .shieldIcon {
@@ -32,15 +63,16 @@
 }
 
 .headerLabel {
-	font-size: 12px;
-	font-weight: 600;
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.005em;
 	color: var(--l1-foreground);
 }
 
 .resourceBadge {
 	margin-left: auto;
 	font-size: 10px;
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
@@ -49,10 +81,10 @@
 }
 
 .summary {
-	font-size: 13px;
-	color: var(--l1-foreground);
 	margin: 0;
-	line-height: 1.5;
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--line-height-20);
+	color: var(--l2-foreground);
 }
 
 .diffSection {
@@ -80,8 +112,8 @@
 	display: flex;
 	gap: 8px;
 
-	// Fixed-height dialog (70vh) — let the diff fill the body and the
-	// JSON panes scroll internally rather than pushing the dialog taller.
+	// Fixed-height modal body — let the diff fill it and the JSON panes
+	// scroll internally rather than pushing the dialog taller.
 	&.expanded {
 		flex: 1;
 		min-height: 0;
@@ -115,9 +147,10 @@
 // + monospace styling but renders an inner stack of `.diffLine` rows
 // instead of a single `<pre>` so individual lines can be colored.
 .diffPane {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 12px;
 	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	margin: 0;
 	overflow: auto;
@@ -213,9 +246,10 @@
 }
 
 .diffJson {
-	font-family: var(--font-mono, monospace);
+	font-family: var(--code-small-400-font-family);
 	font-size: 11px;
 	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: var(--radius-2);
 	padding: 5px 7px;
 	margin: 0;
@@ -238,9 +272,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	flex: 1;
+	height: 60vh;
 	min-height: 0;
-	padding: 16px;
 	overflow: hidden;
 }
 
@@ -260,9 +293,13 @@
 	flex-shrink: 0;
 }
 
+// Equal columns sized to the wider button, aligned right.
 .actions {
-	display: flex;
-	gap: 6px;
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: var(--spacing-6);
+	align-self: flex-end;
 }
 
 .statusIcon {

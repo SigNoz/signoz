@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useAppSearchParams } from 'lib/router/useAppSearchParams';
 import * as Sentry from '@sentry/react';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -78,7 +78,7 @@ function Summary(): JSX.Element {
 		[stagedQuery],
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useAppSearchParams();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
 		() => searchParams.get(IS_METRIC_DETAILS_OPEN_KEY) === 'true' || false,
 	);
@@ -393,13 +393,22 @@ function Summary(): JSX.Element {
 					<div className="no-logs-container">
 						<div className="no-logs-container-content">
 							<img className="eyes-emoji" src={eyesEmojiUrl} alt="eyes emoji" />
-							<Typography className="no-logs-text">
-								Query cancelled.
-								<span className="sub-text">
-									{' '}
-									Click &quot;Run Query&quot; to load metrics.
-								</span>
-							</Typography>
+							<span className="no-logs-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="medium"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									Query cancelled.
+									<span className="sub-text">
+										{' '}
+										Click &quot;Run Query&quot; to load metrics.
+									</span>
+								</Typography>
+							</span>
 						</div>
 					</div>
 				) : showNoMetrics ? (

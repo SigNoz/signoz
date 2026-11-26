@@ -1,4 +1,5 @@
-import { Button, Card, Input, Space } from 'antd';
+import { Button, Card, Input } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import type { FilterDropdownProps } from 'antd/es/table/interface';
 
 import { SEARCH_PLACEHOLDER } from '../Columns/ColumnContants';

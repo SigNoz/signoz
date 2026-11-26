@@ -2,16 +2,11 @@ import {
 	getLatencyOverTimeWidgetData,
 	getRateOverTimeWidgetData,
 } from 'container/ApiMonitoring/utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('MetricOverTime - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
 	const mockEndpointName = '/api/users';
-	const emptyFilters: IBuilderQuery['filters'] = {
-		items: [],
-		op: 'AND',
-	};
+	const emptyFilters = '';
 
 	describe('1. Rate Over Time - V5 Payload Structure', () => {
 		it('generates V5 filter expression format (not V3 filters.items)', () => {
@@ -51,31 +46,8 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 		});
 
 		it('merges custom filters into filter expression', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: DataTypes.String,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: DataTypes.String,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'production',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
 			const widget = getRateOverTimeWidgetData(
 				mockDomainName,
@@ -137,21 +109,8 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 		});
 
 		it('merges custom filters into filter expression', () => {
-			const customFilters: IBuilderQuery['filters'] = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: DataTypes.String,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'user-service',
-					},
-				],
-				op: 'AND',
-			};
+			const customFilters =
+				"service.name = 'user-service' AND deployment.environment = 'production'";
 
 			const widget = getLatencyOverTimeWidgetData(
 				mockDomainName,
@@ -163,7 +122,7 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 
 			// Verify domain filter is present
 			expect(queryData?.filter?.expression).toContain(
-				`http_host = '${mockDomainName}' service.name = 'user-service'`,
+				`http_host = '${mockDomainName}' AND (service.name = 'user-service'`,
 			);
 		});
 	});

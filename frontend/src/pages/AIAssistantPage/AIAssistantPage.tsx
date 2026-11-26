@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { Button } from '@signozhq/ui/button';
+import { Tooltip } from '@signozhq/ui/tooltip';
+import { PictureInPicture2 } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { useAppParams } from 'lib/router/useAppParams';
+import { navigate } from 'lib/router/navigation';
 import ROUTES from 'constants/routes';
 
 import ConversationView from 'container/AIAssistant/ConversationView';
@@ -16,15 +21,12 @@ import { useAIAssistantStripInfo } from './useAIAssistantStripInfo';
 import styles from './AIAssistantPage.module.scss';
 import ConversationsList from 'container/AIAssistant/components/ConversationsList';
 
-interface RouteParams {
-	conversationId: string;
-}
-
 export default function AIAssistantPage(): JSX.Element {
-	const history = useHistory();
-	const location = useLocation<{ fromInApp?: boolean } | undefined>();
+	const location = useAppLocation<
+		{ fromInApp?: boolean; returnTo?: string } | undefined
+	>();
 	const { pathname } = location;
-	const { conversationId } = useParams<RouteParams>();
+	const { conversationId } = useAppParams<'conversationId'>();
 
 	// Skip the mount-time Opened fire when the user expanded an already-open
 	// drawer/modal — that surface already emitted Opened with the right source.
@@ -55,6 +57,16 @@ export default function AIAssistantPage(): JSX.Element {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
+	const openDrawer = useAIAssistantStore((s) => s.openDrawer);
+
+	// Router state is dropped once the URL is re-keyed, so remember where the page was opened from.
+	const returnToRef = useRef(location.state?.returnTo);
+	// Reopens the floating panel on the page it was expanded from, or Home after a deep link.
+	const handleMinimize = useCallback((): void => {
+		openDrawer();
+		// Replaces the full page in history, so Back doesn't reopen it.
+		navigate(returnToRef.current ?? ROUTES.HOME, { replace: true });
+	}, [openDrawer]);
 
 	// Keep refs so the effect can read the latest store state without re-firing
 	// when it mutates the store mid-effect (it only depends on the URL param).
@@ -83,7 +95,9 @@ export default function AIAssistantPage(): JSX.Element {
 			activeId && conversationsRef.current[activeId]
 				? activeId
 				: startNewConversation();
-		history.replace(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId));
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', resumeId), {
+			replace: true,
+		});
 		// Only re-run when the URL param changes, not when conversations mutates.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [conversationId]);
@@ -98,19 +112,17 @@ export default function AIAssistantPage(): JSX.Element {
 			activeConversationId !== conversationId &&
 			conversations[activeConversationId]
 		) {
-			history.replace(
+			navigate(
 				ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
+				{ replace: true },
 			);
 		}
-	}, [activeConversationId, conversationId, conversations, history]);
+	}, [activeConversationId, conversationId, conversations]);
 
 	// When conversations sidebar selects a thread, navigate to it
-	const handleHistorySelect = useCallback(
-		(id: string) => {
-			history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
-		},
-		[history],
-	);
+	const handleHistorySelect = useCallback((id: string) => {
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', id));
+	}, []);
 
 	const handleNewConversation = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -119,14 +131,14 @@ export default function AIAssistantPage(): JSX.Element {
 			source: 'history_list',
 		});
 		const newId = startNewConversation();
-		history.push(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
-	}, [startNewConversation, history, pathname]);
+		navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', newId));
+	}, [startNewConversation, pathname]);
 
 	// Prefer the URL param, but fall back to the store's `activeConversationId`
 	// for the brief render after a re-key (client UUID → backend threadId), so
 	// the chat doesn't unmount while the URL sync effect catches up.
 	let activeId: string | null = null;
-	if (conversations[conversationId]) {
+	if (conversationId && conversations[conversationId]) {
 		activeId = conversationId;
 	} else if (activeConversationId && conversations[activeConversationId]) {
 		activeId = activeConversationId;
@@ -151,6 +163,21 @@ export default function AIAssistantPage(): JSX.Element {
 
 					<div className={styles.chat}>
 						{activeId && <ConversationView conversationId={activeId} />}
+						<div className={styles.minimize}>
+							<Tooltip title="Minimize">
+								<Button
+									variant="ghost"
+									size="sm"
+									icon
+									color="secondary"
+									onClick={handleMinimize}
+									aria-label="Minimize to panel"
+									testId="ai-assistant-minimize"
+								>
+									<PictureInPicture2 size={14} />
+								</Button>
+							</Tooltip>
+						</div>
 					</div>
 				</div>
 			</div>

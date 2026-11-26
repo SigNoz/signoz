@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import type { Location, Action } from 'history';
+import { useCallback, useEffect, useRef } from 'react';
+import type {
+	AppLocation,
+	BlockerFunction,
+	NavigationAction,
+} from 'lib/router/types';
+import { useAppBlocker } from 'lib/router/useAppBlocker';
 
 interface BlockedNavigationDetails {
-	location: Location;
-	action: Action;
+	location: AppLocation;
+	action: NavigationAction;
 }
 
 interface UseNavigationBlockerResult {
@@ -35,7 +39,7 @@ interface UseNavigationBlockerResult {
  * const handleSave = async () => {
  *   await save();
  *   allowNextNavigation();
- *   history.push('/next');
+ *   navigate('/next');
  * };
  * ```
  *
@@ -44,39 +48,31 @@ interface UseNavigationBlockerResult {
 export function useNavigationBlocker(
 	shouldBlock: boolean,
 ): UseNavigationBlockerResult {
-	const history = useHistory();
-	const [blockedNavigation, setBlockedNavigation] =
-		useState<BlockedNavigationDetails | null>(null);
-	const unblockRef = useRef<(() => void) | null>(null);
 	const bypassNextRef = useRef(false);
+	const blockedActionRef = useRef<NavigationAction>('PUSH');
 
 	useEffect(() => {
 		if (!shouldBlock) {
-			if (unblockRef.current) {
-				unblockRef.current();
-				unblockRef.current = null;
-			}
 			bypassNextRef.current = false;
-			return;
 		}
+	}, [shouldBlock]);
 
-		unblockRef.current = history.block((location, action) => {
+	const blockerFunction = useCallback<BlockerFunction>(
+		({ action }) => {
+			if (!shouldBlock) {
+				return false;
+			}
 			if (bypassNextRef.current) {
 				bypassNextRef.current = false;
-				return undefined;
+				return false;
 			}
-			setBlockedNavigation({ location, action });
-			return false;
-		});
+			blockedActionRef.current = action;
+			return true;
+		},
+		[shouldBlock],
+	);
 
-		return (): void => {
-			if (unblockRef.current) {
-				unblockRef.current();
-				unblockRef.current = null;
-			}
-			bypassNextRef.current = false;
-		};
-	}, [shouldBlock, history]);
+	const blocker = useAppBlocker(blockerFunction);
 
 	useEffect(() => {
 		if (!shouldBlock) {
@@ -94,43 +90,30 @@ export function useNavigationBlocker(
 		};
 	}, [shouldBlock]);
 
+	// The router replays a proceeded navigation itself, so a blocked REPLACE
+	// stays a REPLACE and a blocked POP still walks the history stack.
 	const confirmNavigation = useCallback((): void => {
-		if (!blockedNavigation) {
-			return;
+		if (blocker.state === 'blocked') {
+			blocker.proceed();
 		}
-
-		if (unblockRef.current) {
-			unblockRef.current();
-			unblockRef.current = null;
-		}
-
-		const { location, action } = blockedNavigation;
-		setBlockedNavigation(null);
-
-		switch (action) {
-			case 'PUSH':
-				history.push(location);
-				break;
-			case 'REPLACE':
-				history.replace(location);
-				break;
-			case 'POP':
-				history.goBack();
-				break;
-		}
-	}, [blockedNavigation, history]);
+	}, [blocker]);
 
 	const cancelNavigation = useCallback((): void => {
-		setBlockedNavigation(null);
-	}, []);
+		if (blocker.state === 'blocked') {
+			blocker.reset();
+		}
+	}, [blocker]);
 
 	const allowNextNavigation = useCallback((): void => {
 		bypassNextRef.current = true;
 	}, []);
 
 	return {
-		isBlocked: blockedNavigation !== null,
-		blockedNavigationDetails: blockedNavigation,
+		isBlocked: blocker.state === 'blocked',
+		blockedNavigationDetails:
+			blocker.state === 'blocked'
+				? { location: blocker.location, action: blockedActionRef.current }
+				: null,
 		confirmNavigation,
 		cancelNavigation,
 		allowNextNavigation,

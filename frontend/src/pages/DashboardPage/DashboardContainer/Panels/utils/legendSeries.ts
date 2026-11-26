@@ -1,8 +1,13 @@
-import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	DashboardtypesPanelDTO,
+	DashboardtypesPanelSpecDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { themeColors } from 'constants/theme';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { preparePieData } from '../kinds/PieChartPanel/prepareData';
+import { getColorGroupLabels } from '../kinds/ScatterPlotPanel/utils/prepareData';
+import { getJoinedScalarTable } from './getJoinedScalarTable';
 import { getBuilderQueries } from './getBuilderQueries';
 import { resolveSeriesLabelV5 } from './resolveSeriesLabel';
 import { prepareScalarTables } from 'pages/DashboardPage/DashboardContainer/queryV5/prepareScalarTables';
@@ -23,6 +28,8 @@ export interface LegendSeries {
 type PanelQueries = DashboardtypesPanelDTO['spec']['queries'];
 
 interface LegendSeriesArgs {
+	/** The kind's own spec, for kinds whose labels depend on it. */
+	spec: DashboardtypesPanelSpecDTO;
 	queries: PanelQueries;
 	data: PanelQueryData;
 	isDarkMode: boolean;
@@ -99,6 +106,27 @@ export function resolveTimeSeriesLegendSeries({
 				builderQueries,
 				getLabelName(s.labels, s.queryName, s.legend),
 			),
+		),
+		(label) => generateColor(label, palette),
+	);
+}
+
+/** One entry per colour group, labelled the way the renderer labels its series. */
+export function resolveScatterLegendSeries({
+	spec,
+	data,
+	isDarkMode,
+}: LegendSeriesArgs): LegendSeries[] {
+	if (spec.plugin.kind !== 'signoz/ScatterPlotPanel') {
+		return [];
+	}
+	const palette = isDarkMode
+		? themeColors.chartcolors
+		: themeColors.lightModeColor;
+	return buildLegendSeries(
+		getColorGroupLabels(
+			getJoinedScalarTable(data),
+			spec.plugin.spec.dimensions?.colorBy,
 		),
 		(label) => generateColor(label, palette),
 	);

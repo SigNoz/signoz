@@ -1,14 +1,14 @@
 import { Lock } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Typography } from '@signozhq/ui/typography';
 import { Skeleton } from 'antd';
 import { CloudintegrationtypesCredentialsDTO } from 'api/generated/services/sigNoz.schemas';
-import cx from 'classnames';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
 import { Control, Controller } from 'react-hook-form';
 
 import FieldLabel from './FieldLabel';
+import FormField from './FormField';
 import { GcpSetupFormValues } from './types';
 import { SecretFieldType, validateSecretValue } from './validators';
 import styles from './ConnectionSecretsFields.module.scss';
@@ -77,15 +77,29 @@ function ConnectionSecretsFields({
 	return (
 		<div className={styles.drawerSurface}>
 			<div className={styles.drawerSurfaceHead}>
-				<Typography.Text weight="bold" size="base">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					Deployment details &amp; ingestion secrets
-				</Typography.Text>
+				</Typography>
 				{!hasMissingValue && (
 					<div className={styles.headLabel}>
 						<Lock size={12} />
-						<Typography.Text as="span" size="small" className={styles.headLabel}>
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							Auto-filled by SigNoz
-						</Typography.Text>
+						</Typography>
 					</div>
 				)}
 			</div>
@@ -115,15 +129,21 @@ function ConnectionSecretsFields({
 										tooltip={field.tooltip}
 									/>
 									<div className={styles.readonlyField}>
-										<Typography.Text
-											as="span"
-											id={field.testId}
-											className={cx(styles.readonlyValue, styles.mono)}
-											title={providedValue}
-											testId={field.testId}
-										>
-											{providedValue}
-										</Typography.Text>
+										<span className={styles.readonlyValue} title={providedValue}>
+											<Typography
+												variant="code"
+												size="base"
+												weight="regular"
+												color="secondary"
+												as="span"
+												display="block"
+												textOverflow="ellipsis"
+												id={field.testId}
+												testId={field.testId}
+											>
+												{providedValue}
+											</Typography>
+										</span>
 										<CopyButton
 											value={providedValue}
 											size={12}
@@ -141,43 +161,32 @@ function ConnectionSecretsFields({
 						}
 
 						return (
-							<div key={field.name} className={styles.drawerSection}>
-								<FieldLabel
-									htmlFor={field.testId}
-									label={field.label}
-									tooltip={field.tooltip}
-								/>
-								<Controller
-									name={field.name}
-									control={control}
-									rules={{
-										validate: (value): true | string =>
-											validateSecretValue(field.label, field.type, value),
-									}}
-									render={({ field: rhfField, fieldState }): JSX.Element => (
-										<>
-											<Input
-												id={field.testId}
-												className={cx(styles.fullWidth, styles.mono)}
-												placeholder={field.placeholder}
-												value={rhfField.value}
-												onChange={(e): void => rhfField.onChange(e.target.value)}
-												testId={field.testId}
-											/>
-											{fieldState.error && (
-												<Typography.Text
-													as="span"
-													size="small"
-													role="alert"
-													className={styles.fieldError}
-												>
-													{fieldState.error.message}
-												</Typography.Text>
-											)}
-										</>
-									)}
-								/>
-							</div>
+							<Controller
+								key={field.name}
+								name={field.name}
+								control={control}
+								rules={{
+									validate: (value): true | string =>
+										validateSecretValue(field.label, field.type, value),
+								}}
+								render={({ field: rhfField, fieldState }): JSX.Element => (
+									<FormField
+										htmlFor={field.testId}
+										label={field.label}
+										tooltip={field.tooltip}
+										error={fieldState.error}
+										className={styles.monoInput}
+									>
+										<Input
+											id={field.testId}
+											placeholder={field.placeholder}
+											value={rhfField.value}
+											onChange={(e): void => rhfField.onChange(e.target.value)}
+											testId={field.testId}
+										/>
+									</FormField>
+								)}
+							/>
 						);
 					})}
 				</div>

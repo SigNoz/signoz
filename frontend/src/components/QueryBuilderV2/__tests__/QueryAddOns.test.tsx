@@ -15,6 +15,9 @@ import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
 // Mocks: only what is required for this component to render and for us to assert handler calls
 const mockHandleChangeQueryData = jest.fn();
 const mockHandleSetQueryData = jest.fn();
+let mockCurrentQuery: { unit: string | undefined; builder?: unknown } = {
+	unit: undefined,
+};
 
 jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 	useQueryOperations: (): {
@@ -27,10 +30,10 @@ jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: (): {
 		handleSetQueryData: typeof mockHandleSetQueryData;
-		currentQuery: { unit: string | undefined };
+		currentQuery: typeof mockCurrentQuery;
 	} => ({
 		handleSetQueryData: mockHandleSetQueryData,
-		currentQuery: { unit: undefined },
+		currentQuery: mockCurrentQuery,
 	}),
 }));
 
@@ -165,17 +168,24 @@ describe('QueryAddOns', () => {
 			/>,
 		);
 
-		const input = screen.getByTestId('input-Limit') as HTMLInputElement;
+		const input = screen.getByTestId('input-Limit-field') as HTMLInputElement;
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(input.value).toBe('5');
 
-		fireEvent.change(input, { target: { value: '10' } });
-		expect(mockHandleChangeQueryData).toHaveBeenCalledWith('limit', 10);
+		const user = userEvent.setup();
+		await user.clear(input);
+		await user.type(input, '10');
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', 10);
+
+		await user.clear(input);
+		await user.type(input, '-5');
+		expect(input.value).toBe('5');
+		expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith('limit', 5);
 	});
 
 	it.each([
-		[QueryBuilderField.Limit, 'input-Limit', 'placeholder'],
-		[QueryBuilderField.Legend, 'input-Legend format', 'placeholder'],
+		[QueryBuilderField.Limit, 'input-Limit-field', 'placeholder'],
+		[QueryBuilderField.Legend, 'input-Legend format-field', 'placeholder'],
 		[QueryBuilderField.GroupBy, 'groupby', 'data-placeholder'],
 		[QueryBuilderField.Having, 'having-change', 'data-placeholder'],
 		[QueryBuilderField.OrderBy, 'orderby', 'data-placeholder'],
@@ -216,10 +226,81 @@ describe('QueryAddOns', () => {
 
 		fireEvent.click(screen.getByTestId('query-add-on-limit'));
 
-		expect(screen.getByTestId('input-Limit')).toHaveAttribute(
+		expect(screen.getByTestId('input-Limit-field')).toHaveAttribute(
 			'placeholder',
 			'Enter limit',
 		);
+	});
+
+	describe('a pinned limit with a default', () => {
+		const renderPinnedLimit = (): void => {
+			render(
+				<QueryAddOns
+					query={baseQuery()}
+					version="v5"
+					isRawQuery={false}
+					showReduceTo={false}
+					panelType={PANEL_TYPES.TOP_LIST}
+					index={0}
+					fieldsConfig={{
+						[QueryBuilderField.Limit]: {
+							state: 'pinned',
+							placeholder: 'Default 10',
+						},
+					}}
+					isForTraceOperator={false}
+				/>,
+			);
+		};
+
+		afterEach(() => {
+			mockCurrentQuery = { unit: undefined };
+		});
+
+		it('is open with its default as the placeholder', () => {
+			renderPinnedLimit();
+
+			expect(screen.getByTestId('input-Limit-field')).toHaveAttribute(
+				'placeholder',
+				'Default 10',
+			);
+		});
+
+		it('drops the default for an AI query, which the request leaves unlimited', () => {
+			mockCurrentQuery = {
+				unit: undefined,
+				builder: {
+					queryData: [{ ...baseQuery(), builderQueryType: 'builder_ai_query' }],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+			};
+
+			renderPinnedLimit();
+
+			expect(screen.getByTestId('input-Limit-field')).toHaveAttribute(
+				'placeholder',
+				'Enter limit',
+			);
+		});
+
+		it('drops the default once a formula joins the query', () => {
+			mockCurrentQuery = {
+				unit: undefined,
+				builder: {
+					queryData: [baseQuery()],
+					queryFormulas: [{ expression: 'A * 2' }],
+					queryTraceOperator: [],
+				},
+			};
+
+			renderPinnedLimit();
+
+			expect(screen.getByTestId('input-Limit-field')).toHaveAttribute(
+				'placeholder',
+				'Enter limit',
+			);
+		});
 	});
 
 	it('auto-opens Order By and Limit when present in query', () => {
@@ -240,7 +321,9 @@ describe('QueryAddOns', () => {
 		);
 
 		expect(screen.getByTestId('order-by-content')).toBeInTheDocument();
-		const limitInput = screen.getByTestId('input-Limit') as HTMLInputElement;
+		const limitInput = screen.getByTestId(
+			'input-Limit-field',
+		) as HTMLInputElement;
 		expect(screen.getByTestId('limit-content')).toBeInTheDocument();
 		expect(limitInput.value).toBe('7');
 	});
@@ -278,7 +361,7 @@ describe('QueryAddOns', () => {
 	});
 
 	it('calls handleSetQueryData when reduce-to value changes', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const query = baseQuery({
 			reduceTo: ReduceOperators.AVG,
 			aggregations: [
@@ -423,7 +506,7 @@ describe('QueryAddOns', () => {
 			);
 		}
 
-		it('is offered on a metrics heatmap only', () => {
+		it('is offered on a metrics heatmap', () => {
 			renderHeatmap();
 
 			expect(
@@ -449,23 +532,16 @@ describe('QueryAddOns', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('is not offered on a heatmap over another signal', () => {
-			render(
-				<QueryAddOns
-					query={baseQuery({ dataSource: DataSource.LOGS })}
-					version="v5"
-					isRawQuery={false}
-					showReduceTo={false}
-					panelType={PANEL_TYPES.HEATMAP}
-					index={0}
-					isForTraceOperator={false}
-				/>,
-			);
+		it.each([DataSource.LOGS, DataSource.TRACES])(
+			'is offered on a %s heatmap',
+			(dataSource) => {
+				renderHeatmap({ dataSource });
 
-			expect(
-				screen.queryByTestId('query-add-on-bucket_options'),
-			).not.toBeInTheDocument();
-		});
+				expect(
+					screen.getByTestId('query-add-on-bucket_options'),
+				).toBeInTheDocument();
+			},
+		);
 
 		it.each([ATTRIBUTE_TYPES.HISTOGRAM, ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM])(
 			'is not offered for a %s metric, which carries its own buckets',
@@ -570,7 +646,7 @@ describe('QueryAddOns', () => {
 			renderHeatmap({ bucketOptions: { kind: 'log', spec: { scale: 0 } } });
 
 			await user.click(screen.getByRole('button', { name: 'Linear' }));
-			await user.type(screen.getByTestId('bucket-options-max-value'), '500');
+			await user.type(screen.getByTestId('bucket-options-max-value-field'), '500');
 
 			await waitFor(() => {
 				expect(mockHandleChangeQueryData).toHaveBeenLastCalledWith(

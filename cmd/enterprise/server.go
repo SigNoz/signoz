@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/cmd"
 	"github.com/SigNoz/signoz/ee/auditor/fileauditor"
+	"github.com/SigNoz/signoz/ee/auditor/kafkaauditor"
 	"github.com/SigNoz/signoz/ee/auditor/otlphttpauditor"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
@@ -102,8 +103,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		enterprisezeus.Config(),
 		httpzeus.NewProviderFactory(),
 		enterpriselicensing.Config(24*time.Hour, 3),
-		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
-			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics)
+		func(sqlstore sqlstore.SQLStore, zeus zeus.Zeus, orgGetter organization.Getter, analytics analytics.Analytics, cache cache.Cache) factory.ProviderFactory[licensing.Licensing, licensing.Config] {
+			return httplicensing.NewProviderFactory(sqlstore, zeus, orgGetter, analytics, cache)
 		},
 		func(zeus zeus.Zeus, licensing licensing.Licensing) subscription.Subscription {
 			return httpsubscription.New(zeus, licensing)
@@ -154,6 +155,9 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				panic(err)
 			}
 			if err := factories.Add(fileauditor.NewFactory(licensing, version.Info)); err != nil {
+				panic(err)
+			}
+			if err := factories.Add(kafkaauditor.NewFactory(licensing, version.Info)); err != nil {
 				panic(err)
 			}
 			return factories

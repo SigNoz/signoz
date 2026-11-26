@@ -245,25 +245,13 @@ func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConf
 		return nil, err
 	}
 
-	matchers, err := service.configStore.GetMatchers(ctx, incomingConfig.StoreableConfig().OrgID)
-	if err != nil {
-		return nil, err
-	}
-
 	config, err := alertmanagertypes.NewConfigFromChannels(service.config.Global, service.config.Route, channels, incomingConfig.StoreableConfig().OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	for ruleID, receivers := range matchers {
-		err = config.CreateRuleIDMatcher(ruleID, receivers)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if incomingConfig.StoreableConfig().Hash != config.StoreableConfig().Hash {
-		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels and matchers")
+		service.settings.Logger().InfoContext(ctx, "mismatch found, updating config to match channels")
 		return config, nil
 	}
 

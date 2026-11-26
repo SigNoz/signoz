@@ -2,7 +2,7 @@ import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.sche
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 import {
 	AUTHZ_CHECK_URL,
 	authzMockResponse,
@@ -23,7 +23,10 @@ describe('ServiceAccountsSettings — FGA', () => {
 	beforeEach(() => {
 		server.use(
 			rest.get(SA_LIST_URL, (_req, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: [] })),
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: { serviceAccounts: [], total: 0 } }),
+				),
 			),
 		);
 	});
@@ -77,8 +80,12 @@ describe('ServiceAccountsSettings — FGA', () => {
 
 		expect(screen.getByText('Service Accounts')).toBeInTheDocument();
 		expect(
-			screen.getByPlaceholderText('Search by name or email...'),
-		).toBeDisabled();
+			within(screen.getByTestId('sa-list-search')).getByRole('textbox'),
+		).toHaveAttribute('contenteditable', 'false');
+		expect(screen.getByTestId('sa-list-search-submit')).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
 	});
 
 	it('shows table when list permission is granted', async () => {

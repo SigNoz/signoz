@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
@@ -16,9 +16,9 @@ jest.mock('lib/authz/components/AuthZTooltip/AuthZTooltip', () => ({
 	}): React.ReactElement => children,
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const mockToast = jest.mocked(toast);
@@ -80,13 +80,13 @@ describe('KeysTab', () => {
 	it('renders loading state', async () => {
 		renderKeysTab({ isLoading: true });
 		// Wait for authz to complete, then check for skeleton
-		await waitFor(() => {
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
-		});
+		await expect(
+			screen.findByTestId('keys-tab-loading'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders empty state when no keys and clicking add sets add-key param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 		render(
 			<NuqsTestingAdapter
@@ -121,7 +121,7 @@ describe('KeysTab', () => {
 	});
 
 	it('clicking a row sets the edit-key URL param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 
 		render(
@@ -130,12 +130,7 @@ describe('KeysTab', () => {
 			</NuqsTestingAdapter>,
 		);
 
-		const row = (await screen.findByText('Production Key')).closest('tr');
-		if (!row) {
-			throw new Error('Row not found');
-		}
-
-		await user.click(row);
+		await user.click(await screen.findByTestId('keys-tab-row-key-1'));
 
 		expect(onUrlUpdate).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -145,7 +140,7 @@ describe('KeysTab', () => {
 	});
 
 	it('clicking revoke icon sets revoke-key URL param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onUrlUpdate = jest.fn();
 
 		render(
@@ -167,7 +162,7 @@ describe('KeysTab', () => {
 	});
 
 	it('handles successful key revocation via RevokeKeyModal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderKeysTab();
 
@@ -176,8 +171,13 @@ describe('KeysTab', () => {
 		const revokeBtns = screen.getAllByTestId('keys-tab-revoke-btn');
 		await user.click(revokeBtns[0]);
 
-		const confirmBtn = await screen.findByRole('button', { name: /Revoke Key/i });
-		await user.click(confirmBtn);
+		await waitFor(() =>
+			expect(screen.getByTestId('revoke-key-confirm-btn')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		);
+		await user.click(screen.getByTestId('revoke-key-confirm-btn'));
 
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith('Key revoked successfully');

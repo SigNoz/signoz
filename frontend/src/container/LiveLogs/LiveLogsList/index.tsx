@@ -2,9 +2,10 @@ import type { CSSProperties, MouseEvent, ReactNode } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Card } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
+import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ListLogView from 'components/Logs/ListLogView';
@@ -30,7 +31,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useEventSource } from 'providers/EventSource';
 // interfaces
 import { ILog } from 'types/api/logs/log';
-import { DataSource, StringOperators } from 'types/common/queryBuilder';
+import { StringOperators } from 'types/common/queryBuilder';
 
 import loadingPlaneUrl from '@/assets/Icons/loading-plane.gif';
 import { getAbsoluteUrl } from 'utils/basePath';
@@ -68,7 +69,7 @@ function LiveLogsList({
 
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: DataSource.LOGS,
+		sourcePage: SavedviewtypesSourceDTO.logs,
 		aggregateOperator: StringOperators.NOOP,
 	});
 
@@ -178,7 +179,16 @@ function LiveLogsList({
 				<div className="loading-live-logs-content">
 					<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
-					<Typography>Fetching live logs...</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Fetching live logs...
+					</Typography>
 				</div>
 			</div>
 		),
@@ -186,7 +196,7 @@ function LiveLogsList({
 	);
 
 	return (
-		<div className="live-logs-list">
+		<div className="live-logs-list" data-testid="live-logs-list">
 			{(formattedLogs.length === 0 || isLoading || isLoadingList) &&
 				renderLoading()}
 
@@ -203,6 +213,7 @@ function LiveLogsList({
 							cellTypographySize={options.fontSize}
 							data={formattedLogs}
 							isLoading={false}
+							getRowTestId={(log): string => `logs-table-row-${log.id}`}
 							isRowActive={(log): boolean => log.id === activeLog?.id}
 							getRowClassName={(log): string =>
 								log.id === activeLogId ? 'logs-linked-row' : ''
@@ -254,17 +265,15 @@ function LiveLogsList({
 				</InfinityWrapperStyled>
 			)}
 
-			{activeLog && selectedTab && (
-				<LogDetail
-					selectedTab={selectedTab}
-					log={activeLog}
-					onClose={handleCloseLogDetail}
-					handleChangeSelectedView={handleChangeSelectedView}
-					logs={formattedLogs}
-					onNavigateLog={handleSetActiveLog}
-					onScrollToLog={handleScrollToLog}
-				/>
-			)}
+			<LogDetail
+				selectedTab={selectedTab}
+				log={activeLog}
+				onClose={handleCloseLogDetail}
+				handleChangeSelectedView={handleChangeSelectedView}
+				logs={formattedLogs}
+				onNavigateLog={handleSetActiveLog}
+				onScrollToLog={handleScrollToLog}
+			/>
 		</div>
 	);
 }

@@ -29,6 +29,7 @@ import { getMetricNameForQuery } from '../utils';
 import OptionRenderer from '../OptionRenderer/OptionRenderer';
 import { GroupByFilterProps } from './GroupByFilter.interfaces';
 import { toAttributeKey } from './utils';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 
 export const GroupByFilter = memo(function GroupByFilter({
 	query,
@@ -45,6 +46,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
+	const builderQueryType = useBuilderQueryType(query);
 	const { data: fieldKeys, isFetching } = useFieldKeysSuggestion(
 		{
 			signal: DATA_SOURCE_TO_SIGNAL[query.dataSource],
@@ -52,7 +54,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 			metricName: getMetricNameForQuery(query),
 			searchText: debouncedValue,
 		},
-		query.builderQueryType,
+		builderQueryType,
 		{ enabled: !disabled && isFocused, keepPreviousData: true },
 	);
 
@@ -77,6 +79,7 @@ export const GroupByFilter = memo(function GroupByFilter({
 					/>
 				),
 				value: `${item.id}`,
+				'data-testid': `group-by-option-${item.key}`,
 			}));
 	}, [attributeKeys, query.groupBy]);
 

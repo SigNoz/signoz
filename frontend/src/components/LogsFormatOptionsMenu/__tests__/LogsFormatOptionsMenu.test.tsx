@@ -1,5 +1,12 @@
 import { FontSize } from 'container/OptionsMenu/types';
-import { fireEvent, render, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 
 import LogsFormatOptionsMenu from '../LogsFormatOptionsMenu';
 
@@ -28,13 +35,14 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		mockUpdateFormatting.mockClear();
 	});
 
-	function setup(): {
+	async function setup(): Promise<{
+		user: ReturnType<typeof userEvent.setup>;
 		getByTestId: ReturnType<typeof render>['getByTestId'];
-		findItemByLabel: (label: string) => Element | undefined;
 		formatOnChange: jest.Mock<any, any>;
 		maxLinesOnChange: jest.Mock<any, any>;
 		fontSizeOnChange: jest.Mock<any, any>;
-	} {
+	}> {
+		const user = userEvent.setup();
 		const items = [
 			{ key: 'raw', label: 'Raw', data: { title: 'max lines per row' } },
 			{ key: 'list', label: 'Default' },
@@ -70,16 +78,11 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 		// Open the popover menu by default for each test
 		const formatButton = getByTestId('periscope-btn-format-options');
-		fireEvent.click(formatButton);
-
-		const getMenuItems = (): Element[] =>
-			Array.from(document.querySelectorAll('.menu-items .item'));
-		const findItemByLabel = (label: string): Element | undefined =>
-			getMenuItems().find((el) => (el.textContent || '').includes(label));
+		await user.click(formatButton);
 
 		return {
+			user,
 			getByTestId,
-			findItemByLabel,
 			formatOnChange,
 			maxLinesOnChange,
 			fontSizeOnChange,
@@ -88,37 +91,36 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 
 	// Covers: opens menu, changes format selection, updates max-lines, changes font size
 	it('opens and toggles format selection', async () => {
-		const { findItemByLabel, formatOnChange } = setup();
+		const { user, formatOnChange } = await setup();
 
 		// Assert initial selection
-		const columnItem = findItemByLabel('Column') as Element;
-		expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
-		expect(columnItem.querySelector('svg')).toBeInTheDocument();
+		expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
+		expect(
+			within(screen.getByTestId('format-option-table')).getByTestId(
+				'format-check-icon',
+			),
+		).toBeInTheDocument();
 
 		// Change selection to 'Raw'
-		const rawItem = findItemByLabel('Raw') as Element;
-		fireEvent.click(rawItem as HTMLElement);
+		await user.click(screen.getByTestId('format-option-raw'));
 		await waitFor(() => {
-			const rawEl = findItemByLabel('Raw') as Element;
-			expect(document.querySelectorAll('.menu-items .item svg')).toHaveLength(1);
-			expect(rawEl.querySelector('svg')).toBeInTheDocument();
+			expect(screen.getAllByTestId('format-check-icon')).toHaveLength(1);
+			expect(
+				within(screen.getByTestId('format-option-raw')).getByTestId(
+					'format-check-icon',
+				),
+			).toBeInTheDocument();
 		});
 		expect(formatOnChange).toHaveBeenCalledWith('raw');
 	});
 
 	it('increments max-lines and calls onChange', async () => {
-		const { maxLinesOnChange } = setup();
+		const { user, maxLinesOnChange, getByTestId } = await setup();
 
 		// Increment max lines
-		const input = document.querySelector(
-			'.max-lines-per-row-input input',
-		) as HTMLInputElement;
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
 		const initial = Number(input.value);
-		const buttons = document.querySelectorAll(
-			'.max-lines-per-row-input .periscope-btn',
-		);
-		const incrementBtn = buttons[1] as HTMLElement;
-		fireEvent.click(incrementBtn);
+		await user.click(screen.getByRole('button', { name: 'More lines per row' }));
 
 		await waitFor(() => {
 			expect(Number(input.value)).toBe(initial + 1);
@@ -128,28 +130,49 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		});
 	});
 
+	it('clamps a typed max-lines value to 10', async () => {
+		const { user, maxLinesOnChange, getByTestId } = await setup();
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
+
+		await user.clear(input);
+		await user.type(input, '15');
+		await user.tab();
+
+		await waitFor(() => expect(input.value).toBe('10'));
+		expect(maxLinesOnChange).toHaveBeenLastCalledWith(10);
+	});
+
+	it('stops max-lines at 10', async () => {
+		const { user, getByTestId } = await setup();
+		const input = getByTestId('max-lines-per-row-field') as HTMLInputElement;
+		const increment = screen.getByRole('button', { name: 'More lines per row' });
+
+		for (let i = 0; i < 12; i++) {
+			await user.click(increment);
+		}
+
+		await waitFor(() => expect(input.value).toBe('10'));
+	});
+
 	it('changes font size to MEDIUM and calls onChange', async () => {
-		const { fontSizeOnChange } = setup();
+		const { user, fontSizeOnChange, getByTestId } = await setup();
 		// Open font dropdown
-		const fontButton = document.querySelector(
-			'.font-size-container .value',
-		) as HTMLElement;
-		fireEvent.click(fontButton);
+		await user.click(getByTestId('font-size-select'));
 
 		// Choose MEDIUM
-		const optionButtons = Array.from(
-			document.querySelectorAll('.font-size-dropdown .option-btn'),
-		);
-		const mediumBtn = optionButtons[1] as HTMLElement;
-		fireEvent.click(mediumBtn);
+		await user.click(getByTestId(`font-size-option-${FontSize.MEDIUM}`));
 
 		await waitFor(() => {
 			expect(
-				document.querySelectorAll('.font-size-dropdown .option-btn .icon'),
-			).toHaveLength(1);
-			expect(
-				(optionButtons[1] as Element).querySelector('.icon'),
+				within(getByTestId(`font-size-option-${FontSize.MEDIUM}`)).getByTestId(
+					'font-size-option-check',
+				),
 			).toBeInTheDocument();
+			expect(
+				within(getByTestId(`font-size-option-${FontSize.SMALL}`)).queryByTestId(
+					'font-size-option-check',
+				),
+			).not.toBeInTheDocument();
 		});
 		await waitFor(() => {
 			expect(fontSizeOnChange).toHaveBeenCalledWith(FontSize.MEDIUM);
@@ -193,16 +216,16 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		renderWithOnOpen(undefined, 'table');
 
 		expect(
-			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
-		).toBeNull();
+			screen.queryByTestId('periscope-btn-edit-columns'),
+		).not.toBeInTheDocument();
 	});
 
 	it('does not render "Edit columns" row when format is not table', () => {
 		renderWithOnOpen(jest.fn(), 'raw');
 
 		expect(
-			document.querySelector('[data-testid="periscope-btn-edit-columns"]'),
-		).toBeNull();
+			screen.queryByTestId('periscope-btn-edit-columns'),
+		).not.toBeInTheDocument();
 	});
 
 	it('fires onOpenColumns and closes the popover when "Edit columns" is clicked', async () => {
@@ -214,7 +237,7 @@ describe('LogsFormatOptionsMenu (unit)', () => {
 		expect(onOpenColumns).toHaveBeenCalledTimes(1);
 		await waitFor(() => {
 			// Popover content unmounts on close.
-			expect(document.querySelector('.menu-container')).toBeNull();
+			expect(screen.queryByTestId('format-option-table')).not.toBeInTheDocument();
 		});
 	});
 });

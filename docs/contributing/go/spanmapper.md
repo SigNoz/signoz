@@ -17,7 +17,7 @@ Condition: `model`, `llm.input_messages` (OpenInference sets `llm.model_name` fr
 | `gen_ai.response.model`, last source for the request model | vLLM, which writes only the response model |
 | `ai.model.id`, `ai.model.provider`, `ai.response.model`, `ai.response.finishReason`, `ai.prompt.messages`, `ai.response.text`, `ai.response.toolCalls`, `ai.usage.promptTokens`, `ai.usage.completionTokens` | Vercel AI SDK v4, Mastra |
 | `ai.usage.inputTokens`, `ai.usage.outputTokens`, `ai.usage.cachedInputTokens`, `ai.usage.reasoningTokens` | Vercel AI SDK v5 |
-| `langfuse.observation.model.name`, `langfuse.session.id` | Langfuse SDK v3 |
+| `langfuse.observation.model.name`, `langfuse.observation.input`, `langfuse.observation.output`, `langfuse.observation.type`, `langfuse.session.id` | Langfuse SDK v3 (Python) and v4 (JS), LiteLLM `langfuse_otel` callback |
 | `session.id` | OpenInference, Langfuse, Claude Code |
 | `gen_ai.client.session_id` | opentelemetry-hooks runner (Cursor, Copilot, Claude Code hooks) |
 | `model`, `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_creation_tokens` | Claude Code `claude_code.llm_request` spans ([docs](https://code.claude.com/docs/en/monitoring-usage#span-attributes)) |

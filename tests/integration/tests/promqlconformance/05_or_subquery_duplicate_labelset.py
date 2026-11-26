@@ -72,7 +72,7 @@ def test_or_arms_merge_under_subquery_name_drop(
     assert set(instant_values.values()) == {1.0}, instant_values
 
     # query_range over the same grid must agree point for point.
-    spec = {"name": "A", "query": query, "step": 300}
+    spec = {"name": "A", "query": query, "step": 300, "skipStepAlignment": True}
     response = make_query_request(signoz, token, start_ms, end_ms, [{"type": "promql", "spec": spec}])
     assert response.status_code == HTTPStatus.OK, response.text[:300]
     series = get_all_series(response.json(), "A")

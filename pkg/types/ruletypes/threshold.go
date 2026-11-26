@@ -30,8 +30,8 @@ func (ThresholdKind) Enum() []any {
 }
 
 type RuleThresholdData struct {
-	Kind ThresholdKind `json:"kind" required:"true"`
-	Spec any           `json:"spec" required:"true"`
+	Kind ThresholdKind `json:"kind" required:"true" description:"The kind of threshold. The supported value is basic."`
+	Spec any           `json:"spec" required:"true" description:"The threshold specification for kind; an array of thresholds for basic."`
 }
 
 // thresholdBasic is the OpenAPI schema for a RuleThresholdData with kind=basic.
@@ -85,9 +85,6 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw["spec"], &basicThresholds); err != nil {
 			return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to unmarshal rule threshold spec: %v", err)
 		}
-		if err := basicThresholds.Validate(); err != nil {
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule threshold spec: %v", err)
-		}
 		r.Spec = basicThresholds
 
 	default:
@@ -98,8 +95,8 @@ func (r *RuleThresholdData) UnmarshalJSON(data []byte) error {
 }
 
 type RuleReceivers struct {
-	Channels []string `json:"channels"`
-	Name     string   `json:"name"`
+	Channels []string `json:"channels" description:"The displayName of each notification channel the threshold routes to."`
+	Name     string   `json:"name" description:"The threshold name the receivers belong to."`
 }
 
 // EvalData are other dependent values used to evaluate the threshold rules.
@@ -130,16 +127,19 @@ type RuleThreshold interface {
 	// using the given EvalData and returns the matching series
 	Eval(series *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error)
 	GetRuleReceivers() []RuleReceivers
+	// Validate runs on the write path and before a task is built; a stored
+	// rule may hold a threshold that fails it and still decode.
+	Validate() error
 }
 
 type BasicRuleThreshold struct {
-	Name            string          `json:"name" required:"true"`
-	TargetValue     *float64        `json:"target" required:"true" format:"double"`
-	TargetUnit      string          `json:"targetUnit"`
-	RecoveryTarget  *float64        `json:"recoveryTarget" format:"double"`
-	MatchType       MatchType       `json:"matchType" required:"true"`
-	CompareOperator CompareOperator `json:"op" required:"true"`
-	Channels        []string        `json:"channels"`
+	Name            string          `json:"name" required:"true" description:"The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold.name label and, lowercased, as the severity label; templates can read it as $threshold.name."`
+	TargetValue     *float64        `json:"target" required:"true" format:"double" description:"The value the query result is compared against, in targetUnit."`
+	TargetUnit      string          `json:"targetUnit" description:"The unit of target and recoveryTarget, such as percent or ms. Converted to the query unit before comparison when the two differ; empty means the query unit."`
+	RecoveryTarget  *float64        `json:"recoveryTarget" format:"double" description:"The value at which a firing alert resolves, in targetUnit. Keeps an alert firing between target and recoveryTarget to avoid flapping; null resolves at target."`
+	MatchType       MatchType       `json:"matchType" required:"true" description:"Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'."`
+	CompareOperator CompareOperator `json:"op" required:"true" description:"How the value is compared with target. Accepted as above, below, equal, not_equal, above_or_equal, below_or_equal or outside_bounds, their symbols, or the legacy codes as strings, '1' to '7'."`
+	Channels        []string        `json:"channels" description:"The displayName of each notification channel alerts crossing this threshold are sent to. Ignored when notificationSettings.usePolicy is true."`
 }
 
 type BasicRuleThresholds []BasicRuleThreshold
@@ -168,6 +168,37 @@ func (r BasicRuleThresholds) Validate() error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+func (r BasicRuleThresholds) validateUniqueNames() error {
+	names := make(map[string]struct{}, len(r))
+	for _, basicThreshold := range r {
+		if _, seen := names[basicThreshold.Name]; seen {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: duplicate threshold name %q", basicThreshold.Name)
+		}
+		names[basicThreshold.Name] = struct{}{}
+	}
+	return nil
+}
+
+func (r BasicRuleThresholds) validateRecoveryTargets() error {
+	for _, basicThreshold := range r {
+		if basicThreshold.RecoveryTarget == nil || basicThreshold.TargetValue == nil {
+			continue
+		}
+		// equal, not_equal and outside_bounds have no recovering side
+		switch basicThreshold.CompareOperator.Normalize() {
+		case ValueIsAbove, ValueAboveOrEq:
+			if *basicThreshold.RecoveryTarget >= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be below target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		case ValueIsBelow, ValueBelowOrEq:
+			if *basicThreshold.RecoveryTarget <= *basicThreshold.TargetValue {
+				return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: recoveryTarget must be above target for op %s", basicThreshold.CompareOperator.StringValue())
+			}
+		}
+	}
+	return nil
 }
 
 func (r BasicRuleThresholds) Eval(s *qbtypes.TimeSeries, unit string, evalData EvalData) (Vector, error) {

@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import { useDashboardSections } from '../../../../hooks/useDashboardSections';
 import { usePanelPickerTargetStore } from '../../../../store/usePanelPickerTargetStore';
@@ -47,7 +46,7 @@ function renderDrawer(
 	user: User;
 } {
 	// The open drawer sets `pointer-events: none` on the body.
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	const onSelect = jest.fn();
 	const onClose = jest.fn();
 	render(
@@ -156,7 +155,7 @@ describe('PanelTypeSelectionModal', () => {
 
 	it('filters tiles by search and offers to clear an empty result', async () => {
 		const { user } = renderDrawer();
-		const search = screen.getByTestId('panel-type-search');
+		const search = screen.getByTestId('panel-type-search-field');
 
 		await user.clear(search);
 		await user.type(search, 'markdown');
@@ -204,7 +203,7 @@ describe('PanelTypeSelectionModal', () => {
 			expect(confirm).toHaveAttribute('aria-disabled', 'true');
 			expect(confirm).toHaveTextContent('Add to new section');
 
-			await user.type(screen.getByTestId('panel-section-name'), '  Errors ');
+			await user.type(screen.getByTestId('panel-section-name-field'), '  Errors ');
 			await user.click(confirm);
 
 			expect(onSelect).toHaveBeenCalledWith('signoz/TimeSeriesPanel', {
@@ -226,7 +225,7 @@ describe('PanelTypeSelectionModal', () => {
 				}),
 			);
 
-			await user.type(screen.getByTestId('panel-section-name'), 'Errors');
+			await user.type(screen.getByTestId('panel-section-name-field'), 'Errors');
 			await user.click(screen.getByTestId('panel-type-signoz/TablePanel'));
 			expect(draft()).toStrictEqual({
 				title: 'Errors',

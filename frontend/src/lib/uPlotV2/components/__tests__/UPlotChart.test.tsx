@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from 'tests/test-utils';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 
@@ -134,10 +135,10 @@ describe('UPlotChart', () => {
 				{ wrapper: Wrapper },
 			);
 
-			const noDataContainer = screen
-				.getByText('No Data')
-				.closest('.uplot-no-data');
-			expect(noDataContainer).toHaveStyle({ width: '750px', height: '350px' });
+			expect(screen.getByTestId('uplot-no-data')).toHaveStyle({
+				width: '750px',
+				height: '350px',
+			});
 		});
 
 		it('does not create a uPlot instance', () => {
@@ -349,6 +350,57 @@ describe('UPlotChart', () => {
 			expect(onDestroy).toHaveBeenCalledWith(firstInstance);
 			expect(firstInstance.destroy).toHaveBeenCalledTimes(1);
 			expect(plotRef).toHaveBeenCalledWith(null);
+		});
+	});
+
+	describe('instance handle', () => {
+		const hostOf = (call: number): HTMLElement & { __uplot?: unknown } =>
+			mockUPlotConstructor.mock.calls[call][2];
+
+		it('hangs the live instance on the container it was created on', () => {
+			render(
+				<UPlotChart
+					config={createMockConfig()}
+					data={validData}
+					width={600}
+					height={400}
+				/>,
+				{ wrapper: Wrapper },
+			);
+
+			expect(hostOf(0).__uplot).toBe(instances[0]);
+		});
+
+		it('clears the handle from that container on unmount', () => {
+			const { unmount } = render(
+				<UPlotChart
+					config={createMockConfig()}
+					data={validData}
+					width={600}
+					height={400}
+				/>,
+				{ wrapper: Wrapper },
+			);
+			const host = hostOf(0);
+
+			unmount();
+
+			expect(host.__uplot).toBeUndefined();
+		});
+
+		it('clears the handle from that container when the data becomes empty', () => {
+			const config = createMockConfig();
+			const { rerender } = render(
+				<UPlotChart config={config} data={validData} width={600} height={400} />,
+				{ wrapper: Wrapper },
+			);
+			const host = hostOf(0);
+
+			rerender(
+				<UPlotChart config={config} data={emptyData} width={600} height={400} />,
+			);
+
+			expect(host.__uplot).toBeUndefined();
 		});
 	});
 

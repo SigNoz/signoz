@@ -19,15 +19,15 @@ var ErrCodeRuleListInvalid = errors.MustNewCode("rule_list_invalid")
 type ListSort struct{ valuer.String }
 
 var (
-	ListSortUpdatedAt = ListSort{valuer.NewString("updated_at")}
-	ListSortCreatedAt = ListSort{valuer.NewString("created_at")}
-	ListSortName      = ListSort{valuer.NewString("name")}
-	ListSortState     = ListSort{valuer.NewString("state")}
-	ListSortSeverity  = ListSort{valuer.NewString("severity")}
+	ListSortUpdatedAt  = ListSort{valuer.NewString("updated_at")}
+	ListSortCreatedAt  = ListSort{valuer.NewString("created_at")}
+	ListSortName       = ListSort{valuer.NewString("name")}
+	ListSortState      = ListSort{valuer.NewString("state")}
+	ListSortThresholds = ListSort{valuer.NewString("thresholds")}
 )
 
 func (ListSort) Enum() []any {
-	return []any{ListSortUpdatedAt, ListSortCreatedAt, ListSortName, ListSortState, ListSortSeverity}
+	return []any{ListSortUpdatedAt, ListSortCreatedAt, ListSortName, ListSortState, ListSortThresholds}
 }
 
 func (s ListSort) IsValid() bool {
@@ -51,11 +51,11 @@ func (o ListOrder) IsValid() bool {
 
 // ListFilter is the rule listing state shared by the v3 list params and saved views.
 type ListFilter struct {
-	Query string `query:"query" json:"query"`
+	Query string `query:"query" json:"query" description:"A filter expression over rule name, description, labels and other fields, at most 1024 characters. Empty matches every rule."`
 	// gin cannot bind a slice of valuer enums; GetAlertStates converts these.
-	States []string  `query:"states" json:"states" nullable:"false"`
-	Sort   ListSort  `query:"sort" json:"sort"`
-	Order  ListOrder `query:"order" json:"order"`
+	States []string  `query:"states" json:"states" nullable:"false" description:"Only return rules in these states: firing, pending, recovering, inactive, nodata or disabled. Empty means every state."`
+	Sort   ListSort  `query:"sort" json:"sort" description:"The field to sort by: updated_at (the default), created_at, name, state or thresholds. Sorting by thresholds ranks each rule by its first threshold name."`
+	Order  ListOrder `query:"order" json:"order" description:"The sort direction: asc or desc (the default)."`
 }
 
 // Validate normalizes in place; zero sort/order get the defaults, nil states an empty slice.
@@ -77,7 +77,7 @@ func (f *ListFilter) Validate() error {
 		f.Sort = ListSortUpdatedAt
 	} else if !f.Sort.IsValid() {
 		return errors.NewInvalidInputf(ErrCodeRuleListInvalid,
-			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `severity`", f.Sort)
+			"invalid sort %q, expected one of: `updated_at`, `created_at`, `name`, `state`, `thresholds`", f.Sort)
 	}
 
 	if f.Order.IsZero() {
@@ -119,8 +119,8 @@ func parseAlertState(raw string) (AlertState, error) {
 
 type ListRulesParams struct {
 	ListFilter
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
+	Limit  int `query:"limit" description:"The page size, 1 to 200. Defaults to 20 and larger values are clamped to 200."`
+	Offset int `query:"offset" description:"The number of rules to skip before the page. Defaults to 0."`
 }
 
 // Validate normalizes in place; an over-max limit is clamped, not rejected.

@@ -28,7 +28,6 @@ import {
 // same endpoints for the same shapes and answers from the traces builders.
 import {
 	exportDashboardsResponse,
-	savedTraceViewsResponse,
 	traceAttributeValuesResponse,
 	traceFieldKeysResponse,
 	traceFieldValues,
@@ -41,7 +40,6 @@ import {
 const VIEW = 'Explorer · view';
 const LIST = 'Explorer · list';
 const FILTERS = 'Explorer · filters';
-const SAVED = 'Explorer · saved';
 
 const explorerRoute = (view: ExplorerViews): string => {
 	const params = new URLSearchParams({
@@ -97,12 +95,6 @@ export const llmExplorerMocks = defineStoryMocks({
 			value: 6,
 			max: 8,
 		}),
-		savedViews: countControl('Saved views', {
-			group: SAVED,
-			description: 'Fills the views dropdown the explorer options offer.',
-			value: 4,
-			max: 8,
-		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -143,11 +135,6 @@ export const llmExplorerMocks = defineStoryMocks({
 			response.json((req) =>
 				traceAttributeValuesResponse(req.url.searchParams.get('attributeKey')),
 			),
-		),
-
-		rest.get(
-			'http://localhost/api/v1/explorer/views',
-			response.json(() => savedTraceViewsResponse(values.savedViews)),
 		),
 
 		rest.get(

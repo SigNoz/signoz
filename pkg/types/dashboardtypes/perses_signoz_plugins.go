@@ -1,7 +1,11 @@
 package dashboardtypes
 
 import (
+	"bytes"
 	"encoding/json"
+	"maps"
+	"regexp"
+	"slices"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -29,10 +33,9 @@ func (VariablePluginKind) Enum() []any {
 }
 
 type DynamicVariableSpec struct {
-	// Name is the name of the attribute being fetched dynamically from the
-	// signal. This could be extended to a richer selector in the future.
-	Name   string                `json:"name" validate:"required" required:"true"`
-	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false"`
+	// This could be extended to a richer selector in the future.
+	Name   string                `json:"name" validate:"required" required:"true" description:"The attribute key whose observed values populate the variable, such as service.name."`
+	Signal DynamicVariableSignal `json:"signal" required:"true" nullable:"false" description:"The signal the values are read from: traces, logs, metrics or all (default)."`
 }
 
 // DynamicVariableSignal is the telemetry signal a dynamic variable draws its
@@ -78,11 +81,11 @@ func (s *DynamicVariableSignal) UnmarshalJSON(data []byte) error {
 }
 
 type QueryVariableSpec struct {
-	QueryValue string `json:"queryValue" validate:"required" required:"true"`
+	QueryValue string `json:"queryValue" validate:"required" required:"true" description:"A ClickHouse SQL query returning one column of selectable values; every returned column is offered."`
 }
 
 type CustomVariableSpec struct {
-	CustomValue string `json:"customValue" validate:"required" required:"true"`
+	CustomValue string `json:"customValue" validate:"required" required:"true" description:"The fixed values as a comma-separated list, such as 1,10,100."`
 }
 
 // ══════════════════════════════════════════════
@@ -187,58 +190,65 @@ func (AIBuilderQuerySpec) PrepareJSONSchema(s *jsonschema.Schema) error {
 type PanelPluginKind string
 
 const (
-	PanelKindTimeSeries PanelPluginKind = "signoz/TimeSeriesPanel"
-	PanelKindBarChart   PanelPluginKind = "signoz/BarChartPanel"
-	PanelKindAreaChart  PanelPluginKind = "signoz/AreaChartPanel"
-	PanelKindNumber     PanelPluginKind = "signoz/NumberPanel"
-	PanelKindPieChart   PanelPluginKind = "signoz/PieChartPanel"
-	PanelKindTable      PanelPluginKind = "signoz/TablePanel"
-	PanelKindHistogram  PanelPluginKind = "signoz/HistogramPanel"
-	PanelKindList       PanelPluginKind = "signoz/ListPanel"
-	PanelKindText       PanelPluginKind = "signoz/TextPanel"
-	PanelKindHeatmap    PanelPluginKind = "signoz/HeatmapPanel"
+	PanelKindTimeSeries  PanelPluginKind = "signoz/TimeSeriesPanel"
+	PanelKindBarChart    PanelPluginKind = "signoz/BarChartPanel"
+	PanelKindAreaChart   PanelPluginKind = "signoz/AreaChartPanel"
+	PanelKindNumber      PanelPluginKind = "signoz/NumberPanel"
+	PanelKindPieChart    PanelPluginKind = "signoz/PieChartPanel"
+	PanelKindTable       PanelPluginKind = "signoz/TablePanel"
+	PanelKindHistogram   PanelPluginKind = "signoz/HistogramPanel"
+	PanelKindList        PanelPluginKind = "signoz/ListPanel"
+	PanelKindText        PanelPluginKind = "signoz/TextPanel"
+	PanelKindHeatmap     PanelPluginKind = "signoz/HeatmapPanel"
+	PanelKindScatterPlot PanelPluginKind = "signoz/ScatterPlotPanel"
+	PanelKindGeoMap      PanelPluginKind = "signoz/GeoMapPanel"
+	PanelKindTopList     PanelPluginKind = "signoz/TopListPanel"
 )
 
 func (PanelPluginKind) Enum() []any {
-	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap}
+	return []any{PanelKindTimeSeries, PanelKindBarChart, PanelKindAreaChart, PanelKindNumber, PanelKindPieChart, PanelKindTable, PanelKindHistogram, PanelKindList, PanelKindText, PanelKindHeatmap, PanelKindScatterPlot, PanelKindGeoMap, PanelKindTopList}
 }
 
 func (k PanelPluginKind) rendersWithoutQuery() bool {
 	return k == PanelKindText
 }
 
+func (k PanelPluginKind) joinsQueryRowsIntoOneTable() bool {
+	return k == PanelKindTable || k == PanelKindScatterPlot || k == PanelKindGeoMap
+}
+
 type TimeSeriesPanelSpec struct {
-	Visualization   TimeSeriesVisualization   `json:"visualization"`
-	Formatting      PanelFormatting           `json:"formatting"`
-	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance"`
-	Axes            Axes                      `json:"axes"`
-	Legend          Legend                    `json:"legend"`
-	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive"`
+	Visualization   TimeSeriesVisualization   `json:"visualization" description:"Time range and gap handling."`
+	Formatting      PanelFormatting           `json:"formatting" description:"Unit and decimal precision of the values."`
+	ChartAppearance TimeSeriesChartAppearance `json:"chartAppearance" description:"Line drawing options."`
+	Axes            Axes                      `json:"axes" description:"Y axis bounds and scale."`
+	Legend          Legend                    `json:"legend" description:"Legend placement and series colors."`
+	Thresholds      []ThresholdWithLabel      `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 type TimeSeriesChartAppearance struct {
-	LineInterpolation LineInterpolation `json:"lineInterpolation"`
-	ShowPoints        bool              `json:"showPoints"`
-	LineStyle         LineStyle         `json:"lineStyle"`
-	FillMode          FillMode          `json:"fillMode"`
-	SpanGaps          SpanGaps          `json:"spanGaps"`
+	LineInterpolation LineInterpolation `json:"lineInterpolation" description:"How points are joined: linear, spline (default), step_after or step_before."`
+	ShowPoints        bool              `json:"showPoints" description:"Whether each data point is marked on the line."`
+	LineStyle         LineStyle         `json:"lineStyle" description:"The line stroke: solid (default) or dashed."`
+	FillMode          FillMode          `json:"fillMode" description:"The fill under each line: none (default), solid or gradient."`
+	SpanGaps          SpanGaps          `json:"spanGaps" description:"Whether lines connect across missing points."`
 }
 
 type BarChartPanelSpec struct {
-	Visualization BarChartVisualization `json:"visualization"`
-	Formatting    PanelFormatting       `json:"formatting"`
-	Axes          Axes                  `json:"axes"`
-	Legend        Legend                `json:"legend"`
-	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive"`
+	Visualization BarChartVisualization `json:"visualization" description:"Time range, gap handling and stacking."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the values."`
+	Axes          Axes                  `json:"axes" description:"Y axis bounds and scale."`
+	Legend        Legend                `json:"legend" description:"Legend placement and series colors."`
+	Thresholds    []ThresholdWithLabel  `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 type AreaChartPanelSpec struct {
-	Visualization   AreaChartVisualization `json:"visualization"`
-	Formatting      PanelFormatting        `json:"formatting"`
-	ChartAppearance AreaChartAppearance    `json:"chartAppearance"`
-	Axes            Axes                   `json:"axes"`
-	Legend          Legend                 `json:"legend"`
-	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive"`
+	Visualization   AreaChartVisualization `json:"visualization" description:"Time range, gap handling and stacking."`
+	Formatting      PanelFormatting        `json:"formatting" description:"Unit and decimal precision of the values."`
+	ChartAppearance AreaChartAppearance    `json:"chartAppearance" description:"Line and fill drawing options."`
+	Axes            Axes                   `json:"axes" description:"Y axis bounds and scale."`
+	Legend          Legend                 `json:"legend" description:"Legend placement and series colors."`
+	Thresholds      []ThresholdWithLabel   `json:"thresholds" validate:"dive" description:"Horizontal reference lines drawn at fixed values."`
 }
 
 // AreaChartAppearance repeats the line-drawing fields rather than embedding
@@ -246,83 +256,126 @@ type AreaChartPanelSpec struct {
 // a duplicated json tag across an embed boundary is resolved by depth, which the
 // schema reflector does not model.
 type AreaChartAppearance struct {
-	LineInterpolation LineInterpolation `json:"lineInterpolation"`
-	ShowPoints        bool              `json:"showPoints"`
-	LineStyle         LineStyle         `json:"lineStyle"`
-	FillMode          AreaFillMode      `json:"fillMode"`
+	LineInterpolation LineInterpolation `json:"lineInterpolation" description:"How points are joined: linear, spline (default), step_after or step_before."`
+	ShowPoints        bool              `json:"showPoints" description:"Whether each data point is marked on the line."`
+	LineStyle         LineStyle         `json:"lineStyle" description:"The line stroke: solid (default) or dashed."`
+	FillMode          AreaFillMode      `json:"fillMode" description:"The fill under each line: solid (default) or gradient."`
 	// FillOpacity is a pointer so an omitted field resolves to the kind default at
 	// render time; a plain value would make the Go zero value a transparent fill.
-	FillOpacity *FillOpacity `json:"fillOpacity"`
-	SpanGaps    SpanGaps     `json:"spanGaps"`
+	FillOpacity *FillOpacity `json:"fillOpacity" description:"The fill opacity from 0 (transparent) to 1 (opaque). Null uses the chart default."`
+	SpanGaps    SpanGaps     `json:"spanGaps" description:"Whether lines connect across missing points."`
 }
 
 type NumberPanelSpec struct {
-	Visualization BasicVisualization    `json:"visualization"`
-	Formatting    PanelFormatting       `json:"formatting"`
-	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive"`
+	Visualization BasicVisualization    `json:"visualization" description:"The time range the value is computed over."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the value."`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive" description:"Rules that recolor the value when it compares to a threshold as specified."`
 }
 
 type PieChartPanelSpec struct {
-	Visualization BasicVisualization `json:"visualization"`
-	Formatting    PanelFormatting    `json:"formatting"`
-	Legend        Legend             `json:"legend"`
+	Visualization BasicVisualization `json:"visualization" description:"The time range the slices are computed over."`
+	Formatting    PanelFormatting    `json:"formatting" description:"Unit and decimal precision of the slice values."`
+	Legend        Legend             `json:"legend" description:"Legend placement and slice colors."`
+}
+
+type TopListPanelSpec struct {
+	Visualization BasicVisualization    `json:"visualization" description:"The time range the rows are computed over."`
+	Formatting    PanelFormatting       `json:"formatting" description:"Unit and decimal precision of the values."`
+	Appearance    TopListAppearance     `json:"appearance" description:"Rank, share and bar color options."`
+	Thresholds    []ComparisonThreshold `json:"thresholds" validate:"dive" description:"Rules that recolor a row when its value compares to a threshold as specified."`
+}
+
+type TopListAppearance struct {
+	ShowRank  bool            `json:"showRank" description:"Numbers each row by its position in the list."`
+	ShowShare bool            `json:"showShare" description:"Shows each row's share of the listed rows' total."`
+	BarColor  TopListBarColor `json:"barColor" required:"true" description:"Hex color of every bar; a matching background threshold overrides it."`
+}
+
+type TopListBarColor string
+
+const DefaultTopListBarColor TopListBarColor = "#4E74F8"
+
+// Same forms as go-playground/validator's hexcolor: #RGB, #RGBA, #RRGGBB, #RRGGBBAA.
+var hexColorRegex = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$`)
+
+func (c TopListBarColor) ValueOrDefault() string {
+	if c == "" {
+		return string(DefaultTopListBarColor)
+	}
+	return string(c)
+}
+
+func (c TopListBarColor) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.ValueOrDefault())
+}
+
+func (c *TopListBarColor) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid barColor: must be a hex color string")
+	}
+	if !hexColorRegex.MatchString(v) {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid barColor %q: must be a hex color such as #4E74F8", v)
+	}
+	*c = TopListBarColor(v)
+	return nil
 }
 
 type TablePanelSpec struct {
-	Visualization BasicVisualization `json:"visualization"`
-	Formatting    TableFormatting    `json:"formatting"`
-	Thresholds    []TableThreshold   `json:"thresholds" validate:"dive"`
+	Visualization BasicVisualization `json:"visualization" description:"The time range the rows are computed over."`
+	Formatting    TableFormatting    `json:"formatting" description:"Per-column units and decimal precision."`
+	Thresholds    []TableThreshold   `json:"thresholds" validate:"dive" description:"Rules that recolor a cell when its column value compares to a threshold as specified."`
 }
 
 type HistogramPanelSpec struct {
-	HistogramBuckets HistogramBuckets `json:"histogramBuckets"`
-	Legend           Legend           `json:"legend"`
+	HistogramBuckets HistogramBuckets `json:"histogramBuckets" description:"How values are grouped into buckets."`
+	Legend           Legend           `json:"legend" description:"Legend placement and series colors."`
 }
 
 type HistogramBuckets struct {
-	BucketCount           *float64 `json:"bucketCount"`
-	BucketWidth           *float64 `json:"bucketWidth"`
-	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries"`
+	BucketCount           *float64 `json:"bucketCount" description:"The approximate target number of buckets. Ignored when bucketWidth is positive. Null uses the chart default."`
+	BucketWidth           *float64 `json:"bucketWidth" description:"The width of each bucket in the value unit. A positive value takes precedence over bucketCount; null or 0 lets the chart choose."`
+	MergeAllActiveQueries bool     `json:"mergeAllActiveQueries" description:"Whether every series is combined into a single histogram instead of one per series."`
 }
 
 type ListPanelSpec struct {
-	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `json:"selectFields,omitzero" validate:"dive" description:"The columns shown for each row, as field keys with name and optional fieldContext, fieldDataType and signal. Empty shows the default columns."`
 }
 
 type HeatmapPanelSpec struct {
-	Visualization   BasicVisualization     `json:"visualization"`
-	Formatting      PanelFormatting        `json:"formatting"`
-	Axes            HeatmapAxes            `json:"axes"`
-	Legend          Legend                 `json:"legend"`
-	ChartAppearance HeatmapChartAppearance `json:"chartAppearance"`
+	Visualization   BasicVisualization     `json:"visualization" description:"The time range the heatmap covers."`
+	Formatting      PanelFormatting        `json:"formatting" description:"Unit and decimal precision of the bucket bounds."`
+	Axes            HeatmapAxes            `json:"axes" description:"The Y axis scale."`
+	Legend          Legend                 `json:"legend" description:"Legend placement and series colors."`
+	ChartAppearance HeatmapChartAppearance `json:"chartAppearance" description:"How bucket counts map to colors."`
 }
 
 // HeatmapAxes carries only the Y scale. The shared Axes type models a value
 // axis with soft bounds, where a heatmap's Y axis is the bucket boundaries the
 // response already fixed.
 type HeatmapAxes struct {
-	Y HeatmapAxis `json:"y"`
+	Y HeatmapAxis `json:"y" description:"The bucket axis."`
 }
 
 type HeatmapAxis struct {
-	Scale HeatmapYScale `json:"scale"`
+	Scale HeatmapYScale `json:"scale" description:"How bucket bounds are spaced on the axis: auto (default), linear, log or symlog."`
 }
 
 type HeatmapChartAppearance struct {
-	Colors HeatmapColors `json:"colors"`
+	Colors HeatmapColors `json:"colors" description:"The color scale applied to bucket counts."`
 }
 
 type HeatmapColors struct {
-	Mode    HeatmapColorMode  `json:"mode"`
-	Palette HeatmapPalette    `json:"palette"`
-	Scale   HeatmapColorScale `json:"scale"`
-	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128"`
+	Mode    HeatmapColorMode  `json:"mode" description:"How counts are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill."`
+	Palette HeatmapPalette    `json:"palette" description:"The named color ramp used in palette mode, such as lava (default), ice or ember."`
+	Scale   HeatmapColorScale `json:"scale" description:"How counts map onto the color range: log (default), sqrt or linear."`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128" description:"The number of distinct color steps, 2 to 128. 0 uses the chart default."`
 	// MinCount and MaxCount clamp the colour scale; nil derives them from the
 	// grid, 0 and the highest count in it.
-	MinCount *float64 `json:"minCount"`
-	MaxCount *float64 `json:"maxCount"`
+	MinCount *float64 `json:"minCount" description:"The count mapped to the lowest color. Null uses 0. Must not exceed maxCount."`
+	MaxCount *float64 `json:"maxCount" description:"The count mapped to the highest color. Null uses the highest count in the grid."`
 	// Fill applies in opacity mode; empty means the selected group's legend colour.
-	Fill string `json:"fill"`
+	Fill string `json:"fill" description:"The hex color varied in opacity mode. Empty uses the series legend color."`
 }
 
 func (c *HeatmapColors) UnmarshalJSON(data []byte) error {
@@ -344,16 +397,288 @@ func (c HeatmapColors) validate() error {
 }
 
 type TextPanelSpec struct {
-	Mode          TextMode         `json:"mode"`
-	Text          string           `json:"text"`
-	Presentation  TextPresentation `json:"presentation"`
-	HeaderOptions HeaderOptions    `json:"headerOptions"`
+	Mode          TextMode         `json:"mode" description:"How text is interpreted. Only markdown is supported."`
+	Text          string           `json:"text" description:"The content to render."`
+	Presentation  TextPresentation `json:"presentation" description:"Alignment and background of the content."`
+	HeaderOptions HeaderOptions    `json:"headerOptions" description:"Whether the panel header is shown."`
+}
+
+type ScatterPlotPanelSpec struct {
+	Visualization   BasicVisualization         `json:"visualization" description:"The time range the groups are computed over."`
+	Dimensions      ScatterPlotDimensions      `json:"dimensions" description:"Which result columns place, size and color the dots. Each dot is one row of the joined scalar result: one group."`
+	Formatting      TableFormatting            `json:"formatting" description:"Per-column units and decimal precision. The x and y columns' units label their axes; every bound column's unit shows in the tooltip."`
+	Axes            ScatterPlotAxes            `json:"axes" description:"Title, bounds and scale of each axis."`
+	ChartAppearance ScatterPlotChartAppearance `json:"chartAppearance" description:"Dot drawing options."`
+	Legend          Legend                     `json:"legend" description:"Legend placement and series colors. A series is one color group, labeled by its colorBy values joined with a comma, or All when nothing is grouped."`
+	Thresholds      []ScatterPlotThreshold     `json:"thresholds" validate:"dive" description:"Reference lines drawn at fixed values across the x or y axis."`
+}
+
+func (s *ScatterPlotPanelSpec) validateAgainstQuery(query Query, path string) error {
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s.dimensions: %s", path, err.Error())
+	}
+	keys, known := composite.CollectResultColumnKeys()
+	if !known {
+		return nil
+	}
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	if err := s.validateValueDimensions(keys, path); err != nil {
+		return err
+	}
+	if err := s.validateColorDimensions(keys, path); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ScatterPlotPanelSpec) validateValueDimensions(keys qb.ResultColumnKeys, path string) error {
+	for _, binding := range []struct{ field, key string }{{"x", s.Dimensions.X}, {"y", s.Dimensions.Y}, {"sizeBy", s.Dimensions.SizeBy}} {
+		// Empty is unset: the renderer picks a column or a fixed size.
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Aggregations[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
+		}
+	}
+	return nil
+}
+
+func (s *ScatterPlotPanelSpec) validateColorDimensions(keys qb.ResultColumnKeys, path string) error {
+	for _, label := range s.Dimensions.ColorBy {
+		if _, ok := keys.Groups[label]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.dimensions.colorBy: %q is not a group-by key of the panel's query; group-by keys: %s", path, label, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
+		}
+	}
+	return nil
+}
+
+// ScatterPlotDimensions binds result columns to what a dot encodes. Value columns
+// use the Table column key, so formatting.columnUnits carries over between the
+// two kinds.
+type ScatterPlotDimensions struct {
+	X       string   `json:"x" description:"Value column key (queryName, or queryName.expression for a multi-aggregation query) plotted on the x axis. Empty, or a key the result lacks, uses the first value column."`
+	Y       string   `json:"y" description:"Value column key plotted on the y axis. Empty, or a key the result lacks, uses the first value column x does not use."`
+	SizeBy  string   `json:"sizeBy" description:"Value column key that scales each dot's area between chartAppearance.points.minSize and maxSize. Empty draws every dot at chartAppearance.points.size, as does a dot with no value."`
+	ColorBy []string `json:"colorBy" description:"Group-by label names (e.g. k8s.namespace.name) whose combined values color the dots and drive the legend. Empty colors by every group-by label."`
+}
+
+type ScatterPlotAxes struct {
+	X ScatterPlotAxis `json:"x" description:"The axis dimensions.x is plotted along."`
+	Y ScatterPlotAxis `json:"y" description:"The axis dimensions.y is plotted along."`
+}
+
+type ScatterPlotAxis struct {
+	SoftMin *float64  `json:"softMin" description:"The lowest value the axis always shows; data below it still extends the axis, as does a threshold on it. Null fits the data. A log axis ignores a bound at or below zero."`
+	SoftMax *float64  `json:"softMax" description:"The highest value the axis always shows; data above it still extends the axis, as does a threshold on it. Null fits the data."`
+	Scale   AxisScale `json:"scale" description:"auto (default) uses log, or symlog when values include zero or negatives, when that spreads the dots clearly more than linear does; otherwise linear. log cannot place a value at or below zero and leaves that dot out; symlog is log-like but places it."`
+	Label   string    `json:"label" description:"Axis title. Empty draws none; the tooltip still names the column."`
+}
+
+type ScatterPlotChartAppearance struct {
+	Points ScatterPlotPoints `json:"points" description:"Dot size and opacity."`
+}
+
+// ScatterPlotPoints keeps the fixed size and the size range side by side so
+// binding or unbinding dimensions.sizeBy restores the other's last setting. Nil
+// fields resolve to the renderer default.
+type ScatterPlotPoints struct {
+	Size    *PointDiameter `json:"size" description:"Diameter of every dot when dimensions.sizeBy is unset, in CSS pixels from 2 to 40. Null means 6."`
+	MinSize *PointDiameter `json:"minSize" description:"Diameter of the smallest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 4."`
+	MaxSize *PointDiameter `json:"maxSize" description:"Diameter of the largest dot when dimensions.sizeBy is set, in CSS pixels from 2 to 40. Null means 24."`
+	Opacity *PointOpacity  `json:"opacity" description:"Fill opacity of every dot, from 0.1 to 1. Null means 0.7."`
+}
+
+func (p *ScatterPlotPoints) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias ScatterPlotPoints
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid points")
+	}
+	*p = ScatterPlotPoints(tmp)
+	return p.validate()
+}
+
+// Null bounds are compared at their renderer defaults, so one-sided settings can't invert the range.
+func (p ScatterPlotPoints) validate() error {
+	minSize, maxSize := defaultPointMinSize, defaultPointMaxSize
+	if p.MinSize != nil {
+		minSize = *p.MinSize
+	}
+	if p.MaxSize != nil {
+		maxSize = *p.MaxSize
+	}
+	if minSize > maxSize {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid points: minSize %d must not exceed maxSize %d", minSize, maxSize)
+	}
+	return nil
+}
+
+type GeoMapPanelSpec struct {
+	Visualization   BasicVisualization    `json:"visualization" description:"The time range the values are computed over."`
+	Formatting      TableFormatting       `json:"formatting" description:"Per-column units and decimal precision."`
+	Location        GeoMapLocation        `json:"location" description:"The group-by columns that place each row on the map."`
+	Map             GeoMapSettings        `json:"map" description:"Layer, view, projection and the value columns drawn."`
+	ChartAppearance GeoMapChartAppearance `json:"chartAppearance" description:"Color scale, bubble size and labels."`
+	Legend          Legend                `json:"legend" description:"Legend placement."`
+	Thresholds      []GeoMapThreshold     `json:"thresholds" validate:"dive" description:"Rules that recolor a shape, bubble or point when its value compares to a threshold as specified."`
+}
+
+// A null radius bound is compared at the layer's renderer default, so a one-sided setting can't invert the range.
+func (s GeoMapPanelSpec) validate() error {
+	minRadius, maxRadius := defaultBubbleMinRadius, defaultBubbleMaxRadius
+	if s.Map.Layer == GeoMapLayerPoints {
+		minRadius, maxRadius = defaultPointMinRadius, defaultPointMaxRadius
+	}
+	if s.ChartAppearance.Bubbles.MinRadius != nil {
+		minRadius = *s.ChartAppearance.Bubbles.MinRadius
+	}
+	if s.ChartAppearance.Bubbles.MaxRadius != nil {
+		maxRadius = *s.ChartAppearance.Bubbles.MaxRadius
+	}
+	if minRadius > maxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", minRadius, maxRadius)
+	}
+	return nil
+}
+
+func (s *GeoMapPanelSpec) validateAgainstQuery(query Query, path string) error {
+	composite, err := query.Spec.Plugin.buildV5CompositeQueryFromPlugin()
+	if err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	keys, known := composite.CollectResultColumnKeys()
+	if !known {
+		return nil
+	}
+	if err := composite.ValidateQueriesShareGroupBy(); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "%s: %s", path, err.Error())
+	}
+	for _, binding := range []struct{ field, key string }{{"location.country", s.Location.Country}, {"location.region", s.Location.Region}, {"location.lat", s.Location.Lat}, {"location.lon", s.Location.Lon}} {
+		// Empty is unset: the renderer detects the column by name.
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Groups[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.%s: %q is not a group-by key of the panel's query; group-by keys: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Groups))))
+		}
+	}
+	for _, binding := range []struct{ field, key string }{{"map.colorBy", s.Map.ColorBy}, {"map.sizeBy", s.Map.SizeBy}} {
+		if binding.key == "" {
+			continue
+		}
+		if _, ok := keys.Aggregations[binding.key]; !ok {
+			return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "%s.%s: %q is not a value column of the panel's query; value columns: %s", path, binding.field, binding.key, allowedValuesForKind(slices.Sorted(maps.Keys(keys.Aggregations))))
+		}
+	}
+	return nil
+}
+
+type GeoMapLocation struct {
+	Mode          GeoMapLocationMode  `json:"mode" required:"true" description:"How rows are placed: auto (default) detects it from the group-by keys, country, subdivision or coordinates."`
+	Country       string              `json:"country" description:"Group-by key holding the country, for the country and subdivision modes. Empty detects it by name, such as geo.country.iso_code."`
+	CountryFormat GeoMapCountryFormat `json:"countryFormat" required:"true" description:"How country values are written: auto (default) detects it, alpha2, alpha3 or name."`
+	Region        string              `json:"region" description:"Group-by key holding the ISO 3166-2 region code (e.g. geo.region.iso_code), for the subdivision mode. Empty detects it by name."`
+	Lat           string              `json:"lat" description:"Group-by key holding the latitude, for the coordinates mode. Empty detects it by name."`
+	Lon           string              `json:"lon" description:"Group-by key holding the longitude, for the coordinates mode. Empty detects it by name."`
+}
+
+type GeoMapSettings struct {
+	Layer       GeoMapLayer      `json:"layer" required:"true" description:"What is drawn: regions (default) fills each shape, bubbles draws a circle per region, points a circle per coordinate."`
+	View        GeoMapView       `json:"view" required:"true" description:"The area shown: world (default), fit to the data, a continent, or country with viewCountry."`
+	ViewCountry string           `json:"viewCountry" validate:"omitempty,iso3166_1_alpha2" description:"Uppercase ISO 3166-1 alpha-2 code of the country the country view shows."`
+	Projection  GeoMapProjection `json:"projection" required:"true" description:"The map projection: mercator (default), equal_earth or natural_earth."`
+	ColorBy     string           `json:"colorBy" description:"Value column key, as in a Table panel, that sets the color. Empty uses the first value column."`
+	SizeBy      string           `json:"sizeBy" description:"Value column key, as in a Table panel, that sets the bubble or point size. Empty uses colorBy."`
+}
+
+func (m *GeoMapSettings) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapSettings
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid map")
+	}
+	*m = GeoMapSettings(tmp)
+	return m.validate()
+}
+
+func (m GeoMapSettings) validate() error {
+	if m.View == GeoMapViewCountry && m.ViewCountry == "" {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid map: viewCountry is required when view is `country`")
+	}
+	return nil
+}
+
+type GeoMapChartAppearance struct {
+	Colors  GeoMapColors  `json:"colors" description:"The color scale applied to the colorBy values."`
+	Bubbles GeoMapBubbles `json:"bubbles" description:"The circle radius range of the bubbles and points layers."`
+	Labels  *bool         `json:"labels" description:"Shows country and state names once each fits inside its shape. Null shows them."`
+}
+
+type GeoMapColors struct {
+	Mode    HeatmapColorMode  `json:"mode" description:"How values are colored: palette (default) picks a hue from palette, opacity varies the opacity of fill."`
+	Palette HeatmapPalette    `json:"palette" description:"The named color ramp used in palette mode, such as lava (default), ice or ember."`
+	Scale   HeatmapColorScale `json:"scale" description:"How values map onto the color range: log (default), sqrt or linear."`
+	Steps   int               `json:"steps" validate:"omitempty,min=2,max=128" description:"The number of distinct color steps, 2 to 128. 0 uses the chart default."`
+	Min     *float64          `json:"min" description:"The value mapped to the lowest color. Null uses the lowest value in the data. Must not exceed max."`
+	Max     *float64          `json:"max" description:"The value mapped to the highest color. Null uses the highest value in the data."`
+	Fill    string            `json:"fill" validate:"omitempty,hexcolor" description:"The hex color varied in opacity mode. Empty uses the default fill."`
+}
+
+func (c *GeoMapColors) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapColors
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map colors")
+	}
+	*c = GeoMapColors(tmp)
+	return c.validate()
+}
+
+func (c GeoMapColors) validate() error {
+	if c.Min != nil && c.Max != nil && *c.Min > *c.Max {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "geo map colors.min %v is greater than colors.max %v", *c.Min, *c.Max)
+	}
+	return nil
+}
+
+type GeoMapBubbles struct {
+	MinRadius *BubbleRadius `json:"minRadius" description:"Radius of the smallest circle, in CSS pixels from 1 to 64. Null means 2 on the points layer, 3 otherwise."`
+	MaxRadius *BubbleRadius `json:"maxRadius" description:"Radius of the largest circle, in CSS pixels from 1 to 64. Null means 8 on the points layer, 28 otherwise."`
+}
+
+func (b *GeoMapBubbles) UnmarshalJSON(data []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	type alias GeoMapBubbles
+	var tmp alias
+	if err := dec.Decode(&tmp); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid bubbles")
+	}
+	*b = GeoMapBubbles(tmp)
+	return b.validate()
+}
+
+func (b GeoMapBubbles) validate() error {
+	if b.MinRadius != nil && b.MaxRadius != nil && *b.MinRadius > *b.MaxRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubbles: minRadius %d must not exceed maxRadius %d", *b.MinRadius, *b.MaxRadius)
+	}
+	return nil
 }
 
 type TextPresentation struct {
-	TextAlign     TextAlign     `json:"textAlign"`
-	VerticalAlign VerticalAlign `json:"verticalAlign"`
-	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor"`
+	TextAlign     TextAlign     `json:"textAlign" description:"Horizontal alignment: left (default), center or right."`
+	VerticalAlign VerticalAlign `json:"verticalAlign" description:"Vertical alignment: top (default), center or bottom."`
+	Background    *string       `json:"background,omitempty" validate:"omitempty,hexcolor" description:"A hex background color such as #1f2937. Omit for the panel default."`
 }
 
 // ══════════════════════════════════════════════
@@ -361,79 +686,95 @@ type TextPresentation struct {
 // ══════════════════════════════════════════════
 
 type Axes struct {
-	SoftMin    *float64 `json:"softMin"`
-	SoftMax    *float64 `json:"softMax"`
-	IsLogScale bool     `json:"isLogScale"`
+	SoftMin    *float64 `json:"softMin" description:"The lowest value the Y axis always shows; data below it still extends the axis. Null fits the data."`
+	SoftMax    *float64 `json:"softMax" description:"The highest value the Y axis always shows; data above it still extends the axis. Null fits the data."`
+	IsLogScale bool     `json:"isLogScale" description:"Whether the Y axis uses a logarithmic scale."`
 }
 
 // HeaderOptions controls the panel card's header strip — the title/description
 // row above the panel content. Phrased as hide so the zero value shows the
 // header, matching every other panel kind.
 type HeaderOptions struct {
-	Hide bool `json:"hide"`
+	Hide bool `json:"hide" description:"Whether the title and description row above the content is hidden."`
 }
 
 type BasicVisualization struct {
-	TimePreference TimePreference `json:"timePreference"`
+	TimePreference TimePreference `json:"timePreference" description:"The time range the panel queries: global_time (default) follows the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr, last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a fixed window."`
 }
 
 type TimeSeriesVisualization struct {
 	BasicVisualization
-	FillSpans bool `json:"fillSpans"`
+	FillSpans bool `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
 }
 
 type BarChartVisualization struct {
 	BasicVisualization
-	FillSpans       bool `json:"fillSpans"`
-	StackedBarChart bool `json:"stackedBarChart"`
+	FillSpans       bool `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
+	StackedBarChart bool `json:"stackedBarChart" description:"Whether the series are stacked on top of each other."`
 }
 
 type AreaChartVisualization struct {
 	BasicVisualization
-	FillSpans bool      `json:"fillSpans"`
-	Stack     StackMode `json:"stack"`
+	FillSpans bool      `json:"fillSpans" description:"Whether intervals with no data are drawn as zero instead of a gap."`
+	Stack     StackMode `json:"stack" description:"How the areas combine: none (default) overlays them, normal stacks the values, percent stacks them as shares of the total."`
 }
 
 type PanelFormatting struct {
-	Unit             string          `json:"unit"`
-	DecimalPrecision PrecisionOption `json:"decimalPrecision"`
+	Unit             string          `json:"unit" description:"The display unit of the values, such as By, ms, s, percent or percentunit. Use percent for values already expressed as percentages (95 displays as 95%) and percentunit for fractions (0.95 displays as 95%). Empty shows plain numbers."`
+	DecimalPrecision PrecisionOption `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
 type TableFormatting struct {
-	ColumnUnits      map[string]string `json:"columnUnits"`
-	DecimalPrecision PrecisionOption   `json:"decimalPrecision"`
+	ColumnUnits      map[string]string `json:"columnUnits" description:"Unit id per value column, keyed by the column key: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Aggregation aliases are display labels, not keys."`
+	DecimalPrecision PrecisionOption   `json:"decimalPrecision" description:"Decimal places shown: 0, 1, 2 (default), 3, 4 or full."`
 }
 
 type Legend struct {
-	Position     LegendPosition    `json:"position"`
-	Mode         LegendMode        `json:"mode"`
-	CustomColors map[string]string `json:"customColors"`
+	Position     LegendPosition    `json:"position" description:"Where the legend sits: bottom (default) or right."`
+	Mode         LegendMode        `json:"mode" description:"The legend layout. Only list is supported."`
+	CustomColors map[string]string `json:"customColors" description:"Hex colors keyed by series label, overriding the automatic palette."`
 }
 
 type ThresholdWithLabel struct {
 	// Value is always present in the schema (required:"true"), but 0 is a legitimate
 	// threshold, so it drops validate:"required" — go-playground's required treats a
 	// zero float as unset and would wrongly reject value: 0.
-	Value float64 `json:"value" required:"true"`
-	Unit  string  `json:"unit"`
-	Color string  `json:"color" validate:"required" required:"true"`
-	Label string  `json:"label"`
+	Value float64 `json:"value" required:"true" description:"The value the line is drawn at, in unit."`
+	Unit  string  `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color string  `json:"color" validate:"required" required:"true" description:"The CSS color of the line, for example #F1575F, which matches the SigNoz red preset; CSS named colors such as red also work."`
+	Label string  `json:"label" description:"The caption shown on the line."`
 }
 
 type ComparisonThreshold struct {
 	// Value is always present in the schema (required:"true"), but 0 is a legitimate
 	// threshold, so it drops validate:"required" — go-playground's required treats a
 	// zero float as unset and would wrongly reject value: 0.
-	Value    float64            `json:"value" required:"true"`
-	Operator ComparisonOperator `json:"operator"`
-	Unit     string             `json:"unit"`
-	Color    string             `json:"color" validate:"required" required:"true"`
-	Format   ThresholdFormat    `json:"format"`
+	Value    float64            `json:"value" required:"true" description:"The value compared against, in unit."`
+	Operator ComparisonOperator `json:"operator" description:"The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal."`
+	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the panel's unit, or the column's unit for a table threshold. Prefer the panel's unit; a different unit works only when it converts to it, such as s against a panel in ms."`
+	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color applied to the text or background, per format, while the threshold is active. For example #F1575F matches the SigNoz red preset; CSS named colors such as red also work."`
+	Format   ThresholdFormat    `json:"format" description:"What the color is applied to: text (default) or background."`
+}
+
+type ScatterPlotThreshold struct {
+	ThresholdWithLabel
+	Axis ThresholdAxis `json:"axis" description:"The axis the line marks: y (default) draws it horizontally, x vertically. Unit converts against that axis's column unit, and the axis extends to keep the line in view."`
 }
 
 type TableThreshold struct {
 	ComparisonThreshold
-	ColumnName string `json:"columnName" validate:"required" required:"true"`
+	ColumnName string `json:"columnName" validate:"required" required:"true" description:"The key of the value column the rule applies to: the query name for a builder query with one aggregation (A), the query name dotted with the aggregation expression for several (A.count()), or the SQL alias for a ClickHouse SQL column. Group-by columns are never colored, and aggregation aliases are display labels, not keys."`
+}
+
+// GeoMapThreshold is ComparisonThreshold without format.
+type GeoMapThreshold struct {
+	// Value is always present in the schema (required:"true"), but 0 is a legitimate
+	// threshold, so it drops validate:"required" — go-playground's required treats a
+	// zero float as unset and would wrongly reject value: 0.
+	Value    float64            `json:"value" required:"true" description:"The value compared against, in unit."`
+	Operator ComparisonOperator `json:"operator" description:"The comparison that activates the threshold: above (default), below, above_or_equal, below_or_equal, equal or not_equal."`
+	Unit     string             `json:"unit" description:"The unit id of value, such as ms or percent. Empty means the colorBy column's unit."`
+	Color    string             `json:"color" validate:"required" required:"true" description:"The CSS color of the shape, bubble or point while the threshold is active, for example #F1575F; CSS named colors such as red also work."`
 }
 
 // ══════════════════════════════════════════════
@@ -716,6 +1057,86 @@ func (ls *LineStyle) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// AxisScale `auto` leaves the choice to the renderer; `symlog` is log-like but
+// defined at and below zero.
+type AxisScale struct{ valuer.String }
+
+var (
+	AxisScaleAuto   = AxisScale{valuer.NewString("auto")} // default
+	AxisScaleLinear = AxisScale{valuer.NewString("linear")}
+	AxisScaleLog    = AxisScale{valuer.NewString("log")}
+	AxisScaleSymlog = AxisScale{valuer.NewString("symlog")}
+)
+
+func (AxisScale) Enum() []any {
+	return []any{AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog}
+}
+
+func (as AxisScale) ValueOrDefault() string {
+	if as.IsZero() {
+		return AxisScaleAuto.StringValue()
+	}
+	return as.StringValue()
+}
+
+func (as AxisScale) MarshalJSON() ([]byte, error) {
+	return json.Marshal(as.ValueOrDefault())
+}
+
+func (as *AxisScale) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid axis scale: must be a string, one of `auto`, `linear`, `log`, or `symlog`")
+	}
+	val := AxisScale{valuer.NewString(v)}
+	switch val {
+	case AxisScaleAuto, AxisScaleLinear, AxisScaleLog, AxisScaleSymlog:
+		*as = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid axis scale %q: must be `auto`, `linear`, `log`, or `symlog`", v)
+	}
+}
+
+// ThresholdAxis is the axis a scatter plot threshold line marks: `y` draws it
+// horizontally, `x` vertically.
+type ThresholdAxis struct{ valuer.String }
+
+var (
+	ThresholdAxisX = ThresholdAxis{valuer.NewString("x")}
+	ThresholdAxisY = ThresholdAxis{valuer.NewString("y")} // default
+)
+
+func (ThresholdAxis) Enum() []any {
+	return []any{ThresholdAxisX, ThresholdAxisY}
+}
+
+func (ta ThresholdAxis) ValueOrDefault() string {
+	if ta.IsZero() {
+		return ThresholdAxisY.StringValue()
+	}
+	return ta.StringValue()
+}
+
+func (ta ThresholdAxis) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ta.ValueOrDefault())
+}
+
+func (ta *ThresholdAxis) UnmarshalJSON(data []byte) error {
+	var v string
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid threshold axis: must be a string, one of `x` or `y`")
+	}
+	val := ThresholdAxis{valuer.NewString(v)}
+	switch val {
+	case ThresholdAxisX, ThresholdAxisY:
+		*ta = val
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid threshold axis %q: must be `x` or `y`", v)
+	}
+}
+
 type FillMode struct{ valuer.String }
 
 var (
@@ -854,9 +1275,89 @@ func (o *FillOpacity) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+const (
+	minPointDiameter = 2
+	maxPointDiameter = 40
+
+	defaultPointMinSize PointDiameter = 4
+	defaultPointMaxSize PointDiameter = 24
+)
+
+// PointDiameter is a scatter dot's diameter in whole CSS pixels.
+type PointDiameter int
+
+func (PointDiameter) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointDiameter).WithMaximum(maxPointDiameter)
+	return nil
+}
+
+func (d *PointDiameter) UnmarshalJSON(data []byte) error {
+	var v int
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point diameter: must be a whole number between %d and %d", minPointDiameter, maxPointDiameter)
+	}
+	if v < minPointDiameter || v > maxPointDiameter {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point diameter %d: must be a whole number between %d and %d", v, minPointDiameter, maxPointDiameter)
+	}
+	*d = PointDiameter(v)
+	return nil
+}
+
+const (
+	minBubbleRadius = 1
+	maxBubbleRadius = 64
+
+	defaultBubbleMinRadius BubbleRadius = 3
+	defaultBubbleMaxRadius BubbleRadius = 28
+	defaultPointMinRadius  BubbleRadius = 2
+	defaultPointMaxRadius  BubbleRadius = 8
+)
+
+// BubbleRadius is a geo map circle's radius in whole CSS pixels.
+type BubbleRadius int
+
+func (BubbleRadius) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minBubbleRadius).WithMaximum(maxBubbleRadius)
+	return nil
+}
+
+func (r *BubbleRadius) UnmarshalJSON(data []byte) error {
+	var v int
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid bubble radius: must be a whole number between %d and %d", minBubbleRadius, maxBubbleRadius)
+	}
+	if v < minBubbleRadius || v > maxBubbleRadius {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid bubble radius %d: must be a whole number between %d and %d", v, minBubbleRadius, maxBubbleRadius)
+	}
+	*r = BubbleRadius(v)
+	return nil
+}
+
+const minPointOpacity = 0.1
+
+// PointOpacity is a scatter dot's fill alpha. The floor keeps a dot visible.
+type PointOpacity float64
+
+func (PointOpacity) PrepareJSONSchema(s *jsonschema.Schema) error {
+	s.WithMinimum(minPointOpacity).WithMaximum(1)
+	return nil
+}
+
+func (o *PointOpacity) UnmarshalJSON(data []byte) error {
+	var v float64
+	if err := json.Unmarshal(data, &v); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid point opacity: must be a number between %v and 1", minPointOpacity)
+	}
+	if v < minPointOpacity || v > 1 {
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid point opacity %v: must be between %v and 1", v, minPointOpacity)
+	}
+	*o = PointOpacity(v)
+	return nil
+}
+
 type SpanGaps struct {
 	FillOnlyBelow bool   `json:"fillOnlyBelow" description:"Controls whether lines connect across null values. When false (default), all gaps are connected. When true, only gaps smaller than fillLessThan are connected."`
-	FillLessThan  string `json:"fillLessThan" description:"The maximum gap size to connect when fillOnlyBelow is true. Gaps larger than this duration are left disconnected."`
+	FillLessThan  string `json:"fillLessThan" description:"The largest gap still connected when fillOnlyBelow is true; longer gaps are left disconnected. Required in that case, as a positive Prometheus duration such as 30s, 5m or 1d."`
 }
 
 func (sg *SpanGaps) UnmarshalJSON(data []byte) error {
@@ -1142,6 +1643,7 @@ func (p *HeatmapPalette) UnmarshalJSON(data []byte) error {
 	}
 }
 
+// todo(@namanv3): remove and use AxisScale everywhere.
 type HeatmapYScale struct{ valuer.String }
 
 var (
@@ -1216,5 +1718,203 @@ func (s *HeatmapColorScale) UnmarshalJSON(data []byte) error {
 		return nil
 	default:
 		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid heatmap color scale %q: must be `log`, `sqrt`, or `linear`", v)
+	}
+}
+
+type GeoMapLocationMode struct{ valuer.String }
+
+var (
+	GeoMapLocationModeAuto        = GeoMapLocationMode{valuer.NewString("auto")} // default
+	GeoMapLocationModeCountry     = GeoMapLocationMode{valuer.NewString("country")}
+	GeoMapLocationModeSubdivision = GeoMapLocationMode{valuer.NewString("subdivision")}
+	GeoMapLocationModeCoordinates = GeoMapLocationMode{valuer.NewString("coordinates")}
+)
+
+func (GeoMapLocationMode) Enum() []any {
+	return []any{GeoMapLocationModeAuto, GeoMapLocationModeCountry, GeoMapLocationModeSubdivision, GeoMapLocationModeCoordinates}
+}
+
+func (v GeoMapLocationMode) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapLocationModeAuto.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapLocationMode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapLocationMode) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map location mode: must be a string, one of `auto`, `country`, `subdivision`, or `coordinates`")
+	}
+	parsed := GeoMapLocationMode{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapLocationModeAuto, GeoMapLocationModeCountry, GeoMapLocationModeSubdivision, GeoMapLocationModeCoordinates:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map location mode %q: must be `auto`, `country`, `subdivision`, or `coordinates`", s)
+	}
+}
+
+type GeoMapCountryFormat struct{ valuer.String }
+
+var (
+	GeoMapCountryFormatAuto   = GeoMapCountryFormat{valuer.NewString("auto")} // default
+	GeoMapCountryFormatAlpha2 = GeoMapCountryFormat{valuer.NewString("alpha2")}
+	GeoMapCountryFormatAlpha3 = GeoMapCountryFormat{valuer.NewString("alpha3")}
+	GeoMapCountryFormatName   = GeoMapCountryFormat{valuer.NewString("name")}
+)
+
+func (GeoMapCountryFormat) Enum() []any {
+	return []any{GeoMapCountryFormatAuto, GeoMapCountryFormatAlpha2, GeoMapCountryFormatAlpha3, GeoMapCountryFormatName}
+}
+
+func (v GeoMapCountryFormat) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapCountryFormatAuto.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapCountryFormat) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapCountryFormat) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map country format: must be a string, one of `auto`, `alpha2`, `alpha3`, or `name`")
+	}
+	parsed := GeoMapCountryFormat{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapCountryFormatAuto, GeoMapCountryFormatAlpha2, GeoMapCountryFormatAlpha3, GeoMapCountryFormatName:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map country format %q: must be `auto`, `alpha2`, `alpha3`, or `name`", s)
+	}
+}
+
+type GeoMapLayer struct{ valuer.String }
+
+var (
+	GeoMapLayerRegions = GeoMapLayer{valuer.NewString("regions")} // default
+	GeoMapLayerBubbles = GeoMapLayer{valuer.NewString("bubbles")}
+	GeoMapLayerPoints  = GeoMapLayer{valuer.NewString("points")}
+)
+
+func (GeoMapLayer) Enum() []any {
+	return []any{GeoMapLayerRegions, GeoMapLayerBubbles, GeoMapLayerPoints}
+}
+
+func (v GeoMapLayer) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapLayerRegions.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapLayer) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapLayer) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map layer: must be a string, one of `regions`, `bubbles`, or `points`")
+	}
+	parsed := GeoMapLayer{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapLayerRegions, GeoMapLayerBubbles, GeoMapLayerPoints:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map layer %q: must be `regions`, `bubbles`, or `points`", s)
+	}
+}
+
+type GeoMapView struct{ valuer.String }
+
+var (
+	GeoMapViewWorld        = GeoMapView{valuer.NewString("world")} // default
+	GeoMapViewFit          = GeoMapView{valuer.NewString("fit")}
+	GeoMapViewAfrica       = GeoMapView{valuer.NewString("africa")}
+	GeoMapViewAsia         = GeoMapView{valuer.NewString("asia")}
+	GeoMapViewEurope       = GeoMapView{valuer.NewString("europe")}
+	GeoMapViewNorthAmerica = GeoMapView{valuer.NewString("north_america")}
+	GeoMapViewSouthAmerica = GeoMapView{valuer.NewString("south_america")}
+	GeoMapViewOceania      = GeoMapView{valuer.NewString("oceania")}
+	GeoMapViewCountry      = GeoMapView{valuer.NewString("country")}
+)
+
+func (GeoMapView) Enum() []any {
+	return []any{GeoMapViewWorld, GeoMapViewFit, GeoMapViewAfrica, GeoMapViewAsia, GeoMapViewEurope, GeoMapViewNorthAmerica, GeoMapViewSouthAmerica, GeoMapViewOceania, GeoMapViewCountry}
+}
+
+func (v GeoMapView) ValueOrDefault() string {
+	if v.IsZero() {
+		return GeoMapViewWorld.StringValue()
+	}
+	return v.StringValue()
+}
+
+func (v GeoMapView) MarshalJSON() ([]byte, error) {
+	return json.Marshal(v.ValueOrDefault())
+}
+
+func (v *GeoMapView) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map view: must be a string, one of `world`, `fit`, `africa`, `asia`, `europe`, `north_america`, `south_america`, `oceania`, or `country`")
+	}
+	parsed := GeoMapView{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapViewWorld, GeoMapViewFit, GeoMapViewAfrica, GeoMapViewAsia, GeoMapViewEurope, GeoMapViewNorthAmerica, GeoMapViewSouthAmerica, GeoMapViewOceania, GeoMapViewCountry:
+		*v = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map view %q: must be `world`, `fit`, `africa`, `asia`, `europe`, `north_america`, `south_america`, `oceania`, or `country`", s)
+	}
+}
+
+type GeoMapProjection struct{ valuer.String }
+
+var (
+	GeoMapProjectionMercator     = GeoMapProjection{valuer.NewString("mercator")} // default
+	GeoMapProjectionEqualEarth   = GeoMapProjection{valuer.NewString("equal_earth")}
+	GeoMapProjectionNaturalEarth = GeoMapProjection{valuer.NewString("natural_earth")}
+)
+
+func (GeoMapProjection) Enum() []any {
+	return []any{GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth}
+}
+
+func (p GeoMapProjection) ValueOrDefault() string {
+	if p.IsZero() {
+		return GeoMapProjectionMercator.StringValue()
+	}
+	return p.StringValue()
+}
+
+func (p GeoMapProjection) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.ValueOrDefault())
+}
+
+func (p *GeoMapProjection) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WrapInvalidInputf(err, ErrCodeDashboardInvalidInput, "invalid geo map projection: must be a string, one of `mercator`, `equal_earth`, or `natural_earth`")
+	}
+	parsed := GeoMapProjection{valuer.NewString(s)}
+	switch parsed {
+	case GeoMapProjectionMercator, GeoMapProjectionEqualEarth, GeoMapProjectionNaturalEarth:
+		*p = parsed
+		return nil
+	default:
+		return errors.NewInvalidInputf(ErrCodeDashboardInvalidInput, "invalid geo map projection %q: must be `mercator`, `equal_earth`, or `natural_earth`", s)
 	}
 }

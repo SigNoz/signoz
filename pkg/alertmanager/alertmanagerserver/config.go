@@ -102,10 +102,11 @@ func NewConfig() Config {
 			MaintenanceInterval: 15 * time.Minute,
 			Retention:           120 * time.Hour,
 		},
-		// Corresponds to the default in upstream (https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/cmd/alertmanager/main.go#L149)
+		// MaintenanceInterval corresponds to the default in upstream (https://github.com/prometheus/alertmanager/blob/3b06b97af4d146e141af92885a185891eb79a5b0/cmd/alertmanager/main.go#L149).
+		// Retention below 2x the repeat interval drops the entry of a still firing alert, which notifies it again.
 		NFLog: NFLogConfig{
 			MaintenanceInterval: 15 * time.Minute,
-			Retention:           120 * time.Hour,
+			Retention:           2 * alertmanagertypes.NoRenotifyInterval,
 		},
 		Templates: []string{"/root/templates/alertmanager/*.gotmpl"},
 	}

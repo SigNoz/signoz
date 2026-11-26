@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Button, Form, Space, Tooltip } from 'antd';
+import { Button, Form, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Divider } from '@signozhq/ui/divider';
 import { Switch } from '@signozhq/ui/switch';
+import { TelemetrytypesFieldContextDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import { FilterSelect } from 'components/CeleryOverview/CeleryOverviewConfigOptions/CeleryOverviewConfigOptions';
 import { QueryParams } from 'constants/query';
@@ -80,6 +82,7 @@ function FunnelStep({
 
 	return (
 		<div
+			data-testid={`funnel-step-${index}`}
 			className={cx('funnel-step', {
 				'funnel-step--readonly': !hasEditPermission,
 			})}
@@ -121,7 +124,7 @@ function FunnelStep({
 							/>
 						</Tooltip>
 
-						<Divider type="vertical" />
+						<Divider orientation="vertical" />
 						<FunnelStepPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
@@ -140,12 +143,16 @@ function FunnelStep({
 				<div className="funnel-step__content">
 					<div className="filters">
 						<div className="filters__service-and-span">
-							<div className="service">
+							<div
+								className="service"
+								data-testid={`funnel-step-service-select-${index}`}
+							>
 								<Form.Item name={['steps', stepData.id, 'service_name']}>
 									<FilterSelect
 										placeholder="Select Service"
 										queryParam={QueryParams.service}
-										filterType="serviceName"
+										filterType="service.name"
+										fieldContext={TelemetrytypesFieldContextDTO.resource}
 										shouldSetQueryParams={false}
 										values={stepData.service_name}
 										isMultiple={false}
@@ -159,12 +166,13 @@ function FunnelStep({
 									/>
 								</Form.Item>
 							</div>
-							<div className="span">
+							<div className="span" data-testid={`funnel-step-span-select-${index}`}>
 								<Form.Item name={['steps', stepData.id, 'span_name']}>
 									<FilterSelect
 										placeholder="Select Span name"
 										queryParam={QueryParams.spanName}
 										filterType="name"
+										fieldContext={TelemetrytypesFieldContextDTO.span}
 										shouldSetQueryParams={false}
 										values={stepData.span_name}
 										isMultiple={false}
@@ -200,6 +208,7 @@ function FunnelStep({
 					<div className="error">
 						<Switch
 							color="primary"
+							testId={`funnel-step-errors-switch-${index}`}
 							textPlacement="right"
 							disabledTooltip="You need edit permissions to change this step"
 							value={stepData.has_errors}
@@ -219,7 +228,10 @@ function FunnelStep({
 								align="end"
 								side="bottom"
 							>
-								<Space data-testid={`funnel-step-latency-pointer-${index}`}>
+								<Space
+									className="latency-pointer__trigger"
+									data-testid={`funnel-step-latency-pointer-${index}`}
+								>
 									{
 										LatencyPointers.find(
 											(option) => option.value === stepData.latency_pointer,
@@ -229,7 +241,7 @@ function FunnelStep({
 								</Space>
 							</Dropdown>
 						) : (
-							<Space>
+							<Space className="latency-pointer__trigger">
 								{
 									LatencyPointers.find(
 										(option) => option.value === stepData.latency_pointer,

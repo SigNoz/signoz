@@ -68,7 +68,7 @@ describe('SSOEnforcementToggle', () => {
 	});
 
 	it('calls update API when toggle is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockUpdateAPI = jest.fn();
 
 		server.use(
@@ -105,7 +105,7 @@ describe('SSOEnforcementToggle', () => {
 	// The toggle sends a full replacement, so anything it fails to echo back is
 	// dropped from the domain — role mappings included.
 	it('echoes the existing role mapping when toggling enforcement', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const mockUpdateAPI = jest.fn();
 
 		server.use(
@@ -133,7 +133,7 @@ describe('SSOEnforcementToggle', () => {
 	});
 
 	it('shows error modal when update fails', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.put(AUTH_DOMAINS_UPDATE_ENDPOINT, (_, res, ctx) =>
@@ -157,7 +157,7 @@ describe('SSOEnforcementToggle', () => {
 	});
 
 	it('does not call API when record has no id', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let apiCalled = false;
 
 		server.use(

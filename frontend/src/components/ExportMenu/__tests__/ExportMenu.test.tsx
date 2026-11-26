@@ -1,5 +1,5 @@
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
 import { DataSource } from 'types/common/queryBuilder';
 
 import ExportMenu from '../ExportMenu';
@@ -74,6 +74,28 @@ describe('ExportMenu', () => {
 		fireEvent.click(screen.getByText('Export'));
 
 		expect(mockHandleExport).toHaveBeenCalledWith({ format: 'jsonl' });
+	});
+
+	it('exports the picked jsonl format and closes the popover', async () => {
+		renderMenu();
+		await userEvent.click(screen.getByTestId(TEST_ID));
+		await userEvent.click(screen.getByRole('radio', { name: 'jsonl' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Export' }));
+
+		expect(mockHandleExport).toHaveBeenCalledTimes(1);
+		expect(mockHandleExport).toHaveBeenCalledWith({ format: 'jsonl' });
+		expect(screen.queryByText('FORMAT')).not.toBeInTheDocument();
+	});
+
+	it('closes the popover on a second press of the trigger', async () => {
+		renderMenu();
+		await userEvent.click(screen.getByTestId(TEST_ID));
+		expect(screen.getByText('FORMAT')).toBeInTheDocument();
+
+		await userEvent.click(screen.getByTestId(TEST_ID));
+
+		expect(screen.getByTestId(TEST_ID)).toHaveAttribute('aria-expanded', 'false');
+		expect(screen.queryByText('FORMAT')).not.toBeInTheDocument();
 	});
 
 	it('disables the trigger while an export is in progress', () => {

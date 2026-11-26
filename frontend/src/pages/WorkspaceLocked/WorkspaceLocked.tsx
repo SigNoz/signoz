@@ -3,18 +3,12 @@ import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
-import {
-	Button,
-	Col,
-	Collapse,
-	Flex,
-	List,
-	Modal,
-	Row,
-	Skeleton,
-	Space,
-	Tabs,
-} from 'antd';
+import { Button, Collapse, Modal, Skeleton, Tabs } from 'antd';
+import List from 'periscope/components/List/List';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
@@ -24,7 +18,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
 import { SubscriptionCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/subscription.permissions';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { CircleArrowRight } from '@signozhq/icons';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
@@ -78,7 +72,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				!shouldBlockWorkspace ||
 				activeLicense?.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		}
 	}, [
@@ -122,7 +116,14 @@ export default function WorkspaceBlocked(): JSX.Element {
 			message: t('extendTrial'),
 			duration: 0,
 			description: (
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('extendTrialMsgPart1')}{' '}
 					<a href="mailto:cloud-support@signoz.io">cloud-support@signoz.io</a>{' '}
 					{t('extendTrialMsgPart2')}
@@ -167,17 +168,39 @@ export default function WorkspaceBlocked(): JSX.Element {
 							<Col span={24}>
 								<Space size="large" direction="vertical">
 									<Flex vertical>
-										<Typography.Title level={3}>
+										<Typography
+											variant="label"
+											size="large"
+											weight="bold"
+											color="inherit"
+											as="h3"
+											marginY={4}
+											textOverflow="wrap"
+										>
 											{t('enterpriseGradeObservability')}
-										</Typography.Title>
-										<Typography>{t('observabilityDescription')}</Typography>
+										</Typography>
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="span"
+											textOverflow="wrap"
+										>
+											{t('observabilityDescription')}
+										</Typography>
 									</Flex>
 									<List
+										className="workspace-locked__list"
 										itemLayout="horizontal"
 										dataSource={enterpriseGradeValuesData}
 										renderItem={(item, index): React.ReactNode => (
-											<List.Item key={index}>
-												<List.Item.Meta avatar={<CircleArrowRight />} title={item.title} />
+											<List.Item key={index} className="workspace-locked__list-item">
+												<List.Item.Meta
+													className="workspace-locked__list-meta"
+													avatar={<CircleArrowRight />}
+													title={item.title}
+												/>
 											</List.Item>
 										)}
 									/>
@@ -331,18 +354,37 @@ export default function WorkspaceBlocked(): JSX.Element {
 							<Row justify="center" align="middle">
 								<Col>
 									<Space direction="vertical" align="center">
-										<Typography.Title level={2}>
+										<Typography
+											variant="label"
+											size="large"
+											weight="bold"
+											color="inherit"
+											as="h2"
+											marginY={4}
+											textOverflow="wrap"
+										>
 											<div className="workspace-locked__title">Upgrade to Continue</div>
-										</Typography.Title>
-										<Typography.Text className="workspace-locked__details">
-											{t('upgradeNow')}
-											<br />
-											{t('yourDataIsSafe')}{' '}
-											<span className="workspace-locked__details__highlight">
-												{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
-											</span>{' '}
-											{t('actNow')}
-										</Typography.Text>
+										</Typography>
+										<span className="workspace-locked__details">
+											<Typography
+												variant="paragraph"
+												size="medium"
+												weight="regular"
+												color="inherit"
+												as="span"
+												display="inline-block"
+												align="center"
+												textOverflow="wrap"
+											>
+												{t('upgradeNow')}
+												<br />
+												{t('yourDataIsSafe')}{' '}
+												<span className="workspace-locked__details__highlight">
+													{getFormattedDate(trialInfo?.gracePeriodEnd || Date.now())}
+												</span>{' '}
+												{t('actNow')}
+											</Typography>
+										</span>
 									</Space>
 								</Col>
 							</Row>

@@ -10,6 +10,7 @@ import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 
 import {
+	FIRST_POLICY_NAME,
 	ROUTING_POLICY_MAX,
 	routingPoliciesResponse,
 } from './__story_mockdata__/routingPolicies';
@@ -141,8 +142,11 @@ export const fillNewPolicy = async (): Promise<void> => {
 		await screen.findByPlaceholderText(/e\.g\. service\.name/),
 		'severity = "critical"',
 	);
-	await userEvent.click(await screen.findByRole('combobox'));
-	await userEvent.click(await screen.findByTitle('ops-slack'));
+	const dialog = await screen.findByRole('dialog');
+
+	await userEvent.click(await within(dialog).findByRole('combobox'));
+	const options = await screen.findAllByTitle('ops-slack');
+	await userEvent.click(options[options.length - 1]);
 	await userEvent.keyboard('{Escape}');
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Save Routing Policy' }),
@@ -153,13 +157,11 @@ export const openEditPolicy = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
 	await userEvent.click(
-		(
-			await within(canvasElement).findAllByTestId(
-				'edit-routing-policy',
-				undefined,
-				untilLoaded,
-			)
-		)[0],
+		await within(canvasElement).findByText(
+			FIRST_POLICY_NAME,
+			undefined,
+			untilLoaded,
+		),
 	);
 	await userEvent.click(
 		await screen.findByRole('button', { name: 'Save Routing Policy' }),

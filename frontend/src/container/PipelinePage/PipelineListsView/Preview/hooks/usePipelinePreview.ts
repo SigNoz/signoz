@@ -4,6 +4,7 @@ import simulatePipelineProcessing, {
 } from 'api/pipeline/preview';
 import { AxiosError } from 'axios';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import { ILog } from 'types/api/logs/log';
 import { PipelineData } from 'types/api/pipeline/def';
 
@@ -29,6 +30,8 @@ const usePipelinePreview = ({
 		...l,
 		// log timestamps in query service API are unix nanos
 		timestamp: new Date(l.timestamp).getTime() * 10 ** 6,
+		// the preview API only accepts a string body
+		body: getBodyDisplay(l.body),
 	}));
 
 	const response = useQuery<PipelineSimulationResponse, AxiosError>({

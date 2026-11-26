@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Check, ChevronDown } from '@signozhq/icons';
 import { Button, Popover } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -34,7 +34,7 @@ function AutoRefresh({
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isDisabled = useMemo(
 		() =>
@@ -153,9 +153,18 @@ function AutoRefresh({
 							Auto Refresh
 						</Checkbox>
 					</div>
-					<Typography.Text disabled={isDisabled} className="refresh-interval-text">
-						Refresh Interval
-					</Typography.Text>
+					<div className="refresh-interval-text">
+						<Typography
+							variant="uppercase"
+							size="base"
+							weight="medium"
+							color={isDisabled ? 'tertiary' : 'inherit'}
+							as="p"
+							textOverflow="wrap"
+						>
+							Refresh Interval
+						</Typography>
+					</div>
 					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (

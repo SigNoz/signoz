@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react';
-import { matchPath, useHistory, useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch } from 'react-redux';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
+import { matchRoute } from 'lib/router/matchRoute';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
@@ -12,11 +16,11 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@signozhq/ui/button';
 import { Tooltip } from '@signozhq/ui/tooltip';
-import type { MessageActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import type { MessageActionDTO } from '@signozhq/noz-client';
 import {
 	ApplyFilterSignalDTO,
 	MessageActionKindDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	restoreExecution,
 	revertExecution,
@@ -24,20 +28,10 @@ import {
 } from 'api/ai-assistant/chat';
 import ROUTES from 'constants/routes';
 import { QueryParams } from 'constants/query';
+import { UpdateTimeInterval } from 'store/actions';
+import { buildExplorerNavigationUrl } from 'utils/buildExplorerNavigationUrl';
 import { openInNewTab } from 'utils/navigation';
-import {
-	ArchiveRestore,
-	BookOpen,
-	Check,
-	ExternalLink,
-	Eye,
-	Filter,
-	MessageCircle,
-	RotateCcw,
-	Sparkles,
-	TriangleAlert,
-	Undo,
-} from '@signozhq/icons';
+import { Check, TriangleAlert } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
 
@@ -45,14 +39,20 @@ import { AIAssistantEvents, SuggestedPromptCategory } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 
+import { getOpenResourceTarget } from './utils/getOpenResourceTarget';
+import {
+	getPanelTypeForRequestType,
+	requestTypeFromActionQuery,
+} from './utils/getPanelTypeForRequestType';
+import { getTimeRangeFromActionQuery } from './utils/getTimeRangeFromActionQuery';
+import { isOnResourcePage } from './utils/isOnResourcePage';
 import { openSavedViewByKey } from './utils/openSavedView';
 import {
 	isSavedViewOpenAction,
-	resolveOpenResourceType,
 	resolveResourceId,
 	resolveSavedViewSourceHint,
 } from './utils/resolveOpenResource';
-import { ResourceType, resourceRoute } from './utils/resourceRoute';
+import { ResourceType } from './utils/resourceRoute';
 
 import styles from './ActionsSection.module.scss';
 
@@ -105,34 +105,6 @@ type ChipState = 'idle' | 'loading' | 'success' | 'error';
 interface ChipResult {
 	state: ChipState;
 	error?: string;
-}
-
-/** Maps each MessageActionKindDTO to its display icon. */
-function ActionIcon({
-	kind,
-	size = 12,
-}: {
-	kind: MessageActionDTO['kind'];
-	size?: number;
-}): JSX.Element {
-	switch (kind) {
-		case MessageActionKindDTO.undo:
-			return <Undo size={size} />;
-		case MessageActionKindDTO.revert:
-			return <RotateCcw size={size} />;
-		case MessageActionKindDTO.restore:
-			return <ArchiveRestore size={size} />;
-		case MessageActionKindDTO.follow_up:
-			return <MessageCircle size={size} />;
-		case MessageActionKindDTO.open_resource:
-			return <Eye size={size} />;
-		case MessageActionKindDTO.open_docs:
-			return <BookOpen size={size} />;
-		case MessageActionKindDTO.apply_filter:
-			return <Filter size={size} />;
-		default:
-			return <ExternalLink size={size} />;
-	}
 }
 
 /**
@@ -213,20 +185,11 @@ function signalMatchesPathname(
 ): boolean {
 	switch (signal) {
 		case ApplyFilterSignalDTO.logs:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.LOGS_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.LOGS_EXPLORER));
 		case ApplyFilterSignalDTO.traces:
-			return Boolean(
-				matchPath(pathname, { path: ROUTES.TRACES_EXPLORER, exact: false }),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.TRACES_EXPLORER));
 		case ApplyFilterSignalDTO.metrics:
-			return Boolean(
-				matchPath(pathname, {
-					path: ROUTES.METRICS_EXPLORER_EXPLORER,
-					exact: false,
-				}),
-			);
+			return Boolean(matchRoute(pathname, ROUTES.METRICS_EXPLORER_EXPLORER));
 		default:
 			return false;
 	}
@@ -275,12 +238,12 @@ function explorerRouteForSignal(signal: ApplyFilterSignalDTO): string | null {
 }
 
 interface ApplyFilterDeps {
-	history: ReturnType<typeof useHistory>;
 	pathname: string;
 	redirectWithQueryBuilderData: ReturnType<
 		typeof useQueryBuilder
 	>['redirectWithQueryBuilderData'];
 	handleSetQueryData: ReturnType<typeof useQueryBuilder>['handleSetQueryData'];
+	setCustomTimeRange: (start: number, end: number) => void;
 }
 
 /**
@@ -317,8 +280,8 @@ function withDerivedFilterExpressions(query: Query): Query {
  *     page-action recipe — calling redirect alone is not sufficient because
  *     the URL→state effect runs after the next render and the editor binds
  *     to `filter.expression`, not `filters.items`.
- *   - Off-page: use `history.push` so the landing explorer initializes from
- *     the new URL on mount.
+ *   - Off-page: `navigate()` so the landing explorer initializes from the
+ *     new URL on mount.
  */
 function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 	// eslint-disable-next-line no-console
@@ -341,16 +304,40 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		);
 		return;
 	}
+	// Read before toUrlCompositeQuery, which drops the requestType envelope.
+	const panelType = getPanelTypeForRequestType(
+		requestTypeFromActionQuery(action.query),
+		action.signal,
+	);
+	const timeRange = getTimeRangeFromActionQuery(action.query);
 	const normalized = withDerivedFilterExpressions(urlQuery as unknown as Query);
 	// eslint-disable-next-line no-console
 	console.log('[apply_filter] normalized', normalized);
 	if (signalMatchesPathname(action.signal, deps.pathname)) {
 		// eslint-disable-next-line no-console
 		console.log('[apply_filter] on-page → handleSetQueryData + redirect');
+		if (timeRange) {
+			deps.setCustomTimeRange(timeRange.start, timeRange.end);
+		}
 		normalized.builder.queryData.forEach((q, i) => {
 			deps.handleSetQueryData(i, q);
 		});
-		deps.redirectWithQueryBuilderData(normalized);
+		deps.redirectWithQueryBuilderData(
+			normalized,
+			{
+				[QueryParams.panelTypes]: panelType,
+				...(timeRange && {
+					[QueryParams.startTime]: timeRange.start,
+					[QueryParams.endTime]: timeRange.end,
+					// relativeTime outranks startTime/endTime in the time picker, so drop it.
+					[QueryParams.relativeTime]: null,
+				}),
+			},
+			undefined,
+			undefined,
+			// New params like startTime would otherwise make safeNavigate replace the entry.
+			{ replace: false },
+		);
 		return;
 	}
 	const base = explorerRouteForSignal(action.signal);
@@ -360,9 +347,15 @@ function applyFilter(action: MessageActionDTO, deps: ApplyFilterDeps): void {
 		return;
 	}
 	// eslint-disable-next-line no-console
-	console.log('[apply_filter] off-page → history.push', base);
-	const encoded = encodeURIComponent(JSON.stringify(normalized));
-	deps.history.push(`${base}?${QueryParams.compositeQuery}=${encoded}`);
+	console.log('[apply_filter] off-page → navigate', base);
+	const url = buildExplorerNavigationUrl(base, normalized, {
+		[QueryParams.panelTypes]: panelType,
+		...(timeRange && {
+			[QueryParams.startTime]: timeRange.start,
+			[QueryParams.endTime]: timeRange.end,
+		}),
+	});
+	navigate(url);
 }
 
 /** Picks the right rollback API call for a given action kind. */
@@ -391,11 +384,17 @@ export default function ActionsSection({
 	actions,
 	messageId,
 }: ActionsSectionProps): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const { threadId, page, mode } = useAIAssistantAnalyticsContext();
 	const { redirectWithQueryBuilderData, handleSetQueryData } = useQueryBuilder();
+	const dispatch = useDispatch();
+	const setCustomTimeRange = useCallback(
+		(start: number, end: number): void => {
+			dispatch(UpdateTimeInterval('custom', [start, end]));
+		},
+		[dispatch],
+	);
 
 	// Per-chip click state, keyed by chip key (see `key` below). Persists
 	// loading/success/error so the chip reflects the rollback outcome until
@@ -424,18 +423,18 @@ export default function ActionsSection({
 			}
 			autoAppliedFilterKeys.add(key);
 			applyFilter(action, {
-				history,
 				pathname,
 				redirectWithQueryBuilderData,
 				handleSetQueryData,
+				setCustomTimeRange,
 			});
 		});
 	}, [
 		actions,
 		pathname,
-		history,
 		redirectWithQueryBuilderData,
 		handleSetQueryData,
+		setCustomTimeRange,
 	]);
 
 	if (actions.length === 0) {
@@ -456,11 +455,7 @@ export default function ActionsSection({
 		}
 		setResult(key, { state: 'loading' });
 		try {
-			await openSavedViewByKey(
-				resourceId,
-				resolveSavedViewSourceHint(action),
-				history,
-			);
+			await openSavedViewByKey(resourceId, resolveSavedViewSourceHint(action));
 			void logEvent(AIAssistantEvents.ResourceOpened, {
 				threadId,
 				messageId,
@@ -499,23 +494,17 @@ export default function ActionsSection({
 			return;
 		}
 
-		const resourceType = resolveOpenResourceType(action);
-		const resourceId = resolveResourceId(action);
-		if (!resourceType || !resourceId) {
-			return;
-		}
-
-		const path = resourceRoute(resourceType, resourceId);
-		if (!path) {
+		const target = getOpenResourceTarget(action);
+		if (!target) {
 			return;
 		}
 		void logEvent(AIAssistantEvents.ResourceOpened, {
 			threadId,
 			messageId,
-			targetModule: targetModuleForResource(resourceType),
-			resourceId,
+			targetModule: targetModuleForResource(target.resourceType),
+			resourceId: target.resourceId,
 		});
-		history.push(path);
+		navigate(target.path);
 	};
 
 	const handleClick = (key: string, action: MessageActionDTO): void => {
@@ -576,10 +565,10 @@ export default function ActionsSection({
 					});
 				}
 				applyFilter(action, {
-					history,
 					pathname,
 					redirectWithQueryBuilderData,
 					handleSetQueryData,
+					setCustomTimeRange,
 				});
 				break;
 			}
@@ -590,10 +579,7 @@ export default function ActionsSection({
 
 	return (
 		<div className={styles.section}>
-			<div className={styles.heading}>
-				<Sparkles size={12} className={styles.headingIcon} />
-				<span className={styles.headingText}>Suggested actions</span>
-			</div>
+			<div className={styles.heading}>Suggested actions</div>
 
 			<div className={styles.list}>
 				{actions.map((action, i) => {
@@ -614,26 +600,33 @@ export default function ActionsSection({
 					// is still surfaced visually via the suffix pill below.
 
 					const tooltip = isError ? result.error : (action.tooltip ?? undefined);
+					const openTarget = getOpenResourceTarget(action);
+					const isViewingResource =
+						openTarget !== null &&
+						isOnResourcePage(openTarget.path, { pathname, search });
 
-					let icon: JSX.Element;
+					let icon: JSX.Element | undefined;
 					if (isSuccess) {
-						icon = <Check size={12} />;
+						icon = <Check size={14} />;
 					} else if (isError) {
-						icon = <TriangleAlert size={12} />;
-					} else {
-						icon = <ActionIcon kind={action.kind} />;
+						icon = <TriangleAlert size={14} />;
 					}
 
 					const chip = (
 						<Button
-							disabledTooltip="This action already ran"
+							disabledTooltip={
+								isViewingResource
+									? "You're already viewing this page"
+									: 'This action already ran'
+							}
 							variant="outlined"
 							color="secondary"
 							size="sm"
 							onClick={(): void => handleClick(key, action)}
-							disabled={isSuccess}
+							disabled={isSuccess || isViewingResource}
 							loading={isLoading}
 							aria-label={action.label}
+							testId={`ai-action-chip-${action.kind}`}
 							prefix={icon}
 						>
 							<span className={styles.chipLabel}>{action.label}</span>

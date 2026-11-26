@@ -74,6 +74,23 @@ func TestFormat_OpenAIResponses(t *testing.T) {
 			wantOutput: `[]`,
 		},
 		{
+			// LiteLLM langfuse_otel: the function_call items of a tool-calling turn as a bare list
+			name:       "BareFunctionCallItems_OneAssistantMessage",
+			output:     `[{"id": "chatcmpl-1", "name": "set_stage", "call_id": "call_7", "type": "function_call", "arguments": {"fields": {"stage": "consent"}}}]`,
+			wantInput:  `[]`,
+			wantOutput: `[{"role": "assistant", "parts": [{"type": "tool_call", "name": "set_stage", "id": "call_7", "arguments": {"fields": {"stage": "consent"}}}]}]`,
+		},
+		{
+			name:  "BareItemsWithMessage_ToolRound",
+			input: `[{"type": "message", "role": "user", "content": [{"type": "input_text", "text": "Weather in Oslo?"}]}, {"type": "function_call", "call_id": "call_9", "name": "get_weather", "arguments": "{\"city\":\"Oslo\"}"}, {"type": "function_call_output", "call_id": "call_9", "output": "4C, cloudy"}]`,
+			wantInput: `[
+			  {"role": "user", "parts": [{"type": "text", "content": "Weather in Oslo?"}]},
+			  {"role": "assistant", "parts": [{"type": "tool_call", "name": "get_weather", "id": "call_9", "arguments": {"city": "Oslo"}}]},
+			  {"role": "tool", "parts": [{"type": "tool_call_response", "id": "call_9", "response": "4C, cloudy"}]}
+			]`,
+			wantOutput: `[]`,
+		},
+		{
 			// openinference capture, CreateEmbeddings span: an embeddings request also has input and model
 			name:       "EmbeddingsRequest_NotResponses_KeptAsGeneric",
 			input:      `{"input": ["observability is the new monitoring"], "model": "text-embedding-3-small", "encoding_format": "base64"}`,

@@ -4,7 +4,7 @@ import { Typography } from '@signozhq/ui/typography';
 import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import APIError from 'types/api/error';
 
 import './ResetPassword.styles.scss';
@@ -54,12 +54,28 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 					<div className="reset-password-header-icon reset-password-header-icon--error">
 						<CircleAlert size={32} />
 					</div>
-					<Typography.Title level={4} className="reset-password-header-title">
+					<Typography
+						variant="label"
+						size="large"
+						weight="bold"
+						color="main"
+						as="h4"
+						textOverflow="wrap"
+					>
 						{title}
-					</Typography.Title>
-					<Typography.Text className="reset-password-header-subtitle">
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						display="inline-block"
+						align="center"
+						textOverflow="wrap"
+					>
 						{subtitle}
-					</Typography.Text>
+					</Typography>
 				</div>
 				{error && <AuthError error={error} />}
 				<div className="reset-password-back-action">
@@ -67,9 +83,10 @@ function TokenError({ error }: TokenErrorProps): JSX.Element {
 						size="md"
 						color="primary"
 						variant="solid"
+						width="100%"
 						testId="back-to-login"
 						prefix={<ArrowLeft size={12} />}
-						onClick={(): void => history.push(ROUTES.LOGIN)}
+						onClick={(): void => navigate(ROUTES.LOGIN)}
 					>
 						Back to login
 					</Button>

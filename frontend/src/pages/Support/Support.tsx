@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Button, Card, Modal } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { getCurrentLocation } from 'lib/router/navigation';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import { createSubscription } from 'api/generated/services/subscriptions';
@@ -26,8 +27,6 @@ import { getBaseUrl } from 'utils/basePath';
 import { openInNewTab } from 'utils/navigation';
 
 import './Support.styles.scss';
-
-const { Title, Text } = Typography;
 
 interface Channel {
 	key: any;
@@ -87,23 +86,23 @@ const supportChannels = [
 ];
 
 export default function Support(): JSX.Element {
-	const history = useHistory();
 	const { notifications } = useNotifications();
 	const { trialInfo, featureFlags } = useAppContext();
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
 		useState(false);
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const handleChannelWithRedirects = (url: string): void => {
 		openInNewTab(url);
 	};
 
 	useEffect(() => {
-		if (history?.location?.state) {
-			const histroyState = history?.location?.state as any;
+		const currentLocation = getCurrentLocation();
+		if (currentLocation?.state) {
+			const locationState = currentLocation.state as any;
 
-			if (histroyState && histroyState?.from) {
-				logEvent(`Support : From URL : ${histroyState.from}`, {});
+			if (locationState && locationState?.from) {
+				logEvent(`Support : From URL : ${locationState.from}`, {});
 			}
 		}
 
@@ -204,11 +203,32 @@ export default function Support(): JSX.Element {
 					{supportChannels.map((channel): JSX.Element => (
 						<Card className="support-channel" key={channel.key}>
 							<div className="support-channel-content">
-								<Title truncate={1} level={5} className="support-channel-title">
+								<Typography
+									variant="paragraph"
+									size="medium"
+									weight="bold"
+									color="inherit"
+									as="h5"
+									display="flex"
+									gap={4}
+									width="100%"
+									marginBottom={4}
+									textOverflow="ellipsis"
+								>
 									{channel.icon}
 									{channel.name}{' '}
-								</Title>
-								<Text> {channel.title} </Text>
+								</Typography>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
+									{' '}
+									{channel.title}{' '}
+								</Typography>
 							</div>
 
 							<div className="support-channel-action">
@@ -217,7 +237,16 @@ export default function Support(): JSX.Element {
 									type="default"
 									onClick={(): void => handleChannelClick(channel)}
 								>
-									<Text truncate={1}>{channel.btnText} </Text>
+									<Typography
+										variant="paragraph"
+										size="base"
+										weight="regular"
+										color="inherit"
+										as="p"
+										textOverflow="ellipsis"
+									>
+										{channel.btnText}{' '}
+									</Typography>
 									{channel.isExternal && <ArrowUpRight size={14} />}
 								</Button>
 							</div>
@@ -262,10 +291,17 @@ export default function Support(): JSX.Element {
 					</AuthZTooltip>,
 				]}
 			>
-				<Typography.Text className="add-credit-card-text">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					You&apos;re currently on <span className="highlight-text">Trial plan</span>
 					. Add a credit card to access SigNoz chat support to your workspace.
-				</Typography.Text>
+				</Typography>
 			</Modal>
 		</div>
 	);

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tabs, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
@@ -7,22 +6,22 @@ import logEvent from 'api/common/logEvent';
 import PromQLIcon from 'assets/Dashboard/PromQl';
 import { QueryBuilderV2 } from 'components/QueryBuilderV2/QueryBuilderV2';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Brain, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { AlertDef } from 'types/api/alerts/def';
 import { EQueryType } from 'types/common/dashboard';
 
+import AIQuerySection from './AIQuerySection';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
-import { FormContainer, StepHeading } from './styles';
 
+import styles from './QuerySection.module.scss';
 import './QuerySection.styles.scss';
 
 const ANOMALY_QUERY_SUPPORT_CLICKHOUSE_ISSUE =
@@ -38,14 +37,10 @@ function QuerySection({
 	runQuery,
 	isLoadingQueries,
 	handleCancelQuery,
-	alertDef,
 	panelType,
 	ruleId,
-	hideTitle,
 	isAnomalyDetection,
 }: QuerySectionProps): JSX.Element {
-	// init namespace for translations
-	const { t } = useTranslation('alerts');
 	const [currentTab, setCurrentTab] = useState(queryCategory);
 	const [signalSource, setSignalSource] = useState<string>('metrics');
 
@@ -75,12 +70,8 @@ function QuerySection({
 				signalSource: signalSource === 'meter' ? 'meter' : '',
 			}}
 			showTraceOperator={alertType === AlertTypes.TRACES_BASED_ALERT}
-			showFunctions={
-				(alertType === AlertTypes.METRICS_BASED_ALERT &&
-					alertDef.version === ENTITY_VERSION_V4) ||
-				alertType === AlertTypes.LOGS_BASED_ALERT
-			}
-			version={alertDef.version || 'v3'}
+			showFunctions={alertType === AlertTypes.LOGS_BASED_ALERT}
+			version={ENTITY_VERSION_V5}
 			onSignalSourceChange={handleSignalSourceChange}
 			signalSourceChangeEnabled
 		/>
@@ -89,14 +80,18 @@ function QuerySection({
 	const anomalyDisabledTooltip = (url: string): JSX.Element => (
 		<span>
 			Coming soon for anomaly detection.{' '}
-			<Typography.Link
-				href={url}
-				target="_blank"
-				rel="noopener noreferrer"
-				style={{ color: 'inherit', textDecoration: 'underline' }}
-			>
-				Leave a thumbs-up
-			</Typography.Link>{' '}
+			<span style={{ color: 'inherit', textDecoration: 'underline' }}>
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					textOverflow="wrap"
+					href={url}
+					target="_blank"
+				>
+					Leave a thumbs-up
+				</Typography.Link>
+			</span>{' '}
 			to help us prioritize!
 		</span>
 	);
@@ -107,7 +102,16 @@ function QuerySection({
 				<Tooltip title="Query Builder">
 					<Button className="nav-btns" data-testid="query-builder-tab">
 						<Atom size={14} />
-						<Typography.Text>Query Builder</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Query Builder
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
@@ -128,12 +132,44 @@ function QuerySection({
 						data-testid="clickhouse-tab"
 					>
 						<Terminal size={14} />
-						<Typography.Text>ClickHouse Query</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							ClickHouse Query
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
 			key: EQueryType.CLICKHOUSE,
 			disabled: isAnomalyDetection,
+		},
+	];
+
+	const aiTabs = [
+		{
+			label: (
+				<Tooltip title="AI Query Builder">
+					<Button className="nav-btns" data-testid="ai-query-builder-tab">
+						<Brain size={14} />
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							AI Query Builder
+						</Typography>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.AI_QUERY_BUILDER,
 		},
 	];
 
@@ -151,7 +187,16 @@ function QuerySection({
 					<Tooltip title="Query Builder">
 						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
-							<Typography.Text>Query Builder</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Query Builder
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -172,7 +217,16 @@ function QuerySection({
 							data-testid="clickhouse-tab"
 						>
 							<Terminal size={14} />
-							<Typography.Text>ClickHouse Query</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								ClickHouse Query
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -196,7 +250,16 @@ function QuerySection({
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
-							<Typography.Text>PromQL</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								PromQL
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -223,6 +286,7 @@ function QuerySection({
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+			case AlertTypes.AI_TRACES_BASED_ALERT:
 				return (
 					<div className="alert-tabs">
 						<Tabs
@@ -248,7 +312,7 @@ function QuerySection({
 									/>
 								</span>
 							}
-							items={tabs}
+							items={typ === AlertTypes.AI_TRACES_BASED_ALERT ? aiTabs : tabs}
 						/>
 					</div>
 				);
@@ -287,21 +351,17 @@ function QuerySection({
 		if (c === EQueryType.QUERY_BUILDER) {
 			return renderMetricUI();
 		}
+		if (c === EQueryType.AI_QUERY_BUILDER) {
+			return <AIQuerySection panelType={panelType} />;
+		}
 		return null;
 	};
 
-	const step2Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '2' : '1';
-
 	return (
-		<>
-			{!hideTitle && (
-				<StepHeading> {t('alert_form_step2', { step: step2Label })}</StepHeading>
-			)}
-			<FormContainer className="alert-query-section-container">
-				<div>{renderTabs(alertType)}</div>
-				{renderQuerySection(currentTab)}
-			</FormContainer>
-		</>
+		<div className={styles.container}>
+			<div>{renderTabs(alertType)}</div>
+			{renderQuerySection(currentTab)}
+		</div>
 	);
 }
 
@@ -312,15 +372,12 @@ interface QuerySectionProps {
 	runQuery: VoidFunction;
 	isLoadingQueries: boolean;
 	handleCancelQuery: () => void;
-	alertDef: AlertDef;
 	panelType: PANEL_TYPES;
 	ruleId: string;
-	hideTitle?: boolean;
 	isAnomalyDetection?: boolean;
 }
 
 QuerySection.defaultProps = {
-	hideTitle: false,
 	isAnomalyDetection: false,
 };
 

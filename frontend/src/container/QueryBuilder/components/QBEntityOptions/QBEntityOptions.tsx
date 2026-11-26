@@ -1,5 +1,6 @@
-import { useLocation } from 'react-router-dom';
-import { Button, Col, Tooltip } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Button, Tooltip } from 'antd';
+import Col from 'periscope/components/Col/Col';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import ROUTES from 'constants/routes';
@@ -79,7 +80,7 @@ export default function QBEntityOptions({
 		}
 	};
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
 
@@ -98,6 +99,7 @@ export default function QBEntityOptions({
 									value="search"
 									className="periscope-btn collapse"
 									onClick={onCollapseEntity}
+									data-testid="qb-entity-collapse"
 								>
 									{isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
 								</Button>
@@ -108,6 +110,7 @@ export default function QBEntityOptions({
 									className="periscope-btn visibility-toggle"
 									onClick={onToggleVisibility}
 									disabled={isRawQuery && !showTraceOperator}
+									data-testid="qb-entity-visibility"
 								>
 									{entityData.disabled ? <EyeOff size={16} /> : <Eye size={16} />}
 								</Button>
@@ -115,7 +118,11 @@ export default function QBEntityOptions({
 
 							{entityType === 'query' && showCloneOption && (
 								<Tooltip title={`Clone Query ${entityData.queryName}`}>
-									<Button className={cx('periscope-btn')} onClick={handleCloneEntity}>
+									<Button
+										className={cx('periscope-btn')}
+										onClick={handleCloneEntity}
+										data-testid="qb-entity-clone"
+									>
 										<Copy size={14} />
 									</Button>
 								</Tooltip>
@@ -131,6 +138,7 @@ export default function QBEntityOptions({
 										: '',
 									isLogsExplorerPage && lastUsedQuery === index ? 'sync-btn' : '',
 								)}
+								data-testid="qb-entity-name"
 							>
 								{entityData.queryName}
 							</Button>
@@ -185,7 +193,11 @@ export default function QBEntityOptions({
 				</div>
 
 				{showDeleteButton && !isRawQuery && (
-					<Button className="periscope-btn ghost" onClick={onDelete}>
+					<Button
+						className="periscope-btn ghost"
+						onClick={onDelete}
+						data-testid="qb-entity-delete"
+					>
 						<Trash2 size={14} />
 					</Button>
 				)}

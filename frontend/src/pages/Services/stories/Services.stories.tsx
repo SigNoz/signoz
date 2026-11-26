@@ -6,6 +6,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import Services from '../index';
 import { servicesMocks } from './Services.stories.mocks';
+import { openColumnFilter } from './__story_mockdata__/services.play';
 
 type ServicesArgs = PageStoryArgs<typeof servicesMocks>;
 
@@ -22,6 +23,7 @@ const pageStory = storyMocks(servicesMocks, {
  */
 const meta = {
 	title: 'Pages/Services/List',
+	tags: ['play'],
 	component: Services,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -37,7 +39,7 @@ type Story = StoryObj<ServicesArgs>;
  */
 export const Default: Story = {};
 
-/** The same list read from span metrics instead of traces, so p99 is in ns. */
+/** The same list read from span metrics instead of traces. */
 export const SpanMetrics: Story = {
 	args: { mode: 'span-metrics' },
 };
@@ -62,12 +64,7 @@ export const OverTrialLimit: Story = {
 	args: { traffic: 'over-trial-limit', banner: 'trial-expiry' },
 };
 
-/** The service count in the bottom strip, in place of the build version. */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
-/** The same count on the span metrics table, which is the page's other path. */
-export const BottomStripSpanMetrics: Story = {
-	args: { bottomStrip: true, mode: 'span-metrics' },
+/** The search dropdown on the Application column, open over the table. */
+export const ColumnFilterOpen: Story = {
+	play: openColumnFilter,
 };

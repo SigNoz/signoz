@@ -17,9 +17,10 @@ import (
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	metadataStore telemetrytypes.MetadataStore,
+	schemaMetadataStore telemetrytypes.SchemaMetadataStore,
 	fl flagger.Flagger,
 ) factory.ProviderFactory[qbtypes.StatementBuilder[qbtypes.TraceAggregation], statementbuilder.Config] {
-	return scopedtraces.NewFactory(factory.MustNewName("ai"), Scope(), telemetryStore, metadataStore, fl)
+	return scopedtraces.NewFactory(factory.MustNewName("ai"), Scope(), telemetryStore, metadataStore, schemaMetadataStore, fl)
 }
 
 // Scope describes gen_ai for the scoped trace builder: an AI trace has >=1 gen_ai

@@ -54,9 +54,19 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			<div className="logs-section">
 				<div className="logs-heading">
 					<ScrollText size={14} />
-					<Typography.Text>Logs</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Logs
+					</Typography>
 				</div>
 				<Table
+					data-testid="integration-logs-table"
 					columns={logsColumns}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : ''
@@ -69,9 +79,19 @@ function DataCollected(props: DataCollectedProps): JSX.Element {
 			<div className="metrics-section">
 				<div className="metrics-heading">
 					<BarChart size={14} />
-					<Typography.Text>Metrics</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Metrics
+					</Typography>
 				</div>
 				<Table
+					data-testid="integration-metrics-table"
 					columns={metricsColumns}
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : ''

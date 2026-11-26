@@ -1,7 +1,6 @@
 import { render, RenderResult } from 'tests/test-utils';
 import { server, rest } from 'mocks-server/server';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 
 import {
@@ -11,6 +10,7 @@ import {
 	QuickFiltersSource,
 } from '../../../types';
 import CheckboxFilterV2 from './CheckboxFilterV2';
+import { DEFAULT_VISIBLE_ITEMS_COUNT } from '../constants';
 
 export const DEFAULT_FILTER: IQuickFiltersConfig = {
 	type: FiltersType.CHECKBOX,
@@ -20,7 +20,6 @@ export const DEFAULT_FILTER: IQuickFiltersConfig = {
 		dataType: DataTypes.String,
 		type: 'tag',
 	},
-	dataSource: DataSource.TRACES,
 	defaultOpen: true,
 };
 
@@ -29,6 +28,13 @@ export const DEFAULT_USE_FIELD_APIS: QuickFilterCheckboxUseFieldApis = {
 	endUnixMilli: 1700003600000,
 	existingQuery: null,
 };
+
+// Enough extra values to push a section past the count that shows its search box.
+// Named to sort last, so a test's own values stay within the first page.
+export const EXTRA_VALUES = Array.from(
+	{ length: DEFAULT_VISIBLE_ITEMS_COUNT },
+	(_, index) => `zz-extra-value-${index + 1}`,
+);
 
 export function mockFieldsValuesAPI(response: {
 	relatedValues?: (string | null)[];
@@ -150,7 +156,7 @@ export function renderWithFilter(
 	return render(
 		<CheckboxFilterV2
 			filter={DEFAULT_FILTER}
-			source={QuickFiltersSource.TRACES_EXPLORER}
+			quickFilterSource={QuickFiltersSource.TRACES_EXPLORER}
 			useFieldApis={{
 				...DEFAULT_USE_FIELD_APIS,
 				existingQuery: 'service.name = "api"',

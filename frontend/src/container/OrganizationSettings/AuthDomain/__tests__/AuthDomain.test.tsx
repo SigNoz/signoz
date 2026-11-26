@@ -9,11 +9,11 @@ import {
 	mockErrorResponse,
 } from './mocks';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -111,7 +111,7 @@ describe('AuthDomain', () => {
 
 	describe('Add Domain', () => {
 		it('opens create modal when Add Domain button is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(AUTH_DOMAINS_LIST_ENDPOINT, (_, res, ctx) =>
@@ -134,7 +134,7 @@ describe('AuthDomain', () => {
 
 	describe('Configure Domain', () => {
 		it('opens edit modal when configure action is clicked', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.get(AUTH_DOMAINS_LIST_ENDPOINT, (_, res, ctx) =>

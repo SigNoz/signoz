@@ -1,6 +1,9 @@
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from typing import Any
+
+import pytest
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
@@ -10,9 +13,15 @@ from fixtures.querier import (
     Aggregation,
     BuilderQuery,
     MetricAggregation,
+    OrderBy,
     RequestType,
+    TelemetryFieldKey,
+    get_all_warnings,
+    make_preview_query_request,
     make_query_request,
 )
+
+ORG_ID_NOT_FOUND = "key `orgId` not found in metadata; querying the underlying data directly. If this is unexpected, check the key name for typos."
 
 
 def test_resource_default_warning(
@@ -384,3 +393,49 @@ def test_no_warnings_for_meter_query(
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
     assert "warning" not in response.json()["data"]
+
+
+@pytest.mark.parametrize(
+    "request_type,query_args,expected_warnings",
+    [
+        pytest.param(RequestType.RAW, {"select_fields": [TelemetryFieldKey(name="orgId")]}, [ORG_ID_NOT_FOUND], id="select_field"),
+        pytest.param(RequestType.RAW, {"order": [OrderBy(key=TelemetryFieldKey(name="orgId"))]}, [ORG_ID_NOT_FOUND], id="order_by"),
+        pytest.param(RequestType.SCALAR, {"aggregations": [Aggregation(expression="count_distinct(orgId)")]}, [ORG_ID_NOT_FOUND], id="aggregation_argument"),
+        pytest.param(RequestType.SCALAR, {"aggregations": [Aggregation(expression="countIf(orgId = 'acme')")]}, [ORG_ID_NOT_FOUND], id="aggregation_predicate"),
+        pytest.param(
+            RequestType.SCALAR,
+            {"aggregations": [Aggregation(expression="count()")], "group_by": [TelemetryFieldKey(name="orgId")], "filter_expression": "orgId = 'acme'"},
+            [ORG_ID_NOT_FOUND],
+            id="filter_and_group_by",
+        ),
+        pytest.param(RequestType.SCALAR, {"aggregations": [Aggregation(expression="count()")], "group_by": [TelemetryFieldKey(name="service.name")]}, [], id="known_key"),
+    ],
+)
+def test_logs_unknown_key_outside_the_filter_warns(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[list[Logs]], None],
+    request_type: str,
+    query_args: dict[str, Any],
+    expected_warnings: list[str],
+) -> None:
+    now = datetime.now(tz=UTC)
+    insert_logs([Logs(timestamp=now - timedelta(seconds=1), resources={"service.name": "java"}, body="checkout failed for orgId=acme")])
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    queries = [BuilderQuery(name="A", signal="logs", **query_args).to_dict()]
+
+    response = make_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type=request_type, queries=queries)
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    assert get_all_warnings(response.json()) == [{"message": message} for message in expected_warnings], response.text
+
+    # the preview reports the same key warnings for the same payload
+    preview = make_preview_query_request(signoz, token, start_ms=start_ms, end_ms=end_ms, request_type=request_type, queries=queries)
+
+    assert preview.status_code == HTTPStatus.OK, preview.text
+    preview_warnings = preview.json()["data"]["compositeQuery"]["A"]["warnings"]
+    assert [warning for warning in preview_warnings if "not found in metadata" in warning] == expected_warnings, preview.text

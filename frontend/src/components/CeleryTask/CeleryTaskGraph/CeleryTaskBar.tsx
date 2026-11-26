@@ -1,16 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { isEmpty } from 'lodash-es';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
@@ -32,6 +33,7 @@ import {
 	celerySlowestTasksTableWidgetData,
 	celerySuccessStateWidgetData,
 	celerySuccessTasksTableWidgetData,
+	getClickedSeries,
 } from './CeleryTaskGraphUtils';
 import {
 	CeleryTaskState,
@@ -50,8 +52,7 @@ function CeleryTaskBar({
 	queryEnabled: boolean;
 	checkIfDataExists?: (isDataAvailable: boolean) => void;
 }): JSX.Element {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const dispatch = useDispatch();
 	const urlQuery = useUrlQuery();
 	const isDarkMode = useIsDarkMode();
@@ -68,13 +69,13 @@ function CeleryTaskBar({
 			urlQuery.set(QueryParams.startTime, startTimestamp.toString());
 			urlQuery.set(QueryParams.endTime, endTimestamp.toString());
 			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.push(generatedUrl);
+			navigate(generatedUrl);
 
 			if (startTimestamp !== endTimestamp) {
 				dispatch(UpdateTimeInterval('custom', [startTimestamp, endTimestamp]));
 			}
 		},
-		[dispatch, history, pathname, urlQuery],
+		[dispatch, pathname, urlQuery],
 	);
 
 	const [barState, setBarState] = useState<CeleryTaskState>(CeleryTaskState.All);
@@ -142,24 +143,19 @@ function CeleryTaskBar({
 		data?: {
 			[key: string]: string;
 		},
+		queryData?: { inFocusOrNot: boolean },
 	): void => {
+		const clickedSeries = getClickedSeries(data, queryData);
+		if (!clickedSeries) {
+			return;
+		}
 		const { start, end } = getStartAndEndTimesInMilliseconds(xValue);
 
-		// Extract entity and value from data
-		const [firstDataPoint] = Object.entries(data || {});
-		const [entity, value] = (firstDataPoint || ([] as unknown)) as [
-			string,
-			string,
-		];
-
-		if (!isEmpty(entity) || !isEmpty(value)) {
-			onClick?.({
-				entity,
-				value,
-				timeRange: [start, end],
-				widgetData,
-			});
-		}
+		onClick?.({
+			...clickedSeries,
+			timeRange: [start, end],
+			widgetData,
+		});
 	};
 
 	const { getCustomSeries } = useGetGraphCustomSeries({
@@ -183,10 +179,11 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.All && (
 					<GridCard
 						widget={celeryAllStateFilteredData}
+						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data, queryData): void =>
 							onGraphClick(
 								celerySlowestTasksTableWidgetData,
 								xValue,
@@ -194,6 +191,7 @@ function CeleryTaskBar({
 								mouseX,
 								mouseY,
 								data,
+								queryData,
 							)
 						}
 						customSeries={getCustomSeries}
@@ -203,10 +201,11 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Failed && (
 					<GridCard
 						widget={celeryFailedStateFilteredData}
+						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data, queryData): void =>
 							onGraphClick(
 								celeryFailedTasksTableWidgetData,
 								xValue,
@@ -214,6 +213,7 @@ function CeleryTaskBar({
 								mouseX,
 								mouseY,
 								data,
+								queryData,
 							)
 						}
 						customSeries={getCustomSeries}
@@ -222,10 +222,11 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Retry && (
 					<GridCard
 						widget={celeryRetryStateFilteredData}
+						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data, queryData): void =>
 							onGraphClick(
 								celeryRetryTasksTableWidgetData,
 								xValue,
@@ -233,6 +234,7 @@ function CeleryTaskBar({
 								mouseX,
 								mouseY,
 								data,
+								queryData,
 							)
 						}
 						customSeries={getCustomSeries}
@@ -241,10 +243,11 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Successful && (
 					<GridCard
 						widget={celerySuccessStateFilteredData}
+						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
-						onClickHandler={(xValue, yValue, mouseX, mouseY, data): void =>
+						onClickHandler={(xValue, yValue, mouseX, mouseY, data, queryData): void =>
 							onGraphClick(
 								celerySuccessTasksTableWidgetData,
 								xValue,
@@ -252,6 +255,7 @@ function CeleryTaskBar({
 								mouseX,
 								mouseY,
 								data,
+								queryData,
 							)
 						}
 						customSeries={getCustomSeries}

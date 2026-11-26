@@ -10,7 +10,6 @@ import { TriangleAlert } from '@signozhq/icons';
 import TanStackTable from 'components/TanStackTableView';
 import { INFRA_MONITORING_ATTR_KEYS } from 'container/InfraMonitoringK8sV2/constants';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 const HOSTNAME_DOCS_URL =
 	'https://signoz.io/docs/infrastructure-monitoring/hostmetrics/#host-name-is-blankempty';
 
@@ -25,7 +24,16 @@ export function HostnameCell({
 	}
 	return (
 		<>
-			<Typography.Text color="muted">-</Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
+				-
+			</Typography>
 			<Tooltip
 				title={
 					<div>
@@ -74,7 +82,6 @@ export function getHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{
@@ -87,7 +94,6 @@ export function getHostsQuickFiltersConfig(): IQuickFiltersConfig[] {
 			},
 			aggregateOperator: 'noop',
 			aggregateAttribute: INFRA_MONITORING_ATTR_KEYS.SYSTEM_CPU_LOAD_AVERAGE_15M,
-			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
 		{

@@ -56,6 +56,23 @@ describe('useTableColumns', () => {
 		expect(mockPrepareScalarTables).not.toHaveBeenCalled();
 	});
 
+	it('resolves columns for a scatter plot, which joins its rows like a table', () => {
+		tableWith([{ id: 'A', name: 'p99', isValueColumn: true }]);
+		const panel = {
+			kind: 'Panel',
+			spec: {
+				plugin: { kind: 'signoz/ScatterPlotPanel', spec: {} },
+				queries: [],
+			},
+		} as unknown as DashboardtypesPanelDTO;
+
+		const { result } = renderHook(() => useTableColumns(panel, DATA));
+
+		expect(result.current).toStrictEqual([
+			{ key: 'A', label: 'p99', name: 'p99', unit: undefined },
+		]);
+	});
+
 	it('returns [] when there is no scalar table with columns', () => {
 		mockPrepareScalarTables.mockReturnValue([{ columns: [], rows: [] }]);
 
@@ -73,7 +90,7 @@ describe('useTableColumns', () => {
 		const { result } = renderHook(() => useTableColumns(tablePanel(), DATA));
 
 		expect(result.current).toStrictEqual([
-			{ key: 'A', label: 'p99', unit: undefined },
+			{ key: 'A', label: 'p99', name: 'p99', unit: undefined },
 		]);
 	});
 

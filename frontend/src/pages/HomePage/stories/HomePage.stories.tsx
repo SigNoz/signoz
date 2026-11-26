@@ -5,6 +5,7 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { homeMocks } from './HomePage.stories.mocks';
+import { openCommandPalette } from './__story_mockdata__/home.play';
 
 import HomePage from '../HomePage';
 
@@ -98,10 +99,7 @@ export const NavSettingsMenu: Story = {
 	},
 };
 
-/**
- * The firing alert count in the bottom strip, in place of the build version. It
- * counts firing instances, so it does not match the alert rules widget above.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
+/** The command palette, opened with the same shortcut the shell listens for. */
+export const CommandPalette: Story = {
+	play: openCommandPalette,
 };

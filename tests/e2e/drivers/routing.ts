@@ -6,22 +6,19 @@ import { randomBytes } from 'crypto';
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { ADMIN } from '../helpers/auth';
-import { authToken } from '../helpers/common';
-import {
-	createDashboardViaApi,
-	deleteDashboardViaApi,
-} from '../helpers/dashboards';
-import { seedPodMetricsViaSeeder } from '../helpers/infra-monitoring';
-import { gotoLogsExplorer } from '../helpers/logs-explorer';
+import { authToken } from './api';
+import { ADMIN } from './auth';
+import { buildDashboard, createViaApi, deleteViaApi } from './dashboards';
+import { SAMPLE_POD, seedPodMetricsViaSeeder } from './infra/pods';
+import { inputField } from './input';
+import { driver, kit, seeded } from './kit';
+import { logsExplorerDriver } from './logs/explorer';
 import {
 	gotoTraceUntilLoaded,
 	type LargeTrace,
 	loadLargeTrace,
 	seedTracesViaSeeder,
-} from '../helpers/trace-details';
-
-import { driver, kit, seeded } from './kit';
+} from './traces';
 
 // The react-router v5 -> v7 regression net. Router-sensitive mechanics (history
 // depth, POP, same-url suppression, the `newTab` branch) live here so the specs
@@ -85,6 +82,8 @@ export interface Routing {
 	waitForParam(key: string, value: string): Promise<void>;
 	/** `history.length`: Chromium keeps it on POP and REPLACE, grows it on PUSH. */
 	historyDepth(): Promise<number>;
+	/** Pathnames of the tab's same-origin history entries, oldest first. */
+	historyPaths(): Promise<string[]>;
 	/** Complete the login form on the page as it stands, without navigating. */
 	login(): Promise<void>;
 	/** Sidebar entries are `div.nav-item`, not links. */
@@ -103,7 +102,22 @@ export interface Routing {
 	): Promise<void>;
 	/** Hold every script requested during `body`, so lazy route chunks suspend. */
 	whileScriptsHeld(body: () => Promise<void>): Promise<void>;
+	/** The `Spinner` a route's Suspense fallback renders. */
+	suspenseFallback(): Locator;
+	/** Every console message and page error from now on; fills as the page runs. */
+	recordMessages(): string[];
+	/** `NotFound`, the catch-all route's screen. */
+	notFound(): Locator;
 	gotoLogsExplorer(): Promise<void>;
+	alerts: {
+		/** The rules table, or its empty state when nothing is seeded. */
+		landmark(): Locator;
+	};
+	settings: {
+		sidenav(): Locator;
+		/** An entry's testid is its `itemKey`. */
+		navItem(itemKey: string): Locator;
+	};
 	dashboards: {
 		gotoList(title?: string): Promise<void>;
 		/** Not `dashboard-title-0`: the search tokenises on hyphens and matches leftovers. */
@@ -118,6 +132,17 @@ export interface Routing {
 		groupBy(attribute: string): Promise<void>;
 		waitUntilGrouped(attribute: string, grouped?: boolean): Promise<void>;
 		groupBySelect(): Locator;
+		/** Run `expression` from the list's search box. */
+		filter(expression: string): Promise<void>;
+		/** Sort by the first sortable column: a nuqs write the router never sees. */
+		sort(): Promise<void>;
+		category(key: string): Locator;
+		/** Click a pod's name once, with no retry: a second click is the bug. */
+		openPod(name: string): Promise<void>;
+		drawer(): Locator;
+		drawerTab(label: string): Locator;
+		/** The search box of the drawer's Overview tab. */
+		overviewSearch(): Locator;
 	};
 	trace: {
 		path(trace: LargeTrace): string;
@@ -132,6 +157,7 @@ export interface Routing {
 		cancel(): Promise<void>;
 		save(): Promise<void>;
 		discardDialog(): Locator;
+		discardDialogButton(name: 'Keep editing' | 'Discard'): Locator;
 		settings(): Locator;
 		removeByName(names: string[]): Promise<void>;
 	};
@@ -169,6 +195,18 @@ export function routingDriver(page: Page): Routing {
 				() =>
 					(globalThis as unknown as { history: { length: number } }).history.length,
 			),
+		historyPaths: async () => {
+			const urls = await page.evaluate(() =>
+				(
+					globalThis as unknown as {
+						navigation: { entries(): { url: string | null }[] };
+					}
+				).navigation
+					.entries()
+					.map((entry) => entry.url ?? ''),
+			);
+			return urls.map((url) => new URL(url).pathname);
+		},
 
 		login: async () => {
 			await page.getByTestId('email').fill(ADMIN.email);
@@ -236,7 +274,30 @@ export function routingDriver(page: Page): Routing {
 			}
 		},
 
-		gotoLogsExplorer: () => gotoLogsExplorer(page),
+		suspenseFallback: () => page.getByRole('img', { name: 'loading' }).first(),
+
+		recordMessages: () => {
+			const messages: string[] = [];
+			page.on('pageerror', (error) => messages.push(error.message));
+			page.on('console', (message) => messages.push(message.text()));
+			return messages;
+		},
+
+		notFound: () => page.getByTestId('not-found'),
+
+		gotoLogsExplorer: () => logsExplorerDriver(page).goto(),
+
+		alerts: {
+			landmark: () =>
+				page
+					.getByRole('heading', { name: 'Alert Rules', exact: true })
+					.or(page.getByTestId('alert-rules-list-search')),
+		},
+
+		settings: {
+			sidenav: () => page.getByTestId('settings-page-sidenav'),
+			navItem: (itemKey) => page.getByTestId(itemKey),
+		},
 
 		dashboards: {
 			gotoList: async (title) => {
@@ -277,6 +338,39 @@ export function routingDriver(page: Page): Routing {
 			waitUntilGrouped: (attribute, grouped = true) =>
 				page.waitForURL((url) => groupByOf(url).includes(attribute) === grouped),
 			groupBySelect: () => page.getByTestId('k8s-table-group-by-select'),
+			// The caret can jump once after the editor mounts and rotate the typed
+			// text, so retype until the editor holds exactly the expression.
+			filter: async (expression) => {
+				const editor = page
+					.locator('.query-where-clause-editor .cm-content')
+					.first();
+				await expect(async () => {
+					await editor.click();
+					await page.keyboard.press('ControlOrMeta+a');
+					await page.keyboard.press('Delete');
+					await page.keyboard.insertText(expression);
+					await expect(editor).toHaveText(expression, { timeout: 2_000 });
+				}).toPass({ timeout: 20_000 });
+				await page.getByRole('button', { name: /run query/i }).click();
+				await page.waitForURL((url) =>
+					decodeURIComponent(url.searchParams.get('compositeQuery') ?? '').includes(
+						expression,
+					),
+				);
+			},
+			sort: async () => {
+				await page.locator('thead button[data-sort]').first().click();
+				await page.waitForURL((url) => url.searchParams.has('orderBy'));
+			},
+			category: (key) => page.getByTestId(`category-${key}`),
+			openPod: async (name) => {
+				await page.getByRole('row').getByText(name, { exact: true }).click();
+			},
+			drawer: () => page.getByRole('dialog'),
+			drawerTab: (label) =>
+				routing.k8s.drawer().getByRole('button', { name: label, exact: true }),
+			overviewSearch: () =>
+				routing.k8s.drawer().locator('.query-where-clause-editor .cm-content'),
 		},
 
 		trace: {
@@ -299,7 +393,7 @@ export function routingDriver(page: Page): Routing {
 				await routing.roles.nameInput().fill(name);
 				await expect(page.getByText('Unsaved changes')).toBeVisible();
 			},
-			nameInput: () => page.getByTestId('role-name-input'),
+			nameInput: () => inputField(page, 'role-name-input'),
 			cancel: async () => {
 				await page.getByTestId('cancel-button').click();
 			},
@@ -307,6 +401,8 @@ export function routingDriver(page: Page): Routing {
 				await page.getByTestId('save-button').click();
 			},
 			discardDialog: () => page.getByTestId('discard-changes-dialog'),
+			discardDialogButton: (name) =>
+				page.getByTestId('discard-changes-dialog').getByRole('button', { name }),
 			settings: () => page.getByTestId('roles-settings'),
 			removeByName: async (names) => {
 				const headers = { Authorization: `Bearer ${await authToken(page)}` };
@@ -346,11 +442,10 @@ const withDashboard = seeded(
 	'dashboard',
 	async ({ page }) => {
 		const title = `routing-${uniqueSuffix()}`;
-		const id = await createDashboardViaApi(page, title);
+		const id = await createViaApi(page, buildDashboard({ title, sections: [] }));
 		return { id, title, path: `${PATH.dashboards}/${id}` };
 	},
-	async ({ page, value }) =>
-		deleteDashboardViaApi(page.request, value.id, await authToken(page)),
+	async ({ page, value }) => deleteViaApi(page, value.id),
 );
 
 const withTrace = seeded(
@@ -370,7 +465,7 @@ const withPods = seeded(
 	'pods',
 	async ({ page }) => {
 		await seedWithRetry(() => seedPodMetricsViaSeeder(page));
-		return { groupBy: NAMESPACE_ATTR };
+		return { groupBy: NAMESPACE_ATTR, pod: SAMPLE_POD };
 	},
 	undefined,
 	{ timeout: SEED_TIMEOUT_MS },

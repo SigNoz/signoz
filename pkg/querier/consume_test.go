@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
+	cmock "github.com/SigNoz/clickhouse-go-mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -95,6 +97,13 @@ func jsonColumn(paths map[string]any) telemetrystoretypes.JSONValue {
 func TestUnwrapVariant(t *testing.T) {
 	jsonCol := jsonColumn(map[string]any{"level": "error", "attrs.code": int64(500)})
 	nullCol := jsonColumn(map[string]any{"level": "error", "absent": chcol.Variant{}})
+	scopeAttrs := chcol.NewJSON()
+	scopeAttrs.SetValueAtPath("lib.lang", "go")
+	scopeCol := jsonColumn(map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": scopeAttrs})
+	resourceAttrs := chcol.NewJSON()
+	resourceAttrs.SetValueAtPath("service.name", "signoz")
+	resourceAttrs.SetValueAtPath("signoz.resource.kind", "role")
+	resourceCol := jsonColumn(map[string]any{"attributes": resourceAttrs})
 
 	testCases := []struct {
 		name   string
@@ -108,6 +117,8 @@ func TestUnwrapVariant(t *testing.T) {
 		{name: "JSONColumnNested", column: "body_v2", input: jsonCol, want: map[string]any{"level": "error", "attrs": map[string]any{"code": float64(500)}}},
 		{name: "AttributesColumnFlat", column: "attributes", input: jsonCol, want: map[string]any{"level": "error", "attrs.code": float64(500)}},
 		{name: "AttributesColumnDropsNullPaths", column: "attributes", input: nullCol, want: map[string]any{"level": "error"}},
+		{name: "ScopeColumnFlat", column: "scope", input: scopeCol, want: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}}},
+		{name: "ResourceColumnFlat", column: "resource", input: resourceCol, want: map[string]any{"attributes": map[string]any{"service.name": "signoz", "signoz.resource.kind": "role"}}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -129,6 +140,32 @@ func TestMergeSpanAttributeColumns_EmptyEventsAndLinks(t *testing.T) {
 	}
 	if links, ok := data["links"].([]spantypes.Link); !ok || len(links) != 0 {
 		t.Fatalf("expected empty []spantypes.Link, got %#v", data["links"])
+	}
+}
+
+func TestMergeSpanAttributeColumns_Scope(t *testing.T) {
+	testCases := []struct {
+		name  string
+		scope map[string]any
+		want  spantypes.Scope
+	}{
+		{
+			name:  "SetFields_Kept",
+			scope: map[string]any{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+			want:  spantypes.Scope{"name": "io.opentelemetry.http", "version": "1.2.0", "attributes": map[string]any{"lib.lang": "go"}},
+		},
+		{
+			name:  "UnsetDeclaredPaths_Empty",
+			scope: map[string]any{"name": "", "version": "", "attributes": map[string]any{}},
+			want:  spantypes.Scope{},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := map[string]any{"scope": testCase.scope}
+			mergeSpanAttributeColumns(data)
+			assert.Equal(t, testCase.want, data["scope"])
+		})
 	}
 }
 
@@ -216,6 +253,44 @@ func TestMergeSpanAttributeColumns_JSONColumn(t *testing.T) {
 				_, present := testCase.data[removed]
 				assert.False(t, present, "%s should be removed", removed)
 			}
+		})
+	}
+}
+
+func TestReadAsRawSkipping(t *testing.T) {
+	testCases := []struct {
+		name        string
+		values      []string
+		skip        int
+		wantSkipped int
+		wantIDs     []string
+	}{
+		{name: "NoSkip", values: []string{"a", "b", "c"}, skip: 0, wantSkipped: 0, wantIDs: []string{"a", "b", "c"}},
+		{name: "SkipInsideResult", values: []string{"d", "e", "f", "g"}, skip: 2, wantSkipped: 2, wantIDs: []string{"f", "g"}},
+		{name: "SkipWholeResult", values: []string{"h", "i"}, skip: 2, wantSkipped: 2, wantIDs: nil},
+		{name: "SkipPastResult", values: []string{"j"}, skip: 5, wantSkipped: 1, wantIDs: nil},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			values := make([][]any, len(testCase.values))
+			for i, value := range testCase.values {
+				values[i] = []any{value}
+			}
+			rows := cmock.NewRows([]cmock.ColumnType{{Name: "id", Type: "String"}}, values)
+			for i := 0; i < testCase.skip && i < len(values); i++ {
+				rows.RowError(i, errors.New(errors.TypeInternal, errors.CodeInternal, "skipped row was scanned"))
+			}
+
+			data, skipped, err := readAsRawSkipping(rows, "A", testCase.skip)
+			require.NoError(t, err)
+
+			var ids []string
+			for _, row := range data.Rows {
+				ids = append(ids, row.Data["id"].(string))
+			}
+			assert.Equal(t, testCase.wantSkipped, skipped)
+			assert.Equal(t, testCase.wantIDs, ids)
 		})
 	}
 }

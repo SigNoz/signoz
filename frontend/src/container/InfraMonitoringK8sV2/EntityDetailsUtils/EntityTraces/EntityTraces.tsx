@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import logEvent from 'api/common/logEvent';
 import {
 	QuerySearchV2Provider,
 	useExpression,
@@ -16,7 +15,6 @@ import {
 	getUserExpressionFromCombined,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { ResizeTable } from 'components/ResizeTable';
-import { InfraMonitoringEvents } from 'constants/events';
 import Controls from 'container/Controls';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
@@ -33,23 +31,28 @@ import { useEntityDetailsTime } from '../EntityDateTimeSelector/useEntityDetails
 import EntityEmptyState from '../EntityEmptyState/EntityEmptyState';
 import EntityError from '../EntityError/EntityError';
 import { isKeyNotFoundError, selectedEntityTracesColumns } from '../utils';
-import { K8S_ENTITY_TRACES_EXPRESSION_KEY, useEntityTraces } from './hooks';
+import {
+	K8S_ENTITY_TRACES_EXPRESSION_KEY,
+	TraceRow,
+	useEntityTraces,
+} from './hooks';
 import { getTraceListColumns } from './traceListColumns';
 import { getEntityTracesQueryPayload } from './utils';
 
 import styles from './EntityTraces.module.scss';
 import { useTimezone } from 'providers/Timezone';
-import { logInfraDrawerFilterCustomizedEvent } from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
+import {
+	logInfraDrawerFilterCustomizedEvent,
+	logInfraDrawerTraceClickedEvent,
+} from 'container/InfraMonitoringK8sV2/EntityDetailsUtils/events';
 
 interface Props {
-	eventEntity: string;
 	queryKey: string;
 	category: InfraMonitoringEntity;
 	initialExpression: string;
 }
 
 function EntityTracesContent({
-	eventEntity,
 	queryKey,
 	category,
 }: Omit<Props, 'initialExpression'>): JSX.Element {
@@ -102,13 +105,6 @@ function EntityTracesContent({
 				saveRecentQueryByExpression(DataSource.TRACES, newUserExpression);
 				querySearchOnRun(newUserExpression || '');
 
-				void logEvent(InfraMonitoringEvents.FilterApplied, {
-					entity: eventEntity,
-					page: InfraMonitoringEvents.DetailedPage,
-					category,
-					view: InfraMonitoringEvents.TracesView,
-				});
-
 				logInfraDrawerFilterCustomizedEvent(
 					category,
 					'traces',
@@ -119,14 +115,7 @@ function EntityTracesContent({
 				refetch();
 			}
 		},
-		[
-			inputExpression,
-			initialExpression,
-			refetch,
-			querySearchOnRun,
-			category,
-			eventEntity,
-		],
+		[inputExpression, initialExpression, refetch, querySearchOnRun, category],
 	);
 
 	const queryData = useMemo(
@@ -154,11 +143,7 @@ function EntityTracesContent({
 	const hasAdditionalFilters = !!userExpression?.trim();
 
 	const handleRowClick = useCallback(() => {
-		void logEvent(InfraMonitoringEvents.ItemClicked, {
-			entity: InfraMonitoringEvents.K8sEntity,
-			category,
-			view: InfraMonitoringEvents.TracesView,
-		});
+		logInfraDrawerTraceClickedEvent(category);
 	}, [category]);
 
 	useEffect(() => {
@@ -171,16 +156,13 @@ function EntityTracesContent({
 		<div className={styles.container}>
 			<div className={styles.filterContainer}>
 				<div className={styles.filterContainerTime}>
-					<EntityDateTimeSelector
-						eventEntity={eventEntity}
-						category={category}
-						view={InfraMonitoringEvents.TracesView}
-					/>
+					<EntityDateTimeSelector category={category} />
 
 					<RunQueryBtn
 						isLoadingQueries={isFetching}
 						onStageRunQuery={(): void => handleRunQuery()}
 						handleCancelQuery={cancel}
+						testId="entity-traces-run-query-btn"
 					/>
 				</div>
 
@@ -202,7 +184,7 @@ function EntityTracesContent({
 			{isError && !isKeyNotFound && !isLoading && <EntityError />}
 
 			{(!isError || isKeyNotFound) && traces.length > 0 && (
-				<div className={styles.entityTracesTable}>
+				<div className={styles.entityTracesTable} data-testid="entity-traces-table">
 					<div className={styles.controls}>
 						<Controls
 							totalCount={hasMore ? currentCount + 1 : currentCount}
@@ -238,7 +220,8 @@ function EntityTracesContent({
 						loading={isFetching && traces.length === 0}
 						dataSource={traces}
 						columns={traceListColumns}
-						onRow={(): Record<string, unknown> => ({
+						onRow={(record: TraceRow): Record<string, unknown> => ({
+							'data-testid': `entity-traces-row-${String(record.data.span_id)}`,
 							onClick: (): void => handleRowClick(),
 						})}
 					/>

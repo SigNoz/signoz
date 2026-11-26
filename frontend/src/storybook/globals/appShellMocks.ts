@@ -1,11 +1,11 @@
 import { StatusCodes } from 'http-status-codes';
-import remove from 'api/browser/localstorage/remove';
-import set from 'api/browser/localstorage/set';
 import { FeatureKeys } from 'constants/features';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import type { IAppContext } from 'providers/App/types';
-import { createAppContextMock } from 'tests/fixtures/appContextMock';
+import {
+	createAppContextMock,
+	defaultFeatureFlags,
+} from 'tests/fixtures/appContextMock';
 import APIError from 'types/api/error';
 import type { FeatureFlagProps } from 'types/api/features/getFeaturesFlags';
 import {
@@ -18,7 +18,7 @@ import type { UserPreference } from 'types/api/preferences/preference';
 import { USER_ROLES } from 'types/roles';
 import { setNoAuthMode } from 'utils/noAuthMode';
 
-import { choiceControl, toggleControl } from '../controls/controls';
+import { choiceControl } from '../controls/controls';
 import { defineStoryMocks } from '../controls/defineStoryMocks';
 import type { StoryMockArgs } from '../controls/types';
 import { RESPONSE_STATES, type ResponseState } from '../runtime/responseState';
@@ -42,6 +42,11 @@ const BANNERS = [
 	'payment-failed',
 	'license-expired',
 	'license-terminated',
+	'license-cancelled',
+	'license-defaulted',
+	'evaluation-expired',
+	'license-expired-with-trial',
+	'license-expired-with-payment-failed',
 	'no-auth',
 ] as const;
 
@@ -156,56 +161,76 @@ const licensedBanner = (
 	};
 };
 
+const trialExpiryContext = (): Partial<IAppContext> => {
+	const nowInSeconds = Math.floor(Date.now() / 1000);
+
+	return {
+		trialInfo: {
+			...baseTrialInfo,
+			onTrial: true,
+			trialStart: nowInSeconds - 27 * DAY_IN_SECONDS,
+			trialEnd: nowInSeconds + 3 * DAY_IN_SECONDS,
+			workSpaceBlock: false,
+			trialConvertedToSubscription: false,
+			gracePeriodEnd: -1,
+		},
+	};
+};
+
+const withPaymentFailed = (license: LicenseResModel): LicenseResModel => ({
+	...license,
+	eventQueue: {
+		...license.eventQueue,
+		event: LicenseEvent.DEFAULT,
+		scheduledAt: new Date(Date.now() + 7 * DAY_IN_SECONDS * 1000).toISOString(),
+	},
+});
+
+// The restricted-workspace banner needs a self-hosted license; the cloud
+// platform redirects to the restricted page instead.
+const withRestricted =
+	(state: LicenseState) =>
+	(license: LicenseResModel): LicenseResModel => ({
+		...license,
+		platform: LicensePlatform.SELF_HOSTED,
+		state,
+	});
+
+const RESTRICTED_STATES: Partial<Record<Banner, LicenseState>> = {
+	'license-expired': LicenseState.EXPIRED,
+	'license-terminated': LicenseState.TERMINATED,
+	'license-cancelled': LicenseState.CANCELLED,
+	'license-defaulted': LicenseState.DEFAULTED,
+	'evaluation-expired': LicenseState.EVALUATION_EXPIRED,
+};
+
 const bannerContext = (
 	banner: Banner,
 	activeLicense: LicenseResModel | null,
 ): Partial<IAppContext> => {
-	const nowInSeconds = Math.floor(Date.now() / 1000);
-
 	switch (banner) {
 		case 'trial-expiry':
-			return {
-				trialInfo: {
-					...baseTrialInfo,
-					onTrial: true,
-					trialStart: nowInSeconds - 27 * DAY_IN_SECONDS,
-					trialEnd: nowInSeconds + 3 * DAY_IN_SECONDS,
-					workSpaceBlock: false,
-					trialConvertedToSubscription: false,
-					gracePeriodEnd: -1,
-				},
-			};
+			return trialExpiryContext();
 
 		case 'payment-failed':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				eventQueue: {
-					...license.eventQueue,
-					event: LicenseEvent.DEFAULT,
-					scheduledAt: new Date(
-						Date.now() + 7 * DAY_IN_SECONDS * 1000,
-					).toISOString(),
-				},
-			}));
+			return licensedBanner(activeLicense, withPaymentFailed);
 
-		// Both restricted-workspace banners need a self-hosted license; the cloud
-		// platform never reaches that branch.
-		case 'license-expired':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				platform: LicensePlatform.SELF_HOSTED,
-				state: LicenseState.EXPIRED,
-			}));
+		case 'license-expired-with-trial':
+			return {
+				...trialExpiryContext(),
+				...licensedBanner(activeLicense, withRestricted(LicenseState.EXPIRED)),
+			};
 
-		case 'license-terminated':
-			return licensedBanner(activeLicense, (license) => ({
-				...license,
-				platform: LicensePlatform.SELF_HOSTED,
-				state: LicenseState.TERMINATED,
-			}));
+		case 'license-expired-with-payment-failed':
+			return licensedBanner(activeLicense, (license) =>
+				withRestricted(LicenseState.EXPIRED)(withPaymentFailed(license)),
+			);
 
-		default:
-			return {};
+		default: {
+			const state = RESTRICTED_STATES[banner];
+
+			return state ? licensedBanner(activeLicense, withRestricted(state)) : {};
+		}
 	}
 };
 
@@ -257,7 +282,7 @@ export const appShellMocks = defineStoryMocks({
 		banner: choiceControl<Banner>('Banner', {
 			group: APP_SHELL,
 			description:
-				'License, trial and no-auth banners above the shell. The license ones need a license to read, so they override an unlicensed License control.',
+				'License, trial and no-auth banners above the shell. The license ones need a license to read, so they override an unlicensed License control. The `-with-` values turn two banners on at once.',
 			options: BANNERS,
 			value: 'none',
 		}),
@@ -265,12 +290,6 @@ export const appShellMocks = defineStoryMocks({
 			group: APP_SHELL,
 			options: SIDENAV_STATES,
 			value: 'pinned',
-		}),
-		bottomStrip: toggleControl('Bottom strip', {
-			group: APP_SHELL,
-			description:
-				'The `SAVED_VIEW_ENABLED` localStorage flag the bottom strip ships behind.',
-			value: false,
 		}),
 		support: choiceControl<SupportState>('Support', {
 			group: APP_SHELL,
@@ -299,14 +318,8 @@ export const appShellMocks = defineStoryMocks({
 			},
 		};
 	},
-	effect: ({ banner, bottomStrip, support }) => {
+	effect: ({ banner, support }) => {
 		setNoAuthMode(banner === 'no-auth');
-
-		if (bottomStrip) {
-			set(LOCALSTORAGE.SAVED_VIEW_ENABLED, 'true');
-		} else {
-			remove(LOCALSTORAGE.SAVED_VIEW_ENABLED);
-		}
 
 		const pylon = window.signozBootData?.settings?.pylon;
 
@@ -317,3 +330,24 @@ export const appShellMocks = defineStoryMocks({
 });
 
 export type AppShellArgs = StoryMockArgs<typeof appShellMocks>;
+
+type ShellArgs = Parameters<typeof appShellMocks.read>[0];
+
+const shellContext = (args: ShellArgs): Partial<IAppContext> | undefined =>
+	appShellMocks.config?.(appShellMocks.read(args)).appContext;
+
+/** A restricted-license banner swaps the cloud license for a self-hosted one. */
+export const shellLicense = (
+	args: ShellArgs,
+): LicenseResModel | null | undefined => shellContext(args)?.activeLicense;
+
+export const isCloudShell = (args: ShellArgs): boolean =>
+	shellLicense(args)?.platform === LicensePlatform.CLOUD;
+
+export const shellFeatureActive = (
+	args: ShellArgs,
+	name: FeatureKeys,
+): boolean =>
+	(shellContext(args)?.featureFlags ?? defaultFeatureFlags).some(
+		(flag) => flag.name === name && flag.active,
+	);

@@ -1,4 +1,3 @@
-import { MemoryRouter } from 'react-router-dom-v5-compat';
 import * as panelTypesQueryParamHooks from 'hooks/queryBuilder/useGetPanelTypesQueryParam';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -6,13 +5,6 @@ import { PreferenceContextProvider } from 'providers/preferences/context/Prefere
 import { fireEvent, render, screen } from 'tests/test-utils';
 
 import LogsExplorer from '../index';
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.LOGS_EXPLORER}`,
-	}),
-}));
 
 jest.mock(
 	'container/Toolbar/Toolbar',
@@ -85,16 +77,14 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 
 function page(): JSX.Element {
 	return (
-		<MemoryRouter initialEntries={[ROUTES.LOGS_EXPLORER]}>
-			<PreferenceContextProvider>
-				<LogsExplorer />
-			</PreferenceContextProvider>
-		</MemoryRouter>
+		<PreferenceContextProvider>
+			<LogsExplorer />
+		</PreferenceContextProvider>
 	);
 }
 
 describe('Logs Explorer live mode', () => {
-	// useLocation is mocked without a search string, so the tab is driven
+	// The route carries no search string, so the tab is driven
 	// through the hook that reads it from the url.
 	const panelTypeSpy = jest.spyOn(
 		panelTypesQueryParamHooks,
@@ -107,7 +97,9 @@ describe('Logs Explorer live mode', () => {
 
 	it('ends when the url moves off the list tab, whatever moved it', () => {
 		panelTypeSpy.mockReturnValue(PANEL_TYPES.LIST);
-		const { rerender } = render(page());
+		const { rerender } = render(page(), undefined, {
+			initialRoute: ROUTES.LOGS_EXPLORER,
+		});
 
 		fireEvent.click(screen.getByTestId('go-live'));
 		expect(screen.getByTestId('live-state')).toHaveTextContent('live');
@@ -120,7 +112,9 @@ describe('Logs Explorer live mode', () => {
 
 	it('stays on while the url keeps the list tab', () => {
 		panelTypeSpy.mockReturnValue(PANEL_TYPES.LIST);
-		const { rerender } = render(page());
+		const { rerender } = render(page(), undefined, {
+			initialRoute: ROUTES.LOGS_EXPLORER,
+		});
 
 		fireEvent.click(screen.getByTestId('go-live'));
 		rerender(page());

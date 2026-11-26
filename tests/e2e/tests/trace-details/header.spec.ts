@@ -1,9 +1,9 @@
-import { test, expect } from '../../fixtures/auth';
 import {
-	gotoTraceUntilLoaded,
+	expect,
 	loadLargeTrace,
 	seedTracesViaSeeder,
-} from '../../helpers/trace-details';
+	test,
+} from '../../drivers/traces';
 
 // §1 header — the Analytics FloatingPanel. The action cluster (Analytics button
 // + options menu) only renders once trace data is loaded, which gotoTraceUntilLoaded
@@ -21,9 +21,8 @@ test.describe('Trace details — header analytics panel', () => {
 		await request.dispose();
 	});
 
-	test.beforeEach(async ({ authedPage: page }) => {
-		await gotoTraceUntilLoaded(
-			page,
+	test.beforeEach(async ({ traces }) => {
+		await traces.goto(
 			`/trace/${trace.traceId}`,
 			`cell-0-${trace.landmarks.root}`,
 		);
@@ -31,15 +30,15 @@ test.describe('Trace details — header analytics panel', () => {
 
 	test('TC-01 the analytics panel can be dragged by its header', async ({
 		authedPage: page,
+		traces,
 	}) => {
-		await page.getByRole('button', { name: 'Analytics' }).click();
-		const panel = page.getByTestId('trace-analytics-panel');
+		await traces.analytics.open();
+		const panel = traces.analytics.panel();
 		await expect(panel).toBeVisible();
 
 		const zero = { x: 0, y: 0, width: 0, height: 0 };
 		const before = (await panel.boundingBox()) ?? zero;
-		const hb =
-			(await page.locator('.floating-panel__drag-handle').boundingBox()) ?? zero;
+		const hb = (await traces.analytics.dragHandle().boundingBox()) ?? zero;
 
 		// Drag the header left + down.
 		await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);

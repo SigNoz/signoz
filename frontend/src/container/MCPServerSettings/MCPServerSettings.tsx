@@ -5,14 +5,14 @@ import ROUTES from 'constants/routes';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { useGetGlobalConfig } from 'api/generated/services/global';
 import { useGetHosts } from 'api/generated/services/zeus';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { USER_ROLES } from 'types/roles';
 import { getBaseUrl } from 'utils/basePath';
 
 import { Badge } from '@signozhq/ui/badge';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import Spinner from 'components/Spinner';
 import AuthCard from './AuthCard/AuthCard';
 import ClientTabs from './ClientTabs/ClientTabs';
@@ -83,7 +83,7 @@ function MCPServerSettings(): JSX.Element {
 
 	const handleCreateServiceAccount = useCallback(() => {
 		void logEvent(ANALYTICS.CREATE_SA_CLICKED, {});
-		history.push(
+		navigate(
 			`${ROUTES.SERVICE_ACCOUNTS_SETTINGS}?${SA_QUERY_PARAMS.CREATE_SA}=true`,
 		);
 	}, []);

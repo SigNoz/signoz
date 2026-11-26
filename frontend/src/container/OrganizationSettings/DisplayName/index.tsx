@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Button, Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -81,6 +81,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	return (
 		<form
 			className="display-name-form"
+			data-testid="org-display-name-form"
 			onSubmit={handleSubmit(onSubmit)}
 			autoComplete="off"
 		>
@@ -95,6 +96,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 							<Input
 								{...field}
 								id="displayName"
+								data-testid="org-display-name-input"
 								size="large"
 								placeholder={t('signoz')}
 								status={fieldState.error ? 'error' : ''}
@@ -112,6 +114,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 					disabled={isDisabled}
 					type="primary"
 					htmlType="submit"
+					data-testid="org-display-name-submit"
 				>
 					Submit
 				</Button>

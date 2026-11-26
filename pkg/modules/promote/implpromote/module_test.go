@@ -538,7 +538,7 @@ func TestTracesNumberIndexExpr_MatchesQuerierFilters(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sb := sqlbuilder.NewSelectBuilder()
-			conditions, _, err := querybuilder.Conditions(context.Background(), queryInfo, tracestelemetryschema.NewStorage(), &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
+			conditions, _, err := querybuilder.Conditions(context.Background(), queryInfo, tracestelemetryschema.NewStorage(nil), &key, testCase.operator, testCase.value, map[string][]*telemetrytypes.TelemetryFieldKey{key.Name: {&key}}, false, sb)
 			require.NoError(t, err)
 			sb.Where(conditions...)
 			sql, _ := sb.BuildWithFlavor(sqlbuilder.ClickHouse)

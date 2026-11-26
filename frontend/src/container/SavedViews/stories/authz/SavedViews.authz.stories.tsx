@@ -4,14 +4,15 @@ import { expect, waitFor, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { unreadableViewId } from '../__story_mockdata__/savedViews';
 import {
 	byTestId,
 	expectDisabled,
 	expectPending,
 	findRows,
+	hoverUnreadableRow,
 	openRowMenu,
 	openSaveChangesMenu,
+	openUnreadableView,
 	rowMenuItem,
 	rowName,
 	saveChangesItem,
@@ -99,21 +100,18 @@ export const NoCreateSaveMenu: Story = {
 };
 
 /**
- * `read` denied on one view made by someone else: its name is disabled and its
- * hover card never opens, while every other view still opens.
+ * `read` denied on one view made by someone else: the list checks no `read`, so
+ * its row opens it like any other, and the header then says No view access.
  */
 export const NoRead: Story = {
 	args: { unreadableView: true },
-	play: async ({ canvasElement, args }) => {
-		const rows = await findRows(canvasElement);
-		const deniedId = unreadableViewId(args.source);
+	play: openUnreadableView,
+};
 
-		await Promise.all(
-			rows.map((row) =>
-				expectDisabled(rowName(row), row.getAttribute('data-view-id') === deniedId),
-			),
-		);
-	},
+/** The hover card of the unreadable view: the permission callout in place of its query. */
+export const NoReadHoverCard: Story = {
+	args: { unreadableView: true },
+	play: hoverUnreadableRow,
 };
 
 /** The unreadable view open from its link: the header names it No view access. */

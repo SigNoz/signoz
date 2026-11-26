@@ -4,6 +4,7 @@ import cx from 'classnames';
 import { OPERATORS } from 'constants/queryBuilder';
 import { FontSize } from 'container/OptionsMenu/types';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { ScalarFieldValue } from 'utils/stringUtils';
 
 import './AddToQueryHOC.styles.scss';
 
@@ -40,10 +41,10 @@ function AddToQueryHOC({
 
 export interface AddToQueryHOCProps {
 	fieldKey: string;
-	fieldValue: string;
+	fieldValue: ScalarFieldValue;
 	onAddToQuery: (
 		fieldKey: string,
-		fieldValue: string,
+		fieldValue: ScalarFieldValue,
 		operator: string,
 		dataType?: DataTypes,
 	) => void;

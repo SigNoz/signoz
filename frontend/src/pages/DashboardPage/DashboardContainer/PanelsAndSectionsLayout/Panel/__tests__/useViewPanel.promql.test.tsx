@@ -1,25 +1,29 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent } from 'tests/test-utils';
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider as ReduxProvider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { CompatRouter } from 'react-router-dom-v5-compat';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
 import appStore from 'store';
+import { TestRouter } from 'tests/router';
 
 import ViewPanelModal from '../ViewPanelModal/ViewPanelModal';
 import { useViewPanel } from '../hooks/useViewPanel';
 
 // jest.config maps the real hook to a no-op mock; this suite needs real navigation.
-jest.mock('hooks/useSafeNavigate', () =>
-	jest
-		.requireActual('tests/browser-history-safe-navigate')
-		.createBrowserHistorySafeNavigateMock(),
-);
+jest.mock('hooks/useSafeNavigate', () => {
+	const { navigate } = jest.requireActual('lib/router/navigation');
+	return {
+		useSafeNavigate: (): unknown => ({
+			safeNavigate: (to: string, opts?: { replace?: boolean }): void => {
+				navigate(to, { replace: opts?.replace });
+			},
+		}),
+	};
+});
 
 jest.mock('pages/DashboardPage/DashboardContainer/hooks/usePanelQuery', () => ({
 	usePanelQuery: (): unknown => ({
@@ -139,23 +143,21 @@ const INITIAL_ROUTE = '/dashboard/dash-1';
 const renderHarness = (): void => {
 	window.history.replaceState(null, '', INITIAL_ROUTE);
 	render(
-		<MemoryRouter initialEntries={[INITIAL_ROUTE]}>
-			<CompatRouter>
-				<QueryClientProvider client={new QueryClient()}>
-					<ReduxProvider store={configureStore([])(appStore.getState())}>
-						<QueryBuilderProvider>
-							<Harness />
-						</QueryBuilderProvider>
-					</ReduxProvider>
-				</QueryClientProvider>
-			</CompatRouter>
-		</MemoryRouter>,
+		<TestRouter initialRoute="/dashboard/dash-1">
+			<QueryClientProvider client={new QueryClient()}>
+				<ReduxProvider store={configureStore([])(appStore.getState())}>
+					<QueryBuilderProvider>
+						<Harness />
+					</QueryBuilderProvider>
+				</ReduxProvider>
+			</QueryClientProvider>
+		</TestRouter>,
 	);
 };
 
 describe('View modal, PromQL panels', () => {
 	it('shows the opened panel query, not the previously viewed one', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+		const user = userEvent.setup({ delay: null });
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-a'));

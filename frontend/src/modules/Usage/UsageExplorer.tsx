@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
-import { withRouter } from 'react-router-dom';
-import { Select, Space } from 'antd';
+import { Select } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Typography } from '@signozhq/ui/typography';
 import Graph from 'components/Graph';
 import { GetService, getUsageData, UsageDataItem } from 'store/actions';
@@ -32,7 +32,6 @@ interface UsageExplorerProps {
 		selectedTimeInterval: GlobalReducer['selectedTime'];
 	}) => void;
 	globalTime: GlobalTime;
-	servicesList: servicesListItem[];
 	totalCount: number;
 }
 const timeDaysOptions = [
@@ -168,7 +167,14 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 							justifyContent: 'center',
 						}}
 					>
-						<Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							No spans found. Please add instrumentation (follow this
 							<a
 								href="https://signoz.io/docs/instrumentation/overview"
@@ -183,7 +189,14 @@ function _UsageExplorer(props: UsageExplorerProps): JSX.Element {
 					</Space>
 				) : (
 					<Space style={{ display: 'block', marginLeft: 20, width: 200 }}>
-						<Typography>{`Total count is ${totalCount}`}</Typography>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>{`Total count is ${totalCount}`}</Typography>
 					</Space>
 				)}
 			</Space>
@@ -213,9 +226,7 @@ const mapStateToProps = (
 	};
 };
 
-export const UsageExplorer = withRouter(
-	connect(mapStateToProps, {
-		getUsageData,
-		getServicesList: GetService,
-	})(_UsageExplorer),
-);
+export const UsageExplorer = connect(mapStateToProps, {
+	getUsageData,
+	getServicesList: GetService,
+})(_UsageExplorer);

@@ -24,9 +24,17 @@ const COLUMNS = [
 	'confirm.text',
 ] as const satisfies readonly ActionColumn[];
 
-function SlackActions(): JSX.Element {
+interface SlackActionsProps {
+	readOnly: boolean;
+}
+
+function SlackActions({ readOnly }: SlackActionsProps): JSX.Element {
 	const { t } = useTranslation('channels');
-	const { control, register } = useFormContext<ChannelSpecFormValues>();
+	const {
+		control,
+		register,
+		formState: { errors },
+	} = useFormContext<ChannelSpecFormValues>();
 	const { fields, append, remove } = useFieldArray({ control, name: 'actions' });
 
 	const keyFor = (column: ActionColumn): string => column.replace('.text', '');
@@ -45,12 +53,16 @@ function SlackActions(): JSX.Element {
 						removeLabel={t('remove_slack_action')}
 						removeTestId={`slack-action-remove-${index}`}
 						onRemove={(): void => remove(index)}
+						readOnly={readOnly}
 					>
 						{COLUMNS.map((column) => (
 							<FormField
 								key={column}
 								label={t(`label_slack_action_${keyFor(column)}`)}
 								tooltip={t(`tooltip_slack_action_${keyFor(column)}`)}
+								error={
+									column === 'url' ? errors.actions?.[index]?.url?.message : undefined
+								}
 							>
 								<Input
 									{...register(`actions.${index}.${column}` as const)}
@@ -70,6 +82,8 @@ function SlackActions(): JSX.Element {
 					size="sm"
 					prefix={<Plus size={14} />}
 					onClick={(): void => append({ type: 'button', text: '', url: '' })}
+					disabled={readOnly}
+					disabledTooltip={undefined}
 					testId="slack-action-add"
 				>
 					{t('add_slack_action')}

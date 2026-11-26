@@ -62,6 +62,28 @@ describe('handleQueryChange bucket options', () => {
 		expect(result.builder.queryFormulas[0].bucketOptions).toBeUndefined();
 	});
 
+	it.each([DataSource.LOGS, DataSource.TRACES])(
+		'keeps the axis of a %s query that stays a heatmap',
+		(dataSource) => {
+			const base = initialQueriesMap[dataSource];
+			const result = handleQueryChange(
+				PANEL_TYPES.HEATMAP,
+				{
+					...base,
+					builder: {
+						...base.builder,
+						queryData: [{ ...base.builder.queryData[0], bucketOptions }],
+					},
+				},
+				PANEL_TYPES.HEATMAP,
+			);
+
+			expect(result.builder.queryData[0].bucketOptions).toStrictEqual(
+				bucketOptions,
+			);
+		},
+	);
+
 	it('leaves the rest of the formula intact', () => {
 		const result = handleQueryChange(
 			PANEL_TYPES.TIME_SERIES,
@@ -74,5 +96,52 @@ describe('handleQueryChange bucket options', () => {
 			expression: 'A',
 			disabled: false,
 		});
+	});
+});
+
+describe('handleQueryChange trace operator', () => {
+	function queryWithTraceOperator(): Query {
+		const base = initialQueriesMap[DataSource.TRACES];
+		return {
+			...base,
+			builder: {
+				...base.builder,
+				queryTraceOperator: [
+					{ ...base.builder.queryData[0], queryName: 'T1', expression: 'A => B' },
+				],
+			},
+		};
+	}
+
+	// The API rejects a trace operator on a scatter plot, so the switch sheds it.
+	it('drops the trace operator when switching to a scatter plot', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.SCATTER,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TABLE,
+		);
+
+		expect(result.builder.queryTraceOperator).toStrictEqual([]);
+	});
+
+	// A heatmap request takes one builder query and rejects a trace operator.
+	it('drops the trace operator when switching to a heatmap', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.HEATMAP,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TIME_SERIES,
+		);
+
+		expect(result.builder.queryTraceOperator).toStrictEqual([]);
+	});
+
+	it('keeps the trace operator when switching to a table', () => {
+		const result = handleQueryChange(
+			PANEL_TYPES.TABLE,
+			queryWithTraceOperator(),
+			PANEL_TYPES.TIME_SERIES,
+		);
+
+		expect(result.builder.queryTraceOperator).toHaveLength(1);
 	});
 });

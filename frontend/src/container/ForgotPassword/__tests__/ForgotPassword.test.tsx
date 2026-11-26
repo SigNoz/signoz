@@ -1,30 +1,24 @@
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import {
 	createErrorResponse,
 	handleInternalServerError,
 	rest,
 	server,
 } from 'mocks-server/server';
+import { holdResponse } from 'tests/holdResponse';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { OrgSessionContext } from 'types/api/v2/sessions/context/get';
 
 import ForgotPassword, { ForgotPasswordRouteState } from '../index';
 
 // Mock dependencies
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: jest.fn(),
-		location: {
-			search: '',
-		},
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const FORGOT_PASSWORD_ENDPOINT = '*/api/v2/factor_password/forgot';
 
@@ -71,6 +65,18 @@ const multiOrgProps: ForgotPasswordRouteState = {
 	orgs: mockMultipleOrgs,
 };
 
+function mockForgot(held?: Promise<void>): { forgotCalls: () => number } {
+	let calls = 0;
+	server.use(
+		rest.post(FORGOT_PASSWORD_ENDPOINT, async (_req, res, ctx) => {
+			calls += 1;
+			await held;
+			return res(ctx.status(200), ctx.json({ status: 'success' }));
+		}),
+	);
+	return { forgotCalls: (): number => calls };
+}
+
 describe('ForgotPassword Component', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -96,14 +102,14 @@ describe('ForgotPassword Component', () => {
 		it('pre-fills email from props', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
-			const emailInput = screen.getByTestId('email');
+			const emailInput = screen.getByTestId('email-field');
 			expect(emailInput).toHaveValue(TEST_EMAIL);
 		});
 
 		it('disables email input field', () => {
 			render(<ForgotPassword {...defaultProps} />);
 
-			const emailInput = screen.getByTestId('email');
+			const emailInput = screen.getByTestId('email-field');
 			expect(emailInput).toBeDisabled();
 		});
 
@@ -143,7 +149,7 @@ describe('ForgotPassword Component', () => {
 		});
 
 		it('enables submit button after selecting an organization', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<ForgotPassword {...multiOrgProps} />);
 
@@ -151,7 +157,7 @@ describe('ForgotPassword Component', () => {
 			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Click on the dropdown to reveal the options
-			await user.click(screen.getByRole('combobox'));
+			await user.click(screen.getByText('Select your organization'));
 			await user.click(screen.getByText('Organization One'));
 
 			await waitFor(() => {
@@ -175,7 +181,7 @@ describe('ForgotPassword Component', () => {
 
 	describe('Form Submission - Success', () => {
 		it('successfully submits forgot password request and shows success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
@@ -197,7 +203,7 @@ describe('ForgotPassword Component', () => {
 		});
 
 		it('shows back to login button on success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
@@ -216,7 +222,7 @@ describe('ForgotPassword Component', () => {
 		});
 
 		it('redirects to login when clicking back to login on success screen', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
@@ -236,13 +242,13 @@ describe('ForgotPassword Component', () => {
 			const backToLoginButton = screen.getByTestId('back-to-login');
 			await user.click(backToLoginButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
 	describe('Form Submission - Error Handling', () => {
 		it('displays error message when forgot password API fails', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(
 				rest.post(
@@ -262,7 +268,7 @@ describe('ForgotPassword Component', () => {
 		});
 
 		it('displays error message when API returns server error', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(rest.post(FORGOT_PASSWORD_ENDPOINT, handleInternalServerError));
 
@@ -277,7 +283,7 @@ describe('ForgotPassword Component', () => {
 		});
 
 		it('clears error message on new submission attempt', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			let requestCount = 0;
 
 			server.use(
@@ -321,26 +327,23 @@ describe('ForgotPassword Component', () => {
 
 	describe('Navigation', () => {
 		it('redirects to login when clicking back button on form', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<ForgotPassword {...defaultProps} />);
 
 			const backButton = screen.getByTestId('forgot-password-back');
 			await user.click(backButton);
 
-			expect(mockHistoryPush).toHaveBeenCalledWith(ROUTES.LOGIN);
+			expect(mockNavigate).toHaveBeenCalledWith(ROUTES.LOGIN);
 		});
 	});
 
 	describe('Loading States', () => {
 		it('shows loading state during API call', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.delay(100), ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
+			const response = holdResponse();
+			mockForgot(response.held);
 
 			render(<ForgotPassword {...defaultProps} />);
 
@@ -351,16 +354,14 @@ describe('ForgotPassword Component', () => {
 			await expect(
 				screen.findByText(/sending\.\.\./i),
 			).resolves.toBeInTheDocument();
+			response.release();
 		});
 
 		it('disables submit button during loading', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
-			server.use(
-				rest.post(FORGOT_PASSWORD_ENDPOINT, (_req, res, ctx) =>
-					res(ctx.delay(100), ctx.status(200), ctx.json({ status: 'success' })),
-				),
-			);
+			const response = holdResponse();
+			mockForgot(response.held);
 
 			render(<ForgotPassword {...defaultProps} />);
 
@@ -370,6 +371,7 @@ describe('ForgotPassword Component', () => {
 			await waitFor(() => {
 				expect(submitButton).toHaveAttribute('aria-disabled', 'true');
 			});
+			response.release();
 		});
 	});
 
@@ -411,6 +413,65 @@ describe('ForgotPassword Component', () => {
 			// Submit should be disabled because no orgId can be determined
 			const submitButton = screen.getByTestId('forgot-password-submit');
 			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+		});
+	});
+
+	// The email input is disabled and Enter in the org Select opens it, so Enter
+	// only reaches the form through the focused submit button.
+	describe('Enter key submission', () => {
+		it('sends the reset link once on Enter on the submit button', async () => {
+			const user = userEvent.setup();
+			const { forgotCalls } = mockForgot();
+
+			render(<ForgotPassword {...defaultProps} />);
+
+			await user.tab();
+			await user.tab();
+			expect(screen.getByTestId('forgot-password-submit')).toHaveFocus();
+			await user.keyboard('{enter}');
+
+			await expect(
+				screen.findByText(/check your email/i),
+			).resolves.toBeInTheDocument();
+			expect(forgotCalls()).toBe(1);
+		});
+
+		it('does not send on Enter while no organization is selected', async () => {
+			const user = userEvent.setup();
+			const { forgotCalls } = mockForgot();
+
+			render(<ForgotPassword {...multiOrgProps} />);
+
+			const submitButton = screen.getByTestId('forgot-password-submit');
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			submitButton.focus();
+			await user.keyboard('{enter}');
+
+			// Give a wrongly sent request time to land before asserting it never did.
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(forgotCalls()).toBe(0);
+		});
+
+		it('does not send again on Enter while the first request is loading', async () => {
+			const user = userEvent.setup();
+			const response = holdResponse();
+			const { forgotCalls } = mockForgot(response.held);
+
+			render(<ForgotPassword {...defaultProps} />);
+
+			const submitButton = screen.getByTestId('forgot-password-submit');
+			submitButton.focus();
+			await user.keyboard('{enter}');
+
+			await screen.findByText(/sending\.\.\./i);
+			expect(submitButton).toHaveAttribute('aria-disabled', 'true');
+			await user.keyboard('{enter}');
+
+			response.release();
+			await expect(
+				screen.findByText(/check your email/i),
+			).resolves.toBeInTheDocument();
+			expect(forgotCalls()).toBe(1);
 		});
 	});
 });

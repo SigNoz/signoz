@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
-import { Flex } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import Flex from 'periscope/components/Flex/Flex';
 import { SolidAlertTriangle } from '@signozhq/icons';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
@@ -18,7 +18,7 @@ function ServiceTraceTable({
 	services,
 	loading,
 }: ServiceTableProps): JSX.Element {
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const [RPS, setRPS] = useState(0);
 	const { t: getText } = useTranslation(['services']);
 
@@ -54,13 +54,21 @@ function ServiceTraceTable({
 			`${range[0]}-${range[1]} of ${total} items`,
 	};
 	return (
-		<div className="service-traces-table-container">
+		<div className="service-traces-table-container" data-testid="services-table">
 			{RPS > MAX_RPS_LIMIT && (
 				<Flex justify="left">
-					<Typography.Title level={5} color="warning" style={{ marginTop: 0 }}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="warning"
+						as="h5"
+						marginBottom={4}
+						textOverflow="wrap"
+					>
 						<SolidAlertTriangle size="md" /> {getText('rps_over_100')}
 						<a href="mailto:cloud-support@signoz.io">email</a>
-					</Typography.Title>
+					</Typography>
 				</Flex>
 			)}
 

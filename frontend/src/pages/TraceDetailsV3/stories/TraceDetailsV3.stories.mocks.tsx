@@ -13,7 +13,7 @@ import type { SpantypesPostableTraceAggregationsDTO } from 'api/generated/servic
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { screen, userEvent, within } from 'storybook/test';
-import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import type { QueryRangeRequestV5, RawRow } from 'types/api/v5/queryRange';
 
 import {
 	choiceControl,
@@ -21,6 +21,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
@@ -32,6 +33,7 @@ import {
 	timeSeriesPoints,
 } from '@/storybook/msw/__story_mockdata__/queryRange';
 
+import { traceFunnelsResponse } from '../../TracesModulePage/stories/__story_mockdata__/traces';
 import { SpanDetailVariant } from '../SpanDetailsPanel/constants';
 import {
 	focusSpanIndex,
@@ -51,6 +53,12 @@ import {
 	traceWaterfallResponse,
 } from './__story_mockdata__/traceDetails';
 
+/** Holds the download panel on screen: the export request never settles. */
+export const hangingTraceExport = rest.post(
+	'http://localhost/api/v1/export_raw_data',
+	(_req, res, ctx) => res(ctx.delay('infinite')),
+);
+
 const TRACE = 'Trace · trace';
 const PANEL = 'Trace · span panel';
 
@@ -59,6 +67,10 @@ const EXPORT = 'Trace · export';
 const EXPORT_STATES = ['success', 'loading', 'error'] as const;
 
 type ExportState = (typeof EXPORT_STATES)[number];
+
+const ANALYTICS_STATES = ['loaded', 'empty', 'loading', 'error'] as const;
+
+type AnalyticsState = (typeof ANALYTICS_STATES)[number];
 
 const PANEL_POSITIONS = [
 	SpanDetailVariant.DOCKED_RIGHT,
@@ -86,11 +98,15 @@ const signalOf = (body: QueryRangeRequestV5): string | undefined => {
 	return spec && 'signal' in spec ? spec.signal : undefined;
 };
 
+const filterOf = (body: QueryRangeRequestV5): string => {
+	const spec = specOf(body);
+
+	return (spec && 'filter' in spec ? spec.filter?.expression : '') ?? '';
+};
+
 /** Which of the panel's three log queries this is, read off its filter. */
 const spanLogScopeOf = (body: QueryRangeRequestV5): SpanLogScope => {
-	const spec = specOf(body);
-	const expression =
-		(spec && 'filter' in spec ? spec.filter?.expression : '') ?? '';
+	const expression = filterOf(body);
 
 	if (expression.includes('span_id')) {
 		return 'span';
@@ -150,6 +166,19 @@ export const traceDetailsMocks = defineStoryMocks({
 			value: 8,
 			max: 20,
 		}),
+		traceOnlyLogs: toggleControl('Logs only on the trace', {
+			group: PANEL,
+			description:
+				'The span has no logs of its own but the trace does, which is the Logs tab\'s "view logs for the current trace" state.',
+			value: false,
+		}),
+		analytics: choiceControl<AnalyticsState>('Analytics', {
+			group: TRACE,
+			description:
+				'How the aggregations behind the header\'s Analytics panel answer. `empty` has no group to chart, so the panel says "No data".',
+			options: ANALYTICS_STATES,
+			value: 'loaded',
+		}),
 		exportState: choiceControl<ExportState>('Trace export', {
 			group: EXPORT,
 			description:
@@ -164,6 +193,12 @@ export const traceDetailsMocks = defineStoryMocks({
 			spans: values.spans,
 			errors: values.errors,
 			traceStart: traceStartOf(),
+		};
+		const spanLogRowsFor = (body: QueryRangeRequestV5): RawRow[] => {
+			const scope = spanLogScopeOf(body);
+			const count =
+				values.traceOnlyLogs && scope !== 'trace' ? 0 : values.spanLogs;
+			return spanLogRows(count, trace, scope);
 		};
 
 		return [
@@ -200,6 +235,37 @@ export const traceDetailsMocks = defineStoryMocks({
 				response.json(() => traceFlamegraphResponse(trace)),
 			),
 
+			// `loaded` falls through to the next handler.
+			rest.post(
+				'http://localhost/api/v1/traces/:traceId/aggregations',
+				async (req, res, ctx) => {
+					switch (values.analytics) {
+						case 'loading':
+							return res(ctx.delay('infinite'));
+						case 'error':
+							return res(
+								ctx.status(500),
+								ctx.json({ status: 'error', error: 'storybook aggregations failure' }),
+							);
+						case 'empty': {
+							const body = (await req.json()) as SpantypesPostableTraceAggregationsDTO;
+
+							return res(
+								ctx.status(200),
+								ctx.json(
+									traceAggregationsResponse(body.aggregations ?? [], {
+										...trace,
+										spans: 0,
+									}),
+								),
+							);
+						}
+						default:
+							return undefined;
+					}
+				},
+			),
+
 			rest.post(
 				'http://localhost/api/v1/traces/:traceId/aggregations',
 				response.json(async (req) => {
@@ -207,6 +273,11 @@ export const traceDetailsMocks = defineStoryMocks({
 
 					return traceAggregationsResponse(body.aggregations ?? [], trace);
 				}),
+			),
+
+			rest.get(
+				'http://localhost/api/v1/trace-funnels/list',
+				response.json(() => traceFunnelsResponse(3)),
 			),
 
 			rest.post(
@@ -264,12 +335,25 @@ export const traceDetailsMocks = defineStoryMocks({
 					const body = (await req.json()) as QueryRangeRequestV5;
 					const { start, end, requestType } = body;
 
+					if (requestType === 'raw' && signalOf(body) === 'logs') {
+						return queryRangeV5RawResponse(spanLogRowsFor(body));
+					}
+
 					if (requestType === 'raw') {
-						return queryRangeV5RawResponse(
-							signalOf(body) === 'logs'
-								? spanLogRows(values.spanLogs, trace, spanLogScopeOf(body))
-								: spanMatchRows(trace),
-						);
+						const matches = spanMatchRows(trace, filterOf(body));
+						const payload = queryRangeV5RawResponse(matches);
+
+						// The backend sends no rows as null, and the filter says "No results
+						// found" only for that; an empty array leaves it blank.
+						return matches.length > 0
+							? payload
+							: {
+									...payload,
+									data: {
+										...payload.data,
+										data: { results: [{ queryName: 'A', nextCursor: '', rows: null }] },
+									},
+								};
 					}
 
 					if (requestType === 'scalar') {
@@ -306,8 +390,17 @@ export const traceDetailsMocks = defineStoryMocks({
 	},
 });
 
+export type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
+
 /** The waterfall renders once the trace resolves, which outlasts the 1s default. */
 export const untilLoaded = { timeout: 15_000 };
+
+/** The header actions and the span rows exist once a trace loads. */
+export const showsTrace = ({
+	spans,
+	dataState,
+}: Pick<TraceDetailsArgs, 'spans' | 'dataState'>): boolean =>
+	spans > 0 && dataState === 'loaded';
 
 /** Opens the pretty view's action menu on the first row that offers `item`. */
 export const openRowMenu = async (
@@ -358,3 +451,7 @@ export const startDownload = async (
 	await userEvent.click(await screen.findByTestId('download-trace-submenu'));
 	await userEvent.click(await screen.findByTestId('download-trace-csv'));
 };
+
+/** The span panel opens on the focus span when the control asks for it. */
+export const showsSpanPanel = (args: TraceDetailsArgs): boolean =>
+	showsTrace(args) && args.spanPanel;

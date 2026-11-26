@@ -1,4 +1,3 @@
-import userEvent from '@testing-library/user-event';
 import * as roleApi from 'api/generated/services/role';
 import {
 	customRoleResponse,
@@ -12,7 +11,7 @@ import {
 	setupAuthzDenyAll,
 	setupAuthzGrantByPrefix,
 } from 'lib/authz/utils/authz-test-utils';
-import { render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import * as useRolePermissionsModule from '../../hooks/useRolePermissions';
 import ViewRolePage from '../ViewRolePage';
@@ -488,7 +487,7 @@ describe('ViewRolePage - AuthZ', () => {
 				initialRoute: buildViewRoleRoute(CUSTOM_ROLE_ID, CUSTOM_ROLE_NAME),
 			});
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('view-role-loading')).toBeInTheDocument();
 		});
 	});
 });

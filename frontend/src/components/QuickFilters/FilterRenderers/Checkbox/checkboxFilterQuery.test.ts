@@ -3,6 +3,8 @@ import {
 	convertFiltersToExpressionWithExistingQuery,
 } from 'components/QueryBuilderV2/utils';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
+import { initialQueriesMap } from 'constants/queryBuilder';
+import { EQueryType } from 'types/common/dashboard';
 import {
 	Query,
 	TagFilter,
@@ -97,7 +99,7 @@ interface ToggleAction {
 	isOnlyOrAllClicked?: boolean;
 	previousState?: CheckedState;
 	sectionType?: SectionType;
-	source?: QuickFiltersSource;
+	quickFilterSource?: QuickFiltersSource;
 	attributeValues?: string[];
 }
 
@@ -117,7 +119,8 @@ function runToggle(c: ToggleCase): { items: SimpleItem[]; expression: string } {
 		currentQuery: buildQuery(initialItems, initialExpression),
 		activeQueryIndex: 0,
 		filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
-		source: c.action.source ?? QuickFiltersSource.LOGS_EXPLORER,
+		quickFilterSource:
+			c.action.quickFilterSource ?? QuickFiltersSource.LOGS_EXPLORER,
 		attributeValues: c.action.attributeValues ?? ['a', 'b', 'c'],
 		value: c.action.value,
 		checked: c.action.checked,
@@ -162,7 +165,7 @@ const TOGGLE_CASES: ToggleCase[] = [
 		action: {
 			value: 'a',
 			checked: false,
-			source: QuickFiltersSource.INFRA_MONITORING,
+			quickFilterSource: QuickFiltersSource.INFRA_MONITORING,
 		},
 		// `nin` is what the source asks for, but re-deriving the expression
 		// normalises it. Nothing observes the difference: both infra pages send
@@ -313,7 +316,7 @@ const TOGGLE_CASES: ToggleCase[] = [
 		action: {
 			value: 'b',
 			checked: false,
-			source: QuickFiltersSource.INFRA_MONITORING,
+			quickFilterSource: QuickFiltersSource.INFRA_MONITORING,
 		},
 		expected: {
 			items: [{ key: KEY, op: 'not in', value: ['a', 'b'] }],
@@ -553,5 +556,52 @@ describe('clearFilterFromQuery', () => {
 		const active = result.builder.queryData[0];
 		expect(active.filters?.items).toStrictEqual([]);
 		expect(active.filter?.expression).toBe(`http.method = 'GET'`);
+	});
+});
+
+describe('quick filters on an AI query', () => {
+	const builderQuery = buildQuery([], '').builder;
+	const aiQuery: Query = {
+		...initialQueriesMap.traces,
+		queryType: EQueryType.AI_QUERY_BUILDER,
+		builder: builderQuery,
+		builder_ai_query: buildQuery(
+			[{ key: KEY, op: 'in', value: ['a'] }],
+			`${KEY} IN ['a']`,
+		).builder,
+	};
+
+	it('a checkbox toggle writes into the AI slot and leaves builder alone', () => {
+		const result = applyCheckboxToggle({
+			currentQuery: aiQuery,
+			activeQueryIndex: 0,
+			filter: { attributeKey: { key: KEY, type: 'tag' } } as never,
+			quickFilterSource: QuickFiltersSource.AI_OBSERVABILITY,
+			attributeValues: ['a', 'b', 'c'],
+			value: 'b',
+			checked: true,
+			isOnlyOrAllClicked: false,
+		});
+
+		expect(result.builder).toBe(builderQuery);
+		expect(
+			result.builder_ai_query?.queryData[0].filters?.items.map(
+				(item) => item.value,
+			),
+		).toStrictEqual([['a', 'b']]);
+	});
+
+	it('clearing a filter clears it from the AI slot', () => {
+		const result = clearFilterFromQuery({
+			currentQuery: aiQuery,
+			filterKey: KEY,
+			activeQueryIndex: 0,
+		});
+
+		expect(result.builder).toBe(builderQuery);
+		expect(result.builder_ai_query?.queryData[0].filters?.items).toStrictEqual(
+			[],
+		);
+		expect(result.builder_ai_query?.queryData[0].filter?.expression).toBe('');
 	});
 });

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -37,15 +38,24 @@ var (
 
 type ServiceAccountStatus struct{ valuer.String }
 
+func (ServiceAccountStatus) Enum() []any {
+	return []any{ServiceAccountStatusActive, ServiceAccountStatusDeleted}
+}
+
+func (status ServiceAccountStatus) IsValid() bool {
+	return slices.ContainsFunc(status.Enum(), func(value any) bool { return value == status })
+}
+
 type ServiceAccount struct {
 	bun.BaseModel `bun:"table:service_account,alias:service_account"`
 
 	types.Identifiable
-	types.TimeAuditable
-	Name   string               `bun:"name" json:"name" required:"true"`
-	Email  valuer.Email         `bun:"email" json:"email" required:"true"`
-	Status ServiceAccountStatus `bun:"status" json:"status" required:"true"`
-	OrgID  valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
+	CreatedAt time.Time            `bun:"created_at" json:"createdAt" required:"true"`
+	UpdatedAt time.Time            `bun:"updated_at" json:"updatedAt" required:"true"`
+	Name      string               `bun:"name" json:"name" required:"true"`
+	Email     valuer.Email         `bun:"email" json:"email" required:"true"`
+	Status    ServiceAccountStatus `bun:"status" json:"status" required:"true"`
+	OrgID     valuer.UUID          `bun:"org_id" json:"orgId" required:"true"`
 }
 
 type ServiceAccountRole struct {
@@ -81,14 +91,12 @@ func NewServiceAccount(name string, emailDomain string, status ServiceAccountSta
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
 		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		Name:   name,
-		Email:  valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
-		Status: status,
-		OrgID:  orgID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      name,
+		Email:     valuer.MustNewEmail(fmt.Sprintf("%s@%s", name, emailDomain)),
+		Status:    status,
+		OrgID:     orgID,
 	}
 }
 
@@ -262,13 +270,14 @@ type Store interface {
 	GetByIDAndStatus(context.Context, valuer.UUID, ServiceAccountStatus) (*ServiceAccount, error)
 	GetServiceAccountsByOrgIDAndRoleID(context.Context, valuer.UUID, valuer.UUID) ([]*ServiceAccount, error)
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
-	List(context.Context, valuer.UUID) ([]*ServiceAccount, error)
+	List(context.Context, valuer.UUID, *ListServiceAccountsParams) ([]*ServiceAccount, int64, error)
 	Update(context.Context, valuer.UUID, *ServiceAccount) error
 
 	// Service Account Role
 	CreateServiceAccountRole(context.Context, *ServiceAccountRole) error
 	GetServiceAccountRoleByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*ServiceAccountRole, error)
 	DeleteServiceAccountRole(context.Context, valuer.UUID, valuer.UUID) error
+	DeleteServiceAccountRolesByServiceAccountID(context.Context, valuer.UUID) error
 
 	// Service Account Factor API Key
 	CreateFactorAPIKey(context.Context, *FactorAPIKey) error

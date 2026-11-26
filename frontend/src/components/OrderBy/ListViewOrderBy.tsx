@@ -40,7 +40,7 @@ function ListViewOrderBy({
 	const [searchInput, setSearchInput] = useState('');
 	const [debouncedInput, setDebouncedInput] = useState('');
 	const [selectOptions, setSelectOptions] = useState<
-		{ label: string; value: string }[]
+		{ label: string; value: string; 'data-testid': string }[]
 	>([]);
 	const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,8 +75,16 @@ function ListViewOrderBy({
 
 		setSelectOptions(
 			uniqueKeys.flatMap((key) => [
-				{ label: `${key} (desc)`, value: `${key}:desc` },
-				{ label: `${key} (asc)`, value: `${key}:asc` },
+				{
+					label: `${key} (desc)`,
+					value: `${key}:desc`,
+					'data-testid': 'list-view-order-by-option',
+				},
+				{
+					label: `${key} (asc)`,
+					value: `${key}:asc`,
+					'data-testid': 'list-view-order-by-option',
+				},
 			]),
 		);
 	}, [data, searchInput, extraKeysSignature]);
@@ -112,6 +120,7 @@ function ListViewOrderBy({
 			placeholder="Select a field"
 			style={{ width: 200 }}
 			options={selectOptions}
+			data-testid="list-view-order-by"
 			filterOption={(input, option): boolean =>
 				(option?.value ?? '').toLowerCase().includes(input.trim().toLowerCase())
 			}

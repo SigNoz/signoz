@@ -121,10 +121,13 @@ func (f *formatting) messages() {
 
 // OpenRouter's answer object or an Anthropic response beside the OpenAI chat request it answers is one
 // format, not a mix: an Anthropic request without system and without Anthropic-only blocks reads as an
-// OpenAI chat request.
+// OpenAI chat request. A side kept as generic already warned, and a side read from OpenInference's
+// buckets beside the raw payload of the other is the documented fallback.
 func (f *formatting) warnMixedFormats(inputLabel, outputLabel string) {
 	switch {
 	case inputLabel == "" || outputLabel == "" || outputLabel == inputLabel:
+	case inputLabel == FormatterGeneric || outputLabel == FormatterGeneric:
+	case inputLabel == FormatterOpenInference || outputLabel == FormatterOpenInference:
 	case inputLabel == FormatterOpenAIChat && (outputLabel == FormatterOpenRouter || outputLabel == FormatterAnthropic):
 	default:
 		f.warn("output formatted as %s, input as %s", outputLabel, inputLabel)
@@ -183,11 +186,16 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 				return f.semconv(v), FormatterSemconv
 			case isAnthropicMessages(v):
 				return f.anthropicMessages(v), FormatterAnthropic
+			case isResponsesItems(v):
+				return foldAssistant(f.responsesItems(v)), FormatterOpenAIResponses
 			case first["role"] != nil:
 				return f.openAIChatMessages(v), FormatterOpenAIChat
 			}
 		}
 	case map[string]any:
+		if inner, ok := superJSON(v); ok {
+			return f.side(decode(inner), role)
+		}
 		switch {
 		case isLangChainRun(v):
 			return f.langChainRun(v), FormatterLangChain
@@ -213,6 +221,9 @@ func (f *formatting) side(value any, role Role) (OutputMessages, string) {
 		}
 		if messages, ok := v["messages"].([]any); ok {
 			return f.openAIChatMessages(messages), FormatterOpenAIChat
+		}
+		if (v["role"] != nil && hasKeys(v, "content")) || v["tool_calls"] != nil {
+			return OutputMessages{f.openAIChatSingle(v)}, FormatterOpenAIChat
 		}
 	case string:
 		if v == "" {
@@ -307,6 +318,23 @@ func foldAssistant(msgs OutputMessages) OutputMessages {
 		out = append(out, msg)
 	}
 	return out
+}
+
+// superJSON unwraps {json, meta?}, the envelope superjson, the transformer tRPC apps serialise with,
+// puts around a value; a Langfuse generation records it around the request when the app passes the
+// serialised form:
+// https://github.com/flightcontrolhq/superjson/blob/aaa65e36e8e31da740265a56b27c965ca1c7b754/README.md
+func superJSON(m map[string]any) (any, bool) {
+	inner, ok := m["json"]
+	if !ok {
+		return nil, false
+	}
+	for key := range m {
+		if key != "json" && key != "meta" {
+			return nil, false
+		}
+	}
+	return inner, true
 }
 
 // decode parses a JSON-encoded attribute value, twice when an SDK encoded the string again.

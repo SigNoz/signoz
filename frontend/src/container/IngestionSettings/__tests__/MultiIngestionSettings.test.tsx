@@ -1,13 +1,7 @@
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import { rest, server } from 'mocks-server/server';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import MultiIngestionSettings from '../MultiIngestionSettings';
 
@@ -17,13 +11,13 @@ interface TestGatewayIngestionKeysResponse {
 	data: GatewaytypesGettableIngestionKeysDTO;
 }
 
-// Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
-const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
-jest.mock('react-router-dom', () => {
-	const actual = jest.requireActual('react-router-dom');
+// Mock navigate to capture navigation URL used by MultiIngestionSettings
+const mockNavigate = jest.fn() as jest.MockedFunction<(path: string) => void>;
+jest.mock('lib/router/navigation', () => {
+	const actual = jest.requireActual('lib/router/navigation');
 	return {
 		...actual,
-		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
+		navigate: (path: string): void => mockNavigate(path),
 	};
 });
 
@@ -44,10 +38,11 @@ const GLOBAL_CONFIG_RESPONSE = {
 
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
-		mockPush.mockClear();
+		mockNavigate.mockClear();
 	});
 
 	afterEach(() => {
+		jest.useRealTimers();
 		jest.clearAllMocks();
 	});
 
@@ -62,7 +57,8 @@ describe('MultiIngestionSettings Page', () => {
 			screen.getByText('Create and manage ingestion keys for the SigNoz Cloud'),
 		).toBeInTheDocument();
 
-		const aboutKeyslink = screen.getByRole('link', { name: /Learn more/i });
+		const aboutKeyslink = screen.getByTestId('ingestion-keys-learn-more');
+		expect(aboutKeyslink).toHaveTextContent('Learn more');
 		expect(aboutKeyslink).toHaveAttribute(
 			'href',
 			'https://signoz.io/docs/ingestion/signoz-cloud/keys/',
@@ -73,6 +69,7 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('navigates to create alert with metrics count threshold', async () => {
+		const user = userEvent.setup();
 		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
 			data: {
@@ -111,19 +108,16 @@ describe('MultiIngestionSettings Page', () => {
 		render(<MultiIngestionSettings />, undefined, {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
-		await screen.findByText('Key One');
-		fireEvent.click(screen.getByRole('button', { name: /right Key One/i }));
+		await user.click(await screen.findByText('Key One'));
 
 		await screen.findByText('LIMITS');
-		fireEvent.click(
-			(await screen.findByTestId('set-alert-btn-metrics')) as HTMLButtonElement,
-		);
+		await user.click(await screen.findByTestId('set-alert-btn-metrics'));
 
 		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledTimes(1);
+			expect(mockNavigate).toHaveBeenCalledTimes(1);
 		});
 
-		const navigationCall = mockPush.mock.calls[0][0] as string;
+		const navigationCall = mockNavigate.mock.calls[0][0] as string;
 		expect(navigationCall).toContain('/alerts/new');
 
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -151,6 +145,7 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('navigates to create alert for logs with GiB threshold and bytes yAxisUnit', async () => {
+		const user = userEvent.setup();
 		const GIB = 1073741824;
 		const sizeInBytes = 400 * GIB;
 
@@ -192,19 +187,16 @@ describe('MultiIngestionSettings Page', () => {
 		render(<MultiIngestionSettings />, undefined, {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
-		await screen.findByText('Key Logs');
-		fireEvent.click(screen.getByRole('button', { name: /right Key Logs/i }));
+		await user.click(await screen.findByText('Key Logs'));
 
 		await screen.findByText('LIMITS');
-		fireEvent.click(
-			(await screen.findByTestId('set-alert-btn-logs')) as HTMLButtonElement,
-		);
+		await user.click(await screen.findByTestId('set-alert-btn-logs'));
 
 		await waitFor(() => {
-			expect(mockPush).toHaveBeenCalledTimes(1);
+			expect(mockNavigate).toHaveBeenCalledTimes(1);
 		});
 
-		const navigationCall = mockPush.mock.calls[0][0] as string;
+		const navigationCall = mockNavigate.mock.calls[0][0] as string;
 		expect(navigationCall).toContain('/alerts/new');
 
 		const urlParams = new URLSearchParams(navigationCall.split('?')[1]);
@@ -231,6 +223,7 @@ describe('MultiIngestionSettings Page', () => {
 	});
 
 	it('shows alert CTAs in view mode and helper text in edit mode for configured limits', async () => {
+		const user = userEvent.setup();
 		const KEY_NAME = 'Key With Limits';
 		const response: TestGatewayIngestionKeysResponse = {
 			status: 'success',
@@ -276,22 +269,22 @@ describe('MultiIngestionSettings Page', () => {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
 
-		await screen.findByText(KEY_NAME);
-		fireEvent.click(
-			screen.getByRole('button', { name: new RegExp(`right ${KEY_NAME}`, 'i') }),
-		);
+		await user.click(await screen.findByText(KEY_NAME));
 		await screen.findByText('LIMITS');
 
 		expect(screen.getAllByText('Set alert').length).toBeGreaterThan(0);
 
-		fireEvent.click(screen.getByRole('button', { name: 'Edit logs limit' }));
+		await user.click(screen.getByTestId('edit-limit-btn-logs'));
 		expect(
 			screen.getByText('You can set up an alert after saving'),
 		).toBeInTheDocument();
 	});
 
 	it('switches to search API when search text is entered', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		jest.useFakeTimers();
+		const user = userEvent.setup({
+			advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+		});
 
 		const getResponse: TestGatewayIngestionKeysResponse = {
 			status: 'success',

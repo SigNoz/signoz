@@ -1,12 +1,13 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import { Compass, TowerControl, Workflow } from '@signozhq/icons';
-import LogsExplorer from 'pages/LogsExplorer';
-import Pipelines from 'pages/Pipelines';
-import SaveView from 'pages/SaveView';
+import { Compass, Workflow } from '@signozhq/icons';
+
+const LogsExplorer = Loadable(() => import('pages/LogsExplorer'));
+const Pipelines = Loadable(() => import('pages/Pipelines'));
 
 export const logsExplorer: TabRoutes = {
-	Component: (): JSX.Element => <LogsExplorer />,
+	Component: LogsExplorer,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
@@ -17,7 +18,7 @@ export const logsExplorer: TabRoutes = {
 };
 
 export const logsPipelines: TabRoutes = {
-	Component: (): JSX.Element => <Pipelines />,
+	Component: Pipelines,
 	name: (
 		<div className="tab-item">
 			<Workflow size={16} /> Pipelines
@@ -25,15 +26,4 @@ export const logsPipelines: TabRoutes = {
 	),
 	route: ROUTES.LOGS_PIPELINES,
 	key: ROUTES.LOGS_PIPELINES,
-};
-
-export const logSaveView: TabRoutes = {
-	Component: SaveView,
-	name: (
-		<div className="tab-item">
-			<TowerControl size={16} /> Views
-		</div>
-	),
-	route: ROUTES.LOGS_SAVE_VIEWS,
-	key: ROUTES.LOGS_SAVE_VIEWS,
 };

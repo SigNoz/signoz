@@ -4,8 +4,8 @@ import logEvent from 'api/common/logEvent';
 import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
+	QuickfiltertypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SignalType } from 'components/QuickFilters/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { buildCompositeKey } from 'container/OptionsMenu/utils';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
@@ -16,7 +16,7 @@ interface UseQuickFilterSettingsProps {
 	setIsSettingsOpen: (isSettingsOpen: boolean) => void;
 	customFilters: TelemetryFieldKey[];
 	refetchCustomFilters: () => void;
-	signal?: SignalType;
+	savedFiltersSource: QuickfiltertypesSourceDTO;
 }
 
 interface UseQuickFilterSettingsReturn {
@@ -37,7 +37,7 @@ const useQuickFilterSettings = ({
 	customFilters,
 	setIsSettingsOpen,
 	refetchCustomFilters,
-	signal,
+	savedFiltersSource,
 }: UseQuickFilterSettingsProps): UseQuickFilterSettingsReturn => {
 	const [inputValue, setInputValue] = useState<string>('');
 	const [debouncedInputValue, setDebouncedInputValue] = useState<string>('');
@@ -113,21 +113,19 @@ const useQuickFilterSettings = ({
 	);
 
 	const handleSaveChanges = useCallback((): void => {
-		if (signal) {
-			updateCustomFilters({
-				pathParams: { source: signal },
-				data: {
-					// Send only the stored TelemetryFieldKey fields; the composite `key`
-					// is UI-only.
-					filters: addedFilters.map((filter) => ({
-						name: filter.name,
-						fieldContext: filter.fieldContext as TelemetrytypesFieldContextDTO,
-						fieldDataType: filter.fieldDataType as TelemetrytypesFieldDataTypeDTO,
-					})),
-				},
-			});
-		}
-	}, [addedFilters, signal, updateCustomFilters]);
+		updateCustomFilters({
+			pathParams: { source: savedFiltersSource },
+			data: {
+				// Send only the stored TelemetryFieldKey fields; the composite `key`
+				// is UI-only.
+				filters: addedFilters.map((filter) => ({
+					name: filter.name,
+					fieldContext: filter.fieldContext as TelemetrytypesFieldContextDTO,
+					fieldDataType: filter.fieldDataType as TelemetrytypesFieldDataTypeDTO,
+				})),
+			},
+		});
+	}, [addedFilters, savedFiltersSource, updateCustomFilters]);
 
 	return {
 		handleSettingsClose,

@@ -7,8 +7,8 @@ import { immer } from 'zustand/middleware/immer';
 import type {
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
+import { RetryActionDTO } from '@signozhq/noz-client';
 
 import {
 	approveExecution,
@@ -203,6 +203,7 @@ function resetStreamingState(
 		streamingActions: null,
 		pendingApproval: null,
 		pendingClarification: null,
+		startedAt: Date.now(),
 	};
 }
 
@@ -754,6 +755,7 @@ function toMessage(m: MessageSummary): Message {
 		id: m.messageId,
 		role: m.role as MessageRole,
 		content,
+		contexts: m.contexts ?? undefined,
 		blocks: toBlocks(m.blocks),
 		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
@@ -973,6 +975,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								// compatible with the SSE event DTOs used by ConversationStreamState.
 								pendingApproval: detail.pendingApproval ?? null,
 								pendingClarification: detail.pendingClarification ?? null,
+								startedAt: null,
 							};
 						}
 						s.isLoadingThread = false;
@@ -1196,6 +1199,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					role: 'user',
 					content: text,
 					attachments,
+					contexts,
 					createdAt: Date.now(),
 				};
 
@@ -1281,6 +1285,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						st.pendingApproval = null;
 						st.isStreaming = true;
 						st.streamingStatus = 'resumed';
+						st.startedAt ??= Date.now();
 					} else {
 						resetStreamingState(s, conversationId);
 					}
@@ -1408,6 +1413,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						st.pendingClarification = null;
 						st.isStreaming = true;
 						st.streamingStatus = 'resumed';
+						st.startedAt ??= Date.now();
 					} else {
 						resetStreamingState(s, conversationId);
 					}

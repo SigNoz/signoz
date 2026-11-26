@@ -80,6 +80,7 @@ func (name Kind) Enum() []any {
 		KindLogsField,
 		KindTracesField,
 		KindMetricsField,
+		KindLLMPricingRule,
 	}
 }
 

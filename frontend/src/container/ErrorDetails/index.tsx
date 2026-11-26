@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
-import { Button, Space } from 'antd';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Button } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import { Divider } from '@signozhq/ui/divider';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
@@ -13,7 +14,7 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getNanoSeconds } from 'container/AllError/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
@@ -29,7 +30,7 @@ import './styles.scss';
 function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 	const { idPayload } = props;
 	const { t } = useTranslation(['errorDetails', 'common']);
-	const { search, pathname } = useLocation();
+	const { search, pathname } = useAppLocation();
 
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
@@ -100,7 +101,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				errorId: id,
 			};
 
-			history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+			navigate(`${pathname}?${createQueryParams(queryParams)}`, { replace: true });
 		} catch (error) {
 			notifications.error({
 				message: t('something_went_wrong'),
@@ -126,7 +127,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 		if (isModifierKeyPressed(event)) {
 			openInNewTab(path);
 		} else {
-			history.push(path);
+			navigate(path);
 		}
 	};
 
@@ -148,14 +149,52 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 
 	return (
 		<div className="error-details-container">
-			<Typography.Title level={4}>{errorDetail.exceptionType}</Typography.Title>
-			<Typography.Text>{errorDetail.exceptionMessage}</Typography.Text>
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				textOverflow="wrap"
+				testId="error-details-type"
+			>
+				{errorDetail.exceptionType}
+			</Typography>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+				testId="error-details-message"
+			>
+				{errorDetail.exceptionMessage}
+			</Typography>
 			<Divider />
 
 			<EventContainer>
 				<div>
-					<Typography>Event {errorDetail.errorId}</Typography>
-					<Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+						testId="error-details-event-id"
+					>
+						Event {errorDetail.errorId}
+					</Typography>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{formatTimezoneAdjustedTimestamp(
 							errorDetail.timestamp,
 							DATE_TIME_FORMATS.UTC_FULL,
@@ -165,6 +204,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 				<div>
 					<Space align="end" direction="horizontal">
 						<Button
+							data-testid="error-details-older"
 							loading={nextPrevStatus === 'loading'}
 							disabled={nextPrevData?.payload?.prevErrorID.length === 0}
 							onClick={(): Promise<void> =>
@@ -177,6 +217,7 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 							{t('older')}
 						</Button>
 						<Button
+							data-testid="error-details-newer"
 							loading={nextPrevStatus === 'loading'}
 							disabled={nextPrevData?.payload?.nextErrorID.length === 0}
 							onClick={(): Promise<void> =>
@@ -193,18 +234,41 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			</EventContainer>
 
 			<DashedContainer>
-				<Typography>{t('see_trace_graph')}</Typography>
-				<Button onClick={onClickTraceHandler} type="primary">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					{t('see_trace_graph')}
+				</Typography>
+				<Button
+					data-testid="error-details-view-trace"
+					onClick={onClickTraceHandler}
+					type="primary"
+				>
 					{t('see_error_in_trace_graph')}
 				</Button>
 			</DashedContainer>
 
-			<Typography.Title level={4}>{t('stack_trace')}</Typography.Title>
-			<div className="error-container">
+			<Typography
+				variant="label"
+				size="large"
+				weight="bold"
+				color="inherit"
+				as="h4"
+				marginY={4}
+				textOverflow="wrap"
+			>
+				{t('stack_trace')}
+			</Typography>
+			<div className="error-container" data-testid="error-details-stacktrace">
 				<Editor value={stackTraceValue} readOnly />
 			</div>
 
-			<EditorContainer>
+			<EditorContainer data-testid="error-details-attributes-table">
 				<Space direction="vertical">
 					<ResizeTable columns={columns} tableLayout="fixed" dataSource={data} />
 				</Space>

@@ -19,7 +19,6 @@
 	overscroll-behavior: contain;
 	scrollbar-width: none;
 	background: var(--l1-background);
-	font-size: 14px;
 	gap: 16px;
 
 	// DataViewer keeps its global `.data-viewer` class — give it a min-height
@@ -60,7 +59,7 @@
 }
 
 // Single scroll: when the summary sits above (non-docked modes) it scrolls away
-// and the tab section pins to the top; tab content scrolls inside `.tabsScroll`.
+// and the tab section pins to the top; tab content scrolls inside the tab panel.
 .tabsSection {
 	min-width: 0;
 	display: flex;
@@ -92,21 +91,27 @@
 		padding-left: 0 !important;
 		flex-shrink: 0;
 	}
-}
-
-.tabsScroll {
-	flex: 1;
-	min-height: 0;
-	overflow-y: auto;
-	scrollbar-width: none;
-	display: flex;
-	flex-direction: column;
 
 	[role='tabpanel'] {
-		padding: 0;
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
 		scrollbar-width: none;
 	}
+}
+
+.drawerPanel {
+	.panelBody,
+	.logsFooter,
+	:global(.pretty-view__search-wrapper) {
+		background: var(--l2-background);
+	}
+
+	:global(.pretty-view__search-input) {
+		background: var(--l2-background) !important;
+	}
+}
+
+:global([data-testid='span-details-drawer']) {
+	--drawer-body-padding: 0;
 }

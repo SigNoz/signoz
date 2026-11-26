@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { mockAppLocation } from 'tests/router-mocks';
 import { userEvent } from 'tests/test-utils';
 
 import ROUTES from '../../../../constants/routes';
@@ -8,12 +9,7 @@ import AllAttributes from '../AllAttributes';
 import { AllAttributesValue } from '../AllAttributesValue';
 import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER}`,
-	}),
-}));
+mockAppLocation({ pathname: ROUTES.METRICS_EXPLORER });
 
 const useGetMetricAttributesMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -41,6 +37,22 @@ describe('AllAttributes', () => {
 		expect(screen.getByText('value1')).toBeInTheDocument();
 		expect(screen.getByText('value2')).toBeInTheDocument();
 		expect(screen.getByText('value3')).toBeInTheDocument();
+	});
+
+	it('cuts a long attribute key and value at one line with an ellipsis', () => {
+		render(
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
+		);
+
+		expect(
+			screen.getByText('attribute1').getAttribute('data-text-overflow'),
+		).toBe('ellipsis');
+		expect(screen.getByText('value1').getAttribute('data-text-overflow')).toBe(
+			'ellipsis',
+		);
 	});
 
 	it('handles empty attributes array', () => {

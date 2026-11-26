@@ -5,7 +5,11 @@ import { Typography } from '@signozhq/ui/typography';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
-import { SavedViewListPermission } from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import {
+	SavedViewListPermission,
+	SavedViewReadPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/saved-view.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 
 import SavedViewsIconButton from './SavedViewsIconButton';
 import SavedViewsList from './SavedViewsList';
@@ -21,6 +25,8 @@ function SavedViewsPanel({
 	onClose?: () => void;
 }): JSX.Element {
 	const [search, setSearch] = useState('');
+	// Batched with the list check, so the hover card reads it from cache.
+	useAuthZ([SavedViewReadPermission]);
 
 	return (
 		<div
@@ -32,7 +38,16 @@ function SavedViewsPanel({
 				<div className={styles.header} data-testid="saved-views-panel-header">
 					<div className={styles.title}>
 						<TowerControl size={16} />
-						<Typography.Text className={styles.titleText}>All views</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							All views
+						</Typography>
 					</div>
 					<SavedViewsIconButton
 						title="Close"
@@ -46,6 +61,7 @@ function SavedViewsPanel({
 				<>
 					<div className={styles.search}>
 						<Input
+							size="lg"
 							value={search}
 							onChange={(event): void => setSearch(event.target.value)}
 							placeholder="Search..."

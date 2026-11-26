@@ -72,3 +72,32 @@
 		var(--muted-foreground) 2px 3px
 	);
 }
+
+.vertical {
+	display: flex;
+	gap: 10px;
+	height: 100%;
+	min-height: 0;
+
+	.track {
+		flex: 0 0 8px;
+		width: 8px;
+		height: auto;
+	}
+
+	.marker {
+		top: auto;
+		right: -3px;
+		left: -3px;
+		width: auto;
+		height: 2px;
+		transform: translateY(1px);
+	}
+}
+
+.scale {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-width: 0;
+}

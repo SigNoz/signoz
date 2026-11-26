@@ -4,11 +4,20 @@ import {
 	makeListResponse,
 	mockRules,
 } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	configure,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import LLMObservabilityPage from '..';
+
+// Each tab is a lazy chunk; a cold jest transform of its module can exceed the 1s default.
+configure({ asyncUtilTimeout: 5000 });
 
 // The Overview tab renders the full V2 DashboardContainer (toolbar + date picker
 // call useNavigationType, which needs a data router this integration test doesn't
@@ -24,15 +33,12 @@ jest.mock('container/LLMObservability/Explorer/Explorer', () => ({
 	default: (): JSX.Element => <div data-testid="llm-observability-explorer" />,
 }));
 
-jest.mock('lib/history', () => ({
-	push: jest.fn(),
-	listen: jest.fn(() => jest.fn()),
-	location: { pathname: '/ai-observability/overview', search: '' },
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
 }));
 
-const mockHistoryPush = history.push as jest.MockedFunction<
-	typeof history.push
->;
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 const SYSTEM_DASHBOARD_ENDPOINT = '*/api/v2/dashboards/system/ai-o11y-overview';
 
@@ -74,7 +80,7 @@ function setupList(items = mockRules): void {
 describe('LLMObservability (integration)', () => {
 	beforeEach(() => {
 		window.history.pushState(null, '', '/');
-		mockHistoryPush.mockClear();
+		mockNavigate.mockClear();
 	});
 
 	afterEach(() => {
@@ -88,7 +94,9 @@ describe('LLMObservability (integration)', () => {
 		});
 
 		expect(screen.getByTestId('llm-observability-page')).toBeInTheDocument();
-		expect(screen.getByTestId('llm-observability-overview')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('llm-observability-overview'),
+		).resolves.toBeInTheDocument();
 		await waitFor(() =>
 			expect(screen.getByTestId('llm-overview-dashboard')).toBeInTheDocument(),
 		);
@@ -103,60 +111,60 @@ describe('LLMObservability (integration)', () => {
 	});
 
 	it('navigates to the configuration route when the Model pricing tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: /Model pricing/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		);
 	});
 
 	it('navigates to the attribute mapping route when that tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: /Attribute Mapping/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		);
 	});
 
 	it('navigates to the explorer route when the Explorer tab is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_OVERVIEW,
 		});
 
 		await user.click(screen.getByRole('tab', { name: /Explorer/ }));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
-			ROUTES.AI_OBSERVABILITY_EXPLORER,
-		);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.AI_OBSERVABILITY_EXPLORER);
 	});
 
-	it('renders the explorer panel on the explorer route', () => {
+	it('renders the explorer panel on the explorer route', async () => {
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_EXPLORER,
 		});
 
-		expect(screen.getByTestId('llm-observability-explorer')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('llm-observability-explorer'),
+		).resolves.toBeInTheDocument();
 	});
 
-	it('renders the attribute mapping page on the attribute mapping route', () => {
+	it('renders the attribute mapping page on the attribute mapping route', async () => {
 		render(<LLMObservabilityPage />, undefined, {
 			initialRoute: ROUTES.AI_OBSERVABILITY_ATTRIBUTE_MAPPING,
 		});
 
-		expect(
-			screen.getByTestId('llm-observability-attribute-mapping-page'),
-		).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('llm-observability-attribute-mapping-page'),
+		).resolves.toBeInTheDocument();
 	});
 
 	it('renders the model-pricing page on the configuration route', async () => {

@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '@signozhq/ui/button';
 import { RotateCw, TriangleAlert } from '@signozhq/icons';
 
-import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { RetryActionDTO } from '@signozhq/noz-client';
 
 // Side-effect: registers all built-in block types into the BlockRegistry
 import '../blocks';
@@ -16,10 +16,12 @@ import ActionsSection from '../ActionsSection';
 import ActivityGroup, { ActivityItem } from '../ActivityGroup';
 import { RichCodeBlock } from '../blocks';
 import MarkdownExternalLink from '../MarkdownExternalLink/MarkdownExternalLink';
+import MarkdownTable from '../MarkdownTable/MarkdownTable';
 import { MessageContext } from '../MessageContext';
 import MessageFeedback from '../MessageFeedback';
 import UserMessageActions from '../UserMessageActions';
 
+import AddedContexts from './AddedContexts';
 import styles from './MessageBubble.module.scss';
 
 /**
@@ -46,6 +48,7 @@ const MD_COMPONENTS = {
 	code: RichCodeBlock,
 	pre: SmartPre,
 	a: MarkdownExternalLink,
+	table: MarkdownTable,
 };
 
 type RenderGroup =
@@ -141,87 +144,93 @@ export default function MessageBubble({
 			[styles.compact]: isCompact,
 		},
 	);
-	const bodyClass = cx(styles.body, { [styles.compact]: isCompact });
+	const bodyClass = cx(styles.body, {
+		[styles.compact]: isCompact,
+		[styles.fullPage]: variant === 'page',
+	});
 
 	return (
-		<div className={messageClass} data-testid={`ai-message-${message.id}`}>
-			<div className={bodyClass}>
-				<div className={styles.bubbleRow}>
-					<div className={cx(styles.bubble, { [styles.error]: isError })}>
-						{message.attachments && message.attachments.length > 0 && (
-							<div className={styles.attachments}>
-								{message.attachments.map((att) => {
-									const isImage = att.type.startsWith('image/');
-									return isImage ? (
-										<img
-											key={att.name}
-											src={att.dataUrl}
-											alt={att.name}
-											className={styles.attachmentImage}
-										/>
-									) : (
-										<div key={att.name} className={styles.attachmentFile}>
-											{att.name}
-										</div>
-									);
-								})}
-							</div>
-						)}
+		<>
+			<div className={messageClass} data-testid={`ai-message-${message.id}`}>
+				<div className={bodyClass}>
+					<div className={styles.bubbleRow}>
+						<div className={cx(styles.bubble, { [styles.error]: isError })}>
+							{message.attachments && message.attachments.length > 0 && (
+								<div className={styles.attachments}>
+									{message.attachments.map((att) => {
+										const isImage = att.type.startsWith('image/');
+										return isImage ? (
+											<img
+												key={att.name}
+												src={att.dataUrl}
+												alt={att.name}
+												className={styles.attachmentImage}
+											/>
+										) : (
+											<div key={att.name} className={styles.attachmentFile}>
+												{att.name}
+											</div>
+										);
+									})}
+								</div>
+							)}
 
-						{isUser ? (
-							<p className={styles.text}>{message.content}</p>
-						) : isError ? (
-							<div className={styles.errorContent}>
-								<TriangleAlert size={14} className={styles.errorIcon} />
-								<span className={styles.errorText}>{message.content}</span>
-							</div>
-						) : hasBlocks ? (
-							<MessageContext.Provider value={{ messageId: message.id }}>
-								{groups.map((g) => renderGroup(g))}
-							</MessageContext.Provider>
-						) : (
-							<MessageContext.Provider value={{ messageId: message.id }}>
-								<ReactMarkdown
-									className={styles.markdown}
-									remarkPlugins={MD_PLUGINS}
-									components={MD_COMPONENTS}
-								>
-									{message.content}
-								</ReactMarkdown>
-							</MessageContext.Provider>
-						)}
+							{isUser ? (
+								<p className={styles.text}>{message.content}</p>
+							) : isError ? (
+								<div className={styles.errorContent}>
+									<TriangleAlert size={14} className={styles.errorIcon} />
+									<span className={styles.errorText}>{message.content}</span>
+								</div>
+							) : hasBlocks ? (
+								<MessageContext.Provider value={{ messageId: message.id }}>
+									{groups.map((g) => renderGroup(g))}
+								</MessageContext.Provider>
+							) : (
+								<MessageContext.Provider value={{ messageId: message.id }}>
+									<ReactMarkdown
+										className={styles.markdown}
+										remarkPlugins={MD_PLUGINS}
+										components={MD_COMPONENTS}
+									>
+										{message.content}
+									</ReactMarkdown>
+								</MessageContext.Provider>
+							)}
 
-						{!isUser && message.actions && message.actions.length > 0 && (
-							<ActionsSection actions={message.actions} messageId={message.id} />
-						)}
+							{!isUser && message.actions && message.actions.length > 0 && (
+								<ActionsSection actions={message.actions} messageId={message.id} />
+							)}
+						</div>
 					</div>
+
+					{showRetry && (
+						<div className={styles.retryButton}>
+							<Button
+								size="sm"
+								variant="ghost"
+								color="secondary"
+								prefix={<RotateCw size={12} />}
+								onClick={onRetry}
+								testId={`ai-message-retry-${message.id}`}
+							>
+								Retry
+							</Button>
+						</div>
+					)}
+
+					{!isUser && !isError && !message.isRateLimitError && (
+						<MessageFeedback
+							message={message}
+							onRegenerate={onRegenerate}
+							isLastAssistant={isLastAssistant}
+						/>
+					)}
+
+					{isUser && <UserMessageActions message={message} />}
 				</div>
-
-				{showRetry && (
-					<div className={styles.retryButton}>
-						<Button
-							size="sm"
-							variant="ghost"
-							color="secondary"
-							prefix={<RotateCw size={12} />}
-							onClick={onRetry}
-							testId={`ai-message-retry-${message.id}`}
-						>
-							Retry
-						</Button>
-					</div>
-				)}
-
-				{!isUser && !isError && !message.isRateLimitError && (
-					<MessageFeedback
-						message={message}
-						onRegenerate={onRegenerate}
-						isLastAssistant={isLastAssistant}
-					/>
-				)}
-
-				{isUser && <UserMessageActions message={message} />}
 			</div>
-		</div>
+			{isUser && message.contexts && <AddedContexts contexts={message.contexts} />}
+		</>
 	);
 }

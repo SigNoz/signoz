@@ -1,6 +1,6 @@
 import { MouseEvent } from 'react';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';

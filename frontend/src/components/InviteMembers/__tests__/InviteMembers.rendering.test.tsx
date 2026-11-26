@@ -66,9 +66,9 @@ describe('InviteMembers - Rendering', () => {
 	});
 
 	it('applies custom className', () => {
-		const { container } = render(<InviteMembers className="custom-class" />);
+		render(<InviteMembers className="custom-class" />);
 
-		expect(container.querySelector('.custom-class')).toBeInTheDocument();
+		expect(screen.getByTestId('invite-members')).toHaveClass('custom-class');
 	});
 
 	it('renders footer via renderFooter prop', () => {

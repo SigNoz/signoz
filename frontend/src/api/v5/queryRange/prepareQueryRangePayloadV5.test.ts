@@ -21,6 +21,8 @@ import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import {
 	convertBuilderQueriesToV5,
+	createAggregation,
+	mapPanelTypeToRequestType,
 	prepareQueryRangePayloadV5,
 } from './prepareQueryRangePayloadV5';
 
@@ -902,6 +904,46 @@ describe('prepareQueryRangePayloadV5', () => {
 		const logSpec = builderQuery.spec as LogBuilderQuery;
 		expect(logSpec.filter).toStrictEqual({ expression: '' });
 	});
+
+	it('sends the AI slot as builder_ai_query envelopes, ignoring builder', () => {
+		const props: GetQueryResultsProps = {
+			query: {
+				queryType: EQueryType.AI_QUERY_BUILDER,
+				id: 'q-ai',
+				unit: undefined,
+				promql: [],
+				clickhouse_sql: [],
+				builder: {
+					queryData: [baseBuilderQuery({ queryName: 'M' })],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+				builder_ai_query: {
+					queryData: [
+						baseBuilderQuery({ queryName: 'A', dataSource: DataSource.TRACES }),
+					],
+					queryFormulas: [],
+					queryTraceOperator: [],
+				},
+			},
+			graphType: PANEL_TYPES.TIME_SERIES,
+			selectedTime: 'GLOBAL_TIME',
+			start,
+			end,
+		};
+
+		const { queries } =
+			prepareQueryRangePayloadV5(props).queryPayload.compositeQuery;
+		expect(
+			queries.map((q) => [q.type, (q.spec as { name: string }).name]),
+		).toStrictEqual([['builder_ai_query', 'A']]);
+	});
+});
+
+describe('mapPanelTypeToRequestType', () => {
+	it('sends a scatter plot as scalar, like a table', () => {
+		expect(mapPanelTypeToRequestType(PANEL_TYPES.SCATTER)).toBe('scalar');
+	});
 });
 
 describe('convertBuilderQueriesToV5 having normalization', () => {
@@ -972,5 +1014,49 @@ describe('convertBuilderQueriesToV5 builder query type', () => {
 		['an explicitly generic query', 'builder_query'],
 	])('sends builder_query for %s', (_label, builderQueryType) => {
 		expect(buildEnvelope(builderQueryType, 'trace').type).toBe('builder_query');
+	});
+});
+
+describe('createAggregation fallback', () => {
+	const logsQuery = (expression: string): Partial<IBuilderQuery> => ({
+		dataSource: DataSource.LOGS,
+		aggregations: [{ expression }],
+	});
+
+	it('sends no aggregation for a heatmap with no field', () => {
+		expect(createAggregation(logsQuery(''), PANEL_TYPES.HEATMAP)).toStrictEqual(
+			[],
+		);
+	});
+
+	it('reads a field on a heatmap and turns it into count() elsewhere', () => {
+		expect(
+			createAggregation(logsQuery('duration_nano'), PANEL_TYPES.HEATMAP),
+		).toStrictEqual([{ expression: 'duration_nano' }]);
+		expect(
+			createAggregation(logsQuery('duration_nano'), PANEL_TYPES.TIME_SERIES),
+		).toStrictEqual([{ expression: 'count()' }]);
+	});
+
+	it('still defaults other panels to count()', () => {
+		expect(
+			createAggregation(logsQuery(''), PANEL_TYPES.TIME_SERIES),
+		).toStrictEqual([{ expression: 'count()' }]);
+	});
+
+	it('sends the field of a logs heatmap query', () => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: {
+					...logsQuery('duration_nano'),
+					queryName: 'A',
+				} as IBuilderQuery,
+			},
+			mapPanelTypeToRequestType(PANEL_TYPES.HEATMAP),
+			PANEL_TYPES.HEATMAP,
+		);
+		expect((envelope.spec as LogBuilderQuery).aggregations).toStrictEqual([
+			{ expression: 'duration_nano' },
+		]);
 	});
 });

@@ -4,11 +4,32 @@
  */
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { screen, userEvent, within } from 'storybook/test';
 
-import { choiceControl, countControl } from '@/storybook/controls/controls';
+import {
+	choiceControl,
+	countControl,
+	toggleControl,
+} from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { accessFor } from '@/storybook/access/access';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
+import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
+import { componentPermission } from 'utils/permission';
+import type { RuleViewCtx } from 'container/ListAlertRules/types';
+import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
+import {
+	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
+	RULE_BUILTIN_VIEWS,
+	type RuleViewId,
+} from 'container/ListAlertRules/list.config';
 
+import {
+	orgUsersResponse,
+	STORY_USER_EMAIL,
+} from '../../../DashboardsListPage/stories/__story_mockdata__/orgUsers';
 import {
 	alertRulesResponse,
 	RULE_MAX,
@@ -18,12 +39,71 @@ import {
 	type SeverityChoice,
 } from '../../stories/__story_mockdata__/alerts';
 import { AlertListTabs } from '../../types';
+import {
+	alertRulesPage,
+	INVALID_QUERY_CHOICES,
+	invalidRuleQueryError,
+	type InvalidQueryChoice,
+	RULE_VIEW_MAX,
+	ruleView,
+	ruleViewsResponse,
+} from './__story_mockdata__/ruleViews';
 
 const LIST = 'Alert rules · list';
 const ACTIONS = 'Alert rules · row actions';
+const VIEWS = 'Alert rules · saved views';
 
 const ACTION_STATES = ['success', 'loading', 'error'] as const;
 type ActionState = (typeof ACTION_STATES)[number];
+
+const VIEW_CHOICES = [
+	'all',
+	'mine',
+	'recent',
+	'firing',
+	'enabled',
+	'disabled',
+	'saved',
+] as const satisfies readonly (RuleViewId | 'saved')[];
+
+/** Rules the browser remembers opening, most recent first. */
+const STORY_RECENT_RULE_IDS = ['rule-3', 'rule-1', 'rule-6'];
+
+const storyViewCtx = (recentRules: number): RuleViewCtx => ({
+	userEmail: STORY_USER_EMAIL,
+	recent: STORY_RECENT_RULE_IDS.slice(0, recentRules),
+});
+type ViewChoice = (typeof VIEW_CHOICES)[number];
+
+/**
+ * The rail applies a view by writing `view` with its `query` and `states`, so a
+ * story that opens on one seeds all three or the rail shows unsaved changes.
+ */
+const listRoute = (view: ViewChoice): string => {
+	const params = new URLSearchParams({ tab: AlertListTabs.ALERT_RULES });
+	if (view === DEFAULT_RULE_VIEW) {
+		return `/alerts?${params.toString()}`;
+	}
+
+	const saved = ruleView(0);
+	const filter =
+		view === 'saved'
+			? { query: saved.data.query ?? '', states: saved.data.states ?? [] }
+			: RULE_BUILTIN_VIEWS.find((v) => v.id === view)?.filter(
+					DEFAULT_RULE_LIST_FILTER,
+					storyViewCtx(STORY_RECENT_RULE_IDS.length),
+				);
+
+	params.set('view', view === 'saved' ? saved.id : view);
+	if (filter?.query) {
+		params.set('query', filter.query);
+	}
+	if (filter?.states.length) {
+		params.set('states', filter.states.join(','));
+	}
+
+	return `/alerts?${params.toString()}`;
+};
 
 const actionDescription = (call: string): string =>
 	`How the ${call} behind the row action answers. \`loading\` never answers and keeps the promise toast pending, \`error\` settles it with the failure.`;
@@ -59,7 +139,7 @@ export const alertRulesMocks = defineStoryMocks({
 		ruleSeverity: choiceControl<SeverityChoice>('Severity', {
 			group: LIST,
 			description:
-				'The severity label every rule carries. `mixed` leaves each rule with its own.',
+				'The one threshold every rule fires at, shown in the Severity column. `mixed` leaves each rule with its own, some with two.',
 			options: SEVERITY_CHOICES,
 			value: 'mixed',
 		}),
@@ -69,6 +149,51 @@ export const alertRulesMocks = defineStoryMocks({
 				'The evaluation state the Status column shows. `disabled` also switches the row action to Enable.',
 			options: RULE_STATE_CHOICES,
 			value: 'mixed',
+		}),
+		invalidQuery: choiceControl<InvalidQueryChoice>('Invalid query', {
+			group: LIST,
+			description:
+				'The 400 code any request carrying a `query` answers with. Both replace the list with the Invalid query state and the server message.',
+			options: INVALID_QUERY_CHOICES,
+			value: 'off',
+		}),
+		view: choiceControl<ViewChoice>('Active view', {
+			group: VIEWS,
+			description:
+				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set, and `recent` narrows one large page to the rules the browser remembers opening.',
+			options: VIEW_CHOICES,
+			value: DEFAULT_RULE_VIEW,
+		}),
+		recentRules: countControl('Recently viewed', {
+			group: VIEWS,
+			description:
+				'How many rules the browser remembers opening. At 0 the Recently viewed view shows its own empty state.',
+			value: STORY_RECENT_RULE_IDS.length,
+			max: STORY_RECENT_RULE_IDS.length,
+		}),
+		railCollapsed: toggleControl('Rail collapsed', {
+			group: VIEWS,
+			description:
+				'The rail collapsed from the status bar, as the browser remembers it.',
+			value: false,
+		}),
+		ruleViews: countControl('Saved views', {
+			group: VIEWS,
+			value: 3,
+			max: RULE_VIEW_MAX,
+		}),
+		ruleViewsState: choiceControl<ActionState>('Views list', {
+			group: VIEWS,
+			description:
+				'How the views list behind the rail answers, independent of the rule list.',
+			options: ACTION_STATES,
+			value: 'success',
+		}),
+		saveViewState: choiceControl<ActionState>('Save, rename or delete', {
+			group: VIEWS,
+			description: `${actionDescription('POST, PUT or DELETE')} The list does not change after a write: it answers with the Saved views count.`,
+			options: ACTION_STATES,
+			value: 'success',
 		}),
 		toggleState: choiceControl<ActionState>('Enable or disable', {
 			group: ACTIONS,
@@ -90,14 +215,49 @@ export const alertRulesMocks = defineStoryMocks({
 		}),
 	},
 	handlers: (values, response) => [
+		rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
+			values.invalidQuery !== 'off' && req.url.searchParams.get('query')
+				? res(ctx.status(400), ctx.json(invalidRuleQueryError(values.invalidQuery)))
+				: response.json(() =>
+						alertRulesPage(
+							values.rules,
+							{ severity: values.ruleSeverity, state: values.ruleState },
+							req.url.searchParams,
+						),
+					)(req, res, ctx),
+		),
+
 		rest.get(
-			'http://localhost/api/v2/rules',
-			response.json(() =>
-				alertRulesResponse(values.rules, {
-					severity: values.ruleSeverity,
-					state: values.ruleState,
-				}),
+			'http://localhost/api/v2/users',
+			response.json(() => orgUsersResponse()),
+		),
+
+		rest.get('http://localhost/api/v2/rule_views', (_req, res, ctx) =>
+			actionResponse(values.ruleViewsState, res, ctx, () =>
+				ruleViewsResponse(values.ruleViews),
 			),
+		),
+
+		rest.post('http://localhost/api/v2/rule_views', async (req, res, ctx) => {
+			const body = (await req.json()) as object;
+			return actionResponse(values.saveViewState, res, ctx, () => ({
+				status: 'success',
+				data: { ...ruleView(values.ruleViews), ...body },
+			}));
+		}),
+
+		rest.put('http://localhost/api/v2/rule_views/:id', async (req, res, ctx) => {
+			const body = (await req.json()) as object;
+			return actionResponse(values.saveViewState, res, ctx, () => ({
+				status: 'success',
+				data: { ...ruleView(0), ...body, id: req.params.id },
+			}));
+		}),
+
+		rest.delete('http://localhost/api/v2/rule_views/:id', (_req, res, ctx) =>
+			values.saveViewState === 'success'
+				? res(ctx.status(204))
+				: actionResponse(values.saveViewState, res, ctx, () => null),
 		),
 
 		rest.patch('http://localhost/api/v2/rules/:id', (_req, res, ctx) =>
@@ -124,7 +284,13 @@ export const alertRulesMocks = defineStoryMocks({
 			})),
 		),
 	],
-	config: () => ({ route: `/alerts?tab=${AlertListTabs.ALERT_RULES}` }),
+	config: (values) => ({ route: listRoute(values.view) }),
+	effect: (values) => {
+		useAlertRuleViewsStore.setState({
+			railCollapsed: values.railCollapsed,
+			recent: storyViewCtx(values.recentRules).recent,
+		});
+	},
 });
 
 /** The page fetches before it renders a row, which outlasts the 1s default. */
@@ -143,3 +309,47 @@ export const runRowAction = async (
 	await userEvent.click(actions);
 	await userEvent.click(await screen.findByRole('menuitem', { name }));
 };
+
+export type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
+
+export const listedRules = (
+	args: AlertRulesArgs,
+): RuletypesListableRuleDTO[] => {
+	const params = new URL(listRoute(args.view), 'http://localhost').searchParams;
+	// The URL joins states with commas; the request repeats the key.
+	const states = params.get('states');
+	if (states) {
+		params.delete('states');
+		states.split(',').forEach((state) => params.append('states', state));
+	}
+	if (
+		args.dataState !== 'loaded' ||
+		(args.invalidQuery !== 'off' && params.get('query'))
+	) {
+		return [];
+	}
+
+	const { rules } = alertRulesPage(
+		args.rules,
+		{ severity: args.ruleSeverity, state: args.ruleState },
+		params,
+	).data;
+	const clientFilter = findRuleBuiltinView(args.view)?.clientFilter;
+	return clientFilter
+		? clientFilter(rules, storyViewCtx(args.recentRules))
+		: rules;
+};
+
+export const hasRowMenu = (args: AlertRulesArgs): boolean =>
+	listedRules(args).length > 0 &&
+	componentPermission.action.includes(
+		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+	);
+
+export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
+	args.view === DEFAULT_RULE_VIEW &&
+	args.dataState === 'loaded' &&
+	args.rules === 0;
+
+export const listsSavedViews = (args: AlertRulesArgs): boolean =>
+	args.ruleViews > 0 && args.ruleViewsState === 'success';

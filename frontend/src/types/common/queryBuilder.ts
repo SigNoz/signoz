@@ -1,12 +1,11 @@
-import { Dispatch, SetStateAction } from 'react';
 import {
 	TelemetrytypesSignalDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { Format } from 'constants/formats/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { Format } from 'constants/formats/types';
-import { OptionsQuery } from 'container/OptionsMenu/types';
+import { Dispatch, SetStateAction } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -16,7 +15,6 @@ import {
 	Query,
 	QueryState,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { ViewProps } from 'types/api/saveViews/types';
 
 import { EQueryType } from './dashboard';
 
@@ -56,6 +54,7 @@ export const QUERY_SOURCE_TO_FIELD_SOURCE: Record<
 	BuilderQuerySource,
 	TelemetrytypesSourceDTO | undefined
 > = {
+	audit: TelemetrytypesSourceDTO.audit,
 	meter: TelemetrytypesSourceDTO.meter,
 	'': undefined,
 };
@@ -314,7 +313,7 @@ export type QueryBuilderContextType = {
 		searchParams?: Record<string, unknown>,
 		redirectToUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 		shallStringify?: boolean,
-		newTab?: boolean,
+		navigateOptions?: { newTab?: boolean; replace?: boolean },
 	) => void;
 	handleRunQuery: () => void;
 	resetQuery: (newCurrentQuery?: QueryState) => void;
@@ -334,11 +333,6 @@ export type QueryBuilderContextType = {
 		) => QueryBuilderData[T][number],
 	) => Query;
 	initQueryBuilderData: (query: Query, timeUpdated?: boolean) => void;
-	isStagedQueryUpdated: (
-		viewData: ViewProps[] | undefined,
-		viewKey: string,
-		options: OptionsQuery,
-	) => boolean;
 	isDefaultQuery: (props: IsDefaultQueryProps) => boolean;
 };
 

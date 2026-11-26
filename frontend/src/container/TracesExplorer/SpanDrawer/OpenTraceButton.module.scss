@@ -1,0 +1,9 @@
+// One text line tall, so the taller button overflows into the cell padding
+// instead of growing the row on hover.
+.slot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: var(--tanstack-plain-cell-line-height, 20px);
+	overflow: visible;
+}

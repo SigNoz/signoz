@@ -91,13 +91,13 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return storableServiceAccount, nil
 }
 
-func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
-	serviceAccounts, err := module.store.List(ctx, orgID)
+func (module *module) List(ctx context.Context, orgID valuer.UUID, params *serviceaccounttypes.ListServiceAccountsParams) ([]*serviceaccounttypes.ServiceAccount, int64, error) {
+	serviceAccounts, total, err := module.store.List(ctx, orgID, params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return serviceAccounts, nil
+	return serviceAccounts, total, nil
 }
 
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
@@ -176,7 +176,11 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 			return err
 		}
 
-		// update the status but do not delete the role mappings as we will use them for audits
+		err = module.store.DeleteServiceAccountRolesByServiceAccountID(ctx, id)
+		if err != nil {
+			return err
+		}
+
 		err = module.store.Update(ctx, orgID, serviceAccount.ServiceAccount)
 		if err != nil {
 			return err

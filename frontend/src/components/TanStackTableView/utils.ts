@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
 
 import { RowKeyData, TableColumnDef } from './types';
-import { ComboboxSimpleItem } from '@signozhq/ui/combobox';
+import type { ComboboxItemType } from '@signozhq/ui/combobox';
 
 export const getColumnId = <TData>(column: TableColumnDef<TData>): string =>
 	column.id;
@@ -61,6 +61,19 @@ export const getColumnWidthStyle = <TData>(
 		minWidth: width.min ?? DEFAULT_MIN_WIDTH,
 		maxWidth: width.max,
 	};
+};
+
+/**
+ * Index of the column that fills spare width: the last one, or the one before
+ * it when the last sets `width.passLastColumnFill`.
+ */
+export const getFillColumnIndex = <TData>(
+	columns: (TableColumnDef<TData> | undefined)[],
+): number => {
+	const lastIndex = columns.length - 1;
+	return columns[lastIndex]?.width?.passLastColumnFill
+		? lastIndex - 1
+		: lastIndex;
 };
 
 const isSkeletonRow = (row: unknown): boolean => {
@@ -151,11 +164,12 @@ const DEFAULT_PAGE_SIZES = [10, 20, 30, 50, 100];
 
 export function buildPageSizeItems(
 	calculatedSize?: number | null,
-): ComboboxSimpleItem[] {
-	const items: ComboboxSimpleItem[] = [];
+): ComboboxItemType[] {
+	const items: ComboboxItemType[] = [];
 
 	if (calculatedSize) {
 		items.push({
+			type: 'item',
 			value: calculatedSize.toString(),
 			label: `Auto (${calculatedSize})`,
 			displayValue: calculatedSize.toString(),
@@ -165,6 +179,7 @@ export function buildPageSizeItems(
 	for (const size of DEFAULT_PAGE_SIZES) {
 		if (size !== calculatedSize) {
 			items.push({
+				type: 'item',
 				value: size.toString(),
 				label: size.toString(),
 				displayValue: size.toString(),

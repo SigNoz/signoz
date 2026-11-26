@@ -10,6 +10,7 @@ import {
 	DashboardtypesLineStyleDTO,
 	type DashboardtypesPanelSpecDTO,
 	DashboardtypesStackModeDTO,
+	DashboardtypesThresholdAxisDTO,
 	DashboardtypesThresholdFormatDTO,
 	DashboardtypesTextAlignDTO,
 	DashboardtypesTimePreferenceDTO,
@@ -28,6 +29,7 @@ import {
 	type SectionSpecMap,
 	ThresholdVariant,
 } from '../types/sections';
+import { DEFAULT_BAR_COLOR } from '../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { getTableColumnKeys } from './getTableColumnKeys';
 
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
@@ -36,6 +38,7 @@ export interface SeededPluginSpec {
 	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
+	appearance?: SectionSpecMap[SectionKind.Appearance];
 	formatting?: Pick<
 		PanelFormattingSlice,
 		'unit' | 'decimalPrecision' | 'columnUnits'
@@ -67,12 +70,14 @@ interface AnyThresholdFields {
 	format?: DashboardtypesThresholdFormatDTO;
 	columnName?: string;
 	label?: string;
+	axis?: DashboardtypesThresholdAxisDTO;
 }
 
 /** Remaps a threshold to the target variant, seeding the fields that variant needs to stay functional. */
 function toThresholdVariant(
 	source: AnyThresholdFields,
 	variant: ThresholdVariant,
+	withAxis: boolean,
 	defaultColumnName?: string,
 ): AnyThreshold {
 	const core = {
@@ -87,6 +92,12 @@ function toThresholdVariant(
 			format: source.format ?? DashboardtypesThresholdFormatDTO.text,
 		};
 	}
+	if (variant === ThresholdVariant.COLOR) {
+		return {
+			...core,
+			operator: source.operator ?? DashboardtypesComparisonOperatorDTO.above,
+		};
+	}
 	if (variant === ThresholdVariant.TABLE) {
 		return {
 			...core,
@@ -98,6 +109,7 @@ function toThresholdVariant(
 	return {
 		...core,
 		...(source.label !== undefined && { label: source.label }),
+		...(withAxis && { axis: source.axis ?? DashboardtypesThresholdAxisDTO.y }),
 	};
 }
 
@@ -161,7 +173,70 @@ function translateStackingForKind(
 	return {};
 }
 
+type ChartAppearanceSlice = SectionSpecMap[SectionKind.ChartAppearance];
+type ChartColors = NonNullable<ChartAppearanceSlice['colors']>;
+
+/**
+ * Heatmap and Geo Map share the ramp but not the range or fill fields, and the
+ * save API rejects a field the target kind lacks.
+ */
+function seedColors(
+	controls: SectionControls[SectionKind.ChartAppearance],
+	colors: ChartColors | undefined,
+): ChartColors | undefined {
+	const ramp = {
+		mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
+		palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
+		scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
+		...(colors?.steps && { steps: colors.steps }),
+		...(colors?.fill !== undefined && { fill: colors.fill }),
+	};
+	if (controls.colors) {
+		return {
+			...ramp,
+			...(colors?.minCount != null && { minCount: colors.minCount }),
+			...(colors?.maxCount != null && { maxCount: colors.maxCount }),
+		};
+	}
+	if (controls.mapColors) {
+		return {
+			...ramp,
+			...(colors?.min != null && { min: colors.min }),
+			...(colors?.max != null && { max: colors.max }),
+		};
+	}
+	return undefined;
+}
+
+/** Geo Map's circle range and names; carried only between kinds that declare them. */
+function seedMapMarks(
+	controls: SectionControls[SectionKind.ChartAppearance],
+	{ bubbles, labels }: Pick<ChartAppearanceSlice, 'bubbles' | 'labels'>,
+): Pick<ChartAppearanceSlice, 'bubbles' | 'labels'> {
+	return {
+		...(controls.bubbles && bubbles && { bubbles }),
+		...(controls.labels && labels != null && { labels }),
+	};
+}
+
 const SECTION_SEEDS: SectionSeeds = {
+	[SectionKind.Appearance]: {
+		specKey: 'appearance',
+		// Carries the toggles the target kind declares; unset reads as off.
+		seed: (
+			controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.Appearance] => {
+			const old = oldPluginSpec?.appearance;
+			return {
+				barColor: (controls.barColor && old?.barColor) || DEFAULT_BAR_COLOR,
+				...(controls.showRank &&
+					old?.showRank !== undefined && { showRank: old.showRank }),
+				...(controls.showShare &&
+					old?.showShare !== undefined && { showShare: old.showShare }),
+			};
+		},
+	},
 	[SectionKind.TextLayout]: {
 		specKey: 'presentation',
 		// Explicit alignment defaults (not the API's implicit ones) so the controls
@@ -219,10 +294,7 @@ const SECTION_SEEDS: SectionSeeds = {
 					old.isLogScale !== undefined && { isLogScale: old.isLogScale }),
 				// Seeded so the control opens on the axis being drawn.
 				...(controls.y && {
-					y: {
-						...old.y,
-						scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto,
-					},
+					y: { scale: old.y?.scale ?? DashboardtypesHeatmapYScaleDTO.auto },
 				}),
 			};
 		},
@@ -252,6 +324,8 @@ const SECTION_SEEDS: SectionSeeds = {
 				showPoints,
 				spanGaps,
 				colors,
+				bubbles,
+				labels,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -280,15 +354,11 @@ const SECTION_SEEDS: SectionSeeds = {
 			}
 			// Seeded so the controls open on the ramp the grid is drawn with; the
 			// count bounds and step count stay unset, which reads as derived.
-			if (controls.colors) {
-				appearance.colors = {
-					...colors,
-					mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
-					palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
-					scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
-				};
+			const seededColors = seedColors(controls, colors);
+			if (seededColors) {
+				appearance.colors = seededColors;
 			}
-			return appearance;
+			return { ...appearance, ...seedMapMarks(controls, { bubbles, labels }) };
 		},
 	},
 	[SectionKind.Formatting]: {
@@ -307,6 +377,13 @@ const SECTION_SEEDS: SectionSeeds = {
 						decimalPrecision: old.decimalPrecision,
 					}),
 			};
+			// Kinds that both key units per column (Table ↔ Scatter Plot) share the keys.
+			if (controls.columnUnits && old?.columnUnits) {
+				if (Object.keys(old.columnUnits).length > 0) {
+					carried.columnUnits = { ...old.columnUnits };
+				}
+				return carried;
+			}
 			// A panel-wide unit fans out to every value column when the target keys units
 			// per column (→ Table). One-way: `columnUnits` never seed a panel-wide `unit`.
 			const unit = old?.unit;
@@ -337,13 +414,16 @@ const SECTION_SEEDS: SectionSeeds = {
 				variant === ThresholdVariant.TABLE
 					? getTableColumnKeys(oldSpec?.queries ?? [])[0]
 					: undefined;
-			const mapped = old.map((threshold) =>
-				toThresholdVariant(
-					threshold as AnyThresholdFields,
-					variant,
-					defaultColumnName,
-				),
-			);
+			const withAxis = !!controls.axis;
+			// Only a kind that picks the axis can place an x threshold.
+			const mapped = (old as AnyThresholdFields[])
+				.filter(
+					(threshold) =>
+						withAxis || threshold.axis !== DashboardtypesThresholdAxisDTO.x,
+				)
+				.map((threshold) =>
+					toThresholdVariant(threshold, variant, withAxis, defaultColumnName),
+				);
 			return variant === ThresholdVariant.TABLE
 				? mapped.filter((t) => (t as { columnName?: string }).columnName)
 				: mapped;

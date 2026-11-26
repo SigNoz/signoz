@@ -1,6 +1,13 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen } from 'tests/test-utils';
 
 import LabelColumn from './LabelColumn';
+
+// The global CSS mock maps every class to undefined; keep the names so overflow is assertable.
+jest.mock('./LabelColumn.module.scss', () => ({
+	labelColumn: 'labelColumn',
+	overflowed: 'overflowed',
+	shrinkable: 'shrinkable',
+}));
 
 const BADGE_WIDTH = 60;
 
@@ -77,6 +84,22 @@ describe('LabelColumn', () => {
 		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
 	});
 
+	it('should hide the labels past the visible count', () => {
+		const labels = ['env', 'service', 'region', 'team', 'owner', 'version'];
+
+		// 3 badges (180px) + overflow reserve (40px)
+		mockLayout(220);
+		renderWithProviders(<LabelColumn labels={labels} />);
+
+		const isHidden = (label: string): boolean =>
+			screen
+				.getByTestId(`label-tag-container-${label}`)
+				.classList.contains('overflowed');
+
+		expect(labels.filter(isHidden)).toStrictEqual(['team', 'owner', 'version']);
+		expect(screen.getByTestId('label-overflow-badge')).toHaveTextContent('+3');
+	});
+
 	it('should render label with value when value prop provided', () => {
 		const labels = ['env'];
 		const value = { env: 'production' };
@@ -136,8 +159,7 @@ describe('LabelColumn', () => {
 	it('should render empty when no labels provided', () => {
 		renderWithProviders(<LabelColumn labels={[]} />);
 
-		const column = screen.getByTestId('label-column');
-		expect(column.children).toHaveLength(0);
+		expect(screen.getByTestId('label-column')).toBeEmptyDOMElement();
 	});
 
 	it('should use primary color by default', () => {

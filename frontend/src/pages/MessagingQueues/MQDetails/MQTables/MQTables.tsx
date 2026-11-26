@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Skeleton, Table } from 'antd';
+import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import {
@@ -13,7 +13,8 @@ import cx from 'classnames';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
-import { History } from 'history';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useNotifications } from 'hooks/useNotifications';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { isEmpty } from 'lodash-es';
@@ -42,7 +43,6 @@ const INITIAL_PAGE_SIZE = 10;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
-	history: History<unknown>,
 	isProducerOverview?: boolean,
 ): RowData[] {
 	if (data?.result?.length === 0) {
@@ -77,7 +77,10 @@ export function getColumns(
 			: (text: string): ColumnTypeRender<Record<string, unknown>> => ({
 					children:
 						column.name === 'service_name' ? (
-							<Typography.Link
+							<Button
+								variant="link"
+								color="primary"
+								size="md"
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
@@ -85,14 +88,23 @@ export function getColumns(
 									if (isModifierKeyPressed(e as React.MouseEvent)) {
 										openInNewTab(path);
 									} else {
-										history.push(path);
+										navigate(path);
 									}
 								}}
 							>
 								{text}
-							</Typography.Link>
+							</Button>
 						) : (
-							<Typography.Text>{text}</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								{text}
+							</Typography>
 						),
 				}),
 	}));
@@ -118,10 +130,27 @@ export function getTableData(
 
 const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 	<>
-		<Typography.Text className="numbers">
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{range[0]} &#8212; {range[1]}
-		</Typography.Text>
-		<Typography.Text className="total"> of {total}</Typography.Text>
+		</Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
+			{' '}
+			of {total}
+		</Typography>
 	</>
 );
 
@@ -151,7 +180,6 @@ function MessagingQueuesTable({
 	const [tableData, setTableData] = useState<any[]>([]);
 	const { notifications } = useNotifications();
 	const urlQuery = useUrlQuery();
-	const history = useHistory();
 	const timelineQuery = decodeURIComponent(
 		urlQuery.get(QueryParams.selectedTimelineQuery) || '',
 	);
@@ -205,7 +233,7 @@ function MessagingQueuesTable({
 	} = useMutation(tableApi, {
 		onSuccess: (data) => {
 			if (data.payload) {
-				setColumns(getColumns(data?.payload, history, isProducerOverview));
+				setColumns(getColumns(data?.payload, isProducerOverview));
 				setTableData(
 					isProducerOverview
 						? getTableDataForProducerLatencyOverview(data?.payload)
@@ -228,7 +256,7 @@ function MessagingQueuesTable({
 
 	const [selectedRowKey, setSelectedRowKey] = useState<React.Key>();
 	const [, setSelectedRows] = useState<any>();
-	const location = useLocation();
+	const location = useAppLocation();
 
 	const selectedRowKeyGenerator = (record: {
 		[key: string]: string;
@@ -250,13 +278,13 @@ function MessagingQueuesTable({
 		if (selectedRowKeyGenerator(record) === selectedRowKey) {
 			setSelectedRowKey(undefined);
 			setSelectedRows({});
-			setConfigDetail(urlQuery, location, history, {});
+			setConfigDetail(urlQuery, location, {});
 		} else {
 			setSelectedRowKey(selectedRowKeyGenerator(record));
 			setSelectedRows(record);
 
 			if (!isEmpty(record)) {
-				setConfigDetail(urlQuery, location, history, record);
+				setConfigDetail(urlQuery, location, record);
 			}
 		}
 	};
@@ -311,16 +339,32 @@ function MessagingQueuesTable({
 		<div className="mq-tables-container">
 			{!validConfigPresent ? (
 				<div className="no-data-style">
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						{selectedView === MessagingQueuesViewType.consumerLag.value
 							? 'Click on a co-ordinate above to see the details'
 							: 'Click on a row above to see the details'}
-					</Typography.Text>
+					</Typography>
 					<Skeleton />
 				</div>
 			) : isError ? (
 				<div className="no-data-style">
-					<Typography.Text>{error?.message || SOMETHING_WENT_WRONG}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{error?.message || SOMETHING_WENT_WRONG}
+					</Typography>
 				</div>
 			) : (
 				<>
@@ -331,6 +375,7 @@ function MessagingQueuesTable({
 						</div>
 					)}
 					<Table
+						data-testid={`mq-table-${type.toLowerCase()}`}
 						className={cx(
 							'mq-table',
 							type !== 'Detail' ? 'mq-overview-row-clickable' : 'pagination-left',

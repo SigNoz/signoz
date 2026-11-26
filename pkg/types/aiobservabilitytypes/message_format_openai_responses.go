@@ -2,13 +2,15 @@ package aiobservabilitytypes
 
 import "strings"
 
-// Format: OpenAI Responses, a request {input, instructions} or a response {output, status} of items:
+// Format: OpenAI Responses, a request {input, instructions}, a response {output, status} or a bare list
+// of items:
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L47597
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L69691
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L53834
 // https://github.com/openai/openai-openapi/blob/aeb6a041dc56c011ca9f12127ec898f911100aa0/openapi.yaml#L57596
-// Written by: gateways recording raw Responses bodies, and the raw calls OpenInference records for the
-// Responses API and the OpenAI Agents SDK when its flattened messages are absent.
+// Written by: gateways recording raw Responses bodies, the raw calls OpenInference records for the
+// Responses API and the OpenAI Agents SDK when its flattened messages are absent, and LiteLLM's
+// langfuse_otel callback, the function_call items of a tool-calling turn as a bare list.
 // Handled: message items with input_text, output_text, refusal, input_image and input_file content;
 // function_call and custom_tool_call with their outputs; reasoning summaries; compaction; every other
 // *_call item as a server tool call and *_output item as its response; the status and incomplete_details
@@ -30,6 +32,19 @@ func isResponsesRequest(m map[string]any) bool {
 	}
 	_, isItem := firstObject(items)
 	return isItem
+}
+
+// isResponsesItems looks for an item only the Responses API has, a tool call or its output, a reasoning
+// or compaction item, all without a role; a list of messages has none.
+func isResponsesItems(list []any) bool {
+	for _, item := range list {
+		m, _ := item.(map[string]any)
+		typ := stringOf(m["type"])
+		if m["role"] == nil && (typ == "reasoning" || typ == "compaction" || typ == "mcp_approval_response" || strings.HasSuffix(typ, "_call") || strings.HasSuffix(typ, "_output")) {
+			return true
+		}
+	}
+	return false
 }
 
 func isResponsesResponse(m map[string]any) bool {

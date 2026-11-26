@@ -1,12 +1,14 @@
 import {
 	Dispatch,
+	lazy,
 	SetStateAction,
+	Suspense,
 	useCallback,
 	useEffect,
 	useMemo,
 	useState,
 } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -24,14 +26,19 @@ import dayjs from 'dayjs';
 import { Clock, PenLine, TriangleAlert } from '@signozhq/icons';
 import { useTimezone } from 'providers/Timezone';
 import { getCustomTimeRanges } from 'utils/customTimeRangeUtils';
+import { lazyRetry } from 'utils/lazyWithRetries';
 import { TimeRangeValidationResult } from 'utils/timeUtils';
 
-import CalendarContainer from './CalendarContainer';
+import CalendarContainerFallback from './CalendarContainerFallback';
 import { CustomTimePickerInputStatus } from './CustomTimePicker';
 import TimezonePicker from './TimezonePicker';
 import { Timezone } from './timezoneUtils';
 
 import './CustomTimePicker.styles.scss';
+
+const CalendarContainer = lazy(() =>
+	lazyRetry(() => import('./CalendarContainer')),
+);
 
 const TO_MILLISECONDS_FACTOR = 1000_000;
 
@@ -114,7 +121,7 @@ function CustomTimePickerPopoverContent({
 	customDateTimeInputStatus = CustomTimePickerInputStatus.UNSET,
 	inputErrorDetails,
 }: CustomTimePickerPopoverContentProps): JSX.Element {
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isLogsExplorerPage = useMemo(
 		() => pathname === ROUTES.LOGS_EXPLORER,
@@ -251,6 +258,7 @@ function CustomTimePickerPopoverContent({
 						<Button
 							className={cx('data-time-live', isLiveLogsEnabled ? 'active' : '')}
 							type="text"
+							data-testid="time-picker-live"
 							onClick={handleGoLive}
 						>
 							Live
@@ -290,12 +298,16 @@ function CustomTimePickerPopoverContent({
 					)}
 				>
 					{customDateTimeVisible ? (
-						<CalendarContainer
-							dateRange={dateRange}
-							onSelectDateRange={handleSelectDateRange}
-							onCancel={handleCalendarRangeCancel}
-							onApply={handleCalendarRangeApply}
-						/>
+						<Suspense
+							fallback={<CalendarContainerFallback month={dateRange?.from} />}
+						>
+							<CalendarContainer
+								dateRange={dateRange}
+								onSelectDateRange={handleSelectDateRange}
+								onCancel={handleCalendarRangeCancel}
+								onApply={handleCalendarRangeApply}
+							/>
+						</Suspense>
 					) : (
 						<div className="time-selector-container">
 							{customDateTimeInputStatus === CustomTimePickerInputStatus.ERROR &&

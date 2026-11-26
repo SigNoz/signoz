@@ -1,5 +1,5 @@
 import { ReactNode, useCallback } from 'react';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import CopyButton from 'periscope/components/CopyButton/CopyButton';
@@ -18,32 +18,41 @@ export function EntityMetadataItem({
 	value,
 	renderedValue,
 }: EntityMetadataItemProps): JSX.Element {
+	const testIdSuffix = label.toLowerCase().replace(/\s+/g, '-');
 	const handleCopy = useCallback((): void => {
 		toast.success(`${label} copied to clipboard`, { position: 'bottom-left' });
 	}, [label]);
 
 	return (
 		<div className={styles.metadataItem}>
-			<Typography.Text
-				color="muted"
+			<Typography
+				variant="uppercase"
 				size="small"
 				weight="medium"
-				className={styles.label}
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
 			>
 				{label}
-			</Typography.Text>
+			</Typography>
 
 			{renderedValue ?? (
 				<div className={styles.valueRow}>
 					<Tooltip title={value} side="bottom" align="start">
-						<span className={styles.value}>
-							<Typography.Text
+						<span
+							className={styles.value}
+							data-testid={`metadata-value-${testIdSuffix}`}
+						>
+							<Typography
+								variant="code"
 								size="small"
 								weight="medium"
-								className={styles.valueText}
+								color="inherit"
+								as="span"
+								textOverflow="visible"
 							>
 								{value}
-							</Typography.Text>
+							</Typography>
 						</span>
 					</Tooltip>
 					{!!value && (
@@ -51,7 +60,7 @@ export function EntityMetadataItem({
 							value={value}
 							size={10}
 							ariaLabel={`Copy ${label}`}
-							testId={`copy-metadata-${label.toLowerCase().replace(/\s+/g, '-')}`}
+							testId={`copy-metadata-${testIdSuffix}`}
 							onCopy={handleCopy}
 						/>
 					)}

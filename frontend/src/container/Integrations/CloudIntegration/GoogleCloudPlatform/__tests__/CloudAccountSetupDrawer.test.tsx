@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { server } from 'mocks-server/server';
-import { rest, RestRequest } from 'msw';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { rest, server } from 'mocks-server/server';
+import { RestRequest } from 'msw';
+import { holdResponse } from 'tests/holdResponse';
 
 import CloudAccountSetupDrawer from '../AddNewAccount/CloudAccountSetupDrawer';
 import {
@@ -15,8 +15,10 @@ import {
 	GCP_CHECK_IN_URL,
 	GCP_CREDENTIALS_URL,
 } from './mockData';
+import { addProjectIds } from './projectIdsTestUtils';
+import { selectRegion } from './regionTestUtils';
 
-// `useCloudAccountSetupDrawer` imports logEvent by relative path, which the
+// `useManualAccountSetup` imports logEvent by relative path, which the
 // jest.config moduleNameMapper (keyed on the `api/common/logEvent` alias) does
 // not intercept — so mock the resolved module directly.
 jest.mock('../../../../../api/common/logEvent', () => ({
@@ -24,14 +26,12 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-const onClose = jest.fn();
+const onClose = jest.fn() as jest.MockedFunction<
+	ComponentProps<typeof CloudAccountSetupDrawer>['onClose']
+>;
 
 const renderDrawer = (): void => {
-	render(
-		<MockQueryClientProvider>
-			<CloudAccountSetupDrawer onClose={onClose} />
-		</MockQueryClientProvider>,
-	);
+	render(<CloudAccountSetupDrawer onClose={onClose} />);
 };
 
 describe('GCP CloudAccountSetupDrawer', () => {
@@ -109,6 +109,14 @@ describe('GCP CloudAccountSetupDrawer', () => {
 	});
 
 	it('creates the account, checks the agent in, and closes the drawer', async () => {
+		const checkIn = holdResponse();
+		server.use(
+			rest.post(GCP_CHECK_IN_URL, async (req: RestRequest, res, ctx) => {
+				checkInPayload = await req.json();
+				await checkIn.held;
+				return res(ctx.status(200), ctx.json(checkInResponse));
+			}),
+		);
 		const user = userEvent.setup();
 		renderDrawer();
 
@@ -119,20 +127,27 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('billing@company.com');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
 
-		await user.click(screen.getByTestId('gcp-deployment-region-select'));
-		await user.click(await screen.findByText('Mumbai (asia-south1)'));
+		await selectRegion(user, 'Mumbai');
 
-		const projectIdsInput = document.querySelector(
-			'#gcp-project-ids-select',
-		) as HTMLInputElement;
-		await user.type(projectIdsInput, 'project-a,project-b,');
+		await addProjectIds(user, 'gcp-project-ids-select', [
+			'project-a',
+			'project-b',
+		]);
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
+
+		// Switching away mid-request would let its success close the other form.
+		await waitFor(() => {
+			expect(screen.getByTestId('gcp-connection-method')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+		});
 
 		await waitFor(() => {
 			expect(createAccountPayload).not.toBeNull();
@@ -141,6 +156,7 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		expect(createAccountPayload).toStrictEqual({
 			config: {
 				gcp: {
+					connectionMethod: 'manual',
 					deploymentRegion: 'asia-south1',
 					deploymentProjectId: 'my-deployment-project-123',
 					projectIds: ['project-a', 'project-b'],
@@ -157,11 +173,14 @@ describe('GCP CloudAccountSetupDrawer', () => {
 				data: {},
 			});
 		});
+		expect(onClose).not.toHaveBeenCalled();
+
+		checkIn.release();
 
 		await waitFor(() => {
 			expect(onClose).toHaveBeenCalledTimes(1);
 		});
-	}, 15000);
+	});
 
 	it('shows the backend error inline when account creation fails', async () => {
 		server.use(
@@ -186,17 +205,13 @@ describe('GCP CloudAccountSetupDrawer', () => {
 			);
 		});
 
-		await user.click(screen.getByTestId('gcp-account-name-input'));
+		await user.click(screen.getByTestId('gcp-account-name-input-field'));
 		await user.paste('my-org');
-		await user.click(screen.getByTestId('gcp-deployment-project-id-input'));
+		await user.click(screen.getByTestId('gcp-deployment-project-id-input-field'));
 		await user.paste('my-deployment-project-123');
-		await user.click(screen.getByTestId('gcp-deployment-region-select'));
-		await user.click(await screen.findByText('Mumbai (asia-south1)'));
+		await selectRegion(user, 'Mumbai');
 
-		const projectIdsInput = document.querySelector(
-			'#gcp-project-ids-select',
-		) as HTMLInputElement;
-		await user.type(projectIdsInput, 'project-a,');
+		await addProjectIds(user, 'gcp-project-ids-select', ['project-a']);
 
 		await user.click(screen.getByTestId('gcp-connect-account-btn'));
 
@@ -207,5 +222,5 @@ describe('GCP CloudAccountSetupDrawer', () => {
 		});
 		expect(checkInPayload).toBeNull();
 		expect(onClose).not.toHaveBeenCalled();
-	}, 15000);
+	});
 });

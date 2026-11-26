@@ -1,4 +1,6 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
+import { aiTraceAlertDefaults } from 'container/CreateAlertRule/defaults';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
@@ -233,5 +235,96 @@ describe('mapQueryDataFromApi', (): void => {
 		expect(result.builder.queryData[0].builderQueryType).toBe('builder_ai_query');
 		expect(result.builder.queryData[0].queryName).toBe('A');
 		expect(result.builder.queryData[0].dataSource).toBe(DataSource.TRACES);
+	});
+
+	it('puts an AI-typed composite in the AI slot, leaving builder empty', () => {
+		const compositeQuery: ICompositeMetricQuery = {
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+			queries: [
+				{
+					type: 'builder_ai_query',
+					spec: {
+						name: 'A',
+						signal: 'traces',
+						aggregations: [{ expression: 'count()' }],
+					},
+				} as QueryEnvelope,
+				{
+					type: 'builder_formula',
+					spec: { name: 'F1', expression: 'A * 2' },
+				} as QueryEnvelope,
+			],
+		};
+
+		const result = mapQueryDataFromApi(compositeQuery);
+
+		expect(result.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(result.builder).toStrictEqual({
+			queryData: [],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		});
+		expect(result.builder_ai_query?.queryData[0].queryName).toBe('A');
+		// The AI slot marks its queries as AI; only queries kept in `builder` carry the tag.
+		expect(
+			result.builder_ai_query?.queryData[0].builderQueryType,
+		).toBeUndefined();
+		expect(result.builder_ai_query?.queryFormulas[0].queryName).toBe('F1');
+	});
+
+	it('puts an AI-typed V3 composite in the AI slot, leaving builder empty', () => {
+		const compositeQuery: ICompositeMetricQuery = {
+			queryType: EQueryType.AI_QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+			builderQueries: { A: getActiveBuilder(initialQueryAIWithType).queryData[0] },
+		};
+
+		const result = mapQueryDataFromApi(compositeQuery);
+
+		expect(result.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(result.builder).toStrictEqual({
+			queryData: [],
+			queryFormulas: [],
+			queryTraceOperator: [],
+		});
+		expect(result.builder_ai_query?.queryData[0]).toMatchObject({
+			queryName: 'A',
+			dataSource: DataSource.TRACES,
+		});
+	});
+
+	it('keeps AI-tagged queries of a builder-typed V3 composite in builder', () => {
+		const compositeQuery: ICompositeMetricQuery = {
+			queryType: EQueryType.QUERY_BUILDER,
+			panelType: PANEL_TYPES.TIME_SERIES,
+			unit: undefined,
+			builderQueries: {
+				A: {
+					...getActiveBuilder(initialQueryAIWithType).queryData[0],
+					builderQueryType: 'builder_ai_query',
+				},
+			},
+		};
+
+		const result = mapQueryDataFromApi(compositeQuery);
+
+		expect(result.builder_ai_query).toBeUndefined();
+		expect(result.builder.queryData[0].builderQueryType).toBe('builder_ai_query');
+	});
+
+	it('loads the AI traces alert default into the AI slot', () => {
+		const result = mapQueryDataFromApi(
+			aiTraceAlertDefaults.condition.compositeQuery,
+		);
+
+		expect(result.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(result.builder.queryData).toHaveLength(0);
+		expect(result.builder_ai_query?.queryData).toHaveLength(1);
+		expect(result.builder_ai_query?.queryData[0].dataSource).toBe(
+			DataSource.TRACES,
+		);
 	});
 });

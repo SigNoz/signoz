@@ -16,19 +16,24 @@ import {
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5QueryEnvelopeClickHouseSQLDTOType,
 	Querybuildertypesv5QueryEnvelopePromQLDTOType,
+	Querybuildertypesv5RequestTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
 import type { PanelQueryCapabilities } from '../Panels/types/panelCapabilities';
-import { isBuilderEnvelope } from 'lib/query/builderEnvelope';
+import {
+	isBuilderEnvelope,
+	isLoneBuilderQuery,
+} from 'lib/query/builderEnvelope';
 
 // Narrow view over the envelope spec variants. Orval erases envelope `spec` to `unknown`, so
 // shared fields are read through this view with a localized cast at the envelope boundary.
-interface QuerySpecView {
+export interface QuerySpecView {
 	name?: string;
 	legend?: string;
 	signal?: string;
 	stepInterval?: number | string;
-	aggregations?: { metricName?: string }[];
+	disabled?: boolean;
+	aggregations?: { metricName?: string; expression?: string }[];
 	order?: Querybuildertypesv5OrderByDTO[];
 }
 
@@ -221,13 +226,11 @@ function withDefaultRowLimit(
 	envelopes: Querybuildertypesv5QueryEnvelopeDTO[],
 	limit: number,
 ): Querybuildertypesv5QueryEnvelopeDTO[] {
+	if (!isLoneBuilderQuery(envelopes)) {
+		return envelopes;
+	}
 	const [envelope] = envelopes;
-	if (
-		envelopes.length !== 1 ||
-		envelope.type !==
-			Querybuildertypesv5QueryEnvelopeBuilderDTOType.builder_query ||
-		envelope.spec?.limit
-	) {
+	if (envelope.spec?.limit) {
 		return envelopes;
 	}
 	return [
@@ -324,8 +327,9 @@ export function extractLegendMap(
 }
 
 /**
- * Fetch gate. False with no queries, or when every metrics builder query lacks a metric name —
- * skipping a guaranteed 400 (V1 parity: `validateMetricNameForMetricsDataSource`).
+ * Fetch gate. False with no queries, when every metrics builder query lacks a metric name —
+ * skipping a guaranteed 400 (V1 parity: `validateMetricNameForMetricsDataSource`) — or when a
+ * logs/traces heatmap names no field to bucket.
  */
 export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 	const envelopes = toQueryEnvelopes(queries);
@@ -333,10 +337,23 @@ export function hasRunnableQueries(queries: DashboardtypesQueryDTO[]): boolean {
 		return false;
 	}
 
-	const metricsSpecs = envelopes
+	const builderSpecs = envelopes
 		.filter(isBuilderEnvelope)
-		.map((envelope) => envelope.spec as QuerySpecView)
-		.filter((spec) => spec.signal === 'metrics');
+		.map((envelope) => envelope.spec as QuerySpecView);
+
+	if (
+		queries[0].kind === Querybuildertypesv5RequestTypeDTO.heatmap &&
+		builderSpecs.some(
+			(spec) =>
+				!spec.disabled &&
+				spec.signal !== 'metrics' &&
+				!spec.aggregations?.[0]?.expression?.trim(),
+		)
+	) {
+		return false;
+	}
+
+	const metricsSpecs = builderSpecs.filter((spec) => spec.signal === 'metrics');
 
 	if (metricsSpecs.length === 0) {
 		return true;

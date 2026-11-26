@@ -1,12 +1,12 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Link, useParams } from 'react-router-dom';
 import { Histogram, RefreshCw } from '@signozhq/icons';
+import { AppLink } from 'lib/router/AppLink';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Alert, Table } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
-import { IServiceName } from 'container/MetricsApplication/Tabs/types';
 import useErrorNotification from 'hooks/useErrorNotification';
 import { useQueryService } from 'hooks/useQueryService';
 import useResourceAttribute from 'hooks/useResourceAttribute';
@@ -18,12 +18,12 @@ import { Tags } from 'hooks/useResourceAttribute/types';
 import './ServiceTopLevelOperations.styles.scss';
 
 export default function ServiceTopLevelOperations(): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 	const { maxTime, minTime, selectedTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
@@ -85,7 +85,17 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 			key: 'top-level-operation',
 			render: (operation: string): JSX.Element => (
 				<div className="top-level-operations-list-item" key={operation}>
-					<Typography.Text> {operation} </Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						{' '}
+						{operation}{' '}
+					</Typography>
 				</div>
 			),
 		},
@@ -93,18 +103,28 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 	return (
 		<div className="container">
-			<Typography.Title level={5} className="top-level-operations-header">
-				<Link to={ROUTES.APPLICATION}>
+			<Typography
+				variant="paragraph"
+				size="medium"
+				weight="bold"
+				color="inherit"
+				as="h5"
+				display="flex"
+				gap={4}
+				marginY={4}
+				textOverflow="wrap"
+			>
+				<AppLink to={ROUTES.APPLICATION}>
 					<span className="breadcrumb">
 						{' '}
 						<Histogram size={12} /> services{' '}
 					</span>
-				</Link>
+				</AppLink>
 				<div className="divider">/</div>
-				<Link to={`${ROUTES.APPLICATION}/${servicename}`}>
+				<AppLink to={`${ROUTES.APPLICATION}/${servicename}`}>
 					<span className="breadcrumb">{servicename} </span>
-				</Link>
-			</Typography.Title>
+				</AppLink>
+			</Typography>
 
 			<div className="info-alert">
 				<Alert message={alertDesc()} type="info" showIcon />
@@ -112,14 +132,25 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 
 			{isLoading && (
 				<div className="loading-top-level-operations">
-					<Typography.Title level={5}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						<RefreshCw className="animate-spin" size="sm" /> Loading ...
-					</Typography.Title>
+					</Typography>
 				</div>
 			)}
 
 			{!isLoading && (
-				<div className="top-level-operations-list">
+				<div
+					className="top-level-operations-list"
+					data-testid="top-level-operations-table"
+				>
 					<Table
 						columns={columns}
 						bordered

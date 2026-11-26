@@ -436,3 +436,97 @@ func TestRoundToNonZeroDecimals(t *testing.T) {
 	assert.Equal(t, math.Inf(1), roundToNonZeroDecimals(math.Inf(1), 3))
 	assert.Equal(t, math.Inf(-1), roundToNonZeroDecimals(math.Inf(-1), 3))
 }
+
+func TestTimeSeriesDataFilterToTimeRange(t *testing.T) {
+	testCases := []struct {
+		name             string
+		timeSeriesData   *TimeSeriesData
+		startMs          uint64
+		endMs            uint64
+		expectedFiltered *TimeSeriesData
+	}{
+		{
+			name: "HalfOpenRange_KeepsStartDropsEnd",
+			timeSeriesData: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 0,
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{
+							{Timestamp: 1000, Value: 1},
+							{Timestamp: 2000, Value: 2},
+							{Timestamp: 3000, Value: 3},
+							{Timestamp: 4000, Value: 4},
+						},
+					}},
+				}},
+			},
+			startMs: 2000,
+			endMs:   4000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 0,
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{
+							{Timestamp: 2000, Value: 2},
+							{Timestamp: 3000, Value: 3},
+						},
+					}},
+				}},
+			},
+		},
+		{
+			// heatmap counts are positional against Meta.Buckets, so the axis
+			// has to survive even when no value falls in the range
+			name: "NothingInRange_KeepsSeriesAndHeatmapAxis",
+			timeSeriesData: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 1,
+					Alias: "__result_1",
+					Meta:  AggregationMeta{Unit: "By", Buckets: []float64{1, 2, 4}},
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{{Timestamp: 1000, Values: []float64{1, 2, 3, 4}}},
+					}},
+				}},
+			},
+			startMs: 5000,
+			endMs:   6000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*AggregationBucket{{
+					Index: 1,
+					Alias: "__result_1",
+					Meta:  AggregationMeta{Unit: "By", Buckets: []float64{1, 2, 4}},
+					Series: []*TimeSeries{{
+						Labels: []*Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "host"}, Value: "node-1"}},
+						Values: []*TimeSeriesValue{},
+					}},
+				}},
+			},
+		},
+		{
+			name: "NoSeries_KeepsAggregation",
+			timeSeriesData: &TimeSeriesData{
+				QueryName:    "A",
+				Aggregations: []*AggregationBucket{{Index: 0}},
+			},
+			startMs: 1000,
+			endMs:   2000,
+			expectedFiltered: &TimeSeriesData{
+				QueryName:    "A",
+				Aggregations: []*AggregationBucket{{Index: 0, Series: []*TimeSeries{}}},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expectedFiltered, testCase.timeSeriesData.FilterToTimeRange(testCase.startMs, testCase.endMs))
+		})
+	}
+}

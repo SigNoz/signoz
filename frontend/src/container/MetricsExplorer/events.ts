@@ -20,10 +20,7 @@ export enum MetricsExplorerEvents {
 	AddToAlertClicked = 'Metrics Explorer: Add to alert clicked',
 	AddToDashboardClicked = 'Metrics Explorer: Add to dashboard clicked',
 	AddToDashboardSuccessful = 'Metrics Explorer: Add to dashboard successful',
-	SaveViewClicked = 'Metrics Explorer: Save view clicked',
 	SearchApplied = 'Metrics Explorer: Search applied',
-	ViewEdited = 'Metrics Explorer: View edited',
-	ViewDeleted = 'Metrics Explorer: View deleted',
 }
 
 export enum MetricsExplorerEventKeys {
@@ -46,7 +43,6 @@ export enum MetricsExplorerEventKeys {
 	SpaceAggregationLabels = 'spaceAggregationLabels',
 	OneChartPerQueryEnabled = 'oneChartPerQueryEnabled',
 	YAxisUnit = 'yAxisUnit',
-	ViewName = 'viewName',
 	Filters = 'filters',
 	TimeRange = 'timeRange',
 }

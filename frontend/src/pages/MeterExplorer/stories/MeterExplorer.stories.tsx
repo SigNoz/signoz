@@ -15,7 +15,7 @@ const pageStory = storyMocks(meterMocks, { layout: 'app' });
  * What the workspace is metered for, per signal: the explorer over `query_range`,
  * its saved views and the billing notice above them.
  *
- * Routes: `/meter`, `/meter/explorer` and `/meter/explorer/views`.
+ * Routes: `/meter` and `/meter/explorer`.
  */
 const meta = {
 	title: 'Pages/Metering/Cost Meter',
@@ -76,36 +76,13 @@ export const Explorer: Story = {
 	args: { tab: 'explorer' },
 };
 
-/** The Views tab, where the meter queries the workspace has saved are managed. */
-export const SavedViews: Story = {
-	args: { tab: 'views' },
-};
-
 /**
  * A workspace that has not sent telemetry yet: the totals read zero and every
  * section reports no data. Its quick filters and saved views are unset too, so
- * the Explorer and Views tabs are empty from here as well.
+ * the Explorer tab is empty from here as well.
  */
 export const NoUsage: Story = {
 	args: { signals: [], quickFilters: 0, savedViews: 0 },
-};
-
-/**
- * A window from the meter's beta phase, which a cloud tenant is warned about
- * because the numbers from before 22 August 2025 are not billable.
- */
-export const BeforeMeterLaunch: Story = {
-	args: { timeRange: 'august-2025' },
-};
-
-/** The warning shown when the selected window is shorter than one hour. */
-export const ShortWindowNotice: Story = {
-	args: { timeRange: 'last-30-minutes' },
-};
-
-/** The returning-user meter view after the billing notice was dismissed. */
-export const BillingNoticeDismissed: Story = {
-	args: { billingNotice: false },
 };
 
 /** Meter usage where only logs are currently ingesting. */
@@ -118,11 +95,6 @@ export const ExplorerWithoutQuickFilters: Story = {
 	args: { tab: 'explorer', quickFilters: 0 },
 };
 
-/** The Views tab without any saved meter queries. */
-export const ViewsEmpty: Story = {
-	args: { tab: 'views', savedViews: 0 },
-};
-
 /** The editable quick-filter settings panel, which lives on the Explorer tab. */
 export const QuickFiltersSettings: Story = {
 	args: { tab: 'explorer' },
@@ -132,16 +104,5 @@ export const QuickFiltersSettings: Story = {
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
 	args: { tab: 'explorer' },
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { tab: 'explorer', banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };

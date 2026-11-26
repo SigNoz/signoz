@@ -1,8 +1,10 @@
 import { PrecisionOption } from 'components/Graph/types';
-import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
-import { formatRowLabel } from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
+import {
+	createBucketValueFormatter,
+	formatRowLabel,
+} from 'lib/uPlotV2/plugins/HeatmapPlugin/geometry';
 import {
 	HeatmapSeries,
 	HeatmapYAxis,
@@ -71,8 +73,9 @@ export function formatBucketLabel({
 	if (!bucket) {
 		return '';
 	}
-	return formatRowLabel(bucket, (value) =>
-		getToolTipValue(String(value), yAxisUnit, decimalPrecision),
+	return formatRowLabel(
+		bucket,
+		createBucketValueFormatter(yAxisUnit, decimalPrecision),
 	);
 }
 
@@ -106,8 +109,10 @@ export function buildBucketRows({
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 }): HeatmapBucketRow[] {
-	const formatBucketValue = (value: number): string =>
-		getToolTipValue(String(value), yAxisUnit, decimalPrecision);
+	const formatBucketValue = createBucketValueFormatter(
+		yAxisUnit,
+		decimalPrecision,
+	);
 
 	const rows: HeatmapBucketRow[] = [];
 	for (let offset = NEIGHBOUR_SPAN; offset >= -NEIGHBOUR_SPAN; offset -= 1) {

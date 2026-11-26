@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/ui/button';
+import { Typography } from '@signozhq/ui/typography';
+import { navigate } from 'lib/router/navigation';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
 import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
-import Noz from 'components/Noz/Noz';
 
 import logEvent from 'api/common/logEvent';
 
@@ -16,6 +17,7 @@ import {
 	normalizePage,
 	useAIAssistantAnalyticsContext,
 } from '../hooks/useAIAssistantAnalyticsContext';
+import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
 
@@ -31,14 +33,14 @@ import styles from './AIAssistantModal.module.scss';
  */
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
-	const history = useHistory();
-	const { pathname } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
+	const chatTitle = useActiveChatTitle();
 	const openModal = useAIAssistantStore((s) => s.openModal);
 	const closeModal = useAIAssistantStore((s) => s.closeModal);
 	const minimizeModal = useAIAssistantStore((s) => s.minimizeModal);
@@ -93,12 +95,12 @@ export default function AIAssistantModal(): JSX.Element | null {
 		closeModal();
 		// Router state tells AIAssistantPage to skip its mount-time Opened fire:
 		// the assistant was already open in the modal, so this is a surface
-		// switch, not a new open.
-		history.push(
+		// switch, not a new open. `returnTo` is where its minimize button comes back to.
+		navigate(
 			ROUTES.AI_ASSISTANT.replace(':conversationId', activeConversationId),
-			{ fromInApp: true },
+			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
-	}, [activeConversationId, closeModal, history]);
+	}, [activeConversationId, closeModal, pathname, search]);
 
 	const handleNew = useCallback(() => {
 		void logEvent(AIAssistantEvents.NewChatClicked, {
@@ -142,6 +144,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 			<div
 				className={styles.backdrop}
 				role="dialog"
+				data-testid="ai-assistant-modal"
 				aria-modal="true"
 				aria-label="Noz"
 				onClick={handleBackdropClick}
@@ -149,9 +152,20 @@ export default function AIAssistantModal(): JSX.Element | null {
 				<div className={styles.modal}>
 					{/* Header */}
 					<div className={styles.header}>
-						<div className={`${styles.title} noz-wave`}>
-							<Noz size={16} />
-							<span>Noz</span>
+						<div className={styles.title}>
+							{chatTitle && (
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="inherit"
+									as="span"
+									display="block"
+									textOverflow="ellipsis"
+								>
+									{chatTitle}
+								</Typography>
+							)}
 							<kbd className={styles.shortcut}>
 								<span>⌘</span>
 								<span>J</span>

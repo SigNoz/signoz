@@ -1,3 +1,4 @@
+import { extractOnlyMessageBody } from 'lib/logs/logBody';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { SuccessResponse, Warning } from 'types/api';
 import { MetricRangePayloadV3 } from 'types/api/metrics/getQueryRange';
@@ -279,19 +280,6 @@ function convertScalarWithFormatForWeb(
 			},
 		};
 	});
-}
-
-function extractOnlyMessageBody(body: unknown): unknown {
-	const isJsonBody = body && typeof body === 'object' && !Array.isArray(body);
-	if (isJsonBody) {
-		const keys = Object.keys(body);
-		const hasOnlyMessageKey = keys.length === 1 && keys[0] === 'message';
-		if (hasOnlyMessageKey) {
-			const { message } = body as { message: unknown };
-			return typeof message === 'string' ? message : JSON.stringify(message);
-		}
-	}
-	return body;
 }
 
 /**

@@ -77,7 +77,9 @@ function FunnelConfiguration({
 							/>
 						</Tooltip>
 						<CopyToClipboard textToCopy={window.location.href} />
-						<Divider type="vertical" className="funnel-configuration__divider" />
+						<span className="funnel-configuration__divider">
+							<Divider orientation="vertical" />
+						</span>
 						<FunnelItemPopover
 							isPopoverOpen={isPopoverOpen}
 							setIsPopoverOpen={setIsPopoverOpen}
@@ -95,7 +97,9 @@ function FunnelConfiguration({
 					<>
 						{!isTraceDetailsPage && (
 							<div className="funnel-configuration__description-wrapper">
-								<div className="funnel-title">{funnel.funnel_name}</div>
+								<div className="funnel-title" data-testid="funnel-title">
+									{funnel.funnel_name}
+								</div>
 								<div className="funnel-description">
 									{funnel?.description ?? 'No description added.'}
 								</div>

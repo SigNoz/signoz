@@ -45,7 +45,6 @@ import type {
 	GetRuleHistoryTopContributorsParams,
 	GetRuleHistoryTopContributorsPathParameters,
 	ListRuleViews200,
-	ListRules200,
 	ListRulesV3200,
 	ListRulesV3Params,
 	PatchRuleByID200,
@@ -427,85 +426,6 @@ export const useUpdateRuleView = <
 > => {
 	return useMutation(getUpdateRuleViewMutationOptions(options));
 };
-/**
- * This endpoint lists all alert rules with their current evaluation state. Deprecated: use ListRulesV3, which supports filtering, sorting and pagination.
- * @deprecated
- * @summary List alert rules
- */
-export const listRules = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListRules200>({
-		url: `/api/v2/rules`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListRulesQueryKey = () => {
-	return [`/api/v2/rules`] as const;
-};
-
-export const getListRulesQueryOptions = <
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListRulesQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listRules>>> = ({
-		signal,
-	}) => listRules(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listRules>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListRulesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listRules>>
->;
-export type ListRulesQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-
-export function useListRules<
-	TData = Awaited<ReturnType<typeof listRules>>,
-	TError = ErrorType<RenderErrorResponseDTO>,
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listRules>>, TError, TData>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListRulesQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	return withQueryKey(query, queryOptions.queryKey);
-}
-
-/**
- * @deprecated
- * @summary List alert rules
- */
-export const invalidateListRules = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListRulesQueryKey() },
-		options,
-	);
-
-	return queryClient;
-};
-
 /**
  * This endpoint creates a new alert rule
  * @summary Create alert rule
@@ -1826,7 +1746,7 @@ export const useTestRule = <
 	return useMutation(getTestRuleMutationOptions(options));
 };
 /**
- * Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`severity`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.
+ * Returns a page of alert rules with their current evaluation state, trimmed to the fields the list page renders. Supports a filter DSL (`query`), a repeated `states` filter applied after the state overlay, sort (`updated_at`/`created_at`/`name`/`state`/`thresholds`), order (`asc`/`desc`), and offset-based pagination (`limit`/`offset`). In the filter DSL, a non-reserved key is matched as a rule label directly (`team = infra`); a key that collides with a reserved keyword matches either interpretation (negative operators exclude both), and `labels.<key>` targets only the label. The response also carries the org's label pairs and the reserved filter keys for building filter suggestions.
  * @summary List alert rules (v3)
  */
 export const listRulesV3 = (

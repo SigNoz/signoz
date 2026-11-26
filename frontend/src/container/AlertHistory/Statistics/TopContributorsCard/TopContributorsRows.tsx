@@ -1,5 +1,4 @@
 import { HTMLAttributes } from 'react';
-import { Color } from '@signozhq/design-tokens';
 import { Table, TableColumnsType as ColumnsType } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import logEvent from 'api/common/logEvent';
@@ -32,6 +31,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div>
 						<AlertLabels labels={labels} />
@@ -48,13 +48,15 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
-					<Progress
-						percent={(count / totalCurrentTriggers) * 100}
-						showInfo={false}
-						strokeColor={Color.BG_ROBIN_500}
-						className="top-contributors-progress"
-					/>
+					<div className="top-contributors-progress">
+						<Progress
+							percent={(count / totalCurrentTriggers) * 100}
+							showInfo={false}
+							color="primary"
+						/>
+					</div>
 				</ConditionalAlertPopover>
 			),
 		},
@@ -67,6 +69,7 @@ function TopContributorsRows({
 				<ConditionalAlertPopover
 					relatedTracesLink={record.relatedTracesLink}
 					relatedLogsLink={record.relatedLogsLink}
+					relatedAITracesLink={record.relatedAITracesLink}
 				>
 					<div
 						className="total-contribution"

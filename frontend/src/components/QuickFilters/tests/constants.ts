@@ -1,6 +1,6 @@
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { FiltersType } from '../types';
+import { FiltersType, QuickFilterCheckboxUseFieldApis } from '../types';
 
 export const QuickFiltersConfig = [
 	{
@@ -24,3 +24,9 @@ export const QuickFiltersConfig = [
 		defaultOpen: false,
 	},
 ];
+
+export const QuickFiltersFieldApis: QuickFilterCheckboxUseFieldApis = {
+	startUnixMilli: 1700000000000,
+	endUnixMilli: 1700003600000,
+	existingQuery: null,
+};

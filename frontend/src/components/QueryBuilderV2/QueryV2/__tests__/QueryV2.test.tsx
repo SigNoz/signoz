@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { jest } from '@jest/globals';
-import { fireEvent, waitFor } from '@testing-library/react';
+import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { render, screen, userEvent } from 'tests/test-utils';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { render, screen, userEvent, within } from 'tests/test-utils';
 import {
 	Having,
 	IBuilderQuery,
@@ -22,6 +24,8 @@ import {
 import '@testing-library/jest-dom';
 
 import { QueryBuilderV2 } from '../../QueryBuilderV2';
+import { QueryBuilderV2Provider } from '../../QueryBuilderV2Context';
+import { QueryV2 } from '../QueryV2';
 
 // Local mocks for domain-specific heavy child components
 jest.mock(
@@ -53,6 +57,15 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 	let baseQBContext: QueryBuilderContextType;
 
 	beforeEach(() => {
+		server.use(
+			rest.get(`${ENVIRONMENT.baseURL}/api/v1/fields/keys`, (_req, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ status: 'success', data: { complete: true, keys: {} } }),
+				),
+			),
+		);
+
 		const mockCloneQuery = jest.fn() as jest.MockedFunction<
 			(type: string, q: IBuilderQuery) => void
 		>;
@@ -130,7 +143,6 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 			updateAllQueriesOperators,
 			updateQueriesData,
 			initQueryBuilderData: jest.fn(),
-			isStagedQueryUpdated: jest.fn(() => false),
 			isDefaultQuery: jest.fn(() => false),
 		} as unknown as QueryBuilderContextType;
 
@@ -158,6 +170,25 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		jest.clearAllMocks();
 	});
 
+	const renderQueryV2 = (queriesCount: number): void => {
+		const [queryA] = (baseQBContext.currentQuery as Query).builder.queryData;
+		render(
+			<QueryBuilderV2Provider>
+				<QueryV2
+					index={0}
+					query={queryA}
+					version="v4"
+					isAvailableToDisable={false}
+					isMultiQueryAllowed
+					queriesCount={queriesCount}
+					onSignalSourceChange={jest.fn()}
+					signalSourceChangeEnabled={false}
+					savePreviousQuery={false}
+				/>
+			</QueryBuilderV2Provider>,
+		);
+	};
+
 	it('renders limit input when dataSource is logs', () => {
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
@@ -168,46 +199,38 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		expect(limitInput).toBeInTheDocument();
 		expect(limitInput).toHaveAttribute('type', 'number');
 		expect(limitInput).toHaveAttribute('name', 'limit');
-		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit');
+		expect(limitInput).toHaveAttribute('data-testid', 'input-Limit-field');
 	});
 
-	it('Cmd+Enter on an input triggers handleRunQuery via container handler', async () => {
+	it('Cmd+Enter on the limit input triggers handleRunQuery via container handler', async () => {
+		const user = userEvent.setup();
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		const limitInput = screen.getByPlaceholderText('Enter limit');
-		fireEvent.keyDown(limitInput, {
-			key: 'Enter',
-			code: 'Enter',
-			metaKey: true,
-		});
+		screen.getByTestId('input-Limit-field').focus();
+		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
-		expect(handleRunQueryMock).toHaveBeenCalled();
+		expect(handleRunQueryMock).toHaveBeenCalledTimes(1);
+	});
 
-		const legendInput = screen.getByPlaceholderText('Write legend format');
-		fireEvent.keyDown(legendInput, {
-			key: 'Enter',
-			code: 'Enter',
-			metaKey: true,
-		});
+	it('Cmd+Enter on the legend input triggers handleRunQuery via container handler', async () => {
+		const user = userEvent.setup();
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		expect(handleRunQueryMock).toHaveBeenCalled();
+		screen.getByPlaceholderText('Write legend format').focus();
+		await user.keyboard('{Meta>}{Enter}{/Meta}');
 
-		const CM_EDITOR_SELECTOR = '.cm-editor .cm-content';
-		// Wait for CodeMirror to initialize
-		await waitFor(() => {
-			const editor = document.querySelector(CM_EDITOR_SELECTOR);
-			expect(editor).toBeInTheDocument();
-		});
+		expect(handleRunQueryMock).toHaveBeenCalledTimes(1);
+	});
 
-		const editor = document.querySelector(CM_EDITOR_SELECTOR) as HTMLElement;
-		await userEvent.click(editor);
-		fireEvent.keyDown(editor, {
-			key: 'Enter',
-			code: 'Enter',
-			metaKey: true,
-		});
+	it('Cmd+Enter in the where clause editor triggers handleRunQuery via container handler', async () => {
+		const user = userEvent.setup();
+		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		expect(handleRunQueryMock).toHaveBeenCalled();
+		const editorWrapper = await screen.findByTestId('query-where-clause-editor');
+		within(editorWrapper).getByRole('textbox').focus();
+		await user.keyboard('{Meta>}{Enter}{/Meta}');
+
+		expect(handleRunQueryMock).toHaveBeenCalledTimes(1);
 	});
 
 	it('does not crash when builder.queryFormulas/queryTraceOperator are missing (partial/legacy query)', () => {
@@ -230,13 +253,60 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 		).not.toThrow();
 
 		// query list still renders from queryData, formulas block is skipped
-		expect(document.querySelector('.query-names-section')).toBeInTheDocument();
-		expect(
-			document.querySelector('.qb-formulas-container'),
-		).not.toBeInTheDocument();
+		expect(screen.getByTestId('query-names-section')).toBeInTheDocument();
+		expect(screen.queryByTestId('qb-formulas-container')).not.toBeInTheDocument();
 	});
 
-	it('fx button is disabled when functions already exist', () => {
+	describe('query actions menu', () => {
+		it('Clone calls cloneQuery with the query', async () => {
+			const user = userEvent.setup();
+			renderQueryV2(1);
+
+			await user.click(screen.getByTestId('query-actions'));
+			await user.click(
+				await screen.findByTestId('query-actions-item-clone-query'),
+			);
+
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledTimes(1);
+			expect(baseQBContext.cloneQuery).toHaveBeenCalledWith(
+				'query',
+				expect.objectContaining({ queryName: 'A' }),
+			);
+		});
+
+		it('hides Delete when there is a single query', async () => {
+			const user = userEvent.setup();
+			renderQueryV2(1);
+
+			await user.click(screen.getByTestId('query-actions'));
+			await screen.findByTestId('query-actions-item-clone-query');
+
+			expect(
+				screen.queryByTestId('query-actions-item-delete-query'),
+			).not.toBeInTheDocument();
+		});
+
+		it('shows Delete with more than one query and deletes on click', async () => {
+			const user = userEvent.setup();
+			const handleDeleteQuery = jest.fn();
+			mockedUseQueryOperations.mockReturnValue({
+				...mockedUseQueryOperations({} as Parameters<UseQueryOperations>[0]),
+				handleDeleteQuery,
+			});
+
+			renderQueryV2(2);
+
+			await user.click(screen.getByTestId('query-actions'));
+			await user.click(
+				await screen.findByTestId('query-actions-item-delete-query'),
+			);
+
+			expect(handleDeleteQuery).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	it('fx button is disabled when functions already exist', async () => {
+		const user = userEvent.setup();
 		const currentQueryBase = baseQBContext.currentQuery as Query;
 		const supersetQueryBase = baseQBContext.supersetQuery as Query;
 
@@ -274,17 +344,13 @@ describe('QueryBuilderV2 + QueryV2 - base render', () => {
 
 		render(<QueryBuilderV2 panelType={PANEL_TYPES.TABLE} version="v4" />);
 
-		const fxButton = document.querySelector('.function-btn') as HTMLButtonElement;
+		const fxButton = screen.getByTestId('query-functions-fx-btn');
 		expect(fxButton).toBeInTheDocument();
 		expect(fxButton).toBeDisabled();
 
-		const deleteButton = document.querySelector(
-			'.query-function-delete-btn',
-		) as HTMLButtonElement;
+		const deleteButton = screen.getByTestId('query-function-delete-btn');
 		expect(deleteButton).toBeInTheDocument();
-		userEvent.click(deleteButton);
-		waitFor(() => {
-			expect(fxButton).not.toBeDisabled();
-		});
+		await user.click(deleteButton);
+		expect(fxButton).not.toBeDisabled();
 	});
 });

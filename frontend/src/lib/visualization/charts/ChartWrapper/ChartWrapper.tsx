@@ -33,10 +33,12 @@ export default function ChartWrapper({
 	canPinTooltip = false,
 	pinKey,
 	onClick,
+	shouldPinOnClick,
 	syncMode,
 	syncKey,
 	syncFilterMode,
 	onDestroy = noop,
+	plotRef,
 	children,
 	layoutChildren,
 	yAxisUnit,
@@ -123,6 +125,7 @@ export default function ChartWrapper({
 						height={chartHeight}
 						plotRef={(plot): void => {
 							plotInstanceRef.current = plot;
+							plotRef?.(plot);
 						}}
 						onDestroy={(plot: uPlot): void => {
 							plotInstanceRef.current = null;
@@ -137,6 +140,7 @@ export default function ChartWrapper({
 								canPinTooltip={canPinTooltip}
 								pinKey={pinKey}
 								onClick={onClick}
+								shouldPinOnClick={shouldPinOnClick}
 								syncMode={syncMode}
 								maxWidth={Math.max(
 									TOOLTIP_MIN_WIDTH,

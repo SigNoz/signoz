@@ -15,10 +15,40 @@ $max-recents-shown: 5;
 		Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', sans-serif;
 
+	.query-where-clause-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+		// single-line editor: 36px .cm-line + 1px .cm-content border on each side
+		--button-height: 38px;
+
+		.query-where-clause-editor-container {
+			flex: 1;
+			min-width: 0;
+		}
+	}
+
 	.query-where-clause-editor-container {
 		position: relative;
 		display: flex;
 		flex-direction: row;
+
+		// The field draws one outline around the scope chip and the editor, so
+		// the editor inside draws none
+		&.hasScopeChip {
+			align-items: center;
+			gap: var(--spacing-3);
+			padding-left: var(--spacing-3);
+			border: 1px solid var(--l2-border);
+			border-radius: 2px;
+			background: var(--input-background);
+			--query-builder-v2-border-color: transparent;
+			--query-builder-v2-background-color: transparent;
+
+			.query-where-clause-editor {
+				min-width: 0;
+			}
+		}
 
 		.query-search-initial-scope-label {
 			position: absolute;
@@ -37,7 +67,7 @@ $max-recents-shown: 5;
 
 			background-color: var(
 				--query-builder-v2-background-color,
-				var(--l2-background)
+				var(--input-background)
 			) !important;
 			display: flex;
 			justify-content: center;
@@ -83,6 +113,10 @@ $max-recents-shown: 5;
 			border-radius: 2px;
 			border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 			padding: 0px !important;
+			background-color: var(
+				--query-builder-v2-background-color,
+				var(--input-background)
+			);
 
 			&:focus-within {
 				border-color: var(--query-builder-v2-border-color, var(--l2-border));
@@ -108,8 +142,8 @@ $max-recents-shown: 5;
 			border: 0px;
 			background: linear-gradient(
 				139deg,
-				color-mix(in srgb, var(--card) 80%, transparent) 0%,
-				color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+				color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+				color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 			) !important;
 			backdrop-filter: blur(20px);
 			box-sizing: border-box;
@@ -178,11 +212,9 @@ $max-recents-shown: 5;
 					box-sizing: border-box;
 					overflow: hidden;
 
-					font-family: 'Space Mono', monospace !important;
-
 					background-color: var(
 						--query-builder-v2-background-color,
-						var(--l2-background)
+						var(--input-background)
 					) !important;
 					color: var(--query-builder-v2-color, var(--l2-foreground)) !important;
 
@@ -200,7 +232,7 @@ $max-recents-shown: 5;
 					.cm-completionDetail {
 						margin-left: auto;
 						font-style: normal;
-						font-size: var(--periscope-font-size-small, 11px);
+						font-size: var(--uppercase-small-600-font-size);
 						font-weight: 600;
 						letter-spacing: 0.06em;
 						text-transform: uppercase;
@@ -282,10 +314,8 @@ $max-recents-shown: 5;
 		.cm-line {
 			line-height: 36px !important;
 			font-family: 'Space Mono', monospace !important;
-			background-color: var(
-				--query-builder-v2-background-color,
-				var(--l2-background)
-			) !important;
+			// The field box paints the fill; also hides the theme's active-line tint.
+			background-color: transparent !important;
 
 			::-moz-selection {
 				background: var(
@@ -321,7 +351,6 @@ $max-recents-shown: 5;
 	}
 
 	.cursor-position {
-		font-size: 12px;
 		color: var(--l2-foreground);
 		padding: 6px;
 		background-color: var(--l1-background);

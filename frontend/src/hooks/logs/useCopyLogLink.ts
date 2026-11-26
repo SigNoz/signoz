@@ -1,9 +1,9 @@
 import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -18,7 +18,7 @@ import { UseCopyLogLink } from './types';
 
 export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();
-	const { pathname, search } = useLocation();
+	const { pathname, search } = useAppLocation();
 	const [, setCopy] = useCopyToClipboard();
 
 	const { safeNavigate } = useSafeNavigate();

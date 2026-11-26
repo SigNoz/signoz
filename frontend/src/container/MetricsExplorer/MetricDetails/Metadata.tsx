@@ -186,7 +186,7 @@ function Metadata({
 			if (field.key === TableFields.DESCRIPTION) {
 				return (
 					<Input
-						data-testid="description-input"
+						testId="description-input"
 						name={field.key}
 						defaultValue={metricMetadataState.description}
 						onChange={(e): void => {
@@ -298,9 +298,19 @@ function Metadata({
 						type="text"
 						onClick={cancelEdit}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-cancel-button"
 					>
 						<X size={14} />
-						<Typography.Text>Cancel</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Cancel
+						</Typography>
 					</Button>
 					<Button
 						className="action-button"
@@ -310,9 +320,19 @@ function Metadata({
 							handleSave();
 						}}
 						disabled={isUpdatingMetricsMetadata}
+						data-testid="metadata-save-button"
 					>
 						<Save size={14} />
-						<Typography.Text>Save</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Save
+						</Typography>
 					</Button>
 				</div>
 			);
@@ -330,9 +350,19 @@ function Metadata({
 						setIsEditing(true);
 					}}
 					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
+					data-testid="metadata-edit-button"
 				>
 					<PenLine size={14} />
-					<Typography.Text>Edit</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Edit
+					</Typography>
 				</Button>
 			</div>
 		);
@@ -350,7 +380,16 @@ function Metadata({
 			{
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
-						<Typography.Text>Metadata</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Metadata
+						</Typography>
 						{actionButton}
 					</div>
 				),
@@ -368,6 +407,7 @@ function Metadata({
 					</div>
 				) : (
 					<ResizeTable
+						data-testid="metric-metadata-table"
 						columns={columns}
 						tableLayout="fixed"
 						dataSource={tableData}

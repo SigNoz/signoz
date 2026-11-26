@@ -7,60 +7,49 @@ import {
 } from 'react';
 import { useQueryClient } from 'react-query';
 import cx from 'classnames';
-import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@signozhq/ui/popover';
-import { toast } from '@signozhq/ui/sonner';
+import { Popover, usePopoverHandle } from '@signozhq/ui/popover';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type { UploadFile } from 'antd';
-import getSessionStorage from 'api/browser/sessionstorage/get';
-import setSessionStorage from 'api/browser/sessionstorage/set';
 import {
 	getListDashboardsForUserV2QueryKey,
 	useListDashboardsForUserV2,
 } from 'api/generated/services/dashboard';
 import {
-	getListRulesQueryKey,
-	useListRules,
+	getListRulesV3QueryKey,
+	useListRulesV3,
 } from 'api/generated/services/rules';
 import type {
 	DashboardtypesListedDashboardForUserV2DTO,
 	ListDashboardsForUserV2200,
 	ListDashboardsForUserV2Params,
-	ListRules200,
+	ListRulesV3200,
+	ListRulesV3Params,
 } from 'api/generated/services/sigNoz.schemas';
-import logEvent from 'api/common/logEvent';
 import { useQueryService } from 'hooks/useQueryService';
 // eslint-disable-next-line
 import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import {
-	AIAssistantEvents,
-	VoiceInputSource,
-	getBrowserInfo,
-} from '../../events';
-import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
-import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import { MessageAttachment } from '../../types';
+import { useVariant } from '../../VariantContext';
 import { MessageContext } from '../../../../api/ai-assistant/chat';
-import {
-	Mic,
-	Plus,
-	Search,
-	Send,
-	Square,
-	TriangleAlert,
-	X,
-} from '@signozhq/icons';
+import { ArrowUp, AtSign, Square, TriangleAlert, X } from '@signozhq/icons';
 
 import styles from './ChatInput.module.scss';
+import ComposerCaret from './ComposerCaret/ComposerCaret';
 import ContextPickerEmptyState from './ContextPickerEmptyState';
+import ContextPill from './ContextPill/ContextPill';
+import EdgeSweep from './EdgeSweep/EdgeSweep';
+import NozPeek from './NozPeek/NozPeek';
 import {
+	AUTO_CONTEXT_ICONS,
 	CONTEXT_CATEGORIES,
 	CONTEXT_CATEGORY_ICONS,
+	CONTEXT_CATEGORY_SINGULAR,
+	CONTEXT_TYPE_LABELS,
 	ContextCategory,
 } from './contextPicker';
 
@@ -72,8 +61,17 @@ interface ChatInputProps {
 	) => void;
 	onCancel?: () => void;
 	disabled?: boolean;
+	/** Keeps the field editable but blocks sending. */
+	sendDisabled?: boolean;
 	disabledTooltip?: string;
+	placeholder?: string;
+	/** Focuses the textarea each time it changes. */
+	focusRequest?: number;
 	isStreaming?: boolean;
+	/** When the current stream began; drives the top-edge sweep. */
+	streamStartedAt?: number | null;
+	/** Noz peeks over the top edge; meant for an empty conversation. */
+	showNozPeek?: boolean;
 	/**
 	 * URL-derived `source: 'auto'` contexts representing the page the user is
 	 * currently looking at. Rendered as chips alongside the user's `@`-mention
@@ -141,28 +139,6 @@ function autoContextLabel(ctx: MessageContext): string {
 	}
 }
 
-/** Capitalised category badge text — e.g. "Dashboard", "Logs explorer". */
-function autoContextCategory(ctx: MessageContext): string {
-	switch (ctx.type) {
-		case 'dashboard':
-			return 'Dashboard';
-		case 'alert':
-			return 'Alert';
-		case 'service':
-			return 'Service';
-		case 'logs_explorer':
-			return 'Logs';
-		case 'traces_explorer':
-			return 'Traces';
-		case 'metrics_explorer':
-			return 'Metrics';
-		case 'saved_view':
-			return 'Saved view';
-		default:
-			return ctx.type;
-	}
-}
-
 const MAX_INPUT_LENGTH = 20000;
 const WARNING_THRESHOLD = 15000;
 // Cap for the auto-growing composer. Past this, the textarea stops growing
@@ -170,14 +146,15 @@ const WARNING_THRESHOLD = 15000;
 // squeezed in tighter container variants (e.g. the floating panel).
 const TEXTAREA_MAX_HEIGHT_PX = 200;
 const HOME_SERVICES_INTERVAL = 30 * 60 * 1000;
-/** sessionStorage key for the "voice input failed this tab" flag. */
-const VOICE_UNAVAILABLE_KEY = 'ai-assistant-voice-unavailable';
 /**
  * The picker filters client-side, so it pulls one large page instead of
  * paginating. Shared with `getQueryData` below — the params are part of the
  * generated query key, so both sides must use the same object.
  */
 const DASHBOARD_LIST_PARAMS: ListDashboardsForUserV2Params = { limit: 1000 };
+
+/** Same as dashboards. 200 is the most the rules list returns per call. */
+const ALERT_RULE_LIST_PARAMS: ListRulesV3Params = { limit: 200 };
 
 function dashboardTitle(
 	dashboard: DashboardtypesListedDashboardForUserV2DTO,
@@ -237,14 +214,20 @@ export default function ChatInput({
 	onSend,
 	onCancel,
 	disabled,
+	sendDisabled = false,
 	disabledTooltip,
+	placeholder = 'Ask Noz…',
+	focusRequest,
 	isStreaming = false,
+	streamStartedAt = null,
+	showNozPeek = false,
 	autoContexts,
 	onDismissAutoContext,
 }: ChatInputProps): JSX.Element {
 	const { selectedTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
+	const isCompact = useVariant() === 'panel';
 	const [text, setText] = useState('');
 	const [pendingFiles, setPendingFiles] = useState<UploadFile[]>([]);
 	const [selectedContexts, setSelectedContexts] = useState<
@@ -254,6 +237,13 @@ export default function ChatInput({
 	const [activeContextCategory, setActiveContextCategory] =
 		useState<ContextCategory>('Dashboards');
 	const [pickerSearchQuery, setPickerSearchQuery] = useState('');
+	// The picker resets to its first category on every open and close, and the entity queries
+	// below are gated on whether it is showing.
+	const contextPicker = usePopoverHandle((open) => {
+		setIsContextPickerOpen(open);
+		setActiveContextCategory('Dashboards');
+		setPickerSearchQuery('');
+	});
 	// Refs to each category tab so we can move DOM focus to the newly-active
 	// tab on ArrowUp/ArrowDown. Without this the roving-tabindex pattern
 	// stalls: focus stays on the original button (whose closure has the old
@@ -284,10 +274,9 @@ export default function ChatInput({
 			endTime: now,
 		};
 	});
-	// Stores the already-committed final text so interim results don't overwrite it
-	const committedTextRef = useRef('');
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const inputRootRef = useRef<HTMLDivElement>(null);
+	const addContextRef = useRef<HTMLButtonElement>(null);
 
 	const capText = useCallback(
 		(value: string) => value.slice(0, MAX_INPUT_LENGTH),
@@ -298,21 +287,26 @@ export default function ChatInput({
 		(value: string, caret: number) => {
 			const beforeCaret = value.slice(0, caret);
 			const atIndex = beforeCaret.lastIndexOf('@');
-			if (atIndex < 0) {
-				setIsContextPickerOpen(false);
+			// `@` only triggers at a word start, so words containing `@` stay plain text.
+			if (atIndex < 0 || /\S/.test(beforeCaret.charAt(atIndex - 1))) {
+				contextPicker.close();
 				setMentionRange(null);
 				return;
 			}
 			const query = beforeCaret.slice(atIndex + 1);
 			if (/\s/.test(query)) {
-				setIsContextPickerOpen(false);
+				contextPicker.close();
 				setMentionRange(null);
 				return;
 			}
-			setIsContextPickerOpen(true);
+			// Typed `@`, not pressed: the picker still belongs beside the button it has
+			// always hung off, so it is shown against that element rather than the caret.
+			if (addContextRef.current) {
+				contextPicker.showAt(addContextRef.current);
+			}
 			setMentionRange({ start: atIndex, end: caret });
 		},
-		[],
+		[contextPicker],
 	);
 
 	const toggleContextSelection = useCallback(
@@ -338,7 +332,6 @@ export default function ChatInput({
 				const next =
 					text.slice(0, mentionRange.start) + text.slice(mentionRange.end);
 				setText(next);
-				committedTextRef.current = next;
 				setMentionRange(null);
 			}
 		},
@@ -351,10 +344,9 @@ export default function ChatInput({
 		(prompt: string) => {
 			const next = capText(prompt);
 			setText(next);
-			committedTextRef.current = next;
 			setMentionRange(null);
 			setPickerSearchQuery('');
-			setIsContextPickerOpen(false);
+			contextPicker.close();
 			// Defer so React commits the new value before we place the caret.
 			requestAnimationFrame(() => {
 				const el = textareaRef.current;
@@ -442,6 +434,12 @@ export default function ChatInput({
 		textareaRef.current?.focus();
 	}, []);
 
+	useEffect(() => {
+		if (focusRequest) {
+			textareaRef.current?.focus();
+		}
+	}, [focusRequest]);
+
 	// Auto-grow the textarea so long prompts aren't trapped in a 2-line
 	// scrolling porthole. Reset to `auto` first to let the field shrink back
 	// down when the user deletes content, then snap to scrollHeight capped at
@@ -463,7 +461,7 @@ export default function ChatInput({
 
 	const handleSend = useCallback(async () => {
 		const trimmed = text.trim();
-		if (!trimmed && pendingFiles.length === 0) {
+		if (disabled || sendDisabled || (!trimmed && pendingFiles.length === 0)) {
 			return;
 		}
 
@@ -492,16 +490,24 @@ export default function ChatInput({
 			contexts.length > 0 ? contexts : undefined,
 		);
 		setText('');
-		committedTextRef.current = '';
 		setPendingFiles([]);
 		setSelectedContexts([]);
 		textareaRef.current?.focus();
-	}, [text, pendingFiles, onSend, selectedContexts, autoContexts, capText]);
+	}, [
+		text,
+		pendingFiles,
+		disabled,
+		sendDisabled,
+		onSend,
+		selectedContexts,
+		autoContexts,
+		capText,
+	]);
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 			if (e.key === 'Escape' && isContextPickerOpen) {
-				setIsContextPickerOpen(false);
+				contextPicker.close();
 				return;
 			}
 			if (e.key === 'Enter' && !e.shiftKey) {
@@ -509,7 +515,7 @@ export default function ChatInput({
 				void handleSend();
 			}
 		},
-		[handleSend, isContextPickerOpen],
+		[handleSend, isContextPickerOpen, contextPicker],
 	);
 
 	const removeFile = useCallback((uid: string) => {
@@ -526,209 +532,6 @@ export default function ChatInput({
 		},
 		[],
 	);
-
-	// ── Voice input ────────────────────────────────────────────────────────────
-
-	const analyticsCtx = useAIAssistantAnalyticsContext();
-	// Captured at the start of a voice session, consumed when it ends.
-	// Tracks both the trigger (button vs. PTT shortcut) and the wall-clock
-	// start time so we can attribute `durationMs` on the Voice input used
-	// event regardless of which control ended the session.
-	const voiceStartedAtRef = useRef<number | null>(null);
-	const voiceSourceRef = useRef<VoiceInputSource | null>(null);
-	// Set to true after a `network`, `not-allowed`, or `not-supported` failure
-	// so we hide the mic button for the rest of the tab session — silent
-	// retries don't help, and Chromium derivatives without the Google Speech
-	// API key always fail with `network` no matter how many times the user
-	// clicks. Persisted to sessionStorage so a page reload doesn't surface the
-	// button again (closing the tab still resets, in case the user fixed
-	// permissions or switched browsers).
-	const [voiceUnavailable, setVoiceUnavailable] = useState(
-		() => getSessionStorage(VOICE_UNAVAILABLE_KEY) === 'true',
-	);
-	const markVoiceUnavailable = useCallback((): void => {
-		setVoiceUnavailable(true);
-		setSessionStorage(VOICE_UNAVAILABLE_KEY, 'true');
-	}, []);
-
-	const {
-		isListening,
-		isSupported,
-		permission: micPermission,
-		start,
-		discard,
-	} = useSpeechRecognition({
-		onTranscript: (transcriptText, isFinal) => {
-			if (isFinal) {
-				// Commit: append to whatever the user has already typed
-				const separator = committedTextRef.current ? ' ' : '';
-				const next = capText(committedTextRef.current + separator + transcriptText);
-				committedTextRef.current = next;
-				setText(next);
-			} else {
-				// Interim: live preview appended to committed text, not yet persisted
-				const separator = committedTextRef.current ? ' ' : '';
-				setText(capText(committedTextRef.current + separator + transcriptText));
-			}
-		},
-		onError: (error) => {
-			// Guard against double-fire: Chrome can fire `onerror` more than
-			// once per session when `continuous = true` (it retries internally
-			// before giving up). Only fire the analytics event for the first
-			// error in a given session — voiceSourceRef being null means we've
-			// already handled it.
-			const source = voiceSourceRef.current;
-			if (source === null) {
-				return;
-			}
-			voiceStartedAtRef.current = null;
-			voiceSourceRef.current = null;
-			void logEvent(AIAssistantEvents.VoiceInputFailed, {
-				...analyticsCtx,
-				...getBrowserInfo(),
-				source,
-				errorType: error,
-			});
-			if (error === 'network') {
-				markVoiceUnavailable();
-				toast.error('Voice input unavailable in this browser', {
-					description:
-						'This browser cannot reach the speech recognition service. Try Google Chrome or Microsoft Edge.',
-				});
-			} else if (error === 'not-allowed') {
-				markVoiceUnavailable();
-				toast.error('Microphone access denied', {
-					description:
-						'Grant microphone permission in your browser settings to use voice input.',
-				});
-			} else if (error === 'not-supported') {
-				markVoiceUnavailable();
-				toast.error('Voice input is not supported in this browser.');
-			}
-			// `no-speech` is benign (just silence) — don't toast or hide.
-		},
-	});
-
-	const showMic = isSupported && micPermission !== 'denied' && !voiceUnavailable;
-
-	const startVoiceInput = useCallback(
-		(source: VoiceInputSource) => {
-			// Defense in depth: the button is hidden when `voiceUnavailable` is
-			// true, but the PTT shortcut listener can still call us. Bailing here
-			// keeps a single source of truth and prevents repeat `Voice input
-			// failed` events in the same session.
-			if (voiceUnavailable) {
-				return;
-			}
-			voiceStartedAtRef.current = Date.now();
-			voiceSourceRef.current = source;
-			start();
-		},
-		[start, voiceUnavailable],
-	);
-
-	const fireVoiceInputEvent = useCallback(
-		(outcome: 'sent' | 'discarded') => {
-			const startedAt = voiceStartedAtRef.current;
-			const source = voiceSourceRef.current;
-			voiceStartedAtRef.current = null;
-			voiceSourceRef.current = null;
-			if (startedAt === null || source === null) {
-				return;
-			}
-			void logEvent(AIAssistantEvents.VoiceInputUsed, {
-				...analyticsCtx,
-				...getBrowserInfo(),
-				source,
-				outcome,
-				durationMs: Date.now() - startedAt,
-			});
-		},
-		[analyticsCtx],
-	);
-
-	// Stop recording and immediately send whatever is in the textarea.
-	const handleStopAndSend = useCallback(async () => {
-		// Promote the displayed text (interim included) to committed so handleSend sees it.
-		committedTextRef.current = capText(text);
-		// Stop recognition without triggering onTranscript again (would double-append).
-		discard();
-		fireVoiceInputEvent('sent');
-		await handleSend();
-	}, [text, discard, handleSend, capText, fireVoiceInputEvent]);
-
-	// Stop recording and revert the textarea to what it was before voice started.
-	const handleDiscard = useCallback(() => {
-		discard();
-		fireVoiceInputEvent('discarded');
-		setText(committedTextRef.current);
-		textareaRef.current?.focus();
-	}, [discard, fireVoiceInputEvent]);
-
-	// ── Push-to-talk (Cmd/Ctrl + Shift + Space) ────────────────────────────────
-	// Hold the combo to record; release Space to submit. We track which key
-	// triggered PTT in a ref so a late-released modifier (Cmd/Shift) doesn't
-	// accidentally stop the session. Auto-repeat is suppressed via a
-	// "session active" ref so a held key only calls `start()` once.
-	const pttActiveRef = useRef(false);
-	useEffect(() => {
-		if (!isSupported || micPermission === 'denied' || voiceUnavailable) {
-			return undefined;
-		}
-
-		const handleKeyDown = (e: KeyboardEvent): void => {
-			const isComboKey =
-				(e.metaKey || e.ctrlKey) &&
-				e.shiftKey &&
-				(e.code === 'Space' || e.key === ' ');
-			if (!isComboKey || disabled || isStreaming) {
-				return;
-			}
-			e.preventDefault();
-			if (pttActiveRef.current) {
-				return; // ignore auto-repeat
-			}
-			pttActiveRef.current = true;
-			startVoiceInput(VoiceInputSource.Shortcut);
-		};
-
-		const handleKeyUp = (e: KeyboardEvent): void => {
-			if (!pttActiveRef.current) {
-				return;
-			}
-			// End on the *first* released key in the combo. macOS browsers
-			// frequently swallow keyup of regular keys (incl. Space) while
-			// Cmd is held, so we can't rely on Space-up alone — releasing
-			// Cmd/Ctrl/Shift must also stop the session.
-			const isComboKey =
-				e.code === 'Space' ||
-				e.key === ' ' ||
-				e.key === 'Meta' ||
-				e.key === 'Control' ||
-				e.key === 'Shift';
-			if (!isComboKey) {
-				return;
-			}
-			pttActiveRef.current = false;
-			e.preventDefault();
-			void handleStopAndSend();
-		};
-
-		window.addEventListener('keydown', handleKeyDown);
-		window.addEventListener('keyup', handleKeyUp);
-		return (): void => {
-			window.removeEventListener('keydown', handleKeyDown);
-			window.removeEventListener('keyup', handleKeyUp);
-		};
-	}, [
-		isSupported,
-		micPermission,
-		voiceUnavailable,
-		disabled,
-		isStreaming,
-		startVoiceInput,
-		handleStopAndSend,
-	]);
 
 	// Each list hook fetches only when its picker tab is actively shown,
 	// AND treats already-cached data as never stale (`staleTime: Infinity`)
@@ -754,7 +557,7 @@ export default function ChatInput({
 		data: alertsResponse,
 		isLoading: isAlertsLoading,
 		isError: isAlertsError,
-	} = useListRules({
+	} = useListRulesV3(ALERT_RULE_LIST_PARAMS, {
 		query: {
 			enabled: isContextPickerOpen && activeContextCategory === 'Alerts',
 			staleTime: Infinity,
@@ -803,10 +606,10 @@ export default function ChatInput({
 				}
 			}
 			if (ctx.type === 'alert' && ctx.resourceId) {
-				const cached = queryClient.getQueryData<ListRules200>(
-					getListRulesQueryKey(),
+				const cached = queryClient.getQueryData<ListRulesV3200>(
+					getListRulesV3QueryKey(ALERT_RULE_LIST_PARAMS),
 				);
-				const rule = cached?.data?.find((r) => r.id === ctx.resourceId);
+				const rule = cached?.data.rules.find((r) => r.id === ctx.resourceId);
 				if (rule?.alert) {
 					return rule.alert;
 				}
@@ -834,8 +637,8 @@ export default function ChatInput({
 					value: dashboardTitle(dashboard),
 				})) ?? [],
 			Alerts:
-				alertsResponse?.data
-					?.filter((alertRule) => Boolean(alertRule.alert))
+				alertsResponse?.data.rules
+					.filter((alertRule) => Boolean(alertRule.alert))
 					.map((alertRule) => ({
 						id: alertRule.id,
 						value: alertRule.alert,
@@ -895,7 +698,12 @@ export default function ChatInput({
 	const showTextWarning = currentLength >= WARNING_THRESHOLD;
 
 	return (
-		<div className={styles.input} ref={inputRootRef}>
+		<div
+			className={cx(styles.input, { [styles.compact]: isCompact })}
+			ref={inputRootRef}
+		>
+			<EdgeSweep startedAt={streamStartedAt} />
+			{showNozPeek && <NozPeek />}
 			{pendingFiles.length > 0 && (
 				<div className={styles.attachments}>
 					{pendingFiles.map((f) => (
@@ -921,55 +729,30 @@ export default function ChatInput({
 				<div className={styles.contextTags}>
 					{autoContexts?.map((ctx) => {
 						const key = autoContextKey(ctx);
-						const label = resolveAutoContextName(ctx);
-						const category = autoContextCategory(ctx);
 						return (
-							<div key={key} className={cx(styles.contextTag, styles.auto)}>
-								<div className={styles.contextTagContent}>
-									<Badge textTransform="none" color="secondary" variant="outlined">
-										{category}
-									</Badge>
-									<span className={styles.contextTagLabel}>{label}</span>
-								</div>
-								{onDismissAutoContext && (
-									<Button
-										variant="link"
-										size="sm"
-										icon
-										color="secondary"
-										onClick={(): void => onDismissAutoContext(key)}
-										aria-label={`Remove ${category}: ${label} context`}
-									>
-										<X size={10} />
-									</Button>
-								)}
-							</div>
+							<ContextPill
+								key={key}
+								icon={AUTO_CONTEXT_ICONS[ctx.type]}
+								category={CONTEXT_TYPE_LABELS[ctx.type]}
+								label={resolveAutoContextName(ctx)}
+								onRemove={
+									onDismissAutoContext
+										? (): void => onDismissAutoContext(key)
+										: undefined
+								}
+							/>
 						);
 					})}
 					{selectedContexts.map((contextItem) => (
-						<div
+						<ContextPill
 							key={`${contextItem.category}:${contextItem.entityId}`}
-							className={styles.contextTag}
-						>
-							<div className={styles.contextTagContent}>
-								<Badge textTransform="none" color="primary" variant="outlined">
-									{contextItem.category}
-								</Badge>
-								<span className={styles.contextTagLabel}>{contextItem.value}</span>
-							</div>
-							<Button
-								variant="link"
-								size="sm"
-								icon
-								color="secondary"
-								onClick={(): void =>
-									removeContext(contextItem.category, contextItem.entityId)
-								}
-								aria-label={`Remove ${contextItem.category}: ${contextItem.value} context`}
-							>
-								<X size={10} />
-							</Button>
-						</div>
+							icon={CONTEXT_CATEGORY_ICONS[contextItem.category]}
+							category={CONTEXT_CATEGORY_SINGULAR[contextItem.category]}
+							label={contextItem.value}
+							onRemove={(): void =>
+								removeContext(contextItem.category, contextItem.entityId)
+							}
+						/>
 					))}
 				</div>
 			)}
@@ -978,20 +761,20 @@ export default function ChatInput({
 				<textarea
 					ref={textareaRef}
 					className={styles.textarea}
-					placeholder="Ask anything… (Shift+Enter for new line)"
+					data-testid="ai-chat-input-textarea"
+					placeholder={placeholder}
 					value={text}
 					onChange={(e): void => {
 						const next = capText(e.target.value);
 						setText(next);
-						// Keep committed text in sync when the user edits manually
-						committedTextRef.current = next;
 						syncContextPickerFromText(next, e.target.selectionStart ?? next.length);
 					}}
 					onKeyDown={handleKeyDown}
 					disabled={disabled}
 					maxLength={MAX_INPUT_LENGTH}
-					rows={3}
+					rows={2}
 				/>
+				<ComposerCaret textareaRef={textareaRef} value={text} />
 			</div>
 			{showTextWarning && (
 				<div className={styles.charWarning} role="status">
@@ -1004,40 +787,40 @@ export default function ChatInput({
 			)}
 
 			<div className={styles.footer}>
-				<div className={styles.leftActions}>
-					<Popover
-						open={isContextPickerOpen}
-						onOpenChange={(open): void => {
-							setIsContextPickerOpen(open);
-							if (!open) {
-								setActiveContextCategory('Dashboards');
-								setPickerSearchQuery('');
+				<div className={styles.actions}>
+					<Tooltip title="Add context">
+						<Button
+							ref={addContextRef}
+							disabledTooltip={disabledTooltip}
+							variant="ghost"
+							color="secondary"
+							size="sm"
+							icon
+							disabled={disabled}
+							aria-haspopup="dialog"
+							aria-expanded={isContextPickerOpen}
+							onClick={(event): void =>
+								contextPicker.isOpen
+									? contextPicker.close()
+									: contextPicker.showAt(event.currentTarget)
 							}
-						}}
-					>
-						<PopoverTrigger asChild>
-							<Button
-								disabledTooltip={disabledTooltip}
-								variant="solid"
-								color="secondary"
-								size="md"
-								disabled={disabled}
-								onClick={(): void => {
-									setActiveContextCategory('Dashboards');
-									setPickerSearchQuery('');
-								}}
-								prefix={<Plus size={10} />}
-							>
-								Add Context
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent
-							className={styles.contextPopover}
-							side="top"
-							align="end"
-							sideOffset={8}
+							testId="ai-chat-input-add-context"
+							aria-label="Add context"
 						>
-							<div className={styles.contextPopoverContent}>
+							<AtSign size={14} />
+						</Button>
+					</Tooltip>
+					<Popover
+						side="top"
+						align="end"
+						width={532}
+						maxWidth="min(92vw, 532px)"
+						handle={contextPicker}
+						aria-label="Add context"
+					>
+						<div className={styles.contextPopoverContent}>
+							<div className={styles.contextPopoverLeft}>
+								<div className={styles.contextPopoverLabel}>Available resources</div>
 								<div
 									className={styles.contextPopoverCategories}
 									role="tablist"
@@ -1045,7 +828,6 @@ export default function ChatInput({
 									aria-label="Context categories"
 								>
 									{CONTEXT_CATEGORIES.map((category) => {
-										const CategoryIcon = CONTEXT_CATEGORY_ICONS[category];
 										const isActive = activeContextCategory === category;
 										return (
 											<Button
@@ -1058,6 +840,7 @@ export default function ChatInput({
 												color="secondary"
 												size="sm"
 												id={`ai-context-tab-${category}`}
+												testId={`ai-context-tab-${category}`}
 												// Single stable panel id shared by every tab: only the
 												// active category's tabpanel is rendered, so per-category
 												// `aria-controls` ids would point at nonexistent nodes
@@ -1075,180 +858,119 @@ export default function ChatInput({
 													setPickerSearchQuery('');
 												}}
 												onKeyDown={(e): void => handleCategoryKeyDown(e, category)}
-												prefix={<CategoryIcon size={13} />}
 											>
 												<span>{category}</span>
 											</Button>
 										);
 									})}
 								</div>
+							</div>
 
-								<div
-									className={styles.contextPopoverRight}
-									role="tabpanel"
-									id="ai-context-tabpanel"
-									aria-labelledby={`ai-context-tab-${activeContextCategory}`}
-								>
-									<div className={styles.contextPopoverSearch}>
-										<Input
-											type="text"
-											placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
-											className={styles.contextPopoverSearchInput}
-											value={pickerSearchQuery}
-											onChange={(e): void => setPickerSearchQuery(e.target.value)}
-											prefix={<Search size={12} />}
-											// Skip the picker's roving keyboard focus — typing here
-											// shouldn't move category selection.
-											onKeyDown={(e): void => {
-												e.stopPropagation();
-											}}
+							<div
+								className={styles.contextPopoverRight}
+								role="tabpanel"
+								id="ai-context-tabpanel"
+								aria-labelledby={`ai-context-tab-${activeContextCategory}`}
+							>
+								<div className={styles.contextPopoverSearch}>
+									<Input
+										type="text"
+										placeholder={`Search ${activeContextCategory.toLowerCase()}…`}
+										testId="ai-context-search"
+										value={pickerSearchQuery}
+										onChange={(e): void => setPickerSearchQuery(e.target.value)}
+										// Skip the picker's roving keyboard focus — typing here
+										// shouldn't move category selection.
+										onKeyDown={(e): void => {
+											e.stopPropagation();
+										}}
+									/>
+								</div>
+								<div className={styles.contextPopoverEntities}>
+									{isActiveContextLoading ? (
+										<div className={styles.contextPopoverEmpty}>
+											Loading {activeContextCategory.toLowerCase()}...
+										</div>
+									) : isActiveContextError ? (
+										<div className={styles.contextPopoverEmpty}>
+											Failed to load {activeContextCategory.toLowerCase()}.
+										</div>
+									) : filteredContextOptions.length === 0 ? (
+										<ContextPickerEmptyState
+											category={activeContextCategory}
+											query={displayQuery}
+											onPrefill={handleContextPrefill}
 										/>
-									</div>
-									<div className={styles.contextPopoverEntities}>
-										{isActiveContextLoading ? (
-											<div className={styles.contextPopoverEmpty}>
-												Loading {activeContextCategory.toLowerCase()}...
-											</div>
-										) : isActiveContextError ? (
-											<div className={styles.contextPopoverEmpty}>
-												Failed to load {activeContextCategory.toLowerCase()}.
-											</div>
-										) : filteredContextOptions.length === 0 ? (
-											<ContextPickerEmptyState
-												category={activeContextCategory}
-												query={displayQuery}
-												onPrefill={handleContextPrefill}
-											/>
-										) : (
-											filteredContextOptions.map((option, index) => {
-												const isSelected = selectedContexts.some(
-													(item) =>
-														item.category === activeContextCategory &&
-														item.entityId === option.id,
-												);
+									) : (
+										filteredContextOptions.map((option, index) => {
+											const isSelected = selectedContexts.some(
+												(item) =>
+													item.category === activeContextCategory &&
+													item.entityId === option.id,
+											);
 
-												return (
-													<Button
-														key={option.id}
-														ref={(el): void => {
-															entityRefs.current[index] = el;
-														}}
-														type="button"
-														variant="ghost"
-														color="secondary"
-														size="sm"
-														aria-pressed={isSelected}
-														width="100%"
-														onClick={(): void =>
-															toggleContextSelection(
-																activeContextCategory,
-																option.id,
-																option.value,
-															)
-														}
-														onKeyDown={(e): void => handleEntityKeyDown(e, index)}
-													>
-														{option.value}
-													</Button>
-												);
-											})
-										)}
-									</div>
+											return (
+												<Button
+													key={option.id}
+													ref={(el): void => {
+														entityRefs.current[index] = el;
+													}}
+													type="button"
+													variant="ghost"
+													color="secondary"
+													size="sm"
+													aria-pressed={isSelected}
+													width="100%"
+													testId={`ai-context-option-${activeContextCategory}-${option.id}`}
+													onClick={(): void =>
+														toggleContextSelection(
+															activeContextCategory,
+															option.id,
+															option.value,
+														)
+													}
+													onKeyDown={(e): void => handleEntityKeyDown(e, index)}
+												>
+													{option.value}
+												</Button>
+											);
+										})
+									)}
 								</div>
 							</div>
-						</PopoverContent>
+						</div>
 					</Popover>
-				</div>
-
-				<div className={styles.rightActions}>
-					{showMic &&
-						(isListening ? (
-							<div
-								className={styles.micRecording}
-								role="status"
-								aria-live="polite"
-								aria-label="Recording voice input"
-							>
-								<Tooltip title="Discard recording">
-									<Button
-										type="button"
-										variant="ghost"
-										size="md"
-										icon
-										color="secondary"
-										onClick={handleDiscard}
-										aria-label="Discard recording"
-									>
-										<X size={12} />
-									</Button>
-								</Tooltip>
-								<span className={styles.micWaves} aria-hidden="true">
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-									<span />
-								</span>
-								<Tooltip title="Stop and send">
-									<Button
-										type="button"
-										variant="ghost"
-										size="md"
-										icon
-										color="secondary"
-										onClick={handleStopAndSend}
-										aria-label="Stop and send"
-									>
-										<Square size={9} fill="currentColor" strokeWidth={0} />
-									</Button>
-								</Tooltip>
-							</div>
-						) : (
-							<Tooltip title="Voice input">
-								<Button
-									disabledTooltip={disabledTooltip}
-									color="secondary"
-									variant="ghost"
-									size="md"
-									icon
-									onClick={(): void => startVoiceInput(VoiceInputSource.Button)}
-									disabled={disabled}
-									aria-label="Start voice input"
-								>
-									<Mic size={14} />
-								</Button>
-							</Tooltip>
-						))}
 
 					{isStreaming && onCancel ? (
 						<Tooltip title="Stop generating">
 							<Button
 								variant="solid"
-								size="md"
+								size="sm"
 								icon
 								color="danger"
 								onClick={onCancel}
 								aria-label="Stop generating"
 							>
-								<Square size={10} fill="currentColor" strokeWidth={0} />
+								<Square size={14} fill="currentColor" />
 							</Button>
 						</Tooltip>
 					) : (
 						<Tooltip title="Send message">
 							<Button
-								disabledTooltip={disabled ? disabledTooltip : 'Type a message first'}
+								disabledTooltip={
+									disabled || sendDisabled ? disabledTooltip : 'Type a message first'
+								}
 								variant="solid"
-								size="md"
+								size="sm"
 								icon
 								color="primary"
-								onClick={isListening ? handleStopAndSend : handleSend}
-								disabled={disabled || (!text.trim() && pendingFiles.length === 0)}
+								onClick={handleSend}
+								disabled={
+									disabled || sendDisabled || (!text.trim() && pendingFiles.length === 0)
+								}
 								aria-label="Send message"
 							>
-								<Send size={14} />
+								<ArrowUp size={14} />
 							</Button>
 						</Tooltip>
 					)}

@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
-import { Button, Col, Modal, Row, Skeleton, Space } from 'antd';
+import { Button, Modal, Skeleton } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Col from 'periscope/components/Col/Col';
+import Row from 'periscope/components/Row/Row';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 
@@ -25,7 +28,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 				!isWorkspaceAccessRestricted ||
 				activeLicense.platform === LicensePlatform.SELF_HOSTED
 			) {
-				history.push(ROUTES.HOME);
+				navigate(ROUTES.HOME);
 			}
 		}
 	}, [isFetchingActiveLicense, activeLicense]);
@@ -54,9 +57,17 @@ function WorkspaceAccessRestricted(): JSX.Element {
 							<Row justify="center" align="middle">
 								<Col>
 									<Space direction="vertical" align="center">
-										<Typography.Title
-											level={4}
-											className="workspace-access-restricted__details"
+										<Typography
+											variant="paragraph"
+											size="medium"
+											weight="regular"
+											color="secondary"
+											as="h4"
+											align="center"
+											width="80%"
+											marginY={4}
+											marginX="auto"
+											textOverflow="wrap"
 										>
 											{activeLicense.state === LicenseState.TERMINATED && (
 												<>
@@ -101,7 +112,7 @@ function WorkspaceAccessRestricted(): JSX.Element {
 													.
 												</>
 											)}
-										</Typography.Title>
+										</Typography>
 
 										<Button
 											type="default"

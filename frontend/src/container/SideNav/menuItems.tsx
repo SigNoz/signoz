@@ -96,7 +96,7 @@ export const aiAssistantMenuItem = {
 	label: 'Noz',
 	icon: <Noz size={16} />,
 	itemKey: 'ai-assistant',
-	isEarlyAccess: true,
+	isBeta: true,
 	tooltip: NOZ_TOOLTIP_TITLE,
 };
 
@@ -342,14 +342,6 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <User size={16} />,
 				isEnabled: true,
 				itemKey: 'account',
-			},
-			// TODO(@SigNoz/pulse-frontend): https://github.com/SigNoz/engineering-pod/issues/5323
-			{
-				key: ROUTES.ALL_CHANNELS,
-				label: 'Notification Channels',
-				icon: <FileKey2 size={16} />,
-				isEnabled: true,
-				itemKey: 'notification-channels',
 			},
 			{
 				key: ROUTES.BILLING,

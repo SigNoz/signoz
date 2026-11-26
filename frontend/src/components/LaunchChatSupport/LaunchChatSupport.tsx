@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useAppLocation } from 'lib/router/useAppLocation';
 import { Button, Tooltip } from 'antd';
 import AddCreditCardModal from 'components/AddCreditCardModal/AddCreditCardModal';
 import logEvent from 'api/common/logEvent';
@@ -43,7 +43,7 @@ function LaunchChatSupport({
 	const [isAddCreditCardModalOpen, setIsAddCreditCardModalOpen] =
 		useState(false);
 
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 
 	const isChatSupportEnabled = useMemo(() => {
 		if (!isFetchingFeatureFlags && (featureFlags || featureFlagsFetchError)) {

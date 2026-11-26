@@ -18,7 +18,7 @@ import {
 	RefreshCw,
 } from '@signozhq/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Select } from 'antd';
+import { Button, type RefSelectProps, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import cx from 'classnames';
@@ -26,7 +26,6 @@ import TextToolTip from 'components/TextToolTip/TextToolTip';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { capitalize, isEmpty } from 'lodash-es';
-import type { BaseSelectRef } from 'rc-select';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import TruncatedTooltip from './TruncatedTooltip';
@@ -84,7 +83,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 	// ===== State & Refs =====
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchText, setSearchText] = useState('');
-	const selectRef = useRef<BaseSelectRef>(null);
+	const selectRef = useRef<RefSelectProps>(null);
 	const [activeIndex, setActiveIndex] = useState<number>(-1);
 	const [activeChipIndex, setActiveChipIndex] = useState<number>(-1); // For tracking active chip/tag
 	const [selectionStart, setSelectionStart] = useState<number>(-1);
@@ -633,7 +632,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							const uniqueKey = `${text.substring(0, 3)}-${part.substring(0, 3)}-${i}`;
 
 							return part.toLowerCase() === searchQuery.toLowerCase() ? (
-								<span key={uniqueKey} className="highlight-text">
+								<span
+									key={uniqueKey}
+									className="highlight-text"
+									data-testid="highlight-text"
+								>
 									{part}
 								</span>
 							) : (
@@ -747,6 +750,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								selected: isSelected,
 								active: isActive,
 							})}
+							data-testid={`option-item-${option.value}`}
 							onKeyDown={(e): void => {
 								if ((e.key === 'Enter' || e.key === SPACEKEY) && isActive) {
 									e.stopPropagation();
@@ -778,7 +782,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 										{highlightMatchedText(String(option.label || ''), searchText)}
 									</span>
 									{(option.type === 'custom' || option.type === 'regex') && (
-										<div className="option-badge">{capitalize(option.type)}</div>
+										<div className="option-badge" data-testid="option-badge">
+											{capitalize(option.type)}
+										</div>
 									)}
 									{option.value && ensureValidOption(option.value) && (
 										<Button
@@ -1563,6 +1569,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 			<div
 				ref={dropdownRef}
 				className="custom-multiselect-dropdown"
+				data-testid="custom-multiselect-dropdown"
 				onMouseDown={handleDropdownMouseDown}
 				onClick={handleDropdownClick}
 				onKeyDown={handleKeyDown}
@@ -1584,6 +1591,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								active: activeIndex === 0,
 							})}
 							key={`all-option-${allOptionsSelected}`}
+							data-testid="all-option"
 							id="option-0"
 							onMouseEnter={(): void => {
 								setActiveIndex(0);
@@ -1642,7 +1650,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 								</div>
 							</div>
 						</div>
-						<div className="divider" />
+						<div className="divider" data-testid="all-option-divider" />
 					</>
 				)}
 
@@ -1712,7 +1720,11 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 					)}
 
 				{/* Navigation help footer */}
-				<div className="navigation-footer" role="note">
+				<div
+					className="navigation-footer"
+					role="note"
+					data-testid="navigation-footer"
+				>
 					{!loading &&
 						!errorMessage &&
 						!noDataMessage &&
@@ -1727,7 +1739,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							</section>
 						)}
 					{loading && (
-						<div className="navigation-loading">
+						<div className="navigation-loading" data-testid="navigation-loading">
 							<div className="navigation-icons">
 								<Loader size="md" className="animate-spin" />
 							</div>
@@ -1735,7 +1747,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						</div>
 					)}
 					{!loading && waitingMessage && (
-						<div className="navigation-loading">
+						<div className="navigation-loading" data-testid="navigation-loading">
 							<div className="navigation-icons">
 								<Loader size="md" className="animate-spin" />
 							</div>
@@ -1745,7 +1757,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						</div>
 					)}
 					{errorMessage && !loading && !waitingMessage && (
-						<div className="navigation-error">
+						<div className="navigation-error" data-testid="navigation-error">
 							<div className="navigation-text">
 								{errorMessage || SOMETHING_WENT_WRONG}
 							</div>
@@ -1960,6 +1972,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 							'ant-select-selection-item-active': isActive,
 							'ant-select-selection-item-selected': isSelected,
 						})}
+						data-testid={`selected-tag-${value}`}
 						style={
 							isActive || isSelected
 								? {

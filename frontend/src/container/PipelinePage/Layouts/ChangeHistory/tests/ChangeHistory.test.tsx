@@ -2,11 +2,11 @@ import { I18nextProvider } from 'react-i18next';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import TimezoneProvider from 'providers/Timezone';
 import i18n from 'ReactI18';
 import store from 'store';
+import { TestRouter } from 'tests/router';
 
 import ChangeHistory from '../index';
 import { pipelineData, pipelineDataHistory } from './testUtils';
@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
 describe('ChangeHistory test', () => {
 	it('should render changeHistory correctly', () => {
 		const { getAllByText, getByText } = render(
-			<MemoryRouter>
+			<TestRouter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
@@ -32,7 +32,7 @@ describe('ChangeHistory test', () => {
 						</I18nextProvider>
 					</Provider>
 				</QueryClientProvider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		// change History table headers
@@ -50,8 +50,8 @@ describe('ChangeHistory test', () => {
 	});
 
 	it('test deployment stage and icon based on history data', () => {
-		const { getByText, container } = render(
-			<MemoryRouter>
+		const { getByText } = render(
+			<TestRouter>
 				<QueryClientProvider client={queryClient}>
 					<Provider store={store}>
 						<I18nextProvider i18n={i18n}>
@@ -66,30 +66,22 @@ describe('ChangeHistory test', () => {
 						</I18nextProvider>
 					</Provider>
 				</QueryClientProvider>
-			</MemoryRouter>,
+			</TestRouter>,
 		);
 
 		// assertion for different deployment stages
-		expect(
-			container.querySelector('[data-testid="deployment-icon-in-progress"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('deployment-icon-in-progress')).toBeInTheDocument();
 		expect(getByText('In Progress')).toBeInTheDocument();
 
-		expect(
-			container.querySelector('[data-testid="deployment-icon-dirty"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('deployment-icon-dirty')).toBeInTheDocument();
 		expect(getByText('Dirty')).toBeInTheDocument();
 
-		expect(
-			container.querySelector('[data-testid="deployment-icon-failed"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('deployment-icon-failed')).toBeInTheDocument();
 		expect(getByText('Failed')).toBeInTheDocument();
 
-		expect(
-			container.querySelector('[data-testid="deployment-icon-unknown"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('deployment-icon-unknown')).toBeInTheDocument();
 		expect(getByText('Unknown')).toBeInTheDocument();
 
-		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(5);
+		expect(screen.getAllByTestId('change-history-row')).toHaveLength(5);
 	});
 });

@@ -26,11 +26,9 @@ export interface AlertDef {
 	labels?: Labels;
 	annotations?: Labels;
 	evalWindow?: string;
-	source?: string;
 	disabled?: boolean;
 	preferredChannels?: string[];
 	broadcastToAll?: boolean;
-	version?: string;
 }
 
 export interface RuleCondition {
@@ -79,6 +77,7 @@ export interface AlertRuleTopContributors {
 	count: number;
 	relatedLogsLink: string;
 	relatedTracesLink: string;
+	relatedAITracesLink: string;
 }
 
 export interface AlertRuleTimelineTableResponse {
@@ -94,6 +93,7 @@ export interface AlertRuleTimelineTableResponse {
 	value: number;
 	relatedLogsLink?: string;
 	relatedTracesLink?: string;
+	relatedAITracesLink?: string;
 }
 
 export interface AlertRuleTimelineGraphResponse {

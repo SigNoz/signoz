@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	getListDashboardViewsQueryKey,
 	invalidateListDashboardViews,
@@ -16,38 +16,42 @@ import {
 	type ListDashboardViews200,
 } from 'api/generated/services/sigNoz.schemas';
 
-import type { SavedView, SavedViewInput } from '../types';
+import type {
+	SavedListView,
+	SavedListViewsApi,
+} from 'components/ListViews/types';
+
+import type { DashboardViewFilter } from '../types';
 
 // Schema version stamped on the view's data envelope (the backend requires it).
 const VIEW_DATA_VERSION = 'v1';
 
-const toSavedView = (dto: DashboardtypesDashboardViewDTO): SavedView => ({
+type DashboardSavedView = SavedListView<DashboardViewFilter>;
+
+const toSavedView = (
+	dto: DashboardtypesDashboardViewDTO,
+): DashboardSavedView => ({
 	id: dto.id,
 	name: dto.name,
-	query: dto.data.query ?? '',
-	sort: dto.data.sort ?? DashboardtypesListSortDTO.updated_at,
-	order: dto.data.order ?? DashboardtypesListOrderDTO.desc,
-});
-
-const toPostable = (
-	input: SavedViewInput,
-): { name: string; data: DashboardtypesDashboardViewDTO['data'] } => ({
-	name: input.name.trim(),
-	data: {
-		version: VIEW_DATA_VERSION,
-		query: input.query,
-		sort: input.sort,
-		order: input.order,
+	filter: {
+		query: dto.data.query ?? '',
+		sort: dto.data.sort ?? DashboardtypesListSortDTO.updated_at,
+		order: dto.data.order ?? DashboardtypesListOrderDTO.desc,
 	},
 });
 
-export interface UseSavedViewsResult {
-	views: SavedView[];
-	isLoading: boolean;
-	createView: (input: SavedViewInput) => Promise<SavedView | null>;
-	updateView: (id: string, input: SavedViewInput) => void;
-	deleteView: (id: string) => Promise<void>;
-}
+const toPostable = (
+	name: string,
+	filter: DashboardViewFilter,
+): { name: string; data: DashboardtypesDashboardViewDTO['data'] } => ({
+	name: name.trim(),
+	data: {
+		version: VIEW_DATA_VERSION,
+		query: filter.query,
+		sort: filter.sort,
+		order: filter.order,
+	},
+});
 
 /**
  * Org-shared saved views, backed by the Views API. `enabled` is the caller's
@@ -55,11 +59,11 @@ export interface UseSavedViewsResult {
  */
 export function useSavedViews({
 	enabled = true,
-}: { enabled?: boolean } = {}): UseSavedViewsResult {
+}: { enabled?: boolean } = {}): SavedListViewsApi<DashboardViewFilter> {
 	const queryClient = useQueryClient();
 	const { data, isLoading } = useListDashboardViews({ query: { enabled } });
 
-	const views = useMemo<SavedView[]>(
+	const views = useMemo<DashboardSavedView[]>(
 		() => (data?.data?.views ?? []).map(toSavedView),
 		[data],
 	);
@@ -72,7 +76,7 @@ export function useSavedViews({
 		mutation: {
 			onSuccess: invalidate,
 			onError: (): void => {
-				toast.error('Failed to save view.');
+				toast.danger('Failed to save view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});
@@ -98,7 +102,7 @@ export function useSavedViews({
 				});
 			},
 			onError: (): void => {
-				toast.error('Failed to update view.');
+				toast.danger('Failed to update view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});
@@ -106,15 +110,20 @@ export function useSavedViews({
 		mutation: {
 			onSuccess: invalidate,
 			onError: (): void => {
-				toast.error('Failed to delete view.');
+				toast.danger('Failed to delete view.', { action: { label: 'Dismiss' } });
 			},
 		},
 	});
 
 	const createView = useCallback(
-		async (input: SavedViewInput): Promise<SavedView | null> => {
+		async (
+			name: string,
+			filter: DashboardViewFilter,
+		): Promise<DashboardSavedView | null> => {
 			try {
-				const res = await createMutation.mutateAsync({ data: toPostable(input) });
+				const res = await createMutation.mutateAsync({
+					data: toPostable(name, filter),
+				});
 				return res?.data ? toSavedView(res.data) : null;
 			} catch {
 				return null;
@@ -124,8 +133,11 @@ export function useSavedViews({
 	);
 
 	const updateView = useCallback(
-		(id: string, input: SavedViewInput): void => {
-			updateMutation.mutate({ pathParams: { id }, data: toPostable(input) });
+		(id: string, name: string, filter: DashboardViewFilter): void => {
+			updateMutation.mutate({
+				pathParams: { id },
+				data: toPostable(name, filter),
+			});
 		},
 		[updateMutation],
 	);

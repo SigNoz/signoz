@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Redirect, useLocation } from 'react-router-dom';
 import { Typography } from '@signozhq/ui/typography';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Redirect } from 'lib/router/Redirect';
 import getByErrorType from 'api/errors/getByErrorTypeAndService';
 import getById from 'api/errors/getById';
 import Spinner from 'components/Spinner';
@@ -21,7 +22,7 @@ function ErrorDetails(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { search } = useLocation();
+	const { search } = useAppLocation();
 	const params = useMemo(() => new URLSearchParams(search), [search]);
 
 	const groupId = params.get(urlKey.groupId);
@@ -70,7 +71,18 @@ function ErrorDetails(): JSX.Element {
 
 	// if any error occurred while loading
 	if (status === 'error' || IdStatus === 'error') {
-		return <Typography>{data?.error || defaultError}</Typography>;
+		return (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{data?.error || defaultError}
+			</Typography>
+		);
 	}
 
 	const idPayload = data?.payload || IdData?.payload;
@@ -82,7 +94,18 @@ function ErrorDetails(): JSX.Element {
 		idPayload === null ||
 		idPayload === undefined
 	) {
-		return <Typography>{data?.error || defaultError}</Typography>;
+		return (
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
+				{data?.error || defaultError}
+			</Typography>
+		);
 	}
 
 	return <ErrorDetailsContainer idPayload={idPayload} />;

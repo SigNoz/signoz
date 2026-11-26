@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';
-import { Button, Card, Input, Space, TableProps, Tooltip, Flex } from 'antd';
+import { AppLink } from 'lib/router/AppLink';
+import { useAppLocation } from 'lib/router/useAppLocation';
+import { Button, Card, Input, TableProps, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Flex from 'periscope/components/Flex/Flex';
 import { Search } from '@signozhq/icons';
 import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
 import type { FilterValue, SorterResult } from 'antd/es/table/interface';
@@ -28,7 +31,7 @@ import {
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { isUndefined } from 'lodash-es';
 import { useAllErrorsQueryState } from 'pages/AllErrors/QueryStateContext';
 import { useTimezone } from 'providers/Timezone';
@@ -67,7 +70,7 @@ function AllErrors(): JSX.Element {
 	const { maxTime, minTime, loading } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const { pathname } = useLocation();
+	const { pathname } = useAppLocation();
 	const params = useUrlQuery();
 	const { t } = useTranslation(['common']);
 	const {
@@ -188,7 +191,14 @@ function AllErrors(): JSX.Element {
 			format?: string,
 		) => string,
 	): JSX.Element => (
-		<Typography>
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="wrap"
+		>
 			{formatTimezoneAdjustedTimestamp(
 				value,
 				DATE_TIME_FORMATS.UK_DATETIME_SECONDS,
@@ -228,7 +238,9 @@ function AllErrors(): JSX.Element {
 					queryParams.serviceName = serviceFilterValue;
 				}
 
-				history.replace(`${pathname}?${createQueryParams(queryParams)}`);
+				navigate(`${pathname}?${createQueryParams(queryParams)}`, {
+					replace: true,
+				});
 				confirm();
 			},
 		[
@@ -336,13 +348,14 @@ function AllErrors(): JSX.Element {
 			...getFilter(onExceptionTypeFilter, 'Search By Exception', 'exceptionType'),
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Link
+					<AppLink
+						data-testid="exception-row-link"
 						to={`${ROUTES.ERROR_DETAIL}?groupId=${
 							record.groupID
 						}&timestamp=${getNanoSeconds(record.lastSeen)}`}
 					>
 						{value}
-					</Link>
+					</AppLink>
 				</Tooltip>
 			),
 			sorter: true,
@@ -359,7 +372,17 @@ function AllErrors(): JSX.Element {
 			width: 100,
 			render: (value): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
-					<Typography.Text truncate={2}>{value}</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="p"
+						textOverflow="ellipsis"
+						maxLines={2}
+					>
+						{value}
+					</Typography>
 				</Tooltip>
 			),
 		},
@@ -438,7 +461,7 @@ function AllErrors(): JSX.Element {
 					exceptionType: getFilterString(params.get(urlKey.exceptionType)),
 				});
 				const compositeQuery = params.get(urlKey.compositeQuery) || '';
-				history.replace(
+				navigate(
 					`${pathname}?${createQueryParams({
 						order: updatedOrder,
 						offset: (current - 1) * pageSize,
@@ -448,6 +471,7 @@ function AllErrors(): JSX.Element {
 						serviceName,
 						compositeQuery,
 					})}`,
+					{ replace: true },
 				);
 			}
 		},
@@ -482,6 +506,7 @@ function AllErrors(): JSX.Element {
 
 	return (
 		<ResizeTable
+			data-testid="exceptions-table"
 			columns={columns}
 			tableLayout="fixed"
 			dataSource={data?.payload as Exception[]}

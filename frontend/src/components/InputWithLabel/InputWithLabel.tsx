@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { X } from '@signozhq/icons';
 
@@ -18,6 +17,7 @@ function InputWithLabel({
 	className,
 	closeIcon,
 	disabled,
+	sanitize,
 }: {
 	label: string;
 	initialValue?: string | number | null;
@@ -29,14 +29,17 @@ function InputWithLabel({
 	className?: string;
 	closeIcon?: React.ReactNode;
 	disabled?: boolean;
+	/** Rewrites the typed value before it is shown and reported. */
+	sanitize?: (value: string) => string;
 }): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		initialValue ? initialValue.toString() : '',
 	);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-		setInputValue(e.target.value);
-		onChange?.(e.target.value);
+		const value = sanitize ? sanitize(e.target.value) : e.target.value;
+		setInputValue(value);
+		onChange?.(value);
 	};
 
 	return (
@@ -45,21 +48,26 @@ function InputWithLabel({
 				labelAfter,
 			})}
 		>
-			{!labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
-			<Input
+			{!labelAfter && <div className="label">{label}</div>}
+			<div
 				className={cx('input', {
 					'input__has-label-after': !labelAfter,
 					'input__has-close-button': !!onClose,
 				})}
-				placeholder={placeholder}
-				type={type}
-				value={inputValue}
-				onChange={handleChange}
-				disabled={disabled}
-				name={label.toLowerCase()}
-				data-testid={`input-${label}`}
-			/>
-			{labelAfter && <Typography.Text className="label">{label}</Typography.Text>}
+			>
+				<Input
+					size="sm"
+					placeholder={placeholder}
+					type={type}
+					value={inputValue}
+					onChange={handleChange}
+					disabled={disabled}
+					disabledTooltip={undefined}
+					name={label.toLowerCase()}
+					testId={`input-${label}`}
+				/>
+			</div>
+			{labelAfter && <div className="label">{label}</div>}
 			{onClose && (
 				<Button
 					className="periscope-btn ghost close-btn"
@@ -78,6 +86,7 @@ InputWithLabel.defaultProps = {
 	initialValue: undefined,
 	className: undefined,
 	closeIcon: undefined,
+	sanitize: undefined,
 };
 
 export default InputWithLabel;

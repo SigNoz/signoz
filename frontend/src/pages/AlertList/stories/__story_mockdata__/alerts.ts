@@ -7,22 +7,26 @@ import {
 	MetrictypesSpaceAggregationDTO,
 	MetrictypesTemporalityDTO,
 	MetrictypesTimeAggregationDTO,
+	Querybuildertypesv5FunctionNameDTO,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricsSignal,
 	Querybuildertypesv5QueryEnvelopeBuilderDTOType,
 	Querybuildertypesv5ReduceToDTO,
 	RuletypesAlertStateDTO,
 	RuletypesAlertTypeDTO,
 	RuletypesCompareOperatorDTO,
+	RuletypesEvaluationRollingDTOKind,
 	RuletypesMatchTypeDTO,
 	RuletypesPanelTypeDTO,
 	RuletypesQueryTypeDTO,
+	RuletypesRuleDTOSchemaVersion,
 	RuletypesRuleTypeDTO,
+	RuletypesSeasonalityDTO,
 	RuletypesThresholdBasicDTOKind,
 	type AlertmanagertypesDeprecatedGettableAlertDTO,
 	type GetAlerts200,
 	type GetRuleByID200,
-	type ListRules200,
 	type RenderErrorResponseDTO,
+	type Querybuildertypesv5FunctionDTO,
 	type RuletypesAlertCompositeQueryDTO,
 	type RuletypesRuleConditionDTO,
 	type RuletypesRuleDTO,
@@ -30,7 +34,6 @@ import {
 	type AlertmanagertypesGettableNotificationChannelDTO,
 	type AlertmanagertypesListedNotificationChannelDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -66,9 +69,9 @@ export const RULE_STATE_CHOICES = ['mixed', ...RULE_STATES] as const;
 
 export type RuleStateChoice = (typeof RULE_STATE_CHOICES)[number];
 
-export const ALERT_SCHEMAS = ['v2', 'classic'] as const;
+export const RULE_KINDS = ['threshold', 'anomaly'] as const;
 
-export type AlertSchema = (typeof ALERT_SCHEMAS)[number];
+export type RuleKind = (typeof RULE_KINDS)[number];
 
 export const CHANNEL_TYPES = [
 	'slack',
@@ -90,7 +93,10 @@ export type ChannelType = (typeof CHANNEL_TYPES)[number];
  * One query envelope is enough for the alert form to mount its query builder
  * over the rule, and it is the query the preview chart is drawn for.
  */
-const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
+const compositeQuery = (
+	seed: RuleSeed,
+	functions?: Querybuildertypesv5FunctionDTO[],
+): RuletypesAlertCompositeQueryDTO => ({
 	queryType: RuletypesQueryTypeDTO.builder,
 	panelType: RuletypesPanelTypeDTO.graph,
 	unit: seed.unit,
@@ -114,32 +120,65 @@ const compositeQuery = (seed: RuleSeed): RuletypesAlertCompositeQueryDTO => ({
 				groupBy: [],
 				order: [],
 				stepInterval: 60,
+				functions,
 			},
 		},
 	],
 });
 
-const condition = (seed: RuleSeed): RuletypesRuleConditionDTO => ({
+/**
+ * An anomaly rule fires on the z-score of each point against the seasonal
+ * forecast, so its targets are signed deviations (`-3`). The `anomaly` function
+ * on the query is what makes the preview draw the forecast band.
+ */
+const anomalyCondition = (
+	seed: RuleSeed,
+	severities: readonly AlertSeverity[],
+): RuletypesRuleConditionDTO => {
+	return {
+		...condition(seed, severities),
+		compositeQuery: compositeQuery(seed, [
+			{
+				name: Querybuildertypesv5FunctionNameDTO.anomaly,
+				args: [
+					{ name: 'z_score_threshold', value: 2 },
+					{ name: 'seasonality', value: 'daily' },
+				],
+			},
+		]),
+		seasonality: RuletypesSeasonalityDTO.daily,
+		thresholds: {
+			kind: RuletypesThresholdBasicDTOKind.basic,
+			spec: severities.map((name, index) => ({
+				name,
+				matchType: RuletypesMatchTypeDTO.all_the_times,
+				op: RuletypesCompareOperatorDTO.below,
+				target: index - 3,
+				targetUnit: '',
+				channels: ['ops-slack'],
+			})),
+		},
+	};
+};
+
+const condition = (
+	seed: RuleSeed,
+	severities: readonly AlertSeverity[],
+): RuletypesRuleConditionDTO => ({
 	compositeQuery: compositeQuery(seed),
-	op: RuletypesCompareOperatorDTO.above,
-	matchType: RuletypesMatchTypeDTO.at_least_once,
 	selectedQueryName: 'A',
-	target: seed.target,
-	targetUnit: seed.unit,
 	alertOnAbsent: false,
 	requireMinPoints: false,
 	thresholds: {
 		kind: RuletypesThresholdBasicDTOKind.basic,
-		spec: [
-			{
-				name: 'critical',
-				matchType: RuletypesMatchTypeDTO.at_least_once,
-				op: RuletypesCompareOperatorDTO.above,
-				target: seed.target,
-				targetUnit: seed.unit,
-				channels: ['ops-slack'],
-			},
-		],
+		spec: severities.map((name, index) => ({
+			name,
+			matchType: RuletypesMatchTypeDTO.at_least_once,
+			op: RuletypesCompareOperatorDTO.above,
+			target: Math.round(seed.target * (1 - index * 0.2)),
+			targetUnit: seed.unit,
+			channels: ['ops-slack'],
+		})),
 	},
 });
 
@@ -147,7 +186,8 @@ interface RuleSeed {
 	alert: string;
 	alertType: RuletypesAlertTypeDTO;
 	state: RuletypesAlertStateDTO;
-	severity: AlertSeverity;
+	// Threshold names, highest first; each fires below the one before it.
+	severities: readonly AlertSeverity[];
 	labels: Record<string, string>;
 	metric: string;
 	unit: string;
@@ -159,7 +199,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Node CPU saturation',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'critical',
+		severities: ['critical', 'warning'],
 		labels: { team: 'platform', env: 'prod' },
 		metric: 'system_cpu_utilization',
 		unit: 'percent',
@@ -169,7 +209,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Checkout API latency above 2s',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'critical',
+		severities: ['critical'],
 		labels: { team: 'checkout', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: 'ms',
@@ -179,8 +219,8 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Payment service error rate',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'critical',
-		labels: { team: 'payments', env: 'prod' },
+		severities: ['critical'],
+		labels: { severity: 'critical', team: 'payments', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: 'percent',
 		target: 5,
@@ -189,7 +229,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Kafka consumer lag',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'platform', component: 'kafka' },
 		metric: 'kafka_consumer_lag',
 		unit: '',
@@ -199,7 +239,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Postgres connections near limit',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'warning',
+		severities: ['warning', 'info'],
 		labels: { team: 'platform', component: 'database' },
 		metric: 'postgresql_backends',
 		unit: '',
@@ -209,7 +249,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Auth service 5xx spike',
 		alertType: RuletypesAlertTypeDTO.LOGS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'identity', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: '',
@@ -219,7 +259,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Unhandled exceptions in web',
 		alertType: RuletypesAlertTypeDTO.EXCEPTIONS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.firing,
-		severity: 'error',
+		severities: ['error'],
 		labels: { team: 'web', env: 'prod' },
 		metric: 'http_server_duration',
 		unit: '',
@@ -229,7 +269,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Ingest pipeline dropped logs',
 		alertType: RuletypesAlertTypeDTO.LOGS_BASED_ALERT,
 		state: RuletypesAlertStateDTO.nodata,
-		severity: 'warning',
+		severities: ['warning'],
 		labels: { team: 'platform', component: 'collector' },
 		metric: 'system_memory_usage',
 		unit: '',
@@ -239,7 +279,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Nightly batch job overran',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.disabled,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'data' },
 		metric: 'http_server_duration',
 		unit: 's',
@@ -249,7 +289,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Search p99 above budget',
 		alertType: RuletypesAlertTypeDTO.TRACES_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'search', env: 'staging' },
 		metric: 'http_server_duration',
 		unit: 'ms',
@@ -259,7 +299,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Cache hit ratio dropped',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.inactive,
-		severity: 'info',
+		severities: ['info'],
 		labels: { team: 'platform', component: 'redis' },
 		metric: 'system_memory_usage',
 		unit: 'percent',
@@ -269,7 +309,7 @@ const RULE_SEEDS: RuleSeed[] = [
 		alert: 'Disk usage on ingesters',
 		alertType: RuletypesAlertTypeDTO.METRIC_BASED_ALERT,
 		state: RuletypesAlertStateDTO.pending,
-		severity: 'critical',
+		severities: ['critical', 'warning'],
 		labels: { team: 'platform', env: 'prod' },
 		metric: 'system_memory_usage',
 		unit: 'percent',
@@ -295,42 +335,48 @@ const ruleName = (index: number): string => {
 export interface RuleShape {
 	severity: SeverityChoice;
 	state: RuleStateChoice;
-	schema?: AlertSchema;
+	kind?: RuleKind;
 }
 
 const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 	const seed = seedAt(index);
-	const severity = shape.severity === 'mixed' ? seed.severity : shape.severity;
+	const severities =
+		shape.severity === 'mixed' ? seed.severities : [shape.severity];
 	const state =
 		shape.state === 'mixed'
 			? seed.state
 			: (shape.state as RuletypesAlertStateDTO);
+	const isAnomaly = shape.kind === 'anomaly';
 
 	return {
 		id: `rule-${index + 1}`,
 		alert: ruleName(index),
-		alertType: seed.alertType,
-		ruleType: RuletypesRuleTypeDTO.threshold_rule,
+		alertType: isAnomaly
+			? RuletypesAlertTypeDTO.METRIC_BASED_ALERT
+			: seed.alertType,
+		ruleType: isAnomaly
+			? RuletypesRuleTypeDTO.anomaly_rule
+			: RuletypesRuleTypeDTO.threshold_rule,
 		state,
 		disabled: state === RuletypesAlertStateDTO.disabled,
-		condition: condition(seed),
-		labels: { severity, ...seed.labels },
+		condition: isAnomaly
+			? anomalyCondition(seed, severities)
+			: condition(seed, severities),
+		labels: seed.labels,
 		annotations: {
 			summary: `${seed.alert} crossed its threshold of ${seed.target}`,
 			description:
 				'The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}',
 		},
-		evalWindow: '5m0s',
-		frequency: '1m0s',
+		evaluation: {
+			kind: RuletypesEvaluationRollingDTOKind.rolling,
+			spec: { evalWindow: isAnomaly ? '1h0m0s' : '5m0s', frequency: '1m0s' },
+		},
 		createdAt: ago((index + 3) * DAY),
 		updatedAt: ago((index + 1) * HOUR),
 		createdBy: 'ada@signoz.io',
 		updatedBy: 'grace@signoz.io',
-		schemaVersion:
-			shape.schema === 'classic' ? undefined : NEW_ALERT_SCHEMA_VERSION,
-		version: 'v5',
-		source: 'http://localhost/alerts',
-		preferredChannels: ['ops-slack'],
+		schemaVersion: RuletypesRuleDTOSchemaVersion.v2alpha1,
 		notificationSettings: {
 			groupBy: ['alertname'],
 			usePolicy: false,
@@ -342,7 +388,7 @@ const buildRule = (index: number, shape: RuleShape): RuletypesRuleDTO => {
 export const alertRulesResponse = (
 	count: number,
 	shape: RuleShape,
-): ListRules200 => ({
+): { status: string; data: RuletypesRuleDTO[] } => ({
 	status: 'success',
 	data: Array.from({ length: count }, (_unused, index) =>
 		buildRule(index, shape),
@@ -781,6 +827,51 @@ export const channelNames = (count: number): string[] =>
 		(_unused, index) => CHANNEL_SEEDS[index % CHANNEL_SEEDS.length].name,
 	);
 
+export const WEBHOOK_AUTHS = ['basic', 'bearer', 'none'] as const;
+
+export type WebhookAuthChoice = (typeof WEBHOOK_AUTHS)[number];
+
+const WEBHOOK_CREDENTIALS: Record<WebhookAuthChoice, Record<string, string>> = {
+	basic: { username: 'story-user' },
+	bearer: { bearerToken: 'story-bearer-token' },
+	none: {},
+};
+
+const webhookSpec = (auth: WebhookAuthChoice): Record<string, unknown> => ({
+	url: 'https://example.com/story-hook',
+	...WEBHOOK_CREDENTIALS[auth],
+	sendResolved: true,
+});
+
+export const JIRA_DEPLOYMENTS = ['cloud', 'selfhosted'] as const;
+
+export type JiraDeploymentChoice = (typeof JIRA_DEPLOYMENTS)[number];
+
+const JIRA_CONNECTIONS: Record<
+	JiraDeploymentChoice,
+	Record<string, unknown>
+> = {
+	cloud: {
+		site: 'https://story.atlassian.net',
+		auth: { email: 'story@signoz.io', apiToken: 'story-jira-token' },
+	},
+	selfhosted: {
+		site: 'https://jira.story.internal',
+		auth: { pat: 'story-jira-pat' },
+	},
+};
+
+const jiraSpec = (
+	deployment: JiraDeploymentChoice,
+): Record<string, unknown> => ({
+	deployment,
+	...JIRA_CONNECTIONS[deployment],
+	project: 'OPS',
+	issueType: 'Task',
+	summary: '{{ .CommonLabels.alertname }}',
+	sendResolved: true,
+});
+
 /**
  * The v2 spec each kind is fetched with, so the edit form renders populated
  * fields. Keys mirror the generated channel spec schemas.
@@ -809,11 +900,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		],
 		sendResolved: true,
 	},
-	webhook: {
-		url: 'https://example.com/story-hook',
-		username: 'story-user',
-		sendResolved: true,
-	},
+	webhook: webhookSpec('basic'),
 	pagerduty: {
 		routingKey: 'story-routing-key',
 		description: '{{ .CommonLabels.alertname }}',
@@ -843,15 +930,7 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 		text: 'Story channel',
 		sendResolved: true,
 	},
-	jira: {
-		site: 'https://story.atlassian.net',
-		project: 'OPS',
-		issueType: 'Task',
-		email: 'story@signoz.io',
-		apiToken: 'story-jira-token',
-		summary: '{{ .CommonLabels.alertname }}',
-		sendResolved: true,
-	},
+	jira: jiraSpec('cloud'),
 	jsmops: {
 		apiKey: 'story-jsm-key',
 		message: '{{ .CommonLabels.alertname }}',
@@ -873,10 +952,26 @@ const CHANNEL_SPECS: Record<ChannelType, Record<string, unknown>> = {
 	},
 };
 
+export const channelSpec = (
+	type: ChannelType,
+	webhookAuth: WebhookAuthChoice,
+	jiraDeployment: JiraDeploymentChoice,
+): Record<string, unknown> => {
+	if (type === 'webhook') {
+		return webhookSpec(webhookAuth);
+	}
+	if (type === 'jira') {
+		return jiraSpec(jiraDeployment);
+	}
+	return CHANNEL_SPECS[type];
+};
+
 /** The v2 fetch by id, which is what the redesigned screens read. */
 export const notificationChannelResponse = (
 	id: string,
 	type: ChannelType,
+	webhookAuth: WebhookAuthChoice = 'basic',
+	jiraDeployment: JiraDeploymentChoice = 'cloud',
 ): {
 	status: string;
 	data: AlertmanagertypesGettableNotificationChannelDTO;
@@ -897,7 +992,7 @@ export const notificationChannelResponse = (
 			updatedAt: ago((index + 1) * DAY),
 			config: {
 				kind: type,
-				spec: CHANNEL_SPECS[type],
+				spec: channelSpec(type, webhookAuth, jiraDeployment),
 			} as unknown as AlertmanagertypesChannelConfigDTO,
 		},
 	};

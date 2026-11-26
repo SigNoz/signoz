@@ -35,7 +35,10 @@ function StatusCodeTable({
 	}
 
 	return (
-		<div className="status-code-table-container">
+		<div
+			className="status-code-table-container"
+			data-testid="endpoint-status-code-table"
+		>
 			<Table
 				loading={isLoading || isRefetching}
 				dataSource={statusCodeData || []}
@@ -55,9 +58,18 @@ function StatusCodeTable({
 										className="empty-state-svg"
 									/>
 
-									<Typography.Text className="no-status-code-data-message">
-										This query had no results. Edit your query and try again!
-									</Typography.Text>
+									<div className="no-status-code-data-message">
+										<Typography
+											variant="paragraph"
+											size="base"
+											weight="regular"
+											color="inherit"
+											as="p"
+											textOverflow="wrap"
+										>
+											This query had no results. Edit your query and try again!
+										</Typography>
+									</div>
 								</div>
 							</div>
 						),

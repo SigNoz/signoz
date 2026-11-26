@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 import { screen, userEvent } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
@@ -11,6 +11,7 @@ import {
 	clickRowAction,
 	confirmImpact,
 	dashboardMocks,
+	expectToast,
 	openSettings,
 	openVariableEditor,
 	typeVariableName,
@@ -35,9 +36,7 @@ const meta = {
 	title: 'Pages/Dashboards/Detail/Variables',
 	tags: ['authz', 'play'],
 	component: DashboardPage as ComponentType<DashboardArgs>,
-	render: (): JSX.Element => (
-		<Route path={ROUTES.DASHBOARD} component={DashboardPage} />
-	),
+	render: renderAtRoute(ROUTES.DASHBOARD, DashboardPage),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<DashboardArgs>;
@@ -166,7 +165,7 @@ export const VariableDeleteFailedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async (context) => {
 		await VariableDeletedToast.play?.(context);
-		await screen.findByText('Could not delete the variable');
+		await expectToast('Could not delete the variable');
 	},
 };
 
@@ -191,7 +190,7 @@ export const VariableRenameFailedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async (context) => {
 		await VariableRenamedToast.play?.(context);
-		await screen.findByText('Could not rename the variable');
+		await expectToast('Could not rename the variable');
 	},
 };
 
@@ -215,6 +214,6 @@ export const VariableApplyFailedToast: Story = {
 	parameters: { allowConsoleErrors: true },
 	play: async (context) => {
 		await VariableAppliedToast.play?.(context);
-		await screen.findByText('Could not apply the variable to panels');
+		await expectToast('Could not apply the variable to panels');
 	},
 };

@@ -9,6 +9,11 @@ import {
 	QUERY_BUILDER_FUNCTIONS,
 } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
+import {
+	getActiveBuilder,
+	getBuilderSlotKeyForQueryType,
+	isBuilderQueryType,
+} from 'lib/query/builderSlot';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import FilterQueryParser, {
 	AndExpressionContext,
@@ -33,7 +38,6 @@ import {
 	MetricAggregation,
 	TraceAggregation,
 } from 'types/api/v5/queryRange';
-import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { extractQueryPairs } from 'utils/queryContextUtils';
 import { isQuoted, unquote } from 'utils/stringUtils';
@@ -840,6 +844,16 @@ export const appendAndClause = (
 	return hasTopLevelOr ? `(${base}) AND ${clause}` : `${base} AND ${clause}`;
 };
 
+/** Strips everything but digits, so a limit input can't hold a sign or decimal. */
+export const sanitizeLimit = (value: string): string =>
+	value.replace(/\D/g, '');
+
+/** A query or formula limit: a positive integer, otherwise none. */
+export const parseLimit = (value: string): number | null => {
+	const limit = Number(value);
+	return Number.isInteger(limit) && limit > 0 ? limit : null;
+};
+
 /**
  * Convert old having format to new having format
  * @param having - Array of old having objects with columnName, op, and value
@@ -871,7 +885,14 @@ export const convertHavingToExpression = (
 				formattedValue = String(value);
 			}
 
-			return `${columnName} ${op} ${formattedValue}`;
+			// The old having filter upper-cased the function (`COUNT()`); v5 only
+			// resolves the aggregation's own lower-case expression.
+			const reference = columnName.replace(
+				/^\s*([A-Za-z_]\w*)\(/,
+				(_, fn: string) => `${fn.toLowerCase()}(`,
+			);
+
+			return `${reference} ${op} ${formattedValue}`;
 		})
 		.filter((expression) => expression !== ''); // Remove empty expressions
 
@@ -1013,8 +1034,9 @@ export function getQueryLabelWithAggregation(
 }
 
 export const adjustQueryForV5 = (currentQuery: Query): Query => {
-	if (currentQuery.queryType === EQueryType.QUERY_BUILDER) {
-		const newQueryData = currentQuery.builder.queryData.map((query) => {
+	if (isBuilderQueryType(currentQuery.queryType)) {
+		const activeBuilder = getActiveBuilder(currentQuery);
+		const newQueryData = activeBuilder.queryData.map((query) => {
 			const aggregations = query.aggregations?.map((aggregation) => {
 				if (query.dataSource === DataSource.METRICS) {
 					const metricAggregation = aggregation as MetricAggregation;
@@ -1055,8 +1077,8 @@ export const adjustQueryForV5 = (currentQuery: Query): Query => {
 
 		return {
 			...currentQuery,
-			builder: {
-				...currentQuery.builder,
+			[getBuilderSlotKeyForQueryType(currentQuery.queryType)]: {
+				...activeBuilder,
 				queryData: newQueryData,
 			},
 		};

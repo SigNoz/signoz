@@ -72,40 +72,6 @@
 	}
 }
 
-.chat-support-gateway {
-	position: fixed;
-	// Lifted above the bottom strip. Don't extend this pattern — new fixed-bottom
-	// UI belongs in the bounded layout, not in another offset here.
-	bottom: calc(20px + var(--bottom-strip-height, 0px));
-	right: 20px;
-	z-index: 1000;
-
-	.chat-support-gateway-btn {
-		max-width: 48px;
-		width: 48px;
-		max-height: 48px;
-		height: 48px;
-		padding: 12px;
-		border-radius: 50%;
-
-		display: flex;
-		justify-content: center;
-		align-items: center;
-
-		background-color: #f25733;
-		border: none;
-
-		&:hover {
-			color: white !important;
-			border-color: white !important;
-		}
-
-		.chat-support-gateway-btn-icon {
-			fill: white;
-		}
-	}
-}
-
 .add-credit-card-btn,
 .cancel-btn {
 	display: inline-flex;
@@ -117,26 +83,8 @@
 	border-radius: 2px;
 	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 	padding-right: 4px;
-	font-family: 'Geist Mono';
+	font-family: var(--code-base-400-font-family);
 	color: var(--primary-foreground);
-}
-
-.add-credit-card-modal {
-	.ant-modal-footer {
-		display: flex;
-		justify-content: flex-end;
-	}
-
-	.cancel-btn {
-		border-radius: 2px;
-		border: none;
-		background: var(--l1-background, #161922);
-		box-shadow: none;
-	}
-
-	.add-credit-card-btn {
-		box-shadow: none;
-	}
 }
 
 .trial-expiry-banner {
@@ -148,30 +96,11 @@
 }
 
 .trial-expiry-banner,
-.slow-api-warning-banner,
 .workspace-restricted-banner {
 	padding: 8px;
 	background-color: #f25733;
 	color: white;
 	text-align: center;
-}
-
-.slow-api-warning-banner {
-	background-color: var(--primary-background);
-
-	.dismiss-banner {
-		color: var(--primary-foreground);
-		float: right;
-		padding: 0 16px;
-
-		display: flex;
-		align-items: center;
-		gap: 4px;
-
-		&:hover {
-			color: var(--primary-foreground);
-		}
-	}
 }
 
 .payment-failed-banner {
@@ -187,7 +116,6 @@
 	display: inline !important;
 	color: white;
 	text-decoration: underline;
-	text-decoration-color: white;
 	text-decoration-thickness: 2px;
 	text-underline-offset: 2px;
 

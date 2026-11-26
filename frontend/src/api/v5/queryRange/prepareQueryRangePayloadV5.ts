@@ -3,7 +3,10 @@
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { foldAISlot } from 'lib/query/builderSlot';
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
+import { parseAggregations } from 'lib/query/aggregationExpression';
+import { aggregatesDistributionField } from 'lib/query/distributionField';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
 import { isEmpty } from 'lodash-es';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
@@ -51,8 +54,11 @@ export function mapPanelTypeToRequestType(panelType: PANEL_TYPES): RequestType {
 		case PANEL_TYPES.BAR:
 			return 'time_series';
 		case PANEL_TYPES.TABLE:
+		case PANEL_TYPES.SCATTER:
 		case PANEL_TYPES.PIE:
 		case PANEL_TYPES.VALUE:
+		case PANEL_TYPES.GEO_MAP:
+		case PANEL_TYPES.TOP_LIST:
 			return 'scalar';
 		case PANEL_TYPES.TRACE:
 			return 'trace';
@@ -236,32 +242,6 @@ function createBaseSpec(
 	};
 }
 
-// Utility to parse aggregation expressions with optional alias
-export function parseAggregations(
-	expression: string,
-	availableAlias?: string,
-): { expression: string; alias?: string }[] {
-	const result: { expression: string; alias?: string }[] = [];
-	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
-	// Handles quoted ('alias'), dash-separated (field-name), and unquoted values after "as" keyword
-	const regex =
-		/([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
-	let match = regex.exec(expression);
-	while (match !== null) {
-		const expr = match[1];
-		let alias = match[2] || availableAlias; // Use provided alias or availableAlias if not matched
-		if (alias) {
-			// Remove quotes if present
-			alias = alias.replace(/^['"]|['"]$/g, '');
-			result.push({ expression: expr, alias });
-		} else {
-			result.push({ expression: expr });
-		}
-		match = regex.exec(expression);
-	}
-	return result;
-}
-
 export function createAggregation(
 	queryData: any,
 	panelType?: PANEL_TYPES,
@@ -274,8 +254,11 @@ export function createAggregation(
 		queryData.dataSource === DataSource.METRICS &&
 		panelType &&
 		(panelType === PANEL_TYPES.TABLE ||
+			panelType === PANEL_TYPES.SCATTER ||
 			panelType === PANEL_TYPES.PIE ||
-			panelType === PANEL_TYPES.VALUE);
+			panelType === PANEL_TYPES.VALUE ||
+			panelType === PANEL_TYPES.GEO_MAP ||
+			panelType === PANEL_TYPES.TOP_LIST);
 
 	if (queryData.dataSource === DataSource.METRICS) {
 		return [
@@ -295,22 +278,36 @@ export function createAggregation(
 				reduceTo: haveReduceTo
 					? queryData?.aggregations?.[0]?.reduceTo || queryData?.reduceTo
 					: undefined,
+				...(queryData?.aggregations?.[0]?.comparisonSpaceAggregationParam && {
+					comparisonSpaceAggregationParam:
+						queryData.aggregations[0].comparisonSpaceAggregationParam,
+				}),
 			},
 		];
 	}
 
+	// A heatmap buckets the field the user names; count() would be rejected as one.
+	// Elsewhere a field is not an aggregation, so it falls back to count().
+	const isDistributionField = aggregatesDistributionField(
+		panelType,
+		queryData.dataSource,
+	);
+	const fallback = isDistributionField ? [] : [{ expression: 'count()' }];
+
 	if (queryData.aggregations?.length > 0) {
 		return queryData.aggregations.flatMap(
 			(agg: { expression: string; alias?: string }) => {
-				const parsedAggregations = parseAggregations(agg.expression, agg?.alias);
-				return isEmpty(parsedAggregations)
-					? [{ expression: 'count()' }]
-					: parsedAggregations;
+				const parsedAggregations = parseAggregations(
+					agg.expression,
+					agg?.alias,
+					isDistributionField,
+				);
+				return isEmpty(parsedAggregations) ? fallback : parsedAggregations;
 			},
 		);
 	}
 
-	return [{ expression: 'count()' }];
+	return fallback;
 }
 
 /**
@@ -557,9 +554,15 @@ export const prepareQueryRangePayloadV5 = (
 	const requestType = mapPanelTypeToRequestType(graphType);
 	let queries: QueryEnvelope[] = [];
 
-	switch (query.queryType) {
+	const foldedQuery = foldAISlot(query);
+
+	switch (foldedQuery.queryType) {
 		case EQueryType.QUERY_BUILDER: {
-			const { queryData: data, queryFormulas, queryTraceOperator } = query.builder;
+			const {
+				queryData: data,
+				queryFormulas,
+				queryTraceOperator,
+			} = foldedQuery.builder;
 			const currentQueryData = mapQueryDataToApi(data, 'queryName', tableParams);
 			const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
 
@@ -621,13 +624,15 @@ export const prepareQueryRangePayloadV5 = (
 			break;
 		}
 		case EQueryType.PROM: {
-			const promQueries = reduceQueriesToObject(query[query.queryType]);
+			const promQueries = reduceQueriesToObject(
+				foldedQuery[foldedQuery.queryType],
+			);
 			queries = convertPromQueriesToV5(promQueries.queries);
 			legendMap = promQueries.legends;
 			break;
 		}
 		case EQueryType.CLICKHOUSE: {
-			const chQueries = reduceQueriesToObject(query[query.queryType]);
+			const chQueries = reduceQueriesToObject(foldedQuery[foldedQuery.queryType]);
 			queries = convertClickHouseQueriesToV5(chQueries.queries);
 			legendMap = chQueries.legends;
 			break;

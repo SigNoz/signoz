@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FullScreenHandle } from 'react-full-screen';
-import { generatePath } from 'react-router-dom';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import {
 	Braces,
 	Configure,
@@ -14,7 +14,7 @@ import {
 	Trash2,
 } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import logEvent from 'api/common/logEvent';
 import { cloneDashboardV2 } from 'api/generated/services/dashboard';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
@@ -130,7 +130,7 @@ function DashboardActions({
 				source: 'detail',
 			});
 			safeNavigate(
-				generatePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
+				buildRoutePath(ROUTES.DASHBOARD, { dashboardId: response.data.id }),
 			);
 		} catch (error) {
 			showErrorModal(error as APIError);

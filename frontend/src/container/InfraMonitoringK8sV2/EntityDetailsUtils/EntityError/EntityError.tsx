@@ -1,6 +1,6 @@
 import { Typography } from '@signozhq/ui/typography';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { ArrowRight } from '@signozhq/icons';
 import { openInNewTab } from 'utils/navigation';
 
@@ -13,37 +13,42 @@ export default function EntityError(): JSX.Element {
 
 	const handleContactSupport = (): void => {
 		if (isCloudUserVal) {
-			history.push('/support');
+			navigate('/support');
 		} else {
 			openInNewTab('https://signoz.io/slack');
 		}
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container} data-testid="entity-error-state">
 			<div className={styles.content}>
 				<img src={awwSnapUrl} alt="error" className={styles.icon} />
-				<Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					<span className={styles.title}>Aw snap :/ </span>
 					Something went wrong. Please try again or contact support.
-				</Typography.Text>
+				</Typography>
 
-				<div
-					className={styles.contactSupport}
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					display="inline-flex"
+					gap={4}
+					marginTop={8}
+					textOverflow="wrap"
 					onClick={handleContactSupport}
-					role="button"
-					tabIndex={0}
-					onKeyDown={(e): void => {
-						if (e.key === 'Enter') {
-							handleContactSupport();
-						}
-					}}
+					testId="entity-error-contact-support"
 				>
-					<Typography.Link className={styles.contactSupportText}>
-						Contact Support
-					</Typography.Link>
+					Contact Support
 					<ArrowRight size={14} />
-				</div>
+				</Typography.Link>
 			</div>
 		</div>
 	);

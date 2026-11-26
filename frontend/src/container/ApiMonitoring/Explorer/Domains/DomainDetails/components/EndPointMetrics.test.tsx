@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from 'tests/test-utils';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse } from 'types/api';
@@ -114,10 +114,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			const domainName = 'api.example.com';
 			const startTime = 1758259531000;
 			const endTime = 1758261331000;
-			const filters = {
-				items: [],
-				op: 'AND' as const,
-			};
+			const filters = '';
 
 			// Get the actual payload that would be generated
 			const payloads = getEndPointDetailsQueryPayload(
@@ -237,31 +234,8 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 		it('includes custom domainListFilters in all query expressions', async () => {
 			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
 
-			const customFilters = {
-				items: [
-					{
-						id: 'test-1',
-						key: {
-							key: 'service.name',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'payment-service',
-					},
-					{
-						id: 'test-2',
-						key: {
-							key: 'deployment.environment',
-							dataType: 'string' as any,
-							type: 'resource',
-						},
-						op: '=',
-						value: 'staging',
-					},
-				],
-				op: 'AND' as const,
-			};
+			const customFilters =
+				"service.name = 'payment-service' AND deployment.environment = 'staging'";
 
 			const payloads = getEndPointDetailsQueryPayload(
 				'api.internal.com',
@@ -301,10 +275,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			renderComponent(mockQuery);
 
 			// Wait for skeletons to disappear
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
+			await screen.findByText('85.5 ops/sec');
 
 			// Verify all metric labels are displayed
 			expect(screen.getByText('Rate')).toBeInTheDocument();
@@ -340,13 +311,8 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 
 			renderComponent(mockQuery);
 
-			await waitFor(() => {
-				const skeletons = document.querySelectorAll('.ant-skeleton-button');
-				expect(skeletons).toHaveLength(0);
-			});
-
 			// When no data, all values should show "-"
-			const dashValues = screen.getAllByText('-');
+			const dashValues = await screen.findAllByText('-');
 			// Should have at least 2 dashes (rate and last used - latency shows "-", error % shows progress bar)
 			expect(dashValues.length).toBeGreaterThanOrEqual(2);
 		});

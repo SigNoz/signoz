@@ -1,15 +1,19 @@
 import React from 'react';
+import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
-import { MemoryRouter as MemoryRouterV5 } from 'react-router-dom-v5-compat';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { NuqsTestingAdapter, UrlUpdateEvent } from 'nuqs/adapters/testing';
 import { AppProvider } from 'providers/App/App';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
+import { TestRouter } from 'tests/router';
+import { userEvent } from 'tests/test-utils';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { K8sCategories } from '../constants';
 import InfraMonitoringK8s from '../InfraMonitoringK8s';
@@ -33,39 +37,96 @@ jest.mock('lib/navigation', () => ({
 	getNavigationReferrer: (): string => 'direct',
 }));
 
+function buildCompositeQueryParam(expression: string): string {
+	const defaultQuery = initialQueriesMap[DataSource.METRICS];
+
+	return encodeURIComponent(
+		JSON.stringify({
+			...defaultQuery,
+			builder: {
+				...defaultQuery.builder,
+				queryData: defaultQuery.builder.queryData.map((query) => ({
+					...query,
+					filter: { expression },
+				})),
+			},
+		}),
+	);
+}
+
+function getNavigatedQueryData(): IBuilderQuery {
+	const [to] = safeNavigateMock.mock.calls.at(-1) ?? [];
+	const url = typeof to === 'string' ? to : (to?.search ?? '');
+	const param = new URL(url, 'http://localhost').searchParams.get(
+		'compositeQuery',
+	);
+
+	return JSON.parse(decodeURIComponent(param ?? '')).builder.queryData[0];
+}
+
 function renderPage(
 	queryParams: Record<string, string>,
 	onUrlUpdate: jest.Mock<void, [UrlUpdateEvent]>,
+	initialUrl = '/',
 ): void {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
 
 	render(
-		<MemoryRouter>
-			<MemoryRouterV5>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<AppProvider>
-							<Provider store={store}>
-								<NuqsTestingAdapter
-									searchParams={queryParams}
-									onUrlUpdate={onUrlUpdate}
-								>
-									<QueryBuilderProvider>
-										<InfraMonitoringK8s />
-									</QueryBuilderProvider>
-								</NuqsTestingAdapter>
-							</Provider>
-						</AppProvider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</MemoryRouterV5>
-		</MemoryRouter>,
+		<TestRouter initialRoute={initialUrl}>
+			<TimezoneProvider>
+				<QueryClientProvider client={queryClient}>
+					<AppProvider>
+						<Provider store={store}>
+							<NuqsTestingAdapter searchParams={queryParams} onUrlUpdate={onUrlUpdate}>
+								<QueryBuilderProvider>
+									<InfraMonitoringK8s />
+								</QueryBuilderProvider>
+							</NuqsTestingAdapter>
+						</Provider>
+					</AppProvider>
+				</QueryClientProvider>
+			</TimezoneProvider>
+		</TestRouter>,
 	);
 }
 
 describe('InfraMonitoringK8s', () => {
+	describe('when the category changes with a list filter applied', () => {
+		beforeEach(async () => {
+			renderPage(
+				{ category: K8sCategories.NODES },
+				jest.fn(),
+				`/?compositeQuery=${buildCompositeQueryParam(
+					"k8s.node.condition_ready = true AND k8s.node.name in ['node-1', 'node-2']",
+				)}`,
+			);
+
+			await screen.findByTestId(`category-${K8sCategories.PODS}`);
+		});
+
+		it('should keep the clauses the new category can filter by', async () => {
+			await userEvent.click(screen.getByTestId(`category-${K8sCategories.PODS}`));
+
+			await waitFor(() => {
+				expect(safeNavigateMock).toHaveBeenCalled();
+			});
+
+			const queryData = getNavigatedQueryData();
+
+			expect(queryData.filter?.expression).toBe(
+				"k8s.node.name in ['node-1', 'node-2']",
+			);
+			expect(queryData.filters?.items).toHaveLength(1);
+			expect(queryData.filters?.items[0]).toMatchObject({
+				key: { key: 'k8s.node.name' },
+				op: 'in',
+				value: ['node-1', 'node-2'],
+			});
+		});
+	});
+
 	describe('when the category changes with a status filter applied', () => {
 		const onUrlUpdateMock = jest.fn<void, [UrlUpdateEvent]>();
 

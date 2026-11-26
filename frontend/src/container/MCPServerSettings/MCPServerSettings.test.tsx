@@ -4,7 +4,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import MCPServerSettings from './MCPServerSettings';
 
 const mockCopyToClipboard = jest.fn();
-const mockHistoryPush = jest.fn();
+const mockNavigate = jest.fn();
 const mockUseGetGlobalConfig = jest.fn();
 const mockUseGetHosts = jest.fn();
 const mockUseGetTenantLicense = jest.fn();
@@ -29,31 +29,28 @@ jest.mock('react-use', () => ({
 	useCopyToClipboard: (): [unknown, jest.Mock] => [null, mockCopyToClipboard],
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 		warning: (...args: unknown[]): unknown => mockToastWarning(...args),
 	},
 }));
 
-jest.mock('lib/history', () => ({
-	__esModule: true,
-	default: {
-		push: (...args: unknown[]): unknown => mockHistoryPush(...args),
-		location: { pathname: '/', search: '', hash: '', state: null },
-	},
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: (...args: unknown[]): unknown => mockNavigate(...args),
 }));
 
 jest.mock('utils/basePath', () => ({
+	...jest.requireActual('utils/basePath'),
 	getBaseUrl: (): string => 'http://localhost',
-	getBasePath: (): string => '/',
-	withBasePath: (p: string): string => p,
 }));
 
 const MCP_URL = 'https://mcp.us.signoz.cloud/mcp';
 const CUSTOM_HOST_URL = 'https://myteam.signoz.cloud';
 const DEFAULT_HOST_URL = 'https://default.signoz.cloud';
+const SKELETON_TEST_ID = 'mcp-instance-url-skeleton';
 
 function setupLicense({
 	isCloudUser = true,
@@ -112,7 +109,7 @@ describe('MCPServerSettings', () => {
 
 		render(<MCPServerSettings />);
 
-		expect(document.querySelector('.ant-spin-spinning')).toBeInTheDocument();
+		expect(screen.getByRole('img', { name: 'loading' })).toBeInTheDocument();
 		expect(screen.queryByTestId('mcp-settings')).not.toBeInTheDocument();
 	});
 
@@ -176,20 +173,20 @@ describe('MCPServerSettings', () => {
 
 	it('navigates to service accounts when admin clicks Create CTA', async () => {
 		setupGlobalConfig({ mcpUrl: MCP_URL });
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
 		await user.click(screen.getByText('Create service account'));
 
-		expect(mockHistoryPush).toHaveBeenCalledWith(
+		expect(mockNavigate).toHaveBeenCalledWith(
 			'/settings/service-accounts?create-sa=true',
 		);
 	});
 
 	it('copies instance URL and shows success toast', async () => {
 		setupGlobalConfig({ mcpUrl: MCP_URL });
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<MCPServerSettings />);
 
@@ -212,7 +209,7 @@ describe('MCPServerSettings', () => {
 					{ name: 'myteam', url: CUSTOM_HOST_URL, is_default: false },
 				],
 			});
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -232,7 +229,7 @@ describe('MCPServerSettings', () => {
 			setupHosts({
 				hosts: [{ name: 'default', url: DEFAULT_HOST_URL, is_default: true }],
 			});
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -250,7 +247,7 @@ describe('MCPServerSettings', () => {
 		it('falls back to browser URL when hosts request errors', async () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupHosts({ isError: true });
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -268,13 +265,13 @@ describe('MCPServerSettings', () => {
 			render(<MCPServerSettings />);
 
 			expect(screen.queryByTestId('mcp-instance-url')).not.toBeInTheDocument();
-			expect(document.querySelector('.ant-skeleton-input')).toBeInTheDocument();
+			expect(screen.getByTestId(SKELETON_TEST_ID)).toBeInTheDocument();
 		});
 
 		it('does not copy while hosts are still loading', async () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupHosts({ isLoading: true });
-			userEvent.setup({ pointerEventsCheck: 0 });
+			userEvent.setup();
 
 			render(<MCPServerSettings />);
 
@@ -298,13 +295,11 @@ describe('MCPServerSettings', () => {
 			setupGlobalConfig({ mcpUrl: MCP_URL });
 			setupLicense({ isCloudUser: false, isEnterpriseSelfHostedUser: true });
 			setupHosts({ isLoading: false });
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(<MCPServerSettings />, undefined, { role: 'ADMIN' });
 
-			expect(
-				document.querySelector('.ant-skeleton-input'),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId(SKELETON_TEST_ID)).not.toBeInTheDocument();
 			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
 				'http://localhost',
 			);
@@ -335,9 +330,7 @@ describe('MCPServerSettings', () => {
 
 			render(<MCPServerSettings />, undefined, { role: 'VIEWER' });
 
-			expect(
-				document.querySelector('.ant-skeleton-input'),
-			).not.toBeInTheDocument();
+			expect(screen.queryByTestId(SKELETON_TEST_ID)).not.toBeInTheDocument();
 			expect(screen.getByTestId('mcp-instance-url')).toHaveTextContent(
 				DEFAULT_HOST_URL,
 			);

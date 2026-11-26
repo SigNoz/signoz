@@ -1,15 +1,48 @@
-import { Route, Switch } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import ROUTES from 'constants/routes';
 import { customRoleResponse } from 'mocks-server/__mockdata__/roles';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
+import {
+	act,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
+import {
+	AUTHZ_CHECK_URL,
+	authzMockResponse,
+	setupAuthzAdmin,
+} from 'lib/authz/utils/authz-test-utils';
+import { getCurrentLocation } from 'lib/router/navigation';
 
 import CreateEditRolePage from '../CreateEditRolePage';
 
+jest.mock('@monaco-editor/react', () => ({
+	__esModule: true,
+	default: ({
+		value,
+		onChange,
+	}: {
+		value: string;
+		onChange: (next?: string) => void;
+	}): JSX.Element => (
+		<textarea
+			data-testid="monaco-editor"
+			value={value}
+			onChange={(e): void => onChange(e.target.value)}
+		/>
+	),
+}));
+
 const CUSTOM_ROLE_ID = '019c24aa-3333-0001-aaaa-111111111111';
 const rolesApiBase = '*/api/v1/roles';
+const VIEW_ROLE_URL = `${ROUTES.ROLE_DETAILS.replace(
+	':roleId',
+	CUSTOM_ROLE_ID,
+)}?name=${encodeURIComponent('Custom Role')}`;
 
 const roleWithTransactionGroups = {
 	status: 'success',
@@ -41,21 +74,9 @@ afterEach(() => {
 });
 
 function renderEditPage(roleId = CUSTOM_ROLE_ID): ReturnType<typeof render> {
-	return render(
-		<Switch>
-			<Route path={ROUTES.ROLES_SETTINGS} exact>
-				<div data-testid="roles-list-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_DETAILS} exact>
-				<div data-testid="role-details-redirect" />
-			</Route>
-			<Route path={ROUTES.ROLE_EDIT}>
-				<CreateEditRolePage />
-			</Route>
-		</Switch>,
-		undefined,
-		{ initialRoute: `/settings/roles/${roleId}/edit?name=Custom%20Role` },
-	);
+	return render(<CreateEditRolePage />, undefined, {
+		initialRoute: `/settings/roles/${roleId}/edit?name=Custom%20Role`,
+	});
 }
 
 describe('EditRolePage', () => {
@@ -69,7 +90,7 @@ describe('EditRolePage', () => {
 
 			renderEditPage();
 
-			expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+			expect(screen.getByTestId('role-editor-loading')).toBeInTheDocument();
 		});
 
 		it('shows loading title in header while fetching role data', async () => {
@@ -144,9 +165,10 @@ describe('EditRolePage', () => {
 			const cancelButton = await screen.findByTestId('cancel-button');
 			await user.click(cancelButton);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 	});
 
@@ -163,7 +185,9 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(() => {
-				expect(screen.queryByTestId('role-name-input')).not.toBeInTheDocument();
+				expect(
+					screen.queryByTestId('role-name-input-field'),
+				).not.toBeInTheDocument();
 			});
 		});
 
@@ -171,7 +195,7 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(async () => {
-				const descInput = await screen.findByTestId('role-description-input');
+				const descInput = await screen.findByTestId('role-description-input-field');
 				expect(descInput).toHaveValue(
 					'Custom role for managing billing and invoices.',
 				);
@@ -181,7 +205,7 @@ describe('EditRolePage', () => {
 		it('description input is enabled in edit mode', async () => {
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			expect(descInput).not.toBeDisabled();
 		});
 
@@ -196,7 +220,7 @@ describe('EditRolePage', () => {
 			renderEditPage();
 
 			await waitFor(async () => {
-				const descInput = await screen.findByTestId('role-description-input');
+				const descInput = await screen.findByTestId('role-description-input-field');
 				expect(descInput).toHaveValue(
 					'Custom role for managing billing and invoices.',
 				);
@@ -212,7 +236,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.clear(descInput);
 			await user.type(descInput, 'New description');
 
@@ -224,7 +248,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' updated');
 
 			await expect(
@@ -236,7 +260,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			const originalValue = 'Custom role for managing billing and invoices.';
 
 			await user.clear(descInput);
@@ -263,14 +287,15 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			await screen.findByTestId('role-description-input');
+			await screen.findByTestId('role-description-input-field');
 
 			const cancelBtn = screen.getByTestId('cancel-button');
 			await user.click(cancelBtn);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 	});
 
@@ -285,16 +310,17 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.clear(descInput);
 			await user.type(descInput, 'Updated description');
 
 			const saveBtn = screen.getByTestId('save-button');
 			await user.click(saveBtn);
 
-			await expect(
-				screen.findByTestId('role-details-redirect'),
-			).resolves.toBeInTheDocument();
+			await waitFor(() => {
+				const { pathname, search } = getCurrentLocation();
+				expect(`${pathname}${search}`).toBe(VIEW_ROLE_URL);
+			});
 		});
 
 		it('calls update API when save clicked', async () => {
@@ -310,7 +336,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' edited');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -331,7 +357,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' changed');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -350,7 +376,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' test');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -369,7 +395,7 @@ describe('EditRolePage', () => {
 			const user = userEvent.setup();
 			renderEditPage();
 
-			const descInput = await screen.findByTestId('role-description-input');
+			const descInput = await screen.findByTestId('role-description-input-field');
 			await user.type(descInput, ' x');
 
 			const saveBtn = screen.getByTestId('save-button');
@@ -409,6 +435,127 @@ describe('EditRolePage', () => {
 				'aria-disabled',
 				'true',
 			);
+		});
+	});
+
+	describe('JSON view opened from the URL', () => {
+		const roleGrants = roleWithTransactionGroups.data.transactionGroups;
+
+		function renderJsonView(client?: QueryClient): ReturnType<typeof render> {
+			const page = <CreateEditRolePage />;
+			return render(
+				client ? (
+					<QueryClientProvider client={client}>{page}</QueryClientProvider>
+				) : (
+					page
+				),
+				undefined,
+				{
+					initialRoute: `/settings/roles/${CUSTOM_ROLE_ID}/edit?name=Custom%20Role&viewMode=json`,
+				},
+			);
+		}
+
+		function readBuffer(editor: HTMLElement): unknown {
+			return JSON.parse((editor as HTMLTextAreaElement).value);
+		}
+
+		it('shows the role grants when the role loads after the authz check', async () => {
+			server.use(
+				rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) =>
+					res(ctx.delay(300), ctx.status(200), ctx.json(roleWithTransactionGroups)),
+				),
+			);
+
+			renderJsonView();
+
+			const editor = await screen.findByTestId('monaco-editor');
+			expect(readBuffer(editor)).toStrictEqual(roleGrants);
+		});
+
+		it('shows the role grants when the role loads before the authz check', async () => {
+			server.use(
+				rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+					const payload = await req.json();
+					return res(
+						ctx.delay(300),
+						ctx.status(200),
+						ctx.json(
+							authzMockResponse(
+								payload,
+								payload.map(() => true),
+							),
+						),
+					);
+				}),
+			);
+
+			renderJsonView();
+
+			const editor = await screen.findByTestId('monaco-editor');
+			expect(readBuffer(editor)).toStrictEqual(roleGrants);
+		});
+
+		it('saves what was typed in the buffer even when the role refetches afterwards', async () => {
+			const updatedBodies: unknown[] = [];
+			let roleReads = 0;
+			server.use(
+				rest.get(`${rolesApiBase}/:id`, (_req, res, ctx) => {
+					roleReads += 1;
+					return res(
+						ctx.status(200),
+						ctx.json(
+							roleReads === 1
+								? roleWithTransactionGroups
+								: {
+										...roleWithTransactionGroups,
+										data: {
+											...roleWithTransactionGroups.data,
+											transactionGroups: [
+												{
+													objectGroup: {
+														resource: { kind: 'role', type: 'role' },
+														selectors: ['*'],
+													},
+													relation: 'update',
+												},
+											],
+										},
+									},
+						),
+					);
+				}),
+				rest.put(`${rolesApiBase}/:id`, async (req, res, ctx) => {
+					updatedBodies.push(await req.json());
+					return res(ctx.status(200), ctx.json({ status: 'success' }));
+				}),
+			);
+
+			const user = userEvent.setup();
+			const client = new QueryClient({
+				defaultOptions: { queries: { retry: false } },
+			});
+			renderJsonView(client);
+
+			const editor = await screen.findByTestId('monaco-editor');
+			await user.type(editor, '[[]', {
+				initialSelectionStart: 0,
+				initialSelectionEnd: (editor as HTMLTextAreaElement).value.length,
+			});
+
+			await act(async () => {
+				await client.invalidateQueries();
+			});
+			await waitFor(() => {
+				expect(roleReads).toBeGreaterThan(1);
+			});
+
+			await user.click(screen.getByTestId('save-button'));
+
+			await waitFor(() => {
+				expect(updatedBodies).toHaveLength(1);
+			});
+			expect(updatedBodies[0]).toMatchObject({ transactionGroups: [] });
 		});
 	});
 });

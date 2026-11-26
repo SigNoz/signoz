@@ -13,7 +13,7 @@ import (
 
 func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/saved_views", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.ListV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.List, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListSavedViews",
 			Tags:                []string{"saved_view"},
@@ -40,7 +40,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.CreateV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Create, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "CreateSavedView",
 			Tags:                []string{"saved_view"},
@@ -48,6 +48,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 			Description:         "Persists a saved view for the explore page. Returns the id of the created view.",
 			Request:             new(savedviewtypes.PostableSavedView),
 			RequestContentType:  "application/json",
+			RequestExamples:     postableSavedViewExamples(),
 			Response:            new(types.Identifiable),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusCreated,
@@ -67,7 +68,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.GetV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Get, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetSavedView",
 			Tags:                []string{"saved_view"},
@@ -94,7 +95,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.UpdateV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Update, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateSavedView",
 			Tags:                []string{"saved_view"},
@@ -102,6 +103,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 			Description:         "Replaces a saved view's name and query.",
 			Request:             new(savedviewtypes.UpdatableSavedView),
 			RequestContentType:  "application/json",
+			RequestExamples:     updatableSavedViewExamples(),
 			Response:            nil,
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusNoContent,

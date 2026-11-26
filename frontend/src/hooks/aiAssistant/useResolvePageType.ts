@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
 
-import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { useAppLocation } from 'lib/router/useAppLocation';
+
+import { PageTypeDTO } from '@signozhq/noz-client';
 import { resolvePageType } from 'container/AIAssistant/resolvePageType';
 import { useVariant } from 'container/AIAssistant/VariantContext';
 
@@ -10,7 +11,7 @@ import { useVariant } from 'container/AIAssistant/VariantContext';
  * `page_type` from the active location and assistant variant.
  */
 export function useResolvePageType(): PageTypeDTO {
-	const location = useLocation();
+	const location = useAppLocation();
 	const variant = useVariant();
 
 	return useMemo(

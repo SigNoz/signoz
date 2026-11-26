@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Badge } from '@signozhq/ui/badge';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -39,6 +39,17 @@ import DeleteMemberDialog from './DeleteMemberDialog';
 import ResetLinkDialog from './ResetLinkDialog';
 
 import './EditMemberDrawer.styles.scss';
+import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
+import {
+	buildResetPasswordPermission,
+	buildUserDeletePermission,
+	buildUserReadPermission,
+	buildUserUpdatePermission,
+	PasswordListPermission,
+} from '@/lib/authz/hooks/useAuthZ/permissions/user.permissions';
+import AuthZButton from '@/lib/authz/components/AuthZButton/AuthZButton';
+import { useAuthZ } from '@/lib/authz/hooks/useAuthZ/useAuthZ';
+import AuthZTooltip from '@/lib/authz/components/AuthZTooltip/AuthZTooltip';
 
 const ROOT_USER_TOOLTIP = 'This operation is not supported for the root user';
 const SELF_DELETE_TOOLTIP =
@@ -59,12 +70,16 @@ function getDeleteTooltip(
 
 function getInviteButtonLabel(
 	isLoading: boolean,
+	canListPassword: boolean,
 	existingToken: { expiresAt?: string } | undefined,
 	isExpired: boolean,
 	notFound: boolean,
 ): string {
 	if (isLoading) {
 		return 'Checking invite...';
+	}
+	if (!canListPassword) {
+		return 'Invite Link Unavailable';
 	}
 	if (existingToken && !isExpired) {
 		return 'Copy Invite Link';
@@ -87,7 +102,6 @@ function toSaveApiError(err: unknown): APIError {
 
 export interface EditMemberDrawerProps {
 	member: MemberRow | null;
-	open: boolean;
 	onClose: () => void;
 	onComplete: () => void;
 }
@@ -95,7 +109,6 @@ export interface EditMemberDrawerProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function EditMemberDrawer({
 	member,
-	open,
 	onClose,
 	onComplete,
 }: EditMemberDrawerProps): JSX.Element {
@@ -119,16 +132,47 @@ function EditMemberDrawer({
 	const isDeleted = member?.status === MemberStatus.Deleted;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
 
+	const requestPermission = useMemo(() => {
+		if (member) {
+			return isInvited
+				? [buildUserReadPermission(member.id), PasswordListPermission]
+				: [buildUserReadPermission(member.id)];
+		}
+		return [];
+	}, [member, isInvited]);
+
+	const {
+		permissions: authZPermission,
+		error: authZError,
+		isLoading: isLoadingAuthZ,
+	} = useAuthZ(requestPermission);
+
+	const canReadUser = member
+		? !!authZError ||
+			(authZPermission?.[buildUserReadPermission(member.id)]?.isGranted ?? false)
+		: false;
+
+	const canListPassword =
+		!!authZError ||
+		(authZPermission?.[PasswordListPermission]?.isGranted ?? false);
+
+	const resetLinkChecks = useMemo(() => {
+		if (!member) {
+			return [];
+		}
+		if (isInvited && !canListPassword) {
+			return [PasswordListPermission];
+		}
+		return buildResetPasswordPermission(member.id);
+	}, [member, isInvited, canListPassword]);
+
 	const { showErrorModal } = useErrorModal();
 
 	const {
 		data: fetchedUser,
 		isLoading: isFetchingUser,
 		refetch: refetchUser,
-	} = useGetUser(
-		{ id: member?.id ?? '' },
-		{ query: { enabled: open && !!member?.id } },
-	);
+	} = useGetUser({ id: member?.id ?? '' }, { query: { enabled: canReadUser } });
 
 	const isRootUser = !!fetchedUser?.data?.isRoot;
 
@@ -144,7 +188,7 @@ function EditMemberDrawer({
 		currentRoles: currentMemberRoles,
 		isLoading: isMemberRolesLoading,
 		applyDiff,
-	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
+	} = useMemberRoleManager(member?.id ?? '', canReadUser);
 
 	// Token status query for invited users
 	const {
@@ -153,7 +197,7 @@ function EditMemberDrawer({
 		isError: tokenNotFound,
 	} = useGetResetPasswordToken(
 		{ id: member?.id ?? '' },
-		{ query: { enabled: open && !!member?.id && isInvited } },
+		{ query: { enabled: !!member?.id && isInvited && canListPassword } },
 	);
 
 	const existingToken = tokenQueryData?.data;
@@ -187,13 +231,17 @@ function EditMemberDrawer({
 	useEffect(() => {
 		if (!member?.id) {
 			roleSessionRef.current = null;
-		} else if (member.id !== roleSessionRef.current && !isMemberRolesLoading) {
+		} else if (
+			canReadUser &&
+			member.id !== roleSessionRef.current &&
+			!isMemberRolesLoading
+		) {
 			setLocalRoles(
 				currentMemberRoles.map((r) => r.id).filter(Boolean) as string[],
 			);
 			roleSessionRef.current = member.id;
 		}
-	}, [member?.id, currentMemberRoles, isMemberRolesLoading]);
+	}, [member?.id, canReadUser, currentMemberRoles, isMemberRolesLoading]);
 
 	const isDirty =
 		member !== null &&
@@ -210,7 +258,7 @@ function EditMemberDrawer({
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
 
-	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
+	const { mutateAsync: deleteUser, isLoading: isDeleting } = useDeleteUser({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success(
@@ -378,11 +426,15 @@ function EditMemberDrawer({
 		onComplete,
 	]);
 
-	const handleDelete = useCallback((): void => {
+	const handleDelete = useCallback(async (): Promise<void> => {
 		if (!member) {
 			return;
 		}
-		deleteUser({ pathParams: { id: member.id } });
+		try {
+			await deleteUser({ pathParams: { id: member.id } });
+		} catch {
+			// `onError` already shows the error modal, and the confirmation stays open.
+		}
 	}, [member, deleteUser]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
@@ -409,7 +461,8 @@ function EditMemberDrawer({
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {
-				toast.error('Failed to generate password reset link', {
+				toast.danger('Failed to generate password reset link', {
+					action: { label: 'Dismiss' },
 					position: 'top-right',
 				});
 			}
@@ -438,7 +491,7 @@ function EditMemberDrawer({
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link');
+			toast.danger('Failed to copy link', { action: { label: 'Dismiss' } });
 		}
 	}, [copyState.error]);
 
@@ -463,6 +516,31 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
+	const inviteLinkAndResetPasswordText = useMemo(() => {
+		if (isGeneratingLink) {
+			return 'Generating...';
+		}
+		if (isInvited) {
+			return getInviteButtonLabel(
+				isLoadingTokenStatus || isLoadingAuthZ,
+				canListPassword,
+				existingToken,
+				isTokenExpired,
+				tokenNotFound,
+			);
+		}
+		return 'Generate Password Reset Link';
+	}, [
+		isGeneratingLink,
+		isInvited,
+		isLoadingTokenStatus,
+		isLoadingAuthZ,
+		canListPassword,
+		existingToken,
+		isTokenExpired,
+		tokenNotFound,
+	]);
+
 	const drawerBody = isFetchingUser ? (
 		<Skeleton active paragraph={{ rows: 6 }} />
 	) : (
@@ -471,7 +549,11 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-name">
 					Name
 				</label>
-				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+
+				<AuthZTooltip
+					checks={member && !isSelf ? [buildUserUpdatePermission(member.id)] : []}
+					disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				>
 					<Input
 						id="member-name"
 						value={localDisplayName}
@@ -483,8 +565,9 @@ function EditMemberDrawer({
 						}}
 						placeholder="Enter name"
 						disabled={isRootUser || isDeleted}
+						disabledTooltip={undefined}
 					/>
-				</Tooltip>
+				</AuthZTooltip>
 			</div>
 
 			<div className="edit-member-drawer__field">
@@ -503,17 +586,12 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-role">
 					Roles
 				</label>
-				{isSelf || isRootUser || isDeleted ? (
-					<Tooltip
-						title={
-							isRootUser
-								? ROOT_USER_TOOLTIP
-								: isDeleted
-									? undefined
-									: 'You cannot modify your own role'
-						}
-					>
-						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
+				{isRootUser || isDeleted ? (
+					<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+						<div
+							className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled"
+							data-testid="member-roles-locked"
+						>
 							<div className="edit-member-drawer__disabled-roles">
 								{localRoles.length > 0 ? (
 									localRoles.map((roleId) => {
@@ -540,6 +618,7 @@ function EditMemberDrawer({
 					<RolesSelect
 						id="member-role"
 						mode="multiple"
+						testId="member-roles-select"
 						roles={availableRoles}
 						loading={rolesLoading}
 						isError={rolesError}
@@ -615,93 +694,91 @@ function EditMemberDrawer({
 		</div>
 	);
 
-	const footer = (
-		<div className="edit-member-drawer__footer">
-			{!isDeleted && (
-				<>
-					<div className="edit-member-drawer__footer-left">
-						<Button
-							disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
-							size="md"
-							onClick={(): void => setShowDeleteConfirm(true)}
-							disabled={isRootUser || isSelf}
-							variant="link"
-							color="danger"
-							prefix={<Trash2 size={12} />}
-						>
-							{isInvited ? 'Revoke Invite' : 'Delete Member'}
-						</Button>
+	const footerStart = isDeleted ? null : (
+		<div className="edit-member-drawer__footer-left">
+			<AuthZButton
+				disabledTooltip={getDeleteTooltip(isRootUser, isSelf)}
+				size="md"
+				onClick={(): void => setShowDeleteConfirm(true)}
+				testId="member-delete-btn"
+				variant="link"
+				color="danger"
+				checks={member ? [buildUserDeletePermission(member.id)] : []}
+				prefix={<Trash2 size={12} />}
+			>
+				{isInvited ? 'Revoke Invite' : 'Delete Member'}
+			</AuthZButton>
 
-						<div className="edit-member-drawer__footer-divider" />
-						<Button
-							disabledTooltip={ROOT_USER_TOOLTIP}
-							size="md"
-							onClick={handleGenerateResetLink}
-							disabled={isRootUser}
-							loading={isGeneratingLink || isLoadingTokenStatus}
-							variant="link"
-							color="warning"
-							prefix={<RefreshCw size={12} />}
-						>
-							{isGeneratingLink
-								? 'Generating...'
-								: isInvited
-									? getInviteButtonLabel(
-											isLoadingTokenStatus,
-											existingToken,
-											isTokenExpired,
-											tokenNotFound,
-										)
-									: 'Generate Password Reset Link'}
-						</Button>
-					</div>
-
-					<div className="edit-member-drawer__footer-right">
-						<Button
-							size="md"
-							variant="outlined"
-							color="secondary"
-							onClick={handleClose}
-							prefix={<X size={14} />}
-						>
-							Cancel
-						</Button>
-
-						<Button
-							disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : 'No changes to save'}
-							size="md"
-							variant="solid"
-							color="primary"
-							disabled={!isDirty || isRootUser}
-							onClick={handleSave}
-							loading={isSaving}
-						>
-							{isSaving ? 'Saving...' : 'Save Member Details'}
-						</Button>
-					</div>
-				</>
-			)}
+			<div className="edit-member-drawer__footer-divider" />
+			<AuthZButton
+				disabledTooltip={isRootUser ? ROOT_USER_TOOLTIP : undefined}
+				size="md"
+				onClick={handleGenerateResetLink}
+				testId="member-reset-link-btn"
+				loading={isGeneratingLink || isLoadingTokenStatus}
+				variant="link"
+				color="warning"
+				checks={resetLinkChecks}
+				prefix={<RefreshCw size={12} />}
+			>
+				{inviteLinkAndResetPasswordText}
+			</AuthZButton>
 		</div>
+	);
+
+	const footerActions = isDeleted ? null : (
+		<>
+			<Button
+				size="md"
+				variant="outlined"
+				color="secondary"
+				onClick={handleClose}
+				prefix={<X size={14} />}
+			>
+				Cancel
+			</Button>
+
+			<AuthZButton
+				disabledTooltip={
+					isRootUser
+						? ROOT_USER_TOOLTIP
+						: !isDirty
+							? 'No changes to save'
+							: undefined
+				}
+				size="md"
+				variant="solid"
+				color="primary"
+				disabled={!isDirty || isRootUser}
+				onClick={handleSave}
+				checks={[]}
+				testId="member-save-btn"
+				loading={isSaving}
+			>
+				{isSaving ? 'Saving...' : 'Save Member Details'}
+			</AuthZButton>
+		</>
 	);
 
 	return (
 		<>
-			<DrawerWrapper
-				open={open}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						handleClose();
-					}
-				}}
-				direction="right"
-				showCloseButton
-				showOverlay={false}
+			<Drawer
+				type="task"
+				stack="overlay"
+				open={member !== null}
+				onClose={handleClose}
 				title="Member Details"
-				footer={footer}
 				width="wide"
+				footerPrefix={footerStart}
+				footerSuffix={footerActions}
 			>
-				{drawerContent}
-			</DrawerWrapper>
+				<AuthZGuardContent
+					checks={member ? [buildUserReadPermission(member?.id)] : []}
+					fallbackOnLoading={<Skeleton active paragraph={{ rows: 6 }} />}
+				>
+					{drawerContent}
+				</AuthZGuardContent>
+			</Drawer>
 
 			<ResetLinkDialog
 				open={showResetLinkDialog}

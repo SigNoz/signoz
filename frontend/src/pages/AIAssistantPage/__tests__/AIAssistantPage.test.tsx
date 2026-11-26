@@ -1,8 +1,15 @@
-import { MemoryRouter, Route } from 'react-router-dom';
 // eslint-disable-next-line no-restricted-imports
 import { render } from '@testing-library/react';
 import ROUTES from 'constants/routes';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
+import { getCurrentLocation, navigate } from 'lib/router/navigation';
+import { TestRouter } from 'tests/router';
+import {
+	act,
+	render as renderWithProviders,
+	screen,
+	userEvent,
+} from 'tests/test-utils';
 
 jest.mock('api/common/logEvent', () => ({
 	__esModule: true,
@@ -34,13 +41,12 @@ import AIAssistantPage from '../AIAssistantPage';
 
 function renderAt(entry: string): { unmount: () => void } {
 	return render(
-		<MemoryRouter initialEntries={[entry]}>
-			<Route
-				exact
-				path={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
-				component={AIAssistantPage}
-			/>
-		</MemoryRouter>,
+		<TestRouter
+			initialRoute={entry}
+			routePath={[ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT]}
+		>
+			<AIAssistantPage />
+		</TestRouter>,
 	);
 }
 
@@ -175,6 +181,42 @@ describe('AIAssistantPage', () => {
 		expect(
 			Object.keys(useAIAssistantStore.getState().conversations),
 		).toStrictEqual(['persisted']);
+
+		unmount();
+	});
+
+	it('minimizes back to the page it was expanded from after the URL has moved on', async () => {
+		const user = userEvent.setup();
+		useAIAssistantStore.setState({
+			conversations: {
+				first: { id: 'first', messages: [], createdAt: 1, updatedAt: 1 },
+				second: { id: 'second', messages: [], createdAt: 2, updatedAt: 2 },
+			},
+			streams: {},
+			activeConversationId: 'first',
+			isDrawerOpen: false,
+		});
+		const { unmount } = renderWithProviders(<AIAssistantPage />, undefined, {
+			initialRoute: '/dashboard/abc?relativeTime=1h',
+			routePath: [ROUTES.AI_ASSISTANT_BASE, ROUTES.AI_ASSISTANT],
+		});
+		// Expanded from the dashboard…
+		act(() => {
+			navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', 'first'), {
+				state: { fromInApp: true, returnTo: '/dashboard/abc?relativeTime=1h' },
+			});
+		});
+		// …then switched to another conversation, the way the list does it.
+		act(() => {
+			useAIAssistantStore.getState().setActiveConversation('second');
+			navigate(ROUTES.AI_ASSISTANT.replace(':conversationId', 'second'));
+		});
+
+		await user.click(await screen.findByTestId('ai-assistant-minimize'));
+
+		const { pathname, search } = getCurrentLocation();
+		expect(`${pathname}${search}`).toBe('/dashboard/abc?relativeTime=1h');
+		expect(useAIAssistantStore.getState().isDrawerOpen).toBe(true);
 
 		unmount();
 	});

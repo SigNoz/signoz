@@ -4,7 +4,7 @@ import {
 	DashboardtypesHeatmapColorScaleDTO,
 	DashboardtypesHeatmapPaletteDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { DEFAULT_COLOR_STEPS } from 'lib/uPlotV2/plugins/HeatmapPlugin/colorScale';
+import { DEFAULT_COLOR_STEPS } from 'lib/visualization/colorRamp/colorScale';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import HeatmapColorsField from '../HeatmapColorsField';
@@ -148,12 +148,12 @@ describe('HeatmapColorsField', () => {
 		const onChange = jest.fn();
 		render(<HeatmapColorsField value={undefined} onChange={onChange} />);
 
-		expect(screen.getByRole('slider')).toHaveAttribute(
+		expect(screen.getByRole('slider', { hidden: true })).toHaveAttribute(
 			'aria-valuenow',
 			String(DEFAULT_COLOR_STEPS),
 		);
 
-		screen.getByRole('slider').focus();
+		screen.getByRole('slider', { hidden: true }).focus();
 		await user.keyboard('{ArrowRight}');
 
 		expect(onChange).toHaveBeenLastCalledWith({
@@ -166,9 +166,9 @@ describe('HeatmapColorsField', () => {
 		const onChange = jest.fn();
 		render(<HeatmapColorsField value={{ steps: 2 }} onChange={onChange} />);
 
-		const slider = screen.getByRole('slider');
-		expect(slider).toHaveAttribute('aria-valuemin', '2');
-		expect(slider).toHaveAttribute('aria-valuemax', '128');
+		const slider = screen.getByRole('slider', { hidden: true });
+		expect(slider).toHaveAttribute('min', '2');
+		expect(slider).toHaveAttribute('max', '128');
 
 		// Already at the floor, so there is no step to take and nothing to write.
 		slider.focus();

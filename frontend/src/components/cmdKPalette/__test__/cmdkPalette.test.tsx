@@ -3,7 +3,7 @@
  */
 // ---- Mocks (must run BEFORE importing the component) ----
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import '@testing-library/jest-dom/extend-expect';
@@ -24,61 +24,12 @@ afterAll(() => {
 	delete (HTMLElement.prototype as any).scrollIntoView;
 });
 
-// mock history.push / replace / go / location
-jest.mock('lib/history', () => {
-	const location = { pathname: '/', search: '', hash: '' };
+jest.mock('lib/router/navigation', () => ({
+	...jest.requireActual('lib/router/navigation'),
+	navigate: jest.fn(),
+}));
 
-	const stack: { pathname: string; search: string }[] = [
-		{ pathname: '/', search: '' },
-	];
-
-	const push = jest.fn((path: string) => {
-		const [rawPath, rawQuery] = path.split('?');
-		const pathname = rawPath || '/';
-		const search = path.includes('?') ? `?${rawQuery || ''}` : '';
-
-		location.pathname = pathname;
-		location.search = search;
-
-		stack.push({ pathname, search });
-		return undefined;
-	});
-
-	const replace = jest.fn((path: string) => {
-		const [rawPath, rawQuery] = path.split('?');
-		const pathname = rawPath || '/';
-		const search = path.includes('?') ? `?${rawQuery || ''}` : '';
-
-		location.pathname = pathname;
-		location.search = search;
-
-		if (stack.length > 0) {
-			stack[stack.length - 1] = { pathname, search };
-		} else {
-			stack.push({ pathname, search });
-		}
-		return undefined;
-	});
-
-	const listen = jest.fn();
-	const go = jest.fn((n: number) => {
-		if (n < 0 && stack.length > 1) {
-			stack.pop();
-		}
-		const top = stack[stack.length - 1] || { pathname: '/', search: '' };
-		location.pathname = top.pathname;
-		location.search = top.search;
-	});
-
-	return {
-		push,
-		replace,
-		listen,
-		go,
-		location,
-		__stack: stack,
-	};
-});
+const mockNavigate = navigate as jest.MockedFunction<typeof navigate>;
 
 // Mock ResizeObserver for Jest/jsdom
 class ResizeObserver {
@@ -159,14 +110,16 @@ describe('CmdKPalette', () => {
 		expect(screen.getByText('Switch to Dark Mode')).toBeInTheDocument();
 	});
 
-	it('clicking a navigation item calls history.push with correct route', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+	it('clicking a navigation item navigates to the correct route', async () => {
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const homeItem = screen.getByText(HOME_LABEL);
-		await user.click(homeItem);
+		await user.type(
+			screen.getByTestId('cmdk-palette-search'),
+			`${HOME_LABEL}{Enter}`,
+		);
 
-		expect(history.push).toHaveBeenCalledWith(ROUTES.HOME);
+		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.HOME);
 	});
 
 	it('role-based filtering (basic smoke)', () => {
@@ -188,17 +141,20 @@ describe('CmdKPalette', () => {
 	it('items render with icons when provided', () => {
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const iconHolders = document.querySelectorAll('.cmd-item-icon');
-		expect(iconHolders.length).toBeGreaterThan(0);
+		expect(
+			screen.getByTestId('cmdk-palette-item-home-prefix'),
+		).toBeInTheDocument();
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
 	it('closing the palette via handleInvoke sets open to false', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const dashItem = screen.getByText('Go to Dashboards');
-		await user.click(dashItem);
+		await user.type(
+			screen.getByTestId('cmdk-palette-search'),
+			'Go to Dashboards{Enter}',
+		);
 
 		// last call from handleInvoke should set open to false
 		expect(mockSetOpen).toHaveBeenCalledWith(false);

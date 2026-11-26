@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { useHistory, useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
+import { navigate } from 'lib/router/navigation';
 import { Button } from '@signozhq/ui/button';
-import { Flex, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import ROUTES from 'constants/routes';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
@@ -32,8 +34,7 @@ const cloudIntegrationTypeById: Record<string, IntegrationType> = {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function IntegrationDetailPage(): JSX.Element {
-	const history = useHistory();
-	const { integrationId } = useParams<{ integrationId?: string }>();
+	const { integrationId } = useAppParams<{ integrationId?: string }>();
 	const [activeDetailTab, setActiveDetailTab] = useState<string | null>(
 		'overview',
 	);
@@ -74,7 +75,7 @@ function IntegrationDetailPage(): JSX.Element {
 					color="secondary"
 					prefix={<ArrowLeft size={14} />}
 					onClick={(): void => {
-						history.push(ROUTES.INTEGRATIONS);
+						navigate(ROUTES.INTEGRATIONS);
 					}}
 				>
 					All Integrations
@@ -85,9 +86,16 @@ function IntegrationDetailPage(): JSX.Element {
 				<div className="error-container">
 					<div className="error-content">
 						<img src={awwSnapUrl} alt="error-emoji" className="error-state-svg" />
-						<Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
 							Something went wrong :/ Please retry or contact support.
-						</Typography.Text>
+						</Typography>
 						<div className="error-btns">
 							<Button
 								size="md"

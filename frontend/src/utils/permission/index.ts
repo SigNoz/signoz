@@ -3,7 +3,6 @@ import { ROLES } from 'types/roles';
 
 export type ComponentTypes =
 	| 'current_org_settings'
-	| 'invite_members'
 	| 'create_new_dashboards'
 	| 'import_dashboard'
 	| 'export_dashboard'
@@ -30,7 +29,6 @@ export type ComponentTypes =
  */
 export const componentPermission: Record<ComponentTypes, ROLES[]> = {
 	current_org_settings: ['ADMIN'],
-	invite_members: ['ADMIN'],
 	create_new_dashboards: ['ADMIN', 'EDITOR'],
 	import_dashboard: ['ADMIN', 'EDITOR'],
 	export_dashboard: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -112,8 +110,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	BILLING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	SUPPORT: ['ADMIN', 'EDITOR', 'VIEWER', 'ANONYMOUS'],
 	SOMETHING_WENT_WRONG: ['ADMIN', 'EDITOR', 'VIEWER'],
-	LOGS_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
-	TRACES_SAVE_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_FUNNELS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	TRACES_FUNNELS_DETAIL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	LOGS_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -128,7 +124,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	MESSAGING_QUEUES_OVERVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	METRICS_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METRICS_EXPLORER_VOLUME_CONTROL: ['ADMIN', 'EDITOR', 'VIEWER'],
 	API_MONITORING: ['ADMIN', 'EDITOR', 'VIEWER'],
 	WORKSPACE_ACCESS_RESTRICTED: ['ADMIN', 'EDITOR', 'VIEWER'],
@@ -138,7 +133,6 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
 	MESSAGING_QUEUES_BASE: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METER_EXPLORER: ['ADMIN', 'EDITOR', 'VIEWER'],
 	METER: ['ADMIN', 'EDITOR', 'VIEWER'],
-	METER_EXPLORER_VIEWS: ['ADMIN', 'EDITOR', 'VIEWER'],
 	PUBLIC_DASHBOARD: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT: ['ADMIN', 'EDITOR', 'VIEWER'],
 	AI_ASSISTANT_ICON_PREVIEW: ['ADMIN', 'EDITOR', 'VIEWER'],

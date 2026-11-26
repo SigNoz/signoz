@@ -7,7 +7,6 @@ import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
-import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from '../constants';
 import Inspect from '../Inspect';
@@ -67,13 +66,6 @@ jest.spyOn(metricsGeneratedAPI, 'useGetMetricMetadata').mockReturnValue({
 		status: 'success',
 	},
 } as any);
-
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useLocation: (): { pathname: string } => ({
-		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
-	}),
-}));
 
 const mockResizeObserver = jest.fn();
 mockResizeObserver.mockImplementation(() => ({

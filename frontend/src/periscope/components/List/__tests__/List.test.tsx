@@ -1,0 +1,250 @@
+import { createRef } from 'react';
+import { render, screen, userEvent, within } from 'tests/test-utils';
+
+import List from '../List';
+
+jest.mock('../List.module.scss', () => ({
+	__esModule: true,
+	default: new Proxy({}, { get: (_target, key): unknown => key }),
+}));
+
+const TEST_ID = 'list';
+
+interface Row {
+	key?: string;
+	id: string;
+	name: string;
+}
+
+const ROWS: Row[] = [
+	{ id: 'a', name: 'Alpha' },
+	{ id: 'b', name: 'Beta' },
+];
+
+function renderRow(row: Row): JSX.Element {
+	return <List.Item data-testid={`item-${row.id}`}>{row.name}</List.Item>;
+}
+
+describe('List', () => {
+	it('renders each row through renderItem inside the items list', () => {
+		render(
+			<List data-testid={TEST_ID} dataSource={ROWS} renderItem={renderRow} />,
+		);
+
+		const list = screen.getByTestId(TEST_ID);
+		const item = screen.getByTestId('item-a');
+		const items = within(list).getByRole('list');
+		expect(list.className).toBe('list split');
+		expect(item.tagName).toBe('LI');
+		expect(item.className).toBe('item');
+		expect(items.className).toBe('items');
+		expect(within(items).getAllByTestId(/^item-/)).toStrictEqual([
+			item,
+			screen.getByTestId('item-b'),
+		]);
+		expect(screen.getByTestId('list-container')).toContainElement(items);
+		expect(screen.getByTestId('item-b')).toHaveTextContent('Beta');
+	});
+
+	it('maps layout, size, split, bordered and footer to classes', () => {
+		const { rerender } = render(
+			<List
+				data-testid={TEST_ID}
+				className="custom"
+				itemLayout="vertical"
+				size="large"
+				bordered
+				footer="Footer"
+			/>,
+		);
+		const list = screen.getByTestId(TEST_ID);
+		expect(list.className).toBe(
+			'list vertical lg split bordered somethingAfterLastItem custom',
+		);
+
+		rerender(<List data-testid={TEST_ID} size="small" split={false} />);
+		expect(list.className).toBe('list sm');
+
+		rerender(<List data-testid={TEST_ID} size="default" />);
+		expect(list.className).toBe('list split');
+	});
+
+	it('wraps header and footer around the content', () => {
+		render(<List data-testid={TEST_ID} header="Head" footer="Foot" />);
+
+		expect(screen.getByText('Head').className).toBe('header');
+		expect(screen.getByText('Foot').className).toBe('footer');
+		expect(screen.getByTestId(TEST_ID)).toHaveTextContent(/^HeadNo dataFoot$/);
+	});
+
+	it('shows the default empty state, or locale.emptyText, without data', () => {
+		const { rerender } = render(<List data-testid={TEST_ID} />);
+		const emptyText = screen.getByTestId('list-empty');
+		expect(emptyText).toHaveTextContent('No data');
+		expect(
+			within(emptyText).getByTestId('empty-simple-image'),
+		).toBeInTheDocument();
+
+		rerender(<List data-testid={TEST_ID} locale={{ emptyText: 'Nothing' }} />);
+		expect(screen.getByTestId('list-empty')).toHaveTextContent(/^Nothing$/);
+	});
+
+	it('renders children instead of the empty state', () => {
+		render(
+			<List data-testid={TEST_ID}>
+				<List.Item data-testid="child">Child</List.Item>
+			</List>,
+		);
+
+		expect(screen.queryByTestId('list-empty')).not.toBeInTheDocument();
+		expect(screen.getByTestId('list-container')).toContainElement(
+			screen.getByTestId('child'),
+		);
+	});
+
+	it('passes native props through and forwards its ref', async () => {
+		const user = userEvent.setup();
+		const onClick = jest.fn();
+		const ref = createRef<HTMLDivElement>();
+		render(<List data-testid={TEST_ID} ref={ref} onClick={onClick} />);
+
+		await user.click(screen.getByTestId(TEST_ID));
+
+		expect(onClick).toHaveBeenCalledTimes(1);
+		expect(ref.current).toBe(screen.getByTestId(TEST_ID));
+	});
+});
+
+describe('List.Item', () => {
+	it('renders actions with a split between each', () => {
+		render(
+			<List.Item data-testid="item" actions={['Edit', 'Delete', 'More']}>
+				Content
+			</List.Item>,
+		);
+
+		const actionList = within(screen.getByTestId('item')).getByRole('list');
+		const actions = within(actionList).getAllByRole('listitem');
+		expect(actionList.className).toBe('itemAction');
+		expect(actions.map((action) => action.textContent)).toStrictEqual([
+			'Edit',
+			'Delete',
+			'More',
+		]);
+		expect(
+			actions.map(
+				(action) => !!within(action).queryByTestId('list-item-action-split'),
+			),
+		).toStrictEqual([true, true, false]);
+		expect(
+			within(actions[0]).getByTestId('list-item-action-split').className,
+		).toBe('itemActionSplit');
+	});
+
+	it('omits the action list when actions is empty', () => {
+		render(
+			<List.Item data-testid="item" actions={[]}>
+				Content
+			</List.Item>,
+		);
+
+		expect(
+			within(screen.getByTestId('item')).queryByRole('list'),
+		).not.toBeInTheDocument();
+	});
+
+	it('drops flex layout when text sits beside other children', () => {
+		const { rerender } = render(
+			<List.Item data-testid="item">
+				text
+				<span>sibling</span>
+			</List.Item>,
+		);
+		const item = screen.getByTestId('item');
+		expect(item.className).toBe('item itemNoFlex');
+
+		rerender(<List.Item data-testid="item">only text</List.Item>);
+		expect(item.className).toBe('item');
+	});
+
+	it('splits a vertical item with extra into main and extra blocks', () => {
+		render(
+			<List itemLayout="vertical">
+				<List.Item data-testid="with-extra" extra="Extra" actions={['Edit']}>
+					Body
+				</List.Item>
+				<List.Item data-testid="without-extra">Body</List.Item>
+			</List>,
+		);
+
+		const withExtra = screen.getByTestId('with-extra');
+		expect(withExtra.className).toBe('item');
+		expect(within(withExtra).getByTestId('list-item-main').className).toBe(
+			'itemMain',
+		);
+		expect(within(withExtra).getByText('Extra').className).toBe('itemExtra');
+		expect(withExtra).toHaveTextContent(/^BodyEditExtra$/);
+		expect(
+			within(within(withExtra).getByTestId('list-item-main')).getByRole('list'),
+		).toHaveTextContent('Edit');
+		expect(screen.getByTestId('without-extra').className).toBe('item itemNoFlex');
+	});
+
+	it('renders extra inline after the actions in a horizontal list', () => {
+		render(
+			<List.Item data-testid="item" actions={['Edit']} extra={<b>Extra</b>}>
+				<span>Body</span>
+			</List.Item>,
+		);
+
+		const item = screen.getByTestId('item');
+		expect(within(item).queryByTestId('list-item-main')).not.toBeInTheDocument();
+		expect(within(item).getByText('Extra').tagName).toBe('B');
+		expect(item).toHaveTextContent(/^BodyEditExtra$/);
+	});
+
+	it('forwards its ref to the li', () => {
+		const ref = createRef<HTMLLIElement>();
+		render(<List.Item data-testid="item" ref={ref} />);
+
+		expect(ref.current).toBe(screen.getByTestId('item'));
+	});
+});
+
+describe('List.Item.Meta', () => {
+	it('renders avatar, title and description', () => {
+		render(
+			<List.Item.Meta
+				data-testid="meta"
+				className="custom"
+				avatar={<i>A</i>}
+				title="Title"
+				description="Description"
+			/>,
+		);
+
+		const meta = screen.getByTestId('meta');
+		expect(meta.className).toBe('itemMeta custom');
+		expect(within(meta).getByTestId('list-item-meta-avatar')).toHaveTextContent(
+			'A',
+		);
+		const title = within(
+			within(meta).getByTestId('list-item-meta-content'),
+		).getByRole('heading', { level: 4 });
+		expect(title.className).toBe('itemMetaTitle');
+		expect(title).toHaveTextContent('Title');
+		expect(
+			within(meta).getByTestId('list-item-meta-description'),
+		).toHaveTextContent('Description');
+	});
+
+	it('omits the content block without a title or description', () => {
+		render(<List.Item.Meta data-testid="meta" avatar={<i>A</i>} />);
+
+		const meta = screen.getByTestId('meta');
+		expect(meta).toHaveTextContent(/^A$/);
+		expect(
+			within(meta).queryByTestId('list-item-meta-content'),
+		).not.toBeInTheDocument();
+	});
+});

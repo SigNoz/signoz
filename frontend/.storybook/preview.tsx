@@ -21,7 +21,7 @@ import i18n from '../src/ReactI18';
 // `src/index.tsx` does this at boot: without it `@monaco-editor/react` falls back
 // to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
 // not report because the requests look like static assets.
-import '../src/lib/monaco/setup';
+import '../src/lib/monaco/loader';
 
 import '../src/styles.scss';
 
@@ -127,6 +127,7 @@ const preview: Preview = {
 							'Detail',
 							[
 								'Overview',
+								'Panels',
 								'Settings',
 								'Variables',
 								'New Variable',
@@ -140,9 +141,15 @@ const preview: Preview = {
 						'Services',
 						['List', 'Detail', 'Top Level Operations', 'Service Map'],
 						'Logs',
-						['Explorer', 'Live Tail', 'Saved Views', 'Pipelines', 'Settings'],
+						['Explorer', 'Live Tail', 'Pipelines', 'Settings'],
 						'Traces',
-						['Explorer', 'Trace Details', 'Funnel Details'],
+						[
+							'Explorer',
+							['Overview', 'Span Drawer'],
+							'Trace Details',
+							['Overview', 'Thread'],
+							'Funnel Details',
+						],
 						'Metrics',
 						['Explorer'],
 						'Infrastructure',
@@ -169,6 +176,7 @@ const preview: Preview = {
 						'AI Observability',
 						['Overview', 'Explorer', 'Model Pricing', 'Attribute Mapping'],
 						'Noz',
+						['Overview', 'Modal', 'Panel'],
 						'Metering',
 						['Cost Meter', 'Usage Explorer'],
 						'Messaging Queues',
@@ -186,6 +194,7 @@ const preview: Preview = {
 							'Role Details',
 							'Role Editor',
 							'Members',
+							['Overview', 'Authz'],
 							'Service Accounts',
 							'Ingestion',
 							'Single Sign-on',

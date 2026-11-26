@@ -18,8 +18,19 @@ import {
 import { omit, pick } from 'lodash-es';
 import { omitBlank } from 'utils/omitBlank';
 
-import { ChannelFormValues, ChannelKind, ChannelSpecFormValues } from './types';
-import { canonicalJiraReopenDuration, filledRows } from './utils';
+import {
+	ChannelFormValues,
+	ChannelKind,
+	ChannelSpecFormValues,
+	JiraDeployment,
+	KeysOfUnion,
+	WebhookAuth,
+} from './types';
+import {
+	canonicalJiraReopenDuration,
+	filledRows,
+	webhookAuthOf,
+} from './utils';
 
 const SPEC_FIELDS = {
 	[ChannelKind.slack]: [
@@ -86,11 +97,11 @@ const SPEC_FIELDS = {
 		'sendResolved',
 	] as const satisfies readonly (keyof AlertmanagertypesChannelGoogleChatConfigDTO)[],
 	[ChannelKind.jira]: [
+		'deployment',
 		'site',
 		'project',
 		'issueType',
-		'email',
-		'apiToken',
+		'auth',
 		'summary',
 		'description',
 		'priority',
@@ -136,7 +147,7 @@ const SPEC_FIELDS = {
  * instead, and the error names the missing field.
  */
 type MissingFrom<D, T extends readonly PropertyKey[]> = Exclude<
-	keyof D,
+	KeysOfUnion<D>,
 	T[number]
 >;
 
@@ -207,6 +218,26 @@ export function toChannelConfig(
 			'text',
 		).map((action) =>
 			action.confirm?.text?.trim() ? action : omit(action, 'confirm'),
+		);
+	}
+
+	if (kind === ChannelKind.webhook) {
+		const auth = webhookAuthOf(values);
+		if (auth !== WebhookAuth.basic) {
+			delete picked.username;
+			delete picked.password;
+		}
+		if (auth !== WebhookAuth.bearer) {
+			delete picked.bearerToken;
+		}
+	}
+
+	if (kind === ChannelKind.jira) {
+		const auth = values.auth ?? {};
+		picked.auth = omitBlank(
+			values.deployment === JiraDeployment.selfhosted
+				? pick(auth, ['pat'])
+				: pick(auth, ['email', 'apiToken']),
 		);
 	}
 

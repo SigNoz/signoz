@@ -4,7 +4,7 @@ import { useCopyToClipboard } from 'react-use';
 import { Copy, Ellipsis, Pin, PinOff } from '@signozhq/icons';
 import { Dropdown, type DropdownActionItemType } from '@signozhq/ui/dropdown';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
 import { darkTheme, lightTheme, themeExtension } from './constants';
@@ -244,7 +244,13 @@ function PrettyView({
 								align="start"
 								side="bottom"
 							>
-								<span className="pretty-view__actions" role="button" tabIndex={0}>
+								<span
+									className="pretty-view__actions"
+									role="button"
+									tabIndex={0}
+									aria-label={`Actions for ${fieldKey}`}
+									data-testid={`pretty-view-actions-${fieldKey}`}
+								>
 									<Ellipsis size={12} />
 								</span>
 							</Dropdown>
@@ -326,13 +332,15 @@ function PrettyView({
 		<div className="pretty-view">
 			{searchable && (
 				<div className="pretty-view__search-wrapper">
-					<Input
-						className="pretty-view__search-input"
-						type="text"
-						placeholder="Search for a field..."
-						value={searchQuery}
-						onChange={(e): void => setSearchQuery(e.target.value)}
-					/>
+					<div className="pretty-view__search-input">
+						<Input
+							variant="unstyled"
+							type="text"
+							placeholder="Search for a field..."
+							value={searchQuery}
+							onChange={(e): void => setSearchQuery(e.target.value)}
+						/>
+					</div>
 				</div>
 			)}
 

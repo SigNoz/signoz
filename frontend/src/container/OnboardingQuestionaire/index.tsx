@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
@@ -12,7 +12,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { navigate } from 'lib/router/navigation';
 import { useAppContext } from 'providers/App/App';
 
 import {
@@ -95,7 +95,7 @@ function OnboardingQuestionaire(): JSX.Element {
 
 			logEvent('Org Onboarding: Redirecting to Get Started', {});
 
-			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+			navigate(ROUTES.GET_STARTED_WITH_CLOUD);
 		},
 		onError: () => {
 			setUpdatingOrgOnboardingStatus(false);
@@ -158,7 +158,9 @@ function OnboardingQuestionaire(): JSX.Element {
 					setCurrentStep(4);
 				},
 				onError: (error: any) => {
-					toast.error(error?.message || SOMETHING_WENT_WRONG);
+					toast.danger(error?.message || SOMETHING_WENT_WRONG, {
+						action: { label: 'Dismiss' },
+					});
 
 					// Allow user to proceed even if API fails
 					setCurrentStep(4);

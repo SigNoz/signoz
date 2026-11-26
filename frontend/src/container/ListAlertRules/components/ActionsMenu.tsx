@@ -3,11 +3,11 @@ import { useQueryClient } from 'react-query';
 import { Ellipsis } from '@signozhq/icons';
 import { Button } from '@signozhq/ui/button';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	deleteRuleByID,
-	invalidateListRules,
+	invalidateListRulesV3,
 	patchRuleByID,
 	cloneRuleByID,
 } from 'api/generated/services/rules';
@@ -22,7 +22,7 @@ import { ALERT_ACTIONS, alertActionLogEvent } from '../utils';
 
 interface ActionsMenuProps {
 	rule: AlertRule;
-	onEdit: (rule: AlertRule, options?: { newTab?: boolean }) => void;
+	onEdit: (rule: Pick<AlertRule, 'id'>, options?: { newTab?: boolean }) => void;
 }
 
 function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
@@ -31,10 +31,12 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	const handleToggle = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.TOGGLE, rule);
 		const newDisabled = !rule.disabled;
-		toast.promise(
+		void toast.promise(
 			patchRuleByID({ id: rule.id ?? '' }, {
 				disabled: newDisabled,
-			} as RuletypesPostableRuleDTO).then(() => invalidateListRules(queryClient)),
+			} as RuletypesPostableRuleDTO).then(() =>
+				invalidateListRulesV3(queryClient),
+			),
 			{
 				loading: newDisabled ? 'Disabling alert...' : 'Enabling alert...',
 				success: newDisabled ? 'Alert disabled' : 'Alert enabled',
@@ -44,6 +46,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to toggle alert state';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);
@@ -61,14 +64,14 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 
 	const handleClone = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.CLONE, rule);
-		toast.promise(
+		void toast.promise(
 			cloneRuleByID({
 				id: rule.id,
 			}).then(async (response) => {
-				await invalidateListRules(queryClient);
+				await invalidateListRulesV3(queryClient);
 				const newRule = response.data;
 				if (newRule) {
-					onEdit(newRule as AlertRule);
+					onEdit(newRule);
 				}
 				return newRule;
 			}),
@@ -81,6 +84,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to clone alert';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);
@@ -88,9 +92,9 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 
 	const handleDelete = useCallback((): void => {
 		alertActionLogEvent(ALERT_ACTIONS.DELETE, rule);
-		toast.promise(
+		void toast.promise(
 			deleteRuleByID({ id: rule.id ?? '' }).then(() =>
-				invalidateListRules(queryClient),
+				invalidateListRulesV3(queryClient),
 			),
 			{
 				loading: 'Deleting alert...',
@@ -101,6 +105,7 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 					);
 					return apiError?.getErrorMessage() || 'Failed to delete alert';
 				},
+				errorAction: { label: 'Dismiss' },
 				position: 'top-right',
 			},
 		);
@@ -158,7 +163,13 @@ function ActionsMenu({ rule, onEdit }: ActionsMenuProps): JSX.Element {
 	return (
 		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div onClick={handleClick}>
-			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+			<Dropdown
+				items={menuItems}
+				nativeButton
+				align="end"
+				side="bottom"
+				testId="alert-actions"
+			>
 				<Button
 					aria-label="Action"
 					variant="outlined"

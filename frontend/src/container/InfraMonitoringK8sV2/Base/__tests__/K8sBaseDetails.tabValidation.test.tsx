@@ -1,9 +1,6 @@
 import { Box } from '@signozhq/icons';
-import { screen } from '@testing-library/react';
-import { InfraMonitoringEvents } from 'constants/events';
-import userEvent from '@testing-library/user-event';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
-import { act, render, waitFor } from 'tests/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import {
 	InfraMonitoringEntity,
@@ -43,7 +40,6 @@ const relatedEntity: TestEntity = {
 function createBaseProps(category: InfraMonitoringEntity, entity = mockEntity) {
 	return {
 		category,
-		eventCategory: InfraMonitoringEvents.Pod,
 		getSelectedItemExpression: (): string => 'k8s.pod.name = "test-pod"',
 		fetchEntityData: jest.fn().mockResolvedValue({ data: entity, error: null }),
 		getEntityName: (e: TestEntity): string => e.name,
@@ -101,9 +97,12 @@ function renderK8sBaseDetails({
 	);
 }
 
-function getSelectedTabText(): string | null {
-	const selectedTab = document.querySelector('[aria-pressed="true"]');
-	return selectedTab?.textContent ?? null;
+function getTab(view: string): HTMLElement {
+	return screen.getByTestId(`drawer-tab-bar-button-${view}`);
+}
+
+function expectSelectedTab(view: string): void {
+	expect(getTab(view)).toHaveAttribute('aria-pressed', 'true');
 }
 
 describe('K8sBaseDetails - Tab Validation', () => {
@@ -116,9 +115,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Metrics');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.METRICS));
 	});
 
 	it('should land on the overview tab for a category with related resources', async () => {
@@ -135,9 +132,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Overview');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.OVERVIEW));
 	});
 
 	it('should reset to first available tab when METRICS is disabled and view is invalid', async () => {
@@ -152,9 +147,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Logs');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.LOGS));
 	});
 
 	it('should reset to custom tab when all standard tabs disabled and custom tab exists', async () => {
@@ -184,9 +177,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Pod Metrics');
-		});
+		await waitFor(() => expectSelectedTab(customTabKey));
 	});
 
 	it('should NOT reset view when selected view is valid', async () => {
@@ -198,9 +189,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Logs');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.LOGS));
 	});
 
 	it('should NOT reset view when custom tab is selected and exists', async () => {
@@ -224,9 +213,7 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Pod Metrics');
-		});
+		await waitFor(() => expectSelectedTab(customTabKey));
 	});
 
 	it('should keep the selected tab when the active tab is clicked again (untoggle guard)', async () => {
@@ -240,17 +227,10 @@ describe('K8sBaseDetails - Tab Validation', () => {
 			expect(screen.getAllByText('test-pod').length).toBeGreaterThan(0);
 		});
 
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Logs');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.LOGS));
 
-		const selectedTab = document.querySelector('[aria-pressed="true"]');
-		expect(selectedTab).not.toBeNull();
+		await user.click(getTab(VIEW_TYPES.LOGS));
 
-		await user.click(selectedTab as Element);
-
-		await waitFor(() => {
-			expect(getSelectedTabText()).toContain('Logs');
-		});
+		await waitFor(() => expectSelectedTab(VIEW_TYPES.LOGS));
 	});
 });

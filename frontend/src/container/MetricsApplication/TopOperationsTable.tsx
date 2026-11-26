@@ -1,16 +1,15 @@
 import { useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useAppParams } from 'lib/router/useAppParams';
 import { Search } from '@signozhq/icons';
 import {
 	InputRef,
 	TableColumnsType as ColumnsType,
 	TableColumnType as ColumnType,
-	Tooltip,
 } from 'antd';
 import { Switch } from '@signozhq/ui/switch';
-import { Typography } from '@signozhq/ui/typography';
+import { Button } from '@signozhq/ui/button';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';
@@ -24,7 +23,6 @@ import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as uuid } from 'uuid';
 
-import { IServiceName } from './Tabs/types';
 import { useGetAPMToTracesQueries } from './Tabs/util';
 import {
 	convertedTracesToDownloadData,
@@ -41,9 +39,9 @@ function TopOperationsTable({
 	onEntryPointToggle,
 }: TopOperationsTableProps): JSX.Element {
 	const searchInput = useRef<InputRef>(null);
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 	const { safeNavigate } = useSafeNavigate();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const servicename = decodeURIComponent(encodedServiceName || '');
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -55,11 +53,11 @@ function TopOperationsTable({
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
-	const params = useParams<{ servicename: string }>();
+	const params = useAppParams<'servicename'>();
 
 	const handleOnClick = (operation: string, openInNewTab: boolean): void => {
 		const { servicename: encodedServiceName } = params;
-		const servicename = decodeURIComponent(encodedServiceName);
+		const servicename = decodeURIComponent(encodedServiceName || '');
 
 		const opFilters: TagFilterItem[] = [
 			{
@@ -116,22 +114,24 @@ function TopOperationsTable({
 			}
 		},
 		render: (text: string): JSX.Element => (
-			<Tooltip placement="topLeft" title={text}>
-				<Typography.Link
-					onClick={(e): void => {
-						e.stopPropagation();
-						e.preventDefault();
+			<Button
+				variant="link"
+				color="primary"
+				size="md"
+				testId="top-operation-link"
+				onClick={(e): void => {
+					e.stopPropagation();
+					e.preventDefault();
 
-						if (e.metaKey || e.ctrlKey) {
-							handleOnClick(text, true); // open in new tab
-						} else {
-							handleOnClick(text, false); // open in current tab
-						}
-					}}
-				>
-					{text}
-				</Typography.Link>
-			</Tooltip>
+					if (e.metaKey || e.ctrlKey) {
+						handleOnClick(text, true); // open in new tab
+					} else {
+						handleOnClick(text, false); // open in current tab
+					}
+				}}
+			>
+				{text}
+			</Button>
 		),
 	});
 
@@ -202,7 +202,7 @@ function TopOperationsTable({
 	};
 
 	return (
-		<div className="top-operation">
+		<div className="top-operation" data-testid="top-operations">
 			<div className="top-operation__controls">
 				<div className="top-operation__download">
 					<Download
@@ -213,6 +213,8 @@ function TopOperationsTable({
 				</div>
 				<div className="top-operation__entry-point">
 					<Switch
+						testId="top-operations-entrypoint-toggle"
+						aria-label="Entrypoint Spans"
 						color="primary"
 						textPlacement="right"
 						value={isEntryPoint}

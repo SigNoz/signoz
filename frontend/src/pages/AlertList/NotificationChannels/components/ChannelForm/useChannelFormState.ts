@@ -49,12 +49,14 @@ interface UseChannelFormStateArgs {
 	draft: ChannelFormState;
 	target: ChannelFormTarget;
 	onDone: () => void;
+	readOnly: boolean;
 }
 
 export function useChannelFormState({
 	draft,
 	target,
 	onDone,
+	readOnly,
 }: UseChannelFormStateArgs): ChannelFormStateResult {
 	const { t } = useTranslation('channels');
 	const { notifications } = useNotifications();
@@ -68,6 +70,8 @@ export function useChannelFormState({
 	const form = useForm<ChannelFormValues>({
 		defaultValues: draft.values,
 		resolver: channelResolver(type, t),
+		// `false` is not a no-op: it re-enables fields disabled by their own prop
+		disabled: readOnly || undefined,
 	});
 
 	const { mutateAsync: createChannel, isLoading: isCreating } =
@@ -86,9 +90,25 @@ export function useChannelFormState({
 
 			setTypeState(nextType);
 
+			const nextDefaults = ChannelInitialConfig[nextType];
+
+			// the previous type's templates would otherwise be sent as the new
+			// type's values; sendResolved is a general setting and is kept.
+			// '' not undefined: a field mounting on undefined falls back to the
+			// draft's defaults, and blanks are dropped on save anyway
+			Object.keys(ChannelInitialConfig[type])
+				.filter((field) => field !== 'sendResolved' && !(field in nextDefaults))
+				.forEach((field) => {
+					form.setValue(
+						field as keyof ChannelFormValues,
+						'' as ChannelFormValues[keyof ChannelFormValues],
+						{ shouldDirty: true },
+					);
+				});
+
 			// shouldDirty, because the type lives outside the form: without it
 			// picking a different type leaves the form pristine and unsavable.
-			Object.entries(ChannelInitialConfig[nextType]).forEach(([field, value]) => {
+			Object.entries(nextDefaults).forEach(([field, value]) => {
 				form.setValue(
 					field as keyof ChannelFormValues,
 					value as ChannelFormValues[keyof ChannelFormValues],
@@ -185,7 +205,11 @@ export function useChannelFormState({
 		isDirty: form.formState.isDirty,
 		onTypeChange,
 		onSave: form.handleSubmit(submitSave),
-		onTest: form.handleSubmit(submitTest),
+		// handleSubmit drops the values of disabled fields, and a reader with
+		// `create` can still send a test from a read-only form.
+		onTest: readOnly
+			? (): void => void submitTest(form.getValues())
+			: form.handleSubmit(submitTest),
 		isSaving: isCreating || isUpdating,
 		isTesting,
 	};

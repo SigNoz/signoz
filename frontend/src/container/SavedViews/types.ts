@@ -1,5 +1,6 @@
 import { ReactElement, ReactNode } from 'react';
 import type { Link } from '@signozhq/icons';
+import type { PopoverHandleType } from '@signozhq/ui/popover';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import {
 	SavedviewtypesSavedViewDTO,
@@ -9,6 +10,8 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
+
+import { SavedViewCreatedFrom } from './events';
 
 export type SavedViewSourcePage = DataSource | 'meter';
 
@@ -30,6 +33,7 @@ export interface HasUnsavedViewChangesArgs {
 	stagedQuery: Query | null;
 	panelType: PANEL_TYPES;
 	options?: SavedViewOptions;
+	sourcePage: SavedviewtypesSourceDTO;
 }
 
 export interface UseLastUsedViewResult {
@@ -51,7 +55,12 @@ export interface UseSavedViewActionsResult {
 	selectView: (view: SavedviewtypesSavedViewDTO) => void;
 	revertView: (view: SavedviewtypesSavedViewDTO) => void;
 	clearView: () => void;
-	createView: (displayName: string) => Promise<string | undefined>;
+	/** Clears the open view without logging it, for flows that are not a clear. */
+	resetView: () => void;
+	createView: (
+		displayName: string,
+		from: SavedViewCreatedFrom,
+	) => Promise<string | undefined>;
 	updateView: (view: SavedviewtypesSavedViewDTO) => Promise<boolean>;
 	isSaving: boolean;
 }
@@ -121,6 +130,11 @@ export interface SavedViewsListRowProps {
 	hover: SavedViewsListRowHoverProps;
 }
 
+export type SavedViewsRowLinkProps = Pick<
+	SavedViewsListRowProps,
+	'view' | 'isActive' | 'onSelect'
+>;
+
 export type SavedViewRowActionKey =
 	| 'copyLink'
 	| 'copyId'
@@ -156,9 +170,8 @@ export interface SavedViewsRowMenuProps {
 }
 
 export interface DeleteSavedViewDialogProps {
-	isDeleting: boolean;
 	onCancel: () => void;
-	onConfirm: () => void;
+	onConfirm: () => Promise<void>;
 }
 
 export interface UseSavedViewRowActionsResult {
@@ -173,15 +186,12 @@ export interface UseSavedViewRowActionsResult {
 	isDeleting: boolean;
 }
 
-export interface SavedViewHoverCardTarget {
-	view: SavedviewtypesSavedViewDTO;
-	anchorTop: number;
-	anchorHeight: number;
-}
+/** Carries the id of the view under the pointer. */
+export type SavedViewHoverCardHandle = PopoverHandleType<string>;
 
 export interface UseSavedViewHoverCardResult {
-	target: SavedViewHoverCardTarget | null;
-	onRowEnter: (target: SavedViewHoverCardTarget) => void;
+	handle: SavedViewHoverCardHandle;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onCardEnter: () => void;
 	onCardLeave: () => void;
@@ -189,14 +199,19 @@ export interface UseSavedViewHoverCardResult {
 }
 
 export interface SavedViewHoverCardProps {
-	target: SavedViewHoverCardTarget | null;
+	handle: SavedViewHoverCardHandle;
 	onCardEnter: () => void;
 	onCardLeave: () => void;
-	onClose: () => void;
+}
+
+export interface SavedViewHoverCardDetailsProps {
+	viewId: string;
+	/** `read` is granted on every view, so the view needs no check of its own. */
+	canReadAll: boolean;
 }
 
 export interface SavedViewsListRowHoverProps {
-	onRowEnter: (view: SavedviewtypesSavedViewDTO, row: HTMLElement) => void;
+	onRowEnter: (viewId: string, row: HTMLElement) => void;
 	onRowLeave: () => void;
 	onMenuOpen: () => void;
 }
@@ -218,3 +233,20 @@ export interface SavedViewsEmptyStateProps {
 	isSaving: boolean;
 	onSave: (displayName: string) => Promise<boolean>;
 }
+
+export enum PreservedViewsTypes {
+	LOGS = 'logs',
+	TRACES = 'traces',
+	METRICS = 'metrics',
+	METER = 'meter',
+}
+
+export type PreservedViewType =
+	| PreservedViewsTypes.LOGS
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
+
+export type PreservedViewsInLocalStorage = Partial<
+	Record<PreservedViewType, { key: string; value: string }>
+>;

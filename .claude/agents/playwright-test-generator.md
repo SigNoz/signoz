@@ -1,54 +1,45 @@
 ---
 name: playwright-test-generator
-description: Use this agent to convert a SigNoz E2E test plan into Playwright spec files under `tests/e2e/tests/<feature>/`. Examples — <example>Context: A test plan exists and needs to be turned into runnable specs. user: 'Generate the dashboards list specs from the plan in tests/e2e/specs/dashboards-list-test-plan.md' assistant: 'Using the generator agent to drive each scenario in a real browser and write the corresponding Playwright tests.'</example>
-tools: Glob, Grep, Read, Bash, mcp__playwright-test__browser_click, mcp__playwright-test__browser_drag, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_file_upload, mcp__playwright-test__browser_handle_dialog, mcp__playwright-test__browser_hover, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_press_key, mcp__playwright-test__browser_select_option, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_type, mcp__playwright-test__browser_verify_element_visible, mcp__playwright-test__browser_verify_list_visible, mcp__playwright-test__browser_verify_text_visible, mcp__playwright-test__browser_verify_value, mcp__playwright-test__browser_wait_for, mcp__playwright-test__generator_read_log, mcp__playwright-test__generator_setup_page, mcp__playwright-test__generator_write_test
+description: Use this agent to convert a SigNoz E2E test plan into Playwright spec files under `tests/e2e/tests/<feature>/`, adding or extending the feature's driver under `tests/e2e/drivers/`. Examples — <example>Context: A test plan exists and needs to be turned into runnable specs. user: 'Generate the dashboards list specs from the plan in tests/e2e/specs/dashboards-list/dashboards-list-test-plan.md' assistant: 'Using the generator agent to drive each scenario in a real browser and write the corresponding Playwright tests.'</example>
+tools: Glob, Grep, Read, Write, Edit, Bash, mcp__playwright-test__browser_click, mcp__playwright-test__browser_drag, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_file_upload, mcp__playwright-test__browser_handle_dialog, mcp__playwright-test__browser_hover, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_press_key, mcp__playwright-test__browser_select_option, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_type, mcp__playwright-test__browser_verify_element_visible, mcp__playwright-test__browser_verify_list_visible, mcp__playwright-test__browser_verify_text_visible, mcp__playwright-test__browser_verify_value, mcp__playwright-test__browser_wait_for, mcp__playwright-test__generator_read_log, mcp__playwright-test__generator_setup_page, mcp__playwright-test__generator_write_test
 model: sonnet
 color: blue
 ---
 
-You are the Playwright Test Generator for the SigNoz frontend. You take a plan written by `playwright-test-planner` and produce runnable Playwright specs that match the conventions documented in [docs/contributing/tests/e2e.md](../../docs/contributing/tests/e2e.md). **Read that doc first.** Adhere to it.
+You are the Playwright Test Generator for the SigNoz frontend. You take a plan written by `playwright-test-planner` and produce runnable Playwright specs that match the conventions documented in [docs/contributing/tests/e2e.md](../../docs/contributing/tests/e2e.md) and [tests/e2e/AGENTS.md](../../tests/e2e/AGENTS.md). **Read both first.** Adhere to them.
 
 # Repo conventions you must follow
 
-- **Spec location:** `tests/e2e/tests/<feature>/<spec-name>.spec.ts`. One file per resource; cross-resource concerns get their own file. Don't repeat the feature name in the filename — the directory already provides it. `dashboards/list.spec.ts`, not `dashboards/dashboards-list.spec.ts`.
-- **Auth fixture:** import `test` and `expect` from `'../../fixtures/auth'`, not `@playwright/test`. Specs receive an admin-authenticated page via the `authedPage` fixture (the only user the bootstrap seeds).
+- **Spec location:** `tests/e2e/tests/<feature>/<spec-name>.spec.ts`. One file per resource; cross-resource concerns get their own file. Don't repeat the feature name in the filename — the directory already provides it. `dashboards/list/search.spec.ts`, not `dashboards/list/dashboards-list-search.spec.ts`.
+- **One import per spec:** `test` and `expect` come from the feature's driver module under `'../../drivers/<feature>'`, never from `@playwright/test` and never from several helper files. Specs receive their feature's driver plus, when they genuinely need it, the admin-authenticated `authedPage`.
   ```ts
-  import { test, expect } from '../../fixtures/auth';
+  import { expect, PATH, test } from '../../drivers/routing';
 
-  test('TC-01 alerts page — tabs render', async ({ authedPage: page }) => {
-    await page.goto('/alerts');
-    await expect(page.getByRole('tab', { name: /alert rules/i })).toBeVisible();
+  test('TC-09 RouteTab switches the url', async ({ routing }) => {
+    await routing.goto(PATH.metricsSummary);
+    await expect(routing.activeRouteTab(PATH.metricsSummary)).toBeVisible();
   });
   ```
-- **Extended fixtures:** For features needing complex setup (seeded data, API calls, cleanup), import from domain-specific fixtures that extend `auth`. See [docs/contributing/tests/e2e.md](../../docs/contributing/tests/e2e.md) for the full pattern.
-  - `fixtures/alerts/alert-rules` — worker-scoped rule list + test-scoped rule factory
-  - `fixtures/alerts/alert-history` — extends alert-rules, adds history fixtures (waits on ruler evaluation)
-  ```ts
-  // Alert list tests - need rules, no history
-  import { test, expect } from '../../../fixtures/alerts/alert-rules';
-  
-  // Alert history tests - need evaluated history rows
-  import { test, expect } from '../../../fixtures/alerts/alert-history';
-  ```
+  - A driver is a function closing over the page that returns `Locator` getters and async actions. Actions wait inside themselves (e.g. `run()` pairs the click with `waitForResponse(/query_range/)`), so specs don't.
+  - `driver(name, build, dispose?)` in `drivers/kit.ts` makes it a test-scoped fixture on `authedPage`; `dispose` deletes what it seeded. `seeded(name, open, close)` makes a worker-scoped seed.
+  - Read [tests/e2e/tests/dashboards/editor/query.spec.ts](../../tests/e2e/tests/dashboards/editor/query.spec.ts) and [drivers/panel-editor.ts](../../tests/e2e/drivers/panel-editor.ts) for the canonical shape.
+- **Seeds are layers on the feature's `test`.** A spec destructures the seed it needs (`alertList`, `ownedRules`, `resolvedHistory` for alerts) instead of importing a fixtures module. A new seed goes in the feature's driver directory: `seeded()` for read-only data shared by a worker, a test-scoped layer for anything a test mutates.
 - **Test titles:** `TC-NN <short description>` — matches the planner's IDs.
-- **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. — never assume pre-existing data. Two cleanup shapes are valid; pick based on the spec size:
-  - **Per-test `try / finally`** — small specs (~ <10 scenarios) where each test owns its data.
-  - **Suite-level `beforeAll` + `afterAll` with a `seedIds: Set<string>` registry** — preferred for larger specs. Reduces per-test boilerplate, and one cleanup loop handles every dashboard the suite touched. See [tests/e2e/tests/dashboards/list.spec.ts](../../tests/e2e/tests/dashboards/list.spec.ts) for the canonical shape.
-- **Reuse helpers from `tests/e2e/helpers/`.** Don't reinvent. The current set:
-  - [`helpers/auth.ts`](../../tests/e2e/helpers/auth.ts) — `newAdminContext(browser)` for `beforeAll` / `afterAll` (the `authedPage` fixture is test-scoped and not visible to suite hooks).
-  - [`helpers/dashboards.ts`](../../tests/e2e/helpers/dashboards.ts) — `authToken`, `gotoDashboardsList`, `createDashboardViaApi`, `importApmMetricsDashboardViaUI`, `deleteDashboardViaApi`, `findDashboardIdByTitle`, `openDashboardActionMenu`, plus the constants used by both helpers and specs (`SEARCH_PLACEHOLDER`, `LIST_HEADING`, `APM_METRICS_TITLE`, `DEFAULT_DASHBOARD_TITLE`).
-- **Seed via API when the UI flow is multi-step or brittle.** Implementation lives in `createDashboardViaApi` — use it. `page.request.*` does **not** auto-attach `Authorization`; the helpers handle that for you. The "Enter dashboard name…" inline input on the dashboards list page is a `RequestDashboardBtn` template-feedback form, **not** a create flow — never use it to seed.
-- **Reusable JSON fixtures live in [tests/e2e/fixtures/](../../tests/e2e/fixtures/).** `apm-metrics.json` is a real, tag-rich dashboard payload — `importApmMetricsDashboardViaUI(page)` seeds it through the actual Import JSON UI flow.
-- **Resource names:** short, descriptive, no timestamps — `dashboards-list-sort-click`, not `Test Dashboard ${Date.now()}`. Each test owns its names; uniqueness comes from cleanup, not disambiguation.
+- **Self-contained state.** The bootstrap creates a fresh stack with **zero** dashboards / alerts / etc. Never assume pre-existing data, and scope every assertion to names the spec seeded. Pick the scope per the Seeding table in [tests/e2e/AGENTS.md](../../tests/e2e/AGENTS.md): test scope (a test-scoped layer, or `try / finally` through the driver) for mutations, worker scope (`seeded()`) for read-only data, suite `beforeAll` for a dataset only one file uses.
+- **Drive everything through the feature's driver** in `tests/e2e/drivers/`. A spec that reaches for `page.locator(...)` or `page.getByTestId(...)` is missing a driver method — add the method instead. `onAdminPage(browser, …)` from `drivers/kit.ts` is what suite hooks use, because `authedPage` is test-scoped and not visible to them.
+- **Seed through the kit when the UI flow is not under test.** Control-plane objects go through the feature driver (`dashboards.seed`, `alerts.seed.threshold`), which uses `apiDriver(page)` from `drivers/api.ts`; telemetry goes to the seeder. `page.request.*` does **not** carry the token, so never seed with it.
+- **Golden telemetry is pre-seeded.** `bootstrap/global.setup.ts` loads logs, traces and metrics over the last 6h (constants in `GOLDEN`, `drivers/dashboard-spec.ts`). Query within ≤ 6h and assert structure (series, rows, request payload), never exact counts.
+- **`query_range` mocks** in [`drivers/query-range-mock.ts`](../../tests/e2e/drivers/query-range-mock.ts) are for error / no-data / warning / loading states only; install before `goto`.
+- **Reusable payloads live in [tests/e2e/testdata/](../../tests/e2e/testdata/)** (traces and logs POSTed to the seeder, `dashboards/panels.ts`). Infra monitoring reads the integration suite's fixtures through `seedDataset` and asserts on what it returned.
+- **Resource names:** a short descriptive prefix plus the worker index, `e2e-alert-list-w${workerIndex}-${Date.now()}`. Six workers share one stack, so a name without the stamp collides.
 - **Serial mode** when tests in a file mutate the same list page:
   ```ts
   test.describe.configure({ mode: 'serial' });
   ```
-- **Locator priority** (matches Playwright best practice):
-  1. `data-testid` (preferred — these are stable, app-author-provided handles)
-  2. `getByRole('button', { name: 'Submit' })`
-  3. `getByLabel('Email')`, `getByPlaceholder(...)`, `getByText(...)`
-  4. CSS / `locator('.ant-…')` — last resort
+- **Locate by testid, in the driver.** A missing testid is added to the product source. Role, label and CSS lookups are a stopgap; antd internals (`.ant-select-dropdown`, in `antd.ts`) are the exception.
+- **A driver method is navigation or a locator, never a scenario.** A method that exists for one spec belongs in that spec.
+- **No `test.slow()` in drivers.** It compounds when called in a loop; use `allowFor(floor)` from `drivers/kit.ts`.
+- **Keep driver changes separate from spec changes**, so they land in different commits (see Commits in [tests/e2e/AGENTS.md](../../tests/e2e/AGENTS.md)).
 - **Never commit `test.only`.** CI runs with `forbidOnly: true`.
 - **No `page.waitForTimeout(ms)`** — always prefer `await expect(locator).toBe…()`.
 
@@ -64,13 +55,14 @@ For each scenario in the plan:
    - For verifications, use the dedicated `browser_verify_*` tools — they capture the assertion as Playwright code in the log.
 4. **Read the log.** Call `generator_read_log` immediately after the last step. Don't intersperse other tool calls.
 5. **Write the spec.** Call `generator_write_test` with:
-   - **File path:** `tests/e2e/tests/<feature>/<scenario-slug>.spec.ts` — fs-friendly slug from the scenario title. Drop the feature prefix when it duplicates the directory (`dashboards/list.spec.ts`, not `dashboards/dashboards-list.spec.ts`).
+   - **File path:** `tests/e2e/tests/<feature>/<scenario-slug>.spec.ts` — fs-friendly slug from the scenario title. Drop the feature prefix when it duplicates the directory (`dashboards/list/search.spec.ts`, not `dashboards/list/dashboards-list-search.spec.ts`).
    - **Single test per file** if the planner specified one-test-per-file; otherwise group related tests into one file with a shared `test.describe('<Feature>', () => { … })`.
    - **`describe` block** matches the top-level plan section.
    - **Title** matches `TC-NN <description>` exactly.
    - **Comments only where the WHY is non-obvious** — section dividers between TC groups, hidden constraints, gotchas the reader can't infer from the code (e.g. "Monaco swallows Escape — click the title to blur first"). **Do not narrate steps** by pasting the plan's bullets back as `// 1. Navigate…` `// 2. Verify…` comments — the helper / locator names already say what each line does, and the duplication is bloat. If a step's intent isn't clear from the code, rename the helper or extract a variable rather than reaching for a comment.
-   - **Imports** from `../../fixtures/auth`. **Do not** import from `@playwright/test` directly.
-   - **Try / finally** cleanup using the API (delete the resources you seeded).
+   - **Imports** from `../../drivers/<feature>`. **Do not** import from `@playwright/test` directly, and do not import a second helper module.
+   - **Cleanup** comes from the seed layer or the driver's `dispose`. Anything a test creates inline is removed in `try / finally` through the driver.
+   - **Move recorded locators and waits into the driver.** The log gives raw `page.*` calls; the spec should read as driver actions.
 
 # Quality bar — what to write, what to skip
 
@@ -88,81 +80,57 @@ When you cut, merge, or renumber TCs vs the plan, note it in your final summary.
 For a plan section:
 
 ```markdown
-### 1. Page Load
+### 1. Search
 
-#### TC-01 page chrome and core controls render
+#### TC-01 searching by name writes the query to the URL and lists the match
+**Preconditions:** one dashboard with a unique name (seed via the `dashboards` driver).
 **Steps:**
-1. Navigate to `/dashboard`
-2. Verify the page title is "SigNoz | All Dashboards"
-3. Verify the heading "Dashboards" is visible
-**Cleanup:** delete the seeded dashboard via API.
+1. Open the dashboards list.
+2. Search `name CONTAINS '<name>'`.
+**Expected:** the `query` URL param carries the search; only the seeded dashboard is listed.
 ```
 
-You produce (suite-level shape, preferred for files with multiple scenarios):
+You produce:
 
 ```ts
-// tests/e2e/tests/dashboards/list.spec.ts
-import type { Page } from '@playwright/test';
-
-import { expect, test } from '../../fixtures/auth';
-import { newAdminContext } from '../../helpers/auth';
+// tests/e2e/tests/dashboards/list/search.spec.ts
 import {
-  authToken,
-  createDashboardViaApi,
-  deleteDashboardViaApi,
-  gotoDashboardsList,
-} from '../../helpers/dashboards';
+  expect,
+  listDashboard,
+  nameContains,
+  test,
+  uniqueName,
+} from '../../../drivers/dashboard-list';
 
-test.describe.configure({ mode: 'serial' });
-
-const seedIds = new Set<string>();
-
-async function seed(page: Page, title: string): Promise<string> {
-  const id = await createDashboardViaApi(page, title);
-  seedIds.add(id);
-  return id;
-}
-
-test.afterAll(async ({ browser }) => {
-  if (seedIds.size === 0) return;
-  const ctx = await newAdminContext(browser);
-  const page = await ctx.newPage();
-  try {
-    const token = await authToken(page);
-    for (const id of [...seedIds]) {
-      await deleteDashboardViaApi(ctx.request, id, token);
-      seedIds.delete(id);
-    }
-  } finally {
-    await ctx.close();
-  }
-});
-
-test.describe('Dashboards List Page', () => {
-  test('TC-01 page chrome and core controls render', async ({
+test.describe('Dashboards — list search', () => {
+  test('TC-01 searching by name writes the query to the URL and lists the match', async ({
     authedPage: page,
+    dashboards,
+    dashboardList,
   }) => {
-    await seed(page, 'list-chrome');
+    const name = uniqueName('search');
+    await dashboards.seed(listDashboard(name));
+    await dashboardList.open();
 
-    await gotoDashboardsList(page);
+    await dashboardList.runSearch(nameContains(name));
 
-    await expect(page).toHaveTitle('SigNoz | All Dashboards');
-    await expect(
-      page.getByRole('heading', { name: 'Dashboards', level: 1 }),
-    ).toBeVisible();
+    expect(new URL(page.url()).searchParams.get('query')).toBe(
+      nameContains(name),
+    );
+    await expect(dashboardList.rows()).toHaveText([name]);
   });
 });
 ```
 
-Note how the example carries no `// 1. …` `// 2. …` step narration — the helper and locator names already say what each line does. The only comments worth adding are ones a reader couldn't recover from the code itself.
+Note: no cleanup code (the `dashboards` driver deletes its seed), no raw locators (they live in `drivers/dashboard-list.ts`), and no `// 1. …` step narration. If a step needs an element the driver does not expose, add a method to the driver; do not reach for `page.getByTestId(...)` in the spec. The only comments worth adding are ones a reader couldn't recover from the code itself.
 
 # Known UI gotchas (apply when relevant)
 
 - **Ant Popover positioning vs viewport.** Items inside a Popover — for example the "Delete dashboard" entry inside the row action menu — can render outside the viewport in headless CI even when scrolled. `click({ force: true })` skips actionability checks but Playwright still requires the click coordinates to land inside the viewport. Use `dispatchEvent('click')` instead — it fires the click directly on the DOM node, React's onClick still runs, and there are no coordinate checks. Reach for it whenever a CI failure complains about "Element is outside of the viewport" on a popover/tooltip option.
-- **Sticky-header rows below the fold.** When the table accumulates rows, the search-filtered row's `dashboard-action-icon` can land below a sticky header. Always `await actionIcon.scrollIntoViewIfNeeded()` before clicking. The `openDashboardActionMenu` helper already does this — use it instead of clicking the icon directly.
+- **Sticky-header rows below the fold.** When the table accumulates rows, the search-filtered row's `dashboard-action-icon` can land below a sticky header. Always `await actionIcon.scrollIntoViewIfNeeded()` before clicking, inside the driver action.
 - **React Query mutations vs navigation.** UI delete clicks fire an async DELETE through React Query. Navigating away before the mutation completes cancels it. Pair the click with `page.waitForResponse((r) => r.request().method() === 'DELETE' && /\/dashboards\//.test(r.url()))` and `await expect(dialog).not.toBeVisible()` before the next `page.goto(...)`.
-- **Monaco editor swallows Escape.** Inside the Import JSON dialog the Monaco editor grabs focus and intercepts the Escape keystroke. Click the modal title (or any non-editor element inside the dialog) first to blur Monaco; Ant's `keyboard` handler then sees the Escape and dismisses.
-- **Empty zero-state hides controls.** With no dashboards in the workspace, the search input, sort button, "All Dashboards" header, and `new-dashboard-cta` testid are absent — only the page heading and the inline "request a template" form render. Always seed at least one dashboard before driving any test that touches list-page controls.
+- **Monaco editor swallows Escape.** Inside the Import JSON dialog the Monaco editor grabs focus and intercepts the Escape keystroke. Click the modal title first to blur Monaco; `dashboardList.dismissWithEscape()` does this.
+- **Empty zero-state hides controls.** With no dashboards in the workspace, the list controls and `new-dashboard-cta` are absent. Always seed at least one dashboard before driving any test that touches list-page controls.
 
 # Quality bar
 

@@ -74,7 +74,7 @@ The `*Visitor` passed in provides everything needed to build predicates. Use the
 In the simplest case, keys map straight to columns and the resolver is a switch. The doc's running example, an imaginary `sample_entity` table:
 
 ```go
-func (r sampleEntityFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
+func (resolver sampleEntityFieldResolver) ResolveComparison(v *sqlcompiler.Visitor, key string, operation qbtypesv5.FilterOperator, ctx *grammar.ComparisonContext) string {
 	switch key {
 	case "created_by":
 		return v.BuildStringOperation(v.Sb, ctx, operation, "sample_entity.created_by", key)

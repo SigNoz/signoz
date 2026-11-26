@@ -9,6 +9,7 @@ import type {
 	FormatTimezoneAdjustedTimestamp,
 	TimestampInput,
 } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
+import { getBodyDisplay } from 'lib/logs/logBody';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { coerceToString } from 'utils/stringUtils';
 
@@ -33,7 +34,33 @@ const HTTP_FIELDS = new Set([
 const DURATION_FIELDS = new Set(['durationNano', 'duration_nano']);
 
 function renderCell(value: unknown): ReactNode {
-	return <Typography.Text>{coerceToString(value)}</Typography.Text>;
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="visible"
+		>
+			{coerceToString(value)}
+		</Typography>
+	);
+}
+
+function renderBodyCell(value: unknown): ReactNode {
+	return (
+		<Typography
+			variant="paragraph"
+			size="base"
+			weight="regular"
+			color="inherit"
+			as="span"
+			textOverflow="visible"
+		>
+			{getBodyDisplay(value)}
+		</Typography>
+	);
 }
 
 /**
@@ -85,11 +112,18 @@ function makeTimestampRenderer(
 	return (value: unknown): ReactNode => {
 		const normalized = normalizeTimestamp(value);
 		return (
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				{normalized == null
 					? ''
 					: formatTimestamp(normalized, DATE_TIME_FORMATS.ISO_DATETIME_MS)}
-			</Typography.Text>
+			</Typography>
 		);
 	};
 }
@@ -101,7 +135,19 @@ function makeTimestampRenderer(
 function makeTraceRenderer(name: string) {
 	return (value: unknown): ReactNode => {
 		if (value == null || value === '') {
-			return <Typography.Text data-testid={name}>N/A</Typography.Text>;
+			return (
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+					data-testid={name}
+				>
+					N/A
+				</Typography>
+			);
 		}
 		if (HTTP_FIELDS.has(name)) {
 			return (
@@ -117,9 +163,17 @@ function makeTraceRenderer(name: string) {
 		}
 		if (DURATION_FIELDS.has(name)) {
 			return (
-				<Typography.Text data-testid={name}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+					data-testid={name}
+				>
 					{getMs(coerceToString(value))}ms
-				</Typography.Text>
+				</Typography>
 			);
 		}
 		return (
@@ -178,7 +232,7 @@ export function buildListColumns({
 				dataIndex: name,
 				key: name,
 				ellipsis: true,
-				render: renderCell,
+				render: renderBodyCell,
 			};
 		}
 		return {

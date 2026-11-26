@@ -40,6 +40,7 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			range,
 			thresholds,
 			logBase = 10,
+			asinhThreshold,
 			padMinBy = 0,
 			padMaxBy = 0.05,
 		} = this.props;
@@ -99,6 +100,7 @@ export class UPlotScaleBuilder extends ConfigBuilder<
 			time,
 			distr,
 			logBase,
+			asinhThreshold,
 		});
 
 		const { rangeConfig, hardMinOnly, hardMaxOnly, hasFixedRange } =

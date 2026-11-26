@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { useAppParams } from 'lib/router/useAppParams';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
@@ -13,14 +13,16 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
 import useResourceAttribute from 'hooks/useResourceAttribute';
-import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import {
+	resourceAttributesToTagFilterItems,
+	resourceAttributesToTracesFilterItems,
+} from 'hooks/useResourceAttribute/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { useAppContext } from 'providers/App/App';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
-import { IServiceName } from '../types';
 import {
 	handleNonInQueryRange,
 	onViewTracePopupClick,
@@ -38,8 +40,8 @@ function ServiceOverview({
 	topLevelOperationsIsLoading,
 	stepInterval,
 }: ServiceOverviewProps): JSX.Element {
-	const { servicename: encodedServiceName } = useParams<IServiceName>();
-	const servicename = decodeURIComponent(encodedServiceName);
+	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
+	const servicename = decodeURIComponent(encodedServiceName || '');
 
 	const { featureFlags } = useAppContext();
 	const isSpanMetricEnable =
@@ -50,9 +52,9 @@ function ServiceOverview({
 
 	const tagFilterItems = useMemo(
 		() =>
-			handleNonInQueryRange(
-				resourceAttributesToTagFilterItems(queries, !isSpanMetricEnable),
-			) || [],
+			isSpanMetricEnable
+				? handleNonInQueryRange(resourceAttributesToTagFilterItems(queries))
+				: resourceAttributesToTracesFilterItems(queries),
 		[isSpanMetricEnable, queries],
 	);
 
@@ -73,7 +75,7 @@ function ServiceOverview({
 				},
 				title: GraphTitle.LATENCY,
 				panelTypes: PANEL_TYPES.TIME_SERIES,
-				yAxisUnit: 'ns',
+				yAxisUnit: isSpanMetricEnable ? 'ms' : 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
 		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
@@ -117,7 +119,7 @@ function ServiceOverview({
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
-						version={ENTITY_VERSION_V4}
+						version={ENTITY_VERSION_V5}
 						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 					/>
 				</GraphContainer>

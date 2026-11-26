@@ -1,4 +1,4 @@
-import { PageTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { PageTypeDTO } from '@signozhq/noz-client';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 
@@ -58,6 +58,12 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=Configuration')).toBe(
 			PageTypeDTO.alert_list,
 		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=RoutingPolicies')).toBe(
+			PageTypeDTO.alert_list,
+		);
+		expect(resolvePageType(ROUTES.LIST_ALL_ALERT, '?tab=PlannedDowntime')).toBe(
+			PageTypeDTO.alert_list,
+		);
 	});
 
 	it('returns log_detail when logs explorer has activeLogId', () => {
@@ -102,7 +108,7 @@ describe('resolvePageType', () => {
 		expect(resolvePageType(ROUTES.METRICS_EXPLORER_EXPLORER, '')).toBe(
 			PageTypeDTO.metrics_explorer,
 		);
-		expect(resolvePageType(ROUTES.METRICS_EXPLORER_VIEWS, '')).toBe(
+		expect(resolvePageType('/metrics-explorer/views', '')).toBe(
 			PageTypeDTO.metrics_explorer,
 		);
 	});

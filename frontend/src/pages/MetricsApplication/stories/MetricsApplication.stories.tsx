@@ -1,12 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import MetricsApplication from '../MetricsApplication';
+import {
+	openApDexSettings,
+	openDownloadMenu,
+} from './__story_mockdata__/metricsApplication.play';
 import { metricsApplicationMocks } from './MetricsApplication.stories.mocks';
 
 type MetricsApplicationArgs = PageStoryArgs<typeof metricsApplicationMocks>;
@@ -25,9 +28,7 @@ const meta = {
 	component: MetricsApplication,
 	// The page reads the service out of the pathname, so it renders under its own
 	// route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.SERVICE_METRICS} component={MetricsApplication} />
-	),
+	render: renderAtRoute(ROUTES.SERVICE_METRICS, MetricsApplication),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<MetricsApplicationArgs>;
@@ -41,6 +42,14 @@ type Story = StoryObj<MetricsApplicationArgs>;
  * selected range, with the key operations behind them.
  */
 export const Default: Story = {};
+
+/**
+ * The overview read from span metrics, which the `use_span_metrics` flag
+ * switches it to: histogram latency and the metrics key operations table.
+ */
+export const SpanMetrics: Story = {
+	args: { mode: 'span-metrics' },
+};
 
 /** The database calls the service makes, by system and by upstream. */
 export const DatabaseCalls: Story = {
@@ -67,14 +76,10 @@ export const NoOperations: Story = {
  * be taken away in.
  */
 export const DownloadMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'download-menu-trigger',
-				{},
-				{ timeout: 15000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openDownloadMenu,
+};
+
+/** The apdex threshold popover, opened from the overview's settings control. */
+export const ApDexSettingsOpen: Story = {
+	play: openApDexSettings,
 };

@@ -14,7 +14,7 @@ Grep recipes, run against the page's directories:
 | endpoint URLs | the api module's `axios.get\|post` |
 | endpoint URLs behind a generated hook | the hook lives in `src/api/generated/services/<name>/index.ts` and the URL only appears in the fetcher body: `rg 'url: \`' src/api/generated/services/<name>/` |
 | url state | `useUrlQuery\|useUrlQueryData\|useUrlSearchState\|useQueryState\|QueryParams\.` |
-| navigation | `useSafeNavigate\|history.push\|<Link` |
+| navigation | `useSafeNavigate\|useAppNavigate\|navigate\|<AppLink` |
 | permissions | `useAuthZ\|AuthZGuard\|AuthZButton\|hasEditPermission\|routePermission` |
 | flags and prefs | `useFeatureFlag\|FeatureKeys\.\|USER_PREFERENCES\.\|userPreferences` |
 | empty and error branches | `isLoading\|isError\|isFetching\|length === 0\|!data` |

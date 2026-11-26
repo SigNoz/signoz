@@ -1,4 +1,6 @@
-import { act, screen, within } from 'tests/test-utils';
+import logEvent from 'api/common/logEvent';
+import { InfraMonitoringEntity } from 'container/InfraMonitoringK8sV2/constants';
+import { act, screen, userEvent, within } from 'tests/test-utils';
 
 import { renderEntityTraces } from './testUtils';
 import { mockQueryRangeV5WithTracesResponse } from '__tests__/query_range_v5.util';
@@ -20,30 +22,30 @@ jest.spyOn(window, 'matchMedia').mockImplementation(
 		}) as unknown as MediaQueryList,
 );
 
+jest.mock('api/common/logEvent', () => ({
+	__esModule: true,
+	default: jest.fn(() => Promise.resolve()),
+}));
+
 describe('EntityTraces - Table Rendering', () => {
 	it('should render table with all column headers', async () => {
 		mockQueryRangeV5WithTracesResponse({ pageSize: 3 });
 
-		act(() => {
-			renderEntityTraces();
+		renderEntityTraces();
+
+		await screen.findAllByTestId('serviceName');
+		const table = screen.getByTestId('entity-traces-table');
+
+		[
+			'Timestamp',
+			'Service Name',
+			'Name',
+			'Duration',
+			'HTTP Method',
+			'Status Code',
+		].forEach((header) => {
+			expect(within(table).getByText(header)).toBeInTheDocument();
 		});
-
-		await expect(screen.findByText('Service Name')).resolves.toBeInTheDocument();
-
-		const headerTexts = within(screen.getByRole('table'))
-			.getAllByRole('columnheader')
-			.map((header) => header.textContent);
-
-		expect(headerTexts).toStrictEqual(
-			expect.arrayContaining([
-				'Timestamp',
-				'Service Name',
-				'Name',
-				'Duration',
-				'HTTP Method',
-				'Status Code',
-			]),
-		);
 	});
 
 	it('should render trace values in table cells', async () => {
@@ -145,13 +147,13 @@ describe('EntityTraces - Table Rendering', () => {
 			customTraces: [{ serviceName: 'frontend' }],
 		});
 
-		act(() => {
-			renderEntityTraces();
-		});
+		renderEntityTraces();
 
 		await expect(screen.findByTestId('serviceName')).resolves.toBeInTheDocument();
 
-		const links = within(screen.getByRole('table')).getAllByRole('link');
+		const links = within(
+			screen.getByTestId('entity-traces-row-span-id-0'),
+		).getAllByTestId('trace-block-link');
 
 		expect(links.length).toBeGreaterThan(0);
 		links.forEach((link) => {
@@ -181,5 +183,23 @@ describe('EntityTraces - Table Rendering', () => {
 			'backend',
 			'database',
 		]);
+	});
+
+	it('should log the drawer trace clicked event when a trace row is clicked', async () => {
+		mockQueryRangeV5WithTracesResponse({
+			customTraces: [{ serviceName: 'frontend' }],
+		});
+
+		renderEntityTraces();
+
+		const user = userEvent.setup();
+		await user.click(await screen.findByTestId('entity-traces-row-span-id-0'));
+
+		expect(logEvent).toHaveBeenCalledWith(
+			'Infra Monitoring: Drawer trace clicked',
+			{
+				entityType: InfraMonitoringEntity.PODS,
+			},
+		);
 	});
 });

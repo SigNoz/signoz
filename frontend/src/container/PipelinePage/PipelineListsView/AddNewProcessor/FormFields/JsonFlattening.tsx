@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Info } from '@signozhq/icons';
 import { Input } from '@signozhq/ui/input';
 import { Switch } from '@signozhq/ui/switch';
-import { Flex, Form, Space, Tooltip } from 'antd';
+import { Form, Tooltip } from 'antd';
+import Space from 'periscope/components/Space/Space';
+import Flex from 'periscope/components/Flex/Flex';
 import { ProcessorData } from 'types/api/pipeline/def';
 
 import { PREDEFINED_MAPPING } from '../config';
@@ -63,6 +65,7 @@ function JsonFlattening({
 					<Switch
 						color="primary"
 						textPlacement="right"
+						testId="enable-paths-switch"
 						value={!!enablePaths}
 						onChange={handleEnablePathsChange}
 					/>
@@ -76,7 +79,7 @@ function JsonFlattening({
 					label="Path Prefix"
 					initialValue={selectedProcessorData?.path_prefix}
 				>
-					<Input placeholder="Path Prefix" />
+					<Input placeholder="Path Prefix" testId="path-prefix-input" />
 				</Form.Item>
 			)}
 

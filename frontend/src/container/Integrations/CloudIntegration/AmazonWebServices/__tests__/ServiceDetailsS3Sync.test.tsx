@@ -1,6 +1,6 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { server } from 'mocks-server/server';
 import { rest, RestRequest } from 'msw';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 
 import {
 	accountsResponse,
@@ -11,18 +11,9 @@ import {
 import {
 	assertGenericModalElements,
 	assertS3SyncSpecificElements,
+	bucketSelectInput,
 	renderServiceDetails,
 } from './utils';
-
-// --- RESIZE OBSERVER (required by @radix-ui in Tabs/Switch) ---
-class ResizeObserverMock {
-	observe(): void {}
-
-	unobserve(): void {}
-
-	disconnect(): void {}
-}
-global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // --- MOCKS ---
 jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
@@ -36,27 +27,22 @@ jest.mock(
 	}),
 );
 
-let testServiceId = 's3sync';
 let testInitialBuckets: Record<string, string[]> = {};
-const mockGet = jest.fn((param: string) => {
-	if (param === 'cloudAccountId') {
-		return CLOUD_ACCOUNT_ID;
-	}
-	if (param === 'service') {
-		return testServiceId;
-	}
-	return null;
-});
-jest.mock('hooks/useUrlQuery', () => ({
-	__esModule: true,
-	default: (): { get: (param: string) => string | null } => ({ get: mockGet }),
-}));
+
+const addBucket = async (
+	user: ReturnType<typeof userEvent.setup>,
+	bucketName: string,
+): Promise<void> => {
+	await screen.findByTestId('s3-buckets-select-ap-south-1');
+	await user.click(bucketSelectInput('ap-south-1'));
+	// antd reads the legacy keyCode on Enter, which user-event leaves at 0, so
+	// commit the tag with the select's comma separator instead.
+	await user.paste(`${bucketName},`);
+};
 
 // --- TEST SUITE ---
 describe('ServiceDetails for S3 Sync service', () => {
-	jest.setTimeout(10000);
 	beforeEach(() => {
-		testServiceId = 's3sync';
 		testInitialBuckets = {};
 		server.use(
 			rest.get(
@@ -79,41 +65,34 @@ describe('ServiceDetails for S3 Sync service', () => {
 	});
 
 	it('should render with logs collection switch and bucket selectors (no buckets initially selected)', async () => {
-		renderServiceDetails({}); // No initial S3 buckets, defaults to 's3sync' serviceId
+		renderServiceDetails();
 		await assertGenericModalElements();
 		await assertS3SyncSpecificElements({});
 	});
 
 	it('should render with logs collection switch and bucket selectors (some buckets initially selected)', async () => {
 		testInitialBuckets = initialBuckets;
-		renderServiceDetails(initialBuckets);
+		renderServiceDetails();
 		await assertGenericModalElements();
 		await assertS3SyncSpecificElements(initialBuckets);
 	});
 
 	it('should enable save button after adding a new bucket via combobox', async () => {
+		const user = userEvent.setup();
 		testInitialBuckets = initialBuckets;
-		renderServiceDetails(initialBuckets);
-		await assertGenericModalElements();
-		await assertS3SyncSpecificElements(initialBuckets);
+		renderServiceDetails();
 
-		const targetCombobox = screen.getAllByRole('combobox')[0];
 		const newBucketName = 'a-newly-added-bucket';
+		await addBucket(user, newBucketName);
 
-		fireEvent.change(targetCombobox, { target: { value: newBucketName } });
-		fireEvent.keyDown(targetCombobox, {
-			key: 'Enter',
-			code: 'Enter',
-			keyCode: 13,
-		});
-
-		await waitFor(() => {
-			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save/i })).not.toHaveAttribute(
-				'aria-disabled',
-				'true',
-			);
-		});
+		expect(
+			within(screen.getByTestId('s3-buckets-select-ap-south-1')).getByTitle(
+				newBucketName,
+			),
+		).toHaveTextContent(newBucketName);
+		await expect(
+			screen.findByTestId('cloud-service-save-btn'),
+		).resolves.not.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('should send updated bucket configuration on save', async () => {
@@ -127,29 +106,13 @@ describe('ServiceDetails for S3 Sync service', () => {
 				return res(ctx.status(200), ctx.json({ message: 'Config updated' }));
 			}),
 		);
+		const user = userEvent.setup();
 		testInitialBuckets = initialBuckets;
-		renderServiceDetails(initialBuckets);
-		await assertGenericModalElements();
-		await assertS3SyncSpecificElements(initialBuckets);
+		renderServiceDetails();
 
 		const newBucketName = 'another-new-bucket';
-		const targetCombobox = screen.getAllByRole('combobox')[0];
-
-		fireEvent.change(targetCombobox, { target: { value: newBucketName } });
-		fireEvent.keyDown(targetCombobox, {
-			key: 'Enter',
-			code: 'Enter',
-			keyCode: 13,
-		});
-
-		await waitFor(() => {
-			expect(screen.getByLabelText(newBucketName)).toBeInTheDocument();
-			expect(screen.getByRole('button', { name: /save/i })).not.toHaveAttribute(
-				'aria-disabled',
-				'true',
-			);
-		});
-		fireEvent.click(screen.getByRole('button', { name: /save/i }));
+		await addBucket(user, newBucketName);
+		await user.click(await screen.findByTestId('cloud-service-save-btn'));
 
 		await waitFor(() => {
 			expect(capturedPayload).not.toBeNull();
@@ -172,13 +135,8 @@ describe('ServiceDetails for S3 Sync service', () => {
 	});
 
 	it('should not render S3 bucket region selector UI for services other than s3sync', async () => {
-		testServiceId = 'ec2';
-		testInitialBuckets = {};
-		renderServiceDetails({}, 'ec2');
-		await waitFor(() => {
-			expect(
-				screen.queryByText(/select s3 buckets by region/i),
-			).not.toBeInTheDocument();
-		});
+		renderServiceDetails('ec2');
+		await screen.findByTestId('markdown-renderer');
+		expect(screen.queryByTestId('s3-buckets-selector')).not.toBeInTheDocument();
 	});
 });

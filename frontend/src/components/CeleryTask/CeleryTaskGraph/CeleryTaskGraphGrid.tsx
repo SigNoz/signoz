@@ -8,12 +8,9 @@ import { CardContainer } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronUp } from '@signozhq/icons';
 import { AppState } from 'store/reducers';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { CaptureDataProps } from '../CeleryTaskDetail/CeleryTaskDetail';
-import { useCeleryFilterOptions } from '../useCeleryFilterOptions';
 import CeleryTaskBar from './CeleryTaskBar';
 import CeleryTaskGraph from './CeleryTaskGraph';
 import {
@@ -23,6 +20,7 @@ import {
 	celeryTasksByWorkerWidgetData,
 } from './CeleryTaskGraphUtils';
 import CeleryTaskLatencyGraph from './CeleryTaskLatencyGraph';
+import { useCeleryWorkerCount } from './useCeleryWorkerCount';
 
 import './CeleryTaskGraph.style.scss';
 
@@ -71,14 +69,7 @@ export default function CeleryTaskGraphGrid({
 		'Latency by worker',
 	];
 
-	const { options } = useCeleryFilterOptions(
-		'worker',
-		'rate',
-		DataSource.METRICS,
-		'flower_task_runtime_seconds_sum',
-		DataTypes.String,
-		'tag',
-	);
+	const { data: workerCount } = useCeleryWorkerCount();
 	const isDarkMode = useIsDarkMode();
 
 	const [collapsedSections, setCollapsedSections] = useState<{
@@ -105,14 +96,24 @@ export default function CeleryTaskGraphGrid({
 	};
 
 	return (
-		<div className="celery-task-graph-grid-container">
+		<div
+			className="celery-task-graph-grid-container"
+			data-testid="celery-graph-grid"
+		>
 			<div className="metric-based-graphs">
 				<CardContainer className="row-card" isDarkMode={isDarkMode}>
 					<div className="row-panel">
 						<div className="row-panel-section">
-							<Typography.Text className="section-title">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								Flower Metrics
-							</Typography.Text>
+							</Typography>
 							{collapsedSections.metricBasedGraphs ? (
 								<ChevronDown
 									size={14}
@@ -143,14 +144,31 @@ export default function CeleryTaskGraphGrid({
 						/>
 						<Card className="celery-task-graph-worker-count">
 							<div className="worker-count-header">
-								<Typography.Text className="worker-count-header-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									textOverflow="wrap"
+								>
 									Worker Online
-								</Typography.Text>
+								</Typography>
 							</div>
 							<div className="worker-count-text-container">
-								<Typography.Text className="celery-task-graph-worker-count-text">
-									{options.filter((option) => option.value).length}
-								</Typography.Text>
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="inline-block"
+									align="center"
+									textOverflow="wrap"
+									testId="celery-worker-count"
+								>
+									{workerCount ?? '-'}
+								</Typography>
 							</div>
 						</Card>
 					</div>
@@ -161,9 +179,16 @@ export default function CeleryTaskGraphGrid({
 					<CardContainer className="row-card" isDarkMode={isDarkMode}>
 						<div className="row-panel">
 							<div className="row-panel-section">
-								<Typography.Text className="section-title">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									Span Based Stats
-								</Typography.Text>
+								</Typography>
 								{collapsedSections.traceBasedGraphs ? (
 									<ChevronDown
 										size={14}
@@ -182,9 +207,16 @@ export default function CeleryTaskGraphGrid({
 					</CardContainer>
 					<div className="configure-option-Info">
 						{configureOptionComponent}
-						<Typography.Text className="configure-option-Info-text">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							Click on a graph co-ordinate to see more details
-						</Typography.Text>
+						</Typography>
 					</div>
 				</div>
 				{!collapsedSections.traceBasedGraphs && (

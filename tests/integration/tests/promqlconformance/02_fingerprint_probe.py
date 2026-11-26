@@ -73,7 +73,7 @@ def test_identical_labelsets_merge_and_grouping(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     def run(promql: str, start_ms: int, end_ms: int) -> list[tuple[dict, list]]:
-        q = {"type": "promql", "spec": {"name": "A", "query": promql, "step": 60}}
+        q = {"type": "promql", "spec": {"name": "A", "query": promql, "step": 60, "skipStepAlignment": True}}
         resp = make_query_request(signoz, token, start_ms, end_ms, [q])
         assert resp.status_code == HTTPStatus.OK, f"{promql!r}: {resp.text[:300]}"
         out = []

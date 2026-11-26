@@ -10,6 +10,11 @@ import {
 import { OPERATORS } from 'constants/antlrQueryConstants';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
 import { cloneDeep, isArray } from 'lodash-es';
+import {
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { v4 as uuid } from 'uuid';
 
@@ -46,14 +51,18 @@ export function removeManagedClauses(expression: string, key: string): string {
 }
 
 // Sources that use backend APIs expecting short operator format (e.g., 'nin' instead of 'not in')
-const SOURCES_WITH_SHORT_OPERATORS = [QuickFiltersSource.INFRA_MONITORING];
+const SOURCES_WITH_SHORT_OPERATORS: QuickFiltersSource[] = [
+	QuickFiltersSource.INFRA_MONITORING,
+];
 
 /**
  * Returns the correct NOT_IN operator value based on source.
  * InfraMonitoring backend expects 'nin', others expect 'not in'.
  */
-export function getNotInOperator(source: QuickFiltersSource): string {
-	if (SOURCES_WITH_SHORT_OPERATORS.includes(source)) {
+export function getNotInOperator(
+	quickFilterSource: QuickFiltersSource,
+): string {
+	if (SOURCES_WITH_SHORT_OPERATORS.includes(quickFilterSource)) {
 		return 'nin';
 	}
 	return getOperatorValue('NOT_IN');
@@ -134,7 +143,7 @@ export function applyCheckboxToggle({
 	currentQuery,
 	activeQueryIndex,
 	filter,
-	source,
+	quickFilterSource,
 	attributeValues,
 	value,
 	checked,
@@ -145,7 +154,7 @@ export function applyCheckboxToggle({
 	currentQuery: Query;
 	activeQueryIndex: number;
 	filter: IQuickFiltersConfig;
-	source: QuickFiltersSource;
+	quickFilterSource: QuickFiltersSource;
 	attributeValues: string[];
 	value: string;
 	checked: boolean;
@@ -153,8 +162,10 @@ export function applyCheckboxToggle({
 	previousState?: CheckedState;
 	sectionType?: SectionType;
 }): Query {
+	const slotKey = getBuilderSlotKeyForQueryType(currentQuery.queryType);
+	const activeBuilder = getBuilderBySlotKey(currentQuery, slotKey);
 	const activeItems =
-		currentQuery.builder.queryData?.[activeQueryIndex]?.filters?.items;
+		activeBuilder.queryData?.[activeQueryIndex]?.filters?.items;
 
 	const isSomeFilterPresentForCurrentAttribute = !!activeItems?.some((item) =>
 		isKeyMatch(item.key?.key, filter.attributeKey.key),
@@ -169,7 +180,7 @@ export function applyCheckboxToggle({
 	const isMultipleValuesTrueForTheKey =
 		Object.values(currentFilterState).filter((val) => val).length > 1;
 
-	const query = cloneDeep(currentQuery.builder.queryData?.[activeQueryIndex]);
+	const query = cloneDeep(activeBuilder.queryData?.[activeQueryIndex]);
 
 	// if only or all are clicked we do not need to worry about anything just override whatever we have
 	// by either adding a new IN operator value clause in case of ONLY or remove everything we have for ALL.
@@ -240,7 +251,7 @@ export function applyCheckboxToggle({
 							if (sectionType === SectionType.RELATED) {
 								const newFilter: TagFilterItem = {
 									id: uuid(),
-									op: getNotInOperator(source),
+									op: getNotInOperator(quickFilterSource),
 									key: filter.attributeKey,
 									value,
 								};
@@ -380,7 +391,7 @@ export function applyCheckboxToggle({
 						if (!checked) {
 							const newFilter = {
 								...currentFilter,
-								op: getNotInOperator(source),
+								op: getNotInOperator(quickFilterSource),
 								value: [currentFilter.value as string, value],
 							};
 							query.filters.items = query.filters.items.map((item) => {
@@ -404,7 +415,9 @@ export function applyCheckboxToggle({
 			// checked=true → user wants to select (IN), checked=false → exclude (NOT IN)
 			const newFilterItem: TagFilterItem = {
 				id: uuid(),
-				op: checked ? getOperatorValue(OPERATORS.IN) : getNotInOperator(source),
+				op: checked
+					? getOperatorValue(OPERATORS.IN)
+					: getNotInOperator(quickFilterSource),
 				key: filter.attributeKey,
 				value,
 			};
@@ -424,18 +437,15 @@ export function applyCheckboxToggle({
 		query.filters = synced.filters;
 	}
 
-	return {
-		...currentQuery,
-		builder: {
-			...currentQuery.builder,
-			queryData: [
-				...currentQuery.builder.queryData.map((q, idx) => {
-					if (idx === activeQueryIndex) {
-						return query;
-					}
-					return q;
-				}),
-			],
-		},
-	};
+	return replaceBuilderBySlotKey(currentQuery, slotKey, {
+		...activeBuilder,
+		queryData: [
+			...activeBuilder.queryData.map((q, idx) => {
+				if (idx === activeQueryIndex) {
+					return query;
+				}
+				return q;
+			}),
+		],
+	});
 }

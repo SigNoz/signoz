@@ -9,10 +9,10 @@ import {
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import cx from 'classnames';
 import { ENTITY_VERSION_V4, ENTITY_VERSION_V5 } from 'constants/app';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import QBEntityOptions from 'container/QueryBuilder/components/QBEntityOptions/QBEntityOptions';
 import { QueryProps } from 'container/QueryBuilder/type';
 import SpanScopeSelector from 'container/QueryBuilder/filters/QueryBuilderSearchV2/SpanScopeSelector';
+import { useBuilderQueryType } from 'hooks/queryBuilder/useBuilderQueryType';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Copy, Ellipsis, Trash } from '@signozhq/icons';
@@ -27,6 +27,7 @@ import {
 	resolveQueryBuilderField,
 } from '../queryBuilderFields.utils';
 
+import { isScalarPanelType } from './panelTypes';
 import MetricsAggregateSection from './MerticsAggregateSection/MetricsAggregateSection';
 import { MetricsSelect } from './MetricsSelect/MetricsSelect';
 import QueryAddOns from './QueryAddOns/QueryAddOns';
@@ -62,7 +63,8 @@ export const QueryV2 = forwardRef(function QueryV2(
 	const { cloneQuery, panelType } = useQueryBuilder();
 
 	const hasQueryFunctions = query?.functions?.length > 0;
-	const { dataSource, builderQueryType } = query;
+	const { dataSource } = query;
+	const builderQueryType = useBuilderQueryType(query);
 
 	const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -112,11 +114,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 	}
 
 	const showReduceTo = useMemo(
-		() =>
-			dataSource === DataSource.METRICS &&
-			(panelType === PANEL_TYPES.TABLE ||
-				panelType === PANEL_TYPES.PIE ||
-				panelType === PANEL_TYPES.VALUE),
+		() => dataSource === DataSource.METRICS && isScalarPanelType(panelType),
 		[dataSource, panelType],
 	);
 
@@ -183,6 +181,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 		<div
 			className={cx('query-v2', { 'where-clause-view': showOnlyWhereClause })}
 			ref={ref}
+			data-testid={`query-${query.queryName}`}
 		>
 			<div className="qb-content-section">
 				{(!showOnlyWhereClause || showTraceOperator) && (
@@ -246,6 +245,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 							{isMultiQueryAllowed && (
 								<Dropdown
 									items={queryActionItems}
+									testId="query-actions"
 									nativeButton={false}
 									align="end"
 									side="bottom"

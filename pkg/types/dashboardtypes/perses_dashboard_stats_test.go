@@ -117,20 +117,60 @@ func TestNewStatsFromStorableDashboardsCountsCompositeSubQueries(t *testing.T) {
 	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
 }
 
-// An AI builder query is always a traces query, so it counts towards traces.
-func TestNewStatsFromStorableDashboardsCountsAIBuilderQueries(t *testing.T) {
-	aiBuilder := `{
+func statsAIBuilderQuery() string {
+	return `{
 		"kind": "time_series",
 		"spec": {"plugin": {"kind": "signoz/AIBuilderQuery", "spec": {"name": "A", "aggregations": [{"expression": "count()"}]}}}
 	}`
-	dashboard := newStatsStorableV2(t, `"p1": `+statsPanel(aiBuilder))
+}
+
+// An AI builder query reads traces but counts only towards the AI stat.
+func TestNewStatsFromStorableDashboardsCountsAIBuilderQueries(t *testing.T) {
+	dashboard := newStatsStorableV2(t, `"p1": `+statsPanel(statsAIBuilderQuery()))
 
 	stats := NewStatsFromStorableDashboards([]*StorableDashboard{dashboard})
 
 	assert.Equal(t, int64(1), stats[statKeyPanelCount])
-	assert.Equal(t, int64(1), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelAICount])
+}
+
+func TestNewStatsFromStorableDashboardsCountsAICompositeSubQueries(t *testing.T) {
+	composite := `{
+		"kind": "time_series",
+		"spec": {"plugin": {"kind": "signoz/CompositeQuery", "spec": {"queries": [
+			{"type": "builder_ai_query", "spec": {"name": "A", "aggregations": [{"expression": "count()"}]}},
+			{"type": "builder_query", "spec": ` + statsBuilderQuerySpec("B", "logs") + `}
+		]}}}
+	}`
+	dashboard := newStatsStorableV2(t, `
+		"p1": `+statsPanel(composite)+`,
+		"p2": `+statsPanel(statsAIBuilderQuery())+`
+	`)
+
+	stats := NewStatsFromStorableDashboards([]*StorableDashboard{dashboard})
+
+	assert.Equal(t, int64(2), stats[statKeyPanelCount])
+	assert.Equal(t, int64(2), stats[statKeyPanelAICount])
+	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
+}
+
+func TestNewStatsFromStorableDashboardsSkipsSystemDashboards(t *testing.T) {
+	system := newStatsStorableV2(t, `"p1": `+statsPanel(statsAIBuilderQuery()))
+	system.Source = SourceSystem
+	system.Name = SystemDashboardNamePrefix + "overview"
+	user := newStatsStorableV2(t, `"p1": `+statsPanel(statsBuilderQuery("logs")))
+
+	stats := NewStatsFromStorableDashboards([]*StorableDashboard{system, user})
+
+	assert.Equal(t, int64(1), stats[statKeyDashboardCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelAICount])
+	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
 }
 
 // promql and clickhouse queries carry no signal, so they land in the panel total
@@ -215,6 +255,17 @@ func TestNewStatsFromPostableDashboardV2(t *testing.T) {
 	assert.Equal(t, int64(1), stats[statKeyPanelLogsCount])
 	assert.Equal(t, int64(1), stats[statKeyPanelTracesCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelAICount])
+}
+
+func TestNewStatsFromPostableDashboardV2CountsAIBuilderQueries(t *testing.T) {
+	postable := newStatsPostableV2(t, `"p1": `+statsPanel(statsAIBuilderQuery()))
+
+	stats := NewStatsFromPostableDashboardV2(postable)
+
+	assert.Equal(t, int64(1), stats[statKeyDashboardCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelCount])
+	assert.Equal(t, int64(1), stats[statKeyPanelAICount])
 }
 
 func TestNewStatsFromPostableDashboardV2WithNoPanels(t *testing.T) {
@@ -233,4 +284,5 @@ func TestNewStatsFromStorableDashboardsWithNoDashboards(t *testing.T) {
 	assert.Equal(t, int64(0), stats[statKeyPanelTracesCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelMetricsCount])
 	assert.Equal(t, int64(0), stats[statKeyPanelLogsCount])
+	assert.Equal(t, int64(0), stats[statKeyPanelAICount])
 }

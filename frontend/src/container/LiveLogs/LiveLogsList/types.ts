@@ -1,4 +1,4 @@
-import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
+import { ChangeViewFunctionType } from 'hooks/useHandleExplorerTabChange';
 import { ILog } from 'types/api/logs/log';
 
 export interface ILiveLogsLog {

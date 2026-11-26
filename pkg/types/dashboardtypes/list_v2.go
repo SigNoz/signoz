@@ -52,9 +52,9 @@ func (o ListOrder) IsValid() bool {
 var ErrCodeDashboardListInvalid = errors.MustNewCode("dashboard_list_invalid")
 
 type ListFilter struct {
-	Query string    `query:"query" json:"query"`
-	Sort  ListSort  `query:"sort" json:"sort"`
-	Order ListOrder `query:"order" json:"order"`
+	Query string    `query:"query" json:"query" description:"A filter expression over the reserved keys name, description, created_at, updated_at, created_by and locked, and over tag keys, using the SigNoz filter grammar: comparisons such as =, !=, CONTAINS, LIKE, IN, < and >, single-quoted strings, RFC3339 timestamps in quotes for created_at and updated_at, combined with AND, OR and NOT, for example name CONTAINS 'overview' AND created_at >= '2026-10-21T00:00:00Z'. At most 1024 characters. Empty matches every dashboard."`
+	Sort  ListSort  `query:"sort" json:"sort" description:"The sort field: updated_at (default), created_at or name."`
+	Order ListOrder `query:"order" json:"order" description:"The sort direction: asc or desc (default)."`
 }
 
 func (f *ListFilter) Validate() error {
@@ -75,8 +75,8 @@ func (f *ListFilter) Validate() error {
 
 type ListDashboardsV2Params struct {
 	ListFilter
-	Limit  int `query:"limit"`
-	Offset int `query:"offset"`
+	Limit  int `query:"limit" description:"The page size. Defaults to 20 and is capped at 200."`
+	Offset int `query:"offset" description:"The number of dashboards to skip. Defaults to 0."`
 }
 
 func (p *ListDashboardsV2Params) Validate() error {
@@ -114,22 +114,22 @@ type listedDashboardV2 struct {
 	types.TimeAuditable
 	types.UserAuditable
 
-	OrgID         valuer.UUID             `json:"orgId" required:"true"`
-	Locked        bool                    `json:"locked" required:"true"`
-	Source        Source                  `json:"source" required:"true"`
-	SchemaVersion string                  `json:"schemaVersion" required:"true"`
-	Name          string                  `json:"name" required:"true"`
-	Image         string                  `json:"image,omitempty"`
-	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
-	Spec          listedDashboardV2Spec   `json:"spec" required:"true"`
+	OrgID         valuer.UUID             `json:"orgId" required:"true" description:"The organization that owns the dashboard."`
+	Locked        bool                    `json:"locked" required:"true" description:"Whether the dashboard is locked against update and patch."`
+	Source        Source                  `json:"source" required:"true" description:"Where the dashboard came from: user or integration. System dashboards are not listed."`
+	SchemaVersion string                  `json:"schemaVersion" required:"true" description:"The dashboard schema version, v6 for v2 dashboards."`
+	Name          string                  `json:"name" required:"true" description:"The dashboard's unique, immutable name."`
+	Image         string                  `json:"image,omitempty" description:"Icon or logo shown in the dashboard list: the path of an icon or logo bundled with the UI under /assets/Icons/ or /assets/Logos/, or a base64 image data URI. Omitted when none is set."`
+	Tags          []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false" description:"The tags attached to the dashboard."`
+	Spec          listedDashboardV2Spec   `json:"spec" required:"true" description:"The display part of the dashboard spec. Panels, variables and layouts are not included in list rows."`
 	// Legacy marks a dashboard whose stored data is not yet in the v2 (perses)
 	// schema. Such rows are extracted best-effort from the v1 shape so the list
 	// still surfaces them; callers should route them to the legacy view.
-	Legacy bool `json:"legacy" required:"true"`
+	Legacy bool `json:"legacy" required:"true" description:"Whether the dashboard is still in the v1 schema. It is listed but cannot be fetched or edited through the v2 endpoints."`
 }
 
 type listedDashboardV2Spec struct {
-	Display Display `json:"display,omitempty"`
+	Display Display `json:"display,omitempty" description:"The dashboard name and description."`
 }
 
 func newListedDashboardV2(v2 *DashboardV2) *listedDashboardV2 {
@@ -184,10 +184,10 @@ func newLegacyListedDashboardV2(storable *StorableDashboard, tags []*tagtypes.Ta
 }
 
 type ListableDashboardV2 struct {
-	Dashboards       []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false"`
-	Total            int64                   `json:"total" required:"true"`
-	Tags             []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false"`
-	ReservedKeywords []DSLKey                `json:"reservedKeywords" required:"true" nullable:"false"`
+	Dashboards       []*listedDashboardV2    `json:"dashboards" required:"true" nullable:"false" description:"The dashboards on this page."`
+	Total            int64                   `json:"total" required:"true" description:"The number of dashboards matching the filter across every page."`
+	Tags             []*tagtypes.GettableTag `json:"tags" required:"true" nullable:"false" description:"Every dashboard tag in the organization, for building filters."`
+	ReservedKeywords []DSLKey                `json:"reservedKeywords" required:"true" nullable:"false" description:"The filter keys that address dashboard columns rather than tags."`
 }
 
 func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsByEntity map[valuer.UUID][]*tagtypes.Tag, allTags []*tagtypes.Tag) *ListableDashboardV2 {
@@ -207,14 +207,14 @@ func NewListableDashboardV2(dashboards []*StorableDashboard, total int64, tagsBy
 // state. Only the per-user list endpoint emits this; the pure list omits pins.
 type listedDashboardForUserV2 struct {
 	listedDashboardV2
-	Pinned bool `json:"pinned" required:"true"`
+	Pinned bool `json:"pinned" required:"true" description:"Whether the calling user has pinned the dashboard."`
 }
 
 type ListableDashboardForUserV2 struct {
-	Dashboards       []*listedDashboardForUserV2 `json:"dashboards" required:"true" nullable:"false"`
-	Total            int64                       `json:"total" required:"true"`
-	Tags             []*tagtypes.GettableTag     `json:"tags" required:"true" nullable:"false"`
-	ReservedKeywords []DSLKey                    `json:"reservedKeywords" required:"true" nullable:"false"`
+	Dashboards       []*listedDashboardForUserV2 `json:"dashboards" required:"true" nullable:"false" description:"The dashboards on this page, each with the calling user's pin state."`
+	Total            int64                       `json:"total" required:"true" description:"The number of dashboards matching the filter across every page."`
+	Tags             []*tagtypes.GettableTag     `json:"tags" required:"true" nullable:"false" description:"Every dashboard tag in the organization, for building filters."`
+	ReservedKeywords []DSLKey                    `json:"reservedKeywords" required:"true" nullable:"false" description:"The filter keys that address dashboard columns rather than tags."`
 }
 
 // StorableDashboardWithPinInfo is the per-row shape Store.ListForUser returns: the dashboard

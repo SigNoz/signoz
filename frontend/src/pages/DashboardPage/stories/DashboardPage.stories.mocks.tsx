@@ -4,13 +4,20 @@
  */
 
 import { rest } from 'msw';
-import { generatePath } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { GetPublicDashboard200 } from 'api/generated/services/sigNoz.schemas';
 import { useDashboardPreferencesStore } from 'hooks/dashboard/useDashboardPreference';
+import {
+	buildDashboardDeletePermission,
+	buildDashboardReadPermission,
+	buildDashboardUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
 
+import { grantsAll } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
@@ -18,23 +25,29 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { findToastText } from '@/storybook/play/toastText';
 import {
 	fieldKeysResponse,
 	fieldValuesResponse,
 } from '@/storybook/msw/__story_mockdata__/fields';
 import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	currentDashboardDocument,
 	cyclicVariablesDashboardResponse,
+	DURATION_CHOICES,
 	patchDashboardDocument,
 	PANEL_IDS,
 	seedDashboardDocument,
 	STORY_DASHBOARD_ID,
 	VARIABLE_KINDS,
 	type DashboardArgs,
+	type DurationChoice,
+	type PanelId,
 	type VariableKind,
 } from './__story_mockdata__/dashboard';
+import { publicDashboardMeta } from './__story_mockdata__/publicDashboard';
 import {
 	API_RESULTS,
 	settle,
@@ -45,6 +58,7 @@ import {
 	emptyPanelResponse,
 	VARIABLE_ATTRIBUTES,
 	panelResponse,
+	partialDataWarning,
 	serviceVariableValues,
 } from './__story_mockdata__/panelData';
 import {
@@ -60,7 +74,7 @@ const SHARING = 'Dashboard · sharing';
 const REQUESTS = 'Dashboard · requests';
 
 export const dashboardRoute = (): string =>
-	generatePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
+	buildRoutePath(ROUTES.DASHBOARD, { dashboardId: STORY_DASHBOARD_ID });
 
 export const tooltipRoute = (): string =>
 	`${dashboardRoute()}?variables=${encodeURIComponent(
@@ -87,14 +101,8 @@ const VARIABLE_QUERY_ERROR = {
 		"Code: 62. DB::Exception: Syntax error: failed at position 58 ('$environment'). (SYNTAX_ERROR)",
 };
 
-const publicMeta = (): GetPublicDashboard200 => ({
-	status: 'success',
-	data: {
-		timeRangeEnabled: true,
-		defaultTimeRange: '30m',
-		publicPath: `/public/dashboard/${STORY_DASHBOARD_ID}`,
-	},
-});
+const publicMeta = (): GetPublicDashboard200 =>
+	publicDashboardMeta(STORY_DASHBOARD_ID);
 
 const NOT_PUBLIC = {
 	status: 'error',
@@ -152,6 +160,13 @@ export const dashboardMocks = defineStoryMocks({
 				'The variable bar above the panels, one control per kind: a custom list, a query-backed list, a dynamic attribute and a free-text value.',
 			options: VARIABLE_KINDS,
 			value: [...VARIABLE_KINDS],
+		}),
+		duration: choiceControl<DurationChoice>('Default time range', {
+			group: LAYOUT,
+			description:
+				"The dashboard's `spec.duration`, which the time picker opens on when the URL carries no time. `unset` leaves the 30 minute default, `90m` is a window the settings list does not offer, `1s` opens as 1m and `0m` is not applied. The JSON editor rejects the last two.",
+			options: DURATION_CHOICES,
+			value: 'unset',
 		}),
 		variableValues: countControl('Variable options', {
 			group: DATA,
@@ -228,6 +243,7 @@ export const dashboardMocks = defineStoryMocks({
 			sectioned: values.sectioned,
 			variables: values.variables,
 			locked: values.locked,
+			duration: values.duration,
 		};
 
 		return [
@@ -367,12 +383,52 @@ export const dashboardMocks = defineStoryMocks({
 			sectioned: values.sectioned,
 			variables: values.variables,
 			locked: values.locked,
+			duration: values.duration,
 		});
 		// The sync mode persists per dashboard, so one story's pick would open the
 		// next one on it.
 		useDashboardPreferencesStore.setState({ preferences: {} });
 	},
 });
+
+export type DashboardPageArgs = PageStoryArgs<typeof dashboardMocks>;
+
+const SEARCHABLE_PANELS: readonly PanelId[] = ['top-endpoints', 'recent-logs'];
+
+/**
+ * The page mounts on `read`. A check that fails rather than denies still
+ * renders it.
+ */
+export const showsDashboard = (args: DashboardPageArgs): boolean =>
+	!args.notFound &&
+	(args.authzState === 'error' ||
+		grantsAll(args, buildDashboardReadPermission(STORY_DASHBOARD_ID)));
+
+/** A menu row whose check errors stays enabled; a lock disables it otherwise. */
+const rowEnabled = (
+	args: DashboardPageArgs,
+	...checks: BrandedPermission[]
+): boolean =>
+	showsDashboard(args) &&
+	(args.authzState === 'error' || (!args.locked && grantsAll(args, ...checks)));
+
+export const hasPanelSearch = (args: DashboardPageArgs): boolean =>
+	showsDashboard(args) &&
+	PANEL_IDS.slice(0, args.panels).some((id) => SEARCHABLE_PANELS.includes(id));
+
+export const hasPanel = (args: DashboardPageArgs, id: PanelId): boolean =>
+	showsDashboard(args) && PANEL_IDS.slice(0, args.panels).includes(id);
+
+export const canDeleteDashboard = (args: DashboardPageArgs): boolean =>
+	rowEnabled(args, buildDashboardDeletePermission(STORY_DASHBOARD_ID));
+
+export const canEditSections = (args: DashboardPageArgs): boolean =>
+	args.sectioned &&
+	rowEnabled(
+		args,
+		buildDashboardReadPermission(STORY_DASHBOARD_ID),
+		buildDashboardUpdatePermission(STORY_DASHBOARD_ID),
+	);
 
 /**
  * One panel's query answered with a warning beside its value, so its header
@@ -395,17 +451,7 @@ export const warnedPanelQueryHandler = rest.post(
 			ctx.status(200),
 			ctx.json(
 				queryRangeV5ScalarResponse(0.94, 'A', {
-					warning: {
-						code: 'partial_data',
-						message: `Some series for ${TOOLTIP_WARNED_METRIC} were dropped: the metric changed temporality partway through the selected window.`,
-						url: 'https://signoz.io/docs/metrics-management/types-and-aggregation/',
-						warnings: [
-							{
-								message:
-									'Narrow the window to a period with one temporality, or re-record the metric as a delta.',
-							},
-						],
-					},
+					warning: partialDataWarning(TOOLTIP_WARNED_METRIC),
 				}),
 			),
 		);
@@ -454,9 +500,9 @@ export const clickAction = async (
 	const item = await screen.findByText(label);
 	const menuItem = item.closest('[role="menuitem"]') ?? item;
 
-	await waitFor(() => {
-		expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
-		expect(menuItem).not.toHaveAttribute('data-disabled');
+	await waitFor(async () => {
+		await expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+		await expect(menuItem).not.toHaveAttribute('data-disabled');
 	});
 	await userEvent.click(menuItem);
 };
@@ -490,7 +536,7 @@ export const clickSectionAction = async (
 };
 
 export const expectToast = (text: string | RegExp): Promise<HTMLElement> =>
-	screen.findByText(text, undefined, PAGE_LOAD);
+	findToastText(text, PAGE_LOAD);
 
 export const openJsonEditor = async (
 	canvasElement: HTMLElement,
@@ -561,6 +607,18 @@ export const openSettings = async (
 	return screen.findByRole('tabpanel');
 };
 
+export const clickWhenEnabled = async (testId: string): Promise<void> => {
+	await waitFor(
+		() =>
+			expect(screen.getByTestId(testId)).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			),
+		PAGE_LOAD,
+	);
+	await userEvent.click(screen.getByTestId(testId));
+};
+
 export const variableRow = (name: string): Promise<HTMLElement> =>
 	screen.findByTestId(`variable-row-${name}`, {}, PAGE_LOAD);
 
@@ -616,12 +674,10 @@ export const openVariableEditor = async (
  */
 export const findPreviewValue = async (value: string): Promise<HTMLElement> => {
 	const label = await screen.findByText('Preview of Values');
+	// The label text sits in a wrapper beside the values, so the row is two levels up.
+	const section = label.parentElement?.parentElement as HTMLElement;
 
-	return within(label.parentElement as HTMLElement).findByText(
-		value,
-		undefined,
-		PAGE_LOAD,
-	);
+	return within(section).findByText(value, undefined, PAGE_LOAD);
 };
 
 export const pickVariableType = async (type: VariableType): Promise<void> => {
@@ -629,7 +685,7 @@ export const pickVariableType = async (type: VariableType): Promise<void> => {
 };
 
 export const typeVariableName = async (name: string): Promise<void> => {
-	const input = await screen.findByTestId('variable-name');
+	const input = await screen.findByTestId('variable-name-field');
 
 	await userEvent.clear(input);
 	await userEvent.type(input, name);

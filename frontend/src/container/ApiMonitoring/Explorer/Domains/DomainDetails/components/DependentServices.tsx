@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Skeleton, Table, TablePaginationConfig } from 'antd';
+import { Table, TablePaginationConfig } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { QueryParams } from 'constants/query';
 import {
@@ -54,17 +54,16 @@ function DependentServices({
 		[isExpanded, dependentServicesData.length],
 	);
 
-	if (isLoading || isRefetching) {
-		return <Skeleton />;
-	}
-
 	if (isError) {
 		return <ErrorState refetch={refetch} />;
 	}
 
 	return (
 		<div className="top-services-content">
-			<div className="dependent-services-container">
+			<div
+				className="dependent-services-container"
+				data-testid="dependent-services-table"
+			>
 				<Table
 					loading={isLoading || isRefetching}
 					dataSource={dependentServicesData || []}
@@ -82,9 +81,18 @@ function DependentServices({
 											className="empty-state-svg"
 										/>
 
-										<Typography.Text className="no-status-code-data-message">
-											This query had no results. Edit your query and try again!
-										</Typography.Text>
+										<div className="no-status-code-data-message">
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="p"
+												textOverflow="wrap"
+											>
+												This query had no results. Edit your query and try again!
+											</Typography>
+										</div>
 									</div>
 								</div>
 							),

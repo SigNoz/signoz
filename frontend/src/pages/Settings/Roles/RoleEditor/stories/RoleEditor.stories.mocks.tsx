@@ -5,11 +5,12 @@
 
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { RoleType } from 'types/roles';
 
 import { choiceControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	MUTATION_OUTCOMES,
@@ -33,7 +34,7 @@ const EDITORS = ['interactive', 'json'] as const;
 
 type Editor = (typeof EDITORS)[number];
 
-const CUSTOM_ROLE_NAME = 'oncall-responder';
+export const CUSTOM_ROLE_NAME = 'oncall-responder';
 
 /**
  * Create and edit are the same page on two routes: `roles/new` reads as create,
@@ -101,6 +102,8 @@ export const roleEditorMocks = defineStoryMocks({
 	config: (values) => ({ route: routeFor(values.mode, values.editor) }),
 });
 
+export type RoleEditorArgs = PageStoryArgs<typeof roleEditorMocks>;
+
 /** Opens the Logs card and returns it. */
 export const openLogsCard = async (
 	canvasElement: HTMLElement,
@@ -116,13 +119,28 @@ export const openLogsCard = async (
 	return header.parentElement as HTMLElement;
 };
 
+/** Opens the telemetry selector wizard from the Logs read verb and returns its dialog. */
+export const openSelectorWizard = async (
+	canvasElement: HTMLElement,
+): Promise<HTMLElement> => {
+	const card = await openLogsCard(canvasElement);
+	const [onlySelected] = await within(card).findAllByText('Only selected');
+
+	await userEvent.click(onlySelected);
+	await userEvent.click(
+		await within(card).findByRole('button', { name: 'Wizard' }),
+	);
+
+	return screen.findByRole('dialog', { name: 'Selector Wizard' });
+};
+
 /** Clicks save once the permission check behind the button has answered. */
 export const save = async (canvasElement: HTMLElement): Promise<void> => {
 	const button = await waitFor(
-		() => {
+		async () => {
 			const found = within(canvasElement).getByTestId('save-button');
 
-			expect(found).not.toHaveAttribute('aria-disabled', 'true');
+			await expect(found).not.toHaveAttribute('aria-disabled', 'true');
 
 			return found;
 		},

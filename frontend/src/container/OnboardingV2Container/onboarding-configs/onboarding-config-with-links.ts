@@ -25,6 +25,7 @@ import azureVmUrl from '@/assets/Logos/azure-vm.svg';
 import azureUrl from '@/assets/Logos/azure.svg';
 import basetenUrl from '@/assets/Logos/baseten.svg';
 import bunUrl from '@/assets/Logos/bun.svg';
+import caddyUrl from '@/assets/Logos/caddy.svg';
 import cassandraUrl from '@/assets/Logos/cassandra.svg';
 import celeryUrl from '@/assets/Logos/celery.svg';
 import certManagerUrl from '@/assets/Logos/cert-manager.svg';
@@ -96,6 +97,7 @@ import haystackUrl from '@/assets/Logos/haystack.svg';
 import hcpVaultUrl from '@/assets/Logos/hcp-vault.svg';
 import herokuUrl from '@/assets/Logos/heroku.svg';
 import honeycombUrl from '@/assets/Logos/honeycomb.svg';
+import honoUrl from '@/assets/Logos/hono.svg';
 import hostmetricsUrl from '@/assets/Logos/hostmetrics.svg';
 import httpUrl from '@/assets/Logos/http.svg';
 import httpMonitoringUrl from '@/assets/Logos/http-monitoring.svg';
@@ -151,7 +153,9 @@ import opentelemetryUrl from '@/assets/Logos/opentelemetry.svg';
 import phpUrl from '@/assets/Logos/php.svg';
 import pinoUrl from '@/assets/Logos/pino.svg';
 import pipecatUrl from '@/assets/Logos/pipecat.svg';
+import pixeltableUrl from '@/assets/Logos/pixeltable.svg';
 import planetscaleUrl from '@/assets/Logos/planetscale.svg';
+import pm2Url from '@/assets/Logos/pm2.svg';
 import podmanUrl from '@/assets/Logos/podman.svg';
 import postgresqlUrl from '@/assets/Logos/postgresql.svg';
 import prometheusUrl from '@/assets/Logos/prometheus.svg';
@@ -2576,7 +2580,7 @@ const onboardingConfigWithLinks = [
 								key: 'aws-ec2-metrics-one-click',
 								label: 'One Click AWS',
 								imgUrl: ec2Url,
-								link: '/integrations?integration=aws-integration&service=ec2',
+								link: '/integrations/aws?service=ec2',
 								internalRedirect: true,
 							},
 							{
@@ -2634,7 +2638,7 @@ const onboardingConfigWithLinks = [
 								key: 'aws-ecs-ec2-one-click',
 								label: 'One Click AWS',
 								imgUrl: ecsUrl,
-								link: '/integrations?integration=aws-integration&service=ecs',
+								link: '/integrations/aws?service=ecs',
 								internalRedirect: true,
 							},
 							{
@@ -2696,7 +2700,7 @@ const onboardingConfigWithLinks = [
 								key: 'aws-eks-ec2-one-click',
 								label: 'One Click AWS',
 								imgUrl: eksUrl,
-								link: '/integrations?integration=aws-integration&service=eks',
+								link: '/integrations/aws?service=eks',
 								internalRedirect: true,
 							},
 							{
@@ -2820,21 +2824,21 @@ const onboardingConfigWithLinks = [
 					key: 'aws-rds-one-click',
 					label: 'One Click AWS',
 					imgUrl: rdsUrl,
-					link: '/integrations?integration=aws-integration&service=rds',
+					link: '/integrations/aws?service=rds',
 					internalRedirect: true,
 				},
 				{
 					key: 'aws-rds-mysql-manual',
 					label: 'MySQL Manual',
 					imgUrl: rdsUrl,
-					link: '/integrations?integration=builtin-aws_rds_mysql',
+					link: '/integrations/builtin-aws_rds_mysql',
 					internalRedirect: true,
 				},
 				{
 					key: 'aws-rds-postgresql-manual',
 					label: 'PostgreSQL Manual',
 					imgUrl: rdsUrl,
-					link: '/integrations?integration=builtin-aws_rds_postgresql',
+					link: '/integrations/builtin-aws_rds_postgresql',
 					internalRedirect: true,
 				},
 			],
@@ -2893,7 +2897,7 @@ const onboardingConfigWithLinks = [
 								key: 'aws-lambda-logs-one-click',
 								label: 'One Click AWS',
 								imgUrl: lambdaUrl,
-								link: '/integrations?integration=aws-integration&service=lambda',
+								link: '/integrations/aws?service=lambda',
 								internalRedirect: true,
 							},
 							{
@@ -2951,7 +2955,7 @@ const onboardingConfigWithLinks = [
 								key: 'aws-lambda-metrics-one-click',
 								label: 'One Click AWS',
 								imgUrl: lambdaUrl,
-								link: '/integrations?integration=aws-integration&service=lambda',
+								link: '/integrations/aws?service=lambda',
 								internalRedirect: true,
 							},
 							{
@@ -4707,6 +4711,7 @@ const onboardingConfigWithLinks = [
 			'messaging',
 			'messaging queues',
 			'messaging-queues-celery',
+			'python celery',
 			'queues',
 			'task queue tracing',
 		],
@@ -4927,7 +4932,7 @@ const onboardingConfigWithLinks = [
 			'redis metrics',
 		],
 		imgUrl: redisUrl,
-		link: '/integrations?integration=builtin-redis',
+		link: '/integrations/builtin-redis',
 		internalRedirect: true,
 	},
 	{
@@ -4943,7 +4948,7 @@ const onboardingConfigWithLinks = [
 			'postgresql metrics',
 		],
 		imgUrl: postgresqlUrl,
-		link: '/integrations?integration=builtin-postgres',
+		link: '/integrations/builtin-postgres',
 		internalRedirect: true,
 	},
 	{
@@ -4959,7 +4964,7 @@ const onboardingConfigWithLinks = [
 			'proxy',
 		],
 		imgUrl: nginxUrl,
-		link: '/integrations?integration=builtin-nginx',
+		link: '/integrations/builtin-nginx',
 		internalRedirect: true,
 	},
 	{
@@ -4980,7 +4985,7 @@ const onboardingConfigWithLinks = [
 			'self',
 		],
 		imgUrl: mongoUrl,
-		link: '/integrations?integration=builtin-mongo',
+		link: '/integrations/builtin-mongo',
 		internalRedirect: true,
 	},
 	{
@@ -4998,7 +5003,7 @@ const onboardingConfigWithLinks = [
 			'olap database',
 		],
 		imgUrl: clickhouseUrl,
-		link: '/integrations?integration=builtin-clickhouse',
+		link: '/integrations/builtin-clickhouse',
 		internalRedirect: true,
 	},
 	{
@@ -5053,7 +5058,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-alb-one-click',
 					label: 'One Click AWS',
 					imgUrl: awsAlbUrl,
-					link: '/integrations?integration=aws-integration&service=alb',
+					link: '/integrations/aws?service=alb',
 					internalRedirect: true,
 				},
 				{
@@ -5094,7 +5099,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-api-gateway-one-click',
 					label: 'One Click AWS',
 					imgUrl: apiGatewayUrl,
-					link: '/integrations?integration=aws-integration&service=api-gateway',
+					link: '/integrations/aws?service=api-gateway',
 					internalRedirect: true,
 				},
 				{
@@ -5139,7 +5144,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-dynamodb-one-click',
 					label: 'One Click AWS',
 					imgUrl: dynamodbUrl,
-					link: '/integrations?integration=aws-integration&service=dynamodb',
+					link: '/integrations/aws?service=dynamodb',
 					internalRedirect: true,
 				},
 				{
@@ -5186,14 +5191,14 @@ const onboardingConfigWithLinks = [
 					key: 'aws-elasticache-one-click',
 					label: 'One Click AWS',
 					imgUrl: elasticacheUrl,
-					link: '/integrations?integration=aws-integration&service=elasticache',
+					link: '/integrations/aws?service=elasticache',
 					internalRedirect: true,
 				},
 				{
 					key: 'aws-elasticache-redis-manual',
 					label: 'Redis Manual',
 					imgUrl: elasticacheUrl,
-					link: '/integrations?integration=builtin-aws_elasticache_redis',
+					link: '/integrations/builtin-aws_elasticache_redis',
 					internalRedirect: true,
 				},
 			],
@@ -5232,7 +5237,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-msk-one-click',
 					label: 'One Click AWS',
 					imgUrl: amazonMskUrl,
-					link: '/integrations?integration=aws-integration&service=msk',
+					link: '/integrations/aws?service=msk',
 					internalRedirect: true,
 				},
 				{
@@ -5275,7 +5280,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-s3-one-click',
 					label: 'One Click AWS',
 					imgUrl: s3Url,
-					link: '/integrations?integration=aws-integration&service=s3sync',
+					link: '/integrations/aws?service=s3sync',
 					internalRedirect: true,
 				},
 				{
@@ -5317,7 +5322,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-sns-one-click',
 					label: 'One Click AWS',
 					imgUrl: snsUrl,
-					link: '/integrations?integration=aws-integration&service=sns',
+					link: '/integrations/aws?service=sns',
 					internalRedirect: true,
 				},
 				{
@@ -5359,7 +5364,7 @@ const onboardingConfigWithLinks = [
 					key: 'aws-sqs-one-click',
 					label: 'One Click AWS',
 					imgUrl: sqsUrl,
-					link: '/integrations?integration=aws-integration&service=sqs',
+					link: '/integrations/aws?service=sqs',
 					internalRedirect: true,
 				},
 				{
@@ -7239,24 +7244,33 @@ const onboardingConfigWithLinks = [
 		dataSource: 'gcp-integration',
 		label: 'GCP Integration',
 		imgUrl: gcpUrl,
-		tags: ['GCP'],
-		module: 'metrics',
+		tags: ['GCP', 'logs'],
+		module: 'integrations',
 		relatedSearchKeywords: [
+			'cloud logging',
 			'cloud monitoring metrics',
 			'connect gcp account',
 			'gcp',
+			'gcp agent',
 			'gcp integration',
+			'gcp logs',
 			'gcp manual setup',
 			'gcp metrics',
 			'gcp monitoring',
 			'gcp observability',
+			'gcp one click',
 			'gcp service account',
 			'google cloud',
 			'google cloud integration',
+			'log sink',
+			'logs',
 			'metrics',
 			'monitoring',
 			'observability',
+			'one click',
+			'one click gcp integration',
 			'opentelemetry collector gcp',
+			'pub/sub',
 		],
 		id: 'gcp-integration',
 		link: '/docs/integrations/gcp/gcp-integration/',
@@ -8065,6 +8079,132 @@ const onboardingConfigWithLinks = [
 		],
 		id: 'microsoft-agent-framework',
 		link: '/docs/microsoft-agent-framework-observability/',
+	},
+	{
+		dataSource: 'hono',
+		label: 'Hono',
+		imgUrl: honoUrl,
+		tags: ['apm/traces', 'metrics'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'bun hono',
+			'hono',
+			'hono metrics',
+			'hono monitoring',
+			'hono observability',
+			'hono traces',
+			'honojs',
+			'javascript',
+			'metrics',
+			'nodejs',
+			'nodejs hono',
+			'observability',
+			'opentelemetry hono',
+			'traces',
+			'tracing',
+			'typescript',
+		],
+		id: 'hono',
+		link: '/docs/instrumentation/javascript/opentelemetry-hono/',
+	},
+	{
+		dataSource: 'caddy',
+		label: 'Caddy',
+		imgUrl: caddyUrl,
+		tags: ['apm/traces', 'metrics', 'logs'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'access logs',
+			'apm',
+			'caddy',
+			'caddy logs',
+			'caddy metrics',
+			'caddy monitoring',
+			'caddy server',
+			'caddy traces',
+			'logs',
+			'metrics',
+			'observability',
+			'opentelemetry caddy',
+			'reverse proxy',
+			'traces',
+			'tracing',
+			'web server',
+		],
+		id: 'caddy',
+		link: '/docs/integrations/opentelemetry-caddy/',
+	},
+	{
+		dataSource: 'pm2',
+		label: 'PM2',
+		imgUrl: pm2Url,
+		tags: ['apm/traces'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'cluster mode',
+			'javascript',
+			'nodejs',
+			'nodejs pm2',
+			'observability',
+			'opentelemetry pm2',
+			'pm2',
+			'pm2 cluster',
+			'pm2 monitoring',
+			'pm2 traces',
+			'process manager',
+			'traces',
+			'tracing',
+		],
+		id: 'pm2',
+		link: '/docs/instrumentation/javascript/opentelemetry-pm2/',
+	},
+	{
+		dataSource: 'pixeltable',
+		label: 'Pixeltable',
+		imgUrl: pixeltableUrl,
+		tags: ['LLM Monitoring'],
+		module: 'apm',
+		relatedSearchKeywords: [
+			'apm',
+			'llm',
+			'llm monitoring',
+			'multimodal ai',
+			'observability',
+			'opentelemetry pixeltable',
+			'pixeltable',
+			'pixeltable monitoring',
+			'pixeltable observability',
+			'pixeltable traces',
+			'traces',
+			'udf',
+		],
+		id: 'pixeltable',
+		link: '/docs/pixeltable-observability/',
+	},
+	{
+		dataSource: 'claude-cowork',
+		label: 'Claude Cowork',
+		imgUrl: claudeCodeUrl,
+		tags: ['LLM Monitoring', 'logs'],
+		module: 'logs',
+		relatedSearchKeywords: [
+			'claude',
+			'claude cowork',
+			'claude cowork monitoring',
+			'claude cowork observability',
+			'cowork',
+			'llm',
+			'llm monitoring',
+			'logs',
+			'monitoring',
+			'observability',
+			'otel claude cowork',
+			'telemetry',
+		],
+		id: 'claude-cowork',
+		link: '/docs/claude-cowork-monitoring/',
 	},
 ];
 export default onboardingConfigWithLinks;

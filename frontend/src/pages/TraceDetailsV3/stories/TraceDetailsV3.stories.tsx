@@ -1,33 +1,37 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import {
-	expect,
-	fireEvent,
-	screen,
-	userEvent,
-	waitFor,
-	within,
-} from 'storybook/test';
+import { renderAtRoute } from '@/storybook/renderAtRoute';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { scenarioSpanCount } from './__story_mockdata__/traceDetails';
 import {
-	focusSpanIndex,
-	scenarioSpanCount,
-	spanIdAt,
-	STORY_TRACE_ID,
-} from './__story_mockdata__/traceDetails';
+	cancelDownload,
+	copyPrettyViewValue,
+	copySpanLink,
+	copyTraceId,
+	downloadTrace,
+	expandFilterBar,
+	hoverAiSpan,
+	hoverEventStacktrace,
+	openAddSpanToFunnel,
+	openAnalytics,
+	openCreateFunnelStep,
+	openPercentile,
+	openPercentileResourceSelector,
+	openSpanEvents,
+	openTraceOptions,
+	showsAnalyticsState,
+	showsHighlightedErrors,
+	showsTraceOnlyLogs,
+	showTooltips,
+	switchDockMode,
+} from './__story_mockdata__/traceDetails.play';
 import {
-	openRowMenu,
-	startDownload,
+	type TraceDetailsArgs,
 	traceDetailsMocks,
-	untilLoaded,
 } from './TraceDetailsV3.stories.mocks';
 import TraceDetailsV3 from '../index';
-
-type TraceDetailsArgs = PageStoryArgs<typeof traceDetailsMocks>;
 
 const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
 
@@ -39,14 +43,12 @@ const pageStory = storyMocks(traceDetailsMocks, { layout: 'app' });
  * Route: `/trace/:id`.
  */
 const meta = {
-	title: 'Pages/Traces/Trace Details',
+	title: 'Pages/Traces/Trace Details/Overview',
 	tags: ['play'],
 	component: TraceDetailsV3,
 	// The page reads the trace id out of the pathname, so it renders under its
 	// own route rather than being mounted on its own.
-	render: (): JSX.Element => (
-		<Route path={ROUTES.TRACE_DETAIL} component={TraceDetailsV3} />
-	),
+	render: renderAtRoute(ROUTES.TRACE_DETAIL, TraceDetailsV3),
 	...pageStory,
 	parameters: { ...pageStory.parameters },
 } satisfies Meta<TraceDetailsArgs>;
@@ -83,22 +85,9 @@ export const Loading: Story = {
 	args: { dataState: 'loading' },
 };
 
-/**
- * The trace's span and error counts in the bottom strip, in place of the build
- * version, the error icon red while any span failed.
- */
-export const BottomStrip: Story = {
-	args: { bottomStrip: true },
-};
-
 /** The strip over a trace with no failing span: the error icon stays neutral. */
 export const BottomStripNoErrors: Story = {
-	args: { bottomStrip: true, errors: false },
-};
-
-/** The strip mid-fetch, whose counts read zero until the trace resolves. */
-export const BottomStripLoading: Story = {
-	args: { bottomStrip: true, dataState: 'loading' },
+	args: { errors: false },
 };
 
 /**
@@ -123,30 +112,15 @@ const AI_SPANS = scenarioSpanCount('ai');
  */
 export const AiTrace: Story = {
 	args: { scenario: 'ai', spans: AI_SPANS },
-	play: async ({ canvasElement }): Promise<void> => {
-		const row = await within(canvasElement).findByTestId(
-			`cell-0-${spanIdAt(focusSpanIndex('ai', AI_SPANS))}`,
-			undefined,
-			untilLoaded,
-		);
-
-		await fireEvent.mouseOver(row);
-		await screen.findByText('Usage Breakdown', undefined, untilLoaded);
-	},
+	play: hoverAiSpan,
 };
 
 /**
- * Turns on Highlight errors, which writes `has_error = true` into the filter and
- * expands the bar to show it.
+ * The agent run with every tooltip held open: the header's and the span panel's
+ * token usage breakdowns, and the cost labels beside them.
  */
-const highlightErrors = async (canvasElement: HTMLElement): Promise<void> => {
-	const toggle = await within(canvasElement).findByTestId(
-		'highlight-errors-toggle',
-		undefined,
-		untilLoaded,
-	);
-
-	await userEvent.click(within(toggle).getByRole('switch'));
+export const AiTraceTooltips: Story = {
+	args: { scenario: 'ai', spans: AI_SPANS, tooltipsOpen: true },
 };
 
 /**
@@ -158,52 +132,7 @@ const highlightErrors = async (canvasElement: HTMLElement): Promise<void> => {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await highlightErrors(canvasElement);
-
-		// Collapsing puts the filter back behind the pill, which is where it carries
-		// its popover. Neither expanded action carries a label of its own, so the
-		// row is located by its container and the collapse is its last button.
-		const actions = await waitFor(() => {
-			const found = canvasElement.querySelector<HTMLElement>(
-				'[class*="expandedActions"]',
-			);
-
-			if (!found) {
-				throw new Error('Filter row is not expanded');
-			}
-
-			return found;
-		}, untilLoaded);
-		const expandedActions = within(actions).getAllByRole('button');
-
-		await userEvent.click(expandedActions[expandedActions.length - 1]);
-
-		// `userEvent.hover` tracks the pointer, so hovering the dot would fire the
-		// row's mouseleave and drop the hover card. `mouseOver` is what React reads
-		// to synthesise mouseenter, and it leaves the previous target alone, so both
-		// stay open. The dot has no test id.
-		const [row] = await within(canvasElement).findAllByTestId(
-			/^cell-0-/,
-			undefined,
-			untilLoaded,
-		);
-
-		await fireEvent.mouseOver(row);
-
-		await waitFor(async () => {
-			const dot = canvasElement.querySelector('[class*="eventDot"]');
-
-			if (!dot) {
-				throw new Error('no event dot rendered');
-			}
-
-			await fireEvent.mouseOver(dot);
-		}, untilLoaded);
-
-		// The dot opens its card on a 200ms timer rather than on the event itself.
-		await screen.findByRole('tooltip', { name: /event details/i }, untilLoaded);
-	},
+	play: showTooltips,
 };
 
 /**
@@ -213,9 +142,13 @@ export const Tooltips: Story = {
  */
 export const TooltipsInFilterBar: Story = {
 	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await highlightErrors(canvasElement);
-	},
+	play: expandFilterBar,
+};
+
+/** Highlight errors on a trace with no failing span: the filter finds no results. */
+export const HighlightErrorsNoMatches: Story = {
+	args: { errors: false },
+	play: showsHighlightedErrors,
 };
 
 /**
@@ -224,100 +157,99 @@ export const TooltipsInFilterBar: Story = {
  * on.
  */
 export const TraceOptionsMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: 'Trace options' },
-				untilLoaded,
-			),
-		);
-		await screen.findByText('Preview fields');
-	},
+	play: openTraceOptions,
+};
+
+/** The Analytics panel over a trace with no group to chart. */
+export const AnalyticsNoData: Story = {
+	args: { analytics: 'empty' },
+	play: showsAnalyticsState,
+};
+
+/** The Analytics panel when the aggregations request fails. */
+export const AnalyticsError: Story = {
+	args: { analytics: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: showsAnalyticsState,
 };
 
 /** The span panel moved from the right edge to the bottom through its dock toggle. */
 export const DockModeSwitched: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		// The dock options are icon-only and carry no accessible name.
-		const option = await within(canvasElement).findByTestId(
-			'dock-mode-docked',
-			undefined,
-			untilLoaded,
-		);
-
-		await userEvent.click(option.querySelector('button') ?? option);
-	},
+	play: switchDockMode,
 };
 
 /** The span's percentile badge expanded into the distribution it was ranked in. */
 export const SpanPercentileOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: /^p\d+/ },
-				untilLoaded,
-			),
-		);
-		await screen.findByText(/This span duration is/);
-	},
+	play: openPercentile,
 };
 
-/** The span's trace id clicked in the panel, which copies it. */
-export const TraceIdCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByRole(
-				'button',
-				{ name: STORY_TRACE_ID },
-				untilLoaded,
-			),
-		);
-		await expect(
-			await screen.findByText('Trace ID copied to clipboard'),
-		).toBeVisible();
-	},
+/** The percentile's resource attribute picker, which narrows the spans it ranks against. */
+export const SpanPercentileResourceSelector: Story = {
+	play: openPercentileResourceSelector,
+};
+
+/** The span panel's Events tab on the failing span: its exception event and attributes. */
+export const SpanPanelEvents: Story = {
+	play: openSpanEvents,
+};
+
+/** The Events tab on a span with no events. */
+export const SpanPanelNoEvents: Story = {
+	args: { errors: false },
+	play: openSpanEvents,
+};
+
+/** The exception's stacktrace hovered: the preview popover with its Expand action. */
+export const SpanPanelEventAttributePopover: Story = {
+	play: hoverEventStacktrace,
+};
+
+/** The analytics panel the header toggle opens. */
+export const AnalyticsOpen: Story = {
+	play: openAnalytics,
+};
+
+/** The download progress panel, held open by an export that never answers. */
+export const TraceDownload: Story = {
+	args: { exportState: 'loading' },
+	play: downloadTrace,
+};
+
+/** The funnel picker a span row's add-to-funnel action opens. */
+export const AddSpanToFunnel: Story = {
+	play: openAddSpanToFunnel,
+};
+
+/** The name field behind "Create new funnel" in that picker. */
+export const AddSpanToFunnelCreateStep: Story = {
+	play: openCreateFunnelStep,
+};
+
+/** The span has no logs of its own but its trace does, so the Logs tab points to the trace's. */
+export const SpanPanelTraceOnlyLogs: Story = {
+	args: { traceOnlyLogs: true },
+	play: showsTraceOnlyLogs,
+};
+
+/** The span panel's trace id copied with its copy button, which turns into a check. */
+export const TraceIdCopied: Story = {
+	play: copyTraceId,
 };
 
 /** "Copy Value" picked from a row of the span panel's pretty view. */
 export const PrettyViewValueCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openRowMenu(canvasElement, 'Copy Value');
-		await expect(await screen.findByText('Copied to clipboard')).toBeVisible();
-	},
+	play: copyPrettyViewValue,
 };
 
 /** The copy-link button on a waterfall row, which copies the span's URL. */
 export const SpanLinkCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const [row] = await within(canvasElement).findAllByTestId(
-			/^cell-0-/,
-			undefined,
-			untilLoaded,
-		);
-
-		await fireEvent.mouseOver(row);
-		// The hover re-renders the row, so the button has to be looked up after it settles.
-		await new Promise((resolve) => {
-			setTimeout(resolve, 300);
-		});
-		const [hovered] = within(canvasElement).getAllByTestId(/^cell-0-/);
-		// The row's hover actions have no accessible name; copy link comes first.
-		const [link] = within(hovered).getAllByRole('button');
-
-		await fireEvent.click(link);
-		await waitFor(() =>
-			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
-		);
-	},
+	play: copySpanLink,
 };
 
 /** "Download trace" as CSV, finished. */
 export const TraceExportedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await startDownload(canvasElement);
-	},
+	play: downloadTrace,
 };
 
 /** "Download trace" whose export request fails. */
@@ -325,16 +257,11 @@ export const TraceExportErrorToast: Story = {
 	args: { exportState: 'error' },
 	// The deliberate 500 is the state under test.
 	parameters: { allowConsoleErrors: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await startDownload(canvasElement);
-	},
+	play: downloadTrace,
 };
 
 /** "Download trace" cancelled from the download panel while the export runs. */
 export const TraceExportCancelledToast: Story = {
 	args: { exportState: 'loading' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await startDownload(canvasElement);
-		await userEvent.click(await screen.findByTestId('trace-download-cancel'));
-	},
+	play: cancelDownload,
 };

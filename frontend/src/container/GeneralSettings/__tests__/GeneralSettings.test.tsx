@@ -1,6 +1,6 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { IDiskType } from 'types/api/disks/getDisks';
 import {
 	PayloadPropsLogs,
@@ -93,10 +93,7 @@ const mockDisksWithoutS3: IDiskType[] = [
 	},
 ];
 
-const getLogsRow = (): HTMLElement => {
-	const logsLabel = screen.getByText('Logs');
-	return logsLabel.closest('.retention-row') as HTMLElement;
-};
+const getLogsRow = (): HTMLElement => screen.getByTestId('logs-retention-row');
 
 describe('GeneralSettings - S3 Logs Retention', () => {
 	beforeEach(() => {
@@ -108,7 +105,8 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 	});
 
 	describe('Test 1: S3 Enabled - Only Days in Dropdown', () => {
-		it('should show only Days option for S3 retention and send correct API payload', async () => {
+		it('should show only Days option for S3 retention', async () => {
+			const user = userEvent.setup();
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -125,54 +123,56 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(logsRow).toBeInTheDocument();
 
 			// Find all inputs in the Logs row - there should be 2 (total retention + S3)
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(2);
-
-			// The second input is the S3 retention field
-			const s3Input = inputs[1] as HTMLInputElement;
-
-			// Find the S3 dropdown (next sibling of the S3 input)
-			const s3Dropdown = s3Input
-				?.closest('.retention-row-controls')
-				?.querySelectorAll('.ant-select-selector')[1] as HTMLElement;
-			expect(s3Dropdown).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-total-retention-field'),
+			).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-s3-retention-field'),
+			).toBeInTheDocument();
 
 			// Click the S3 dropdown to open it
-			fireEvent.mouseDown(s3Dropdown);
+			await user.click(
+				within(screen.getByTestId('logs-s3-retention-unit')).getByTitle('Days'),
+			);
 
 			// Wait for dropdown options to appear and verify only "Days" is available
-			await waitFor(() => {
-				const dropdownOptions = document.querySelectorAll('.ant-select-item');
-				expect(dropdownOptions).toHaveLength(1);
-				expect(dropdownOptions[0]).toHaveTextContent('Days');
-			});
+			await expect(
+				screen.findByTestId('logs-s3-retention-unit-option-day'),
+			).resolves.toHaveTextContent('Days');
+			expect(
+				screen.queryByTestId('logs-s3-retention-unit-option-hr'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('logs-s3-retention-unit-option-month'),
+			).not.toBeInTheDocument();
+		});
 
-			// Close dropdown
-			fireEvent.click(document.body);
+		it('should send correct API payload for S3 retention', async () => {
+			const user = userEvent.setup();
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			const s3Input = screen.getByTestId('logs-s3-retention-field');
 
 			// Change S3 retention value to 5 days
-			fireEvent.change(s3Input, { target: { value: '5' } });
+			await user.clear(s3Input);
+			await user.type(s3Input, '5');
 
-			// Find the save button in the Logs row
-			const saveButton = logsRow.querySelector(
-				'button:not([disabled])',
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
+			const saveButton = screen.getByTestId('logs-retention-save-button');
+			expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
+			await user.click(saveButton);
 
-			// Wait for button to be enabled
-			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
-
-			fireEvent.click(saveButton);
-
-			// Wait for modal to appear
-			const modal = await screen.findByRole('dialog');
-			expect(modal).toBeInTheDocument();
-
-			// Click OK button
-			const okButton = await screen.findByRole('button', { name: /ok/i });
-			fireEvent.click(okButton);
+			// Wait for modal to appear and click OK
+			await user.click(await screen.findByTestId('logs-retention-confirm-button'));
 
 			// Verify API was called with correct payload
 			await waitFor(() => {
@@ -201,13 +201,18 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Verify S3 field is visible
 			const logsRow = getLogsRow();
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(2); // Total + S3
+			expect(
+				within(logsRow).getByTestId('logs-total-retention-field'),
+			).toBeInTheDocument();
+			expect(
+				within(logsRow).getByTestId('logs-s3-retention-field'),
+			).toBeInTheDocument();
 		});
 	});
 
 	describe('Test 2: S3 Disabled - Field Hidden', () => {
 		it('should hide S3 retention field and send empty S3 values to API', async () => {
+			const user = userEvent.setup();
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -224,55 +229,35 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(logsRow).toBeInTheDocument();
 
 			// Only 1 input should be visible (total retention, no S3)
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			expect(inputs).toHaveLength(1);
+			expect(
+				within(logsRow).queryByTestId('logs-s3-retention-field'),
+			).not.toBeInTheDocument();
 
 			// Change total retention value
-			const totalInput = inputs[0] as HTMLInputElement;
+			const totalInput = within(logsRow).getByTestId('logs-total-retention-field');
 
 			// First, change the dropdown to Days (it defaults to Months)
-			const totalDropdown = logsRow.querySelector(
-				'.ant-select-selector',
-			) as HTMLElement;
-			fireEvent.mouseDown(totalDropdown);
-
-			// Wait for dropdown options to appear
-			await waitFor(() => {
-				const options = document.querySelectorAll('.ant-select-item');
-				expect(options.length).toBeGreaterThan(0);
-			});
+			await user.click(
+				within(screen.getByTestId('logs-total-retention-unit')).getByTitle(
+					'Months',
+				),
+			);
 
 			// Find and click the Days option
-			const options = document.querySelectorAll('.ant-select-item');
-			const daysOption = Array.from(options).find((opt) =>
-				opt.textContent?.includes('Days'),
+			await user.click(
+				await screen.findByTestId('logs-total-retention-unit-option-day'),
 			);
-			expect(daysOption).toBeInTheDocument();
-			fireEvent.click(daysOption as HTMLElement);
 
 			// Now change the value
-			fireEvent.change(totalInput, { target: { value: '60' } });
+			await user.clear(totalInput);
+			await user.type(totalInput, '60');
 
-			// Find the save button
-			const saveButton = logsRow.querySelector(
-				'button:not([disabled])',
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
+			const saveButton = screen.getByTestId('logs-retention-save-button');
+			expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
+			await user.click(saveButton);
 
-			// Wait for button to be enabled
-			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
-
-			// Click save button
-			fireEvent.click(saveButton);
-
-			// Wait for modal to appear
-			const okButton = await screen.findByRole('button', { name: /ok/i });
-			expect(okButton).toBeInTheDocument();
-
-			// Click OK button
-			fireEvent.click(okButton);
+			// Wait for modal to appear and click OK
+			await user.click(await screen.findByTestId('logs-retention-confirm-button'));
 
 			// Verify API was called with empty S3 values (60 days)
 			await waitFor(() => {
@@ -301,26 +286,25 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			const logsRow = getLogsRow();
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-
 			// Total retention: 30 days = 1 month (displays as 1 Month)
-			const totalInput = inputs[0] as HTMLInputElement;
-			expect(totalInput.value).toBe('1');
+			expect(screen.getByTestId('logs-total-retention-field')).toHaveValue(1);
 
 			// S3 retention: 24 days
-			const s3Input = inputs[1] as HTMLInputElement;
-			expect(s3Input.value).toBe('24');
+			expect(screen.getByTestId('logs-s3-retention-field')).toHaveValue(24);
 
 			// Verify dropdowns: total shows Months, S3 shows Days
-			const dropdowns = logsRow.querySelectorAll('.ant-select-selection-item');
-			expect(dropdowns[0]).toHaveTextContent('Months');
-			expect(dropdowns[1]).toHaveTextContent('Days');
+			expect(screen.getByTestId('logs-total-retention-unit')).toHaveTextContent(
+				'Months',
+			);
+			expect(screen.getByTestId('logs-s3-retention-unit')).toHaveTextContent(
+				'Days',
+			);
 		});
 	});
 
 	describe('Test 4: Save Button State with S3 Disabled', () => {
 		it('should disable save button when cold_storage_ttl_days is -1 and no changes made', async () => {
+			const user = userEvent.setup();
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -336,35 +320,28 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			const logsRow = getLogsRow();
 			expect(logsRow).toBeInTheDocument();
 
-			// Find the save button by accessible name within the Logs row
-			const allSaveButtons = screen.getAllByRole('button', { name: /save/i });
-			const saveButton = allSaveButtons.find((btn) =>
-				logsRow.contains(btn),
-			) as HTMLButtonElement;
-			expect(saveButton).toBeInTheDocument();
+			const saveButton = screen.getByTestId('logs-retention-save-button');
+			expect(logsRow).toContainElement(saveButton);
 
 			// Verify save button is disabled on initial load
 			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 
 			// Find the total retention input
-			const inputs = logsRow.querySelectorAll('input[type="number"]');
-			const totalInput = inputs[0] as HTMLInputElement;
+			const totalInput = within(logsRow).getByTestId('logs-total-retention-field');
 
 			// Change total retention value to trigger button enable
-			fireEvent.change(totalInput, { target: { value: '60' } });
+			await user.clear(totalInput);
+			await user.type(totalInput, '60');
 
 			// Button should now be enabled after change
-			await waitFor(() => {
-				expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
-			});
+			expect(saveButton).not.toHaveAttribute('aria-disabled', 'true');
 
 			// Revert to original value (30 days displays as 1 Month)
-			fireEvent.change(totalInput, { target: { value: '1' } });
+			await user.clear(totalInput);
+			await user.type(totalInput, '1');
 
 			// Button should be disabled again (back to original state)
-			await waitFor(() => {
-				expect(saveButton).toHaveAttribute('aria-disabled', 'true');
-			});
+			expect(saveButton).toHaveAttribute('aria-disabled', 'true');
 		});
 	});
 
@@ -421,8 +398,11 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			).not.toBeInTheDocument();
 
 			// Save buttons should be visible for non-cloud users (these are from retentions)
-			const saveButtons = screen.getAllByRole('button', { name: /save/i });
-			expect(saveButtons.length).toBeGreaterThan(0);
+			['metrics', 'traces', 'logs'].forEach((type) => {
+				expect(
+					screen.getByTestId(`${type}-retention-save-button`),
+				).toHaveTextContent('retention_save_button.success');
+			});
 		});
 	});
 });

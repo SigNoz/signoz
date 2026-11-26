@@ -34,13 +34,19 @@ function PipelineProcessingPreview({
 					onChange={setLogsSampleQueryInterval}
 				/>
 			</div>
-			<div className="pipeline-preview-logs-container">
+			<div
+				className="pipeline-preview-logs-container"
+				data-testid="pipeline-preview-samples"
+			>
 				<SampleLogsResponseDisplay response={sampleLogsResponse} />
 			</div>
 			<div className="pipeline-preview-section-header">
 				<div>Processed Output</div>
 			</div>
-			<div className="pipeline-preview-logs-container">
+			<div
+				className="pipeline-preview-logs-container"
+				data-testid="pipeline-preview-output"
+			>
 				<LogsProcessingSimulator inputLogs={sampleLogs} pipeline={pipeline} />
 			</div>
 		</div>
