@@ -296,6 +296,8 @@
     // Bans msw imports in *.stories.tsx; handlers/mock data belong in the sibling .stories.mocks.tsx
     "signoz/no-direct-react-router-import": "error",
     // Steers call sites to the src/lib/router facade (allowlisted in overrides below)
+    "signoz/no-builder-ai-query-access": "error",
+    // Steers AI slot access to lib/query/builderSlot (allowlisted in overrides below)
     "no-restricted-globals": [
       "error",
       {
@@ -552,6 +554,7 @@
       ],
       "rules": {
         "import/first": "off",
+        "signoz/no-dom-node-access": "error",
         // Should ignore due to mocks
         "signoz/no-navigator-clipboard": "off",
         // Tests can use navigator.clipboard directly,
@@ -559,6 +562,8 @@
         "no-restricted-globals": "off",
         // Tests need raw localStorage/sessionStorage to seed DOM state for isolation
         "signoz/no-zustand-getstate-in-hooks": "off",
+        "signoz/no-builder-ai-query-access": "off",
+        // Fixtures build and assert on the raw AI slot
         "@typescript-eslint/no-explicit-any": "off", // Tests often need any for mocks/stubs
         "@typescript-eslint/explicit-module-boundary-types": "off", // Return types not required in tests
         "@typescript-eslint/explicit-function-return-type": "off" // Same as above rule, don't need to care about return type
@@ -614,6 +619,20 @@
       ],
       "rules": {
         "signoz/no-direct-react-router-import": "off"
+      }
+    },
+    {
+      // builderSlot owns the AI slot; the rest normalise its wire shape or test whether it exists, which the helpers hide
+      "files": [
+        "src/lib/query/builderSlot.ts",
+        "src/hooks/queryBuilder/normalizeCompositeQuery.ts",
+        "src/hooks/queryBuilder/useGetCompositeQueryParam.ts",
+        "src/providers/QueryBuilder.tsx",
+        "src/pages/DashboardPage/DashboardContainer/PanelEditor/hooks/usePanelKindChange.ts",
+        "src/pages/DashboardPage/DashboardContainer/Panels/utils/seedBuilderForMode.ts"
+      ],
+      "rules": {
+        "signoz/no-builder-ai-query-access": "off"
       }
     }
   ]

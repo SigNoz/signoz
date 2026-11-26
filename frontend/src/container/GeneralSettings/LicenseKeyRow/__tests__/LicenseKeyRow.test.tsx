@@ -51,7 +51,7 @@ describe('LicenseKeyRow', () => {
 	});
 
 	it('calls copyToClipboard and shows success toast when clipboard is available', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		mockUseActiveLicenseKey.mockReturnValue({
 			licenseKey: 'test-key',

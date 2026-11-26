@@ -51,7 +51,7 @@ describe('ChannelForm save', () => {
 			const onDone = jest.fn();
 			render(<ChannelForm onDone={onDone} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.type(
 				await screen.findByTestId('channel-name-textbox-field', {}, FIND),
 				'prod alerts',
@@ -99,7 +99,7 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await pickChannelType(user, ChannelKind.telegram);
 
 			await user.type(
@@ -150,7 +150,7 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await pickChannelType(user, ChannelKind.webhook);
 
 			await user.type(
@@ -212,7 +212,7 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await pickChannelType(user, ChannelKind.jira);
 			expect(
 				screen.getByTestId('jira-deployment-radio-item-cloud'),
@@ -280,7 +280,7 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.type(
 				await screen.findByTestId('channel-name-textbox-field', {}, FIND),
 				'slack alerts',
@@ -329,7 +329,7 @@ describe('ChannelForm save', () => {
 			);
 			expect(channelName).toBeDisabled();
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.clear(screen.getByTestId('slack-channel-textbox-field'));
 			await user.type(
 				screen.getByTestId('slack-channel-textbox-field'),
@@ -398,7 +398,7 @@ describe('ChannelForm save', () => {
 				{},
 				FIND,
 			);
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.clear(token);
 			await user.type(
 				screen.getByTestId('webhook-bearer-token-textbox-field'),
@@ -494,7 +494,7 @@ describe('ChannelForm save', () => {
 				FIND,
 			);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.click(testButton);
 
 			await waitFor(() => expect(body).toBeDefined(), FIND);
@@ -531,7 +531,7 @@ describe('ChannelForm save', () => {
 
 			// Save is off until something changes, so one edit is what tells a
 			// settled failure apart from a denial
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.type(channel, '-edited');
 
 			const save = screen.getByTestId('save-channel-button');
@@ -568,7 +568,7 @@ describe('ChannelForm save', () => {
 			const save = screen.getByTestId('save-channel-button');
 			expect(save).toHaveAttribute('aria-disabled', 'true');
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await user.type(
 				screen.getByTestId('slack-channel-textbox-field'),
 				'-edited',
@@ -588,7 +588,7 @@ describe('ChannelForm save', () => {
 			const onDone = jest.fn();
 			render(<ChannelForm channelId="3" onDone={onDone} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			const discard = await screen.findByTestId(
 				'discard-channel-button',
 				{},
@@ -663,7 +663,7 @@ describe('ChannelForm save', () => {
 
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await pickChannelType(user, ChannelKind.telegram);
 
 			expect(screen.getByTestId('telegram-title-textarea')).toHaveValue('');
@@ -705,7 +705,7 @@ describe('ChannelForm save', () => {
 		async () => {
 			render(<ChannelForm onDone={jest.fn()} />);
 
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup({ delay: null });
 			await pickChannelType(user, ChannelKind.pagerduty);
 
 			expect(screen.getByTestId('pager-client-url-textarea-field')).toHaveValue(

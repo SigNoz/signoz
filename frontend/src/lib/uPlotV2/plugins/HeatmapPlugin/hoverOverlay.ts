@@ -52,6 +52,7 @@ export function createHoverOverlay(isDarkMode: boolean): HeatmapHoverOverlay {
 	const dims = Array.from({ length: 4 }, () => {
 		const dim = createOverlayElement();
 		dim.style.background = dimColor;
+		dim.setAttribute('data-testid', 'heatmap-hover-dim');
 		container.appendChild(dim);
 		return dim;
 	});
@@ -61,6 +62,7 @@ export function createHoverOverlay(isDarkMode: boolean): HeatmapHoverOverlay {
 		isDarkMode ? Color.BG_VANILLA_100 : Color.BG_INK_300
 	}`;
 	highlight.style.boxSizing = 'border-box';
+	highlight.setAttribute('data-testid', 'heatmap-hover-highlight');
 	container.appendChild(highlight);
 
 	return { container, highlight, dims };

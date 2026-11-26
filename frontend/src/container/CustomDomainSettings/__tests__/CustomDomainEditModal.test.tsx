@@ -1,7 +1,7 @@
 import type { ComponentProps } from 'react';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError, AxiosHeaders } from 'axios';
-import { fireEvent, render, screen } from 'tests/test-utils';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 
 import CustomDomainEditModal from '../CustomDomainEditModal';
 
@@ -101,7 +101,9 @@ describe('CustomDomainEditModal status feedback', () => {
 		render(<CustomDomainEditModal {...defaultProps} isLoading />);
 
 		expect(
-			screen.getByTestId('workspace-url-input-prefix').querySelector('svg'),
+			within(screen.getByTestId('workspace-url-input-prefix')).getByTestId(
+				'workspace-url-loading-icon',
+			),
 		).toHaveClass('animate-spin');
 		expect(
 			screen.queryByTestId('workspace-url-input-status'),

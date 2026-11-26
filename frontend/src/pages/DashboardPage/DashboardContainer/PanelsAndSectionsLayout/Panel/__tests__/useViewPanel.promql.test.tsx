@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent } from 'tests/test-utils';
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -157,7 +157,7 @@ const renderHarness = (): void => {
 
 describe('View modal, PromQL panels', () => {
 	it('shows the opened panel query, not the previously viewed one', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0, delay: null });
+		const user = userEvent.setup({ delay: null });
 		renderHarness();
 
 		await user.click(screen.getByTestId('open-a'));

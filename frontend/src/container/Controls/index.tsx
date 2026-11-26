@@ -71,6 +71,7 @@ function Controls({
 
 			{showSizeChanger && (
 				<Select<Pagination['limit']>
+					data-testid="controls-page-size"
 					style={defaultSelectStyle}
 					loading={isLoading}
 					value={countPerPage}

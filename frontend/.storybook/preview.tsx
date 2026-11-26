@@ -21,7 +21,7 @@ import i18n from '../src/ReactI18';
 // `src/index.tsx` does this at boot: without it `@monaco-editor/react` falls back
 // to its loader default and pulls Monaco from cdn.jsdelivr.net, which msw does
 // not report because the requests look like static assets.
-import '../src/lib/monaco/setup';
+import '../src/lib/monaco/loader';
 
 import '../src/styles.scss';
 
@@ -199,6 +199,7 @@ const preview: Preview = {
 							'Ingestion',
 							['Overview', 'Authz'],
 							'Single Sign-on',
+							['Overview', 'Authz'],
 							'Keyboard Shortcuts',
 						],
 						'Auth',

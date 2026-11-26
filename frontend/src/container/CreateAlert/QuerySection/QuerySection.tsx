@@ -12,6 +12,7 @@ import { getMetricNameFromQueryData } from 'hooks/useGetYAxisUnit';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	BarChart,
+	Brain,
 	DraftingCompass,
 	FileText,
 	ScrollText,
@@ -126,6 +127,11 @@ function QuerySection(): JSX.Element {
 			value: AlertTypes.TRACES_BASED_ALERT,
 		},
 		{
+			label: 'AI Traces',
+			icon: <Brain size={14} data-testid="ai-traces-view" />,
+			value: AlertTypes.AI_TRACES_BASED_ALERT,
+		},
+		{
 			label: 'Exceptions',
 			icon: <FileText size={14} data-testid="exceptions-view" />,
 			value: AlertTypes.EXCEPTIONS_BASED_ALERT,
@@ -154,6 +160,7 @@ function QuerySection(): JSX.Element {
 							className={classNames('list-view-tab', 'explorer-view-option', {
 								'active-tab': activeTab === tab.value,
 							})}
+							data-testid={`query-section-tab-${tab.value}`}
 							onClick={(): void => {
 								if (isAnomalyDetection && tab.value === activeTab) {
 									return;

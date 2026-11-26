@@ -1,9 +1,7 @@
 import type { PieSlice } from 'lib/visualization/charts/types';
 
-import {
-	groupPieSlices,
-	OTHER_SLICE_LABEL,
-} from 'lib/visualization/charts/Pie/utils/groupPieSlices';
+import { groupPieSlices } from 'lib/visualization/charts/Pie/utils/groupPieSlices';
+import { OTHER_GROUP_LABEL } from 'lib/visualization/charts/utils/otherGroup';
 
 const slice = (label: string, value: number): PieSlice => ({
 	label,
@@ -29,7 +27,7 @@ describe('groupPieSlices', () => {
 		expect(result.map((s) => [s.label, s.value])).toStrictEqual([
 			['b', 400],
 			['a', 500],
-			[OTHER_SLICE_LABEL, 7],
+			[OTHER_GROUP_LABEL, 7],
 		]);
 		expect(result[2].groupedMembers?.map((s) => s.label)).toStrictEqual([
 			'tail2',
@@ -48,7 +46,7 @@ describe('groupPieSlices', () => {
 		expect(result.slice(0, 14).map((s) => s.label)).toStrictEqual(
 			slices.slice(0, 14).map((s) => s.label),
 		);
-		expect(result[14].label).toBe(OTHER_SLICE_LABEL);
+		expect(result[14].label).toBe(OTHER_GROUP_LABEL);
 		expect(result[14].groupedMembers).toHaveLength(16);
 	});
 
@@ -72,7 +70,7 @@ describe('groupPieSlices', () => {
 
 		const result = group(slices);
 
-		expect(result.map((s) => s.label)).toStrictEqual(['a', OTHER_SLICE_LABEL]);
+		expect(result.map((s) => s.label)).toStrictEqual(['a', OTHER_GROUP_LABEL]);
 		expect(result[1].value).toBe(400);
 		expect(result[1].groupedMembers).toHaveLength(400);
 	});
@@ -91,7 +89,7 @@ describe('groupPieSlices', () => {
 			'a',
 			'b',
 			'c',
-			OTHER_SLICE_LABEL,
+			OTHER_GROUP_LABEL,
 		]);
 		expect(result[3].groupedMembers).toHaveLength(13);
 	});
@@ -105,7 +103,7 @@ describe('groupPieSlices', () => {
 		expect(result.slice(0, 14).map((s) => s.label)).toStrictEqual(
 			slices.slice(0, 14).map((s) => s.label),
 		);
-		expect(result[14].label).toBe(OTHER_SLICE_LABEL);
+		expect(result[14].label).toBe(OTHER_GROUP_LABEL);
 		expect(result[14].groupedMembers).toHaveLength(186);
 		expect(result[14].value).toBe(930);
 	});

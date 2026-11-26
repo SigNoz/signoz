@@ -190,7 +190,7 @@ describe('JsonEditorDrawer', () => {
 				validity: { valid: false, lineCount: 4, errorLine: 2, message },
 			}),
 		);
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<JsonEditorDrawer dashboard={dashboard} isOpen onClose={jest.fn()} />);
 
 		await user.hover(screen.getByTestId('json-editor-validation'));

@@ -1,35 +1,26 @@
 @use '../../_scrollbar' as *;
 @use '../../_bareInput' as *;
 
+// Fixed-width left column; the thread pane draws the edge beside it.
 .conversationsList {
+	position: relative;
 	display: flex;
 	flex-direction: column;
+	flex-shrink: 0;
+	width: 280px;
 	height: 100%;
 	overflow: hidden;
 
-	// Page variant: fixed-width left column; the thread pane draws the edge beside it.
-	&.variantPage {
-		position: relative;
-		width: 280px;
-		flex-shrink: 0;
-
-		// Fades the list's foot into the page.
-		&::after {
-			content: '';
-			position: absolute;
-			right: 0;
-			bottom: 0;
-			left: 0;
-			height: 46px;
-			background: linear-gradient(to bottom, transparent, var(--l1-background));
-			pointer-events: none;
-		}
-	}
-
-	// Panel variant: full-width overlay (replaces conversation view).
-	&.variantPanel {
-		width: 100%;
-		flex: 1;
+	// Fades the list's foot into the page.
+	&::after {
+		content: '';
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		height: 46px;
+		background: linear-gradient(to bottom, transparent, var(--l1-background));
+		pointer-events: none;
 	}
 }
 

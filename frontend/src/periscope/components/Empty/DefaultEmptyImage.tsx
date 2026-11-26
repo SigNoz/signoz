@@ -3,6 +3,7 @@ import styles from './Empty.module.scss';
 function DefaultEmptyImage(): JSX.Element {
 	return (
 		<svg
+			data-testid="empty-default-image"
 			className={styles.defaultImage}
 			width="184"
 			height="152"

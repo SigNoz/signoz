@@ -15,19 +15,15 @@ import {
 	QUESTIONS,
 } from '../__story_mockdata__/aiAssistant';
 import {
-	copyConversationLink,
 	expandActivity,
 	expandSingleStep,
 	openApprovalDiff,
 	openClarificationSelect,
 	openContextPicker,
-	openConversationActions,
-	openHistory,
 	openLiveSteps,
 	openNegativeFeedback,
 	openPanel,
 	pickContexts,
-	renameConversation,
 	scrollToTop,
 	typeDraft,
 } from '../__story_mockdata__/aiAssistantPanel.play';
@@ -43,9 +39,7 @@ const pageStory = storyMocks(aiAssistantMocks, {
 
 /**
  * Noz in the floating panel the bottom strip's Ask Noz opens beside any page: the
- * thread, composer and cards of the Noz page at panel width, with the
- * conversation list behind the header's History. Every story opens it from Ask
- * Noz.
+ * thread, composer and cards of the Noz page at panel width.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -68,10 +62,6 @@ export const Default: Story = {
 export const NewConversation: Story = {
 	args: { conversation: false, history: 0, archived: 0 },
 	play: openPanel,
-};
-
-export const History: Story = {
-	play: openHistory,
 };
 
 export const QuestionBlocks: Story = {
@@ -157,14 +147,6 @@ export const NegativeFeedback: Story = {
 	play: openNegativeFeedback,
 };
 
-export const ConversationRename: Story = {
-	play: renameConversation,
-};
-
-export const ConversationActions: Story = {
-	play: openConversationActions,
-};
-
 export const AddContext: Story = {
 	play: openContextPicker,
 };
@@ -176,10 +158,6 @@ export const PickedContexts: Story = {
 export const SentContexts: Story = {
 	args: { contents: ['contexts'] },
 	play: openPanel,
-};
-
-export const ConversationLinkCopiedToast: Story = {
-	play: copyConversationLink,
 };
 
 export const Tooltips: Story = {

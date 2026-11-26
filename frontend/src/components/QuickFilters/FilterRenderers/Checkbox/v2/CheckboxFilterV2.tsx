@@ -197,7 +197,7 @@ export default function CheckboxFilterV2(
 				onClear={onClear}
 			/>
 			{isOpen && isLoading && !hasLoadedOnce.current && (
-				<section>
+				<section data-testid="checkbox-filter-skeleton">
 					<Skeleton paragraph={{ rows: 4 }} />
 				</section>
 			)}

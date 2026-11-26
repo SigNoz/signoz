@@ -40,8 +40,9 @@ async function openRowMenu(
 	user: ReturnType<typeof userEvent.setup>,
 	ruleId: string,
 ): Promise<void> {
-	const row = screen.getByTestId(`model-cell-name-${ruleId}`).closest('tr');
-	await user.click(within(row as HTMLElement).getByRole('button'));
+	await user.click(
+		within(screen.getByTestId(`model-cost-row-${ruleId}`)).getByRole('button'),
+	);
 }
 
 describe('ModelCostTabPanel (integration)', () => {
@@ -95,7 +96,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends the debounced search term as the q param', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let lastParams: URLSearchParams | null = null;
 		server.use(
 			rest.get(LLM_PRICING_ENDPOINT, (req, res, ctx) => {
@@ -115,7 +116,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('clears the search via the clear button', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -130,7 +131,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends isOverride=true when the source filter is set to User override', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let lastParams: URLSearchParams | null = null;
 		server.use(
 			rest.get(LLM_PRICING_ENDPOINT, (req, res, ctx) => {
@@ -151,7 +152,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('opens the add drawer for a manager (ADMIN)', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -167,16 +168,15 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />, undefined, { role: 'VIEWER' });
 
-		const row = (
-			await screen.findByTestId('model-cell-name-rule-openai')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-openai');
+		const row = screen.getByTestId('model-cost-row-rule-openai');
 		expect(screen.queryByTestId('add-model-cost-btn')).not.toBeInTheDocument();
 		// View-only rows render no action menu (no buttons in the row).
 		expect(within(row).queryByRole('button')).not.toBeInTheDocument();
 	});
 
 	it('opens the edit drawer prefilled from the row action menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setupList();
 		render(<ModelCostTabPanel />);
 
@@ -194,7 +194,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('deletes a rule through the confirm dialog', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let deletedId: string | null = null;
 		setupList();
 		server.use(
@@ -221,9 +221,8 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />);
 
-		const anthropicRow = (
-			await screen.findByTestId('model-cell-name-rule-anthropic')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-anthropic');
+		const anthropicRow = screen.getByTestId('model-cost-row-rule-anthropic');
 		expect(within(anthropicRow).getByText(/Cache Read/i)).toBeInTheDocument();
 		expect(within(anthropicRow).getByText(/Cache Write/i)).toBeInTheDocument();
 	});
@@ -232,15 +231,14 @@ describe('ModelCostTabPanel (integration)', () => {
 		setupList();
 		render(<ModelCostTabPanel />);
 
-		const openaiRow = (
-			await screen.findByTestId('model-cell-name-rule-openai')
-		).closest('tr') as HTMLElement;
+		await screen.findByTestId('model-cell-name-rule-openai');
+		const openaiRow = screen.getByTestId('model-cost-row-rule-openai');
 		// mockRules gpt-4o has input cost 3 → rendered as $3.00.
 		expect(within(openaiRow).getByText('$3.00')).toBeInTheDocument();
 	});
 
 	it('sends a normalized create payload when adding a rule', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let body: Record<string, unknown> | null = null;
 		setupList();
 		server.use(
@@ -281,7 +279,7 @@ describe('ModelCostTabPanel (integration)', () => {
 	});
 
 	it('sends an updated payload when editing a rule', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let body: Record<string, unknown> | null = null;
 		setupList();
 		server.use(

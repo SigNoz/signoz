@@ -31,7 +31,10 @@ function PermissionDeniedCallout({
 			: [];
 
 	return (
-		<div className={cx(styles.callout, className)}>
+		<div
+			className={cx(styles.callout, className)}
+			data-testid="permission-denied-callout-wrapper"
+		>
 			<Callout
 				color="danger"
 				size="sm"

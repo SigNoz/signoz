@@ -79,6 +79,7 @@ function RouteTab({
 	return (
 		<Tabs
 			className={cx(styles.routeTab, className)}
+			data-testid="route-tab"
 			onChange={onChange}
 			destroyInactiveTabPane
 			activeKey={currentRoute?.key || activeKey}

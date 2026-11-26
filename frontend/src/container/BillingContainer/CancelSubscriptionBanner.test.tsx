@@ -75,7 +75,7 @@ describe('CancelSubscriptionBanner', () => {
 	});
 
 	it('opens dialog with content when Cancel Subscription is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -99,7 +99,7 @@ describe('CancelSubscriptionBanner', () => {
 	});
 
 	it('keeps Cancel subscription button disabled until "cancel" is typed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -122,7 +122,7 @@ describe('CancelSubscriptionBanner', () => {
 	});
 
 	it('closes dialog and resets input when Go back is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -154,7 +154,7 @@ describe('CancelSubscriptionBanner', () => {
 	it('fires mailto via DOM-attached anchor and shows fallback view after confirming', async () => {
 		const { mockClick, appendSpy, removeSpy } = mockMailto();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -190,7 +190,7 @@ describe('CancelSubscriptionBanner', () => {
 	it('copies email template to clipboard when Copy button is clicked', async () => {
 		mockMailto();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -216,7 +216,7 @@ describe('CancelSubscriptionBanner', () => {
 		mockMailto();
 		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {
@@ -240,7 +240,7 @@ describe('CancelSubscriptionBanner', () => {
 	it('closes fallback view when Close is clicked and resets state', async () => {
 		mockMailto();
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CancelSubscriptionBanner />);
 
 		await waitFor(() => {

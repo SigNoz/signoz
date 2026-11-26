@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { axiosResponseThresholdData } from './__mock__/axiosResponseMockThresholdData';
 import ApDexSettings from './ApDexSettings';
@@ -28,7 +28,7 @@ describe('ApDexSettings', () => {
 	});
 
 	it('should render the spinner when the data is loading', () => {
-		const { container } = render(
+		render(
 			<ApDexSettings
 				servicename="mockServiceName"
 				handlePopOverClose={jest.fn()}
@@ -38,10 +38,8 @@ describe('ApDexSettings', () => {
 			/>,
 		);
 
-		const loadingSpan = container.querySelector('[aria-label="loading"]');
-
 		// Assert that the loading span is found
-		expect(loadingSpan).toBeInTheDocument();
+		expect(screen.getByLabelText('loading')).toBeInTheDocument();
 	});
 
 	it('should close the popover when the cancel button is clicked', async () => {

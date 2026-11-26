@@ -104,7 +104,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('copies the log link from the ⋯ menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderDrawer();
 
@@ -115,7 +115,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('copies the log from the ⋯ menu', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		renderDrawer();
 
@@ -128,7 +128,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('keeps the drawer open when a ⋯ menu item is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClose = jest.fn();
 
 		renderDrawer({ onClose });
@@ -152,7 +152,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('calls handleOpenInExplorer when "Open in Explorer" is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const handleOpenInExplorer = jest.fn();
 
 		renderDrawer({ handleOpenInExplorer });
@@ -163,7 +163,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('closes from the close button and from Escape', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClose = jest.fn();
 
 		renderDrawer({ onClose });
@@ -176,7 +176,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('closes on a mousedown outside the drawer and not on one inside it', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClose = jest.fn();
 
 		renderDrawer({ onClose });
@@ -196,7 +196,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('keeps the drawer open on a mousedown in a data-log-detail-ignore region', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const onClose = jest.fn();
 
 		render(
@@ -258,7 +258,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('navigates to the next / previous log with the Down / Up arrow keys', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const logs = [makeLog('log-0'), makeLog('log-1'), makeLog('log-2')];
 		const onNavigateLog = jest.fn();
 		const onScrollToLog = jest.fn();
@@ -276,7 +276,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('does not navigate past the first log on ArrowUp', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const logs = [makeLog('log-0'), makeLog('log-1')];
 		const onNavigateLog = jest.fn();
 
@@ -287,7 +287,7 @@ describe('LogDetail drawer — header', () => {
 	});
 
 	it('navigates via the header up / down buttons and disables them at boundaries', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const logs = [makeLog('log-0'), makeLog('log-1')];
 		const onNavigateLog = jest.fn();
 

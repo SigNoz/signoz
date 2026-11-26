@@ -1,8 +1,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { act, render, RenderResult, screen } from '@testing-library/react';
-import type userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
 import { EditorView } from '@uiw/react-codemirror';
 import ListAlertRules from 'container/ListAlertRules';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
@@ -10,7 +9,13 @@ import { AppContext } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import { onNuqsUrlUpdate, resetNuqsState } from 'tests/nuqs-helpers';
 import { TestRouter } from 'tests/router';
-import { getAppContextMock } from 'tests/test-utils';
+import {
+	act,
+	getAppContextMock,
+	RenderResult,
+	screen,
+	type userEvent,
+} from 'tests/test-utils';
 
 // NuqsTestingAdapter resets its update queue on every render, not only on mount,
 // dropping writes queued just before it re-renders.
@@ -77,15 +82,6 @@ export function renderListAlertRules(
 			</UrlAdapter>
 		</TestRouter>,
 	);
-}
-
-export async function findAlertRow(alertName: string): Promise<HTMLElement> {
-	const cell = await screen.findByText(alertName, {}, { timeout: 5000 });
-	const row = cell.closest('tr');
-	if (!row) {
-		throw new Error(`Row not found for alert "${alertName}"`);
-	}
-	return row as HTMLElement;
 }
 
 type User = ReturnType<typeof userEvent.setup>;
