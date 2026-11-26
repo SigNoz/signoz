@@ -6,6 +6,7 @@
 import { expect, screen, userEvent, within } from 'storybook/test';
 
 import { isCloudShell } from '@/storybook/globals/appShellMocks';
+import { findMonacoEditor } from '@/storybook/play/monacoEditor';
 import { findToastText } from '@/storybook/play/toastText';
 
 import {
@@ -106,6 +107,7 @@ export const importInvalidJson = async ({
 
 	await openNewDashboard(canvasElement);
 	await userEvent.click(await screen.findByText('Import JSON'));
+	await findMonacoEditor(document, '');
 	await userEvent.click(await screen.findByTestId('import-json-submit'));
 	await screen.findByText(/error loading json/i);
 	// The error modal and the toast under it carry the same message.

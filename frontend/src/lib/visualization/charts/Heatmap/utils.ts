@@ -1,10 +1,10 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import { getToolTipValue } from 'components/Graph/yAxisConfig';
 import { uPlotXAxisValuesFormat } from 'lib/uPlotLib/utils/constants';
 import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import {
+	createBucketValueFormatter,
 	decimateAxisSplits,
 	formatRowLabel,
 	resolveColumnAlignedSplits,
@@ -65,7 +65,7 @@ export function resolveBoundaryPrecision({
 
 	const separates = (candidate: PrecisionOption): boolean => {
 		const labels = boundaries.map((boundary) =>
-			getToolTipValue(String(boundary), yAxisUnit, candidate),
+			createBucketValueFormatter(yAxisUnit, candidate)(boundary),
 		);
 		return labels.every(
 			(label, index) => index === 0 || label !== labels[index - 1],
@@ -166,8 +166,10 @@ export function buildHeatmapConfig({
 	builder.setFocus({ alpha: 1 });
 	builder.setCursor({ focus: { prox: -1 }, points: { show: false } });
 
-	const formatBucketValue = (value: number): string =>
-		getToolTipValue(String(value), yAxisUnit, decimalPrecision);
+	const formatBucketValue = createBucketValueFormatter(
+		yAxisUnit,
+		decimalPrecision,
+	);
 
 	const lastTimestamp = grid.timestamps[grid.timestamps.length - 1] ?? 0;
 	const xRange: [number, number] = [

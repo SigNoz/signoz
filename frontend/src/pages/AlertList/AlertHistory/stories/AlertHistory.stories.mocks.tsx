@@ -6,10 +6,12 @@
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { rest } from 'msw';
 
-import { countControl } from '@/storybook/controls/controls';
+import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	RELATED_EXPLORERS,
 	ruleHistoryFilterKeysResponse,
 	ruleHistoryFilterValuesResponse,
 	ruleHistoryOverallStatusResponse,
@@ -19,6 +21,7 @@ import {
 	TIMELINE_MAX,
 	TOP_CONTRIBUTOR_MAX,
 	type HistoryWindow,
+	type RelatedExplorer,
 } from './__story_mockdata__/alertHistory';
 
 import {
@@ -75,6 +78,13 @@ export const alertHistoryMocks = defineStoryMocks({
 			value: 30,
 			max: 60,
 		}),
+		relatedExplorer: choiceControl<RelatedExplorer>('Related explorer', {
+			group: TIMELINE,
+			description:
+				"Where a row's actions lead, for top contributors and timeline rows alike. The backend picks it from the rule's alert type; `none` is a metrics rule, whose actions are disabled.",
+			options: RELATED_EXPLORERS,
+			value: 'traces',
+		}),
 	},
 	handlers: (values, response) => [
 		rest.get(
@@ -91,7 +101,11 @@ export const alertHistoryMocks = defineStoryMocks({
 		rest.get(
 			'http://localhost/api/v2/rules/:id/history/top_contributors',
 			response.json(() =>
-				ruleHistoryTopContributorsResponse(values.topContributors, values.triggers),
+				ruleHistoryTopContributorsResponse(
+					values.topContributors,
+					values.triggers,
+					values.relatedExplorer,
+				),
 			),
 		),
 
@@ -111,6 +125,7 @@ export const alertHistoryMocks = defineStoryMocks({
 					end: windowOf(req).end,
 					ruleId: String(req.params.id),
 					ruleName: FIRST_RULE_NAME,
+					relatedExplorer: values.relatedExplorer,
 				}),
 			),
 		),
@@ -146,3 +161,21 @@ export const alertHistoryMocks = defineStoryMocks({
 		route: `/alerts/history?ruleId=${STORY_RULE_ID}&relativeTime=${STORY_RELATIVE_TIME}`,
 	}),
 });
+
+export type AlertHistoryArgs = PageStoryArgs<typeof alertHistoryMocks>;
+
+export const untilLoaded = { timeout: 15_000 };
+
+export const listsTimelineRows = (args: AlertHistoryArgs): boolean =>
+	args.dataState === 'loaded' && args.timelineEntries > 0;
+
+const POPOVER_LINK_TEST_IDS: Record<RelatedExplorer, string | null> = {
+	logs: 'alert-popover-view-logs',
+	traces: 'alert-popover-view-traces',
+	'ai-traces': 'alert-popover-view-ai-traces',
+	none: null,
+};
+
+/** The popover link a row's actions open, or null when the rule has none and the actions are disabled. */
+export const rowActionLinkTestId = (args: AlertHistoryArgs): string | null =>
+	POPOVER_LINK_TEST_IDS[args.relatedExplorer];
