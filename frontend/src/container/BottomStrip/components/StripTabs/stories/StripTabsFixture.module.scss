@@ -1,0 +1,19 @@
+// Stands in for the bottom strip the row lives in.
+.strip {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	max-width: 100%;
+	height: 24px;
+	padding: 0 var(--spacing-6);
+	background: var(--l2-background);
+	border-top: 1px solid var(--l2-border);
+}
+
+.dot {
+	flex-shrink: 0;
+	width: var(--spacing-3);
+	height: var(--spacing-3);
+	border-radius: var(--radius-round);
+	background: var(--accent-primary);
+}

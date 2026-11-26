@@ -212,6 +212,7 @@ function ListAlertRules(): JSX.Element {
 				testIdPrefix="alert-rules"
 				saveTestIdPrefix="save-alert-rule-view"
 				renameTestIdPrefix="rename-alert-rule-view"
+				viewNamePlaceholder="e.g. Prod alerts"
 				deleteDescription="Views are shared across your organization, so this removes it for everyone. Alert rules are not affected."
 			/>
 			<div className={styles.main}>

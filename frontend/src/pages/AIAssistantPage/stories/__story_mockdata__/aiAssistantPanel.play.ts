@@ -3,7 +3,8 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent, within } from 'storybook/test';
+import { openAIAssistant } from 'container/AIAssistant/store/useAIAssistantStore';
+import { screen } from 'storybook/test';
 
 import type { AIAssistantArgs } from '../AIAssistantPage.stories.mocks';
 import * as page from './aiAssistant.play';
@@ -30,35 +31,16 @@ const panel = async (): Promise<HTMLElement> => {
 	return root;
 };
 
+/** Ask Noz starts a new chat; this opens the panel on the thread the story seeded. */
 export const openPanel = async (): Promise<void> => {
-	await userEvent.click(
-		await screen.findByTestId(
-			'bottom-strip-ask-noz-button',
-			undefined,
-			untilLoaded,
-		),
-	);
+	openAIAssistant();
 	await panel();
-};
-
-export const openHistory = async (): Promise<void> => {
-	await openPanel();
-	const scope = within(await panel());
-	await userEvent.click(await scope.findByLabelText('Toggle conversations'));
-	await scope.findByLabelText('Search conversations');
 };
 
 const inPanel =
 	(play: Play): Play =>
 	async (context) => {
 		await openPanel();
-		await play({ ...context, canvasElement: await panel() });
-	};
-
-const inHistory =
-	(play: Play): Play =>
-	async (context) => {
-		await openHistory();
 		await play({ ...context, canvasElement: await panel() });
 	};
 
@@ -72,7 +54,3 @@ export const openLiveSteps = inPanel(page.openLiveSteps);
 export const scrollToTop = inPanel(page.scrollToTop);
 export const typeDraft = inPanel(page.typeDraft);
 export const openClarificationSelect = inPanel(page.openClarificationSelect);
-
-export const openConversationActions = inHistory(page.openConversationActions);
-export const renameConversation = inHistory(page.renameConversation);
-export const copyConversationLink = inHistory(page.copyConversationLink);

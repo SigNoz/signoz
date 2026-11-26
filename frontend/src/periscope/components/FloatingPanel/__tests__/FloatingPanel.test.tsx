@@ -1,7 +1,7 @@
 import { act, render, screen, userEvent } from 'tests/test-utils';
 
 import FloatingPanel from '../FloatingPanel';
-import type { FloatingObstacle, FloatingRect } from '../types';
+import type { Obstacle, Rect } from 'lib/obstacles/types';
 
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 601;
@@ -144,7 +144,7 @@ describe('FloatingPanel', () => {
 
 	describe('avoid', () => {
 		const HOME = { x: 852, y: 167 };
-		const SUPPORT_CHAT: FloatingRect = {
+		const SUPPORT_CHAT: Rect = {
 			x: 882,
 			y: 286,
 			width: 384,
@@ -153,8 +153,8 @@ describe('FloatingPanel', () => {
 		// 8px gap left of the support chat: 882 - 8 - 420.
 		const CLEAR_OF_SUPPORT_CHAT = { x: 454, y: 167 };
 
-		function createObstacle(rect: FloatingRect): {
-			obstacle: FloatingObstacle;
+		function createObstacle(rect: Rect): {
+			obstacle: Obstacle;
 			show: () => void;
 			hide: () => void;
 		} {
@@ -166,7 +166,7 @@ describe('FloatingPanel', () => {
 			};
 			return {
 				obstacle: {
-					getRect: (): FloatingRect | null => (isShown ? rect : null),
+					getRect: (): Rect | null => (isShown ? rect : null),
 					subscribe: (onChange): (() => void) => {
 						listeners.add(onChange);
 						return (): void => {
@@ -179,7 +179,7 @@ describe('FloatingPanel', () => {
 			};
 		}
 
-		function renderPanel(avoid: FloatingObstacle[]): void {
+		function renderPanel(avoid: Obstacle[]): void {
 			render(
 				<FloatingPanel
 					isOpen

@@ -808,7 +808,7 @@ describe('PrivateRoute', () => {
 			assertStaysOnRoute(ROUTES.BILLING);
 		});
 
-		it('should redirect VIEWER to workspace locked when trying to access org-settings', async () => {
+		it('should allow VIEWER to access org-settings when workspace is blocked', () => {
 			renderPrivateRoute({
 				initialRoute: ROUTES.ORG_SETTINGS,
 				appContext: {
@@ -821,7 +821,7 @@ describe('PrivateRoute', () => {
 				isCloudUser: true,
 			});
 
-			await assertRedirectsTo(ROUTES.WORKSPACE_LOCKED);
+			assertStaysOnRoute(ROUTES.ORG_SETTINGS);
 		});
 
 		it('should allow VIEWER to access members settings when workspace is blocked', () => {
@@ -1707,6 +1707,7 @@ describe('PrivateRoute', () => {
 			// Everything under /settings resolves to the non-exact SETTINGS route
 			SETTINGS: { path: ROUTES.SETTINGS, deniedRoles: DENIED_ROLES },
 			MY_SETTINGS: { path: ROUTES.MY_SETTINGS, deniedRoles: DENIED_ROLES },
+			ORG_SETTINGS: { path: ROUTES.ORG_SETTINGS, deniedRoles: DENIED_ROLES },
 			ROLES_SETTINGS: { path: ROUTES.ROLES_SETTINGS, deniedRoles: DENIED_ROLES },
 			ROLE_CREATE: { path: ROUTES.ROLE_CREATE, deniedRoles: DENIED_ROLES },
 			ROLE_DETAILS: {
