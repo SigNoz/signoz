@@ -33,14 +33,6 @@ export const convertMetricKeyToTrace = (key: string): string => {
 	return splittedKey.splice(1).join('.');
 };
 
-/**
- * x.y -> resource_x_y
- */
-export const convertTraceKeyToMetric = (key: string): string => {
-	const splittedKey = key.split('.');
-	return `resource_${splittedKey.join('_')}`;
-};
-
 export const convertOperatorLabelToMetricOperator = (label: string): string =>
 	OperatorConversions.find((operator) => operator.label === label)
 		?.metricValue || '';

@@ -87,7 +87,6 @@ function TimeSeriesViewContainer({
 				dataSource,
 			},
 		},
-		// ENTITY_VERSION_V4,
 		ENTITY_VERSION_V5,
 		{
 			queryKey,

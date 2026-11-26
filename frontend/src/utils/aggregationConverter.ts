@@ -81,27 +81,6 @@ export function convertAggregationsToBaseAutocompleteData(
 }
 
 /**
- * Helper function to get aggregation options for OrderByFilter
- * This creates BaseAutocompleteData that can be used with the existing OrderByFilter
- */
-export function getAggregationOptionsForOrderBy(query: {
-	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
-	dataSource: DataSource;
-	aggregateAttribute?: { key: string };
-	spaceAggregation?: string;
-}): BaseAutocompleteData[] {
-	const { aggregations, dataSource, aggregateAttribute, spaceAggregation } =
-		query;
-
-	return convertAggregationsToBaseAutocompleteData(
-		aggregations,
-		dataSource,
-		aggregateAttribute?.key,
-		spaceAggregation,
-	);
-}
-
-/**
  * Enhanced function that uses createAggregation to parse aggregations first
  * then converts them to BaseAutocompleteData format for OrderByFilter
  */
