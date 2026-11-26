@@ -49,8 +49,8 @@ const (
        )
      {{- end }}`
 
-	msteamsSlackRelatedLinksCall    = `{{ template "signoz.relatedLinks.slack" . }}`
-	msteamsMarkdownRelatedLinksCall = `{{ template "signoz.relatedLinks.markdown" . }}`
+	msteamsSlackRelatedLinksName    = `"signoz.relatedLinks.slack"`
+	msteamsMarkdownRelatedLinksName = `"signoz.relatedLinks.markdown"`
 
 	msteamsMaskOpen  = ""
 	msteamsMaskClose = ""
@@ -543,7 +543,7 @@ func isMSTeamsSlackSeedDerived(text string) bool {
 
 // convertMSTeamsSlackSeed rewrites Slack mrkdwn into the markdown a Teams card renders, leaving every {{ }} action as written.
 func convertMSTeamsSlackSeed(text string) string {
-	text = strings.ReplaceAll(text, msteamsSlackRelatedLinksCall, msteamsMarkdownRelatedLinksCall)
+	text = strings.ReplaceAll(text, msteamsSlackRelatedLinksName, msteamsMarkdownRelatedLinksName)
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 
 	masked, actions := maskMSTeamsActions(text)
