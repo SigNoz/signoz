@@ -9,7 +9,7 @@ function onlyPod(name: string): string {
 	return `k8s.pod.name = '${name}'`;
 }
 
-test.describe('Routing — nuqs and router param coexistence', () => {
+test.describe('Routing — nuqs and router param coexistence @smoke', () => {
 	test('TC-01 a router write keeps the nuqs params it did not author', async ({
 		routing,
 		pods,

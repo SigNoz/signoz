@@ -17,6 +17,7 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:chromium": "playwright test --project=chromium",
+    "test:smoke": "playwright test --project=chromium --grep @smoke",
     "test:firefox": "playwright test --project=firefox",
     "test:webkit": "playwright test --project=webkit",
     "report": "playwright show-report artifacts/html",
