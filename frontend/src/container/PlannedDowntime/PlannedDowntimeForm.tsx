@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { Check, Info } from '@signozhq/icons';
 import {
 	DatePicker,
@@ -36,6 +42,9 @@ import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { RuleListPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppContext } from 'providers/App/App';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZSelect from 'lib/authz/components/AuthZSelect/AuthZSelect';
+import type { AuthZSelectOption } from 'lib/authz/components/AuthZSelect/types';
+import { deniedReason } from 'lib/authz/components/deniedTooltip';
 import { defaultTo, isEmpty } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
@@ -169,23 +178,23 @@ export function PlannedDowntimeForm(
 
 	const gatedAlertOptions = useMemo(
 		() =>
-			alertOptions.map((option) => {
-				const { disabled, reason } = getRuleAccess(String(option.value));
-				return {
-					...option,
-					disabled,
-					title: reason,
-					'aria-disabled': disabled,
-					'data-testid': `downtime-rule-option-${option.value}`,
-				};
-			}),
+			alertOptions.map((option): AuthZSelectOption => ({
+				...getRuleAccess(String(option.value)),
+				value: String(option.value),
+				label:
+					typeof option.label === 'string' ? option.label : String(option.value),
+				testId: `downtime-rule-option-${option.value}`,
+			})),
 		[alertOptions, getRuleAccess],
 	);
 
 	const getRuleLockReason = useCallback(
-		(ruleId: string): string | undefined => {
-			const { disabled, reason } = getRuleAccess(ruleId);
-			return disabled ? reason : undefined;
+		(ruleId: string): ReactNode => {
+			const { disabled, reason, denied } = getRuleAccess(ruleId);
+			if (!disabled || !reason) {
+				return undefined;
+			}
+			return denied ? deniedReason(reason) : reason;
 		},
 		[getRuleAccess],
 	);
@@ -584,9 +593,8 @@ export function PlannedDowntimeForm(
 									},
 								]}
 							>
-								<Select
+								<AuthZSelect
 									placeholder="Search for alert rules or groups..."
-									mode="multiple"
 									status={isError ? 'error' : undefined}
 									loading={isLoading}
 									tagRender={noTagRenderer}
@@ -595,11 +603,6 @@ export function PlannedDowntimeForm(
 									options={gatedAlertOptions}
 									data-testid="downtime-alert-rules"
 									onDropdownVisibleChange={onPickerVisibleChange}
-									filterOption={(input, option): boolean =>
-										(option?.label as string)
-											?.toLowerCase()
-											?.includes(input.toLowerCase())
-									}
 									notFoundContent={
 										isRuleListDenied ? (
 											<span data-testid="downtime-rules-denied">
@@ -613,18 +616,7 @@ export function PlannedDowntimeForm(
 											<span>No alert available.</span>
 										)
 									}
-								>
-									{gatedAlertOptions.map((option) => (
-										<Select.Option
-											key={option.value}
-											value={option.value}
-											disabled={option.disabled}
-											title={option.title}
-										>
-											{option.label}
-										</Select.Option>
-									))}
-								</Select>
+								/>
 							</Form.Item>
 						</>
 					)}

@@ -225,8 +225,15 @@ export const expectRuleAttachLocked = async ({
 	await openFirstSchedule(canvasElement);
 	await expectLocked(await saveButton(), false);
 	const option = await ruleOption(UNLINKED_RULE);
-	// A pending option is disabled too, so the denial is read from its title.
-	await waitFor(() => expect(option.title).toMatch(/attach:rule:/), untilLoaded);
+	// A pending option is disabled too, so the denial is read from its description.
+	await waitFor(
+		() =>
+			expect(option).toHaveAttribute(
+				'aria-description',
+				expect.stringMatching(/attach:rule:/),
+			),
+		untilLoaded,
+	);
 	await expect(option).toHaveAttribute('aria-disabled', 'true');
 };
 

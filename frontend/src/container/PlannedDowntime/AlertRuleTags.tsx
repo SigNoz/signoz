@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Badge } from '@signozhq/ui/badge';
 import { Pill } from '@signozhq/ui/pill';
 import { Tooltip } from '@signozhq/ui/tooltip';
@@ -10,7 +11,7 @@ interface AlertRuleTagsProps {
 	closable: boolean;
 	handleClose?: (removedTag: DowntimeAlertOption['value']) => void;
 	/** Why a closable tag must stay, which keeps it without its close button. */
-	getLockReason?: (value: string) => string | undefined;
+	getLockReason?: (value: string) => ReactNode;
 	classname?: string;
 }
 export function AlertRuleTags(props: AlertRuleTagsProps): JSX.Element {

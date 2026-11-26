@@ -353,7 +353,7 @@ describe('PlannedDowntimeForm authz', () => {
 		const option = await findRuleOption(user, 'rule-2');
 		await waitFor(() =>
 			expect(option).toHaveAttribute(
-				'title',
+				'aria-description',
 				expect.stringContaining('attach:rule:rule-2'),
 			),
 		);
@@ -369,7 +369,7 @@ describe('PlannedDowntimeForm authz', () => {
 
 		const option = await findRuleOption(user, 'rule-2');
 		expect(option).toHaveAttribute('aria-disabled', 'true');
-		expect(option).toHaveAttribute('title', 'Checking permissions');
+		expect(option).toHaveAttribute('aria-description', 'Checking permissions');
 	});
 
 	it('locks a silenced rule the user cannot detach, naming the permission', async () => {
