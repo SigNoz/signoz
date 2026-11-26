@@ -5,14 +5,18 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { singleSignOnMocks } from './SingleSignOn.stories.mocks';
 import {
+	createDomain,
 	deleteDomain,
 	expandAttributeMapping,
 	expandRoleMappings,
+	expectViewerAccess,
 	openAddDomain,
 	openConfigureDomain,
 	openDeleteDomain,
 	openProviderSelector,
+	saveConfiguredDomain,
 	submitEmptyProvider,
+	toggleEnforcement,
 	updateDisplayName,
 } from './__story_mockdata__/singleSignOn.play';
 
@@ -24,13 +28,14 @@ const pageStory = storyMocks(singleSignOnMocks, { layout: 'app' });
 
 /**
  * SAML and OIDC domains for the org, whether SSO is enforced, and the role a new
- * user lands on.
+ * user lands on. Gated on authz permissions: the domain list, delete and the
+ * display name; saving a domain is checked by the backend.
  *
  * Route: `/settings/org-settings`.
  */
 const meta = {
-	title: 'Pages/Settings/Single Sign-on',
-	tags: ['play'],
+	title: 'Pages/Settings/Single Sign-on/Overview',
+	tags: ['authz', 'play'],
 	component: SettingsPage,
 	...pageStory,
 	parameters: { ...pageStory.parameters },
@@ -124,4 +129,46 @@ export const DisplayNameUpdatedToast: Story = {
  */
 export const DomainDeletedToast: Story = {
 	play: deleteDomain,
+};
+
+/**
+ * A viewer: the tab is listed for every role, but the domain list is denied and
+ * the display name is locked.
+ */
+export const Viewer: Story = {
+	args: { access: 'viewer' },
+	play: expectViewerAccess,
+};
+
+/**
+ * Adding a domain whose save the backend rejects: the error modal opens and the
+ * filled form stays. Set Domain save to `success` for the created toast.
+ */
+export const DomainCreateFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: createDomain,
+};
+
+/**
+ * Saving a configured domain the backend rejects: the error modal opens over the
+ * form. Set Domain save to `success` for the updated toast.
+ */
+export const DomainUpdateFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: saveConfiguredDomain,
+};
+
+/**
+ * The enforce SSO switch flipped on a domain the backend rejects: the error modal
+ * opens and the switch returns to where it was.
+ */
+export const EnforceSsoFailed: Story = {
+	args: { domainSave: 'error' },
+	// The deliberate 500 is the state under test.
+	parameters: { allowConsoleErrors: true },
+	play: toggleEnforcement,
 };
