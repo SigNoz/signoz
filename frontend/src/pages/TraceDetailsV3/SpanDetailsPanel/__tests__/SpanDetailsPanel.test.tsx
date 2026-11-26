@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
 import { render } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { SpanDetailVariant } from '../constants';
@@ -154,7 +155,7 @@ describe('SpanDetailsPanel – span summary', () => {
 
 describe('SpanDetailsPanel – tabs', () => {
 	it('shows Overview by default and switches content on tab change', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPanel(400);
 
 		// Overview active by default.
@@ -203,7 +204,7 @@ describe('SpanDetailsPanel – Open in Logs Explorer footer', () => {
 	});
 
 	it('appears only while the Logs tab is active', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPanel(400);
 
 		expect(
@@ -220,7 +221,7 @@ describe('SpanDetailsPanel – Open in Logs Explorer footer', () => {
 	});
 
 	it('opens Logs Explorer in a new tab filtered to the span trace when clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPanel(400);
 
 		await user.click(screen.getByRole('tab', { name: /logs/i }));

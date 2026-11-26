@@ -4,6 +4,7 @@ import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/si
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
 import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { TraceDetailsTab } from '../../constants';
 import { TraceDetailEvents } from '../../events';
@@ -99,7 +100,7 @@ describe('TraceDetailsHeader – back button', () => {
 
 	it('pushes to the AI observability explorer when opened directly on another tab', async () => {
 		mockHasInAppHistory.mockReturnValue(false);
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<NuqsTestingAdapter searchParams="?tab=thread">
 				<TraceDetailsHeader {...baseProps} />
@@ -296,7 +297,7 @@ describe('TraceDetailsHeader – trace metadata row', () => {
 	});
 
 	it('is shown by default and can be hidden / shown again via the Trace options menu', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		mockSummary(traceMetadata);
 		render(<TraceDetailsHeader {...baseProps} showTraceDetailsHeaderOptions />);
 
@@ -365,7 +366,7 @@ describe('TraceDetailsHeader – tabs', () => {
 	});
 
 	it('keeps only the metadata row on the Thread tab', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHeader();
 
 		await user.click(screen.getByTestId('trace-details-tab-thread'));
@@ -380,7 +381,7 @@ describe('TraceDetailsHeader – tabs', () => {
 	});
 
 	it('shows the metadata row on the Thread tab even when hidden on Overview', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHeader();
 
 		await user.click(screen.getByTestId('trace-options-button'));
@@ -414,7 +415,7 @@ describe('TraceDetailsHeader – tabs', () => {
 	});
 
 	it('clears the filter result when switching to the Thread tab', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHeader();
 		baseProps.onFilteredSpansChange.mockClear();
 
@@ -424,7 +425,7 @@ describe('TraceDetailsHeader – tabs', () => {
 	});
 
 	it('closes the Analytics panel when switching to the Thread tab', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHeader();
 
 		await user.click(screen.getByTestId('trace-analytics-button'));
@@ -442,7 +443,7 @@ describe('TraceDetailsHeader – tabs', () => {
 	});
 
 	it('logs the tab change with the previous and next tab', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderHeader();
 		jest.mocked(logEvent).mockClear();
 

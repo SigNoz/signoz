@@ -7,6 +7,7 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderChannels } from './renderChannels';
 
@@ -69,7 +70,7 @@ describe('Notification channels list - AuthZ', () => {
 			renderChannels();
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			await user.click(screen.getByTestId('channel-actions-3'));
 
 			// the label never flips between Edit and View, so it cannot flash the
@@ -89,7 +90,7 @@ describe('Notification channels list - AuthZ', () => {
 			renderChannels();
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			await user.click(screen.getByTestId('channel-actions-3'));
 
 			await expect(

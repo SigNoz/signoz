@@ -12,6 +12,7 @@ import {
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
 import { render, screen, userEvent, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntime } from '../PlannedDowntime';
@@ -240,7 +241,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should filter downtime schedules by name when searching', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPage();
 
 		await expect(
@@ -258,7 +259,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should filter downtime schedules with partial name match', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPage();
 
 		await expect(
@@ -275,7 +276,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should show no results when search term matches nothing', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPage();
 
 		await user.click(screen.getByTestId(SEARCH_TEST_ID));
@@ -288,7 +289,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('opens the delete confirmation from the row actions', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderPage();
 
 		await user.click(await screen.findByTestId('downtime-actions-1'));

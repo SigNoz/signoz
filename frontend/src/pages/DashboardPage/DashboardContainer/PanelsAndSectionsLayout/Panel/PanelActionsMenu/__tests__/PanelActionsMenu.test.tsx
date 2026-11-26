@@ -1,6 +1,7 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 import { render, screen, userEvent } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import type { DashboardSection } from '../../../../utils';
 import PanelActionsMenu from '../PanelActionsMenu';
@@ -112,7 +113,8 @@ type User = ReturnType<typeof userEvent.setup>;
 
 // skipHover: simulated pointer travel fires pointerleave on the subtrigger and
 // Base UI's safe-polygon math (zero rects in jsdom) closes the submenu.
-const setupUser = (): User => userEvent.setup({ skipHover: true, delay: null });
+const setupUser = (): User =>
+	userEvent.setup({ ...NO_DELAY_USER_EVENT, skipHover: true });
 
 async function openSubmenu(user: User, value: string): Promise<void> {
 	await user.click(screen.getByTestId(MENU_TEST_ID));

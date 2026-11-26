@@ -1,6 +1,7 @@
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderChannels } from './renderChannels';
 
@@ -76,7 +77,7 @@ describe('Notification channels list', () => {
 
 			await screen.findByText('Dummy-Channel', {}, FIND);
 			// the table paints a loading layer over the rows until the fetch settles
-			const user = userEvent.setup({ delay: null });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			await user.click(screen.getByTestId('channel-actions-3'));
 			// Radix renders the menu into a portal once the trigger is activated
 			await screen.findByRole('menu', {}, FIND);

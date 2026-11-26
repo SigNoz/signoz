@@ -3,6 +3,7 @@ import {
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import EndPointPicker from '../Explorer/Domains/DomainDetails/components/EndPointPicker';
@@ -65,7 +66,7 @@ describe('EndPointPicker', () => {
 	});
 
 	it('reports the picked endpoint', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;
@@ -83,7 +84,7 @@ describe('EndPointPicker', () => {
 	});
 
 	it('shows All endpoints when none is picked and clears through it', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;

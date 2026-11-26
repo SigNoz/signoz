@@ -2,6 +2,7 @@ import { triggeredAlertsPaginationFixture } from 'mocks-server/__mockdata__/trig
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { getCurrentNuqsQueryString } from 'tests/nuqs-helpers';
 
 import { renderTriggeredAlerts } from './_helpers';
@@ -50,7 +51,7 @@ describe('TriggeredAlerts — pagination', () => {
 
 	it('navigates to page 2 and shows the next batch of alerts', async () => {
 		usePaginationHandler();
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await screen.findByText('Pag Alert 14');

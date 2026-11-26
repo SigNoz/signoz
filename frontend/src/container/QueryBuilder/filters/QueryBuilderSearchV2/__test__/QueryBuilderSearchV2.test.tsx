@@ -19,6 +19,7 @@ import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';
 
@@ -148,7 +149,7 @@ jest.mock('hooks/dashboard/useDynamicVariableSuggestions', () => ({
 
 describe('Suggestion Key -> Operator -> Value Flow', () => {
 	it('should complete full flow from key selection to value', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext();
 
 		const combobox = getSearchCombobox();
@@ -199,7 +200,7 @@ describe('Suggestion Key -> Operator -> Value Flow', () => {
 
 describe('Operator suggestions for data types missing from the operators map', () => {
 	it('should fall back to universal operators for a non-canonical data type', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext();
 
 		const combobox = getSearchCombobox();
@@ -226,7 +227,7 @@ describe('Operator suggestions for data types missing from the operators map', (
 
 describe('Dynamic Variable Suggestions', () => {
 	it('should suggest dynamic variable when key matches a variable attribute', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext();
 
 		const combobox = getSearchCombobox();
@@ -298,7 +299,7 @@ describe('Filter chips', () => {
 	});
 
 	it('removes the filter once when the chip close button is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext({ query: queryWithFilter });
 
 		await user.click(
@@ -312,7 +313,7 @@ describe('Filter chips', () => {
 	});
 
 	it('moves the filter into the search input when the chip body is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext({ query: queryWithFilter });
 
 		await user.click(screen.getByText(CHIP_LABEL));
@@ -356,7 +357,7 @@ describe('Key fetch context', () => {
 
 describe('Keys the legacy filter builders cannot read', () => {
 	it('does not suggest body JSON keys or span search scope selectors', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext();
 
 		const combobox = getSearchCombobox();
@@ -372,7 +373,7 @@ describe('Keys the legacy filter builders cannot read', () => {
 
 describe('Span field keys', () => {
 	it('marks span fields as columns and looks up their values in the span context', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderWithContext();
 
 		const combobox = getSearchCombobox();

@@ -1,4 +1,5 @@
 import { screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderTriggeredAlerts } from './_helpers';
 
@@ -13,7 +14,7 @@ describe('TriggeredAlerts — group by', () => {
 	});
 
 	it('groups by service when "service" is selected', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -38,7 +39,7 @@ describe('TriggeredAlerts — group by', () => {
 	});
 
 	it('expands and collapses a group row to reveal nested alerts', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>

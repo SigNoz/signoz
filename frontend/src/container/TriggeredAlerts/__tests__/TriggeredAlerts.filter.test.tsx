@@ -1,11 +1,12 @@
 import userEvent from '@testing-library/user-event';
 import { screen, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderTriggeredAlerts } from './_helpers';
 
 describe('TriggeredAlerts — severity filter', () => {
 	it('filters to only critical-severity rows when "Critical" is selected', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -30,7 +31,7 @@ describe('TriggeredAlerts — severity filter', () => {
 	});
 
 	it('shows union when multiple severities are selected', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>
@@ -55,7 +56,7 @@ describe('TriggeredAlerts — severity filter', () => {
 	});
 
 	it('clearing the filter shows all rows again', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderTriggeredAlerts();
 
 		await waitFor(() =>

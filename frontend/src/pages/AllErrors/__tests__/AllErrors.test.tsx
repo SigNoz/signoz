@@ -12,6 +12,7 @@ import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { rest } from 'msw';
 import store from 'store';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import AllErrors from '../index';
@@ -85,7 +86,7 @@ describe('Exceptions page - run query', () => {
 	};
 
 	it('keeps the filter items in the query when Run Query is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		await renderWithFilter();
 
 		// The button reads Cancel while the list is still fetching.
@@ -97,7 +98,7 @@ describe('Exceptions page - run query', () => {
 	});
 
 	it('keeps the filter items in the query on Ctrl+Enter in the search bar', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		await renderWithFilter();
 
 		within(screen.getByTestId('qb-search-select'))

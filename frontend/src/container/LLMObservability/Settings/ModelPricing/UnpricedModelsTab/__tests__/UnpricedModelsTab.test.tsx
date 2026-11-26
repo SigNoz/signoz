@@ -9,6 +9,7 @@ import {
 } from 'container/LLMObservability/Settings/ModelPricing/__tests__/fixtures';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import UnpricedModelsTab from '../UnpricedModelsTab';
 import { usePendingMappingStore } from '../usePendingMappingStore';
@@ -98,7 +99,7 @@ describe('UnpricedModelsTab (integration)', () => {
 		);
 
 		stageMapping();
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await user.click(await screen.findByTestId('unpriced-map-cancel-btn'));
@@ -112,7 +113,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the confirm dialog with the target rule pricing when a model is picked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);
@@ -138,7 +139,7 @@ describe('UnpricedModelsTab (integration)', () => {
 
 	it('reverts the row trigger to the placeholder when the mapping is cancelled', async () => {
 		stageMapping();
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		const trigger = await screen.findByTestId(`map-to-select-${MODEL}`);
@@ -163,7 +164,7 @@ describe('UnpricedModelsTab (integration)', () => {
 		);
 
 		stageMapping();
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await user.click(await screen.findByTestId('unpriced-map-confirm-btn'));
@@ -183,7 +184,7 @@ describe('UnpricedModelsTab (integration)', () => {
 	});
 
 	it('opens the add-cost drawer prefilled when creating pricing for a model', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(<UnpricedModelsTab />);
 
 		await screen.findByTestId(`unpriced-model-name-${MODEL}`);

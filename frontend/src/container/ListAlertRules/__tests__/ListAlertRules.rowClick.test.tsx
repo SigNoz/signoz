@@ -1,6 +1,7 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
 import { screen, userEvent, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -13,7 +14,7 @@ describe('ListAlertRules — row click navigation', () => {
 	});
 
 	it('clicking a row calls safeNavigate to alerts/overview with ruleId', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		await user.click(await screen.findByTestId(RULE_NAME_CELL_TEST_ID));
@@ -29,7 +30,7 @@ describe('ListAlertRules — row click navigation', () => {
 	});
 
 	it('records an opened rule as recently viewed, most recent first', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		useAlertRuleViewsStore.setState({ recent: ['rule-2', 'rule-1'] });
 		renderListAlertRules();
 
@@ -44,7 +45,7 @@ describe('ListAlertRules — row click navigation', () => {
 	});
 
 	it('ctrl+click on a row navigates with newTab option', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		renderListAlertRules();
 
 		const ruleCell = await screen.findByTestId(RULE_NAME_CELL_TEST_ID);

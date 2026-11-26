@@ -9,6 +9,7 @@ import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
 import { screen, waitFor } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderListAlertRules } from './_helpers';
 
@@ -18,7 +19,7 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders AlertsEmptyState when API returns no rules', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		server.use(
 			rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
@@ -49,7 +50,7 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders ErrorEmptyState when API returns 500; refresh triggers a refetch', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		let callCount = 0;
 		server.use(
@@ -76,7 +77,7 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders NoResultsEmptyState when the query matches nothing; Clear Search resets it', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		server.use(
 			rest.get('http://localhost/api/v3/rules', (req, res, ctx) =>
@@ -116,7 +117,7 @@ describe('ListAlertRules — empty states', () => {
 	});
 
 	it('renders NoResultsEmptyState when the states filter matches nothing; Clear Search resets it', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderListAlertRules({ initialRoute: '/?states=nodata' });
 

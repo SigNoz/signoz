@@ -16,6 +16,7 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 
@@ -172,7 +173,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Enabled sends every state except disabled', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			const requests = captureRulesRequests();
 			renderListAlertRules();
 			await screen.findByTestId('alert-row-rule-1-name');
@@ -188,7 +189,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('Recently viewed lists the opened rules in visit order from one large page', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			const requests = captureRulesRequests();
 			useAlertRuleViewsStore.setState({ recent: ['rule-3', 'rule-1'] });
 			renderListAlertRules();
@@ -213,7 +214,7 @@ describe('ListAlertRules — saved views rail', () => {
 		});
 
 		it('an empty Recently viewed keeps the search and says how it fills', async () => {
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			renderListAlertRules();
 			await screen.findByTestId('alert-row-rule-1-name');
 
@@ -564,7 +565,7 @@ describe('ListAlertRules — saved views rail', () => {
 					),
 				),
 			);
-			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			const user = userEvent.setup(NO_DELAY_USER_EVENT);
 			renderListAlertRules();
 			await selectView(user, 'view-1');
 			await waitFor(() => expect(urlParam('orderBy')).toBe(VIEW_1_ORDER_BY));

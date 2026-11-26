@@ -40,7 +40,7 @@ The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/fron
 
 - Import from `tests/test-utils` only.
 - Prefer `userEvent` for real interactions; use `fireEvent` only for low-level events (scroll/resize/setting `scrollTop`).
-- `userEvent.setup({ delay: null })` skips the timer wait after each key and click; `user.paste` long values. Keep the default delay when the test checks what happens between two actions (a debounce per key).
+- `userEvent.setup(NO_DELAY_USER_EVENT)` (from `tests/noDelayUserEvent`) skips the timer wait after each key and click; `user.paste` long values. Keep the default delay when the test checks what happens between two actions (a debounce per key).
 - One behaviour per test, rendering the smallest component that owns it; each test under 500 ms (`pnpm jest <file> --verbose`).
 - Never call `*ByRole` inside `waitFor`; never raise a timeout to make a slow test pass.
 - Use MSW to mock network calls; large JSON goes in `mocks-server/__mockdata__`.

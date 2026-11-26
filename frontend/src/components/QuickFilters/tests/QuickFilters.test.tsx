@@ -20,6 +20,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 
@@ -200,7 +201,7 @@ describe('Quick Filters', () => {
 		const setLastUsedQuery = jest.fn() as jest.MockedFunction<
 			QueryBuilderContextType['setLastUsedQuery']
 		>;
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		(useQueryBuilder as jest.Mock).mockReturnValue({
 			currentQuery: {
@@ -302,7 +303,7 @@ describe('Quick Filters', () => {
 	});
 
 	it('should add filter data to query when checkbox is clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		render(<TestQuickFilters />);
 
@@ -334,7 +335,7 @@ describe('Quick Filters', () => {
 		});
 	});
 	it('toggles Show IP addresses and updates API Monitoring params', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.API_MONITORING} />,
@@ -368,7 +369,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('opens the settings with the saved filters added and the rest under other filters', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		server.use(
 			rest.get(quickFiltersListURL, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(smallFiltersListResponse)),
@@ -390,7 +391,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('keeps same-name fields with different context as distinct entries', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		server.use(
 			rest.get(quickFiltersSuggestionsURL, (_req, res, ctx) =>
 				res(
@@ -442,7 +443,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('adds a filter from OTHER FILTERS to ADDED FILTERS when clicked', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 
@@ -454,7 +455,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('removes a filter from ADDED FILTERS and moves it to OTHER FILTERS', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 		const addedSection = screen.getByTestId(ADDED_FILTERS_TEST_ID);
@@ -472,7 +473,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('restores original filter state on Discard', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 		const addedSection = screen.getByTestId(ADDED_FILTERS_TEST_ID);
@@ -495,7 +496,7 @@ describe('Quick Filters with custom filters', () => {
 	});
 
 	it('saves the updated filters by calling PUT with correct payload', async () => {
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 
 		renderSettings();
 
@@ -654,7 +655,7 @@ describe('Quick Filters refetch behavior', () => {
 			}),
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
 		);
@@ -696,7 +697,7 @@ describe('Quick Filters refetch behavior', () => {
 			),
 		);
 
-		const user = userEvent.setup({ delay: null });
+		const user = userEvent.setup(NO_DELAY_USER_EVENT);
 		render(
 			<TestQuickFilters quickFilterSource={QuickFiltersSource.LOGS_EXPLORER} />,
 		);
