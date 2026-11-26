@@ -1,3 +1,4 @@
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -20,6 +21,7 @@ jest.mock('@signozhq/ui/toast', () => ({
 describe('AuthDomain', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {

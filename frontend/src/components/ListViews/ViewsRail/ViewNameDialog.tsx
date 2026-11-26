@@ -24,6 +24,7 @@ interface Props {
 	confirmLabel: string;
 	/** Name the input holds each time the dialog opens. */
 	initialName?: string;
+	placeholder: string;
 	testIdPrefix: string;
 }
 
@@ -35,6 +36,7 @@ function ViewNameDialog({
 	description,
 	confirmLabel,
 	initialName = '',
+	placeholder,
 	testIdPrefix,
 }: Props): JSX.Element {
 	const [name, setName] = useState(initialName);
@@ -116,7 +118,7 @@ function ViewNameDialog({
 					id={inputId}
 					value={name}
 					maxLength={VIEW_NAME_MAX_LENGTH}
-					placeholder="e.g. Prod alerts"
+					placeholder={placeholder}
 					autoComplete="off"
 					testId={`${testIdPrefix}-name`}
 					onChange={(e: ChangeEvent<HTMLInputElement>): void =>

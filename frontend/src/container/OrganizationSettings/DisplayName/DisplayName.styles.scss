@@ -8,6 +8,10 @@
 		}
 	}
 
+	.org-input-disabled-tooltip-class {
+		width: 100%;
+	}
+
 	.field-error {
 		color: var(--destructive);
 		margin-top: var(--spacing-2);

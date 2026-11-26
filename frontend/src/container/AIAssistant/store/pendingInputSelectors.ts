@@ -21,3 +21,18 @@ export function selectPendingUserInputStreamCount(
 	}
 	return n;
 }
+
+/** Thread ids of the saved chats whose execution is waiting on the user. */
+export function selectAwaitingUserThreadIds(
+	state: AIAssistantStoreState,
+): string[] {
+	return Object.entries(state.streams).flatMap(
+		([conversationId, { streamingStatus }]) => {
+			const threadId = state.conversations[conversationId]?.threadId;
+			const isAwaiting =
+				streamingStatus === 'awaiting_approval' ||
+				streamingStatus === 'awaiting_clarification';
+			return threadId && isAwaiting ? [threadId] : [];
+		},
+	);
+}

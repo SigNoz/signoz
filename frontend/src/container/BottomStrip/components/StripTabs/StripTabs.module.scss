@@ -1,0 +1,8 @@
+.stripTabs {
+	display: flex;
+	align-items: center;
+	flex: 0 1 auto;
+	gap: var(--spacing-1);
+	min-width: 0;
+	overflow: hidden;
+}

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
 import { matchRoute } from 'lib/router/matchRoute';
@@ -6,17 +6,13 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Plus, X } from '@signozhq/icons';
+import { Maximize2, Minus, X } from '@signozhq/icons';
 import { BOTTOM_STRIP_HEIGHT } from 'container/BottomStrip';
+import { useAIAssistantOpenConversationsStore } from '../store/useAIAssistantOpenConversationsStore';
 import { supportChatObstacle } from 'container/BottomStrip/SupportButton/supportChatObstacle';
 import { FloatingPanel } from 'periscope/components/FloatingPanel';
 
-import logEvent from 'api/common/logEvent';
-
-import ConversationsList from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
-import { AIAssistantEvents } from '../events';
-import { useAIAssistantAnalyticsContext } from '../hooks/useAIAssistantAnalyticsContext';
 import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
@@ -44,7 +40,6 @@ const PANEL_AVOID = [supportChatObstacle];
 
 export default function AIAssistantPanel(): JSX.Element | null {
 	const { pathname, search } = useAppLocation();
-	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isDrawerOpen);
 	const isFullScreenPage = !!matchRoute(pathname, ROUTES.AI_ASSISTANT, {
@@ -53,12 +48,22 @@ export default function AIAssistantPanel(): JSX.Element | null {
 	const activeConversationId = useAIAssistantStore(
 		(s) => s.activeConversationId,
 	);
-	const closeDrawer = useAIAssistantStore((s) => s.closeDrawer);
-	const startNewConversation = useAIAssistantStore(
-		(s) => s.startNewConversation,
+	const activeThreadId = useAIAssistantStore((s) =>
+		s.activeConversationId
+			? s.conversations[s.activeConversationId]?.threadId
+			: undefined,
 	);
-	const analyticsCtx = useAIAssistantAnalyticsContext();
+	const closeDrawer = useAIAssistantStore((s) => s.closeDrawer);
+	const closeChatTab = useAIAssistantOpenConversationsStore((s) => s.close);
 	const chatTitle = useActiveChatTitle();
+
+	// Minimize keeps the chat as a strip tab; close drops it until its next reply.
+	const handleClose = useCallback((): void => {
+		if (activeThreadId) {
+			closeChatTab(activeThreadId);
+		}
+		closeDrawer();
+	}, [activeThreadId, closeChatTab, closeDrawer]);
 
 	const handleExpand = useCallback(() => {
 		if (!activeConversationId) {
@@ -73,25 +78,6 @@ export default function AIAssistantPanel(): JSX.Element | null {
 			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
 	}, [activeConversationId, closeDrawer, pathname, search]);
-
-	const handleNew = useCallback(() => {
-		void logEvent(AIAssistantEvents.NewChatClicked, {
-			...analyticsCtx,
-			// useAIAssistantAnalyticsContext() runs above this component's
-			// VariantContext.Provider, so the hook reports the default 'page'
-			// mode. Override here: this handler only runs when the drawer
-			// itself is mounted, which is unambiguously the sidepane surface.
-			mode: 'sidepane',
-			source: 'header',
-		});
-		startNewConversation();
-		setShowHistory(false);
-	}, [startNewConversation, analyticsCtx]);
-
-	// When user picks a conversation from the list, close the sidebar
-	const handleHistorySelect = useCallback(() => {
-		setShowHistory(false);
-	}, []);
 
 	if (!isOpen || isFullScreenPage) {
 		return null;
@@ -149,29 +135,17 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 
 					<div className={styles.actions}>
-						<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
+						<Tooltip title="Minimize">
 							<Button
 								variant="ghost"
 								size="sm"
 								icon
 								color="secondary"
-								onClick={(): void => setShowHistory((v) => !v)}
-								aria-label="Toggle conversations"
+								testId="ai-assistant-panel-minimize"
+								onClick={closeDrawer}
+								aria-label="Minimize panel"
 							>
-								<History size={14} />
-							</Button>
-						</Tooltip>
-
-						<Tooltip title="New conversation">
-							<Button
-								variant="ghost"
-								size="sm"
-								icon
-								color="secondary"
-								onClick={handleNew}
-								aria-label="New conversation"
-							>
-								<Plus size={14} />
+								<Minus size={14} />
 							</Button>
 						</Tooltip>
 
@@ -197,7 +171,7 @@ export default function AIAssistantPanel(): JSX.Element | null {
 								icon
 								color="secondary"
 								testId="ai-assistant-panel-close"
-								onClick={closeDrawer}
+								onClick={handleClose}
 								aria-label="Close panel"
 							>
 								<X size={14} />
@@ -206,12 +180,8 @@ export default function AIAssistantPanel(): JSX.Element | null {
 					</div>
 				</div>
 
-				{showHistory ? (
-					<ConversationsList onSelect={handleHistorySelect} />
-				) : (
-					activeConversationId && (
-						<ConversationView conversationId={activeConversationId} />
-					)
+				{activeConversationId && (
+					<ConversationView conversationId={activeConversationId} />
 				)}
 			</FloatingPanel>
 		</VariantContext.Provider>
