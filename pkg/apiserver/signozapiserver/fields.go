@@ -4,13 +4,15 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/gorilla/mux"
 )
 
 func (provider *provider) addFieldsRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/fields/keys", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetFieldsKeys), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/fields/keys", handler.New(provider.authzMiddleware.CheckResources(provider.fieldsHandler.GetFieldsKeys, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
 		ID:                  "GetFieldsKeys",
 		Tags:                []string{"fields"},
 		Summary:             "Get field keys",
@@ -23,12 +25,17 @@ func (provider *provider) addFieldsRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.FieldsResources,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/fields/values", handler.New(provider.authzMiddleware.ViewAccess(provider.fieldsHandler.GetFieldsValues), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/fields/values", handler.New(provider.authzMiddleware.CheckResources(provider.fieldsHandler.GetFieldsValues, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
 		ID:                  "GetFieldsValues",
 		Tags:                []string{"fields"},
 		Summary:             "Get field values",
@@ -41,8 +48,13 @@ func (provider *provider) addFieldsRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodGet).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.FieldsResources,
+	}))).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 

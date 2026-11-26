@@ -25,6 +25,7 @@ import (
 
 	"github.com/prometheus/prometheus/promql"
 
+	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
@@ -51,8 +52,10 @@ import (
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
@@ -358,7 +361,12 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_range", am.ViewAccess(aH.queryRangeMetrics)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/query", am.ViewAccess(aH.queryMetrics)).Methods(http.MethodGet)
 
-	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
+	router.Handle("/api/v2/variables/query", handler.New(am.CheckResources(aH.queryDashboardVarsV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.ClickHouseSQLResources,
+	}))).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/event", am.ViewAccess(aH.registerEvent)).Methods(http.MethodPost)
 

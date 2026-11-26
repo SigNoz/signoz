@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -635,7 +634,7 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authzMiddleware.ViewAccess(provider.querierHandler.ReplaceVariables), handler.OpenAPIDef{
+	if err := router.Handle("/api/v5/substitute_vars", handler.New(provider.authzMiddleware.CheckResources(provider.querierHandler.ReplaceVariables, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName), handler.OpenAPIDef{
 		ID:                  "ReplaceVariables",
 		Tags:                []string{"querier"},
 		Summary:             "Replace variables",
@@ -646,8 +645,13 @@ func (provider *provider) addQuerierRoutes(router *mux.Router) error {
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
-		SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-	})).Methods(http.MethodPost).GetError(); err != nil {
+		SecuritySchemes:     newScopedSecuritySchemes(telemetryReadScopes()),
+	}, handler.WithResourceDefs(handler.TelemetryResourceDef{
+		Verb:      coretypes.VerbRead,
+		Category:  coretypes.ActionCategoryDataAccess,
+		Selector:  querybuilder.TelemetrySelector,
+		Resources: querybuilder.QueryRangeResources,
+	}))).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
