@@ -1687,6 +1687,7 @@ describe('PrivateRoute', () => {
 			keyof typeof routeWithInitialAuthZSupport,
 			AuthzRouteCase
 		> = {
+			LIST_ALL_ALERT: { path: ROUTES.LIST_ALL_ALERT, deniedRoles: DENIED_ROLES },
 			CHANNELS_NEW: { path: ROUTES.CHANNELS_NEW, deniedRoles: DENIED_ROLES },
 			CHANNELS_EDIT: {
 				path: ROUTES.CHANNELS_EDIT.replace(':channelId', 'channel-id-1'),
