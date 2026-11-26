@@ -192,8 +192,7 @@ export const QueryV2 = forwardRef(function QueryV2(
 										!functions.hidden &&
 										(query.dataSource === DataSource.LOGS ||
 											query.dataSource === DataSource.METRICS ||
-											hasQueryFunctions ||
-											false)
+											hasQueryFunctions)
 									}
 									areFunctionsDisabled={functions.disabled}
 									functionsDisabledReason={functions.reason}

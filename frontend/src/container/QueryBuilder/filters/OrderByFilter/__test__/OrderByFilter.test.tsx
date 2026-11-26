@@ -39,7 +39,6 @@ function setup(query: Partial<IBuilderQuery>): { onChange: jest.Mock } {
 			}
 			onChange={onChange}
 			isRawQuery
-			isNewQueryV2
 		/>,
 	);
 	return { onChange };
