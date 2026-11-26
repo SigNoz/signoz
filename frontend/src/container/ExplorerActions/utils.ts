@@ -95,7 +95,8 @@ export function getCreateAlertLink({
 		orderBy: isListStyle ? [] : item.orderBy,
 	}));
 
+	// Encoded twice: the alert page decodes it again after the URL does.
 	return `${ROUTES.ALERTS_NEW}?${QueryParams.compositeQuery}=${encodeURIComponent(
-		JSON.stringify(alertQuery),
+		encodeURIComponent(JSON.stringify(alertQuery)),
 	)}`;
 }

@@ -98,7 +98,9 @@ async function createAlertFrom(
 	const [path, search] = (navigate.mock.calls[0][0] as string).split('?');
 	expect(path).toBe(ROUTES.ALERTS_NEW);
 	return JSON.parse(
-		new URLSearchParams(search).get(QueryParams.compositeQuery) ?? '',
+		decodeURIComponent(
+			new URLSearchParams(search).get(QueryParams.compositeQuery) ?? '',
+		),
 	) as Query;
 }
 

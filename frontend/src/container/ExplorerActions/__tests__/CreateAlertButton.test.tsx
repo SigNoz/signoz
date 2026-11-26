@@ -61,7 +61,7 @@ function pushedQuery(): Query {
 	const [path, search] = (mockedNavigate.mock.calls[0][0] as string).split('?');
 	expect(path).toBe(ROUTES.ALERTS_NEW);
 	const raw = new URLSearchParams(search).get(QueryParams.compositeQuery);
-	return JSON.parse(raw as string);
+	return JSON.parse(decodeURIComponent(raw as string));
 }
 
 function setPanelType(panelType: PANEL_TYPES): void {
