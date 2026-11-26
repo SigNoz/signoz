@@ -123,10 +123,11 @@ Before writing the clicks, list what has to be on screen for the play's target t
 
 Make those checks with the page's own code instead of restating a condition. Build the rows with the builder the handler uses and the view's own filter, and check a permission with the page's own check through `accessFor(...).allows(...)`, or the role against the constant the page gates on, such as `componentPermission.action`. Export the checks from the mocks module, next to the handlers, so a handler change moves them too. The alert rules page has `listedRules`, `hasRowMenu`, `showsNoRulesPage` and `listsSavedViews`; the dashboards list has `listedDashboards`, `canList`, `canCreate` and `canUpdate`.
 
-Two habits cover the rest:
+Three habits cover the rest:
 
 - Use `findAllBy*` and take the first whenever the text can appear twice, such as in a tooltip or a popover title.
 - Wrap `toBeVisible` in `waitFor` for anything that fades in. A tooltip or toast found the moment it mounts is not visible yet.
+- Wait for what a click depends on before clicking. A control can do something else until a request answers: in the cloud account setup, Cancel closes the drawer outright until the agent command exists, and asks to confirm only after. Clicking Cancel straight after Generate raced the account POST on CI; find `<provider>-agent-command` first.
 
 ## Rules
 
