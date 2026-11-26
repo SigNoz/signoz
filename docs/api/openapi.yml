@@ -16159,9 +16159,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get field keys
       tags:
       - fields
@@ -16334,9 +16342,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Get field values
       tags:
       - fields
@@ -33794,9 +33810,17 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       - tokenizer:
-        - VIEWER
+        - logs:read
+        - traces:read
+        - metrics:read
+        - audit-logs:read
+        - meter-metrics:read
       summary: Replace variables
       tags:
       - querier
