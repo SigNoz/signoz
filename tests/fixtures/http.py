@@ -18,6 +18,13 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+class PatientWireMockContainer(WireMockContainer):
+    # The stock check gives the JVM 10 one-second pings and its failure is not
+    # retried, which a loaded CI runner can outlast.
+    def server_running(self, retry_count: int = 60, retry_delay: int = 1) -> bool:
+        return super().server_running(retry_count=retry_count, retry_delay=retry_delay)
+
+
 @pytest.fixture(name="zeus", scope="package")
 def zeus(
     network: Network,
@@ -26,7 +33,7 @@ def zeus(
 ) -> types.TestContainerDocker:
 
     def create() -> types.TestContainerDocker:
-        container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
+        container = PatientWireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_network(network)
         container.start()
 
@@ -75,7 +82,7 @@ def gateway(
 ) -> types.TestContainerDocker:
 
     def create() -> types.TestContainerDocker:
-        container = WireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
+        container = PatientWireMockContainer(image="wiremock/wiremock:2.35.1-1", secure=False)
         container.with_exposed_ports(8080)
         container.with_network(network)
         container.start()
