@@ -43,6 +43,8 @@ export interface QuickFilters {
 		signal: QuickFilterSignal,
 		filters?: QuickFilterDefinition[],
 	): Promise<void>;
+	/** Put back what `seed` replaced; the layer runs it after every test. */
+	restore(): Promise<void>;
 	/** Hide the one-off announcement tooltip so it cannot swallow the gear click. */
 	dismissAnnouncement(): Promise<void>;
 	gotoExplorer(path: string): Promise<void>;
@@ -62,15 +64,33 @@ export function quickFiltersDriver(page: Page): QuickFilters {
 			.filter({ hasText: SETTINGS_PANEL_TITLE });
 	const gearContainer = (): Locator => page.getByTestId(SETTINGS_ICON_CONTAINER);
 
+	const replaced = new Map<QuickFilterSignal, unknown[]>();
+
 	const filters: QuickFilters = {
 		rail: () => page.locator('.quick-filters'),
 		settingsPanel: panel,
 
 		seed: async (signal, definitions = DEFAULT_CUSTOM_FILTERS) => {
-			await apiDriver(page).put('/api/v1/orgs/me/filters', {
+			const api = apiDriver(page);
+			if (!replaced.has(signal)) {
+				const stored = await api.get<{ data: { filters: unknown[] } }>(
+					`/api/v2/quick_filters/${signal}`,
+				);
+				replaced.set(signal, stored.data.filters);
+			}
+			await api.put('/api/v1/orgs/me/filters', {
 				signal,
 				filters: definitions,
 			});
+		},
+
+		restore: async () => {
+			const api = apiDriver(page);
+			for (const [signal, stored] of replaced) {
+				// eslint-disable-next-line no-await-in-loop
+				await api.put(`/api/v2/quick_filters/${signal}`, { filters: stored });
+			}
+			replaced.clear();
 		},
 
 		dismissAnnouncement: () => dismissQuickFiltersAnnouncement(page),
@@ -192,9 +212,11 @@ export const withExplorers: Layer<{
 	editor: QueryEditor;
 }> = (base) =>
 	driver('editor', ({ page }) => queryEditorDriver(page))(
-		driver('quickFilters', ({ page }) => quickFiltersDriver(page))(
-			driver('logs', ({ page }) => logsExplorerDriver(page))(base),
-		),
+		driver(
+			'quickFilters',
+			({ page }) => quickFiltersDriver(page),
+			(quickFilters) => quickFilters.restore(),
+		)(driver('logs', ({ page }) => logsExplorerDriver(page))(base)),
 	);
 
 /** The explorers `test`. */
