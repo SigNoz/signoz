@@ -68,14 +68,14 @@ function DashboardActions({
 		deleteChecks,
 		deleteDisabledTooltip,
 	} = useDashboardEditContext();
-	const show = useDashboardControlGroup('dashboardActions');
+	const actionControls = useDashboardControlGroup('dashboardActions');
 	const requestSettings = useDashboardStore((s) => s.requestSettings);
 	const { safeNavigate } = useSafeNavigate();
 	const { showErrorModal } = useErrorModal();
 	const { disabledTooltip: lockDisabledTooltip } = useDashboardLockPermission({
 		dashboardId: dashboard.id,
 		source: dashboard.source,
-		enabled: show.lock,
+		enabled: actionControls.lock,
 	});
 
 	// Cloning creates a new dashboard, so it needs `create` too, and no lock gate.
@@ -158,7 +158,7 @@ function DashboardActions({
 	// Unavailable items stay in the menu, carrying the reason; hidden ones are dropped.
 	const menuItems = useMemo<AuthZDropdownItemType[]>(() => {
 		const dashboardItems: AuthZGroupChildType[] = [
-			...(show.rename
+			...(actionControls.rename
 				? [
 						{
 							type: 'item' as const,
@@ -173,7 +173,7 @@ function DashboardActions({
 					]
 				: []),
 			// Clone creates a new dashboard, so it's not lock-gated.
-			...(show.clone
+			...(actionControls.clone
 				? [
 						{
 							type: 'item' as const,
@@ -188,7 +188,7 @@ function DashboardActions({
 						},
 					]
 				: []),
-			...(show.lock
+			...(actionControls.lock
 				? [
 						{
 							type: 'item' as const,
@@ -202,7 +202,7 @@ function DashboardActions({
 						},
 					]
 				: []),
-			...(show.fullscreen
+			...(actionControls.fullscreen
 				? [
 						{
 							type: 'item' as const,
@@ -215,7 +215,7 @@ function DashboardActions({
 					]
 				: []),
 		];
-		const layoutItems: AuthZGroupChildType[] = show.newSection
+		const layoutItems: AuthZGroupChildType[] = actionControls.newSection
 			? [
 					{
 						type: 'item',
@@ -251,7 +251,7 @@ function DashboardActions({
 						},
 					]
 				: []),
-			...(show.delete
+			...(actionControls.delete
 				? [
 						{ type: 'separator' as const, value: 'divider-danger' },
 						{
@@ -270,7 +270,7 @@ function DashboardActions({
 				: []),
 		];
 	}, [
-		show,
+		actionControls,
 		editChecks,
 		editDisabledTooltip,
 		deleteChecks,
@@ -301,14 +301,14 @@ function DashboardActions({
 					</Button>
 				</AuthZDropdown>
 			)}
-			{show.configure && (
+			{actionControls.configure && (
 				<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 					<Button
 						disabledTooltip={undefined}
 						variant="solid"
 						color="secondary"
 						prefix={<Configure size="md" />}
-						testId="show-drawer"
+						testId="actionControls-drawer"
 						disabled={!isEditable}
 						onClick={handleOpenSettings}
 						size="md"
@@ -317,7 +317,7 @@ function DashboardActions({
 					</Button>
 				</AuthZTooltip>
 			)}
-			{show.json && (
+			{actionControls.json && (
 				<Button
 					variant="solid"
 					color="secondary"
@@ -329,7 +329,7 @@ function DashboardActions({
 					JSON
 				</Button>
 			)}
-			{show.newPanel && (
+			{actionControls.newPanel && (
 				<AuthZTooltip checks={editChecks} disabledTooltip={editDisabledTooltip}>
 					<Button
 						disabledTooltip={undefined}

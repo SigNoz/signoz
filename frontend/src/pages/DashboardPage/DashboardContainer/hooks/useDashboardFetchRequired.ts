@@ -39,12 +39,12 @@ export function useDashboardFetchRequired(): UseDashboardFetchRequiredResult {
 	const refetch = useDashboardStore((s) => s.refetch);
 	// Observe only: the root owns the request, so this never fetches.
 	const { data: dashboard } = useQuery<
-		unknown,
+		never,
 		unknown,
 		DashboardtypesGettableDashboardV2DTO | undefined
 	>({
 		queryKey,
-		select: select as (response: unknown) => DashboardtypesGettableDashboardV2DTO,
+		select,
 		enabled: false,
 	});
 

@@ -17,16 +17,16 @@ function DashboardPageHeader({
 	image,
 }: DashboardPageHeaderProps): JSX.Element {
 	const shareVariablesOption = useShareVariablesOption();
-	const show = useDashboardControlGroup('header');
+	const headerControls = useDashboardControlGroup('header');
 	return (
 		<div className={styles.dashboardPageHeader}>
-			{show.breadcrumbs && (
+			{headerControls.breadcrumbs && (
 				<DashboardPageBreadcrumbs title={title} image={image} />
 			)}
 			<HeaderRightSection
 				enableAnnouncements={false}
-				enableShare={show.share}
-				enableFeedback={show.feedback}
+				enableShare={headerControls.share}
+				enableFeedback={headerControls.feedback}
 				shareModalExtraOption={shareVariablesOption}
 			/>
 		</div>

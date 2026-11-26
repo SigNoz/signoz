@@ -51,7 +51,7 @@ export const DEFAULT_CONTROLS: DashboardControls = {
  * `true` here regardless of what the host asked for. Exhaustive, so a new
  * control can't ship without deciding.
  */
-export const CONTROL_WRITES: Record<DashboardControlId, boolean> = {
+export const WRITING_CONTROLS: Record<DashboardControlId, boolean> = {
 	'header.breadcrumbs': false,
 	'header.share': false,
 	'header.feedback': false,
@@ -105,7 +105,7 @@ function resolveGroup<G extends DashboardControlGroup>(
 			typeof override === 'boolean'
 				? override
 				: (override?.[item] ?? defaults[item]);
-		const writes = CONTROL_WRITES[`${group}.${item}` as DashboardControlId];
+		const writes = WRITING_CONTROLS[`${group}.${item}` as DashboardControlId];
 		return [item, requested && !(readOnly && writes)];
 	});
 	return Object.fromEntries(items) as DashboardControls[G];

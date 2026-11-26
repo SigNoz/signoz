@@ -58,7 +58,11 @@ function LockdownHost({ panels }: { panels: number }): JSX.Element | null {
 }
 
 function visibleInteractive(): Element[] {
-	return Array.from(document.body.querySelectorAll(INTERACTIVE)).filter(
+	return Array.from(
+		// oxlint-disable-next-line signoz/no-dom-node-access -- sweeps every interactive element, whatever role or test id it carries
+		document.body.querySelectorAll(INTERACTIVE),
+	).filter(
+		// oxlint-disable-next-line signoz/no-dom-node-access -- a `hidden` ancestor is what hides it, not a queryable element
 		(element) => !element.closest('[hidden]'),
 	);
 }
