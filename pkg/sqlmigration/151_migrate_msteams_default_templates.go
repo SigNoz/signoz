@@ -228,7 +228,7 @@ func (migration *migrateMSTeamsDefaultTemplates) migrateConfigs(ctx context.Cont
 			var receiverName string
 			_ = json.Unmarshal(receiver["name"], &receiverName)
 
-			outcomes, err := migrateMSTeamsReceiver(receiver)
+			outcomes, receiverChanged, err := migrateMSTeamsReceiver(receiver)
 			if err != nil {
 				migration.logger.WarnContext(ctx, "leaving msteams receiver templates as is", slog.String("config_id", row.ID), slog.String("org_id", row.OrgID), slog.String("receiver", receiverName), errors.Attr(err))
 				counts.failed++
@@ -238,8 +238,8 @@ func (migration *migrateMSTeamsDefaultTemplates) migrateConfigs(ctx context.Cont
 				if counts.add(outcome) {
 					migration.logger.InfoContext(ctx, "migrated msteams receiver template", slog.String("config_id", row.ID), slog.String("org_id", row.OrgID), slog.String("receiver", receiverName), slog.String("field", field), slog.String("outcome", outcome.String()))
 				}
-				changed = changed || outcome.rewrites()
 			}
+			changed = changed || receiverChanged
 		}
 		if !changed {
 			continue
@@ -280,7 +280,6 @@ func (migration *migrateMSTeamsDefaultTemplates) migrateChannels(ctx context.Con
 	counts := msteamsMigrationCounts{}
 	for _, row := range rows {
 		query := tx.NewUpdate().Model((*msteamsChannelRow)(nil)).Where("id = ?", row.ID)
-		changed := false
 
 		receiver := make(map[string]json.RawMessage)
 		if err := json.Unmarshal([]byte(row.Data), &receiver); err != nil {
@@ -289,7 +288,7 @@ func (migration *migrateMSTeamsDefaultTemplates) migrateChannels(ctx context.Con
 			continue
 		}
 
-		outcomes, err := migrateMSTeamsReceiver(receiver)
+		outcomes, changed, err := migrateMSTeamsReceiver(receiver)
 		if err != nil {
 			migration.logger.WarnContext(ctx, "leaving notification channel templates as is", slog.String("org_id", row.OrgID), slog.String("channel_id", row.ID), errors.Attr(err))
 			counts.failed++
@@ -299,7 +298,6 @@ func (migration *migrateMSTeamsDefaultTemplates) migrateChannels(ctx context.Con
 			if counts.add(outcome) {
 				migration.logger.InfoContext(ctx, "migrated msteams notification channel template", slog.String("org_id", row.OrgID), slog.String("channel_id", row.ID), slog.String("field", field), slog.String("outcome", outcome.String()))
 			}
-			changed = changed || outcome.rewrites()
 		}
 		if changed {
 			newData, err := json.Marshal(receiver)
@@ -379,25 +377,25 @@ func (counts *msteamsMigrationCounts) add(outcome msteamsTemplateOutcome) bool {
 	return true
 }
 
-// migrateMSTeamsReceiver reports the outcome of the receiver's first msteams notifier, the only one a channel carries.
-func migrateMSTeamsReceiver(receiver map[string]json.RawMessage) (map[string]msteamsTemplateOutcome, error) {
+// migrateMSTeamsReceiver reports the outcome of the receiver's first msteams notifier, the only one a channel carries, and whether any notifier was rewritten.
+func migrateMSTeamsReceiver(receiver map[string]json.RawMessage) (map[string]msteamsTemplateOutcome, bool, error) {
 	configsRaw, ok := receiver[msteamsConfigsKey]
 	outcomes := make(map[string]msteamsTemplateOutcome)
 
 	if !ok || string(configsRaw) == "null" {
-		return outcomes, nil
+		return outcomes, false, nil
 	}
 
 	configs := make([]map[string]json.RawMessage, 0)
 	if err := json.Unmarshal(configsRaw, &configs); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	changed := false
 	for i, config := range configs {
 		configOutcomes, err := migrateMSTeamsFields(config)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 		if i == 0 {
 			outcomes = configOutcomes
@@ -407,16 +405,16 @@ func migrateMSTeamsReceiver(receiver map[string]json.RawMessage) (map[string]mst
 		}
 	}
 	if !changed {
-		return outcomes, nil
+		return outcomes, false, nil
 	}
 
 	newConfigs, err := json.Marshal(configs)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	receiver[msteamsConfigsKey] = newConfigs
 
-	return outcomes, nil
+	return outcomes, true, nil
 }
 
 func migrateMSTeamsFields(object map[string]json.RawMessage) (map[string]msteamsTemplateOutcome, error) {
