@@ -29,6 +29,8 @@ const HARNESS_CONSOLE_NOISE = [
 	'ErrorResponseHandler: unclassified error',
 	// Google Fonts, which the chromium project fails at DNS (playwright.config.ts).
 	'Failed to load resource: net::ERR_NAME_NOT_RESOLVED',
+	// Chrome's own report of a blocked Compute Pressure observer; it names no source.
+	'Permissions policy violation: compute-pressure is not allowed in this document.',
 ];
 
 export interface ConsoleWatch {
