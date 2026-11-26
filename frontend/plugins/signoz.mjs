@@ -19,6 +19,8 @@ import noMswInStoryFile from './rules/no-msw-in-story-file.mjs';
 import noDirectReactRouterImport from './rules/no-direct-react-router-import.mjs';
 import noTextCss from './rules/no-text-css.mjs';
 import requireDisableReason from './rules/require-disable-reason.mjs';
+import noDomNodeAccess from './rules/no-dom-node-access.mjs';
+import noBuilderAiQueryAccess from './rules/no-builder-ai-query-access.mjs';
 
 export default {
 	meta: {
@@ -39,5 +41,7 @@ export default {
 		'no-direct-react-router-import': noDirectReactRouterImport,
 		'no-text-css': noTextCss,
 		'require-disable-reason': requireDisableReason,
+		'no-dom-node-access': noDomNodeAccess,
+		'no-builder-ai-query-access': noBuilderAiQueryAccess,
 	},
 };

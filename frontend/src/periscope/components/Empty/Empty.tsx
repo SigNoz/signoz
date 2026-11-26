@@ -30,7 +30,7 @@ function Empty({
 			style={style}
 			{...rest}
 		>
-			<div className={styles.image} style={imageStyle}>
+			<div data-testid="empty-image" className={styles.image} style={imageStyle}>
 				{typeof image === 'string' ? (
 					<img alt={getImageAlt(resolvedDescription)} src={image} />
 				) : (
@@ -38,9 +38,15 @@ function Empty({
 				)}
 			</div>
 			{resolvedDescription && (
-				<div className={styles.description}>{resolvedDescription}</div>
+				<div data-testid="empty-description" className={styles.description}>
+					{resolvedDescription}
+				</div>
 			)}
-			{children && <div className={styles.footer}>{children}</div>}
+			{children && (
+				<div data-testid="empty-footer" className={styles.footer}>
+					{children}
+				</div>
+			)}
 		</div>
 	);
 }

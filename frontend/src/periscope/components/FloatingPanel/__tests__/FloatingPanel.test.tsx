@@ -1,7 +1,7 @@
 import { act, render, screen, userEvent } from 'tests/test-utils';
 
 import FloatingPanel from '../FloatingPanel';
-import type { FloatingObstacle, FloatingRect } from '../types';
+import type { Obstacle, Rect } from 'lib/obstacles/types';
 
 const PANEL_WIDTH = 420;
 const PANEL_HEIGHT = 601;
@@ -24,16 +24,14 @@ function getPanelBox(): {
 	width: number;
 	height: number;
 } {
-	const panel = document.querySelector<HTMLElement>('.floating-panel');
+	const panel = screen.getByTestId('floating-panel');
 	const [, x, y] =
-		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(
-			panel?.style.transform ?? '',
-		) ?? [];
+		/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(panel.style.transform) ?? [];
 	return {
 		x: Number(x),
 		y: Number(y),
-		width: parseFloat(panel?.style.width ?? ''),
-		height: parseFloat(panel?.style.height ?? ''),
+		width: parseFloat(panel.style.width),
+		height: parseFloat(panel.style.height),
 	};
 }
 
@@ -110,7 +108,7 @@ describe('FloatingPanel', () => {
 	});
 
 	it('keeps the grabbed point under the pointer after pushing past an edge', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		setViewport(1280, 800);
 		render(
 			<FloatingPanel
@@ -146,7 +144,7 @@ describe('FloatingPanel', () => {
 
 	describe('avoid', () => {
 		const HOME = { x: 852, y: 167 };
-		const SUPPORT_CHAT: FloatingRect = {
+		const SUPPORT_CHAT: Rect = {
 			x: 882,
 			y: 286,
 			width: 384,
@@ -155,8 +153,8 @@ describe('FloatingPanel', () => {
 		// 8px gap left of the support chat: 882 - 8 - 420.
 		const CLEAR_OF_SUPPORT_CHAT = { x: 454, y: 167 };
 
-		function createObstacle(rect: FloatingRect): {
-			obstacle: FloatingObstacle;
+		function createObstacle(rect: Rect): {
+			obstacle: Obstacle;
 			show: () => void;
 			hide: () => void;
 		} {
@@ -168,7 +166,7 @@ describe('FloatingPanel', () => {
 			};
 			return {
 				obstacle: {
-					getRect: (): FloatingRect | null => (isShown ? rect : null),
+					getRect: (): Rect | null => (isShown ? rect : null),
 					subscribe: (onChange): (() => void) => {
 						listeners.add(onChange);
 						return (): void => {
@@ -181,7 +179,7 @@ describe('FloatingPanel', () => {
 			};
 		}
 
-		function renderPanel(avoid: FloatingObstacle[]): void {
+		function renderPanel(avoid: Obstacle[]): void {
 			render(
 				<FloatingPanel
 					isOpen
@@ -216,7 +214,7 @@ describe('FloatingPanel', () => {
 		});
 
 		it('stays where the user dragged it while the obstacle showed', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const supportChat = createObstacle(SUPPORT_CHAT);
 			renderPanel([supportChat.obstacle]);
 			supportChat.show();

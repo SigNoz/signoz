@@ -1,10 +1,10 @@
-import type { FloatingRect } from 'periscope/components/FloatingPanel/types';
+import type { Rect } from 'lib/obstacles/types';
 
 import { supportChatObstacle } from '../supportChatObstacle';
 
 type Pylon = Window['Pylon'];
 
-const SUPPORT_CHAT: FloatingRect = { x: 882, y: 286, width: 384, height: 478 };
+const SUPPORT_CHAT: Rect = { x: 882, y: 286, width: 384, height: 478 };
 const CLOSED_CLASS = 'PylonChat-chatWindowFrameContainer--closed';
 
 const originalPylon = window.Pylon;

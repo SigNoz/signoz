@@ -101,10 +101,13 @@ export interface Settings {
 	org: {
 		goto(): Promise<void>;
 		nameInput(): Locator;
+		nameFrame(): Locator;
 		rename(name: string): Promise<void>;
 		apiName(): Promise<string>;
 		setApiName(name: string): Promise<void>;
+		submitButton(): Locator;
 		authDomainTitle(): Locator;
+		deniedMessage(): Locator;
 	};
 
 	account: {
@@ -310,7 +313,8 @@ export function settingsDriver(page: Page): Settings {
 
 		org: {
 			goto: () => settings.shell.goto('/settings/org-settings'),
-			nameInput: () => page.getByTestId('org-display-name-input'),
+			nameInput: () => page.getByTestId('org-display-name-input-field'),
+			nameFrame: () => page.getByTestId('org-display-name-input'),
 			rename: async (name) => {
 				await settings.org.nameInput().fill(name);
 				const saved = page.waitForResponse(
@@ -318,7 +322,7 @@ export function settingsDriver(page: Page): Settings {
 						response.request().method() === 'PUT' &&
 						new URL(response.url()).pathname === '/api/v2/orgs/me',
 				);
-				await page.getByTestId('org-display-name-submit').click();
+				await settings.org.submitButton().click();
 				expect((await saved).ok()).toBe(true);
 			},
 			apiName: async () =>
@@ -330,7 +334,9 @@ export function settingsDriver(page: Page): Settings {
 				).data;
 				await api.put('/api/v2/orgs/me', { id: org.id, displayName: name });
 			},
+			submitButton: () => page.getByTestId('org-display-name-submit'),
 			authDomainTitle: () => page.getByTestId('auth-domain-title'),
+			deniedMessage: () => page.getByText(/is not authorized/).first(),
 		},
 
 		account: {

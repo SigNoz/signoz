@@ -191,7 +191,8 @@ function TopErrors({
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 					}
-					onRow={(record): { onClick: () => void } => ({
+					onRow={(record): { 'data-testid': string; onClick: () => void } => ({
+						'data-testid': `top-errors-row-${record.endpointName}-${record.statusCode}`,
 						onClick: (): void => {
 							const filters = getTopErrorsCoRelationQueryFilters(
 								domainName,

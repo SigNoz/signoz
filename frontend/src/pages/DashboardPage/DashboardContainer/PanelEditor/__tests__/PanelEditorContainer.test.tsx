@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent, waitFor } from 'tests/test-utils';
 import { toast } from '@signozhq/ui/toast';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -111,8 +111,8 @@ jest.mock('@signozhq/ui/resizable', () => ({
 		items: Array<{ value: string; children: React.ReactNode }>;
 	}): JSX.Element => (
 		<div>
-			{items.map((item) => (
-				<div key={item.value}>{item.children}</div>
+			{items.map(({ value, children }) => (
+				<div key={value}>{children}</div>
 			))}
 		</div>
 	),

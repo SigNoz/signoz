@@ -1,6 +1,5 @@
-import { fireEvent, screen } from '@testing-library/react';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
-import { render } from 'tests/test-utils';
+import { fireEvent, render, screen, within } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import SpanLineActionButtons from '../index';
@@ -60,8 +59,9 @@ describe('SpanLineActionButtons', () => {
 		expect(copyButton).toBeInTheDocument();
 
 		// Check that an icon is rendered inside the button
-		const linkIcon = copyButton.querySelector('svg');
-		expect(linkIcon).toBeInTheDocument();
+		expect(
+			within(copyButton).getByTestId('copy-span-link-icon'),
+		).toBeInTheDocument();
 	});
 
 	it('calls onSpanCopy when copy button is clicked', () => {

@@ -14,7 +14,12 @@ function ListItemActions({ actions }: ListItemActionsProps): JSX.Element {
 				// eslint-disable-next-line react/no-array-index-key
 				<li key={index} className={styles.itemActionItem}>
 					{action}
-					{index !== actions.length - 1 && <em className={styles.itemActionSplit} />}
+					{index !== actions.length - 1 && (
+						<em
+							data-testid="list-item-action-split"
+							className={styles.itemActionSplit}
+						/>
+					)}
 				</li>
 			))}
 		</ul>

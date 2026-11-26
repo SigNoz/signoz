@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent } from 'tests/test-utils';
 import { RuletypesRuleTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
 import {
@@ -146,7 +146,11 @@ const METRICS_TEXT = 'Metrics';
 const QUERY_BUILDER_TEXT = 'query_builder';
 const LOGS_TEXT = 'Logs';
 const TRACES_TEXT = 'Traces';
+const AI_TRACES_TEXT = 'AI Traces';
 const ACTIVE_TAB_CLASS = 'active-tab';
+const METRICS_TAB_TEST_ID = `query-section-tab-${AlertTypes.METRICS_BASED_ALERT}`;
+const LOGS_TAB_TEST_ID = `query-section-tab-${AlertTypes.LOGS_BASED_ALERT}`;
+const AI_TRACES_TAB_TEST_ID = `query-section-tab-${AlertTypes.AI_TRACES_BASED_ALERT}`;
 
 describe('QuerySection', () => {
 	const { useQueryBuilder } = jest.requireMock(
@@ -199,16 +203,13 @@ describe('QuerySection', () => {
 	it('shows Metrics tab as active by default', () => {
 		renderQuerySection();
 
-		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
-		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(screen.getByTestId(METRICS_TAB_TEST_ID)).toHaveClass(ACTIVE_TAB_CLASS);
 	});
 
 	it('keeps Metrics active and restricts query types for anomaly alerts', () => {
 		renderQuerySection(`?${QueryParams.ruleType}=anomaly_rule`);
 
-		expect(screen.getByText(METRICS_TEXT).closest('button')).toHaveClass(
-			ACTIVE_TAB_CLASS,
-		);
+		expect(screen.getByTestId(METRICS_TAB_TEST_ID)).toHaveClass(ACTIVE_TAB_CLASS);
 		expect(screen.getByTestId('is-anomaly-detection')).toHaveTextContent('true');
 	});
 
@@ -264,16 +265,15 @@ describe('QuerySection', () => {
 		renderQuerySection();
 
 		// Initially Metrics should be active
-		const metricsTab = screen.getByText(METRICS_TEXT).closest('button');
+		const metricsTab = screen.getByTestId(METRICS_TAB_TEST_ID);
 		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
 
 		// Click on Logs tab
-		const logsTab = screen.getByText(LOGS_TEXT);
+		const logsTab = screen.getByTestId(LOGS_TAB_TEST_ID);
 		await user.click(logsTab);
 
 		// Logs should now be active
-		const logsButton = logsTab.closest('button');
-		expect(logsButton).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(logsTab).toHaveClass(ACTIVE_TAB_CLASS);
 		expect(metricsTab).not.toHaveClass(ACTIVE_TAB_CLASS);
 	});
 
@@ -288,23 +288,6 @@ describe('QuerySection', () => {
 			AlertTypes.METRICS_BASED_ALERT,
 		);
 		expect(screen.getByTestId('panel-type')).toHaveTextContent('graph');
-	});
-
-	it('renders with correct container structure', () => {
-		renderQuerySection();
-
-		const container = screen.getByText(METRICS_TEXT).closest('.query-section');
-		expect(container).toBeInTheDocument();
-
-		const tabsContainer = screen
-			.getByText(METRICS_TEXT)
-			.closest('.query-section-tabs');
-		expect(tabsContainer).toBeInTheDocument();
-
-		const actionsContainer = screen
-			.getByText(METRICS_TEXT)
-			.closest('.query-section-query-actions');
-		expect(actionsContainer).toBeInTheDocument();
 	});
 
 	it('handles multiple rapid tab clicks correctly', async () => {
@@ -330,21 +313,19 @@ describe('QuerySection', () => {
 		renderQuerySection();
 
 		// Click on Logs tab
-		const logsTab = screen.getByText('Logs');
+		const logsTab = screen.getByTestId(LOGS_TAB_TEST_ID);
 		await user.click(logsTab);
 
 		// Verify Logs is active
-		const logsButton = logsTab.closest('button');
-		expect(logsButton).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(logsTab).toHaveClass(ACTIVE_TAB_CLASS);
 
 		// Click back to Metrics
-		const metricsTab = screen.getByText(METRICS_TEXT);
+		const metricsTab = screen.getByTestId(METRICS_TAB_TEST_ID);
 		await user.click(metricsTab);
 
 		// Verify Metrics is active again
-		const metricsButton = metricsTab.closest('button');
-		expect(metricsButton).toHaveClass(ACTIVE_TAB_CLASS);
-		expect(logsButton).not.toHaveClass(ACTIVE_TAB_CLASS);
+		expect(metricsTab).toHaveClass(ACTIVE_TAB_CLASS);
+		expect(logsTab).not.toHaveClass(ACTIVE_TAB_CLASS);
 	});
 
 	it('updates the query data when the alert type changes', async () => {
@@ -378,6 +359,35 @@ describe('QuerySection', () => {
 			[QueryParams.alertType]: AlertTypes.METRICS_BASED_ALERT,
 			[QueryParams.ruleType]: RuletypesRuleTypeDTO.threshold_rule,
 		});
+	});
+
+	it('renders the AI traces alert type tab', () => {
+		renderQuerySection();
+
+		expect(screen.getByTestId(AI_TRACES_TAB_TEST_ID)).toHaveTextContent(
+			AI_TRACES_TEXT,
+		);
+		expect(screen.getByTestId('ai-traces-view')).toBeInTheDocument();
+	});
+
+	it('loads the AI default into the AI slot when the AI traces tab is clicked', async () => {
+		const user = userEvent.setup();
+		renderQuerySection();
+
+		await user.click(screen.getByTestId(AI_TRACES_TAB_TEST_ID));
+
+		const [query, params] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+
+		expect(params).toStrictEqual({
+			[QueryParams.alertType]: AlertTypes.AI_TRACES_BASED_ALERT,
+			[QueryParams.ruleType]: RuletypesRuleTypeDTO.threshold_rule,
+		});
+		expect(query.queryType).toBe(EQueryType.AI_QUERY_BUILDER);
+		expect(query.builder.queryData).toHaveLength(0);
+		expect(query.builder_ai_query.queryData[0].dataSource).toBe(
+			DataSource.TRACES,
+		);
 	});
 
 	it('updates the query data when the query type changes from query_builder to promql', async () => {

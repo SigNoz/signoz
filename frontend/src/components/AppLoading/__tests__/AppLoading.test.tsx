@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
+import { screen } from 'tests/test-utils';
 
 import getLocal from '../../../api/browser/localstorage/get';
 import AppLoading from '../AppLoading';
@@ -15,7 +16,6 @@ describe('AppLoading', () => {
 	const SIGNOZ_TEXT = 'SigNoz';
 	const TAGLINE_TEXT =
 		'OpenTelemetry-Native Logs, Metrics and Traces in a single pane';
-	const CONTAINER_SELECTOR = '.app-loading-container';
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -33,7 +33,7 @@ describe('AppLoading', () => {
 		expect(screen.getByText(TAGLINE_TEXT)).toBeInTheDocument();
 
 		// Check if dark theme class is applied
-		const container = screen.getByText(SIGNOZ_TEXT).closest(CONTAINER_SELECTOR);
+		const container = screen.getByTestId('app-loading-container');
 		expect(container).toHaveClass('dark');
 		expect(container).not.toHaveClass('lightMode');
 	});
@@ -58,7 +58,7 @@ describe('AppLoading', () => {
 		expect(tagline).toBeInTheDocument();
 
 		// Check for loader
-		const loader = document.querySelector('.loader');
+		const loader = screen.getByTestId('app-loading-loader');
 		expect(loader).toBeInTheDocument();
 	});
 
@@ -72,7 +72,7 @@ describe('AppLoading', () => {
 
 		// Should still render with dark theme as fallback
 		expect(screen.getByText(SIGNOZ_TEXT)).toBeInTheDocument();
-		const container = screen.getByText(SIGNOZ_TEXT).closest(CONTAINER_SELECTOR);
+		const container = screen.getByTestId('app-loading-container');
 		expect(container).toHaveClass('dark');
 	});
 });

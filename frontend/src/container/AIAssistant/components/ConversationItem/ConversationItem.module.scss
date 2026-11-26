@@ -41,6 +41,10 @@
 	&.isReplying {
 		background: var(--accent-amber);
 	}
+
+	&.hasUnreadReply {
+		background: var(--accent-primary);
+	}
 }
 
 .body {
@@ -53,7 +57,7 @@
 }
 
 .title {
-	font-size: var(--periscope-font-size-base);
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: 20px;
 	letter-spacing: -0.005em;
 	color: var(--text-vanilla-400);
@@ -73,7 +77,7 @@
 	// Wide enough to hold the action buttons that replace it.
 	min-width: 16px;
 	text-align: right;
-	font-size: var(--periscope-font-size-small);
+	font-size: var(--paragraph-small-400-font-size);
 	line-height: 18px;
 	color: var(--l3-foreground);
 	opacity: calc(1 - var(--actions-opacity, 0));
@@ -87,7 +91,7 @@
 	width: 100%;
 	border-bottom: 1px solid var(--accent-primary);
 	--input-padding: 1px 0;
-	--input-font-size: var(--periscope-font-size-base);
+	--input-font-size: var(--label-base-400-font-size);
 	--input-hover-border-color: transparent;
 }
 

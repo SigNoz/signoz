@@ -361,7 +361,7 @@ describe('QueryAddOns', () => {
 	});
 
 	it('calls handleSetQueryData when reduce-to value changes', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		const query = baseQuery({
 			reduceTo: ReduceOperators.AVG,
 			aggregations: [
@@ -506,7 +506,7 @@ describe('QueryAddOns', () => {
 			);
 		}
 
-		it('is offered on a metrics heatmap only', () => {
+		it('is offered on a metrics heatmap', () => {
 			renderHeatmap();
 
 			expect(
@@ -532,23 +532,16 @@ describe('QueryAddOns', () => {
 			).not.toBeInTheDocument();
 		});
 
-		it('is not offered on a heatmap over another signal', () => {
-			render(
-				<QueryAddOns
-					query={baseQuery({ dataSource: DataSource.LOGS })}
-					version="v5"
-					isRawQuery={false}
-					showReduceTo={false}
-					panelType={PANEL_TYPES.HEATMAP}
-					index={0}
-					isForTraceOperator={false}
-				/>,
-			);
+		it.each([DataSource.LOGS, DataSource.TRACES])(
+			'is offered on a %s heatmap',
+			(dataSource) => {
+				renderHeatmap({ dataSource });
 
-			expect(
-				screen.queryByTestId('query-add-on-bucket_options'),
-			).not.toBeInTheDocument();
-		});
+				expect(
+					screen.getByTestId('query-add-on-bucket_options'),
+				).toBeInTheDocument();
+			},
+		);
 
 		it.each([ATTRIBUTE_TYPES.HISTOGRAM, ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM])(
 			'is not offered for a %s metric, which carries its own buckets',

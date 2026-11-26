@@ -33,7 +33,7 @@ describe('ForgotPassword Page', () => {
 				initialRoute: '/forgot-password',
 			});
 
-			expect(container.firstChild).toBeNull();
+			expect(container).toBeEmptyDOMElement();
 		});
 	});
 });

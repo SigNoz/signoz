@@ -4,14 +4,18 @@ import {
 	MessageContextDTOType,
 	MessageRoleDTO,
 	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import type {
 	MessageContext,
 	SSEEvent,
 	ThreadDetailResponse,
+	ThreadSummary,
 } from 'api/ai-assistant/chat';
 
-import { useAIAssistantStore } from '../useAIAssistantStore';
+import {
+	openNewAIAssistantChat,
+	useAIAssistantStore,
+} from '../useAIAssistantStore';
 import type { Message } from '../../types';
 
 // The store talks to the chat API only through these named exports. Mock the
@@ -71,6 +75,10 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			s.streams = {};
 			s.activeConversationId = null;
 		});
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it('commits a manually-retryable error bubble with friendly copy and metadata', async () => {
@@ -142,6 +150,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 	});
 
 	it('silently retries auto-flagged errors, then downgrades to manual once spent', async () => {
+		jest.useFakeTimers();
 		chat.createThread.mockResolvedValue('thread-2');
 		chat.sendMessage.mockResolvedValue('exec');
 		// Always auto-retryable: 1 initial attempt + MAX_AUTO_RETRIES (2) = 3 sends.
@@ -152,7 +161,9 @@ describe('useAIAssistantStore — streaming error handling', () => {
 		);
 
 		useAIAssistantStore.getState().startNewConversation();
-		await useAIAssistantStore.getState().sendMessage('hi');
+		const sending = useAIAssistantStore.getState().sendMessage('hi');
+		await jest.runAllTimersAsync();
+		await sending;
 
 		expect(chat.sendMessage).toHaveBeenCalledTimes(3);
 		expect(lastMessage('thread-2')).toMatchObject({
@@ -161,7 +172,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			// Auto budget exhausted → presented as manual so a Retry button shows.
 			retryAction: RetryActionDTO.manual,
 		});
-	}, 10000);
+	});
 
 	it('marks rate-limit errors and offers no retry', async () => {
 		chat.createThread.mockResolvedValue('thread-3');
@@ -191,6 +202,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 	});
 
 	it('recovers silently when an auto-flagged error succeeds on retry', async () => {
+		jest.useFakeTimers();
 		chat.createThread.mockResolvedValue('thread-4');
 		chat.sendMessage.mockResolvedValue('exec');
 		chat.streamEvents
@@ -212,7 +224,9 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			);
 
 		useAIAssistantStore.getState().startNewConversation();
-		await useAIAssistantStore.getState().sendMessage('hi');
+		const sending = useAIAssistantStore.getState().sendMessage('hi');
+		await jest.runAllTimersAsync();
+		await sending;
 
 		// 1 initial attempt + 1 silent auto retry, then success — no error bubble.
 		expect(chat.sendMessage).toHaveBeenCalledTimes(2);
@@ -224,7 +238,7 @@ describe('useAIAssistantStore — streaming error handling', () => {
 			content: 'Recovered',
 		});
 		expect(conv.messages.some((m) => m.isError)).toBe(false);
-	}, 10000);
+	});
 
 	it('replays the originating action on retry for a non-send error (approve)', async () => {
 		chat.approveExecution.mockResolvedValue('exec-a');
@@ -378,5 +392,239 @@ describe('useAIAssistantStore — message contexts', () => {
 		await useAIAssistantStore.getState().loadThread('thread-1');
 
 		expect(lastMessage('thread-1').contexts).toStrictEqual([pickedDashboard]);
+	});
+});
+
+describe('useAIAssistantStore — unread replies', () => {
+	const summary = (threadId: string, archived: boolean): ThreadSummary => ({
+		threadId,
+		title: threadId,
+		archived,
+		createdAt: '2026-11-16T09:00:00Z',
+		updatedAt: '2026-11-16T09:00:00Z',
+	});
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.streams = {};
+			s.activeConversationId = null;
+			s.unreadReplyIds = [];
+			s.hasLoadedThreads = false;
+		});
+	});
+
+	it('marks a finished reply unread under its thread id and saves it', async () => {
+		chat.createThread.mockResolvedValue('thread-reply');
+		chat.sendMessage.mockResolvedValue('exec');
+		chat.streamEvents.mockReturnValueOnce(
+			eventStream([
+				{
+					type: 'message',
+					executionId: 'exec',
+					messageId: 'm1',
+					delta: 'Done',
+					done: true,
+				},
+			]),
+		);
+
+		useAIAssistantStore.getState().startNewConversation();
+		await useAIAssistantStore.getState().sendMessage('hi');
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual([
+			'thread-reply',
+		]);
+		expect(
+			JSON.parse(localStorage.getItem('ai-assistant-store') ?? '{}').state
+				.unreadReplyIds,
+		).toStrictEqual(['thread-reply']);
+	});
+
+	it('drops the mark when the reply is read, or its chat archived or cleared', () => {
+		chat.updateThread.mockResolvedValue(summary('b', true));
+		useAIAssistantStore.setState((s) => {
+			['a', 'b', 'c'].forEach((id) => {
+				s.conversations[id] = { id, threadId: id, messages: [], createdAt: 0 };
+			});
+			s.unreadReplyIds = ['a', 'b', 'c'];
+		});
+		const { markReplyRead, archiveConversation, clearConversation } =
+			useAIAssistantStore.getState();
+
+		markReplyRead('a');
+		archiveConversation('b');
+		clearConversation('c');
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual([]);
+	});
+
+	it('keeps only loaded, unarchived threads once the list loads', async () => {
+		chat.listThreads.mockImplementation(({ archived }) =>
+			Promise.resolve({
+				threads:
+					archived === 'true'
+						? [summary('archived', true)]
+						: [summary('live', false)],
+				hasMore: false,
+			}),
+		);
+		useAIAssistantStore.setState((s) => {
+			s.unreadReplyIds = ['live', 'archived', 'gone'];
+		});
+
+		await useAIAssistantStore.getState().fetchThreads();
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual(['live']);
+		expect(useAIAssistantStore.getState().hasLoadedThreads).toBe(true);
+	});
+
+	it('keeps every mark when the list fails to load', async () => {
+		chat.listThreads.mockRejectedValue(new Error('down'));
+		useAIAssistantStore.setState((s) => {
+			s.unreadReplyIds = ['live'];
+		});
+
+		await useAIAssistantStore.getState().fetchThreads();
+
+		expect(useAIAssistantStore.getState().unreadReplyIds).toStrictEqual(['live']);
+		expect(useAIAssistantStore.getState().hasLoadedThreads).toBe(false);
+	});
+});
+
+describe('useAIAssistantStore — loading threads', () => {
+	const detail = (threadId: string): ThreadDetailResponse => ({
+		threadId,
+		createdAt: '2026-11-17T00:00:00Z',
+		updatedAt: '2026-11-17T00:00:00Z',
+		messages: [],
+	});
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.loadingThreadIds = [];
+			s.activeConversationId = null;
+		});
+	});
+
+	it('keeps each thread loading until its own request settles', async () => {
+		let resolveA: (value: ThreadDetailResponse) => void = () => undefined;
+		let rejectB: (reason: Error) => void = () => undefined;
+		chat.getThreadDetail
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveA = resolve;
+				}),
+			)
+			.mockReturnValueOnce(
+				new Promise((_resolve, reject) => {
+					rejectB = reject;
+				}),
+			);
+		jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		const loadA = useAIAssistantStore.getState().loadThread('a');
+		const loadB = useAIAssistantStore.getState().loadThread('b');
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual([
+			'a',
+			'b',
+		]);
+
+		resolveA(detail('a'));
+		await loadA;
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual(['b']);
+		expect(useAIAssistantStore.getState().activeConversationId).toBe('b');
+
+		rejectB(new Error('network'));
+		await loadB;
+		expect(useAIAssistantStore.getState().loadingThreadIds).toStrictEqual([]);
+	});
+});
+
+describe('openNewAIAssistantChat', () => {
+	const reply: Message = {
+		id: 'm1',
+		role: 'assistant',
+		content: 'Hi',
+		createdAt: 0,
+	};
+
+	beforeEach(() => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations = {};
+			s.activeConversationId = null;
+			s.isDrawerOpen = false;
+		});
+	});
+
+	it('opens the drawer on a new chat, leaving the open one as it was', () => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations.old = {
+				id: 'old',
+				threadId: 'old',
+				messages: [reply],
+				createdAt: 0,
+			};
+			s.activeConversationId = 'old';
+		});
+
+		openNewAIAssistantChat();
+
+		const { activeConversationId, conversations, isDrawerOpen } =
+			useAIAssistantStore.getState();
+		expect(activeConversationId).not.toBe('old');
+		expect(conversations[activeConversationId ?? ''].messages).toStrictEqual([]);
+		expect(conversations.old.messages).toStrictEqual([reply]);
+		expect(isDrawerOpen).toBe(true);
+	});
+
+	it('reuses the open chat while nothing has been sent in it', () => {
+		useAIAssistantStore.setState((s) => {
+			s.conversations.blank = { id: 'blank', messages: [], createdAt: 0 };
+			s.activeConversationId = 'blank';
+		});
+
+		openNewAIAssistantChat();
+
+		expect(useAIAssistantStore.getState().activeConversationId).toBe('blank');
+		expect(
+			Object.keys(useAIAssistantStore.getState().conversations),
+		).toStrictEqual(['blank']);
+	});
+});
+
+describe('history list', () => {
+	beforeEach(() => {
+		useAIAssistantStore.setState((s) => {
+			s.isDrawerOpen = false;
+			s.isModalOpen = false;
+			s.isHistoryOpen = false;
+		});
+	});
+
+	it('closes the panel when it opens', () => {
+		useAIAssistantStore.setState((s) => {
+			s.isDrawerOpen = true;
+		});
+
+		useAIAssistantStore.getState().setHistoryOpen(true);
+
+		const { isHistoryOpen, isDrawerOpen } = useAIAssistantStore.getState();
+		expect(isHistoryOpen).toBe(true);
+		expect(isDrawerOpen).toBe(false);
+	});
+
+	it.each([
+		['panel', (): void => useAIAssistantStore.getState().openDrawer()],
+		['popup chat', (): void => useAIAssistantStore.getState().openModal()],
+	])('closes when the %s opens', (_surface, open) => {
+		useAIAssistantStore.getState().setHistoryOpen(true);
+
+		open();
+
+		expect(useAIAssistantStore.getState().isHistoryOpen).toBe(false);
 	});
 });

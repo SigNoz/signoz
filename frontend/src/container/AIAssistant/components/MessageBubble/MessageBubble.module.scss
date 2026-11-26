@@ -69,16 +69,14 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
-		background: var(--l2-background);
 		color: var(--l1-foreground);
-		font-size: var(--periscope-font-size-base);
+		font-size: var(--paragraph-base-400-font-size);
 		border-bottom-left-radius: var(--radius-2);
 	}
 
-	// The full page shows replies as plain text on the pane; errors keep their callout.
+	// The full page sets replies flush on the pane; errors keep their callout.
 	.assistant .fullPage &:not(.error) {
 		padding: 0 0 0 var(--spacing-5);
-		background: transparent;
 	}
 }
 
@@ -274,7 +272,7 @@
 		width: max-content;
 		min-width: 100%;
 		border-collapse: collapse;
-		font-size: var(--periscope-font-size-base);
+		font-size: var(--paragraph-base-400-font-size);
 		font-variant-numeric: tabular-nums;
 		word-break: normal;
 
@@ -286,8 +284,8 @@
 
 		th {
 			padding-block: 13px;
-			font-size: var(--periscope-font-size-small);
-			font-weight: var(--font-weight-medium);
+			font-size: var(--label-small-500-font-size);
+			font-weight: var(--label-small-500-font-weight);
 			line-height: 1;
 			letter-spacing: 0.04em;
 			text-transform: uppercase;

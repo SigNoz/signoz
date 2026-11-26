@@ -9,6 +9,10 @@ import type {
 import type { PANEL_TYPES } from 'constants/queryBuilder';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 import { resolveQueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.utils';
+import {
+	fromDistributionAggregation,
+	toDistributionAggregation,
+} from 'lib/query/distributionField';
 import { rebuildBuilderForPanelType } from 'lib/query/panelQuery';
 import type { PartialPanelTypes } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -182,9 +186,16 @@ export function usePanelKindChange({
 						: transformed,
 					newKind,
 				);
-				return newKind === 'signoz/HeatmapPanel'
-					? withSingleHeatmapQuery(ordered)
-					: withPercentileHistogramAggregation(ordered);
+				const isHeatmap = newKind === 'signoz/HeatmapPanel';
+				const converted = {
+					...ordered,
+					queryData: ordered.queryData.map(
+						isHeatmap ? toDistributionAggregation : fromDistributionAggregation,
+					),
+				};
+				return isHeatmap
+					? withSingleHeatmapQuery(converted)
+					: withPercentileHistogramAggregation(converted);
 			};
 
 			// Revisit → restore the stash (the reversibility path) on the tab in use, an AI

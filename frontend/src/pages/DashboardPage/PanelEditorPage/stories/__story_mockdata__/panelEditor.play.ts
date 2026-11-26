@@ -7,9 +7,16 @@ import { EQueryType } from 'types/common/dashboard';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
+	blurActiveElement,
+	findMonacoEditor,
+	setMonacoText,
+} from '@/storybook/play/monacoEditor';
+
+import {
 	hasClickHouseTab,
 	hasDisconnectValues,
 	hasPromQLTab,
+	openConfigSelect,
 	type PanelEditorArgs,
 	pickSegment,
 	savePanel,
@@ -114,6 +121,25 @@ export const openAIQueryBuilder = async ({
 	}
 };
 
+/** Switches a new heatmap to traces and opens its field picker. */
+export const pickHeatmapTracesField = async ({
+	args,
+}: Pick<PlayContext, 'args'>): Promise<void> => {
+	await openConfigSelect('query-data-source-selector-0');
+	await userEvent.click(await screen.findByTitle('Traces'));
+
+	await userEvent.click(
+		await screen.findByTestId('distribution-field-select', {}, EDITOR_LOAD),
+	);
+	if (args.dataState === 'loaded') {
+		await screen.findByTestId(
+			'distribution-field-select-item-attribute.retry.count',
+			{},
+			EDITOR_LOAD,
+		);
+	}
+};
+
 export const openClickHouseQuery = async ({
 	canvasElement,
 	args,
@@ -130,6 +156,31 @@ export const openClickHouseQuery = async ({
 	await screen.findByText(/ClickHouse query agent skill/i, undefined, {
 		timeout: 15000,
 	});
+	// A new query starts empty, so the editor has no text to wait for.
+	await findMonacoEditor(document, '');
+	blurActiveElement();
+};
+
+const CLICKHOUSE_SQL = `SELECT
+    toStartOfInterval(timestamp, INTERVAL 1 MINUTE) AS ts,
+    serviceName,
+    count() AS value
+FROM signoz_traces.distributed_signoz_index_v3
+WHERE timestamp BETWEEN {{.start_datetime}} AND {{.end_datetime}}
+GROUP BY ts, serviceName
+ORDER BY ts`;
+
+export const writeClickHouseQuery = async (
+	context: PlayContext,
+): Promise<void> => {
+	if (!hasClickHouseTab(context.args)) {
+		return;
+	}
+
+	await openClickHouseQuery(context);
+	await setMonacoText('sql', CLICKHOUSE_SQL);
+	await findMonacoEditor(document, 'distributed_signoz_index_v3');
+	blurActiveElement();
 };
 
 export const openPromQLQuery = async ({

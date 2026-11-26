@@ -56,6 +56,7 @@ function ModelCostsTable({
 			isLoading={isLoading}
 			skeletonRowCount={SKELETON_ROW_COUNT}
 			getRowKey={(row): string => row.id}
+			getRowTestId={(row): string => `model-cost-row-${row.id}`}
 			isRowActive={(row): boolean => row.id === selectedRuleId}
 			disableVirtualScroll
 			testId="model-costs-table"

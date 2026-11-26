@@ -69,6 +69,7 @@ export function CheckboxFilterV2ValueRow({
 
 			<div
 				role="button"
+				data-testid={`checkbox-value-button-${value}`}
 				tabIndex={disabled ? -1 : 0}
 				className={cx(styles.valueButton, disabled && styles.isDisabled)}
 				onClick={(): void => {

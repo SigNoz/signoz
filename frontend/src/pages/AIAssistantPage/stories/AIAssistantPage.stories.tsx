@@ -10,7 +10,12 @@ import {
 	aiAssistantMocks,
 	longActionTooltipHandlers,
 } from './AIAssistantPage.stories.mocks';
-import type { ThreadPart } from './__story_mockdata__/aiAssistant';
+import {
+	BRIEF,
+	COMMITMENTS,
+	INTERACTIVE,
+	QUESTIONS,
+} from './__story_mockdata__/aiAssistant';
 import {
 	copyConversationLink,
 	expandActivity,
@@ -37,7 +42,7 @@ const pageStory = storyMocks(aiAssistantMocks, { layout: 'app' });
  * Route: `/ai-assistant/:conversationId`.
  */
 const meta = {
-	title: 'Pages/Noz',
+	title: 'Pages/Noz/Overview',
 	tags: ['play'],
 	component: AIAssistantPage,
 	// The conversation id is in the pathname, so the page renders under its own
@@ -53,24 +58,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<AIAssistantArgs>;
-
-/** The blocks the agent renders as cards the user answers in place. */
-const INTERACTIVE: ThreadPart[] = [
-	'question',
-	'checkboxes',
-	'confirm',
-	'suggested-action',
-];
-
-const QUESTIONS: ThreadPart[] = ['question', 'checkboxes'];
-
-const COMMITMENTS: ThreadPart[] = ['confirm', 'suggested-action'];
-
-/**
- * Two short exchanges and nothing else, so the state the story is about sits in
- * the first screen rather than under a scroll.
- */
-const BRIEF: ThreadPart[] = [];
 
 /** A thread mid-investigation, with the earlier ones beside it. */
 export const Default: Story = {};
@@ -137,6 +124,11 @@ export const AwaitingApproval: Story = {
 	args: { agent: 'awaiting-approval', contents: BRIEF },
 };
 
+/** A delete awaiting approval: nothing to compare, so the summary sits beside Reject and Approve. */
+export const AwaitingDeleteApproval: Story = {
+	args: { agent: 'awaiting-approval', approvalDiff: false, contents: BRIEF },
+};
+
 /** The agent asking for the details it needs, one field per detail. */
 export const AwaitingClarification: Story = {
 	args: { agent: 'awaiting-clarification', contents: BRIEF },
@@ -186,6 +178,15 @@ export const ConversationRename: Story = {
 /** What a conversation row offers: rename, a link to it, and archiving. */
 export const ConversationActions: Story = {
 	play: openConversationActions,
+};
+
+/**
+ * Open chats as tabs in the strip, the one on the page current. The chat on the
+ * page reads its reply at once; the other unseen reply keeps a dot on its tab and
+ * its sidebar row.
+ */
+export const ChatTabs: Story = {
+	args: { nozChats: 4, nozUnread: 2 },
 };
 
 /**

@@ -63,6 +63,7 @@ function CopyButton({
 					className={styles.iconStack}
 					style={stackStyle}
 					data-copied={isCopied}
+					data-testid="copy-button-icon-stack"
 				>
 					<Copy size={size} className={cx(styles.icon, styles.copyIcon)} />
 					<Check size={size} className={cx(styles.icon, styles.checkIcon)} />

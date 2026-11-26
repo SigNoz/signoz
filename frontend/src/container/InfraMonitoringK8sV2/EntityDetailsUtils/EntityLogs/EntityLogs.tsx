@@ -237,6 +237,7 @@ function EntityLogsContent({
 			<Card bordered={false} className={styles.listCard}>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						data-testid="entity-logs-virtuoso-scroller"
 						key="entity-logs-virtuoso"
 						ref={virtuosoRef}
 						data={logs}

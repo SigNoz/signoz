@@ -123,7 +123,11 @@ function ViewRoleContentInner({
 	);
 
 	if (isLoading) {
-		return <Skeleton active paragraph={{ rows: 6 }} />;
+		return (
+			<div data-testid="view-role-loading">
+				<Skeleton active paragraph={{ rows: 6 }} />
+			</div>
+		);
 	}
 
 	if (error) {
@@ -199,7 +203,11 @@ const ViewRoleContent = withAuthZContent<ViewRoleContentProps>(
 	{
 		checks: (props: ViewRoleContentProps) =>
 			props.roleName ? [buildRoleReadPermission(props.roleName)] : [],
-		fallbackOnLoading: <Skeleton active paragraph={{ rows: 6 }} />,
+		fallbackOnLoading: (
+			<div data-testid="view-role-loading">
+				<Skeleton active paragraph={{ rows: 6 }} />
+			</div>
+		),
 	},
 );
 

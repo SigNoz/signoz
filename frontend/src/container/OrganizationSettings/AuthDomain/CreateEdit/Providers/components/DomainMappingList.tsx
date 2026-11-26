@@ -63,6 +63,7 @@ function DomainMappingList({
 									color="secondary"
 									onClick={(): void => remove(field.name)}
 									aria-label="Remove mapping"
+									testId="domain-mapping-remove"
 									icon
 								>
 									<Trash2 size={12} />

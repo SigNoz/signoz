@@ -192,7 +192,7 @@ function KeysTab({
 
 	if (isLoading) {
 		return (
-			<div className="keys-tab__loading">
+			<div className="keys-tab__loading" data-testid="keys-tab-loading">
 				<Skeleton active paragraph={{ rows: 4 }} />
 			</div>
 		);
@@ -257,6 +257,7 @@ function KeysTab({
 					role: string;
 					tabIndex: number;
 					'aria-label': string;
+					'data-testid': string;
 				} => ({
 					onClick: async (): Promise<void> => {
 						if (!isDisabled) {
@@ -274,6 +275,7 @@ function KeysTab({
 					role: 'button',
 					tabIndex: 0,
 					'aria-label': `Edit key ${record.name || 'options'}`,
+					'data-testid': `keys-tab-row-${record.id}`,
 				})}
 			/>
 

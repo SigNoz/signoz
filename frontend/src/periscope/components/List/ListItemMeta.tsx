@@ -13,12 +13,24 @@ function ListItemMeta({
 }: ListItemMetaProps): JSX.Element {
 	return (
 		<div className={cx(styles.itemMeta, className)} {...rest}>
-			{avatar && <div className={styles.itemMetaAvatar}>{avatar}</div>}
+			{avatar && (
+				<div data-testid="list-item-meta-avatar" className={styles.itemMetaAvatar}>
+					{avatar}
+				</div>
+			)}
 			{(title || description) && (
-				<div className={styles.itemMetaContent}>
+				<div
+					data-testid="list-item-meta-content"
+					className={styles.itemMetaContent}
+				>
 					{title && <h4 className={styles.itemMetaTitle}>{title}</h4>}
 					{description && (
-						<div className={styles.itemMetaDescription}>{description}</div>
+						<div
+							data-testid="list-item-meta-description"
+							className={styles.itemMetaDescription}
+						>
+							{description}
+						</div>
 					)}
 				</div>
 			)}

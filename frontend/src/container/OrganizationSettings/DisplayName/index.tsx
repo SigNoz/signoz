@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Input } from '@signozhq/ui/input';
 import { toast } from '@signozhq/ui/toast';
-import { Button, Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useGetMyOrganization,
@@ -10,25 +10,42 @@ import {
 } from 'api/generated/services/orgs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZTooltip from 'lib/authz/components/AuthZTooltip/AuthZTooltip';
+import {
+	buildOrganizationReadPermission,
+	buildOrganizationUpdatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/organization.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
-import { USER_ROLES } from 'types/roles';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
+import { getSubmitBlockedReason } from './utils';
+
 import './DisplayName.styles.scss';
+import { AuthZGuardContent } from '@/lib/authz/components/AuthZGuard/AuthZGuardContent';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { showErrorModal } = useErrorModal();
-	const { org, updateOrg, user } = useAppContext();
+	const { org, updateOrg } = useAppContext();
 	const currentOrg = (org || [])[index];
-	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const readPermission = buildOrganizationReadPermission(orgId);
+	const updatePermission = buildOrganizationUpdatePermission(orgId);
+	const { permissions: authzPermissions } = useAuthZ([
+		readPermission,
+		updatePermission,
+	]);
+
+	const canReadOrg = authzPermissions?.[readPermission]?.isGranted ?? false;
+	const canUpdateOrg = authzPermissions?.[updatePermission]?.isGranted ?? false;
 
 	const { data: orgData } = useGetMyOrganization({
 		query: {
-			enabled: isAdmin && !currentOrg?.displayName,
+			enabled: canReadOrg && !currentOrg?.displayName,
 		},
 	});
 
@@ -76,48 +93,65 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 		return <div />;
 	}
 
-	const isDisabled = isLoading || orgName === displayName || !orgName;
+	const submitBlockedReason = getSubmitBlockedReason({
+		canUpdate: canUpdateOrg,
+		name: orgName,
+		savedName: displayName,
+	});
 
 	return (
 		<form
 			className="display-name-form"
+			data-testid="org-display-name-form"
 			onSubmit={handleSubmit(onSubmit)}
 			autoComplete="off"
 		>
 			<div className="form-field">
 				<label htmlFor="displayName">Display name</label>
-				<Controller
-					name="displayName"
-					control={control}
-					rules={{ required: requireErrorMessage('Display name') }}
-					render={({ field, fieldState }): JSX.Element => (
-						<>
-							<Input
-								{...field}
-								id="displayName"
-								data-testid="org-display-name-input"
-								size="large"
-								placeholder={t('signoz')}
-								status={fieldState.error ? 'error' : ''}
-							/>
-							{fieldState.error && (
-								<div className="field-error">{fieldState.error.message}</div>
-							)}
-						</>
-					)}
-				/>
+				<AuthZGuardContent checks={[readPermission]}>
+					<Controller
+						name="displayName"
+						control={control}
+						rules={{ required: requireErrorMessage('Display name') }}
+						render={({ field, fieldState }): JSX.Element => (
+							<>
+								<AuthZTooltip
+									triggerClassName="org-input-disabled-tooltip-class"
+									checks={[updatePermission]}
+								>
+									<Input
+										{...field}
+										id="displayName"
+										testId="org-display-name-input"
+										size="lg"
+										placeholder={t('signoz')}
+										status={fieldState.error ? 'danger' : undefined}
+									/>
+								</AuthZTooltip>
+								{fieldState.error && (
+									<div className="field-error">{fieldState.error.message}</div>
+								)}
+							</>
+						)}
+					/>
+				</AuthZGuardContent>
 			</div>
-			<div>
-				<Button
-					loading={isLoading}
-					disabled={isDisabled}
-					type="primary"
-					htmlType="submit"
-					data-testid="org-display-name-submit"
-				>
-					Submit
-				</Button>
-			</div>
+			{canReadOrg && (
+				<div>
+					<AuthZButton
+						size="md"
+						variant="solid"
+						color="primary"
+						type="submit"
+						loading={isLoading}
+						disabledTooltip={submitBlockedReason}
+						testId="org-display-name-submit"
+						checks={[updatePermission]}
+					>
+						Submit
+					</AuthZButton>
+				</div>
+			)}
 		</form>
 	);
 }
