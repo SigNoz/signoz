@@ -52,7 +52,7 @@ const rowAction = (label: string): Promise<HTMLElement> =>
 
 const channelOption = async (channelId: string): Promise<HTMLElement> => {
 	await userEvent.click(
-		within(await screen.findByTestId('routing-policy-channels')).getByRole(
+		within(await screen.findByTestId('routing-policy-channels-select')).getByRole(
 			'combobox',
 		),
 	);
@@ -270,7 +270,7 @@ export const expectNoChannelCreateLink = async (
 	// The channel check answers with Save's; until then the picker reads as denied.
 	await expectLocked(await screen.findByTestId('routing-policy-save'), false);
 	await userEvent.click(
-		within(await screen.findByTestId('routing-policy-channels')).getByRole(
+		within(await screen.findByTestId('routing-policy-channels-select')).getByRole(
 			'combobox',
 		),
 	);
