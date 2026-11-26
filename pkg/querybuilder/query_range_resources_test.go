@@ -2,6 +2,8 @@ package querybuilder
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/types/coretypes"
@@ -325,4 +327,55 @@ func TestBuilderQueryWildcardResources(t *testing.T) {
 	refs, err := BuilderQueryWildcardResources(coretypes.ResourceTelemetryResourceTraces)(coretypes.ExtractorContext{})
 	require.NoError(t, err)
 	assert.Equal(t, []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}}, refs)
+}
+
+func TestFieldsResources(t *testing.T) {
+	testCases := []struct {
+		name     string
+		query    string
+		expected []coretypes.ResourceWithID
+	}{
+		{
+			name:     "SignalTraces_Traces",
+			query:    "signal=traces&name=service.name",
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"}},
+		},
+		{
+			name:     "SignalLogs_Logs",
+			query:    "signal=logs",
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"}},
+		},
+		{
+			name:     "SignalLogsSourceAudit_AuditLogs",
+			query:    "signal=logs&source=audit",
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceAuditLogs, ID: "builder_query/*"}},
+		},
+		{
+			name:     "SignalMetricsSourceMeter_MeterMetrics",
+			query:    "signal=metrics&source=meter",
+			expected: []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: "builder_query/*"}},
+		},
+		{
+			name:  "SignalEmpty_TracesLogsMetrics",
+			query: "name=service.name&source=meter",
+			expected: []coretypes.ResourceWithID{
+				{Resource: coretypes.ResourceTelemetryResourceTraces, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceLogs, ID: "builder_query/*"},
+				{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: "builder_query/*"},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			refs, err := FieldsResources(coretypes.ExtractorContext{Request: httptest.NewRequest(http.MethodGet, "/api/v1/fields/values?"+testCase.query, nil)})
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expected, refs)
+		})
+	}
+
+	t.Run("UnknownSignal_Error", func(t *testing.T) {
+		_, err := FieldsResources(coretypes.ExtractorContext{Request: httptest.NewRequest(http.MethodGet, "/api/v1/fields/keys?signal=profiles", nil)})
+		require.Error(t, err)
+	})
 }

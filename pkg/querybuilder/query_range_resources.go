@@ -101,6 +101,39 @@ func BuilderQueryWildcardResources(resource coretypes.Resource) coretypes.Resour
 	}
 }
 
+func ClickHouseSQLResources(coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+	typeWildcard := qbtypes.QueryTypeClickHouseSQL.StringValue() + "/" + coretypes.WildCardSelectorString
+
+	return []coretypes.ResourceWithID{
+		{Resource: coretypes.ResourceTelemetryResourceLogs, ID: typeWildcard},
+		{Resource: coretypes.ResourceTelemetryResourceTraces, ID: typeWildcard},
+		{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard},
+		{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: typeWildcard},
+	}, nil
+}
+
+// FieldsResources reads the signal and source query params of the fields
+// endpoints. An empty signal searches traces, logs and metrics, so it needs all three.
+func FieldsResources(ec coretypes.ExtractorContext) ([]coretypes.ResourceWithID, error) {
+	params := ec.Request.URL.Query()
+	resources := []coretypes.Resource{coretypes.ResourceTelemetryResourceTraces, coretypes.ResourceTelemetryResourceLogs, coretypes.ResourceTelemetryResourceMetrics}
+	if signal := params.Get("signal"); signal != "" {
+		resource, err := telemetryResource(signal, params.Get("source"))
+		if err != nil {
+			return nil, err
+		}
+		resources = []coretypes.Resource{resource}
+	}
+
+	typeWildcard := qbtypes.QueryTypeBuilder.StringValue() + "/" + coretypes.WildCardSelectorString
+	refs := make([]coretypes.ResourceWithID, 0, len(resources))
+	for _, resource := range resources {
+		refs = append(refs, coretypes.ResourceWithID{Resource: resource, ID: typeWildcard})
+	}
+
+	return refs, nil
+}
+
 func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
 	queryType := query.Get("type").String()
 	typeWildcard := queryType + "/" + coretypes.WildCardSelectorString
@@ -114,12 +147,7 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 	case qbtypes.QueryTypePromQL.StringValue():
 		return []coretypes.ResourceWithID{{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard}}, nil
 	case qbtypes.QueryTypeClickHouseSQL.StringValue():
-		return []coretypes.ResourceWithID{
-			{Resource: coretypes.ResourceTelemetryResourceLogs, ID: typeWildcard},
-			{Resource: coretypes.ResourceTelemetryResourceTraces, ID: typeWildcard},
-			{Resource: coretypes.ResourceTelemetryResourceMetrics, ID: typeWildcard},
-			{Resource: coretypes.ResourceTelemetryResourceMeterMetrics, ID: typeWildcard},
-		}, nil
+		return ClickHouseSQLResources(coretypes.ExtractorContext{})
 	case qbtypes.QueryTypeFormula.StringValue(), qbtypes.QueryTypeJoin.StringValue(), qbtypes.QueryTypeTraceOperator.StringValue():
 		return nil, nil
 	default:
@@ -128,7 +156,7 @@ func resourcesForQuery(query gjson.Result, variables map[string]qbtypes.Variable
 }
 
 func resourcesForBuilderQuery(queryType string, spec gjson.Result, variables map[string]qbtypes.VariableItem) ([]coretypes.ResourceWithID, error) {
-	resource, err := builderQueryResource(spec)
+	resource, err := telemetryResource(spec.Get("signal").String(), spec.Get("source").String())
 	if err != nil {
 		return nil, err
 	}
@@ -153,10 +181,8 @@ func builderResources(queryType string, resource coretypes.Resource, expression 
 	return refs, nil
 }
 
-func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
-	source := spec.Get("source").String()
-
-	switch spec.Get("signal").String() {
+func telemetryResource(signal, source string) (coretypes.Resource, error) {
+	switch signal {
 	case telemetrytypes.SignalTraces.StringValue():
 		return coretypes.ResourceTelemetryResourceTraces, nil
 	case telemetrytypes.SignalLogs.StringValue():
@@ -170,7 +196,7 @@ func builderQueryResource(spec gjson.Result) (coretypes.Resource, error) {
 		}
 		return coretypes.ResourceTelemetryResourceMetrics, nil
 	default:
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal %q", spec.Get("signal").String())
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal %q", signal)
 	}
 }
 
