@@ -22,9 +22,11 @@ import { openInNewTab } from 'utils/navigation';
 import triangleRulerUrl from '@/assets/Icons/triangle-ruler.svg';
 
 import { DOCS_LINKS } from '../constants';
-import { columns, TIME_PICKER_OPTIONS } from './constants';
+import { getColumns, TIME_PICKER_OPTIONS } from './constants';
 
 const homeInterval = 30 * 60 * 1000;
+
+const columns = getColumns(false);
 
 export default function ServiceTraces({
 	onUpdateChecklistDoneItem,
@@ -91,7 +93,7 @@ export default function ServiceTraces({
 			(option) => option.value === value,
 		);
 
-		logEvent('Homepage: Services time interval updated', {
+		void logEvent('Homepage: Services time interval updated', {
 			updatedTimeInterval: timeInterval?.label,
 		});
 
@@ -126,7 +128,7 @@ export default function ServiceTraces({
 								type="default"
 								className="periscope-btn secondary"
 								onClick={(): void => {
-									logEvent('Homepage: Get Started clicked', {
+									void logEvent('Homepage: Get Started clicked', {
 										source: 'Service Traces',
 									});
 
@@ -147,7 +149,7 @@ export default function ServiceTraces({
 								type="link"
 								className="learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: Learn more clicked', {
+									void logEvent('Homepage: Learn more clicked', {
 										source: 'Service Traces',
 									});
 									window.open(
@@ -168,7 +170,10 @@ export default function ServiceTraces({
 
 	const renderDashboardsList = useCallback(
 		() => (
-			<div className="services-list-container home-data-item-container traces-services-list">
+			<div
+				className="services-list-container home-data-item-container traces-services-list"
+				data-testid="home-services-table"
+			>
 				<div className="services-list">
 					<Table<ServicesList>
 						columns={columns}
@@ -177,8 +182,9 @@ export default function ServiceTraces({
 						rowKey="serviceName"
 						className="services-table"
 						onRow={(record: ServicesList): Record<string, unknown> => ({
+							'data-testid': `home-services-row-${record.serviceName}`,
 							onClick: (event: React.MouseEvent): void => {
-								logEvent('Homepage: Service clicked', {
+								void logEvent('Homepage: Service clicked', {
 									serviceName: record.serviceName,
 								});
 
@@ -246,7 +252,7 @@ export default function ServiceTraces({
 								type="link"
 								className="periscope-btn link learn-more-link"
 								onClick={(): void => {
-									logEvent('Homepage: All Services clicked', {});
+									void logEvent('Homepage: All Services clicked', {});
 								}}
 							>
 								All Services <ArrowRight size={12} />

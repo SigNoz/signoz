@@ -20,7 +20,7 @@ import MyComponent from '../MyComponent';
 
 describe('MyComponent', () => {
   it('renders and interacts', async () => {
-    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    const user = userEvent.setup();
 
     server.use(
       rest.get('*/api/v1/example', (_req, res, ctx) => res(ctx.status(200), ctx.json({ value: 42 })))
@@ -40,7 +40,10 @@ The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/fron
 
 - Import from `tests/test-utils` only.
 - Prefer `userEvent` for real interactions; use `fireEvent` only for low-level events (scroll/resize/setting `scrollTop`).
+- One behaviour per test, rendering the smallest component that owns it; each test under 500 ms (`pnpm jest <file> --verbose`).
+- Never call `*ByRole` inside `waitFor`; never raise a timeout to make a slow test pass.
 - Use MSW to mock network calls; large JSON goes in `mocks-server/__mockdata__`.
+- To test a loading state, hold the response with `holdResponse()` from `tests/holdResponse`: await `held` in the handler and call `release()` before the test ends. Never time it with `ctx.delay`.
 - Keep tests type-safe (`jest.MockedFunction<T>`, avoid `any`).
 - Find elements by test ID (`getByTestId`, `findByTestId`); role or text only for markup the app doesn't own.
 - Pin time only when asserting relative dates; avoid global fake timers otherwise.
@@ -48,6 +51,9 @@ The full list is [`.claude/rules/frontend-tests.md`](../../../.claude/rules/fron
 Repo-specific reasons:
 - The harness wires Redux, React Query, i18n, timezone, preferences, so importing from RTL directly bypasses critical providers.
 - Some infra deps are globally mocked (e.g., `uplot`) to keep tests fast and stable.
+- `jest.environment.cjs` keeps library CSS (antd's runtime styles, CodeMirror's theme, `@signozhq/ui`'s injected modules) out of the document, as `moduleNameMapper` already does for the app's own stylesheets. jsdom matches every rule on each `getComputedStyle` call, so with them loaded a role query took up to half a second.
+- Nothing is hidden by CSS in tests. A closed antd popover stays in the DOM, so unmount it on close (`destroyTooltipOnHide`) when a test checks that it closed. Base UI keeps slider thumbs at `visibility: hidden` until it measures layout, which jsdom never does, so query them with `{ hidden: true }`.
+- `jest.setup.ts` turns off user-event's pointer-events check for every test. Base UI popups sit inside an element with an inline `pointer-events: none`, and the stylesheet that turns it back on never loads.
 - For virtualization (react-virtuoso), there is no `userEvent` scroll helper; use `fireEvent.scroll` after setting `element.scrollTop`.
 
 #### Example patterns (from `components/QuickFilters/tests/QuickFilters.test.tsx`)
@@ -73,14 +79,14 @@ jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 
 Interact via test IDs:
 ```ts
-const user = userEvent.setup({ pointerEventsCheck: 0 });
+const user = userEvent.setup();
 await user.click(screen.getByTestId('save-changes'));
 expect(screen.getByText(/ADDED FILTERS/i)).toBeInTheDocument();
 ```
 
-Virtualized scroll:
+Virtualized scroll (`<Virtuoso>` passes its `data-testid` to the scroll element):
 ```ts
-const scroller = container.querySelector('[data-test-id="virtuoso-scroller"]') as HTMLElement;
+const scroller = screen.getByTestId('logs-list-virtuoso-scroller');
 scroller.scrollTop = 500;
 fireEvent.scroll(scroller);
 ```
@@ -99,7 +105,10 @@ render(<Page />, undefined, {
 expect(getCurrentLocation().pathname).toBe(ROUTES.HOME);
 ```
 
-Never mock the router packages (`react-router`, `react-router-dom`) or `lib/history`;
+Module-level `navigate()` and `getCurrentLocation()` drive the mounted router and throw
+when none is. Render first, or attach one with `attachTestRouter` from `tests/router-utils`.
+
+Never mock the router packages (`react-router`, `react-router-dom`);
 `signoz/no-direct-react-router-import` rejects it. When a test cannot render at a route,
 or asserts the call itself, spy on the `lib/router` facade with `tests/router-mocks`:
 ```ts
@@ -110,5 +119,5 @@ const navigateSpy = mockNavigate(); // module-level navigate()
 ```
 
 #### Notes
-- Global mocks configured in Jest: `uplot` → `__mocks__/uplotMock.ts`.
+- Global mocks configured in Jest: `uplot` → `__mocks__/uplotMock.ts`; `@testing-library/user-event` in `jest.setup.ts`.
 - If a test needs custom behavior (e.g., different API response), override with `server.use(...)` locally.

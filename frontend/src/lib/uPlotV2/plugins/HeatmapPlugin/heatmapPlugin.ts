@@ -1,10 +1,10 @@
 import uPlot from 'uplot';
 
 import {
-	createHeatmapColorResolver,
-	HeatmapColorResolver,
-	resolveCountDomain,
-} from './colorScale';
+	createColorRampResolver,
+	ColorRampResolver,
+	resolveColorDomain,
+} from 'lib/visualization/colorRamp/colorScale';
 import { resolveColumnIndex, resolveRowIndex } from './geometry';
 import {
 	createHoverOverlay,
@@ -12,13 +12,14 @@ import {
 	showHoverOverlay,
 } from './hoverOverlay';
 import { createHatchPattern, drawCells, drawOverflowBoundary } from './paint';
-import { HeatmapCell, HeatmapColorOptions, HeatmapYAxis } from './types';
+import { HeatmapCell, HeatmapYAxis } from './types';
+import { ColorRampOptions } from 'lib/visualization/colorRamp/types';
 
 export interface HeatmapRenderOptions {
 	yAxis: HeatmapYAxis;
 	/** Column width in seconds. */
 	step: number;
-	colors: HeatmapColorOptions;
+	colors: ColorRampOptions;
 	isDarkMode: boolean;
 	/** Opacity-mode fill when `colors.fill` is empty. */
 	seriesColor: string;
@@ -58,15 +59,15 @@ export function createHeatmapHooks({
 	// config-build time. Resolving lazily keeps a refetch on uPlot's `setData` path
 	// rather than forcing a rebuild.
 	let cachedData: uPlot.AlignedData | null = null;
-	let cachedResolver: HeatmapColorResolver | null = null;
+	let cachedResolver: ColorRampResolver | null = null;
 
-	function getResolver(u: uPlot): HeatmapColorResolver {
+	function getResolver(u: uPlot): ColorRampResolver {
 		if (cachedResolver && cachedData === u.data) {
 			return cachedResolver;
 		}
-		cachedResolver = createHeatmapColorResolver({
+		cachedResolver = createColorRampResolver({
 			options: colors,
-			domain: resolveCountDomain(
+			domain: resolveColorDomain(
 				colors,
 				u.data.slice(1) as Array<Array<number | null>>,
 			),

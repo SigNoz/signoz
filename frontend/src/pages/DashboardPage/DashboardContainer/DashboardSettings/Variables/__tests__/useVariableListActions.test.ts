@@ -16,8 +16,8 @@ jest.mock('api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn(),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn(), info: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn(), info: jest.fn() },
 }));
 
 function builderPanel(name: string, expression: string): unknown {

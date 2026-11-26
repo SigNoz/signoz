@@ -124,7 +124,11 @@ function ListPanelRenderer({
 		() =>
 			resizableColumns.map((col) => ({
 				...col,
-				render: (): JSX.Element => <Skeleton.Input active block size="small" />,
+				render: (): JSX.Element => (
+					<div data-testid="list-panel-skeleton">
+						<Skeleton.Input active block size="small" />
+					</div>
+				),
 			})),
 		[resizableColumns],
 	);
@@ -212,7 +216,7 @@ function ListPanelRenderer({
 					)}
 				</>
 			)}
-			{logDetail?.activeLog && (
+			{logDetail && (
 				<LogDetail
 					log={logDetail.activeLog}
 					selectedTab={logDetail.selectedTab}

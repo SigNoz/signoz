@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 import type { ColumnType } from 'antd/es/table';
 import { TelemetrytypesSignalDTO } from 'api/generated/services/sigNoz.schemas';
 
@@ -75,6 +75,22 @@ describe('buildListColumns', () => {
 		expect(body.width).toBeUndefined();
 		expect(body.ellipsis).toBe(true);
 	});
+
+	it.each(['body', 'service.name'])(
+		'keeps the %s log cell on one line so a narrow column clips instead of growing the row',
+		(key) => {
+			const cols = buildListColumns({
+				columns: [key],
+				signal: TelemetrytypesSignalDTO.logs,
+				formatTimestamp: fmt,
+			}) as Col[];
+			renderCell(colByKey(cols, key), 'checkout complete');
+			expect(screen.getByText('checkout complete')).toHaveAttribute(
+				'data-text-overflow',
+				'visible',
+			);
+		},
+	);
 
 	it('renders trace http fields as a tag', () => {
 		const cols = buildListColumns({

@@ -74,6 +74,7 @@ function KeySearchInput({
 				placeholder={placeholder}
 				value={value}
 				disabled={disabled}
+				disabledTooltip={undefined}
 				autoComplete="off"
 				onChange={(event): void => {
 					onChange(event.target.value);

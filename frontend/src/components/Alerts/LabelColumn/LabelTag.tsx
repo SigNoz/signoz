@@ -1,6 +1,6 @@
 import { Copy } from '@signozhq/icons';
 import { Badge, type BadgeColorType } from '@signozhq/ui/badge';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { useCopyToClipboard } from 'react-use';
 
@@ -45,7 +45,7 @@ function LabelTag({
 				</div>
 			}
 		>
-			<span className={className}>
+			<span className={className} data-testid={`label-tag-container-${label}`}>
 				<Badge
 					textTransform="none"
 					color={color ?? 'secondary'}

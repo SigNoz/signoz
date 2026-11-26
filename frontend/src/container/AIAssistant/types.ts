@@ -1,8 +1,7 @@
 /**
  * UI types for the AI Assistant.
  *
- * Wherever the OpenAPI-generated DTOs in
- * `src/api/ai-assistant/sigNozAIAssistantAPI.schemas.ts`
+ * Wherever the OpenAPI-generated DTOs in `@signozhq/noz-client`
  * already capture the right shape, this module re-exports them.
  *
  * A type is defined locally only when the UI needs a different shape than
@@ -20,7 +19,8 @@ import type {
 	MessageActionDTO,
 	MessageActionKindDTO,
 	RetryActionDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
+import type { MessageContext } from 'api/ai-assistant/chat';
 
 /** Client-only file attachment — no API equivalent (uploads happen via data URLs). */
 export interface MessageAttachment {
@@ -82,6 +82,8 @@ export interface Message {
 	role: MessageRole;
 	content: string;
 	attachments?: MessageAttachment[];
+	/** What a user message was sent with: its @-picked resources and the page it came from. */
+	contexts?: MessageContext[];
 	/** Ordered content blocks for structured rendering of assistant replies. */
 	blocks?: MessageBlock[];
 	/** Suggested follow-up actions returned by the assistant (final message only). */
@@ -183,4 +185,6 @@ export interface ConversationStreamState {
 	streamingActions: MessageActionDTO[] | null;
 	pendingApproval: ApprovalEventDTO | null;
 	pendingClarification: ClarificationEventDTO | null;
+	/** When the reply began; null when nothing is streaming. */
+	startedAt: number | null;
 }

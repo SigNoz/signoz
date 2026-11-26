@@ -22,7 +22,11 @@ import { getPanelQueryType } from 'pages/DashboardPage/DashboardContainer/Panels
 import { fromPerses } from 'pages/DashboardPage/DashboardContainer/queryV5/persesQueryAdapters';
 import { dynamicSignalFromQuerySignal } from 'pages/DashboardPage/DashboardContainer/Panels/utils/drilldown/signal';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
-import { EQueryType } from 'types/common/dashboard';
+import {
+	isBuilderQueryType,
+	foldAISlot,
+	toSlotQuery,
+} from 'lib/query/builderSlot';
 
 import DrilldownAggregateMenu from '../DrilldownMenu/DrilldownAggregateMenu';
 import DrilldownBreakoutMenu from '../DrilldownMenu/DrilldownBreakoutMenu';
@@ -87,19 +91,22 @@ export function useDrilldown(
 	// ClickHouse have no builder context to refine). A panel whose builder queries
 	// are all disabled draws only formulas, which have no series to drill into.
 	const showDrilldown = useDashboardControl('panelActions.drilldown');
-	const enableDrillDown = useMemo(
-		() =>
+	const enableDrillDown = useMemo(() => {
+		const queryType = getPanelQueryType(panel);
+		return (
 			showDrilldown &&
 			getPanelDefinition(kind).actions.drilldown &&
-			getPanelQueryType(panel) === EQueryType.QUERY_BUILDER &&
-			getBuilderQueries(queries).some((query) => !query.disabled),
-		[showDrilldown, kind, panel, queries],
-	);
+			!!queryType &&
+			isBuilderQueryType(queryType) &&
+			getBuilderQueries(queries).some((query) => !query.disabled)
+		);
+	}, [showDrilldown, kind, panel, queries]);
 
-	const v1Query = useMemo(
+	const slotQuery = useMemo(
 		() => fromPerses(queries, panelType),
 		[queries, panelType],
 	);
+	const v1Query = useMemo(() => foldAISlot(slotQuery), [slotQuery]);
 
 	const {
 		coordinates,
@@ -150,7 +157,13 @@ export function useDrilldown(
 
 	// Default handoff navigates to the View modal (grid); the modal overrides this to refine in place.
 	const { openViewWithQuery: navigateToView } = useViewPanel();
-	const openViewWithQuery = options?.openDrilldownView ?? navigateToView;
+	const openView = options?.openDrilldownView ?? navigateToView;
+	// Filter/breakout refine the request shape; the View edits the panel's own slots.
+	const openViewWithQuery = useCallback<OpenDrilldownView>(
+		(viewPanelId, query, viewPanelType) =>
+			openView(viewPanelId, toSlotQuery(query, slotQuery), viewPanelType),
+		[openView, slotQuery],
+	);
 
 	const breakout = useDrilldownBreakout({
 		panelId,

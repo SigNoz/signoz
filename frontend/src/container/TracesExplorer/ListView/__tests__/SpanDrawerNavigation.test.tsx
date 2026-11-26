@@ -97,7 +97,7 @@ describe('Traces ListView - span drawer navigation', () => {
 		await user.click(await screen.findByText('HTTP GET'));
 		await screen.findByTestId('span-details-drawer');
 
-		await user.click(screen.getByTestId('span-drawer-close'));
+		await user.click(screen.getByTestId('span-details-drawer-close'));
 
 		await waitFor(() =>
 			expect(screen.queryByTestId('span-details-drawer')).not.toBeInTheDocument(),
@@ -131,9 +131,9 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup({ skipHover: true });
 		renderListView();
 
-		const row = (await screen.findByText('HTTP GET')).closest(
-			'tr',
-		) as HTMLElement;
+		const row = await screen.findByTestId(
+			`traces-table-row-${listRows[0].data.span_id}`,
+		);
 		expect(screen.queryByTestId('span-row-open-trace')).not.toBeInTheDocument();
 		await user.hover(row);
 		await user.click(await screen.findByTestId('span-row-open-trace'));
@@ -211,8 +211,10 @@ describe('Traces ListView - span drawer navigation', () => {
 		const user = userEvent.setup({ skipHover: true });
 		renderListView();
 
-		const [first] = await screen.findAllByText('HTTP GET');
-		await user.hover(first.closest('tr') as HTMLElement);
+		const [first] = await screen.findAllByTestId(
+			`traces-table-row-${listRows[0].data.span_id}`,
+		);
+		await user.hover(first);
 
 		await expect(
 			screen.findAllByTestId('span-row-open-trace'),

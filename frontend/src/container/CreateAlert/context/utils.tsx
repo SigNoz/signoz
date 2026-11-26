@@ -2,12 +2,14 @@ import { UTC_TIMEZONE } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { QueryParams } from 'constants/query';
 import {
+	aiTraceAlertDefaults,
 	alertDefaults,
 	anamolyAlertDefaults,
 	exceptionAlertDefaults,
 	logAlertDefaults,
 	traceAlertDefaults,
 } from 'container/CreateAlertRule/defaults';
+import { isAIQueryType } from 'lib/query/builderSlot';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { AlertDef } from 'types/api/alerts/def';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -67,9 +69,12 @@ export const alertCreationReducer = (
 	}
 };
 
-export function getInitialAlertType(currentQuery: Query): AlertTypes {
+export function getInitialAlertType(currentQuery: Query | null): AlertTypes {
+	if (currentQuery && isAIQueryType(currentQuery.queryType)) {
+		return AlertTypes.AI_TRACES_BASED_ALERT;
+	}
 	const dataSource =
-		currentQuery.builder.queryData?.[0]?.dataSource || DataSource.METRICS;
+		currentQuery?.builder.queryData?.[0]?.dataSource || DataSource.METRICS;
 	switch (dataSource) {
 		case DataSource.METRICS:
 			return AlertTypes.METRICS_BASED_ALERT;
@@ -92,6 +97,8 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 			return exceptionAlertDefaults;
 		case AlertTypes.ANOMALY_BASED_ALERT:
 			return anamolyAlertDefaults;
+		case AlertTypes.AI_TRACES_BASED_ALERT:
+			return aiTraceAlertDefaults;
 		case AlertTypes.METRICS_BASED_ALERT:
 			return alertDefaults;
 		default:
@@ -101,7 +108,7 @@ export function buildInitialAlertDef(alertType: AlertTypes): AlertDef {
 
 export function getInitialAlertTypeFromURL(
 	urlSearchParams: URLSearchParams,
-	currentQuery: Query,
+	currentQuery: Query | null,
 ): AlertTypes {
 	const ruleType = urlSearchParams.get(QueryParams.ruleType);
 	if (ruleType === 'anomaly_rule') {

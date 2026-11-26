@@ -1,5 +1,6 @@
 import { useMutation } from 'react-query';
-import { Button, Modal } from 'antd';
+import { Button } from '@signozhq/ui/button';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Typography } from '@signozhq/ui/typography';
 import { createSubscription } from 'api/generated/services/subscriptions';
 import type { CreateSubscription201 } from 'api/generated/services/sigNoz.schemas';
@@ -55,46 +56,51 @@ function AddCreditCardModal({
 	};
 
 	return (
-		<Modal
-			className="add-credit-card-modal"
-			title={<span className="title">Add Credit Card for Chat Support</span>}
+		<Dialog
 			open={open}
-			closable
-			onCancel={onClose}
-			destroyOnClose
-			footer={[
-				<Button
-					key="cancel"
-					onClick={onClose}
-					className="cancel-btn"
-					icon={<X size={16} />}
-				>
-					Cancel
-				</Button>,
-				<AuthZTooltip
-					key="submit"
-					checks={[SubscriptionCreatePermission]}
-					withPortal={false}
-				>
+			onClose={onClose}
+			title="Add Credit Card for Chat Support"
+			testId="add-credit-card-modal"
+			footerSuffix={
+				<>
 					<Button
-						type="primary"
-						icon={<CreditCard size={16} />}
-						size="middle"
-						loading={isLoadingBilling}
-						disabled={isLoadingBilling}
-						onClick={handleAddCreditCard}
-						className="add-credit-card-btn"
+						variant="outlined"
+						color="secondary"
+						size="md"
+						prefix={<X size={16} />}
+						onClick={onClose}
+						testId="add-credit-card-cancel"
 					>
-						Add Credit Card
+						Cancel
 					</Button>
-				</AuthZTooltip>,
-			]}
+					<AuthZTooltip checks={[SubscriptionCreatePermission]}>
+						<Button
+							variant="solid"
+							color="primary"
+							size="md"
+							prefix={<CreditCard size={16} />}
+							loading={isLoadingBilling}
+							onClick={handleAddCreditCard}
+							testId="add-credit-card-submit"
+						>
+							Add Credit Card
+						</Button>
+					</AuthZTooltip>
+				</>
+			}
 		>
-			<Typography.Text className="add-credit-card-text">
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				You&apos;re currently on <span className="highlight-text">Trial plan</span>.
 				Add a credit card to access SigNoz chat support to your workspace.
-			</Typography.Text>
-		</Modal>
+			</Typography>
+		</Dialog>
 	);
 }
 

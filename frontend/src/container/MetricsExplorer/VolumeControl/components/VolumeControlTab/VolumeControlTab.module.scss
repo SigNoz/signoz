@@ -5,12 +5,9 @@
 	padding: 16px 0;
 }
 
-.metricNameCell {
-	font-family: 'Geist Mono', monospace;
-}
-
+// Break between labels, never inside one.
 .attributesCell {
-	font-family: 'Geist Mono', monospace;
+	--typography-overflow-wrap: normal;
 }
 
 .volumeCell {

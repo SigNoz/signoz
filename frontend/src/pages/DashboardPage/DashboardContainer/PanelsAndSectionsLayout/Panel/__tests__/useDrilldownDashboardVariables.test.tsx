@@ -83,8 +83,8 @@ jest.mock('components/OverlayScrollbar/OverlayScrollbar', () => ({
 		<div>{children}</div>
 	),
 }));
-jest.mock('@signozhq/ui/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const filters: FilterData[] = [

@@ -151,7 +151,7 @@ export function getWidgetQuery({
 						queryName: 'A',
 						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'avg',
-						stepInterval: 60,
+						stepInterval: null,
 						timeAggregation: 'max',
 					},
 				],
@@ -231,7 +231,6 @@ export enum MessagingQueuesViewTypeOptions {
 	ConsumerLag = 'consumerLag',
 	PartitionLatency = 'partitionLatency',
 	ProducerLatency = 'producerLatency',
-	DropRate = 'dropRate',
 	MetricPage = 'metricPage',
 }
 
@@ -247,10 +246,6 @@ export const MessagingQueuesViewType = {
 	producerLatency: {
 		label: 'Producer Latency view',
 		value: MessagingQueuesViewTypeOptions.ProducerLatency,
-	},
-	dropRate: {
-		label: 'Drop Rate view',
-		value: MessagingQueuesViewTypeOptions.DropRate,
 	},
 	metricPage: {
 		label: 'Metric view',

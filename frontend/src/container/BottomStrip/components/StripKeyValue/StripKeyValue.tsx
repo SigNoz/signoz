@@ -25,19 +25,44 @@ function StripKeyValue({
 	return (
 		<span className={styles.keyValue}>
 			{prefix && (
-				<span className={cx(styles.prefix, tone && styles[tone])} data-tone={tone}>
+				<span
+					className={cx(styles.prefix, tone && styles[tone])}
+					data-tone={tone}
+					data-testid={`strip-key-value-prefix-${label}`}
+				>
 					{prefix}
 				</span>
 			)}
-			<Typography.Text as="span" className={styles.label}>
+			<Typography
+				variant="code"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
 				{label}
-			</Typography.Text>
-			<Typography.Text as="span" className={styles.colon}>
+			</Typography>
+			<Typography
+				variant="code"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
 				:
-			</Typography.Text>
-			<Typography.Text as="span" className={styles.value}>
+			</Typography>
+			<Typography
+				variant="code"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="visible"
+			>
 				{value}
-			</Typography.Text>
+			</Typography>
 		</span>
 	);
 }

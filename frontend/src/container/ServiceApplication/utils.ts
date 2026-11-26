@@ -3,7 +3,6 @@ import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsAppli
 import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { ServicesList } from 'types/api/metrics/getService';
-import { QueryDataV3 } from 'types/api/widgets/getQuery';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -13,13 +12,12 @@ import {
 	GetServiceListFromQueryProps,
 } from './types';
 
-export function getSeriesValue(
-	queryArray: QueryDataV3[] | undefined,
+function getRowValue(
+	row: Record<string, unknown> | undefined,
 	queryName: string,
-): string {
-	const queryObject = queryArray?.find((item) => item?.queryName === queryName);
-	const series = queryObject ? queryObject.series : 0;
-	return series ? series[0].values[0].value : '0';
+): number {
+	const value = Number(row?.[queryName]);
+	return Number.isFinite(value) ? value : 0;
 }
 
 export const getQueryRangeRequestData = ({
@@ -71,14 +69,13 @@ export const getServiceListFromQuery = ({
 					numErrors: 0,
 				};
 				services.push(serviceData);
-			}
-			if (query.data) {
-				const queryArray = query.data?.payload?.data?.newResult?.data?.result;
+			} else if (query.data) {
+				const row = query.data?.payload?.data?.result?.[0]?.table?.rows?.[0]?.data;
 				const serviceData: ServicesList = {
 					serviceName: topLevelOperations[index][0].toString(),
-					p99: parseFloat(getSeriesValue(queryArray, 'A')),
-					callRate: parseFloat(getSeriesValue(queryArray, 'D')),
-					errorRate: parseFloat(getSeriesValue(queryArray, 'F1')),
+					p99: getRowValue(row, 'A'),
+					callRate: getRowValue(row, 'D'),
+					errorRate: getRowValue(row, 'F1'),
 					avgDuration: 0,
 					numCalls: 0,
 					numErrors: 0,

@@ -9,6 +9,7 @@ import type {
 	SavedviewtypesSourceDTO,
 } from './schemas';
 import { apiDriver, type Envelope } from './api';
+import { inputField } from './input';
 
 /**
  * Saved views, shared by every explorer that has them (logs, traces, metrics,
@@ -99,12 +100,12 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 			if (await open.isVisible()) {
 				await open.click();
 			}
-			await expect(panel().getByTestId('saved-views-search')).toBeVisible();
+			await expect(inputField(panel(), 'saved-views-search')).toBeVisible();
 		},
 
 		search: async (text) => {
 			await views.openList();
-			await panel().getByTestId('saved-views-search').fill(text);
+			await inputField(panel(), 'saved-views-search').fill(text);
 		},
 
 		row: (name) =>
@@ -125,7 +126,7 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 
 		saveAs: async (name) => {
 			await header().getByTestId('saved-views-create').click();
-			await page.getByTestId('save-view-name').fill(name);
+			await inputField(page, 'save-view-name').fill(name);
 			const saved = page.waitForResponse(isViewsCall('POST'));
 			await page.getByTestId('save-view-submit').click();
 			expect((await saved).ok()).toBe(true);
@@ -148,7 +149,7 @@ export function savedViewsDriver(page: Page, source: ViewSource): SavedViews {
 		rename: async (name, next) => {
 			await openRowMenu(name);
 			await page.getByTestId('saved-views-row-menu-item-editDetails').click();
-			await page.getByTestId('save-view-name').fill(next);
+			await inputField(page, 'save-view-name').fill(next);
 			const updated = page.waitForResponse(isViewsCall('PUT'));
 			await page.getByTestId('save-view-submit').click();
 			expect((await updated).ok()).toBe(true);

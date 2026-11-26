@@ -1,4 +1,10 @@
-import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
+import {
+	type FocusEvent,
+	type MouseEvent,
+	useCallback,
+	useMemo,
+	useRef,
+} from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -27,7 +33,7 @@ import styles from './SearchBar.module.scss';
 interface Props {
 	value: string;
 	grammar: DslGrammar;
-	// Ids: `${testIdPrefix}`, `-submit`, `-dirty`.
+	// Ids: `${testIdPrefix}`, `-field` (the editable area), `-submit`, `-dirty`.
 	testIdPrefix: string;
 	onChange: (value: string) => void;
 	onSubmit: () => void;
@@ -67,10 +73,25 @@ function SearchBar({
 	const onSubmitRef = useRef(handleSubmit);
 	onSubmitRef.current = handleSubmit;
 
+	// Leaving the box runs an unrun draft, e.g. terms picked from the suggestions.
+	// A blur from switching windows or tabs does not.
+	const handleBlur = useCallback(
+		(event: FocusEvent<HTMLDivElement>): void => {
+			const stillInside = event.currentTarget.contains(
+				event.relatedTarget as Node | null,
+			);
+			if (!stillInside && dirty && !disabled && document.hasFocus()) {
+				handleSubmit();
+			}
+		},
+		[dirty, disabled, handleSubmit],
+	);
+
 	const extensions = useMemo(
 		() => [
 			dslHighlight,
 			editorTheme,
+			EditorView.contentAttributes.of({ 'data-testid': `${testIdPrefix}-field` }),
 			// Wrap a long query onto the next line instead of scrolling horizontally.
 			EditorView.lineWrapping,
 			// Read-only is not enough: these open the list on click and accepting an
@@ -122,12 +143,15 @@ function SearchBar({
 				]),
 			),
 		],
-		[disabled],
+		[disabled, testIdPrefix],
 	);
 
 	return (
 		<div className={styles.wrapper}>
-			<div className={cx(styles.field, { [styles.disabled]: disabled })}>
+			<div
+				className={cx(styles.field, { [styles.disabled]: disabled })}
+				onBlur={handleBlur}
+			>
 				<Search
 					size={12}
 					color={Color.BG_VANILLA_400}

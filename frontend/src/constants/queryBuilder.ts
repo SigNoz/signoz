@@ -311,14 +311,10 @@ export const initialQueryMeterWithType: Query = {
 
 export const initialQueryAIWithType: Query = {
 	...initialQueryWithType,
-	builder: {
+	queryType: EQueryType.AI_QUERY_BUILDER,
+	builder_ai_query: {
 		...initialQueryWithType.builder,
-		queryData: [
-			{
-				...initialQueryBuilderFormValuesMap.traces,
-				builderQueryType: 'builder_ai_query',
-			},
-		],
+		queryData: [initialQueryBuilderFormValuesMap.traces],
 	},
 };
 
@@ -340,6 +336,8 @@ export enum PANEL_TYPES {
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
 	HEATMAP = 'heatmap',
+	GEO_MAP = 'geo_map',
+	TOP_LIST = 'top_list',
 	TEXT = 'text',
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }

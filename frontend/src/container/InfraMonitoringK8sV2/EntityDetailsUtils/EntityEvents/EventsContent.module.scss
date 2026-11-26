@@ -47,7 +47,7 @@
 		}
 
 		:global(.value-field-container .value-field) {
-			font-family: 'Geist Mono';
+			font-family: var(--code-base-400-font-family);
 			position: relative;
 		}
 

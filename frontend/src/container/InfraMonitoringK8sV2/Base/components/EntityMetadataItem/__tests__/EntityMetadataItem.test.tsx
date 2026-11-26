@@ -11,8 +11,8 @@ jest.mock('react-use', () => ({
 
 const mockToastSuccess = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -92,7 +92,9 @@ describe('EntityMetadataItem', () => {
 		// off the text.
 		const textEl = screen.getByText('a-very-long-node-name');
 		expect(textEl).not.toHaveAttribute('data-slot', 'tooltip-trigger');
-		expect(textEl.parentElement).toHaveAttribute('data-slot', 'tooltip-trigger');
+		const trigger = screen.getByTestId('metadata-value-node');
+		expect(trigger).toContainElement(textEl);
+		expect(trigger).toHaveAttribute('data-slot', 'tooltip-trigger');
 	});
 
 	it('leaves an entity-supplied renderer alone', () => {

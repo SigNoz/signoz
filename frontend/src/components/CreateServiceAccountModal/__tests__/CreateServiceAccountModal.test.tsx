@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import {
 	setupAuthzAdmin,
 	setupAuthzDenyAll,
@@ -10,9 +10,9 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
-	toast: { success: jest.fn(), error: jest.fn() },
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
+	toast: { success: jest.fn(), danger: jest.fn() },
 }));
 
 const mockToast = jest.mocked(toast);
@@ -23,7 +23,6 @@ jest.mock('providers/ErrorModalProvider', () => ({
 	...jest.requireActual('providers/ErrorModalProvider'),
 	useErrorModal: jest.fn(() => ({
 		showErrorModal,
-		isErrorModalVisible: false,
 	})),
 }));
 
@@ -58,7 +57,7 @@ describe('CreateServiceAccountModal', () => {
 		// The form only renders once the create check resolves, and the name field
 		// registers its `required` rule on mount, so the empty-form invalid state
 		// settles a tick later.
-		await screen.findByTestId('create-sa-name-input');
+		await screen.findByTestId('create-sa-name-input-field');
 
 		await waitFor(() =>
 			expect(screen.getByTestId('create-sa-submit-btn')).toHaveAttribute(
@@ -69,10 +68,10 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('submit button becomes disabled after clearing the name field', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
-		const nameInput = await screen.findByTestId('create-sa-name-input');
+		const nameInput = await screen.findByTestId('create-sa-name-input-field');
 		const submitBtn = await screen.findByTestId('create-sa-submit-btn');
 
 		await user.type(nameInput, 'test');
@@ -87,10 +86,10 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('successful submit shows toast.success and closes modal', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
-		const nameInput = await screen.findByTestId('create-sa-name-input');
+		const nameInput = await screen.findByTestId('create-sa-name-input-field');
 		await user.type(nameInput, 'Deploy Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
@@ -113,7 +112,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('pressing Enter again while creating sends one request', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		let requests = 0;
 		server.use(
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) => {
@@ -128,7 +127,7 @@ describe('CreateServiceAccountModal', () => {
 		renderModal();
 
 		const nameInput = await screen.findByTestId<HTMLInputElement>(
-			'create-sa-name-input',
+			'create-sa-name-input-field',
 		);
 		await user.type(nameInput, 'Deploy Bot');
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
@@ -147,7 +146,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('shows toast.error on API error and keeps modal open', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(
 			rest.post(SERVICE_ACCOUNTS_ENDPOINT, (_, res, ctx) =>
@@ -160,7 +159,7 @@ describe('CreateServiceAccountModal', () => {
 
 		renderModal();
 
-		const nameInput = await screen.findByTestId('create-sa-name-input');
+		const nameInput = await screen.findByTestId('create-sa-name-input-field');
 		await user.type(nameInput, 'Dupe Bot');
 
 		const submitBtn = screen.getByTestId('create-sa-submit-btn');
@@ -187,7 +186,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('Cancel button closes modal without submitting', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
 		const cancelBtn = await screen.findByTestId('create-sa-cancel-btn');
@@ -209,14 +208,16 @@ describe('CreateServiceAccountModal', () => {
 			screen.findByText(/is not authorized to perform/i),
 		).resolves.toBeInTheDocument();
 
-		expect(screen.queryByTestId('create-sa-name-input')).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('create-sa-name-input-field'),
+		).not.toBeInTheDocument();
 		expect(
 			screen.getByTestId('create-service-account-modal'),
 		).toBeInTheDocument();
 	});
 
 	it('keeps the footer usable when create permission is denied', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		server.use(setupAuthzDenyAll());
 
 		renderModal();
@@ -241,10 +242,10 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderModal();
 
-		const nameInput = await screen.findByTestId('create-sa-name-input');
+		const nameInput = await screen.findByTestId('create-sa-name-input-field');
 		await user.type(nameInput, 'Bot');
 		await user.clear(nameInput);
 

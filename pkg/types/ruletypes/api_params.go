@@ -71,7 +71,7 @@ type PostableRule struct {
 	RuleType    RuleType           `json:"ruleType" required:"true" description:"The evaluation strategy: threshold_rule compares against thresholds, promql_rule evaluates a PromQL expression, anomaly_rule scores deviation from seasonal history. Defaults to threshold_rule for builder and clickhouse_sql queries and is forced to promql_rule for promql queries."`
 
 	RuleCondition *RuleCondition    `json:"condition" required:"true" description:"The query to evaluate and the thresholds applied to its result."`
-	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. severity is the conventional routing label."`
+	Labels        map[string]string `json:"labels,omitempty" description:"Labels attached to every alert the rule fires. Keys match [a-zA-Z_.][a-zA-Z0-9_.]*; values may use Go templates such as {{$labels.service_name}}. A label named after one the engine writes, such as severity or threshold.name, is ignored."`
 	Annotations   map[string]string `json:"annotations,omitempty" description:"Free text attached to every alert, conventionally summary and description. Values may use Go templates with $value, $threshold and $labels."`
 
 	Disabled bool `json:"disabled" description:"Whether the rule is paused. A disabled rule is neither evaluated nor notifies. Defaults to false."`
@@ -110,8 +110,8 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 	} else {
-		renotifyInterval = 8760 * time.Hour //1 year for no renotify substitute
-		noDataRenotifyInterval = 8760 * time.Hour
+		renotifyInterval = alertmanagertypes.NoRenotifyInterval //1 year for no renotify substitute
+		noDataRenotifyInterval = alertmanagertypes.NoRenotifyInterval
 	}
 	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }
@@ -248,6 +248,21 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	}
 	r.processRuleDefaults()
 	return r.validate()
+}
+
+func NewPatchedPostableRule(stored []byte, patch []byte) (*PostableRule, error) {
+	patched := new(PostableRule)
+	if err := json.Unmarshal(stored, patched); err != nil {
+		return nil, err
+	}
+	// a rule stored before selectedQueryName was required resolves it the way evaluation does
+	patched.RuleCondition.SelectedQuery = patched.RuleCondition.SelectedQueryName()
+
+	if err := patched.DecodeStrict(string(patch)); err != nil {
+		return nil, err
+	}
+
+	return patched, nil
 }
 
 func (r *PostableRule) DecodeStrict(ruleStr string) error {

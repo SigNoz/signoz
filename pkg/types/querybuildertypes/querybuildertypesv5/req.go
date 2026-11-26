@@ -3,6 +3,7 @@ package querybuildertypesv5
 import (
 	"bytes"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
@@ -303,6 +304,35 @@ func (c *CompositeQuery) CollectResultColumnKeys() (ResultColumnKeys, bool) {
 		}
 	}
 	return keys, true
+}
+
+// ValidateQueriesShareGroupBy rejects queries whose rows cannot join on their
+// group-by keys. Order is ignored since rows join on sorted labels; disabled
+// queries count, as formulas carry their keys.
+func (c *CompositeQuery) ValidateQueriesShareGroupBy() error {
+	var queries []QueryEnvelope
+	for _, envelope := range c.Queries {
+		if envelope.GetType() != QueryTypeFormula {
+			queries = append(queries, envelope)
+		}
+	}
+	for i := 1; i < len(queries); i++ {
+		first, other := queries[0].GetGroupByKeyNames(), queries[i].GetGroupByKeyNames()
+		slices.Sort(first)
+		slices.Sort(other)
+		if !slices.Equal(first, other) {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "queries must group by the same keys so their rows join; %q groups by [%s], %q groups by [%s]", queries[0].GetQueryName(), quoteKeyNames(first), queries[i].GetQueryName(), quoteKeyNames(other))
+		}
+	}
+	return nil
+}
+
+func quoteKeyNames(names []string) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = "`" + name + "`"
+	}
+	return strings.Join(quoted, ", ")
 }
 
 // PrepareJSONSchema adds description to the CompositeQuery schema.

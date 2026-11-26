@@ -1,4 +1,4 @@
-import { Empty } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from './EmptyMeterSearch.module.scss';
@@ -14,11 +14,19 @@ export default function EmptyMeterSearch({
 		<div className={styles.emptyMeterSearch}>
 			<Empty
 				description={
-					<Typography.Title level={5}>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>
 						{hasQueryResult
 							? 'No data'
 							: 'Select a metric and run a query to see the results'}
-					</Typography.Title>
+					</Typography>
 				}
 			/>
 		</div>

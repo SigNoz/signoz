@@ -1,193 +1,120 @@
-import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
+import { ServiceDataProps } from 'api/metrics/getTopLevelOperations';
+import {
+	Querybuildertypesv5ColumnTypeDTO,
+	Querybuildertypesv5RequestTypeDTO,
+	type QueryRangeV5200,
+} from 'api/generated/services/sigNoz.schemas';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { act, render, screen } from 'tests/test-utils';
+import { render, screen, waitFor, within } from 'tests/test-utils';
 
 import ServicesUsingMetrics from './index';
 
-// Mock the useGetTopLevelOperations hook
-jest.mock('hooks/useGetTopLevelOperations', () => ({
-	__esModule: true,
-	default: jest.fn(),
-}));
+const topLevelOperations: ServiceDataProps = {
+	SampleApp: ['GET'],
+	TestApp: ['POST'],
+};
 
-const mockUseGetTopLevelOperations =
-	useGetTopLevelOperations as jest.MockedFunction<
-		typeof useGetTopLevelOperations
-	>;
+// A = p99, D = ops/s, F1 = error rate
+const metricsByService: Record<string, [number, number, number]> = {
+	SampleApp: [100, 50, 2.5],
+	TestApp: [200, 10, 0],
+};
+
+const scalarTable = (service: string): QueryRangeV5200 => ({
+	status: 'success',
+	data: {
+		type: Querybuildertypesv5RequestTypeDTO.scalar,
+		data: {
+			results: [
+				{
+					columns: [
+						{
+							name: 'service.name',
+							queryName: 'A',
+							aggregationIndex: 0,
+							columnType: Querybuildertypesv5ColumnTypeDTO.group,
+						},
+						...['A', 'D', 'F1'].map((queryName) => ({
+							name: '__result_0',
+							queryName,
+							aggregationIndex: 0,
+							columnType: Querybuildertypesv5ColumnTypeDTO.aggregation,
+						})),
+					],
+					data: [[service, ...metricsByService[service]]],
+				},
+			],
+		},
+	},
+});
+
+const mockTopLevelOperations = (operations: ServiceDataProps): void => {
+	server.use(
+		rest.post(
+			'http://localhost/api/v1/service/top_level_operations',
+			(_, res, ctx) => res(ctx.status(200), ctx.json(operations)),
+		),
+	);
+};
+
+const table = (): HTMLElement => screen.getByTestId('services-table');
+
+const rowCells = (service: string): (string | null)[] =>
+	within(screen.getByTestId(`services-table-row-${service}`))
+		.getAllByRole('cell')
+		.map((cell) => cell.textContent);
 
 describe('ServicesUsingMetrics', () => {
 	beforeEach(() => {
-		// Reset all mocks before each test
-		jest.clearAllMocks();
-	});
-
-	it('should render the ServicesUsingMetrics component', async () => {
-		// Mock successful API response
-		mockUseGetTopLevelOperations.mockReturnValue({
-			data: {
-				SampleApp: ['GET'],
-				TestApp: ['POST'],
-			},
-			isLoading: false,
-			isError: false,
-			error: null,
-			isIdle: false,
-			isLoadingError: false,
-			isRefetchError: false,
-			isSuccess: true,
-			status: 'success',
-			dataUpdatedAt: 0,
-			errorUpdatedAt: 0,
-			failureCount: 0,
-			failureReason: null,
-			isFetching: false,
-			isFetchingNextPage: false,
-			isFetchingPreviousPage: false,
-			isPlaceholderData: false,
-			isPreviousData: false,
-			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
-		} as any);
-
-		// Mock the query range API responses
 		server.use(
-			rest.post('*/api/v1/query_range', (req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							resultType: 'matrix',
-							result: [
-								{
-									metric: { __name__: 'A' },
-									values: [[Date.now() / 1000, '100']],
-								},
-								{
-									metric: { __name__: 'D' },
-									values: [[Date.now() / 1000, '50']],
-								},
-								{
-									metric: { __name__: 'F1' },
-									values: [[Date.now() / 1000, '2.5']],
-								},
-							],
-						},
-					}),
-				),
-			),
+			rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
+				const body = JSON.stringify(await req.json());
+				const service = Object.keys(metricsByService).find((name) =>
+					body.includes(`'${name}'`),
+				);
+
+				return res(ctx.status(200), ctx.json(scalarTable(service ?? '')));
+			}),
 		);
-
-		await act(async () => {
-			render(<ServicesUsingMetrics />);
-		});
-
-		// Wait for the component to load and render
-		await screen.findByText(/application/i);
-		expect(screen.getByText(/p99 latency \(in ns\)/i)).toBeInTheDocument();
-		expect(screen.getByText(/error rate \(% of total\)/i)).toBeInTheDocument();
 	});
 
-	it('should render the ServicesUsingMetrics component with loading', async () => {
-		// Mock loading state
-		mockUseGetTopLevelOperations.mockReturnValue({
-			data: undefined,
-			isLoading: true,
-			isError: false,
-			error: null,
-			isIdle: false,
-			isLoadingError: false,
-			isRefetchError: false,
-			isSuccess: false,
-			status: 'loading',
-			dataUpdatedAt: 0,
-			errorUpdatedAt: 0,
-			failureCount: 0,
-			failureReason: null,
-			isFetching: true,
-			isFetchingNextPage: false,
-			isFetchingPreviousPage: false,
-			isPlaceholderData: false,
-			isPreviousData: false,
-			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
-		} as any);
+	it('fills each row from the v5 table', async () => {
+		mockTopLevelOperations(topLevelOperations);
+		render(<ServicesUsingMetrics />);
 
-		await act(async () => {
-			render(<ServicesUsingMetrics />);
-		});
-
-		// Should show loading spinner
-		expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
+		await screen.findByText('100.00');
+		expect(rowCells('SampleApp')).toStrictEqual([
+			'SampleApp',
+			'100.00',
+			'2.50',
+			'50.00',
+		]);
+		expect(rowCells('TestApp')).toStrictEqual([
+			'TestApp',
+			'200.00',
+			'0.00',
+			'10.00',
+		]);
 	});
 
-	it('should not render if the data is not present', async () => {
-		// Mock successful API response with data
-		mockUseGetTopLevelOperations.mockReturnValue({
-			data: {
-				SampleApp: ['GET'],
-				TestApp: ['GET'],
-			},
-			isLoading: false,
-			isError: false,
-			error: null,
-			isIdle: false,
-			isLoadingError: false,
-			isRefetchError: false,
-			isSuccess: true,
-			status: 'success',
-			dataUpdatedAt: 0,
-			errorUpdatedAt: 0,
-			failureCount: 0,
-			failureReason: null,
-			isFetching: false,
-			isFetchingNextPage: false,
-			isFetchingPreviousPage: false,
-			isPlaceholderData: false,
-			isPreviousData: false,
-			isStale: false,
-			refetch: jest.fn(),
-			remove: jest.fn(),
-		} as any);
+	it('labels the span-metrics p99 in ms', async () => {
+		mockTopLevelOperations(topLevelOperations);
+		render(<ServicesUsingMetrics />);
 
-		// Mock the query range API responses
-		server.use(
-			rest.post('*/api/v1/query_range', (req, res, ctx) =>
-				res(
-					ctx.status(200),
-					ctx.json({
-						status: 'success',
-						data: {
-							resultType: 'matrix',
-							result: [
-								{
-									metric: { __name__: 'A' },
-									values: [[Date.now() / 1000, '100']],
-								},
-								{
-									metric: { __name__: 'D' },
-									values: [[Date.now() / 1000, '50']],
-								},
-								{
-									metric: { __name__: 'F1' },
-									values: [[Date.now() / 1000, '2.5']],
-								},
-							],
-						},
-					}),
-				),
-			),
+		await expect(
+			screen.findByText('P99 latency (in ms)'),
+		).resolves.toBeInTheDocument();
+	});
+
+	it('renders an empty list when no service has top level operations', async () => {
+		mockTopLevelOperations({});
+		render(<ServicesUsingMetrics />);
+
+		await waitFor(() => expect(table()).toHaveAttribute('aria-busy', 'false'));
+		expect(within(table()).queryAllByTestId(/^services-table-row-/)).toHaveLength(
+			0,
 		);
-
-		await act(async () => {
-			render(<ServicesUsingMetrics />);
-		});
-
-		// Wait for the services to be rendered
-		await screen.findByText(/SampleApp/i);
-		expect(screen.getByText(/TestApp/i)).toBeInTheDocument();
+		expect(within(table()).getByText('No data')).toBeInTheDocument();
 	});
 });

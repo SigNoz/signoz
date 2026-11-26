@@ -1,8 +1,11 @@
-import { ComponentProps } from 'react';
+import { ComponentProps, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Rnd } from 'react-rnd';
 
 import './FloatingPanel.styles.scss';
+import type { Obstacle } from 'lib/obstacles/types';
+import { useAvoidObstacles } from './useAvoidObstacles';
+import { useKeepInViewport } from './useKeepInViewport';
 
 type EnableResizing = ComponentProps<typeof Rnd>['enableResizing'];
 
@@ -16,6 +19,10 @@ export interface FloatingPanelProps {
 	minHeight?: number;
 	enableResizing?: EnableResizing;
 	className?: string;
+	/** Moves and shrinks the panel back into view when the window resizes. */
+	keepInViewport?: boolean;
+	/** Slides the panel clear of these while they show; keep the array stable across renders. */
+	avoid?: Obstacle[];
 }
 
 function FloatingPanel({
@@ -28,7 +35,13 @@ function FloatingPanel({
 	minHeight = 300,
 	enableResizing,
 	className,
+	keepInViewport = false,
+	avoid,
 }: FloatingPanelProps): JSX.Element | null {
+	const rndRef = useRef<Rnd>(null);
+	const viewport = useKeepInViewport(rndRef, isOpen && keepInViewport);
+	useAvoidObstacles(rndRef, avoid, isOpen);
+
 	if (!isOpen) {
 		return null;
 	}
@@ -40,6 +53,7 @@ function FloatingPanel({
 
 	return createPortal(
 		<Rnd
+			ref={rndRef}
 			default={{
 				x: initialPosition.x,
 				y: initialPosition.y,
@@ -47,29 +61,12 @@ function FloatingPanel({
 				height,
 			}}
 			dragHandleClassName="floating-panel__drag-handle"
-			minWidth={minWidth}
-			minHeight={minHeight}
-			onDrag={(_e, d): void | false => {
-				const HEADER_HEIGHT = 40;
-				// Top: don't allow header to go above viewport
-				if (d.y < 0) {
-					return false;
-				}
-				// Left: don't allow panel to go off-screen left
-				if (d.x < 0) {
-					return false;
-				}
-				// Bottom: only header needs to be visible
-				if (d.y > window.innerHeight - HEADER_HEIGHT) {
-					return false;
-				}
-				// Right: at least the close button (~40px) stays visible
-				if (d.x > window.innerWidth - 40) {
-					return false;
-				}
-			}}
+			bounds="window"
+			minWidth={keepInViewport ? Math.min(minWidth, viewport.width) : minWidth}
+			minHeight={keepInViewport ? Math.min(minHeight, viewport.height) : minHeight}
 			className={`floating-panel ${className || ''}`}
 			enableResizing={enableResizing}
+			data-testid="floating-panel"
 		>
 			<div className="floating-panel__inner">{children}</div>
 		</Rnd>,

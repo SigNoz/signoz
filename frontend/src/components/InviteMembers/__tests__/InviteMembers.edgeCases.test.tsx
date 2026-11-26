@@ -2,14 +2,19 @@ import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import InviteMembers from '../InviteMembers';
+import { InviteMembersProps } from '../types';
 
+import { pickRole } from './roleSelectUtils';
 import {
 	CREATE_USER_ENDPOINT,
 	createErrorHandler,
 	createRolesHandler,
 	createSuccessHandler,
+	enterInviteEmail,
 	VALID_EMAIL,
 } from './testUtils';
+
+type InviteCallback = Required<InviteMembersProps>['onSuccess'];
 
 describe('InviteMembers - Edge Cases', () => {
 	beforeEach(() => {
@@ -22,7 +27,7 @@ describe('InviteMembers - Edge Cases', () => {
 
 	describe('reset behavior', () => {
 		it('clears all rows when reset is called', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -35,13 +40,12 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.type(emailInputs[1], 'bob@signoz.io');
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await enterInviteEmail(user, 1, 'bob@signoz.io');
 
 			await user.click(screen.getByTestId('reset-btn'));
 
-			const resetInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
+			const resetInputs = screen.getAllByTestId(/^invite-email-.*-field$/);
 			expect(resetInputs).toHaveLength(2);
 			resetInputs.forEach((input) => {
 				expect(input).toHaveValue('');
@@ -49,7 +53,7 @@ describe('InviteMembers - Edge Cases', () => {
 		});
 
 		it('clears results on reset', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -66,10 +70,8 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
@@ -84,7 +86,7 @@ describe('InviteMembers - Edge Cases', () => {
 
 	describe('results cleared on edit', () => {
 		it('clears API error when email is edited', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(createErrorHandler('already_exists', 'User already exists'));
 
@@ -98,17 +100,15 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
 				screen.findByTestId('invite-api-error'),
 			).resolves.toBeInTheDocument();
 
-			await user.type(emailInputs[0], 'x');
+			await user.type(screen.getAllByTestId(/^invite-email-.*-field$/)[0], 'x');
 
 			await waitFor(() => {
 				expect(screen.queryByTestId('invite-api-error')).not.toBeInTheDocument();
@@ -116,7 +116,7 @@ describe('InviteMembers - Edge Cases', () => {
 		});
 
 		it('clears API error when role is changed', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			server.use(createErrorHandler('already_exists', 'User already exists'));
 
@@ -130,20 +130,15 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 			await expect(
 				screen.findByTestId('invite-api-error'),
 			).resolves.toBeInTheDocument();
 
-			const viewerElements = screen.getAllByTitle('Viewer');
-			await user.click(viewerElements[0]);
-			const editorOptions = await screen.findAllByTitle('Editor');
-			await user.click(editorOptions[editorOptions.length - 1]);
+			await pickRole(user, 0, 'role-editor');
 
 			await waitFor(() => {
 				expect(screen.queryByTestId('invite-api-error')).not.toBeInTheDocument();
@@ -153,8 +148,8 @@ describe('InviteMembers - Edge Cases', () => {
 
 	describe('empty submission', () => {
 		it('does not submit when no rows are touched', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const onSuccess = jest.fn();
+			const user = userEvent.setup();
+			const onSuccess = jest.fn() as jest.MockedFunction<InviteCallback>;
 
 			render(
 				<InviteMembers
@@ -175,7 +170,7 @@ describe('InviteMembers - Edge Cases', () => {
 
 	describe('submitting state', () => {
 		it('disables submit while submitting', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 
 			render(
 				<InviteMembers
@@ -187,10 +182,8 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], VALID_EMAIL);
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, VALID_EMAIL);
+			await pickRole(user, 0, 'role-viewer');
 
 			const submitBtn = screen.getByTestId('submit-btn');
 			await user.click(submitBtn);
@@ -203,7 +196,7 @@ describe('InviteMembers - Edge Cases', () => {
 
 	describe('whitespace handling', () => {
 		it('trims email whitespace before submission', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const user = userEvent.setup();
 			const calls: { email: string }[] = [];
 
 			server.use(
@@ -224,10 +217,8 @@ describe('InviteMembers - Edge Cases', () => {
 				/>,
 			);
 
-			const emailInputs = screen.getAllByPlaceholderText('e.g. john@signoz.io');
-			await user.type(emailInputs[0], '  alice@signoz.io  ');
-			await user.click(screen.getAllByText('Select roles')[0]);
-			await user.click(await screen.findByTitle('Viewer'));
+			await enterInviteEmail(user, 0, '  alice@signoz.io  ');
+			await pickRole(user, 0, 'role-viewer');
 
 			await user.click(screen.getByTestId('submit-btn'));
 

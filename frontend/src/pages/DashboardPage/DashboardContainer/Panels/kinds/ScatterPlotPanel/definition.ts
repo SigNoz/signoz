@@ -1,7 +1,7 @@
 import { ChartScatter } from '@signozhq/icons';
 
 import type { PanelDefinition } from '../../types/panelDefinition';
-import { QueryModeKind } from '../../types/panelCapabilities';
+import { QueryTypeKind } from '../../types/panelCapabilities';
 import QueryBuilderEditorPane from 'pages/DashboardPage/DashboardContainer/PanelEditor/PanelEditorQueryBuilder/QueryBuilderEditorPane';
 import Renderer from './Renderer';
 import { MAX_PLOTTED_GROUPS } from './utils/prepareData';
@@ -12,7 +12,7 @@ import {
 	Querybuildertypesv5RequestTypeDTO,
 	TelemetrytypesSignalDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { QueryMode } from 'types/api/queryBuilder/queryBuilderData';
+import { EQueryType } from 'types/common/dashboard';
 import { QueryBuilderField } from 'components/QueryBuilderV2/queryBuilderFields.types';
 
 export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
@@ -23,16 +23,16 @@ export const definition: PanelDefinition<'signoz/ScatterPlotPanel'> = {
 	Renderer,
 	EditorPane: QueryBuilderEditorPane,
 	sections,
-	supportedQueryModesKindMap: {
-		[QueryMode.QUERY_BUILDER]: {
-			kind: QueryModeKind.SIGNAL,
+	supportedQueryTypesKindMap: {
+		[EQueryType.QUERY_BUILDER]: {
+			kind: QueryTypeKind.SIGNAL,
 			signals: [
 				TelemetrytypesSignalDTO.metrics,
 				TelemetrytypesSignalDTO.logs,
 				TelemetrytypesSignalDTO.traces,
 			],
 		},
-		[QueryMode.CLICKHOUSE]: { kind: QueryModeKind.SIGNAL_LESS },
+		[EQueryType.CLICKHOUSE]: { kind: QueryTypeKind.SIGNAL_LESS },
 	},
 	queryBuilderFields: {
 		// Pinned so it opens empty: the group-by template a click would seed names nothing here.

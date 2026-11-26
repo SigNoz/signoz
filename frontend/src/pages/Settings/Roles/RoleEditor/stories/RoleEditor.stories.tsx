@@ -2,18 +2,20 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import {
+	enterUnknownRelation,
+	showJsonEditor,
+} from './__story_mockdata__/roleEditor.play';
 import {
 	openLogsCard,
 	openSelectorWizard,
 	roleEditorMocks,
+	type RoleEditorArgs,
 	save,
 } from './RoleEditor.stories.mocks';
 
 import SettingsPage from '../../../Settings';
-
-type RoleEditorArgs = PageStoryArgs<typeof roleEditorMocks>;
 
 const pageStory = storyMocks(roleEditorMocks, { layout: 'app' });
 
@@ -49,6 +51,16 @@ export const EditExisting: Story = {
 /** The JSON the API stores, which is the other way the same grant is written. */
 export const JsonEditor: Story = {
 	args: { mode: 'edit', editor: 'json' },
+	play: showJsonEditor,
+};
+
+/**
+ * A grant whose relation the schema does not list, which schema validation
+ * underlines and reports under the editor, keeping the role from being saved.
+ */
+export const JsonUnknownRelation: Story = {
+	args: { mode: 'edit', editor: 'json' },
+	play: enterUnknownRelation,
 };
 
 /**
@@ -79,6 +91,7 @@ export const Tooltips: Story = {
 /** The copy action over the JSON editor, which the resource cards replace. */
 export const TooltipsInJsonEditor: Story = {
 	args: { tooltipsOpen: true, mode: 'edit', editor: 'json' },
+	play: showJsonEditor,
 };
 
 /** The Logs card's first verb granted over everything instead of nothing. */
@@ -128,11 +141,11 @@ export const TelemetryKeyScoped: Story = {
 			),
 		);
 		await userEvent.type(
-			screen.getByTestId('wizard-value-input-logs-read'),
+			screen.getByTestId('wizard-value-input-logs-read-field'),
 			'checkout',
 		);
 		await expect(
-			screen.getByTestId('wizard-selector-input-logs-read'),
+			screen.getByTestId('wizard-selector-input-logs-read-field'),
 		).toHaveValue('builder_query/resource.service.name/checkout');
 	},
 };
@@ -144,9 +157,13 @@ export const TelemetryKeyScoped: Story = {
 export const RoleCreatedToast: Story = {
 	play: async ({ canvasElement, args }): Promise<void> => {
 		await userEvent.type(
-			await within(canvasElement).findByTestId('role-name-input', undefined, {
-				timeout: 15_000,
-			}),
+			await within(canvasElement).findByTestId(
+				'role-name-input-field',
+				undefined,
+				{
+					timeout: 15_000,
+				},
+			),
 			'release-manager',
 		);
 		await save(canvasElement);
@@ -166,7 +183,7 @@ export const RoleUpdatedToast: Story = {
 	args: { mode: 'edit' },
 	play: async ({ canvasElement, args }): Promise<void> => {
 		const description = await within(canvasElement).findByTestId(
-			'role-description-input',
+			'role-description-input-field',
 			undefined,
 			{ timeout: 15_000 },
 		);

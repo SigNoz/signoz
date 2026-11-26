@@ -1,8 +1,7 @@
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { act, render, screen, userEvent, within } from 'tests/test-utils';
 
 import OverflowInputToolTip from './OverflowInputToolTip';
 
-const TOOLTIP_INNER_SELECTOR = '.ant-tooltip-inner';
 // Utility to mock overflow behaviour on inputs / elements.
 // Stubs HTMLElement.prototype.clientWidth, scrollWidth and offsetWidth used by component.
 function mockOverflow(clientWidth: number, scrollWidth: number): void {
@@ -22,26 +21,26 @@ function mockOverflow(clientWidth: number, scrollWidth: number): void {
 	});
 }
 
-function queryTooltipInner(): HTMLElement | null {
-	// find element that has role="tooltip" (could be the inner itself)
-	const tooltip = document.querySelector<HTMLElement>('[role="tooltip"]');
-	if (!tooltip) {
-		return document.querySelector(TOOLTIP_INNER_SELECTOR);
-	}
+const ANTD_TOOLTIP_OPEN_DELAY_MS = 100;
 
-	// if the role element is already the inner, return it; otherwise return its descendant
-	if (tooltip.classList.contains('ant-tooltip-inner')) {
-		return tooltip;
-	}
-	return (
-		(tooltip.querySelector(TOOLTIP_INNER_SELECTOR) as HTMLElement) ??
-		document.querySelector(TOOLTIP_INNER_SELECTOR)
-	);
+async function hoverPastOpenDelay(element: HTMLElement): Promise<void> {
+	jest.useFakeTimers();
+	const user = userEvent.setup({
+		advanceTimers: (ms) => jest.advanceTimersByTime(ms),
+	});
+	await user.hover(element);
+	act(() => {
+		jest.advanceTimersByTime(ANTD_TOOLTIP_OPEN_DELAY_MS * 2);
+	});
 }
 
 describe('OverflowInputToolTip', () => {
 	beforeEach(() => {
 		jest.restoreAllMocks();
+	});
+
+	afterEach(() => {
+		jest.useRealTimers();
 	});
 
 	it('shows tooltip when content overflows and input is clamped at maxAutoWidth', async () => {
@@ -51,16 +50,9 @@ describe('OverflowInputToolTip', () => {
 
 		await userEvent.hover(screen.getByRole('textbox'));
 
-		await waitFor(() => {
-			expect(queryTooltipInner()).not.toBeNull();
-		});
-
-		const tooltipInner = queryTooltipInner();
-		if (!tooltipInner) {
-			throw new Error('Tooltip inner not found');
-		}
+		const tooltip = await screen.findByRole('tooltip');
 		expect(
-			within(tooltipInner).getByText('Very long overflowing text'),
+			within(tooltip).getByText('Very long overflowing text'),
 		).toBeInTheDocument();
 	});
 
@@ -69,11 +61,9 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Short text" />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
-		await waitFor(() => {
-			expect(queryTooltipInner()).toBeNull();
-		});
+		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});
 
 	it('does NOT show tooltip when content overflows but input is NOT at maxAutoWidth', async () => {
@@ -81,11 +71,9 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Long but input not clamped" />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
-		await waitFor(() => {
-			expect(queryTooltipInner()).toBeNull();
-		});
+		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});
 
 	it('uncontrolled input allows typing', async () => {
@@ -102,24 +90,20 @@ describe('OverflowInputToolTip', () => {
 
 		render(<OverflowInputToolTip value="Overflowing!" disabled />);
 
-		await userEvent.hover(screen.getByRole('textbox'));
+		await hoverPastOpenDelay(screen.getByRole('textbox'));
 
-		await waitFor(() => {
-			expect(queryTooltipInner()).toBeNull();
-		});
+		expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
 	});
 
 	it('renders mirror span and input correctly (structural assertions instead of snapshot)', () => {
-		const { container } = render(<OverflowInputToolTip value="Snapshot" />);
-		const mirror = container.querySelector('.overflow-input-mirror');
-		const input = container.querySelector('input') as HTMLInputElement | null;
+		render(<OverflowInputToolTip value="Snapshot" />);
+		const mirror = screen.getByTestId('overflow-input-mirror');
+		const input = screen.getByRole('textbox');
 
-		expect(mirror).toBeTruthy();
-		expect(mirror?.textContent).toBe('Snapshot');
-		expect(input).toBeTruthy();
-		expect(input?.value).toBe('Snapshot');
+		expect(mirror.textContent).toBe('Snapshot');
+		expect(input).toHaveValue('Snapshot');
 
 		// width should be set inline (component calculates width on mount)
-		expect(input?.getAttribute('style')).toContain('width:');
+		expect(input.getAttribute('style')).toContain('width:');
 	});
 });

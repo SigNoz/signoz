@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { DrawerWrapper } from '@signozhq/ui/drawer';
+import { Drawer } from '@signozhq/ui/drawer';
 
 import { useDashboardSections } from '../../../hooks/useDashboardSections';
 import { releasePanelPickerTarget } from '../../../store/usePanelPickerTargetStore';
 import type { NewPanelTarget } from '../../../patchOps';
 import type { PanelKind } from '../../../Panels/types/panelKind';
-import { JS_DRIVEN_SLIDE } from '../../../utils/drawerSlide';
 import AddPanelSplitButton from './components/AddPanelSplitButton/AddPanelSplitButton';
 import NewSectionNameInput from './components/NewSectionNameInput/NewSectionNameInput';
 import PanelTypeBrowser from './components/PanelTypeBrowser/PanelTypeBrowser';
 import { usePanelPickerDraftSection } from './hooks/usePanelPickerDraftSection';
 import { usePanelPickerTarget } from './hooks/usePanelPickerTarget';
 import { buildSectionOptions, resolveDefaultSectionValue } from './utils';
-
-import styles from './PanelTypeSelectionModal.module.scss';
 
 const DEFAULT_PANEL_KIND: PanelKind = 'signoz/TimeSeriesPanel';
 
@@ -95,22 +92,17 @@ function PanelTypeSelectionModal({
 	}
 
 	return (
-		<DrawerWrapper
+		<Drawer
+			type="task"
+			stack="overlay"
 			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
-					handleClose();
-				}
-			}}
+			onClose={handleClose}
 			title="New panel"
-			subTitle="Pick a visualization. You can change it later."
-			direction="right"
+			description="Pick a visualization. You can change it later."
 			width="wide"
 			testId="panel-type-drawer"
-			drawerContentProps={JS_DRIVEN_SLIDE}
-			drawerDescriptionProps={{ className: styles.body }}
-			footer={
-				<div className={styles.footer}>
+			footerSuffix={
+				<>
 					{isCreatingSection && (
 						<NewSectionNameInput
 							value={newSectionTitle}
@@ -124,6 +116,8 @@ function PanelTypeSelectionModal({
 						color="secondary"
 						size="md"
 						onClick={handleClose}
+						width={90}
+						testId="panel-type-drawer-cancel"
 					>
 						Cancel
 					</Button>
@@ -136,11 +130,11 @@ function PanelTypeSelectionModal({
 						onConfirm={handleConfirm}
 						disabled={isCreatingSection && !sectionTitle}
 					/>
-				</div>
+				</>
 			}
 		>
 			<PanelTypeBrowser selectedKind={selectedKind} onSelect={setSelectedKind} />
-		</DrawerWrapper>
+		</Drawer>
 	);
 }
 

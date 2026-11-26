@@ -3,9 +3,11 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import { createShortcutActions } from 'constants/shortcutActions';
 import { listRulesV3Response } from 'mocks-server/__mockdata__/alert_rules';
 import { rest } from 'msw';
 
+import { accessFor } from '@/storybook/access/access';
 import {
 	countControl,
 	choiceControl,
@@ -13,6 +15,7 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	buildAlertRules,
 	buildServices,
@@ -51,7 +54,8 @@ interface QueryRangeV5Body {
 
 /**
  * Home detects logs and traces with one `query_range` call each, told apart by
- * the signal on the query spec.
+ * the signal on the query spec. The span-metrics services card queries metrics
+ * and falls through to its own handler, which follows the data state.
  */
 const signalOf = (body: QueryRangeV5Body): string | undefined =>
 	body.compositeQuery?.queries?.[0]?.spec?.signal;
@@ -129,6 +133,10 @@ export const homeMocks = defineStoryMocks({
 		rest.post('http://localhost/api/v5/query_range', async (req, res, ctx) => {
 			const signal = signalOf((await req.json()) as QueryRangeV5Body);
 
+			if (signal === 'metrics') {
+				return undefined;
+			}
+
 			const isActive =
 				signal === 'traces' ? values.tracesIngestion : values.logsIngestion;
 
@@ -137,6 +145,11 @@ export const homeMocks = defineStoryMocks({
 				ctx.json(queryRangeV5ScalarResponse(isActive ? INGESTED_COUNT : 0)),
 			);
 		}),
+
+		rest.post(
+			'http://localhost/api/v5/query_range',
+			response.json(() => spanMetricsResponse()),
+		),
 
 		rest.get('http://localhost/api/v1/user/preferences', (_req, res, ctx) =>
 			res(
@@ -191,13 +204,23 @@ export const homeMocks = defineStoryMocks({
 			'http://localhost/api/v1/service/top_level_operations',
 			response.json(() => topLevelOperationsResponse(values.services)),
 		),
-
-		rest.post(
-			'http://localhost/api/v4/query_range',
-			response.json(() => spanMetricsResponse()),
-		),
 	],
 	config: ({ servicesSource }) => ({
 		appContext: { featureFlags: homeFeatureFlags(servicesSource) },
 	}),
 });
+
+export type HomeArgs = PageStoryArgs<typeof homeMocks>;
+
+const noop = (): void => undefined;
+
+/** The palette only lists the actions the role it runs as is allowed. */
+export const paletteListsHome = (args: HomeArgs): boolean => {
+	const { legacyRole } = accessFor(args.access, args.permissions, args.revoked);
+	const home = createShortcutActions({
+		navigate: noop,
+		handleThemeChange: noop,
+	}).find((action) => action.id === 'home');
+
+	return !home?.roles || home.roles.includes(legacyRole);
+};

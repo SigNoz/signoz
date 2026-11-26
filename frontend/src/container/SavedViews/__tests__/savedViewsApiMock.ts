@@ -22,14 +22,14 @@ export function mockSavedViewsApi(
 		updateStatus = 204,
 		deleteStatus = 204,
 		createdId = 'view-new',
-		getDelay = 0,
+		getHeld,
 		listFailures = 0,
 	}: {
 		createStatus?: number;
 		updateStatus?: number;
 		deleteStatus?: number;
 		createdId?: string;
-		getDelay?: number;
+		getHeld?: Promise<void>;
 		listFailures?: number;
 	} = {},
 ): Requests {
@@ -51,16 +51,13 @@ export function mockSavedViewsApi(
 				}),
 			);
 		}),
-		rest.get(`${API}/:id`, (req, res, ctx) => {
+		rest.get(`${API}/:id`, async (req, res, ctx) => {
 			const view = views.find((v) => v.id === req.params.id);
 			if (!view) {
 				return res(ctx.status(404), ctx.json({ status: 'error' }));
 			}
-			return res(
-				ctx.delay(getDelay),
-				ctx.status(200),
-				ctx.json({ status: 'success', data: view }),
-			);
+			await getHeld;
+			return res(ctx.status(200), ctx.json({ status: 'success', data: view }));
 		}),
 		rest.post(API, async (req, res, ctx) => {
 			const body = await req.json();

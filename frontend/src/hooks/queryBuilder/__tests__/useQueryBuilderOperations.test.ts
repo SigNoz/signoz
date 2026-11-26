@@ -433,4 +433,57 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 			);
 		});
 	});
+
+	describe('handleChangeQueryData on a heatmap', () => {
+		it('moves the sort on the old field to the new one', () => {
+			setupMockQueryBuilder('heatmap');
+			const result = renderHookWithProps({
+				entityVersion: ENTITY_VERSION_V5,
+				query: {
+					...defaultMockQuery,
+					dataSource: DataSource.TRACES,
+					aggregations: [{ expression: 'duration_nano' }],
+					orderBy: [{ columnName: 'duration_nano', order: 'desc' }],
+				},
+			});
+			act(() => {
+				result.current.handleChangeQueryData('aggregations', [
+					{ expression: 'attribute.quantity' },
+				]);
+			});
+
+			expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+				0,
+				expect.objectContaining({
+					aggregations: [{ expression: 'attribute.quantity' }],
+					orderBy: [{ columnName: 'attribute.quantity', order: 'desc' }],
+				}),
+			);
+		});
+	});
+
+	describe('handleChangeDataSource', () => {
+		it.each([
+			['heatmap', ''],
+			['time_series', 'count() '],
+		])(
+			'seeds the traces aggregation on a %s panel with %j',
+			(panelType, expression) => {
+				setupMockQueryBuilder(panelType);
+
+				const result = renderHookWithProps({ entityVersion: ENTITY_VERSION_V5 });
+				act(() => {
+					result.current.handleChangeDataSource(DataSource.TRACES);
+				});
+
+				expect(mockHandleSetQueryData).toHaveBeenLastCalledWith(
+					0,
+					expect.objectContaining({
+						dataSource: DataSource.TRACES,
+						aggregations: [{ expression }],
+					}),
+				);
+			},
+		);
+	});
 });

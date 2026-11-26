@@ -22,6 +22,14 @@ interface ComparisonThresholdRowProps {
 	onLiveChange: (next: DashboardtypesComparisonThresholdDTO) => void;
 	onDiscard: () => void;
 	onRemove: () => void;
+	/** Off where a match always recolors the same thing (Geo Map). */
+	withFormat?: boolean;
+	/** How `yAxisUnit` reads in the unit mismatch message. */
+	scopeLabel?: string;
+	/** The column the value is compared against, where it isn't the panel's own. */
+	target?: string;
+	/** Shown when a unit is picked but `yAxisUnit` is unset. */
+	unscopedHint?: string;
 }
 
 /**
@@ -39,6 +47,10 @@ function ComparisonThresholdRow({
 	onLiveChange,
 	onDiscard,
 	onRemove,
+	withFormat = true,
+	scopeLabel = 'y-axis unit',
+	target,
+	unscopedHint,
 }: ComparisonThresholdRowProps): JSX.Element {
 	const { draft, setDraft, setValue } = useThresholdDraft(
 		threshold,
@@ -62,7 +74,9 @@ function ComparisonThresholdRow({
 			isEditing={isEditing}
 			isNew={isNew}
 			title={`${symbol} ${formatPanelValue(threshold.value, threshold.unit)}`}
-			subtitle={describeThresholdPaint(threshold.color, threshold.format)}
+			subtitle={[describeThresholdPaint(threshold.color, threshold.format), target]
+				.filter(Boolean)
+				.join(' · ')}
 			onEdit={onEdit}
 			onSave={(): void => onSave(draft)}
 			onDiscard={onDiscard}
@@ -81,7 +95,8 @@ function ComparisonThresholdRow({
 				onValueChange={setValue}
 				unit={draft.unit}
 				scopeUnit={yAxisUnit}
-				scopeLabel="y-axis unit"
+				scopeLabel={scopeLabel}
+				unscopedHint={unscopedHint}
 				onUnitChange={(unit): void => setDraft((d) => ({ ...d, unit }))}
 			/>
 			<ThresholdColorField
@@ -89,12 +104,14 @@ function ComparisonThresholdRow({
 				value={draft.color}
 				onChange={(color): void => setDraft((d) => ({ ...d, color }))}
 			/>
-			<ThresholdFormatField
-				testId={`comparison-threshold-format-${index}`}
-				value={draft.format}
-				color={draft.color}
-				onChange={(format): void => setDraft((d) => ({ ...d, format }))}
-			/>
+			{withFormat && (
+				<ThresholdFormatField
+					testId={`comparison-threshold-format-${index}`}
+					value={draft.format}
+					color={draft.color}
+					onChange={(format): void => setDraft((d) => ({ ...d, format }))}
+				/>
+			)}
 		</ThresholdRowShell>
 	);
 }

@@ -40,14 +40,6 @@ describe('JsonEditor', () => {
 
 			expect(screen.getByTestId('json-editor')).toBeInTheDocument();
 		});
-
-		it('renders JSON editor container div', async () => {
-			renderPage();
-			await switchToJsonMode();
-
-			const jsonEditor = screen.getByTestId('json-editor');
-			expect(jsonEditor.querySelector('div')).toBeInTheDocument();
-		});
 	});
 
 	describe('sync with interactive mode', () => {

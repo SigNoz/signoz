@@ -526,14 +526,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	]);
 
 	useEffect(() => {
-		if (!isAdmin) {
-			setHelpSupportDropdownMenuItems((prevState) =>
-				prevState.filter(
-					(item) => !('key' in item) || item.key !== 'invite-collaborators',
-				),
-			);
-		}
-
 		const showAddCreditCardModal =
 			!isPremiumSupportEnabled && !trialInfo?.trialConvertedToSubscription;
 
@@ -616,7 +608,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
-		isAdmin,
 		isChatSupportEnabled,
 		isPremiumSupportEnabled,
 		isCloudUser,

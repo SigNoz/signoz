@@ -1,10 +1,35 @@
-import { screen, waitFor } from 'tests/test-utils';
+import {
+	alertRulesFixture,
+	listRulesV3Response,
+} from 'mocks-server/__mockdata__/alert_rules';
+import { server } from 'mocks-server/server';
+import { rest } from 'msw';
+import { screen } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 
 describe('ListAlertRules — list rendering', () => {
 	beforeEach(() => {
 		jest.setSystemTime(new Date('2023-10-20T12:00:00Z'));
+	});
+
+	it('asks for rules sorted by status, firing first, by default', async () => {
+		const requests: URLSearchParams[] = [];
+		server.use(
+			rest.get('http://localhost/api/v3/rules', (req, res, ctx) => {
+				requests.push(req.url.searchParams);
+				return res(
+					ctx.status(200),
+					ctx.json(listRulesV3Response(alertRulesFixture, req.url.searchParams)),
+				);
+			}),
+		);
+		renderListAlertRules();
+
+		await screen.findByTestId('alert-row-rule-1-name');
+
+		expect(requests[0].get('sort')).toBe('state');
+		expect(requests[0].get('order')).toBe('desc');
 	});
 
 	it('renders alert rules from API', async () => {
@@ -27,9 +52,7 @@ describe('ListAlertRules — list rendering', () => {
 	it('renders state badges via STATE_CONFIG mapping', async () => {
 		renderListAlertRules();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('alert-row-rule-1-state')).toBeInTheDocument(),
-		);
+		await screen.findByTestId('alert-row-rule-1-state');
 
 		expect(screen.getByTestId('alert-row-rule-1-state')).toHaveTextContent(
 			'Firing',
@@ -47,9 +70,7 @@ describe('ListAlertRules — list rendering', () => {
 	it('renders state badges with semantic colors', async () => {
 		renderListAlertRules();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('alert-row-rule-1-state')).toBeInTheDocument(),
-		);
+		await screen.findByTestId('alert-row-rule-1-state');
 
 		expect(screen.getByTestId('alert-row-rule-1-state')).toHaveAttribute(
 			'data-color',
@@ -69,44 +90,39 @@ describe('ListAlertRules — list rendering', () => {
 		);
 	});
 
-	it('renders severity badges for rules with severity', async () => {
+	it('renders a badge per threshold under the Thresholds column', async () => {
 		renderListAlertRules();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('alert-row-rule-1-severity')).toBeInTheDocument(),
-		);
-
-		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveTextContent(
-			'critical',
-		);
-		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveTextContent(
-			'warning',
-		);
-		expect(screen.getByTestId('alert-row-rule-3-severity')).toHaveTextContent(
-			'info',
-		);
-		expect(screen.getByTestId('alert-row-rule-4-severity')).toHaveTextContent(
-			'critical',
-		);
-		expect(screen.getByTestId('alert-row-rule-5-severity')).toHaveTextContent(
+		await expect(
+			screen.findByTestId('alert-row-rule-1-thresholds'),
+		).resolves.toHaveTextContent('criticalwarning');
+		expect(screen.getByTitle('Thresholds')).toBeInTheDocument();
+		expect(
+			screen.getByTestId('alert-row-rule-1-thresholds-critical'),
+		).toHaveAttribute('data-color', 'danger');
+		expect(
+			screen.getByTestId('alert-row-rule-1-thresholds-warning'),
+		).toHaveAttribute('data-color', 'warning');
+		expect(
+			screen.getByTestId('alert-row-rule-3-thresholds-info'),
+		).toHaveAttribute('data-color', 'primary');
+		expect(screen.getByTestId('alert-row-rule-5-thresholds')).toHaveTextContent(
 			'-',
 		);
-		expect(screen.getByTestId('alert-row-rule-1-severity')).toHaveAttribute(
-			'data-color',
-			'danger',
-		);
-		expect(screen.getByTestId('alert-row-rule-2-severity')).toHaveAttribute(
-			'data-color',
-			'warning',
-		);
+	});
+
+	it('shows the severity label among the labels', async () => {
+		renderListAlertRules();
+
+		await expect(
+			screen.findByTestId('alert-row-rule-1-labels'),
+		).resolves.toHaveTextContent('severity: critical');
 	});
 
 	it('renders header controls (search, states, columns, new alert)', async () => {
 		renderListAlertRules();
 
-		await waitFor(() =>
-			expect(screen.getByTestId('alert-row-rule-1-name')).toBeInTheDocument(),
-		);
+		await screen.findByTestId('alert-row-rule-1-name');
 
 		expect(screen.getByTestId('alert-rules-list-search')).toBeInTheDocument();
 		expect(
@@ -114,11 +130,8 @@ describe('ListAlertRules — list rendering', () => {
 		).toBeInTheDocument();
 		expect(screen.getByTestId('alert-rules-filter-states')).toBeInTheDocument();
 		expect(screen.getByTestId('alert-columns-button')).toBeInTheDocument();
-		expect(
-			screen.getByTestId('list-alerts-new-alert-button'),
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: /new alert/i }),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('list-alerts-new-alert-button')).toHaveTextContent(
+			'New Alert',
+		);
 	});
 });

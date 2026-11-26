@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, userEvent, within } from 'tests/test-utils';
 import * as alertState from 'container/CreateAlert/context';
 
 import AdvancedOptions from '../AdvancedOptions';
@@ -14,8 +14,6 @@ jest.spyOn(alertState, 'useCreateAlertState').mockReturnValue(
 const ALERT_WHEN_DATA_STOPS_COMING_TEXT = 'Alert when data stops coming';
 const MINIMUM_DATA_REQUIRED_TEXT = 'Minimum data required';
 const ACCOUNT_FOR_DATA_DELAY_TEXT = 'Account for data delay';
-const ADVANCED_OPTION_ITEM_CLASS = '.advanced-option-item';
-const SWITCH_ROLE_SELECTOR = '[role="switch"]';
 
 describe('AdvancedOptions', () => {
 	it('should render evaluation cadence and the advanced options minimized by default', () => {
@@ -58,26 +56,24 @@ describe('AdvancedOptions', () => {
 		// expect(screen.getByText('Account for data delay')).toBeInTheDocument();
 	});
 
-	it('"Alert when data stops coming" works as expected', () => {
+	it('"Alert when data stops coming" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
-		const alertWhenDataStopsComingContainer = screen
-			.getByText(ALERT_WHEN_DATA_STOPS_COMING_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const alertWhenDataStopsComingSwitch =
-			alertWhenDataStopsComingContainer?.querySelector(
-				SWITCH_ROLE_SELECTOR,
-			) as HTMLElement;
-
-		fireEvent.click(alertWhenDataStopsComingSwitch);
+		await user.click(
+			within(
+				screen.getByTestId('send-notification-if-data-is-missing-container'),
+			).getByRole('switch'),
+		);
 
 		const toleranceInput = screen.getByPlaceholderText(
 			'Enter tolerance limit...',
 		);
-		fireEvent.change(toleranceInput, { target: { value: '10' } });
+		await user.tripleClick(toleranceInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_SEND_NOTIFICATION_IF_DATA_IS_MISSING',
@@ -88,25 +84,24 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
-	it('"Minimum data required" works as expected', () => {
+	it('"Minimum data required" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
-		const minimumDataRequiredContainer = screen
-			.getByText(MINIMUM_DATA_REQUIRED_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const minimumDataRequiredSwitch = minimumDataRequiredContainer?.querySelector(
-			SWITCH_ROLE_SELECTOR,
-		) as HTMLElement;
-
-		fireEvent.click(minimumDataRequiredSwitch);
+		await user.click(
+			within(screen.getByTestId('enforce-minimum-datapoints-container')).getByRole(
+				'switch',
+			),
+		);
 
 		const minimumDataRequiredInput = screen.getByPlaceholderText(
 			'Enter minimum datapoints...',
 		);
-		fireEvent.change(minimumDataRequiredInput, { target: { value: '10' } });
+		await user.tripleClick(minimumDataRequiredInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_ENFORCE_MINIMUM_DATAPOINTS',
@@ -116,23 +111,25 @@ describe('AdvancedOptions', () => {
 		});
 	});
 
-	it.skip('"Account for data delay" works as expected', () => {
+	it.skip('"Account for data delay" works as expected', async () => {
+		const user = userEvent.setup();
 		render(<AdvancedOptions />);
 
 		const collapse = screen.getByRole('button', { name: /ADVANCED OPTIONS/i });
-		fireEvent.click(collapse);
+		await user.click(collapse);
 
-		const accountForDataDelayContainer = screen
-			.getByText(ACCOUNT_FOR_DATA_DELAY_TEXT)
-			.closest(ADVANCED_OPTION_ITEM_CLASS);
-		const accountForDataDelaySwitch = accountForDataDelayContainer?.querySelector(
-			SWITCH_ROLE_SELECTOR,
-		) as HTMLElement;
+		const accountForDataDelayContainer = screen.getByTestId(
+			'delay-evaluation-container',
+		);
+		expect(accountForDataDelayContainer).toHaveTextContent(
+			ACCOUNT_FOR_DATA_DELAY_TEXT,
+		);
 
-		fireEvent.click(accountForDataDelaySwitch);
+		await user.click(within(accountForDataDelayContainer).getByRole('switch'));
 
 		const delayInput = screen.getByPlaceholderText('Enter delay...');
-		fireEvent.change(delayInput, { target: { value: '10' } });
+		await user.tripleClick(delayInput);
+		await user.paste('10');
 
 		expect(mockSetAdvancedOptions).toHaveBeenCalledWith({
 			type: 'SET_DELAY_EVALUATION',

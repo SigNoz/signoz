@@ -21,6 +21,7 @@ import LockedIndicator from './components/LockedIndicator/LockedIndicator';
 import DashboardChangedDialog from './components/DashboardChangedDialog/DashboardChangedDialog';
 import DashboardSettingsDrawer from './components/DashboardSettingsDrawer/DashboardSettingsDrawer';
 import { useDashboardStaleCheck } from './hooks/useDashboardStaleCheck';
+import { useDashboardDefaultTime } from './hooks/useDashboardDefaultTime';
 import { resolveDashboardImage } from 'pages/DashboardPage/DashboardContainer/dashboardIcons';
 
 interface DashboardContainerProps {
@@ -43,8 +44,9 @@ function DashboardContainer({
 	readOnly = false,
 	controls,
 	queryRunner,
-}: DashboardContainerProps): JSX.Element {
+}: DashboardContainerProps): JSX.Element | null {
 	const spec = dashboard.spec;
+	const isTimeInitialized = useDashboardDefaultTime(dashboard.id, spec.duration);
 	const image = resolveDashboardImage(dashboard.image);
 	const name = spec.display.name;
 
@@ -83,6 +85,10 @@ function DashboardContainer({
 	const showHeader = Object.values(useDashboardControlGroup('header')).some(
 		Boolean,
 	);
+
+	if (!isTimeInitialized) {
+		return null;
+	}
 
 	// In full screen show only the sections and panels — the header/toolbar chrome
 	// is hidden for a clean presentation view (exit with Esc).

@@ -49,7 +49,7 @@ function RuleStatesFilter({
 		<MultiSelectFilter
 			value={draft}
 			options={STATE_OPTIONS}
-			placeholder="State"
+			placeholder="Status"
 			testId="alert-rules-filter-states"
 			onChange={handleChange}
 			onDropdownVisibleChange={handleDropdownVisibleChange}

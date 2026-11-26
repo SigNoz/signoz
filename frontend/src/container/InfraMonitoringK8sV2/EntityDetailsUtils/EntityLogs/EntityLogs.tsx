@@ -61,7 +61,6 @@ function EntityLogsContent({
 }: Omit<Props, 'initialExpression'>): JSX.Element {
 	const { timeRange } = useEntityDetailsTime();
 	const virtuosoRef = useRef<VirtuosoHandle>(null);
-	const logDetailContainerRef = useRef<HTMLDivElement>(null);
 
 	const { safeNavigate } = useSafeNavigate();
 
@@ -238,6 +237,7 @@ function EntityLogsContent({
 			<Card bordered={false} className={styles.listCard}>
 				<OverlayScrollbar isVirtuoso>
 					<Virtuoso
+						data-testid="entity-logs-virtuoso-scroller"
 						key="entity-logs-virtuoso"
 						ref={virtuosoRef}
 						data={logs}
@@ -295,22 +295,20 @@ function EntityLogsContent({
 						{renderContent}
 					</div>
 				)}
-				<div ref={logDetailContainerRef} data-log-detail-ignore="true" />
-				{selectedTab && activeLog && (
-					<LogDetail
-						log={activeLog}
-						onClose={handleCloseLogDetail}
-						logs={logs}
-						onNavigateLog={handleSetActiveLog}
-						selectedTab={selectedTab}
-						onApplyLogFilter={onApplyLogFilter}
-						onScrollToLog={handleScrollToLog}
-						handleOpenInExplorer={(e) => handleOpenInExplorer(e, activeLog)}
-						getContainer={(): HTMLElement =>
-							logDetailContainerRef.current || document.body
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+					selectedTab={selectedTab}
+					onApplyLogFilter={onApplyLogFilter}
+					onScrollToLog={handleScrollToLog}
+					handleOpenInExplorer={(e): void => {
+						if (activeLog) {
+							handleOpenInExplorer(e, activeLog);
 						}
-					/>
-				)}
+					}}
+				/>
 			</div>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 
@@ -22,25 +22,12 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	default: jest.fn(),
 }));
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
-}));
-
-// jsdom has no layout, and Floating UI's getComputedStyle walk over every
-// popover ancestor costs ~1 s per open here, enough to time out under load.
-jest.mock('@floating-ui/dom', () => ({
-	...jest.requireActual('@floating-ui/dom'),
-	autoUpdate: (): (() => void) => (): void => {},
-	computePosition: (
-		_reference: unknown,
-		_floating: unknown,
-		{ placement = 'bottom', strategy = 'absolute' } = {},
-	): Promise<unknown> =>
-		Promise.resolve({ x: 0, y: 0, placement, strategy, middlewareData: {} }),
 }));
 
 type AccountSettingsDrawerProps = ComponentProps<typeof AccountSettingsDrawer>;
@@ -103,7 +90,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('keeps save disabled until the project IDs actually change', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		expect(screen.getByTestId('gcp-update-account-btn')).toHaveAttribute(
@@ -122,7 +109,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('sends the updated project IDs while preserving the immutable deployment fields', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
@@ -165,7 +152,7 @@ describe('GCP AccountSettingsDrawer', () => {
 	});
 
 	it('blocks the update and shows a validation error when every project ID is removed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		// Strip every tag via its remove icon; the list shrinks as we go.
@@ -201,7 +188,7 @@ describe('GCP AccountSettingsDrawer', () => {
 			),
 		);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderDrawer();
 
 		await addProjectIds(user, 'gcp-edit-project-ids-select', ['project-c']);
@@ -214,7 +201,7 @@ describe('GCP AccountSettingsDrawer', () => {
 		await user.click(screen.getByTestId('gcp-update-account-btn'));
 
 		await waitFor(() => {
-			expect(toast.error).toHaveBeenCalledWith(
+			expect(toast.danger).toHaveBeenCalledWith(
 				'Failed to update account settings',
 				expect.anything(),
 			);

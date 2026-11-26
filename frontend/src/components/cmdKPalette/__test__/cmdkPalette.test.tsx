@@ -111,11 +111,13 @@ describe('CmdKPalette', () => {
 	});
 
 	it('clicking a navigation item navigates to the correct route', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const homeItem = screen.getByText(HOME_LABEL);
-		await user.click(homeItem);
+		await user.type(
+			screen.getByTestId('cmdk-palette-search'),
+			`${HOME_LABEL}{Enter}`,
+		);
 
 		expect(mockNavigate).toHaveBeenCalledWith(ROUTES.HOME);
 	});
@@ -139,17 +141,20 @@ describe('CmdKPalette', () => {
 	it('items render with icons when provided', () => {
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const iconHolders = document.querySelectorAll('.cmd-item-icon');
-		expect(iconHolders.length).toBeGreaterThan(0);
+		expect(
+			screen.getByTestId('cmdk-palette-item-home-prefix'),
+		).toBeInTheDocument();
 		expect(screen.getByText(HOME_LABEL)).toBeInTheDocument();
 	});
 
 	it('closing the palette via handleInvoke sets open to false', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(<CmdKPalette userRole="ADMIN" />);
 
-		const dashItem = screen.getByText('Go to Dashboards');
-		await user.click(dashItem);
+		await user.type(
+			screen.getByTestId('cmdk-palette-search'),
+			'Go to Dashboards{Enter}',
+		);
 
 		// last call from handleInvoke should set open to false
 		expect(mockSetOpen).toHaveBeenCalledWith(false);

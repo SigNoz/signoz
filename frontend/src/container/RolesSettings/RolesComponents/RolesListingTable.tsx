@@ -147,7 +147,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 
 	if (isLoading) {
 		return (
-			<div className={styles.rolesListingTable}>
+			<div className={styles.rolesListingTable} data-testid="roles-list-loading">
 				<Skeleton active paragraph={{ rows: 5 }} />
 			</div>
 		);
@@ -271,7 +271,7 @@ function RolesListContent({ searchQuery }: RolesListContentProps): JSX.Element {
 export default withAuthZContent<RolesListContentProps>(RolesListContent, {
 	checks: [RoleListPermission],
 	fallbackOnLoading: (
-		<div className={styles.rolesListingTable}>
+		<div className={styles.rolesListingTable} data-testid="roles-list-loading">
 			<Skeleton active paragraph={{ rows: 5 }} />
 		</div>
 	),

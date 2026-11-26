@@ -1,6 +1,9 @@
 import { expect, test } from '../../drivers/logs';
 
 test.describe('Logs Explorer — linked row in Column format', () => {
+	// The open drawer covers the table at 1280 wide, so the row cannot be clicked.
+	test.use({ viewport: { width: 1600, height: 900 } });
+
 	test('TC-01 the linked row in a newly opened tab is highlighted and toggles the details drawer on click', async ({
 		logs,
 	}) => {

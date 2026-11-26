@@ -3,6 +3,7 @@ import { Select, Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Info } from '@signozhq/icons';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 
 import { ALL_SELECTED_VALUE } from '../constants';
 import { useCreateAlertState } from '../context';
@@ -18,14 +19,13 @@ function MultipleNotifications(): JSX.Element {
 		[notificationSettings.multipleNotifications],
 	);
 
+	const { queryData } = getActiveBuilder(currentQuery);
+
 	const spaceAggregationOptions = useMemo(() => {
-		const allGroupBys = currentQuery.builder.queryData?.reduce<string[]>(
-			(acc, query) => {
-				const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
-				return [...acc, ...groupByKeys];
-			},
-			[],
-		);
+		const allGroupBys = queryData.reduce<string[]>((acc, query) => {
+			const groupByKeys = query.groupBy?.map((groupBy) => groupBy.key) || [];
+			return [...acc, ...groupByKeys];
+		}, []);
 		const uniqueGroupBys = [...new Set(allGroupBys)];
 		const options = uniqueGroupBys.map((key) => ({
 			label: key,
@@ -44,7 +44,7 @@ function MultipleNotifications(): JSX.Element {
 			];
 		}
 		return options;
-	}, [currentQuery.builder.queryData, isAllOptionSelected]);
+	}, [queryData, isAllOptionSelected]);
 
 	const isMultipleNotificationsEnabled = spaceAggregationOptions.length > 0;
 
@@ -106,9 +106,17 @@ function MultipleNotifications(): JSX.Element {
 						data-testid="multiple-notifications-select"
 					/>
 					{isMultipleNotificationsEnabled && (
-						<Typography.Text className="multiple-notifications-select-description">
+						<Typography
+							variant="paragraph"
+							size="small"
+							weight="regular"
+							color="secondary"
+							as="p"
+							marginTop={2}
+							textOverflow="wrap"
+						>
 							{groupByDescription}
-						</Typography.Text>
+						</Typography>
 					)}
 				</div>
 			</Tooltip>
@@ -124,15 +132,31 @@ function MultipleNotifications(): JSX.Element {
 	return (
 		<div className="multiple-notifications-container">
 			<div className="multiple-notifications-header">
-				<Typography.Text className="multiple-notifications-header-title">
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="medium"
+					color="main"
+					as="p"
+					display="flex"
+					gap={4}
+					textOverflow="wrap"
+				>
 					Group alerts by{' '}
 					<Tooltip title="Group similar alerts together to reduce notification volume. Leave empty to combine all matching alerts into one notification without grouping.">
 						<Info size={16} />
 					</Tooltip>
-				</Typography.Text>
-				<Typography.Text className="multiple-notifications-header-description">
+				</Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Combine alerts with the same field values into a single notification.
-				</Typography.Text>
+				</Typography>
 			</div>
 			{multipleNotificationsInput}
 		</div>

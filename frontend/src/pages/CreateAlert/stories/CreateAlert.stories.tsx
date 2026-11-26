@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
-
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { createAlertMocks } from './CreateAlert.stories.mocks';
 import {
-	clickFooterButton,
-	createAlertMocks,
-	fillValidAlert,
-} from './CreateAlert.stories.mocks';
+	enableRepeatNotifications,
+	openMatchTypeTooltip,
+	saveValidAlert,
+	sendTestNotification,
+} from './__story_mockdata__/createAlert.play';
 
 import CreateAlertPage from '../index';
 
@@ -52,33 +52,19 @@ export const LogsAlert: Story = {
 };
 
 /**
+ * An AI traces alert, whose query section has only the AI Query Builder tab,
+ * querying traces.
+ */
+export const AITracesAlert: Story = {
+	args: { alertMode: 'ai-traces' },
+};
+
+/**
  * Anomaly detection: the condition is a number of deviations from the seasonal
  * forecast instead of a fixed threshold, and only builder metric queries apply.
  */
 export const AnomalyAlert: Story = {
 	args: { alertMode: 'anomaly' },
-};
-
-/**
- * An anomaly alert handed to routing policies: the channel picker leaves the
- * condition, and the banner points at the policies that route it instead.
- */
-export const AnomalyAlertRoutingPolicies: Story = {
-	args: { alertMode: 'anomaly' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const canvas = within(canvasElement);
-
-		await userEvent.click(
-			await canvas.findByTestId('routing-policies-switch', undefined, {
-				timeout: 15_000,
-			}),
-		);
-		await waitFor(() =>
-			expect(
-				canvas.queryByTestId('threshold-notification-channel-select'),
-			).not.toBeInTheDocument(),
-		);
-	},
 };
 
 /**
@@ -91,52 +77,29 @@ export const AnomalyAlertRoutingPolicies: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		const select = await within(canvasElement).findByTestId(
-			'alert-threshold-match-type-select',
-			undefined,
-			{ timeout: 15_000 },
-		);
-
-		// The select opens off a mousedown on its inner selector, so a click on
-		// the wrapper the test id sits on reaches nothing.
-		await userEvent.click(within(select).getByRole('combobox'));
-
-		await userEvent.hover(
-			await screen.findByText('ALL THE TIME', undefined, { timeout: 15_000 }),
-		);
-		await screen.findByText('Example:', undefined, { timeout: 15_000 });
-	},
+	play: openMatchTypeTooltip,
 };
 
 /** A valid rule saved from the footer: the toast raised once the POST answers. */
 export const AlertRuleCreatedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await fillValidAlert(canvasElement);
-		await clickFooterButton(canvasElement, 'save-alert-rule-button');
-		await waitFor(() =>
-			expect(screen.getByText(/alert rule created successfully/i)).toBeVisible(),
-		);
-	},
+	play: saveValidAlert,
 };
 
 /** Test Notification on a rule whose condition fires: the success toast. */
 export const TestNotificationSentToast: Story = {
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await fillValidAlert(canvasElement);
-		await clickFooterButton(canvasElement, 'test-notification-button');
-		if (args.testNotification === 'sent') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/test notification sent successfully/i),
-				).toBeVisible(),
-			);
-		}
-	},
+	play: sendTestNotification,
 };
 
 /** Test Notification on a rule that finds nothing to alert on: the error toast. */
 export const TestNotificationNoAlertsToast: Story = {
 	args: { testNotification: 'no-alerts' },
-	play: TestNotificationSentToast.play,
+	play: sendTestNotification,
+};
+
+/**
+ * Repeat notifications turned on: the interval, its unit and the conditions it
+ * repeats under, on one line beside the option.
+ */
+export const RepeatNotifications: Story = {
+	play: enableRepeatNotifications,
 };

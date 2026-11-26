@@ -5,7 +5,7 @@ import TooltipList from 'lib/uPlotV2/components/Tooltip/components/TooltipList/T
 import TooltipPinnedBadge from 'lib/uPlotV2/components/Tooltip/components/TooltipPinnedBadge/TooltipPinnedBadge';
 
 import { PieTooltipData } from 'lib/visualization/charts/Pie/types';
-import PieTooltipFooter from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltipFooter';
+import GroupedTooltipFooter from 'lib/visualization/panels/components/GroupedTooltipFooter';
 
 import styles from 'lib/visualization/charts/Pie/components/PieTooltip/PieTooltip.module.scss';
 
@@ -59,7 +59,7 @@ export default function PieTooltipContent({
 				</>
 			)}
 			{showFooter && (
-				<PieTooltipFooter
+				<GroupedTooltipFooter
 					isGroup={!!groupedMembers}
 					isPinned={isPinned}
 					canDrilldown={canDrilldown}

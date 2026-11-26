@@ -1,61 +1,20 @@
 import { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from '@testing-library/react';
+import { screen, userEvent, waitFor, within } from 'tests/test-utils';
 import ROUTES from 'constants/routes';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { encode } from 'js-base64';
+import {
+	fieldStringValuesResponse,
+	metricFieldKeysResponse,
+} from 'mocks-server/__mockdata__/fields';
+import { rest, server } from 'mocks-server/server';
 import { TestRouter } from 'tests/router';
 import { resetTestRoute } from 'tests/router-utils';
 
 import ResourceAttributesFilter from '../ResourceAttributesFilter';
-
-jest.mock('api/metrics/getResourceAttributes', () => ({
-	getResourceAttributesTagKeys: jest.fn(),
-	getResourceAttributesTagValues: jest.fn(),
-}));
-
-// eslint-disable-next-line import/first, import/order
-import {
-	getResourceAttributesTagKeys,
-	getResourceAttributesTagValues,
-	// eslint-disable-next-line import/newline-after-import
-} from 'api/metrics/getResourceAttributes';
-
-const mockTagKeys = getResourceAttributesTagKeys as jest.MockedFunction<
-	typeof getResourceAttributesTagKeys
->;
-const mockTagValues = getResourceAttributesTagValues as jest.MockedFunction<
-	typeof getResourceAttributesTagValues
->;
-
-function tagKeysPayload(keys: string[]): never {
-	return {
-		statusCode: 200,
-		error: null,
-		message: 'ok',
-		payload: {
-			data: {
-				attributeKeys: keys.map((key) => ({
-					key,
-					dataType: 'string',
-					type: 'resource',
-					isColumn: false,
-				})),
-			},
-		},
-	} as unknown as never;
-}
-
-function tagValuesPayload(values: string[]): never {
-	return {
-		statusCode: 200,
-		error: null,
-		message: 'ok',
-		payload: { data: { stringAttributeValues: values } },
-	} as unknown as never;
-}
 
 function routeWithQueries(
 	queries: IResourceAttribute[],
@@ -91,13 +50,28 @@ function renderFilter(route: string): void {
 }
 
 describe('ResourceAttributesFilter', () => {
+	let keysRequests: URLSearchParams[];
+	let valuesRequests: URLSearchParams[];
+
 	beforeEach(() => {
-		mockTagKeys.mockReset();
-		mockTagValues.mockReset();
-		mockTagKeys.mockResolvedValue(
-			tagKeysPayload(['resource_deployment.environment']),
+		keysRequests = [];
+		valuesRequests = [];
+		server.use(
+			rest.get('*/api/v1/fields/keys', (req, res, ctx) => {
+				keysRequests.push(req.url.searchParams);
+				return res(
+					ctx.status(200),
+					ctx.json(metricFieldKeysResponse(['resource_deployment.environment'])),
+				);
+			}),
+			rest.get('*/api/v1/fields/values', (req, res, ctx) => {
+				valuesRequests.push(req.url.searchParams);
+				return res(
+					ctx.status(200),
+					ctx.json(fieldStringValuesResponse(['production', 'staging'])),
+				);
+			}),
 		);
-		mockTagValues.mockResolvedValue(tagValuesPayload(['production', 'staging']));
 		resetTestRoute();
 	});
 
@@ -127,9 +101,9 @@ describe('ResourceAttributesFilter', () => {
 		);
 		await waitFor(() =>
 			expect(
-				screen
-					.getByTestId('resource-environment-filter')
-					.querySelector('.ant-select-selection-item'),
+				within(screen.getByTestId('resource-environment-filter')).getByTitle(
+					'production',
+				),
 			).toHaveTextContent('production'),
 		);
 	});
@@ -139,25 +113,44 @@ describe('ResourceAttributesFilter', () => {
 		renderFilter('/services');
 
 		const environmentFilter = screen.getByTestId('resource-environment-filter');
-		await user.click(
-			environmentFilter.querySelector('input') as HTMLInputElement,
-		);
+		const environmentInput = within(environmentFilter).getByRole('combobox');
+		await user.click(environmentInput);
 
 		await user.click(await screen.findByTitle('production'));
 
 		await waitFor(() =>
-			expect(
-				screen.getByTitle('staging').closest('.ant-select-dropdown'),
-			).not.toHaveClass('ant-select-dropdown-hidden'),
+			expect(environmentInput).toHaveAttribute('aria-expanded', 'true'),
 		);
 
 		await user.click(screen.getByTitle('staging'));
 
 		await waitFor(() => {
-			const selected = Array.from(
-				environmentFilter.querySelectorAll('.ant-select-selection-item-content'),
-			).map((node) => node.textContent);
+			const selected = within(environmentFilter)
+				.getAllByText(/^(production|staging)$/, {
+					selector: '.ant-select-selection-item-content',
+				})
+				.map((node) => node.textContent);
 			expect(selected).toStrictEqual(['production', 'staging']);
+		});
+	});
+
+	it('lists environments from the span metric on the v5 fields API', async () => {
+		renderFilter('/services');
+
+		await waitFor(() => expect(valuesRequests).toHaveLength(1));
+		expect(
+			keysRequests.map((params) => Object.fromEntries(params)),
+		).toStrictEqual([
+			{
+				signal: 'metrics',
+				metricName: 'signoz_calls_total',
+				searchText: 'resource_deployment.environment',
+			},
+		]);
+		expect(Object.fromEntries(valuesRequests[0])).toStrictEqual({
+			signal: 'metrics',
+			metricName: 'signoz_calls_total',
+			name: 'resource_deployment.environment',
 		});
 	});
 });

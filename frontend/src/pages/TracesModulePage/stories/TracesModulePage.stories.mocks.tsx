@@ -9,15 +9,19 @@ import ROUTES from 'constants/routes';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { spanPercentilesResponse } from 'pages/TraceDetailsV3/stories/__story_mockdata__/traceDetails';
+import type { CreateFunnelPayload } from 'types/api/traceFunnels';
 import type { QueryRangeRequestV5 } from 'types/api/v5/queryRange';
+import { USER_ROLES } from 'types/roles';
 import { explorerViewToPanelType } from 'utils/explorerUtils';
 
+import { accessFor } from '@/storybook/access/access';
 import {
 	choiceControl,
 	countControl,
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { fieldValuesResponse } from '@/storybook/msw/__story_mockdata__/fields';
 import {
 	queryRangeV5RawResponse,
@@ -28,6 +32,7 @@ import {
 
 import {
 	exportDashboardsResponse,
+	ORDERS_SPAN_ROWS,
 	savedTraceViewsResponse,
 	SPAN_LOGS_STATES,
 	spanLogRows,
@@ -192,6 +197,36 @@ export const tracesMocks = defineStoryMocks({
 			response.json(() => traceFunnelsResponse(values.funnels)),
 		),
 
+		// The backend wraps a taken name in a 400, which the dialog shows under the field.
+		rest.post(
+			'http://localhost/api/v1/trace-funnels/new',
+			async (req, res, ctx) => {
+				const { funnel_name: name } = (await req.json()) as CreateFunnelPayload;
+				const taken = traceFunnelsResponse(values.funnels).data.some(
+					({ funnel_name }) => funnel_name === name,
+				);
+
+				return taken
+					? res(
+							ctx.status(400),
+							ctx.json({
+								status: 'error',
+								error: {
+									code: 'invalid_input',
+									message: `failed to create funnel: a funnel with name '${name}' already exists in this organization`,
+								},
+							}),
+						)
+					: res(
+							ctx.status(200),
+							ctx.json({
+								status: 'success',
+								data: { funnel_id: 'storybook-funnel-new' },
+							}),
+						);
+			},
+		),
+
 		rest.get(
 			'http://localhost/api/v2/users/me/dashboards',
 			response.json(exportDashboardsResponse),
@@ -354,3 +389,52 @@ export const tracesMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: tracesRoute(values) }),
 });
+
+export type TracesArgs = PageStoryArgs<typeof tracesMocks>;
+
+/** The span drawer opens from a row of the spans list, so no other view has one. */
+export const listsOrdersSpan = (args: TracesArgs): boolean =>
+	args.tab === 'explorer' &&
+	args.view === ExplorerViews.LIST &&
+	args.dataState === 'loaded' &&
+	args.spans >= ORDERS_SPAN_ROWS;
+
+/** What the drawer's Logs tab settles on, from the two controls that decide it. */
+export type DrawerLogs =
+	| 'waiting'
+	| 'error'
+	| 'logs'
+	| 'trace-only'
+	| 'none'
+	| 'span-empty';
+
+export const drawerLogsOf = ({
+	spanLogs,
+	traceSummary,
+}: Pick<TracesArgs, 'spanLogs' | 'traceSummary'>): DrawerLogs => {
+	if (traceSummary === 'loading' || spanLogs === 'loading') {
+		return 'waiting';
+	}
+
+	if (spanLogs === 'error') {
+		return 'error';
+	}
+
+	if (spanLogs === 'span') {
+		return 'logs';
+	}
+
+	// Without the trace bounds the drawer never checks the trace's own logs.
+	if (traceSummary === 'not found') {
+		return 'span-empty';
+	}
+
+	return spanLogs === 'trace only' ? 'trace-only' : 'none';
+};
+
+/** `hasEditPermission`, which every funnel action gates on. */
+export const canEditFunnels = (args: TracesArgs): boolean => {
+	const { legacyRole } = accessFor(args.access, args.permissions, args.revoked);
+
+	return legacyRole === USER_ROLES.ADMIN || legacyRole === USER_ROLES.EDITOR;
+};

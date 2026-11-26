@@ -115,7 +115,7 @@ describe('useFilterExpression', () => {
 	});
 
 	it('applies the draft on blur only when focus leaves the container', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<FilterProviders queryParamKey={PARAM_KEY}>
 				<FilterBox />

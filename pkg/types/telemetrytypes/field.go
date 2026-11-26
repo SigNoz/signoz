@@ -147,36 +147,8 @@ func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
 //	key.Normalize()
 //	// Result: Name: "service.name", FieldContext: FieldContextResource, FieldDataType: FieldDataTypeString
 func (f *TelemetryFieldKey) Normalize() {
-
-	// Step 1: Parse data type from the right (after the last ":") if not already specified
-	if f.FieldDataType == FieldDataTypeUnspecified {
-		if colonIdx := strings.LastIndex(f.Name, ":"); colonIdx != -1 {
-			potentialDataType := f.Name[colonIdx+1:]
-			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
-				f.FieldDataType = dt
-				f.Name = f.Name[:colonIdx]
-			}
-		}
-	}
-
-	// Step 2: Parse field context from the left if not already specified
-	if f.FieldContext == FieldContextUnspecified {
-		if dotIdx := strings.Index(f.Name, "."); dotIdx != -1 {
-			potentialContext := f.Name[:dotIdx]
-			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
-				f.Name = f.Name[dotIdx+1:]
-				f.FieldContext = fc
-
-				// Step 2a: Handle special case for log.body.* fields
-				if f.FieldContext == FieldContextLog && strings.HasPrefix(f.Name, BodyJSONStringSearchPrefix) {
-					f.FieldContext = FieldContextBody
-					f.Name = strings.TrimPrefix(f.Name, BodyJSONStringSearchPrefix)
-				}
-
-			}
-		}
-	}
-
+	f.normalizeDataType()
+	f.normalizeContext()
 }
 
 // GetFieldKeyFromKeyText returns a TelemetryFieldKey parsed from a key text of the
@@ -253,6 +225,15 @@ type FieldKeySelector struct {
 	MetricContext     *MetricContext         `json:"metricContext,omitempty" description:"Scopes the lookup to one metric or metric namespace. Metrics signal only."`
 }
 
+func (s *FieldKeySelector) Copy() *FieldKeySelector {
+	copied := *s
+	if s.MetricContext != nil {
+		metricContext := *s.MetricContext
+		copied.MetricContext = &metricContext
+	}
+	return &copied
+}
+
 // MatchesKey reports whether a statically defined key satisfies the selector, so
 // callers can suggest keys that were never ingested.
 func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
@@ -260,7 +241,7 @@ func (s *FieldKeySelector) MatchesKey(key *TelemetryFieldKey) bool {
 		return false
 	}
 
-	if s.FieldDataType != FieldDataTypeUnspecified && s.FieldDataType != key.FieldDataType {
+	if s.FieldDataType != FieldDataTypeUnspecified && !sameDataTypeFamily(s.FieldDataType, key.FieldDataType) {
 		return false
 	}
 
@@ -279,6 +260,9 @@ type FieldValueSelector struct {
 	ExistingQuery string `json:"existingQuery" description:"Filter expression already applied in the explorer. Used to compute relatedValues; empty disables them."`
 	Value         string `json:"value" description:"Substring the returned values must contain, case-insensitive except for the meter source, where it is case-sensitive and % and _ act as wildcards. Empty returns any value."`
 	Limit         int    `json:"limit" description:"Maximum number of values to return."`
+
+	// prefixedName keeps the context prefix of Name; set when FieldContext was parsed from it.
+	prefixedName string
 }
 
 type GettableFieldKeys struct {
@@ -306,7 +290,7 @@ type GettableFieldValues struct {
 
 type PostableFieldValueParams struct {
 	PostableFieldKeysParams
-	Name          string `query:"name" description:"The key whose values to return, such as service.name. A context prefix such as resource.service.name sets fieldContext when it is empty."`
+	Name          string `query:"name" description:"The key whose values to return, such as service.name. With fieldContext set, it is the stored name as is. Otherwise a context prefix such as resource.service.name sets the context and a type suffix such as service.name:string sets fieldDataType when that is empty; as in filter expressions, a prefixed name also matches a key stored under the full name, whose values come first: log.level returns values of a key named log.level, then of the log field level."`
 	ExistingQuery string `query:"existingQuery" description:"Filter expression already applied in the explorer. When set, relatedValues lists the values seen on data matching it."`
 }
 
@@ -358,26 +342,35 @@ func NewFieldKeySelectorFromPostableFieldKeysParams(params PostableFieldKeysPara
 }
 
 func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValueParams) *FieldValueSelector {
-
-	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(params.PostableFieldKeysParams)
+	// SearchText filters values here, so it must not be parsed as a key.
+	keyParams := params.PostableFieldKeysParams
+	keyParams.SearchText = ""
+	keySelector := NewFieldKeySelectorFromPostableFieldKeysParams(keyParams)
 
 	fieldValueSelector := &FieldValueSelector{
 		FieldKeySelector: keySelector,
 	}
 
-	fieldValueSelector.Name = params.Name
-
-	if params.Name != "" && fieldValueSelector.FieldContext == FieldContextUnspecified {
-		parsedFieldKey := GetFieldKeyFromKeyText(params.Name)
-		if parsedFieldKey.FieldContext != FieldContextUnspecified {
-			// Only apply inferred context if it is valid for the current signal
-			if isContextValidForSignal(parsedFieldKey.FieldContext, fieldValueSelector.Signal) {
-				fieldValueSelector.Name = parsedFieldKey.Name
-				fieldValueSelector.FieldContext = parsedFieldKey.FieldContext
+	// An explicit context means the name is the stored name as is.
+	key := TelemetryFieldKey{Name: params.Name, FieldContext: keySelector.FieldContext, FieldDataType: keySelector.FieldDataType}
+	if keySelector.FieldContext == FieldContextUnspecified {
+		key.normalizeDataType()
+		prefixedName := key.Name
+		key.normalizeContext()
+		// Only apply inferred context if it is valid for the current signal
+		if isContextValidForSignal(key.FieldContext, keySelector.Signal) {
+			if key.FieldContext != FieldContextUnspecified {
+				fieldValueSelector.prefixedName = prefixedName
 			}
+		} else {
+			key.Name = prefixedName
+			key.FieldContext = FieldContextUnspecified
 		}
 	}
 
+	fieldValueSelector.Name = key.Name
+	fieldValueSelector.FieldContext = key.FieldContext
+	fieldValueSelector.FieldDataType = key.FieldDataType
 	fieldValueSelector.ExistingQuery = params.ExistingQuery
 	fieldValueSelector.Value = params.SearchText
 
@@ -388,6 +381,25 @@ func NewFieldValueSelectorFromPostableFieldValueParams(params PostableFieldValue
 	}
 
 	return fieldValueSelector
+}
+
+// NameMatchSelectors returns the lookups for the requested key, highest priority first.
+// A context parsed from the name may instead be part of the stored name (attribute.key
+// may be the attribute named attribute.key), so like the query builder both readings are
+// looked up: the prefixed name, in any context, before the name with its prefix stripped.
+func (selector *FieldValueSelector) NameMatchSelectors() []*FieldValueSelector {
+	if selector.prefixedName != "" {
+		return []*FieldValueSelector{selector.withName(selector.prefixedName), selector}
+	}
+	return []*FieldValueSelector{selector}
+}
+
+func (selector *FieldValueSelector) Copy() *FieldValueSelector {
+	copied := *selector
+	if selector.FieldKeySelector != nil {
+		copied.FieldKeySelector = selector.FieldKeySelector.Copy()
+	}
+	return &copied
 }
 
 func NewTelemetryFieldKey(name string, fieldContext FieldContext, fieldDataType FieldDataType) *TelemetryFieldKey {
@@ -420,4 +432,46 @@ type TelemetryFieldKeySkipIndex struct {
 	IndexType       string        `json:"indexType"`
 	IndexExpression string        `json:"indexExpression"`
 	Granularity     int           `json:"granularity"`
+}
+
+func (key *TelemetryFieldKey) normalizeDataType() {
+	// Step 1: Parse data type from the right (after the last ":") if not already specified
+	if key.FieldDataType == FieldDataTypeUnspecified {
+		if colonIdx := strings.LastIndex(key.Name, ":"); colonIdx != -1 {
+			potentialDataType := key.Name[colonIdx+1:]
+			if dt, ok := fieldDataTypes[potentialDataType]; ok && dt != FieldDataTypeUnspecified {
+				key.FieldDataType = dt
+				key.Name = key.Name[:colonIdx]
+			}
+		}
+	}
+}
+
+func (key *TelemetryFieldKey) normalizeContext() {
+	// Step 2: Parse field context from the left if not already specified
+	if key.FieldContext == FieldContextUnspecified {
+		if dotIdx := strings.Index(key.Name, "."); dotIdx != -1 {
+			potentialContext := key.Name[:dotIdx]
+			if fc, ok := fieldContexts[potentialContext]; ok && fc != FieldContextUnspecified {
+				key.Name = key.Name[dotIdx+1:]
+				key.FieldContext = fc
+
+				// Step 2a: Handle special case for log.body.* fields
+				if key.FieldContext == FieldContextLog && strings.HasPrefix(key.Name, BodyJSONStringSearchPrefix) {
+					key.FieldContext = FieldContextBody
+					key.Name = strings.TrimPrefix(key.Name, BodyJSONStringSearchPrefix)
+				}
+
+			}
+		}
+	}
+}
+
+// withName returns a copy looking up name in any context.
+func (selector *FieldValueSelector) withName(name string) *FieldValueSelector {
+	renamed := selector.Copy()
+	renamed.Name = name
+	renamed.FieldContext = FieldContextUnspecified
+	renamed.prefixedName = ""
+	return renamed
 }

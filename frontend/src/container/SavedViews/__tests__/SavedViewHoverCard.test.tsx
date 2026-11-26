@@ -1,11 +1,4 @@
 import {
-	act,
-	fireEvent,
-	screen,
-	waitFor,
-	within,
-} from '@testing-library/react';
-import {
 	AuthtypesTransactionDTO,
 	SavedviewtypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -17,7 +10,14 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { userEvent } from 'tests/test-utils';
+import {
+	act,
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -252,7 +252,7 @@ describe('SavedViewHoverCard', () => {
 
 			expect(card()).toBeNull();
 			expect(
-				document.querySelector('[data-radix-popper-content-wrapper]'),
+				screen.queryByRole('dialog', { name: 'Saved view preview', hidden: true }),
 			).toBeNull();
 		});
 	});

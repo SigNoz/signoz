@@ -1,4 +1,4 @@
-import { Empty } from 'antd';
+import Empty from 'periscope/components/Empty/Empty';
 import Spinner from 'components/Spinner';
 
 import './FunnelMetricsTable.styles.scss';

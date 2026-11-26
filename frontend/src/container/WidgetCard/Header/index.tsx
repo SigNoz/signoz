@@ -238,6 +238,7 @@ function WidgetHeader({
 								setShowGlobalSearch(false);
 							}}
 							className="search-header-icons"
+							data-testid="widget-header-search-close"
 						/>
 					}
 					key={widget.id}
@@ -249,13 +250,19 @@ function WidgetHeader({
 				<>
 					<div className="widget-header-title-container">
 						<Tooltip title={fullText} placement="top">
-							<Typography.Text
-								truncate={1}
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="div"
+								minWidth={0}
+								maxWidth="80%"
+								textOverflow="ellipsis"
 								data-testid={title}
-								className="widget-header-title"
 							>
 								{truncatedText}
-							</Typography.Text>
+							</Typography>
 						</Tooltip>
 						{widget.description && (
 							<Tooltip

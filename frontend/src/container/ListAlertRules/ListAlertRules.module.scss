@@ -15,18 +15,6 @@
 	background: var(--l1-background);
 }
 
-.headerZone {
-	position: relative;
-	z-index: 10;
-	display: flex;
-	flex-direction: column;
-	flex-shrink: 0;
-	gap: 14px;
-	padding: 20px 24px;
-	background: var(--l2-background);
-	border-bottom: 1px solid var(--l2-border);
-}
-
 .tableContainer {
 	flex: 1;
 	min-height: 0;
@@ -49,6 +37,12 @@
 	--tanstack-cell-padding-right-override: 16px;
 
 	--badge-cursor: pointer;
+}
+
+.thresholds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
 }
 
 .actionsColumn {

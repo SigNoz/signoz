@@ -165,12 +165,7 @@ export function getPlannedDowntimeColumns(
 
 				if (isAlertsLoading) {
 					return (
-						<Skeleton.Input
-							testId="alerts-silenced-skeleton"
-							active
-							size="small"
-							style={{ width: 100, height: 22 }}
-						/>
+						<Skeleton.Input testId="alerts-silenced-skeleton" size="sm" width={100} />
 					);
 				}
 

@@ -4,6 +4,7 @@
  */
 
 import { rest, type ResponseComposition, type RestContext } from 'msw';
+import type { RuletypesListableRuleDTO } from 'api/generated/services/sigNoz.schemas';
 import { screen, userEvent, within } from 'storybook/test';
 
 import {
@@ -12,10 +13,15 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { accessFor } from '@/storybook/access/access';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
+import { componentPermission } from 'utils/permission';
+import type { RuleViewCtx } from 'container/ListAlertRules/types';
 import { DEFAULT_RULE_LIST_FILTER } from 'container/ListAlertRules/utils';
 import {
 	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
 	RULE_BUILTIN_VIEWS,
 	type RuleViewId,
 } from 'container/ListAlertRules/list.config';
@@ -53,10 +59,20 @@ type ActionState = (typeof ACTION_STATES)[number];
 const VIEW_CHOICES = [
 	'all',
 	'mine',
+	'recent',
 	'firing',
+	'enabled',
 	'disabled',
 	'saved',
 ] as const satisfies readonly (RuleViewId | 'saved')[];
+
+/** Rules the browser remembers opening, most recent first. */
+const STORY_RECENT_RULE_IDS = ['rule-3', 'rule-1', 'rule-6'];
+
+const storyViewCtx = (recentRules: number): RuleViewCtx => ({
+	userEmail: STORY_USER_EMAIL,
+	recent: STORY_RECENT_RULE_IDS.slice(0, recentRules),
+});
 type ViewChoice = (typeof VIEW_CHOICES)[number];
 
 /**
@@ -75,14 +91,16 @@ const listRoute = (view: ViewChoice): string => {
 			? { query: saved.data.query ?? '', states: saved.data.states ?? [] }
 			: RULE_BUILTIN_VIEWS.find((v) => v.id === view)?.filter(
 					DEFAULT_RULE_LIST_FILTER,
-					{ userEmail: STORY_USER_EMAIL },
+					storyViewCtx(STORY_RECENT_RULE_IDS.length),
 				);
 
 	params.set('view', view === 'saved' ? saved.id : view);
 	if (filter?.query) {
 		params.set('query', filter.query);
 	}
-	filter?.states.forEach((state) => params.append('states', state));
+	if (filter?.states.length) {
+		params.set('states', filter.states.join(','));
+	}
 
 	return `/alerts?${params.toString()}`;
 };
@@ -121,7 +139,7 @@ export const alertRulesMocks = defineStoryMocks({
 		ruleSeverity: choiceControl<SeverityChoice>('Severity', {
 			group: LIST,
 			description:
-				'The severity label every rule carries. `mixed` leaves each rule with its own.',
+				'The one threshold every rule fires at, shown in the Severity column. `mixed` leaves each rule with its own, some with two.',
 			options: SEVERITY_CHOICES,
 			value: 'mixed',
 		}),
@@ -135,16 +153,23 @@ export const alertRulesMocks = defineStoryMocks({
 		invalidQuery: choiceControl<InvalidQueryChoice>('Invalid query', {
 			group: LIST,
 			description:
-				'The 400 code any request carrying a `query` answers with. Both show the server message under the search box.',
+				'The 400 code any request carrying a `query` answers with. Both replace the list with the Invalid query state and the server message.',
 			options: INVALID_QUERY_CHOICES,
 			value: 'off',
 		}),
 		view: choiceControl<ViewChoice>('Active view', {
 			group: VIEWS,
 			description:
-				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set.',
+				'The rail entry the page opens on. `saved` is the first saved view; the built-ins apply a query or a state set, and `recent` narrows one large page to the rules the browser remembers opening.',
 			options: VIEW_CHOICES,
 			value: DEFAULT_RULE_VIEW,
+		}),
+		recentRules: countControl('Recently viewed', {
+			group: VIEWS,
+			description:
+				'How many rules the browser remembers opening. At 0 the Recently viewed view shows its own empty state.',
+			value: STORY_RECENT_RULE_IDS.length,
+			max: STORY_RECENT_RULE_IDS.length,
 		}),
 		railCollapsed: toggleControl('Rail collapsed', {
 			group: VIEWS,
@@ -261,7 +286,10 @@ export const alertRulesMocks = defineStoryMocks({
 	],
 	config: (values) => ({ route: listRoute(values.view) }),
 	effect: (values) => {
-		useAlertRuleViewsStore.setState({ railCollapsed: values.railCollapsed });
+		useAlertRuleViewsStore.setState({
+			railCollapsed: values.railCollapsed,
+			recent: storyViewCtx(values.recentRules).recent,
+		});
 	},
 });
 
@@ -281,3 +309,47 @@ export const runRowAction = async (
 	await userEvent.click(actions);
 	await userEvent.click(await screen.findByRole('menuitem', { name }));
 };
+
+export type AlertRulesArgs = PageStoryArgs<typeof alertRulesMocks>;
+
+export const listedRules = (
+	args: AlertRulesArgs,
+): RuletypesListableRuleDTO[] => {
+	const params = new URL(listRoute(args.view), 'http://localhost').searchParams;
+	// The URL joins states with commas; the request repeats the key.
+	const states = params.get('states');
+	if (states) {
+		params.delete('states');
+		states.split(',').forEach((state) => params.append('states', state));
+	}
+	if (
+		args.dataState !== 'loaded' ||
+		(args.invalidQuery !== 'off' && params.get('query'))
+	) {
+		return [];
+	}
+
+	const { rules } = alertRulesPage(
+		args.rules,
+		{ severity: args.ruleSeverity, state: args.ruleState },
+		params,
+	).data;
+	const clientFilter = findRuleBuiltinView(args.view)?.clientFilter;
+	return clientFilter
+		? clientFilter(rules, storyViewCtx(args.recentRules))
+		: rules;
+};
+
+export const hasRowMenu = (args: AlertRulesArgs): boolean =>
+	listedRules(args).length > 0 &&
+	componentPermission.action.includes(
+		accessFor(args.access, args.permissions, args.revoked).legacyRole,
+	);
+
+export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
+	args.view === DEFAULT_RULE_VIEW &&
+	args.dataState === 'loaded' &&
+	args.rules === 0;
+
+export const listsSavedViews = (args: AlertRulesArgs): boolean =>
+	args.ruleViews > 0 && args.ruleViewsState === 'success';

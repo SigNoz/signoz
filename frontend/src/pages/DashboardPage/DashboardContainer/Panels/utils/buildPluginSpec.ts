@@ -29,6 +29,7 @@ import {
 	type SectionSpecMap,
 	ThresholdVariant,
 } from '../types/sections';
+import { DEFAULT_BAR_COLOR } from '../../PanelEditor/ConfigPane/sections/AppearanceSection/barColorOptions';
 import { getTableColumnKeys } from './getTableColumnKeys';
 
 /** Cross-section of the per-kind spec union; assigned to `plugin.spec` (unknown) at the boundary. */
@@ -37,6 +38,7 @@ export interface SeededPluginSpec {
 	axes?: SectionSpecMap[SectionKind.Axes];
 	legend?: SectionSpecMap[SectionKind.Legend];
 	chartAppearance?: SectionSpecMap[SectionKind.ChartAppearance];
+	appearance?: SectionSpecMap[SectionKind.Appearance];
 	formatting?: Pick<
 		PanelFormattingSlice,
 		'unit' | 'decimalPrecision' | 'columnUnits'
@@ -88,6 +90,12 @@ function toThresholdVariant(
 			...core,
 			operator: source.operator ?? DashboardtypesComparisonOperatorDTO.above,
 			format: source.format ?? DashboardtypesThresholdFormatDTO.text,
+		};
+	}
+	if (variant === ThresholdVariant.COLOR) {
+		return {
+			...core,
+			operator: source.operator ?? DashboardtypesComparisonOperatorDTO.above,
 		};
 	}
 	if (variant === ThresholdVariant.TABLE) {
@@ -165,7 +173,70 @@ function translateStackingForKind(
 	return {};
 }
 
+type ChartAppearanceSlice = SectionSpecMap[SectionKind.ChartAppearance];
+type ChartColors = NonNullable<ChartAppearanceSlice['colors']>;
+
+/**
+ * Heatmap and Geo Map share the ramp but not the range or fill fields, and the
+ * save API rejects a field the target kind lacks.
+ */
+function seedColors(
+	controls: SectionControls[SectionKind.ChartAppearance],
+	colors: ChartColors | undefined,
+): ChartColors | undefined {
+	const ramp = {
+		mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
+		palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
+		scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
+		...(colors?.steps && { steps: colors.steps }),
+		...(colors?.fill !== undefined && { fill: colors.fill }),
+	};
+	if (controls.colors) {
+		return {
+			...ramp,
+			...(colors?.minCount != null && { minCount: colors.minCount }),
+			...(colors?.maxCount != null && { maxCount: colors.maxCount }),
+		};
+	}
+	if (controls.mapColors) {
+		return {
+			...ramp,
+			...(colors?.min != null && { min: colors.min }),
+			...(colors?.max != null && { max: colors.max }),
+		};
+	}
+	return undefined;
+}
+
+/** Geo Map's circle range and names; carried only between kinds that declare them. */
+function seedMapMarks(
+	controls: SectionControls[SectionKind.ChartAppearance],
+	{ bubbles, labels }: Pick<ChartAppearanceSlice, 'bubbles' | 'labels'>,
+): Pick<ChartAppearanceSlice, 'bubbles' | 'labels'> {
+	return {
+		...(controls.bubbles && bubbles && { bubbles }),
+		...(controls.labels && labels != null && { labels }),
+	};
+}
+
 const SECTION_SEEDS: SectionSeeds = {
+	[SectionKind.Appearance]: {
+		specKey: 'appearance',
+		// Carries the toggles the target kind declares; unset reads as off.
+		seed: (
+			controls,
+			{ oldPluginSpec },
+		): SectionSpecMap[SectionKind.Appearance] => {
+			const old = oldPluginSpec?.appearance;
+			return {
+				barColor: (controls.barColor && old?.barColor) || DEFAULT_BAR_COLOR,
+				...(controls.showRank &&
+					old?.showRank !== undefined && { showRank: old.showRank }),
+				...(controls.showShare &&
+					old?.showShare !== undefined && { showShare: old.showShare }),
+			};
+		},
+	},
 	[SectionKind.TextLayout]: {
 		specKey: 'presentation',
 		// Explicit alignment defaults (not the API's implicit ones) so the controls
@@ -253,6 +324,8 @@ const SECTION_SEEDS: SectionSeeds = {
 				showPoints,
 				spanGaps,
 				colors,
+				bubbles,
+				labels,
 			} = oldPluginSpec?.chartAppearance ?? {};
 			const appearance: SectionSpecMap[SectionKind.ChartAppearance] = {};
 			if (controls.lineStyle) {
@@ -281,15 +354,11 @@ const SECTION_SEEDS: SectionSeeds = {
 			}
 			// Seeded so the controls open on the ramp the grid is drawn with; the
 			// count bounds and step count stay unset, which reads as derived.
-			if (controls.colors) {
-				appearance.colors = {
-					...colors,
-					mode: colors?.mode ?? DashboardtypesHeatmapColorModeDTO.palette,
-					palette: colors?.palette ?? DashboardtypesHeatmapPaletteDTO.lava,
-					scale: colors?.scale ?? DashboardtypesHeatmapColorScaleDTO.log,
-				};
+			const seededColors = seedColors(controls, colors);
+			if (seededColors) {
+				appearance.colors = seededColors;
 			}
-			return appearance;
+			return { ...appearance, ...seedMapMarks(controls, { bubbles, labels }) };
 		},
 	},
 	[SectionKind.Formatting]: {

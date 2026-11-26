@@ -90,7 +90,7 @@ export const useHandleExplorerTabChange = (): {
 				},
 				redirectToUrl,
 				undefined,
-				newTab,
+				{ newTab },
 			);
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewKey],

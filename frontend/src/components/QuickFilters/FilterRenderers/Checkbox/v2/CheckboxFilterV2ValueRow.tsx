@@ -69,6 +69,7 @@ export function CheckboxFilterV2ValueRow({
 
 			<div
 				role="button"
+				data-testid={`checkbox-value-button-${value}`}
 				tabIndex={disabled ? -1 : 0}
 				className={cx(styles.valueButton, disabled && styles.isDisabled)}
 				onClick={(): void => {
@@ -91,9 +92,19 @@ export function CheckboxFilterV2ValueRow({
 					{customRendererForValue ? (
 						customRendererForValue(value)
 					) : (
-						<Typography.Text title={value} className={styles.valueLabel}>
-							{value}
-						</Typography.Text>
+						<span title={value} className={styles.valueLabel}>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								display="block"
+								textOverflow="ellipsis"
+							>
+								{value}
+							</Typography>
+						</span>
 					)}
 				</div>
 

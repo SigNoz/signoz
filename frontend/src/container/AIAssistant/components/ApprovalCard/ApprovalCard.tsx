@@ -2,20 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
-import {
-	Dialog,
-	DialogCloseButton,
-	DialogContent,
-	DialogHeader,
-	DialogSubtitle,
-	DialogTitle,
-} from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { ToggleGroup } from '@signozhq/ui/toggle-group';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import type {
 	ApprovalEventDTO,
 	ApprovalEventDTODiff,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import {
 	Check,
 	Columns2,
@@ -86,9 +79,9 @@ export default function ApprovalCard({
 	}
 
 	return (
-		<div className={styles.card}>
+		<div className={cx(styles.card, { [styles.inline]: !approval.diff })}>
 			<div className={styles.header}>
-				<Shield size={13} className={styles.shieldIcon} />
+				<Shield size={16} className={styles.shieldIcon} />
 				<span className={styles.headerLabel}>Action requires approval</span>
 				<span className={styles.resourceBadge}>
 					{approval.actionType} · {approval.resourceType}
@@ -118,99 +111,91 @@ export default function ApprovalCard({
 				</div>
 			)}
 
-			<Dialog open={diffExpanded} onOpenChange={setDiffExpanded}>
-				<DialogContent
-					className={styles.diffDialog}
-					style={{ width: '80vw', maxWidth: '80vw', height: '70vh' }}
-					// Skip auto-focus — otherwise the first Copy button opens its tooltip on dialog open.
-					onOpenAutoFocus={(e): void => e.preventDefault()}
-				>
-					<DialogHeader>
-						<DialogTitle>Approval diff</DialogTitle>
-						<DialogSubtitle>
-							{approval.actionType} · {approval.resourceType}
-						</DialogSubtitle>
-					</DialogHeader>
-					<div className={styles.diffModalBody}>
-						<p className={styles.diffModalSummary}>{approval.summary}</p>
-						<div className={styles.diffToolbarRow}>
-							<ToggleGroup
-								variant="outlined"
-								color="secondary"
-								type="single"
-								size="sm"
-								value={viewMode}
-								onChange={(next: string): void => {
-									// Radix `single` group can emit '' when the active item
-									// is clicked again — preserve the current mode.
-									if (next === 'split' || next === 'unified') {
-										setViewMode(next);
-									}
-								}}
-								items={[
-									{
-										value: 'split',
-										'aria-label': 'Split view',
-										label: <Columns2 size={12} />,
-									},
-									{
-										value: 'unified',
-										'aria-label': 'Unified view',
-										label: <List size={12} />,
-									},
-								]}
-							/>
-							<ToggleGroup
-								variant="outlined"
-								color="secondary"
-								type="multiple"
-								size="sm"
-								value={wrapText ? ['wrap'] : []}
-								onChange={(next: string[]): void => setWrapText(next.includes('wrap'))}
-								items={[
-									{
-										value: 'wrap',
-										'aria-label': wrapText ? 'Disable text wrap' : 'Wrap long lines',
-										label: <WrapText size={12} />,
-									},
-								]}
-							/>
-						</div>
-						{approval.diff && (
-							<DiffView
-								diff={approval.diff}
-								expanded
-								wrapText={wrapText}
-								viewMode={viewMode}
-							/>
-						)}
+			<Dialog
+				open={diffExpanded}
+				onClose={(): void => setDiffExpanded(false)}
+				title="Approval diff"
+				description={`${approval.actionType} · ${approval.resourceType}`}
+				width="full"
+			>
+				<div className={styles.diffModalBody}>
+					<p className={styles.diffModalSummary}>{approval.summary}</p>
+					<div className={styles.diffToolbarRow}>
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							type="single"
+							size="sm"
+							value={viewMode}
+							onChange={(next: string): void => {
+								// Radix `single` group can emit '' when the active item
+								// is clicked again — preserve the current mode.
+								if (next === 'split' || next === 'unified') {
+									setViewMode(next);
+								}
+							}}
+							items={[
+								{
+									value: 'split',
+									'aria-label': 'Split view',
+									label: <Columns2 size={12} />,
+								},
+								{
+									value: 'unified',
+									'aria-label': 'Unified view',
+									label: <List size={12} />,
+								},
+							]}
+						/>
+						<ToggleGroup
+							variant="outlined"
+							color="secondary"
+							type="multiple"
+							size="sm"
+							value={wrapText ? ['wrap'] : []}
+							onChange={(next: string[]): void => setWrapText(next.includes('wrap'))}
+							items={[
+								{
+									value: 'wrap',
+									'aria-label': wrapText ? 'Disable text wrap' : 'Wrap long lines',
+									label: <WrapText size={12} />,
+								},
+							]}
+						/>
 					</div>
-					<DialogCloseButton onClick={(): void => setDiffExpanded(false)} />
-				</DialogContent>
+					{approval.diff && (
+						<DiffView
+							diff={approval.diff}
+							expanded
+							wrapText={wrapText}
+							viewMode={viewMode}
+						/>
+					)}
+				</div>
 			</Dialog>
 
 			<div className={styles.actions}>
 				<Button
 					disabledTooltip="Wait for the response to finish"
-					color="primary"
-					variant="solid"
-					size="sm"
-					onClick={handleApprove}
-					disabled={isStreaming}
-					prefix={<Check />}
-				>
-					Approve
-				</Button>
-				<Button
-					disabledTooltip="Wait for the response to finish"
 					variant="outlined"
-					size="sm"
+					size="md"
 					color="secondary"
 					onClick={handleReject}
 					disabled={isStreaming}
 					prefix={<X />}
 				>
 					Reject
+				</Button>
+				<Button
+					disabledTooltip="Wait for the response to finish"
+					color="primary"
+					variant="solid"
+					size="md"
+					onClick={handleApprove}
+					disabled={isStreaming}
+					prefix={<Check />}
+				>
+					Approve
 				</Button>
 			</div>
 		</div>

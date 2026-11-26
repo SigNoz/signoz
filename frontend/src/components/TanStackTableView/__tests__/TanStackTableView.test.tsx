@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+	fireEvent,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+} from 'tests/test-utils';
 import { UrlUpdateEvent } from 'nuqs/adapters/testing';
 
 import TanStackTable from '../index';
@@ -159,14 +164,7 @@ describe('TanStackTableView Integration', () => {
 			});
 
 			// Find page 2 button/link within pagination navigation
-			const nav = screen.getByRole('navigation');
-			const page2 = Array.from(nav.querySelectorAll('button')).find(
-				(btn) => btn.textContent?.trim() === '2',
-			);
-			if (!page2) {
-				throw new Error('Page 2 button not found in pagination');
-			}
-			await user.click(page2);
+			await user.click(screen.getByTestId('pagination-page-2'));
 
 			await waitFor(() => {
 				const lastPage = onUrlUpdate.mock.calls
@@ -175,6 +173,21 @@ describe('TanStackTableView Integration', () => {
 					.pop();
 				expect(lastPage).toBe('2');
 			});
+		});
+
+		it('does not render the page bar when every row fits on one page', async () => {
+			renderTanStackTable({
+				props: {
+					pagination: { total: 5, defaultPage: 1, defaultLimit: 10 },
+				},
+			});
+
+			await waitFor(() => {
+				expect(screen.getByText('Item 1')).toBeInTheDocument();
+			});
+
+			expect(screen.queryByTestId('pagination')).not.toBeInTheDocument();
+			expect(screen.getByTestId('pagination-page-size')).toBeInTheDocument();
 		});
 
 		it('does not render pagination in infinite scroll mode', async () => {
@@ -312,9 +325,7 @@ describe('TanStackTableView Integration', () => {
 			});
 
 			// Page size combobox trigger should be visible by default (button with aria-haspopup)
-			const comboboxTrigger = document.querySelector(
-				'button[aria-haspopup="dialog"]',
-			);
+			const comboboxTrigger = screen.queryByTestId('pagination-page-size');
 			expect(comboboxTrigger).toBeInTheDocument();
 		});
 
@@ -334,9 +345,7 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByRole('navigation')).toBeInTheDocument();
 			});
 
-			const comboboxTrigger = document.querySelector(
-				'button[aria-haspopup="dialog"]',
-			);
+			const comboboxTrigger = screen.queryByTestId('pagination-page-size');
 			expect(comboboxTrigger).toBeInTheDocument();
 		});
 
@@ -356,9 +365,7 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByRole('navigation')).toBeInTheDocument();
 			});
 
-			const comboboxTrigger = document.querySelector(
-				'button[aria-haspopup="dialog"]',
-			);
+			const comboboxTrigger = screen.queryByTestId('pagination-page-size');
 			expect(comboboxTrigger).not.toBeInTheDocument();
 		});
 
@@ -376,14 +383,7 @@ describe('TanStackTableView Integration', () => {
 				expect(screen.getByRole('navigation')).toBeInTheDocument();
 			});
 
-			const nav = screen.getByRole('navigation');
-			const page2 = Array.from(nav.querySelectorAll('button')).find(
-				(btn) => btn.textContent?.trim() === '2',
-			);
-			if (!page2) {
-				throw new Error('Page 2 button not found in pagination');
-			}
-			await user.click(page2);
+			await user.click(screen.getByTestId('pagination-page-2'));
 
 			await waitFor(() => {
 				expect(onPageChange).toHaveBeenCalledWith(2);
@@ -405,20 +405,14 @@ describe('TanStackTableView Integration', () => {
 				},
 			});
 
-			await waitFor(() => {
-				expect(
-					document.querySelector('button[aria-haspopup="dialog"]'),
-				).toBeInTheDocument();
-			});
-
-			const comboboxTrigger = document.querySelector(
-				'button[aria-haspopup="dialog"]',
-			) as HTMLElement;
+			const comboboxTrigger = await screen.findByTestId('pagination-page-size');
 			await user.click(comboboxTrigger);
 
 			// Select a different page size option
-			const option20 = await screen.findByRole('option', { name: '20' });
-			await user.click(option20);
+			await user.type(
+				await screen.findByTestId('pagination-page-size-search'),
+				'20{Enter}',
+			);
 
 			await waitFor(() => {
 				expect(onLimitChange).toHaveBeenCalledWith(20);
@@ -434,8 +428,8 @@ describe('TanStackTableView Integration', () => {
 				queryParams: { page: '3' },
 			});
 
-			const nav = await screen.findByRole('navigation');
-			const page3Button = within(nav).getByRole('button', { name: '3' });
+			await screen.findByTestId('pagination');
+			const page3Button = screen.getByTestId('pagination-page-3');
 
 			// Page 3 should be active (from URL), not reset to defaultPage 1
 			expect(page3Button).toHaveAttribute('aria-current', 'page');
@@ -459,14 +453,7 @@ describe('TanStackTableView Integration', () => {
 			});
 
 			// Navigate to page 2
-			const nav = screen.getByRole('navigation');
-			const page2 = Array.from(nav.querySelectorAll('button')).find(
-				(btn) => btn.textContent?.trim() === '2',
-			);
-			if (!page2) {
-				throw new Error('Page 2 button not found in pagination');
-			}
-			await user.click(page2);
+			await user.click(screen.getByTestId('pagination-page-2'));
 
 			await waitFor(() => {
 				const lastPage = onUrlUpdate.mock.calls
@@ -477,13 +464,12 @@ describe('TanStackTableView Integration', () => {
 			});
 
 			// Change page size
-			const comboboxTrigger = document.querySelector(
-				'button[aria-haspopup="dialog"]',
-			) as HTMLElement;
-			await user.click(comboboxTrigger);
+			await user.click(screen.getByTestId('pagination-page-size'));
 
-			const option20 = await screen.findByRole('option', { name: '20' });
-			await user.click(option20);
+			await user.type(
+				await screen.findByTestId('pagination-page-size-search'),
+				'20{Enter}',
+			);
 
 			// Verify page reset to 1 (nuqs removes default values from URL)
 			await waitFor(() => {
@@ -668,6 +654,7 @@ describe('TanStackTableView Integration', () => {
 			renderTanStackTable({
 				props: {
 					isRowActive: (row) => row.id === '1',
+					getRowTestId: (row) => `row-${row.id}`,
 				},
 			});
 
@@ -676,9 +663,7 @@ describe('TanStackTableView Integration', () => {
 			});
 
 			// Find the row containing Item 1 and check for active class
-			const cell = screen.getByText('Item 1');
-			const row = cell.closest('tr');
-			expect(row).toHaveClass('tableRowActive');
+			expect(screen.getByTestId('row-1')).toHaveClass('tableRowActive');
 		});
 
 		it('calls onRowClick with isActive: true when clicking the active row', async () => {
@@ -825,8 +810,8 @@ describe('TanStackTableView Integration', () => {
 			expect(screen.getByText('Expanded: Item 1')).toBeInTheDocument();
 
 			// Verify all 3 data rows plus 1 expansion row = 4 tr elements in tbody
-			const tbody = screen.getByRole('table').querySelector('tbody');
-			expect(tbody?.querySelectorAll('tr')).toHaveLength(4);
+			const [, tbody] = within(screen.getByRole('table')).getAllByRole('rowgroup');
+			expect(within(tbody).getAllByRole('row')).toHaveLength(4);
 		});
 	});
 
@@ -977,7 +962,9 @@ describe('TanStackTableView Integration', () => {
 
 	describe('hasSingleColumn — gates the Remove popover per-column', () => {
 		const hasSingleColumnFlagPresent = (): boolean =>
-			Boolean(document.querySelector('th[data-single-column="true"]'));
+			screen
+				.getAllByTestId(/^tanstack-header-/)
+				.some((th) => th.getAttribute('data-single-column') === 'true');
 
 		it('is true when only one non-pinned column exists', async () => {
 			renderTanStackTable({

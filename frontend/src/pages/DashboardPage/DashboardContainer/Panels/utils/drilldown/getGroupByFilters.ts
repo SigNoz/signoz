@@ -1,3 +1,4 @@
+import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 import {
 	type FilterData,
 	getFiltersFromMetric,
@@ -8,11 +9,13 @@ import type { BuilderQuery } from 'types/api/v5/queryRange';
  * Equality filters for the clicked series/slice, restricted to the query's group-by dimensions.
  * `labels` also carry a display-only legend backfill (`{queryName: queryName}` when ungrouped, see
  * `resolveLegendAndLabels`); intersecting with group-by drops it so `filters` stays empty when
- * ungrouped, matching V1.
+ * ungrouped, matching V1. `missingKeys` are group-by keys the row has no value for, filtered as
+ * `NOT EXISTS` so the drilldown keeps to the clicked group.
  */
 export function getGroupByFilters(
 	labels: Record<string, string>,
 	builderQuery: BuilderQuery,
+	missingKeys: string[] = [],
 ): FilterData[] {
 	const groupByKeys = new Set(
 		(builderQuery.groupBy ?? []).map((group) => group.name),
@@ -20,7 +23,12 @@ export function getGroupByFilters(
 	if (groupByKeys.size === 0) {
 		return [];
 	}
-	return getFiltersFromMetric(labels).filter((filter) =>
+	const missingFilters = missingKeys.map((key) => ({
+		filterKey: key,
+		filterValue: '',
+		operator: negateOperator(OPERATORS.EXISTS),
+	}));
+	return [...getFiltersFromMetric(labels), ...missingFilters].filter((filter) =>
 		groupByKeys.has(filter.filterKey),
 	);
 }

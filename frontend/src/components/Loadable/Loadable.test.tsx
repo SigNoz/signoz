@@ -1,40 +1,32 @@
 import React, { ComponentType, Suspense } from 'react';
-import {
-	render,
-	screen,
-	waitForElementToBeRemoved,
-} from '@testing-library/react';
+import { render, screen } from 'tests/test-utils';
 
 import Loadable from './index';
 
 // Sample component to be loaded lazily
 function SampleComponent(): JSX.Element {
-	return <div>Sample Component</div>;
+	return <div data-testid="sample-component">Sample Component</div>;
 }
 
 const loadSampleComponent = (): Promise<{
 	default: ComponentType;
-}> =>
-	new Promise<{ default: ComponentType }>((resolve) => {
-		setTimeout(() => {
-			resolve({ default: SampleComponent });
-		}, 500);
-	});
+}> => Promise.resolve({ default: SampleComponent });
 
 describe('Loadable', () => {
 	it('should render the lazily loaded component', async () => {
 		const LoadableSampleComponent = Loadable(loadSampleComponent);
 
-		const { container } = render(
-			<Suspense fallback={<div>Loading...</div>}>
+		render(
+			<Suspense fallback={<div data-testid="loading">Loading...</div>}>
 				<LoadableSampleComponent />
 			</Suspense>,
 		);
 
-		expect(screen.getByText('Loading...')).toBeInTheDocument();
-		await waitForElementToBeRemoved(() => screen.queryByText('Loading...'));
-
-		expect(container.querySelector('div')).toHaveTextContent('Sample Component');
+		expect(screen.getByTestId('loading')).toBeInTheDocument();
+		await expect(
+			screen.findByTestId('sample-component'),
+		).resolves.toHaveTextContent('Sample Component');
+		expect(screen.queryByTestId('loading')).not.toBeInTheDocument();
 	});
 
 	it('should call lazy with the provided import path', () => {

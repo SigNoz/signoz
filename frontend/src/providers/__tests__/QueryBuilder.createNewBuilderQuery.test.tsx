@@ -1,7 +1,4 @@
-import {
-	initialQueriesMap,
-	initialQueryAIWithType,
-} from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { act, AllTheProviders, renderHook } from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -23,21 +20,28 @@ const renderQueryBuilder = (
 };
 
 describe('createNewBuilderQuery builderQueryType propagation', () => {
+	// Alert editors keep AI queries in `builder`, tagged.
 	it('carries builderQueryType from the first query onto an added query', () => {
-		const { result } = renderQueryBuilder(initialQueryAIWithType);
-
-		expect(
-			result.current.currentQuery.builder.queryData[0].builderQueryType,
-		).toBe('builder_ai_query');
+		const { result } = renderQueryBuilder({
+			...initialQueriesMap.traces,
+			builder: {
+				...initialQueriesMap.traces.builder,
+				queryData: [
+					{
+						...initialQueriesMap.traces.builder.queryData[0],
+						builderQueryType: 'builder_ai_query',
+					},
+				],
+			},
+		});
 
 		act(() => {
 			result.current.addNewBuilderQuery();
 		});
 
-		expect(result.current.currentQuery.builder.queryData).toHaveLength(2);
-		expect(
-			result.current.currentQuery.builder.queryData[1].builderQueryType,
-		).toBe('builder_ai_query');
+		const { queryData } = result.current.currentQuery.builder;
+		expect(queryData).toHaveLength(2);
+		expect(queryData[1].builderQueryType).toBe('builder_ai_query');
 	});
 
 	it('leaves builderQueryType unset when the first query has none', () => {

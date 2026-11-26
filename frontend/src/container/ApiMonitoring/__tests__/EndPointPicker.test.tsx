@@ -65,7 +65,7 @@ describe('EndPointPicker', () => {
 	});
 
 	it('reports the picked endpoint', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup({ delay: null });
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;
@@ -73,13 +73,17 @@ describe('EndPointPicker', () => {
 
 		await waitFor(() => expect(mockGetMetricQueryRange).toHaveBeenCalled());
 		await user.click(screen.getByTestId('endpoint-picker'));
-		await user.click(await screen.findByText('/v1/refunds'));
+		await screen.findByTestId('endpoint-picker-item-/v1/refunds');
+		await user.type(
+			screen.getByTestId('endpoint-picker-search'),
+			'/v1/refunds{Enter}',
+		);
 
 		expect(onChange).toHaveBeenCalledWith('/v1/refunds');
 	});
 
 	it('shows All endpoints when none is picked and clears through it', async () => {
-		const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+		const user = userEvent.setup({ delay: null });
 		const onChange = jest.fn() as jest.MockedFunction<
 			(endPointName: string) => void
 		>;
@@ -96,8 +100,10 @@ describe('EndPointPicker', () => {
 		);
 		await waitFor(() => expect(mockGetMetricQueryRange).toHaveBeenCalled());
 		await user.click(screen.getByTestId('endpoint-picker'));
-		await user.click(
-			await screen.findByRole('option', { name: 'All endpoints' }),
+		await screen.findByTestId('endpoint-picker-item-/v1/charges');
+		await user.type(
+			screen.getByTestId('endpoint-picker-search'),
+			'All endpoints{Enter}',
 		);
 
 		expect(onChange).toHaveBeenCalledWith('');

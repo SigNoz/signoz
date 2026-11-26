@@ -13,6 +13,7 @@ import {
 	Querybuildertypesv5OrderDirectionDTO as OrderDirection,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTOSignal as LogSignal,
 	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTOSignal as MetricSignal,
+	Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTOSignal as TraceSignal,
 	Querybuildertypesv5RequestTypeDTO as RequestType,
 	type DashboardtypesComparisonThresholdDTO,
 	type DashboardtypesQueryDTO,
@@ -20,17 +21,19 @@ import {
 	type DashboardtypesThresholdWithLabelDTO,
 	type Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5LogAggregationDTO as LogBuilderQuery,
 	type Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5MetricAggregationDTO as MetricBuilderQuery,
+	type Querybuildertypesv5QueryBuilderQueryGithubComSigNozSignozPkgTypesQuerybuildertypesQuerybuildertypesv5TraceAggregationDTO as TraceBuilderQuery,
 } from 'api/generated/services/sigNoz.schemas';
 
 import {
 	CHART_THRESHOLD_VALUE,
+	HEATMAP_FIELDS,
 	NUMBER_THRESHOLD_VALUE,
 	QUERY_NAME,
 	TABLE_THRESHOLD_VALUE,
 	TABLE_VALUE_COLUMN,
 	THRESHOLD_COLOR,
 } from './constants';
-import type { TextSample } from './types';
+import type { HeatmapSource, TextSample } from './types';
 
 export const labelThresholds = (
 	on: boolean,
@@ -41,11 +44,12 @@ export const labelThresholds = (
 
 export const comparisonThresholds = (
 	on: boolean,
+	value = NUMBER_THRESHOLD_VALUE,
 ): DashboardtypesComparisonThresholdDTO[] =>
 	on
 		? [
 				{
-					value: NUMBER_THRESHOLD_VALUE,
+					value,
 					operator: ComparisonOperator.above,
 					color: THRESHOLD_COLOR,
 					format: ThresholdFormat.background,
@@ -91,6 +95,7 @@ interface MetricQueryOptions {
 	heatmap?: boolean;
 	name?: string;
 	metricName?: string;
+	spaceAggregation?: SpaceAggregation;
 }
 
 export const metricQuery = (
@@ -100,6 +105,7 @@ export const metricQuery = (
 		heatmap,
 		name = QUERY_NAME,
 		metricName = 'signoz_latency',
+		spaceAggregation = SpaceAggregation.p99,
 	}: MetricQueryOptions,
 ): DashboardtypesQueryDTO => {
 	const spec: MetricBuilderQuery = {
@@ -108,7 +114,7 @@ export const metricQuery = (
 		aggregations: [
 			{
 				metricName: heatmap ? `${metricName}_bucket` : metricName,
-				spaceAggregation: heatmap ? undefined : SpaceAggregation.p99,
+				spaceAggregation: heatmap ? undefined : spaceAggregation,
 				timeAggregation: heatmap ? TimeAggregation.increase : TimeAggregation.avg,
 			},
 		],
@@ -140,6 +146,45 @@ export const logQuery = (): DashboardtypesQueryDTO => {
 
 	return {
 		kind: RequestType.raw,
+		spec: {
+			name: QUERY_NAME,
+			plugin: { kind: BuilderQueryKind['signoz/BuilderQuery'], spec },
+		},
+	};
+};
+
+/** `no field` is a traces heatmap whose field was cleared: it saves with no aggregation. */
+export const eventHeatmapQuery = (
+	source: Exclude<HeatmapSource, 'metrics'>,
+): DashboardtypesQueryDTO => {
+	const groupBy = [{ name: 'service.name' }];
+	const legend = '{{service.name}}';
+	const bucketOptions = {
+		kind: LinearBuckets.linear,
+		spec: { maxValue: 1000, numBuckets: 10 },
+	};
+	const spec: LogBuilderQuery | TraceBuilderQuery =
+		source === 'logs'
+			? {
+					name: QUERY_NAME,
+					signal: LogSignal.logs,
+					aggregations: [{ expression: HEATMAP_FIELDS.logs }],
+					groupBy,
+					legend,
+					bucketOptions,
+				}
+			: {
+					name: QUERY_NAME,
+					signal: TraceSignal.traces,
+					aggregations:
+						source === 'traces' ? [{ expression: HEATMAP_FIELDS.traces }] : [],
+					groupBy,
+					legend,
+					bucketOptions,
+				};
+
+	return {
+		kind: RequestType.heatmap,
 		spec: {
 			name: QUERY_NAME,
 			plugin: { kind: BuilderQueryKind['signoz/BuilderQuery'], spec },

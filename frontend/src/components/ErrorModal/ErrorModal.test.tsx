@@ -53,7 +53,7 @@ describe('ErrorModal Component', () => {
 
 		// Click the close button
 		const closeButton = screen.getByTestId('close-button');
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(closeButton);
 
 		// Check if onClose was called
@@ -145,7 +145,7 @@ it('should open the modal when the trigger component is clicked', async () => {
 
 	// Click the trigger component
 	const triggerButton = screen.getByText('Open Error Modal');
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	await user.click(triggerButton);
 
 	// Check if the modal is displayed
@@ -165,12 +165,13 @@ it('should close the modal when the onCancel event is triggered', async () => {
 
 	// Click the trigger component
 	const triggerButton = screen.getByText('error');
-	const user = userEvent.setup({ pointerEventsCheck: 0 });
+	const user = userEvent.setup();
 	await user.click(triggerButton);
 
 	await waitFor(() => {
 		expect(screen.getByText('An error occurred')).toBeInTheDocument();
 	});
+	const modal = screen.getByRole('dialog');
 
 	// Trigger the onCancel event
 	await user.click(screen.getByTestId('close-button'));
@@ -180,8 +181,6 @@ it('should close the modal when the onCancel event is triggered', async () => {
 
 	await waitFor(() => {
 		// check if the modal is not visible
-		const modal = document.getElementsByClassName('ant-modal');
-		const style = window.getComputedStyle(modal[0]);
-		expect(style.display).toBe('none');
+		expect(modal).toHaveStyle({ display: 'none' });
 	});
 });

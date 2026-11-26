@@ -121,6 +121,8 @@ export interface HeatmapTooltipProps
 	visibleGroups: string[];
 	/** Same colour the legend and the densest cells use. */
 	groupColor: string;
+	/** What the bucket axis measures, e.g. `Traces · duration_nano`. */
+	bucketLabel?: string;
 }
 
 export interface ScatterTooltipProps

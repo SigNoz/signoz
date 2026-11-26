@@ -8,7 +8,8 @@
 	background-color: var(--l1-background);
 	border-top: 1px solid var(--l1-border);
 	padding: 12px;
-	z-index: 1000;
+	// Below FloatingPanel (999), so the Noz panel stacks over the footer.
+	z-index: 998;
 	box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 	display: flex;
 	justify-content: space-between;
@@ -30,8 +31,4 @@
 		border: 1px solid var(--l1-border);
 		color: var(--l2-foreground);
 	}
-}
-
-body.ai-assistant-panel-open .create-alert-v2-footer {
-	right: var(--ai-assistant-panel-width, 380px);
 }

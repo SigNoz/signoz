@@ -2,6 +2,7 @@
 /* eslint-disable sonarjs/no-identical-functions */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import {
 	autocompletion,
 	closeCompletion,
@@ -87,17 +88,18 @@ function TraceOperatorEditor({
 	const [isExternalQueryChange, setIsExternalQueryChange] = useState(false);
 	const [lastExternalValue, setLastExternalValue] = useState<string>('');
 	const { currentQuery } = useQueryBuilder();
+	const activeBuilder = getActiveBuilder(currentQuery);
 
 	const queryOptions = useMemo(
 		() =>
-			currentQuery.builder.queryData
+			activeBuilder.queryData
 				.filter((query) => query.dataSource === DataSource.TRACES) // Only show trace queries
 				.map((query) => ({
 					label: query.queryName,
 					type: 'atom',
 					apply: query.queryName,
 				})),
-		[currentQuery.builder.queryData],
+		[activeBuilder.queryData],
 	);
 
 	const toggleSuggestions = useCallback(

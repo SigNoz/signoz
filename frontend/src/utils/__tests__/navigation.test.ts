@@ -1,12 +1,12 @@
+import { addBaseTag, removeBaseTags } from 'tests/baseTag';
+
 import { isModifierKeyPressed } from '../app';
 
 type NavigationModule = typeof import('../navigation');
 
 function loadNavigationModule(href?: string): NavigationModule {
 	if (href !== undefined) {
-		const base = document.createElement('base');
-		base.setAttribute('href', href);
-		document.head.append(base);
+		addBaseTag(href);
 	}
 	let mod!: NavigationModule;
 	jest.isolateModules(() => {
@@ -29,9 +29,7 @@ describe('navigation utilities', () => {
 
 	afterEach(() => {
 		window.open = originalWindowOpen;
-		for (const el of document.head.querySelectorAll('base')) {
-			el.remove();
-		}
+		removeBaseTags();
 	});
 
 	describe('isModifierKeyPressed', () => {

@@ -13,7 +13,7 @@ import (
 
 func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	if err := router.Handle("/api/v2/saved_views", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.ListV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.List, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "ListSavedViews",
 			Tags:                []string{"saved_view"},
@@ -40,7 +40,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.CreateV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Create, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "CreateSavedView",
 			Tags:                []string{"saved_view"},
@@ -68,7 +68,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.GetV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Get, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName, authtypes.SigNozViewerRoleName),
 		handler.OpenAPIDef{
 			ID:                  "GetSavedView",
 			Tags:                []string{"saved_view"},
@@ -95,7 +95,7 @@ func (provider *provider) addSavedViewRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/saved_views/{id}", handler.New(
-		provider.authzMiddleware.CheckResources(provider.savedViewHandler.UpdateV2, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
+		provider.authzMiddleware.CheckResources(provider.savedViewHandler.Update, authtypes.SigNozAdminRoleName, authtypes.SigNozEditorRoleName),
 		handler.OpenAPIDef{
 			ID:                  "UpdateSavedView",
 			Tags:                []string{"saved_view"},

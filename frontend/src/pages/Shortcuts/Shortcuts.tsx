@@ -15,9 +15,16 @@ function Shortcuts(): JSX.Element {
 				className="shortcut-section"
 				data-testid={`shortcut-section-${shortcutSection}`}
 			>
-				<Typography.Text className="shortcut-section-heading">
+				<Typography
+					variant="label"
+					size="large"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{shortcutSection}
-				</Typography.Text>
+				</Typography>
 				<Table
 					columns={shortcutColumns}
 					dataSource={tableData}

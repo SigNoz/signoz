@@ -9,6 +9,7 @@ import {
 	attributeMappingMocks,
 	wideConditionGroup,
 } from './AttributeMapping.stories.mocks';
+import { openAddMappingDrawer } from './__story_mockdata__/attributeMapping.play';
 
 type AttributeMappingArgs = PageStoryArgs<typeof attributeMappingMocks>;
 
@@ -68,6 +69,11 @@ export const GroupActionsMenu: Story = {
 		await userEvent.click(first);
 		await screen.findByRole('menu');
 	},
+};
+
+/** The drawer that adds a mapping to the first group, opened from its expanded row. */
+export const AddMappingDrawer: Story = {
+	play: openAddMappingDrawer,
 };
 
 /** The first mapping group's edit drawer, opened from its menu. */
