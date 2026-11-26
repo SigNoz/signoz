@@ -1,18 +1,20 @@
 import type { ReactElement } from 'react';
 import { AuthZGuardContent } from 'lib/authz/components/AuthZGuard/AuthZGuardContent';
 import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
-import { LIST_CHECKS } from 'pages/DashboardsListPage/constants/permissions';
+import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import styles from './ViewsRailGuard.module.scss';
 
 interface Props {
+	/** What reading the list's saved views needs. */
+	checks: BrandedPermission[];
 	children: ReactElement;
 }
 
-function ViewsRailGuard({ children }: Props): JSX.Element {
+function ViewsRailGuard({ checks, children }: Props): JSX.Element {
 	return (
 		<AuthZGuardContent
-			checks={LIST_CHECKS}
+			checks={checks}
 			onFailRenderContent={false}
 			fallback={({ deniedPermissions }): ReactElement => (
 				<div className={styles.denied} data-testid="views-rail-denied">
