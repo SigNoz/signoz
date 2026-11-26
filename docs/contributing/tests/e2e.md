@@ -314,6 +314,23 @@ cp .env.example .env      # fill SIGNOZ_E2E_USERNAME / PASSWORD
 pnpm test:staging
 ```
 
+### Which specs run on a PR
+
+`e2eci` runs the specs a change can reach plus the `@smoke` set, on one shard per 80 tests.
+
+- A frontend change is traced up the import graph to the pages the router loads. `affected.json` maps each spec folder to the pages its specs visit. Pages under the `@smoke` key are covered by the smoke set alone.
+- A changed spec runs itself. A changed driver runs every spec that imports it.
+- The full suite runs when a change reaches the app shell, sits outside the module graph (a lockfile, `package.json`, a public asset, `bootstrap/`, `testdata/`), touches the e2e workflow or the shared Python fixtures, or reaches a page `affected.json` doesn't name.
+- Backend changes don't pick specs. The merge queue and the `safe-to-e2e` label always run the full suite.
+
+When you add a spec folder or a page, add it to `affected.json`. A folder whose specs all run as `@smoke` gets an empty list. `pnpm test:scripts` fails until every spec folder and page has an entry. Add `@smoke` to a describe title only for a core path every PR should check.
+
+```bash
+pnpm plan                 # what your branch would run, against origin/main
+pnpm test:smoke           # the smoke set
+pnpm test:scripts         # check affected.json and the spec selection
+```
+
 ## How to configure different options for E2E tests?
 
 ### Environment variables

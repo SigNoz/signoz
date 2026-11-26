@@ -22,6 +22,7 @@
     "test:webkit": "playwright test --project=webkit",
     "report": "playwright show-report artifacts/html",
     "codegen": "playwright codegen",
+    "plan": "node scripts/plan.mjs",
     "install:browsers": "playwright install",
     "install:cli": "npm install -g @playwright/cli@latest && playwright-cli install --skills",
     "fmt": "oxfmt .",

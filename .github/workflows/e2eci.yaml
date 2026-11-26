@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       e2e: ${{ steps.changes.outputs.e2e }}
+      shards: ${{ steps.plan.outputs.shards }}
+      shard-count: ${{ steps.plan.outputs.shard-count }}
     steps:
       - name: changes
         id: changes
@@ -37,12 +39,49 @@ jobs:
 
           CHANGED_FILES=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename | select((startswith("tests/integration/") or startswith("frontend/src/api/generated/")) | not)')
           PATTERN='^(frontend/|tests/|\.github/workflows/e2eci\.yaml$|cmd/enterprise/Dockerfile\.with-web\.integration$)'
+          printf '%s\n' "$CHANGED_FILES" | grep -E "$PATTERN" > "$RUNNER_TEMP/changed.txt" || true
 
           if printf '%s\n' "$CHANGED_FILES" | grep -qE "$PATTERN"; then
             echo "e2e=true" >> "$GITHUB_OUTPUT"
           else
             echo "e2e=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: checkout
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/checkout@v4
+      - name: node
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: install-pnpm
+        if: steps.changes.outputs.e2e == 'true'
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: pnpm-install
+        if: steps.changes.outputs.e2e == 'true'
+        run: |
+          cd tests/e2e && pnpm install --frozen-lockfile
+      - name: plan
+        id: plan
+        if: steps.changes.outputs.e2e == 'true'
+        env:
+          FORCE: ${{ github.event_name == 'merge_group' || contains(github.event.pull_request.labels.*.name, 'safe-to-e2e') }}
+        run: |
+          cd tests/e2e
+          if [ "$FORCE" = "true" ]; then
+            node scripts/plan.mjs --all < /dev/null
+          else
+            node scripts/plan.mjs < "$RUNNER_TEMP/changed.txt"
+          fi
+      - name: upload-plan
+        if: steps.changes.outputs.e2e == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan/
+          retention-days: 5
   fmtlint:
     needs: changes
     if: github.event_name != 'merge_group' && needs.changes.outputs.e2e == 'true'
@@ -76,9 +115,9 @@ jobs:
       matrix:
         project:
           - chromium
-        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        shard: ${{ fromJSON(needs.changes.outputs.shards) }}
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.e2e == 'true' && needs.changes.outputs.shards != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -168,10 +207,15 @@ jobs:
             e2e/bootstrap/setup.py::test_setup
       - name: wait-playwright-browsers
         wait: playwright-browsers
+      - name: download-plan
+        uses: actions/download-artifact@v4
+        with:
+          name: e2e-plan
+          path: tests/e2e/artifacts/plan
       - name: playwright-test
         run: |
           cd tests/e2e && \
-            pnpm playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }}/10
+            pnpm playwright test --project=${{ matrix.project }} --test-list artifacts/plan/tests.txt --shard=${{ matrix.shard }}/${{ needs.changes.outputs.shard-count }}
       - name: teardown-stack
         if: always()
         run: |
