@@ -3,9 +3,6 @@ import {
 	getRuleHistoryFilterValues,
 	useGetRuleHistoryFilterKeys,
 } from 'api/generated/services/rules';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import type { AxiosError } from 'axios';
-import { getAuthZForbiddenMessage } from 'lib/authz/utils/getAuthZForbiddenMessage';
 import { useAlertHistoryQueryParams } from 'pages/AlertDetails/hooks';
 import { QueryKeyDataSuggestionsProps } from 'types/api/querySuggestions/types';
 import { fieldContextToSuggestionContext } from 'container/AlertHistory/Timeline/Table/utils';
@@ -22,12 +19,6 @@ export interface AlertHistoryFilterSuggestions {
 	}>;
 	isLoadingKeys: boolean;
 }
-
-const NO_VALUE_SUGGESTIONS = {
-	stringValues: [],
-	numberValues: [],
-	complete: true,
-};
 
 export function useAlertHistoryFilterSuggestions(
 	ruleId: string | null,
@@ -80,27 +71,21 @@ export function useAlertHistoryFilterSuggestions(
 			complete: boolean;
 		}> => {
 			if (!ruleId) {
-				return NO_VALUE_SUGGESTIONS;
+				return {
+					stringValues: [],
+					numberValues: [],
+					complete: true,
+				};
 			}
-			let response: Awaited<ReturnType<typeof getRuleHistoryFilterValues>>;
-			try {
-				response = await getRuleHistoryFilterValues(
-					{ id: ruleId },
-					{
-						name: key,
-						searchText,
-						startUnixMilli: startTime,
-						endUnixMilli: endTime,
-					},
-				);
-			} catch (error) {
-				// Without read on the queried telemetry there is nothing to suggest,
-				// which is not an error to show.
-				if (getAuthZForbiddenMessage(error as AxiosError<RenderErrorResponseDTO>)) {
-					return NO_VALUE_SUGGESTIONS;
-				}
-				throw error;
-			}
+			const response = await getRuleHistoryFilterValues(
+				{ id: ruleId },
+				{
+					name: key,
+					searchText,
+					startUnixMilli: startTime,
+					endUnixMilli: endTime,
+				},
+			);
 			const values = response.data?.values;
 			return {
 				stringValues: values?.stringValues ?? [],

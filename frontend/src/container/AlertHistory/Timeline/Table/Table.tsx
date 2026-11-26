@@ -3,8 +3,6 @@ import { Button, Skeleton, Table } from 'antd';
 import { ChevronLeft, ChevronRight } from '@signozhq/icons';
 import logEvent from 'api/common/logEvent';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import PermissionDeniedCallout from 'lib/authz/components/PermissionDeniedCallout/PermissionDeniedCallout';
-import { getAuthZForbiddenMessage } from 'lib/authz/utils/getAuthZForbiddenMessage';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import {
 	QuerySearchV2Provider,
@@ -50,9 +48,6 @@ function TimelineTableContent(): JSX.Element {
 	} = useGetAlertRuleDetailsTimelineTable({ filterExpression: expression });
 
 	const apiError = useMemo(() => convertToApiError(error), [error]);
-	// The timeline also needs read on the queried telemetry, which only the
-	// server checks.
-	const forbiddenMessage = getAuthZForbiddenMessage(error);
 
 	const { hardcodedAttributeKeys, valueSuggestionsOverride, isLoadingKeys } =
 		useAlertHistoryFilterSuggestions(ruleId ?? null);
@@ -186,11 +181,7 @@ function TimelineTableContent(): JSX.Element {
 					emptyText:
 						isError && apiError ? (
 							<div className="timeline-table__error" data-testid="timeline-error">
-								{forbiddenMessage ? (
-									<PermissionDeniedCallout message={forbiddenMessage} />
-								) : (
-									<ErrorContent error={apiError} />
-								)}
+								<ErrorContent error={apiError} />
 							</div>
 						) : undefined,
 				}}
