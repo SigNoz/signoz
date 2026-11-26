@@ -14,7 +14,8 @@ receivers:
   otlp: {}
 processors:
   batch: {}
-  memory_limiter: {}
+  memory_limiter:
+    limit_mib: 4000
   resourcedetection: {}
   memory_limiter/traces: {}
   attributes/tenant:
@@ -63,7 +64,8 @@ service:
 	assert.Equal(t, []string{"memory_limiter/traces", "batch", "memory_limiter/traces"}, processorNamesInOrder(t, processorsConfs["traces"]))
 	assert.Contains(t, string(processorsConfs["logs"]), "type: move")
 	assert.Contains(t, string(processorsConfs["logs"]), "position: before")
-	assert.Contains(t, string(processorsConfs["logs"]), "- memory_limiter\n")
+	assert.Contains(t, string(processorsConfs["logs"]), "limit_mib: 4000")
+	assert.Contains(t, string(processorsConfs["logs"]), "- attributes/tenant\n")
 }
 
 func processorNamesInOrder(t *testing.T, conf []byte) []string {
