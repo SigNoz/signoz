@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	END_POINT_DETAILS_QUERY_KEYS_ARRAY,
@@ -93,13 +92,9 @@ function EndPointDetails({
 
 	const endPointDetailsDataQueries = useQueries(
 		endPointDetailsQueryPayload.map((payload, index) => ({
-			queryKey: [
-				END_POINT_DETAILS_QUERY_KEYS_ARRAY[index],
-				payload,
-				ENTITY_VERSION_V5,
-			],
+			queryKey: [END_POINT_DETAILS_QUERY_KEYS_ARRAY[index], payload],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+				GetMetricQueryRange(payload),
 			enabled: !!payload,
 			// Keeps the table's rows, and so its height, while a new filter loads
 			keepPreviousData:

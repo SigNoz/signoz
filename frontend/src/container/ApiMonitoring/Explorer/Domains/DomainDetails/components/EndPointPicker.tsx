@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { Combobox, type ComboboxItemType } from '@signozhq/ui/combobox';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	getEndPointDropDownQueryPayload,
@@ -44,12 +43,8 @@ function EndPointPicker({
 	);
 
 	const { data, isLoading, isFetching } = useQuery({
-		queryKey: [
-			REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA,
-			payload,
-			ENTITY_VERSION_V5,
-		],
-		queryFn: () => GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+		queryKey: [REACT_QUERY_KEY.GET_ENDPOINT_DROPDOWN_DATA, payload],
+		queryFn: () => GetMetricQueryRange(payload),
 		staleTime: 60 * 1000,
 	});
 

@@ -6,7 +6,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -53,7 +52,6 @@ function MetricPageGridGraph({
 		>
 			<GridCard
 				widget={widgetData}
-				version={ENTITY_VERSION_V5}
 				headerMenuList={[...ViewMenuAction]}
 				onDragSelect={onDragSelect}
 				dataAvailable={checkIfDataExists}

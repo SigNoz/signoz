@@ -7,7 +7,6 @@ import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -179,7 +178,6 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.All && (
 					<GridCard
 						widget={celeryAllStateFilteredData}
-						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -201,7 +199,6 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Failed && (
 					<GridCard
 						widget={celeryFailedStateFilteredData}
-						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -222,7 +219,6 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Retry && (
 					<GridCard
 						widget={celeryRetryStateFilteredData}
-						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}
@@ -243,7 +239,6 @@ function CeleryTaskBar({
 				{barState === CeleryTaskState.Successful && (
 					<GridCard
 						widget={celerySuccessStateFilteredData}
-						version={ENTITY_VERSION_V5}
 						headerMenuList={[...ViewMenuAction]}
 						onDragSelect={onDragSelect}
 						isQueryEnabled={queryEnabled}

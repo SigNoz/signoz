@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { QueryParams } from 'constants/query';
@@ -137,7 +136,6 @@ function CeleryTaskGraph({
 				isQueryEnabled={queryEnabled}
 				openTracesButton={openTracesButton}
 				onOpenTraceBtnClick={onOpenTraceBtnClick}
-				version={ENTITY_VERSION_V5}
 				customErrorMessage={customErrorMessage}
 				start={start}
 				end={end}

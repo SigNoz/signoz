@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { ILog } from 'types/api/logs/log';
@@ -77,7 +76,7 @@ export function useEntityEvents({
 				offset,
 				pageSize,
 			});
-			return GetMetricQueryRange(query, ENTITY_VERSION_V5, undefined, signal);
+			return GetMetricQueryRange(query, undefined, signal);
 		},
 		enabled: !!expression?.trim(),
 	});

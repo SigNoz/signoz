@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -43,15 +42,12 @@ const useSampleLogs = ({
 		return q;
 	}, [count, filter]);
 
-	const response = useGetQueryRange(
-		{
-			graphType: PANEL_TYPES.LIST,
-			query,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: timeInterval,
-		},
-		ENTITY_VERSION_V5,
-	);
+	const response = useGetQueryRange({
+		graphType: PANEL_TYPES.LIST,
+		query,
+		selectedTime: 'GLOBAL_TIME',
+		globalSelectedInterval: timeInterval,
+	});
 
 	const { isFetching: isLoading, data } = response;
 

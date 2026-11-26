@@ -43,7 +43,6 @@ export interface FullViewProps {
 	customOnDragSelect?: (start: number, end: number) => void;
 	name: string;
 	tableProcessedDataRef: MutableRefObject<RowData[]>;
-	version?: string;
 	originalName: string;
 	yAxisUnit?: string;
 	isDependedDataLoaded?: boolean;

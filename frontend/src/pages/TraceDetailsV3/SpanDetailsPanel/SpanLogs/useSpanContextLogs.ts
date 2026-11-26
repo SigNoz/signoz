@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { OPERATORS } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearchV2/utils';
@@ -143,7 +142,7 @@ export const useSpanContextLogs = ({
 			timeRange.startTime,
 			timeRange.endTime,
 		],
-		queryFn: () => GetMetricQueryRange(spanQueryPayload, ENTITY_VERSION_V5),
+		queryFn: () => GetMetricQueryRange(spanQueryPayload),
 		enabled: enabled && !!traceId && !!spanId,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
@@ -211,8 +210,7 @@ export const useSpanContextLogs = ({
 			timeRange.startTime,
 			timeRange.endTime,
 		],
-		queryFn: () =>
-			GetMetricQueryRange(beforeQueryPayload as any, ENTITY_VERSION_V5),
+		queryFn: () => GetMetricQueryRange(beforeQueryPayload as any),
 		enabled: !!beforeQueryPayload && !!firstSpanLog,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
@@ -245,8 +243,7 @@ export const useSpanContextLogs = ({
 			timeRange.startTime,
 			timeRange.endTime,
 		],
-		queryFn: () =>
-			GetMetricQueryRange(afterQueryPayload as any, ENTITY_VERSION_V5),
+		queryFn: () => GetMetricQueryRange(afterQueryPayload as any),
 		enabled: !!afterQueryPayload && !!lastSpanLog,
 		staleTime: FIVE_MINUTES_IN_MS,
 	});
@@ -311,8 +308,7 @@ export const useSpanContextLogs = ({
 			timeRange.startTime,
 			timeRange.endTime,
 		],
-		queryFn: () =>
-			GetMetricQueryRange(traceOnlyQueryPayload as any, ENTITY_VERSION_V5),
+		queryFn: () => GetMetricQueryRange(traceOnlyQueryPayload as any),
 		enabled:
 			enabled &&
 			checkTraceLogs &&

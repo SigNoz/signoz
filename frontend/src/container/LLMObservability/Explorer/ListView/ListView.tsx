@@ -14,7 +14,6 @@ import logEvent from 'api/common/logEvent';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { SavedviewtypesSourceDTO } from 'api/generated/services/sigNoz.schemas';
 import type { TableColumnDef } from 'components/TanStackTableView/types';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { initialQueryAIWithType, PANEL_TYPES } from 'constants/queryBuilder';
@@ -144,7 +143,6 @@ function ListView({
 				selectColumns,
 			},
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled:

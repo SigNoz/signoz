@@ -22,14 +22,12 @@ type UseGetQueryRangeOptions = UseQueryOptions<
 
 type UseGetQueryRange = (
 	requestData: GetQueryResultsProps,
-	version: string,
 	options?: UseGetQueryRangeOptions,
 	headers?: Record<string, string>,
 ) => UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 
 export const useGetQueryRange: UseGetQueryRange = (
 	requestData,
-	version,
 	options,
 	headers,
 ) => {
@@ -150,7 +148,6 @@ export const useGetQueryRange: UseGetQueryRange = (
 		queryFn: async ({ signal }) =>
 			GetMetricQueryRange(
 				modifiedRequestData,
-				version,
 				dashboardDynamicVariables,
 				signal,
 				headers,

@@ -16,7 +16,6 @@ import classNames from 'classnames';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -101,7 +100,6 @@ function TimeSeries({
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
-				ENTITY_VERSION_V5,
 				globalSelectedTime,
 				maxTime,
 				minTime,
@@ -122,7 +120,6 @@ function TimeSeries({
 							dataSource: DataSource.METRICS,
 						},
 					},
-					ENTITY_VERSION_V5,
 					undefined,
 					signal,
 				),

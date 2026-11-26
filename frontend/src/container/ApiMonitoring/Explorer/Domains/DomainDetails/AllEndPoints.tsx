@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	getAllEndpointsWidgetData,
 	getGroupByExpressionFromRowData,
@@ -156,7 +155,6 @@ function AllEndPoints({
 					customOnDragSelect={(): void => {}}
 					customTimeRange={timeRange}
 					customOnRowClick={onRowClick}
-					version={ENTITY_VERSION_V5}
 				/>
 			</div>
 		</div>

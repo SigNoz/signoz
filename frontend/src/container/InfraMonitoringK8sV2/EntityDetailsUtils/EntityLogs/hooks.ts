@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQueryClient } from 'react-query';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { DEFAULT_PER_PAGE_VALUE } from 'container/Controls/config';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -63,7 +62,7 @@ export function useInfiniteEntityLogs({
 				offset: pageParam as number,
 				pageSize: DEFAULT_PER_PAGE_VALUE,
 			});
-			return GetMetricQueryRange(query, ENTITY_VERSION_V5, undefined, signal);
+			return GetMetricQueryRange(query, undefined, signal);
 		},
 		getNextPageParam: (lastPage, allPages) => {
 			const list = lastPage?.payload?.data?.newResult?.data?.result?.[0]?.list;

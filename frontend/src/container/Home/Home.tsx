@@ -20,7 +20,6 @@ import Header from 'components/Header/Header';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import NoAuthBanner from 'components/NoAuthBanner/NoAuthBanner';
 import { getIsNoAuthMode } from 'utils/noAuthMode';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -102,7 +101,6 @@ export default function Home(): JSX.Element {
 			},
 			formatForWeb: false,
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
@@ -127,7 +125,6 @@ export default function Home(): JSX.Element {
 			},
 			formatForWeb: false,
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,

@@ -2,7 +2,6 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useScrollWidgetIntoView } from 'lib/visualization/hooks/useScrollWidgetIntoView';
@@ -15,7 +14,6 @@ import getTimeString from 'lib/getTimeString';
 import isEmpty from 'lodash-es/isEmpty';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
-import APIError from 'types/api/error';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
@@ -41,7 +39,6 @@ function GridCardGraph({
 	headerMenuList = [MenuItemKeys.View],
 	isQueryEnabled,
 	threshold,
-	version,
 	onClickHandler,
 	onDragSelect,
 	customOnDragSelect,
@@ -62,8 +59,6 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const [isInternalServerError, setIsInternalServerError] =
-		useState<boolean>(false);
 	const {
 		minTime,
 		maxTime,
@@ -171,7 +166,6 @@ function GridCardGraph({
 			end: customTimeRange?.endTime || end,
 			originalGraphType: widget?.panelTypes,
 		},
-		version || ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
@@ -188,16 +182,7 @@ function GridCardGraph({
 					? [customTimeRange.startTime, customTimeRange.endTime]
 					: []),
 			],
-			retry(failureCount, error): boolean {
-				if (
-					String(error).includes('status: error') &&
-					String(error).includes('i/o timeout')
-				) {
-					return false;
-				}
-
-				return failureCount < 2;
-			},
+			retry: 2,
 			keepPreviousData: true,
 			cacheTime: isAutoRefreshDisabled
 				? DASHBOARD_CACHE_TIME
@@ -205,21 +190,11 @@ function GridCardGraph({
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
-				const errorMessage =
-					version === ENTITY_VERSION_V5
-						? errorDetails(error as APIError)
-						: error.message;
-
-				setErrorMessage(errorMessage);
-				if (customErrorMessage) {
-					setIsInternalServerError(
-						String(error.message).includes('API responded with 500'),
-					);
-					if (analyticsEvent) {
-						void logEvent(analyticsEvent, {
-							error: error.message,
-						});
-					}
+				setErrorMessage(errorDetails(error));
+				if (customErrorMessage && analyticsEvent) {
+					void logEvent(analyticsEvent, {
+						error: error.message,
+					});
 				}
 			},
 			onSettled: (data) => {
@@ -262,7 +237,6 @@ function GridCardGraph({
 					queryResponse={queryResponse}
 					errorMessage={errorMessage}
 					isWarning={!isEmpty(queryResponse.data?.warning)}
-					version={version}
 					threshold={threshold}
 					headerMenuList={menuList}
 					isFetchingResponse={queryResponse.isFetching}
@@ -274,7 +248,6 @@ function GridCardGraph({
 					openTracesButton={openTracesButton}
 					onOpenTraceBtnClick={onOpenTraceBtnClick}
 					customSeries={customSeries}
-					customErrorMessage={isInternalServerError ? customErrorMessage : undefined}
 					customOnRowClick={customOnRowClick}
 					customTimeRangeWindowForCoRelation={customTimeRangeWindowForCoRelation}
 					enableDrillDown={enableDrillDown}
@@ -290,7 +263,6 @@ GridCardGraph.defaultProps = {
 	isQueryEnabled: true,
 	threshold: undefined,
 	headerMenuList: [MenuItemKeys.View],
-	version: ENTITY_VERSION_V5,
 	analyticsEvent: undefined,
 	customTimeRangeWindowForCoRelation: undefined,
 	enableDrillDown: false,

@@ -12,7 +12,6 @@ import { useSelector } from 'react-redux';
 import { Typography } from '@signozhq/ui/typography';
 import logEvent from 'api/common/logEvent';
 import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -102,7 +101,6 @@ function TracesView({
 					pagination: pagination.request,
 				},
 			},
-			ENTITY_VERSION_V5,
 			{
 				queryKey,
 				keepPreviousData: true,

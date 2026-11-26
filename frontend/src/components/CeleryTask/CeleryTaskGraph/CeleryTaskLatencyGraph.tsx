@@ -9,7 +9,6 @@ import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { Button } from 'container/MetricsApplication/Tabs/styles';
@@ -202,7 +201,6 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
-							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p99_latency')}
@@ -224,7 +222,6 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
-							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p95_latency')}
@@ -245,7 +242,6 @@ function CeleryTaskLatencyGraph({
 						</Button>
 						<GridCard
 							widget={updatedWidgetData}
-							version={ENTITY_VERSION_V5}
 							headerMenuList={[...ViewMenuAction]}
 							onDragSelect={onDragSelect}
 							onClickHandler={onGraphClick('Celery_p90_latency')}

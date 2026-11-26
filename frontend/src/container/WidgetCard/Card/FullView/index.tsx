@@ -19,7 +19,6 @@ import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import TimePreference from 'components/TimePreferenceDropDown';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'lib/visualization/panels/types';
@@ -55,7 +54,6 @@ import 'container/WidgetCard/Card/FullView/WidgetFullView.styles.scss';
 function FullView({
 	widget,
 	fullViewOptions = true,
-	version,
 	originalName,
 	tableProcessedDataRef,
 	isDependedDataLoaded = false,
@@ -170,18 +168,11 @@ function FullView({
 	}, [selectedPanelType]);
 
 	const queryRangeKey = useMemo(
-		() => [
-			widget?.query,
-			selectedPanelType,
-			requestData,
-			version,
-			minTime,
-			maxTime,
-		],
-		[widget?.query, selectedPanelType, requestData, version, minTime, maxTime],
+		() => [widget?.query, selectedPanelType, requestData, minTime, maxTime],
+		[widget?.query, selectedPanelType, requestData, minTime, maxTime],
 	);
 
-	const response = useGetQueryRange(requestData, ENTITY_VERSION_V5, {
+	const response = useGetQueryRange(requestData, {
 		queryKey: queryRangeKey,
 		enabled: !isDependedDataLoaded,
 		keepPreviousData: true,

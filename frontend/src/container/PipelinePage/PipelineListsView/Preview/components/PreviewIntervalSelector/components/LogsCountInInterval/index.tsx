@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialFilters,
 	initialQueriesMap,
@@ -27,15 +26,12 @@ function LogsCountInInterval({
 		return q;
 	}, [filter]);
 
-	const result = useGetQueryRange(
-		{
-			graphType: PANEL_TYPES.TABLE,
-			query,
-			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: timeInterval,
-		},
-		ENTITY_VERSION_V5,
-	);
+	const result = useGetQueryRange({
+		graphType: PANEL_TYPES.TABLE,
+		query,
+		selectedTime: 'GLOBAL_TIME',
+		globalSelectedInterval: timeInterval,
+	});
 
 	const count = useMemo(() => {
 		const table = result.data?.payload?.data?.result?.[0]?.table;

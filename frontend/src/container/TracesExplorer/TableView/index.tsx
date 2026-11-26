@@ -12,7 +12,6 @@ import { useSelector } from 'react-redux';
 import Space from 'periscope/components/Space/Space';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ExportMenu from 'components/ExportMenu/ExportMenu';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { QueryTable } from 'container/QueryTable';
@@ -71,7 +70,6 @@ function TableView({
 				dataSource: 'traces',
 			},
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey,
 			enabled: !!stagedQuery && panelType === PANEL_TYPES.TABLE,

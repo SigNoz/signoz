@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useQueries } from 'react-query';
 import { isAxiosError } from 'axios';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { MAX_QUERY_RETRIES } from 'constants/reactQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -72,7 +71,6 @@ export function useTimeSeriesQueries({
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
 				payload,
-				ENTITY_VERSION_V5,
 				globalSelectedTime,
 				maxTime,
 				minTime,
@@ -93,7 +91,6 @@ export function useTimeSeriesQueries({
 							dataSource: DataSource.METRICS,
 						},
 					},
-					ENTITY_VERSION_V5,
 					undefined,
 					signal,
 				),

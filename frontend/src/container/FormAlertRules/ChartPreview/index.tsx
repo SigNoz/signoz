@@ -8,7 +8,6 @@ import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -177,7 +176,6 @@ function ChartPreview({
 			},
 			originalGraphType: graphType,
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				REACT_QUERY_KEY.ALERT_RULES_CHART_PREVIEW,

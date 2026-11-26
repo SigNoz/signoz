@@ -118,7 +118,7 @@ function Section(section: MetricSection): JSX.Element {
 						$panelType={PANEL_TYPES.BAR}
 						className="meter-graph"
 					>
-						<GridCard widget={widget} onDragSelect={onDragSelect} version="v5" />
+						<GridCard widget={widget} onDragSelect={onDragSelect} />
 					</Card>
 				))}
 			</div>
