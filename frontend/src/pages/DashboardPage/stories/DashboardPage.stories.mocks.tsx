@@ -36,6 +36,7 @@ import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import {
 	currentDashboardDocument,
 	cyclicVariablesDashboardResponse,
+	DASHBOARD_IMAGES,
 	DURATION_CHOICES,
 	patchDashboardDocument,
 	PANEL_IDS,
@@ -43,6 +44,7 @@ import {
 	STORY_DASHBOARD_ID,
 	VARIABLE_KINDS,
 	type DashboardArgs,
+	type DashboardImage,
 	type DurationChoice,
 	type PanelId,
 	type VariableKind,
@@ -168,6 +170,13 @@ export const dashboardMocks = defineStoryMocks({
 			options: DURATION_CHOICES,
 			value: 'unset',
 		}),
+		image: choiceControl<DashboardImage>('Image', {
+			group: LAYOUT,
+			description:
+				"The dashboard's `image`, shown beside its name in the header and in the settings icon picker: a bundled icon or a logo, which dashboard JSON can reference but the picker does not offer.",
+			options: DASHBOARD_IMAGES,
+			value: '/assets/Icons/circus-tent',
+		}),
 		variableValues: countControl('Variable options', {
 			group: DATA,
 			description: 'Values the query-backed `service` variable resolves to.',
@@ -244,6 +253,7 @@ export const dashboardMocks = defineStoryMocks({
 			variables: values.variables,
 			locked: values.locked,
 			duration: values.duration,
+			image: values.image,
 		};
 
 		return [
@@ -384,6 +394,7 @@ export const dashboardMocks = defineStoryMocks({
 			variables: values.variables,
 			locked: values.locked,
 			duration: values.duration,
+			image: values.image,
 		});
 		// The sync mode persists per dashboard, so one story's pick would open the
 		// next one on it.
