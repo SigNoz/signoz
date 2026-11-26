@@ -563,7 +563,7 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 	}
 }
 
-func TestProcessorsOnlyCollectorConf(t *testing.T) {
+func TestProcessorsConfByCollectorPipeline(t *testing.T) {
 	baseConf := []byte(`
 receivers:
   otlp: {}
@@ -571,6 +571,7 @@ processors:
   batch: {}
   memory_limiter: {}
   resourcedetection: {}
+  memory_limiter/traces: {}
 exporters:
   clickhouselogsexporter:
     dsn: tcp://admin:supersecret@clickhouse:9000/signoz_logs
@@ -584,6 +585,10 @@ service:
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
+      exporters: [clickhouselogsexporter]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter/traces, batch]
       exporters: [clickhouselogsexporter]
 `)
 	pipelines := []pipelinetypes.GettablePipeline{
@@ -610,29 +615,17 @@ service:
 	_, err = generateCollectorConfigWithPipelines(collectorConf, pipelines)
 	require.NoError(t, err)
 
-	processorsConf, err := processorsOnlyCollectorConf(collectorConf)
+	processorsConfs, err := processorsConfByCollectorPipeline(collectorConf)
 	require.NoError(t, err)
+	require.Len(t, processorsConfs, 2)
 
-	assert.NotContains(t, string(processorsConf), "supersecret")
-	assert.NotContains(t, string(processorsConf), "hunter2")
-
-	var got yaml.Node
-	require.NoError(t, yaml.Unmarshal(processorsConf, &got))
-	require.Len(t, got.Content, 1)
-	root := got.Content[0]
-	require.Len(t, root.Content, 4)
-	assert.Equal(t, "processors", root.Content[0].Value)
-	assert.Equal(t, "service", root.Content[2].Value)
-
-	var processorNames []string
-	for i := 0; i < len(root.Content[1].Content); i += 2 {
-		processorNames = append(processorNames, root.Content[1].Content[i].Value)
+	for _, conf := range processorsConfs {
+		assert.NotContains(t, string(conf), "supersecret")
+		assert.NotContains(t, string(conf), "hunter2")
+		assert.NotContains(t, string(conf), "resourcedetection")
 	}
-	assert.Equal(t, []string{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch", "resourcedetection"}, processorNames)
-
-	var service map[string]any
-	require.NoError(t, root.Content[3].Decode(&service))
-	assert.Equal(t, []any{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch"}, service["pipelines"].(map[string]any)["logs"].(map[string]any)["processors"])
+	assert.Equal(t, []string{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch"}, processorNamesInOrder(t, processorsConfs["logs"]))
+	assert.Equal(t, []string{"memory_limiter/traces", "batch"}, processorNamesInOrder(t, processorsConfs["traces"]))
 }
 
 func TestRecommendAgentConfigLogsProcessorsInOrderWithNormalizer(t *testing.T) {
@@ -694,34 +687,25 @@ service:
 			for _, line := range bytes.Split(bytes.TrimSpace(logs.Bytes()), []byte("\n")) {
 				var record map[string]any
 				require.NoError(t, json.Unmarshal(line, &record))
-				if record["msg"] == "generated log pipelines collector config" {
+				if record["msg"] == "generated collector pipeline processors config" && record["pipeline"] == "logs" {
 					loggedConf, _ = record["config"].(string)
 				}
 			}
 			require.NotEmpty(t, loggedConf)
 			assert.NotContains(t, loggedConf, "normalizersecret")
-
-			var got yaml.Node
-			require.NoError(t, yaml.Unmarshal([]byte(loggedConf), &got))
-			require.Len(t, got.Content, 1)
-			root := got.Content[0]
-			require.Len(t, root.Content, 4)
-
-			var processorNames []string
-			for i := 0; i < len(root.Content[1].Content); i += 2 {
-				processorNames = append(processorNames, root.Content[1].Content[i].Value)
-			}
-			assert.Equal(t, testCase.expected, processorNames)
-
-			var service struct {
-				Pipelines struct {
-					Logs struct {
-						Processors []string `yaml:"processors"`
-					} `yaml:"logs"`
-				} `yaml:"pipelines"`
-			}
-			require.NoError(t, root.Content[3].Decode(&service))
-			assert.Equal(t, testCase.expected, service.Pipelines.Logs.Processors)
+			assert.Equal(t, testCase.expected, processorNamesInOrder(t, []byte(loggedConf)))
 		})
 	}
+}
+
+func processorNamesInOrder(t *testing.T, conf []byte) []string {
+	t.Helper()
+	var root yaml.Node
+	require.NoError(t, yaml.Unmarshal(conf, &root))
+	require.Len(t, root.Content, 1)
+	var names []string
+	for i := 0; i < len(root.Content[0].Content); i += 2 {
+		names = append(names, root.Content[0].Content[i].Value)
+	}
+	return names
 }
