@@ -13,10 +13,11 @@ import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryB
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { isEmpty } from 'lodash-es';
-import { Atom, Terminal } from '@signozhq/icons';
+import { Atom, Brain, Terminal } from '@signozhq/icons';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { EQueryType } from 'types/common/dashboard';
 
+import AIQuerySection from './AIQuerySection';
 import ChQuerySection from './ChQuerySection';
 import PromqlSection from './PromqlSection';
 
@@ -79,14 +80,18 @@ function QuerySection({
 	const anomalyDisabledTooltip = (url: string): JSX.Element => (
 		<span>
 			Coming soon for anomaly detection.{' '}
-			<Typography.Link
-				href={url}
-				target="_blank"
-				rel="noopener noreferrer"
-				style={{ color: 'inherit', textDecoration: 'underline' }}
-			>
-				Leave a thumbs-up
-			</Typography.Link>{' '}
+			<span style={{ color: 'inherit', textDecoration: 'underline' }}>
+				<Typography.Link
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					textOverflow="wrap"
+					href={url}
+					target="_blank"
+				>
+					Leave a thumbs-up
+				</Typography.Link>
+			</span>{' '}
 			to help us prioritize!
 		</span>
 	);
@@ -97,7 +102,16 @@ function QuerySection({
 				<Tooltip title="Query Builder">
 					<Button className="nav-btns" data-testid="query-builder-tab">
 						<Atom size={14} />
-						<Typography.Text>Query Builder</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							Query Builder
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
@@ -118,12 +132,44 @@ function QuerySection({
 						data-testid="clickhouse-tab"
 					>
 						<Terminal size={14} />
-						<Typography.Text>ClickHouse Query</Typography.Text>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							ClickHouse Query
+						</Typography>
 					</Button>
 				</Tooltip>
 			),
 			key: EQueryType.CLICKHOUSE,
 			disabled: isAnomalyDetection,
+		},
+	];
+
+	const aiTabs = [
+		{
+			label: (
+				<Tooltip title="AI Query Builder">
+					<Button className="nav-btns" data-testid="ai-query-builder-tab">
+						<Brain size={14} />
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="inherit"
+							as="span"
+							textOverflow="wrap"
+						>
+							AI Query Builder
+						</Typography>
+					</Button>
+				</Tooltip>
+			),
+			key: EQueryType.AI_QUERY_BUILDER,
 		},
 	];
 
@@ -141,7 +187,16 @@ function QuerySection({
 					<Tooltip title="Query Builder">
 						<Button className="nav-btns" data-testid="query-builder-tab">
 							<Atom size={14} />
-							<Typography.Text>Query Builder</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								Query Builder
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -162,7 +217,16 @@ function QuerySection({
 							data-testid="clickhouse-tab"
 						>
 							<Terminal size={14} />
-							<Typography.Text>ClickHouse Query</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								ClickHouse Query
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -186,7 +250,16 @@ function QuerySection({
 							<PromQLIcon
 								fillColor={isDarkMode ? Color.BG_VANILLA_200 : Color.BG_INK_300}
 							/>
-							<Typography.Text>PromQL</Typography.Text>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
+								PromQL
+							</Typography>
 						</Button>
 					</Tooltip>
 				),
@@ -213,6 +286,7 @@ function QuerySection({
 			case AlertTypes.TRACES_BASED_ALERT:
 			case AlertTypes.LOGS_BASED_ALERT:
 			case AlertTypes.EXCEPTIONS_BASED_ALERT:
+			case AlertTypes.AI_TRACES_BASED_ALERT:
 				return (
 					<div className="alert-tabs">
 						<Tabs
@@ -238,7 +312,7 @@ function QuerySection({
 									/>
 								</span>
 							}
-							items={tabs}
+							items={typ === AlertTypes.AI_TRACES_BASED_ALERT ? aiTabs : tabs}
 						/>
 					</div>
 				);
@@ -276,6 +350,9 @@ function QuerySection({
 		}
 		if (c === EQueryType.QUERY_BUILDER) {
 			return renderMetricUI();
+		}
+		if (c === EQueryType.AI_QUERY_BUILDER) {
+			return <AIQuerySection panelType={panelType} />;
 		}
 		return null;
 	};

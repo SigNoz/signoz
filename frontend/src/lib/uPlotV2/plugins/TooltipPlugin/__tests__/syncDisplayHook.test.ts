@@ -1,3 +1,4 @@
+import { within } from 'tests/test-utils';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import uPlot from 'uplot';
 
@@ -39,6 +40,7 @@ function makeUPlotRoot(includeCrosshair = true): HTMLElement {
 	if (includeCrosshair) {
 		const el = document.createElement('div');
 		el.className = 'u-cursor-y';
+		el.dataset.testid = 'crosshair';
 		root.append(el);
 	}
 	return root;
@@ -82,11 +84,7 @@ function mockSetSeries(u: uPlot): jest.Mock {
 }
 
 function getCrosshair(u: uPlot): HTMLElement {
-	const el = u.root.querySelector<HTMLElement>('.u-cursor-y');
-	if (!el) {
-		throw new Error('crosshair element missing');
-	}
-	return el;
+	return within(u.root).getByTestId('crosshair');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

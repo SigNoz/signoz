@@ -46,9 +46,16 @@ function ThresholdFormatField({
 
 	return (
 		<div className={styles.field}>
-			<Typography.Text className={styles.fieldLabel}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
+			>
 				Apply color to
-			</Typography.Text>
+			</Typography>
 			<ConfigTiles
 				testId={testId}
 				aria-label="Apply color to"

@@ -4,11 +4,14 @@
  */
 
 import ROUTES from 'constants/routes';
+import { UserCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/user.permissions';
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	ACTIVE_MEMBER_MAX,
@@ -177,8 +180,32 @@ export const membersMocks = defineStoryMocks({
 	config: () => ({ route: ROUTES.MEMBERS_SETTINGS }),
 });
 
+export type MembersArgs = PageStoryArgs<typeof membersMocks>;
+
+/** `AuthZButton` leaves Invite member enabled when the check itself fails. */
+export const canInvite = (args: MembersArgs): boolean =>
+	args.authzState === 'error' || grantsAll(args, UserCreatePermission);
+
+/** The roles dropdown lists what the roles endpoint answers, which State holds back or fails. */
+export const offersRole = (args: MembersArgs, role: string): boolean =>
+	args.dataState === 'loaded' &&
+	rolesListResponse(args.roles).data.some((listed) => listed.name === role);
+
 /** The table fetches before it renders a row, which outlasts the 1s default. */
+export const MEMBERS_PAGE_SIZE = 20;
+
 export const untilLoaded = { timeout: 15_000 };
+
+/** A permission-gated control ignores a click until its check has resolved. */
+export const clickWhenEnabled = async (element: HTMLElement): Promise<void> => {
+	const control = element.closest('button') ?? element;
+
+	await waitFor(
+		() => expect(control).not.toHaveAttribute('aria-disabled', 'true'),
+		untilLoaded,
+	);
+	await userEvent.click(element);
+};
 
 /**
  * The click handler sits on the row rather than the cell, and the header row
@@ -197,40 +224,57 @@ export const openMember = async (
 	await userEvent.click(cell.closest('tr') as HTMLElement);
 };
 
-/**
- * Selects `viewer` in the roles dropdown at `index`. The option's content ignores
- * pointer events, so the click goes to the option around it. A click on the
- * label closes the dropdown, where Escape would close the dialog too.
- */
-const pickRole = async (index: number): Promise<void> => {
-	const comboboxes = await screen.findAllByRole(
-		'combobox',
-		undefined,
-		untilLoaded,
-	);
+export const roleItemTestId = (triggerTestId: string, role: string): string =>
+	`${triggerTestId}-item-role-${role}`;
 
-	await userEvent.click(comboboxes[index]);
-	const options = await screen.findAllByText('viewer', undefined, untilLoaded);
-
-	await userEvent.click(
-		options[options.length - 1].closest('.ant-select-item-option') as HTMLElement,
-	);
-	await userEvent.click(await screen.findByText('Email address'));
-};
-
-export const sendInvites = async (
+export const openInviteForm = async (
 	canvasElement: HTMLElement,
-	emails: string[],
 ): Promise<void> => {
-	await userEvent.click(
+	await clickWhenEnabled(
 		await within(canvasElement).findByText(
 			/invite member/i,
 			undefined,
 			untilLoaded,
 		),
 	);
+	// The form opens with a row per seat, each carrying its own email field.
+	await screen.findAllByTestId(
+		/^invite-email-.+-field$/,
+		undefined,
+		untilLoaded,
+	);
+};
+
+/** One roles dropdown per invite row, in row order. */
+export const findInviteRoleTriggers = (): Promise<HTMLElement[]> =>
+	screen.findAllByTestId(/^invite-role-[0-9a-f-]{36}$/, undefined, untilLoaded);
+
+/** A click on the label closes the dropdown, where Escape would close the dialog too. */
+export const closeRoles = async (): Promise<void> => {
+	await userEvent.click(await screen.findByText('Email address'));
+};
+
+const pickRole = async (index: number): Promise<void> => {
+	const trigger = (await findInviteRoleTriggers())[index];
+
+	await userEvent.click(trigger);
+	await userEvent.click(
+		await screen.findByTestId(
+			roleItemTestId(trigger.dataset.testid ?? '', 'viewer'),
+			undefined,
+			untilLoaded,
+		),
+	);
+	await closeRoles();
+};
+
+export const sendInvites = async (
+	canvasElement: HTMLElement,
+	emails: string[],
+): Promise<void> => {
+	await openInviteForm(canvasElement);
 	const fields = await screen.findAllByTestId(
-		/^invite-email-/,
+		/^invite-email-.+-field$/,
 		undefined,
 		untilLoaded,
 	);
@@ -239,8 +283,12 @@ export const sendInvites = async (
 		await userEvent.type(fields[index], email);
 		await pickRole(index);
 	}
-	await userEvent.click(
-		await screen.findByRole('button', { name: 'Invite Team Members' }),
+	await clickWhenEnabled(
+		await screen.findByRole(
+			'button',
+			{ name: 'Invite Team Members' },
+			untilLoaded,
+		),
 	);
 };
 
@@ -248,7 +296,7 @@ export const openResetLink = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
 	await openMember(canvasElement, /jon snow/i);
-	await userEvent.click(
+	await clickWhenEnabled(
 		await screen.findByRole(
 			'button',
 			{ name: 'Generate Password Reset Link' },

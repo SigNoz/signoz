@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+	type HTMLAttributes,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
 import cx from 'classnames';
 import { ResizeTable } from 'components/ResizeTable';
 import Download from 'container/Download/Download';
+import { isBuilderQueryType } from 'lib/query/builderSlot';
 import {
 	createTableColumnsFromQuery,
 	RowData,
@@ -33,7 +40,7 @@ export function QueryTable({
 	...props
 }: QueryTableProps): JSX.Element {
 	const { isDownloadEnabled = false, fileName = '' } = downloadOption || {};
-	const isQueryTypeBuilder = query.queryType === 'builder';
+	const isQueryTypeBuilder = isBuilderQueryType(query.queryType);
 
 	const { servicename: encodedServiceName } = useAppParams<'servicename'>();
 	const servicename = decodeURIComponent(encodedServiceName || '');
@@ -179,6 +186,9 @@ export function QueryTable({
 					columnWidths={columnWidths}
 					onColumnWidthsChange={onColumnWidthsChange}
 					sticky={sticky}
+					onRow={(): HTMLAttributes<HTMLElement> & { 'data-testid': string } => ({
+						'data-testid': 'query-table-row',
+					})}
 					{...props}
 				/>
 			</div>

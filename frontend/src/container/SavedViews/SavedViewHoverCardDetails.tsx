@@ -35,12 +35,17 @@ function SavedViewHoverCardDetails({
 
 	if (isError || !view) {
 		return (
-			<Typography.Text
-				className={styles.error}
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="span"
+				textOverflow="wrap"
 				data-testid="saved-view-hover-card-error"
 			>
 				{SAVED_VIEW_LOAD_FAILED_NAME}
-			</Typography.Text>
+			</Typography>
 		);
 	}
 
@@ -55,9 +60,17 @@ function SavedViewHoverCardDetails({
 	return (
 		<>
 			<div className={styles.header}>
-				<Typography.Text className={styles.name}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="main"
+					as="span"
+					display="block"
+					textOverflow="ellipsis"
+				>
 					{view.spec.displayName}
-				</Typography.Text>
+				</Typography>
 				{copyValue && (
 					<CopyButton
 						value={copyValue}
@@ -68,45 +81,100 @@ function SavedViewHoverCardDetails({
 			</div>
 			<div className={styles.query} data-testid="saved-view-hover-card-query">
 				{querySummaries.length === 0 ? (
-					<Typography.Text className={styles.noFilters}>No filters</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="tertiary"
+						as="span"
+						textOverflow="wrap"
+					>
+						No filters
+					</Typography>
 				) : (
 					querySummaries.map(({ queryName, expression, metric }) => (
 						<div key={queryName} className={styles.queryItem}>
 							{hasQueryNames && (
-								<Typography.Text className={styles.queryName}>
+								<Typography
+									variant="paragraph"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{queryName}
-								</Typography.Text>
+								</Typography>
 							)}
 							{metric && (
-								<Typography.Text className={styles.metric}>{metric}</Typography.Text>
+								<Typography
+									variant="code"
+									size="small"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
+									{metric}
+								</Typography>
 							)}
 							{expression && (
-								<Typography.Text className={styles.expression}>
-									<SavedViewHighlightedExpression expression={expression} />
-								</Typography.Text>
+								<div className={styles.expression}>
+									<Typography
+										variant="code"
+										size="small"
+										weight="regular"
+										color="main"
+										as="span"
+										textOverflow="wrap"
+									>
+										<SavedViewHighlightedExpression expression={expression} />
+									</Typography>
+								</div>
 							)}
 						</div>
 					))
 				)}
 			</div>
 			<div className={styles.updated}>
-				<Typography.Text className={styles.sectionTitle}>
+				<Typography
+					variant="uppercase"
+					size="small"
+					weight="medium"
+					color="secondary"
+					as="span"
+					textOverflow="wrap"
+				>
 					Last updated
-				</Typography.Text>
+				</Typography>
 				{view.updatedBy && (
-					<Typography.Text className={styles.metaText}>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						{view.updatedBy}
-					</Typography.Text>
+					</Typography>
 				)}
 				{view.updatedAt && (
 					<div className={styles.meta}>
 						<CalendarClock size={14} />
-						<Typography.Text className={styles.metaText}>
+						<Typography
+							variant="paragraph"
+							size="base"
+							weight="regular"
+							color="secondary"
+							as="span"
+							textOverflow="wrap"
+						>
 							{formatTimezoneAdjustedTimestamp(
 								view.updatedAt,
 								SAVED_VIEW_UPDATED_AT_FORMAT,
 							)}
-						</Typography.Text>
+						</Typography>
 					</div>
 				)}
 			</div>

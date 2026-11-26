@@ -14,6 +14,8 @@ import { deniedTooltip } from 'lib/authz/components/deniedTooltip';
 const DISABLED_STYLE: CSSProperties = {
 	pointerEvents: 'all',
 	cursor: 'not-allowed',
+	caretColor: 'transparent',
+	userSelect: 'none',
 };
 
 const noOp = (): void => {};
@@ -49,6 +51,7 @@ interface AuthZTooltipProps {
 	 * child's layout depends on its parent, e.g. an input that fills a flex row.
 	 */
 	triggerClassName?: string;
+	testId?: string;
 }
 
 function AuthZTooltip({
@@ -60,6 +63,7 @@ function AuthZTooltip({
 	side,
 	withPortal,
 	triggerClassName,
+	testId,
 }: AuthZTooltipProps): JSX.Element {
 	const { user } = useAppContext();
 	const inlineContainerRef = useRef<HTMLSpanElement>(null);
@@ -100,6 +104,7 @@ function AuthZTooltip({
 			}
 			side={side}
 			container={withPortal === false ? inlineContainerRef : undefined}
+			testId={testId}
 		>
 			{/*
 			 * A natively disabled control receives no hover, so the popup never

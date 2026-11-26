@@ -1,4 +1,5 @@
-import { Button, Flex, SelectProps } from 'antd';
+import { Button, SelectProps } from 'antd';
+import Flex from 'periscope/components/Flex/Flex';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
@@ -12,6 +13,7 @@ import {
 } from 'container/CreateAlert/context/types';
 import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { ArrowRight } from '@signozhq/icons';
 import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -25,21 +27,23 @@ import { Threshold } from '../context/types';
 import { RoutingPolicyBannerProps } from './types';
 
 export function getQueryNames(currentQuery: Query): BaseOptionType[] {
+	const builder = getActiveBuilder(currentQuery);
 	const involvedQueriesInTraceOperator = getInvolvedQueriesInTraceOperator(
-		currentQuery.builder.queryTraceOperator,
+		builder.queryTraceOperator,
 	);
+	const getBuilderQueryNames = (): SelectProps['options'] => [
+		...(getSelectedQueryOptions(builder.queryData)?.filter(
+			(option) => !involvedQueriesInTraceOperator.includes(option.value as string),
+		) || []),
+		...(getSelectedQueryOptions(builder.queryFormulas) || []),
+		...(getSelectedQueryOptions(builder.queryTraceOperator) || []),
+	];
 	const queryConfig: Record<EQueryType, () => SelectProps['options']> = {
-		[EQueryType.QUERY_BUILDER]: () => [
-			...(getSelectedQueryOptions(currentQuery.builder.queryData)?.filter(
-				(option) =>
-					!involvedQueriesInTraceOperator.includes(option.value as string),
-			) || []),
-			...(getSelectedQueryOptions(currentQuery.builder.queryFormulas) || []),
-			...(getSelectedQueryOptions(currentQuery.builder.queryTraceOperator) || []),
-		],
+		[EQueryType.QUERY_BUILDER]: getBuilderQueryNames,
 		[EQueryType.PROM]: () => getSelectedQueryOptions(currentQuery.promql),
 		[EQueryType.CLICKHOUSE]: () =>
 			getSelectedQueryOptions(currentQuery.clickhouse_sql),
+		[EQueryType.AI_QUERY_BUILDER]: getBuilderQueryNames,
 	};
 
 	return queryConfig[currentQuery.queryType]?.() || [];
@@ -433,9 +437,25 @@ export function NotificationChannelsNotFoundContent({
 	return (
 		<Flex justify="space-between">
 			<Flex gap={4} align="center">
-				<Typography.Text>No channels yet.</Typography.Text>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					No channels yet.
+				</Typography>
 				{user?.role === USER_ROLES.ADMIN ? (
-					<Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
 						Create one
 						<Button
 							style={{ padding: '0 4px' }}
@@ -446,9 +466,18 @@ export function NotificationChannelsNotFoundContent({
 						>
 							here.
 						</Button>
-					</Typography.Text>
+					</Typography>
 				) : (
-					<Typography.Text>Please ask your admin to create one.</Typography.Text>
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="inherit"
+						as="span"
+						textOverflow="wrap"
+					>
+						Please ask your admin to create one.
+					</Typography>
 				)}
 			</Flex>
 			<Button type="text" onClick={refreshChannels}>
@@ -465,9 +494,16 @@ export function RoutingPolicyBanner({
 	const { safeNavigate } = useSafeNavigate();
 	return (
 		<div className="routing-policies-info-banner">
-			<Typography.Text>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="inherit"
+				as="span"
+				textOverflow="wrap"
+			>
 				Use <strong>Routing Policies</strong> for dynamic routing
-			</Typography.Text>
+			</Typography>
 			<div className="routing-policies-info-banner-right">
 				<Switch
 					color="primary"

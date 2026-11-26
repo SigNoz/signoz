@@ -98,6 +98,7 @@ function AlertCondition(): JSX.Element {
 								className={classNames('list-view-tab', 'explorer-view-option', {
 									'active-tab': alertType === tab.value,
 								})}
+								data-testid={`alert-condition-tab-${tab.value}`}
 								onClick={(): void => {
 									if (alertType !== tab.value) {
 										handleAlertTypeChange(tab.value as AlertTypes);

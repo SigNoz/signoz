@@ -7,8 +7,8 @@ import { immer } from 'zustand/middleware/immer';
 import type {
 	MessageActionDTO,
 	MessageSummaryDTOBlocksAnyOfItem,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
-import { RetryActionDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
+import { RetryActionDTO } from '@signozhq/noz-client';
 
 import {
 	approveExecution,
@@ -203,6 +203,7 @@ function resetStreamingState(
 		streamingActions: null,
 		pendingApproval: null,
 		pendingClarification: null,
+		startedAt: Date.now(),
 	};
 }
 
@@ -528,9 +529,24 @@ function finalizeStreamingMessage(
 				createdAt: Date.now(),
 			});
 			conv.updatedAt = Date.now();
+			dropUnreadReply(s, conversationId);
+			s.unreadReplyIds.push(conversationId);
 		}
 		delete s.streams[conversationId];
 	});
+}
+
+function dropUnreadReply(s: AIAssistantStore, conversationId: string): void {
+	s.unreadReplyIds = s.unreadReplyIds.filter((id) => id !== conversationId);
+}
+
+function setThreadLoading(
+	s: AIAssistantStore,
+	threadId: string,
+	isLoading: boolean,
+): void {
+	const others = s.loadingThreadIds.filter((id) => id !== threadId);
+	s.loadingThreadIds = isLoading ? [...others, threadId] : others;
 }
 
 function hasPendingInput(conversationId: string, get: StoreGetter): boolean {
@@ -619,6 +635,8 @@ export interface AIAssistantStore {
 	// UI state
 	isDrawerOpen: boolean;
 	isModalOpen: boolean;
+	/** The bottom strip's recent-conversations list. */
+	isHistoryOpen: boolean;
 	activeConversationId: string | null;
 
 	// Data
@@ -626,6 +644,9 @@ export interface AIAssistantStore {
 
 	// Per-conversation streaming state
 	streams: Record<string, ConversationStreamState>;
+
+	/** Thread ids whose finished reply no open view has shown yet, oldest first; persisted. */
+	unreadReplyIds: string[];
 
 	/**
 	 * Persists answered state for interactive blocks (ai-question, ai-confirm)
@@ -635,7 +656,10 @@ export interface AIAssistantStore {
 
 	// Loading state
 	isLoadingThreads: boolean;
-	isLoadingThread: boolean;
+	/** Threads whose messages are being fetched. */
+	loadingThreadIds: string[];
+	/** True once `fetchThreads` has succeeded; a failed fetch leaves it false. */
+	hasLoadedThreads: boolean;
 
 	// Actions
 	openDrawer: () => void;
@@ -643,11 +667,13 @@ export interface AIAssistantStore {
 	openModal: () => void;
 	closeModal: () => void;
 	minimizeModal: () => void;
+	setHistoryOpen: (open: boolean) => void;
 	fetchThreads: () => Promise<void>;
 	loadThread: (threadId: string) => Promise<void>;
 	startNewConversation: () => string;
 	setActiveConversation: (id: string) => void;
 	clearConversation: (id: string) => void;
+	markReplyRead: (id: string) => void;
 	archiveConversation: (id: string) => void;
 	restoreConversation: (id: string) => void;
 	renameConversation: (id: string, title: string) => Promise<void>;
@@ -754,6 +780,7 @@ function toMessage(m: MessageSummary): Message {
 		id: m.messageId,
 		role: m.role as MessageRole,
 		content,
+		contexts: m.contexts ?? undefined,
 		blocks: toBlocks(m.blocks),
 		actions: m.actions ?? undefined,
 		feedbackRating: m.feedbackRating ?? undefined,
@@ -779,16 +806,20 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 		immer<AIAssistantStore>((set, get) => ({
 			isDrawerOpen: false,
 			isModalOpen: false,
+			isHistoryOpen: false,
 			activeConversationId: null,
 			conversations: {},
 			streams: {},
+			unreadReplyIds: [],
 			isLoadingThreads: false,
-			isLoadingThread: false,
+			loadingThreadIds: [],
+			hasLoadedThreads: false,
 			answeredBlocks: {},
 
 			openDrawer: (): void => {
 				set((state) => {
 					state.isDrawerOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -811,6 +842,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			openModal: (): void => {
 				set((state) => {
 					state.isModalOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -834,6 +866,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				set((state) => {
 					state.isModalOpen = false;
 					state.isDrawerOpen = true;
+					state.isHistoryOpen = false;
 					if (!state.activeConversationId) {
 						const id = uuidv4();
 						state.conversations[id] = {
@@ -843,6 +876,16 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							updatedAt: Date.now(),
 						};
 						state.activeConversationId = id;
+					}
+				});
+			},
+
+			// One Noz surface at a time: the list replaces the panel behind it.
+			setHistoryOpen: (open: boolean): void => {
+				set((state) => {
+					state.isHistoryOpen = open;
+					if (open) {
+						state.isDrawerOpen = false;
 					}
 				});
 			},
@@ -892,7 +935,14 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							s.conversations[thread.threadId] = mapped;
 						}
 
+						// Restored ids may name a deleted, archived or another user's thread.
+						s.unreadReplyIds = s.unreadReplyIds.filter((id) => {
+							const conv = s.conversations[id];
+							return Boolean(conv && !conv.archived);
+						});
+
 						s.isLoadingThreads = false;
+						s.hasLoadedThreads = true;
 
 						// Clear the rehydrate-time hydration flag on any entries
 						// the server didn't claim — those are local-only chats
@@ -913,7 +963,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 							const conv = s.conversations[id];
 							if (conv?.threadId && conv.messages.length === 0) {
 								activeThreadIdToLoad = conv.threadId;
-								s.isLoadingThread = true;
+								setThreadLoading(s, conv.threadId, true);
 							}
 						}
 					});
@@ -942,7 +992,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 			// eslint-disable-next-line sonarjs/cognitive-complexity
 			loadThread: async (threadId: string): Promise<void> => {
 				set((s) => {
-					s.isLoadingThread = true;
+					setThreadLoading(s, threadId, true);
 					s.activeConversationId = threadId;
 				});
 				try {
@@ -973,9 +1023,10 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 								// compatible with the SSE event DTOs used by ConversationStreamState.
 								pendingApproval: detail.pendingApproval ?? null,
 								pendingClarification: detail.pendingClarification ?? null,
+								startedAt: null,
 							};
 						}
-						s.isLoadingThread = false;
+						setThreadLoading(s, threadId, false);
 					});
 
 					// Reconnect to SSE if backend execution is still running
@@ -1009,13 +1060,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						}
 					}
 				} catch (err) {
+					set((s) => {
+						setThreadLoading(s, threadId, false);
+					});
 					if (err instanceof DOMException && err.name === 'AbortError') {
 						return;
 					}
 					console.error('[AIAssistant] loadThread failed:', err);
-					set((s) => {
-						s.isLoadingThread = false;
-					});
 				}
 			},
 
@@ -1054,6 +1105,13 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						state.conversations[id].archived = false;
 						state.conversations[id].updatedAt = Date.now();
 					}
+					dropUnreadReply(state, id);
+				});
+			},
+
+			markReplyRead: (id: string): void => {
+				set((state) => {
+					dropUnreadReply(state, id);
 				});
 			},
 
@@ -1063,6 +1121,9 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					return;
 				}
 				disconnectAndCommit(id, set, get);
+				set((state) => {
+					dropUnreadReply(state, id);
+				});
 				if (conv.threadId) {
 					updateThread(conv.threadId, { archived: true }).catch((err) => {
 						console.error('[AIAssistant] archiveThread failed:', err);
@@ -1196,6 +1257,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 					role: 'user',
 					content: text,
 					attachments,
+					contexts,
 					createdAt: Date.now(),
 				};
 
@@ -1281,6 +1343,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						st.pendingApproval = null;
 						st.isStreaming = true;
 						st.streamingStatus = 'resumed';
+						st.startedAt ??= Date.now();
 					} else {
 						resetStreamingState(s, conversationId);
 					}
@@ -1408,6 +1471,7 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 						st.pendingClarification = null;
 						st.isStreaming = true;
 						st.streamingStatus = 'resumed';
+						st.startedAt ??= Date.now();
 					} else {
 						resetStreamingState(s, conversationId);
 					}
@@ -1460,6 +1524,8 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 				// Persist the active conversation so a page reload returns the
 				// user to the same thread instead of dumping them into a new one.
 				activeConversationId: state.activeConversationId,
+				// A reply needs a thread, and a chat is re-keyed to its threadId on first send.
+				unreadReplyIds: state.unreadReplyIds,
 			}),
 			migrate: () => ({
 				isDrawerOpen: false,
@@ -1510,6 +1576,27 @@ export const useAIAssistantStore = create<AIAssistantStore>()(
 // Standalone imperative accessors
 export const openAIAssistant = (): void =>
 	useAIAssistantStore.getState().openDrawer();
+/** Opens the panel on a fresh chat, reusing the open one while nothing has been sent in it. */
+export const openNewAIAssistantChat = (): void => {
+	const {
+		activeConversationId,
+		conversations,
+		startNewConversation,
+		openDrawer,
+	} = useAIAssistantStore.getState();
+	const active = activeConversationId
+		? conversations[activeConversationId]
+		: undefined;
+	if (
+		!active ||
+		active.threadId ||
+		active.isHydrating ||
+		active.messages.length > 0
+	) {
+		startNewConversation();
+	}
+	openDrawer();
+};
 export const closeAIAssistant = (): void =>
 	useAIAssistantStore.getState().closeDrawer();
 export const openAIAssistantModal = (): void =>

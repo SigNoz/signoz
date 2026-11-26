@@ -10,7 +10,7 @@ import logEvent from 'api/common/logEvent';
 import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import { DashboardDetailEvents } from 'pages/DashboardPage/constants/events';
 import { useCopyToClipboard } from 'react-use';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 
 import {
 	defineJsonEditorTheme,
@@ -107,9 +107,13 @@ function JsonEditorDrawer({
 	} else if (!readOnly && !validity.valid) {
 		applyDisabledReason = 'Fix the JSON errors first';
 	}
-	const validationText = validity.valid
-		? `Valid JSON · ${validity.lineCount} lines`
-		: `Line ${validity.errorLine ?? '?'} · ${validity.message ?? 'Invalid JSON'}`;
+	const errorText = validity.message ?? 'Invalid JSON';
+	let validationText = `Valid JSON · ${validity.lineCount} lines`;
+	if (!validity.valid) {
+		validationText = validity.errorLine
+			? `Line ${validity.errorLine} · ${errorText}`
+			: errorText;
+	}
 	const plural = (n: number): string => (n === 1 ? '' : 's');
 	const danglingWarning =
 		danglingPanelIds.length > 0
@@ -135,15 +139,27 @@ function JsonEditorDrawer({
 			footer={
 				<div className={styles.footer}>
 					<div className={styles.footerStatus}>
-						<Typography.Text
-							className={cx(styles.validation, {
-								[styles.validationValid]: validity.valid,
-								[styles.validationInvalid]: !validity.valid,
-							})}
-							data-testid="json-editor-validation"
-						>
-							{validationText}
-						</Typography.Text>
+						<Tooltip title={validity.valid ? undefined : validationText}>
+							<span
+								className={cx(styles.validation, {
+									[styles.validationValid]: validity.valid,
+									[styles.validationInvalid]: !validity.valid,
+								})}
+							>
+								<Typography
+									variant="code"
+									size="small"
+									weight="regular"
+									color="inherit"
+									as="span"
+									display="inline"
+									textOverflow="visible"
+									data-testid="json-editor-validation"
+								>
+									{validationText}
+								</Typography>
+							</span>
+						</Tooltip>
 						{danglingWarning && (
 							<Tooltip title={danglingPanelIds.join(', ')}>
 								<span
@@ -151,9 +167,19 @@ function JsonEditorDrawer({
 									data-testid="json-editor-dangling-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{danglingWarning}
-									</Typography.Text>
+									<span className={styles.warningText}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="warning"
+											as="span"
+											display="inline"
+											textOverflow="visible"
+										>
+											{danglingWarning}
+										</Typography>
+									</span>
 								</span>
 							</Tooltip>
 						)}
@@ -164,9 +190,19 @@ function JsonEditorDrawer({
 									data-testid="json-editor-missing-ref-warning"
 								>
 									<TriangleAlert size={12} className={styles.warningIcon} />
-									<Typography.Text className={styles.warningText}>
-										{missingRefWarning}
-									</Typography.Text>
+									<span className={styles.warningText}>
+										<Typography
+											variant="paragraph"
+											size="small"
+											weight="regular"
+											color="warning"
+											as="span"
+											display="inline"
+											textOverflow="visible"
+										>
+											{missingRefWarning}
+										</Typography>
+									</span>
 								</span>
 							</Tooltip>
 						)}

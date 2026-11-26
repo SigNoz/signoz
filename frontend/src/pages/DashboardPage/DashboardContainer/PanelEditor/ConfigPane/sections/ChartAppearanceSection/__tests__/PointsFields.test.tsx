@@ -70,7 +70,7 @@ describe('ChartAppearanceSection points', () => {
 
 		const sizeThumb = within(
 			screen.getByTestId('panel-editor-v2-point-size'),
-		).getByRole('slider');
+		).getByRole('slider', { hidden: true });
 		sizeThumb.focus();
 		await user.keyboard('{ArrowRight}');
 
@@ -92,8 +92,8 @@ describe('ChartAppearanceSection points', () => {
 
 		const opacityThumb = within(
 			screen.getByTestId('panel-editor-v2-point-opacity'),
-		).getByRole('slider');
-		expect(opacityThumb).toHaveAttribute('aria-valuemin', '0.1');
+		).getByRole('slider', { hidden: true });
+		expect(opacityThumb).toHaveAttribute('min', '0.1');
 		opacityThumb.focus();
 		await user.keyboard('{ArrowLeft}');
 

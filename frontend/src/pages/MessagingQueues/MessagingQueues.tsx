@@ -212,25 +212,6 @@ function MessagingQueues(): JSX.Element {
 					</div>
 					<div className="overview-info-card">
 						<div>
-							<p className="card-title">{t('summarySection.dropRate.title')}</p>
-							<p className="card-info-text">
-								{t('summarySection.dropRate.description')}
-							</p>
-						</div>
-						<div className="button-grp">
-							<Button
-								data-testid="mq-view-details-dropRate"
-								type="default"
-								onClick={(e): void =>
-									redirectToDetailsPage(MessagingQueuesViewType.dropRate.value, e)
-								}
-							>
-								{t('summarySection.viewDetailsButton')}
-							</Button>
-						</div>
-					</div>
-					<div className="overview-info-card">
-						<div>
 							<p className="card-title">{t('summarySection.metricPage.title')}</p>
 							<p className="card-info-text">
 								{t('summarySection.metricPage.description')}

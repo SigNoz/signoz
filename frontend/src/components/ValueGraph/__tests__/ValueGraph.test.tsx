@@ -1,5 +1,4 @@
-import { screen } from '@testing-library/react';
-import { render } from 'tests/test-utils';
+import { render, screen } from 'tests/test-utils';
 
 import ValueGraph from '../index';
 import { getBackgroundColorAndThresholdCheck } from '../utils';
@@ -95,12 +94,11 @@ describe('ValueGraph', () => {
 			isConflictingThresholds: false,
 		});
 
-		const { container } = render(
-			<ValueGraph value="42" rawValue={42} thresholds={[]} />,
-		);
+		render(<ValueGraph value="42" rawValue={42} thresholds={[]} />);
 
-		const containerElement = container.querySelector('.value-graph-container');
-		expect(containerElement).toHaveStyle({ backgroundColor: 'blue' });
+		expect(screen.getByTestId('value-graph-container')).toHaveStyle({
+			backgroundColor: 'blue',
+		});
 	});
 
 	it('displays conflicting thresholds indicator when multiple thresholds match', () => {

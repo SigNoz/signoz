@@ -5,6 +5,8 @@
 /**
  * Adds custom matchers from the react testing library to all tests
  */
+import { TextDecoder, TextEncoder } from 'node:util';
+
 import '@testing-library/jest-dom';
 import '@testing-library/jest-dom/extend-expect';
 import 'jest-styled-components';
@@ -13,6 +15,14 @@ import { server } from './src/mocks-server/server';
 
 import './src/styles.scss';
 // Establish API mocking before all tests.
+
+// react-router@7's entry point pulls in its server-runtime cookie signing,
+// which builds a TextEncoder at module scope. jsdom ships neither encoder, so
+// importing anything from the router throws before a test starts.
+Object.assign(globalThis, {
+	TextEncoder: globalThis.TextEncoder ?? TextEncoder,
+	TextDecoder: globalThis.TextDecoder ?? TextDecoder,
+});
 
 // Mock window.matchMedia
 window.matchMedia =
@@ -27,6 +37,19 @@ window.matchMedia =
 
 if (!HTMLElement.prototype.scrollIntoView) {
 	HTMLElement.prototype.scrollIntoView = function (): void {};
+}
+
+// jsdom has no elementFromPoint; CodeMirror calls it on mousedown to place the cursor.
+if (!document.elementFromPoint) {
+	document.elementFromPoint = (): Element | null => null;
+}
+
+// jsdom Ranges have no layout; CodeMirror measures text through them on click.
+if (!Range.prototype.getClientRects) {
+	Range.prototype.getClientRects = (): DOMRectList =>
+		document.body.getClientRects();
+	Range.prototype.getBoundingClientRect = (): DOMRect =>
+		document.body.getBoundingClientRect();
 }
 
 // jsdom doesn't implement the Pointer Capture API, which Radix UI primitives
@@ -110,29 +133,9 @@ if (typeof globalThis.DOMRect === 'undefined') {
 	};
 }
 
-// Patch getComputedStyle to handle CSS parsing errors from @signozhq/* packages.
-// These packages inject CSS at import time via style-inject / vite-plugin-css-injected-by-js.
-// jsdom's nwsapi cannot parse some of the injected selectors (e.g. Tailwind's :animate-in),
-// causing SyntaxErrors during getComputedStyle / getByRole calls.
-const _origGetComputedStyle = window.getComputedStyle;
-window.getComputedStyle = function (
-	elt: Element,
-	pseudoElt?: string | null,
-): CSSStyleDeclaration {
-	try {
-		return _origGetComputedStyle.call(window, elt, pseudoElt);
-	} catch {
-		// Return a minimal CSSStyleDeclaration so callers (testing-library, Radix UI)
-		// see the element as visible and without animations.
-		return {
-			display: '',
-			visibility: '',
-			opacity: '1',
-			animationName: 'none',
-			getPropertyValue: () => '',
-		} as unknown as CSSStyleDeclaration;
-	}
-};
+jest.mock('@testing-library/user-event', () =>
+	jest.requireActual('tests/userEventWithDefaults'),
+);
 
 beforeAll(() => server.listen());
 

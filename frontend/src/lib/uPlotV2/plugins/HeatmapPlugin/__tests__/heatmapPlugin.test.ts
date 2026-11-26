@@ -1,6 +1,7 @@
+import { within } from 'tests/test-utils';
 import type uPlot from 'uplot';
 
-import { DEFAULT_HEATMAP_COLORS } from '../colorScale';
+import { DEFAULT_COLOR_RAMP_OPTIONS } from 'lib/visualization/colorRamp/colorScale';
 import { resolveHeatmapYAxis } from '../geometry';
 import { createHeatmapHooks } from '../heatmapPlugin';
 import { HeatmapAxisScale, HeatmapCell } from '../types';
@@ -103,7 +104,7 @@ function createHooks(
 	return createHeatmapHooks({
 		yAxis: Y_AXIS,
 		step: STEP,
-		colors: DEFAULT_HEATMAP_COLORS,
+		colors: DEFAULT_COLOR_RAMP_OPTIONS,
 		isDarkMode: true,
 		seriesColor: '#4e74f8',
 		dimOnHover,
@@ -117,14 +118,10 @@ describe('heatmap renderer — lifecycle', () => {
 		const { plot, over } = createFakePlot({ left: -10, top: -10 });
 
 		hooks.init(plot);
-		expect(
-			over.querySelector('[data-testid="heatmap-hover-overlay"]'),
-		).not.toBeNull();
+		expect(within(over).queryByTestId('heatmap-hover-overlay')).not.toBeNull();
 
 		hooks.destroy(plot);
-		expect(
-			over.querySelector('[data-testid="heatmap-hover-overlay"]'),
-		).toBeNull();
+		expect(within(over).queryByTestId('heatmap-hover-overlay')).toBeNull();
 	});
 });
 
@@ -232,12 +229,10 @@ describe('heatmap renderer — hover', () => {
 		hooks.init(plot);
 		hooks.setCursor(plot);
 
-		const overlay = over.querySelector<HTMLDivElement>(
-			'[data-testid="heatmap-hover-overlay"]',
-		);
-		expect(overlay?.style.display).toBe('block');
+		const overlay = within(over).getByTestId('heatmap-hover-overlay');
+		expect(overlay.style.display).toBe('block');
 		// Column 0 spans the left third of a 300px plot.
-		expect(overlay?.lastElementChild).toHaveStyle({
+		expect(within(overlay).getByTestId('heatmap-hover-highlight')).toHaveStyle({
 			left: '0px',
 			width: '100px',
 		});
@@ -252,10 +247,8 @@ describe('heatmap renderer — hover', () => {
 
 		// An end cell whose bucket or time slice is only partly in view is positioned
 		// past the axis; the plot area's edge is where the highlight has to stop.
-		const overlay = over.querySelector<HTMLDivElement>(
-			'[data-testid="heatmap-hover-overlay"]',
-		);
-		expect(overlay?.style.overflow).toBe('hidden');
+		const overlay = within(over).getByTestId('heatmap-hover-overlay');
+		expect(overlay.style.overflow).toBe('hidden');
 	});
 
 	it('collapses the dim rects when dimming is off', () => {
@@ -265,10 +258,8 @@ describe('heatmap renderer — hover', () => {
 		hooks.init(plot);
 		hooks.setCursor(plot);
 
-		const overlay = over.querySelector<HTMLDivElement>(
-			'[data-testid="heatmap-hover-overlay"]',
-		);
-		expect(overlay?.firstElementChild).toHaveStyle({
+		const [firstDim] = within(over).getAllByTestId('heatmap-hover-dim');
+		expect(firstDim).toHaveStyle({
 			width: '0px',
 			height: '0px',
 		});
@@ -289,10 +280,9 @@ describe('heatmap renderer — hover', () => {
 
 		expect(onHoverChange).toHaveBeenLastCalledWith(null);
 		expect(setSeries).toHaveBeenLastCalledWith(null, { focus: true });
-		expect(
-			over.querySelector<HTMLDivElement>('[data-testid="heatmap-hover-overlay"]')
-				?.style.display,
-		).toBe('none');
+		expect(within(over).getByTestId('heatmap-hover-overlay').style.display).toBe(
+			'none',
+		);
 	});
 
 	it('clears the hover when the cursor is inside the plot but past the last column', () => {

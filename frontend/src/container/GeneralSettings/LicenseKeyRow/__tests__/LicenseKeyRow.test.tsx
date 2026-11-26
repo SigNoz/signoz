@@ -17,8 +17,8 @@ jest.mock('react-use', () => ({
 
 const mockToastSuccess = jest.fn();
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
 	},
@@ -51,7 +51,7 @@ describe('LicenseKeyRow', () => {
 	});
 
 	it('calls copyToClipboard and shows success toast when clipboard is available', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		mockUseActiveLicenseKey.mockReturnValue({
 			licenseKey: 'test-key',

@@ -27,7 +27,6 @@ import { useViewPanel } from '../hooks/useViewPanel';
 import { buildMoveItems } from '../utils/buildMoveItems';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
 import { blockedBy } from 'lib/authz/components/AuthZDropdown/utils';
-import { getBlockedPanelActions } from '../utils/getBlockedPanelActions';
 import { useDashboardEditContext } from '../../../hooks/useDashboardEditContext';
 import { useDashboardControlGroup } from '../../../controls/useDashboardControlGroup';
 
@@ -64,7 +63,6 @@ export function usePanelActionItems({
 	panelActions,
 }: UsePanelActionItemsArgs): PanelActionItems {
 	const panelKind = panel.spec.plugin.kind;
-	const blocked = useMemo(() => getBlockedPanelActions(panel), [panel]);
 	const { isEditable, editChecks, editDisabledTooltip } =
 		useDashboardEditContext();
 	const show = useDashboardControlGroup('panelActions');
@@ -156,7 +154,6 @@ export function usePanelActionItems({
 				value: 'create-alert',
 				label: 'Create Alerts',
 				prefix: <Bell size={14} />,
-				...blockedBy(blocked.createAlert ?? ''),
 				onClick: (): void => createAlert(panel, panelId),
 			});
 		}
@@ -207,7 +204,6 @@ export function usePanelActionItems({
 		editChecks,
 		editDisabledTooltip,
 		panelCapabilities,
-		blocked,
 		panel,
 		panelActions,
 		sections,

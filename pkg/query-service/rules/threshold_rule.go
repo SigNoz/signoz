@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/contextlinks"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
@@ -277,9 +278,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		lb := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel)
 		resultLabels := ruletypes.NewBuilder(smpl.Metric...).Del(ruletypes.MetricNameLabel).Del(ruletypes.TemporalityLabel).Labels()
 
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
+		lb.SetRuleLabels(r.labels.Map(), expand)
 
 		lb.Set(ruletypes.AlertNameLabel, r.Name())
 		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
@@ -304,14 +303,14 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				}
 				link := r.ExternalURL(explorerPath, params)
 				r.logger.InfoContext(ctx, "adding traces link to annotations", slog.String("annotation.link", link))
-				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedTraces, Value: link})
+				annotations = append(annotations, ruletypes.Label{Name: alertmanagertypes.AnnotationRelatedTraces, Value: link})
 			}
 		case ruletypes.AlertTypeLogs:
 			params := r.prepareParamsForLogs(ctx, ts, smpl.Metric)
 			if len(params) > 0 {
 				link := r.ExternalURL("logs/logs-explorer", params)
 				r.logger.InfoContext(ctx, "adding logs link to annotations", slog.String("annotation.link", link))
-				annotations = append(annotations, ruletypes.Label{Name: ruletypes.AnnotationRelatedLogs, Value: link})
+				annotations = append(annotations, ruletypes.Label{Name: alertmanagertypes.AnnotationRelatedLogs, Value: link})
 			}
 		}
 

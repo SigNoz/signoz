@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from 'react';
 import cx from 'classnames';
 import { useAppLocation } from 'lib/router/useAppLocation';
 
@@ -17,6 +23,8 @@ import { useVariant } from '../VariantContext';
 
 import styles from './ConversationView.module.scss';
 
+const SNAKE_PLACEHOLDER = 'Playing Snake · Esc to quit';
+
 interface ConversationViewProps {
 	conversationId: string;
 }
@@ -26,7 +34,17 @@ export default function ConversationView({
 }: ConversationViewProps): JSX.Element {
 	const variant = useVariant();
 	const isCompact = variant === 'panel';
+	const isFullPage = variant === 'page';
 	const location = useAppLocation();
+
+	const [isPlayingSnake, setIsPlayingSnake] = useState(false);
+	const [inputFocusRequest, setInputFocusRequest] = useState(0);
+	const handleSnakeGameChange = useCallback((isPlaying: boolean): void => {
+		setIsPlayingSnake(isPlaying);
+		if (!isPlaying) {
+			setInputFocusRequest((n) => n + 1);
+		}
+	}, []);
 
 	const conversation = useAIAssistantStore(
 		(s) => s.conversations[conversationId],
@@ -34,7 +52,9 @@ export default function ConversationView({
 	const isStreamingHere = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.isStreaming ?? false,
 	);
-	const isLoadingThread = useAIAssistantStore((s) => s.isLoadingThread);
+	const isLoadingThread = useAIAssistantStore((s) =>
+		s.loadingThreadIds.includes(conversationId),
+	);
 	const pendingApprovalHere = useAIAssistantStore(
 		(s) => s.streams[conversationId]?.pendingApproval ?? null,
 	);
@@ -44,6 +64,17 @@ export default function ConversationView({
 	const sendMessage = useAIAssistantStore((s) => s.sendMessage);
 	const cancelStream = useAIAssistantStore((s) => s.cancelStream);
 	const analyticsCtx = useAIAssistantAnalyticsContext(conversationId);
+
+	const hasUnreadReply = useAIAssistantStore((s) =>
+		s.unreadReplyIds.includes(conversationId),
+	);
+	const markReplyRead = useAIAssistantStore((s) => s.markReplyRead);
+	// Layout effect: clears before paint, so the strip tab never flashes for an on-screen reply.
+	useLayoutEffect(() => {
+		if (hasUnreadReply) {
+			markReplyRead(conversationId);
+		}
+	}, [hasUnreadReply, conversationId, markReplyRead]);
 
 	// Auto-derived contexts come from the route the user is currently looking
 	// at (dashboard detail, service metrics, an explorer, …). Skip when the
@@ -109,38 +140,34 @@ export default function ConversationView({
 		[sendMessage, analyticsCtx, pendingClarificationHere],
 	);
 
-	// Wall-clock timestamp of the current streaming start, used to compute
-	// `secondsSinceStart` on Cancel clicked. Cleared whenever streaming ends.
-	const streamStartedAtRef = useRef<number | null>(null);
-	useEffect(() => {
-		if (!isStreamingHere) {
-			streamStartedAtRef.current = null;
-			return;
-		}
-		if (streamStartedAtRef.current === null) {
-			streamStartedAtRef.current = Date.now();
-		}
-	}, [isStreamingHere]);
+	// When the current reply began, kept with the stream so a reopened view carries on from it.
+	const streamStartedAt = useAIAssistantStore((s) => {
+		const stream = s.streams[conversationId];
+		return stream?.isStreaming ? stream.startedAt : null;
+	});
 
 	const handleCancel = useCallback(() => {
-		const startedAt = streamStartedAtRef.current;
 		void logEvent(AIAssistantEvents.CancelClicked, {
 			threadId: analyticsCtx.threadId,
 			secondsSinceStart:
-				startedAt !== null ? Math.round((Date.now() - startedAt) / 1000) : null,
+				streamStartedAt !== null
+					? Math.round((Date.now() - streamStartedAt) / 1000)
+					: null,
 		});
 		cancelStream(conversationId);
-	}, [cancelStream, conversationId, analyticsCtx.threadId]);
+	}, [cancelStream, conversationId, analyticsCtx.threadId, streamStartedAt]);
 
 	const messages = conversation?.messages ?? [];
 	const showDisclaimer = messages.length > 0;
-	const inputDisabled =
+	const inputDisabled = isPlayingSnake || isLoadingThread;
+	const sendDisabled =
 		isStreamingHere ||
-		isLoadingThread ||
 		Boolean(pendingApprovalHere) ||
 		Boolean(pendingClarificationHere);
 	let inputDisabledTooltip: string | undefined;
-	if (isStreamingHere) {
+	if (isPlayingSnake) {
+		inputDisabledTooltip = SNAKE_PLACEHOLDER;
+	} else if (isStreamingHere) {
 		inputDisabledTooltip = 'Wait for the response to finish';
 	} else if (isLoadingThread) {
 		inputDisabledTooltip = 'Wait for the conversation to load';
@@ -150,8 +177,12 @@ export default function ConversationView({
 		inputDisabledTooltip = 'Answer the pending question first';
 	}
 
+	const conversationClass = cx(styles.conversation, {
+		[styles.fullPage]: isFullPage,
+	});
 	const inputWrapperClass = cx(styles.inputWrapper, {
 		[styles.compact]: isCompact,
+		[styles.fullPage]: isFullPage,
 	});
 	const disclaimerClass = cx(styles.disclaimer, {
 		[styles.compact]: isCompact,
@@ -165,7 +196,7 @@ export default function ConversationView({
 	const isHydrating = Boolean(conversation?.isHydrating);
 	if ((isLoadingThread || isHydrating) && messages.length === 0) {
 		return (
-			<div className={styles.conversation}>
+			<div className={conversationClass}>
 				<ConversationSkeleton />
 				<div className={inputWrapperClass}>
 					<ChatInput
@@ -182,12 +213,13 @@ export default function ConversationView({
 	}
 
 	return (
-		<div className={styles.conversation}>
+		<div className={conversationClass} data-testid="ai-conversation-view">
 			<VirtualizedMessages
 				key={conversationId}
 				conversationId={conversationId}
 				messages={messages}
 				isStreaming={isStreamingHere}
+				onSnakeGameChange={handleSnakeGameChange}
 				onSendSuggestedPrompt={(text): void => {
 					handleSend(
 						text,
@@ -207,8 +239,13 @@ export default function ConversationView({
 					onSend={handleSend}
 					onCancel={handleCancel}
 					disabled={inputDisabled}
+					sendDisabled={sendDisabled}
 					disabledTooltip={inputDisabledTooltip}
+					placeholder={isPlayingSnake ? SNAKE_PLACEHOLDER : undefined}
+					focusRequest={inputFocusRequest}
 					isStreaming={isStreamingHere}
+					streamStartedAt={streamStartedAt}
+					showNozPeek={messages.length === 0 && !isStreamingHere}
 					autoContexts={autoContexts}
 					onDismissAutoContext={handleDismissAutoContext}
 				/>

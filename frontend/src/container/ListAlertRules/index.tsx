@@ -1,13 +1,16 @@
 import { useCallback, useMemo } from 'react';
 import ErrorEmptyState from 'components/Alerts/ErrorEmptyState';
 import NoResultsEmptyState from 'components/Alerts/NoResultsEmptyState';
+import InvalidQueryState from 'components/ListFilter/InvalidQueryState/InvalidQueryState';
 import ListCommandHeader from 'components/ListViews/ListCommandHeader/ListCommandHeader';
+import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
 import TanStackTable from 'components/TanStackTableView';
 import { useCalculatedPageSize } from 'components/TanStackTableView/useCalculatedPageSize';
 import { useTableParams } from 'components/TanStackTableView/useTableParams';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 
@@ -25,7 +28,13 @@ import { useAlertRulesHandlers } from './useAlertRulesHandlers';
 import { useAlertRulesListFilter } from './useAlertRulesListFilter';
 import { useAlertRuleViews } from './useAlertRuleViews';
 import { useAlertRuleViewsStore } from './useAlertRuleViewsStore';
-import { DEFAULT_RULE_VIEW, RULE_BUILTIN_VIEWS } from './list.config';
+import {
+	DEFAULT_RULE_VIEW,
+	findRuleBuiltinView,
+	RULE_BUILTIN_VIEWS,
+} from './list.config';
+import { useRuleViewCtx } from './useRuleViewCtx';
+import { ruleListEmptyState } from './utils';
 
 const QUERY_PARAMS_CONFIG = {
 	orderBy: 'orderBy',
@@ -33,11 +42,15 @@ const QUERY_PARAMS_CONFIG = {
 	limit: 'limit',
 } as const;
 
+// Client-filtered views (Recently viewed) narrow one page of the API's max size.
+const CLIENT_VIEW_LIMIT = 200;
+
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
 function ListAlertRules(): JSX.Element {
 	const { user } = useAppContext();
+	const { isCloudUser } = useGetTenantLicense();
 	const [addNewAlert, action] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,
@@ -60,7 +73,7 @@ function ListAlertRules(): JSX.Element {
 		},
 	);
 
-	const { filter, applyFilter, submitQuery, changeStates } =
+	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
 	const ruleViews = useAlertRuleViews({ filter, applyFilter });
@@ -71,21 +84,25 @@ function ListAlertRules(): JSX.Element {
 		setRailCollapsed(!railCollapsed);
 	}, [setRailCollapsed, railCollapsed]);
 
+	const viewCtx = useRuleViewCtx();
+	const clientFilter = findRuleBuiltinView(ruleViews.activeViewId)?.clientFilter;
+	const clientView = !!clientFilter;
+
 	const listParams = useMemo(
 		() => ({
 			query: filter.query || undefined,
 			states: filter.states.length ? filter.states : undefined,
 			sort: filter.sort,
 			order: filter.order,
-			limit,
-			offset: (page - 1) * limit,
+			limit: clientView ? CLIENT_VIEW_LIMIT : limit,
+			offset: clientView ? 0 : (page - 1) * limit,
 		}),
-		[filter, limit, page],
+		[filter, limit, page, clientView],
 	);
 
 	const {
-		rules,
-		total,
+		rules: fetchedRules,
+		total: fetchedTotal,
 		labels,
 		reservedKeywords,
 		isFetching,
@@ -93,6 +110,19 @@ function ListAlertRules(): JSX.Element {
 		queryError,
 		refetch,
 	} = useAlertRulesData(listParams);
+
+	const clientRules = useMemo(
+		() => (clientFilter ? clientFilter(fetchedRules, viewCtx) : null),
+		[clientFilter, fetchedRules, viewCtx],
+	);
+	const rules = useMemo(
+		() =>
+			clientRules
+				? clientRules.slice((page - 1) * limit, page * limit)
+				: fetchedRules,
+		[clientRules, fetchedRules, page, limit],
+	);
+	const total = clientRules ? clientRules.length : fetchedTotal;
 
 	const { creatorOptions, source } = useAlertRulesFilterSource({
 		rules,
@@ -147,10 +177,16 @@ function ListAlertRules(): JSX.Element {
 	}, [action, columns, handleEdit]);
 
 	const hasActiveFilters = filter.query.length > 0 || filter.states.length > 0;
-	const isEmptyDueToFilters =
-		!isFetching && total === 0 && (hasActiveFilters || !!queryError);
-	const isEmptyNoRules =
-		!isFetching && !isError && !queryError && !hasActiveFilters && total === 0;
+	const { isEmptyDueToFilters, isEmptyNoRules, noResults, onClear } =
+		ruleListEmptyState({
+			isFetching,
+			isError,
+			queryError,
+			hasActiveFilters,
+			total,
+			viewEmptyState: findRuleBuiltinView(ruleViews.activeViewId)?.emptyState,
+			onClear: handleClearFilters,
+		});
 
 	const activeLabel =
 		ruleViews.activeView?.name ??
@@ -179,45 +215,45 @@ function ListAlertRules(): JSX.Element {
 				deleteDescription="Views are shared across your organization, so this removes it for everyone. Alert rules are not affected."
 			/>
 			<div className={styles.main}>
-				{!isEmptyNoRules && (
-					<div className={styles.headerZone}>
-						<ListCommandHeader
-							label={activeLabel}
-							count={total}
-							isModified={ruleViews.isModified}
-							testIdPrefix="alert-rules"
-							action={
-								<AlertRulesHeaderActions
-									columns={columns}
-									canAddAlert={addNewAlert}
-									onNewAlert={handleNewAlert}
-								/>
-							}
-						/>
-						<AlertRulesFilterZone
-							query={filter.query}
-							states={filter.states}
-							creatorOptions={creatorOptions}
-							source={source}
-							error={queryError}
-							onQueryChange={submitQuery}
-							onStatesChange={changeStates}
-						/>
-					</div>
-				)}
+				<ListHeaderZone testId="alert-rules-header-zone">
+					<ListCommandHeader
+						label={activeLabel}
+						count={total}
+						isCountLoading={isFetching}
+						isModified={ruleViews.isModified}
+						testIdPrefix="alert-rules"
+						action={
+							<AlertRulesHeaderActions
+								columns={columns}
+								canAddAlert={addNewAlert && !isEmptyNoRules}
+								onNewAlert={handleNewAlert}
+							/>
+						}
+					/>
+					<AlertRulesFilterZone
+						query={filter.query}
+						states={filter.states}
+						creatorOptions={creatorOptions}
+						source={source}
+						onQueryChange={submitQuery}
+						onStatesChange={changeStates}
+					/>
+				</ListHeaderZone>
 
 				<div ref={containerRef} className={styles.tableContainer}>
 					{isError ? (
 						<ErrorEmptyState title="Failed to load alert rules" onRefresh={refetch} />
+					) : isEmptyDueToFilters && queryError ? (
+						<InvalidQueryState
+							errorMessage={queryError}
+							isCloudUser={!!isCloudUser}
+							testIdPrefix="alert-rules"
+						/>
 					) : isEmptyDueToFilters ? (
 						<NoResultsEmptyState
-							title="No matching alert rules"
-							subtitle={
-								queryError
-									? 'The filter query is invalid. Fix it or clear the search.'
-									: 'No alert rules match your search. Try adjusting your search criteria.'
-							}
-							onClear={handleClearFilters}
+							title={noResults.title}
+							subtitle={noResults.description}
+							onClear={onClear}
 							clearButtonText="Clear Search"
 						/>
 					) : isEmptyNoRules ? (
@@ -231,6 +267,7 @@ function ListAlertRules(): JSX.Element {
 							getItemKey={(row): string => row.id ?? ''}
 							columnStorageKey="alert-rules-columns"
 							enableQueryParams={QUERY_PARAMS_CONFIG}
+							onSort={changeSort}
 							onRowClick={handleRowClick}
 							onRowClickNewTab={handleRowClickNewTab}
 							pagination={{

@@ -55,7 +55,7 @@
 						padding: 0px !important;
 						background-color: var(
 							--query-builder-v2-background-color,
-							var(--l2-background)
+							var(--input-background)
 						) !important;
 
 						&:focus-within {
@@ -78,8 +78,8 @@
 						border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 						background: linear-gradient(
 							139deg,
-							color-mix(in srgb, var(--card) 80%, transparent) 0%,
-							color-mix(in srgb, var(--card) 90%, transparent) 98.68%
+							color-mix(in srgb, var(--surface-2) 80%, transparent) 0%,
+							color-mix(in srgb, var(--surface-2) 90%, transparent) 98.68%
 						) !important;
 						backdrop-filter: blur(20px);
 						box-sizing: border-box;
@@ -146,10 +146,8 @@
 					.cm-line {
 						line-height: 36px !important;
 						font-family: 'Space Mono', monospace !important;
-						background-color: var(
-							--query-builder-v2-background-color,
-							var(--l2-background)
-						) !important;
+						// The field box paints the fill; also hides the theme's active-line tint.
+						background-color: transparent !important;
 
 						::-moz-selection {
 							background: var(
@@ -221,7 +219,10 @@
 			.close-btn {
 				border-radius: 0px 2px 2px 0px;
 				border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-				background: var(--query-builder-v2-background-color, var(--l2-background));
+				background: var(
+					--query-builder-v2-background-color,
+					var(--input-background)
+				);
 				height: 100%;
 				width: 38px;
 
@@ -256,7 +257,6 @@
 			.query-aggregation-interval-input-container {
 				.query-aggregation-interval-input {
 					input {
-						min-height: 36px;
 						max-width: 120px;
 						&::placeholder {
 							color: var(--query-builder-v2-color, var(--l2-foreground));

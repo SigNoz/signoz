@@ -68,7 +68,7 @@ describe('AnomalyThreshold', () => {
 	});
 
 	const pickOption = async (testId: string, title: string): Promise<void> => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(within(screen.getByTestId(testId)).getByRole('combobox'));
 		await user.click(await screen.findByTitle(title));
 	};
@@ -99,9 +99,9 @@ describe('AnomalyThreshold', () => {
 	});
 
 	it('renames the severity from its threshold row', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('threshold-name-input'), 'x');
+		await user.type(screen.getByTestId('threshold-name-input-field'), 'x');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ label: 'criticalx' })],
@@ -109,7 +109,7 @@ describe('AnomalyThreshold', () => {
 	});
 
 	it('takes a typed deviation', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		useCreateAlertStateSpy.mockReturnValue({
 			...mockContextState,
 			thresholdState: {
@@ -123,7 +123,7 @@ describe('AnomalyThreshold', () => {
 			},
 		});
 		renderAnomalyThreshold();
-		await user.type(screen.getByTestId('threshold-value-input'), '4');
+		await user.type(screen.getByTestId('threshold-value-input-field'), '4');
 		expect(mockSetThresholdState).toHaveBeenCalledWith({
 			type: 'SET_THRESHOLDS',
 			payload: [expect.objectContaining({ thresholdValue: '4' })],
@@ -152,7 +152,7 @@ describe('AnomalyThreshold', () => {
 	});
 
 	it('adds the next severity one deviation lower', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		renderAnomalyThreshold();
 		await user.click(screen.getByTestId('add-threshold-button'));
 		expect(mockSetThresholdState).toHaveBeenCalledWith({

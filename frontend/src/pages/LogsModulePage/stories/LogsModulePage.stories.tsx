@@ -1,22 +1,41 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import {
-	blurFilter,
-	openKeySuggestions,
-	showFilterErrors,
-	typeFilter,
-	typeFilterWithCaretBack,
-	findSuggestion,
-} from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
-import { logsMocks } from './LogsModulePage.stories.mocks';
+import { type LogsArgs, logsMocks } from './LogsModulePage.stories.mocks';
+import {
+	cancelQuery,
+	completeFilter,
+	copyLog,
+	copyLogDetailsLink,
+	copyLogLinkFromRow,
+	dirtyQuickFiltersSettings,
+	openDownloadMenu,
+	openEditColumns,
+	openFormatFontSize,
+	openFormatMenu,
+	openLogContext,
+	openLogContextFilters,
+	openLogDetails,
+	openLogDetailsMenu,
+	openLogMetrics,
+	openQuickFiltersSettings,
+	showFilterSyntaxError,
+	stepToNextLog,
+	suggestConjunctions,
+	suggestFilterKeys,
+	suggestFilterValues,
+	suggestInListValues,
+	suggestInNestedGroup,
+	suggestNegatedOperators,
+	suggestNoValues,
+	suggestNumberOperators,
+	suggestOperators,
+	suggestPartialKey,
+	suggestRecentSearches,
+} from './__story_mockdata__/logs.play';
 
 import LogsModulePage from '../LogsModulePage';
-
-type LogsArgs = PageStoryArgs<typeof logsMocks>;
 
 const pageStory = storyMocks(logsMocks, { layout: 'app' });
 
@@ -38,42 +57,6 @@ export default meta;
 
 type Story = StoryObj<LogsArgs>;
 
-/** The page fetches before it renders a row, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-const openQuickFiltersSettings = async (): Promise<void> => {
-	// The settings control renders disabled while its permission check is in
-	// flight and is swapped for the enabled one once the check answers, so it is
-	// looked up again on every attempt; a click on the disabled one is dropped in
-	// silence.
-	const control = await waitFor(() => {
-		const settings = screen.getByTestId('settings-icon-container');
-
-		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
-
-		return settings;
-	}, untilLoaded);
-
-	await userEvent.click(control);
-	await screen.findByText('Edit quick filters');
-};
-
-/** Opening a log is what the drawer is for, and the first row will do. */
-const openFirstLog = async (canvasElement: HTMLElement): Promise<void> => {
-	const [row] = await within(canvasElement).findAllByTestId(
-		/^logs-table-row-/,
-		undefined,
-		untilLoaded,
-	);
-
-	// The list hangs its click handler off the cells rather than the row, so a
-	// click on the row itself opens nothing.
-	const [, timestamp] = within(row).getAllByRole('cell');
-
-	await userEvent.click(timestamp);
-	await screen.findByTestId('log-detail-drawer', undefined, untilLoaded);
-};
-
 /**
  * The explorer on its list view: quick filters down the left, the frequency
  * chart over a page of log lines across every severity, and the saved views
@@ -84,6 +67,27 @@ export const Default: Story = {};
 /** A workspace with logs ingesting but nothing matching the query. */
 export const NoLogs: Story = {
 	args: { logs: 0 },
+};
+
+/**
+ * A filter the explorer opened on from a link, with nothing matching it: the
+ * list says the search came up empty rather than offering to send logs.
+ */
+export const NoMatchingLogs: Story = {
+	args: { logs: 0, urlFilter: 'service' },
+};
+
+/**
+ * A span's "View logs" with no log carrying its trace: why the logs may be
+ * missing, and a way to drop the filter.
+ */
+export const NoLogsForTrace: Story = {
+	args: { logs: 0, urlFilter: 'trace' },
+};
+
+/** The timeseries view over a linked filter that matches nothing. */
+export const TimeseriesNoMatchingLogs: Story = {
+	args: { view: 'timeseries', logs: 0, urlFilter: 'service' },
 };
 
 /** One aggregated line over the selected range instead of the log lines. */
@@ -104,6 +108,33 @@ export const ListFormat: Story = {
 /** The raw log-body format with its line clipping. */
 export const RawFormat: Story = {
 	args: { format: 'raw' },
+};
+
+/** The format popover: radios, the max-lines stepper, and the font-size control. */
+export const FormatMenuOpen: Story = {
+	args: { format: 'raw' },
+	play: openFormatMenu,
+};
+
+/** The format popover switched to its font sizes. */
+export const FormatMenuFontSize: Story = {
+	play: openFormatFontSize,
+};
+
+/** The column picker the table format's Edit columns opens. */
+export const EditColumns: Story = {
+	play: openEditColumns,
+};
+
+/** The list's download options: format, how many rows, and which columns. */
+export const DownloadMenuOpen: Story = {
+	play: openDownloadMenu,
+};
+
+/** The table's download options, which export the aggregated rows it shows. */
+export const ExportMenuOpen: Story = {
+	args: { view: 'table' },
+	play: openDownloadMenu,
 };
 
 /** An explorer with no configured quick filters. */
@@ -148,30 +179,39 @@ export const JsonBodyFieldsRaw: Story = {
 
 /** One log opened up: its own fields, then the resource that sent it. */
 export const LogDetails: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-	},
+	play: openLogDetails,
 };
 
 /** The logs either side of the one that was opened, on the same filters. */
 export const LogDetailsContext: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-		await userEvent.click(
-			await screen.findByText('Context', undefined, untilLoaded),
-		);
-		// The tab queries the logs either side before it can render them.
-		await screen.findAllByText(/cache lookup for cart/, undefined, untilLoaded);
-	},
+	play: openLogContext,
+};
+
+/** The context tab with its filter open, to narrow the logs either side. */
+export const LogDetailsContextFilters: Story = {
+	play: openLogContextFilters,
+};
+
+/** The pod's CPU, memory, filesystem and network around the log's timestamp. */
+export const LogDetailsPodMetrics: Story = {
+	play: openLogMetrics,
+};
+
+/** A log from a node: the node's charts, with its pod's one toggle away. */
+export const LogDetailsNodeMetrics: Story = {
+	args: { infraResource: 'node' },
+	play: openLogMetrics,
+};
+
+/** A log with no pod, node or host to chart. */
+export const LogDetailsNoMetrics: Story = {
+	args: { infraResource: 'none' },
+	play: openLogMetrics,
 };
 
 /** The log detail drawer with its header actions menu open. */
 export const LogDetailsMenuOpen: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-		await userEvent.click(await screen.findByTestId('log-details-header-menu'));
-		await screen.findByText('Copy link to log');
-	},
+	play: openLogDetailsMenu,
 };
 
 /** A response warning shown beside the query actions. */
@@ -182,6 +222,12 @@ export const QueryWarning: Story = {
 /** The table waiting on its query. */
 export const Loading: Story = {
 	args: { dataState: 'loading' },
+};
+
+/** A query cancelled while in flight, waiting for the next run. */
+export const QueryCancelled: Story = {
+	args: { dataState: 'loading' },
+	play: cancelQuery,
 };
 
 /** A failed logs query. */
@@ -196,30 +242,8 @@ export const QuickFiltersSettings: Story = {
 	play: openQuickFiltersSettings,
 };
 
-const dirtyQuickFiltersSettings = async (): Promise<void> => {
-	await openQuickFiltersSettings();
-	// One Remove per added filter; the first row's is the one clicked.
-	const [removeFilter] = await screen.findAllByRole('button', {
-		name: 'Remove',
-	});
-
-	await userEvent.click(removeFilter);
-	await screen.findByRole('button', { name: 'Save changes' });
-};
-
 /** Settings with an unsaved filter removal and the fixed action footer. */
 export const QuickFiltersSettingsDirty: Story = {
-	play: dirtyQuickFiltersSettings,
-};
-
-/**
- * The same panel with a banner above the shell. The banner takes 48px off the
- * layout, so this is the case where the footer used to be pushed off screen:
- * the panel is sized from the filters pane rather than the viewport, which
- * keeps Save changes reachable.
- */
-export const QuickFiltersSettingsWithBanner: Story = {
-	args: { banner: 'trial-expiry' },
 	play: dirtyQuickFiltersSettings,
 };
 
@@ -232,76 +256,48 @@ export const QuickFiltersSettingsWithBanner: Story = {
  */
 export const Tooltips: Story = {
 	args: { tooltipsOpen: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId('log-details-header-next', undefined, untilLoaded),
-		);
-	},
+	play: stepToNextLog,
 };
 
 /** The filter focused before anything is typed: every key the logs carry. */
 export const FilterKeySuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openKeySuggestions(canvasElement, 'severity_text');
-	},
+	play: suggestFilterKeys,
 };
 
 /** A partial key, with the keys that still match and the typed part marked. */
 export const FilterPartialKey: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'serv');
-		await findSuggestion(canvasElement, 'service.name');
-	},
+	play: suggestPartialKey,
 };
 
 /** A string key followed by a space: the operators a string compares with. */
 export const FilterOperatorSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name ');
-		await findSuggestion(canvasElement, 'CONTAINS');
-	},
+	play: suggestOperators,
 };
 
 /** A number key puts the range comparisons first. */
 export const FilterNumberOperatorSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'http.status_code ');
-		await findSuggestion(canvasElement, 'BETWEEN');
-	},
+	play: suggestNumberOperators,
 };
 
 /** `NOT` after a key narrows the list to the operators it can negate. */
 export const FilterNegatedOperatorSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name NOT ');
-		await findSuggestion(canvasElement, 'IN');
-	},
+	play: suggestNegatedOperators,
 };
 
 /** A key and an operator: the values the key holds, fetched for it. */
 export const FilterValueSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name = ');
-		await findSuggestion(canvasElement, 'checkout');
-	},
+	play: suggestFilterValues,
 };
 
 /** Values still being fetched for the key. */
 export const FilterValuesLoading: Story = {
 	args: { filterValues: 'loading' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name = ');
-		await findSuggestion(canvasElement, 'Loading suggestions');
-	},
+	play: suggestFilterValues,
 };
 
 /** A key the backend holds no values for, such as the free-text body. */
 export const FilterNoValueSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'body = ');
-		await findSuggestion(canvasElement, 'No suggestions available');
-	},
+	play: suggestNoValues,
 };
 
 /** The values request failed. */
@@ -309,120 +305,61 @@ export const FilterValuesError: Story = {
 	args: { filterValues: 'error' },
 	// The values request deliberately fails.
 	parameters: { allowConsoleErrors: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, 'service.name = ');
-		await findSuggestion(canvasElement, 'Error loading suggestions');
-	},
+	play: suggestFilterValues,
 };
 
 /** Inside an `IN` list, after the first value: the rest of the values. */
 export const FilterInList: Story = {
 	// The editor logs a TypeError while the list is open, which it survives.
 	parameters: { allowConsoleErrors: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilterWithCaretBack(
-			canvasElement,
-			"service.name IN ['auth', ]",
-			1,
-			'checkout',
-		);
-	},
+	play: suggestInListValues,
 };
 
 /** A complete condition: the conjunctions that start the next one. */
 export const FilterConjunctionSuggestions: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(canvasElement, "service.name = 'checkout' ");
-		await findSuggestion(canvasElement, 'OR');
-	},
+	play: suggestConjunctions,
 };
 
 /** Inside an opened group: keys, another group and `NOT`. */
 export const FilterNestedGroup: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilterWithCaretBack(canvasElement, '()', 1, 'NOT');
-	},
+	play: suggestInNestedGroup,
 };
 
 /** A long valid expression mixing operators, left for the next run. */
 export const FilterComplete: Story = {
 	// The editor logs a TypeError while the `IN` list is typed, which it survives.
 	parameters: { allowConsoleErrors: true },
-	play: async ({ canvasElement }): Promise<void> => {
-		await typeFilter(
-			canvasElement,
-			"service.name IN ['checkout', 'payments'] AND severity_text = 'ERROR' AND http.status_code >= 500 AND body CONTAINS 'timeout'",
-		);
-		await blurFilter(canvasElement);
-	},
+	play: completeFilter,
 };
 
 /** An incomplete expression after focus left: the marker and its errors. */
 export const FilterSyntaxError: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await showFilterErrors(canvasElement, 'service.name = ');
-	},
+	play: showFilterSyntaxError,
 };
 
 /** Filters run before, offered above the key suggestions. */
 export const FilterRecentSearches: Story = {
 	args: { recentFilters: 3 },
-	play: async ({ canvasElement }): Promise<void> => {
-		await openKeySuggestions(
-			canvasElement,
-			"k8s.namespace.name = 'observability'",
-		);
-	},
+	play: suggestRecentSearches,
 };
 
 /** Row actions render on hover, so the first row is hovered before the copy link is pressed. */
 export const LogLinkCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		const [row] = await within(canvasElement).findAllByTestId(
-			/^logs-table-row-/,
-			undefined,
-			untilLoaded,
-		);
-		const [, timestamp] = within(row).getAllByRole('cell');
+	play: copyLogLinkFromRow,
+};
 
-		await userEvent.hover(timestamp);
-		await userEvent.click(
-			await waitFor(() => {
-				const button = canvasElement.querySelector<HTMLElement>('.copy-log-btn');
-
-				if (!button) {
-					throw new Error('Row actions did not render');
-				}
-
-				return button;
-			}, untilLoaded),
-		);
-		await waitFor(() =>
-			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
-		);
-	},
+/** The same copy link on a line in the list format. */
+export const LogLinkCopiedToastListFormat: Story = {
+	args: { format: 'list' },
+	play: copyLogLinkFromRow,
 };
 
 /** "Copy log" in the log detail drawer's actions menu. */
 export const LogCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-		await userEvent.click(await screen.findByTestId('log-details-header-menu'));
-		await userEvent.click(await screen.findByText('Copy log'));
-		await waitFor(() =>
-			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
-		);
-	},
+	play: copyLog,
 };
 
 /** "Copy link to log" in the log detail drawer's actions menu. */
 export const LogDetailsLinkCopiedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await openFirstLog(canvasElement);
-		await userEvent.click(await screen.findByTestId('log-details-header-menu'));
-		await userEvent.click(await screen.findByText('Copy link to log'));
-		await waitFor(() =>
-			expect(screen.getByText('Copied to clipboard')).toBeVisible(),
-		);
-	},
+	play: copyLogDetailsLink,
 };

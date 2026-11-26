@@ -96,7 +96,7 @@ export const aiAssistantMenuItem = {
 	label: 'Noz',
 	icon: <Noz size={16} />,
 	itemKey: 'ai-assistant',
-	isEarlyAccess: true,
+	isBeta: true,
 	tooltip: NOZ_TOOLTIP_TITLE,
 };
 

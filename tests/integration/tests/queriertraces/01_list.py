@@ -917,6 +917,69 @@ def test_traces_list_pagination(
     assert [row["data"]["span_id"] for row in rows] == expected_ids
 
 
+@pytest.mark.parametrize(
+    "limit,offset",
+    [
+        pytest.param(2, 0, id="first_chunk"),
+        pytest.param(2, 1, id="first_into_second_chunk"),
+        pytest.param(2, 2, id="second_chunk"),
+        pytest.param(2, 3, id="second_into_third_chunk"),
+        pytest.param(2, 4, id="third_chunk"),
+        pytest.param(4, 5, id="last_partial_page"),
+        pytest.param(2, 6, id="offset_past_end"),
+    ],
+)
+def test_traces_list_offset_across_chunks(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[list[Traces]], None],
+    limit: int,
+    offset: int,
+) -> None:
+    """
+    A 4h list runs as 1h, 2h and 1h chunks, newest first. Two spans sit in each
+    chunk, so the offset lands in, or crosses into, every chunk.
+    """
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    minutes_ago = [10, 20, 90, 150, 200, 220]
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(minutes=minutes),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=f"chunked-span-{minutes}",
+                resources={"service.name": "chunked-offset-service"},
+            )
+            for minutes in minutes_ago
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(hours=4)).timestamp() * 1000),
+        end_ms=int((now + timedelta(seconds=1)).timestamp() * 1000),
+        request_type=RequestType.RAW,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=limit,
+                offset=offset,
+                filter_expression="service.name = 'chunked-offset-service'",
+                order=[OrderBy(TelemetryFieldKey("timestamp"), "desc")],
+            ).to_dict()
+        ],
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.text
+    expected_names = [f"chunked-span-{minutes}" for minutes in minutes_ago][offset : offset + limit]
+    assert [row["data"]["name"] for row in get_rows(response)] == expected_names
+
+
 # ============================================================================
 # Time window
 # ============================================================================

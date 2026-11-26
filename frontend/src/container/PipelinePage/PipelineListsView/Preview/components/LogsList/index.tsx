@@ -1,3 +1,4 @@
+import { KeyboardEvent } from 'react';
 import { Expand } from '@signozhq/icons';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
@@ -13,6 +14,14 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 	const { activeLog, onSetActiveLog, onClearActiveLog } = useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
+
+	const makeLogDetailsKeyHandler =
+		(log: ILog) =>
+		(e: KeyboardEvent<HTMLDivElement>): void => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				onSetActiveLog(log);
+			}
+		};
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -38,7 +47,8 @@ function LogsList({ logs }: LogsListProps): JSX.Element {
 						onClick={makeLogDetailsHandler(log)}
 						role="button"
 						tabIndex={0}
-						onKeyUp={makeLogDetailsHandler(log)}
+						data-testid="pipeline-preview-log-expand"
+						onKeyUp={makeLogDetailsKeyHandler(log)}
 					>
 						<Expand size="md" />
 					</div>

@@ -15,8 +15,8 @@ import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from './constants';
-import { InspectMetricsSeries } from './types';
 import {
+	InspectMetricsSeries,
 	ExpandedViewProps,
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -148,10 +148,18 @@ function ExpandedView({
 	return (
 		<div className="expanded-view">
 			<div className="expanded-view-header">
-				<Typography.Title level={5}>
+				<Typography
+					variant="paragraph"
+					size="medium"
+					weight="bold"
+					color="inherit"
+					as="h5"
+					marginY={4}
+					textOverflow="wrap"
+				>
 					<Focus size={16} color={Color.BG_VANILLA_100} />
 					<div>POINT INSPECTOR</div>
-				</Typography.Title>
+				</Typography>
 			</div>
 			{/* Show only when space aggregation is completed */}
 			{step === InspectionStep.COMPLETED && (
@@ -159,25 +167,49 @@ function ExpandedView({
 					<Card className="graph-popover-card" size="small">
 						{/* Header */}
 						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-header-text">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
-							</Typography.Text>
-							<Typography.Text strong>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{`${absoluteValue} is the ${
 									SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW[
 										metricInspectionAppliedOptions.spaceAggregationOption ??
 											SpaceAggregationOptions.SUM_BY
 									]
 								} of`}
-							</Typography.Text>
+							</Typography>
 						</div>
 
 						{/* Table */}
 						<div className="graph-popover-section">
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									VALUES
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{spaceAggregatedData?.map(({ value, title, timestamp }) => (
 										<Tooltip key={`${title}-${timestamp}-${value}`} title={value}>
@@ -189,9 +221,19 @@ function ExpandedView({
 								</div>
 							</div>
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									TIME SERIES
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{spaceAggregatedData?.map(({ title, timeSeries }) => (
 										<Tooltip key={title} title={title}>
@@ -226,11 +268,25 @@ function ExpandedView({
 						{/* Header */}
 						<div className="graph-popover-row">
 							{step !== InspectionStep.COMPLETED && (
-								<Typography.Text className="graph-popover-header-text">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									textOverflow="wrap"
+								>
 									{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
-								</Typography.Text>
+								</Typography>
 							)}
-							<Typography.Text strong>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{step === InspectionStep.COMPLETED
 									? `${
 											selectedTimeSeries?.values.find(
@@ -245,15 +301,25 @@ function ExpandedView({
 									: (selectedTimeSeries?.values.find(
 											(value) => value?.timestamp >= (options?.timestamp || 0),
 										)?.value ?? options?.value)}
-							</Typography.Text>
+							</Typography>
 						</div>
 
 						{/* Table */}
 						<div className="graph-popover-section">
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									RAW VALUES
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{rawData?.map(({ value: rawValue, timestamp, title }) => (
 										<Tooltip key={`${title}-${timestamp}-${rawValue}`} title={rawValue}>
@@ -265,9 +331,19 @@ function ExpandedView({
 								</div>
 							</div>
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									TIMESTAMPS
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{rawData?.map(({ timestamp }) => (
 										<Tooltip
@@ -291,25 +367,49 @@ function ExpandedView({
 					<Card className="graph-popover-card" size="small">
 						{/* Header */}
 						<div className="graph-popover-row">
-							<Typography.Text className="graph-popover-header-text">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="secondary"
+								as="span"
+								textOverflow="wrap"
+							>
 								{formatTimestampToFullDateTime(options?.timestamp ?? 0)}
-							</Typography.Text>
-							<Typography.Text strong>
+							</Typography>
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="bold"
+								color="inherit"
+								as="span"
+								textOverflow="wrap"
+							>
 								{`${absoluteValue} is the ${
 									TIME_AGGREGATION_OPTIONS[
 										metricInspectionAppliedOptions.timeAggregationOption ??
 											TimeAggregationOptions.SUM
 									]
 								} of`}
-							</Typography.Text>
+							</Typography>
 						</div>
 
 						{/* Table */}
 						<div className="graph-popover-section">
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									RAW VALUES
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{timeAggregatedData?.map(({ value, title, timestamp }) => (
 										<Tooltip key={`${title}-${timestamp}-${value}`} title={value}>
@@ -321,9 +421,19 @@ function ExpandedView({
 								</div>
 							</div>
 							<div className="graph-popover-row">
-								<Typography.Text className="graph-popover-row-label">
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="regular"
+									color="secondary"
+									as="span"
+									display="inline-block"
+									width={100}
+									minWidth={100}
+									textOverflow="wrap"
+								>
 									TIMESTAMPS
-								</Typography.Text>
+								</Typography>
 								<div className="graph-popover-inner-row">
 									{timeAggregatedData?.map(({ timestamp }) => (
 										<Tooltip
@@ -344,9 +454,15 @@ function ExpandedView({
 			{/* Labels */}
 			{selectedTimeSeries && (
 				<>
-					<Typography.Title
-						level={5}
-					>{`${selectedTimeSeries?.title} Labels`}</Typography.Title>
+					<Typography
+						variant="paragraph"
+						size="medium"
+						weight="bold"
+						color="inherit"
+						as="h5"
+						marginY={4}
+						textOverflow="wrap"
+					>{`${selectedTimeSeries?.title} Labels`}</Typography>
 					<ResizeTable
 						columns={columns}
 						tableLayout="fixed"

@@ -1,0 +1,18 @@
+// Strips a `@signozhq/ui` Input inside this element down to its text: no box, no focus ring.
+@mixin bare-input {
+	--input-height: 20px;
+	--input-padding: 0;
+	--input-border-width: 0;
+	--input-background: transparent;
+	--input-hover-background: transparent;
+	--input-focus-background: transparent;
+	--input-focus-outline-width: 0;
+	--input-box-shadow: none;
+	--input-font-size: var(--label-base-400-font-size);
+	--input-line-height: 20px;
+	--input-placeholder-color: color-mix(
+		in srgb,
+		var(--l2-foreground),
+		transparent 40%
+	);
+}

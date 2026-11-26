@@ -80,7 +80,7 @@ describe('Home alert rules', () => {
 		]);
 		expect(requestedStates).toStrictEqual(['firing', '']);
 
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		await user.click(screen.getByTestId('home-alert-rule-burning'));
 		expect(navigate).toHaveBeenCalledWith(
 			`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=burning`,
@@ -115,5 +115,17 @@ describe('Home alert rules', () => {
 			'home-alert-rule-burning',
 			'home-alert-rule-quiet',
 		]);
+	});
+
+	it('shows a badge per rule severity', async () => {
+		serveRules([burning]);
+		renderAlertRules();
+
+		await expect(
+			screen.findByTestId('home-alert-threshold-burning-critical'),
+		).resolves.toHaveTextContent('critical');
+		expect(
+			screen.getByTestId('home-alert-threshold-burning-warning'),
+		).toHaveTextContent('warning');
 	});
 });

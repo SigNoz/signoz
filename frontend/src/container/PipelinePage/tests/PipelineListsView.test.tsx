@@ -1,18 +1,13 @@
-import { screen, within } from '@testing-library/react';
+import { Form } from 'antd';
 import { ENVIRONMENT } from 'constants/env';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
-import {
-	findByText,
-	fireEvent,
-	render,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { render, screen, userEvent, within } from 'tests/test-utils';
+import { PipelineData } from 'types/api/pipeline/def';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
+import AddNewPipeline from '../PipelineListsView/AddNewPipeline';
 import PipelineListsView from '../PipelineListsView';
 
 // Mock useUrlQuery hook
@@ -84,8 +79,23 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 	}),
 }));
 
+function EditPipelineForm(): JSX.Element {
+	const [form] = Form.useForm<PipelineData>();
+	return (
+		<AddNewPipeline
+			form={form}
+			isActionType="edit-pipeline"
+			setActionType={jest.fn()}
+			selectedPipelineData={pipelineApiResponseMockData.pipelines[0]}
+			setShowSaveButton={jest.fn()}
+			setCurrPipelineData={jest.fn()}
+			currPipelineData={pipelineApiResponseMockData.pipelines}
+		/>
+	);
+}
+
 const BASE_URL = ENVIRONMENT.baseURL;
-const attributeKeysURL = `${BASE_URL}/api/v3/filter_suggestions`;
+const fieldKeysURL = `${BASE_URL}/api/v1/fields/keys`;
 
 describe('PipelinePage container test', () => {
 	beforeAll(() => {
@@ -99,7 +109,7 @@ describe('PipelinePage container test', () => {
 		server.close();
 	});
 	it('should render PipelineListsView section', () => {
-		const { getByText, container } = render(
+		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
 					setActionType={jest.fn()}
@@ -118,7 +128,7 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(container.querySelectorAll('.ant-table-row')).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-row')).toHaveLength(2);
 
 		expect(getByText('Apache common parser')).toBeInTheDocument();
 		expect(getByText('source = nginx')).toBeInTheDocument();
@@ -128,6 +138,7 @@ describe('PipelinePage container test', () => {
 	});
 
 	it('should render expanded content and edit mode correctly', async () => {
+		const user = userEvent.setup();
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -142,29 +153,24 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-edit-action')).toHaveLength(2);
 		expect(getByText('add_new_pipeline')).toBeInTheDocument();
 
 		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
+		const expandIcon = screen.getAllByTestId('pipeline-row-expand');
 		expect(expandIcon).toHaveLength(2);
 
-		await fireEvent.click(expandIcon[0]);
+		await user.click(expandIcon[0]);
 
 		// assert expanded view
-		expect(
-			document.querySelector('[data-testid="pipeline-row-collapse"]'),
-		).toBeInTheDocument();
+		expect(screen.getByTestId('pipeline-row-collapse')).toBeInTheDocument();
 		expect(getByText('add_new_processor')).toBeInTheDocument();
 		expect(getByText('grok use common asd')).toBeInTheDocument();
 		expect(getByText('rename auth')).toBeInTheDocument();
 	});
 
 	it('should be able to perform actions and edit on expanded view content', async () => {
+		const user = userEvent.setup();
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -179,55 +185,41 @@ describe('PipelinePage container test', () => {
 		);
 
 		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
+		expect(screen.getAllByTestId('pipeline-edit-action')).toHaveLength(2);
 
 		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
+		const expandIcon = screen.getAllByTestId('pipeline-row-expand');
 		expect(expandIcon).toHaveLength(2);
-		await fireEvent.click(expandIcon[0]);
+		await user.click(expandIcon[0]);
 
-		const switchToggle = document.querySelector(
-			'.ant-table-expanded-row [role="switch"]',
-		);
+		const [switchToggle] = within(
+			screen.getByTestId('pipeline-expand-view'),
+		).getAllByTestId('pipeline-enabled-switch');
 
 		expect(switchToggle).toBeChecked();
-		await fireEvent.click(switchToggle as HTMLElement);
+		await user.click(switchToggle);
 		expect(switchToggle).not.toBeChecked();
 
-		const deleteBtns = document.querySelectorAll(
-			'.ant-table-expanded-row [data-testid="pipeline-delete-action"]',
-		);
+		const deleteBtns = within(
+			screen.getByTestId('pipeline-expand-view'),
+		).getAllByTestId('pipeline-delete-action');
 
 		expect(deleteBtns).toHaveLength(3);
 
 		// delete pipeline
-		await fireEvent.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0]);
 
-		let deleteConfirmationModal;
-
-		await waitFor(async () => {
-			deleteConfirmationModal = document.querySelector('.ant-modal-wrap');
-			expect(deleteConfirmationModal).toBeInTheDocument();
-		});
-
-		await fireEvent.click(
-			(deleteConfirmationModal as unknown as HTMLElement)?.querySelector(
-				'.ant-modal-confirm-btns .ant-btn-primary',
-			) as HTMLElement,
-		);
+		await user.click(await screen.findByTestId('pipeline-alert-ok'));
 
 		expect(
-			document.querySelectorAll(
-				'.ant-table-expanded-row [data-testid="pipeline-delete-action"]',
+			within(screen.getByTestId('pipeline-expand-view')).getAllByTestId(
+				'pipeline-delete-action',
 			),
 		).toHaveLength(2);
 	});
 
 	it('should be able to toggle and delete pipeline', async () => {
+		const user = userEvent.setup();
 		const { getByText } = render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -244,66 +236,44 @@ describe('PipelinePage container test', () => {
 		const addNewPipelineBtn = getByText('add_new_pipeline');
 		expect(addNewPipelineBtn).toBeInTheDocument();
 
-		const switchToggle = document.querySelectorAll('[role="switch"]');
+		const switchToggle = screen.getAllByTestId('pipeline-enabled-switch');
 
 		expect(switchToggle[0]).not.toBeChecked();
-		await fireEvent.click(switchToggle[0] as HTMLElement);
+		await user.click(switchToggle[0]);
 		expect(switchToggle[0]).toBeChecked();
 
 		// view pipeline
-		const viewBtn = document.querySelectorAll(
-			'[data-testid="pipeline-preview-action"]',
-		);
-		await fireEvent.click(viewBtn[0] as HTMLElement);
+		const viewBtn = screen.getAllByTestId('pipeline-preview-action');
+		await user.click(viewBtn[0]);
 
-		const viewPipelineModal = document.querySelector('.ant-modal-wrap');
-		expect(viewPipelineModal).toBeInTheDocument();
+		const viewPipelineModal = screen.getByTestId('pipeline-preview-modal');
 
 		await expect(
-			findByText(
-				viewPipelineModal as unknown as HTMLElement,
-				'Simulate Processing',
-			),
-		).resolves.toBeInTheDocument();
+			within(viewPipelineModal).findByTestId('pipeline-simulate-processing'),
+		).resolves.toHaveTextContent('Simulate Processing');
 
-		await fireEvent.click(
-			viewPipelineModal?.querySelector(
-				'button[class*="ant-modal-close"]',
-			) as HTMLElement,
-		);
+		await user.click(within(viewPipelineModal).getByLabelText('Close'));
 
-		const deleteBtns = document.querySelectorAll(
-			'[data-testid="pipeline-delete-action"]',
-		);
+		const deleteBtns = screen.getAllByTestId('pipeline-delete-action');
 
 		// delete pipeline
-		await fireEvent.click(deleteBtns[0] as HTMLElement);
+		await user.click(deleteBtns[0]);
 
-		await waitFor(() =>
-			expect(document.querySelector('.delete-pipeline')).toBeInTheDocument(),
-		);
+		await expect(
+			screen.findByText('delete_pipeline : Apache common parser?'),
+		).resolves.toBeInTheDocument();
 
-		await waitFor(() =>
-			expect(
-				document.querySelector('.delete-pipeline-ok-text'),
-			).toBeInTheDocument(),
-		);
+		await user.click(screen.getByTestId('pipeline-alert-ok'));
 
-		await fireEvent.click(
-			document.querySelector('.delete-pipeline-ok-text') as HTMLElement,
-		);
-
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-delete-action"]'),
-		).toHaveLength(1);
+		expect(screen.getAllByTestId('pipeline-delete-action')).toHaveLength(1);
 
 		const saveBtn = getByText('save_configuration');
 		expect(saveBtn).toBeInTheDocument();
-		await fireEvent.click(saveBtn);
+		await user.click(saveBtn);
 	});
 
 	it('should have populated form fields when edit pipeline is clicked', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 		render(
 			<PreferenceContextProvider>
 				<PipelineListsView
@@ -317,80 +287,67 @@ describe('PipelinePage container test', () => {
 			</PreferenceContextProvider>,
 		);
 
-		// content assertion
-		expect(
-			document.querySelectorAll('[data-testid="pipeline-edit-action"]'),
-		).toHaveLength(2);
-
-		// expand action
-		const expandIcon = document.querySelectorAll(
-			'[data-testid="pipeline-row-expand"]',
-		);
-		expect(expandIcon).toHaveLength(2);
-		await fireEvent.click(expandIcon[0]);
-
-		const editBtn = document.querySelectorAll(
-			'[data-testid="pipeline-edit-action"]',
-		);
+		const editBtn = screen.getAllByTestId('pipeline-edit-action');
+		expect(editBtn).toHaveLength(2);
 		// click on edit btn
-		await fireEvent.click(editBtn[0] as HTMLElement);
+		await user.click(editBtn[0]);
 
 		// to have length 2
 		expect(screen.queryAllByText('source = nginx')).toHaveLength(2);
+	});
 
+	it('should suggest attribute keys in the filter of the pipeline form', async () => {
+		const user = userEvent.setup();
 		server.use(
-			rest.get(attributeKeysURL, (_req, res, ctx) =>
+			rest.get(fieldKeysURL, (_req, res, ctx) =>
 				res(
 					ctx.status(200),
 					ctx.json({
 						status: 'success',
 						data: {
-							attributes: [
-								{
-									key: 'otelServiceName',
-									dataType: DataTypes.String,
-									type: 'tag',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'resource',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.instance.id',
-									dataType: DataTypes.String,
-									type: 'resource',
-									isColumn: false,
-									isJSON: false,
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'tag',
-									isColumn: false,
-									isJSON: false,
-								},
-							],
+							complete: true,
+							keys: {
+								otelServiceName: [
+									{
+										name: 'otelServiceName',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+								'service.name': [
+									{
+										name: 'service.name',
+										fieldContext: 'resource',
+										fieldDataType: 'string',
+									},
+									{
+										name: 'service.name',
+										fieldContext: 'attribute',
+										fieldDataType: 'string',
+									},
+								],
+								'service.instance.id': [
+									{
+										name: 'service.instance.id',
+										fieldContext: 'resource',
+										fieldDataType: 'string',
+									},
+								],
+							},
 						},
 					}),
 				),
 			),
 		);
+		render(<EditPipelineForm />);
 
-		// Open Filter input and type to trigger suggestions
+		// Open Filter input to trigger suggestions
 		const filterSelect = screen.getByTestId('qb-search-select');
-		const input = within(filterSelect).getByRole('combobox') as HTMLInputElement;
+		await user.click(within(filterSelect).getByRole('combobox'));
 
-		await user.click(input);
-		await waitFor(() =>
-			expect(screen.getByText('otelServiceName')).toBeInTheDocument(),
-		);
-
-		const serviceNameOccurences = await screen.findAllByText('service.name');
-		expect(serviceNameOccurences.length).toBeGreaterThanOrEqual(2);
+		await expect(
+			screen.findByText('otelServiceName'),
+		).resolves.toBeInTheDocument();
+		expect(screen.getAllByText('service.name').length).toBeGreaterThanOrEqual(2);
 	});
 });

@@ -36,6 +36,7 @@ function PreviewAction({ pipeline }: PreviewActionProps): JSX.Element | null {
 				data-testid="pipeline-preview-action"
 			/>
 			<Modal
+				data-testid="pipeline-preview-modal"
 				open={isModalOpen}
 				onCancel={closeModal}
 				centered

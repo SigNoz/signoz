@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import cx from 'classnames';
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/ui/button';
-import { DialogWrapper } from '@signozhq/ui/dialog';
+import { Dialog } from '@signozhq/ui/dialog';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { Check, Copy, RefreshCw, ThumbsDown, ThumbsUp } from '@signozhq/icons';
@@ -10,11 +10,12 @@ import { useTimezone } from 'providers/Timezone';
 
 import logEvent from 'api/common/logEvent';
 
-import { FeedbackRatingDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { FeedbackRatingDTO } from '@signozhq/noz-client';
 import { AIAssistantEvents } from '../../events';
 import { useAIAssistantAnalyticsContext } from '../../hooks/useAIAssistantAnalyticsContext';
 import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { FeedbackRating, Message } from '../../types';
+import { useVariant } from '../../VariantContext';
 
 import styles from './MessageFeedback.module.scss';
 
@@ -72,6 +73,7 @@ export default function MessageFeedback({
 }: MessageFeedbackProps): JSX.Element {
 	const [copied, setCopied] = useState(false);
 	const [, copyToClipboard] = useCopyToClipboard();
+	const isFullPage = useVariant() === 'page';
 	const submitMessageFeedback = useAIAssistantStore(
 		(s) => s.submitMessageFeedback,
 	);
@@ -90,6 +92,7 @@ export default function MessageFeedback({
 	// users can describe what was wrong.
 	const [isNegativeDialogOpen, setIsNegativeDialogOpen] = useState(false);
 	const [negativeComment, setNegativeComment] = useState('');
+	const negativeCommentRef = useRef<HTMLTextAreaElement>(null);
 
 	const [relativeTime, setRelativeTime] = useState(() =>
 		formatRelativeTime(message.createdAt),
@@ -172,7 +175,12 @@ export default function MessageFeedback({
 
 	return (
 		<>
-			<div className={cx(styles.feedback, { [styles.visible]: isLastAssistant })}>
+			<div
+				className={cx(styles.feedback, {
+					[styles.visible]: isLastAssistant,
+					[styles.fullPage]: isFullPage,
+				})}
+			>
 				<div className={styles.actions}>
 					<Tooltip title={copied ? 'Copied!' : 'Copy'}>
 						<Button
@@ -183,7 +191,7 @@ export default function MessageFeedback({
 							color="secondary"
 							aria-label={copied ? 'Copied' : 'Copy message'}
 						>
-							{copied ? <Check size={12} /> : <Copy size={12} />}
+							{copied ? <Check size={14} /> : <Copy size={14} />}
 						</Button>
 					</Tooltip>
 
@@ -198,7 +206,7 @@ export default function MessageFeedback({
 							aria-label={VOTE_LABEL[FeedbackRatingDTO.positive].ariaLabel}
 							aria-pressed={vote === FeedbackRatingDTO.positive}
 						>
-							<ThumbsUp size={12} />
+							<ThumbsUp size={14} />
 						</Button>
 					</Tooltip>
 
@@ -213,39 +221,40 @@ export default function MessageFeedback({
 							aria-label={VOTE_LABEL[FeedbackRatingDTO.negative].ariaLabel}
 							aria-pressed={vote === FeedbackRatingDTO.negative}
 						>
-							<ThumbsDown size={12} />
+							<ThumbsDown size={14} />
 						</Button>
 					</Tooltip>
-
-					{onRegenerate && (
-						<Tooltip title="Regenerate">
-							<Button
-								size="sm"
-								icon
-								variant="ghost"
-								color="secondary"
-								onClick={onRegenerate}
-								aria-label="Regenerate response"
-							>
-								<RefreshCw size={12} />
-							</Button>
-						</Tooltip>
-					)}
 				</div>
+
+				{onRegenerate && (
+					<Tooltip title="Regenerate">
+						<Button
+							size="sm"
+							icon
+							variant="ghost"
+							color="secondary"
+							onClick={onRegenerate}
+							aria-label="Regenerate response"
+						>
+							<RefreshCw size={14} />
+						</Button>
+					</Tooltip>
+				)}
 
 				<span className={styles.time}>
 					{relativeTime} · {absoluteTime}
 				</span>
 			</div>
 
-			<DialogWrapper
+			<Dialog
 				open={isNegativeDialogOpen}
-				onOpenChange={setIsNegativeDialogOpen}
+				onClose={(): void => setIsNegativeDialogOpen(false)}
 				title="What went wrong?"
-				subTitle="Your feedback helps us improve the assistant. Comments are optional."
+				description="Your feedback helps us improve the assistant. Comments are optional."
 				width="base"
-				footer={
-					<div className={styles.feedbackDialogFooter}>
+				initialFocus={negativeCommentRef}
+				footerSuffix={
+					<>
 						<Button
 							size="md"
 							variant="solid"
@@ -262,19 +271,19 @@ export default function MessageFeedback({
 						>
 							Send feedback
 						</Button>
-					</div>
+					</>
 				}
 			>
 				<textarea
+					ref={negativeCommentRef}
 					className={styles.feedbackTextarea}
 					placeholder="Tell us what was unhelpful, inaccurate, or unsafe…"
 					value={negativeComment}
 					onChange={(e): void => setNegativeComment(e.target.value)}
 					rows={5}
-					autoFocus
 					maxLength={2000}
 				/>
-			</DialogWrapper>
+			</Dialog>
 		</>
 	);
 }

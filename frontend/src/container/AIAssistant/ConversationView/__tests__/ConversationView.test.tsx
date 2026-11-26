@@ -3,6 +3,7 @@ import { MessageContext } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { TestRouter } from 'tests/router';
+import { screen } from 'tests/test-utils';
 
 const CHIP_ID = 'recent-errors';
 const CHIP_TEXT = 'Show me recent errors';
@@ -37,7 +38,25 @@ jest.mock('container/AIAssistant/hooks/useAIAssistantAnalyticsContext', () => ({
 // ConversationView imports for its dismissed-context filter.
 jest.mock('container/AIAssistant/components/ChatInput', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="chat-input" />,
+	default: ({
+		streamStartedAt,
+		disabled,
+		placeholder,
+		focusRequest,
+	}: {
+		streamStartedAt?: number | null;
+		disabled?: boolean;
+		placeholder?: string;
+		focusRequest?: number;
+	}): JSX.Element => (
+		<div
+			data-testid="chat-input"
+			data-stream-started-at={streamStartedAt ?? ''}
+			data-disabled={String(Boolean(disabled))}
+			data-placeholder={placeholder ?? ''}
+			data-focus-request={focusRequest ?? 0}
+		/>
+	),
 	autoContextKey: (): string => '',
 }));
 
@@ -51,6 +70,30 @@ jest.mock('container/AIAssistant/components/ConversationSkeleton', () => ({
 jest.mock('components/Noz/Noz', () => ({
 	__esModule: true,
 	default: (): JSX.Element => <div data-testid="noz" />,
+}));
+
+jest.mock('components/DotGrid/DotGrid', () => ({
+	__esModule: true,
+	default: ({
+		onGameChange,
+	}: {
+		onGameChange?: (isPlaying: boolean) => void;
+	}): JSX.Element => (
+		<>
+			<button
+				type="button"
+				aria-label="Start Snake"
+				data-testid="start-snake"
+				onClick={(): void => onGameChange?.(true)}
+			/>
+			<button
+				type="button"
+				aria-label="End Snake"
+				data-testid="end-snake"
+				onClick={(): void => onGameChange?.(false)}
+			/>
+		</>
+	),
 }));
 
 jest.mock('container/AIAssistant/components/MessageBubble', () => ({
@@ -111,7 +154,7 @@ describe('ConversationView — empty-state chip context', () => {
 			},
 			streams: {},
 			activeConversationId: CONVERSATION_ID,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 			sendMessage,
 		} as unknown as Partial<ReturnType<typeof useAIAssistantStore.getState>>);
 	});
@@ -137,5 +180,119 @@ describe('ConversationView — empty-state chip context', () => {
 
 		expect(sendMessage).toHaveBeenCalledTimes(1);
 		expect(sendMessage).toHaveBeenCalledWith(CHIP_TEXT, undefined, undefined);
+	});
+});
+
+describe('ConversationView — loading', () => {
+	beforeEach(() => {
+		useAIAssistantStore.setState({
+			conversations: {
+				[CONVERSATION_ID]: {
+					id: CONVERSATION_ID,
+					messages: [],
+					createdAt: 1,
+					updatedAt: 1,
+				},
+			},
+			streams: {},
+			activeConversationId: CONVERSATION_ID,
+		});
+	});
+
+	it('shows the skeleton while its own chat loads', () => {
+		useAIAssistantStore.setState({ loadingThreadIds: [CONVERSATION_ID] });
+
+		expect(renderView('panel').getByTestId('skeleton')).toBeInTheDocument();
+	});
+
+	it('skips the skeleton while only another chat loads', () => {
+		useAIAssistantStore.setState({ loadingThreadIds: ['another-thread'] });
+
+		renderView('panel');
+
+		expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
+	});
+});
+
+describe('ConversationView — reply start time', () => {
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('carries on from when the reply began when the view is reopened mid-reply', () => {
+		jest.spyOn(Date, 'now').mockReturnValue(5000);
+		useAIAssistantStore.setState({
+			conversations: {
+				[CONVERSATION_ID]: {
+					id: CONVERSATION_ID,
+					messages: [],
+					createdAt: 1,
+					updatedAt: 1,
+				},
+			},
+			streams: {
+				[CONVERSATION_ID]: {
+					isStreaming: true,
+					streamingContent: '',
+					streamingStatus: '',
+					streamingEvents: [],
+					streamingMessageId: null,
+					streamingActions: null,
+					pendingApproval: null,
+					pendingClarification: null,
+					startedAt: 1000,
+				},
+			},
+			activeConversationId: CONVERSATION_ID,
+			loadingThreadIds: [],
+		});
+
+		const { getByTestId } = renderView('panel');
+
+		expect(getByTestId('chat-input')).toHaveAttribute(
+			'data-stream-started-at',
+			'1000',
+		);
+	});
+});
+
+describe('ConversationView — Snake on the empty state', () => {
+	beforeEach(() => {
+		useAIAssistantStore.setState({
+			conversations: {
+				[CONVERSATION_ID]: {
+					id: CONVERSATION_ID,
+					messages: [],
+					createdAt: 1,
+					updatedAt: 1,
+				},
+			},
+			streams: {},
+			activeConversationId: CONVERSATION_ID,
+			loadingThreadIds: [],
+		});
+	});
+
+	it('disables the input while Snake runs', () => {
+		const { getByTestId } = renderView('page');
+
+		fireEvent.click(getByTestId('start-snake'));
+
+		expect(getByTestId('chat-input')).toHaveAttribute('data-disabled', 'true');
+		expect(getByTestId('chat-input')).toHaveAttribute(
+			'data-placeholder',
+			'Playing Snake · Esc to quit',
+		);
+	});
+
+	it('gives the input back, focused, once the game ends', () => {
+		const { getByTestId } = renderView('page');
+		fireEvent.click(getByTestId('start-snake'));
+
+		fireEvent.click(getByTestId('end-snake'));
+
+		expect(getByTestId('chat-input')).toHaveAttribute('data-disabled', 'false');
+		expect(getByTestId('chat-input')).toHaveAttribute('data-placeholder', '');
+		expect(getByTestId('chat-input')).toHaveAttribute('data-focus-request', '1');
 	});
 });

@@ -52,8 +52,8 @@ test.describe('auth — login', () => {
 		await authFlows.forgotPasswordLink().click();
 
 		await expect.poll(() => authFlows.pathname()).toBe('/forgot-password');
-		await expect(authFlows.emailInput()).toBeDisabled();
-		await expect(authFlows.emailInput()).toHaveValue(email);
+		await expect(authFlows.forgotEmailInput()).toBeDisabled();
+		await expect(authFlows.forgotEmailInput()).toHaveValue(email);
 
 		expect(await authFlows.submitForgot()).toBe(204);
 		await expect(authFlows.forgotSuccess()).toBeVisible();

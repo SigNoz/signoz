@@ -44,6 +44,7 @@ function SaveErrorItem({
 						variant="link"
 						color="secondary"
 						aria-label="Retry"
+						testId="sa-error-retry-btn"
 						onClick={async (e): Promise<void> => {
 							e.stopPropagation();
 							setIsRetrying(true);

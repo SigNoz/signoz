@@ -20,17 +20,23 @@ function ConnectionMethodSelector({
 }: ConnectionMethodSelectorProps): JSX.Element {
 	return (
 		<div className={cx(styles.drawerSection, styles.drawerSurface)}>
-			<Typography.Text
-				weight="bold"
-				size="base"
-				className={styles.drawerSurfaceHead}
-			>
-				Connection method
-			</Typography.Text>
+			<div className={styles.drawerSurfaceHead}>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="bold"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
+					Connection method
+				</Typography>
+			</div>
 
 			<RadioGroup
 				color="primary"
 				textOverflow="wrap"
+				testId="gcp-connection-method"
 				value={value}
 				onChange={(next): void =>
 					onChange(next as CloudintegrationtypesGCPConnectionMethodDTO)
@@ -43,17 +49,27 @@ function ConnectionMethodSelector({
 						testId: 'gcp-connection-method-manual',
 						label: (
 							<>
-								<Typography.Text weight="semibold" size="base" display="block">
-									Connect Manually
-								</Typography.Text>
-								<Typography.Text
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="inherit"
 									as="p"
+									textOverflow="wrap"
+								>
+									Connect Manually
+								</Typography>
+								<Typography
+									variant="paragraph"
 									size="small"
-									color="muted"
-									className={styles.methodRadioDesc}
+									weight="regular"
+									color="secondary"
+									as="p"
+									display="inline-block"
+									textOverflow="wrap"
 								>
 									Deploy your own OTel Collector.
-								</Typography.Text>
+								</Typography>
 							</>
 						),
 					},
@@ -62,17 +78,27 @@ function ConnectionMethodSelector({
 						testId: 'gcp-connection-method-agent',
 						label: (
 							<>
-								<Typography.Text weight="semibold" size="base" display="block">
-									Connect via Agent
-								</Typography.Text>
-								<Typography.Text
+								<Typography
+									variant="paragraph"
+									size="base"
+									weight="bold"
+									color="inherit"
 									as="p"
+									textOverflow="wrap"
+								>
+									Connect via Agent
+								</Typography>
+								<Typography
+									variant="paragraph"
 									size="small"
-									color="muted"
-									className={styles.methodRadioDesc}
+									weight="regular"
+									color="secondary"
+									as="p"
+									display="inline-block"
+									textOverflow="wrap"
 								>
 									SigNoz deploys and manages the collector for you.
-								</Typography.Text>
+								</Typography>
 							</>
 						),
 					},

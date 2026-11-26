@@ -168,11 +168,20 @@ function TopErrors({
 											className="empty-state-svg"
 										/>
 
-										<Typography.Text className="no-filtered-endpoints-message">
-											{showStatusCodeErrors
-												? 'Please disable "Status Message Exists" toggle to see all errors'
-												: 'This query had no results. Edit your query and try again!'}
-										</Typography.Text>
+										<div className="no-filtered-endpoints-message">
+											<Typography
+												variant="paragraph"
+												size="base"
+												weight="regular"
+												color="inherit"
+												as="p"
+												textOverflow="wrap"
+											>
+												{showStatusCodeErrors
+													? 'Please disable "Status Message Exists" toggle to see all errors'
+													: 'This query had no results. Edit your query and try again!'}
+											</Typography>
+										</div>
 									</div>
 								</div>
 							),
@@ -182,7 +191,8 @@ function TopErrors({
 					rowClassName={(_, index): string =>
 						index % 2 === 0 ? 'table-row-dark' : 'table-row-light'
 					}
-					onRow={(record): { onClick: () => void } => ({
+					onRow={(record): { 'data-testid': string; onClick: () => void } => ({
+						'data-testid': `top-errors-row-${record.endpointName}-${record.statusCode}`,
 						onClick: (): void => {
 							const filters = getTopErrorsCoRelationQueryFilters(
 								domainName,

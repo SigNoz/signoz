@@ -1,32 +1,16 @@
 .alertListContainer {
-	margin-top: auto;
-	margin-bottom: auto;
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
 	display: flex;
-	justify-content: center;
 	width: 100%;
 }
 
 .alertListViewContent {
+	margin: auto;
+	padding: 24px 0;
 	width: calc(100% - 30px);
 	max-width: 836px;
-}
-
-.title {
-	color: var(--l1-foreground);
-	font-size: var(--font-size-lg);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: 28px;
-	letter-spacing: -0.09px;
-}
-
-.subtitle {
-	color: var(--l2-foreground);
-	font-size: var(--font-size-sm);
-	font-style: normal;
-	font-weight: var(--font-weight-normal);
-	line-height: 20px;
-	letter-spacing: -0.07px;
 }
 
 .emptyAlertInfoContainer {
@@ -54,26 +38,6 @@
 
 .icons {
 	color: white;
-}
-
-.emptyAlertAction {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 24px;
-	letter-spacing: -0.07px;
-}
-
-.emptyInfo {
-	color: var(--l1-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 500;
-	line-height: 24px;
-	letter-spacing: -0.07px;
 }
 
 .actionContainer {
@@ -138,37 +102,6 @@
 	display: flex;
 	gap: 2px;
 	flex-direction: column;
-}
-
-.alertCardTextHeader {
-	color: var(--l1-foreground);
-	font-family: Inter;
-	font-size: 14px;
-	font-style: normal;
-	font-weight: 500;
-	line-height: 20px;
-	letter-spacing: -0.07px;
-}
-
-.alertCardTextSubheader {
-	color: var(--l2-foreground);
-	font-family: Inter;
-	font-size: 12px;
-	font-style: normal;
-	font-weight: 400;
-	line-height: 18px;
-}
-
-.infoText {
-	color: var(--primary);
-	font-family: Inter;
-	font-size: 12px;
-	font-style: normal;
-	font-weight: 500;
-	line-height: 16px;
-	letter-spacing: -0.06px;
-	margin: 0 8px;
-	white-space: nowrap;
 }
 
 .infoLinkContainer {

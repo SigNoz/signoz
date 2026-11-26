@@ -8,6 +8,7 @@ export enum AlertTypes {
 	LOGS_BASED_ALERT = 'LOGS_BASED_ALERT',
 	TRACES_BASED_ALERT = 'TRACES_BASED_ALERT',
 	EXCEPTIONS_BASED_ALERT = 'EXCEPTIONS_BASED_ALERT',
+	AI_TRACES_BASED_ALERT = 'AI_TRACES_BASED_ALERT',
 }
 
 export interface BasicThreshold {
@@ -36,7 +37,6 @@ export interface PostableAlertRuleV2 {
 		absentFor?: number;
 		requireMinPoints?: boolean;
 		requiredNumPoints?: number;
-		algorithm?: string;
 		seasonality?: string;
 	};
 	evaluation?: {

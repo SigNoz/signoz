@@ -531,7 +531,7 @@ function CustomTimePicker({
 		// Use setTimeout to wait for React to update the DOM and make input editable
 		setTimeout(() => {
 			const inputElement = inputRef.current?.input;
-			if (inputElement) {
+			if (inputElement && !document.activeElement?.closest('.timezone-picker')) {
 				inputElement.focus();
 				inputElement.select();
 			}
@@ -640,12 +640,14 @@ function CustomTimePicker({
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleClose}
+										data-testid="time-picker-close-chevron"
 									/>
 								) : (
 									<ChevronDown
 										size={14}
 										className="cursor-pointer time-input-suffix-icon-badge"
 										onClick={handleOpen}
+										data-testid="time-picker-open-chevron"
 									/>
 								)}
 							</div>

@@ -46,13 +46,18 @@ function PlannedDowntimeActionsMenu({
 			className={styles.actions}
 			onClick={(event): void => event.stopPropagation()}
 		>
-			<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+			<Dropdown
+				items={menuItems}
+				nativeButton
+				align="end"
+				side="bottom"
+				testId={`downtime-actions-${downtime.id}`}
+			>
 				<Button
 					variant="outlined"
 					color="secondary"
 					size="sm"
 					icon
-					testId={`downtime-actions-${downtime.id}`}
 					aria-label={`Actions for ${downtime.name}`}
 				>
 					<Ellipsis size={16} />

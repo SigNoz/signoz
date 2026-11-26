@@ -147,7 +147,6 @@ function AnalyticsPanel({
 					variant="secondary"
 					orientation="horizontal"
 					alignment="start"
-					className={styles.tabsScroll}
 					defaultValue="exec-time"
 					onChange={onTabChange}
 					noTabContentPadding

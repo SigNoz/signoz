@@ -11,7 +11,7 @@
  * to resume, which each return a new executionId to open a fresh SSE stream.
  *
  * Types in this file re-use the OpenAPI-generated DTOs in
- * `src/api/ai-assistant/sigNozAIAssistantAPI.schemas.ts`.
+ * `@signozhq/noz-client`.
  * Local types are defined only when the UI needs a different shape — for
  * example, the SSE event union adds a literal `type` discriminator that the
  * generated event DTOs leave loose.
@@ -30,16 +30,11 @@ import rotateSession from 'api/v2/sessions/rotate/post';
 import afterLogin from 'AppRoutes/utils';
 import type {
 	ActionResultResponseDTO,
-	ApprovalEventDTO,
 	ApproveResponseDTO,
 	CancelResponseDTO,
-	ClarificationEventDTO,
 	ClarifyResponseDTO,
-	ConversationEventDTO,
 	CreateMessageResponseDTO,
 	CreateThreadResponseDTO,
-	DoneEventDTO,
-	ErrorEventDTO,
 	ExecutionStateDTO,
 	FeedbackRatingDTO,
 	ListThreadsApiV1AssistantThreadsGetArchived,
@@ -47,20 +42,15 @@ import type {
 	MessageContextDTO,
 	MessageContextDTOSource,
 	MessageContextDTOType,
-	MessageEventDTO,
 	MessageSummaryDTO,
 	RegenerateResponseDTO,
-	StatusEventDTO,
-	ThinkingEventDTO,
 	ThreadDetailResponseDTO,
 	ThreadListResponseDTO,
 	ThreadSummaryDTO,
 	ChipDTO,
 	ChipsResponseDTO,
 	PageTypeDTO,
-	ToolCallEventDTO,
-	ToolResultEventDTO,
-} from './sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { LOCALSTORAGE } from 'constants/localStorage';
 
 import {
@@ -69,6 +59,10 @@ import {
 	SIGNOZ_URL_HEADER,
 } from '../AIAPIInstance';
 import { getSigNozInstanceUrl } from 'utils/signozInstanceUrl';
+
+import type { SSEEvent } from './sseEvent';
+
+export type { SSEEvent };
 
 // ---------------------------------------------------------------------------
 // SSE-only auth wrapper.
@@ -182,26 +176,6 @@ async function fetchSSEWithAuth(
 	}
 	return res;
 }
-
-// ---------------------------------------------------------------------------
-// SSE event types
-//
-// The generated event DTOs each declare `type?: string` (loose). The UI needs
-// a discriminated union, so we intersect each variant with a string-literal
-// `type` to enable narrowing via `event.type === 'status'`.
-// ---------------------------------------------------------------------------
-
-export type SSEEvent =
-	| (StatusEventDTO & { type: 'status' })
-	| (MessageEventDTO & { type: 'message' })
-	| (ThinkingEventDTO & { type: 'thinking' })
-	| (ToolCallEventDTO & { type: 'tool_call' })
-	| (ToolResultEventDTO & { type: 'tool_result' })
-	| (ApprovalEventDTO & { type: 'approval' })
-	| (ClarificationEventDTO & { type: 'clarification' })
-	| (ErrorEventDTO & { type: 'error' })
-	| (ConversationEventDTO & { type: 'conversation' })
-	| (DoneEventDTO & { type: 'done' });
 
 /** String-literal view of `ExecutionStateDTO` for ergonomic comparisons. */
 export type ExecutionState = `${ExecutionStateDTO}`;

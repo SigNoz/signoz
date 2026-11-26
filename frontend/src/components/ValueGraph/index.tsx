@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import { CircleAlert } from '@signozhq/icons';
 import { ThresholdProps } from 'types/api/widgets/threshold';
 
@@ -21,7 +20,7 @@ function Unit({
 	fontSize: string;
 }): JSX.Element {
 	return (
-		<Typography.Text
+		<span
 			className="value-graph-unit"
 			data-testid={`value-graph-${type}-unit`}
 			style={{
@@ -33,7 +32,7 @@ function Unit({
 			}}
 		>
 			{unit}
-		</Typography.Text>
+		</span>
 	);
 }
 
@@ -93,6 +92,7 @@ function ValueGraph({
 		<div
 			ref={containerRef}
 			className="value-graph-container"
+			data-testid="value-graph-container"
 			style={{
 				backgroundColor:
 					threshold.thresholdFormat === 'Background'
@@ -109,7 +109,7 @@ function ValueGraph({
 						fontSize={fontSize}
 					/>
 				)}
-				<Typography.Text
+				<span
 					className="value-graph-text"
 					data-testid="value-graph-text"
 					style={{
@@ -121,7 +121,7 @@ function ValueGraph({
 					}}
 				>
 					{numericValue}
-				</Typography.Text>
+				</span>
 				{suffixUnit && (
 					<Unit
 						type="suffix"

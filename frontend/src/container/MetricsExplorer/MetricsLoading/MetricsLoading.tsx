@@ -13,7 +13,14 @@ export function MetricsLoading(): JSX.Element {
 			<div className="loading-metrics-content">
 				<img className="loading-gif" src={loadingPlaneUrl} alt="wait-icon" />
 
-				<Typography>
+				<Typography
+					variant="paragraph"
+					size="base"
+					weight="regular"
+					color="inherit"
+					as="span"
+					textOverflow="wrap"
+				>
 					{t('pending_data_placeholder', { dataSource: DataSource.METRICS })}
 				</Typography>
 			</div>

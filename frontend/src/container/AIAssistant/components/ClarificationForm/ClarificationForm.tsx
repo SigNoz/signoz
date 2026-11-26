@@ -3,18 +3,14 @@ import cx from 'classnames';
 import { Button } from '@signozhq/ui/button';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import { Input } from '@signozhq/ui/input';
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-} from '@signozhq/ui/select';
+import { Select } from '@signozhq/ui/select';
+import type { SelectItemType } from '@signozhq/ui/select';
 import logEvent from 'api/common/logEvent';
-import { ClarificationFieldTypeDTO } from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+import { ClarificationFieldTypeDTO } from '@signozhq/noz-client';
 import type {
 	ClarificationEventDTO,
 	ClarificationFieldEventDTO,
-} from 'api/ai-assistant/sigNozAIAssistantAPI.schemas';
+} from '@signozhq/noz-client';
 import { CircleHelp, Send, X } from '@signozhq/icons';
 
 import { AIAssistantEvents } from '../../events';
@@ -121,7 +117,7 @@ export default function ClarificationForm({
 	return (
 		<div className={styles.clarification}>
 			<div className={styles.header}>
-				<CircleHelp size={13} className={styles.headerIcon} />
+				<CircleHelp size={16} className={styles.headerIcon} />
 				<span className={styles.headerLabel}>A few details needed</span>
 			</div>
 
@@ -140,6 +136,17 @@ export default function ClarificationForm({
 
 			<div className={styles.actions}>
 				<Button
+					disabledTooltip="Wait for the response to finish"
+					size="md"
+					variant="outlined"
+					color="secondary"
+					onClick={handleCancel}
+					disabled={isStreaming}
+					prefix={<X />}
+				>
+					Cancel request
+				</Button>
+				<Button
 					disabledTooltip={
 						isStreaming
 							? 'Wait for the response to finish'
@@ -153,17 +160,6 @@ export default function ClarificationForm({
 					prefix={<Send />}
 				>
 					Submit
-				</Button>
-				<Button
-					disabledTooltip="Wait for the response to finish"
-					size="md"
-					variant="outlined"
-					color="secondary"
-					onClick={handleCancel}
-					disabled={isStreaming}
-					prefix={<X />}
-				>
-					Cancel request
 				</Button>
 			</div>
 		</div>
@@ -247,10 +243,7 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 	// "Other (type your own)" entry — a plain `options: null` would
 	// otherwise fall through to the bare text-input renderer).
 	if (type === ClarificationFieldTypeDTO.select && (options || allowCustom)) {
-		const handleSelectChange = (next: string | string[]): void => {
-			// `multiple` is off → callback receives a single string. The wider
-			// `string | string[]` typing comes from the shared Select root.
-			const picked = Array.isArray(next) ? (next[0] ?? '') : next;
+		const handleSelectChange = (picked: string): void => {
 			if (picked === CUSTOM_OPTION_SENTINEL) {
 				setIsCustom(true);
 				onChange(customValue);
@@ -259,6 +252,25 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 				onChange(picked);
 			}
 		};
+
+		const selectItems: SelectItemType[] = [
+			...(options ?? []).map((opt): SelectItemType => ({
+				type: 'item',
+				value: opt,
+				label: opt,
+			})),
+			...(allowCustom
+				? [
+						{
+							type: 'item',
+							value: CUSTOM_OPTION_SENTINEL,
+							label: CUSTOM_OPTION_LABEL,
+						} as SelectItemType,
+					]
+				: []),
+		];
+
+		const selectedValue = isCustom ? CUSTOM_OPTION_SENTINEL : String(value ?? '');
 
 		return (
 			<div className={styles.field}>
@@ -271,34 +283,16 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 					)}
 				</label>
 				<Select
-					value={isCustom ? CUSTOM_OPTION_SENTINEL : String(value ?? '')}
+					id={id}
+					items={selectItems}
+					placeholder="Select…"
+					aria-required={required || undefined}
+					value={selectedValue || undefined}
 					onChange={handleSelectChange}
-				>
-					<SelectTrigger
-						id={id}
-						placeholder="Select…"
-						aria-required={required || undefined}
-					/>
-					{/* Pin the dropdown width to the trigger via Radix's
-					    `--radix-select-trigger-width`; otherwise the popover
-					    sizes to its widest item and looks misaligned. */}
-					<SelectContent className={styles.selectContent}>
-						{options?.map((opt) => (
-							<SelectItem key={opt} value={opt}>
-								{opt}
-							</SelectItem>
-						))}
-						{allowCustom && (
-							<SelectItem value={CUSTOM_OPTION_SENTINEL}>
-								{CUSTOM_OPTION_LABEL}
-							</SelectItem>
-						)}
-					</SelectContent>
-				</Select>
+				/>
 				{isCustom && (
 					<Input
 						type="text"
-						className={styles.input}
 						placeholder="Enter a custom value"
 						value={customValue}
 						onChange={(e): void => {
@@ -407,7 +401,6 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 				{isCustom && (
 					<Input
 						type="text"
-						className={styles.input}
 						placeholder="Enter a custom value"
 						value={customValue}
 						onChange={(e): void => updateCustomValue(e.target.value)}
@@ -431,7 +424,6 @@ function FieldInput({ field, value, onChange }: FieldInputProps): JSX.Element {
 			<Input
 				id={id}
 				type={type === 'number' ? 'number' : 'text'}
-				className={styles.input}
 				value={String(value ?? '')}
 				aria-required={required || undefined}
 				onChange={(e): void => {

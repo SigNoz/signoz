@@ -15,6 +15,7 @@ import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
@@ -35,7 +36,7 @@ function TimeSeriesViewContainer({
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
 
-		currentQuery.builder.queryData.forEach(
+		getActiveBuilder(currentQuery).queryData.forEach(
 			({ aggregateAttribute, aggregateOperator }) => {
 				const isExistDurationNanoAttribute =
 					aggregateAttribute?.key === 'durationNano' ||

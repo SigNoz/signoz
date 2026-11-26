@@ -5,6 +5,7 @@ import { screen, userEvent, within } from 'storybook/test';
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { homeMocks } from './HomePage.stories.mocks';
+import { openCommandPalette } from './__story_mockdata__/home.play';
 
 import HomePage from '../HomePage';
 
@@ -96,4 +97,9 @@ export const NavSettingsMenu: Story = {
 		);
 		await screen.findByRole('menu');
 	},
+};
+
+/** The command palette, opened with the same shortcut the shell listens for. */
+export const CommandPalette: Story = {
+	play: openCommandPalette,
 };

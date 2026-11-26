@@ -30,7 +30,9 @@ function DashboardsFilterZone({
 }: Props): JSX.Element {
 	const wrapControl = useCallback(
 		(node: ReactElement): ReactElement => (
-			<AuthZTooltip checks={LIST_CHECKS}>{node}</AuthZTooltip>
+			<AuthZTooltip checks={LIST_CHECKS} testId="dashboards-list-denied-tooltip">
+				{node}
+			</AuthZTooltip>
 		),
 		[],
 	);

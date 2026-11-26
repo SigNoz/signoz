@@ -5,10 +5,16 @@
 
 import type {
 	ListSpanMapperGroups200,
+	ListSpanMappers200,
+	SpantypesSpanMapperDTO,
 	SpantypesSpanMapperGroupConditionKeyDTO,
 	SpantypesSpanMapperGroupDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { SpantypesSpanMapperOriginDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	SpantypesFieldContextDTO,
+	SpantypesSpanMapperOperationDTO,
+	SpantypesSpanMapperOriginDTO,
+} from 'api/generated/services/sigNoz.schemas';
 
 const ORG_ID = 'org-signoz';
 
@@ -70,6 +76,44 @@ export const spanMapperGroupsResponse = (
 ): ListSpanMapperGroups200 => ({
 	status: 'success',
 	data: { items: GROUPS.slice(0, count).map(group) },
+});
+
+const MAPPERS: { name: string; source: string }[] = [
+	{ name: 'gen_ai.request.model', source: 'langchain.model' },
+	{ name: 'gen_ai.usage.input_tokens', source: 'langchain.prompt_tokens' },
+];
+
+const mapper = (
+	groupId: string,
+	seed: (typeof MAPPERS)[number],
+	index: number,
+): SpantypesSpanMapperDTO => ({
+	id: `${groupId}-mapper-${index + 1}`,
+	groupId,
+	name: seed.name,
+	enabled: true,
+	origin: SpantypesSpanMapperOriginDTO.user,
+	fieldContext: SpantypesFieldContextDTO.attribute,
+	config: {
+		sources: [
+			{
+				key: seed.source,
+				context: SpantypesFieldContextDTO.attribute,
+				operation: SpantypesSpanMapperOperationDTO.copy,
+				priority: 1,
+				enabled: true,
+			},
+		],
+	},
+	createdAt: '2026-07-18T11:20:00Z',
+	createdBy: 'anna@signoz.io',
+	updatedAt: '2026-08-05T08:40:00Z',
+	updatedBy: 'anna@signoz.io',
+});
+
+export const spanMappersResponse = (groupId: string): ListSpanMappers200 => ({
+	status: 'success',
+	data: { items: MAPPERS.map((seed, index) => mapper(groupId, seed, index)) },
 });
 
 const MANY_ATTRIBUTES = [

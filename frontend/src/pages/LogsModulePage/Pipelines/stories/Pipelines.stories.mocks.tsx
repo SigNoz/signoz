@@ -3,22 +3,25 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import type { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { rest } from 'msw';
 import type { ILog } from 'types/api/logs/log';
+import type {
+	BuilderQuery,
+	QueryRangeRequestV5,
+} from 'types/api/v5/queryRange';
 
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import { queryRangeV5ScalarResponse } from '@/storybook/msw/__story_mockdata__/queryRange';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
-	attributeValuesResponse,
-	filterSuggestionsResponse,
-	logCountV3Response,
+	infraMetricsResponse,
 	logFieldKeysResponse,
 	logFieldValuesResponse,
 	LOG_SEVERITIES,
-	logRowsV3Response,
+	logRowsResponse,
 	timeRangeState,
 } from '../../stories/__story_mockdata__/logs';
 import {
@@ -102,30 +105,25 @@ export const pipelinesMocks = defineStoryMocks({
 				}),
 			),
 
-			// The preview queries on `DEFAULT_ENTITY_VERSION`, so it asks v3 rather
-			// than the v5 endpoint the explorer uses: the panel type says whether it
-			// wants the matching logs or how many there are.
 			rest.post(
-				'http://localhost/api/v3/query_range',
+				'http://localhost/api/v5/query_range',
 				response.json(async (req) => {
-					const body = (await req.json()) as {
-						end: number;
-						compositeQuery: { panelType: PANEL_TYPES };
-					};
+					const body = (await req.json()) as QueryRangeRequestV5;
+					const spec = body.compositeQuery?.queries?.[0]?.spec as
+						| BuilderQuery
+						| undefined;
 
-					if (body.compositeQuery?.panelType === 'table') {
-						return logCountV3Response(4213, body.end);
+					// The preview's log detail drawer asks for its infra charts here.
+					if (spec?.signal === 'metrics') {
+						return infraMetricsResponse(body);
 					}
 
-					return logRowsV3Response(values.sampleLogs, LOG_SEVERITIES, body.end);
-				}),
-			),
+					if (body.requestType === 'scalar') {
+						return queryRangeV5ScalarResponse(4213);
+					}
 
-			rest.get(
-				'http://localhost/api/v3/filter_suggestions',
-				response.json((req) =>
-					filterSuggestionsResponse(req.url.searchParams.get('searchText') ?? ''),
-				),
+					return logRowsResponse(values.sampleLogs, LOG_SEVERITIES, body.end);
+				}),
 			),
 
 			rest.get(
@@ -144,16 +142,6 @@ export const pipelinesMocks = defineStoryMocks({
 					),
 				),
 			),
-
-			rest.get(
-				'http://localhost/api/v3/autocomplete/attribute_values',
-				response.json((req) =>
-					attributeValuesResponse(
-						req.url.searchParams.get('attributeKey') ?? '',
-						req.url.searchParams.get('searchText') ?? '',
-					),
-				),
-			),
 		];
 	},
 	config: () => ({
@@ -161,3 +149,5 @@ export const pipelinesMocks = defineStoryMocks({
 		reduxState: timeRangeState(),
 	}),
 });
+
+export type PipelinesArgs = PageStoryArgs<typeof pipelinesMocks>;

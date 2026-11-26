@@ -31,6 +31,23 @@ const (
 	AlertDescriptionLabel = "description"
 )
 
+// reservedLabelNames are written by the rule engine; a rule label with one of
+// these names never reaches the alert.
+var reservedLabelNames = map[string]struct{}{
+	MetricNameLabel:    {},
+	TemporalityLabel:   {},
+	AlertNameLabel:     {},
+	AlertRuleIDLabel:   {},
+	RuleSourceLabel:    {},
+	NoDataLabel:        {},
+	LabelThresholdName: {},
+	LabelSeverityName:  {},
+	LabelLastSeen:      {},
+	// TODO: the template layer reads is_recovering but nothing writes it;
+	// set it from Alert.IsRecovering.
+	LabelIsRecovering: {},
+}
+
 // Label is a key/value pair of strings.
 // TODO(srikanthccv): https://github.com/SigNoz/signoz/issues/9232?
 type Label struct {
@@ -282,6 +299,20 @@ func (b *Builder) Set(n, v string) *Builder {
 	}
 	b.add = append(b.add, Label{Name: n, Value: v})
 
+	return b
+}
+
+// SetRuleLabels adds the rule's labels, each expanded, skipping the names the
+// engine writes.
+// TODO: a rule label still overwrites a query result label of the same name;
+// decide whether those are locked too.
+func (b *Builder) SetRuleLabels(ruleLabels map[string]string, expand func(string) string) *Builder {
+	for name, value := range ruleLabels {
+		if _, reserved := reservedLabelNames[name]; reserved {
+			continue
+		}
+		b.Set(name, expand(value))
+	}
 	return b
 }
 

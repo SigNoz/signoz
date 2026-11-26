@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { rest, server } from 'mocks-server/server';
 import {
 	fireEvent,
@@ -10,11 +10,11 @@ import {
 
 import DisplayName from '../index';
 
-jest.mock('@signozhq/ui/sonner', () => ({
-	...jest.requireActual('@signozhq/ui/sonner'),
+jest.mock('@signozhq/ui/toast', () => ({
+	...jest.requireActual('@signozhq/ui/toast'),
 	toast: {
 		success: jest.fn(),
-		error: jest.fn(),
+		danger: jest.fn(),
 	},
 }));
 
@@ -41,7 +41,7 @@ describe('DisplayName', () => {
 	});
 
 	it('enables submit and calls PUT when display name is changed', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		server.use(rest.put(ORG_ME_ENDPOINT, (_, res, ctx) => res(ctx.status(200))));
 
@@ -62,15 +62,14 @@ describe('DisplayName', () => {
 	});
 
 	it('shows validation error when display name is cleared and submitted', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const user = userEvent.setup();
 
 		render(<DisplayName {...defaultProps} />);
 
 		const input = await screen.findByRole('textbox');
 		await user.clear(input);
 
-		const form = input.closest('form') as HTMLFormElement;
-		fireEvent.submit(form);
+		fireEvent.submit(screen.getByTestId('org-display-name-form'));
 
 		await waitFor(() => {
 			expect(screen.getByText(/missing display name/i)).toBeInTheDocument();

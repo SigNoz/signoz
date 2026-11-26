@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Input } from '@signozhq/ui/input';
 import classNames from 'classnames';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { getActiveBuilder } from 'lib/query/builderSlot';
 import { useAlertRuleOptional } from 'providers/Alert';
 import { Labels } from 'types/api/alerts/def';
 
@@ -18,7 +19,7 @@ function CreateAlertHeader(): JSX.Element {
 
 	const groupByLabels = useMemo(() => {
 		const labels = new Array<string>();
-		currentQuery.builder.queryData.forEach((query) => {
+		getActiveBuilder(currentQuery).queryData.forEach((query) => {
 			query.groupBy.forEach((groupBy) => {
 				labels.push(groupBy.key);
 			});
@@ -47,20 +48,21 @@ function CreateAlertHeader(): JSX.Element {
 				</div>
 			)}
 			<div className="alert-header__content">
-				<Input
-					type="text"
-					value={alertState.name}
-					onChange={(e): void => {
-						const newName = e.target.value;
-						setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
-						if (isEditMode && alertRuleContext?.setAlertRuleName) {
-							alertRuleContext.setAlertRuleName(newName);
-						}
-					}}
-					className="alert-header__input title"
-					placeholder="Enter alert rule name"
-					data-testid="alert-name-input"
-				/>
+				<div className="alert-header__input title">
+					<Input
+						type="text"
+						value={alertState.name}
+						onChange={(e): void => {
+							const newName = e.target.value;
+							setAlertState({ type: 'SET_ALERT_NAME', payload: newName });
+							if (isEditMode && alertRuleContext?.setAlertRuleName) {
+								alertRuleContext.setAlertRuleName(newName);
+							}
+						}}
+						placeholder="Enter alert rule name"
+						testId="alert-name-input"
+					/>
+				</div>
 				<LabelsInput
 					labels={alertState.labels}
 					onLabelsChange={(labels: Labels): void =>

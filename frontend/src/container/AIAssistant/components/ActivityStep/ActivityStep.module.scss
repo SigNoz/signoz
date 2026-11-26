@@ -1,0 +1,99 @@
+@use '../../_shimmer' as *;
+
+.step {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-5);
+	padding: var(--spacing-3) var(--spacing-4);
+	border-radius: var(--radius-3);
+}
+
+// The dot sits on the title's line, and a line runs down beside the step's content.
+.rail {
+	position: relative;
+	flex-shrink: 0;
+	align-self: stretch;
+	width: 6px;
+	padding-top: 7px;
+
+	// A lone step is no timeline, so it goes without the dot.
+	.step:only-child & {
+		display: none;
+	}
+
+	// 8px under the dot to the end of the step's content, clear of the next step's dot.
+	.step:not(:last-child) &::after {
+		content: '';
+		position: absolute;
+		top: 21px;
+		bottom: 0;
+		left: 50%;
+		width: 1px;
+		background: var(--l2-border);
+		transform: translateX(-50%);
+	}
+}
+
+.dot {
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--l2-border);
+}
+
+.content {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.title {
+	display: inline-flex;
+	align-self: flex-start;
+	align-items: center;
+	gap: 3px;
+	max-width: 100%;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.005em;
+	color: var(--l1-foreground);
+	text-align: left;
+}
+
+button.title {
+	cursor: pointer;
+}
+
+.live .title {
+	color: var(--l3-foreground);
+}
+
+.titleText {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+
+	// A highlight sweeps across the running step's title.
+	.live & {
+		@include shimmer-text(
+			color-mix(in srgb, var(--l3-foreground), transparent 30%),
+			var(--l2-foreground)
+		);
+	}
+}
+
+.detail {
+	font-size: var(--paragraph-base-400-font-size);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.005em;
+	color: var(--l2-foreground);
+	white-space: pre-wrap;
+	word-break: break-word;
+}

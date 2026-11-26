@@ -1,6 +1,9 @@
 // ===================== Base Types =====================
 
-import { Querybuildertypesv5BucketOptionsDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesComparisonSpaceAggregationParamDTO,
+	Querybuildertypesv5BucketOptionsDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
 import { Warning } from '..';
@@ -53,6 +56,7 @@ export type FieldContext =
 	| 'scope'
 	| 'attribute'
 	| 'event'
+	| 'body'
 	| '';
 
 export type FieldDataType =
@@ -200,6 +204,7 @@ export interface MetricAggregation {
 	timeAggregation: TimeAggregation;
 	spaceAggregation: SpaceAggregation;
 	reduceTo?: ReduceOperators;
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 }
 
 export interface SecondaryAggregation {

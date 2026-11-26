@@ -17,6 +17,7 @@ import {
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
 	initialQueriesMap,
+	initialQueryAIWithType,
 	initialQueryBuilderFormTraceOperatorValues,
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -33,11 +34,16 @@ import {
 	PartialPanelTypes,
 } from 'lib/query/panelTypeDataSourceFormValuesMap';
 import { useNormalizedCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
-import { updateStepInterval } from 'hooks/queryBuilder/useStepInterval';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';
+import {
+	getBuilderBySlotKey,
+	getBuilderSlotKeyForQueryType,
+	isAIQueryType,
+	replaceBuilderBySlotKey,
+} from 'lib/query/builderSlot';
 import { saveRecentQuery } from 'lib/recentQueries/saveRecentQuery';
 import { cloneDeep, get, isEqual, set } from 'lodash-es';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -132,6 +138,7 @@ export function QueryBuilderProvider({
 	const [stagedQuery, setStagedQuery] = useState<Query | null>(null);
 
 	const [queryType, setQueryType] = useState<EQueryType>(queryTypeParam);
+	const builderSlotKey = getBuilderSlotKeyForQueryType(queryType);
 
 	const getElementWithActualOperator = useCallback(
 		(
@@ -159,62 +166,73 @@ export function QueryBuilderProvider({
 
 	const prepareQueryBuilderData = useCallback(
 		(query: Query): Query => {
-			const builder: QueryBuilderData = {
-				queryData:
-					query.builder.queryData?.map((item) => ({
-						...initialQueryBuilderFormValuesMap[
-							initialDataSource || DataSource.METRICS
-						],
-						...item,
-					})) ?? [],
-				queryFormulas:
-					query.builder.queryFormulas?.map((item) => ({
-						...initialFormulaBuilderFormValues,
-						...item,
-					})) ?? [],
-				queryTraceOperator:
-					query.builder.queryTraceOperator?.map((item) => ({
-						...initialQueryBuilderFormTraceOperatorValues,
-						...item,
-					})) ?? [],
-			};
-
 			const urlPanelType = readPanelTypeFromUrl(PANEL_TYPES.LIST);
 
 			const isRawPanel =
 				urlPanelType === PANEL_TYPES.LIST || urlPanelType === PANEL_TYPES.TRACE;
 
-			const setupedQueryData = builder.queryData.map((item) => {
-				const currentElement: IBuilderQuery = {
-					...item,
-					groupBy: item.groupBy.map(({ id: _, ...item }) => ({
-						...item,
-						id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
-					})),
-					aggregateAttribute: {
-						...item.aggregateAttribute,
-						id: createIdFromObjectFields(
-							item.aggregateAttribute as BaseAutocompleteData,
-							baseAutoCompleteIdKeysOrder,
-						),
-					} as BaseAutocompleteData,
+			const prepareBuilder = (source: QueryBuilderData): QueryBuilderData => {
+				const builder: QueryBuilderData = {
+					queryData:
+						source.queryData?.map((item) => ({
+							...initialQueryBuilderFormValuesMap[
+								initialDataSource || DataSource.METRICS
+							],
+							...item,
+						})) ?? [],
+					queryFormulas:
+						source.queryFormulas?.map((item) => ({
+							...initialFormulaBuilderFormValues,
+							...item,
+						})) ?? [],
+					queryTraceOperator:
+						source.queryTraceOperator?.map((item) => ({
+							...initialQueryBuilderFormTraceOperatorValues,
+							...item,
+						})) ?? [],
 				};
 
-				// Explorer pages: sanitize stale orderBy before first query
-				const isExplorer =
-					(location.pathname === ROUTES.LOGS_EXPLORER ||
-						location.pathname === ROUTES.TRACES_EXPLORER ||
-						location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
-					!isRawPanel;
-				if (isExplorer) {
-					const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
-					return calledFromHandleRunQuery
-						? currentElement
-						: { ...currentElement, orderBy: sanitizedOrderBy };
-				}
+				const setupedQueryData = builder.queryData.map((item) => {
+					const currentElement: IBuilderQuery = {
+						...item,
+						groupBy: item.groupBy.map(({ id: _, ...item }) => ({
+							...item,
+							id: createIdFromObjectFields(item, baseAutoCompleteIdKeysOrder),
+						})),
+						aggregateAttribute: {
+							...item.aggregateAttribute,
+							id: createIdFromObjectFields(
+								item.aggregateAttribute as BaseAutocompleteData,
+								baseAutoCompleteIdKeysOrder,
+							),
+						} as BaseAutocompleteData,
+					};
 
-				return currentElement;
-			});
+					// Explorer pages: sanitize stale orderBy before first query
+					const isExplorer =
+						(location.pathname === ROUTES.LOGS_EXPLORER ||
+							location.pathname === ROUTES.TRACES_EXPLORER ||
+							location.pathname === ROUTES.AI_OBSERVABILITY_EXPLORER) &&
+						!isRawPanel;
+					if (isExplorer) {
+						const sanitizedOrderBy = sanitizeOrderByForExplorer(currentElement);
+						return calledFromHandleRunQuery
+							? currentElement
+							: { ...currentElement, orderBy: sanitizedOrderBy };
+					}
+
+					return currentElement;
+				});
+
+				return { ...builder, queryData: setupedQueryData };
+			};
+
+			// Filled the first time AI is the active type, then kept so a tab switch can return to it.
+			const aiBuilder =
+				query.builder_ai_query ??
+				(query.queryType === EQueryType.AI_QUERY_BUILDER
+					? initialQueryAIWithType.builder_ai_query
+					: undefined);
 
 			const promql: IPromQLQuery[] =
 				query.promql?.map((item) => ({
@@ -231,10 +249,8 @@ export function QueryBuilderProvider({
 			const newQueryState: QueryState = {
 				clickhouse_sql: clickHouse,
 				promql,
-				builder: {
-					...builder,
-					queryData: setupedQueryData,
-				},
+				builder: prepareBuilder(query.builder),
+				...(aiBuilder && { builder_ai_query: prepareBuilder(aiBuilder) }),
 				id: query.id,
 				unit: query.unit,
 			};
@@ -279,20 +295,19 @@ export function QueryBuilderProvider({
 			dataSource: DataSource,
 			signalSource?: 'meter' | '',
 		): Query => {
-			const queryData = query.builder.queryData?.map((item) =>
+			const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+			const builder = getBuilderBySlotKey(query, slotKey);
+			const queryData = builder.queryData?.map((item) =>
 				getElementWithActualOperator(item, dataSource, panelType),
 			);
 
-			return {
-				...query,
-				builder: {
-					...query.builder,
-					queryData: queryData.map((item) => ({
-						...item,
-						source: signalSource,
-					})),
-				},
-			};
+			return replaceBuilderBySlotKey(query, slotKey, {
+				...builder,
+				queryData: queryData.map((item) => ({
+					...item,
+					source: signalSource,
+				})),
+			});
 		},
 
 		[getElementWithActualOperator],
@@ -389,9 +404,14 @@ export function QueryBuilderProvider({
 				index: number,
 			) => QueryBuilderData[T][number],
 		): Query => {
-			const result = query.builder[type].map(updateCallback);
+			const slotKey = getBuilderSlotKeyForQueryType(query.queryType);
+			const builder = getBuilderBySlotKey(query, slotKey);
+			const result = builder[type].map(updateCallback);
 
-			return { ...query, builder: { ...query.builder, [type]: result } };
+			return replaceBuilderBySlotKey(query, slotKey, {
+				...builder,
+				[type]: result,
+			});
 		},
 		[],
 	);
@@ -403,17 +423,14 @@ export function QueryBuilderProvider({
 					| IBuilderQuery
 					| IBuilderFormula
 					| IBuilderTraceOperator
-				)[] = prevState.builder[type];
+				)[] = getBuilderBySlotKey(prevState, builderSlotKey)[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						[type]: filteredArray,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					[type]: filteredArray,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
@@ -421,34 +438,35 @@ export function QueryBuilderProvider({
 					| IBuilderQuery
 					| IBuilderFormula
 					| IBuilderTraceOperator
-				)[] = prevState.builder[type];
+				)[] = getBuilderBySlotKey(prevState, builderSlotKey)[type];
 
 				const filteredArray = currentArray.filter((_, i) => index !== i);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						[type]: filteredArray,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					[type]: filteredArray,
+				});
 			});
 		},
-		[],
+		[builderSlotKey],
 	);
 
 	const removeAllQueryBuilderEntities = useCallback(
 		(type: keyof QueryBuilderData) => {
-			setCurrentQuery((prevState) => ({
-				...prevState,
-				builder: { ...prevState.builder, [type]: [] },
-			}));
-			setSupersetQuery((prevState) => ({
-				...prevState,
-				builder: { ...prevState.builder, [type]: [] },
-			}));
+			setCurrentQuery((prevState) =>
+				replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					[type]: [],
+				}),
+			);
+			setSupersetQuery((prevState) =>
+				replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					[type]: [],
+				}),
+			);
 		},
-		[setCurrentQuery, setSupersetQuery],
+		[builderSlotKey, setCurrentQuery, setSupersetQuery],
 	);
 
 	const removeQueryTypeItemByIndex = useCallback(
@@ -583,177 +601,202 @@ export function QueryBuilderProvider({
 
 	const addNewBuilderQuery = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+			if (
+				getBuilderBySlotKey(prevState, builderSlotKey).queryData.length >=
+				MAX_QUERIES
+			) {
 				return prevState;
 			}
 
-			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+			const newQuery = createNewBuilderQuery(
+				getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryData: [...prevState.builder.queryData, newQuery],
-				},
-			};
+			return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
+				queryData: [
+					...getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+					newQuery,
+				],
+			});
 		});
 
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryData.length >= MAX_QUERIES) {
+			if (
+				getBuilderBySlotKey(prevState, builderSlotKey).queryData.length >=
+				MAX_QUERIES
+			) {
 				return prevState;
 			}
 
-			const newQuery = createNewBuilderQuery(prevState.builder.queryData);
+			const newQuery = createNewBuilderQuery(
+				getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryData: [...prevState.builder.queryData, newQuery],
-				},
-			};
+			return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
+				queryData: [
+					...getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+					newQuery,
+				],
+			});
 		});
-	}, [createNewBuilderQuery]);
+	}, [builderSlotKey, createNewBuilderQuery]);
 
 	const cloneQuery = useCallback(
 		(type: string, query: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				if (
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData.length >=
+					MAX_QUERIES
+				) {
 					return prevState;
 				}
 
 				const clonedQuery = cloneNewBuilderQuery(
-					prevState.builder.queryData,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData,
 					query,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: [...prevState.builder.queryData, clonedQuery],
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryData: [
+						...getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+						clonedQuery,
+					],
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
-				if (prevState.builder.queryData.length >= MAX_QUERIES) {
+				if (
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData.length >=
+					MAX_QUERIES
+				) {
 					return prevState;
 				}
 
 				const clonedQuery = cloneNewBuilderQuery(
-					prevState.builder.queryData,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData,
 					query,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: [...prevState.builder.queryData, clonedQuery],
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryData: [
+						...getBuilderBySlotKey(prevState, builderSlotKey).queryData,
+						clonedQuery,
+					],
+				});
 			});
 		},
-		[cloneNewBuilderQuery],
+		[builderSlotKey, cloneNewBuilderQuery],
 	);
 
 	const addNewFormula = useCallback(() => {
 		setCurrentQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+			if (
+				getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas.length >=
+				MAX_FORMULAS
+			) {
 				return prevState;
 			}
 
-			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+			const newFormula = createNewBuilderFormula(
+				getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
-				},
-			};
+			return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
+				queryFormulas: [
+					...getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
+					newFormula,
+				],
+			});
 		});
 		// eslint-disable-next-line sonarjs/no-identical-functions
 		setSupersetQuery((prevState) => {
-			if (prevState.builder.queryFormulas.length >= MAX_FORMULAS) {
+			if (
+				getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas.length >=
+				MAX_FORMULAS
+			) {
 				return prevState;
 			}
 
-			const newFormula = createNewBuilderFormula(prevState.builder.queryFormulas);
+			const newFormula = createNewBuilderFormula(
+				getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
+			);
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
-					queryFormulas: [...prevState.builder.queryFormulas, newFormula],
-				},
-			};
+			return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
+				queryFormulas: [
+					...getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
+					newFormula,
+				],
+			});
 		});
-	}, [createNewBuilderFormula]);
+	}, [builderSlotKey, createNewBuilderFormula]);
 
-	const addTraceOperator = useCallback((expression = '') => {
-		const trimmed = (expression || '').trim();
+	const addTraceOperator = useCallback(
+		(expression = '') => {
+			const trimmed = (expression || '').trim();
 
-		setCurrentQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-					};
+			setCurrentQuery((prevState) => {
+				const existing =
+					getBuilderBySlotKey(prevState, builderSlotKey).queryTraceOperator?.[0] ||
+					null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+						};
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
 					// enforce single trace operator and replace only expression
 					queryTraceOperator: [updated],
-				},
-			};
-		});
-		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => {
-			const existing = prevState.builder.queryTraceOperator?.[0] || null;
-			const updated: IBuilderTraceOperator = existing
-				? { ...existing, expression: trimmed }
-				: {
-						...initialQueryBuilderFormTraceOperatorValues,
-						queryName: TRACE_OPERATOR_QUERY_NAME,
-						expression: trimmed,
-					};
+				});
+			});
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			setSupersetQuery((prevState) => {
+				const existing =
+					getBuilderBySlotKey(prevState, builderSlotKey).queryTraceOperator?.[0] ||
+					null;
+				const updated: IBuilderTraceOperator = existing
+					? { ...existing, expression: trimmed }
+					: {
+							...initialQueryBuilderFormTraceOperatorValues,
+							queryName: TRACE_OPERATOR_QUERY_NAME,
+							expression: trimmed,
+						};
 
-			return {
-				...prevState,
-				builder: {
-					...prevState.builder,
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
 					// enforce single trace operator and replace only expression
 					queryTraceOperator: [updated],
-				},
-			};
-		});
-	}, []);
+				});
+			});
+		},
+		[builderSlotKey],
+	);
 
 	const removeTraceOperator = useCallback(() => {
-		setCurrentQuery((prevState) => ({
-			...prevState,
-			builder: {
-				...prevState.builder,
+		setCurrentQuery((prevState) =>
+			replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
 				queryTraceOperator: [],
-			},
-		}));
+			}),
+		);
 		// eslint-disable-next-line sonarjs/no-identical-functions
-		setSupersetQuery((prevState) => ({
-			...prevState,
-			builder: {
-				...prevState.builder,
+		setSupersetQuery((prevState) =>
+			replaceBuilderBySlotKey(prevState, builderSlotKey, {
+				...getBuilderBySlotKey(prevState, builderSlotKey),
 				queryTraceOperator: [],
-			},
-		}));
-	}, []);
+			}),
+		);
+	}, [builderSlotKey]);
 
 	const updateQueryBuilderData: <T>(
 		arr: T[],
@@ -833,110 +876,92 @@ export function QueryBuilderProvider({
 		(index: number, newQueryData: IBuilderQuery): void => {
 			setCurrentQuery((prevState) => {
 				const updatedQueryBuilderData = updateQueryBuilderData(
-					prevState.builder.queryData,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData,
 					index,
 					newQueryData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: updatedQueryBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryData: updatedQueryBuilderData,
+				});
 			});
 			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
-					prevState.builder.queryData,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryData,
 					index,
 					newQueryData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryData: updatedQueryBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryData: updatedQueryBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData, updateSuperSetQueryBuilderData],
+		[builderSlotKey, updateQueryBuilderData, updateSuperSetQueryBuilderData],
 	);
 
 	const handleSetTraceOperatorData = useCallback(
 		(index: number, traceOperatorData: IBuilderTraceOperator): void => {
 			setCurrentQuery((prevState) => {
 				const updatedTraceOperatorBuilderData = updateQueryBuilderData(
-					prevState.builder.queryTraceOperator,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryTraceOperator,
 					index,
 					traceOperatorData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryTraceOperator: updatedTraceOperatorBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryTraceOperator: updatedTraceOperatorBuilderData,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedTraceOperatorBuilderData = updateQueryBuilderData(
-					prevState.builder.queryTraceOperator,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryTraceOperator,
 					index,
 					traceOperatorData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryTraceOperator: updatedTraceOperatorBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryTraceOperator: updatedTraceOperatorBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData],
+		[builderSlotKey, updateQueryBuilderData],
 	);
 
 	const handleSetFormulaData = useCallback(
 		(index: number, formulaData: IBuilderFormula): void => {
 			setCurrentQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
-					prevState.builder.queryFormulas,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
 					index,
 					formulaData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryFormulas: updatedFormulasBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryFormulas: updatedFormulasBuilderData,
+				});
 			});
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedFormulasBuilderData = updateQueryBuilderData(
-					prevState.builder.queryFormulas,
+					getBuilderBySlotKey(prevState, builderSlotKey).queryFormulas,
 					index,
 					formulaData,
 				);
 
-				return {
-					...prevState,
-					builder: {
-						...prevState.builder,
-						queryFormulas: updatedFormulasBuilderData,
-					},
-				};
+				return replaceBuilderBySlotKey(prevState, builderSlotKey, {
+					...getBuilderBySlotKey(prevState, builderSlotKey),
+					queryFormulas: updatedFormulasBuilderData,
+				});
 			});
 		},
-		[updateQueryBuilderData],
+		[builderSlotKey, updateQueryBuilderData],
 	);
 
 	const { safeNavigate } = useSafeNavigate({
@@ -949,7 +974,7 @@ export function QueryBuilderProvider({
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: (typeof ROUTES)[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
-			newTab?: boolean,
+			navigateOptions?: { newTab?: boolean; replace?: boolean },
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -974,6 +999,9 @@ export function QueryBuilderProvider({
 			const currentGeneratedQuery: Query = {
 				queryType,
 				builder,
+				...(query.builder_ai_query && {
+					builder_ai_query: query.builder_ai_query,
+				}),
 				promql,
 				clickhouse_sql: clickhouseSql,
 				id: uuid(),
@@ -1001,14 +1029,18 @@ export function QueryBuilderProvider({
 			);
 
 			if (searchParams) {
-				Object.keys(searchParams).forEach((param) =>
+				Object.keys(searchParams).forEach((param) => {
+					if (searchParams[param] === null) {
+						urlQuery.delete(param);
+						return;
+					}
 					urlQuery.set(
 						param,
 						shouldNotStringify
 							? (searchParams[param] as string)
 							: JSON.stringify(searchParams[param]),
-					),
-				);
+					);
+				});
 			}
 			// Remove Hidden Filters from URL query parameters on query change
 			urlQuery.delete(QueryParams.activeLogId);
@@ -1017,7 +1049,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl, { newTab });
+			safeNavigate(generatedUrl, navigateOptions);
 		},
 		[location.pathname, safeNavigate],
 	);
@@ -1038,13 +1070,15 @@ export function QueryBuilderProvider({
 		if (isExplorer) {
 			setCalledFromHandleRunQuery(true);
 		}
-		saveRecentQuery(currentQuery);
+		saveRecentQuery({ ...currentQuery, queryType });
 
-		const currentQueryData = {
-			...currentQuery,
-			builder: {
-				...currentQuery.builder,
-				queryData: currentQuery.builder.queryData.map((item) => ({
+		const builder = getBuilderBySlotKey(currentQuery, builderSlotKey);
+		const currentQueryData = replaceBuilderBySlotKey(
+			currentQuery,
+			builderSlotKey,
+			{
+				...builder,
+				queryData: builder.queryData.map((item) => ({
 					...item,
 					filter: {
 						...item.filter,
@@ -1057,25 +1091,19 @@ export function QueryBuilderProvider({
 						items: [],
 						op: 'AND',
 					},
+					stepInterval: item.stepInterval ?? null,
 				})),
 			},
-		};
+		);
 
-		redirectWithQueryBuilderData({
-			...{
-				...currentQueryData,
-				...updateStepInterval({
-					builder: currentQueryData.builder,
-					clickhouse_sql: currentQueryData.clickhouse_sql,
-					promql: currentQueryData.promql,
-					id: currentQueryData.id,
-					queryType,
-					unit: currentQueryData.unit,
-				}),
-			},
-			queryType,
-		});
-	}, [currentQuery, location.pathname, queryType, redirectWithQueryBuilderData]);
+		redirectWithQueryBuilderData({ ...currentQueryData, queryType });
+	}, [
+		builderSlotKey,
+		currentQuery,
+		location.pathname,
+		queryType,
+		redirectWithQueryBuilderData,
+	]);
 
 	useEffect(() => {
 		if (location.pathname !== currentPathnameRef.current) {
@@ -1085,6 +1113,10 @@ export function QueryBuilderProvider({
 			// reset the last used query to 0 when navigating away from the page
 			setLastUsedQuery(0);
 			setCalledFromHandleRunQuery(false);
+			// Pages without an AI compositeQuery must not suggest from the AI field endpoints.
+			setQueryType((prev) =>
+				isAIQueryType(prev) ? EQueryType.QUERY_BUILDER : prev,
+			);
 		}
 	}, [location.pathname]);
 

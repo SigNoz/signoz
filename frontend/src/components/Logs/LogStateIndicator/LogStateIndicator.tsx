@@ -138,8 +138,11 @@ function LogStateIndicator({
 	const severityClass = getSeverityClass(severityText, severityNumber);
 
 	return (
-		<div className="log-state-indicator">
-			<div className={cx('line', fontSize, severityClass)} />
+		<div className="log-state-indicator" data-testid="log-state-indicator">
+			<div
+				className={cx('line', fontSize, severityClass)}
+				data-testid="log-state-indicator-line"
+			/>
 		</div>
 	);
 }

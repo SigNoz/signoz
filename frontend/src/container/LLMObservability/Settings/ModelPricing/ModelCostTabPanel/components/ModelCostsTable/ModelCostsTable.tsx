@@ -24,7 +24,7 @@ interface ModelCostsTableProps {
 // The table owns its own pagination URL state (page/limit) via enableQueryParams;
 // ModelCostsTab reads the same keys to build the list request. Virtual scroll is
 // disabled: a plain table renders fine at our page sizes (up to 100 rows) and the
-// fixed-height scroll viewport (.modelCostsTable) keeps large pages scrolling
+// scroll viewport (.modelCostsTable) keeps large pages scrolling
 // inside the table.
 function ModelCostsTable({
 	rules,
@@ -56,6 +56,7 @@ function ModelCostsTable({
 			isLoading={isLoading}
 			skeletonRowCount={SKELETON_ROW_COUNT}
 			getRowKey={(row): string => row.id}
+			getRowTestId={(row): string => `model-cost-row-${row.id}`}
 			isRowActive={(row): boolean => row.id === selectedRuleId}
 			disableVirtualScroll
 			testId="model-costs-table"

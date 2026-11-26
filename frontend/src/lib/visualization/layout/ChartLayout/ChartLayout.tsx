@@ -90,7 +90,7 @@ export default function ChartLayout({
 					'chart-layout--with-layout-children': !!layoutChildren,
 				})}
 			>
-				<div className="chart-layout__content">
+				<div className="chart-layout__content" data-testid="chart-layout-content">
 					{children({
 						chartWidth: chartDimensions.width,
 						chartHeight: chartDimensions.height,

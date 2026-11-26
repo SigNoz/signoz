@@ -141,9 +141,16 @@ function MappingsTable({
 			{isEmpty ? (
 				<div className={styles.tableState} data-testid="mapper-groups-empty">
 					<Layers size={24} />
-					<Typography.Text as="span" size="base" color="muted">
+					<Typography
+						variant="paragraph"
+						size="base"
+						weight="regular"
+						color="secondary"
+						as="span"
+						textOverflow="wrap"
+					>
 						No mapping groups yet.
-					</Typography.Text>
+					</Typography>
 				</div>
 			) : (
 				<div data-testid="mappings-table">

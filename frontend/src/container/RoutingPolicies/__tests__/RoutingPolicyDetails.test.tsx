@@ -1,15 +1,13 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import * as appHooks from 'providers/App/App';
+import type { ComponentProps } from 'react';
+import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
+import { USER_ROLES } from 'types/roles';
 
 import RoutingPolicyDetails from '../RoutingPolicyDetails';
 import {
-	getAppContextMockState,
 	MOCK_CHANNEL_1,
 	MOCK_CHANNEL_2,
 	MOCK_ROUTING_POLICY_1,
 } from './testUtils';
-
-jest.spyOn(appHooks, 'useAppContext').mockReturnValue(getAppContextMockState());
 
 const mockHandlePolicyDetailsModalAction = jest.fn();
 const mockCloseModal = jest.fn();
@@ -23,47 +21,58 @@ const NEW_DESCRIPTION = 'New Description';
 const SAVE_BUTTON_TEXT = 'Save Routing Policy';
 const NO_CHANNELS_FOUND_TEXT = 'No channels yet.';
 
+const NAME_INPUT = 'routing-policy-name-input';
+const EXPRESSION_INPUT = 'routing-policy-expression-input';
+const DESCRIPTION_INPUT = 'routing-policy-description-input';
+const CHANNELS_SELECT = 'routing-policy-channels-select';
+const CANCEL_BUTTON = 'routing-policy-cancel';
+const SAVE_BUTTON = 'routing-policy-save';
+
+type Props = ComponentProps<typeof RoutingPolicyDetails>;
+
+function renderDetails(
+	props: Partial<Props> = {},
+	role: string = USER_ROLES.ADMIN,
+): void {
+	render(
+		<RoutingPolicyDetails
+			routingPolicy={mockRoutingPolicy}
+			closeModal={mockCloseModal}
+			mode="create"
+			channels={mockChannels}
+			handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
+			isPolicyDetailsModalActionLoading={false}
+			isErrorChannels={false}
+			isLoadingChannels={false}
+			refreshChannels={mockRefreshChannels}
+			{...props}
+		/>,
+		undefined,
+		{ role },
+	);
+}
+
+function channelsSelectInput(): HTMLElement {
+	return within(screen.getByTestId(CHANNELS_SELECT)).getByLabelText(
+		'Notification Channels',
+	);
+}
+
 describe('RoutingPolicyDetails', () => {
 	it('renders base create layout with header, 3 inputs and footer', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ mode: 'create' });
 
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 		expect(screen.getByText('Create routing policy')).toBeInTheDocument();
 		expect(screen.getByText('Routing Policy Name')).toBeInTheDocument();
 		expect(screen.getByText('Expression')).toBeInTheDocument();
 		expect(screen.getByText('Notification Channels')).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: SAVE_BUTTON_TEXT }),
-		).toBeInTheDocument();
+		expect(screen.getByTestId(CANCEL_BUTTON)).toHaveTextContent('Cancel');
+		expect(screen.getByTestId(SAVE_BUTTON)).toHaveTextContent(SAVE_BUTTON_TEXT);
 	});
 
 	it('renders base edit layout with header, 3 inputs and footer', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="edit"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ mode: 'edit' });
 
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 		expect(screen.getByText('Edit routing policy')).toBeInTheDocument();
@@ -71,328 +80,164 @@ describe('RoutingPolicyDetails', () => {
 		expect(screen.getByText('Expression')).toBeInTheDocument();
 		expect(screen.getByText('Notification Channels')).toBeInTheDocument();
 
-		expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-		expect(
-			screen.getByRole('button', { name: SAVE_BUTTON_TEXT }),
-		).toBeInTheDocument();
+		expect(screen.getByTestId(CANCEL_BUTTON)).toHaveTextContent('Cancel');
+		expect(screen.getByTestId(SAVE_BUTTON)).toHaveTextContent(SAVE_BUTTON_TEXT);
 	});
 
 	it('prefills inputs with existing policy values in edit mode', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="edit"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ mode: 'edit' });
 
-		const nameInput = screen.getByDisplayValue(mockRoutingPolicy.name);
-		expect(nameInput).toBeInTheDocument();
-
-		const expressionTextarea = screen.getByDisplayValue(
+		expect(screen.getByTestId(NAME_INPUT)).toHaveValue(mockRoutingPolicy.name);
+		expect(screen.getByTestId(EXPRESSION_INPUT)).toHaveValue(
 			mockRoutingPolicy.expression,
 		);
-		expect(expressionTextarea).toBeInTheDocument();
 
 		expect(screen.getByText(MOCK_CHANNEL_1.name)).toBeInTheDocument();
 	});
 
 	it('creating and saving the routing policy works correctly', async () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
+		const user = userEvent.setup();
+		renderDetails({ mode: 'create' });
+
+		const nameInput = screen.getByTestId(NAME_INPUT);
+		expect(nameInput).toHaveAttribute(
+			'placeholder',
+			'e.g. Base routing policy...',
 		);
-
-		const nameInput = screen.getByPlaceholderText('e.g. Base routing policy...');
-		expect(nameInput).toBeInTheDocument();
-
-		const expressionTextarea = screen.getByPlaceholderText(
+		const expressionTextarea = screen.getByTestId(EXPRESSION_INPUT);
+		expect(expressionTextarea).toHaveAttribute(
+			'placeholder',
 			'e.g. service.name == "payment" && threshold.name == "critical"',
 		);
-		expect(expressionTextarea).toBeInTheDocument();
-
-		const descriptionTextarea = screen.getByPlaceholderText(
+		const descriptionTextarea = screen.getByTestId(DESCRIPTION_INPUT);
+		expect(descriptionTextarea).toHaveAttribute(
+			'placeholder',
 			'e.g. This is a routing policy that...',
 		);
-		expect(descriptionTextarea).toBeInTheDocument();
 
-		fireEvent.change(nameInput, { target: { value: NEW_NAME } });
-		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
-		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
+		await user.click(nameInput);
+		await user.paste(NEW_NAME);
+		await user.click(expressionTextarea);
+		await user.paste(NEW_EXPRESSION);
+		await user.click(descriptionTextarea);
+		await user.paste(NEW_DESCRIPTION);
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
-		const channelOptions = await screen.findAllByText('Channel 1');
-		fireEvent.click(channelOptions[1]);
+		await user.click(channelsSelectInput());
+		await user.click(await screen.findByTitle('Channel 1'));
 
-		// Wait for the form to be valid before submitting
-		await waitFor(() => {
-			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
-		});
+		await user.click(screen.getByTestId(SAVE_BUTTON));
 
-		const saveButton = screen.getByRole('button', {
-			name: 'Save Routing Policy',
-		});
-		fireEvent.click(saveButton);
-
-		// Wait for the form submission to complete
-		await waitFor(() => {
-			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalled();
-		});
-
-		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('create', {
-			name: NEW_NAME,
-			expression: NEW_EXPRESSION,
-			description: NEW_DESCRIPTION,
-			channels: ['Channel 1'],
-		});
+		await waitFor(() =>
+			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('create', {
+				name: NEW_NAME,
+				expression: NEW_EXPRESSION,
+				description: NEW_DESCRIPTION,
+				channels: ['Channel 1'],
+			}),
+		);
 	});
 
 	it('editing and saving the routing policy works correctly', async () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="edit"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		const user = userEvent.setup();
+		renderDetails({ mode: 'edit' });
 
-		const nameInput = screen.getByDisplayValue(mockRoutingPolicy.name);
-		expect(nameInput).toBeInTheDocument();
-
-		const expressionTextarea = screen.getByDisplayValue(
-			mockRoutingPolicy.expression,
-		);
-		expect(expressionTextarea).toBeInTheDocument();
-
-		const descriptionTextarea = screen.getByDisplayValue(
+		const nameInput = screen.getByTestId(NAME_INPUT);
+		expect(nameInput).toHaveValue(mockRoutingPolicy.name);
+		const expressionTextarea = screen.getByTestId(EXPRESSION_INPUT);
+		expect(expressionTextarea).toHaveValue(mockRoutingPolicy.expression);
+		const descriptionTextarea = screen.getByTestId(DESCRIPTION_INPUT);
+		expect(descriptionTextarea).toHaveValue(
 			mockRoutingPolicy.description || 'description 1',
 		);
-		expect(descriptionTextarea).toBeInTheDocument();
 
-		fireEvent.change(nameInput, { target: { value: NEW_NAME } });
-		fireEvent.change(expressionTextarea, { target: { value: NEW_EXPRESSION } });
-		fireEvent.change(descriptionTextarea, { target: { value: NEW_DESCRIPTION } });
+		await user.clear(nameInput);
+		await user.paste(NEW_NAME);
+		await user.clear(expressionTextarea);
+		await user.paste(NEW_EXPRESSION);
+		await user.clear(descriptionTextarea);
+		await user.paste(NEW_DESCRIPTION);
 
-		// Wait for the form to be valid before submitting
-		await waitFor(() => {
-			expect(screen.getByDisplayValue(NEW_NAME)).toBeInTheDocument();
-		});
+		await user.click(screen.getByTestId(SAVE_BUTTON));
 
-		const saveButton = screen.getByRole('button', {
-			name: SAVE_BUTTON_TEXT,
-		});
-		fireEvent.click(saveButton);
-
-		// Wait for the form submission to complete
-		await waitFor(() => {
-			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalled();
-		});
-
-		expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('edit', {
-			name: NEW_NAME,
-			expression: NEW_EXPRESSION,
-			description: NEW_DESCRIPTION,
-			channels: ['Channel 1'],
-		});
+		await waitFor(() =>
+			expect(mockHandlePolicyDetailsModalAction).toHaveBeenCalledWith('edit', {
+				name: NEW_NAME,
+				expression: NEW_EXPRESSION,
+				description: NEW_DESCRIPTION,
+				channels: ['Channel 1'],
+			}),
+		);
 	});
 
-	it('should close modal when cancel button is clicked', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="edit"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('should close modal when cancel button is clicked', async () => {
+		const user = userEvent.setup();
+		renderDetails({ mode: 'edit' });
 
-		const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-		fireEvent.click(cancelButton);
+		await user.click(screen.getByTestId(CANCEL_BUTTON));
 		expect(mockCloseModal).toHaveBeenCalled();
 	});
 
 	it('buttons should be disabled when loading', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="edit"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ mode: 'edit', isPolicyDetailsModalActionLoading: true });
 
-		const cancelButton = screen.getByRole('button', { name: 'Cancel' });
-		expect(cancelButton).toBeDisabled();
+		expect(screen.getByTestId(CANCEL_BUTTON)).toBeDisabled();
 
-		const saveButton = screen.getByRole('button', {
-			name: new RegExp(SAVE_BUTTON_TEXT, 'i'),
-		});
+		const saveButton = screen.getByTestId(SAVE_BUTTON);
+		expect(saveButton).toHaveTextContent(SAVE_BUTTON_TEXT);
 		expect(saveButton).toBeDisabled();
-		expect(saveButton.querySelector('svg')).toBeInTheDocument();
-		expect(saveButton.querySelector('svg')).toHaveAttribute(
-			'data-icon',
-			'loading',
-		);
+		expect(within(saveButton).getByLabelText('loading')).toBeInTheDocument();
 	});
 
-	it('submit should not be called when inputs are invalid', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={mockChannels}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('submit should not be called when inputs are invalid', async () => {
+		const user = userEvent.setup();
+		renderDetails({ mode: 'create' });
 
-		const saveButton = screen.getByRole('button', {
-			name: SAVE_BUTTON_TEXT,
-		});
-		fireEvent.click(saveButton);
+		await user.click(screen.getByTestId(SAVE_BUTTON));
 
+		await expect(
+			screen.findByText('Please provide a name for the routing policy'),
+		).resolves.toBeInTheDocument();
 		expect(mockHandlePolicyDetailsModalAction).not.toHaveBeenCalled();
 	});
 
 	it('notification channels select should be disabled when channels are loading', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ channels: [], isLoadingChannels: true });
 
-		const channelSelect = screen.getByRole('combobox');
-		expect(channelSelect).toBeDisabled();
+		expect(channelsSelectInput()).toBeDisabled();
 	});
 
 	it('should show error state when channels fail to load', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+		renderDetails({ channels: [], isErrorChannels: true });
 
-		const channelSelect = screen.getByRole('combobox');
-		const selectContainer = channelSelect.closest('.ant-select');
-		expect(selectContainer).toHaveClass('ant-select-status-error');
+		expect(screen.getByTestId(CHANNELS_SELECT)).toHaveClass(
+			'ant-select-status-error',
+		);
 	});
 
-	it('should show empty state when no channels are available', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('should show empty state when no channels are available', async () => {
+		const user = userEvent.setup();
+		renderDetails({ channels: [] });
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
+		await user.click(channelsSelectInput());
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 	});
 
-	it('should show create channel button for admin users in empty state', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('should show create channel button for admin users in empty state', async () => {
+		const user = userEvent.setup();
+		renderDetails({ channels: [] });
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
+		await user.click(channelsSelectInput());
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 		expect(screen.getByText('Create one')).toBeInTheDocument();
 	});
 
-	it('should show admin message for non-admin users in empty state', () => {
-		jest
-			.spyOn(appHooks, 'useAppContext')
-			.mockReturnValue(getAppContextMockState({ role: 'VIEWER' }));
+	it('should show admin message for non-admin users in empty state', async () => {
+		const user = userEvent.setup();
+		renderDetails({ channels: [] }, USER_ROLES.VIEWER);
 
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
-
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
+		await user.click(channelsSelectInput());
 
 		expect(screen.getByText(NO_CHANNELS_FOUND_TEXT)).toBeInTheDocument();
 		expect(
@@ -401,28 +246,16 @@ describe('RoutingPolicyDetails', () => {
 		expect(screen.queryByText('Create one')).not.toBeInTheDocument();
 	});
 
-	it('should call refreshChannels when refresh button is clicked in empty state', () => {
-		render(
-			<RoutingPolicyDetails
-				routingPolicy={mockRoutingPolicy}
-				closeModal={mockCloseModal}
-				mode="create"
-				channels={[]}
-				handlePolicyDetailsModalAction={mockHandlePolicyDetailsModalAction}
-				isPolicyDetailsModalActionLoading={false}
-				isErrorChannels={false}
-				isLoadingChannels={false}
-				refreshChannels={mockRefreshChannels}
-			/>,
-		);
+	it('should call refreshChannels when refresh button is clicked in empty state', async () => {
+		const user = userEvent.setup();
+		renderDetails({ channels: [] });
 
-		const channelSelect = screen.getByRole('combobox');
-		fireEvent.mouseDown(channelSelect);
+		await user.click(channelsSelectInput());
 
 		const refreshButton = screen.getByText('Refresh');
 		expect(refreshButton).toBeInTheDocument();
 
-		fireEvent.click(refreshButton);
+		await user.click(refreshButton);
 		expect(mockRefreshChannels).toHaveBeenCalledTimes(1);
 	});
 });

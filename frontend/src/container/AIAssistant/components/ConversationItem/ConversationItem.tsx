@@ -5,7 +5,7 @@ import ROUTES from 'constants/routes';
 import { getAbsoluteUrl } from 'utils/basePath';
 import { Button } from '@signozhq/ui/button';
 import { Input } from '@signozhq/ui/input';
-import { toast } from '@signozhq/ui/sonner';
+import { toast } from '@signozhq/ui/toast';
 import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 
 import {
@@ -13,11 +13,12 @@ import {
 	ArchiveRestore,
 	EllipsisVertical,
 	Link,
-	MessageSquare,
 	Pencil,
 } from '@signozhq/icons';
 
+import { useAIAssistantStore } from '../../store/useAIAssistantStore';
 import { Conversation } from '../../types';
+import { formatRelativeTime } from '../../utils/formatRelativeTime';
 
 import styles from './ConversationItem.module.scss';
 
@@ -28,32 +29,6 @@ interface ConversationItemProps {
 	onRename: (id: string, title: string) => void;
 	onArchive: (id: string) => void;
 	onRestore: (id: string) => void;
-}
-
-function formatRelativeTime(ts: number): string {
-	if (!Number.isFinite(ts)) {
-		return '';
-	}
-	const diff = Date.now() - ts;
-	const mins = Math.floor(diff / 60_000);
-	if (mins < 1) {
-		return 'just now';
-	}
-	if (mins < 60) {
-		return `${mins}m ago`;
-	}
-	const hrs = Math.floor(mins / 60);
-	if (hrs < 24) {
-		return `${hrs}h ago`;
-	}
-	const days = Math.floor(hrs / 24);
-	if (days < 7) {
-		return `${days}d ago`;
-	}
-	return new Date(ts).toLocaleDateString(undefined, {
-		month: 'short',
-		day: 'numeric',
-	});
 }
 
 export default function ConversationItem({
@@ -70,6 +45,19 @@ export default function ConversationItem({
 	const [, copyToClipboard] = useCopyToClipboard();
 
 	const isArchived = Boolean(conversation.archived);
+	const isReplying = useAIAssistantStore((s) =>
+		Boolean(s.streams[conversation.id]?.isStreaming),
+	);
+	const hasUnreadReply = useAIAssistantStore((s) =>
+		s.unreadReplyIds.includes(conversation.id),
+	);
+	// Replying wins: the dot turns blue once that reply lands unseen.
+	let dotState: 'replying' | 'unread' | undefined;
+	if (isReplying) {
+		dotState = 'replying';
+	} else if (hasUnreadReply) {
+		dotState = 'unread';
+	}
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -126,14 +114,14 @@ export default function ConversationItem({
 			type: 'item',
 			value: 'rename',
 			label: 'Rename',
-			prefix: <Pencil size={12} />,
+			prefix: <Pencil size={16} />,
 			onClick: (): void => startEditing(),
 		},
 		{
 			type: 'item',
 			value: 'copy-link',
 			label: 'Copy link',
-			prefix: <Link size={12} />,
+			prefix: <Link size={16} />,
 			onClick: handleCopyLink,
 		},
 		{ type: 'separator', value: 'divider' },
@@ -145,7 +133,7 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'restore',
 					label: 'Restore',
-					prefix: <ArchiveRestore size={12} />,
+					prefix: <ArchiveRestore size={16} />,
 					onClick: (): void => onRestore(conversation.id),
 				},
 			]
@@ -155,7 +143,8 @@ export default function ConversationItem({
 					type: 'item',
 					value: 'archive',
 					label: 'Archive',
-					prefix: <Archive size={12} />,
+					prefix: <Archive size={16} />,
+					danger: true,
 					onClick: (): void => onArchive(conversation.id),
 				},
 			];
@@ -163,29 +152,45 @@ export default function ConversationItem({
 	return (
 		<div
 			className={itemClass}
+			data-testid={`ai-conversation-item-${conversation.id}`}
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}
+			aria-label={
+				dotState === 'unread' ? `Noz replied in ${displayTitle}` : undefined
+			}
 			onKeyDown={(e): void => {
 				if (e.key === 'Enter' || e.key === ' ') {
 					onSelect(conversation.id);
 				}
 			}}
 		>
-			<MessageSquare size={12} className={styles.icon} />
+			<span
+				className={cx(styles.dot, {
+					[styles.isReplying]: dotState === 'replying',
+					[styles.hasUnreadReply]: dotState === 'unread',
+				})}
+				data-state={dotState}
+				data-testid={`ai-conversation-item-${conversation.id}-dot`}
+			/>
 
 			<div className={styles.body}>
 				{isEditing ? (
-					<Input
-						ref={inputRef}
-						className={styles.input}
-						value={editValue}
-						onChange={(e): void => setEditValue(e.target.value)}
-						onKeyDown={handleKeyDown}
-						onBlur={commitEdit}
-						onClick={(e): void => e.stopPropagation()}
-						maxLength={80}
-					/>
+					<div className={styles.input}>
+						<Input
+							ref={inputRef}
+							// The wrapper's accent bottom border is the edit/focus
+							// treatment, so the Input renders chromeless.
+							variant="unstyled"
+							noFocusRing
+							value={editValue}
+							onChange={(e): void => setEditValue(e.target.value)}
+							onKeyDown={handleKeyDown}
+							onBlur={commitEdit}
+							onClick={(e): void => e.stopPropagation()}
+							maxLength={80}
+						/>
+					</div>
 				) : (
 					<>
 						<span className={styles.title} title={displayTitle}>

@@ -153,7 +153,7 @@
 		width: 44px;
 		padding: 8px;
 
-		border-left: 1px solid var(--l1-border);
+		border-left: 1px solid var(--l2-border);
 
 		.query-name {
 			display: flex;
@@ -173,8 +173,6 @@
 			color: var(--bg-sakura-400);
 			font-family: 'Space Mono';
 			font-size: 12px;
-			font-style: normal;
-			font-weight: 400;
 			line-height: 16px; /* 128.571% */
 			text-transform: uppercase;
 		}
@@ -215,7 +213,8 @@
 		padding-left: 8px;
 
 		.qb-formula {
-			.ant-row {
+			.formula-row,
+			.formula-container {
 				row-gap: 8px !important;
 			}
 
@@ -229,7 +228,7 @@
 				padding: 8px;
 				margin-left: 74px;
 
-				.ant-col {
+				.formula-item {
 					&::before {
 						content: '';
 						position: absolute;
@@ -273,7 +272,7 @@
 
 					background-color: var(
 						--query-builder-v2-background-color,
-						var(--l2-background)
+						var(--input-background)
 					);
 					border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 
@@ -291,13 +290,14 @@
 						border-top-right-radius: 0px !important;
 						background: var(
 							--query-builder-v2-background-color,
-							var(--l2-background)
+							var(--input-background)
 						);
 						color: var(--query-builder-v2-color, var(--l2-foreground));
 						font-size: 12px;
 						font-weight: 300;
 
 						border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
+						border-right-width: 0;
 						position: relative;
 					}
 
@@ -309,12 +309,11 @@
 
 						background-color: var(
 							--query-builder-v2-background-color,
-							var(--l2-background)
+							var(--input-background)
 						);
 						border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
 
 						position: relative;
-						margin-left: -1px;
 
 						&:hover,
 						&:focus {
@@ -396,8 +395,6 @@
 				color: var(--bg-sakura-400) !important;
 				font-family: 'Space Mono';
 				font-size: 14px;
-				font-style: normal;
-				font-weight: 400;
 				line-height: 18px; /* 128.571% */
 				text-transform: uppercase;
 
@@ -447,7 +444,7 @@
 
 				border-radius: 2px;
 				border: 1px solid var(--query-builder-v2-border-color, var(--l2-border));
-				background: var(--l1-background);
+				background: var(--query-builder-v2-background-color, var(--l1-background));
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 				.ant-select-selection-item {
@@ -494,7 +491,7 @@
 			border: 1px solid var(--query-builder-v2-border-color, var(--l2-border)) !important;
 			background: var(
 				--query-builder-v2-background-color,
-				var(--l2-background)
+				var(--input-background)
 			) !important;
 			height: 36px !important;
 			box-sizing: border-box !important;

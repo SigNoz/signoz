@@ -9,7 +9,7 @@ import {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { Space } from 'antd';
+import Space from 'periscope/components/Space/Space';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ExportMenu from 'components/ExportMenu/ExportMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';

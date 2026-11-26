@@ -1,6 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 import { apiDriver } from './api';
+import { inputField } from './input';
 import { driver, kit, type Layer } from './kit';
 
 // ─── Constants ───────────────────────────────────────────────────────────
@@ -181,16 +182,16 @@ export function ssoDriver(page: Page): Sso {
 		openConfigure: (name) => openConfigureAuthDomain(page, name),
 		form: {
 			root: () => page.getByTestId('auth-domain-form'),
-			googleDomain: () => page.getByTestId('google-auth-domain'),
-			googleClientId: () => page.getByTestId('google-auth-client-id'),
-			googleClientSecret: () => page.getByTestId('google-auth-client-secret'),
+			googleDomain: () => inputField(page, 'google-auth-domain'),
+			googleClientId: () => inputField(page, 'google-auth-client-id'),
+			googleClientSecret: () => inputField(page, 'google-auth-client-secret'),
 			save: () => page.getByTestId('auth-domain-save'),
 		},
 		roleMapping: {
 			header: () => page.getByTestId('role-mapping-header'),
 			rows: roleMappingRows,
 			groupName: (index) =>
-				roleMappingRows().nth(index).getByTestId('role-mapping-group-name'),
+				inputField(roleMappingRows().nth(index), 'role-mapping-group-name'),
 			remove: (index) =>
 				roleMappingRows().nth(index).getByTestId('role-mapping-remove'),
 		},

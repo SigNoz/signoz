@@ -12,13 +12,13 @@ import type { LegendLayout } from 'lib/visualization/layout/ChartLayout/ChartLay
 import type {
 	HeatmapAxisScale,
 	HeatmapCell,
-	HeatmapColorOptions,
 	HeatmapSeries,
 } from 'lib/uPlotV2/plugins/HeatmapPlugin/types';
 import type {
 	ScatterChannels,
 	ScatterPointLabel,
 } from 'lib/uPlotV2/plugins/ScatterPlugin/types';
+import type { ColorRampOptions } from 'lib/visualization/colorRamp/types';
 import {
 	DashboardCursorSync,
 	SyncTooltipFilterMode,
@@ -26,6 +26,11 @@ import {
 } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import type { StackMode } from 'lib/uPlotV2/config/types';
+import type {
+	DistributionBarClick,
+	DistributionSeries,
+	DistributionYScale,
+} from 'lib/visualization/charts/Distribution/types';
 
 interface BaseChartProps {
 	width: number;
@@ -37,6 +42,8 @@ interface BaseChartProps {
 	pinKey?: string;
 	/** Called when the user clicks the uPlot overlay. Receives resolved click data. */
 	onClick?: (clickData: ChartClickData) => void;
+	/** With `canPinTooltip`, a click it returns true for pins the tooltip instead of calling `onClick`. */
+	shouldPinOnClick?: (clickData: ChartClickData) => boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: ChartClickData) => React.ReactNode;
@@ -133,8 +140,8 @@ export interface HeatmapChartProps {
 	width: number;
 	height: number;
 	isDarkMode: boolean;
-	/** Overrides on top of `DEFAULT_HEATMAP_COLORS`. */
-	colors?: Partial<HeatmapColorOptions>;
+	/** Overrides on top of `DEFAULT_COLOR_RAMP_OPTIONS`. */
+	colors?: Partial<ColorRampOptions>;
 	/** Default auto: the boundaries pick between log, symmetric log and
 	 *  linear. */
 	axisScale?: HeatmapAxisScale;
@@ -142,6 +149,8 @@ export interface HeatmapChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	timezone?: Timezone;
+	/** What the bucket axis measures, shown in the tooltip header, e.g. `Traces · duration_nano`. */
+	bucketLabel?: string;
 	/** Colour bar below the grid. Default true. */
 	showVisualMap?: boolean;
 	/** Default true; hidden anyway when there is only one group. The label isolates
@@ -161,6 +170,48 @@ export interface HeatmapChartProps {
 	maxTimeScale?: number;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	onCellClick?: (cell: HeatmapCell, clickData: ChartClickData) => void;
+	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
+	tooltipPortalRoot?: HTMLElement | null;
+	layoutChildren?: React.ReactNode;
+	'data-testid'?: string;
+}
+
+/**
+ * Whole-range bucket counts, one series per group, drawn as bars whose widths follow
+ * the bucket bounds. Builds its own config, since `buckets` fully determines the x
+ * axis. `buckets` and `series` must be referentially stable: a new identity rebuilds
+ * the plot.
+ */
+export interface DistributionChartProps {
+	/** Widget id; the group selection persists under it. */
+	id: string;
+	/** Ascending. N boundaries describe N+1 buckets, the last one overflow. */
+	buckets: number[];
+	series: DistributionSeries[];
+	width: number;
+	height: number;
+	isDarkMode: boolean;
+	/** Buckets wholly below it are hidden. */
+	xMin?: number;
+	/** Buckets wholly above it are hidden; unset crops trailing empty buckets. */
+	xMax?: number;
+	/** Default linear. Ignored under `percent`, whose axis is a share. */
+	yScale?: DistributionYScale;
+	/** Default normal. `none` draws the groups side by side. */
+	stack?: StackMode;
+	/** Unit of the bucket bounds; counts are always plain numbers. */
+	xAxisUnit?: string;
+	decimalPrecision?: PrecisionOption;
+	/** Hex colours keyed by group label, overriding the automatic palette. */
+	customColors?: Record<string, string>;
+	/** 0–100. Marked across the plot, over the visible groups combined. */
+	percentiles?: readonly number[];
+	/** Fires for a click on a group's bar; not on Other or empty space. */
+	onBarClick?: (click: DistributionBarClick) => void;
+	showLegend?: boolean;
+	legendPosition?: LegendPosition;
+	showTooltip?: boolean;
+	canPinTooltip?: boolean;
 	renderTooltipFooter?: (args: IRenderTooltipFooterArgs) => React.ReactNode;
 	tooltipPortalRoot?: HTMLElement | null;
 	layoutChildren?: React.ReactNode;

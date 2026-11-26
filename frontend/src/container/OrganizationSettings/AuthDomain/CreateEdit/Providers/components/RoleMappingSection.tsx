@@ -124,9 +124,8 @@ function RoleMappingSection({
 									isError={isError}
 									error={error}
 									onRefetch={refetch}
-									className="role-mapping-section__select"
 									allowClear={false}
-									getPopupContainer={(): HTMLElement => document.body}
+									testId="role-mapping-default-role"
 								/>
 							</Form.Item>
 						</div>
@@ -161,7 +160,7 @@ function RoleMappingSection({
 									</span>
 									<p className="role-mapping-section__group-description">
 										Map IDP group names to SigNoz roles. If a user belongs to multiple
-										groups, the highest privilege role will be assigned.
+										groups, they are assigned every matching role.
 									</p>
 								</div>
 
@@ -199,7 +198,7 @@ function RoleMappingSection({
 															error={error}
 															onRefetch={refetch}
 															allowClear={false}
-															getPopupContainer={(): HTMLElement => document.body}
+															testId={`role-mapping-group-role-${field.key}`}
 														/>
 													</Form.Item>
 
