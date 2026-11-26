@@ -8,7 +8,7 @@ import {
 	openKeySuggestions,
 	typeFilter,
 } from 'components/QueryBuilderV2/QueryV2/QuerySearch/stories/__story_mockdata__/querySearch.play';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import type { PodsArgs } from '../Kubernetes.stories.mocks';
 
@@ -52,6 +52,30 @@ export const openDrawerLogDetails = async ({
 
 	await userEvent.click(line);
 	await screen.findByTestId('log-detail-drawer', {}, { timeout: 10000 });
+};
+
+export const navigateDrawerLogDetails = async (
+	context: PlayContext,
+): Promise<void> => {
+	const { args } = context;
+	if (!args.drawer || args.dataState !== 'loaded' || args.telemetryRows < 3) {
+		return;
+	}
+
+	await openDrawerLogDetails(context);
+	const detail = await screen.findByTestId('log-detail-drawer');
+	const shown = (): string => detail.textContent ?? '';
+
+	const first = shown();
+	await userEvent.click(within(detail).getByTestId('log-details-header-next'));
+	await waitFor(() => expect(shown()).not.toBe(first));
+
+	const second = shown();
+	await userEvent.keyboard('{ArrowDown}');
+	await waitFor(() => expect(shown()).not.toBe(second));
+
+	await userEvent.keyboard('{ArrowUp}');
+	await waitFor(() => expect(shown()).toBe(second));
 };
 
 export const copyPodName = async ({ args }: PlayContext): Promise<void> => {
