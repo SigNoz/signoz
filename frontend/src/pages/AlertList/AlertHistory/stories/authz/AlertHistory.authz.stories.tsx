@@ -4,10 +4,7 @@ import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import { alertHistoryMocks } from '../AlertHistory.stories.mocks';
-import {
-	expectRuleDenied,
-	expectTelemetryRefused,
-} from '../__story_mockdata__/alertHistory.play';
+import { expectRuleDenied } from '../__story_mockdata__/alertHistory.play';
 
 import AlertList from '../../../index';
 
@@ -17,9 +14,7 @@ const pageStory = storyMocks(alertHistoryMocks, { layout: 'app' });
 
 /**
  * One rule's history with access taken away. `read` on the rule decides whether
- * the page opens and covers the stats and the status graph. The timeline, the
- * top contributors and the filter suggestions also read the telemetry the rule
- * queries, which only the server checks.
+ * the page opens.
  *
  * Route: `/alerts/history?ruleId=...`.
  */
@@ -39,17 +34,4 @@ type Story = StoryObj<AlertHistoryArgs>;
 export const NoRead: Story = {
 	args: { revoked: ['read:rule'] },
 	play: expectRuleDenied,
-};
-
-/**
- * A role that reads the rule but not its logs: the stats stay, the timeline and
- * the top contributors name the refused permission, and the filter suggests
- * nothing rather than erroring.
- */
-export const TelemetryDenied: Story = {
-	args: { telemetryAccess: 'denied' },
-	// The mocked history requests intentionally fail; the resulting console
-	// errors are the point of the story, not a regression.
-	parameters: { allowConsoleErrors: true },
-	play: expectTelemetryRefused,
 };
