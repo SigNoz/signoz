@@ -2,6 +2,7 @@ import { ComponentProps } from 'react';
 import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
+import type { Region } from 'utils/regions';
 import type logEvent from '../../../../../api/common/logEvent';
 
 import CloudAccountSetupModal from '../AddNewAccount/CloudAccountSetupModal';
@@ -13,6 +14,24 @@ jest.mock('../../../../../api/common/logEvent', () => ({
 	__esModule: true,
 	default: jest.fn() as jest.MockedFunction<typeof logEvent>,
 }));
+
+jest.mock('utils/regions', () => {
+	const regions: Region[] = [
+		{
+			id: 'north-america',
+			name: 'North America',
+			subRegions: [
+				{
+					id: 'us-east-1',
+					name: 'us-east-1',
+					displayName: 'US East (N. Virginia)',
+				},
+				{ id: 'us-east-2', name: 'us-east-2', displayName: 'US East (Ohio)' },
+			],
+		},
+	];
+	return { regions };
+});
 
 type OnClose = ComponentProps<typeof CloudAccountSetupModal>['onClose'];
 
@@ -96,7 +115,7 @@ describe('AWS CloudAccountSetupModal', () => {
 	it('creates the account and shows its setup command', async () => {
 		const api = mockApi();
 		const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 
 		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 
@@ -123,7 +142,7 @@ describe('AWS CloudAccountSetupModal', () => {
 
 	it('asks before closing once a setup command exists', async () => {
 		mockApi();
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
@@ -146,7 +165,7 @@ describe('AWS CloudAccountSetupModal', () => {
 
 	it('closes without asking before a setup command exists', async () => {
 		mockApi();
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		const onClose = mockOnClose();
 
 		render(<CloudAccountSetupModal onClose={onClose} />);
@@ -159,7 +178,7 @@ describe('AWS CloudAccountSetupModal', () => {
 
 	it('resumes polling with Check Again after the connection check fails', async () => {
 		const api = mockApi({ failFirstPoll: true });
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 
 		render(<CloudAccountSetupModal onClose={mockOnClose()} />);
 

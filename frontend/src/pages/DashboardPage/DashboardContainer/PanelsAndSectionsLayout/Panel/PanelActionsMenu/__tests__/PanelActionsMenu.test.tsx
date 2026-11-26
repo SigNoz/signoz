@@ -112,7 +112,7 @@ type User = ReturnType<typeof userEvent.setup>;
 
 // skipHover: simulated pointer travel fires pointerleave on the subtrigger and
 // Base UI's safe-polygon math (zero rects in jsdom) closes the submenu.
-const setupUser = (): User => userEvent.setup({ skipHover: true });
+const setupUser = (): User => userEvent.setup({ skipHover: true, delay: null });
 
 async function openSubmenu(user: User, value: string): Promise<void> {
 	await user.click(screen.getByTestId(MENU_TEST_ID));

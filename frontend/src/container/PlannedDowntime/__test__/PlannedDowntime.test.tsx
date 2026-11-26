@@ -240,14 +240,15 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should filter downtime schedules by name when searching', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		renderPage();
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_1_NAME),
 		).resolves.toBeInTheDocument();
 
-		await user.type(screen.getByTestId(SEARCH_TEST_ID), MOCK_DOWNTIME_1_NAME);
+		await user.click(screen.getByTestId(SEARCH_TEST_ID));
+		await user.paste(MOCK_DOWNTIME_1_NAME);
 
 		await expect(
 			screen.findByText(MOCK_DOWNTIME_1_NAME),
@@ -257,7 +258,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should filter downtime schedules with partial name match', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		renderPage();
 
 		await expect(
@@ -274,10 +275,11 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('should show no results when search term matches nothing', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		renderPage();
 
-		await user.type(screen.getByTestId(SEARCH_TEST_ID), 'NonExistentDowntime');
+		await user.click(screen.getByTestId(SEARCH_TEST_ID));
+		await user.paste('NonExistentDowntime');
 
 		await expect(
 			screen.findByTestId('no-results-empty-state'),
@@ -286,7 +288,7 @@ describe('PlannedDowntime Component', () => {
 	});
 
 	it('opens the delete confirmation from the row actions', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({ delay: null });
 		renderPage();
 
 		await user.click(await screen.findByTestId('downtime-actions-1'));
