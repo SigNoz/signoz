@@ -16,6 +16,7 @@ import {
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
+	FileClock,
 	FileKey2,
 	Github,
 	HardDrive,
@@ -322,6 +323,13 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 		icon: <Route size={16} />,
 		isEnabled: true,
 		itemKey: 'service-map',
+	},
+	{
+		key: ROUTES.AUDIT_LOGS,
+		label: 'Audit Logs',
+		icon: <FileClock size={16} />,
+		isEnabled: true,
+		itemKey: 'audit-logs',
 	},
 ];
 

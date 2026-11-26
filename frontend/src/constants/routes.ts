@@ -41,6 +41,7 @@ const ROUTES = {
 	LOGS_PIPELINES: '/logs/pipelines',
 	PASSWORD_RESET: '/password-reset',
 	LIST_LICENSES: '/licenses',
+	AUDIT_LOGS: '/audit-logs',
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 	TRACE_EXPLORER: '/trace-explorer',
 	BILLING: '/settings/billing',

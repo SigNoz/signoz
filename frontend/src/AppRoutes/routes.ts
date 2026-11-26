@@ -7,6 +7,7 @@ import {
 	AlertOverview,
 	AllErrors,
 	ApiMonitoring,
+	AuditLogsPage,
 	ChannelsEdit,
 	ChannelsNew,
 	CreateNewAlerts,
@@ -406,6 +407,12 @@ const routes: AppRoutes[] = [
 		path: ROUTES.AI_OBSERVABILITY_CONFIGURATION,
 		component: LLMObservabilityPage,
 		key: 'AI_OBSERVABILITY_CONFIGURATION',
+		isPrivate: true,
+	},
+	{
+		path: ROUTES.AUDIT_LOGS,
+		component: AuditLogsPage,
+		key: 'AUDIT_LOGS',
 		isPrivate: true,
 	},
 ];

@@ -285,9 +285,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		const shouldShowIntegrationsValue =
 			(isCloudUser || isEnterpriseSelfHostedUser) && (isAdmin || isEditor);
 
+		const shouldShowAuditLogs = isCloudUser || isEnterpriseSelfHostedUser;
+
 		const isEnabledForItem = (item: SidebarItem): boolean | undefined => {
 			if (item.key === ROUTES.INTEGRATIONS) {
 				return shouldShowIntegrationsValue;
+			}
+			if (item.key === ROUTES.AUDIT_LOGS) {
+				return shouldShowAuditLogs;
 			}
 			return item.isEnabled;
 		};
