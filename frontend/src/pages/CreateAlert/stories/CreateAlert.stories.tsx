@@ -59,6 +59,11 @@ export const AITracesAlert: Story = {
 	args: { alertMode: 'ai-traces' },
 };
 
+/** Create an alert from the AI explorer: an AI traces alert counting the explorer's query. */
+export const AITracesAlertFromExplorer: Story = {
+	args: { alertMode: 'ai-traces-explorer' },
+};
+
 /**
  * Anomaly detection: the condition is a number of deviations from the seasonal
  * forecast instead of a fixed threshold, and only builder metric queries apply.
