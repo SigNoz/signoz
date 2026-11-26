@@ -1,11 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import ROUTES from 'constants/routes';
-import { screen, userEvent, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 import { homeMocks } from './HomePage.stories.mocks';
-import { openCommandPalette } from './__story_mockdata__/home.play';
+import {
+	openCommandPalette,
+	openNavHelpMenu,
+	openNavSettingsMenu,
+} from './__story_mockdata__/home.play';
 
 import HomePage from '../HomePage';
 
@@ -70,16 +73,7 @@ export const Loading: Story = {
  * this menu is the same on every page; Home is where it is shot.
  */
 export const NavHelpMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'help-support-nav-item',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openNavHelpMenu,
 };
 
 /**
@@ -87,16 +81,16 @@ export const NavHelpMenu: Story = {
  * reaches without leaving the page.
  */
 export const NavSettingsMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'settings-nav-item',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openNavSettingsMenu,
+};
+
+/**
+ * The sidebar's Settings menu on a self-hosted enterprise license, which adds
+ * Manage License between the account and shortcut entries.
+ */
+export const NavSettingsMenuSelfHosted: Story = {
+	args: { license: 'enterprise' },
+	play: openNavSettingsMenu,
 };
 
 /** The command palette, opened with the same shortcut the shell listens for. */

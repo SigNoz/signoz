@@ -1,7 +1,6 @@
 import { CircleSlash2 } from '@signozhq/icons';
 
 import styles from './PermissionDeniedFullPage.module.scss';
-import { Style } from '@signozhq/design-tokens';
 import { useAppContext } from 'providers/App/App';
 import { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 import { formatPermission } from 'lib/authz/hooks/useAuthZ/utils';
@@ -31,7 +30,7 @@ function PermissionDeniedFullPage({
 		<div className={styles.container}>
 			<div className={styles.content}>
 				<span className={styles.icon}>
-					<CircleSlash2 color={Style.CALLOUT_ERROR_TITLE} size={14} />
+					<CircleSlash2 color="var(--callout-error-title)" size={14} />
 				</span>
 				<p className={styles.title}>Uh-oh! You are not authorized</p>
 				<p className={styles.subtitle}>

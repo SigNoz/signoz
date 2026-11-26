@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Color, Style } from '@signozhq/design-tokens';
+import { Color } from '@signozhq/design-tokens';
 import {
 	ChevronDown,
 	ChevronRight,
@@ -108,7 +108,7 @@ function RoleMappingSection({
 							<label className="role-mapping-section__label" htmlFor="default-role">
 								Default Role
 								<Tooltip title='The default role assigned to new SSO users if no other role mapping applies. Default: "signoz-viewer"'>
-									<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+									<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 								</Tooltip>
 							</label>
 							<Form.Item
@@ -148,7 +148,7 @@ function RoleMappingSection({
 								</Checkbox>
 							</Form.Item>
 							<Tooltip title="If enabled, the role claim/attribute from the IDP will be used directly instead of group mappings. The role value must match a SigNoz role name (e.g. signoz-viewer, signoz-editor, signoz-admin, or a custom role).">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</div>
 
