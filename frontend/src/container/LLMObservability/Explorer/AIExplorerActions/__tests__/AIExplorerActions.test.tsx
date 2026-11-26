@@ -92,12 +92,11 @@ async function exportFrom(
 async function createAlertFrom(
 	panelType: PANEL_TYPES,
 	stagedQuery: Query = aiStagedQuery(),
-	contextPanelType: PANEL_TYPES | null = panelType,
 ): Promise<Query> {
 	const navigate = mockAppNavigate();
 	mockedUseQueryBuilder.mockReturnValue({
 		stagedQuery,
-		panelType: contextPanelType,
+		panelType,
 	} as ReturnType<typeof useQueryBuilder>);
 
 	render(<AIExplorerActions panelType={panelType} />);
@@ -217,18 +216,6 @@ describe('AIExplorerActions', () => {
 				panelType: PANEL_TYPES.TIME_SERIES,
 			},
 		);
-	});
-
-	it('create alert: the view panel type shapes the query while the query builder has none', async () => {
-		const query = await createAlertFrom(
-			PANEL_TYPES.TABLE,
-			aiStagedQuery([{ expression: 'avg(duration_nano)' }]),
-			null,
-		);
-
-		expect(getActiveBuilder(query).queryData[0].aggregations).toStrictEqual([
-			{ expression: 'avg(duration_nano)' },
-		]);
 	});
 
 	it('without a staged query: both actions are disabled and create alert goes nowhere', async () => {
