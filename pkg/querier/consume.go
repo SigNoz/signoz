@@ -425,6 +425,27 @@ func isPartialValue(timestamp int64, queryWindow *qbtypes.TimeRange, stepMs uint
 	return false
 }
 
+const metricExportInterval = time.Minute
+
+// markUnreportedValues marks metric steps that closed less than one export
+// interval ago as partial, because points for those steps can still be arriving.
+func markUnreportedValues(data *qbtypes.TimeSeriesData, step qbtypes.Step, now time.Time) {
+	if data == nil || step.Duration <= 0 {
+		return
+	}
+	stepMs := step.Milliseconds()
+	cutoffMs := now.Add(-metricExportInterval).UnixMilli()
+	for _, agg := range data.Aggregations {
+		for _, series := range agg.Series {
+			for _, v := range series.Values {
+				if v.Timestamp+stepMs > cutoffMs {
+					v.Partial = true
+				}
+			}
+		}
+	}
+}
+
 func isNumericKind(t reflect.Type) bool {
 	if t == nil {
 		return false

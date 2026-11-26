@@ -3,6 +3,7 @@ package querier
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2/lib/chcol"
 	cmock "github.com/SigNoz/clickhouse-go-mock"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/spantypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrystoretypes"
 )
@@ -291,6 +293,84 @@ func TestReadAsRawSkipping(t *testing.T) {
 			}
 			assert.Equal(t, testCase.wantSkipped, skipped)
 			assert.Equal(t, testCase.wantIDs, ids)
+		})
+	}
+}
+
+func TestMarkUnreportedValues(t *testing.T) {
+	now := time.Date(2026, 11, 23, 19, 54, 7, 0, time.UTC)
+	step60 := qbtypes.Step{Duration: time.Minute}
+	step300 := qbtypes.Step{Duration: 5 * time.Minute}
+
+	testCases := []struct {
+		name        string
+		step        qbtypes.Step
+		values      []*qbtypes.TimeSeriesValue
+		wantPartial []bool
+	}{
+		{
+			name: "NewestStepWithinExportInterval",
+			step: step60,
+			values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: now.Add(-127 * time.Second).UnixMilli(), Value: 4.05},
+				{Timestamp: now.Add(-67 * time.Second).UnixMilli(), Value: 0.13},
+			},
+			wantPartial: []bool{false, true},
+		},
+		{
+			name: "StepClosingExactlyOneExportIntervalAgoStaysComplete",
+			step: step60,
+			values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: now.Add(-2 * time.Minute).UnixMilli(), Value: 4.0},
+				{Timestamp: now.Add(-2*time.Minute + time.Millisecond).UnixMilli(), Value: 3.9},
+			},
+			wantPartial: []bool{false, true},
+		},
+		{
+			name: "LargerStepClosingWithinExportInterval",
+			step: step300,
+			values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: now.Add(-10*time.Minute - 7*time.Second).UnixMilli(), Value: 1},
+				{Timestamp: now.Add(-5*time.Minute - 7*time.Second).UnixMilli(), Value: 2},
+			},
+			wantPartial: []bool{false, true},
+		},
+		{
+			name: "PreservesExistingPartialFlag",
+			step: step60,
+			values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: now.Add(-5 * time.Minute).UnixMilli(), Value: 1, Partial: true},
+				{Timestamp: now.Add(-4 * time.Minute).UnixMilli(), Value: 2},
+			},
+			wantPartial: []bool{true, false},
+		},
+		{
+			name: "ZeroStepLeavesValuesUnchanged",
+			step: qbtypes.Step{},
+			values: []*qbtypes.TimeSeriesValue{
+				{Timestamp: now.UnixMilli(), Value: 1},
+			},
+			wantPartial: []bool{false},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := &qbtypes.TimeSeriesData{
+				QueryName: "A",
+				Aggregations: []*qbtypes.AggregationBucket{{
+					Index:  0,
+					Series: []*qbtypes.TimeSeries{{Values: testCase.values}},
+				}},
+			}
+
+			markUnreportedValues(data, testCase.step, now)
+
+			got := make([]bool, len(testCase.values))
+			for i, v := range data.Aggregations[0].Series[0].Values {
+				got[i] = v.Partial
+			}
+			assert.Equal(t, testCase.wantPartial, got)
 		})
 	}
 }

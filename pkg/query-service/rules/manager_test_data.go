@@ -148,8 +148,8 @@ var (
 		{
 			Name: "return first valid point in case of test notification",
 			Values: [][]any{
-				{float64(3), "attr", time.Now()},
-				{float64(4), "attr", time.Now().Add(1 * time.Minute)},
+				{float64(3), "attr", time.Now().Add(-4 * time.Minute)},
+				{float64(4), "attr", time.Now().Add(-3 * time.Minute)},
 			},
 			ExpectAlerts: 1,
 			ExpectValue:  3,
@@ -162,9 +162,9 @@ var (
 		{
 			Name: "return first valid point in case of test notification skips NaN and Inf",
 			Values: [][]any{
-				{math.NaN(), "attr", time.Now()},
-				{math.Inf(1), "attr", time.Now().Add(1 * time.Minute)},
-				{float64(7), "attr", time.Now().Add(2 * time.Minute)},
+				{math.NaN(), "attr", time.Now().Add(-4 * time.Minute)},
+				{math.Inf(1), "attr", time.Now().Add(-3 * time.Minute)},
+				{float64(7), "attr", time.Now().Add(-2*time.Minute - 30*time.Second)},
 			},
 			ExpectAlerts: 1,
 			ExpectValue:  7,
@@ -172,10 +172,10 @@ var (
 		{
 			Name: "If found matching alert with given target value, return the alerting value rather than first valid point",
 			Values: [][]any{
-				{float64(1), "attr", time.Now()},
-				{float64(2), "attr", time.Now().Add(1 * time.Minute)},
-				{float64(3), "attr", time.Now().Add(2 * time.Minute)},
-				{float64(12), "attr", time.Now().Add(3 * time.Minute)},
+				{float64(1), "attr", time.Now().Add(-4 * time.Minute)},
+				{float64(2), "attr", time.Now().Add(-3*time.Minute - 30*time.Second)},
+				{float64(3), "attr", time.Now().Add(-3 * time.Minute)},
+				{float64(12), "attr", time.Now().Add(-2*time.Minute - 30*time.Second)},
 			},
 			ExpectAlerts: 1,
 			ExpectValue:  12,

@@ -162,6 +162,155 @@ func TestQueryRange_MetricTypeFromStore(t *testing.T) {
 	require.NotNil(t, resp)
 }
 
+type mockTraceStmtBuilder struct{}
+
+func (m *mockTraceStmtBuilder) Build(_ context.Context, _ valuer.UUID, _, _ uint64, _ qbtypes.RequestType, _ qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation], _ map[string]qbtypes.VariableItem) (*qbtypes.Statement, error) {
+	return &qbtypes.Statement{
+		Query: "SELECT ts, value FROM signoz_traces",
+		Args:  nil,
+	}, nil
+}
+
+func TestQueryRange_MetricRecentStepPartial(t *testing.T) {
+	nowMinute := time.Now().UTC().Truncate(time.Minute)
+	olderStep := nowMinute.Add(-3 * time.Minute)
+	newestStep := nowMinute
+
+	start := uint64(nowMinute.Add(-5 * time.Minute).UnixMilli())
+	end := uint64(nowMinute.Add(time.Minute).UnixMilli())
+
+	cols := []cmock.ColumnType{
+		{Name: "ts", Type: "DateTime"},
+		{Name: "value", Type: "Float64"},
+	}
+
+	t.Run("MetricQueryMarksRecentStepPartial", func(t *testing.T) {
+		providerSettings := instrumentationtest.New().ToProviderSettings()
+		metadataStore := telemetrytypestest.NewMockMetadataStore()
+		metadataStore.TypeMap["signoz_calls_total"] = metrictypes.SumType
+		metadataStore.TemporalityMap["signoz_calls_total"] = metrictypes.Cumulative
+
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+		rows := cmock.NewRows(cols, [][]any{
+			{olderStep, float64(4.05)},
+			{newestStep, float64(0.13)},
+		})
+		telemetryStore.Mock().ExpectQuery("SELECT any").WillReturnRows(rows)
+
+		q := New(
+			providerSettings,
+			telemetryStore,
+			metadataStore,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			&mockMetricStmtBuilder{},
+			nil,
+			nil,
+			nil,
+			flaggertest.New(t),
+			0,
+			0,
+		)
+
+		req := &qbtypes.QueryRangeRequest{
+			Start:       start,
+			End:         end,
+			RequestType: qbtypes.RequestTypeTimeSeries,
+			CompositeQuery: qbtypes.CompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+						Name:         "A",
+						Signal:       telemetrytypes.SignalMetrics,
+						StepInterval: qbtypes.Step{Duration: time.Minute},
+						Aggregations: []qbtypes.MetricAggregation{{
+							MetricName:       "signoz_calls_total",
+							TimeAggregation:  metrictypes.TimeAggregationRate,
+							SpaceAggregation: metrictypes.SpaceAggregationSum,
+						}},
+					},
+				}},
+			},
+		}
+
+		resp, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
+		require.NoError(t, err)
+		require.Len(t, resp.Data.Results, 1)
+
+		tsData, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+		values := tsData.Aggregations[0].Series[0].Values
+		require.Len(t, values, 2)
+		assert.False(t, values[0].Partial)
+		assert.True(t, values[1].Partial)
+	})
+
+	t.Run("TraceQueryLeavesAlignedRecentStepComplete", func(t *testing.T) {
+		providerSettings := instrumentationtest.New().ToProviderSettings()
+		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
+		rows := cmock.NewRows(cols, [][]any{
+			{olderStep, float64(4)},
+			{newestStep, float64(5)},
+		})
+		telemetryStore.Mock().ExpectQuery("SELECT any").WillReturnRows(rows)
+
+		q := New(
+			providerSettings,
+			telemetryStore,
+			nil,
+			nil,
+			&mockTraceStmtBuilder{},
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			nil,
+			flaggertest.New(t),
+			0,
+			0,
+		)
+
+		req := &qbtypes.QueryRangeRequest{
+			Start:       start,
+			End:         end,
+			RequestType: qbtypes.RequestTypeTimeSeries,
+			CompositeQuery: qbtypes.CompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+						Name:         "A",
+						Signal:       telemetrytypes.SignalTraces,
+						StepInterval: qbtypes.Step{Duration: time.Minute},
+						Aggregations: []qbtypes.TraceAggregation{{
+							Expression: "count()",
+						}},
+					},
+				}},
+			},
+		}
+
+		resp, err := q.QueryRange(context.Background(), valuer.GenerateUUID(), req)
+		require.NoError(t, err)
+		require.Len(t, resp.Data.Results, 1)
+
+		tsData, ok := resp.Data.Results[0].(*qbtypes.TimeSeriesData)
+		require.True(t, ok)
+		require.Len(t, tsData.Aggregations, 1)
+		require.Len(t, tsData.Aggregations[0].Series, 1)
+		values := tsData.Aggregations[0].Series[0].Values
+		require.Len(t, values, 2)
+		assert.False(t, values[0].Partial)
+		assert.False(t, values[1].Partial)
+	})
+}
+
 type fakeQuery struct {
 	execute func(ctx context.Context) (*qbtypes.Result, error)
 }
