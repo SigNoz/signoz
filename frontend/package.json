@@ -34,7 +34,7 @@
     "build:geo-outlines": "node scripts/geo-outlines/build.mjs"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=22.12.0",
     "pnpm": ">=10.0.0 <11.0.0"
   },
   "author": "",
