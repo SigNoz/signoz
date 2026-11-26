@@ -26,11 +26,12 @@ export const METER_EXPLORER_PATH = '/meter/explorer';
 
 export type MeterSection = 'total' | 'logs' | 'traces' | 'metrics';
 
-const SECTION_TITLES: Record<MeterSection, string> = {
-	total: 'Total',
-	logs: 'Logs',
-	traces: 'Traces',
-	metrics: 'Metrics',
+// Section ids derive from the first panel id in frontend/src/container/MeterExplorer/Breakdown/dashboard.ts.
+const SECTION_FIRST_PANEL: Record<MeterSection, string> = {
+	total: 'total-log-size',
+	logs: 'log-count',
+	traces: 'span-count',
+	metrics: 'metric-datapoints',
 };
 
 export interface MeterBreakdown {
@@ -65,13 +66,8 @@ export function meterDriver(page: Page): Meter {
 			page.off('response', collect);
 			return responses;
 		},
-		// The breakdown is a system dashboard: section ids derive from panel ids, so match the title.
 		section: (name) =>
-			page.locator('[data-testid^="dashboard-section-sec-"]').filter({
-				has: page
-					.locator('[data-testid^="dashboard-section-toggle-"]')
-					.filter({ hasText: SECTION_TITLES[name] }),
-			}),
+			page.getByTestId(`dashboard-section-sec-${SECTION_FIRST_PANEL[name]}`),
 	};
 
 	return {

@@ -4,23 +4,30 @@ import { Alert } from 'antd';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import SystemDashboard from 'container/SystemDashboard/SystemDashboard';
-import { createSystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
+import { useQuery } from 'react-query';
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { noop } from 'lodash-es';
+import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 import {
 	CHARTS_ONLY,
 	withControls,
 } from 'pages/DashboardPage/DashboardContainer/controls/presets';
+import type { DashboardQuerySource } from 'pages/DashboardPage/DashboardContainer/store/slices/editContextSlice';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import { COST_METER_DASHBOARD } from './dashboard';
+
 import './BreakDown.styles.scss';
 
-const COST_METER = createSystemDashboardHost(
-	'cost-meter-breakdown',
-	'cost-meter-breakdown',
-);
+// Built in the frontend, never fetched: the container reads it back from this cache entry.
+const QUERY_KEY = ['cost-meter-breakdown-dashboard'];
+const select = (
+	dashboard: DashboardtypesGettableDashboardV2DTO,
+): DashboardtypesGettableDashboardV2DTO => dashboard;
+const SOURCE: DashboardQuerySource = { queryKey: QUERY_KEY, select };
 
 const CONTROLS = withControls(CHARTS_ONLY, {
 	toolbar: { autoRefresh: false },
@@ -28,6 +35,10 @@ const CONTROLS = withControls(CHARTS_ONLY, {
 
 function BreakDown(): JSX.Element {
 	const { isCloudUser } = useGetTenantLicense();
+	useQuery(QUERY_KEY, () => COST_METER_DASHBOARD, {
+		initialData: COST_METER_DASHBOARD,
+		staleTime: Infinity,
+	});
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
@@ -87,7 +98,13 @@ function BreakDown(): JSX.Element {
 					/>
 				)}
 			</section>
-			<SystemDashboard host={COST_METER} controls={CONTROLS} />
+			<DashboardContainer
+				dashboard={COST_METER_DASHBOARD}
+				refetch={noop}
+				source={SOURCE}
+				readOnly
+				controls={CONTROLS}
+			/>
 		</div>
 	);
 }

@@ -5,7 +5,6 @@
 
 import {
 	type GetQuickFilters200,
-	type GetSystemDashboard200,
 	type ListMetrics200,
 	type ListSavedViews200,
 	type TelemetrytypesTelemetryFieldKeyDTO,
@@ -21,14 +20,10 @@ import {
 	TelemetrytypesFieldContextDTO,
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSourceDTO,
-	DashboardtypesSourceDTO,
-	type DashboardtypesGettableSystemDashboardDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
-// The backend's own definition, so the story renders what the server serves.
-import costMeterDefinition from '../../../../../../pkg/modules/dashboard/impldashboard/fs/definitions/cost-meter-breakdown.json';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TimeSeries } from 'types/api/v5/queryRange';
@@ -285,24 +280,6 @@ export const meterExplorerQuery = (volume: MeterVolume): Query => {
 					timeAggregation: 'increase',
 				},
 			],
-		},
-	};
-};
-
-/** The breakdown tab's system dashboard, as `GET /api/v2/dashboards/system/:name` serves it. */
-export const meterSystemDashboardResponse = (): GetSystemDashboard200 => {
-	const { definition } = costMeterDefinition;
-
-	return {
-		status: 'success',
-		data: {
-			orgId: 'storybook-org',
-			locked: true,
-			source: DashboardtypesSourceDTO.system,
-			name: definition.name,
-			schemaVersion: definition.schemaVersion,
-			tags: [],
-			spec: definition.spec as DashboardtypesGettableSystemDashboardDTO['spec'],
 		},
 	};
 };

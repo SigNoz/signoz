@@ -1,34 +1,45 @@
+import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import type { DashboardControlsInput } from 'pages/DashboardPage/DashboardContainer/controls/types';
 import { resolveControls } from 'pages/DashboardPage/DashboardContainer/controls/dashboardControls';
 import { render, screen } from 'tests/test-utils';
 
-import type { SystemDashboardHost } from 'container/SystemDashboard/systemDashboardHost';
-
 import BreakDown from '../BreakDown';
+import {
+	COST_METER_DASHBOARD,
+	COST_METER_DASHBOARD_ID,
+	SECTIONS,
+} from '../dashboard';
 
-jest.mock('container/SystemDashboard/SystemDashboard', () => ({
+jest.mock('pages/DashboardPage/DashboardContainer', () => ({
 	__esModule: true,
 	default: ({
-		host,
+		dashboard,
+		readOnly,
 		controls,
 	}: {
-		host: SystemDashboardHost;
+		dashboard: DashboardtypesGettableDashboardV2DTO;
+		readOnly: boolean;
 		controls: DashboardControlsInput;
 	}): JSX.Element => (
 		<div
-			data-testid="system-dashboard"
-			data-name={host.name}
+			data-testid="dashboard-container"
+			data-dashboard-id={dashboard.id}
+			data-read-only={String(readOnly)}
 			data-controls={JSON.stringify(controls)}
 		/>
 	),
 }));
 
 describe('Cost meter breakdown', () => {
-	it('mounts the cost meter system dashboard as charts only, without auto-refresh', () => {
+	it('mounts the assembled dashboard read-only as charts only, without auto-refresh', () => {
 		render(<BreakDown />);
 
-		const dashboard = screen.getByTestId('system-dashboard');
-		expect(dashboard).toHaveAttribute('data-name', 'cost-meter-breakdown');
+		const dashboard = screen.getByTestId('dashboard-container');
+		expect(dashboard).toHaveAttribute(
+			'data-dashboard-id',
+			COST_METER_DASHBOARD_ID,
+		);
+		expect(dashboard).toHaveAttribute('data-read-only', 'true');
 		const controls = resolveControls(
 			JSON.parse(dashboard.getAttribute('data-controls') ?? ''),
 			true,
@@ -47,5 +58,20 @@ describe('Cost meter breakdown', () => {
 		expect(screen.getByTestId('cost-meter-utc-notice')).toHaveTextContent(
 			'Billing is calculated in UTC',
 		);
+	});
+
+	it('places every panel exactly once, in its section', () => {
+		const placed = COST_METER_DASHBOARD.spec.layouts.flatMap((layout) =>
+			(layout.spec.items ?? []).map((item) =>
+				item.content?.$ref?.replace('#/spec/panels/', ''),
+			),
+		);
+
+		expect(placed.sort()).toStrictEqual(
+			Object.keys(COST_METER_DASHBOARD.spec.panels).sort(),
+		);
+		expect(
+			COST_METER_DASHBOARD.spec.layouts.map((l) => l.spec.display?.title),
+		).toStrictEqual(SECTIONS.map((s) => s.title));
 	});
 });
