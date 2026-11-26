@@ -71,6 +71,15 @@ function fromUrlValue(
 	if (raw === ALL_SELECTED && model.multiSelect && model.showAllOption) {
 		return { value: null, allSelected: true };
 	}
+	// Values a link carries that the custom list doesn't offer were typed by whoever
+	// made it (or set by a host page); keep them as typed instead of dropping them.
+	if (model.type === 'CUSTOM' && model.multiSelect && Array.isArray(raw)) {
+		const options = knownVariableOptions(model);
+		const customValues = raw.map(String).filter((v) => !options.includes(v));
+		if (customValues.length > 0) {
+			return { value: raw, allSelected: false, customValues };
+		}
+	}
 	return { value: raw, allSelected: false };
 }
 
