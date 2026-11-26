@@ -7,6 +7,9 @@ import { screen, userEvent } from 'storybook/test';
 
 import {
 	type CloudIntegrationArgs,
+	connectAwsAccount,
+	connectAzureAccount,
+	generateGcpAgentCommand,
 	offersIntegrateNow,
 	openConnectFlow,
 	openEditAccount,
@@ -104,4 +107,53 @@ export const openDisconnectConfirm = async ({
 		untilLoaded,
 	);
 	blurActiveElement();
+};
+
+/**
+ * Cancel closes the drawer outright until the setup command exists, so the play
+ * waits for the command before it asks to leave.
+ */
+const confirmClosingPendingSetup = async (
+	provider: 'aws' | 'azure' | 'gcp',
+	args: CloudIntegrationArgs,
+): Promise<void> => {
+	if (
+		args.accountCreate !== 'success' ||
+		args.newAccountCheckIn === 'checked-in'
+	) {
+		return;
+	}
+	await screen.findByTestId(`${provider}-agent-command`, undefined, untilLoaded);
+	await userEvent.click(
+		await screen.findByTestId(`${provider}-cancel-btn`, undefined, untilLoaded),
+	);
+	await screen.findByTestId(
+		`${provider}-close-setup-btn`,
+		undefined,
+		untilLoaded,
+	);
+};
+
+export const closePendingAwsSetup = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	await connectAwsAccount(canvasElement);
+	await confirmClosingPendingSetup('aws', args);
+};
+
+export const closePendingAzureSetup = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	await connectAzureAccount(canvasElement);
+	await confirmClosingPendingSetup('azure', args);
+};
+
+export const closePendingGcpSetup = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	await generateGcpAgentCommand(canvasElement);
+	await confirmClosingPendingSetup('gcp', args);
 };

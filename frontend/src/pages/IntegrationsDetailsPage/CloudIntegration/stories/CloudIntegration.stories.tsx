@@ -23,6 +23,9 @@ import {
 	updateTaggedAccount,
 } from './CloudIntegration.stories.mocks';
 import {
+	closePendingAwsSetup,
+	closePendingAzureSetup,
+	closePendingGcpSetup,
 	openAccountSelect,
 	openAccountSettings,
 	openConnectDialog,
@@ -285,13 +288,7 @@ export const AwsAgentConnectionError: Story = {
  */
 export const AwsAgentCloseConfirm: Story = {
 	args: { accounts: 0, newAccountCheckIn: 'pending' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await connectAwsAccount(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId('aws-cancel-btn', undefined, untilLoaded),
-		);
-		await screen.findByTestId('aws-close-setup-btn', undefined, untilLoaded);
-	},
+	play: closePendingAwsSetup,
 };
 
 /**
@@ -329,13 +326,7 @@ export const AzureAgentConnectionError: Story = {
  */
 export const AzureAgentCloseConfirm: Story = {
 	args: { provider: 'azure', accounts: 0, newAccountCheckIn: 'pending' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await connectAzureAccount(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId('azure-cancel-btn', undefined, untilLoaded),
-		);
-		await screen.findByTestId('azure-close-setup-btn', undefined, untilLoaded);
-	},
+	play: closePendingAzureSetup,
 };
 
 /**
@@ -417,13 +408,7 @@ export const GcpAgentConnectionError: Story = {
  */
 export const GcpAgentCloseConfirm: Story = {
 	args: { provider: 'gcp', accounts: 0, newAccountCheckIn: 'pending' },
-	play: async ({ canvasElement }): Promise<void> => {
-		await generateGcpAgentCommand(canvasElement);
-		await userEvent.click(
-			await screen.findByTestId('gcp-cancel-btn', undefined, untilLoaded),
-		);
-		await screen.findByTestId('gcp-close-setup-btn', undefined, untilLoaded);
-	},
+	play: closePendingGcpSetup,
 };
 
 /**
