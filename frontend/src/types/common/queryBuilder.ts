@@ -322,7 +322,7 @@ export type QueryBuilderContextType = {
 		queryData: Query,
 		panelType: PANEL_TYPES,
 		dataSource: DataSource,
-		signalSource?: 'meter' | '',
+		signalSource?: BuilderQuerySource,
 	) => Query;
 	updateQueriesData: <T extends keyof QueryBuilderData>(
 		query: Query,

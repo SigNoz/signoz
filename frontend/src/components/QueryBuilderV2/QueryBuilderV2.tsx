@@ -240,7 +240,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 							queryVariant={config?.queryVariant || 'dropdown'}
 							showOnlyWhereClause={showOnlyWhereClause}
 							isRawQuery={isRawQuery}
-							signalSource={activeBuilder.queryData[0].source as 'meter' | ''}
+							signalSource={activeBuilder.queryData[0].source}
 							onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 							signalSourceChangeEnabled={signalSourceChangeEnabled}
 							queriesCount={1}
@@ -263,7 +263,7 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 								queryVariant={config?.queryVariant || 'dropdown'}
 								showOnlyWhereClause={showOnlyWhereClause}
 								isRawQuery={isRawQuery}
-								signalSource={query.source as 'meter' | ''}
+								signalSource={query.source}
 								onSignalSourceChange={onSignalSourceChange || ((): void => {})}
 								signalSourceChangeEnabled={signalSourceChangeEnabled}
 								queriesCount={activeBuilder.queryData.length}

@@ -5,7 +5,7 @@ import { BuilderQuerySource, DataSource } from 'types/common/queryBuilder';
 
 export type ExplorerQueryRules = {
 	dataSource: DataSource;
-	/** `meter` on the meter explorer, which shares the metrics signal; '' elsewhere. */
+	/** `meter` on the meter explorer, which shares the metrics signal; `audit` on the audit logs page, which shares the logs signal; '' elsewhere. */
 	source: BuilderQuerySource;
 	/** AI_QUERY_BUILDER on the AI explorer, whose queries live in the AI slot. */
 	queryType: EQueryType.QUERY_BUILDER | EQueryType.AI_QUERY_BUILDER;
@@ -40,6 +40,12 @@ const EXPLORER_QUERY_RULES: Partial<Record<string, ExplorerQueryRules>> = {
 	[ROUTES.METER_EXPLORER]: {
 		dataSource: DataSource.METRICS,
 		source: TelemetrytypesSourceDTO.meter,
+		queryType: EQueryType.QUERY_BUILDER,
+		allowsTraceOperator: false,
+	},
+	[ROUTES.AUDIT_LOGS]: {
+		dataSource: DataSource.LOGS,
+		source: TelemetrytypesSourceDTO.audit,
 		queryType: EQueryType.QUERY_BUILDER,
 		allowsTraceOperator: false,
 	},
