@@ -261,36 +261,3 @@ func generateCollectorConfigWithPipelines(collectorConf map[string]any, pipeline
 func hasSignozPipelineProcessorPrefix(procName string) bool {
 	return strings.HasPrefix(procName, constants.LogsPPLPfx) || strings.HasPrefix(procName, constants.OldLogsPPLPfx)
 }
-
-// processorsConfByCollectorPipeline returns, for each service pipeline, the configs of its
-// processors in run order as a list of single-key maps, so a processor listed twice is kept twice.
-// Exporters, extensions and receivers carry secrets and are left out.
-func processorsConfByCollectorPipeline(collectorConf map[string]any) (map[string][]byte, error) {
-	serviceConf, err := json.Marshal(collectorConf["service"])
-	if err != nil {
-		return nil, errors.WrapInternalf(err, CodeCollectorConfigServiceMarshalFailed, "could not marshal OTEL config")
-	}
-	var service struct {
-		Pipelines map[string]struct {
-			Processors []string `json:"processors"`
-		} `json:"pipelines"`
-	}
-	if err := json.Unmarshal(serviceConf, &service); err != nil {
-		return nil, errors.WrapInternalf(err, CodeCollectorConfigServiceUnmarshalFailed, "could not unmarshal OTEL config")
-	}
-
-	processors, _ := collectorConf["processors"].(map[string]any)
-	confs := make(map[string][]byte, len(service.Pipelines))
-	for pipeline, pipelineConf := range service.Pipelines {
-		orderedProcessors := make([]map[string]any, 0, len(pipelineConf.Processors))
-		for _, name := range pipelineConf.Processors {
-			orderedProcessors = append(orderedProcessors, map[string]any{name: processors[name]})
-		}
-		conf, err := yaml.Marshal(orderedProcessors)
-		if err != nil {
-			return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal processors of pipeline %s", pipeline)
-		}
-		confs[pipeline] = conf
-	}
-	return confs, nil
-}

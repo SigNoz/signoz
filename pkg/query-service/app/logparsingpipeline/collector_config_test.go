@@ -1,14 +1,12 @@
 package logparsingpipeline
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"log/slog"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -563,72 +561,7 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 	}
 }
 
-func TestProcessorsConfByCollectorPipeline(t *testing.T) {
-	baseConf := []byte(`
-receivers:
-  otlp: {}
-processors:
-  batch: {}
-  memory_limiter: {}
-  resourcedetection: {}
-  memory_limiter/traces: {}
-exporters:
-  clickhouselogsexporter:
-    dsn: tcp://admin:supersecret@clickhouse:9000/signoz_logs
-extensions:
-  basicauth:
-    client_auth:
-      password: hunter2
-service:
-  extensions: [basicauth]
-  pipelines:
-    logs:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [clickhouselogsexporter]
-    traces:
-      receivers: [otlp]
-      processors: [memory_limiter/traces, batch, memory_limiter/traces]
-      exporters: [clickhouselogsexporter]
-`)
-	pipelines := []pipelinetypes.GettablePipeline{
-		{
-			StoreablePipeline: pipelinetypes.StoreablePipeline{OrderID: 1, Name: "parse nginx", Alias: "parse-nginx", Enabled: true},
-			Filter: &v3.FilterSet{
-				Operator: "AND",
-				Items: []v3.FilterItem{
-					{
-						Key:      v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
-						Operator: "=",
-						Value:    "nginx",
-					},
-				},
-			},
-			Config: []pipelinetypes.PipelineOperator{
-				{ID: "move", Type: "move", Enabled: true, Name: "move", From: "attributes.src", To: "attributes.dst"},
-			},
-		},
-	}
-
-	collectorConf, err := unmarshalCollectorConfig(baseConf)
-	require.NoError(t, err)
-	_, err = generateCollectorConfigWithPipelines(collectorConf, pipelines)
-	require.NoError(t, err)
-
-	processorsConfs, err := processorsConfByCollectorPipeline(collectorConf)
-	require.NoError(t, err)
-	require.Len(t, processorsConfs, 2)
-
-	for _, conf := range processorsConfs {
-		assert.NotContains(t, string(conf), "supersecret")
-		assert.NotContains(t, string(conf), "hunter2")
-		assert.NotContains(t, string(conf), "resourcedetection")
-	}
-	assert.Equal(t, []string{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch"}, processorNamesInOrder(t, processorsConfs["logs"]))
-	assert.Equal(t, []string{"memory_limiter/traces", "batch", "memory_limiter/traces"}, processorNamesInOrder(t, processorsConfs["traces"]))
-}
-
-func TestRecommendAgentConfigLogsProcessorsInOrderWithNormalizer(t *testing.T) {
+func TestRecommendAgentConfigProcessorsOrderWithNormalizer(t *testing.T) {
 	userPipeline := makeTestAddAttributePipeline()
 	controller := &LogParsingPipelineController{
 		fl: flaggertest.WithUseJSONBody(t, true),
@@ -675,25 +608,13 @@ service:
       exporters: [clickhouselogsexporter]
 `, testCase.position)
 
-			var logs bytes.Buffer
-			defaultLogger := slog.Default()
-			slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
-			t.Cleanup(func() { slog.SetDefault(defaultLogger) })
-
-			_, _, err := controller.RecommendAgentConfig(valuer.GenerateUUID(), []byte(conf), nil)
+			recommended, _, err := controller.RecommendAgentConfig(valuer.GenerateUUID(), []byte(conf), nil)
 			require.NoError(t, err)
 
-			var loggedConf string
-			for _, line := range bytes.Split(bytes.TrimSpace(logs.Bytes()), []byte("\n")) {
-				var record map[string]any
-				require.NoError(t, json.Unmarshal(line, &record))
-				if record["msg"] == "generated collector pipeline processors config" && record["pipeline"] == "logs" {
-					loggedConf, _ = record["config"].(string)
-				}
-			}
-			require.NotEmpty(t, loggedConf)
-			assert.NotContains(t, loggedConf, "normalizersecret")
-			assert.Equal(t, testCase.expected, processorNamesInOrder(t, []byte(loggedConf)))
+			processorsConfs, err := agentConf.ProcessorsConfByCollectorPipeline(recommended)
+			require.NoError(t, err)
+			assert.NotContains(t, string(processorsConfs["logs"]), "normalizersecret")
+			assert.Equal(t, testCase.expected, processorNamesInOrder(t, processorsConfs["logs"]))
 		})
 	}
 }

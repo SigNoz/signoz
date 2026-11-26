@@ -431,13 +431,5 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	processorsConfs, err := processorsConfByCollectorPipeline(collectorConf)
-	if err != nil {
-		slog.WarnContext(ctx, "failed to build collector processors config for logging", slog.String("org_id", orgId.StringValue()), errors.Attr(err))
-	}
-	for _, pipeline := range slices.Sorted(maps.Keys(processorsConfs)) {
-		slog.InfoContext(ctx, "generated collector pipeline processors config", slog.String("org_id", orgId.StringValue()), slog.Int("version", pipelinesVersion), slog.String("pipeline", pipeline), slog.String("config", string(processorsConfs[pipeline])))
-	}
-
 	return updatedConf, string(rawPipelineData), nil
 }
