@@ -25,10 +25,22 @@ export function comboboxAt(page: Page, trigger: Locator): Combobox {
 			});
 			await popup.locator('[data-slot="combobox-search-input"]').fill(label);
 			await popup.getByRole('option', { name: label, exact: true }).click();
-			if ((await trigger.getAttribute('aria-expanded')) === 'true') {
-				await page.keyboard.press('Escape');
-			}
-			await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+			// A multiple combobox stays open after a pick. Escape can also close the
+			// dialog around it, so toggle it shut from its chevron instead.
+			await expect(async () => {
+				if ((await trigger.getAttribute('aria-expanded')) === 'true') {
+					const box = await trigger.boundingBox();
+					await trigger.click({
+						position: {
+							x: Math.max(1, (box?.width ?? 24) - 12),
+							y: (box?.height ?? 2) / 2,
+						},
+					});
+				}
+				await expect(trigger).toHaveAttribute('aria-expanded', 'false', {
+					timeout: 2_000,
+				});
+			}).toPass({ timeout: 10_000 });
 		},
 		async clear() {
 			const removers = trigger.locator('[data-slot="combobox-chip-remove"]');
