@@ -148,6 +148,7 @@ export const routePermission: Record<keyof typeof ROUTES, ROLES[]> = {
  */
 export const routeWithInitialAuthZSupport = {
 	LIST_ALL_ALERT: true,
+	ALERTS_NEW: true,
 	CHANNELS_NEW: true,
 	CHANNELS_EDIT: true,
 	ALL_DASHBOARD: true,
