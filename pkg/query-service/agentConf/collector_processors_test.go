@@ -17,6 +17,14 @@ processors:
   memory_limiter: {}
   resourcedetection: {}
   memory_limiter/traces: {}
+  attributes/tenant:
+    actions:
+      - key: tenant.token
+        value: tenantsecret
+        action: insert
+  signozlogsnormalizer:
+    opamp:
+      position: before
   signozlogspipeline/pipeline_parse-nginx:
     operators:
       - id: move
@@ -33,7 +41,7 @@ service:
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [memory_limiter, signozlogspipeline/pipeline_parse-nginx, batch]
+      processors: [memory_limiter, signozlogsnormalizer, signozlogspipeline/pipeline_parse-nginx, attributes/tenant, batch]
       exporters: [clickhouselogsexporter]
     traces:
       receivers: [otlp]
@@ -48,22 +56,32 @@ service:
 	for _, conf := range processorsConfs {
 		assert.NotContains(t, string(conf), "supersecret")
 		assert.NotContains(t, string(conf), "hunter2")
+		assert.NotContains(t, string(conf), "tenantsecret")
 		assert.NotContains(t, string(conf), "resourcedetection")
 	}
-	assert.Equal(t, []string{"memory_limiter", "signozlogspipeline/pipeline_parse-nginx", "batch"}, processorNamesInOrder(t, processorsConfs["logs"]))
+	assert.Equal(t, []string{"memory_limiter", "signozlogsnormalizer", "signozlogspipeline/pipeline_parse-nginx", "attributes/tenant", "batch"}, processorNamesInOrder(t, processorsConfs["logs"]))
 	assert.Equal(t, []string{"memory_limiter/traces", "batch", "memory_limiter/traces"}, processorNamesInOrder(t, processorsConfs["traces"]))
 	assert.Contains(t, string(processorsConfs["logs"]), "type: move")
+	assert.Contains(t, string(processorsConfs["logs"]), "position: before")
+	assert.Contains(t, string(processorsConfs["logs"]), "- memory_limiter\n")
 }
 
 func processorNamesInOrder(t *testing.T, conf []byte) []string {
 	t.Helper()
-	var processors []map[string]any
+	var processors []any
 	require.NoError(t, yaml.Unmarshal(conf, &processors))
 	var names []string
 	for _, processor := range processors {
-		require.Len(t, processor, 1)
-		for name := range processor {
-			names = append(names, name)
+		switch processor := processor.(type) {
+		case string:
+			names = append(names, processor)
+		case map[string]any:
+			require.Len(t, processor, 1)
+			for name := range processor {
+				names = append(names, name)
+			}
+		default:
+			require.Failf(t, "unexpected processor entry", "%v", processor)
 		}
 	}
 	return names

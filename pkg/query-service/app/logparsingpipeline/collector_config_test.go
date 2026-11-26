@@ -621,13 +621,20 @@ service:
 
 func processorNamesInOrder(t *testing.T, conf []byte) []string {
 	t.Helper()
-	var processors []map[string]any
+	var processors []any
 	require.NoError(t, yaml.Unmarshal(conf, &processors))
 	var names []string
 	for _, processor := range processors {
-		require.Len(t, processor, 1)
-		for name := range processor {
-			names = append(names, name)
+		switch processor := processor.(type) {
+		case string:
+			names = append(names, processor)
+		case map[string]any:
+			require.Len(t, processor, 1)
+			for name := range processor {
+				names = append(names, name)
+			}
+		default:
+			require.Failf(t, "unexpected processor entry", "%v", processor)
 		}
 	}
 	return names
