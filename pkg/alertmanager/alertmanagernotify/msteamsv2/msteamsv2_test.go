@@ -550,6 +550,10 @@ func TestEscapeMarkdown(t *testing.T) {
 		{name: "WindowsPath_BackslashesEscaped", value: `C:\Users\x`, expected: `C:\\Users\\x`},
 		{name: "UNCPath_BackslashesEscaped", value: `\\server\share`, expected: `\\\\server\\share`},
 		{name: "EscapedAsterisk_BackslashAndAsteriskEscaped", value: `x\*y*`, expected: `x\\\*y\*`},
+		{name: "BacktickPair_Escaped", value: "run `cmd` now", expected: "run \\`cmd\\` now"},
+		{name: "TildePair_Escaped", value: "a~b~c", expected: `a\~b\~c`},
+		{name: "DoubleTildePair_Escaped", value: "a~~b~~c", expected: `a\~\~b\~\~c`},
+		{name: "LoneTilde_Untouched", value: "https://host.test/~user/logs", expected: "https://host.test/~user/logs"},
 		{name: "HTMLAndHash_Untouched", value: "<b>tag</b> # not a heading", expected: "<b>tag</b> # not a heading"},
 		{name: "Empty_Untouched", value: "", expected: ""},
 	}

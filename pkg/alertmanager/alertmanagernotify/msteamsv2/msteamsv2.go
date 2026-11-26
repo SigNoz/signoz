@@ -286,15 +286,20 @@ func escapeLabels(labels model.LabelSet) model.LabelSet {
 	return escaped
 }
 
-// escapeMarkdown leaves an underscore inside a word alone, since Teams only reads one at a word edge as emphasis.
+// escapeMarkdown leaves an underscore inside a word and a lone tilde alone, since Teams reads neither as markup.
 func escapeMarkdown(value string) string {
 	runes := []rune(value)
+	pairedTildes := strings.Count(value, "~") > 1
 
 	var escaped strings.Builder
 	for i, r := range runes {
 		switch r {
-		case '\\', '*', '[', ']':
+		case '\\', '*', '[', ']', '`':
 			escaped.WriteRune('\\')
+		case '~':
+			if pairedTildes {
+				escaped.WriteRune('\\')
+			}
 		case '_':
 			if i == 0 || i == len(runes)-1 || !isWordRune(runes[i-1]) || !isWordRune(runes[i+1]) {
 				escaped.WriteRune('\\')

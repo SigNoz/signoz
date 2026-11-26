@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 )
 
-// The text is the markdown subset an Adaptive Card TextBlock renders: bold, lists and links, with paragraphs split by a blank line.
+// The text is markdown, which a Teams Adaptive Card TextBlock renders as is.
 const (
 	DefaultMSTeamsTitleTemplate = `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`
 
