@@ -58,7 +58,9 @@ describe('ListAlertRules — permissions', () => {
 		);
 		await openFirstRowMenu();
 		for (const action of ['toggle', 'edit', 'edit-new-tab', 'clone', 'delete']) {
-			await expect(isRowDisabled(`alert-actions-item-${action}`)).resolves.toBe(false);
+			await expect(isRowDisabled(`alert-actions-item-${action}`)).resolves.toBe(
+				false,
+			);
 		}
 	});
 
@@ -125,7 +127,9 @@ describe('ListAlertRules — permissions', () => {
 		await openFirstRowMenu();
 		await expect(isRowDisabled('alert-actions-item-toggle')).resolves.toBe(true);
 		await expect(isRowDisabled('alert-actions-item-edit')).resolves.toBe(true);
-		await expect(isRowDisabled('alert-actions-item-edit-new-tab')).resolves.toBe(true);
+		await expect(isRowDisabled('alert-actions-item-edit-new-tab')).resolves.toBe(
+			true,
+		);
 		await expect(isRowDisabled('alert-actions-item-clone')).resolves.toBe(false);
 		await expect(isRowDisabled('alert-actions-item-delete')).resolves.toBe(false);
 	});
