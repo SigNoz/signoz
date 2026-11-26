@@ -431,11 +431,11 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	pipelinesConf, err := pipelinesOnlyCollectorConf(collectorConf)
+	processorsConf, err := processorsOnlyCollectorConf(collectorConf)
 	if err != nil {
-		slog.WarnContext(ctx, "failed to build pipelines collector config for logging", slog.String("org_id", orgId.StringValue()), errors.Attr(err))
+		slog.WarnContext(ctx, "failed to build processors collector config for logging", slog.String("org_id", orgId.StringValue()), errors.Attr(err))
 	} else {
-		slog.InfoContext(ctx, "generated log pipelines collector config", slog.String("org_id", orgId.StringValue()), slog.Int("version", pipelinesVersion), slog.String("config", string(pipelinesConf)))
+		slog.InfoContext(ctx, "generated log pipelines collector config", slog.String("org_id", orgId.StringValue()), slog.Int("version", pipelinesVersion), slog.String("config", string(processorsConf)))
 	}
 
 	return updatedConf, string(rawPipelineData), nil

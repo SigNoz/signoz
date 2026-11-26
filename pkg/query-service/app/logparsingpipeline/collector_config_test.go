@@ -1,10 +1,11 @@
 package logparsingpipeline
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
-	"maps"
-	"slices"
+	"log/slog"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
@@ -562,12 +563,14 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 	}
 }
 
-func TestPipelinesOnlyCollectorConf(t *testing.T) {
+func TestProcessorsOnlyCollectorConf(t *testing.T) {
 	baseConf := []byte(`
 receivers:
   otlp: {}
 processors:
   batch: {}
+  memory_limiter: {}
+  resourcedetection: {}
 exporters:
   clickhouselogsexporter:
     dsn: tcp://admin:supersecret@clickhouse:9000/signoz_logs
@@ -580,7 +583,7 @@ service:
   pipelines:
     logs:
       receivers: [otlp]
-      processors: [batch]
+      processors: [memory_limiter, batch]
       exporters: [clickhouselogsexporter]
 `)
 	pipelines := []pipelinetypes.GettablePipeline{
@@ -607,16 +610,118 @@ service:
 	_, err = generateCollectorConfigWithPipelines(collectorConf, pipelines)
 	require.NoError(t, err)
 
-	pipelinesConf, err := pipelinesOnlyCollectorConf(collectorConf)
+	processorsConf, err := processorsOnlyCollectorConf(collectorConf)
 	require.NoError(t, err)
 
-	assert.NotContains(t, string(pipelinesConf), "supersecret")
-	assert.NotContains(t, string(pipelinesConf), "hunter2")
-	assert.NotContains(t, string(pipelinesConf), "batch:")
+	assert.NotContains(t, string(processorsConf), "supersecret")
+	assert.NotContains(t, string(processorsConf), "hunter2")
 
-	var got map[string]any
-	require.NoError(t, yaml.Unmarshal(pipelinesConf, &got))
-	assert.Equal(t, []string{"processors", "service"}, slices.Sorted(maps.Keys(got)))
-	assert.Contains(t, got["processors"], constants.LogsPPLPfx+"parse-nginx")
-	assert.Equal(t, []any{constants.LogsPPLPfx + "parse-nginx", "batch"}, got["service"].(map[string]any)["pipelines"].(map[string]any)["logs"].(map[string]any)["processors"])
+	var got yaml.Node
+	require.NoError(t, yaml.Unmarshal(processorsConf, &got))
+	require.Len(t, got.Content, 1)
+	root := got.Content[0]
+	require.Len(t, root.Content, 4)
+	assert.Equal(t, "processors", root.Content[0].Value)
+	assert.Equal(t, "service", root.Content[2].Value)
+
+	var processorNames []string
+	for i := 0; i < len(root.Content[1].Content); i += 2 {
+		processorNames = append(processorNames, root.Content[1].Content[i].Value)
+	}
+	assert.Equal(t, []string{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch", "resourcedetection"}, processorNames)
+
+	var service map[string]any
+	require.NoError(t, root.Content[3].Decode(&service))
+	assert.Equal(t, []any{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch"}, service["pipelines"].(map[string]any)["logs"].(map[string]any)["processors"])
+}
+
+func TestRecommendAgentConfigLogsProcessorsInOrderWithNormalizer(t *testing.T) {
+	userPipeline := makeTestAddAttributePipeline()
+	controller := &LogParsingPipelineController{
+		fl: flaggertest.WithUseJSONBody(t, true),
+		GetIntegrationPipelines: func(context.Context, string) ([]pipelinetypes.GettablePipeline, error) {
+			return []pipelinetypes.GettablePipeline{userPipeline}, nil
+		},
+	}
+	normalizeOperator := CollectorConfProcessorName(getNormalizePipeline())
+	user := CollectorConfProcessorName(userPipeline)
+
+	testCases := []struct {
+		name     string
+		position string
+		expected []string
+	}{
+		{
+			name:     "NormalizerBefore",
+			position: "before",
+			expected: []string{"memory_limiter", "signozlogsnormalizer", user, "batch"},
+		},
+		{
+			name:     "NormalizerAfter",
+			position: "after",
+			expected: []string{"memory_limiter", normalizeOperator, user, "signozlogsnormalizer", "batch"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			conf := fmt.Sprintf(`
+processors:
+  batch: {}
+  memory_limiter: {}
+  signozlogsnormalizer:
+    opamp:
+      position: %s
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://admin:normalizersecret@clickhouse:9000/signoz_logs
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, signozlogsnormalizer, batch]
+      exporters: [clickhouselogsexporter]
+`, testCase.position)
+
+			var logs bytes.Buffer
+			defaultLogger := slog.Default()
+			slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+			t.Cleanup(func() { slog.SetDefault(defaultLogger) })
+
+			_, _, err := controller.RecommendAgentConfig(valuer.GenerateUUID(), []byte(conf), nil)
+			require.NoError(t, err)
+
+			var loggedConf string
+			for _, line := range bytes.Split(bytes.TrimSpace(logs.Bytes()), []byte("\n")) {
+				var record map[string]any
+				require.NoError(t, json.Unmarshal(line, &record))
+				if record["msg"] == "generated log pipelines collector config" {
+					loggedConf, _ = record["config"].(string)
+				}
+			}
+			require.NotEmpty(t, loggedConf)
+			assert.NotContains(t, loggedConf, "normalizersecret")
+
+			var got yaml.Node
+			require.NoError(t, yaml.Unmarshal([]byte(loggedConf), &got))
+			require.Len(t, got.Content, 1)
+			root := got.Content[0]
+			require.Len(t, root.Content, 4)
+
+			var processorNames []string
+			for i := 0; i < len(root.Content[1].Content); i += 2 {
+				processorNames = append(processorNames, root.Content[1].Content[i].Value)
+			}
+			assert.Equal(t, testCase.expected, processorNames)
+
+			var service struct {
+				Pipelines struct {
+					Logs struct {
+						Processors []string `yaml:"processors"`
+					} `yaml:"logs"`
+				} `yaml:"pipelines"`
+			}
+			require.NoError(t, root.Content[3].Decode(&service))
+			assert.Equal(t, testCase.expected, service.Pipelines.Logs.Processors)
+		})
+	}
 }

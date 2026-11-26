@@ -2,6 +2,7 @@ package logparsingpipeline
 
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 	"sync"
@@ -262,18 +263,10 @@ func hasSignozPipelineProcessorPrefix(procName string) bool {
 	return strings.HasPrefix(procName, constants.LogsPPLPfx) || strings.HasPrefix(procName, constants.OldLogsPPLPfx)
 }
 
-// pipelinesOnlyCollectorConf keeps only the pipeline processors and the logs pipeline
-// processor order, leaving out exporters and extensions that carry secrets.
-func pipelinesOnlyCollectorConf(collectorConf map[string]any) ([]byte, error) {
-	pipelineProcessors := map[string]any{}
-	if processors, ok := collectorConf["processors"].(map[string]any); ok {
-		for name, conf := range processors {
-			if strings.HasPrefix(name, constants.LogsPPLPfx) {
-				pipelineProcessors[name] = conf
-			}
-		}
-	}
-
+// processorsOnlyCollectorConf keeps only the processors, in logs pipeline order followed by the
+// rest by name, and the logs pipeline processor order, leaving out exporters and extensions that
+// carry secrets.
+func processorsOnlyCollectorConf(collectorConf map[string]any) ([]byte, error) {
 	p, err := getOtelPipelineFromConfig(collectorConf)
 	if err != nil {
 		return nil, err
@@ -283,12 +276,36 @@ func pipelinesOnlyCollectorConf(collectorConf map[string]any) ([]byte, error) {
 		logsProcessorOrder = p.Pipelines.Logs.Processors
 	}
 
-	conf, err := yaml.Marshal(map[string]any{
-		"processors": pipelineProcessors,
-		"service":    map[string]any{"pipelines": map[string]any{"logs": map[string]any{"processors": logsProcessorOrder}}},
+	processors, _ := collectorConf["processors"].(map[string]any)
+	names := slices.Clone(logsProcessorOrder)
+	for _, name := range slices.Sorted(maps.Keys(processors)) {
+		if !slices.Contains(logsProcessorOrder, name) {
+			names = append(names, name)
+		}
+	}
+
+	orderedProcessors := &yaml.Node{Kind: yaml.MappingNode}
+	for _, name := range names {
+		conf, ok := processors[name]
+		if !ok {
+			continue
+		}
+		var confNode yaml.Node
+		if err := confNode.Encode(conf); err != nil {
+			return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal processor config for %s", name)
+		}
+		orderedProcessors.Content = append(orderedProcessors.Content, &yaml.Node{Kind: yaml.ScalarNode, Value: name}, &confNode)
+	}
+
+	conf, err := yaml.Marshal(struct {
+		Processors *yaml.Node     `yaml:"processors"`
+		Service    map[string]any `yaml:"service"`
+	}{
+		Processors: orderedProcessors,
+		Service:    map[string]any{"pipelines": map[string]any{"logs": map[string]any{"processors": logsProcessorOrder}}},
 	})
 	if err != nil {
-		return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal pipelines collector config")
+		return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal processors collector config")
 	}
 	return conf, nil
 }
