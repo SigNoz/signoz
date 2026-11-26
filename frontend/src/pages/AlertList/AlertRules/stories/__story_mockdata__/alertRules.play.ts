@@ -343,35 +343,35 @@ export const expectUpdateLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openFirstRowMenu(canvasElement);
-	await expectLocked(await rowItem('alert-action-toggle'));
-	await expectLocked(await rowItem('alert-action-edit'));
-	await expectLocked(await rowItem('alert-action-clone'), false);
-	await expectLocked(await rowItem('alert-action-delete'), false);
+	await expectLocked(await rowItem('alert-actions-item-toggle'));
+	await expectLocked(await rowItem('alert-actions-item-edit'));
+	await expectLocked(await rowItem('alert-actions-item-clone'), false);
+	await expectLocked(await rowItem('alert-actions-item-delete'), false);
 };
 
 export const expectReadLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openFirstRowMenu(canvasElement);
-	await expectLocked(await rowItem('alert-action-edit'));
-	await expectLocked(await rowItem('alert-action-clone'));
-	await expectLocked(await rowItem('alert-action-toggle'), false);
+	await expectLocked(await rowItem('alert-actions-item-edit'));
+	await expectLocked(await rowItem('alert-actions-item-clone'));
+	await expectLocked(await rowItem('alert-actions-item-toggle'), false);
 };
 
 export const expectCloneLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openFirstRowMenu(canvasElement);
-	await expectLocked(await rowItem('alert-action-clone'));
-	await expectLocked(await rowItem('alert-action-edit'), false);
+	await expectLocked(await rowItem('alert-actions-item-clone'));
+	await expectLocked(await rowItem('alert-actions-item-edit'), false);
 };
 
 export const expectDeleteLocked = async ({
 	canvasElement,
 }: PlayContext): Promise<void> => {
 	await openFirstRowMenu(canvasElement);
-	await expectLocked(await rowItem('alert-action-delete'));
-	await expectLocked(await rowItem('alert-action-toggle'), false);
+	await expectLocked(await rowItem('alert-actions-item-delete'));
+	await expectLocked(await rowItem('alert-actions-item-toggle'), false);
 };
 
 export const expectCreateLocked = async (
