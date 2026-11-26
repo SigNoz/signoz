@@ -21,7 +21,6 @@ import {
 
 export const getRoutes = (
 	userRole: ROLES | null,
-	isCurrentOrgSettings: boolean,
 	isGatewayEnabled: boolean,
 	isWorkspaceBlocked: boolean,
 	isCloudUser: boolean,
@@ -34,9 +33,7 @@ export const getRoutes = (
 	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked) {
-		if (isAdmin) {
-			settings.push(...organizationSettings(t));
-		}
+		settings.push(...organizationSettings(t));
 
 		settings.push(...membersSettings(t));
 
@@ -55,10 +52,6 @@ export const getRoutes = (
 
 	settings.push(...generalSettings(t));
 
-	if (isCurrentOrgSettings) {
-		settings.push(...organizationSettings(t));
-	}
-
 	if (isGatewayEnabled && (isAdmin || isEditor)) {
 		settings.push(...multiIngestionSettings(t));
 	}
@@ -69,6 +62,7 @@ export const getRoutes = (
 
 	// Visible to all authenticated users
 	settings.push(
+		...organizationSettings(t),
 		...membersSettings(t),
 		...serviceAccountsSettings(t),
 		...rolesSettings(t),

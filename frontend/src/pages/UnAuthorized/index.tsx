@@ -49,15 +49,17 @@ function UnAuthorizePage(): JSX.Element {
 					It looks like you don&lsquo;t have permission to view this page. <br />
 					{mistakeMessage}
 					{userIsAnonymous ? (
-						<Button
-							variant="link"
-							color="primary"
-							size="md"
-							onClick={handleContactSupportClick}
-						>
+						<>
 							{' '}
-							reach out to us.
-						</Button>
+							<Button
+								variant="link"
+								color="primary"
+								size="md"
+								onClick={handleContactSupportClick}
+							>
+								reach out to us.
+							</Button>
+						</>
 					) : null}
 				</p>
 			</Space>

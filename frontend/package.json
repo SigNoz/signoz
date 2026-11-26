@@ -57,7 +57,7 @@
     "@signozhq/design-tokens": "2.8.0",
     "@signozhq/icons": "0.4.0",
     "@signozhq/noz-client": "1.13.0",
-    "@signozhq/ui": "0.4.0-rc.5",
+    "@signozhq/ui": "0.4.1-rc.2",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",

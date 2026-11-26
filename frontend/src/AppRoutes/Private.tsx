@@ -175,8 +175,8 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			pathname === ROUTES.SETTINGS ||
 			pathname === ROUTES.BILLING ||
 			pathname === ROUTES.MEMBERS_SETTINGS ||
-			(isAdmin &&
-				(pathname === ROUTES.ORG_SETTINGS || pathname === ROUTES.MY_SETTINGS));
+			pathname === ROUTES.ORG_SETTINGS ||
+			(isAdmin && pathname === ROUTES.MY_SETTINGS);
 
 		if (
 			pathname !== ROUTES.WORKSPACE_LOCKED &&

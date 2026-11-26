@@ -317,6 +317,7 @@ function DashboardsList(): JSX.Element {
 				onDelete={handleRemoveView}
 				onRename={renameView}
 				testIdPrefix="dashboards"
+				viewNamePlaceholder="e.g. Prod dashboards"
 				deleteDescription="This removes the saved view. Your dashboards are not affected."
 				guard={guardViewsRail}
 				onViewSaved={logViewSaved}
