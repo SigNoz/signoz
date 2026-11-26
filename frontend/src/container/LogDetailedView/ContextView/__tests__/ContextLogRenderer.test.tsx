@@ -117,15 +117,6 @@ describe('ContextLogRenderer', () => {
 		);
 		server.use(
 			rest.post(
-				`${ENVIRONMENT.baseURL}/api/v3/query_range`,
-				async (req, res, ctx) => {
-					capturedQueryRangePayload = await req.json();
-					return res(ctx.status(200), ctx.json(mockQueryRangeResponse));
-				},
-			),
-		);
-		server.use(
-			rest.post(
 				`${ENVIRONMENT.baseURL}/api/v5/query_range`,
 				async (req, res, ctx) => {
 					capturedQueryRangePayload = await req.json();

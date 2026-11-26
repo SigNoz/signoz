@@ -1,13 +1,11 @@
 // @ts-nocheck
 
-import { getMetricsQueryRange } from 'api/metrics/getQueryRange';
 import { createAggregation } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
 import {
 	convertV5ResponseToLegacy,
 	getQueryRangeV5,
 	prepareQueryRangePayloadV5,
 } from 'api/v5/v5';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'constants/timePreference';
 import {
@@ -18,19 +16,11 @@ import { Pagination } from 'hooks/queryPagination';
 import { convertNewDataToOld } from 'lib/newQueryBuilder/convertNewDataToOld';
 import { isEmpty } from 'lodash-es';
 import { DynamicVariableSuggestion } from 'providers/Dashboard/store/dynamicVariableSuggestions';
-import { SuccessResponseV2, Warning } from 'types/api';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	ExecStats,
-	MetricRangePayloadV5,
-	QueryRangeResponseV5,
-} from 'types/api/v5/queryRange';
 import { QueryData } from 'types/api/widgets/getQuery';
 import { getActiveBuilder, isBuilderQueryType } from 'lib/query/builderSlot';
 import { DataSource } from 'types/common/queryBuilder';
-
-import { prepareQueryRangePayload } from './prepareQueryRangePayload';
 
 /**
  * Validates if metric name is available for METRICS data source
@@ -184,25 +174,13 @@ export async function GetMetricQueryRange(
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 ): Promise<MetricQueryRangeSuccessResponse> {
-	let legendMap: Record<string, string>;
-	let response:
-		| MetricQueryRangeSuccessResponse
-		| SuccessResponseV2<MetricRangePayloadV5>;
-	let warning: Warning | undefined;
-	let meta: ExecStats | undefined;
-	// Raw V5 response, kept before it's converted to legacy — powers client-side export.
-	let rawV5Response: QueryRangeResponseV5 | undefined;
-
 	const panelType = props.originalGraphType || props.graphType;
 
 	const finalFormatForWeb =
 		props.formatForWeb || panelType === PANEL_TYPES.TABLE;
 
 	// Validate metric name for METRICS data source before making the API call
-	if (
-		version === ENTITY_VERSION_V5 &&
-		!validateMetricNameForMetricsDataSource(props.query)
-	) {
+	if (!validateMetricNameForMetricsDataSource(props.query)) {
 		// Return empty response to avoid 400 error when metric name is missing
 		return {
 			statusCode: 200,
@@ -226,74 +204,55 @@ export async function GetMetricQueryRange(
 		};
 	}
 
-	if (version === ENTITY_VERSION_V5) {
-		const v5Result = prepareQueryRangePayloadV5(props, dynamicVariables);
-		legendMap = v5Result.legendMap;
+	const v5Result = prepareQueryRangePayloadV5(props, dynamicVariables);
+	const { legendMap } = v5Result;
 
-		// atleast one query should be there to make call to v5 api
-		if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
-			return {
-				statusCode: 200,
-				error: null,
-				message: 'At least one query is required',
-				payload: {
-					data: {
-						result: [],
-						resultType: '',
-						newResult: {
-							data: {
-								result: [],
-								resultType: '',
-							},
+	// atleast one query should be there to make call to v5 api
+	if (v5Result.queryPayload.compositeQuery.queries.length === 0) {
+		return {
+			statusCode: 200,
+			error: null,
+			message: 'At least one query is required',
+			payload: {
+				data: {
+					result: [],
+					resultType: '',
+					newResult: {
+						data: {
+							result: [],
+							resultType: '',
 						},
 					},
 				},
-				warning: undefined,
-				params: props,
-				warnings: [],
-			};
-		}
-
-		const v5Response = await getQueryRangeV5(
-			v5Result.queryPayload,
-			version,
-			signal,
-			headers,
-		);
-
-		rawV5Response = v5Response.data.data;
-
-		// Convert V5 response to legacy format for components
-		response = convertV5ResponseToLegacy(
-			{
-				payload: v5Response.data,
-				params: v5Result.queryPayload,
 			},
-			legendMap,
-			finalFormatForWeb,
-		);
-
-		warning = response.payload.warning || undefined;
-		meta = response.payload.meta || undefined;
-	} else {
-		const legacyResult = prepareQueryRangePayload(props);
-		legendMap = legacyResult.legendMap;
-
-		response = await getMetricsQueryRange(
-			legacyResult.queryPayload,
-			version || 'v3',
-			signal,
-			headers,
-		);
+			warning: undefined,
+			params: props,
+			warnings: [],
+		};
 	}
 
-	if (response.statusCode >= 400 && version !== ENTITY_VERSION_V5) {
-		let error = `API responded with ${response.statusCode} -  ${response.error} status: ${response.message}`;
-		if (response.body && !isEmpty(response.body)) {
-			error = `${error}, errors: ${response.body}`;
-		}
-		throw new Error(error);
-	}
+	const v5Response = await getQueryRangeV5(
+		v5Result.queryPayload,
+		version,
+		signal,
+		headers,
+	);
+
+	// Raw V5 response, kept before it's converted to legacy — powers client-side export.
+	const rawV5Response = v5Response.data.data;
+
+	// Convert V5 response to legacy format for components
+	const response = convertV5ResponseToLegacy(
+		{
+			payload: v5Response.data,
+			params: v5Result.queryPayload,
+		},
+		legendMap,
+		finalFormatForWeb,
+	);
+
+	const warning = response.payload.warning || undefined;
+	const meta = response.payload.meta || undefined;
 
 	if (finalFormatForWeb) {
 		return response;
