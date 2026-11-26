@@ -8,9 +8,12 @@ import { QuickFilterManagePermissions } from 'lib/authz/hooks/useAuthZ/permissio
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { grantsAll } from '@/storybook/access/access';
+import { hoverTruncatableText } from '@/storybook/play/truncatedText';
 import type { GlobalMockArgs } from '@/storybook/globals';
 
 import type QuickFilters from '../../QuickFilters';
+import { longTitleConfig } from '../QuickFilters.stories.mocks';
+import { FiltersType } from '../../types';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -59,6 +62,26 @@ export const dirtySettings = async (context: PlayContext): Promise<void> => {
 	await openSettings(context);
 	await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
 	await screen.findByRole('button', { name: 'Save changes' });
+};
+
+export const hoverTruncatedTitle = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	const [filter] = args.config ?? [];
+	// Duration and slider sections render no title of their own.
+	if (filter?.type !== FiltersType.CHECKBOX || !filter.title) {
+		return;
+	}
+
+	const [label] = await within(canvasElement).findAllByText(
+		filter.title,
+		{},
+		UNTIL_LOADED,
+	);
+	await hoverTruncatableText(label, filter.title, {
+		cut: filter.title === longTitleConfig[0].title || undefined,
+	});
 };
 
 export const openQueryPicker = async ({
