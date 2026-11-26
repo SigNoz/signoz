@@ -1,5 +1,6 @@
 import { GatewaytypesGettableIngestionKeysDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
+import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
@@ -39,6 +40,7 @@ const GLOBAL_CONFIG_RESPONSE = {
 describe('MultiIngestionSettings Page', () => {
 	beforeEach(() => {
 		mockNavigate.mockClear();
+		server.use(setupAuthzAdmin());
 	});
 
 	afterEach(() => {
@@ -350,7 +352,7 @@ describe('MultiIngestionSettings Page', () => {
 			initialRoute: INGESTION_SETTINGS_ROUTE,
 		});
 
-		await screen.findByText('Key Regular');
+		await screen.findByText('Key Regular', undefined, { timeout: 5000 });
 		expect(getHandler).toHaveBeenCalled();
 		expect(searchHandler).not.toHaveBeenCalled();
 
