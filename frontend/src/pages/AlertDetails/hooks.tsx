@@ -478,9 +478,9 @@ export const useAlertRuleClone = ({
 		},
 	);
 
-	const handleAlertClone = (): void => {
+	const handleAlertClone = useCallback((): void => {
 		cloneAlert();
-	};
+	}, [cloneAlert]);
 
 	return { handleAlertClone };
 };
@@ -513,10 +513,10 @@ export const useAlertRuleDelete = ({
 		},
 	);
 
-	const handleAlertDelete = (): void => {
+	const handleAlertDelete = useCallback((): void => {
 		const args = { id: ruleId };
 		deleteAlert(args);
-	};
+	}, [deleteAlert, ruleId]);
 
 	return { handleAlertDelete };
 };
