@@ -21,42 +21,47 @@ import {
 /** Namespaced: persisted per-dashboard state keys on it, so it must never match a server id. */
 export const COST_METER_DASHBOARD_ID = 'signoz-app:cost-meter-breakdown';
 
+export enum MeterUnit {
+	Bytes = 'bytes',
+	Short = 'short',
+}
+
 interface MeterPanel {
 	id: string;
 	name: string;
 	metric: string;
-	unit: 'bytes' | 'short';
+	unit: MeterUnit;
 }
 
 interface MeterSection {
 	title: string;
 	/** Window totals as numbers; otherwise hourly bars. */
-	total?: boolean;
+	isTotal?: boolean;
 	panels: MeterPanel[];
 }
 
 export const SECTIONS: MeterSection[] = [
 	{
 		title: 'Total',
-		total: true,
+		isTotal: true,
 		panels: [
 			{
 				id: 'total-log-size',
 				name: 'Total size of log records ingested',
 				metric: 'signoz.meter.log.size',
-				unit: 'bytes',
+				unit: MeterUnit.Bytes,
 			},
 			{
 				id: 'total-span-size',
 				name: 'Total size of spans ingested',
 				metric: 'signoz.meter.span.size',
-				unit: 'bytes',
+				unit: MeterUnit.Bytes,
 			},
 			{
 				id: 'total-metric-datapoints',
 				name: 'Total metric datapoints ingested',
 				metric: 'signoz.meter.metric.datapoint.count',
-				unit: 'short',
+				unit: MeterUnit.Short,
 			},
 		],
 	},
@@ -67,13 +72,13 @@ export const SECTIONS: MeterSection[] = [
 				id: 'log-count',
 				name: 'Count of log records ingested',
 				metric: 'signoz.meter.log.count',
-				unit: 'short',
+				unit: MeterUnit.Short,
 			},
 			{
 				id: 'log-size',
 				name: 'Size of log records ingested',
 				metric: 'signoz.meter.log.size',
-				unit: 'bytes',
+				unit: MeterUnit.Bytes,
 			},
 		],
 	},
@@ -84,13 +89,13 @@ export const SECTIONS: MeterSection[] = [
 				id: 'span-count',
 				name: 'Count of spans ingested',
 				metric: 'signoz.meter.span.count',
-				unit: 'short',
+				unit: MeterUnit.Short,
 			},
 			{
 				id: 'span-size',
 				name: 'Size of spans ingested',
 				metric: 'signoz.meter.span.size',
-				unit: 'bytes',
+				unit: MeterUnit.Bytes,
 			},
 		],
 	},
@@ -101,13 +106,13 @@ export const SECTIONS: MeterSection[] = [
 				id: 'metric-datapoints',
 				name: 'Count of metric datapoints ingested',
 				metric: 'signoz.meter.metric.datapoint.count',
-				unit: 'short',
+				unit: MeterUnit.Short,
 			},
 		],
 	},
 ];
 
-const meterQuery = (
+const buildMeterQuery = (
 	{ metric, unit }: MeterPanel,
 	kind: RequestType,
 ): DashboardtypesQueryDTO => ({
@@ -127,20 +132,20 @@ const meterQuery = (
 						reduceTo: Querybuildertypesv5ReduceToDTO.sum,
 					},
 				],
-				legend: unit === 'bytes' ? 'size' : 'count',
+				legend: unit === MeterUnit.Bytes ? 'size' : 'count',
 			},
 		},
 	},
 });
 
-const meterPanel = (
+const buildMeterPanel = (
 	panel: MeterPanel,
-	total: boolean,
+	isTotal: boolean,
 ): DashboardtypesPanelDTO => ({
 	kind: PanelKind.Panel,
 	spec: {
 		display: { name: panel.name },
-		plugin: total
+		plugin: isTotal
 			? {
 					kind: NumberKind['signoz/NumberPanel'],
 					spec: {
@@ -158,18 +163,21 @@ const meterPanel = (
 					},
 				},
 		queries: [
-			meterQuery(panel, total ? RequestType.scalar : RequestType.time_series),
+			buildMeterQuery(
+				panel,
+				isTotal ? RequestType.scalar : RequestType.time_series,
+			),
 		],
 	},
 });
 
-const grid = ({
+const buildGridLayout = ({
 	title,
-	total,
+	isTotal,
 	panels,
 }: MeterSection): DashboardtypesLayoutDTO => {
-	const width = total ? 4 : 6;
-	const height = total ? 3 : 6;
+	const width = isTotal ? 4 : 6;
+	const height = isTotal ? 3 : 6;
 	const perRow = 12 / width;
 
 	return {
@@ -202,10 +210,10 @@ export const COST_METER_DASHBOARD: DashboardtypesGettableDashboardV2DTO = {
 				'Logs, spans and metric datapoints ingested, from the signoz.meter.* metrics. Aggregated hourly; billing is calculated in UTC.',
 		},
 		variables: [],
-		layouts: SECTIONS.map(grid),
+		layouts: SECTIONS.map(buildGridLayout),
 		panels: Object.fromEntries(
-			SECTIONS.flatMap(({ total = false, panels }) =>
-				panels.map((panel) => [panel.id, meterPanel(panel, total)]),
+			SECTIONS.flatMap(({ isTotal = false, panels }) =>
+				panels.map((panel) => [panel.id, buildMeterPanel(panel, isTotal)]),
 			),
 		),
 	},

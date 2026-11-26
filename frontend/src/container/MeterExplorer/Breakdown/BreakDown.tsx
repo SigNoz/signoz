@@ -5,10 +5,9 @@ import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { useQuery } from 'react-query';
-import type { DashboardtypesGettableDashboardV2DTO } from 'api/generated/services/sigNoz.schemas';
 import dayjs from 'dayjs';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { noop } from 'lodash-es';
+import { identity, noop } from 'lodash-es';
 import DashboardContainer from 'pages/DashboardPage/DashboardContainer';
 import {
 	CHARTS_ONLY,
@@ -24,10 +23,7 @@ import './BreakDown.styles.scss';
 
 // Built in the frontend, never fetched: the container reads it back from this cache entry.
 const QUERY_KEY = ['cost-meter-breakdown-dashboard'];
-const select = (
-	dashboard: DashboardtypesGettableDashboardV2DTO,
-): DashboardtypesGettableDashboardV2DTO => dashboard;
-const SOURCE: DashboardQuerySource = { queryKey: QUERY_KEY, select };
+const SOURCE: DashboardQuerySource = { queryKey: QUERY_KEY, select: identity };
 
 const CONTROLS = withControls(CHARTS_ONLY, {
 	toolbar: { autoRefresh: false },

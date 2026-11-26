@@ -21,9 +21,10 @@ import {
 	TelemetrytypesFieldDataTypeDTO,
 	TelemetrytypesSourceDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
+import { ReduceOperators } from 'types/common/queryBuilder';
 import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
 import type { Query } from 'types/api/queryBuilder/queryBuilderData';
 import type { TimeSeries } from 'types/api/v5/queryRange';
@@ -255,6 +256,9 @@ export const meterExplorerQuery = (volume: MeterVolume): Query => {
 			queryTraceOperator: [],
 			queryData: [
 				{
+					...initialQueryBuilderFormValuesMap.metrics,
+					// Empty, so the payload builder reads the legacy aggregation fields below.
+					aggregations: [],
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
 						key: metricName,
@@ -262,21 +266,10 @@ export const meterExplorerQuery = (volume: MeterVolume): Query => {
 						type: 'Sum',
 					},
 					aggregateOperator: 'increase',
-					dataSource: DataSource.METRICS,
 					source: 'meter',
-					disabled: false,
-					expression: 'A',
-					filters: { items: [], op: 'AND' },
-					functions: [],
-					groupBy: [],
-					having: [],
 					legend: METRICS[metricName].unit === 'bytes' ? 'size' : 'count',
-					limit: null,
-					orderBy: [],
-					queryName: 'A',
 					reduceTo: ReduceOperators.SUM,
 					spaceAggregation: 'sum',
-					stepInterval: null,
 					timeAggregation: 'increase',
 				},
 			],
