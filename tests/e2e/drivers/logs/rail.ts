@@ -9,15 +9,20 @@ import { SEEDED_DATA_TIMEOUT } from '../kit';
 export interface LogsRail {
 	/** The same payload the settings spec seeds, so parallel seeding agrees. */
 	ensureSeeded(): Promise<void>;
+	/** Put back what `ensureSeeded` replaced; the layer runs it after every test. */
+	restore(): Promise<void>;
 	section(key: string): Locator;
 	/** Filter the list to `value` only, through the value row's Only action. */
 	only(key: string, value: string): Promise<void>;
 }
 
 export function logsRailDriver(page: Page): LogsRail {
+	const quickFilters = quickFiltersDriver(page);
+
 	const rail: LogsRail = {
-		ensureSeeded: () =>
-			quickFiltersDriver(page).seed('logs', DEFAULT_CUSTOM_FILTERS),
+		ensureSeeded: () => quickFilters.seed('logs', DEFAULT_CUSTOM_FILTERS),
+
+		restore: () => quickFilters.restore(),
 
 		section: (key) => page.locator(`[data-filter-key="${key}"]`),
 

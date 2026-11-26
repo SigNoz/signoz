@@ -342,7 +342,9 @@ own stack; one test more or fewer before them would put both on one stack. The
 `quickFilters` layer now reads the stored filters through
 `/api/v2/quick_filters/{source}` before `seed` replaces them and writes them back
 after the test. On a stack left in that state, TC-16 failed 2 of 2 before and
-passed 3 of 3 after.
+passed 3 of 3 after. `logs-explorer/quick-filters` seeds the same filters
+through `logsRail.ensureSeeded`, which used its own driver instance, so the
+`logsRail` layer restores that instance too.
 
 ## Chrome's compute-pressure policy message is console noise
 

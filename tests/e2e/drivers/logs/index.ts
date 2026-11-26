@@ -12,7 +12,11 @@ export const withLogs: Layer<{
 	pipelines: Pipelines;
 	logsRail: LogsRail;
 }> = (base) =>
-	driver('logsRail', ({ page }) => logsRailDriver(page))(
+	driver(
+		'logsRail',
+		({ page }) => logsRailDriver(page),
+		(logsRail) => logsRail.restore(),
+	)(
 		driver('pipelines', ({ page }) => pipelinesDriver(page))(
 			driver('views', ({ page }) => logsViewsDriver(page))(
 				driver('logs', ({ page }) => logsExplorerDriver(page))(base),
