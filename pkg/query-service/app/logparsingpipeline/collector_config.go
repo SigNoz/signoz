@@ -261,3 +261,34 @@ func generateCollectorConfigWithPipelines(collectorConf map[string]any, pipeline
 func hasSignozPipelineProcessorPrefix(procName string) bool {
 	return strings.HasPrefix(procName, constants.LogsPPLPfx) || strings.HasPrefix(procName, constants.OldLogsPPLPfx)
 }
+
+// pipelinesOnlyCollectorConf keeps only the pipeline processors and the logs pipeline
+// processor order, leaving out exporters and extensions that carry secrets.
+func pipelinesOnlyCollectorConf(collectorConf map[string]any) ([]byte, error) {
+	pipelineProcessors := map[string]any{}
+	if processors, ok := collectorConf["processors"].(map[string]any); ok {
+		for name, conf := range processors {
+			if strings.HasPrefix(name, constants.LogsPPLPfx) {
+				pipelineProcessors[name] = conf
+			}
+		}
+	}
+
+	p, err := getOtelPipelineFromConfig(collectorConf)
+	if err != nil {
+		return nil, err
+	}
+	var logsProcessorOrder []string
+	if p.Pipelines.Logs != nil {
+		logsProcessorOrder = p.Pipelines.Logs.Processors
+	}
+
+	conf, err := yaml.Marshal(map[string]any{
+		"processors": pipelineProcessors,
+		"service":    map[string]any{"pipelines": map[string]any{"logs": map[string]any{"processors": logsProcessorOrder}}},
+	})
+	if err != nil {
+		return nil, errors.WrapInternalf(err, CodeCollectorConfigMarshalFailed, "could not marshal pipelines collector config")
+	}
+	return conf, nil
+}

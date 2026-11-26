@@ -3,6 +3,8 @@ package logparsingpipeline
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
@@ -558,4 +560,63 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 			assert.Equal(t, testCase.expected, logs["processors"])
 		})
 	}
+}
+
+func TestPipelinesOnlyCollectorConf(t *testing.T) {
+	baseConf := []byte(`
+receivers:
+  otlp: {}
+processors:
+  batch: {}
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://admin:supersecret@clickhouse:9000/signoz_logs
+extensions:
+  basicauth:
+    client_auth:
+      password: hunter2
+service:
+  extensions: [basicauth]
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [clickhouselogsexporter]
+`)
+	pipelines := []pipelinetypes.GettablePipeline{
+		{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{OrderID: 1, Name: "parse nginx", Alias: "parse-nginx", Enabled: true},
+			Filter: &v3.FilterSet{
+				Operator: "AND",
+				Items: []v3.FilterItem{
+					{
+						Key:      v3.AttributeKey{Key: "service", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeResource},
+						Operator: "=",
+						Value:    "nginx",
+					},
+				},
+			},
+			Config: []pipelinetypes.PipelineOperator{
+				{ID: "move", Type: "move", Enabled: true, Name: "move", From: "attributes.src", To: "attributes.dst"},
+			},
+		},
+	}
+
+	collectorConf, err := unmarshalCollectorConfig(baseConf)
+	require.NoError(t, err)
+	_, err = generateCollectorConfigWithPipelines(collectorConf, pipelines)
+	require.NoError(t, err)
+
+	pipelinesConf, err := pipelinesOnlyCollectorConf(collectorConf)
+	require.NoError(t, err)
+
+	assert.NotContains(t, string(pipelinesConf), "supersecret")
+	assert.NotContains(t, string(pipelinesConf), "hunter2")
+	assert.NotContains(t, string(pipelinesConf), "batch:")
+
+	var got map[string]any
+	require.NoError(t, yaml.Unmarshal(pipelinesConf, &got))
+	assert.Equal(t, []string{"processors", "service"}, slices.Sorted(maps.Keys(got)))
+	assert.Contains(t, got["processors"], constants.LogsPPLPfx+"parse-nginx")
+	assert.Equal(t, []any{constants.LogsPPLPfx + "parse-nginx", "batch"}, got["service"].(map[string]any)["pipelines"].(map[string]any)["logs"].(map[string]any)["processors"])
 }
