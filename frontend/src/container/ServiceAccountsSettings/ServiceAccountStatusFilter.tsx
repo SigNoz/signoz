@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import MultiSelectFilter from 'components/ListFilter/FilterZone/MultiSelectFilter';
 
 import { SERVICE_ACCOUNTS_STATUS_OPTIONS } from './list.config';
@@ -10,15 +11,34 @@ interface Props {
 	setDraft: (newDraft: string) => void;
 }
 
-// Picks splice into the draft and run when the dropdown closes; Clear runs at
-// once. A status term the box holds with another operator shows as nothing
-// picked.
+// Picks splice into the draft and run when the dropdown closes; a tag's × or
+// Clear runs at once. A status term the box holds with another operator shows
+// as nothing picked.
 function ServiceAccountStatusFilter({
 	draft,
 	disabled,
 	onApplyDraft,
 	setDraft,
 }: Props): JSX.Element {
+	const handleChange = useCallback(
+		(statuses: string[]): void => setDraft(withStatuses(draft, statuses)),
+		[draft, setDraft],
+	);
+
+	const handleCommit = useCallback(
+		(statuses: string[]): void => onApplyDraft(withStatuses(draft, statuses)),
+		[draft, onApplyDraft],
+	);
+
+	const handleDropdownVisibleChange = useCallback(
+		(isOpen: boolean): void => {
+			if (!isOpen) {
+				onApplyDraft(draft);
+			}
+		},
+		[draft, onApplyDraft],
+	);
+
 	return (
 		<MultiSelectFilter
 			value={statusesOfQuery(draft)}
@@ -26,13 +46,9 @@ function ServiceAccountStatusFilter({
 			placeholder="Status"
 			testId="sa-filter-status"
 			disabled={disabled}
-			onChange={(statuses): void => setDraft(withStatuses(draft, statuses))}
-			onClear={(): void => onApplyDraft(withStatuses(draft, []))}
-			onDropdownVisibleChange={(open): void => {
-				if (!open) {
-					onApplyDraft(draft);
-				}
-			}}
+			onChange={handleChange}
+			onCommit={handleCommit}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
 		/>
 	);
 }

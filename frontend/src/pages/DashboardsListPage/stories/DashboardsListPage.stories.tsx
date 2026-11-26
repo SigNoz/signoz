@@ -27,6 +27,7 @@ import {
 	openTemplateTab,
 	pinDashboard,
 	renameDashboard,
+	removeCreatedByTag,
 	renameView,
 	saveView,
 	submitTemplateRequest,
@@ -103,6 +104,12 @@ export const LongQuery: Story = {
 /** The Created-by dropdown, open with one creator picked. */
 export const CreatedByFilterOpen: Story = {
 	play: openCreatedByFilter,
+};
+
+/** My dashboards with its creator tag removed by its ×: the list runs unfiltered. */
+export const CreatedByTagRemoved: Story = {
+	args: { view: 'mine' },
+	play: removeCreatedByTag,
 };
 
 /** The template tab of the New dashboard dialog. */

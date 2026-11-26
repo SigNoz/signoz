@@ -15,6 +15,7 @@ import {
 	DashboardtypesListSortDTO,
 	type GetDashboardV2200,
 } from 'api/generated/services/sigNoz.schemas';
+import { parseReflectedClauses } from 'components/ListFilter/dsl/filterQuery';
 import ROUTES from 'constants/routes';
 import {
 	buildDashboardDeletePermission,
@@ -612,6 +613,13 @@ export const listedDashboards = (
 			})
 		: rows;
 };
+
+/** The view's own filter picks creators, so the Created-by chip opens with a tag. */
+export const showsCreatedByTag = (args: DashboardsListArgs): boolean =>
+	parseReflectedClauses(
+		new URL(listRoute(args.view), 'http://localhost').searchParams.get('query') ??
+			'',
+	).createdBy.length > 0;
 
 export const showsWorkspaceEmpty = (args: DashboardsListArgs): boolean =>
 	args.view === DEFAULT_DASHBOARD_VIEW &&
