@@ -16,6 +16,18 @@ export function useEditorDraft(
 	const [draft, setDraft] = useState(external);
 	const sent = useRef<string[]>([]);
 
+	// `sent` holds the edits whose echo has not come back yet. Echoes arrive in
+	// order, and a batched render can skip some, so a match also drops every
+	// older entry: they can no longer come back.
+	//
+	//   type "c", "co", "cou"   sent [c, co, cou]   draft "cou"
+	//   echo "c"                sent [co, cou]      ignored, draft stays "cou"
+	//   echo "cou" (skipped co) sent []             ignored
+	//   "count() > 5" from a saved view, never sent: applied
+	//
+	// Keeping the older entries would also swallow an outside change that
+	// happens to equal one of them: after typing "a", "ab", a saved view with
+	// "a" would be taken for an echo.
 	useEffect(() => {
 		const index = sent.current.indexOf(external);
 		if (index === -1) {
