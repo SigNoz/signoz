@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button, Select, Tooltip } from 'antd';
+import AuthZSelect from 'lib/authz/components/AuthZSelect/AuthZSelect';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
 import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
@@ -184,7 +185,7 @@ function ThresholdItem({
 							>
 								send to
 							</Typography>
-							<Select
+							<AuthZSelect
 								value={threshold.channels}
 								onChange={(value): void =>
 									updateThreshold(threshold.id, 'channels', value)
@@ -194,7 +195,6 @@ function ThresholdItem({
 								style={{ width: 350 }}
 								options={channelOptions}
 								onDropdownVisibleChange={onPickerVisibleChange}
-								mode="multiple"
 								placeholder="Select notification channels"
 								showSearch
 								maxTagCount={2}
@@ -202,9 +202,6 @@ function ThresholdItem({
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isLoadingChannels}
 								notFoundContent={

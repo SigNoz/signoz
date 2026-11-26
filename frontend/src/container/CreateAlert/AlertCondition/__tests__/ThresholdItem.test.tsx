@@ -444,7 +444,10 @@ describe('ThresholdItem', () => {
 
 			const denied = await option(TEST_CONSTANTS.CHANNEL_2);
 			expect(denied).toHaveAttribute('aria-disabled', 'true');
-			expect(denied.title).toContain(formatPermission(attach));
+			expect(denied).toHaveAttribute(
+				'aria-description',
+				expect.stringContaining(formatPermission(attach)),
+			);
 			await expect(option(TEST_CONSTANTS.CHANNEL_3)).resolves.toHaveAttribute(
 				'aria-disabled',
 				'false',
@@ -463,7 +466,10 @@ describe('ThresholdItem', () => {
 
 			const saved = await option(TEST_CONSTANTS.CHANNEL_1);
 			expect(saved).toHaveAttribute('aria-disabled', 'true');
-			expect(saved.title).toContain(formatPermission(detach));
+			expect(saved).toHaveAttribute(
+				'aria-description',
+				expect.stringContaining(formatPermission(detach)),
+			);
 		});
 
 		describe('with several thresholds', () => {
@@ -532,7 +538,7 @@ describe('ThresholdItem', () => {
 
 			const pending = await option(TEST_CONSTANTS.CHANNEL_2);
 			expect(pending).toHaveAttribute('aria-disabled', 'true');
-			expect(pending).toHaveAttribute('title', 'Checking permissions');
+			expect(pending).toHaveAttribute('aria-description', 'Checking permissions');
 		});
 
 		it('offers to create a channel with notification-channel:create', async () => {
