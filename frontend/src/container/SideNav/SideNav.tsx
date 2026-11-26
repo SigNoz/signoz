@@ -37,7 +37,6 @@ import { GlobalShortcuts } from 'constants/shortcuts/globalShortcuts';
 import { USER_PREFERENCES } from 'constants/userPreferences';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useIsAIAssistantEnabled } from 'hooks/useIsAIAssistantEnabled';
 import { useNotifications } from 'hooks/useNotifications';
@@ -615,14 +614,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		changelog,
 	]);
 
-	const [isCurrentOrgSettings] = useComponentPermission(
-		['current_org_settings'],
-		user.role,
-	);
-
-	const settingsRoute = isCurrentOrgSettings
-		? ROUTES.ORG_SETTINGS
-		: ROUTES.SETTINGS;
+	const settingsRoute = ROUTES.ORG_SETTINGS;
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
