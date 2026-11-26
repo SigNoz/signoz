@@ -42,6 +42,12 @@ jest.mock(
 	}),
 );
 jest.mock(
+	'pages/DashboardPage/DashboardContainer/hooks/useDashboardEditContext',
+	() => ({
+		useDashboardEditContext: (): unknown => ({ isEditable: mockIsEditable }),
+	}),
+);
+jest.mock(
 	'pages/DashboardPage/DashboardContainer/hooks/useOptimisticPatch',
 	() => ({
 		useOptimisticPatch: (): unknown => ({ patchAsync: mockPatchAsync }),
