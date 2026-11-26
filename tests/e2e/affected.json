@@ -1,0 +1,138 @@
+{
+	"alerts": [
+		"frontend/src/pages/AlertList",
+		"frontend/src/pages/CreateAlert",
+		"frontend/src/pages/EditRules",
+		"frontend/src/pages/LogsModulePage",
+		"frontend/src/pages/TracesModulePage"
+	],
+	"api-monitoring": [
+		"frontend/src/pages/ApiMonitoring"
+	],
+	"app-shell": [
+		"frontend/src/pages/DashboardsListPage",
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/Services",
+		"frontend/src/pages/Settings"
+	],
+	"auth": [
+		"frontend/src/pages/ForgotPassword",
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/Login",
+		"frontend/src/pages/ResetPassword",
+		"frontend/src/pages/SignUp"
+	],
+	"dashboards": [
+		"frontend/src/pages/DashboardsListPage",
+		"frontend/src/pages/DashboardPage",
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/LogsModulePage"
+	],
+	"exceptions": [
+		"frontend/src/pages/AllErrors",
+		"frontend/src/pages/ErrorDetails",
+		"frontend/src/pages/TraceDetailsV3"
+	],
+	"home": [
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/LogsModulePage"
+	],
+	"infra-monitoring": [
+		"frontend/src/pages/InfrastructureMonitoring"
+	],
+	"integrations": [
+		"frontend/src/pages/IntegrationsDetailsPage",
+		"frontend/src/pages/IntegrationsModulePage"
+	],
+	"llm-o11y": [
+		"frontend/src/pages/LLMObservability"
+	],
+	"logs-explorer": [
+		"frontend/src/pages/LogsModulePage",
+		"frontend/src/pages/LogsSettings"
+	],
+	"logs-pipelines": [
+		"frontend/src/pages/LogsModulePage"
+	],
+	"messaging-queues": [
+		"frontend/src/pages/Celery",
+		"frontend/src/pages/MessagingQueues"
+	],
+	"meter": [
+		"frontend/src/pages/MeterExplorer"
+	],
+	"metrics-explorer": [
+		"frontend/src/pages/DashboardsListPage",
+		"frontend/src/pages/MetricsExplorer"
+	],
+	"noz": [
+		"frontend/src/pages/AIAssistantPage",
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/LogsModulePage"
+	],
+	"onboarding": [
+		"frontend/src/pages/HomePage",
+		"frontend/src/pages/OnboardingPageV2",
+		"frontend/src/pages/OrgOnboarding",
+		"frontend/src/pages/Services"
+	],
+	"public-dashboard": [
+		"frontend/src/pages/DashboardPage",
+		"frontend/src/pages/PublicDashboard"
+	],
+	"query-builder": [
+		"frontend/src/pages/CreateAlert",
+		"frontend/src/pages/DashboardPage",
+		"frontend/src/pages/EditRules",
+		"frontend/src/pages/LogsModulePage",
+		"frontend/src/pages/MetricsExplorer",
+		"frontend/src/pages/TracesModulePage"
+	],
+	"quick-filters": [
+		"frontend/src/pages/LogsModulePage"
+	],
+	"routing": [],
+	"saved-views": [
+		"frontend/src/pages/LogsModulePage",
+		"frontend/src/pages/MeterExplorer",
+		"frontend/src/pages/MetricsExplorer",
+		"frontend/src/pages/TracesModulePage"
+	],
+	"service-map": [
+		"frontend/src/modules/Servicemap",
+		"frontend/src/pages/Services"
+	],
+	"services": [
+		"frontend/src/pages/MetricsApplication",
+		"frontend/src/pages/ServiceTopLevelOperations",
+		"frontend/src/pages/Services"
+	],
+	"settings": [
+		"frontend/src/pages/Settings"
+	],
+	"sso": [
+		"frontend/src/pages/Login",
+		"frontend/src/pages/Settings"
+	],
+	"trace-details": [
+		"frontend/src/pages/TraceDetailsV3"
+	],
+	"traces-explorer": [
+		"frontend/src/pages/TraceDetailsV3",
+		"frontend/src/pages/TracesModulePage"
+	],
+	"traces-funnels": [
+		"frontend/src/pages/TracesModulePage"
+	],
+	"@smoke": [
+		"frontend/src/modules/Usage",
+		"frontend/src/pages/ErrorBoundaryFallback",
+		"frontend/src/pages/License",
+		"frontend/src/pages/Status",
+		"frontend/src/pages/Support",
+		"frontend/src/pages/UnAuthorized",
+		"frontend/src/pages/WorkspaceAccessRestricted",
+		"frontend/src/pages/WorkspaceLocked",
+		"frontend/src/pages/WorkspaceSuspended"
+	]
+}
