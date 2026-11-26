@@ -588,7 +588,7 @@ service:
       exporters: [clickhouselogsexporter]
     traces:
       receivers: [otlp]
-      processors: [memory_limiter/traces, batch]
+      processors: [memory_limiter/traces, batch, memory_limiter/traces]
       exporters: [clickhouselogsexporter]
 `)
 	pipelines := []pipelinetypes.GettablePipeline{
@@ -625,7 +625,7 @@ service:
 		assert.NotContains(t, string(conf), "resourcedetection")
 	}
 	assert.Equal(t, []string{"memory_limiter", constants.LogsPPLPfx + "parse-nginx", "batch"}, processorNamesInOrder(t, processorsConfs["logs"]))
-	assert.Equal(t, []string{"memory_limiter/traces", "batch"}, processorNamesInOrder(t, processorsConfs["traces"]))
+	assert.Equal(t, []string{"memory_limiter/traces", "batch", "memory_limiter/traces"}, processorNamesInOrder(t, processorsConfs["traces"]))
 }
 
 func TestRecommendAgentConfigLogsProcessorsInOrderWithNormalizer(t *testing.T) {
@@ -700,12 +700,14 @@ service:
 
 func processorNamesInOrder(t *testing.T, conf []byte) []string {
 	t.Helper()
-	var root yaml.Node
-	require.NoError(t, yaml.Unmarshal(conf, &root))
-	require.Len(t, root.Content, 1)
+	var processors []map[string]any
+	require.NoError(t, yaml.Unmarshal(conf, &processors))
 	var names []string
-	for i := 0; i < len(root.Content[0].Content); i += 2 {
-		names = append(names, root.Content[0].Content[i].Value)
+	for _, processor := range processors {
+		require.Len(t, processor, 1)
+		for name := range processor {
+			names = append(names, name)
+		}
 	}
 	return names
 }
