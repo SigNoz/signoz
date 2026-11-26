@@ -237,13 +237,14 @@ function valueSetKey(value: SelectedVariableValue): string {
 	return list.map(String).sort().join('||');
 }
 
-/** True when two selections carry the same ALL flag and the same value set. */
+/** True when two selections carry the same ALL flag, value set and typed values. */
 export function areSelectionsEqual(
 	a: VariableSelection,
 	b: VariableSelection,
 ): boolean {
 	return (
 		!!a.allSelected === !!b.allSelected &&
-		valueSetKey(a.value) === valueSetKey(b.value)
+		valueSetKey(a.value) === valueSetKey(b.value) &&
+		valueSetKey(a.customValues ?? []) === valueSetKey(b.customValues ?? [])
 	);
 }
