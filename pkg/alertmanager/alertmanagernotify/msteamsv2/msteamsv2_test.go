@@ -462,6 +462,18 @@ func TestNotifyMessageSize(t *testing.T) {
 			expectedWarnLogs:  1,
 		},
 		{
+			name:              "OverLimit_HTMLCharacters_KeepsFittingPrefix",
+			text:              strings.Repeat("&", 6000),
+			expectedTruncated: true,
+			expectedWarnLogs:  1,
+		},
+		{
+			name:              "OverLimit_Backslashes_KeepsFittingPrefix",
+			text:              strings.Repeat(`C:\\Users\\x `, 4000),
+			expectedTruncated: true,
+			expectedWarnLogs:  1,
+		},
+		{
 			name:              "OverLimit_ManyRuleBodies_BlocksDropped",
 			text:              "unused channel text",
 			ruleBody:          "rule body for $alertname",
@@ -529,6 +541,9 @@ func TestNotifyMessageSize(t *testing.T) {
 			require.Len(t, body, 2)
 			assert.NotEmpty(t, body[1].Text)
 			assert.Equal(t, testCase.expectedTruncated, len(body[1].Text) < len(strings.TrimSpace(testCase.text)))
+			if testCase.expectedTruncated {
+				assert.Greater(t, len(received), maxMessageBytes-32)
+			}
 		})
 	}
 }

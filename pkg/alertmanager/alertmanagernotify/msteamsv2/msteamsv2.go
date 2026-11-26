@@ -164,8 +164,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		if longest < 0 {
 			break
 		}
-		text := bodyBlocks[longest].Text
-		text, _ = notify.TruncateInBytes(text, max(len(text)-(payload.Len()-maxMessageBytes), 0))
+		text := truncateToEncodedBytes(bodyBlocks[longest].Text, payload.Len()-maxMessageBytes)
 		if text == "" && longest > 0 {
 			bodyBlocks = slices.Delete(bodyBlocks, longest, longest+1)
 		} else {
@@ -357,6 +356,31 @@ func encodeMessage(bodyBlocks []Body, titleLink string) (*bytes.Buffer, error) {
 	}
 
 	return &payload, nil
+}
+
+// truncateToEncodedBytes cuts text until its JSON encoding is overflow bytes shorter, since escaping makes some characters longer than their raw bytes.
+func truncateToEncodedBytes(text string, overflow int) string {
+	budget := encodedLen(text) - overflow
+
+	low, high := 0, len(text)
+	for low < high {
+		mid := (low + high + 1) / 2
+		truncated, _ := notify.TruncateInBytes(text, mid)
+		if encodedLen(truncated) <= budget {
+			low = mid
+		} else {
+			high = mid - 1
+		}
+	}
+	truncated, _ := notify.TruncateInBytes(text, low)
+
+	return truncated
+}
+
+func encodedLen(text string) int {
+	encoded, _ := json.Marshal(text)
+
+	return len(encoded)
 }
 
 // indexLongestText returns -1 once no block has text left to trim; the title at index 0 goes last.
