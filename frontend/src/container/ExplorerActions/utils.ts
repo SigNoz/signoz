@@ -10,41 +10,57 @@ import { cloneDeep } from 'lodash-es';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+// The explorer page, not its DataSource: the AI explorer queries traces but logs its own events.
+export const ExplorerActionsSource = {
+	LOGS_EXPLORER: DataSource.LOGS,
+	TRACES_EXPLORER: DataSource.TRACES,
+	METRICS_EXPLORER: DataSource.METRICS,
+	AI_OBSERVABILITY: 'ai_observability',
+} as const;
+
+export type ExplorerActionsSource =
+	(typeof ExplorerActionsSource)[keyof typeof ExplorerActionsSource];
+
 export const EXPLORER_ACTION_EVENTS: Record<
-	DataSource,
+	ExplorerActionsSource,
 	{ createAlert: string; addToDashboard: string; exported: string }
 > = {
-	[DataSource.LOGS]: {
+	[ExplorerActionsSource.LOGS_EXPLORER]: {
 		createAlert: 'Logs Explorer: Create alert',
 		addToDashboard: 'Logs Explorer: Add to dashboard clicked',
 		exported: 'Logs Explorer: Add to dashboard successful',
 	},
-	[DataSource.TRACES]: {
+	[ExplorerActionsSource.TRACES_EXPLORER]: {
 		createAlert: 'Traces Explorer: Create alert',
 		addToDashboard: 'Traces Explorer: Add to dashboard clicked',
 		exported: 'Traces Explorer: Add to dashboard successful',
 	},
-	[DataSource.METRICS]: {
+	[ExplorerActionsSource.METRICS_EXPLORER]: {
 		createAlert: MetricsExplorerEvents.AddToAlertClicked,
 		addToDashboard: MetricsExplorerEvents.AddToDashboardClicked,
 		exported: MetricsExplorerEvents.AddToDashboardSuccessful,
 	},
+	[ExplorerActionsSource.AI_OBSERVABILITY]: {
+		createAlert: 'AI Observability Explorer: Create alert',
+		addToDashboard: 'AI Observability Explorer: Add to dashboard clicked',
+		exported: 'AI Observability Explorer: Add to dashboard successful',
+	},
 };
 
 export function getExplorerActionEventPayload({
-	sourcepage,
+	sourcePage,
 	panelType,
 	isOneChartPerQuery,
 }: {
-	sourcepage: DataSource;
+	sourcePage: ExplorerActionsSource;
 	panelType: PANEL_TYPES | null;
 	isOneChartPerQuery: boolean;
 }): Record<string, unknown> {
-	if (sourcepage !== DataSource.METRICS) {
-		return { sourcepage, panelType };
+	if (sourcePage !== ExplorerActionsSource.METRICS_EXPLORER) {
+		return { sourcepage: sourcePage, panelType };
 	}
 	return {
-		sourcepage,
+		sourcepage: sourcePage,
 		panelType,
 		[MetricsExplorerEventKeys.Tab]: 'explorer',
 		[MetricsExplorerEventKeys.OneChartPerQueryEnabled]: isOneChartPerQuery,

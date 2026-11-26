@@ -14,6 +14,7 @@ import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import CreateAlertButton from '../CreateAlertButton';
+import { ExplorerActionsSource } from '../utils';
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
 	useQueryBuilder: jest.fn(),
@@ -71,11 +72,11 @@ function setPanelType(panelType: PANEL_TYPES): void {
 
 async function clickCreateAlert(
 	query: Query | null,
-	sourcepage: DataSource,
+	sourcePage: ExplorerActionsSource,
 	panelType: PANEL_TYPES,
 ): Promise<void> {
 	setPanelType(panelType);
-	render(<CreateAlertButton query={query} sourcepage={sourcepage} />);
+	render(<CreateAlertButton query={query} sourcePage={sourcePage} />);
 	await userEvent.setup().click(screen.getByTestId('explorer-create-alert'));
 }
 
@@ -86,7 +87,11 @@ describe('CreateAlertButton', () => {
 	});
 
 	it('is disabled and does nothing without a query', async () => {
-		await clickCreateAlert(null, DataSource.LOGS, PANEL_TYPES.LIST);
+		await clickCreateAlert(
+			null,
+			ExplorerActionsSource.LOGS_EXPLORER,
+			PANEL_TYPES.LIST,
+		);
 
 		expect(screen.getByTestId('explorer-create-alert')).toHaveAttribute(
 			'aria-disabled',
@@ -98,10 +103,14 @@ describe('CreateAlertButton', () => {
 	it("logs the explorer's own create alert event", async () => {
 		const query = stagedQuery(DataSource.TRACES, StringOperators.COUNT);
 
-		await clickCreateAlert(query, DataSource.TRACES, PANEL_TYPES.TIME_SERIES);
+		await clickCreateAlert(
+			query,
+			ExplorerActionsSource.TRACES_EXPLORER,
+			PANEL_TYPES.TIME_SERIES,
+		);
 
 		expect(mockedLogEvent).toHaveBeenCalledWith('Traces Explorer: Create alert', {
-			sourcepage: DataSource.TRACES,
+			sourcepage: ExplorerActionsSource.TRACES_EXPLORER,
 			panelType: PANEL_TYPES.TIME_SERIES,
 		});
 	});
@@ -111,7 +120,7 @@ describe('CreateAlertButton', () => {
 		render(
 			<CreateAlertButton
 				query={stagedQuery(DataSource.METRICS, StringOperators.COUNT)}
-				sourcepage={DataSource.METRICS}
+				sourcePage={ExplorerActionsSource.METRICS_EXPLORER}
 				isOneChartPerQuery
 			/>,
 		);
@@ -123,7 +132,7 @@ describe('CreateAlertButton', () => {
 		expect(mockedLogEvent).toHaveBeenCalledWith(
 			'Metrics Explorer: Add to alert clicked',
 			{
-				sourcepage: DataSource.METRICS,
+				sourcepage: ExplorerActionsSource.METRICS_EXPLORER,
 				panelType: PANEL_TYPES.TIME_SERIES,
 				tab: 'explorer',
 				oneChartPerQueryEnabled: true,
@@ -146,7 +155,11 @@ describe('CreateAlertButton', () => {
 				PANEL_TYPES.LIST,
 			) as Query;
 
-			await clickCreateAlert(exportQuery, DataSource.LOGS, PANEL_TYPES.LIST);
+			await clickCreateAlert(
+				exportQuery,
+				ExplorerActionsSource.LOGS_EXPLORER,
+				PANEL_TYPES.LIST,
+			);
 
 			const [queryData] = pushedQuery().builder.queryData;
 			expect(queryData.aggregateOperator).toBe(StringOperators.COUNT);
@@ -165,7 +178,7 @@ describe('CreateAlertButton', () => {
 
 			await clickCreateAlert(
 				exportQuery,
-				DataSource.LOGS,
+				ExplorerActionsSource.LOGS_EXPLORER,
 				PANEL_TYPES.TIME_SERIES,
 			);
 
@@ -180,7 +193,11 @@ describe('CreateAlertButton', () => {
 				PANEL_TYPES.TABLE,
 			) as Query;
 
-			await clickCreateAlert(exportQuery, DataSource.LOGS, PANEL_TYPES.TABLE);
+			await clickCreateAlert(
+				exportQuery,
+				ExplorerActionsSource.LOGS_EXPLORER,
+				PANEL_TYPES.TABLE,
+			);
 
 			expect(pushedQuery().builder).toStrictEqual(tableStaged.builder);
 		});
@@ -194,7 +211,11 @@ describe('CreateAlertButton', () => {
 			async (panelType) => {
 				const exportQuery = getTracesQueryByPanelType(staged, panelType);
 
-				await clickCreateAlert(exportQuery, DataSource.TRACES, panelType);
+				await clickCreateAlert(
+					exportQuery,
+					ExplorerActionsSource.TRACES_EXPLORER,
+					panelType,
+				);
 
 				const [queryData] = pushedQuery().builder.queryData;
 				expect(queryData.aggregateOperator).toBe(StringOperators.COUNT);
@@ -211,7 +232,11 @@ describe('CreateAlertButton', () => {
 				expect(staged.builder.queryData[0].orderBy).toStrictEqual(ORDER_BY);
 				const exportQuery = getTracesQueryByPanelType(staged, panelType);
 
-				await clickCreateAlert(exportQuery, DataSource.TRACES, panelType);
+				await clickCreateAlert(
+					exportQuery,
+					ExplorerActionsSource.TRACES_EXPLORER,
+					panelType,
+				);
 
 				expect(pushedQuery().builder.queryData[0].orderBy).toStrictEqual([]);
 			},
@@ -223,7 +248,11 @@ describe('CreateAlertButton', () => {
 				const aggStaged = stagedQuery(DataSource.TRACES, StringOperators.COUNT);
 				const exportQuery = getTracesQueryByPanelType(aggStaged, panelType);
 
-				await clickCreateAlert(exportQuery, DataSource.TRACES, panelType);
+				await clickCreateAlert(
+					exportQuery,
+					ExplorerActionsSource.TRACES_EXPLORER,
+					panelType,
+				);
 
 				expect(pushedQuery().builder).toStrictEqual(aggStaged.builder);
 			},
@@ -233,7 +262,11 @@ describe('CreateAlertButton', () => {
 	it('metrics: the chart query as is', async () => {
 		const query = stagedQuery(DataSource.METRICS, StringOperators.COUNT);
 
-		await clickCreateAlert(query, DataSource.METRICS, PANEL_TYPES.TIME_SERIES);
+		await clickCreateAlert(
+			query,
+			ExplorerActionsSource.METRICS_EXPLORER,
+			PANEL_TYPES.TIME_SERIES,
+		);
 
 		expect(pushedQuery().builder).toStrictEqual(query.builder);
 	});
