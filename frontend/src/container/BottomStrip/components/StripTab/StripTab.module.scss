@@ -1,0 +1,43 @@
+// `--strip-tab-min-width` lets a container tune how far tabs shrink.
+.stripTab {
+	position: relative;
+	display: flex;
+	align-items: center;
+	flex: 0 1 auto;
+	min-width: var(--strip-tab-min-width, var(--spacing-32));
+	height: 24px;
+
+	&:hover,
+	&:focus-within,
+	&.active {
+		background: var(--l3-background-hover);
+
+		.close {
+			visibility: visible;
+		}
+	}
+}
+
+.open {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+// Over the label's end on a fade, hidden rather than removed so the label never reflows.
+.close {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	width: 37px;
+	height: 100%;
+	background: linear-gradient(
+		to left,
+		var(--l3-background-hover) 66%,
+		transparent
+	);
+	visibility: hidden;
+}

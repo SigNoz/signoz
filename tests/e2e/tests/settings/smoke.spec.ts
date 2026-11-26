@@ -139,10 +139,10 @@ test.describe('settings — smoke as a viewer', () => {
 				'members',
 				'roles',
 				'service-accounts',
+				'sso',
 				'keyboard-shortcuts',
 			]),
 		);
-		expect(keys).not.toContain('sso');
 	});
 
 	test('TC-12 a viewer on /settings/members gets the page without the list or invite', async ({

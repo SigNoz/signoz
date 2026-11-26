@@ -18,7 +18,7 @@
 import fs from 'fs';
 import type { Page } from '@playwright/test';
 
-import { postToSeeder } from '../telemetry';
+import { postToSeeder, seedLogs } from '../telemetry';
 
 import { ENTITIES, entityByKey, type EntityDef } from './entities';
 import {
@@ -269,6 +269,45 @@ export async function seedDataset(
 	const rows = rebaseToNow(readRows(dataset));
 	await postMetrics(page, rows);
 	return factsFor(dataset, rows);
+}
+
+const ENTITY_LOG_STEP_MS = 5_000;
+
+/**
+ * Seed `count` logs under `name`'s resource labels in `dataset`, so the
+ * drawer's Logs tab lists them. Bodies start with `marker` and come back newest
+ * first, the order the tab renders them.
+ */
+export async function seedEntityLogs(
+	page: Page,
+	dataset: DatasetKey,
+	entity: EntityDef,
+	name: string,
+	marker: string,
+	count = 3,
+): Promise<string[]> {
+	const labels = readRows(dataset).find(
+		(row) => row.labels?.[entity.nameColumnId] === name,
+	)?.labels;
+	if (!labels) {
+		throw new Error(`seedEntityLogs: ${name} is not in ${dataset}`);
+	}
+	const resources = Object.fromEntries(
+		Object.entries(labels).filter(
+			([, value]) => value !== '' && value !== START_TIME_PLACEHOLDER,
+		),
+	);
+	const now = Date.now();
+	const bodies = Array.from({ length: count }, (_, i) => `${marker} log-${i}`);
+	await seedLogs(
+		page.request,
+		bodies.map((body, i) => ({
+			timestamp: new Date(now - (count - i) * ENTITY_LOG_STEP_MS).toISOString(),
+			body,
+			resources,
+		})),
+	);
+	return [...bodies].reverse();
 }
 
 export interface SeedGroupedOptions {

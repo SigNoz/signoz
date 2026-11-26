@@ -3,15 +3,15 @@ export interface Position {
 	y: number;
 }
 
-export interface FloatingRect extends Position {
+export interface Rect extends Position {
 	width: number;
 	height: number;
 }
 
-/** Something on screen the panel slides out of the way of. */
-export interface FloatingObstacle {
+/** Something on screen that panels and popovers slide out of the way of. */
+export interface Obstacle {
 	/** Viewport box while on screen, null otherwise. */
-	getRect: () => FloatingRect | null;
+	getRect: () => Rect | null;
 	/** Calls `onChange` whenever the box shows, hides or moves; returns the unsubscribe. */
 	subscribe: (onChange: () => void) => () => void;
 }

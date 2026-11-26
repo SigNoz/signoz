@@ -3,6 +3,7 @@ import { MessageContext } from 'api/ai-assistant/chat';
 import { useAIAssistantStore } from 'container/AIAssistant/store/useAIAssistantStore';
 import { VariantContext } from 'container/AIAssistant/VariantContext';
 import { TestRouter } from 'tests/router';
+import { screen } from 'tests/test-utils';
 
 const CHIP_ID = 'recent-errors';
 const CHIP_TEXT = 'Show me recent errors';
@@ -81,11 +82,13 @@ jest.mock('components/DotGrid/DotGrid', () => ({
 		<>
 			<button
 				type="button"
+				aria-label="Start Snake"
 				data-testid="start-snake"
 				onClick={(): void => onGameChange?.(true)}
 			/>
 			<button
 				type="button"
+				aria-label="End Snake"
 				data-testid="end-snake"
 				onClick={(): void => onGameChange?.(false)}
 			/>
@@ -151,7 +154,7 @@ describe('ConversationView — empty-state chip context', () => {
 			},
 			streams: {},
 			activeConversationId: CONVERSATION_ID,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 			sendMessage,
 		} as unknown as Partial<ReturnType<typeof useAIAssistantStore.getState>>);
 	});
@@ -177,6 +180,37 @@ describe('ConversationView — empty-state chip context', () => {
 
 		expect(sendMessage).toHaveBeenCalledTimes(1);
 		expect(sendMessage).toHaveBeenCalledWith(CHIP_TEXT, undefined, undefined);
+	});
+});
+
+describe('ConversationView — loading', () => {
+	beforeEach(() => {
+		useAIAssistantStore.setState({
+			conversations: {
+				[CONVERSATION_ID]: {
+					id: CONVERSATION_ID,
+					messages: [],
+					createdAt: 1,
+					updatedAt: 1,
+				},
+			},
+			streams: {},
+			activeConversationId: CONVERSATION_ID,
+		});
+	});
+
+	it('shows the skeleton while its own chat loads', () => {
+		useAIAssistantStore.setState({ loadingThreadIds: [CONVERSATION_ID] });
+
+		expect(renderView('panel').getByTestId('skeleton')).toBeInTheDocument();
+	});
+
+	it('skips the skeleton while only another chat loads', () => {
+		useAIAssistantStore.setState({ loadingThreadIds: ['another-thread'] });
+
+		renderView('panel');
+
+		expect(screen.queryByTestId('skeleton')).not.toBeInTheDocument();
 	});
 });
 
@@ -210,7 +244,7 @@ describe('ConversationView — reply start time', () => {
 				},
 			},
 			activeConversationId: CONVERSATION_ID,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 		});
 
 		const { getByTestId } = renderView('panel');
@@ -235,7 +269,7 @@ describe('ConversationView — Snake on the empty state', () => {
 			},
 			streams: {},
 			activeConversationId: CONVERSATION_ID,
-			isLoadingThread: false,
+			loadingThreadIds: [],
 		});
 	});
 

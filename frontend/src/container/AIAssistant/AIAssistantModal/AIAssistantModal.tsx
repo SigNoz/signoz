@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@signozhq/ui/button';
 import { Typography } from '@signozhq/ui/typography';
@@ -6,17 +6,13 @@ import { navigate } from 'lib/router/navigation';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Tooltip } from '@signozhq/ui/tooltip';
 import ROUTES from 'constants/routes';
-import { History, Maximize2, Minus, Plus, X } from '@signozhq/icons';
+import { Maximize2, Minus, X } from '@signozhq/icons';
 
 import logEvent from 'api/common/logEvent';
 
-import HistorySidebar from '../components/ConversationsList';
 import ConversationView from '../ConversationView';
 import { AIAssistantEvents, AIAssistantOpenSource } from '../events';
-import {
-	normalizePage,
-	useAIAssistantAnalyticsContext,
-} from '../hooks/useAIAssistantAnalyticsContext';
+import { normalizePage } from '../hooks/useAIAssistantAnalyticsContext';
 import { useActiveChatTitle } from '../hooks/useActiveChatTitle';
 import { useAIAssistantStore } from '../store/useAIAssistantStore';
 import { VariantContext } from '../VariantContext';
@@ -34,7 +30,6 @@ import styles from './AIAssistantModal.module.scss';
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function AIAssistantModal(): JSX.Element | null {
 	const { pathname, search } = useAppLocation();
-	const [showHistory, setShowHistory] = useState(false);
 
 	const isOpen = useAIAssistantStore((s) => s.isModalOpen);
 	const activeConversationId = useAIAssistantStore(
@@ -47,13 +42,11 @@ export default function AIAssistantModal(): JSX.Element | null {
 	const startNewConversation = useAIAssistantStore(
 		(s) => s.startNewConversation,
 	);
-	const analyticsCtx = useAIAssistantAnalyticsContext();
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent): void => {
 			// Cmd+J (Mac) / Ctrl+J (Win/Linux) — toggle modal. Opening
-			// always starts a brand-new conversation; resuming earlier
-			// threads is done via the in-modal history sidebar.
+			// always starts a brand-new conversation.
 			if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
 				// Don't intercept Cmd+J inside input/textarea — those are for the user
 				const tag = (e.target as HTMLElement).tagName;
@@ -66,7 +59,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 					closeModal();
 				} else {
 					startNewConversation();
-					setShowHistory(false);
 					void logEvent(AIAssistantEvents.Opened, {
 						source: AIAssistantOpenSource.Shortcut,
 						currentPage: normalizePage(pathname),
@@ -101,29 +93,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 			{ state: { fromInApp: true, returnTo: `${pathname}${search}` } },
 		);
 	}, [activeConversationId, closeModal, pathname, search]);
-
-	const handleNew = useCallback(() => {
-		void logEvent(AIAssistantEvents.NewChatClicked, {
-			...analyticsCtx,
-			// useAIAssistantAnalyticsContext() runs above this component's
-			// VariantContext.Provider, so the hook reports the default 'page'
-			// mode. Override here: the modal collapses to 'sidepane' in our
-			// taxonomy alongside the drawer.
-			mode: 'sidepane',
-			source: 'header',
-		});
-		startNewConversation();
-		setShowHistory(false);
-	}, [startNewConversation, analyticsCtx]);
-
-	const handleHistorySelect = useCallback(() => {
-		setShowHistory(false);
-	}, []);
-
-	const handleMinimize = useCallback(() => {
-		minimizeModal();
-		setShowHistory(false);
-	}, [minimizeModal]);
 
 	const handleBackdropClick = useCallback(
 		(e: React.MouseEvent<HTMLDivElement>) => {
@@ -173,33 +142,6 @@ export default function AIAssistantModal(): JSX.Element | null {
 						</div>
 
 						<div className={styles.actions}>
-							<Tooltip title={showHistory ? 'Back to chat' : 'Conversations'}>
-								<Button
-									variant="ghost"
-									size="sm"
-									icon
-									color="secondary"
-									onClick={(): void => setShowHistory((v) => !v)}
-									aria-label="Toggle conversations"
-									aria-pressed={showHistory}
-								>
-									<History size={14} />
-								</Button>
-							</Tooltip>
-
-							<Tooltip title="New conversation">
-								<Button
-									variant="ghost"
-									size="sm"
-									icon
-									color="secondary"
-									onClick={handleNew}
-									aria-label="New conversation"
-								>
-									<Plus size={14} />
-								</Button>
-							</Tooltip>
-
 							<Tooltip title="Open full screen">
 								<Button
 									disabledTooltip="Start a conversation first"
@@ -221,7 +163,7 @@ export default function AIAssistantModal(): JSX.Element | null {
 									size="sm"
 									icon
 									color="secondary"
-									onClick={handleMinimize}
+									onClick={minimizeModal}
 									aria-label="Minimize to side panel"
 								>
 									<Minus size={14} />
@@ -245,12 +187,8 @@ export default function AIAssistantModal(): JSX.Element | null {
 
 					{/* Body */}
 					<div className={styles.body}>
-						{showHistory ? (
-							<HistorySidebar onSelect={handleHistorySelect} />
-						) : (
-							activeConversationId && (
-								<ConversationView conversationId={activeConversationId} />
-							)
+						{activeConversationId && (
+							<ConversationView conversationId={activeConversationId} />
 						)}
 					</div>
 				</div>

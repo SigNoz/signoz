@@ -39,6 +39,7 @@ interface Props {
 	saveTestIdPrefix?: string;
 	renameTestIdPrefix?: string;
 	customSectionLabel?: string;
+	viewNamePlaceholder?: string;
 	deleteDescription?: string;
 	/** Wraps the rail body, e.g. in an authz guard. */
 	guard?: (content: ReactElement) => ReactElement;
@@ -67,6 +68,7 @@ function ViewsRail({
 	saveTestIdPrefix = 'save-view',
 	renameTestIdPrefix = 'rename-view',
 	customSectionLabel = 'My views',
+	viewNamePlaceholder = 'e.g. Production',
 	deleteDescription = 'This removes the saved view.',
 	guard,
 	onViewSaved,
@@ -287,6 +289,7 @@ function ViewsRail({
 				title="Save as view"
 				description="Save the current filters as a view you can return to."
 				confirmLabel="Save view"
+				placeholder={viewNamePlaceholder}
 				testIdPrefix={saveTestIdPrefix}
 			/>
 			<ViewNameDialog
@@ -297,6 +300,7 @@ function ViewsRail({
 				description="The view keeps its filters under the new name."
 				confirmLabel="Rename"
 				initialName={renameTarget?.label}
+				placeholder={viewNamePlaceholder}
 				testIdPrefix={renameTestIdPrefix}
 			/>
 			{contextHolder}

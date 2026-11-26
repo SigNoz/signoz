@@ -163,6 +163,22 @@ describe('ViewsRail', () => {
 		);
 	});
 
+	it('shows the list placeholder in the save and rename dialogs', async () => {
+		const user = userEvent.setup();
+		renderRail({ viewNamePlaceholder: 'e.g. Prod things' });
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-save-trigger`));
+		await expect(
+			screen.findByTestId('save-view-name-field'),
+		).resolves.toHaveAttribute('placeholder', 'e.g. Prod things');
+		await user.click(screen.getByTestId('save-view-cancel'));
+
+		await user.click(screen.getByTestId(`${PREFIX}-view-rename-view-1`));
+		await expect(
+			screen.findByTestId('rename-view-name-field'),
+		).resolves.toHaveAttribute('placeholder', 'e.g. Prod things');
+	});
+
 	it('opens the save dialog empty again after a cancel', async () => {
 		const user = userEvent.setup();
 		const props = renderRail({ isModified: true });
