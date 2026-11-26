@@ -22,6 +22,7 @@ import {
 	pickRowAction,
 	requestTemplate,
 	retryMigration,
+	showsCreatedByTag,
 	showsWorkspaceEmpty,
 	TOAST_TIMEOUT,
 	uploadDashboardJson,
@@ -90,7 +91,8 @@ export const removeCreatedByTag = async ({
 	if (
 		!canList(args) ||
 		args.dataState !== 'loaded' ||
-		showsWorkspaceEmpty(args)
+		showsWorkspaceEmpty(args) ||
+		!showsCreatedByTag(args)
 	) {
 		return;
 	}

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import MultiSelectFilter from 'components/ListFilter/FilterZone/MultiSelectFilter';
 
 import { SERVICE_ACCOUNTS_STATUS_OPTIONS } from './list.config';
@@ -19,6 +20,25 @@ function ServiceAccountStatusFilter({
 	onApplyDraft,
 	setDraft,
 }: Props): JSX.Element {
+	const handleChange = useCallback(
+		(statuses: string[]): void => setDraft(withStatuses(draft, statuses)),
+		[draft, setDraft],
+	);
+
+	const handleCommit = useCallback(
+		(statuses: string[]): void => onApplyDraft(withStatuses(draft, statuses)),
+		[draft, onApplyDraft],
+	);
+
+	const handleDropdownVisibleChange = useCallback(
+		(isOpen: boolean): void => {
+			if (!isOpen) {
+				onApplyDraft(draft);
+			}
+		},
+		[draft, onApplyDraft],
+	);
+
 	return (
 		<MultiSelectFilter
 			value={statusesOfQuery(draft)}
@@ -26,13 +46,9 @@ function ServiceAccountStatusFilter({
 			placeholder="Status"
 			testId="sa-filter-status"
 			disabled={disabled}
-			onChange={(statuses): void => setDraft(withStatuses(draft, statuses))}
-			onCommit={(statuses): void => onApplyDraft(withStatuses(draft, statuses))}
-			onDropdownVisibleChange={(open): void => {
-				if (!open) {
-					onApplyDraft(draft);
-				}
-			}}
+			onChange={handleChange}
+			onCommit={handleCommit}
+			onDropdownVisibleChange={handleDropdownVisibleChange}
 		/>
 	);
 }

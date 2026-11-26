@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ConfigProvider, Select } from 'antd';
 import { Checkbox } from '@signozhq/ui/checkbox';
 import cx from 'classnames';
@@ -23,7 +23,7 @@ interface Props {
 	onChange: (values: string[]) => void;
 	// A change made with the dropdown closed (a tag's ×, the clear icon) has no
 	// close to run on, so it is committed here instead of staged via onChange.
-	onCommit?: (values: string[]) => void;
+	onCommit: (values: string[]) => void;
 	onDropdownVisibleChange?: (open: boolean) => void;
 	disabled?: boolean;
 }
@@ -38,20 +38,26 @@ function MultiSelectFilter({
 	onDropdownVisibleChange,
 	disabled = false,
 }: Props): JSX.Element {
-	const [open, setOpen] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 
-	const handleChange = (next: string[]): void => {
-		if (!open && onCommit) {
-			onCommit(next);
-			return;
-		}
-		onChange(next);
-	};
+	const handleChange = useCallback(
+		(next: string[]): void => {
+			if (!isOpen) {
+				onCommit(next);
+				return;
+			}
+			onChange(next);
+		},
+		[isOpen, onChange, onCommit],
+	);
 
-	const handleDropdownVisibleChange = (nextOpen: boolean): void => {
-		setOpen(nextOpen);
-		onDropdownVisibleChange?.(nextOpen);
-	};
+	const handleDropdownVisibleChange = useCallback(
+		(nextOpen: boolean): void => {
+			setIsOpen(nextOpen);
+			onDropdownVisibleChange?.(nextOpen);
+		},
+		[onDropdownVisibleChange],
+	);
 
 	return (
 		<ConfigProvider theme={CHECKBOX_SELECT_THEME}>
