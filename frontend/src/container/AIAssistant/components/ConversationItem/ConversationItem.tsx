@@ -48,6 +48,16 @@ export default function ConversationItem({
 	const isReplying = useAIAssistantStore((s) =>
 		Boolean(s.streams[conversation.id]?.isStreaming),
 	);
+	const hasUnreadReply = useAIAssistantStore((s) =>
+		s.unreadReplyIds.includes(conversation.id),
+	);
+	// Replying wins: the dot turns blue once that reply lands unseen.
+	let dotState: 'replying' | 'unread' | undefined;
+	if (isReplying) {
+		dotState = 'replying';
+	} else if (hasUnreadReply) {
+		dotState = 'unread';
+	}
 	const displayTitle = conversation.title ?? 'New conversation';
 	const ts = conversation.updatedAt ?? conversation.createdAt;
 
@@ -146,13 +156,23 @@ export default function ConversationItem({
 			onClick={(): void => onSelect(conversation.id)}
 			role="button"
 			tabIndex={0}
+			aria-label={
+				dotState === 'unread' ? `Noz replied in ${displayTitle}` : undefined
+			}
 			onKeyDown={(e): void => {
 				if (e.key === 'Enter' || e.key === ' ') {
 					onSelect(conversation.id);
 				}
 			}}
 		>
-			<span className={cx(styles.dot, { [styles.isReplying]: isReplying })} />
+			<span
+				className={cx(styles.dot, {
+					[styles.isReplying]: dotState === 'replying',
+					[styles.hasUnreadReply]: dotState === 'unread',
+				})}
+				data-state={dotState}
+				data-testid={`ai-conversation-item-${conversation.id}-dot`}
+			/>
 
 			<div className={styles.body}>
 				{isEditing ? (

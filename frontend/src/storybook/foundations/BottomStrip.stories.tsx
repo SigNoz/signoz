@@ -4,6 +4,7 @@ import ROUTES from 'constants/routes';
 import type { GlobalMockArgs } from '../globals';
 import {
 	openAddCardModal,
+	openNozChatTabs,
 	openNozHistory,
 	openNozPanel,
 	raiseToast,
@@ -16,9 +17,9 @@ function EmptyPage(): JSX.Element {
 
 /**
  * The strip along the foot of the shell: what the page puts on the left, the
- * build version when it puts nothing, and the shell's own Ask Noz, Noz history
- * and Support on the right. Support follows the chat support the workspace has,
- * the way the floating bubble it replaces did.
+ * build version when it puts nothing, and the shell's own Noz chat tabs, Ask
+ * Noz, Noz history and Support on the right. Support follows the chat support
+ * the workspace has, the way the floating bubble it replaces did.
  *
  * Route: every page inside the app shell; these stories use `/home`.
  */
@@ -59,11 +60,17 @@ export const AddCardModal: Story = {
 };
 
 /**
- * The pulsing dot beside Ask Noz while conversations wait on an approval. The
- * top nav's Noz entry carries the same count.
+ * A dot on the tab of a chat waiting on an approval, beside one with an unseen
+ * reply. The top nav's Noz entry counts the waiting chats.
  */
 export const NozAwaitingYou: Story = {
-	args: { noz: true, nozAwaiting: 2, support: 'pylon' },
+	args: {
+		noz: true,
+		nozChats: 3,
+		nozAwaiting: 1,
+		nozUnread: 1,
+		support: 'pylon',
+	},
 };
 
 /** The Noz chat opened from Ask Noz, floating above the strip; its header drags it. */
@@ -81,15 +88,29 @@ export const NozHistory: Story = {
 	play: openNozHistory,
 };
 
+/**
+ * Open Noz chats as tabs beside Ask Noz, newest last; a dot marks a reply the
+ * user has not seen yet.
+ */
+export const NozChats: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+};
+
+/**
+ * Tabs opened in the Noz panel, the newest then the one before it: the open one
+ * stays highlighted, the newest's dot clears, and each chat opens on its end.
+ */
+export const NozChatOpen: Story = {
+	args: { noz: true, nozChats: 4, nozUnread: 1, support: 'pylon' },
+	play: openNozChatTabs,
+};
+
 /** Every tooltip the strip carries, held open. */
 export const Tooltips: Story = {
 	args: { noz: true, support: 'pylon', tooltipsOpen: true },
 };
 
-/**
- * A toast above the strip. The toaster pins itself to the foot of the viewport,
- * so without an offset it lands on top of Ask Noz and Support.
- */
+/** A toast in the top-right corner, where the toaster puts it, clear of the strip. */
 export const WithToast: Story = {
 	args: { noz: true, support: 'pylon' },
 	play: raiseToast,
