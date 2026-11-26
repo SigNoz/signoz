@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { AuthZSelectOption } from 'lib/authz/components/AuthZSelect/types';
 import {
 	buildNotificationChannelAttachPermission,
 	buildNotificationChannelDetachPermission,
@@ -8,16 +9,6 @@ import type { LinkPermissions } from 'lib/authz/hooks/useLinkPickerAccess/types'
 import { useLinkPickerAccess } from 'lib/authz/hooks/useLinkPickerAccess/useLinkPickerAccess';
 
 import type { ChannelOption } from './useChannelOptions';
-
-export interface ChannelPickerOption {
-	value: string;
-	label: string;
-	disabled: boolean;
-	/** The denial, that the check is still running, or the channel's name. */
-	title: string;
-	'aria-disabled': boolean;
-	'data-testid': string;
-}
 
 interface UseChannelPickerAccessArgs {
 	/** The `attach`/`detach` of the rule or policy being edited; absent when new. */
@@ -34,7 +25,7 @@ interface UseChannelPickerAccessArgs {
 }
 
 export interface UseChannelPickerAccessReturn {
-	options: ChannelPickerOption[];
+	options: AuthZSelectOption[];
 	/** Starts the `attach` checks on unsaved channels once the picker opens. */
 	onPickerVisibleChange: (open: boolean) => void;
 	/** Whether an owner check is denied; false while pending or failed. */
@@ -83,17 +74,12 @@ export function useChannelPickerAccess({
 
 	const options = useMemo(
 		() =>
-			channels.map((channel): ChannelPickerOption => {
-				const { disabled, reason } = getAccess(channel.id);
-				return {
-					value: channel.name,
-					label: channel.name,
-					disabled,
-					title: reason ?? channel.name,
-					'aria-disabled': disabled,
-					'data-testid': `${testIdPrefix}-${channel.id}`,
-				};
-			}),
+			channels.map((channel): AuthZSelectOption => ({
+				...getAccess(channel.id),
+				value: channel.name,
+				label: channel.name,
+				testId: `${testIdPrefix}-${channel.id}`,
+			})),
 		[channels, getAccess, testIdPrefix],
 	);
 

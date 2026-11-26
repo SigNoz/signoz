@@ -59,10 +59,14 @@ const channelOption = async (channelId: string): Promise<HTMLElement> => {
 	return screen.findByTestId(`routing-policy-channel-option-${channelId}`);
 };
 
-/** A pending option is disabled too, so a denial is read only once its title names it. */
+/** A pending option is disabled too, so a denial is read only once its description names it. */
 const expectOptionLocked = async (option: HTMLElement): Promise<void> => {
 	await waitFor(
-		() => expect(option.title).toMatch(/is not authorized/),
+		() =>
+			expect(option).toHaveAttribute(
+				'aria-description',
+				expect.stringMatching(/is not authorized/),
+			),
 		untilLoaded,
 	);
 	await expect(option).toHaveAttribute('aria-disabled', 'true');

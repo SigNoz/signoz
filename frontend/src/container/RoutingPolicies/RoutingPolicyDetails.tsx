@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { Button, Form, Input, Modal, Select } from 'antd';
+import { Button, Form, Input, Modal } from 'antd';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
 import { Check, X } from '@signozhq/icons';
 import AuthZButton from 'lib/authz/components/AuthZButton/AuthZButton';
+import AuthZSelect from 'lib/authz/components/AuthZSelect/AuthZSelect';
 
 import { INITIAL_ROUTING_POLICY_DETAILS_FORM_STATE } from './constants';
 import {
@@ -183,11 +184,10 @@ function RoutingPolicyDetails({
 								},
 							]}
 						>
-							<Select
+							<AuthZSelect
 								options={channelOptions}
 								popupMatchSelectWidth={false}
 								onDropdownVisibleChange={onPickerVisibleChange}
-								mode="multiple"
 								placeholder="Select notification channels"
 								aria-label="Notification Channels"
 								showSearch
@@ -196,9 +196,6 @@ function RoutingPolicyDetails({
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isReadOnly || isLoadingChannels}
 								notFoundContent={

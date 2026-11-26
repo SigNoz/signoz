@@ -412,7 +412,7 @@ describe('RoutingPolicyDetails', () => {
 			const option = await findChannelOption(user, UNLINKED.id);
 			await waitFor(() =>
 				expect(option).toHaveAttribute(
-					'title',
+					'aria-description',
 					expect.stringContaining(`attach:notification-channel:${UNLINKED.id}`),
 				),
 			);
@@ -430,7 +430,7 @@ describe('RoutingPolicyDetails', () => {
 			const linked = await findChannelOption(user, LINKED.id);
 			await waitFor(() =>
 				expect(linked).toHaveAttribute(
-					'title',
+					'aria-description',
 					expect.stringContaining(`detach:notification-channel:${LINKED.id}`),
 				),
 			);
@@ -452,7 +452,7 @@ describe('RoutingPolicyDetails', () => {
 			const option = await findChannelOption(user, UNLINKED.id);
 			await waitFor(() =>
 				expect(option).toHaveAttribute(
-					'title',
+					'aria-description',
 					expect.stringContaining(`attach:route-policy:${POLICY_ID}`),
 				),
 			);
@@ -468,7 +468,7 @@ describe('RoutingPolicyDetails', () => {
 
 			const option = await findChannelOption(user, UNLINKED.id);
 			expect(option).toHaveAttribute('aria-disabled', 'true');
-			expect(option).toHaveAttribute('title', 'Checking permissions');
+			expect(option).toHaveAttribute('aria-description', 'Checking permissions');
 		});
 
 		it('leaves channels pickable on create when the check fails', async () => {

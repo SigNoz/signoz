@@ -31,16 +31,16 @@ describe('useChannelPickerAccess', () => {
 		act(() => result.current.onPickerVisibleChange(true));
 
 		await waitFor(() =>
-			expect(result.current.options[1].title).toContain(formatPermission(denied)),
+			expect(result.current.options[1].reason).toContain(formatPermission(denied)),
 		);
 		const [open, locked] = result.current.options;
 		expect(open).toMatchObject({
 			value: 'ops-slack',
+			label: 'ops-slack',
 			disabled: false,
-			title: 'ops-slack',
-			'data-testid': 'picker-option-c1',
+			testId: 'picker-option-c1',
 		});
-		expect(locked.disabled).toBe(true);
-		expect(locked.title).toContain(formatPermission(denied));
+		expect(locked).toMatchObject({ disabled: true, denied: true });
+		expect(locked.reason).toContain(formatPermission(denied));
 	});
 });

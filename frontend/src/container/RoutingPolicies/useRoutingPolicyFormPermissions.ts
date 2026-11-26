@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import type { ChannelOption } from 'hooks/notificationChannels/useChannelOptions';
-import {
-	type ChannelPickerOption,
-	useChannelPickerAccess,
-} from 'hooks/notificationChannels/useChannelPickerAccess';
+import { useChannelPickerAccess } from 'hooks/notificationChannels/useChannelPickerAccess';
+import type { AuthZSelectOption } from 'lib/authz/components/AuthZSelect/types';
 import {
 	buildRoutePolicyAttachPermission,
 	buildRoutePolicyDetachPermission,
@@ -19,7 +17,7 @@ export interface UseRoutingPolicyFormPermissionsReturn {
 	isReadOnly: boolean;
 	saveChecks: BrandedPermission[];
 	/** The picker's options, each disabled with the reason when locked. */
-	channelOptions: ChannelPickerOption[];
+	channelOptions: AuthZSelectOption[];
 	/** Starts the `attach` checks on unlinked channels once the picker opens. */
 	onPickerVisibleChange: (open: boolean) => void;
 }
