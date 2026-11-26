@@ -6,6 +6,7 @@ import {
 	getQueryRangeV5,
 	prepareQueryRangePayloadV5,
 } from 'api/v5/v5';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'constants/timePreference';
 import {
@@ -233,7 +234,7 @@ export async function GetMetricQueryRange(
 
 	const v5Response = await getQueryRangeV5(
 		v5Result.queryPayload,
-		version,
+		ENTITY_VERSION_V5,
 		signal,
 		headers,
 	);
