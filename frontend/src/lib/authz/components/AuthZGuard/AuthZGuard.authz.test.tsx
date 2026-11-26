@@ -1,12 +1,16 @@
-import { render, screen, waitFor } from 'tests/test-utils';
+import { useState } from 'react';
+import type { AuthtypesTransactionDTO } from 'api/generated/services/sigNoz.schemas';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
 	AUTHZ_CHECK_URL,
+	authzMockResponse,
 	setupAuthzAllow,
 	setupAuthzDeny,
 } from 'lib/authz/utils/authz-test-utils';
 import type { AuthZObject } from 'lib/authz/hooks/useAuthZ/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { buildPermission } from 'lib/authz/hooks/useAuthZ/utils';
 
 import { AuthZGuard } from './AuthZGuard';
@@ -91,6 +95,61 @@ describe('AuthZGuard', () => {
 		);
 
 		expect(screen.getByText('Loading…')).toBeInTheDocument();
+	});
+
+	it('keeps content shown while checking mounted once allowed', async () => {
+		let answerCheck = (): void => {};
+		const checkAnswered = new Promise<void>((resolve) => {
+			answerCheck = resolve;
+		});
+		server.use(
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = (await req.json()) as AuthtypesTransactionDTO[];
+				await checkAnswered;
+				return res(
+					ctx.json(
+						authzMockResponse(
+							payload,
+							payload.map(() => true),
+						),
+					),
+				);
+			}),
+		);
+		function Draft(): JSX.Element {
+			const [value, setValue] = useState('');
+			return (
+				<input
+					data-testid="draft"
+					value={value}
+					onChange={(event): void => setValue(event.target.value)}
+				/>
+			);
+		}
+		function CheckDone(): JSX.Element | null {
+			const { isLoading } = useAuthZ([readPerm]);
+			return isLoading ? null : <span data-testid="check-done" />;
+		}
+		// A fragment, as a list's content often is.
+		const content = (
+			<>
+				<Draft />
+			</>
+		);
+		render(
+			<>
+				<CheckDone />
+				<AuthZGuard checks={[readPerm]} fallbackOnLoading={content}>
+					{content}
+				</AuthZGuard>
+			</>,
+		);
+
+		await userEvent.setup().type(screen.getByTestId('draft'), 'kept');
+		answerCheck();
+		await screen.findByTestId('check-done');
+
+		expect(screen.getByTestId('draft')).toHaveValue('kept');
 	});
 
 	it('fails open on error by default (renders children)', async () => {

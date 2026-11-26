@@ -66,9 +66,11 @@ export function AuthZGuard({
 		return <>{fallbackOnLoading ?? null}</>;
 	}
 
+	// Wrapped like the loading branch, so content shown while loading keeps its
+	// tree shape, and its state, once the check allows it.
 	if (error) {
 		return onFailRenderContent ? (
-			children
+			<>{children}</>
 		) : (
 			<>{resolveFallback(fallback, deniedPermissions)}</>
 		);
@@ -78,5 +80,5 @@ export function AuthZGuard({
 		return <>{resolveFallback(fallback, deniedPermissions)}</>;
 	}
 
-	return children;
+	return <>{children}</>;
 }
