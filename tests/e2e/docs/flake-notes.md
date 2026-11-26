@@ -276,3 +276,87 @@ The health check button passes `loading` to an antd 5.11 `Button` while the
 three onboarding status queries fetch, and a loading antd button ignores clicks
 without being disabled, so Playwright clicks it and nothing opens.
 `openHealthCheck` clicks again until the dialog shows.
+
+## A route handler still fetching when the context closes fails a passed test
+
+`onboarding/redirect` TC-06 failed its first attempt in 7 of 40 CI jobs with
+`route.fetch: Target page, context or browser has been closed`. `stubFirstRun`
+answers `/api/v2/users` through `route.fetch()`; a request that lands as the
+test ends is still inside the handler when `authedPage` closes its context, and
+Playwright reports the rejection against the test. `authedPage` and `guestPage`
+now call `unrouteAll({ behavior: 'ignoreErrors' })` before closing, which covers
+every spec that fetches inside a handler. A spec that fires five page fetches at
+`/api/v2/users` and ends failed 10 of 15 runs before and 0 of 15 after; TC-06
+itself failed 1 of 30 locally before and 0 of 30 after.
+
+## The release-changelog CMS is blocked in the browser
+
+`AppLayout` asks `cms.signoz.cloud` for the changelog on every logged-in page
+load. When that request fails with a CORS or network error the console gets two
+errors, which failed `query-builder/url` TC-03 once in the merge queue. The
+chromium project now fails its DNS the same way it does for Google Fonts, so no
+spec depends on an external service: a `/home` load logs no console error and the
+request fails with `ERR_NAME_NOT_RESOLVED`, where before it reached the CMS.
+
+## Services overview 400s were a product race, fixed on main
+
+`services/list` TC-02 and `services/detail` TC-04 asserted a clean network and
+saw `400 POST /api/v5/query_range` in 26 of 45 shard-10 CI jobs between
+2026-11-17 and 2026-11-25; ten of them failed all three attempts. `WidgetCard`
+kept a copy of its query in state and refreshed it one render late, so when the
+top-level operations arrived the latency chart first sent the previous query with
+`name in []`. [#13722](https://github.com/SigNoz/signoz/pull/13722) sends the
+widget query directly. The specs needed no change: the six runs after it (60
+jobs) had no such 400, and a pinned local shard 10 passes. Do not widen
+`withoutMissingMetadata` to hide a 400 on `query_range`.
+
+## wheelTo retries a wheel the page drops
+
+`alerts/create` TC-08, TC-10 and TC-11 failed with "the wheel did not move the
+target" in 5 of 39 shard-1 jobs, always at the same row position, so the event
+was dropped rather than the layout clipped. `wheelTo` sent one wheel and polled
+for 2 s. It now sends the wheel again every second for up to 6 s; a genuinely
+clipped container still fails with the same message. It could not be reproduced
+locally in 24 runs at 4x CPU throttle.
+
+## Escape after a multiple combobox pick can close the dialog around it
+
+`onboarding/get-started` TC-09 failed its first attempt in 3 of about 50 shard-6
+CI jobs, and 1 of 40 local runs, with the role trigger still `aria-expanded="true"`
+for a moment and then "element(s) not found". The role select is multiple, so it
+stays open after a pick and `comboboxAt().pick` pressed Escape. When that Escape
+also reached the invite modal, the modal closed, and a loop that pressed Escape
+again closed the whole Get Started page (the failure screenshot shows `/home`).
+`pick` now toggles the combobox shut with a click near the right edge of its
+trigger, where the chevron sits. 1 of 40 local runs failed before and 0 of 120 after; an Escape loop
+failed 1 of 15 and was dropped.
+
+## A spec that rewrites org settings must put them back
+
+`quick-filters/settings` TC-01 replaces the org's logs quick filters with two
+fields and never restored them, so every later spec on that stack lost the
+Severity Text filter. `query-builder/filter` TC-16 then failed all three
+attempts, with a 60 s timeout on `checkbox-Severity Text-ERROR`. CI never saw it
+because the two specs land in different shards (7 and 8) and each shard has its
+own stack; one test more or fewer before them would put both on one stack. The
+`quickFilters` layer now reads the stored filters through
+`/api/v2/quick_filters/{source}` before `seed` replaces them and writes them back
+after the test. On a stack left in that state, TC-16 failed 2 of 2 before and
+passed 3 of 3 after.
+
+## Chrome's compute-pressure policy message is console noise
+
+`Permissions policy violation: compute-pressure is not allowed in this document.`
+reached the console of the logs pipelines page twice, once in CI
+(`app-shell/routes` TC-06) and once locally (`logs-pipelines` TC-01, which
+retried the whole serial group). It names no source, so `HARNESS_CONSOLE_NOISE`
+drops it.
+
+## Run the suite shard by shard
+
+A single 560-test pass on one stack failed `dashboards/page/variables` TC-03 and
+`query-builder/url` TC-05 late in the run; both passed when their shard ran on a
+freshly seeded stack. The likely cause is the golden dataset, which `global.setup`
+rebases to the moment it runs: its newest log is 15 minutes old and its newest
+span 30, so a spec that reads it through a short window only sees it for a while
+after the seed. Reproduce CI with `--shard=N/10` per shard, not with one long run.
