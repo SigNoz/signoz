@@ -3,7 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { expect, screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { isCloudShell } from '@/storybook/globals/appShellMocks';
 import { findToastText } from '@/storybook/play/toastText';
@@ -78,6 +78,37 @@ export const openCreatedByFilter = async ({
 	await userEvent.click(filter.querySelector('.ant-select-selector') ?? filter);
 	await userEvent.click(await screen.findByText('Ada (ada@signoz.io)'));
 	await screen.findAllByRole('checkbox', { checked: true });
+};
+
+// antd renders a tag's × aria-hidden.
+const tagRemove = { name: 'close', hidden: true } as const;
+
+export const removeCreatedByTag = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		!canList(args) ||
+		args.dataState !== 'loaded' ||
+		showsWorkspaceEmpty(args)
+	) {
+		return;
+	}
+
+	const filter = await within(canvasElement).findByTestId(
+		'dashboards-filter-created-by',
+		{},
+		{ timeout: TOAST_TIMEOUT },
+	);
+
+	await userEvent.click(
+		await within(filter).findByRole('img', tagRemove, {
+			timeout: TOAST_TIMEOUT,
+		}),
+	);
+	await waitFor(() =>
+		expect(within(filter).queryByRole('img', tagRemove)).not.toBeInTheDocument(),
+	);
 };
 
 export const openTemplateTab = async ({
