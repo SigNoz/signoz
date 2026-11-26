@@ -1,9 +1,18 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import ExplorerPage from 'container/MetricsExplorer/Explorer';
-import SummaryPage from 'container/MetricsExplorer/Summary';
-import VolumeControlTab from 'container/MetricsExplorer/VolumeControl/components/VolumeControlTab/VolumeControlTab';
 import { BarChart, Compass, Gauge } from '@signozhq/icons';
+
+const SummaryPage = Loadable(() => import('container/MetricsExplorer/Summary'));
+
+const ExplorerPage = Loadable(
+	() => import('container/MetricsExplorer/Explorer'),
+);
+
+const VolumeControlTab = Loadable(
+	() =>
+		import('container/MetricsExplorer/VolumeControl/components/VolumeControlTab/VolumeControlTab'),
+);
 
 export const Summary: TabRoutes = {
 	Component: SummaryPage,
@@ -17,7 +26,7 @@ export const Summary: TabRoutes = {
 };
 
 export const Explorer: TabRoutes = {
-	Component: (): JSX.Element => <ExplorerPage />,
+	Component: ExplorerPage,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer
