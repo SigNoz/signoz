@@ -38,6 +38,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { getListOrderBy, setListOrderBy } from 'utils/explorerUtils';
 
+import AIExplorerActions from '../AIExplorerActions/AIExplorerActions';
 import TraceExplorerControls from '../Controls';
 import { getListViewQuery } from '../explorerUtils';
 import { PER_PAGE_OPTIONS, TIMESTAMP_FIELD } from './configs';
@@ -213,6 +214,7 @@ function ListView({
 	return (
 		<div className={styles.container}>
 			<div className="trace-explorer-controls">
+				<AIExplorerActions />
 				<div className="order-by-container">
 					<div className="order-by-label">
 						Order by <Minus size={14} /> <ArrowUp10 size={14} />
