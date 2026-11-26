@@ -130,7 +130,7 @@ def create_signoz(
         container.start()
 
         def ready(container: DockerContainer) -> None:
-            for attempt in range(10):
+            for attempt in range(60):
                 try:
                     response = requests.get(
                         f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v2/healthz",
