@@ -192,6 +192,8 @@ describe('QuerySearch (Integration with Real CodeMirror)', () => {
 		release();
 		// Outlasts the 10 ms timer QuerySearch uses to reopen suggestions.
 		await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
+		// Outlasts the 100 ms CodeMirror waits before it queries suggestions again.
+		await new Promise((resolve) => setTimeout(resolve, 150));
 
 		expect(screen.getByText('payment-service')).toBeInTheDocument();
 	});
