@@ -21,6 +21,8 @@ function AuthZSelect({
 
 	return (
 		<Select<string[]>
+			optionFilterProp="label"
+
 			{...props}
 			mode="multiple"
 			maxTagTextLength={maxTagTextLength}

@@ -21,6 +21,7 @@ const option = (
 
 const OPTIONS = [
 	option('open'),
+	option('c-9', { label: 'PagerDuty' }),
 	option('pending', { disabled: true, reason: 'Checking permissions' }),
 	option('locked-channel', { disabled: true, reason: DENIAL, denied: true }),
 ];
@@ -83,5 +84,18 @@ describe('AuthZSelect', () => {
 		await user.hover(screen.getByText('locked...'));
 
 		await expect(screen.findByText(DENIAL)).resolves.toBeInTheDocument();
+	});
+
+	it('searches options by label, ignoring case', async () => {
+		const user = userEvent.setup();
+		renderSelect();
+
+		await user.type(
+			within(screen.getByTestId('picker')).getByRole('combobox'),
+			'pagerduty',
+		);
+
+		await expect(screen.findByTestId('option-c-9')).resolves.toBeInTheDocument();
+		expect(screen.queryByTestId('option-open')).not.toBeInTheDocument();
 	});
 });
