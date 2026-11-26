@@ -36,6 +36,7 @@ import {
 } from 'types/common/queryBuilder';
 
 import { useQueryBuilderV2Context } from '../../QueryBuilderV2Context';
+import { useEditorDraft } from '../useEditorDraft';
 
 import './QueryAggregation.styles.scss';
 
@@ -175,13 +176,9 @@ function QueryAggregationSelect({
 		[],
 	);
 
-	const [input, setInput] = useState(
+	const [input, setInput] = useEditorDraft(
 		formatAggregations(queryData?.aggregations),
 	);
-
-	useEffect(() => {
-		setInput(formatAggregations(queryData?.aggregations));
-	}, [queryData?.aggregations, formatAggregations]);
 
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<

@@ -16,6 +16,7 @@ import CodeMirror, { EditorView, keymap } from '@uiw/react-codemirror';
 import { Button } from 'antd';
 import { Having } from 'api/v5/v5';
 import { useQueryBuilderV2Context } from 'components/QueryBuilderV2/QueryBuilderV2Context';
+import { useEditorDraft } from 'components/QueryBuilderV2/QueryV2/useEditorDraft';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronUp } from '@signozhq/icons';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -99,11 +100,7 @@ function HavingFilter({
 	const { getAggregationOptions } = useQueryBuilderV2Context();
 	const aggregationOptions = getAggregationOptions(queryData.queryName);
 	const having = queryData?.having as Having;
-	const [input, setInput] = useState(having?.expression || '');
-
-	useEffect(() => {
-		setInput(having?.expression || '');
-	}, [having?.expression]);
+	const [input, setInput] = useEditorDraft(having?.expression || '');
 
 	const [isFocused, setIsFocused] = useState(false);
 
