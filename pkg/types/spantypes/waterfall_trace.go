@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
@@ -30,16 +31,18 @@ type WaterfallTrace struct {
 
 // GettableWaterfallTrace is the response for the waterfall API.
 type GettableWaterfallTrace struct {
-	StartTimestampMillis  uint64           `json:"startTimestampMillis"`
-	EndTimestampMillis    uint64           `json:"endTimestampMillis"`
-	RootServiceName       string           `json:"rootServiceName"`
-	RootServiceEntryPoint string           `json:"rootServiceEntryPoint"`
-	TotalSpansCount       uint64           `json:"totalSpansCount"`
-	TotalErrorSpansCount  uint64           `json:"totalErrorSpansCount"`
-	Spans                 []*WaterfallSpan `json:"spans"`
-	HasMissingSpans       bool             `json:"hasMissingSpans"`
-	UncollapsedSpans      []string         `json:"uncollapsedSpans"`
-	HasMore               bool             `json:"hasMore"`
+	StartTimestampMillis   uint64           `json:"startTimestampMillis"`
+	EndTimestampMillis     uint64           `json:"endTimestampMillis"`
+	StartTimestampUnixNano string           `json:"startTimestampUnixNano,omitempty"`
+	EndTimestampUnixNano   string           `json:"endTimestampUnixNano,omitempty"`
+	RootServiceName        string           `json:"rootServiceName"`
+	RootServiceEntryPoint  string           `json:"rootServiceEntryPoint"`
+	TotalSpansCount        uint64           `json:"totalSpansCount"`
+	TotalErrorSpansCount   uint64           `json:"totalErrorSpansCount"`
+	Spans                  []*WaterfallSpan `json:"spans"`
+	HasMissingSpans        bool             `json:"hasMissingSpans"`
+	UncollapsedSpans       []string         `json:"uncollapsedSpans"`
+	HasMore                bool             `json:"hasMore"`
 	// FormattedSpans counts the spans in Spans carrying formatted gen_ai messages.
 	FormattedSpans int `json:"-"`
 }
@@ -227,27 +230,33 @@ func NewGettableWaterfallTrace(
 		rootServiceEntryPoint = traceData.TraceRoots[0].Name
 	}
 
-	// convert start timestamp to millis because client is expecting it in millis
+	// Keep exact timestamps alongside legacy milliseconds without mutating input spans.
+	responseSpans := slices.Clone(selectedSpans)
 	formattedSpans := 0
-	for _, span := range selectedSpans {
-		span.TimeUnix = span.TimeUnix / 1_000_000
+	for index, span := range responseSpans {
+		responseSpan := *span
+		responseSpan.TimeUnixNano = strconv.FormatUint(span.TimeUnix, 10)
+		responseSpan.TimeUnix /= 1_000_000
+		responseSpans[index] = &responseSpan
 		if len(span.FormattedInput) > 0 || len(span.FormattedOutput) > 0 {
 			formattedSpans++
 		}
 	}
 
 	return &GettableWaterfallTrace{
-		Spans:                 selectedSpans,
-		UncollapsedSpans:      uncollapsedSpans,
-		StartTimestampMillis:  traceData.StartTime / 1_000_000,
-		EndTimestampMillis:    traceData.EndTime / 1_000_000,
-		TotalSpansCount:       traceData.TotalSpans,
-		TotalErrorSpansCount:  traceData.TotalErrorSpans,
-		RootServiceName:       rootServiceName,
-		RootServiceEntryPoint: rootServiceEntryPoint,
-		HasMissingSpans:       traceData.HasMissingSpans,
-		HasMore:               !selectAllSpans,
-		FormattedSpans:        formattedSpans,
+		Spans:                  responseSpans,
+		UncollapsedSpans:       uncollapsedSpans,
+		StartTimestampMillis:   traceData.StartTime / 1_000_000,
+		EndTimestampMillis:     traceData.EndTime / 1_000_000,
+		StartTimestampUnixNano: strconv.FormatUint(traceData.StartTime, 10),
+		EndTimestampUnixNano:   strconv.FormatUint(traceData.EndTime, 10),
+		TotalSpansCount:        traceData.TotalSpans,
+		TotalErrorSpansCount:   traceData.TotalErrorSpans,
+		RootServiceName:        rootServiceName,
+		RootServiceEntryPoint:  rootServiceEntryPoint,
+		HasMissingSpans:        traceData.HasMissingSpans,
+		HasMore:                !selectAllSpans,
+		FormattedSpans:         formattedSpans,
 	}
 }
 
