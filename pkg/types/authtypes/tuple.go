@@ -9,10 +9,11 @@ import (
 )
 
 var (
-	ErrCodeAuthZUnavailable = errors.MustNewCode("authz_unavailable")
-	ErrCodeAuthZForbidden   = errors.MustNewCode("authz_forbidden")
-	ErrCodeAuthZInvalidType = errors.MustNewCode("authz_invalid_type")
-	ErrCodeTypeableNotFound = errors.MustNewCode("typeable_not_found")
+	ErrCodeAuthZUnavailable         = errors.MustNewCode("authz_unavailable")
+	ErrCodeAuthZForbidden           = errors.MustNewCode("authz_forbidden")
+	ErrCodeAuthZInvalidType         = errors.MustNewCode("authz_invalid_type")
+	ErrCodeAuthZTooManyTransactions = errors.MustNewCode("authz_too_many_transactions")
+	ErrCodeTypeableNotFound         = errors.MustNewCode("typeable_not_found")
 )
 
 type TupleKeyAuthorization struct {
