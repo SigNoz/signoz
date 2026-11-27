@@ -7,6 +7,7 @@ import { getRuleActionChecks } from 'container/ListAlertRules/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
 import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import { Copy, Ellipsis, Trash2 } from '@signozhq/icons';
 import {
@@ -42,6 +43,9 @@ function AlertActionButtons({
 		[ruleId, channelIds],
 	);
 	const toggleLock = useAuthZDisabled(checks.toggle);
+	// The page preload cannot know the channel ids, so warm Clone's checks here
+	// for the menu to open already resolved.
+	useAuthZ(checks.clone);
 
 	const menuItems = useMemo<AuthZDropdownItemType[]>(
 		() => [

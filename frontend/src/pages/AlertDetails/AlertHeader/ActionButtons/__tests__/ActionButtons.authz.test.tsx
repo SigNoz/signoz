@@ -11,6 +11,7 @@ import {
 	RuleAttachPermission,
 	RuleCreatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
 import { denyPermissions } from 'lib/authz/utils/authz-test-utils';
 import AlertRuleProvider from 'providers/Alert';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
@@ -140,6 +141,21 @@ describe('AlertActionButtons - AuthZ', () => {
 		await openMenu();
 
 		expect(isLocked('alert-details-action-clone')).toBe(true);
+	});
+
+	it("checks clone's channel attach before the menu opens", async () => {
+		withSavedChannels(['ops']);
+		await renderButtons();
+
+		const attach = buildNotificationChannelAttachPermission('ch-ops');
+		expect(
+			jest
+				.mocked(useAuthZ)
+				.mock.calls.some(
+					([checks, options]) =>
+						checks.includes(attach) && options?.enabled !== false,
+				),
+		).toBe(true);
 	});
 
 	it('leaves clone open without attach when the rule has no channels', async () => {
