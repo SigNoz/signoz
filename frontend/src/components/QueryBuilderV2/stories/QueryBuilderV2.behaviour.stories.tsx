@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
 
 import { withCanvas } from '@/storybook/decorators/withCanvas';
 
@@ -9,15 +8,18 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import { QueryBuilderV2 } from '../QueryBuilderV2';
 import {
-	addOnToggles,
-	appendToAggregation,
+	expectGaugeDefaults,
+	expectHistogramDefaults,
+	expectSingleAggregation,
+	expectTablePanelAddOns,
+	expectTimeSeriesAddOns,
+	expectValuePanelAddOns,
+} from './__story_mockdata__/queryBuilder.play';
+import {
 	DEFAULT_ARGS,
-	expectFirstQuery,
 	PANEL_EDITOR_ARGS,
 	PANEL_EDITOR_PATH,
-	payloadIn,
 	routeWith,
-	selectMetric,
 } from './QueryBuilderV2.stories.mocks';
 import QueryProbe from './QueryProbe';
 
@@ -60,11 +62,7 @@ export const LogsOnValuePanel: Story = {
 	parameters: {
 		signoz: { route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await waitFor(() =>
-			expect(addOnToggles(canvasElement)).toStrictEqual(['legend_format']),
-		);
-	},
+	play: expectValuePanelAddOns,
 };
 
 /** Metrics on a Table: reduce-to is offered; group by lives in the aggregation row. */
@@ -73,17 +71,7 @@ export const MetricsOnTablePanel: Story = {
 	parameters: {
 		signoz: { route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.metrics) },
 	},
-	play: async ({ canvasElement }) => {
-		await waitFor(() =>
-			expect(addOnToggles(canvasElement)).toStrictEqual([
-				'having',
-				'order_by',
-				'limit',
-				'legend_format',
-				'reduce_to',
-			]),
-		);
-	},
+	play: expectTablePanelAddOns,
 };
 
 /** Traces on a time series: every add-on, with group by as a toggle. */
@@ -92,54 +80,21 @@ export const TracesOnTimeSeriesPanel: Story = {
 	parameters: {
 		signoz: { route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.traces) },
 	},
-	play: async ({ canvasElement }) => {
-		await waitFor(() =>
-			expect(addOnToggles(canvasElement)).toStrictEqual([
-				'group_by',
-				'having',
-				'order_by',
-				'limit',
-				'legend_format',
-			]),
-		);
-	},
+	play: expectTimeSeriesAddOns,
 };
 
 /** Picking a gauge defaults to avg over time and avg across series. */
 export const GaugeMetricDefaults: Story = {
 	args: METRICS_EXPLORER_ARGS,
 	parameters: { signoz: { route: metricsExplorerRoute } },
-	play: async ({ canvasElement }) => {
-		await selectMetric(canvasElement, 'container_cpu_utilization');
-
-		await expectFirstQuery(canvasElement, {
-			aggregations: [
-				expect.objectContaining({
-					metricName: 'container_cpu_utilization',
-					timeAggregation: 'avg',
-					spaceAggregation: 'avg',
-				}),
-			],
-		});
-	},
+	play: expectGaugeDefaults,
 };
 
 /** Picking a histogram defaults to the p90 across series. */
 export const HistogramMetricDefaults: Story = {
 	args: METRICS_EXPLORER_ARGS,
 	parameters: { signoz: { route: metricsExplorerRoute } },
-	play: async ({ canvasElement }) => {
-		await selectMetric(canvasElement, 'signoz_latency_bucket');
-
-		await expectFirstQuery(canvasElement, {
-			aggregations: [
-				expect.objectContaining({
-					metricName: 'signoz_latency_bucket',
-					spaceAggregation: 'p90',
-				}),
-			],
-		});
-	},
+	play: expectHistogramDefaults,
 };
 
 /** A Value panel takes a single aggregation: a second one is not accepted. */
@@ -148,22 +103,5 @@ export const ValuePanelTakesOneAggregation: Story = {
 	parameters: {
 		signoz: { route: routeWith(PANEL_EDITOR_PATH, initialQueriesMap.logs) },
 	},
-	play: async ({ canvasElement }) => {
-		await expectFirstQuery(canvasElement, {
-			aggregations: [{ expression: 'count()' }],
-		});
-
-		const { before, after } = appendToAggregation(
-			canvasElement,
-			', count_distinct(service.name)',
-		);
-		await expect(after).toBe(before);
-
-		await expectFirstQuery(canvasElement, {
-			aggregations: [{ expression: 'count()' }],
-		});
-		await expect(
-			payloadIn(canvasElement).queries[0].spec.aggregations,
-		).toHaveLength(1);
-	},
+	play: expectSingleAggregation,
 };

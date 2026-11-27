@@ -1,31 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-story_count=$(find src -name '*.stories.tsx' | wc -l)
-if [ "$story_count" -eq 0 ]; then
-	echo "No *.stories.tsx found under src/" >&2
+port=6006
+static_dir=${STORYBOOK_STATIC_DIR:-}
+if [ -z "$static_dir" ]; then
+	static_dir=storybook-static
+	pnpm storybook:build --quiet
+fi
+if [ ! -f "$static_dir/index.json" ]; then
+	echo "No Storybook build in $static_dir/" >&2
 	exit 1
 fi
 
-# jest splits the sorted story files into contiguous shards and exits 1 when a
-# shard is empty, which happens on every shard above the file count. The runner
-# rejects jest's own `--passWithNoTests`, so skip those shards here.
-for arg in "$@"; do
-	if [[ $arg == --shard=* ]]; then
-		shard_index=${arg#--shard=}
-		if [ "${shard_index%%/*}" -gt "$story_count" ]; then
-			echo "Skipping ${arg#--shard=}: only ${story_count} story files"
-			exit 0
-		fi
-	fi
-done
+if curl -s -o /dev/null "http://127.0.0.1:$port/"; then
+	echo "Port $port is taken; stop whatever serves it first." >&2
+	exit 1
+fi
 
-pnpm storybook --ci --quiet &
-SB_PID=$!
-trap 'kill "$SB_PID" 2>/dev/null || true' EXIT
+node_modules/.bin/vite preview --outDir "$static_dir" --host 127.0.0.1 --port "$port" --strictPort --no-open >/dev/null &
+SERVER_PID=$!
+trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 
-until curl -sf http://127.0.0.1:6006/index.json >/dev/null 2>&1; do
+until curl -sf "http://127.0.0.1:$port/index.json" >/dev/null 2>&1; do
+	kill -0 "$SERVER_PID" 2>/dev/null || {
+		echo "Static server exited" >&2
+		exit 1
+	}
 	sleep 1
 done
 
-pnpm exec test-storybook --ci --maxWorkers=2 --testTimeout 30000 "$@"
+# Index-json mode names its tests after story titles, so story file arguments
+# would match nothing.
+pnpm exec test-storybook --ci --no-index-json --url "http://127.0.0.1:$port" --maxWorkers=2 --testTimeout 30000 "$@"

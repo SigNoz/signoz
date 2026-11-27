@@ -1,17 +1,12 @@
 import { getStoryContext } from '@storybook/test-runner';
 import type { TestRunnerConfig } from '@storybook/test-runner';
-import type { Page } from 'playwright';
+import type { Page, Request } from 'playwright';
 
 const IGNORED_MESSAGES = [
 	// `preview-head.html` swaps a local stylesheet in for Google Fonts, but the
 	// browser still warns on the real cross-origin one it briefly requests
 	// before msw starts (no CORS headers), regardless of story content.
 	/Can't access cssRules/,
-	// Pre-existing dev-server noise, unrelated to any story.
-	/Couldn't load preload assets/,
-	// Fires because a Jest-driven browser sets a global testing flag React
-	// checks for; unrelated to anything a story does.
-	/current testing environment is not configured to support act/,
 	// React and antd route dev-only warnings (missing keys, DOM nesting, API
 	// deprecations) through `console.error` under this prefix; app-wide and
 	// tracked separately from story regressions.
@@ -37,9 +32,34 @@ interface CapturedMessage {
 	text: string;
 }
 
-const PREPARE_TIMEOUT_MS = 180_000;
-
 const messagesByPage = new WeakMap<Page, CapturedMessage[]>();
+
+const SETTLE_TIMEOUT_MS = 1_000;
+
+const SETTLE_POLL_MS = 25;
+
+const requestsByPage = new WeakMap<Page, Set<Request>>();
+
+/**
+ * The runner opens the next story in this page as soon as the previous one has
+ * rendered, so what that one still has in flight answers into state both share:
+ * the Noz store holds a single thread id. Requests held open on purpose never
+ * end, so the wait gives up and forgets them.
+ */
+const settleRequests = async (page: Page): Promise<void> => {
+	const pending = requestsByPage.get(page);
+	if (!pending) {
+		return;
+	}
+
+	const deadline = Date.now() + SETTLE_TIMEOUT_MS;
+	while (pending.size > 0 && Date.now() < deadline) {
+		await new Promise((resolve) => {
+			setTimeout(resolve, SETTLE_POLL_MS);
+		});
+	}
+	pending.clear();
+};
 
 /**
  * When the story under test started rendering, stamped by the preview's
@@ -61,16 +81,9 @@ const config: TestRunnerConfig = {
 	// msw logs every mocked request at `log`; keep it out of the failure dump
 	// unless the job is re-run with debug logging (GitHub sets RUNNER_DEBUG=1).
 	logLevel: process.env.RUNNER_DEBUG === '1' ? 'info' : 'warn',
-	// The runner's default prepare, minus Playwright's 30s navigation timeout: on
-	// a cold dev server the first load compiles the whole preview, which outlasts
-	// it on a shared CI runner.
-	async prepare({ page }): Promise<void> {
-		await page.goto(new URL('iframe.html', process.env.TARGET_URL).toString(), {
-			waitUntil: 'load',
-			timeout: PREPARE_TIMEOUT_MS,
-		});
-	},
 	async preVisit(page): Promise<void> {
+		await settleRequests(page);
+
 		const existing = messagesByPage.get(page);
 		if (existing) {
 			existing.length = 0;
@@ -79,6 +92,11 @@ const config: TestRunnerConfig = {
 
 		const messages: CapturedMessage[] = [];
 		messagesByPage.set(page, messages);
+		const pending = new Set<Request>();
+		requestsByPage.set(page, pending);
+		page.on('request', (request) => pending.add(request));
+		page.on('requestfinished', (request) => pending.delete(request));
+		page.on('requestfailed', (request) => pending.delete(request));
 		page.on('console', (message) => {
 			if (
 				message.type() === 'error' &&

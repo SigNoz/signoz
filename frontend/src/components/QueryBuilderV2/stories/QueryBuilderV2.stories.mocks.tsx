@@ -3,6 +3,7 @@
  * Do not hand-edit: regenerate instead.
  */
 
+import type { TransactionSpec } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
@@ -134,6 +135,40 @@ export const selectMetric = async (
 	await waitFor(() => expect(screen.queryByRole('listbox')).toBeNull());
 };
 
+const aggregationEditor = (canvasElement: HTMLElement): EditorView => {
+	const content = within(canvasElement)
+		.getByTestId('query-aggregation-editor')
+		.querySelector<HTMLElement>('.cm-content');
+	const view = content ? EditorView.findFromDOM(content) : null;
+	if (!view) {
+		throw new Error('aggregation editor not mounted');
+	}
+	return view;
+};
+
+const appendTo = (view: EditorView, text: string): TransactionSpec => ({
+	changes: { from: view.state.doc.length, insert: text },
+	selection: { anchor: view.state.doc.length + text.length },
+	userEvent: 'input.type',
+});
+
+/**
+ * Waits until query `A`'s aggregation editor refuses `text`. The builder
+ * applies a panel's limits one commit after mounting, which a fast static
+ * build can beat. `state.update` runs the editor's filters without changing
+ * the document.
+ */
+export const waitForAggregationLimit = async (
+	canvasElement: HTMLElement,
+	text: string,
+): Promise<void> => {
+	await waitFor(() => {
+		const view = aggregationEditor(canvasElement);
+		const attempt = view.state.update(appendTo(view, text));
+		return expect(attempt.newDoc.toString()).toBe(view.state.doc.toString());
+	});
+};
+
 /**
  * Appends `text` to query `A`'s aggregation editor and returns its document
  * before and after. Dispatched as a CodeMirror transaction: `userEvent.type`
@@ -144,19 +179,9 @@ export const appendToAggregation = (
 	canvasElement: HTMLElement,
 	text: string,
 ): { before: string; after: string } => {
-	const content = within(canvasElement)
-		.getByTestId('query-aggregation-editor')
-		.querySelector<HTMLElement>('.cm-content');
-	const view = content ? EditorView.findFromDOM(content) : null;
-	if (!view) {
-		throw new Error('aggregation editor not mounted');
-	}
+	const view = aggregationEditor(canvasElement);
 	const before = view.state.doc.toString();
-	view.dispatch({
-		changes: { from: before.length, insert: text },
-		selection: { anchor: before.length + text.length },
-		userEvent: 'input.type',
-	});
+	view.dispatch(appendTo(view, text));
 	// Read synchronously: the document is the editor's own verdict, before
 	// React state catches up.
 	return { before, after: view.state.doc.toString() };

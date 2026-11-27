@@ -15,7 +15,14 @@ import {
 	ResolvedQueryBuilderField,
 	resolveQueryBuilderField,
 } from '../../queryBuilderFields.utils';
-import { expectFirstQuery, payloadIn } from '../QueryBuilderV2.stories.mocks';
+import {
+	addOnToggles,
+	appendToAggregation,
+	expectFirstQuery,
+	payloadIn,
+	selectMetric,
+	waitForAggregationLimit,
+} from '../QueryBuilderV2.stories.mocks';
 
 interface PlayContext {
 	canvasElement: HTMLElement;
@@ -196,4 +203,96 @@ export const hoverAddFunction = async ({
 	});
 
 	await hoverForLearnMore(button, 'Add new function');
+};
+
+export const expectValuePanelAddOns = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await waitFor(() =>
+		expect(addOnToggles(canvasElement)).toStrictEqual(['legend_format']),
+	);
+};
+
+export const expectTablePanelAddOns = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await waitFor(() =>
+		expect(addOnToggles(canvasElement)).toStrictEqual([
+			'having',
+			'order_by',
+			'limit',
+			'legend_format',
+			'reduce_to',
+		]),
+	);
+};
+
+export const expectTimeSeriesAddOns = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await waitFor(() =>
+		expect(addOnToggles(canvasElement)).toStrictEqual([
+			'group_by',
+			'having',
+			'order_by',
+			'limit',
+			'legend_format',
+		]),
+	);
+};
+
+export const expectGaugeDefaults = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await selectMetric(canvasElement, 'container_cpu_utilization');
+
+	await expectFirstQuery(canvasElement, {
+		aggregations: [
+			expect.objectContaining({
+				metricName: 'container_cpu_utilization',
+				timeAggregation: 'avg',
+				spaceAggregation: 'avg',
+			}),
+		],
+	});
+};
+
+export const expectHistogramDefaults = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await selectMetric(canvasElement, 'signoz_latency_bucket');
+
+	await expectFirstQuery(canvasElement, {
+		aggregations: [
+			expect.objectContaining({
+				metricName: 'signoz_latency_bucket',
+				spaceAggregation: 'p90',
+			}),
+		],
+	});
+};
+
+const SECOND_AGGREGATION = ', count_distinct(service.name)';
+
+export const expectSingleAggregation = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await expectFirstQuery(canvasElement, {
+		aggregations: [{ expression: 'count()' }],
+	});
+
+	await waitForAggregationLimit(canvasElement, SECOND_AGGREGATION);
+
+	const { before, after } = appendToAggregation(
+		canvasElement,
+		SECOND_AGGREGATION,
+	);
+	await expect(after).toBe(before);
+
+	await expectFirstQuery(canvasElement, {
+		aggregations: [{ expression: 'count()' }],
+	});
+	await expect(
+		payloadIn(canvasElement).queries[0].spec.aggregations,
+	).toHaveLength(1);
 };

@@ -7,7 +7,14 @@ values.
 ```bash
 pnpm storybook          # dev server on :6006
 pnpm storybook:build    # static build into storybook-static/
+pnpm test:storybook     # build, then run every story through the test runner
 ```
+
+`pnpm test:storybook` tests the static build, the same code users get. Extra
+arguments go to `test-storybook`: runner flags, and story files to test only
+those (`pnpm test:storybook src/components/NewSelect/stories/NewSelect.stories.tsx`).
+Set `STORYBOOK_STATIC_DIR` to test an existing build instead of building one.
+The build is served on `:6006`, so stop the dev server first.
 
 ## Layout
 
@@ -509,6 +516,11 @@ Wait on a `danger` toast with `findToastText` (or `getToastText` inside
 `waitFor`) from `play/toastText`, never a bare `findByText`. The toast is
 announced through a visually hidden copy of its text, so a bare query finds two
 elements.
+
+Hover a label that only shows a tooltip when it is cut off with `hoverTruncated`
+from `play/hoverTruncated`, never a bare `userEvent.hover`. The tooltip is
+switched on by the hover that measures it, and the static build, which has no
+`act`, opens nothing during that first hover.
 
 The play is a named function in `stories/__story_mockdata__/<page>.play.ts`,
 collapsed for review with the other AI-owned files, and the story file only names
