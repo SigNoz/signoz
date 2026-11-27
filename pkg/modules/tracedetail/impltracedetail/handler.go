@@ -157,13 +157,19 @@ func (h *handler) GetTraceHighlights(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusOK, result)
 }
 
+func (h *handler) GetTraceSpan(rw http.ResponseWriter, r *http.Request) {
+	result, err := h.module.GetTraceSpan(r.Context(), mux.Vars(r)["traceID"], mux.Vars(r)["spanID"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, result)
+}
+
 // These routes are registered for their place in the API spec; the implementation follows.
 func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
 	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span list is not implemented yet"))
-}
-
-func (h *handler) GetTraceSpan(rw http.ResponseWriter, _ *http.Request) {
-	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span is not implemented yet"))
 }
 
 func (h *handler) ListTraceSpanChildren(rw http.ResponseWriter, _ *http.Request) {
