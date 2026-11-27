@@ -391,13 +391,17 @@ func (r *PostableRule) Validate() error {
 		if err := r.RuleCondition.CompositeQuery.PanelType.Validate(); err != nil {
 			errs = append(errs, err)
 		}
+		queryRangeRequestType := r.RuleCondition.CompositeQuery.PanelType.GetQueryRangeRequestType()
 		if len(r.RuleCondition.CompositeQuery.Queries) == 0 {
 			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.compositeQuery.queries: must have at least one query"))
 		} else {
 			cq := &qbtypes.CompositeQuery{Queries: r.RuleCondition.CompositeQuery.Queries}
-			if err := cq.Validate(qbtypes.GetValidationOptions(qbtypes.RequestTypeTimeSeries)...); err != nil {
+			if err := cq.Validate(qbtypes.GetValidationOptions(queryRangeRequestType)...); err != nil {
 				errs = append(errs, err)
 			}
+		}
+		if queryRangeRequestType == qbtypes.RequestTypeScalar {
+			errs = append(errs, r.validateScalarPanelType()...)
 		}
 	}
 
@@ -453,6 +457,26 @@ func (r *PostableRule) Validate() error {
 	return nil
 }
 
+func (r *PostableRule) validateScalarPanelType() []error {
+	var errs []error
+	panelType := r.RuleCondition.CompositeQuery.PanelType.StringValue()
+
+	if r.RuleType == RuleTypeAnomaly {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"condition.compositeQuery.panelType: anomaly_rule supports %q only, got %q", PanelTypeGraph.StringValue(), panelType))
+	}
+	if r.RuleType == RuleTypeProm || r.RuleCondition.CompositeQuery.QueryType == QueryTypePromQL {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"condition.compositeQuery.panelType: promql queries support %q only, got %q", PanelTypeGraph.StringValue(), panelType))
+	}
+	if r.RuleCondition.RequireMinPoints {
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"condition.requireMinPoints: not supported with panelType %q, which evaluates one value per group", panelType))
+	}
+
+	return errs
+}
+
 func (r *PostableRule) validateSchemaVersion() []error {
 	switch r.SchemaVersion {
 	case SchemaVersionV2Alpha1:
@@ -481,6 +505,14 @@ func (r *PostableRule) validateV2Alpha1() []error {
 			}
 			if err := thresholds.validateRecoveryTargets(); err != nil {
 				errs = append(errs, err)
+			}
+			if r.RuleCondition.CompositeQuery != nil && r.RuleCondition.CompositeQuery.PanelType.GetQueryRangeRequestType() == qbtypes.RequestTypeTimeSeries {
+				for _, basicThreshold := range thresholds {
+					if basicThreshold.MatchType.IsZero() {
+						errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
+							"condition.matchType: field is required for threshold %q unless panelType is table or value", basicThreshold.Name))
+					}
+				}
 			}
 		}
 	}

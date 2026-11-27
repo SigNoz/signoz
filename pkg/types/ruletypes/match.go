@@ -5,27 +5,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+// MatchType is optional on table and value panels; decoding refuses "", so the
+// zero value can only mean the key was left out.
 type MatchType struct {
-	valuer.String
+	valuer.UnsetOrNonEmptyString
 }
 
 var (
-	AtleastOnce        = MatchType{valuer.NewString("1")}
-	AtleastOnceLiteral = MatchType{valuer.NewString("at_least_once")}
+	AtleastOnce        = MatchType{valuer.MustNewUnsetOrNonEmptyString("1")}
+	AtleastOnceLiteral = MatchType{valuer.MustNewUnsetOrNonEmptyString("at_least_once")}
 
-	AllTheTimes        = MatchType{valuer.NewString("2")}
-	AllTheTimesLiteral = MatchType{valuer.NewString("all_the_times")}
+	AllTheTimes        = MatchType{valuer.MustNewUnsetOrNonEmptyString("2")}
+	AllTheTimesLiteral = MatchType{valuer.MustNewUnsetOrNonEmptyString("all_the_times")}
 
-	OnAverage        = MatchType{valuer.NewString("3")}
-	OnAverageLiteral = MatchType{valuer.NewString("on_average")}
-	OnAverageShort   = MatchType{valuer.NewString("avg")}
+	OnAverage        = MatchType{valuer.MustNewUnsetOrNonEmptyString("3")}
+	OnAverageLiteral = MatchType{valuer.MustNewUnsetOrNonEmptyString("on_average")}
+	OnAverageShort   = MatchType{valuer.MustNewUnsetOrNonEmptyString("avg")}
 
-	InTotal        = MatchType{valuer.NewString("4")}
-	InTotalLiteral = MatchType{valuer.NewString("in_total")}
-	InTotalShort   = MatchType{valuer.NewString("sum")}
+	InTotal        = MatchType{valuer.MustNewUnsetOrNonEmptyString("4")}
+	InTotalLiteral = MatchType{valuer.MustNewUnsetOrNonEmptyString("in_total")}
+	InTotalShort   = MatchType{valuer.MustNewUnsetOrNonEmptyString("sum")}
 
-	Last        = MatchType{valuer.NewString("5")}
-	LastLiteral = MatchType{valuer.NewString("last")}
+	Last        = MatchType{valuer.MustNewUnsetOrNonEmptyString("5")}
+	LastLiteral = MatchType{valuer.MustNewUnsetOrNonEmptyString("last")}
 )
 
 func (MatchType) Enum() []any {

@@ -87,6 +87,17 @@ func (p PanelType) Validate() error {
 	}
 }
 
+func (p PanelType) GetQueryRangeRequestType() qbtypes.RequestType {
+	switch p {
+	case PanelTypeTable, PanelTypeValue:
+		return qbtypes.RequestTypeScalar
+	default:
+		// Only the write path validates the panel, so a stored unset or
+		// unknown one runs as graph.
+		return qbtypes.RequestTypeTimeSeries
+	}
+}
+
 // Note: this is used to represent the state of the alert query
 // i.e the active tab which should be used to represent the selection
 
@@ -121,7 +132,7 @@ func (q QueryType) Validate() error {
 type AlertCompositeQuery struct {
 	Queries []qbtypes.QueryEnvelope `json:"queries" required:"true" description:"The queries to evaluate, at least one. Every envelope type must match queryType: builder_query and builder_formula for builder, promql for promql, clickhouse_sql for clickhouse_sql."`
 
-	PanelType PanelType `json:"panelType" required:"true" description:"The panel the UI renders the queries with: graph, table or value. Use graph for alerts."`
+	PanelType PanelType `json:"panelType" required:"true" description:"How the queries are evaluated. graph runs them as time series and matchType decides which points must satisfy op. table and value run them as scalar: one value per group over the whole evaluation window, compared directly, so matchType has no effect and metric aggregations need reduceTo. promql queries and anomaly_rule support graph only."`
 	QueryType QueryType `json:"queryType" required:"true" description:"The query language of every query: builder, promql or clickhouse_sql."`
 	Unit      string    `json:"unit,omitempty" description:"The unit of the query result, such as percent, ms or bytes. Used to format values in notifications and to convert thresholds given in a different targetUnit."`
 }

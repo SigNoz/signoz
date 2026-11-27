@@ -186,7 +186,7 @@ func TestChannelJiraConfigUnmarshal(t *testing.T) {
 		{"SelfHosted_WithBlankEmail", `{"deployment":"selfhosted","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p","email":""}}`, "", JiraDeploymentSelfHosted},
 		{"NullAuth_Rejected", `{"deployment":"cloud","site":"https://acme.atlassian.net","project":"OPS","issueType":"Task","auth":null}`, "config.spec.auth is required for a jira channel", JiraDeploymentCloud},
 		{"UnknownDeployment", `{"deployment":"onprem","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, `config.spec.deployment "onprem" is not supported`, JiraDeployment{}},
-		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, "string must not be empty", JiraDeployment{}},
+		{"EmptyDeployment_Rejected", `{"deployment":"","site":"https://jira.acme.com","project":"OPS","issueType":"Task","auth":{"pat":"p"}}`, "string must be omitted or non-empty", JiraDeployment{}},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {

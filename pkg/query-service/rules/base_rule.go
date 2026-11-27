@@ -492,6 +492,14 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]s
 // FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
 // Returns the filtered series (old ones) excluding new series that are still within the grace period.
 func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*qbtypes.TimeSeries) ([]*qbtypes.TimeSeries, error) {
+	return filterNewByLabels(ctx, r, ts, series, func(s *qbtypes.TimeSeries) []*qbtypes.Label { return s.Labels })
+}
+
+func (r *BaseRule) FilterNewScalarGroups(ctx context.Context, ts time.Time, groups []qbtypes.ScalarGroup) ([]qbtypes.ScalarGroup, error) {
+	return filterNewByLabels(ctx, r, ts, groups, func(group qbtypes.ScalarGroup) []*qbtypes.Label { return group.Labels })
+}
+
+func filterNewByLabels[T any](ctx context.Context, r *BaseRule, ts time.Time, series []T, labelsOf func(T) []*qbtypes.Label) ([]T, error) {
 	// Extract metric names and groupBy keys
 	metricToGroupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
@@ -510,7 +518,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	for i := 0; i < len(series); i++ {
 
 		valueForKey := func(key string) (string, bool) {
-			for _, item := range series[i].Labels {
+			for _, item := range labelsOf(series[i]) {
 				if item.Key.Name == key {
 					return fmt.Sprint(item.Value), true
 				}
@@ -563,7 +571,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	// Filter series based on first_seen + delay
-	filteredSeries := make([]*qbtypes.TimeSeries, 0, len(series))
+	filteredSeries := make([]T, 0, len(series))
 	evalTimeMs := ts.UnixMilli()
 	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
@@ -605,7 +613,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 				ctx, "skipping new series",
 				slog.Int("series.index", i), slog.Int64("series.max_first_seen", maxFirstSeen),
 				slog.Int64("eval.time_ms", evalTimeMs), slog.Int64("eval.delay_ms", newGroupEvalDelayMs),
-				slog.Any("series.labels", series[i].Labels),
+				slog.Any("series.labels", labelsOf(series[i])),
 			)
 			continue
 		}

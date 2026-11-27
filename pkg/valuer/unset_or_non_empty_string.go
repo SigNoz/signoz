@@ -18,7 +18,7 @@ type UnsetOrNonEmptyString struct {
 
 func NewUnsetOrNonEmptyString(val string) (UnsetOrNonEmptyString, error) {
 	if val == "" {
-		return UnsetOrNonEmptyString{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "string must not be empty")
+		return UnsetOrNonEmptyString{}, errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidValuer, "string must be omitted or non-empty")
 	}
 
 	return UnsetOrNonEmptyString{val: val}, nil

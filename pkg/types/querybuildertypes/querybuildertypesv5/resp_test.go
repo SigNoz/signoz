@@ -530,3 +530,52 @@ func TestTimeSeriesDataFilterToTimeRange(t *testing.T) {
 		})
 	}
 }
+
+func TestScalarDataExtractGroups(t *testing.T) {
+	serviceKey := telemetrytypes.TelemetryFieldKey{Name: "service"}
+	groupCol := &ColumnDescriptor{TelemetryFieldKey: serviceKey, QueryName: "A", Type: ColumnTypeGroup}
+	countCol := &ColumnDescriptor{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "__result_0"}, QueryName: "A", AggregationIndex: 0, Type: ColumnTypeAggregation}
+	latencyCol := &ColumnDescriptor{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "p99"}, QueryName: "A", AggregationIndex: 1, Type: ColumnTypeAggregation}
+
+	testCases := []struct {
+		name           string
+		scalarData     *ScalarData
+		expectedGroups []ScalarGroup
+	}{
+		{
+			name: "GroupByColumn_LabelsAndOneValuePerAggregation_InResultOrder",
+			scalarData: &ScalarData{Columns: []*ColumnDescriptor{groupCol, countCol, latencyCol}, Data: [][]any{
+				{"cart", int64(2), 20.0},
+				{"auth", uint64(1), float32(10)},
+			}},
+			expectedGroups: []ScalarGroup{
+				{Labels: []*Label{{Key: serviceKey, Value: "cart"}}, Values: []float64{2, 20}},
+				{Labels: []*Label{{Key: serviceKey, Value: "auth"}}, Values: []float64{1, 10}},
+			},
+		},
+		{
+			name:           "NoGroupByColumn_SingleUnlabeledGroup",
+			scalarData:     &ScalarData{Columns: []*ColumnDescriptor{countCol}, Data: [][]any{{3.5}}},
+			expectedGroups: []ScalarGroup{{Labels: []*Label{}, Values: []float64{3.5}}},
+		},
+		{
+			name:           "NoAggregationColumn_NoGroups",
+			scalarData:     &ScalarData{Columns: []*ColumnDescriptor{groupCol}, Data: [][]any{{"cart"}}},
+			expectedGroups: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expectedGroups, testCase.scalarData.ExtractGroups())
+		})
+	}
+}
+
+func TestScalarDataExtractGroupsNonNumericCell(t *testing.T) {
+	countCol := &ColumnDescriptor{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "__result_0"}, QueryName: "A", Type: ColumnTypeAggregation}
+	groups := (&ScalarData{Columns: []*ColumnDescriptor{countCol}, Data: [][]any{{"n/a"}}}).ExtractGroups()
+
+	assert.Len(t, groups, 1)
+	assert.True(t, math.IsNaN(groups[0].Values[0]))
+}

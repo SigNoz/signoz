@@ -1,10 +1,12 @@
 package ruletypes
 
 import (
+	"math"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -444,6 +446,45 @@ func TestBasicRuleThresholdEval_UnitConversion(t *testing.T) {
 				assert.Equal(t, *tt.threshold.TargetValue, sample.Target)
 				assert.Equal(t, tt.threshold.TargetUnit, sample.TargetUnit)
 			}
+		})
+	}
+}
+
+func TestBasicRuleThresholdsEvalScalar(t *testing.T) {
+	target := 100.0
+	recoveryTarget := 80.0
+	labels := []*qbtypes.Label{{Key: telemetrytypes.TelemetryFieldKey{Name: "service"}, Value: "cart"}}
+	thresholds := BasicRuleThresholds{{Name: "critical", TargetValue: &target, RecoveryTarget: &recoveryTarget, CompareOperator: ValueIsAbove, MatchType: AllTheTimes}}
+	activeAlerts := map[uint64]struct{}{PrepareSampleLabelsForRule(labels, "critical").Hash(): {}}
+
+	testCases := []struct {
+		name                string
+		value               float64
+		evalData            EvalData
+		expectedSampleCount int
+		expectedValue       float64
+		expectedRecovering  bool
+	}{
+		{name: "AboveTarget_Fires", value: 150, expectedSampleCount: 1, expectedValue: 150},
+		{name: "BelowTarget_Silent", value: 50},
+		{name: "BelowTarget_SendUnmatched_ReportsValue", value: 50, evalData: EvalData{SendUnmatched: true}, expectedSampleCount: 1, expectedValue: 50},
+		{name: "ActiveAlertAboveRecoveryTarget_Recovering", value: 90, evalData: EvalData{ActiveAlerts: activeAlerts}, expectedSampleCount: 1, expectedValue: 90, expectedRecovering: true},
+		{name: "NoActiveAlertAboveRecoveryTarget_Silent", value: 90},
+		{name: "NaN_Silent", value: math.NaN()},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			vector, err := thresholds.EvalScalar(labels, testCase.value, "", testCase.evalData)
+			require.NoError(t, err)
+			require.Len(t, vector, testCase.expectedSampleCount)
+			if testCase.expectedSampleCount == 0 {
+				return
+			}
+			assert.Equal(t, testCase.expectedValue, vector[0].V)
+			assert.Equal(t, testCase.expectedRecovering, vector[0].IsRecovering)
+			assert.Equal(t, "cart", vector[0].Metric.Get("service"))
+			assert.Equal(t, "critical", vector[0].Metric.Get(LabelThresholdName))
 		})
 	}
 }

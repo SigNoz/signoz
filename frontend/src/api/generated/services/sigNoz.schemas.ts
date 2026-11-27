@@ -12787,7 +12787,7 @@ export enum RuletypesQueryTypeDTO {
 }
 export interface RuletypesAlertCompositeQueryDTO {
 	/**
-	 * @description The panel the UI renders the queries with: graph, table or value. Use graph for alerts.
+	 * @description How the queries are evaluated. graph runs them as time series and matchType decides which points must satisfy op. table and value run them as scalar: one value per group over the whole evaluation window, compared directly, so matchType has no effect and metric aggregations need reduceTo. promql queries and anomaly_rule support graph only.
 	 */
 	panelType: RuletypesPanelTypeDTO;
 	/**
@@ -12836,9 +12836,9 @@ export interface RuletypesBasicRuleThresholdDTO {
 	 */
 	channels?: string[] | null;
 	/**
-	 * @description Which points in the window must satisfy op. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'.
+	 * @description Which points in the window must satisfy op. Required on graph; omitted on table and value, where the single value is compared directly. Accepted as at_least_once, all_the_times, on_average, in_total or last, their aliases avg and sum, or the legacy codes as strings, '1' to '5'.
 	 */
-	matchType: RuletypesMatchTypeDTO;
+	matchType?: RuletypesMatchTypeDTO;
 	/**
 	 * @type string
 	 * @description The threshold name, conventionally critical, error, warning or info. Alerts carry it as the threshold.name label and, lowercased, as the severity label; templates can read it as $threshold.name.
