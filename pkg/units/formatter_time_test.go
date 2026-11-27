@@ -27,4 +27,12 @@ func TestDuration(t *testing.T) {
 	assert.Equal(t, "1.27 day", durationFormatter.Format(109800000000000, "ns"))
 	assert.Equal(t, "2 day", durationFormatter.Format(172800000, "ms"))
 	assert.Equal(t, "1 hour", durationFormatter.Format(60, "min"))
+
+	// Minutes switch to years at one year (525948 min), not at the
+	// seconds-per-week boundary 604800. Regression for #13365.
+	assert.Equal(t, "1 week", durationFormatter.Format(10080, "min"))
+	assert.Equal(t, "52.2 week", durationFormatter.Format(525947, "min"))
+	assert.Equal(t, "1 year", durationFormatter.Format(525948, "min"))
+	assert.Equal(t, "1.05 year", durationFormatter.Format(550000, "min"))
+	assert.Equal(t, "1.14 year", durationFormatter.Format(600000, "min"))
 }
