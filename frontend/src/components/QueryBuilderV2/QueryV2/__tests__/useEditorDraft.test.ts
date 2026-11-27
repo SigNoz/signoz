@@ -32,4 +32,15 @@ describe('useEditorDraft', () => {
 
 		expect(result.current[0]).toBe('count() < 5');
 	});
+
+	it('takes an outside value equal to an edit older than the last echo', () => {
+		const { result, rerender } = setup();
+
+		act(() => result.current[1]('a'));
+		act(() => result.current[1]('ab'));
+		rerender({ external: 'ab' });
+		rerender({ external: 'a' });
+
+		expect(result.current[0]).toBe('a');
+	});
 });
