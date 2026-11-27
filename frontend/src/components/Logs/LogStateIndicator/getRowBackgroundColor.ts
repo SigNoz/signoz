@@ -20,6 +20,8 @@ export function getRowBackgroundColor(
 				return `${Color.BG_AQUA_500}40`;
 			case LogType.FATAL:
 				return `${Color.BG_SAKURA_500}40`;
+			case LogType.SUCCESS:
+				return `${Color.BG_FOREST_500}40`;
 			default:
 				return `${Color.BG_ROBIN_500}40`;
 		}
@@ -37,6 +39,8 @@ export function getRowBackgroundColor(
 			return Color.BG_AQUA_100;
 		case LogType.FATAL:
 			return Color.BG_SAKURA_100;
+		case LogType.SUCCESS:
+			return Color.BG_FOREST_100;
 		default:
 			return Color.BG_VANILLA_300;
 	}

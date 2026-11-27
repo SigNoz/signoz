@@ -12,7 +12,7 @@ export function getOutcome(log: AuditLog): AuditOutcome {
 export function getRowHoverColor(isDarkMode: boolean, log: AuditLog): string {
 	return getRowBackgroundColor(
 		isDarkMode,
-		getOutcome(log) === AuditOutcome.SUCCESS ? LogType.INFO : LogType.ERROR,
+		getOutcome(log) === AuditOutcome.SUCCESS ? LogType.SUCCESS : LogType.ERROR,
 	);
 }
 

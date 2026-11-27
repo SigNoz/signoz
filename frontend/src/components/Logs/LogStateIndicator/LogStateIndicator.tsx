@@ -41,6 +41,7 @@ export const LogType = {
 	WARN: 'WARN',
 	ERROR: 'ERROR',
 	FATAL: 'FATAL',
+	SUCCESS: 'SUCCESS',
 	UNKNOWN: 'UNKNOWN',
 } as const;
 
