@@ -12148,6 +12148,29 @@ export type Querybuildertypesv5ExecStatsDTOStepIntervals = {
 	[key: string]: number;
 };
 
+export interface Querybuildertypesv5SemconvResolutionDTO {
+	/**
+	 * @type string
+	 * @description The current name of the family.
+	 */
+	current: string;
+	/**
+	 * @type string
+	 * @description The family kind: attribute or metric.
+	 */
+	kind: string;
+	/**
+	 * @type array
+	 * @description Every name the query read, the current name first.
+	 */
+	members: string[];
+	/**
+	 * @type string
+	 * @description The name as the request spelled it.
+	 */
+	requested: string;
+}
+
 /**
  * Execution cost of the request: rows and bytes scanned and execution time. A measure of cost, not of whether data exists.
  */
@@ -12170,6 +12193,11 @@ export interface Querybuildertypesv5ExecStatsDTO {
 	 * @description Rows scanned to answer every query in the request. A cost indicator only: rows are scanned whether or not any matched, so it says nothing about whether data exists.
 	 */
 	rowsScanned?: number;
+	/**
+	 * @type array
+	 * @description The semantic-convention families that the builder queries in the request resolved. Absent when no query named a family member or when family resolution is off.
+	 */
+	semconvResolutions?: Querybuildertypesv5SemconvResolutionDTO[];
 	/**
 	 * @type object
 	 * @description The step interval in seconds that was used for each query, keyed by query name.
@@ -14861,6 +14889,60 @@ export interface TelemetrytypesGettableFieldValuesDTO {
 	values: TelemetrytypesTelemetryFieldValuesDTO;
 }
 
+export interface TelemetrytypesSemconvMigrationReportEntryDTO {
+	/**
+	 * @type string
+	 * @description The current name of the family.
+	 */
+	current: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Latest time the metadata recorded such a set, in Unix milliseconds.
+	 */
+	lastSeenUnixMilli: number;
+	/**
+	 * @type string
+	 * @description The old name that the listed services still send.
+	 */
+	old: string;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description Number of distinct resource and attribute sets that carry the old name and no current name.
+	 */
+	resourceSets: number;
+	/**
+	 * @type array
+	 * @description Services that sent the old name and no current name in the window, sorted by name. A resource without service.name is listed as <unknown>.
+	 */
+	services: string[];
+	/**
+	 * @description The signal the old name was seen in: traces or logs.
+	 */
+	signal: TelemetrytypesSignalDTO;
+}
+
+export interface TelemetrytypesGettableSemconvMigrationReportDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description End of the window the report covers, in Unix milliseconds.
+	 */
+	endUnixMilli: number;
+	/**
+	 * @type array
+	 * @description One entry for each family, old name and signal with at least one service that sends only the old name. Empty when there is none.
+	 */
+	entries: TelemetrytypesSemconvMigrationReportEntryDTO[];
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Start of the window the report covers, in Unix milliseconds.
+	 */
+	startUnixMilli: number;
+}
+
 export interface TypesChangePasswordRequestDTO {
 	/**
 	 * @type string
@@ -15562,6 +15644,29 @@ export type GetFieldsKeysParams = {
 
 export type GetFieldsKeys200 = {
 	data: TelemetrytypesGettableFieldKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetSemconvMigrationReportParams = {
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description Start of the lookup window in Unix milliseconds. Omit for 24 hours before the current time.
+	 */
+	startUnixMilli?: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 * @description End of the lookup window in Unix milliseconds. Omit for the current time.
+	 */
+	endUnixMilli?: number;
+};
+
+export type GetSemconvMigrationReport200 = {
+	data: TelemetrytypesGettableSemconvMigrationReportDTO;
 	/**
 	 * @type string
 	 */

@@ -1,0 +1,17 @@
+.report {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-6);
+	margin-top: var(--spacing-16);
+}
+
+.empty {
+	padding: var(--spacing-8) 0;
+}
+
+// The table breaks cell text at any character. A list of services reads
+// better when it wraps between names.
+.services {
+	word-break: normal;
+	overflow-wrap: anywhere;
+}

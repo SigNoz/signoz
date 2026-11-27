@@ -68,6 +68,14 @@ export interface PrettyViewProps {
 		value: unknown,
 		keyPath: readonly (string | number)[],
 	) => React.ReactNode | undefined;
+	/**
+	 * Optional node rendered after the key of a row. It receives the path of
+	 * the key from the root of `data`, e.g. `['resource', 'service.name']`.
+	 * Return `null` to leave the row as it is.
+	 */
+	labelSuffixRenderer?: (
+		fieldKeyPath: readonly (string | number)[],
+	) => React.ReactNode;
 }
 
 function PrettyView({
@@ -80,6 +88,7 @@ function PrettyView({
 	pinnedFieldsValue,
 	onPinnedFieldsChange,
 	renderLeafValue,
+	labelSuffixRenderer,
 }: PrettyViewProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [, setCopy] = useCopyToClipboard();
@@ -310,8 +319,15 @@ function PrettyView({
 		(keyPath: KeyPath): React.ReactNode => {
 			const displayKey = String(keyPath[0]);
 			const entry = pinnedEntries.find((e) => e.displayKey === displayKey);
+			const suffix = entry && labelSuffixRenderer?.(entry.forwardPath);
 			return (
-				<span className="pretty-view__pinned-label">
+				<span
+					className={
+						suffix
+							? 'pretty-view__pinned-label pretty-view__label'
+							: 'pretty-view__pinned-label'
+					}
+				>
 					<Pin
 						size={12}
 						className="pretty-view__pinned-icon"
@@ -322,10 +338,29 @@ function PrettyView({
 						}}
 					/>
 					<span>{displayKey}</span>
+					{suffix}
 				</span>
 			);
 		},
-		[togglePin, pinnedEntries],
+		[togglePin, pinnedEntries, labelSuffixRenderer],
+	);
+
+	// A row without a suffix keeps the markup of react-json-tree's own label.
+	const labelRenderer = useCallback(
+		(keyPath: KeyPath): React.ReactNode => {
+			const label = <span>{`${keyPath[0]}:`}</span>;
+			const suffix = labelSuffixRenderer?.(keyPathToForward(keyPath));
+			if (!suffix) {
+				return label;
+			}
+			return (
+				<span className="pretty-view__label">
+					{label}
+					{suffix}
+				</span>
+			);
+		},
+		[labelSuffixRenderer],
 	);
 
 	return (
@@ -370,6 +405,7 @@ function PrettyView({
 				shouldExpandNodeInitially={shouldExpandNodeInitially}
 				valueRenderer={valueRenderer}
 				getItemString={getItemString}
+				labelRenderer={labelSuffixRenderer ? labelRenderer : undefined}
 			/>
 		</div>
 	);

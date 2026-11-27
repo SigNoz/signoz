@@ -238,6 +238,22 @@
 		padding-left: 6px !important;
 	}
 
+	&__label {
+		display: inline-flex;
+		align-items: baseline;
+		gap: var(--spacing-3);
+	}
+
+	// A key with a suffix can fill most of a narrow row. Its value then moves
+	// to the next line instead of wrapping in the few pixels that are left.
+	&__row:has(> label &__label) {
+		flex-wrap: wrap;
+
+		> span {
+			min-width: 40%;
+		}
+	}
+
 	&__pinned-icon {
 		flex-shrink: 0;
 		color: var(--text-robin-400);

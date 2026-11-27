@@ -14,6 +14,8 @@ import {
 	openAIQueryBuilder,
 	openClickHouseQuery,
 	writeClickHouseQuery,
+	writeClickHouseQueryWithOldName,
+	writePromQLQueryWithOldName,
 	openPanelTypeSwitcher,
 	openPromQLQuery,
 	pickHeatmapTracesField,
@@ -65,9 +67,22 @@ export const ClickHouseQueryWritten: Story = {
 	play: writeClickHouseQuery,
 };
 
+/**
+ * A ClickHouse query that reads an attribute by its old name: the tab names the
+ * attribute that replaced it and keeps the query as written.
+ */
+export const ClickHouseQueryOldName: Story = {
+	play: writeClickHouseQueryWithOldName,
+};
+
 /** The PromQL query tab, its query and legend fields empty. */
 export const PromQLQuery: Story = {
 	play: openPromQLQuery,
+};
+
+/** A PromQL query that matches on an old attribute name, with the same warning. */
+export const PromQLQueryOldName: Story = {
+	play: writePromQLQueryWithOldName,
 };
 
 /** The create route, seeding an unsaved panel of the chosen kind. */

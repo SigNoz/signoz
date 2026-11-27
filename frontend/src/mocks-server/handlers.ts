@@ -293,6 +293,15 @@ export const handlers = [
 	rest.delete('http://localhost/api/v2/rules/:id', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json({ status: 'success' })),
 	),
+	rest.get('http://localhost/api/v1/fields/semconv-migration', (_, res, ctx) =>
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: { startUnixMilli: 0, endUnixMilli: 0, entries: [] },
+			}),
+		),
+	),
 	rest.get('http://localhost/locales/en/translation.json', (_, res, ctx) =>
 		res(ctx.status(200), ctx.json(enTranslation)),
 	),

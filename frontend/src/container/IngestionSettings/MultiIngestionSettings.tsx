@@ -98,6 +98,8 @@ import { MeterAggregateOperator } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { getDaysUntilExpiry } from 'utils/timeUtils';
 
+import SemconvMigrationReport from './SemconvMigrationReport/SemconvMigrationReport';
+
 import 'components/LearnMore/LearnMore.styles.scss';
 import './IngestionSettings.styles.scss';
 
@@ -1871,6 +1873,7 @@ function MultiIngestionSettings(): JSX.Element {
 						className="ingestion-keys-table"
 					/>
 				</AuthZGuardContent>
+				<SemconvMigrationReport />
 			</div>
 
 			{/* Delete Key Modal */}
