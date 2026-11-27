@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { startTransition, useCallback } from 'react';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import { QueryParams } from 'constants/query';
@@ -55,15 +55,19 @@ export function useOpenPanelEditor(): (
 					QueryParams.compositeQuery,
 					encodeURIComponent(JSON.stringify(query)),
 				);
-				// The provider applies the URL in an effect, a tick after the builder's fields
-				// have mounted and read the query they keep (PromQL inputs, add-on rows).
-				resetQuery(query);
 			}
 			const search = params.toString();
-			safeNavigate(
-				search ? `${path}?${search}` : path,
-				options?.handoffState ? { state: options.handoffState } : undefined,
-			);
+			startTransition(() => {
+				if (query) {
+					// The provider applies the URL in an effect, a tick after the builder's fields
+					// have mounted and read the query they keep (PromQL inputs, add-on rows).
+					resetQuery(query);
+				}
+				safeNavigate(
+					search ? `${path}?${search}` : path,
+					options?.handoffState ? { state: options.handoffState } : undefined,
+				);
+			});
 		},
 		[safeNavigate, dashboardId, timeSearch, resetQuery],
 	);
