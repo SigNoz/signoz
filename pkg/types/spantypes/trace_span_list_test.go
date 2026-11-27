@@ -1,6 +1,7 @@
 package spantypes
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -99,6 +100,7 @@ func TestNewSpanListPage(t *testing.T) {
 	testCases := []struct {
 		name          string
 		query         SpanListQuery
+		search        *SpanSearch
 		expected      []string
 		expectedTotal uint64
 	}{
@@ -151,18 +153,39 @@ func TestNewSpanListPage(t *testing.T) {
 			expected:      []string{"q2", "pay", "grpc", "caught", "auth"},
 			expectedTotal: 5,
 		},
+		{
+			// the store returns the matching spans in no order; the list keeps the order of the scope.
+			name:          "Search_KeepsScopeOrder",
+			query:         SpanListQuery{Scope: SpanScopeDescendants, ScopeSpanID: "root", Limit: 50},
+			search:        &SpanSearch{SpanIDs: []string{"orphan", "auth", "grpc", "pay"}},
+			expected:      []string{"pay", "grpc", "auth"},
+			expectedTotal: 3,
+		},
+		{
+			name:          "Search_View_BothApply",
+			query:         SpanListQuery{Scope: SpanScopeTrace, View: SpanListViewUnmarkedFailures, Limit: 50},
+			search:        &SpanSearch{SpanIDs: []string{"auth", "pay", "q1"}},
+			expected:      []string{"auth"},
+			expectedTotal: 1,
+		},
+		{
+			name:     "Search_NothingMatches",
+			query:    SpanListQuery{Scope: SpanScopeTrace, Limit: 50},
+			search:   &SpanSearch{},
+			expected: []string{},
+		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			page, err := NewSpanListPage(checkoutSkeleton(nil), &testCase.query)
+			page, err := NewSpanListPage(checkoutSkeleton(nil), &testCase.query, testCase.search)
 			require.NoError(t, err)
 			assert.Equal(t, testCase.expected, page.SpanIDs())
 			assert.Equal(t, testCase.expectedTotal, page.total)
 		})
 	}
 
-	_, err := NewSpanListPage(checkoutSkeleton(nil), &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "missing", Limit: 50})
+	_, err := NewSpanListPage(checkoutSkeleton(nil), &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "missing", Limit: 50}, nil)
 	assert.True(t, errors.Ast(err, errors.TypeNotFound))
 }
 
@@ -177,13 +200,77 @@ func TestNewSpanListPage_TimeSpent_ShowsTheGroupByItsLongestSpanInScope(t *testi
 		skeletonSpec{id: "q2", parent: "root", name: "SELECT", service: "db", startMs: 30, durationMs: 25},
 	)
 
-	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeAncestors, ScopeSpanID: "row", View: SpanListViewTimeSpent, Limit: 50})
+	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeAncestors, ScopeSpanID: "row", View: SpanListViewTimeSpent, Limit: 50}, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"root", "q1"}, page.SpanIDs())
 
-	page, err = NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeTrace, View: SpanListViewTimeSpent, Limit: 50})
+	page, err = NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeTrace, View: SpanListViewTimeSpent, Limit: 50}, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"root", "q2", "row"}, page.SpanIDs())
+}
+
+func TestSnippetAround_CaseFoldingThatChangesByteLength(t *testing.T) {
+	// Lowering İ makes the text a byte longer, so a position in the lowered text does not map back.
+	snippet, ok := snippetAround("İ WORLDPay declined", "worldpay")
+	require.True(t, ok)
+	assert.Equal(t, "İ WORLDPay declined", snippet)
+}
+
+func TestFindWords(t *testing.T) {
+	long := strings.Repeat("é", 30) + "aWorldpay" + strings.Repeat("b", 60)
+	row := &StorableSpan{
+		Name:             "charge_card",
+		StatusMessage:    long,
+		AttributesString: map[string]string{"payment.provider": "worldpay", "http.route": "/pay"},
+		AttributesNumber: map[string]float64{"order.id": 1234567},
+		AttributesBool:   map[string]bool{"payment.retried": true},
+		ResourcesString:  map[string]string{"service.name": "payments"},
+		Events:           []string{`{"name":"retry","timeUnixNano":1795447774760897000,"attributeMap":{"reason":"worldpay timeout"},"isError":true}`},
+	}
+
+	testCases := []struct {
+		name     string
+		words    []string
+		expected []SpanTextMatch
+	}{
+		{
+			// a long text is cut 40 bytes on each side of the word; the cut lands inside an é and widens to its start.
+			name:  "IgnoresCase_CutsLongText",
+			words: []string{"WORLDPAY"},
+			expected: []SpanTextMatch{
+				{Field: "status_message", Snippet: "…" + strings.Repeat("é", 20) + "aWorldpay" + strings.Repeat("b", 40) + "…"},
+				{Field: "attributes.payment.provider", Snippet: "worldpay"},
+				{Field: "events[0]", Snippet: "worldpay timeout"},
+			},
+		},
+		{
+			name:     "AttributeName_ResourceValue",
+			words:    []string{"route", "payments"},
+			expected: []SpanTextMatch{{Field: "attributes.http.route", Snippet: "http.route"}, {Field: "resource.service.name", Snippet: "payments"}},
+		},
+		{
+			name:     "Number_PlainDigits_Bool",
+			words:    []string{"1234567", "true"},
+			expected: []SpanTextMatch{{Field: "attributes.order.id", Snippet: "1234567"}, {Field: "attributes.payment.retried", Snippet: "true"}},
+		},
+		{
+			// the labels and the timestamp of a stored event are not part of what it says.
+			name:     "EventEnvelope_NotMatched",
+			words:    []string{"17954", "isError", "attributeMap"},
+			expected: []SpanTextMatch{},
+		},
+		{
+			name:     "NoWord",
+			words:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.expected, findWords(row, testCase.words))
+		})
+	}
 }
 
 func TestNewSpanListPage_AIUsage_RanksByTokensWhenNoListedSpanHasACost(t *testing.T) {
@@ -199,7 +286,7 @@ func TestNewSpanListPage_AIUsage_RanksByTokensWhenNoListedSpanHasACost(t *testin
 		skeletonSpec{id: "fetch", parent: "tools", usage: &AISpanUsage{InputTokens: value(100)}},
 	)
 
-	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "tools", View: SpanListViewAIUsage, Limit: 50})
+	page, err := NewSpanListPage(skeleton, &SpanListQuery{Scope: SpanScopeChildren, ScopeSpanID: "tools", View: SpanListViewAIUsage, Limit: 50}, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"fetch", "search"}, page.SpanIDs())
 }

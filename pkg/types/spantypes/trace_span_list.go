@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/aiobservabilitytypes"
@@ -22,6 +25,10 @@ const (
 const (
 	spanListDefaultLimit = 50
 	spanListMaxLimit     = 1000
+
+	spanMatchLimit         = 3
+	spanMatchSnippetRadius = 40
+	snippetMark            = "…"
 )
 
 var (
@@ -38,7 +45,9 @@ type SpanListQuery struct {
 	// ScopeSpanID is the span the scope is relative to. Empty when the scope is the whole trace.
 	ScopeSpanID string
 	// View is empty when every span the scope covers is wanted.
-	View         SpanListView
+	View SpanListView
+	// Query holds words, a filter expression, or both. Empty when there is nothing to match.
+	Query        string
 	SelectFields []telemetrytypes.TelemetryFieldKey
 	Offset       int
 	Limit        int
@@ -52,17 +61,25 @@ type SpanListPage struct {
 	total        uint64
 	positions    []int32
 	selectFields []telemetrytypes.TelemetryFieldKey
+	// words holds the free-text terms of the query; warnings holds what the query could not use.
+	words    []string
+	warnings []string
+}
+
+// SpanSearch holds the spans of a trace that match a query.
+type SpanSearch struct {
+	SpanIDs []string
+	// Words holds the free-text terms of the query.
+	Words    []string
+	Warnings []string
 }
 
 func NewSpanListQuery(params *ListTraceSpansParams, scope SpanScope, scopeSpanID string) (*SpanListQuery, error) {
-	query := &SpanListQuery{Scope: scope, ScopeSpanID: scopeSpanID, View: params.View, Offset: params.Offset}
+	query := &SpanListQuery{Scope: scope, ScopeSpanID: scopeSpanID, View: params.View, Query: strings.TrimSpace(params.Query), Offset: params.Offset}
 	if query.View != "" {
 		if err := validateSpanListView(query.View); err != nil {
 			return nil, err
 		}
-	}
-	if strings.TrimSpace(params.Query) != "" {
-		return nil, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "query is not implemented yet")
 	}
 	if params.Offset < 0 {
 		return nil, errors.NewInvalidInputf(ErrCodeTraceSpansInvalidOffset, "offset cannot be negative, got %d", params.Offset)
@@ -81,14 +98,27 @@ func NewSpanListQuery(params *ListTraceSpansParams, scope SpanScope, scopeSpanID
 	return query, nil
 }
 
-func NewSpanListPage(skeleton *TraceSkeleton, query *SpanListQuery) (*SpanListPage, error) {
+// NewSpanListPage picks the page the query asks for. search holds the spans that match the
+// query's text, and is nil when the query has none.
+func NewSpanListPage(skeleton *TraceSkeleton, query *SpanListQuery, search *SpanSearch) (*SpanListPage, error) {
 	scope, err := skeleton.scopePositions(query.Scope, query.ScopeSpanID)
 	if err != nil {
 		return nil, err
 	}
+	if search != nil {
+		scope = skeleton.spansAmong(scope, search.SpanIDs)
+	}
 	page := skeleton.page(scope, query.View, query.Offset, query.Limit)
 	page.selectFields = query.SelectFields
+	if search != nil {
+		page.words, page.warnings = search.Words, search.Warnings
+	}
 	return page, nil
+}
+
+// ReadsAttributes reports whether building the page needs the full stored rows of its spans.
+func (page *SpanListPage) ReadsAttributes() bool {
+	return len(page.selectFields) > 0 || len(page.words) > 0
 }
 
 func (page *SpanListPage) SpanIDs() []string {
@@ -100,7 +130,7 @@ func (page *SpanListPage) SpanIDs() []string {
 }
 
 // NewSpanList builds the page. rows holds the stored data of its spans, read only for the selected
-// fields. A selected field no span of the page has is reported as a warning.
+// fields and the matched words. A selected field no span of the page has is reported as a warning.
 func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 	byID := make(map[string]*StorableSpan, len(rows))
 	for i := range rows {
@@ -108,14 +138,16 @@ func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 	}
 
 	skeleton := page.skeleton
-	list := &SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions))}
+	list := &SpanList{Total: page.total, Items: make([]SpanItem, 0, len(page.positions)), Warnings: slices.Clone(page.warnings)}
 	found := make([]bool, len(page.selectFields))
 	for _, i := range page.positions {
 		item := SpanItem{Span: skeleton.span(i), TreeStats: skeleton.treeStats(i), UnmarkedFailureKind: skeleton.unmarkedFailureKind(i)}
 		if page.view == SpanListViewAIUsage {
 			skeleton.setUsageAttributes(&item.Span, i)
 		}
-		item.Span.selectFields(byID[skeleton.spanID(i)], page.selectFields, found)
+		row := byID[skeleton.spanID(i)]
+		item.Span.selectFields(row, page.selectFields, found)
+		item.Matches = findWords(row, page.words)
 		list.Items = append(list.Items, item)
 	}
 	for k, field := range page.selectFields {
@@ -233,6 +265,108 @@ func setString(target *string, value string) bool {
 	return value != ""
 }
 
+// findWords returns up to three places in the span where one of the words occurs, ignoring case.
+func findWords(row *StorableSpan, words []string) []SpanTextMatch {
+	if row == nil || len(words) == 0 {
+		return nil
+	}
+	found := make([]SpanTextMatch, 0)
+	// check notes the first of texts that holds a word, and reports whether enough places were found.
+	check := func(field string, texts ...string) bool {
+		for _, text := range texts {
+			for _, word := range words {
+				if snippet, ok := snippetAround(text, word); ok {
+					found = append(found, SpanTextMatch{Field: field, Snippet: snippet})
+					return len(found) == spanMatchLimit
+				}
+			}
+		}
+		return false
+	}
+
+	if check("name", row.Name) || check("status_message", row.StatusMessage) {
+		return found
+	}
+	attributes := row.Attributes()
+	for _, key := range slices.Sorted(maps.Keys(attributes)) {
+		if check("attributes."+key, attributeText(attributes[key]), key) {
+			return found
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(row.ResourcesString)) {
+		if check("resource."+key, row.ResourcesString[key], key) {
+			return found
+		}
+	}
+	for index, event := range row.UnmarshalledEvents() {
+		texts := []string{event.Name}
+		for _, key := range slices.Sorted(maps.Keys(event.AttributeMap)) {
+			texts = append(texts, attributeText(event.AttributeMap[key]), key)
+		}
+		if check(fmt.Sprintf("events[%d]", index), texts...) {
+			return found
+		}
+	}
+	return found
+}
+
+// attributeText writes a number in plain digits, as the store does when it matches a word:
+// fmt writes 1234567 as 1.234567e+06.
+func attributeText(value any) string {
+	if number, ok := value.(float64); ok {
+		return strconv.FormatFloat(number, 'f', -1, 64)
+	}
+	return fmt.Sprint(value)
+}
+
+// snippetAround returns the text around the first place word occurs in value, ignoring case.
+func snippetAround(value, word string) (string, bool) {
+	at, wordEnd, ok := indexFold(value, word)
+	if !ok {
+		return "", false
+	}
+	start := max(at-spanMatchSnippetRadius, 0)
+	end := min(wordEnd+spanMatchSnippetRadius, len(value))
+	for start > 0 && !utf8.RuneStart(value[start]) {
+		start--
+	}
+	for end < len(value) && !utf8.RuneStart(value[end]) {
+		end++
+	}
+	snippet := value[start:end]
+	if start > 0 {
+		snippet = snippetMark + snippet
+	}
+	if end < len(value) {
+		snippet += snippetMark
+	}
+	return snippet, true
+}
+
+// indexFold returns the byte range of the first place word occurs in value, ignoring case. The word
+// is found in the lowered text, and the position is then walked back to the original: a lowered
+// character can take fewer or more bytes.
+func indexFold(value, word string) (start, end int, ok bool) {
+	word = strings.ToLower(word)
+	at := strings.Index(strings.ToLower(value), word)
+	if at < 0 {
+		return 0, 0, false
+	}
+	start, end = -1, len(value)
+	lowered := 0
+	for i, char := range value {
+		if lowered == at {
+			start = i
+		}
+		if lowered == at+len(word) {
+			end = i
+			break
+		}
+		lowered += utf8.RuneLen(unicode.ToLower(char))
+	}
+	return start, end, start >= 0
+}
+
 func pageLimit(name string, value, fallback int) (int, error) {
 	switch {
 	case value < 0 || value > spanListMaxLimit:
@@ -280,6 +414,21 @@ func (skeleton *TraceSkeleton) scopePositions(scope SpanScope, spanID string) ([
 		return ancestors, nil
 	}
 	return nil, errors.NewInternalf(errors.CodeInternal, "unknown span scope %q", string(scope))
+}
+
+// spansAmong keeps the spans of scope whose id is one of spanIDs, in the order of scope.
+func (skeleton *TraceSkeleton) spansAmong(scope []int32, spanIDs []string) []int32 {
+	wanted := make(map[string]struct{}, len(spanIDs))
+	for _, spanID := range spanIDs {
+		wanted[spanID] = struct{}{}
+	}
+	spans := make([]int32, 0, min(len(scope), len(spanIDs)))
+	for _, i := range scope {
+		if _, ok := wanted[skeleton.spanID(i)]; ok {
+			spans = append(spans, i)
+		}
+	}
+	return spans
 }
 
 // viewPositions lists the spans of scope that are in a view, in the order of the view.

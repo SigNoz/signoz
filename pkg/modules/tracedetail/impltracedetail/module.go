@@ -326,18 +326,25 @@ func (m *module) ListTraceSpans(ctx context.Context, orgID valuer.UUID, traceID 
 	if err != nil {
 		return nil, err
 	}
+	// The search runs before the tree is loaded, so that a query that cannot be parsed fails early.
+	var search *spantypes.SpanSearch
+	if query.Query != "" {
+		search, err = m.store.SearchTraceSpans(ctx, orgID, traceID, bounds, query.Query)
+		if err != nil {
+			return nil, err
+		}
+	}
 	skeleton, err := m.store.GetTraceSkeleton(ctx, orgID, traceID, bounds)
 	if err != nil {
 		return nil, err
 	}
-	page, err := spantypes.NewSpanListPage(skeleton, query)
+	page, err := spantypes.NewSpanListPage(skeleton, query, search)
 	if err != nil {
 		return nil, err
 	}
 
-	// The attributes of the page's spans are read only when the response shows some of them.
 	var rows []spantypes.StorableSpan
-	if len(query.SelectFields) > 0 {
+	if page.ReadsAttributes() {
 		rows, err = m.store.GetTraceSpansByIDs(ctx, traceID, bounds.Start, bounds.End, page.SpanIDs())
 		if err != nil {
 			return nil, err
