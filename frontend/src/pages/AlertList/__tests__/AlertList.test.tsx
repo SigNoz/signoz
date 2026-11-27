@@ -41,6 +41,12 @@ jest.mock('pages/AlertDetails', () => ({
 		return <div>Alert Details Component</div>;
 	},
 }));
+jest.mock('pages/ChannelsNew', () => ({
+	__esModule: true,
+	default: function MockChannelsNew(): JSX.Element {
+		return <div>Channels New Component</div>;
+	},
+}));
 jest.mock('../NotificationChannels/NotificationChannels', () => ({
 	__esModule: true,
 	default: function MockNotificationChannels(): JSX.Element {
@@ -166,6 +172,41 @@ describe('AlertList', () => {
 			expect(mockSafeNavigate).toHaveBeenCalledWith(
 				`/alerts?tab=Configuration&subTab=${CHANNELS_SUB_TAB}`,
 			);
+		});
+
+		it('navigates to the alert rules list when Alert Rules is clicked on a rule details page', async () => {
+			mockQueryParams({ ruleId: 'rule-1' });
+			mockLocation('/alerts/overview');
+
+			render(<AlertList />);
+
+			await clickTab(ALERT_RULES_TEXT);
+
+			expect(mockSafeNavigate).toHaveBeenCalledWith('/alerts?tab=AlertRules');
+		});
+
+		it('navigates to the channels list when Configuration is clicked on a channel page', async () => {
+			mockQueryParams({});
+			mockLocation('/alerts/channels/new');
+
+			render(<AlertList />);
+
+			await clickTab(CONFIGURATION_TEXT);
+
+			expect(mockSafeNavigate).toHaveBeenCalledWith(
+				`/alerts?tab=Configuration&subTab=${CHANNELS_SUB_TAB}`,
+			);
+		});
+
+		it('does not navigate when the active list tab is clicked again', async () => {
+			mockQueryParams({ tab: 'AlertRules' });
+			mockLocation(ALERTS_PATH);
+
+			render(<AlertList />);
+
+			await clickTab(ALERT_RULES_TEXT);
+
+			expect(mockSafeNavigate).not.toHaveBeenCalled();
 		});
 	});
 
