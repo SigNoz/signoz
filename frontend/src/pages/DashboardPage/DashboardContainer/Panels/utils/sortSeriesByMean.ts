@@ -1,7 +1,7 @@
 import { sortByMeanDesc } from 'lib/visualization/charts/utils/sortByMeanDesc';
 import type { PanelSeries } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
 
-function seriesKey(series: PanelSeries): string {
+export function seriesKey(series: PanelSeries): string {
 	const labels = Object.keys(series.labels)
 		.sort()
 		.map((name) => `${name}=${series.labels[name]}`)
