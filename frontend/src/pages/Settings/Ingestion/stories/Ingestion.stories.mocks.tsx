@@ -7,7 +7,7 @@ import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import dayjs from 'dayjs';
 import { rest } from 'msw';
-import { screen, userEvent, within } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { defaultFeatureFlags } from 'tests/fixtures/appContextMock';
 
 import {
@@ -124,17 +124,17 @@ export const ingestionMocks = defineStoryMocks({
 		),
 
 		rest.post(
-			'http://localhost/api/v2/gateway/ingestion_keys/:keyId/limits',
+			'http://localhost/api/v2/gateway/ingestion_limits',
 			response.json(() => ({ status: 'success', data: { id: 'limit-new' } })),
 		),
 
 		rest.patch(
-			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			'http://localhost/api/v2/gateway/ingestion_limits/:limitId',
 			response.json(() => ({ status: 'success', data: null })),
 		),
 
 		rest.delete(
-			'http://localhost/api/v2/gateway/ingestion_keys/limits/:limitId',
+			'http://localhost/api/v2/gateway/ingestion_limits/:limitId',
 			response.json(() => ({ status: 'success', data: null })),
 		),
 
@@ -159,13 +159,13 @@ export const untilLoaded = { timeout: 15_000 };
 export async function openCreateKey(
 	canvasElement: HTMLElement,
 ): Promise<ReturnType<typeof within>> {
-	await userEvent.click(
-		await within(canvasElement).findByText(
-			'New Ingestion key',
-			undefined,
-			untilLoaded,
-		),
+	const add = await within(canvasElement).findByTestId(
+		'ingestion-key-add-btn',
+		undefined,
+		untilLoaded,
 	);
+	await waitFor(() => expect(add).not.toHaveAttribute('aria-busy'), untilLoaded);
+	await userEvent.click(add);
 	return within(
 		await screen.findByRole(
 			'dialog',

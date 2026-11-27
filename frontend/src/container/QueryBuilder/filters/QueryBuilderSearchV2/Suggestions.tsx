@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
@@ -46,28 +45,73 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 	return (
 		<div className="option">
 			{!isEmpty(optionType) && isObject(value) ? (
-				<Tooltip title={value.key} placement="topLeft">
-					<div className="container">
-						<section className="left-section">
-							{value.isIndexed ? (
-								<Zap size={12} fill={Color.BG_AMBER_500} />
-							) : (
-								<div className="dot" />
-							)}
-							<div className="value">
-								<Typography
-									variant="paragraph"
-									size="base"
-									weight="regular"
-									color="inherit"
-									as="p"
-									textOverflow="ellipsis"
-								>
-									{label}
-								</Typography>
-							</div>
+				<div className="container">
+					<section className="left-section">
+						{value.isIndexed ? (
+							<Zap size={12} fill={Color.BG_AMBER_500} />
+						) : (
+							<div className="dot" />
+						)}
+						<div className="value">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								textOverflow="ellipsis"
+							>
+								{label}
+							</Typography>
+						</div>
+					</section>
+					<section className="right-section">
+						<div className="data-type">
+							<Typography
+								variant="paragraph"
+								size="base"
+								weight="regular"
+								color="inherit"
+								as="p"
+								textOverflow="visible"
+							>
+								{value.dataType}
+							</Typography>
+						</div>
+						<section className={cx('type-tag', value.type)}>
+							<div className="dot" />
+							<Typography
+								variant="paragraph"
+								size="small"
+								weight="regular"
+								color="inherit"
+								as="span"
+								textOverflow="visible"
+								textTransform="capitalize"
+							>
+								{value.type}
+							</Typography>
 						</section>
-						<section className="right-section">
+					</section>
+				</div>
+			) : (
+				<div className="container-without-tag">
+					<section className="left">
+						<div className="dot" />
+						<div className={cx('value', option)}>
+							<Typography
+								{...labelTextStyle}
+								size="base"
+								color="inherit"
+								as="p"
+								textOverflow="ellipsis"
+							>
+								{`${label}`}
+							</Typography>
+						</div>
+					</section>
+					<section className="right">
+						{dataType && (
 							<div className="data-type">
 								<Typography
 									variant="paragraph"
@@ -77,62 +121,13 @@ function Suggestions(props: ISuggestionsProps): React.ReactElement {
 									as="p"
 									textOverflow="visible"
 								>
-									{value.dataType}
+									{dataType}
 								</Typography>
 							</div>
-							<section className={cx('type-tag', value.type)}>
-								<div className="dot" />
-								<Typography
-									variant="paragraph"
-									size="small"
-									weight="regular"
-									color="inherit"
-									as="span"
-									textOverflow="visible"
-									textTransform="capitalize"
-								>
-									{value.type}
-								</Typography>
-							</section>
-						</section>
-					</div>
-				</Tooltip>
-			) : (
-				<Tooltip title={label} placement="topLeft">
-					<div className="container-without-tag">
-						<section className="left">
-							<div className="dot" />
-							<div className={cx('value', option)}>
-								<Typography
-									{...labelTextStyle}
-									size="base"
-									color="inherit"
-									as="p"
-									textOverflow="ellipsis"
-								>
-									{`${label}`}
-								</Typography>
-							</div>
-						</section>
-						<section className="right">
-							{dataType && (
-								<div className="data-type">
-									<Typography
-										variant="paragraph"
-										size="base"
-										weight="regular"
-										color="inherit"
-										as="p"
-										textOverflow="visible"
-									>
-										{dataType}
-									</Typography>
-								</div>
-							)}
-							{tagValue.includes(label) && <Check size={14} />}
-						</section>
-					</div>
-				</Tooltip>
+						)}
+						{tagValue.includes(label) && <Check size={14} />}
+					</section>
+				</div>
 			)}
 		</div>
 	);

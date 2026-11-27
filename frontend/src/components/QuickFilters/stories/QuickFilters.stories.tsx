@@ -8,6 +8,7 @@ import type { GlobalMockArgs } from '@/storybook/globals';
 import QuickFilters from '../QuickFilters';
 import {
 	dirtySettings,
+	hoverTruncatedTitle,
 	openQueryPicker,
 	openSettings,
 } from './__story_mockdata__/quickFilters.play';
@@ -18,6 +19,7 @@ import {
 	handlers,
 	LONG_FILTER_VALUES,
 	loadingFiltersHandlers,
+	longTitleConfig,
 	MANY_FILTER_VALUES,
 	queryBuilder,
 	selectedServiceQueryBuilder,
@@ -157,6 +159,15 @@ export const Tooltips: GlobalArgsStory = {
 			],
 		},
 	},
+};
+
+/** A section title too long for the rail: hovering it shows the full title once. */
+export const TruncatedTitle: GlobalArgsStory = {
+	args: { config: longTitleConfig },
+	parameters: {
+		msw: { handlers: [noSavedFiltersHandler, ...handlers] },
+	},
+	play: hoverTruncatedTitle,
 };
 
 const [firstQuery] = queryBuilder.currentQuery.builder.queryData;

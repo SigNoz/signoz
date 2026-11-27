@@ -9,6 +9,7 @@ import {
 	deleteDomain,
 	expandAttributeMapping,
 	expandRoleMappings,
+	expandWorkspaceGroups,
 	expectViewerAccess,
 	openAddDomain,
 	openConfigureDomain,
@@ -103,6 +104,15 @@ export const AttributeMappingExpanded: Story = {
 export const ClaimMappingExpanded: Story = {
 	args: { provider: 'oidc' },
 	play: expandAttributeMapping,
+};
+
+/**
+ * Interaction: the Google form with its Workspace groups open, group fetching on
+ * and the allowed groups listed.
+ */
+export const WorkspaceGroupsExpanded: Story = {
+	args: { provider: 'google' },
+	play: expandWorkspaceGroups,
 };
 
 /** Validation: submitting a new provider without required fields leaves form errors visible. */

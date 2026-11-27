@@ -28,6 +28,7 @@ const tag = (key: string, value: string): TagtypesGettableTagDTO => ({
 interface DashboardSeed {
 	name: string;
 	icon: string;
+	logo: string;
 	tags: TagtypesGettableTagDTO[];
 	locked?: boolean;
 }
@@ -36,66 +37,83 @@ const SEEDS: DashboardSeed[] = [
 	{
 		name: 'Kubernetes cluster health',
 		icon: 'circus-tent',
+		logo: 'kubernetes',
 		tags: [tag('env', 'prod'), tag('team', 'platform')],
 		locked: true,
 	},
 	{
 		name: 'API latency and errors',
 		icon: 'siren',
+		logo: 'api-gateway',
 		tags: [tag('env', 'prod'), tag('team', 'api')],
 	},
 	{
 		name: 'Checkout funnel',
 		icon: 'bagel',
+		logo: 'rails',
 		tags: [tag('team', 'growth')],
 	},
 	{
 		name: 'Postgres connections',
 		icon: 'cheese',
+		logo: 'postgresql',
 		tags: [tag('env', 'prod'), tag('component', 'database')],
 	},
 	{
 		name: 'Kafka consumer lag',
 		icon: 'drum',
+		logo: 'kafka',
 		tags: [tag('team', 'platform'), tag('component', 'kafka')],
 	},
 	{
 		name: 'Nginx ingress overview',
 		icon: 'crane',
+		logo: 'nginx',
 		tags: [tag('env', 'staging')],
 	},
 	{
 		name: 'Billing jobs',
 		icon: 'dartboard',
+		logo: 'celery',
 		tags: [tag('team', 'billing')],
 		locked: true,
 	},
 	{
 		name: 'Frontend web vitals',
 		icon: 'basketball',
+		logo: 'reactjs',
 		tags: [tag('team', 'frontend')],
 	},
 	{
 		name: 'Redis cache hit ratio',
 		icon: 'cookie',
+		logo: 'redis',
 		tags: [tag('component', 'redis')],
 	},
 	{
 		name: 'Collector pipeline throughput',
 		icon: 'motorcycle',
+		logo: 'opentelemetry',
 		tags: [tag('env', 'prod'), tag('component', 'otel')],
 	},
 	{
 		name: 'On-call triage board',
 		icon: 'police-car',
+		logo: 'prometheus',
 		tags: [tag('team', 'sre')],
 	},
 	{
 		name: 'Cost per service',
 		icon: 'orange',
+		logo: 'cloudwatch',
 		tags: [tag('team', 'finops')],
 	},
 ];
+
+/** Whether rows show a bundled icon or a bundled logo. */
+export const ROW_IMAGES = ['icons', 'logos'] as const;
+
+export type RowImages = (typeof ROW_IMAGES)[number];
 
 /** Row markers a story can put on the list, each landing on a slice of the rows. */
 export const ROW_MARKERS = ['pinned', 'locked', 'legacy'] as const;
@@ -141,6 +159,7 @@ interface ListArgs {
 	limit: number;
 	markers: readonly RowMarker[];
 	query: string;
+	images?: RowImages;
 }
 
 const seedAt = (index: number): DashboardSeed => SEEDS[index % SEEDS.length];
@@ -155,6 +174,7 @@ const nameAt = (index: number): string => {
 const dashboardAt = (
 	index: number,
 	markers: readonly RowMarker[],
+	images: RowImages,
 ): DashboardtypesListedDashboardForUserV2DTO => {
 	const seed = seedAt(index);
 	const name = nameAt(index);
@@ -165,7 +185,10 @@ const dashboardAt = (
 		orgId: 'storybook-org',
 		name,
 		spec: { display: { name } },
-		image: `/assets/Icons/${seed.icon}`,
+		image:
+			images === 'logos'
+				? `/assets/Logos/${seed.logo}`
+				: `/assets/Icons/${seed.icon}`,
 		schemaVersion: 'v2',
 		source: DashboardtypesSourceDTO.user,
 		pinned: pinned.has(dashboardIdAt(index)),
@@ -236,9 +259,10 @@ export const dashboardsListResponse = ({
 	limit,
 	markers,
 	query,
+	images = 'icons',
 }: ListArgs): ListDashboardsForUserV2200 => {
 	const all = Array.from({ length: count }, (_, index) =>
-		dashboardAt(index, markers),
+		dashboardAt(index, markers, images),
 	);
 	const matched = query ? all.filter((d) => matchesQuery(d, query)) : all;
 

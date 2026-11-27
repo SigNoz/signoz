@@ -381,6 +381,27 @@ const stacktraceOf = (span: BuiltSpan): string =>
 		'    at async handle (/app/src/checkout/handler.ts:127:22)',
 	].join('\n');
 
+const UPSTREAM =
+	'payments-authorisation-worker.production-us-east-2.svc.cluster.local';
+
+/**
+ * Event attributes too long for the panel. `endpoint` stays at 100 characters
+ * or fewer, so it renders plain; a longer value goes behind the preview popover.
+ */
+export const LONG_EVENT_ATTRIBUTES = {
+	endpointKey: `upstream.${UPSTREAM}.authorisation.endpoint.url`,
+	endpoint: `https://${UPSTREAM}:8443/v2/authorise?r=3`,
+	responseKey: `upstream.${UPSTREAM}.authorisation.response.body`,
+};
+
+const UPSTREAM_RESPONSE = JSON.stringify({
+	error: 'circuit_open',
+	upstream: 'payments-authorisation-worker',
+	retry_after_ms: 1500,
+	attempts: 3,
+	region: 'us-east-2',
+});
+
 const eventsOf = (span: BuiltSpan): SpantypesWaterfallSpanDTO['events'] =>
 	span.hasError
 		? [
@@ -393,6 +414,8 @@ const eventsOf = (span: BuiltSpan): SpantypesWaterfallSpanDTO['events'] =>
 						'exception.type': 'UpstreamUnavailable',
 						'exception.message': `${span.template.service} refused the request`,
 						'exception.stacktrace': stacktraceOf(span),
+						[LONG_EVENT_ATTRIBUTES.endpointKey]: LONG_EVENT_ATTRIBUTES.endpoint,
+						[LONG_EVENT_ATTRIBUTES.responseKey]: UPSTREAM_RESPONSE,
 					},
 					isError: true,
 				},

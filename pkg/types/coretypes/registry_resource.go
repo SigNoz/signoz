@@ -60,7 +60,7 @@ var (
 	ResourceMetaResourceDashboard                        = NewResourceMetaResource(KindDashboard, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePublicDashboard                  = NewResourceMetaResource(KindPublicDashboard)
 	ResourceMetaResourceIngestionKey                     = NewResourceMetaResource(KindIngestionKey)
-	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit)
+	ResourceMetaResourceIngestionLimit                   = NewResourceMetaResource(KindIngestionLimit, VerbCreate, VerbList, VerbRead, VerbUpdate, VerbDelete)
 	ResourceMetaResourcePipeline                         = NewResourceMetaResource(KindPipeline)
 	ResourceMetaResourceUserPreference                   = NewResourceMetaResource(KindUserPreference)
 	ResourceMetaResourceOrgPreference                    = NewResourceMetaResource(KindOrgPreference)
