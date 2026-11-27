@@ -11,6 +11,7 @@ import { getRowHoverColor } from '../AuditLogs.utils';
 
 import styles from './QueryResults.module.scss';
 import { useAuditLogColumns } from '../hooks/useAuditLogColumns';
+import { useAuditLogDetail } from '../hooks/useAuditLogDetail';
 
 interface QueryResultsProps {
 	logs: AuditLog[];
@@ -31,6 +32,9 @@ export function QueryResults({
 }: QueryResultsProps): JSX.Element {
 	const { columns, fontSize } = useAuditLogColumns();
 	const isDarkMode = useIsDarkMode();
+
+	const { activeLog, handleSetActiveLog, handleCloseLogDetail } =
+		useAuditLogDetail();
 
 	const showLoading = isLoading || (isFetching && logs.length === 0);
 	const showError = !showLoading && isError && !!error;
@@ -70,12 +74,21 @@ export function QueryResults({
 						getRowKey={(log): string => log.id}
 						getRowStyle={(log): CSSProperties =>
 							({
+								'--row-active-bg': getRowHoverColor(isDarkMode, log),
 								'--row-hover-bg': getRowHoverColor(isDarkMode, log),
 							}) as CSSProperties
 						}
 						onEndReached={onEndReached}
+						isRowActive={(log): boolean => log.id === activeLog?.id}
 						cellTypographySize={fontSize}
 						plainTextCellLineClamp={1}
+						onRowClick={(log, _, { isActive }) => {
+							if (isActive) {
+								handleCloseLogDetail();
+								return;
+							}
+							handleSetActiveLog(log);
+						}}
 					/>
 				</div>
 			)}
