@@ -6,7 +6,9 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -14,6 +16,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/web"
 	"github.com/gorilla/mux"
+)
+
+const (
+	assetsPathPrefix      = "/assets/"
+	immutableCacheControl = "public, max-age=31536000, immutable"
 )
 
 type provider struct {
@@ -78,10 +85,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 
 func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Join internally call path.Clean to prevent directory traversal
-	path := filepath.Join(provider.config.Directory, req.URL.Path)
+	filePath := filepath.Join(provider.config.Directory, req.URL.Path)
 
 	// check whether a file exists or is a directory at the given path
-	fi, err := os.Stat(path)
+	fi, err := os.Stat(filePath)
 	if err != nil {
 		// if the file doesn't exist, serve index.html
 		if os.IsNotExist(err) {
@@ -99,6 +106,12 @@ func (provider *provider) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		// path is a directory, serve index.html
 		provider.serveIndex(rw)
 		return
+	}
+
+	// files under /assets/ are content-hashed, so their URL changes with their content.
+	// A non-canonical URL can name a file outside /assets/ or get a redirect.
+	if req.URL.Path == path.Clean(req.URL.Path) && strings.HasPrefix(req.URL.Path, assetsPathPrefix) {
+		rw.Header().Set("Cache-Control", immutableCacheControl)
 	}
 
 	// otherwise, use http.FileServer to serve the static file
