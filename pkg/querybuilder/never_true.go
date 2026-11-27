@@ -194,6 +194,9 @@ func (d *LogicalContradictionDetector) VisitPrimary(ctx *grammar.PrimaryContext)
 	} else if ctx.SearchCall() != nil {
 		// search() spans all fields; it can never be a logical contradiction
 		return nil
+	} else if ctx.PatternCall() != nil {
+		// pattern() reads no key, so it can't contradict a comparison
+		return nil
 	} else if ctx.FullText() != nil {
 		// Handle full text search if needed
 		return nil

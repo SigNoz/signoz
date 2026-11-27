@@ -16,6 +16,7 @@ import { ValueListContext } from "./FilterQueryParser.js";
 import { FullTextContext } from "./FilterQueryParser.js";
 import { FunctionCallContext } from "./FilterQueryParser.js";
 import { SearchCallContext } from "./FilterQueryParser.js";
+import { PatternCallContext } from "./FilterQueryParser.js";
 import { FunctionParamListContext } from "./FilterQueryParser.js";
 import { FunctionParamContext } from "./FilterQueryParser.js";
 import { ArrayContext } from "./FilterQueryParser.js";
@@ -158,6 +159,16 @@ export default class FilterQueryListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitSearchCall?: (ctx: SearchCallContext) => void;
+	/**
+	 * Enter a parse tree produced by `FilterQueryParser.patternCall`.
+	 * @param ctx the parse tree
+	 */
+	enterPatternCall?: (ctx: PatternCallContext) => void;
+	/**
+	 * Exit a parse tree produced by `FilterQueryParser.patternCall`.
+	 * @param ctx the parse tree
+	 */
+	exitPatternCall?: (ctx: PatternCallContext) => void;
 	/**
 	 * Enter a parse tree produced by `FilterQueryParser.functionParamList`.
 	 * @param ctx the parse tree

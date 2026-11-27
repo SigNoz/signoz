@@ -607,6 +607,10 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 		return err
 	}
 
+	if err := r.validatePatterns(); err != nil {
+		return err
+	}
+
 	// raw/trace request types don't support metric queries;
 	// metrics are always aggregated and there is no raw form.
 	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
@@ -648,6 +652,10 @@ func (r *QueryRangeRequest) ValidateRequestScope() ([]ValidationOption, error) {
 	opts := GetValidationOptions(r.RequestType)
 
 	if err := r.validateBucketCounting(); err != nil {
+		return nil, err
+	}
+
+	if err := r.validatePatterns(); err != nil {
 		return nil, err
 	}
 
@@ -979,6 +987,43 @@ func (r *QueryRangeRequest) validateBucketCounting() error {
 	return nil
 }
 
+// PatternsMaxLimit is the most patterns a pattern request returns.
+const PatternsMaxLimit = 1000
+
+// validatePatterns checks a pattern request: one enabled logs builder query,
+// which the request counts by pattern itself, so it takes no aggregation,
+// having, or function.
+func (r *QueryRangeRequest) validatePatterns() error {
+	if r.RequestType != RequestTypePattern {
+		return nil
+	}
+	if len(r.CompositeQuery.Queries) != 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"pattern requests take exactly one logs builder query, got %d queries", len(r.CompositeQuery.Queries))
+	}
+	envelope := r.CompositeQuery.Queries[0]
+	spec, ok := envelope.Spec.(QueryBuilderQuery[LogAggregation])
+	if !ok || envelope.Type != QueryTypeBuilder || spec.Signal != telemetrytypes.SignalLogs {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"pattern requests support only a logs builder query, got %q", envelope.Type.StringValue())
+	}
+	switch {
+	case spec.Disabled:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "the query of a pattern request can't be disabled")
+	case len(spec.Aggregations) > 0:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"pattern requests count the logs of each pattern themselves, so the query takes no aggregations")
+	case spec.Having != nil && spec.Having.Expression != "":
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "pattern requests don't support having")
+	case len(spec.Functions) > 0:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "pattern requests don't support functions")
+	case spec.Limit > PatternsMaxLimit:
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"pattern requests return at most %d patterns, got limit %d", PatternsMaxLimit, spec.Limit)
+	}
+	return nil
+}
+
 // extractEnabledBucketOptions returns the bucket axis a query asks for, nil for
 // a disabled one: a heatmap draws the enabled query alone, so what the rest
 // carry is never read. A promql or clickhouse query has no say in its axis and
@@ -1107,6 +1152,9 @@ func GetValidationOptions(requestType RequestType) []ValidationOption {
 		return []ValidationOption{WithSkipSelectFieldValidation(), WithReduceToValidation()}
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
 		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
+	case RequestTypePattern:
+		// a pattern request counts the logs itself, so it has no aggregation to check
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipSelectFieldValidation()}
 	default:
 		return []ValidationOption{}
 	}

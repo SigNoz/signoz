@@ -176,6 +176,8 @@ func (r *WhereClauseRewriter) VisitPrimary(ctx *parser.PrimaryContext) any {
 		ctx.FunctionCall().Accept(r)
 	} else if ctx.SearchCall() != nil {
 		ctx.SearchCall().Accept(r)
+	} else if ctx.PatternCall() != nil {
+		ctx.PatternCall().Accept(r)
 	} else if ctx.FullText() != nil {
 		ctx.FullText().Accept(r)
 	} else if ctx.Key() != nil {
@@ -370,6 +372,13 @@ func (r *WhereClauseRewriter) VisitFullText(ctx *parser.FullTextContext) any {
 // VisitSearchCall visits search() calls. It has no keys to rewrite, so it is
 // preserved verbatim.
 func (r *WhereClauseRewriter) VisitSearchCall(ctx *parser.SearchCallContext) any {
+	r.rewritten.WriteString(ctx.GetText())
+	return nil
+}
+
+// VisitPatternCall visits pattern() calls. It has no keys to rewrite, so it
+// is preserved verbatim.
+func (r *WhereClauseRewriter) VisitPatternCall(ctx *parser.PatternCallContext) any {
 	r.rewritten.WriteString(ctx.GetText())
 	return nil
 }

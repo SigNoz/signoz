@@ -38,6 +38,7 @@ primary
     | comparison
     | functionCall
     | searchCall
+    | patternCall
     | fullText
     | key
     | value
@@ -121,6 +122,16 @@ searchCall
     ;
 
 // Function parameters can be keys, single scalar values, or arrays
+/*
+ * Log pattern filter: pattern('User <*> logged in from <IP>'[, '...']) keeps the
+ * logs whose pattern is one of the given pattern texts. Handled in the visitor.
+ * PATTERN_CALL carries its opening parenthesis, so a bare `pattern` stays a key
+ * or a full-text word.
+ */
+patternCall
+    : PATTERN_CALL valueList RPAREN
+    ;
+
 functionParamList
     : functionParam ( COMMA functionParam )*
     ;
@@ -195,6 +206,7 @@ HAS         : [Hh][Aa][Ss] ;
 HASANY      : [Hh][Aa][Ss][Aa][Nn][Yy] ;
 HASALL      : [Hh][Aa][Ss][Aa][Ll][Ll] ;
 SEARCH      : [Ss][Ee][Aa][Rr][Cc][Hh] ;
+PATTERN_CALL : [Pp][Aa][Tt][Tt][Ee][Rr][Nn] [ \t]* '(' ;
 
 // Potential boolean constants
 BOOL
