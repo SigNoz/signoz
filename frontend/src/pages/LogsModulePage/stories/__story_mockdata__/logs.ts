@@ -445,6 +445,10 @@ export const logFieldKeysResponse = (
 	};
 };
 
+/** A route longer than the query builder's suggestion list is wide. */
+export const LONG_HTTP_ROUTE =
+	'/api/v1/checkout/orders/{order_id}/payments/{payment_id}/authorisations/{authorisation_id}/retries/{retry_id}/events/{event_id}/acknowledgements/{acknowledgement_id}';
+
 /** Keyed by the fields the quick filters and the query builder ask about. */
 const STRING_VALUES: Record<string, string[]> = {
 	severity_text: [...LOG_SEVERITIES],
@@ -459,7 +463,12 @@ const STRING_VALUES: Record<string, string[]> = {
 	'host.name': ['ip-10-0-1-14', 'ip-10-0-2-31'],
 	'os.description': ['Linux 6.8.0 x86_64', 'Darwin 23.5.0 arm64'],
 	'process.owner': ['root', 'app'],
-	'http.route': ['/api/v1/checkout', '/api/v1/cart', '/api/v1/auth/token'],
+	'http.route': [
+		'/api/v1/checkout',
+		'/api/v1/cart',
+		'/api/v1/auth/token',
+		LONG_HTTP_ROUTE,
+	],
 	'body.level': LOG_SEVERITIES.map((severity) => severity.toLowerCase()),
 	'body.service': SERVICES,
 	'body.http.method': ['POST', 'GET', 'DELETE'],

@@ -3,13 +3,36 @@
  * Do not hand-edit: regenerate instead.
  */
 
-import { screen, userEvent } from 'storybook/test';
+import { screen, userEvent, within } from 'storybook/test';
 
 import { type HomeArgs, paletteListsHome } from '../HomePage.stories.mocks';
 
 interface PlayContext {
+	canvasElement: HTMLElement;
 	args: HomeArgs;
 }
+
+const openNavMenu = async (
+	canvasElement: HTMLElement,
+	testId: string,
+): Promise<void> => {
+	await userEvent.click(
+		await within(canvasElement).findByTestId(testId, {}, { timeout: 10000 }),
+	);
+	await screen.findByRole('menu');
+};
+
+export const openNavHelpMenu = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openNavMenu(canvasElement, 'help-support-nav-item');
+};
+
+export const openNavSettingsMenu = async ({
+	canvasElement,
+}: PlayContext): Promise<void> => {
+	await openNavMenu(canvasElement, 'settings-nav-item');
+};
 
 export const openCommandPalette = async ({
 	args,

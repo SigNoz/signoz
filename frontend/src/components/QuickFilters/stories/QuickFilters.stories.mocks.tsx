@@ -114,6 +114,19 @@ export const loadingFiltersHandlers = [
 	),
 ];
 
+export const longTitleConfig = [
+	{
+		attributeKey: {
+			dataType: DataTypes.Int64,
+			key: 'http.request.content_length_uncompressed',
+			type: 'tag',
+		},
+		defaultOpen: false,
+		title: 'Http Request Content Length Uncompressed',
+		type: FiltersType.CHECKBOX,
+	},
+];
+
 export const LONG_FILTER_VALUES = [
 	'checkout-service.production-eu-central-1.svc.cluster.local',
 	'payments-authorisation-worker.production-us-east-2.svc.cluster.local',

@@ -32,6 +32,24 @@ export default {
 				allowedVerbs: ['create', 'list', 'read'],
 			},
 			{
+				kind: 'ingestion-key',
+				type: 'metaresource',
+				allowedVerbs: [
+					'attach',
+					'create',
+					'delete',
+					'detach',
+					'list',
+					'read',
+					'update',
+				],
+			},
+			{
+				kind: 'ingestion-limit',
+				type: 'metaresource',
+				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],
+			},
+			{
 				kind: 'license',
 				type: 'metaresource',
 				allowedVerbs: ['create', 'delete', 'list', 'read', 'update'],

@@ -1,4 +1,3 @@
-import { Tooltip } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 
 import styles from '../Events.module.scss';
@@ -35,31 +34,27 @@ function EventAttribute({
 
 	return (
 		<div className={styles.attributeContainer} key={attributeKey}>
-			<Tooltip title={attributeKey}>
+			<Typography
+				variant="paragraph"
+				size="base"
+				weight="regular"
+				color="secondary"
+				as="p"
+				textOverflow="ellipsis"
+			>
+				{attributeKey}
+			</Typography>
+			<div className={styles.wrapper}>
 				<Typography
 					variant="paragraph"
 					size="base"
 					weight="regular"
-					color="secondary"
+					color="main"
 					as="p"
 					textOverflow="ellipsis"
 				>
-					{attributeKey}
+					{attributeValue}
 				</Typography>
-			</Tooltip>
-			<div className={styles.wrapper}>
-				<Tooltip title={attributeValue}>
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="main"
-						as="p"
-						textOverflow="ellipsis"
-					>
-						{attributeValue}
-					</Typography>
-				</Tooltip>
 			</div>
 		</div>
 	);
