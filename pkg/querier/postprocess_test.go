@@ -301,3 +301,136 @@ func TestConvertTimeSeriesDataToScalar_RaggedLabels(t *testing.T) {
 	assert.Equal(t, []any{"orphan-0", nil, 20.0}, sd.Data[0])
 	assert.Equal(t, []any{"box-0", "rpc-0", 10.0}, sd.Data[1])
 }
+
+func TestSortFormulasByDependency(t *testing.T) {
+	t.Run("independent formulas preserve declaration order", func(t *testing.T) {
+		formulas := map[string]qbtypes.QueryBuilderFormula{
+			"F1": {Name: "F1", Expression: "A + 1"},
+			"F2": {Name: "F2", Expression: "B + 2"},
+			"F3": {Name: "F3", Expression: "C + 3"},
+		}
+		order := []string{"F1", "F2", "F3"}
+		sorted := sortFormulasByDependency(formulas, order)
+		require.Len(t, sorted, 3)
+		assert.Equal(t, "F1", sorted[0].Name)
+		assert.Equal(t, "F2", sorted[1].Name)
+		assert.Equal(t, "F3", sorted[2].Name)
+	})
+
+	t.Run("dependent formula declared first is evaluated after its dependency", func(t *testing.T) {
+		// F2 is declared before F1, but F2 references F1
+		formulas := map[string]qbtypes.QueryBuilderFormula{
+			"F2": {Name: "F2", Expression: "F1 * 2"},
+			"F1": {Name: "F1", Expression: "A + B"},
+		}
+		order := []string{"F2", "F1"}
+		sorted := sortFormulasByDependency(formulas, order)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "F1", sorted[0].Name, "F1 must be evaluated first because F2 depends on it")
+		assert.Equal(t, "F2", sorted[1].Name, "F2 must be evaluated second")
+	})
+
+	t.Run("handles dotted variable expressions", func(t *testing.T) {
+		// F2 references F1.0 (dotted aggregation index)
+		formulas := map[string]qbtypes.QueryBuilderFormula{
+			"F2": {Name: "F2", Expression: "F1.0 / 100"},
+			"F1": {Name: "F1", Expression: "A + B"},
+		}
+		order := []string{"F2", "F1"}
+		sorted := sortFormulasByDependency(formulas, order)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "F1", sorted[0].Name)
+		assert.Equal(t, "F2", sorted[1].Name)
+	})
+
+	t.Run("chained formula dependencies", func(t *testing.T) {
+		// F3 depends on F2, F2 depends on F1, declared in reverse order: [F3, F2, F1]
+		formulas := map[string]qbtypes.QueryBuilderFormula{
+			"F3": {Name: "F3", Expression: "F2 + 10"},
+			"F2": {Name: "F2", Expression: "F1 * 2"},
+			"F1": {Name: "F1", Expression: "A + 1"},
+		}
+		order := []string{"F3", "F2", "F1"}
+		sorted := sortFormulasByDependency(formulas, order)
+		require.Len(t, sorted, 3)
+		assert.Equal(t, "F1", sorted[0].Name)
+		assert.Equal(t, "F2", sorted[1].Name)
+		assert.Equal(t, "F3", sorted[2].Name)
+	})
+
+	t.Run("cycles degrade gracefully to declaration order", func(t *testing.T) {
+		// F1 depends on F2, F2 depends on F1
+		formulas := map[string]qbtypes.QueryBuilderFormula{
+			"F1": {Name: "F1", Expression: "F2 + 1"},
+			"F2": {Name: "F2", Expression: "F1 + 2"},
+		}
+		order := []string{"F1", "F2"}
+		sorted := sortFormulasByDependency(formulas, order)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "F1", sorted[0].Name)
+		assert.Equal(t, "F2", sorted[1].Name)
+	})
+}
+
+func TestApplyFormulas_FormulaDependencyOrder(t *testing.T) {
+	q := &querier{
+		logger: instrumentationtest.New().Logger(),
+	}
+
+	// Inputs for query A: service "a" = 10, service "b" = 20
+	inputs := map[string]*qbtypes.Result{
+		"A": scalarInputResult("A", []struct {
+			service string
+			value   float64
+		}{
+			{"a", 10},
+			{"b", 20},
+		}),
+	}
+
+	// F2 depends on F1 (F2 = F1 * 2), but F2 is declared BEFORE F1 in CompositeQuery.
+	// Without topological sort, map iteration order is random and F2 would fail ~50% of the time.
+	req := &qbtypes.QueryRangeRequest{
+		RequestType: qbtypes.RequestTypeScalar,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: []qbtypes.QueryEnvelope{
+				{Type: qbtypes.QueryTypeBuilder, Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{Name: "A"}},
+				{Type: qbtypes.QueryTypeFormula, Spec: qbtypes.QueryBuilderFormula{
+					Name:       "F2",
+					Expression: "F1 * 2",
+				}},
+				{Type: qbtypes.QueryTypeFormula, Spec: qbtypes.QueryBuilderFormula{
+					Name:       "F1",
+					Expression: "A + 5",
+				}},
+			},
+		},
+	}
+
+	out := q.applyFormulas(context.Background(), inputs, req)
+
+	// Verify F1 result: a = 10+5 = 15, b = 20+5 = 25
+	gotF1, ok := out["F1"]
+	require.True(t, ok, "F1 result must be present")
+	scalarF1, ok := gotF1.Value.(*qbtypes.ScalarData)
+	require.True(t, ok, "expected *ScalarData for F1")
+	require.Len(t, scalarF1.Data, 2)
+
+	// Verify F2 result: a = 15*2 = 30, b = 25*2 = 50
+	gotF2, ok := out["F2"]
+	require.True(t, ok, "F2 result must be present despite being declared before F1")
+	scalarF2, ok := gotF2.Value.(*qbtypes.ScalarData)
+	require.True(t, ok, "expected *ScalarData for F2")
+	require.Len(t, scalarF2.Data, 2)
+
+	// Check values
+	for _, row := range scalarF2.Data {
+		svc := row[0].(string)
+		val := row[1].(float64)
+		if svc == "a" {
+			assert.InDelta(t, 30.0, val, 1e-9)
+		} else if svc == "b" {
+			assert.InDelta(t, 50.0, val, 1e-9)
+		}
+	}
+}
