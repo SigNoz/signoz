@@ -13,6 +13,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "types": ["node", "@playwright/test"],
     "paths": {
       "@tests/*": ["./tests/*"],
@@ -22,6 +24,12 @@
       "@signozhq/noz-client": ["./node_modules/@signozhq/noz-client"]
     }
   },
-  "include": ["tests/**/*.ts", "drivers/**/*.ts", "bootstrap/**/*.ts", "playwright.config.ts"],
+  "include": [
+    "tests/**/*.ts",
+    "drivers/**/*.ts",
+    "bootstrap/**/*.ts",
+    "scripts/**/*.mts",
+    "playwright.config.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

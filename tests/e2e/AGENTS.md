@@ -167,6 +167,19 @@ Moved to jest:
 "It's covered in jest" names nothing a reviewer can check. If nothing replaces
 it, the PR says so and why.
 
+## Which specs a PR runs
+
+A PR runs only the specs its diff can affect; the merge queue runs all of them.
+`pnpm select-specs` prints the choice and why, and `pnpm test:changed` runs it.
+
+- A frontend file selects the folders under `tests/` whose pages import it,
+  through `scripts/select-specs/spec-pages.mts`. A file only the app shell
+  imports, a dependency, a locale or a stack change selects everything.
+- A spec, driver or testdata change selects the specs that import it
+  (Playwright's `--only-changed`).
+- A new folder under `tests/` needs an entry in `spec-pages.mts`, naming the
+  route components it opens. `pnpm select-specs --check` fails without one.
+
 ## Commits
 
 Keep driver changes apart from everything else, so the history reads one
