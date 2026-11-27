@@ -15,13 +15,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 
 	"log/slog"
-
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
 )
 
 // Server runs auxiliary servers (opamp) alongside the signoz apiserver
 type Server struct {
-	opampServer *opamp.Server
+	opampServer  *opamp.Server
+	opampAddress string
 }
 
 // NewServer creates and initializes Server
@@ -95,7 +94,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{}
+	s := &Server{opampAddress: config.OpAMP.Address}
 
 	s.opampServer = opamp.InitializeServer(
 		&opAmpModel.AllAgents,
@@ -109,8 +108,8 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 // Start starts the opamp websocket server. The HTTP API server is started by
 // the signoz registry.
 func (s *Server) Start(ctx context.Context) error {
-	slog.Info("Starting OpAmp Websocket server", "addr", constants.OpAmpWsEndpoint)
-	if err := s.opampServer.Start(constants.OpAmpWsEndpoint); err != nil {
+	slog.Info("Starting OpAmp Websocket server", "addr", s.opampAddress)
+	if err := s.opampServer.Start(s.opampAddress); err != nil {
 		return err
 	}
 
