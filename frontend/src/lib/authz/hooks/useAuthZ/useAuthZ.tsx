@@ -8,7 +8,11 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { IS_DEV, MODE } from 'lib/env';
 
-import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
+import {
+	AUTHZ_CACHE_TIME,
+	AUTHZ_MAX_CHECKS_PER_REQUEST,
+	SINGLE_FLIGHT_WAIT_TIME_MS,
+} from './constants';
 import type {
 	AuthZCheckResponse,
 	BrandedPermission,
@@ -104,6 +108,18 @@ function dispatchPermission(
 }
 
 async function fetchManyPermissions(
+	permissions: BrandedPermission[],
+): Promise<AuthZCheckResponse> {
+	const chunks: BrandedPermission[][] = [];
+	for (let i = 0; i < permissions.length; i += AUTHZ_MAX_CHECKS_PER_REQUEST) {
+		chunks.push(permissions.slice(i, i + AUTHZ_MAX_CHECKS_PER_REQUEST));
+	}
+
+	const responses = await Promise.all(chunks.map(fetchPermissionChunk));
+	return Object.assign({}, ...responses);
+}
+
+async function fetchPermissionChunk(
 	permissions: BrandedPermission[],
 ): Promise<AuthZCheckResponse> {
 	const payload: AuthtypesTransactionDTO[] = permissions.map((permission) => {
