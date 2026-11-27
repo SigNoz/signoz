@@ -212,6 +212,76 @@ const unitsMapping = [
 				factor: BIT_FACTOR * BINARY_FACTOR ** 2, // 1 MiB = 8 Mibits
 			},
 			{
+				label: 'megabytes/sec',
+				value: 'MBs',
+				factor: DECIMAL_FACTOR ** 2,
+			},
+			{
+				label: 'megabits/sec',
+				value: 'Mbits',
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 2,
+			},
+			{
+				label: 'gibibytes/sec',
+				value: 'GiBs',
+				factor: BINARY_FACTOR ** 3,
+			},
+			{
+				label: 'gibibits/sec',
+				value: 'Gibits',
+				factor: BIT_FACTOR * BINARY_FACTOR ** 3,
+			},
+			{
+				label: 'gigabytes/sec',
+				value: 'GBs',
+				factor: DECIMAL_FACTOR ** 3,
+			},
+			{
+				label: 'gigabits/sec',
+				value: 'Gbits',
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 3,
+			},
+			{
+				label: 'tebibytes/sec',
+				value: 'TiBs',
+				factor: BINARY_FACTOR ** 4,
+			},
+			{
+				label: 'tebibits/sec',
+				value: 'Tibits',
+				factor: BIT_FACTOR * BINARY_FACTOR ** 4,
+			},
+			{
+				label: 'terabytes/sec',
+				value: 'TBs',
+				factor: DECIMAL_FACTOR ** 4,
+			},
+			{
+				label: 'terabits/sec',
+				value: 'Tbits',
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 4,
+			},
+			{
+				label: 'pebibytes/sec',
+				value: 'PiBs',
+				factor: BINARY_FACTOR ** 5,
+			},
+			{
+				label: 'pebibits/sec',
+				value: 'Pibits',
+				factor: BIT_FACTOR * BINARY_FACTOR ** 5,
+			},
+			{
+				label: 'petabytes/sec',
+				value: 'PBs',
+				factor: DECIMAL_FACTOR ** 5,
+			},
+			{
+				label: 'petabits/sec',
+				value: 'Pbits',
+				factor: BIT_FACTOR * DECIMAL_FACTOR ** 5,
+			},
+			{
 				label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.EXABYTES_SECOND],
 				value: UniversalYAxisUnit.EXABYTES_SECOND,
 				factor: DECIMAL_FACTOR ** 6,
