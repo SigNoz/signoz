@@ -346,10 +346,14 @@ function collectSharedMetadata(
 	const compositeQueryRaw = params.get(QueryParams.compositeQuery);
 	if (compositeQueryRaw) {
 		try {
-			out.query = JSON.parse(decodeURIComponent(compositeQueryRaw));
+			out.query = JSON.parse(compositeQueryRaw);
 		} catch {
-			// Malformed JSON in the URL — drop silently rather than throw
-			// inside a context-collection helper.
+			try {
+				out.query = JSON.parse(decodeURIComponent(compositeQueryRaw));
+			} catch {
+				// Malformed JSON in the URL — drop silently rather than throw
+				// inside a context-collection helper.
+			}
 		}
 	}
 
@@ -361,9 +365,13 @@ function collectSharedMetadata(
 	const variablesRaw = params.get(QueryParams.variables);
 	if (variablesRaw) {
 		try {
-			out.variables = JSON.parse(decodeURIComponent(variablesRaw));
+			out.variables = JSON.parse(variablesRaw);
 		} catch {
-			// Same fallback as compositeQuery — keep silent on malformed JSON.
+			try {
+				out.variables = JSON.parse(decodeURIComponent(variablesRaw));
+			} catch {
+				// Same fallback as compositeQuery — keep silent on malformed JSON.
+			}
 		}
 	}
 
