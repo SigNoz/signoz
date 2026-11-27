@@ -4,25 +4,10 @@ import LogsExplorerViews from 'container/LogsExplorerViews';
 import { mockQueryBuilderContextValue } from 'container/LogsExplorerViews/tests/mock';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { logsQueryRangeEmptyResponse } from 'mocks-server/__mockdata__/logs_query_range';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { mockAppLocation } from 'tests/router-mocks';
 import { render, screen } from 'tests/test-utils';
-
-const queryRangeURL = 'http://localhost/api/v3/query_range';
-
-const logsQueryServerRequest = ({
-	response = logsQueryRangeEmptyResponse,
-}: {
-	response?: any;
-}): void =>
-	server.use(
-		rest.post(queryRangeURL, (req, res, ctx) =>
-			res(ctx.status(200), ctx.json(response)),
-		),
-	);
 
 mockAppLocation({ pathname: ROUTES.LOGS_EXPLORER });
 
@@ -78,7 +63,6 @@ describe('LogsExplorerList - empty states', () => {
 		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
 			data: { payload: logsQueryRangeEmptyResponse },
 		});
-		logsQueryServerRequest({});
 	});
 
 	it('should display custom empty state when navigating from trace to logs with no results', async () => {

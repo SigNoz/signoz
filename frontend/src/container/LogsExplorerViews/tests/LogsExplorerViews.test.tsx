@@ -3,9 +3,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
-import { logsQueryRangeSuccessResponse } from 'mocks-server/__mockdata__/logs_query_range';
-import { server } from 'mocks-server/server';
-import { rest } from 'msw';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { mockAppLocation } from 'tests/router-mocks';
@@ -26,16 +23,8 @@ import {
 	mockQueryBuilderContextValue,
 } from './mock';
 
-const queryRangeURL = 'http://localhost/api/v3/query_range';
 const ACTIVE_LOG_ID = 'test-log-id';
 mockAppLocation({ pathname: ROUTES.LOGS_EXPLORER });
-
-const lodsQueryServerRequest = (): void =>
-	server.use(
-		rest.post(queryRangeURL, (req, res, ctx) =>
-			res(ctx.status(200), ctx.json(logsQueryRangeSuccessResponse)),
-		),
-	);
 
 // mocking the graph components in this test as this should be handled separately
 jest.mock(
@@ -126,7 +115,6 @@ const renderer = (): RenderResult =>
 
 describe('LogsExplorerViews -', () => {
 	it('render correctly with props - list and table', async () => {
-		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
 		const periscopeDownloadButtonTestId = 'periscope-btn-download-logs';
@@ -152,7 +140,6 @@ describe('LogsExplorerViews -', () => {
 	});
 
 	it('check isLoading state', async () => {
-		lodsQueryServerRequest();
 		(useGetExplorerQueryRange as jest.Mock).mockReturnValue({
 			data: { payload: logsQueryRangeSuccessNewFormatResponse },
 			isLoading: true,
@@ -174,7 +161,6 @@ describe('LogsExplorerViews -', () => {
 			mockQueryBuilderContextValue.currentQuery.builder.queryData[0].filters?.items
 				.length || 0;
 
-		lodsQueryServerRequest();
 		render(
 			<QueryBuilderContext.Provider value={mockQueryBuilderContextValue}>
 				<PreferenceContextProvider>
@@ -249,8 +235,6 @@ describe('LogsExplorerViews -', () => {
 				},
 			},
 		};
-
-		lodsQueryServerRequest();
 
 		render(
 			<QueryBuilderContext.Provider value={customContext as any}>
