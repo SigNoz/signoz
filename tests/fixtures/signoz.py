@@ -43,9 +43,9 @@ def create_signoz(
         # Get the no-web flag
         with_web = pytestconfig.getoption("--with-web")
 
-        arch = platform.machine()
-        if arch == "x86_64":
-            arch = "amd64"
+        # platform.machine() is "x86_64"/"aarch64" on Linux, "AMD64"/"ARM64" on Windows.
+        machine = platform.machine().lower()
+        arch = {"x86_64": "amd64", "aarch64": "arm64"}.get(machine, machine)
 
         # Build the image
         dockerfile_path = "cmd/enterprise/Dockerfile.integration"
