@@ -110,8 +110,16 @@ msteams_default_config = {
     "msteamsv2_configs": [
         {
             "webhook_url": "msteams/webhook_url",  # base_url configured on runtime
-            "title": '[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}\n {{- if gt (len .CommonLabels) (len .GroupLabels) -}}\n {{" "}}(\n {{- with .CommonLabels.Remove .GroupLabels.Names }}\n {{- range $index, $label := .SortedPairs -}}\n {{ if $index }}, {{ end }}\n {{- $label.Name }}="{{ $label.Value -}}"\n {{- end }}\n {{- end -}}\n )\n {{- end }}',
-            "text": '{{ range .Alerts -}}\r\n *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}\r\n\r\n *Summary:* {{ .Annotations.summary }}\r\n *Description:* {{ .Annotations.description }}\r\n {{ template "signoz.relatedLinks.slack" . }}\r\n\r\n *Details:*\r\n {{ range .Labels.SortedPairs -}}\r\n   {{- if ne .Name "ruleId" -}}\r\n \u2022 *{{ .Name }}:* {{ .Value }}\r\n   {{ end -}}\r\n {{ end -}}\r\n{{ end }}',
+        }
+    ],
+}
+
+msteams_custom_text_config = {
+    "msteamsv2_configs": [
+        {
+            "webhook_url": "msteams/custom_text_webhook_url",  # base_url configured on runtime
+            "title": "Teams custom title: {{ .CommonLabels.alertname }}",
+            "text": "Teams custom description for {{ range .Alerts }}{{ .Labels.alertname }} ({{ .Labels.severity }}){{ end }}",
         }
     ],
 }

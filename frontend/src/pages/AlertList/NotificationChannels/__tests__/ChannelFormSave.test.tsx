@@ -701,6 +701,71 @@ describe('ChannelForm save', () => {
 	);
 
 	it(
+		'prefills microsoft teams with its own templates instead of the slack ones',
+		async () => {
+			let body: Record<string, unknown> | undefined;
+			server.use(
+				rest.post(
+					'http://localhost/api/v2/notification_channels',
+					async (req, res, ctx) => {
+						body = await req.json();
+						return res(ctx.status(201), ctx.json({ status: 'success', data: {} }));
+					},
+				),
+			);
+
+			render(<ChannelForm onDone={jest.fn()} />);
+
+			const user = userEvent.setup({ delay: null, pointerEventsCheck: 0 });
+			await pickChannelType(user, ChannelKind.msteams);
+
+			const teamsTitle =
+				'[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}';
+			expect(screen.getByTestId('title-textarea')).toHaveValue(teamsTitle);
+			const description = screen.getByTestId(
+				'description-textarea',
+			) as HTMLTextAreaElement;
+			expect(description.value).toContain(
+				'**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }} - {{ .Status }}',
+			);
+			expect(description.value).toContain(
+				'{{ template "signoz.relatedLinks.markdown" . }}',
+			);
+			expect(description.value).not.toContain('*Alert:* ');
+			expect(description.value).not.toContain('signoz.relatedLinks.slack');
+
+			await user.type(
+				screen.getByTestId('channel-name-textbox-field'),
+				'teams alerts',
+			);
+			await user.type(
+				screen.getByTestId('webhook-url-textbox-field'),
+				'https://teams.example.com/workflows/hook',
+			);
+
+			const save = screen.getByTestId('save-channel-button');
+			await waitFor(
+				() => expect(save).toHaveAttribute('aria-disabled', 'false'),
+				FIND,
+			);
+			await user.click(save);
+
+			await waitFor(() => expect(body).toBeDefined(), FIND);
+			expect(body).toMatchObject({
+				config: {
+					kind: 'msteams',
+					spec: {
+						webhookUrl: 'https://teams.example.com/workflows/hook',
+						title: teamsTitle,
+						text: description.value,
+					},
+				},
+			});
+		},
+		TEST_TIMEOUT,
+	);
+
+	it(
 		'leaves the pagerduty client url empty so the backend links to this instance',
 		async () => {
 			render(<ChannelForm onDone={jest.fn()} />);

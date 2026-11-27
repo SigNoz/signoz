@@ -14,10 +14,12 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -35,6 +37,10 @@ const (
 
 const (
 	Integration = "msteamsv2"
+
+	// Teams rejects messages over 28 KB; the margin covers the workflow's own envelope.
+	// https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
+	maxMessageBytes = 25 * 1024
 )
 
 type Notifier struct {
@@ -67,18 +73,12 @@ type Body struct {
 	Wrap   bool   `json:"wrap,omitempty"`
 	Style  string `json:"style,omitempty"`
 	Color  string `json:"color,omitempty"`
-	Facts  []Fact `json:"facts,omitempty"`
 }
 
 type Action struct {
 	Type  string `json:"type"`
 	Title string `json:"title"`
 	URL   string `json:"url"`
-}
-
-type Fact struct {
-	Title string `json:"title"`
-	Value string `json:"value"`
 }
 
 type Msteams struct {
@@ -154,8 +154,177 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	// A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema
-	t := teamsMessage{
+	payload, err := encodeMessage(bodyBlocks, titleLink)
+	if err != nil {
+		return false, err
+	}
+	originalBytes := payload.Len()
+	for payload.Len() > maxMessageBytes {
+		longest := indexLongestText(bodyBlocks)
+		if longest < 0 {
+			break
+		}
+		text := truncateToEncodedBytes(bodyBlocks[longest].Text, payload.Len()-maxMessageBytes)
+		if text == "" && longest > 0 {
+			bodyBlocks = slices.Delete(bodyBlocks, longest, longest+1)
+		} else {
+			bodyBlocks[longest].Text = text
+		}
+		if payload, err = encodeMessage(bodyBlocks, titleLink); err != nil {
+			return false, err
+		}
+	}
+	if payload.Len() < originalBytes {
+		n.logger.WarnContext(ctx, "truncated message text to fit the size limit", slog.Int("original_bytes", originalBytes), slog.Int("final_bytes", payload.Len()), slog.Int("max_bytes", maxMessageBytes))
+	}
+
+	resp, err := n.postJSONFunc(ctx, n.client, url, payload) //nolint:bodyclose
+	if err != nil {
+		return true, notify.RedactURL(err)
+	}
+	defer notify.Drain(resp) //drain is used to close the body of the response hence the nolint directive
+
+	// https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors
+	shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
+	if err != nil {
+		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
+	}
+	return shouldRetry, err
+}
+
+// prepareContent builds the Adaptive Card body blocks for the notification.
+// The first block is always the title; the remainder is the channel text, or
+// one block per alert when the alerts carried a custom body template.
+func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
+	if groupLabels, ok := notify.GroupLabels(ctx); ok {
+		ctx = notify.WithGroupLabels(ctx, escapeLabels(groupLabels))
+	}
+
+	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
+	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
+		TitleTemplate:        customTitle,
+		BodyTemplate:         customBody,
+		DefaultTitleTemplate: n.conf.Title,
+		DefaultBodyTemplate:  n.conf.Text,
+	}, escapeLabelValues(alerts))
+	if err != nil {
+		return nil, err
+	}
+
+	color := colorGrey
+	switch types.Alerts(alerts...).Status() {
+	case model.AlertFiring:
+		color = colorRed
+	case model.AlertResolved:
+		color = colorGreen
+	}
+
+	blocks := []Body{{
+		Type:   "TextBlock",
+		Text:   result.Title,
+		Weight: "Bolder",
+		Size:   "Medium",
+		Wrap:   true,
+		Style:  "heading",
+		Color:  color,
+	}}
+
+	if result.IsDefaultBody {
+		for _, body := range result.Body {
+			if body = strings.TrimSpace(body); body != "" {
+				blocks = append(blocks, Body{Type: "TextBlock", Text: body, Wrap: true})
+			}
+		}
+		return blocks, nil
+	}
+
+	// Custom body path: result.Body is positionally aligned with alerts;
+	// entries for alerts whose template rendered empty are kept as "" so we
+	// can skip them here without shifting the per-alert color index.
+	for i, body := range result.Body {
+		if body == "" || i >= len(alerts) {
+			continue
+		}
+		perAlertColor := colorRed
+		if alerts[i].Resolved() {
+			perAlertColor = colorGreen
+		}
+		blocks = append(blocks, Body{
+			Type:  "TextBlock",
+			Text:  body,
+			Wrap:  true,
+			Color: perAlertColor,
+		})
+	}
+	return blocks, nil
+}
+
+// escapeLabelValues copies the alerts so a label value shows on the card as written instead of being read as markdown.
+func escapeLabelValues(alerts []*types.Alert) []*types.Alert {
+	escaped := make([]*types.Alert, 0, len(alerts))
+
+	for _, alert := range alerts {
+		escaped = append(escaped, &types.Alert{
+			Alert: model.Alert{
+				Labels:       escapeLabels(alert.Labels),
+				Annotations:  alert.Annotations.Clone(),
+				StartsAt:     alert.StartsAt,
+				EndsAt:       alert.EndsAt,
+				GeneratorURL: alert.GeneratorURL,
+			},
+			UpdatedAt: alert.UpdatedAt,
+			Timeout:   alert.Timeout,
+		})
+	}
+
+	return escaped
+}
+
+func escapeLabels(labels model.LabelSet) model.LabelSet {
+	escaped := make(model.LabelSet, len(labels))
+	for name, value := range labels {
+		if name == ruletypes.LabelRuleSource {
+			escaped[name] = value
+			continue
+		}
+		escaped[name] = model.LabelValue(escapeMarkdown(string(value)))
+	}
+
+	return escaped
+}
+
+// escapeMarkdown leaves an underscore inside a word and a lone tilde alone, since Teams reads neither as markup.
+func escapeMarkdown(value string) string {
+	runes := []rune(value)
+	pairedTildes := strings.Count(value, "~") > 1
+
+	var escaped strings.Builder
+	for i, r := range runes {
+		switch r {
+		case '\\', '*', '[', ']', '`':
+			escaped.WriteRune('\\')
+		case '~':
+			if pairedTildes {
+				escaped.WriteRune('\\')
+			}
+		case '_':
+			if i == 0 || i == len(runes)-1 || !isWordRune(runes[i-1]) || !isWordRune(runes[i+1]) {
+				escaped.WriteRune('\\')
+			}
+		}
+		escaped.WriteRune(r)
+	}
+
+	return escaped.String()
+}
+
+func isWordRune(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsDigit(r)
+}
+
+// A message as referenced in https://learn.microsoft.com/en-us/connectors/teams/?tabs=text1%2Cdotnet#request-body-schema
+func encodeMessage(bodyBlocks []Body, titleLink string) (*bytes.Buffer, error) {
+	message := teamsMessage{
 		Type: "message",
 		Attachments: []Attachment{
 			{
@@ -182,134 +351,49 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	var payload bytes.Buffer
-	if err = json.NewEncoder(&payload).Encode(t); err != nil {
-		return false, err
-	}
-
-	resp, err := n.postJSONFunc(ctx, n.client, url, &payload) //nolint:bodyclose
-	if err != nil {
-		return true, notify.RedactURL(err)
-	}
-	defer notify.Drain(resp) //drain is used to close the body of the response hence the nolint directive
-
-	// https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using?tabs=cURL#rate-limiting-for-connectors
-	shouldRetry, err := n.retrier.Check(resp.StatusCode, resp.Body)
-	if err != nil {
-		return shouldRetry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
-	}
-	return shouldRetry, err
-}
-
-// prepareContent builds the Adaptive Card body blocks for the notification.
-// The first block is always the title; the remainder depends on whether the
-// alerts carried a custom body template.
-func (n *Notifier) prepareContent(ctx context.Context, alerts []*types.Alert) ([]Body, error) {
-	customTitle, customBody := alertmanagertemplate.ExtractTemplatesFromAnnotations(alerts)
-	result, err := n.templater.Expand(ctx, alertmanagertypes.ExpandRequest{
-		TitleTemplate:        customTitle,
-		BodyTemplate:         customBody,
-		DefaultTitleTemplate: n.conf.Title,
-		DefaultBodyTemplate:  n.conf.Text,
-	}, alerts)
-	if err != nil {
+	if err := json.NewEncoder(&payload).Encode(message); err != nil {
 		return nil, err
 	}
 
-	color := colorGrey
-	switch types.Alerts(alerts...).Status() {
-	case model.AlertFiring:
-		color = colorRed
-	case model.AlertResolved:
-		color = colorGreen
-	}
-
-	blocks := []Body{{
-		Type:   "TextBlock",
-		Text:   result.Title,
-		Weight: "Bolder",
-		Size:   "Medium",
-		Wrap:   true,
-		Style:  "heading",
-		Color:  color,
-	}}
-
-	if result.IsDefaultBody {
-		for _, alert := range alerts {
-			blocks = append(blocks, Body{
-				Type:   "TextBlock",
-				Text:   "Alerts",
-				Weight: "Bolder",
-				Size:   "Medium",
-				Wrap:   true,
-				Color:  color,
-			})
-			blocks = append(blocks, n.createLabelsAndAnnotationsBody(alert)...)
-		}
-		return blocks, nil
-	}
-
-	// Custom body path: result.Body is positionally aligned with alerts;
-	// entries for alerts whose template rendered empty are kept as "" so we
-	// can skip them here without shifting the per-alert color index.
-	for i, body := range result.Body {
-		if body == "" || i >= len(alerts) {
-			continue
-		}
-		perAlertColor := colorRed
-		if alerts[i].Resolved() {
-			perAlertColor = colorGreen
-		}
-		blocks = append(blocks, Body{
-			Type:  "TextBlock",
-			Text:  body,
-			Wrap:  true,
-			Color: perAlertColor,
-		})
-	}
-	return blocks, nil
+	return &payload, nil
 }
 
-func (*Notifier) createLabelsAndAnnotationsBody(alert *types.Alert) []Body {
-	bodies := []Body{}
-	bodies = append(bodies, Body{
-		Type:   "TextBlock",
-		Text:   "Labels",
-		Weight: "Bolder",
-		Size:   "Medium",
-	})
+// truncateToEncodedBytes cuts text until its JSON encoding is overflow bytes shorter, since escaping makes some characters longer than their raw bytes.
+func truncateToEncodedBytes(text string, overflow int) string {
+	budget := encodedLen(text) - overflow
 
-	facts := []Fact{}
-	for k, v := range alert.Labels {
-		if slices.Contains([]string{"alertname", "severity", "ruleId", "ruleSource"}, string(k)) {
-			continue
+	low, high := 0, len(text)
+	for low < high {
+		mid := (low + high + 1) / 2
+		truncated, _ := notify.TruncateInBytes(text, mid)
+		if encodedLen(truncated) <= budget {
+			low = mid
+		} else {
+			high = mid - 1
 		}
-		facts = append(facts, Fact{Title: string(k), Value: string(v)})
 	}
-	bodies = append(bodies, Body{
-		Type:  "FactSet",
-		Facts: facts,
-	})
+	truncated, _ := notify.TruncateInBytes(text, low)
 
-	bodies = append(bodies, Body{
-		Type:   "TextBlock",
-		Text:   "Annotations",
-		Weight: "Bolder",
-		Size:   "Medium",
-	})
+	return truncated
+}
 
-	annotationsFacts := []Fact{}
-	for k, v := range alert.Annotations {
-		if slices.Contains([]string{"summary", "related_logs", "related_traces"}, string(k)) ||
-			alertmanagertypes.IsPrivateAnnotation(string(k)) {
-			continue
+func encodedLen(text string) int {
+	encoded, _ := json.Marshal(text)
+
+	return len(encoded)
+}
+
+// indexLongestText returns -1 once no block has text left to trim; the title at index 0 goes last.
+func indexLongestText(blocks []Body) int {
+	longest := -1
+	for i := 1; i < len(blocks); i++ {
+		if len(blocks[i].Text) > 0 && (longest < 0 || len(blocks[i].Text) > len(blocks[longest].Text)) {
+			longest = i
 		}
-		annotationsFacts = append(annotationsFacts, Fact{Title: string(k), Value: string(v)})
+	}
+	if longest < 0 && len(blocks) > 0 && len(blocks[0].Text) > 0 {
+		return 0
 	}
 
-	bodies = append(bodies, Body{
-		Type:  "FactSet",
-		Facts: annotationsFacts,
-	})
-
-	return bodies
+	return longest
 }

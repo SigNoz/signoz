@@ -4,6 +4,7 @@ import {
 	AlertmanagertypesChannelIncidentIOConfigDTO,
 	AlertmanagertypesChannelJiraConfigDTO,
 	AlertmanagertypesChannelJSMOpsConfigDTO,
+	AlertmanagertypesChannelMSTeamsConfigDTO,
 	AlertmanagertypesChannelOpsgenieConfigDTO,
 	AlertmanagertypesChannelPagerdutyConfigDTO,
 	AlertmanagertypesChannelSlackConfigDTO,
@@ -12,7 +13,6 @@ import {
 
 import { ChannelKind, ChannelSpecFormValues, JiraDeployment } from './types';
 
-// shared by slack and ms teams, both render the same title / description boxes
 export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO> =
 	{
 		text: `{{ range .Alerts -}}
@@ -37,6 +37,26 @@ export const SlackInitialConfig: Partial<AlertmanagertypesChannelSlackConfigDTO>
        {{- end -}}
        )
      {{- end }}`,
+	};
+
+// mirrors DefaultMSTeamsTitleTemplate / DefaultMSTeamsTextTemplate in
+// pkg/types/alertmanagertypes/channel_msteams.go, which the backend applies
+// when title / text are left empty
+export const MsTeamsInitialConfig: Partial<AlertmanagertypesChannelMSTeamsConfigDTO> =
+	{
+		title: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }}`,
+		text: `{{ range .Alerts -}}
+**Alert:** {{ .Labels.alertname }}{{ if .Labels.severity }} ({{ .Labels.severity }}){{ end }} - {{ .Status }}
+
+{{ if .Annotations.summary }}**Summary:** {{ .Annotations.summary }}
+
+{{ end }}{{ if .Annotations.description }}**Description:** {{ .Annotations.description }}
+
+{{ end }}{{ template "signoz.relatedLinks.markdown" . }}{{ with (.Labels.Remove (stringSlice "alertname" "severity" "ruleId" "ruleSource")).SortedPairs }}**Details:**
+
+{{ range . }}- **{{ .Name }}:** {{ .Value }}
+{{ end }}
+{{ end }}{{ end }}`,
 	};
 
 // mirrors DefaultGoogleChatReceiverConfig in pkg/types/alertmanagertypes/googlechat.go,
@@ -577,7 +597,7 @@ export const DEFAULT_CHANNEL_KIND = ChannelKind.slack;
 export const ChannelInitialConfig: Record<ChannelKind, ChannelSpecFormValues> =
 	{
 		[ChannelKind.slack]: SlackInitialConfig,
-		[ChannelKind.msteams]: SlackInitialConfig,
+		[ChannelKind.msteams]: MsTeamsInitialConfig,
 		[ChannelKind.googlechat]: GoogleChatInitialConfig,
 		[ChannelKind.jira]: JiraInitialConfig,
 		[ChannelKind.jsmops]: JsmOpsInitialConfig,
