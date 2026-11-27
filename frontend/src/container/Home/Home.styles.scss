@@ -5,8 +5,6 @@
 	height: 100%;
 	width: 100%;
 
-	background: color-mix(in srgb, var(--l1-background) 90%, transparent);
-
 	&::-webkit-scrollbar {
 		width: 0.3rem;
 		height: 0.3rem;

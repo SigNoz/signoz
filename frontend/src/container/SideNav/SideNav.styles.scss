@@ -15,8 +15,8 @@
 	max-width: 54px;
 	min-width: 54px;
 	width: 54px;
-	border-right: 1px solid var(--l1-border);
-	background: var(--l2-background);
+	border-right: 1px solid var(--l2-border);
+	background: var(--surface-1);
 
 	padding-bottom: 48px;
 	transition:
@@ -466,7 +466,7 @@
 				background: linear-gradient(
 					180deg,
 					transparent 0%,
-					var(--l2-background) 27.11%
+					var(--surface-1) 27.11%
 				);
 
 				&::-webkit-scrollbar {
@@ -631,7 +631,7 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
-		background: var(--l1-background);
+		box-shadow: var(--shadow-sidebar);
 
 		.brand-container {
 			padding: 8px 15px;
@@ -813,6 +813,7 @@
 		position: absolute;
 		height: 100%;
 		z-index: 10;
+		box-shadow: none;
 
 		.brand-container {
 			padding: 8px 15px;
