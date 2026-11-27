@@ -126,17 +126,8 @@ func NewSpanList(page *SpanListPage, rows []StorableSpan) *SpanList {
 	return list
 }
 
-// spanListViews lists every view, in the order they are documented.
-func spanListViews() []SpanListView {
-	views := make([]SpanListView, 0)
-	for _, view := range SpanListView("").Enum() {
-		views = append(views, view.(SpanListView))
-	}
-	return views
-}
-
 func validateSpanListView(view SpanListView) error {
-	if !slices.Contains(spanListViews(), view) {
+	if !slices.Contains(SpanListView("").Enum(), any(view)) {
 		return errors.NewInvalidInputf(ErrCodeTraceSpansInvalidView, "invalid view %q, expected one of error_origins, unmarked_failures, time_spent, ai_usage, links", string(view))
 	}
 	return nil
