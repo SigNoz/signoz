@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Bounds the history when no parent ever echoes the edits back.
-const MAX_SENT = 200;
+const MAX_PENDING_ECHOES = 200;
 
 /**
  * Text of a query editor whose edits round-trip through query state. Each
@@ -14,34 +14,33 @@ export function useEditorDraft(
 	external: string,
 ): [string, (value: string) => void] {
 	const [draft, setDraft] = useState(external);
-	const sent = useRef<string[]>([]);
+	const pendingEchoes = useRef<string[]>([]);
 
-	// `sent` holds the edits whose echo has not come back yet. Echoes arrive in
-	// order, and a batched render can skip some, so a match also drops every
-	// older entry: they can no longer come back.
+	// Echoes arrive in order, and a batched render can skip some, so a match
+	// also drops every older entry: they can no longer come back.
 	//
-	//   type "c", "co", "cou"   sent [c, co, cou]   draft "cou"
-	//   echo "c"                sent [co, cou]      ignored, draft stays "cou"
-	//   echo "cou" (skipped co) sent []             ignored
+	//   type "c", "co", "cou"   pending [c, co, cou]   draft "cou"
+	//   echo "c"                pending [co, cou]      ignored, draft stays "cou"
+	//   echo "cou" (skipped co) pending []             ignored
 	//   "count() > 5" from a saved view, never sent: applied
 	//
 	// Keeping the older entries would also swallow an outside change that
 	// happens to equal one of them: after typing "a", "ab", a saved view with
 	// "a" would be taken for an echo.
 	useEffect(() => {
-		const index = sent.current.indexOf(external);
+		const index = pendingEchoes.current.indexOf(external);
 		if (index === -1) {
-			sent.current = [];
+			pendingEchoes.current = [];
 			setDraft(external);
 			return;
 		}
-		sent.current = sent.current.slice(index + 1);
+		pendingEchoes.current = pendingEchoes.current.slice(index + 1);
 	}, [external]);
 
 	const edit = useCallback((value: string): void => {
-		sent.current.push(value);
-		if (sent.current.length > MAX_SENT) {
-			sent.current.shift();
+		pendingEchoes.current.push(value);
+		if (pendingEchoes.current.length > MAX_PENDING_ECHOES) {
+			pendingEchoes.current.shift();
 		}
 		setDraft(value);
 	}, []);
