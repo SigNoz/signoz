@@ -48,3 +48,7 @@ export function truncateId(id: string, head = 4, tail = 4): string {
 export function getBody(log: AuditLog): string {
 	return log.body || EMPTY_VALUE;
 }
+
+export function getVerb(log: AuditLog): string {
+	return log.attributes['signoz.audit.verb'] || EMPTY_VALUE;
+}

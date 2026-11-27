@@ -12,6 +12,7 @@ import { getRowHoverColor } from '../AuditLogs.utils';
 import styles from './QueryResults.module.scss';
 import { useAuditLogColumns } from '../hooks/useAuditLogColumns';
 import { useAuditLogDetail } from '../hooks/useAuditLogDetail';
+import { DetailsDrawer } from './DetailsDrawer';
 
 interface QueryResultsProps {
 	logs: AuditLog[];
@@ -92,6 +93,10 @@ export function QueryResults({
 					/>
 				</div>
 			)}
+			<DetailsDrawer
+				activeLog={activeLog}
+				handleCloseLogDetail={handleCloseLogDetail}
+			/>
 		</div>
 	);
 }

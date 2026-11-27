@@ -1,0 +1,38 @@
+.summary {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--spacing-8) var(--spacing-10);
+	padding: var(--spacing-2) var(--spacing-0) var(--spacing-10);
+	border-bottom: 1px solid var(--l1-border);
+}
+
+.logLine {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: stretch;
+	gap: var(--spacing-4);
+	min-width: 0;
+	margin-bottom: var(--spacing-2);
+}
+
+.logText {
+	min-width: 0;
+	font-family: var(--code-base-400-font-family);
+	font-size: var(--code-base-400-font-size);
+	line-height: 18px;
+	color: var(--l2-foreground);
+	overflow-wrap: anywhere;
+}
+
+.mono {
+	font-family: 'Space Mono', monospace;
+}
+
+.accent {
+	color: var(--accent-primary);
+	font-weight: 500;
+}
+
+.muted {
+	color: var(--text-neutral-dark-200);
+}
