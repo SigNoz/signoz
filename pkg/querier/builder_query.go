@@ -519,6 +519,12 @@ func (q *builderQuery[T]) executeSkippingRaw(ctx context.Context, query string, 
 		return nil, 0, err
 	}
 
+	if q.spec.Signal == telemetrytypes.SignalMetrics {
+		if tsData, ok := payload.(*qbtypes.TimeSeriesData); ok {
+			markUnreportedValues(tsData, q.spec.StepInterval, time.Now())
+		}
+	}
+
 	// TODO: This should move to readAsRaw function in consume.go but for now we are keeping it here since it's only relevant for traces
 	if q.spec.Signal == telemetrytypes.SignalTraces {
 		if raw, ok := payload.(*qbtypes.RawData); ok {

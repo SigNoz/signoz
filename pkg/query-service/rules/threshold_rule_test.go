@@ -546,6 +546,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 		{Name: "value", Type: "Float64"},
 	}
 
+	completedAt := time.Now().Add(-3 * time.Minute)
 	cases := []struct {
 		targetUnit      string
 		yAxisUnit       string
@@ -560,11 +561,11 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			targetUnit: "s",
 			yAxisUnit:  "ns",
 			values: [][]any{
-				{time.Now(), float64(572588400)},                              // 0.57 seconds
-				{time.Now().Add(1 * time.Second), float64(572386400)},         // 0.57 seconds
-				{time.Now().Add(2 * time.Second), float64(300947400)},         // 0.3 seconds
-				{time.Now().Add(3 * time.Second), float64(299316000)},         // 0.3 seconds
-				{time.Now().Add(4 * time.Second), float64(66640400.00000001)}, // 0.06 seconds
+				{completedAt, float64(572588400)},                              // 0.57 seconds
+				{completedAt.Add(1 * time.Second), float64(572386400)},         // 0.57 seconds
+				{completedAt.Add(2 * time.Second), float64(300947400)},         // 0.3 seconds
+				{completedAt.Add(3 * time.Second), float64(299316000)},         // 0.3 seconds
+				{completedAt.Add(4 * time.Second), float64(66640400.00000001)}, // 0.06 seconds
 			},
 			expectAlerts:    0,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -575,11 +576,11 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			targetUnit: "ms",
 			yAxisUnit:  "ns",
 			values: [][]any{
-				{time.Now(), float64(572588400)},                              // 572.58 ms
-				{time.Now().Add(1 * time.Second), float64(572386400)},         // 572.38 ms
-				{time.Now().Add(2 * time.Second), float64(300947400)},         // 300.94 ms
-				{time.Now().Add(3 * time.Second), float64(299316000)},         // 299.31 ms
-				{time.Now().Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 ms
+				{completedAt, float64(572588400)},                              // 572.58 ms
+				{completedAt.Add(1 * time.Second), float64(572386400)},         // 572.38 ms
+				{completedAt.Add(2 * time.Second), float64(300947400)},         // 300.94 ms
+				{completedAt.Add(3 * time.Second), float64(299316000)},         // 299.31 ms
+				{completedAt.Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 ms
 			},
 			expectAlerts:    1,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -593,11 +594,11 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			targetUnit: "decgbytes",
 			yAxisUnit:  "bytes",
 			values: [][]any{
-				{time.Now(), float64(2863284053)},                             // 2.86 GB
-				{time.Now().Add(1 * time.Second), float64(2863388842)},        // 2.86 GB
-				{time.Now().Add(2 * time.Second), float64(300947400)},         // 0.3 GB
-				{time.Now().Add(3 * time.Second), float64(299316000)},         // 0.3 GB
-				{time.Now().Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 MB
+				{completedAt, float64(2863284053)},                             // 2.86 GB
+				{completedAt.Add(1 * time.Second), float64(2863388842)},        // 2.86 GB
+				{completedAt.Add(2 * time.Second), float64(300947400)},         // 0.3 GB
+				{completedAt.Add(3 * time.Second), float64(299316000)},         // 0.3 GB
+				{completedAt.Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 MB
 			},
 			expectAlerts:    0,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -608,11 +609,11 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			targetUnit: "decgbytes",
 			yAxisUnit:  "By",
 			values: [][]any{
-				{time.Now(), float64(2863284053)},                             // 2.86 GB
-				{time.Now().Add(1 * time.Second), float64(2863388842)},        // 2.86 GB
-				{time.Now().Add(2 * time.Second), float64(300947400)},         // 0.3 GB
-				{time.Now().Add(3 * time.Second), float64(299316000)},         // 0.3 GB
-				{time.Now().Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 MB
+				{completedAt, float64(2863284053)},                             // 2.86 GB
+				{completedAt.Add(1 * time.Second), float64(2863388842)},        // 2.86 GB
+				{completedAt.Add(2 * time.Second), float64(300947400)},         // 0.3 GB
+				{completedAt.Add(3 * time.Second), float64(299316000)},         // 0.3 GB
+				{completedAt.Add(4 * time.Second), float64(66640400.00000001)}, // 66.64 MB
 			},
 			expectAlerts:    0,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -623,10 +624,10 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			targetUnit: "h",
 			yAxisUnit:  "min",
 			values: [][]any{
-				{time.Now(), float64(55)},                      // 55 minutes
-				{time.Now().Add(1 * time.Minute), float64(57)}, // 57 minutes
-				{time.Now().Add(2 * time.Minute), float64(30)}, // 30 minutes
-				{time.Now().Add(3 * time.Minute), float64(29)}, // 29 minutes
+				{completedAt.Add(-1 * time.Minute), float64(55)}, // 55 minutes
+				{completedAt, float64(57)},                       // 57 minutes
+				{completedAt.Add(30 * time.Second), float64(30)}, // 30 minutes
+				{completedAt.Add(45 * time.Second), float64(29)}, // 29 minutes
 			},
 			expectAlerts:    0,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -1146,6 +1147,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 	cols = append(cols, cmock.ColumnType{Name: "attr", Type: "String"})
 	cols = append(cols, cmock.ColumnType{Name: "timestamp", Type: "DateTime"})
 
+	completedAt := time.Now().Add(-3 * time.Minute)
 	cases := []struct {
 		targetUnit      string
 		yAxisUnit       string
@@ -1161,11 +1163,11 @@ func TestMultipleThresholdRule(t *testing.T) {
 			targetUnit: "s",
 			yAxisUnit:  "ns",
 			values: [][]any{
-				{float64(572588400), "attr", time.Now()},                              // 0.57 seconds
-				{float64(572386400), "attr", time.Now().Add(1 * time.Second)},         // 0.57 seconds
-				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},         // 0.3 seconds
-				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 seconds
-				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 0.06 seconds
+				{float64(572588400), "attr", completedAt},                              // 0.57 seconds
+				{float64(572386400), "attr", completedAt.Add(1 * time.Second)},         // 0.57 seconds
+				{float64(300947400), "attr", completedAt.Add(2 * time.Second)},         // 0.3 seconds
+				{float64(299316000), "attr", completedAt.Add(3 * time.Second)},         // 0.3 seconds
+				{float64(66640400.00000001), "attr", completedAt.Add(4 * time.Second)}, // 0.06 seconds
 			},
 			expectAlerts:    1,
 			compareOperator: ruletypes.ValueIsAbove,
@@ -1180,11 +1182,11 @@ func TestMultipleThresholdRule(t *testing.T) {
 			targetUnit: "ms",
 			yAxisUnit:  "ns",
 			values: [][]any{
-				{float64(572588400), "attr", time.Now()},                              // 572.58 ms
-				{float64(572386400), "attr", time.Now().Add(1 * time.Second)},         // 572.38 ms
-				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},         // 300.94 ms
-				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 299.31 ms
-				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 ms
+				{float64(572588400), "attr", completedAt},                              // 572.58 ms
+				{float64(572386400), "attr", completedAt.Add(1 * time.Second)},         // 572.38 ms
+				{float64(300947400), "attr", completedAt.Add(2 * time.Second)},         // 300.94 ms
+				{float64(299316000), "attr", completedAt.Add(3 * time.Second)},         // 299.31 ms
+				{float64(66640400.00000001), "attr", completedAt.Add(4 * time.Second)}, // 66.64 ms
 			},
 			expectAlerts:    2, // Expects 1 values exceed 200ms (573) + 1 values exceed 500ms (5723)
 			compareOperator: ruletypes.ValueIsAbove,
@@ -1200,11 +1202,11 @@ func TestMultipleThresholdRule(t *testing.T) {
 			targetUnit: "decgbytes",
 			yAxisUnit:  "bytes",
 			values: [][]any{
-				{float64(2863284053), "attr", time.Now()},                             // 2.86 GB
-				{float64(2863388842), "attr", time.Now().Add(1 * time.Second)},        // 2.86 GB
-				{float64(300947400), "attr", time.Now().Add(2 * time.Second)},         // 0.3 GB
-				{float64(299316000), "attr", time.Now().Add(3 * time.Second)},         // 0.3 GB
-				{float64(66640400.00000001), "attr", time.Now().Add(4 * time.Second)}, // 66.64 MB
+				{float64(2863284053), "attr", completedAt},                             // 2.86 GB
+				{float64(2863388842), "attr", completedAt.Add(1 * time.Second)},        // 2.86 GB
+				{float64(300947400), "attr", completedAt.Add(2 * time.Second)},         // 0.3 GB
+				{float64(299316000), "attr", completedAt.Add(3 * time.Second)},         // 0.3 GB
+				{float64(66640400.00000001), "attr", completedAt.Add(4 * time.Second)}, // 66.64 MB
 			},
 			expectAlerts:    1,
 			compareOperator: ruletypes.ValueIsAbove,
