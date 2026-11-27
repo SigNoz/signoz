@@ -175,14 +175,22 @@ describe('CreateAlertHeader', () => {
 			renderEdit();
 
 			expect(nameField()).toBeDisabled();
-			expect(screen.getByTestId('alert-add-label-button')).toBeDisabled();
+			expect(screen.getByTestId('alert-add-label-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(screen.getByTestId('label-remove-severity')).toBeDisabled();
 		});
 
 		it('lets a saved rule be renamed and relabelled with update', () => {
 			renderEdit();
 
 			expect(nameField()).toBeEnabled();
-			expect(screen.getByTestId('alert-add-label-button')).toBeEnabled();
+			expect(screen.getByTestId('alert-add-label-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(screen.getByTestId('label-remove-severity')).toBeEnabled();
 		});
 
 		it('never locks naming a new rule', () => {

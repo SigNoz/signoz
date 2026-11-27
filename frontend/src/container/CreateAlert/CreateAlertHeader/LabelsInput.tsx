@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
-import { Tooltip } from '@signozhq/ui/tooltip';
+import { Button } from '@signozhq/ui/button';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -122,18 +122,6 @@ function LabelsInput({
 		}
 	}, [inputState]);
 
-	const addButton = (
-		<button
-			className="labels-input__add-button"
-			type="button"
-			disabled={disabled}
-			onClick={handleAddLabelsClick}
-			data-testid="alert-add-label-button"
-		>
-			+ Add labels
-		</button>
-	);
-
 	return (
 		<div className="labels-input">
 			{Object.keys(labels).length > 0 && (
@@ -161,14 +149,19 @@ function LabelsInput({
 			)}
 
 			{!isAdding ? (
-				disabled ? (
-					// A disabled button gets no hover, so the span carries the tooltip.
-					<Tooltip title={disabledTooltip}>
-						<span>{addButton}</span>
-					</Tooltip>
-				) : (
-					addButton
-				)
+				<div className="labels-input__add">
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="sm"
+						disabled={disabled}
+						disabledTooltip={disabledTooltip}
+						onClick={handleAddLabelsClick}
+						testId="alert-add-label-button"
+					>
+						+ Add labels
+					</Button>
+				</div>
 			) : (
 				<div className="labels-input__input-container">
 					<input

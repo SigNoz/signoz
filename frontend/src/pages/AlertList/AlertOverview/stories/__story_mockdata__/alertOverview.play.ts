@@ -158,7 +158,10 @@ export const expectUpdateLocked = async ({
 		untilLoaded,
 	);
 	await expect(canvas.getByTestId('alert-name-input-field')).toBeDisabled();
-	await expect(canvas.getByTestId('alert-add-label-button')).toBeDisabled();
+	await expect(canvas.getByTestId('alert-add-label-button')).toHaveAttribute(
+		'aria-disabled',
+		'true',
+	);
 	await expectDenied(canvasElement, 'save-alert-rule-button', /update/);
 };
 
