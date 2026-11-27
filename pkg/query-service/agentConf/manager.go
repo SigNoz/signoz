@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
+	"maps"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -155,6 +157,14 @@ func (m *Manager) RecommendAgentConfig(orgId valuer.UUID, currentConfYaml []byte
 		hash := sha256.New()
 		hash.Write(recommendation)
 		configId = string(hash.Sum(nil))
+	}
+
+	processorsConfs, err := ProcessorsConfByCollectorPipeline(recommendation)
+	if err != nil {
+		m.logger.Warn("failed to build collector processors config for logging", slog.String("org_id", orgId.StringValue()), errors.Attr(err))
+	}
+	for _, pipeline := range slices.Sorted(maps.Keys(processorsConfs)) {
+		m.logger.Info("recommended collector pipeline processors config", slog.String("org_id", orgId.StringValue()), slog.String("config_id", configId), slog.String("pipeline", pipeline), slog.String("config", string(processorsConfs[pipeline])))
 	}
 
 	return recommendation, configId, nil

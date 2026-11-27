@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/flagger/flaggertest"
+	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -558,4 +559,83 @@ func TestRecommendAgentConfigWithNormalizerProcessorAndJSONBody(t *testing.T) {
 			assert.Equal(t, testCase.expected, logs["processors"])
 		})
 	}
+}
+
+func TestRecommendAgentConfigProcessorsOrderWithNormalizer(t *testing.T) {
+	userPipeline := makeTestAddAttributePipeline()
+	controller := &LogParsingPipelineController{
+		fl: flaggertest.WithUseJSONBody(t, true),
+		GetIntegrationPipelines: func(context.Context, string) ([]pipelinetypes.GettablePipeline, error) {
+			return []pipelinetypes.GettablePipeline{userPipeline}, nil
+		},
+	}
+	normalizeOperator := CollectorConfProcessorName(getNormalizePipeline())
+	user := CollectorConfProcessorName(userPipeline)
+
+	testCases := []struct {
+		name     string
+		position string
+		expected []string
+	}{
+		{
+			name:     "NormalizerBefore",
+			position: "before",
+			expected: []string{"memory_limiter", "signozlogsnormalizer", user, "batch"},
+		},
+		{
+			name:     "NormalizerAfter",
+			position: "after",
+			expected: []string{"memory_limiter", normalizeOperator, user, "signozlogsnormalizer", "batch"},
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			conf := fmt.Sprintf(`
+processors:
+  batch: {}
+  memory_limiter: {}
+  signozlogsnormalizer:
+    opamp:
+      position: %s
+exporters:
+  clickhouselogsexporter:
+    dsn: tcp://admin:normalizersecret@clickhouse:9000/signoz_logs
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, signozlogsnormalizer, batch]
+      exporters: [clickhouselogsexporter]
+`, testCase.position)
+
+			recommended, _, err := controller.RecommendAgentConfig(valuer.GenerateUUID(), []byte(conf), nil)
+			require.NoError(t, err)
+
+			processorsConfs, err := agentConf.ProcessorsConfByCollectorPipeline(recommended)
+			require.NoError(t, err)
+			assert.NotContains(t, string(processorsConfs["logs"]), "normalizersecret")
+			assert.Equal(t, testCase.expected, processorNamesInOrder(t, processorsConfs["logs"]))
+		})
+	}
+}
+
+func processorNamesInOrder(t *testing.T, conf []byte) []string {
+	t.Helper()
+	var processors []any
+	require.NoError(t, yaml.Unmarshal(conf, &processors))
+	var names []string
+	for _, processor := range processors {
+		switch processor := processor.(type) {
+		case string:
+			names = append(names, processor)
+		case map[string]any:
+			require.Len(t, processor, 1)
+			for name := range processor {
+				names = append(names, name)
+			}
+		default:
+			require.Failf(t, "unexpected processor entry", "%v", processor)
+		}
+	}
+	return names
 }
