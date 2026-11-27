@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -20,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -39,21 +37,18 @@ type LogParsingPipelineController struct {
 	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error)
 	// TODO(Piyush): remove with qbv5 migration
 	reader interfaces.Reader
-	fl     flagger.Flagger
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
 	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error),
 	reader interfaces.Reader,
-	fl flagger.Flagger,
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
 		Repo:                    repo,
 		GetIntegrationPipelines: getIntegrationPipelines,
 		reader:                  reader,
-		fl:                      fl,
 	}, nil
 }
 
@@ -220,44 +215,6 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-// withNormalizePipeline places normalize ahead of user pipelines when queries run on body_v2
-// (use_json_body), so operators see the body the explorer shows. Absent when the flag is off
-// or collectorNormalizesFirst.
-func (ic *LogParsingPipelineController) withNormalizePipeline(ctx context.Context, orgID valuer.UUID, pipelines []pipelinetypes.GettablePipeline, collectorNormalizesFirst bool) []pipelinetypes.GettablePipeline {
-	if collectorNormalizesFirst || !ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		return pipelines
-	}
-	return append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
-}
-
-func getNormalizePipeline() pipelinetypes.GettablePipeline {
-	return pipelinetypes.GettablePipeline{
-		StoreablePipeline: pipelinetypes.StoreablePipeline{
-			Name:    "Default Pipeline - PreProcessing Body",
-			Alias:   "NormalizeBodyDefault",
-			Enabled: true,
-		},
-		Filter: &v3.FilterSet{
-			Items: []v3.FilterItem{
-				{
-					Key: v3.AttributeKey{
-						Key: "body",
-					},
-					Operator: v3.FilterOperatorExists,
-				},
-			},
-		},
-		Config: []pipelinetypes.PipelineOperator{
-			{
-				ID:      uuid.NewString(),
-				Type:    "normalize",
-				Enabled: true,
-				If:      "body != nil",
-			},
-		},
-	}
-}
-
 // Returns effective list of pipelines including user created
 // pipelines and pipelines for installed integrations
 func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
@@ -352,17 +309,11 @@ type PipelinesPreviewResponse struct {
 
 func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
-	orgID valuer.UUID,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, error) {
 	pipelines, err := ic.enrichPipelinesFilters(ctx, request.Pipelines)
 	if err != nil {
 		return nil, err
-	}
-
-	// The collector gets the same pipeline prepended over opamp; see RecommendAgentConfig.
-	if ic.fl.BooleanOrEmpty(ctx, flagger.FeatureUseJSONBody, featuretypes.NewFlaggerEvaluationContext(orgID)) {
-		pipelines = append([]pipelinetypes.GettablePipeline{getNormalizePipeline()}, pipelines...)
 	}
 
 	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
@@ -383,16 +334,13 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 
 // Implements agentConf.AgentFeature interface.
 // RecommendAgentConfig generates the collector config to be sent to agents.
-// The normalize pipeline (when use_json_body is on) is placed
-// here, after rawPipelineData is serialized. So it is only present in the config sent to
-// the collector and never persisted to the database as part of the user's pipeline list.
 //
 // NOTE: The configId sent to agents is derived from the pipeline version number
 // (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
-// the generated YAML without bumping the version (e.g. toggling the use_json_body
-// flag or updating operator IfExpressions), agents that already
-// applied that version will not re-apply the new config. In such cases, users must save a
-// new pipeline version via the API to force agents to pick up the change.
+// the generated YAML without bumping the version (e.g. updating operator IfExpressions),
+// agents that already applied that version will not re-apply the new config. In such
+// cases, users must save a new pipeline version via the API to force agents to pick up
+// the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId valuer.UUID,
 	currentConfYaml []byte,
@@ -418,15 +366,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	collectorConf, err := unmarshalCollectorConfig(currentConfYaml)
-	if err != nil {
-		return nil, "", err
-	}
-
-	// normalize is only for sending to the collector, never persisted
-	enrichedPipelines = pc.withNormalizePipeline(ctx, orgId, enrichedPipelines, collectorNormalizesFirst(collectorConf))
-
-	updatedConf, err := generateCollectorConfigWithPipelines(collectorConf, enrichedPipelines)
+	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
 	if err != nil {
 		return nil, "", err
 	}
