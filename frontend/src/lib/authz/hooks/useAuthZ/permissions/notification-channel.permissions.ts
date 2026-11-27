@@ -1,4 +1,5 @@
 import { buildPermission } from '../utils';
+import type { LinkPermissions } from '../../useLinkPickerAccess/types';
 import type { BrandedPermission } from '../types';
 
 // Collection-level. Wildcard selector required for correct response key matching.
@@ -29,3 +30,10 @@ export const buildNotificationChannelAttachPermission = (
 export const buildNotificationChannelDetachPermission = (
 	id: string,
 ): BrandedPermission => buildPermission('detach', `notification-channel:${id}`);
+
+export const buildNotificationChannelLinkPermissions = (
+	id: string,
+): LinkPermissions => ({
+	attach: buildNotificationChannelAttachPermission(id),
+	detach: buildNotificationChannelDetachPermission(id),
+});

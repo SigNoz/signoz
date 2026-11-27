@@ -13,8 +13,16 @@ import { rest } from 'msw';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
+import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
+import {
+	buildNotificationChannelAttachPermission,
+	NotificationChannelCreatePermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
+
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
+import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
 	alertFieldKeysResponse,
@@ -180,6 +188,37 @@ export const createAlertMocks = defineStoryMocks({
 
 const untilLoaded = { timeout: 15_000 };
 
+type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
+
+/** `ops-slack`, the channel `fillValidAlert` picks: the first one listed. */
+export const STORY_CHANNEL_ID = '1';
+
+/**
+ * Whether a rule notifying the story channel can be saved and tested: the
+ * channel is listed, and the checks pass or failed open.
+ */
+export const canWriteRule = (args: CreateAlertArgs): boolean =>
+	args.channels > 0 &&
+	(args.authzState === 'error' ||
+		grantsAll(args, ...getRuleCreateChecks([STORY_CHANNEL_ID])));
+
+/** Whether the picker takes the story channel: it needs `attach` on the channel. */
+export const canPickStoryChannel = (args: CreateAlertArgs): boolean =>
+	args.channels > 0 &&
+	(args.authzState === 'error' ||
+		grantsAll(args, buildNotificationChannelAttachPermission(STORY_CHANNEL_ID)));
+
+/** The checks Save and Test notification name when a rule with the story channel is refused. */
+export const deniedWriteChecks = (args: CreateAlertArgs): string =>
+	getRuleCreateChecks([STORY_CHANNEL_ID])
+		.filter((check) => !grantsAll(args, check))
+		.join(',');
+
+/** Whether an empty picker offers to create a channel. */
+export const offersChannelCreate = (args: CreateAlertArgs): boolean =>
+	args.authzState === 'error' ||
+	grantsAll(args, NotificationChannelCreatePermission);
+
 export const fillValidAlert = async (
 	canvasElement: HTMLElement,
 ): Promise<void> => {
@@ -206,9 +245,9 @@ export const clickFooterButton = async (
 ): Promise<void> => {
 	const button = await within(canvasElement).findByTestId(testId);
 
+	// Disabled until its permission check answers.
 	await waitFor(async () => {
-		await expect(button).toBeEnabled();
-		await expect(button).not.toHaveAttribute('aria-disabled', 'true');
-	});
+		await expect(button).toHaveAttribute('aria-disabled', 'false');
+	}, untilLoaded);
 	await userEvent.click(button);
 };

@@ -449,9 +449,9 @@ describe('PrivateRoute', () => {
 			assertStaysOnRoute(ROUTES.HOME);
 		});
 
-		it('should redirect to unauthorized when VIEWER tries to access admin-only route /alerts/new', async () => {
+		it('should redirect to unauthorized when VIEWER tries to access admin-only route /licenses', async () => {
 			renderPrivateRoute({
-				initialRoute: ROUTES.ALERTS_NEW,
+				initialRoute: ROUTES.LIST_LICENSES,
 				appContext: {
 					isLoggedIn: true,
 					user: createMockUser({ role: USER_ROLES.VIEWER as ROLES }),
@@ -1688,6 +1688,7 @@ describe('PrivateRoute', () => {
 			AuthzRouteCase
 		> = {
 			LIST_ALL_ALERT: { path: ROUTES.LIST_ALL_ALERT, deniedRoles: DENIED_ROLES },
+			ALERTS_NEW: { path: ROUTES.ALERTS_NEW, deniedRoles: DENIED_ROLES },
 			CHANNELS_NEW: { path: ROUTES.CHANNELS_NEW, deniedRoles: DENIED_ROLES },
 			CHANNELS_EDIT: {
 				path: ROUTES.CHANNELS_EDIT.replace(':channelId', 'channel-id-1'),
@@ -1775,7 +1776,6 @@ describe('PrivateRoute', () => {
 
 		// Routes with no authz check - legacy role check still applies
 		const NON_AUTHZ_ROUTE_CASES: [string, string, ROLES][] = [
-			['ALERTS_NEW', ROUTES.ALERTS_NEW, USER_ROLES.VIEWER as ROLES],
 			['LIST_LICENSES', ROUTES.LIST_LICENSES, USER_ROLES.EDITOR as ROLES],
 			['ONBOARDING', ROUTES.ONBOARDING, USER_ROLES.VIEWER as ROLES],
 			['APPLICATION', ROUTES.APPLICATION, USER_ROLES.ANONYMOUS as ROLES],

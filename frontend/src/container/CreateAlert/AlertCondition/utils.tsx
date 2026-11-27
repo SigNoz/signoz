@@ -1,12 +1,10 @@
 import { Button, SelectProps } from 'antd';
-import Flex from 'periscope/components/Flex/Flex';
 import { Switch } from '@signozhq/ui/switch';
 import { Typography } from '@signozhq/ui/typography';
 import type { BaseOptionType, DefaultOptionType } from 'antd/es/select';
 import { getInvolvedQueriesInTraceOperator } from 'components/QueryBuilderV2/QueryV2/TraceOperator/utils/utils';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
-import ROUTES from 'constants/routes';
 import {
 	AlertThresholdMatchType,
 	AlertThresholdOperator,
@@ -15,12 +13,9 @@ import { getSelectedQueryOptions } from 'container/FormAlertRules/utils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { getActiveBuilder } from 'lib/query/builderSlot';
 import { ArrowRight } from '@signozhq/icons';
-import { IUser } from 'providers/App/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
-import { USER_ROLES } from 'types/roles';
-import { openInNewTab } from 'utils/navigation';
 
 import { ROUTING_POLICIES_ROUTE } from './constants';
 import { Threshold } from '../context/types';
@@ -426,66 +421,6 @@ export const getMatchTypeTooltip = (
 			return '';
 	}
 };
-
-export function NotificationChannelsNotFoundContent({
-	user,
-	refreshChannels,
-}: {
-	user: IUser;
-	refreshChannels: () => void;
-}): JSX.Element {
-	return (
-		<Flex justify="space-between">
-			<Flex gap={4} align="center">
-				<Typography
-					variant="paragraph"
-					size="base"
-					weight="regular"
-					color="inherit"
-					as="span"
-					textOverflow="wrap"
-				>
-					No channels yet.
-				</Typography>
-				{user?.role === USER_ROLES.ADMIN ? (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Create one
-						<Button
-							style={{ padding: '0 4px' }}
-							type="link"
-							onClick={(): void => {
-								openInNewTab(ROUTES.CHANNELS_NEW);
-							}}
-						>
-							here.
-						</Button>
-					</Typography>
-				) : (
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="inherit"
-						as="span"
-						textOverflow="wrap"
-					>
-						Please ask your admin to create one.
-					</Typography>
-				)}
-			</Flex>
-			<Button type="text" onClick={refreshChannels}>
-				Refresh
-			</Button>
-		</Flex>
-	);
-}
 
 export function RoutingPolicyBanner({
 	notificationSettings,

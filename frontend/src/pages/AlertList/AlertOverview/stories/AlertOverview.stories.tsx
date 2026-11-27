@@ -1,13 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
-
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { alertOverviewMocks } from './AlertOverview.stories.mocks';
 import {
-	alertOverviewMocks,
-	clickFooterButton,
-} from './AlertOverview.stories.mocks';
+	openActionsMenu,
+	saveRule,
+	selectForecastSeries,
+	sendTestNotification,
+} from './__story_mockdata__/alertOverview.play';
 
 import AlertList from '../../index';
 
@@ -53,14 +54,7 @@ export const AnomalyRule: Story = {
  */
 export const AnomalyRuleForecastBand: Story = {
 	args: { ruleKind: 'anomaly' },
-	play: async ({ canvasElement }): Promise<void> => {
-		const [firstSeries] = await within(canvasElement).findAllByTestId(
-			'anomaly-series-option',
-			undefined,
-			{ timeout: 15_000 },
-		);
-		await userEvent.click(firstSeries);
-	},
+	play: selectForecastSeries,
 };
 
 /** A rule someone turned off: the toggle in the header is what turns it back on. */
@@ -86,44 +80,21 @@ export const RuleNotFound: Story = {
  * it, or delete it.
  */
 export const AlertActionsMenu: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await userEvent.click(
-			await within(canvasElement).findByTestId(
-				'alert-actions-menu',
-				{},
-				{ timeout: 10000 },
-			),
-		);
-		await screen.findByRole('menu');
-	},
+	play: openActionsMenu,
 };
 
 /** The rule saved unchanged from the footer: the toast raised once the PUT answers. */
 export const AlertRuleUpdatedToast: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await clickFooterButton(canvasElement, 'save-alert-rule-button');
-		await waitFor(() =>
-			expect(screen.getByText(/alert rule updated successfully/i)).toBeVisible(),
-		);
-	},
+	play: saveRule,
 };
 
 /** Test Notification from the footer. */
 export const TestNotificationSentToast: Story = {
-	play: async ({ canvasElement, args }): Promise<void> => {
-		await clickFooterButton(canvasElement, 'test-notification-button');
-		if (args.testNotification === 'sent') {
-			await waitFor(() =>
-				expect(
-					screen.getByText(/test notification sent successfully/i),
-				).toBeVisible(),
-			);
-		}
-	},
+	play: sendTestNotification,
 };
 
 /** Test Notification finding nothing to alert on: the error toast. */
 export const TestNotificationNoAlertsToast: Story = {
 	args: { testNotification: 'no-alerts' },
-	play: TestNotificationSentToast.play,
+	play: sendTestNotification,
 };

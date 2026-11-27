@@ -116,6 +116,7 @@ const preview: Preview = {
 							'Overview',
 							'History',
 							'Create',
+							['Overview', 'Authz'],
 							'Edit',
 							'Planned Downtime',
 							['Overview', 'Authz'],

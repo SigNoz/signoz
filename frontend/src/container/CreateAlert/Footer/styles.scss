@@ -32,3 +32,8 @@
 		color: var(--l2-foreground);
 	}
 }
+
+// A pinned side nav is 240px wide, not the collapsed one the left offset clears.
+.app-layout.side-nav-pinned .create-alert-v2-footer {
+	left: 240px;
+}

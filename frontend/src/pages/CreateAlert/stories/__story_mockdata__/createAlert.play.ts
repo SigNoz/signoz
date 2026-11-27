@@ -8,16 +8,21 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import {
+	canPickStoryChannel,
+	canWriteRule,
 	clickFooterButton,
+	deniedWriteChecks,
+	offersChannelCreate,
 	type createAlertMocks,
 	fillValidAlert,
+	STORY_CHANNEL_ID,
 } from '../CreateAlert.stories.mocks';
 
 type CreateAlertArgs = PageStoryArgs<typeof createAlertMocks>;
 
 interface PlayContext {
 	canvasElement: HTMLElement;
-	args: Pick<CreateAlertArgs, 'alertMode' | 'testNotification'>;
+	args: CreateAlertArgs;
 }
 
 const untilLoaded = { timeout: 15_000 };
@@ -80,6 +85,10 @@ export const saveValidAlert = async ({
 		return;
 	}
 
+	if (!canWriteRule(args)) {
+		return;
+	}
+
 	await fillValidAlert(canvasElement);
 	await clickFooterButton(canvasElement, 'save-alert-rule-button');
 	await waitFor(() =>
@@ -93,6 +102,10 @@ export const sendTestNotification = async ({
 	args,
 }: PlayContext): Promise<void> => {
 	if (args.alertMode === 'select-type') {
+		return;
+	}
+
+	if (!canWriteRule(args)) {
 		return;
 	}
 
@@ -127,4 +140,115 @@ export const enableRepeatNotifications = async ({
 	await waitFor(() =>
 		expect(canvas.getByTestId('repeat-notifications-time-input')).toBeVisible(),
 	);
+};
+
+const openChannelPicker = async (canvasElement: HTMLElement): Promise<void> => {
+	const canvas = within(canvasElement);
+	const picker = (): HTMLElement =>
+		within(canvas.getByTestId('threshold-notification-channel-select')).getByRole(
+			'combobox',
+		);
+	// The picker is disabled until the channels load.
+	await waitFor(
+		() => expect(picker()).not.toHaveAttribute('disabled'),
+		untilLoaded,
+	);
+	await userEvent.click(picker());
+};
+
+/** The story channel's option in the first threshold's picker. */
+const storyChannelOption = (): Promise<HTMLElement> =>
+	screen.findByTestId(
+		`threshold-critical-channel-option-${STORY_CHANNEL_ID}`,
+		undefined,
+		untilLoaded,
+	);
+
+/**
+ * The picker offers the channel but will not take it without `attach` on the
+ * channel. A pending option is disabled too, so the denial is read from its
+ * title.
+ */
+export const expectChannelLocked = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		args.alertMode === 'select-type' ||
+		args.channels === 0 ||
+		canPickStoryChannel(args)
+	) {
+		return;
+	}
+
+	await openChannelPicker(canvasElement);
+	const option = await storyChannelOption();
+	await waitFor(
+		() =>
+			expect(option).toHaveAttribute(
+				'aria-description',
+				expect.stringMatching(/is not authorized/),
+			),
+		untilLoaded,
+	);
+	await expect(option).toHaveAttribute('aria-disabled', 'true');
+};
+
+/**
+ * A valid rule whose Save and Test notification name exactly the checks the
+ * role is missing: `create`, or `attach` on rules, which a new rule is only
+ * asked for on Save.
+ */
+export const expectWriteLocked = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		args.alertMode === 'select-type' ||
+		!canPickStoryChannel(args) ||
+		canWriteRule(args)
+	) {
+		return;
+	}
+
+	await fillValidAlert(canvasElement);
+	const canvas = within(canvasElement);
+	for (const testId of ['save-alert-rule-button', 'test-notification-button']) {
+		await waitFor(
+			() =>
+				expect(canvas.getByTestId(testId)).toHaveAttribute(
+					'data-denied-permissions',
+					deniedWriteChecks(args),
+				),
+			untilLoaded,
+		);
+		await expect(canvas.getByTestId(testId)).toHaveAttribute(
+			'aria-disabled',
+			'true',
+		);
+	}
+};
+
+/** With no channels, the picker asks for an admin instead of offering to create one. */
+export const expectNoChannelCreateLink = async ({
+	canvasElement,
+	args,
+}: PlayContext): Promise<void> => {
+	if (
+		args.alertMode === 'select-type' ||
+		args.channels > 0 ||
+		offersChannelCreate(args)
+	) {
+		return;
+	}
+
+	await openChannelPicker(canvasElement);
+	await screen.findByText(
+		'Please ask your admin to create one.',
+		undefined,
+		untilLoaded,
+	);
+	await expect(
+		screen.queryByTestId('channels-not-found-create'),
+	).not.toBeInTheDocument();
 };

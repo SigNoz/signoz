@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@signozhq/ui/input';
 import { Button, Select, Tooltip } from 'antd';
+import AuthZSelect from 'lib/authz/components/AuthZSelect/AuthZSelect';
 import { Typography } from '@signozhq/ui/typography';
 import { CircleX, Trash } from '@signozhq/icons';
-import { useAppContext } from 'providers/App/App';
+import NotificationChannelsNotFound from 'components/NotificationChannelsNotFound/NotificationChannelsNotFound';
 
 import { useCreateAlertState } from '../context';
 import { AlertThresholdOperator } from '../context/types';
 import { normalizeOperator } from '../utils';
 import { ThresholdItemProps } from './types';
-import { NotificationChannelsNotFoundContent } from './utils';
+import { useAlertRuleChannelAccess } from './useAlertRuleChannelAccess';
 
 function ThresholdItem({
 	threshold,
@@ -23,8 +24,13 @@ function ThresholdItem({
 	isLoadingChannels,
 	isAnomaly = false,
 }: ThresholdItemProps): JSX.Element {
-	const { user } = useAppContext();
 	const { thresholdState, notificationSettings } = useCreateAlertState();
+	const { options: channelOptions, onPickerVisibleChange } =
+		useAlertRuleChannelAccess(
+			threshold,
+			channels,
+			`threshold-${threshold.label}-channel-option`,
+		);
 	const [showRecoveryThreshold, setShowRecoveryThreshold] = useState(false);
 
 	const yAxisUnitSelect = useMemo(() => {
@@ -179,19 +185,16 @@ function ThresholdItem({
 							>
 								send to
 							</Typography>
-							<Select
+							<AuthZSelect
 								value={threshold.channels}
 								onChange={(value): void =>
 									updateThreshold(threshold.id, 'channels', value)
 								}
 								data-testid="threshold-notification-channel-select"
+								popupMatchSelectWidth={false}
 								style={{ width: 350 }}
-								options={channels.map((channel) => ({
-									value: channel.name,
-									label: channel.name,
-									'data-testid': `threshold-notification-channel-option-${threshold.label}`,
-								}))}
-								mode="multiple"
+								options={channelOptions}
+								onDropdownVisibleChange={onPickerVisibleChange}
 								placeholder="Select notification channels"
 								showSearch
 								maxTagCount={2}
@@ -199,16 +202,10 @@ function ThresholdItem({
 									`+${omittedValues.length} more`
 								}
 								maxTagTextLength={10}
-								filterOption={(input, option): boolean =>
-									option?.label?.toLowerCase().includes(input.toLowerCase()) || false
-								}
 								status={isErrorChannels ? 'error' : undefined}
 								disabled={isLoadingChannels}
 								notFoundContent={
-									<NotificationChannelsNotFoundContent
-										user={user}
-										refreshChannels={refreshChannels}
-									/>
+									<NotificationChannelsNotFound onRefresh={refreshChannels} />
 								}
 							/>
 						</>

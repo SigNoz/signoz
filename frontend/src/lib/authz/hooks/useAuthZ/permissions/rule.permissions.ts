@@ -5,6 +5,8 @@ import type { BrandedPermission } from '../types';
 // `list` also covers rule views, which the backend gates on it.
 export const RuleListPermission = buildPermission('list', 'rule:*');
 export const RuleCreatePermission = buildPermission('create', 'rule:*');
+// A new rule has no id yet, so linking its channels is checked on the wildcard.
+export const RuleAttachPermission = buildPermission('attach', 'rule:*');
 
 // Resource-level. Requires a specific rule id.
 export const buildRuleReadPermission = (id: string): BrandedPermission =>
