@@ -1,14 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
-import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import { storyMocks } from '@/storybook/controls/defineStoryMocks';
-import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
 import LLMObservabilityPage from '../../index';
-import { llmExplorerMocks } from './Explorer.stories.mocks';
-
-type LLMExplorerArgs = PageStoryArgs<typeof llmExplorerMocks>;
+import {
+	dirtyQuickFiltersSettings,
+	openAddToDashboard,
+	openQuickFiltersSettings,
+	selectFirstQuickFilterValue,
+} from './__story_mockdata__/explorer.play';
+import {
+	type LLMExplorerArgs,
+	llmExplorerMocks,
+} from './Explorer.stories.mocks';
 
 const pageStory = storyMocks(llmExplorerMocks, { layout: 'app' });
 
@@ -30,72 +35,6 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<LLMExplorerArgs>;
-
-/** The page fetches before it renders a filter, which outlasts the 1s default. */
-const untilLoaded = { timeout: 15_000 };
-
-/**
- * The quick-filter panel has no test id of its own, and it only mounts once the
- * workspace's filters have answered.
- */
-const selectFirstQuickFilterValue = async (
-	canvasElement: HTMLElement,
-): Promise<void> => {
-	const panel = await waitFor(() => {
-		const found = canvasElement.querySelector<HTMLElement>('.quick-filters');
-
-		if (!found) {
-			throw new Error('Quick filters did not render');
-		}
-
-		return found;
-	}, untilLoaded);
-
-	const [filter] = await within(panel).findAllByTestId(
-		'checkbox-filter-v2',
-		undefined,
-		untilLoaded,
-	);
-
-	const [row] = await within(filter).findAllByTestId(
-		/^checkbox-value-row-/,
-		undefined,
-		untilLoaded,
-	);
-	const value = row.dataset.testid?.replace('checkbox-value-row-', '');
-
-	// Every value starts selected, so the checkbox only excludes one; the row
-	// itself is the "Only" action that narrows the query to a single value.
-	await userEvent.click(within(row).getByRole('button'));
-	// The rows remount around the new query and regroup into sections, so they
-	// are looked up again on every attempt rather than held from before the click.
-	await waitFor(() => {
-		const selected = within(filter).getByTestId('section-selected');
-
-		expect(
-			within(selected)
-				.getAllByTestId(/^checkbox-value-row-/)
-				.map((item) => item.dataset.testid),
-		).toEqual([`checkbox-value-row-${value}`]);
-	}, untilLoaded);
-};
-
-const openQuickFiltersSettings = async (): Promise<void> => {
-	// The settings control renders disabled while its permission check is in
-	// flight and is swapped for the enabled one once the check answers, so it is
-	// looked up again on every attempt; a click on the disabled one is dropped in
-	// silence.
-	const control = await waitFor(() => {
-		const settings = screen.getByTestId('settings-icon-container');
-
-		expect(settings).not.toHaveAttribute('aria-disabled', 'true');
-
-		return settings;
-	}, untilLoaded);
-
-	await userEvent.click(control);
-	await screen.findByText('Edit quick filters', undefined, untilLoaded);
-};
 
 /**
  * A full window of LLM spans: the org's quick filters down the left, the query
@@ -146,18 +85,6 @@ export const Failed: Story = {
 	parameters: { allowConsoleErrors: true },
 };
 
-const dirtyQuickFiltersSettings = async (): Promise<void> => {
-	await openQuickFiltersSettings();
-
-	// One Remove per added filter; the first row's is the one clicked.
-	const [removeFilter] = await screen.findAllByRole('button', {
-		name: 'Remove',
-	});
-
-	await userEvent.click(removeFilter);
-	await screen.findByRole('button', { name: 'Save changes' });
-};
-
 /** The editable quick-filter settings panel. */
 export const QuickFiltersSettings: Story = {
 	play: openQuickFiltersSettings,
@@ -170,7 +97,10 @@ export const QuickFiltersSettingsDirty: Story = {
 
 /** A quick-filter value selected against the LLM span query. */
 export const QuickFilterSelected: Story = {
-	play: async ({ canvasElement }): Promise<void> => {
-		await selectFirstQuickFilterValue(canvasElement);
-	},
+	play: selectFirstQuickFilterValue,
+};
+
+/** The dashboard picker Add to dashboard opens to export the AI query as a panel. */
+export const AddToDashboardDialog: Story = {
+	play: openAddToDashboard,
 };
