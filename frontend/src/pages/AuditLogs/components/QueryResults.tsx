@@ -1,10 +1,13 @@
+import { CSSProperties } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import APIError from 'types/api/error';
 import TanStackTable from 'components/TanStackTableView';
 
 import { AuditLog } from '../AuditLogs.types';
+import { getRowHoverColor } from '../AuditLogs.utils';
 
 import styles from './QueryResults.module.scss';
 import { useAuditLogColumns } from '../hooks/useAuditLogColumns';
@@ -27,6 +30,7 @@ export function QueryResults({
 	onEndReached,
 }: QueryResultsProps): JSX.Element {
 	const { columns, fontSize } = useAuditLogColumns();
+	const isDarkMode = useIsDarkMode();
 
 	const showLoading = isLoading || (isFetching && logs.length === 0);
 	const showError = !showLoading && isError && !!error;
@@ -64,6 +68,11 @@ export function QueryResults({
 						data={logs}
 						isLoading={isFetching}
 						getRowKey={(log): string => log.id}
+						getRowStyle={(log): CSSProperties =>
+							({
+								'--row-hover-bg': getRowHoverColor(isDarkMode, log),
+							}) as CSSProperties
+						}
 						onEndReached={onEndReached}
 						cellTypographySize={fontSize}
 						plainTextCellLineClamp={1}

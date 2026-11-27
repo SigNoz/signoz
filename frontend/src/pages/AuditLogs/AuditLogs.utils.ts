@@ -1,9 +1,19 @@
+import { getRowBackgroundColor } from 'components/Logs/LogStateIndicator/getRowBackgroundColor';
+import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
+
 import { AuditLog, AuditOutcome, AuditPrincipalType } from './AuditLogs.types';
 
 export const EMPTY_VALUE = '—';
 
 export function getOutcome(log: AuditLog): AuditOutcome {
 	return log.attributes['signoz.audit.outcome'];
+}
+
+export function getRowHoverColor(isDarkMode: boolean, log: AuditLog): string {
+	return getRowBackgroundColor(
+		isDarkMode,
+		getOutcome(log) === AuditOutcome.SUCCESS ? LogType.INFO : LogType.ERROR,
+	);
 }
 
 export function getPrincipalEmail(log: AuditLog): string {

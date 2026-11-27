@@ -1,4 +1,5 @@
 import styles from './AuditLogs.module.scss';
+import { OrderBy } from './components/OrderBy';
 import { QueryBar } from './components/QueryBar';
 import * as Sentry from '@sentry/react';
 import QueryCancelledPlaceholder from 'components/QueryCancelledPlaceholder';
@@ -56,6 +57,9 @@ function AuditLogs(): JSX.Element {
 						/>
 					</div>
 					<QueryBar />
+					<div className={styles.actionsRow}>
+						<OrderBy />
+					</div>
 					{isCancelled ? (
 						<QueryCancelledPlaceholder subText='Click "Run Query" to load audit logs.' />
 					) : (
