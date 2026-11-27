@@ -24,6 +24,11 @@ func GroupByKeys(keys []qbtypes.GroupByKey) []string {
 	return k
 }
 
+// ContainsPattern escapes value so CONTAINS matches it literally.
+func ContainsPattern(value any) string {
+	return "%" + clickhousesql.LikePattern(FormatValueForContains(value)) + "%"
+}
+
 func FormatValueForContains(value any) string {
 	if value == nil {
 		return ""

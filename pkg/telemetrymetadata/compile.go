@@ -92,9 +92,9 @@ func (s *storage) conditionForKey(
 		cond = sb.NotILike(fieldExpression, value)
 
 	case qbtypes.FilterOperatorContains:
-		cond = sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
+		cond = sb.ILike(fieldExpression, querybuilder.ContainsPattern(value))
 	case qbtypes.FilterOperatorNotContains:
-		cond = sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
+		cond = sb.NotILike(fieldExpression, querybuilder.ContainsPattern(value))
 
 	case qbtypes.FilterOperatorRegexp:
 		cond = fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value))
