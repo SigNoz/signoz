@@ -669,6 +669,269 @@ func TestValidateHeatmapDashboard(t *testing.T) {
 	assert.Equal(t, request, rereadRequest)
 }
 
+func TestValidateDistributionDashboard(t *testing.T) {
+	data, err := os.ReadFile("testdata/perses_distribution_panel.json")
+	require.NoError(t, err, "reading example file")
+
+	dashboard := &DashboardV2{}
+	require.NoError(t, json.Unmarshal(data, &dashboard.Spec), "unmarshal and validate failed")
+	spec := &dashboard.Spec
+
+	require.IsType(t, &DistributionPanelSpec{}, spec.Panels["p1"].Spec.Plugin.Spec)
+	panelSpec := spec.Panels["p1"].Spec.Plugin.Spec.(*DistributionPanelSpec)
+	xMin, enabled := 10.0, true
+	assert.Equal(t, &DistributionPanelSpec{
+		Visualization:   DistributionVisualization{BasicVisualization: BasicVisualization{TimePreference: TimePreferenceGlobalTime}, Stack: DistributionStackModeNone},
+		Formatting:      PanelFormatting{Unit: "s", DecimalPrecision: PrecisionOption3},
+		Axes:            DistributionAxes{X: DistributionXAxis{Min: &xMin}, Y: DistributionYAxis{Scale: DistributionYScaleLog}},
+		Legend:          Legend{Position: LegendPositionRight, Mode: LegendModeList},
+		ChartAppearance: DistributionChartAppearance{Percentiles: DistributionPercentiles{Enabled: &enabled, Values: DistributionPercentileValues{75, 99.9}}},
+	}, panelSpec)
+
+	request, err := dashboard.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the panel's query failed")
+	assert.Equal(t, qb.RequestTypeDistribution, request.RequestType)
+	assert.NoError(t, request.Validate(), "the request built from the panel is not a valid distribution request")
+
+	// the panel read back out of storage draws the same distribution
+	stored, err := json.Marshal(spec)
+	require.NoError(t, err, "marshal dashboard failed")
+	reread := &DashboardV2{}
+	require.NoError(t, json.Unmarshal(stored, &reread.Spec), "the stored dashboard does not validate")
+	assert.Equal(t, panelSpec, reread.Spec.Panels["p1"].Spec.Plugin.Spec)
+	rereadRequest, err := reread.GetPanelQuery(1, 2, "p1")
+	require.NoError(t, err, "building the stored panel's query failed")
+	assert.Equal(t, request, rereadRequest)
+}
+
+func TestDistributionPanelSpecDefaults(t *testing.T) {
+	testCases := []struct {
+		name string
+		spec string
+	}{
+		{name: "EmptySpec", spec: `{}`},
+		{name: "EmptyVisualization", spec: `{"visualization": {}}`},
+		{name: "EmptyChartAppearance", spec: `{"chartAppearance": {}}`},
+		{name: "EmptyPercentiles", spec: `{"chartAppearance": {"percentiles": {}}}`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var plugin PanelPlugin
+			require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin))
+
+			spec := plugin.Spec.(*DistributionPanelSpec)
+			assert.Equal(t, "normal", spec.Visualization.Stack.ValueOrDefault())
+			assert.Nil(t, spec.Axes.X.Min)
+			assert.Nil(t, spec.Axes.X.Max)
+			assert.Equal(t, "linear", spec.Axes.Y.Scale.ValueOrDefault())
+			assert.Nil(t, spec.ChartAppearance.Percentiles.Enabled, "an omitted enabled stays null so the renderer draws the markers")
+			assert.Equal(t, DistributionPercentileValues{50, 90, 99}, spec.ChartAppearance.Percentiles.Values.ValueOrDefault())
+
+			stored, err := json.Marshal(spec)
+			require.NoError(t, err)
+			assert.Equal(t, `{"visualization":{"timePreference":"global_time","stack":"normal"},"formatting":{"unit":"","decimalPrecision":"2"},"axes":{"x":{"min":null,"max":null},"y":{"scale":"linear"}},"legend":{"position":"bottom","mode":"list","customColors":null},"chartAppearance":{"percentiles":{"enabled":null,"values":[50,90,99]}}}`, string(stored))
+		})
+	}
+}
+
+func TestDistributionPanelSpecPercentileValues(t *testing.T) {
+	testCases := []struct {
+		name                    string
+		spec                    string
+		expectedPercentilesJSON string
+	}{
+		{name: "Disabled_ValuesDefaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": false}}}`, expectedPercentilesJSON: `{"enabled":false,"values":[50,90,99]}`},
+		{name: "EmptyValues_MarksNone", spec: `{"chartAppearance": {"percentiles": {"values": []}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[]}`},
+		{name: "NullValues_Defaulted", spec: `{"chartAppearance": {"percentiles": {"enabled": null, "values": null}}}`, expectedPercentilesJSON: `{"enabled":null,"values":[50,90,99]}`},
+		{name: "ExplicitValues_EchoedInOrder", spec: `{"chartAppearance": {"percentiles": {"enabled": true, "values": [99.9, 50]}}}`, expectedPercentilesJSON: `{"enabled":true,"values":[99.9,50]}`},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var plugin PanelPlugin
+			require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin))
+
+			spec := plugin.Spec.(*DistributionPanelSpec)
+			stored, err := json.Marshal(spec.ChartAppearance.Percentiles)
+			require.NoError(t, err)
+			assert.Equal(t, testCase.expectedPercentilesJSON, string(stored))
+		})
+	}
+}
+
+func TestDistributionPanelSpecXMinEqualsMax(t *testing.T) {
+	var plugin PanelPlugin
+	require.NoError(t, json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": {"axes": {"x": {"min": 10, "max": 10}}}}`), &plugin))
+
+	spec := plugin.Spec.(*DistributionPanelSpec)
+	require.NotNil(t, spec.Axes.X.Min)
+	require.NotNil(t, spec.Axes.X.Max)
+	assert.Equal(t, 10.0, *spec.Axes.X.Min)
+	assert.Equal(t, 10.0, *spec.Axes.X.Max)
+}
+
+func TestDistributionPanelSpecRejections(t *testing.T) {
+	testCases := []struct {
+		name            string
+		spec            string
+		expectedMessage string
+	}{
+		{
+			name:            "XMin_AboveMax",
+			spec:            `{"axes": {"x": {"min": 20, "max": 10}}}`,
+			expectedMessage: "axes.x.min 20 is greater than axes.x.max 10",
+		},
+		{
+			name:            "YScale_Unknown",
+			spec:            `{"axes": {"y": {"scale": "symlog"}}}`,
+			expectedMessage: "invalid distribution y scale",
+		},
+		{
+			name:            "UnknownField",
+			spec:            `{"axes": {"y": {"softMax": 10}}}`,
+			expectedMessage: "unknown field \"softMax\"",
+		},
+		{
+			name:            "Percentile_Zero",
+			spec:            `{"chartAppearance": {"percentiles": {"values": [0, 50]}}}`,
+			expectedMessage: "invalid percentile 0: must be greater than 0 and less than 100",
+		},
+		{
+			name:            "Percentile_Hundred",
+			spec:            `{"chartAppearance": {"percentiles": {"values": [100]}}}`,
+			expectedMessage: "invalid percentile 100: must be greater than 0 and less than 100",
+		},
+		{
+			name:            "Percentile_Duplicate",
+			spec:            `{"chartAppearance": {"percentiles": {"values": [90, 90]}}}`,
+			expectedMessage: "invalid percentiles: 90 is listed more than once",
+		},
+		{
+			name:            "Stack_Empty",
+			spec:            `{"visualization": {"stack": ""}}`,
+			expectedMessage: "invalid distribution stack mode \"\": must be `normal`, `none`, or `percent`",
+		},
+		{
+			name:            "Percentiles_UnknownField",
+			spec:            `{"chartAppearance": {"percentiles": {"show": true}}}`,
+			expectedMessage: "unknown field \"show\"",
+		},
+		{
+			name:            "XAxis_UnknownField",
+			spec:            `{"axes": {"x": {"softMin": 0}}}`,
+			expectedMessage: "unknown field \"softMin\"",
+		},
+		{
+			name:            "Percentiles_MoreThanFive",
+			spec:            `{"chartAppearance": {"percentiles": {"values": [10, 25, 50, 75, 90, 99]}}}`,
+			expectedMessage: "invalid percentiles: at most 5, got 6",
+		},
+		{
+			name:            "Percentiles_NotAList",
+			spec:            `{"chartAppearance": {"percentiles": {"values": 50}}}`,
+			expectedMessage: "cannot unmarshal number into Go value of type []float64",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var plugin PanelPlugin
+			err := json.Unmarshal([]byte(`{"kind": "signoz/DistributionPanel", "spec": `+testCase.spec+`}`), &plugin)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), testCase.expectedMessage)
+		})
+	}
+}
+
+func TestDistributionPanelQueryKinds(t *testing.T) {
+	testCases := []struct {
+		name            string
+		queryPluginKind string
+		queryPluginSpec string
+		expectedAllowed bool
+	}{
+		{
+			name:            "MetricsBuilder_Allowed",
+			queryPluginKind: "signoz/BuilderQuery",
+			queryPluginSpec: `{"name": "A", "signal": "metrics", "aggregations": [
+				{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "PromQL_Allowed",
+			queryPluginKind: "signoz/PromQLQuery",
+			queryPluginSpec: `{"name": "A", "query": "sum by (le) (increase(signoz_latency_bucket[5m]))"}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "ClickHouseSQL_Allowed",
+			queryPluginKind: "signoz/ClickHouseSQL",
+			queryPluginSpec: `{"name": "A", "query": "SELECT ts, bucket, value FROM cells"}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Formula_Allowed",
+			queryPluginKind: "signoz/Formula",
+			queryPluginSpec: `{"name": "F1", "expression": "A / B"}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "Composite_Allowed",
+			queryPluginKind: "signoz/CompositeQuery",
+			queryPluginSpec: `{"queries": [
+				{"type": "builder_query", "spec": {"name": "A", "signal": "metrics", "disabled": true, "aggregations": [
+					{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}
+				]}},
+				{"type": "builder_formula", "spec": {"name": "F1", "expression": "A * 2"}}
+			]}`,
+			expectedAllowed: true,
+		},
+		{
+			name:            "TraceOperator_Refused",
+			queryPluginKind: "signoz/TraceOperator",
+			queryPluginSpec: `{"name": "T1", "expression": "A => B"}`,
+			expectedAllowed: false,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			data := fmt.Sprintf(`{
+				"variables": [],
+				"panels": {
+					"p1": {
+						"kind": "Panel",
+						"spec": {
+							"links": [],
+							"plugin": {"kind": "signoz/DistributionPanel", "spec": {}},
+							"queries": [{
+								"kind": "distribution",
+								"spec": {
+									"plugin": {"kind": %q, "spec": %s}
+								}
+							}]
+						}
+					}
+				},
+				"links": [],
+				"layouts": []
+			}`, testCase.queryPluginKind, testCase.queryPluginSpec)
+
+			_, err := unmarshalDashboard([]byte(data))
+
+			if testCase.expectedAllowed {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "is not supported by panel kind")
+		})
+	}
+}
+
 func TestInvalidateOneInvalidPanel(t *testing.T) {
 	data := []byte(`{
 		"variables": [],

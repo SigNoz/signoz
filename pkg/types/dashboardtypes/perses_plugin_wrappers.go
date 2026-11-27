@@ -28,19 +28,20 @@ type PanelPlugin struct {
 // (and strips the duplicate parent properties) after reflection.
 func (PanelPlugin) PrepareJSONSchema(s *jsonschema.Schema) error {
 	return markDiscriminator(s, "kind", map[string]string{
-		string(PanelKindTimeSeries):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
-		string(PanelKindBarChart):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
-		string(PanelKindAreaChart):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
-		string(PanelKindNumber):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
-		string(PanelKindPieChart):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
-		string(PanelKindTable):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
-		string(PanelKindHistogram):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
-		string(PanelKindList):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
-		string(PanelKindText):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
-		string(PanelKindHeatmap):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
-		string(PanelKindScatterPlot): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec"),
-		string(PanelKindGeoMap):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec"),
-		string(PanelKindTopList):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec"),
+		string(PanelKindTimeSeries):   schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec"),
+		string(PanelKindBarChart):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec"),
+		string(PanelKindAreaChart):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec"),
+		string(PanelKindNumber):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec"),
+		string(PanelKindPieChart):     schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec"),
+		string(PanelKindTable):        schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec"),
+		string(PanelKindHistogram):    schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec"),
+		string(PanelKindList):         schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec"),
+		string(PanelKindText):         schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpec"),
+		string(PanelKindHeatmap):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec"),
+		string(PanelKindScatterPlot):  schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec"),
+		string(PanelKindGeoMap):       schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec"),
+		string(PanelKindTopList):      schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec"),
+		string(PanelKindDistribution): schemaRef("DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec"),
 	})
 }
 
@@ -77,6 +78,7 @@ func (PanelPlugin) JSONSchemaOneOf() []any {
 		PanelPluginVariant[ScatterPlotPanelSpec]{Kind: string(PanelKindScatterPlot)},
 		PanelPluginVariant[GeoMapPanelSpec]{Kind: string(PanelKindGeoMap)},
 		PanelPluginVariant[TopListPanelSpec]{Kind: string(PanelKindTopList)},
+		PanelPluginVariant[DistributionPanelSpec]{Kind: string(PanelKindDistribution)},
 	}
 }
 
@@ -240,19 +242,20 @@ func (v VariablePluginVariant[S]) PrepareJSONSchema(s *jsonschema.Schema) error 
 
 var (
 	panelPluginSpecs = map[PanelPluginKind]func() any{
-		PanelKindTimeSeries:  func() any { return new(TimeSeriesPanelSpec) },
-		PanelKindBarChart:    func() any { return new(BarChartPanelSpec) },
-		PanelKindAreaChart:   func() any { return new(AreaChartPanelSpec) },
-		PanelKindNumber:      func() any { return new(NumberPanelSpec) },
-		PanelKindPieChart:    func() any { return new(PieChartPanelSpec) },
-		PanelKindTable:       func() any { return new(TablePanelSpec) },
-		PanelKindHistogram:   func() any { return new(HistogramPanelSpec) },
-		PanelKindList:        func() any { return new(ListPanelSpec) },
-		PanelKindText:        func() any { return new(TextPanelSpec) },
-		PanelKindHeatmap:     func() any { return new(HeatmapPanelSpec) },
-		PanelKindScatterPlot: func() any { return new(ScatterPlotPanelSpec) },
-		PanelKindGeoMap:      func() any { return new(GeoMapPanelSpec) },
-		PanelKindTopList:     func() any { return new(TopListPanelSpec) },
+		PanelKindTimeSeries:   func() any { return new(TimeSeriesPanelSpec) },
+		PanelKindBarChart:     func() any { return new(BarChartPanelSpec) },
+		PanelKindAreaChart:    func() any { return new(AreaChartPanelSpec) },
+		PanelKindNumber:       func() any { return new(NumberPanelSpec) },
+		PanelKindPieChart:     func() any { return new(PieChartPanelSpec) },
+		PanelKindTable:        func() any { return new(TablePanelSpec) },
+		PanelKindHistogram:    func() any { return new(HistogramPanelSpec) },
+		PanelKindList:         func() any { return new(ListPanelSpec) },
+		PanelKindText:         func() any { return new(TextPanelSpec) },
+		PanelKindHeatmap:      func() any { return new(HeatmapPanelSpec) },
+		PanelKindScatterPlot:  func() any { return new(ScatterPlotPanelSpec) },
+		PanelKindGeoMap:       func() any { return new(GeoMapPanelSpec) },
+		PanelKindTopList:      func() any { return new(TopListPanelSpec) },
+		PanelKindDistribution: func() any { return new(DistributionPanelSpec) },
 	}
 	queryPluginSpecs = map[QueryPluginKind]func() any{
 		QueryKindBuilder:       func() any { return new(BuilderQuerySpec) },
@@ -269,19 +272,20 @@ var (
 		VariableKindCustom:  func() any { return new(CustomVariableSpec) },
 	}
 	allowedQueryKinds = map[PanelPluginKind][]QueryPluginKind{
-		PanelKindTimeSeries:  {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindBarChart:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindAreaChart:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindNumber:      {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindHistogram:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindPieChart:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindTable:       {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
-		PanelKindList:        {QueryKindBuilder, QueryKindAIBuilder},
-		PanelKindText:        {},
-		PanelKindHeatmap:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
-		PanelKindScatterPlot: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
-		PanelKindGeoMap:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
-		PanelKindTopList:     {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTimeSeries:   {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindBarChart:     {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindAreaChart:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindNumber:       {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindHistogram:    {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindPieChart:     {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindTable:        {QueryKindBuilder, QueryKindAIBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindList:         {QueryKindBuilder, QueryKindAIBuilder},
+		PanelKindText:         {},
+		PanelKindHeatmap:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
+		PanelKindScatterPlot:  {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
+		PanelKindGeoMap:       {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindClickHouseSQL},
+		PanelKindTopList:      {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindTraceOperator, QueryKindClickHouseSQL},
+		PanelKindDistribution: {QueryKindBuilder, QueryKindComposite, QueryKindFormula, QueryKindPromQL, QueryKindClickHouseSQL},
 	}
 )
 

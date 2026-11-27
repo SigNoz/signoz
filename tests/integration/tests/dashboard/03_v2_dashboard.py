@@ -2255,3 +2255,127 @@ def test_dashboard_v2_rejects_explicit_empty_enum(
         )
         assert response.status_code == HTTPStatus.BAD_REQUEST, response.text
         assert response.json()["error"]["code"] == "dashboard_invalid_input", response.text
+
+
+# ─── distribution panel: a full spec echoes, explicit empties stay, {} fills ──
+
+DISTRIBUTION_FULL_SPEC = {
+    "visualization": {"timePreference": "last_1_hr", "stack": "percent"},
+    "formatting": {"unit": "s", "decimalPrecision": "3"},
+    "axes": {"x": {"min": 10, "max": 2000}, "y": {"scale": "log"}},
+    "legend": {"position": "right", "mode": "list", "customColors": {"frontend": "#1f77b4"}},
+    "chartAppearance": {"percentiles": {"enabled": True, "values": [99.9, 50]}},
+}
+
+
+@pytest.mark.parametrize(
+    ("sent_spec", "expected_spec"),
+    [
+        # Every option set, none at its default: the read echoes the spec as is.
+        pytest.param(DISTRIBUTION_FULL_SPEC, DISTRIBUTION_FULL_SPEC, id="full_spec_echoes"),
+        # Explicit empties ("" unit, {} colors, [] percentiles, false toggle) come
+        # back as sent, never dropped or defaulted.
+        pytest.param(
+            {
+                "formatting": {"unit": ""},
+                "axes": {"x": {}},
+                "legend": {"customColors": {}},
+                "chartAppearance": {"percentiles": {"enabled": False, "values": []}},
+            },
+            {
+                "visualization": {"timePreference": "global_time", "stack": "normal"},
+                "formatting": {"unit": "", "decimalPrecision": "2"},
+                "axes": {"x": {"min": None, "max": None}, "y": {"scale": "linear"}},
+                "legend": {"position": "bottom", "mode": "list", "customColors": {}},
+                "chartAppearance": {"percentiles": {"enabled": False, "values": []}},
+            },
+            id="explicit_empties_stay",
+        ),
+        # Omitted percentile values read back as the default; the omitted toggle,
+        # bounds and colors read back as null.
+        pytest.param(
+            {},
+            {
+                "visualization": {"timePreference": "global_time", "stack": "normal"},
+                "formatting": {"unit": "", "decimalPrecision": "2"},
+                "axes": {"x": {"min": None, "max": None}, "y": {"scale": "linear"}},
+                "legend": {"position": "bottom", "mode": "list", "customColors": None},
+                "chartAppearance": {"percentiles": {"enabled": None, "values": [50, 90, 99]}},
+            },
+            id="omitted_fills_defaults",
+        ),
+    ],
+)
+def test_dashboard_v2_distribution_panel_round_trips(
+    signoz: SigNoz,
+    create_user_admin: Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    sent_spec: dict,
+    expected_spec: dict,
+):
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    dashboard = {
+        "schemaVersion": "v6",
+        "name": f"distribution-{uuid.uuid4().hex[:8]}",
+        "tags": [],
+        "spec": {
+            "variables": [],
+            "layouts": [],
+            "display": {"name": "Distribution"},
+            "links": [],
+            "panels": {
+                "p": {
+                    "kind": "Panel",
+                    "spec": {
+                        "display": {"name": "p"},
+                        "links": [],
+                        "plugin": {"kind": "signoz/DistributionPanel", "spec": sent_spec},
+                        "queries": [
+                            {
+                                "kind": "distribution",
+                                "spec": {
+                                    "plugin": {
+                                        "kind": "signoz/BuilderQuery",
+                                        "spec": {
+                                            "name": "A",
+                                            "signal": "metrics",
+                                            "aggregations": [{"metricName": "http.server.request.duration", "timeAggregation": "increase", "spaceAggregation": "sum"}],
+                                            "groupBy": [{"name": "service.name"}],
+                                        },
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                }
+            },
+        },
+    }
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get(BASE_URL),
+        json=dashboard,
+        headers=headers,
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.CREATED, response.text
+    dashboard_id = response.json()["data"]["id"]
+
+    try:
+        response = requests.get(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )
+        assert response.status_code == HTTPStatus.OK, response.text
+        panel = response.json()["data"]["spec"]["panels"]["p"]["spec"]
+        assert panel["plugin"]["spec"] == expected_spec
+        assert panel["queries"][0]["kind"] == "distribution"
+    finally:
+        requests.delete(
+            signoz.self.host_configs["8080"].get(f"{BASE_URL}/{dashboard_id}"),
+            headers=headers,
+            timeout=5,
+        )

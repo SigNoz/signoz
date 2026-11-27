@@ -4523,6 +4523,121 @@ components:
       required:
       - name
       type: object
+    DashboardtypesDistributionAxes:
+      properties:
+        x:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionXAxis'
+          description: The bucket axis.
+        "y":
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionYAxis'
+          description: The count axis.
+      type: object
+    DashboardtypesDistributionChartAppearance:
+      properties:
+        percentiles:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionPercentiles'
+          description: Percentile markers drawn across the bucket axis.
+      type: object
+    DashboardtypesDistributionPanelSpec:
+      properties:
+        axes:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionAxes'
+          description: The X (bucket) axis range and Y (count) axis scale.
+        chartAppearance:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionChartAppearance'
+          description: Percentile markers.
+        formatting:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+          description: Unit and decimal precision of the bucket bounds; counts take
+            no unit.
+        legend:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesLegend'
+          description: Legend placement and series colors.
+        visualization:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionVisualization'
+          description: The time range the bucket counts are summed over, and how groups
+            stack.
+      type: object
+    DashboardtypesDistributionPercentileValues:
+      items:
+        format: double
+        type: number
+      maxItems: 5
+      type: array
+      uniqueItems: true
+    DashboardtypesDistributionPercentiles:
+      properties:
+        enabled:
+          description: Whether percentile markers are drawn. Null draws them.
+          nullable: true
+          type: boolean
+        values:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionPercentileValues'
+          description: The percentiles to mark, each greater than 0 and less than
+            100, at most 5, no repeats. Null or omitted marks 50, 90 and 99; [] marks
+            none.
+      required:
+      - values
+      type: object
+    DashboardtypesDistributionStackMode:
+      enum:
+      - normal
+      - none
+      - percent
+      type: string
+    DashboardtypesDistributionVisualization:
+      properties:
+        stack:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionStackMode'
+          description: 'How groups combine in a bucket: normal (default) stacks them,
+            none draws them side by side, percent stacks them as shares of the bucket.'
+        timePreference:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesTimePreference'
+          description: 'The time range the panel queries: global_time (default) follows
+            the dashboard range; last_5_min, last_15_min, last_30_min, last_1_hr,
+            last_6_hr, last_1_day, last_3_days, last_1_week or last_1_month pin a
+            fixed window.'
+      required:
+      - stack
+      type: object
+    DashboardtypesDistributionXAxis:
+      properties:
+        max:
+          description: Buckets wholly above this value are hidden. Null shows them
+            all.
+          nullable: true
+          type: number
+        min:
+          description: Buckets wholly below this value are hidden. Null shows them
+            all.
+          nullable: true
+          type: number
+      type: object
+    DashboardtypesDistributionYAxis:
+      properties:
+        scale:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionYScale'
+          description: 'How counts are spaced: linear (default) or log.'
+      required:
+      - scale
+      type: object
+    DashboardtypesDistributionYScale:
+      enum:
+      - linear
+      - log
+      type: string
     DashboardtypesDynamicVariableSignal:
       enum:
       - traces
@@ -5518,6 +5633,7 @@ components:
         mapping:
           signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+          signoz/DistributionPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec'
           signoz/GeoMapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
           signoz/HeatmapPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
@@ -5544,6 +5660,7 @@ components:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesScatterPlotPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesGeoMapPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTopListPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec'
       type: object
     DashboardtypesPanelPluginKind:
       enum:
@@ -5560,6 +5677,7 @@ components:
       - signoz/ScatterPlotPanel
       - signoz/GeoMapPanel
       - signoz/TopListPanel
+      - signoz/DistributionPanel
       type: string
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
       properties:
@@ -5586,6 +5704,21 @@ components:
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesBarChartPanelSpec'
+          description: The options for this panel kind. {} accepts every default.
+      required:
+      - kind
+      - spec
+      type: object
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesDistributionPanelSpec:
+      properties:
+        kind:
+          description: The panel kind.
+          enum:
+          - signoz/DistributionPanel
+          type: string
+        spec:
+          allOf:
+          - $ref: '#/components/schemas/DashboardtypesDistributionPanelSpec'
           description: The options for this panel kind. {} accepts every default.
       required:
       - kind
@@ -5774,9 +5907,9 @@ components:
           - $ref: '#/components/schemas/DashboardtypesPanelPlugin'
           description: 'The visualization: kind is one of signoz/TimeSeriesPanel,
             signoz/BarChartPanel, signoz/AreaChartPanel, signoz/NumberPanel, signoz/PieChartPanel,
-            signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel
-            or signoz/HeatmapPanel, and spec holds that kind''s options ({} accepts
-            every default).'
+            signoz/TablePanel, signoz/HistogramPanel, signoz/ListPanel, signoz/TextPanel,
+            signoz/HeatmapPanel or signoz/DistributionPanel, and spec holds that kind''s
+            options ({} accepts every default).'
         queries:
           description: The queries the panel runs. Use exactly one entry for a data
             panel and [] for signoz/TextPanel. To run several named queries or formulas,
@@ -5912,8 +6045,8 @@ components:
           - $ref: '#/components/schemas/Querybuildertypesv5RequestType'
           description: 'The result shape the panel requests: time_series for time
             series, bar, area and histogram panels, scalar for number, table and pie
-            panels, raw for list panels, heatmap for heatmap panels, trace for trace
-            panels.'
+            panels, raw for list panels, heatmap for heatmap panels, distribution
+            for distribution panels, trace for trace panels.'
         spec:
           allOf:
           - $ref: '#/components/schemas/DashboardtypesQuerySpec'
@@ -6070,9 +6203,9 @@ components:
             (builder query over AI observability traces), signoz/CompositeQuery (several
             named queries and formulas), signoz/Formula, signoz/PromQLQuery, signoz/ClickHouseSQL
             or signoz/TraceOperator, and spec holds that kind''s query. Pie and table
-            panels reject signoz/PromQLQuery; heatmap panels reject signoz/AIBuilderQuery
-            and signoz/TraceOperator; list panels accept only signoz/BuilderQuery
-            and signoz/AIBuilderQuery.'
+            panels reject signoz/PromQLQuery; heatmap and distribution panels reject
+            signoz/AIBuilderQuery and signoz/TraceOperator; list panels accept only
+            signoz/BuilderQuery and signoz/AIBuilderQuery.'
       required:
       - plugin
       type: object
