@@ -833,6 +833,18 @@ describe('convertFiltersToExpression', () => {
 		expect(result.filters.items).toHaveLength(2);
 		expect(result.filter.expression).toBe("service.name = 'old-service'");
 	});
+
+	it.each([
+		"path REGEXP '/api/.*' AND b = '2'",
+		"path NOT REGEXP '/api/.*' AND b = '2'",
+	])('keeps the clause through filters and back: %s', (expression) => {
+		const items = convertExpressionToFilters(expression);
+
+		expect(
+			convertFiltersToExpressionWithExistingQuery({ items, op: 'AND' }, expression)
+				.filter.expression,
+		).toBe(expression);
+	});
 });
 
 describe('convertAggregationToExpression', () => {
