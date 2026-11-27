@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { Style } from '@signozhq/design-tokens';
 import { CircleHelp, TriangleAlert } from '@signozhq/icons';
 import { Callout } from '@signozhq/ui/callout';
 import { Checkbox } from '@signozhq/ui/checkbox';
@@ -54,7 +53,7 @@ function ConfigureSAMLAuthnProvider({
 						<label className="authn-provider__label" htmlFor="saml-domain">
 							Domain
 							<Tooltip title="The email domain for users who should use SSO (e.g., `example.com` for users with `@example.com` emails)">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -76,7 +75,7 @@ function ConfigureSAMLAuthnProvider({
 						<label className="authn-provider__label" htmlFor="saml-acs-url">
 							SAML ACS URL
 							<Tooltip title="The SSO endpoint of the SAML identity provider. It can typically be found in the SingleSignOnService element in the SAML metadata of the identity provider.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -98,7 +97,7 @@ function ConfigureSAMLAuthnProvider({
 						<label className="authn-provider__label" htmlFor="saml-entity-id">
 							SAML Entity ID
 							<Tooltip title="The entityID of the SAML identity provider. It can typically be found in the EntityID attribute of the EntityDescriptor element in the SAML metadata.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -120,7 +119,7 @@ function ConfigureSAMLAuthnProvider({
 						<label className="authn-provider__label" htmlFor="saml-certificate">
 							SAML X.509 Certificate
 							<Tooltip title="The certificate of the SAML identity provider. It can typically be found in the X509Certificate element in the SAML metadata.">
-								<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+								<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 							</Tooltip>
 						</label>
 						<Form.Item
@@ -163,7 +162,7 @@ function ConfigureSAMLAuthnProvider({
 							</Checkbox>
 						</Form.Item>
 						<Tooltip title="Whether to skip signing the SAML requests. For providers like JumpCloud, this should be enabled.">
-							<CircleHelp size={14} color={Style.L3_FOREGROUND} cursor="help" />
+							<CircleHelp size={14} color="var(--l3-foreground)" cursor="help" />
 						</Tooltip>
 					</div>
 

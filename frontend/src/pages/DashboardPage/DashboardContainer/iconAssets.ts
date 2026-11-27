@@ -5,8 +5,9 @@
 //
 // Icons are the always-present set (shown in the picker), so we let Vite inline the
 // small ones as data URIs — they ship in the bundle and render with no network
-// call. Logos are a large, JSON-only catalogue, so `?url` keeps them as emitted
-// files fetched (and cached) on demand rather than bloating the bundle.
+// call. Logos are a large, JSON-only catalogue, so `?no-inline` keeps them as
+// emitted files fetched (and cached) on demand rather than bloating the bundle
+// (`?url` alone still inlines files under `build.assetsInlineLimit`).
 const iconModules = import.meta.glob('../../../assets/Icons/**/*.{svg,png}', {
 	eager: true,
 	import: 'default',
@@ -14,7 +15,7 @@ const iconModules = import.meta.glob('../../../assets/Icons/**/*.{svg,png}', {
 
 const logoModules = import.meta.glob('../../../assets/Logos/**/*.{svg,png}', {
 	eager: true,
-	query: '?url',
+	query: '?no-inline',
 	import: 'default',
 });
 

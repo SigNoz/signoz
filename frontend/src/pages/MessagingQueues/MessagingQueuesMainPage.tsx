@@ -1,15 +1,21 @@
+import Loadable from 'components/Loadable';
 import RouteTab from 'components/RouteTab';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { ListMinus, Rows3 } from '@signozhq/icons';
-import CeleryOverview from 'pages/Celery/CeleryOverview/CeleryOverview';
-
-import CeleryTask from '../Celery/CeleryTask/CeleryTask';
-import MessagingQueues from './MessagingQueues';
-import MQDetailPage from './MQDetailPage/MQDetailPage';
 
 import './MessagingQueuesMainPage.styles.scss';
+
+const MessagingQueues = Loadable(() => import('./MessagingQueues'));
+
+const MQDetailPage = Loadable(() => import('./MQDetailPage/MQDetailPage'));
+
+const CeleryTask = Loadable(() => import('../Celery/CeleryTask/CeleryTask'));
+
+const CeleryOverview = Loadable(
+	() => import('pages/Celery/CeleryOverview/CeleryOverview'),
+);
 
 export const Kafka: TabRoutes = {
 	Component: MessagingQueues,

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RuletypesAlertStateDTO } from 'api/generated/services/sigNoz.schemas';
 import MultiSelectFilter, {
 	type MultiSelectFilterOption,
@@ -25,25 +25,27 @@ function RuleStatesFilter({
 	onChange,
 }: RuleStatesFilterProps): JSX.Element {
 	const [draft, setDraft] = useState(states);
-	const [open, setOpen] = useState(false);
 
 	useEffect(() => {
 		setDraft(states);
 	}, [states]);
 
-	const handleChange = (next: string[]): void => {
-		setDraft(next);
-		if (!open) {
+	const handleCommit = useCallback(
+		(next: string[]): void => {
+			setDraft(next);
 			onChange(next);
-		}
-	};
+		},
+		[onChange],
+	);
 
-	const handleDropdownVisibleChange = (nextOpen: boolean): void => {
-		setOpen(nextOpen);
-		if (!nextOpen && !isSameStates(draft, states)) {
-			onChange(draft);
-		}
-	};
+	const handleDropdownVisibleChange = useCallback(
+		(isOpen: boolean): void => {
+			if (!isOpen && !isSameStates(draft, states)) {
+				onChange(draft);
+			}
+		},
+		[draft, states, onChange],
+	);
 
 	return (
 		<MultiSelectFilter
@@ -51,7 +53,8 @@ function RuleStatesFilter({
 			options={STATE_OPTIONS}
 			placeholder="Status"
 			testId="alert-rules-filter-states"
-			onChange={handleChange}
+			onChange={setDraft}
+			onCommit={handleCommit}
 			onDropdownVisibleChange={handleDropdownVisibleChange}
 		/>
 	);

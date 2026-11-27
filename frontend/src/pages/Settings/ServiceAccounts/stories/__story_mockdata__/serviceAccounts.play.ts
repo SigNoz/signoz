@@ -46,6 +46,20 @@ export const openStatusChip = async (): Promise<void> => {
 	await screen.findByTitle('Deleted', undefined, untilLoaded);
 };
 
+// antd renders a tag's × aria-hidden.
+const tagRemove = { name: 'close', hidden: true } as const;
+
+export const removeStatusTag = async (): Promise<void> => {
+	await editableSearch();
+	const filter = screen.getByTestId('sa-filter-status');
+	await userEvent.click(
+		await within(filter).findByRole('img', tagRemove, untilLoaded),
+	);
+	await waitFor(() =>
+		expect(within(filter).queryByRole('img', tagRemove)).not.toBeInTheDocument(),
+	);
+};
+
 export const openSearchSuggestions = async (): Promise<void> => {
 	await userEvent.click(await editableSearch());
 	await screen.findByText('status', undefined, untilLoaded);

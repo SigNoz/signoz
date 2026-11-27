@@ -30,7 +30,6 @@ export const getRoutes = (
 	const settings = [];
 
 	const isAdmin = userRole === USER_ROLES.ADMIN;
-	const isEditor = userRole === USER_ROLES.EDITOR;
 
 	if (isWorkspaceBlocked) {
 		settings.push(...organizationSettings(t));
@@ -52,7 +51,7 @@ export const getRoutes = (
 
 	settings.push(...generalSettings(t));
 
-	if (isGatewayEnabled && (isAdmin || isEditor)) {
+	if (isGatewayEnabled) {
 		settings.push(...multiIngestionSettings(t));
 	}
 
