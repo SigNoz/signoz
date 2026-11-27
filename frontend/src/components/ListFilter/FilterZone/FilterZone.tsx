@@ -81,7 +81,7 @@ function FilterZone({
 		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
-		handleClearCreatedBy,
+		handleCreatedByCommit,
 		handleClear,
 	} = useFilterZoneDraft({
 		query,
@@ -96,7 +96,7 @@ function FilterZone({
 				creatorOptions,
 				createdBy: reflected.createdBy,
 				onCreatedByChange: handleCreatedByChange,
-				onClearCreatedBy: handleClearCreatedBy,
+				onCreatedByCommit: handleCreatedByCommit,
 			}
 		: {};
 

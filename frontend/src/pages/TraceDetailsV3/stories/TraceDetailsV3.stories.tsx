@@ -14,6 +14,7 @@ import {
 	expandFilterBar,
 	hoverAiSpan,
 	hoverEventStacktrace,
+	hoverLongEventAttributes,
 	openAddSpanToFunnel,
 	openAnalytics,
 	openCreateFunnelStep,
@@ -203,6 +204,11 @@ export const SpanPanelNoEvents: Story = {
 /** The exception's stacktrace hovered: the preview popover with its Expand action. */
 export const SpanPanelEventAttributePopover: Story = {
 	play: hoverEventStacktrace,
+};
+
+/** The Events tab hovered: a key that fits has no tooltip, attributes cut short show in full once. */
+export const SpanPanelEventLongAttributes: Story = {
+	play: hoverLongEventAttributes,
 };
 
 /** The analytics panel the header toggle opens. */

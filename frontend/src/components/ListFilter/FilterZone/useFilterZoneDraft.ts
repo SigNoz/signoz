@@ -31,7 +31,7 @@ interface FilterZoneDraft {
 	applyDraft: (next: string) => void;
 	handleCreatedByChange: (emails: string[]) => void;
 	handleUpdatedChange: (window: UpdatedWindow) => void;
-	handleClearCreatedBy: () => void;
+	handleCreatedByCommit: (emails: string[]) => void;
 	handleClear: () => void;
 }
 
@@ -97,10 +97,14 @@ export function useFilterZoneDraft({
 		[draft, applyDraft, onFilterApplied],
 	);
 
-	// Clear-all on the Created-by select removes its clause and runs immediately.
-	const handleClearCreatedBy = useCallback((): void => {
-		applyDraft(spliceClause(draft, 'created_by', null));
-	}, [draft, applyDraft]);
+	// Runs a Created-by change made with its dropdown closed.
+	const handleCreatedByCommit = useCallback(
+		(emails: string[]): void => {
+			onFilterApplied?.('createdBy', { valueCount: emails.length });
+			applyDraft(spliceClause(draft, 'created_by', createdByClause(emails)));
+		},
+		[draft, applyDraft, onFilterApplied],
+	);
 
 	// Clear resets the draft and runs immediately (empty query).
 	const handleClear = useCallback((): void => {
@@ -122,7 +126,7 @@ export function useFilterZoneDraft({
 		applyDraft,
 		handleCreatedByChange,
 		handleUpdatedChange,
-		handleClearCreatedBy,
+		handleCreatedByCommit,
 		handleClear,
 	};
 }

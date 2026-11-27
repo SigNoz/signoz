@@ -27,6 +27,7 @@ import {
 	openTemplateTab,
 	pinDashboard,
 	renameDashboard,
+	removeCreatedByTag,
 	renameView,
 	saveView,
 	submitTemplateRequest,
@@ -85,6 +86,11 @@ export const Viewer: Story = {
 	args: { access: 'viewer' },
 };
 
+/** Rows whose images are bundled logos rather than icons. */
+export const Logos: Story = {
+	args: { images: 'logos' },
+};
+
 /** The rows the user pinned, which the page filters out of the fetched page. */
 export const Pinned: Story = {
 	args: { view: 'pinned' },
@@ -98,6 +104,12 @@ export const LongQuery: Story = {
 /** The Created-by dropdown, open with one creator picked. */
 export const CreatedByFilterOpen: Story = {
 	play: openCreatedByFilter,
+};
+
+/** My dashboards with its creator tag removed by its ×: the list runs unfiltered. */
+export const CreatedByTagRemoved: Story = {
+	args: { view: 'mine' },
+	play: removeCreatedByTag,
 };
 
 /** The template tab of the New dashboard dialog. */

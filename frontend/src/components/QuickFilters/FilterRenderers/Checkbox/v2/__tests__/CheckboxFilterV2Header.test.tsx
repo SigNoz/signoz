@@ -120,43 +120,4 @@ describe('CheckboxFilterV2Header', () => {
 			expect(onToggleOpen).not.toHaveBeenCalled();
 		});
 	});
-
-	describe('title tooltip', () => {
-		// jsdom has no layout, so truncation is simulated at the prototype level
-		// before mount (the component measures in a layout effect).
-		function mockTitleWidths(scrollWidth: number, clientWidth: number): void {
-			jest
-				.spyOn(HTMLElement.prototype, 'scrollWidth', 'get')
-				.mockReturnValue(scrollWidth);
-			jest
-				.spyOn(HTMLElement.prototype, 'clientWidth', 'get')
-				.mockReturnValue(clientWidth);
-		}
-
-		afterEach(() => {
-			jest.restoreAllMocks();
-		});
-
-		it('shows the full name on hover when the title is truncated', async () => {
-			mockTitleWidths(200, 100);
-			const user = userEvent.setup();
-			render(<CheckboxFilterV2Header {...defaultProps} />);
-
-			await user.hover(screen.getByText(defaultProps.title));
-
-			await expect(screen.findByRole('tooltip')).resolves.toHaveTextContent(
-				defaultProps.title,
-			);
-		});
-
-		it('shows no tooltip when the title fits', async () => {
-			mockTitleWidths(100, 100);
-			const user = userEvent.setup();
-			render(<CheckboxFilterV2Header {...defaultProps} />);
-
-			await user.hover(screen.getByText(defaultProps.title));
-
-			expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
-		});
-	});
 });

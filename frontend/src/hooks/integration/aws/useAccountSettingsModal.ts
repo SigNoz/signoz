@@ -7,8 +7,7 @@ import {
 	useState,
 } from 'react';
 import { toast } from '@signozhq/ui/toast';
-import { Form } from 'antd';
-import { FormInstance } from 'antd/lib';
+import { Form, FormInstance } from 'antd';
 import { useUpdateAccount } from 'api/generated/services/cloudintegration';
 import { CloudAccount } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { INTEGRATION_TYPES } from 'container/Integrations/constants';

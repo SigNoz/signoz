@@ -14,14 +14,14 @@ export type CreatedByProps =
 			creatorOptions: CreatorOption[];
 			createdBy: string[];
 			onCreatedByChange: (emails: string[]) => void;
-			// Clear all Created-by selections and run immediately.
-			onClearCreatedBy: () => void;
+			// Run a Created-by change made with the dropdown closed.
+			onCreatedByCommit: (emails: string[]) => void;
 	  }
 	| {
 			creatorOptions?: undefined;
 			createdBy?: undefined;
 			onCreatedByChange?: undefined;
-			onClearCreatedBy?: undefined;
+			onCreatedByCommit?: undefined;
 	  };
 
 type Props = CreatedByProps & {
@@ -61,8 +61,8 @@ function FilterChips(props: Props): JSX.Element {
 					placeholder="Created by"
 					testId={`${testIdPrefix}-filter-created-by`}
 					disabled={disabled}
-					onClear={props.onClearCreatedBy}
 					onChange={props.onCreatedByChange}
+					onCommit={props.onCreatedByCommit}
 					onDropdownVisibleChange={runOnClose}
 				/>
 			)}

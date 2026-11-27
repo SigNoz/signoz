@@ -1,11 +1,16 @@
+import Loadable from 'components/Loadable';
 import { TabRoutes } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
-import BreakDownPage from 'container/MeterExplorer/Breakdown/BreakDown';
-import ExplorerPage from 'container/MeterExplorer/Explorer';
 import { Compass, TowerControl } from '@signozhq/icons';
 
+const ExplorerPage = Loadable(() => import('container/MeterExplorer/Explorer'));
+
+const BreakDownPage = Loadable(
+	() => import('container/MeterExplorer/Breakdown/BreakDown'),
+);
+
 export const Explorer: TabRoutes = {
-	Component: (): JSX.Element => <ExplorerPage />,
+	Component: ExplorerPage,
 	name: (
 		<div className="tab-item">
 			<Compass size={16} /> Explorer

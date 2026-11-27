@@ -110,8 +110,9 @@ await expect(toggle.getAttribute('aria-checked')).toBe(before);
 
 CI runs each play once, with its story's own args. Anyone can flip a control in the panel, and nothing runs the play against that value, so a play that breaks on it goes unnoticed. Write each play so it cannot.
 
-Before writing the clicks, list what has to be on screen for the play's target to exist, and return early when the args take it away. These are the cases plays have missed:
+Before writing the clicks, list what has to be on screen for the play's target to exist. Then walk every control the story exposes, the page's own as well as the shared ones, and return early for each value that takes something on that list away. These are the cases plays have missed:
 
+- An arg the story sets. The story sets it because the play needs what that value renders, and the panel can flip it. On the `mine` view the dashboards Created-by filter opens with a tag to remove; on the other views it opens empty and there is no × to click. Check the tag is there by parsing the route the view resolves to.
 - The controls every story has. `State` on loading or error renders no rows and no filter suggestions. `Access`, `Permissions` and `Revoked` remove rows, row actions and gated buttons, and the `editor` and `viewer` presets grant telemetry reads only, so a page gated on its own resource shows them nothing. `Check state` on loading disables every gated control, and on error an `AuthZButton` stays enabled while an `AuthZGuardContent` set to fail closed hides what it wraps. `License` and `Banner` decide the plan, so a cloud-only form is gone on the others. `Hold tooltips open` shows a label a second time, inside its tooltip.
 - A count at 0. The page can swap its whole list for an empty state, and the header, filters and column picker go with it.
 - A view, filter or invalid query that leaves no rows, even when the count is above 0.

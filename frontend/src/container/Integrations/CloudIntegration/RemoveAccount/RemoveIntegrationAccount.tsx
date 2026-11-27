@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@signozhq/ui/button';
-import { Modal } from 'antd/lib';
+import { Modal } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useDisconnectAccount } from 'api/generated/services/cloudintegration';
 import { CloudintegrationtypesGCPConnectionMethodDTO } from 'api/generated/services/sigNoz.schemas';
