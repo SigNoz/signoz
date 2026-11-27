@@ -643,6 +643,28 @@ describe('prepareQueryRangePayloadV5', () => {
 		);
 	});
 
+	it('sends source audit on a logs query that targets audit', () => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: baseBuilderQuery({ dataSource: DataSource.LOGS, source: 'audit' }),
+			},
+			'raw',
+		);
+
+		expect(envelope.spec).toMatchObject({ signal: 'logs', source: 'audit' });
+	});
+
+	it('sends no source on a plain logs query', () => {
+		const [envelope] = convertBuilderQueriesToV5(
+			{
+				A: baseBuilderQuery({ dataSource: DataSource.LOGS, source: '' }),
+			},
+			'raw',
+		);
+
+		expect(envelope.spec).not.toHaveProperty('source');
+	});
+
 	it('builds payload for builder queries with filters array but no filter expression', () => {
 		const props: GetQueryResultsProps = {
 			query: {

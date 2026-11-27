@@ -341,6 +341,7 @@ export function convertBuilderQueriesToV5(
 					spec = {
 						name: queryName,
 						signal: 'logs' as const,
+						...(queryData.source === 'audit' && { source: 'audit' as const }),
 						...baseSpec,
 						aggregations: aggregations as LogAggregation[],
 					};

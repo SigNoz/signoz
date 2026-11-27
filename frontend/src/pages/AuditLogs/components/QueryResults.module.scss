@@ -1,0 +1,11 @@
+.empty {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+}
+
+.results {
+	flex: 1;
+	min-height: 0;
+}
