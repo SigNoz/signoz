@@ -13,7 +13,10 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { usePageActions } from 'container/AIAssistant/pageActions/usePageActions';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
-import { getExportPanelType } from 'container/ExplorerActions/utils';
+import {
+	ExplorerActionsSource,
+	getExportPanelType,
+} from 'container/ExplorerActions/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import LeftToolbarActions from 'container/QueryBuilder/components/ToolbarActions/LeftToolbarActions';
 import RightToolbarActions from 'container/QueryBuilder/components/ToolbarActions/RightToolbarActions';
@@ -204,7 +207,7 @@ function TracesExplorer(): JSX.Element {
 			<ExplorerActions
 				query={stagedQuery ? exportDefaultQuery : null}
 				dashboardQuery={stagedQuery ? exportDashboardQuery : null}
-				sourcepage={DataSource.TRACES}
+				sourcePage={ExplorerActionsSource.TRACES_EXPLORER}
 			/>
 		),
 		[stagedQuery, exportDefaultQuery, exportDashboardQuery],

@@ -36,6 +36,7 @@ import {
 	getQueryByPanelType,
 } from 'container/LogsExplorerViews/explorerUtils';
 import ExplorerActions from 'container/ExplorerActions/ExplorerActions';
+import { ExplorerActionsSource } from 'container/ExplorerActions/utils';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
@@ -136,7 +137,10 @@ function LogsExplorerViewsContainer({
 
 	const explorerActions = useMemo(
 		() => (
-			<ExplorerActions query={exportDefaultQuery} sourcepage={DataSource.LOGS} />
+			<ExplorerActions
+				query={exportDefaultQuery}
+				sourcePage={ExplorerActionsSource.LOGS_EXPLORER}
+			/>
 		),
 		[exportDefaultQuery],
 	);

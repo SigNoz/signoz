@@ -5,7 +5,9 @@
 
 import { rest } from 'msw';
 import { Querybuildertypesv5RequestTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { AVAILABLE_EXPORT_PANEL_TYPES } from 'constants/panelTypes';
 import ROUTES from 'constants/routes';
+import { getExportQuery } from 'container/LLMObservability/Explorer/explorerUtils';
 import { buildDashboardReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 import { buildRoutePath } from 'lib/router/buildRoutePath';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
@@ -24,10 +26,13 @@ import {
 } from '@/storybook/msw/__story_mockdata__/metrics';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
 
+import { aiExplorerQuery } from '../../../LLMObservability/Explorer/stories/__story_mockdata__/explorer';
 import {
+	buildExportPanelLink,
 	NEW_PANEL_ID,
 	newPanelSearch,
 } from '../../DashboardContainer/PanelEditor/newPanelRoute';
+import { PANEL_KIND_TO_PANEL_TYPE } from '../../DashboardContainer/Panels/types/panelKind';
 import {
 	API_RESULTS,
 	settle,
@@ -67,15 +72,32 @@ const PANEL_OPTIONS = [...PANEL_IDS, NEW_PANEL_ID] as const;
 
 type PanelOption = (typeof PANEL_OPTIONS)[number];
 
-const editorRoute = (panel: PanelOption, kind: NewPanelKind): string => {
+const editorRoute = (
+	panel: PanelOption,
+	kind: NewPanelKind,
+	aiExplorerExport: boolean,
+): string => {
 	const path = buildRoutePath(ROUTES.DASHBOARD_PANEL_EDITOR, {
 		dashboardId: STORY_DASHBOARD_ID,
 		panelId: panel,
 	});
 
-	return panel === NEW_PANEL_ID
-		? `${path}${newPanelSearch(newPanelKindOf(kind))}`
-		: path;
+	if (panel !== NEW_PANEL_ID) {
+		return path;
+	}
+
+	const panelKind = newPanelKindOf(kind);
+	const panelType = PANEL_KIND_TO_PANEL_TYPE[panelKind];
+	const exportLink =
+		aiExplorerExport && AVAILABLE_EXPORT_PANEL_TYPES.includes(panelType)
+			? buildExportPanelLink({
+					dashboardId: STORY_DASHBOARD_ID,
+					panelType,
+					query: getExportQuery(aiExplorerQuery(), panelType),
+				})
+			: null;
+
+	return exportLink ?? `${path}${newPanelSearch(panelKind)}`;
 };
 
 export const panelEditorMocks = defineStoryMocks({
@@ -92,6 +114,12 @@ export const panelEditorMocks = defineStoryMocks({
 			description: 'Which kind the create route seeds. Ignored on a saved panel.',
 			options: NEW_PANEL_KINDS,
 			value: 'time-series',
+		}),
+		aiExplorerExport: toggleControl('Exported from the AI explorer', {
+			group: PANEL,
+			description:
+				"Seeds the create route with the query the AI explorer's Add to dashboard exports, so it opens on the AI Query Builder. Only the kinds it exports take it: time series, table and list.",
+			value: false,
 		}),
 		locked: toggleControl('Dashboard locked', {
 			group: PANEL,
@@ -212,7 +240,11 @@ export const panelEditorMocks = defineStoryMocks({
 		];
 	},
 	config: (values) => ({
-		route: editorRoute(values.panel, values.newPanelKind),
+		route: editorRoute(
+			values.panel,
+			values.newPanelKind,
+			values.aiExplorerExport,
+		),
 	}),
 	effect: (values) => {
 		seedDashboardDocument({
@@ -305,9 +337,9 @@ export const savePanel = async (): Promise<void> => {
 	);
 
 	await waitFor(
-		() => {
-			expect(save).toBeEnabled();
-			expect(save).not.toHaveAttribute('aria-disabled', 'true');
+		async () => {
+			await expect(save).toBeEnabled();
+			await expect(save).not.toHaveAttribute('aria-disabled', 'true');
 		},
 		{ timeout: 10000 },
 	);
