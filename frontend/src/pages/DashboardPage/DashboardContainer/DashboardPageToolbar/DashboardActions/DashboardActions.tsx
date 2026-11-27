@@ -208,6 +208,11 @@ function DashboardActions({
 						testId: 'dashboard-action-fullscreen',
 						label: 'Full screen',
 						prefix: <Fullscreen size={14} />,
+						...blockedBy(
+							document.fullscreenEnabled
+								? ''
+								: "Full screen isn't supported in this browser",
+						),
 						onClick: handleEnterFullScreen,
 					},
 				],
