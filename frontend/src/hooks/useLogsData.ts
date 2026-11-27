@@ -163,12 +163,8 @@ export const useLogsData = ({
 				...item.data,
 				timestamp: item.timestamp,
 			}));
-			const newLogs = [...logs, ...currentLogs];
-
-			setLogs(newLogs);
+			setLogs((prevLogs) => [...prevLogs, ...currentLogs]);
 		}
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data]);
 
 	const handleEndReached = (index: number): void => {
