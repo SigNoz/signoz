@@ -141,7 +141,7 @@ func NewHandlers(
 		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 		SpanMapperHandler:       implspanmapper.NewHandler(modules.SpanMapper),
-		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService),
+		AlertmanagerHandler:     signozalertmanager.NewHandler(alertmanagerService, authz),
 		PrometheusHandler:       prometheus.NewHandler(providerSettings.Logger, prometheusService),
 		TraceDetail:             impltracedetail.NewHandler(modules.TraceDetail),
 		RulerHandler:            signozruler.NewHandler(rulerService),
