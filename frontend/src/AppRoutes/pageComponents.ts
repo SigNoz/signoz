@@ -294,5 +294,6 @@ export const LLMObservabilityPage = Loadable(
 );
 
 export const AuditLogsPage = Loadable(
-	() => import(/* webpackChunkName: "Audit Logs Page" */ 'pages/AuditLogs'),
+	() =>
+		import(/* webpackChunkName: "Audit Logs Page" */ 'pages/AuditLogsModule'),
 );
