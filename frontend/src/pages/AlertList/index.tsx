@@ -53,15 +53,16 @@ function AllAlertList(): JSX.Element {
 
 	const tab = urlQuery.get('tab');
 	const subTab = urlQuery.get('subTab');
-	const isAlertHistory = location.pathname === ROUTES.ALERT_HISTORY;
-	const isAlertOverview = location.pathname === ROUTES.ALERT_OVERVIEW;
+	const isRuleDetails =
+		location.pathname === ROUTES.ALERT_HISTORY ||
+		location.pathname === ROUTES.ALERT_OVERVIEW;
 	const isChannelsNew = location.pathname === ROUTES.CHANNELS_NEW;
 	const isChannelsEdit = location.pathname.startsWith('/alerts/channels/edit/');
 	const isChannelDetails = isChannelsNew || isChannelsEdit;
-	const isDetailsView = isAlertHistory || isAlertOverview || isChannelDetails;
+	const isDetailsView = isRuleDetails || isChannelDetails;
 
 	const getActiveTab = useCallback((): string => {
-		if (isAlertHistory || isAlertOverview) {
+		if (isRuleDetails) {
 			return AlertListTabs.ALERT_RULES;
 		}
 		if (isChannelDetails) {
@@ -75,7 +76,7 @@ function AllAlertList(): JSX.Element {
 			return AlertListTabs.CONFIGURATION;
 		}
 		return tab || AlertListTabs.ALERT_RULES;
-	}, [isAlertHistory, isAlertOverview, isChannelDetails, tab]);
+	}, [isRuleDetails, isChannelDetails, tab]);
 
 	const getActiveSubTab = useCallback((): AlertListSubTabs => {
 		if (isChannelDetails) {
@@ -214,7 +215,7 @@ function AllAlertList(): JSX.Element {
 			key: AlertListTabs.ALERT_RULES,
 			children: (
 				<div className="alert-rules-container">
-					{isAlertHistory || isAlertOverview ? <AlertDetails /> : <AllAlertRules />}
+					{isRuleDetails ? <AlertDetails /> : <AllAlertRules />}
 				</div>
 			),
 		},
