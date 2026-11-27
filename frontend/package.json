@@ -34,7 +34,7 @@
     "build:geo-outlines": "node scripts/geo-outlines/build.mjs"
   },
   "engines": {
-    "node": ">=22.0.0",
+    "node": ">=22.12.0",
     "pnpm": ">=10.0.0 <11.0.0"
   },
   "author": "",
@@ -67,7 +67,7 @@
     "@visx/hierarchy": "3.12.0",
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
-    "@vitejs/plugin-react": "5.1.4",
+    "@vitejs/plugin-react": "6.3.0",
     "ansi-to-html": "0.7.2",
     "antd": "5.11.0",
     "antd-table-saveas-excel": "2.2.1",
@@ -137,7 +137,7 @@
     "typescript": "5.9.3",
     "uplot": "1.6.31",
     "uuid": "14.0.1",
-    "vite": "npm:rolldown-vite@7.3.1",
+    "vite": "8.3.8",
     "zod": "4.6.7",
     "zustand": "5.0.11"
   },
@@ -194,6 +194,7 @@
     "@types/topojson-client": "3.1.5",
     "@types/topojson-specification": "1.0.5",
     "@typescript/native-preview": "7.0.0-dev.20260430.1",
+    "esbuild": "0.28.1",
     "eslint-plugin-sonarjs": "4.0.2",
     "husky": "^9.1.7",
     "jest-environment-jsdom": "29.7.0",
@@ -221,8 +222,7 @@
     "use-sync-external-store": "1.6.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
-    "vite-plugin-image-optimizer": "2.0.3",
-    "vite-tsconfig-paths": "6.1.1"
+    "vite-plugin-image-optimizer": "2.0.3"
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
