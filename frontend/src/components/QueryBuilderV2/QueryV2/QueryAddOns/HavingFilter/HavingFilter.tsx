@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -100,24 +100,20 @@ function HavingFilter({
 	const { getAggregationOptions } = useQueryBuilderV2Context();
 	const aggregationOptions = getAggregationOptions(queryData.queryName);
 	const having = queryData?.having as Having;
-	const [input, setInput] = useEditorDraft(having?.expression || '');
+	const { editorRef, editorProps } = useEditorDraft(
+		having?.expression || '',
+		onChange,
+	);
 
 	const [isFocused, setIsFocused] = useState(false);
 
-	const editorRef = useRef<EditorView | null>(null);
-
 	const [options, setOptions] = useState<{ label: string; value: string }[]>([]);
-
-	const handleChange = (value: string): void => {
-		setInput(value);
-		onChange(value);
-	};
 
 	useEffect(() => {
 		if (isFocused && editorRef.current && options.length > 0) {
 			startCompletion(editorRef.current);
 		}
-	}, [isFocused, options]);
+	}, [editorRef, isFocused, options]);
 
 	// Update options when aggregation options change
 	useEffect(() => {
@@ -326,8 +322,7 @@ function HavingFilter({
 		<div className="having-filter-container">
 			<div className="having-filter-select-container">
 				<CodeMirror
-					value={input}
-					onChange={handleChange}
+					{...editorProps}
 					theme={isDarkMode ? copilot : githubLight}
 					data-testid="having-editor"
 					className="having-filter-select-editor"
@@ -350,9 +345,6 @@ function HavingFilter({
 						lineNumbers: false,
 						autocompletion: true,
 						completionKeymap: true,
-					}}
-					onCreateEditor={(view: EditorView): void => {
-						editorRef.current = view;
 					}}
 					onFocus={(): void => {
 						setIsFocused(true);

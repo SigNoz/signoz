@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	autocompletion,
 	closeCompletion,
@@ -176,16 +176,17 @@ function QueryAggregationSelect({
 		[],
 	);
 
-	const [input, setInput] = useEditorDraft(
-		formatAggregations(queryData?.aggregations),
-	);
+	const {
+		draft: input,
+		editorRef,
+		editorProps,
+	} = useEditorDraft(formatAggregations(queryData?.aggregations), onChange);
 
 	const [cursorPos, setCursorPos] = useState(0);
 	const [functionArgPairs, setFunctionArgPairs] = useState<
 		{ func: string; arg: string }[]
 	>([]);
 	const [validationError, setValidationError] = useState<string | null>(null);
-	const editorRef = useRef<EditorView | null>(null);
 	const [isFocused, setIsFocused] = useState(false);
 
 	// Get valid function names (lowercase)
@@ -201,7 +202,7 @@ function QueryAggregationSelect({
 				startCompletion(editorRef.current);
 			}
 		});
-	}, []);
+	}, [editorRef]);
 
 	// Update cursor position on every editor update
 	const handleUpdate = (update: { view: EditorView }): void => {
@@ -598,11 +599,7 @@ function QueryAggregationSelect({
 	return (
 		<div className="query-aggregation-select-container">
 			<CodeMirror
-				value={input}
-				onChange={(value): void => {
-					setInput(value);
-					onChange?.(value);
-				}}
+				{...editorProps}
 				data-testid="query-aggregation-editor"
 				className={`query-aggregation-select-editor ${
 					validationError ? 'error' : ''
@@ -634,9 +631,6 @@ function QueryAggregationSelect({
 					completionKeymap: true,
 				}}
 				onUpdate={handleUpdate}
-				onCreateEditor={(view: EditorView): void => {
-					editorRef.current = view;
-				}}
 				onFocus={(): void => {
 					setIsFocused(true);
 					safeStartCompletion();
