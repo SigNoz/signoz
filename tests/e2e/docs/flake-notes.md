@@ -355,20 +355,22 @@ again closed the whole Get Started page (the failure screenshot shows `/home`).
 trigger, where the chevron sits. 1 of 40 local runs failed before and 0 of 120 after; an Escape loop
 failed 1 of 15 and was dropped.
 
-## A spec that rewrites org settings must put them back
+## A spec that changes org settings only adds to them
 
-`quick-filters/settings` TC-01 replaces the org's logs quick filters with two
+`quick-filters/settings` TC-01 replaced the org's logs quick filters with two
 fields and never restored them, so every later spec on that stack lost the
 Severity Text filter. `query-builder/filter` TC-16 then failed all three
 attempts, with a 60 s timeout on `checkbox-Severity Text-ERROR`. CI never saw it
 because the two specs land in different shards (7 and 8) and each shard has its
-own stack; one test more or fewer before them would put both on one stack. The
-`quickFilters` layer now reads the stored filters through
-`/api/v2/quick_filters/{source}` before `seed` replaces them and writes them back
-after the test. On a stack left in that state, TC-16 failed 2 of 2 before and
-passed 3 of 3 after. `logs-explorer/quick-filters` seeds the same filters
-through `logsRail.ensureSeeded`, which used its own driver instance, so the
-`logsRail` layer restores that instance too.
+own stack; one test more or fewer before them would put both on one stack.
+
+Restoring the old filters after each test is not enough. With `fullyParallel`,
+`quick-filters/settings` and `logs-explorer/quick-filters` seed the same org at
+once, so one test can snapshot the other's seed as the original, or restore the
+defaults while the other still needs its seed. `seed` reads the stored filters
+through `/api/v2/quick_filters/{source}` and writes back a superset with only the
+missing fields added. Parallel seeds end in the same state in any order, no
+filter another spec needs goes away, and there is nothing to restore.
 
 ## Chrome's compute-pressure policy message is console noise
 

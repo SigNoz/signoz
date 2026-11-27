@@ -8,6 +8,11 @@ import {
 	logsExplorerDriver,
 	type LogsExplorer,
 } from './logs/explorer';
+import type {
+	QuickfiltertypesSourceFiltersDTO,
+	TelemetrytypesFieldContextDTO,
+	TelemetrytypesFieldDataTypeDTO,
+} from './schemas';
 
 /**
  * The logs explorer, the quick-filters rail and the CodeMirror query editor —
@@ -27,24 +32,30 @@ const SETTINGS_PANEL_MIN_WIDTH_PX = 300;
 export type QuickFilterSignal = 'logs' | 'traces';
 
 export interface QuickFilterDefinition {
-	key: string;
-	dataType: string;
-	type: string;
+	name: string;
+	fieldContext: `${TelemetrytypesFieldContextDTO}`;
+	fieldDataType: `${TelemetrytypesFieldDataTypeDTO}`;
 }
 
 /** Minimal set so `isDynamicFilters` is true and the settings gear renders. */
 export const DEFAULT_CUSTOM_FILTERS: QuickFilterDefinition[] = [
-	{ key: 'service.name', dataType: 'string', type: 'resource' },
-	{ key: 'deployment.environment', dataType: 'string', type: 'resource' },
+	{ name: 'service.name', fieldContext: 'resource', fieldDataType: 'string' },
+	{
+		name: 'deployment.environment',
+		fieldContext: 'resource',
+		fieldDataType: 'string',
+	},
 ];
 
 export interface QuickFilters {
+	/**
+	 * Add the filters the org lacks. Never removes one, so parallel tests on
+	 * one org cannot take away what another test needs, and nothing is restored.
+	 */
 	seed(
 		signal: QuickFilterSignal,
 		filters?: QuickFilterDefinition[],
 	): Promise<void>;
-	/** Put back what `seed` replaced; the layer runs it after every test. */
-	restore(): Promise<void>;
 	/** Hide the one-off announcement tooltip so it cannot swallow the gear click. */
 	dismissAnnouncement(): Promise<void>;
 	gotoExplorer(path: string): Promise<void>;
@@ -64,33 +75,21 @@ export function quickFiltersDriver(page: Page): QuickFilters {
 			.filter({ hasText: SETTINGS_PANEL_TITLE });
 	const gearContainer = (): Locator => page.getByTestId(SETTINGS_ICON_CONTAINER);
 
-	const replaced = new Map<QuickFilterSignal, unknown[]>();
-
 	const filters: QuickFilters = {
 		rail: () => page.locator('.quick-filters'),
 		settingsPanel: panel,
 
 		seed: async (signal, definitions = DEFAULT_CUSTOM_FILTERS) => {
 			const api = apiDriver(page);
-			if (!replaced.has(signal)) {
-				const stored = await api.get<{ data: { filters: unknown[] } }>(
-					`/api/v2/quick_filters/${signal}`,
-				);
-				replaced.set(signal, stored.data.filters);
+			const path = `/api/v2/quick_filters/${signal}`;
+			const stored = await api.get<{ data: QuickfiltertypesSourceFiltersDTO }>(
+				path,
+			);
+			const names = new Set(stored.data.filters.map((filter) => filter.name));
+			const missing = definitions.filter((filter) => !names.has(filter.name));
+			if (missing.length > 0) {
+				await api.put(path, { filters: [...stored.data.filters, ...missing] });
 			}
-			await api.put('/api/v1/orgs/me/filters', {
-				signal,
-				filters: definitions,
-			});
-		},
-
-		restore: async () => {
-			const api = apiDriver(page);
-			for (const [signal, stored] of replaced) {
-				// eslint-disable-next-line no-await-in-loop
-				await api.put(`/api/v2/quick_filters/${signal}`, { filters: stored });
-			}
-			replaced.clear();
 		},
 
 		dismissAnnouncement: () => dismissQuickFiltersAnnouncement(page),
@@ -135,7 +134,7 @@ export function quickFiltersDriver(page: Page): QuickFilters {
 			await expect(settings.getByText('ADDED FILTERS')).toBeVisible();
 			for (const filter of seeded) {
 				// eslint-disable-next-line no-await-in-loop
-				await expect(added.getByText(filter.key, { exact: true })).toBeVisible();
+				await expect(added.getByText(filter.name, { exact: true })).toBeVisible();
 			}
 
 			// The footer only mounts after an edit, so it is absent on first open.
@@ -212,11 +211,9 @@ export const withExplorers: Layer<{
 	editor: QueryEditor;
 }> = (base) =>
 	driver('editor', ({ page }) => queryEditorDriver(page))(
-		driver(
-			'quickFilters',
-			({ page }) => quickFiltersDriver(page),
-			(quickFilters) => quickFilters.restore(),
-		)(driver('logs', ({ page }) => logsExplorerDriver(page))(base)),
+		driver('quickFilters', ({ page }) => quickFiltersDriver(page))(
+			driver('logs', ({ page }) => logsExplorerDriver(page))(base),
+		),
 	);
 
 /** The explorers `test`. */
