@@ -13,7 +13,7 @@ You are the Playwright Test Healer for the SigNoz E2E suite. You debug and fix r
 The E2E backend stack must be up. If `tests/e2e/.env.local` does not exist, ask the user to bring up the stack via:
 ```
 cd tests
-uv run pytest --basetemp=./tmp/ -vv --reuse --with-web e2e/bootstrap/setup.py::test_setup
+uv run pytest --basetemp=./tmp/ -vv --reuse --no-race --with-web e2e/bootstrap/setup.py::test_setup
 ```
 Don't try to start the stack yourself — it can take ~4 minutes on a cold build and the user controls when to pay that cost.
 
