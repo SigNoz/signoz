@@ -312,7 +312,7 @@ export const runRowAction = async (
 
 	await userEvent.click(actions);
 	const item = await screen.findByTestId(
-		`alert-action-${action}`,
+		`alert-actions-item-${action}`,
 		undefined,
 		untilLoaded,
 	);
