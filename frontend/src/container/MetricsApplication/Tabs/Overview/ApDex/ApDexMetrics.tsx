@@ -8,7 +8,6 @@ import {
 	apDexToolTipUrl,
 	apDexToolTipUrlText,
 } from 'constants/apDex';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
 import DisplayThreshold from 'container/WidgetCard/Header/DisplayThreshold';
@@ -104,7 +103,6 @@ function ApDexMetrics({
 			onClickHandler={handleGraphClick('ApDex')}
 			threshold={threshold}
 			isQueryEnabled={isQueryEnabled}
-			version={ENTITY_VERSION_V5}
 			enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 		/>
 	);

@@ -8,7 +8,6 @@ export type OrderByFilterProps = {
 	query: IBuilderQuery;
 	onChange: (values: OrderByPayload[]) => void;
 	isRawQuery?: boolean;
-	isNewQueryV2?: boolean;
 	placeholder?: string;
 	/** A logs or traces heatmap aggregates a field, which Order by then offers. */
 	panelType?: PANEL_TYPES;

@@ -2,7 +2,6 @@ import { MutableRefObject, useMemo } from 'react';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
@@ -17,7 +16,6 @@ import { useQueryBuilder } from './useQueryBuilder';
 export const useGetExplorerQueryRange = (
 	requestData: Query | null,
 	panelType: PANEL_TYPES | null,
-	version: string,
 	options?: UseQueryOptions<MetricQueryRangeSuccessResponse, Error>,
 	params?: Record<string, unknown>,
 	isDependentOnQB = true,
@@ -61,8 +59,6 @@ export const useGetExplorerQueryRange = (
 			query: requestData || initialQueriesMap.metrics,
 			params,
 		},
-		// version,
-		ENTITY_VERSION_V5,
 		{
 			...options,
 			queryKey: [key, globalSelectedInterval, requestData, minTime, maxTime],

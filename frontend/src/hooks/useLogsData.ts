@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import {
 	initialQueryBuilderFormValues,
@@ -141,7 +140,6 @@ export const useLogsData = ({
 	const { data, isFetching } = useGetExplorerQueryRange(
 		requestData,
 		panelType,
-		ENTITY_VERSION_V5,
 		{
 			keepPreviousData: true,
 			enabled: !isLimit && !!requestData,

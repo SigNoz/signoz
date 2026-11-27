@@ -1,7 +1,6 @@
 import { RefObject, useEffect, useRef, useState } from 'react';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { Skeleton, Tooltip } from 'antd';
-import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -38,7 +37,6 @@ import 'container/WidgetCard/WidgetCard.styles.scss';
 function WidgetGraphComponent({
 	widget,
 	queryResponse,
-	version,
 	threshold,
 	headerMenuList,
 	isWarning,
@@ -51,7 +49,6 @@ function WidgetGraphComponent({
 	openTracesButton,
 	onOpenTraceBtnClick,
 	customSeries,
-	customErrorMessage,
 	customOnRowClick,
 	customTimeRangeWindowForCoRelation,
 	enableDrillDown,
@@ -209,7 +206,6 @@ function WidgetGraphComponent({
 			>
 				<FullView
 					name={`${widget.id}expanded`}
-					version={version}
 					originalName={widget.id}
 					widget={widget}
 					yAxisUnit={widget.yAxisUnit}
@@ -238,21 +234,6 @@ function WidgetGraphComponent({
 					setSearchTerm={setSearchTerm}
 				/>
 			</div>
-
-			{queryResponse.error && customErrorMessage && (
-				<div className="error-message-container">
-					<Typography
-						variant="paragraph"
-						size="base"
-						weight="regular"
-						color="warning"
-						as="span"
-						textOverflow="wrap"
-					>
-						{customErrorMessage}
-					</Typography>
-				</div>
-			)}
 
 			{queryResponse.isLoading && widget.panelTypes !== PANEL_TYPES.LIST && (
 				<div data-testid="widget-graph-loading">

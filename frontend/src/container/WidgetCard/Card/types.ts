@@ -24,7 +24,6 @@ export interface WidgetGraphComponentProps {
 	widget: Widgets;
 	queryResponse: UseQueryResult<MetricQueryRangeSuccessResponse, Error>;
 	errorMessage: string | undefined;
-	version?: string;
 	threshold?: ReactNode;
 	headerMenuList: MenuItemKeys[];
 	isWarning: boolean;
@@ -37,7 +36,6 @@ export interface WidgetGraphComponentProps {
 	openTracesButton?: boolean;
 	onOpenTraceBtnClick?: (record: RowData) => void;
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
-	customErrorMessage?: string;
 	customOnRowClick?: (record: RowData) => void;
 	customTimeRangeWindowForCoRelation?: string | undefined;
 	enableDrillDown?: boolean;
@@ -51,7 +49,6 @@ export interface GridCardGraphProps {
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
-	version?: string;
 	onDragSelect: (start: number, end: number) => void;
 	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;

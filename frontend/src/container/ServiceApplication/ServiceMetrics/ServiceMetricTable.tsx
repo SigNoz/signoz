@@ -7,7 +7,6 @@ import { SolidAlertTriangle } from '@signozhq/icons';
 import Flex from 'periscope/components/Flex/Flex';
 import { Typography } from '@signozhq/ui/typography';
 import { ResizeTable } from 'components/ResizeTable';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { MAX_RPS_LIMIT } from 'constants/global';
 import ResourceAttributesFilter from 'container/ResourceAttributesFilter';
 import { useGetQueriesRange } from 'hooks/queryBuilder/useGetQueriesRange';
@@ -40,7 +39,7 @@ function ServiceMetricTable({
 	const { isFetchingActiveLicense, trialInfo } = useAppContext();
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const queries = useGetQueriesRange(queryRangeRequestData, ENTITY_VERSION_V5, {
+	const queries = useGetQueriesRange(queryRangeRequestData, {
 		queryKey: [
 			`GetMetricsQueryRange-${queryRangeRequestData[0]?.selectedTime}-${globalSelectedInterval}`,
 			maxTime,

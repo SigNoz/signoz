@@ -22,7 +22,6 @@ export type UseOrderByFilterResult = {
 	searchText: string;
 	debouncedSearchText: string;
 	selectedValue: IOption[];
-	aggregationOptions: IOption[];
 	generateOptions: (options: IOption[]) => IOption[];
 	createOptions: (keys: string[]) => IOption[];
 	handleChange: (values: IOption[]) => void;
@@ -123,29 +122,10 @@ export const useOrderByFilter = ({
 		[],
 	);
 
-	const aggregationOptions = useMemo(
-		() => [
-			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute?.key}) ${
-					ORDERBY_FILTERS.ASC
-				}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.ASC}`,
-			},
-			{
-				label: `${query.aggregateOperator}(${query.aggregateAttribute?.key}) ${
-					ORDERBY_FILTERS.DESC
-				}`,
-				value: `${SIGNOZ_VALUE}${orderByValueDelimiter}${ORDERBY_FILTERS.DESC}`,
-			},
-		],
-		[query],
-	);
-
 	return {
 		searchText,
 		debouncedSearchText,
 		selectedValue,
-		aggregationOptions,
 		createOptions,
 		handleChange,
 		handleSearchKeys,

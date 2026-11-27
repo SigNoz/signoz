@@ -8,7 +8,6 @@ import { Tooltip } from '@signozhq/ui/tooltip';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { uniqBy } from 'lodash-es';
@@ -206,7 +205,6 @@ function Filters({
 				],
 			},
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey: [committedExpression, traceID, startTime, endTime],
 			enabled: isFilterActive,

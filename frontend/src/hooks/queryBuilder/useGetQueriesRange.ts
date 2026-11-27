@@ -15,7 +15,6 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 export const useGetQueriesRange = (
 	requestData: GetQueryResultsProps[],
-	version: string,
 	options: UseQueryOptions<SuccessResponse<MetricRangePayloadProps>, Error>,
 ): UseQueryResult<SuccessResponse<MetricRangePayloadProps>, Error>[] => {
 	const queryKey = useMemo(() => {
@@ -27,7 +26,7 @@ export const useGetQueriesRange = (
 
 	const queryData = requestData.map((request, index) => ({
 		queryFn: async (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-			GetMetricQueryRange(request, version),
+			GetMetricQueryRange(request),
 		...options,
 		queryKey: [...queryKey, index] as QueryKey,
 	}));

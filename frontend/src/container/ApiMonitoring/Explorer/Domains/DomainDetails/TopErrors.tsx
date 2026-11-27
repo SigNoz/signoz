@@ -9,7 +9,6 @@ import { MetricRangePayloadV5, ScalarData } from 'api/v5/v5';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
 import { combineInitialAndUserExpression } from 'components/QueryBuilderV2/QueryV2/QuerySearch/utils';
 import { withErrorBoundary } from 'components/ErrorBoundaryHOC';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	formatTopErrorsDataForTable,
@@ -76,13 +75,12 @@ function TopErrors({
 		queryKey: [
 			REACT_QUERY_KEY.GET_TOP_ERRORS_BY_DOMAIN,
 			queryPayload,
-			ENTITY_VERSION_V5,
 			showStatusCodeErrors,
 		],
 		queryFn: ({
 			signal,
 		}: QueryFunctionContext): Promise<SuccessResponseV2<MetricRangePayloadV5>> =>
-			getQueryRangeV5(queryPayload, ENTITY_VERSION_V5, signal),
+			getQueryRangeV5(queryPayload, signal),
 		enabled: !!queryPayload,
 		staleTime: 0,
 		cacheTime: 0,

@@ -1,5 +1,4 @@
 import { prepareQueryRangePayloadV5 } from 'api/v5/queryRange/prepareQueryRangePayloadV5';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
@@ -87,7 +86,6 @@ describe('GridCardGraph', () => {
 				<GridCardGraph
 					widget={widgetFiltering('name in []')}
 					isQueryEnabled={enabledBefore}
-					version={ENTITY_VERSION_V5}
 				/>,
 			);
 
@@ -95,7 +93,6 @@ describe('GridCardGraph', () => {
 				<GridCardGraph
 					widget={widgetFiltering("name in ['GET /']")}
 					isQueryEnabled
-					version={ENTITY_VERSION_V5}
 				/>,
 			);
 
@@ -113,10 +110,7 @@ describe('GridCardGraph', () => {
 			widgetFiltering(expression, DataSource.LOGS, PANEL_TYPES.LIST);
 
 		const { rerender } = render(
-			<GridCardGraph
-				widget={logsList("severity_text = 'ERROR'")}
-				version={ENTITY_VERSION_V5}
-			/>,
+			<GridCardGraph widget={logsList("severity_text = 'ERROR'")} />,
 		);
 
 		await user.click(
@@ -127,12 +121,7 @@ describe('GridCardGraph', () => {
 		await user.click(await screen.findByText('50 / page'));
 		await waitFor(() => expect(lastRequestedLimit()).toBe(50));
 
-		rerender(
-			<GridCardGraph
-				widget={logsList("severity_text = 'WARN'")}
-				version={ENTITY_VERSION_V5}
-			/>,
-		);
+		rerender(<GridCardGraph widget={logsList("severity_text = 'WARN'")} />);
 
 		await waitFor(() =>
 			expect(requestedFilters()).toContain("severity_text = 'WARN'"),

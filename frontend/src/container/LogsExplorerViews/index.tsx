@@ -14,7 +14,6 @@ import { useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import {
@@ -148,7 +147,6 @@ function LogsExplorerViewsContainer({
 	} = useGetExplorerQueryRange(
 		listChartQuery,
 		PANEL_TYPES.TIME_SERIES,
-		ENTITY_VERSION_V5,
 		{
 			enabled:
 				showFrequencyChart &&
@@ -166,7 +164,6 @@ function LogsExplorerViewsContainer({
 		useGetExplorerQueryRange(
 			requestData,
 			selectedPanelType,
-			ENTITY_VERSION_V5,
 			{
 				keepPreviousData: true,
 				enabled: !isLimit && !!requestData,

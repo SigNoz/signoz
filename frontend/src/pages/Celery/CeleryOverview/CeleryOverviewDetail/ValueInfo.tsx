@@ -8,7 +8,6 @@ import Col from 'periscope/components/Col/Col';
 import Row from 'periscope/components/Row/Row';
 import logEvent from 'api/common/logEvent';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { AppState } from 'store/reducers';
@@ -59,14 +58,9 @@ export default function ValueInfo({
 
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: [
-				'overview-detail',
-				payload,
-				ENTITY_VERSION_V5,
-				'overview-right-panel',
-			],
+			queryKey: ['overview-detail', payload, 'overview-right-panel'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+				GetMetricQueryRange(payload),
 			enabled: !!payload,
 		})),
 	);

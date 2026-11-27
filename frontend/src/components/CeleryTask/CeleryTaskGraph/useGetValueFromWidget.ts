@@ -2,7 +2,6 @@ import { useCallback } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import {
@@ -42,9 +41,9 @@ export const useGetValueFromWidget = (
 
 	const queries = useQueries(
 		queryPayloads().map((payload) => ({
-			queryKey: [...queryKey, payload, ENTITY_VERSION_V5],
+			queryKey: [...queryKey, payload],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+				GetMetricQueryRange(payload),
 			enabled: !!payload,
 		})),
 	);

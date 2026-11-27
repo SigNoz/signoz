@@ -1,5 +1,4 @@
 import { Card } from 'antd';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Widgets } from 'types/api/widgets/widget';
 
@@ -23,7 +22,6 @@ function MetricOverTimeGraph({
 						customOnDragSelect={(): void => {}}
 						customTimeRange={timeRange}
 						customTimeRangeWindowForCoRelation="5m"
-						version={ENTITY_VERSION_V5}
 					/>
 				</div>
 			</Card>

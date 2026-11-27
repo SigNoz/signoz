@@ -433,7 +433,6 @@ function QueryAddOns({
 											query={query}
 											onChange={handleChangeOrderByKeys}
 											isRawQuery={isRawQuery}
-											isNewQueryV2
 											panelType={panelType ?? undefined}
 											placeholder={placeholderOf(QueryBuilderField.OrderBy)}
 										/>

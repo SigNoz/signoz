@@ -2,7 +2,6 @@ import { ReactNode, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useAppParams } from 'lib/router/useAppParams';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { topOperationMetricsDownloadOptions } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -71,7 +70,6 @@ function TopOperationMetrics(): JSX.Element {
 			globalSelectedInterval,
 			variables: {},
 		},
-		ENTITY_VERSION_V5,
 		{
 			queryKey: [
 				`GetMetricsQueryRange-${keyOperationWidget?.timePreferance}-${globalSelectedInterval}-${keyOperationWidget?.id}`,

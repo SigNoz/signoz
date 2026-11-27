@@ -7,7 +7,6 @@ import logEvent from 'api/common/logEvent';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ViewMenuAction } from 'container/WidgetCard/config';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import GridCard from 'container/WidgetCard/Card';
 import { Card } from 'container/WidgetCard/styles';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
@@ -88,7 +87,6 @@ function MessagingQueuesGraph(): JSX.Element {
 		>
 			<GridCard
 				widget={widgetData}
-				version={ENTITY_VERSION_V5}
 				headerMenuList={[...ViewMenuAction]}
 				onClickHandler={(xValue, _yValue, _mouseX, _mouseY, data): void => {
 					setSelectedTimelineQuery(urlQuery, xValue, location, data);

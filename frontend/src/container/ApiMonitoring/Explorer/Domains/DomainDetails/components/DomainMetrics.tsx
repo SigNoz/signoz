@@ -3,7 +3,6 @@ import { useQueries } from 'react-query';
 import { Skeleton, Tooltip } from 'antd';
 import { Progress } from '@signozhq/ui/progress';
 import { Typography } from '@signozhq/ui/typography';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	DomainMetricsResponseRow,
@@ -41,13 +40,9 @@ function DomainMetrics({
 	// Since only one query here
 	const domainMetricsDataQueries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: [
-				REACT_QUERY_KEY.GET_DOMAIN_METRICS_DATA,
-				payload,
-				ENTITY_VERSION_V5,
-			],
+			queryKey: [REACT_QUERY_KEY.GET_DOMAIN_METRICS_DATA, payload],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+				GetMetricQueryRange(payload),
 			enabled: !!payload,
 			staleTime: 60 * 1000, // 1 minute stale time : optimize this part
 		})),

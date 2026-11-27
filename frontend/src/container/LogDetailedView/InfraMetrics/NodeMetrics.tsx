@@ -4,7 +4,6 @@ import { Card, Skeleton } from 'antd';
 import { Typography } from '@signozhq/ui/typography';
 import cx from 'classnames';
 import Uplot from 'components/Uplot';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -60,9 +59,9 @@ function NodeMetrics({
 	const widgetInfo = nodeName ? nodeWidgetInfo : hostWidgetInfo;
 	const queries = useQueries(
 		queryPayloads.map((payload) => ({
-			queryKey: ['metrics', payload, ENTITY_VERSION_V5, 'NODE'],
+			queryKey: ['metrics', payload, 'NODE'],
 			queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
-				GetMetricQueryRange(payload, ENTITY_VERSION_V5),
+				GetMetricQueryRange(payload),
 			enabled: !!payload,
 		})),
 	);

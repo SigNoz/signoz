@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useAppParams } from 'lib/router/useAppParams';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import Graph from 'container/WidgetCard/Card';
@@ -119,7 +118,6 @@ function ServiceOverview({
 						widget={latencyWidget}
 						onClickHandler={handleGraphClick('Service')}
 						isQueryEnabled={isQueryEnabled}
-						version={ENTITY_VERSION_V5}
 						enableDrillDown={SERVICE_DETAIL_DRILLDOWN_ENABLED}
 					/>
 				</GraphContainer>

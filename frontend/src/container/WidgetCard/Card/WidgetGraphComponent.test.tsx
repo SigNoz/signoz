@@ -141,7 +141,6 @@ const mockProps: WidgetGraphComponentProps = {
 		remove: jest.fn(),
 	},
 	errorMessage: '',
-	version: 'v4',
 	headerMenuList: [
 		MenuItemKeys.View,
 		MenuItemKeys.Clone,
@@ -170,7 +169,6 @@ describe('WidgetGraphComponent', () => {
 								widget={mockProps.widget}
 								queryResponse={mockProps.queryResponse}
 								errorMessage={mockProps.errorMessage}
-								version={mockProps.version}
 								headerMenuList={mockProps.headerMenuList}
 								isWarning={mockProps.isWarning}
 								isFetchingResponse={mockProps.isFetchingResponse}

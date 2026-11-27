@@ -6,7 +6,6 @@ import {
 	getQueryRangeV5,
 	prepareQueryRangePayloadV5,
 } from 'api/v5/v5';
-import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { timePreferenceType } from 'constants/timePreference';
 import {
@@ -170,7 +169,6 @@ export const getLegend = (
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export async function GetMetricQueryRange(
 	props: GetQueryResultsProps,
-	version: string,
 	dynamicVariables: DynamicVariableSuggestion[] = [],
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
@@ -234,7 +232,6 @@ export async function GetMetricQueryRange(
 
 	const v5Response = await getQueryRangeV5(
 		v5Result.queryPayload,
-		ENTITY_VERSION_V5,
 		signal,
 		headers,
 	);
