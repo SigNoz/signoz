@@ -23,7 +23,7 @@ func valueForIndexFilter(op qbtypes.FilterOperator, key *telemetrytypes.Telemetr
 		return values
 	default:
 		// format to string for anything else as we store resource values as string
-		if op == qbtypes.FilterOperatorEqual || op == qbtypes.FilterOperatorNotEqual {
+		if op == qbtypes.FilterOperatorEqual {
 			return fmt.Sprintf(`%%%s":"%s%%`, key.Name, querybuilder.FormatValueForContains(v))
 		}
 		return fmt.Sprintf(`%%%s%%%s%%`, key.Name, querybuilder.FormatValueForContains(v))
@@ -138,9 +138,7 @@ func (b *storage) conditionForLogicalField(
 	column := columns[0]
 
 	members := logical.Members
-	isFamily := logical.IsFamily()
 	keyIdxFilter := keyIndexCondition(sb, column.Name, members)
-	singleValueIndexFilter := valueForIndexFilter(op, members[0], value)
 
 	logicalRead, err := querybuilder.LogicalRead(ctx, q, b, logical)
 	if err != nil {
@@ -156,15 +154,10 @@ func (b *storage) conditionForLogicalField(
 			valueIndexCondition(sb, column.Name, members, op, value, false),
 		), nil
 	case qbtypes.FilterOperatorNotEqual:
-		if isFamily {
-			// A negated value-index hint would drop rows where another member
-			// holds the value; the fingerprint scan is small enough without it.
-			return sb.NE(fieldName, formattedValue), nil
-		}
-		return sb.And(
-			sb.NE(fieldName, formattedValue),
-			sb.NotLike(column.Name, singleValueIndexFilter),
-		), nil
+		// A negated value-index hint would drop rows where another member
+		// holds the value or where the attribute value starts with the operand;
+		// the fingerprint scan is small enough without it.
+		return sb.NE(fieldName, formattedValue), nil
 	case qbtypes.FilterOperatorGreaterThan:
 		return sb.And(sb.GT(fieldName, formattedValue), keyIdxFilter), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
@@ -232,18 +225,9 @@ func (b *storage) conditionForLogicalField(
 			notInConditions = append(notInConditions, sb.NE(fieldName, querybuilder.FormatValueForContains(v)))
 		}
 		mainCondition := sb.And(notInConditions...)
-		if isFamily {
-			// A negated value-index hint would drop rows where another member
-			// holds the value; the fingerprint scan is small enough without it.
-			return mainCondition, nil
-		}
-		valConditions := make([]string, 0, len(values))
-		if valuesForIndexFilter, ok := singleValueIndexFilter.([]string); ok {
-			for _, v := range valuesForIndexFilter {
-				valConditions = append(valConditions, sb.NotLike(column.Name, v))
-			}
-		}
-		mainCondition = sb.And(mainCondition, sb.And(valConditions...))
+		// A negated value-index hint would drop rows where another member
+		// holds the value or where the attribute value starts with the operand;
+		// the fingerprint scan is small enough without it.
 		return mainCondition, nil
 
 	case qbtypes.FilterOperatorExists:
