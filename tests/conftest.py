@@ -89,6 +89,12 @@ def pytest_addoption(parser: pytest.Parser):
         help="Build and run with web. Run pytest --basetemp=./tmp/ -vv --with-web src/bootstrap/setup::test_setup to setup your local dev environment with web.",
     )
     parser.addoption(
+        "--prebuilt-signoz",
+        action="store_true",
+        default=False,
+        help="Run the signoz:integration image already in the local image store instead of building it. The image must be built with ZEUSURL=http://zeus:8080.",
+    )
+    parser.addoption(
         "--sqlstore-provider",
         action="store",
         default="postgres",

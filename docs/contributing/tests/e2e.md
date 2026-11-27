@@ -352,6 +352,7 @@ The same pytest flags integration tests expose work here, since E2E reuses the s
 - `--teardown` — tear everything down.
 - `--clean` — prune the docker build caches, forcing the next image build to start cold.
 - `--with-web` — build the frontend into the SigNoz container. **Required for E2E**; integration tests don't need it.
+- `--prebuilt-signoz` — run the `signoz:integration` image already in the local image store instead of building it. The image must be built with `ZEUSURL=http://zeus:8080`. CI uses it when main's server binary matches the change.
 - `--sqlstore-provider`, `--postgres-version`, `--clickhouse-version`, etc. — see `docs/contributing/tests/integration.md`.
 
 ## What should I remember?
