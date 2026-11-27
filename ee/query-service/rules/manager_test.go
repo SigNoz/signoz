@@ -15,8 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstoretest"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
@@ -62,14 +60,6 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 				ManagerOptionsHook: func(opts *rules.ManagerOptions) {
 					opts.PrepareTestRuleFunc = TestNotification
-				},
-				SqlStoreHook: func(store sqlstore.SQLStore) {
-					mockStore := store.(*sqlstoretest.Provider)
-					// Mock the organizations query that SendAlerts makes
-					// Bun generates: SELECT id FROM organizations LIMIT 1 (or SELECT "id" FROM "organizations" LIMIT 1)
-					orgRows := mockStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
-					// Match bun's generated query pattern - bun may quote identifiers
-					mockStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
 				},
 				TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
 					telemetryStore := store.(*telemetrystoretest.Provider)
@@ -175,12 +165,6 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 							triggeredTestAlerts = append(triggeredTestAlerts, args.Get(3).(map[*alertmanagertypes.PostableAlert][]string))
 						}).Return(nil).Times(tc.ExpectAlerts)
 					}
-				},
-				SqlStoreHook: func(store sqlstore.SQLStore) {
-					mockStore := store.(*sqlstoretest.Provider)
-					// Mock the organizations query that SendAlerts makes
-					orgRows := mockStore.Mock().NewRows([]string{"id"}).AddRow(orgID.StringValue())
-					mockStore.Mock().ExpectQuery("SELECT (.+) FROM (.+)organizations(.+) LIMIT (.+)").WillReturnRows(orgRows)
 				},
 				TelemetryStoreHook: func(store telemetrystore.TelemetryStore) {
 					mockStore := store.(*telemetrystoretest.Provider)
