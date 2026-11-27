@@ -8,6 +8,46 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+func TestPlannedMaintenanceValidateRecurrenceDuration(t *testing.T) {
+	for _, repeatType := range []RepeatType{RepeatTypeDaily, RepeatTypeWeekly, RepeatTypeMonthly} {
+		t.Run(repeatType.StringValue(), func(t *testing.T) {
+			for _, tc := range []struct {
+				duration string
+				wantErr  bool
+			}{
+				{duration: "-1h", wantErr: true},
+				{duration: "-1ns", wantErr: true},
+				{duration: "0s", wantErr: true},
+				{duration: "1ns"},
+				{duration: "1h"},
+			} {
+				t.Run(tc.duration, func(t *testing.T) {
+					schedule := &Schedule{
+						Timezone:  "UTC",
+						StartTime: time.Date(2026, 1, 1, 9, 0, 0, 0, time.UTC),
+						Recurrence: &Recurrence{
+							RepeatType: repeatType,
+							Duration:   valuer.MustParseTextDuration(tc.duration),
+						},
+					}
+					postable := &PostablePlannedMaintenance{Name: "maintenance", Schedule: schedule}
+					stored := &PlannedMaintenance{Name: "maintenance", Schedule: schedule}
+					for name, validate := range map[string]func() error{
+						"postable": postable.Validate,
+						"stored":   stored.Validate,
+					} {
+						t.Run(name, func(t *testing.T) {
+							if err := validate(); (err != nil) != tc.wantErr {
+								t.Errorf("Validate() error = %v, wantErr %v", err, tc.wantErr)
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestShouldSkipMaintenance(t *testing.T) {
 	cases := []struct {
 		name        string
