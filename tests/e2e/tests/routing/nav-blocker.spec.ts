@@ -16,7 +16,7 @@ test.describe.configure({ mode: 'serial' });
 const BLOCKED_ROLE_NAME = `routing-blocker-${uniqueAlphaSuffix()}`;
 const SAVED_ROLE_NAME = `routing-bypass-${uniqueAlphaSuffix()}`;
 
-test.describe('Routing — unsaved-changes navigation blocker', () => {
+test.describe('Routing — unsaved-changes navigation blocker @smoke', () => {
 	test.afterAll(async ({ browser }) => {
 		await onAdminPage(browser, (page) =>
 			routingDriver(page).roles.removeByName([BLOCKED_ROLE_NAME, SAVED_ROLE_NAME]),

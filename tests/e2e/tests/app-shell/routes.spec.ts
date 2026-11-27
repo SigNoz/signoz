@@ -3,7 +3,7 @@ import { expect, REDIRECTS, ROUTES, test } from '../../drivers/shell';
 // The broad regression net: every top-level route mounts its own component
 // without tripping an error boundary, a console error or a failed request.
 
-test.describe('app shell — routes', () => {
+test.describe('app shell — routes @smoke', () => {
 	for (const probe of [...ROUTES, ...REDIRECTS]) {
 		test(probe.title, async ({ shell, noise }) => {
 			await shell.visit(probe);

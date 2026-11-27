@@ -3,7 +3,7 @@ import { dashboardListParams, expect, PATH, test } from '../../drivers/routing';
 // Imperative navigation: the `history.listen` counter behind `hasInAppHistory()`,
 // `useSafeNavigate`'s same-url suppression, and its `newTab` branch.
 
-test.describe('Routing — imperative navigation', () => {
+test.describe('Routing — imperative navigation @smoke', () => {
 	// Both branches of the trace header's Back button in one document:
 	// `hasInAppHistory() ? goBack() : push(TRACES_EXPLORER)`.
 	test('TC-06 the trace-details previous button pushes when deep-linked and pops once in-app', async ({
