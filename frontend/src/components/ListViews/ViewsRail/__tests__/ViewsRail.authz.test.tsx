@@ -4,10 +4,9 @@ import { render, screen } from 'tests/test-utils';
 import { setupAuthzAllow } from 'lib/authz/utils/authz-test-utils';
 import { DashboardListPermission } from 'lib/authz/hooks/useAuthZ/permissions/dashboard.permissions';
 
-import ViewsRailGuard from 'pages/DashboardsListPage/components/DashboardsList/ViewsRailGuard';
-
 import type { BuiltinListView } from '../../types';
 import ViewsRail from '../ViewsRail';
+import ViewsRailGuard from '../ViewsRailGuard';
 
 const BUILTIN_VIEWS: BuiltinListView[] = [
 	{
@@ -38,7 +37,11 @@ function renderRail(
 			onDelete={jest.fn()}
 			onRename={jest.fn()}
 			testIdPrefix="dashboards"
-			guard={(content): JSX.Element => <ViewsRailGuard>{content}</ViewsRailGuard>}
+			guard={(content): JSX.Element => (
+				<ViewsRailGuard checks={[DashboardListPermission]}>
+					{content}
+				</ViewsRailGuard>
+			)}
 			{...props}
 		/>,
 	);

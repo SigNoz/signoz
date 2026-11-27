@@ -13,6 +13,7 @@ import { isDefaultRuleListFilter, isSameRuleListFilter } from './utils';
 interface UseAlertRuleViewsArgs {
 	filter: RuleListFilter;
 	applyFilter: (next: RuleListFilter) => void;
+	enabled: boolean;
 }
 
 export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilter> {
@@ -20,12 +21,14 @@ export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilt
 }
 
 // A link carrying only `view=<custom id>` gets that view's filter applied once
-// the views load; a link carrying its own filter params keeps them.
+// the views load; a link carrying its own filter params keeps them. A held
+// query reports no loading, so the link also waits for `enabled`.
 export function useAlertRuleViews({
 	filter,
 	applyFilter,
+	enabled,
 }: UseAlertRuleViewsArgs): UseAlertRuleViewsResult {
-	const api = useRuleViews();
+	const api = useRuleViews({ enabled });
 
 	const ctx = useRuleViewCtx();
 
@@ -48,7 +51,7 @@ export function useAlertRuleViews({
 	const hasResolvedLinkedView = useRef(false);
 
 	useEffect(() => {
-		if (hasResolvedLinkedView.current || api.isLoading) {
+		if (hasResolvedLinkedView.current || !enabled || api.isLoading) {
 			return;
 		}
 		hasResolvedLinkedView.current = true;
@@ -59,7 +62,7 @@ export function useAlertRuleViews({
 		) {
 			applyFilter(activeView.filter);
 		}
-	}, [api.isLoading, activeView, applyFilter, filter]);
+	}, [enabled, api.isLoading, activeView, applyFilter, filter]);
 
 	return { ...views, customViewsLoading: api.isLoading };
 }

@@ -39,9 +39,9 @@ import ListHeaderZone from 'components/ListViews/ListHeaderZone/ListHeaderZone';
 import ListStatusBar from 'components/ListViews/ListStatusBar/ListStatusBar';
 import type { ViewSaveMode } from 'components/ListViews/types';
 import ViewsRail from 'components/ListViews/ViewsRail/ViewsRail';
+import ViewsRailGuard from 'components/ListViews/ViewsRail/ViewsRailGuard';
 import DashboardsResults from './DashboardsResults';
 import NewDashboardButton from './NewDashboardButton';
-import ViewsRailGuard from './ViewsRailGuard';
 import WorkspaceEmptyState from './WorkspaceEmptyState';
 
 import styles from './DashboardsList.module.scss';
@@ -133,7 +133,7 @@ function DashboardsList(): JSX.Element {
 	}, [setRailCollapsed, railCollapsed]);
 	const guardViewsRail = useCallback(
 		(content: ReactElement): ReactElement => (
-			<ViewsRailGuard>{content}</ViewsRailGuard>
+			<ViewsRailGuard checks={LIST_CHECKS}>{content}</ViewsRailGuard>
 		),
 		[],
 	);
