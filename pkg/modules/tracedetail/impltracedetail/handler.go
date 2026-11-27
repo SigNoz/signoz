@@ -3,6 +3,7 @@ package impltracedetail
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/tracedetail"
@@ -126,4 +127,29 @@ func (h *handler) GetThread(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(rw, http.StatusOK, result)
+}
+
+// These routes are registered for their place in the API spec; the implementation follows.
+func (h *handler) GetTraceHighlights(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace highlights is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpans(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span list is not implemented yet"))
+}
+
+func (h *handler) GetTraceSpan(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanChildren(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span children is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanDescendants(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span descendants is not implemented yet"))
+}
+
+func (h *handler) ListTraceSpanAncestors(rw http.ResponseWriter, _ *http.Request) {
+	render.Error(rw, errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "trace span ancestors is not implemented yet"))
 }

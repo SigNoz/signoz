@@ -11,6 +11,8 @@ type TraceStats struct {
 	TotalErrorSpans    uint64
 	HasMissingSpans    bool
 	GenAISpanCount     uint64
+	LLMCallCount       uint64
+	ToolCallCount      uint64
 	Tokens             TraceAITokens
 	TotalCost          *float64
 }
@@ -31,7 +33,9 @@ type GettableTraceSummary struct {
 
 // TraceAISummary is present when any span carries a gen_ai gate key.
 type TraceAISummary struct {
-	Tokens TraceAITokens `json:"tokens" required:"true"`
+	LLMCallCount  uint64        `json:"llmCallCount" required:"true" description:"Number of LLM calls: spans with gen_ai.request.model."`
+	ToolCallCount uint64        `json:"toolCallCount" required:"true" description:"Number of tool call spans: spans with gen_ai.tool.name."`
+	Tokens        TraceAITokens `json:"tokens" required:"true"`
 	// TotalCost is omitted when no span carries a cost attribute.
 	TotalCost *float64 `json:"totalCost,omitempty" nullable:"false"`
 }
@@ -56,7 +60,7 @@ func NewGettableTraceSummary(stats *TraceStats) *GettableTraceSummary {
 		HasMissingSpans:       stats.HasMissingSpans,
 	}
 	if stats.GenAISpanCount > 0 {
-		summary.AI = &TraceAISummary{Tokens: stats.Tokens, TotalCost: stats.TotalCost}
+		summary.AI = &TraceAISummary{LLMCallCount: stats.LLMCallCount, ToolCallCount: stats.ToolCallCount, Tokens: stats.Tokens, TotalCost: stats.TotalCost}
 	}
 	return summary
 }
