@@ -23,17 +23,61 @@ jobs:
       PRIMUS_REF: main
       JS_SRC: frontend
       JS_PKG_MANAGER: pnpm
-  test:
+  test-shard:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    uses: signoz/primus.workflows/.github/workflows/js-test.yaml@main
-    secrets: inherit
-    with:
-      PRIMUS_REF: main
-      JS_SRC: frontend
-      JS_PKG_MANAGER: pnpm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(github.event_name == 'merge_group' && '[1, 2, 3]' || '[1]') }}
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          fetch-depth: ${{ github.event_name == 'merge_group' && 1 || 0 }}
+          filter: blob:none
+      - name: install-pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: install-frontend
+        run: cd frontend && pnpm install
+      - name: test
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+        run: |
+          cd frontend
+          # Changes to these reach every test without any test importing them.
+          RUN_ALL='^(\.github/workflows/jsci\.yaml|frontend/(jest\.(config\.ts|setup\.ts|environment\.cjs)|package\.json|pnpm-lock\.yaml|tsconfig[^/]*\.json|babel\.config\.cjs|__mocks__/|src/mocks-server/))'
+          if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null &&
+            ! git diff --name-only "$BASE_SHA...HEAD" | grep -qE "$RUN_ALL"; then
+            pnpm test --changedSince="$BASE_SHA" --passWithNoTests
+          else
+            pnpm test --shard="$SHARD"
+          fi
+  # Branch protection requires a check named "test / js"; this job keeps that name stable across shard changes.
+  test:
+    name: test / js
+    needs: test-shard
+    if: always() && needs.test-shard.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - name: shards-passed
+        run: test "${{ needs.test-shard.result }}" = success
   fmt:
     if: |
       github.event_name == 'merge_group' ||
