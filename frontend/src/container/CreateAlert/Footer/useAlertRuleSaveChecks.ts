@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useChannelOptions } from 'hooks/notificationChannels/useChannelOptions';
+import { getChannelIds } from 'hooks/notificationChannels/utils';
 import type { BrandedPermission } from 'lib/authz/hooks/useAuthZ/types';
 
 import { useCreateAlertState } from '../context';
@@ -13,10 +14,8 @@ export interface UseAlertRuleSaveChecksReturn {
 }
 
 /**
- * Save and Test notification checks for the rule form. Rules name their
- * channels; the checks need channel ids, which come from the channel list the
- * form already loads. A name the list lacks is a deleted channel, which the
- * backend skips too.
+ * Save and Test notification checks for the rule form. The channel ids come
+ * from the channel list the form already loads.
  */
 export function useAlertRuleSaveChecks(): UseAlertRuleSaveChecksReturn {
 	const { thresholdState, savedChannelNames, isEditMode, ruleId } =
@@ -29,15 +28,12 @@ export function useAlertRuleSaveChecks(): UseAlertRuleSaveChecksReturn {
 	);
 
 	return useMemo(() => {
-		const idByName = new Map(channels.map((c) => [c.name, c.id]));
-		const toIds = (names: string[]): string[] =>
-			names.flatMap((name) => idByName.get(name) ?? []);
-		const selectedChannelIds = toIds(selectedChannels);
+		const selectedChannelIds = getChannelIds(channels, selectedChannels);
 
 		return {
 			saveChecks: getRuleSaveChecks({
 				ruleId: isEditMode ? ruleId : undefined,
-				savedChannelIds: toIds(savedChannelNames),
+				savedChannelIds: getChannelIds(channels, savedChannelNames),
 				selectedChannelIds,
 			}),
 			testChecks: getRuleCreateChecks(selectedChannelIds),
