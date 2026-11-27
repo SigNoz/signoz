@@ -7,6 +7,7 @@ import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	type AlertHistoryArgs,
+	deniesRuleRead,
 	listsTimelineRows,
 	rowActionLinkTestId,
 	untilLoaded,
@@ -39,4 +40,20 @@ export const openRowActions = async ({
 	await userEvent.click(actions);
 	const link = await screen.findByTestId(linkTestId);
 	await waitFor(() => expect(link).toBeVisible());
+};
+
+/** The page refuses the rule: the full-page denial names `read` on it. */
+export const expectRuleDenied = async ({
+	args,
+}: PlayContext): Promise<void> => {
+	if (!deniesRuleRead(args)) {
+		return;
+	}
+
+	await screen.findByText(
+		'Uh-oh! You are not authorized',
+		undefined,
+		untilLoaded,
+	);
+	await screen.findByText(/read:rule:/);
 };

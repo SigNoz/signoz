@@ -1689,6 +1689,8 @@ describe('PrivateRoute', () => {
 		> = {
 			LIST_ALL_ALERT: { path: ROUTES.LIST_ALL_ALERT, deniedRoles: DENIED_ROLES },
 			ALERTS_NEW: { path: ROUTES.ALERTS_NEW, deniedRoles: DENIED_ROLES },
+			ALERT_OVERVIEW: { path: ROUTES.ALERT_OVERVIEW, deniedRoles: DENIED_ROLES },
+			ALERT_HISTORY: { path: ROUTES.ALERT_HISTORY, deniedRoles: DENIED_ROLES },
 			CHANNELS_NEW: { path: ROUTES.CHANNELS_NEW, deniedRoles: DENIED_ROLES },
 			CHANNELS_EDIT: {
 				path: ROUTES.CHANNELS_EDIT.replace(':channelId', 'channel-id-1'),

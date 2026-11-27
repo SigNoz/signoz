@@ -1,4 +1,6 @@
 import { initialQueryAIWithType } from 'constants/queryBuilder';
+import { buildRuleUpdatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import { denyPermissions } from 'lib/authz/utils/authz-test-utils';
 import { defaultPostableAlertRuleV2 } from 'container/CreateAlert/constants';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlert/utils';
 import { getActiveBuilder } from 'lib/query/builderSlot';
@@ -42,6 +44,12 @@ jest.mock('uplot', () => {
 });
 
 mockAppLocation({ search: '' });
+
+jest.mock('lib/authz/hooks/useAuthZ/useAuthZ');
+
+beforeEach(() => {
+	denyPermissions();
+});
 
 const ENTER_ALERT_RULE_NAME_PLACEHOLDER = 'Enter alert rule name';
 
@@ -141,5 +149,55 @@ describe('CreateAlertHeader', () => {
 		);
 
 		alertStateSpy.mockRestore();
+	});
+
+	describe('authz', () => {
+		const RULE_ID = 'rule-1';
+		const renderEdit = (): void => {
+			render(
+				<CreateAlertProvider
+					isEditMode
+					ruleId={RULE_ID}
+					initialAlertType={AlertTypes.METRICS_BASED_ALERT}
+					initialAlertState={getCreateAlertLocalStateFromAlertDef(
+						defaultPostableAlertRuleV2,
+					)}
+				>
+					<CreateAlertHeader />
+				</CreateAlertProvider>,
+			);
+		};
+		const nameField = (): HTMLElement =>
+			screen.getByPlaceholderText(ENTER_ALERT_RULE_NAME_PLACEHOLDER);
+
+		it('locks renaming and relabelling a saved rule without update', () => {
+			denyPermissions(buildRuleUpdatePermission(RULE_ID));
+			renderEdit();
+
+			expect(nameField()).toBeDisabled();
+			expect(screen.getByTestId('alert-add-label-button')).toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(screen.getByTestId('label-remove-severity')).toBeDisabled();
+		});
+
+		it('lets a saved rule be renamed and relabelled with update', () => {
+			renderEdit();
+
+			expect(nameField()).toBeEnabled();
+			expect(screen.getByTestId('alert-add-label-button')).not.toHaveAttribute(
+				'aria-disabled',
+				'true',
+			);
+			expect(screen.getByTestId('label-remove-severity')).toBeEnabled();
+		});
+
+		it('never locks naming a new rule', () => {
+			denyPermissions(buildRuleUpdatePermission(RULE_ID));
+			renderCreateAlertHeader();
+
+			expect(nameField()).toBeEnabled();
+		});
 	});
 });

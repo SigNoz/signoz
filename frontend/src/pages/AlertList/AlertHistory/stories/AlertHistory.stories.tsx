@@ -14,13 +14,13 @@ const pageStory = storyMocks(alertHistoryMocks, { layout: 'app' });
 
 /**
  * One rule's firing history: the timeline of state changes, the overall status for
- * the period, and the series contributing most to it.
+ * the period, and the series contributing most to it. Gated on authz permissions.
  *
  * Route: `/alerts/history?ruleId=...`.
  */
 const meta = {
-	title: 'Pages/Alerts/History',
-	tags: ['play'],
+	title: 'Pages/Alerts/History/Overview',
+	tags: ['authz', 'play'],
 	component: AlertList,
 	...pageStory,
 	parameters: { ...pageStory.parameters },

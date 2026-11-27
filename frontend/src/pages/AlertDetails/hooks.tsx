@@ -164,6 +164,7 @@ export const useGetAlertRuleDetailsStats =
 
 type GetAlertRuleDetailsTopContributorsProps = GetAlertRuleDetailsApiProps & {
 	data: GetRuleHistoryTopContributors200 | undefined;
+	error: AxiosError<RenderErrorResponseDTO> | null;
 };
 
 export const useGetAlertRuleDetailsTopContributors =
@@ -172,7 +173,7 @@ export const useGetAlertRuleDetailsTopContributors =
 
 		const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 
-		const { isLoading, isRefetching, isError, data } =
+		const { isLoading, isRefetching, isError, data, error } =
 			useGetRuleHistoryTopContributors(
 				{ id: ruleId || '' },
 				{ start: startTime, end: endTime },
@@ -185,7 +186,15 @@ export const useGetAlertRuleDetailsTopContributors =
 				},
 			);
 
-		return { isLoading, isRefetching, isError, data, isValidRuleId, ruleId };
+		return {
+			isLoading,
+			isRefetching,
+			isError,
+			data,
+			error,
+			isValidRuleId,
+			ruleId,
+		};
 	};
 
 type GetAlertRuleDetailsTimelineTableProps = GetAlertRuleDetailsApiProps & {
@@ -469,9 +478,9 @@ export const useAlertRuleClone = ({
 		},
 	);
 
-	const handleAlertClone = (): void => {
+	const handleAlertClone = useCallback((): void => {
 		cloneAlert();
-	};
+	}, [cloneAlert]);
 
 	return { handleAlertClone };
 };
@@ -504,10 +513,10 @@ export const useAlertRuleDelete = ({
 		},
 	);
 
-	const handleAlertDelete = (): void => {
+	const handleAlertDelete = useCallback((): void => {
 		const args = { id: ruleId };
 		deleteAlert(args);
-	};
+	}, [deleteAlert, ruleId]);
 
 	return { handleAlertDelete };
 };

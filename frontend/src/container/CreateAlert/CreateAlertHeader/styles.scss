@@ -60,20 +60,8 @@
 	flex-direction: column;
 	gap: 8px;
 
-	&__add-button {
-		width: fit-content;
-		font-size: 13px;
-		color: var(--l2-foreground);
-		border: 1px solid var(--l1-border);
-		background-color: transparent;
-		cursor: pointer;
-		padding: 4px 8px;
-		border-radius: 4px;
-
-		&:hover {
-			border-color: var(--l1-border);
-			color: var(--l1-foreground);
-		}
+	&__add {
+		display: flex;
 	}
 
 	&__existing-labels {

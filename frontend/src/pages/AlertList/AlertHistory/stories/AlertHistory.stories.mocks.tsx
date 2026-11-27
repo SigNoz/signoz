@@ -6,6 +6,9 @@
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { rest } from 'msw';
 
+import { buildRuleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+
+import { grantsAll } from '@/storybook/access/access';
 import { choiceControl, countControl } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -167,7 +170,9 @@ export type AlertHistoryArgs = PageStoryArgs<typeof alertHistoryMocks>;
 export const untilLoaded = { timeout: 15_000 };
 
 export const listsTimelineRows = (args: AlertHistoryArgs): boolean =>
-	args.dataState === 'loaded' && args.timelineEntries > 0;
+	args.dataState === 'loaded' &&
+	args.timelineEntries > 0 &&
+	!deniesRuleRead(args);
 
 const POPOVER_LINK_TEST_IDS: Record<RelatedExplorer, string | null> = {
 	logs: 'alert-popover-view-logs',
@@ -179,3 +184,9 @@ const POPOVER_LINK_TEST_IDS: Record<RelatedExplorer, string | null> = {
 /** The popover link a row's actions open, or null when the rule has none and the actions are disabled. */
 export const rowActionLinkTestId = (args: AlertHistoryArgs): string | null =>
 	POPOVER_LINK_TEST_IDS[args.relatedExplorer];
+
+/** The history loads, but the page refuses the rule for want of `read`. */
+export const deniesRuleRead = (args: AlertHistoryArgs): boolean =>
+	args.dataState === 'loaded' &&
+	args.authzState === 'loaded' &&
+	!grantsAll(args, buildRuleReadPermission(STORY_RULE_ID));

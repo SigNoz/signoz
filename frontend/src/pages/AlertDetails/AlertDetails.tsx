@@ -12,7 +12,10 @@ import {
 	getAlertTypeFromAlertDef,
 	getCreateAlertLocalStateFromAlertDef,
 } from 'container/CreateAlert/utils';
+import { getRuleActionChecks } from 'container/ListAlertRules/utils';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { withAuthZPage } from 'lib/authz/components/withAuthZ/withAuthZPage';
+import { buildRuleReadPermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 import { useAppLocation } from 'lib/router/useAppLocation';
 import { useAlertRule } from 'providers/Alert';
 import { fromRuleDTOToPostableRuleV2 } from 'types/api/alerts/convert';
@@ -120,4 +123,20 @@ function AlertDetails(): JSX.Element {
 	);
 }
 
-export default AlertDetails;
+/**
+ * Gates on `read`. The header's actions are warmed in the same request, so they
+ * do not flip from loading once the page shows.
+ */
+export default withAuthZPage(AlertDetails, {
+	checks: (_props, router) => {
+		const ruleId = router.searchParams.get(QueryParams.ruleId);
+		return ruleId ? [buildRuleReadPermission(ruleId)] : [];
+	},
+	preloadChecks: (_props, router) => {
+		const ruleId = router.searchParams.get(QueryParams.ruleId);
+		return ruleId
+			? [...new Set(Object.values(getRuleActionChecks(ruleId)).flat())]
+			: [];
+	},
+	fallbackOnLoading: <Spinner />,
+});

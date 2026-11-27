@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';
 import { Divider } from '@signozhq/ui/divider';
-import { Dropdown, type DropdownItemType } from '@signozhq/ui/dropdown';
 import { Switch } from '@signozhq/ui/switch';
+import { getRuleActionChecks } from 'container/ListAlertRules/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import AuthZDropdown from 'lib/authz/components/AuthZDropdown/AuthZDropdown';
+import type { AuthZDropdownItemType } from 'lib/authz/components/AuthZDropdown/types';
+import { useAuthZ } from 'lib/authz/hooks/useAuthZ/useAuthZ';
+import { useAuthZDisabled } from 'lib/authz/hooks/useAuthZDisabled/useAuthZDisabled';
 import { Copy, Ellipsis, Trash2 } from '@signozhq/icons';
 import {
 	useAlertRuleClone,
@@ -15,6 +19,7 @@ import CopyToClipboard from 'periscope/components/CopyToClipboard';
 import { useAlertRule } from 'providers/Alert';
 
 import { AlertHeaderProps } from '../AlertHeader';
+import { useRuleChannelIds } from './useRuleChannelIds';
 
 import './ActionButtons.styles.scss';
 
@@ -32,23 +37,40 @@ function AlertActionButtons({
 	const { handleAlertClone } = useAlertRuleClone({ ruleId });
 	const { handleAlertDelete } = useAlertRuleDelete({ ruleId });
 
-	const menuItems: DropdownItemType[] = [
-		{
-			type: 'item',
-			value: 'clone-rule',
-			label: 'Clone',
-			prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
-			onClick: handleAlertClone,
-		},
-		{
-			type: 'item',
-			value: 'delete-rule',
-			label: 'Delete',
-			prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
-			onClick: handleAlertDelete,
-			danger: true,
-		},
-	];
+	const channelIds = useRuleChannelIds();
+	const checks = useMemo(
+		() => getRuleActionChecks(ruleId, channelIds),
+		[ruleId, channelIds],
+	);
+	const toggleLock = useAuthZDisabled(checks.toggle);
+	// The page preload cannot know the channel ids, so warm Clone's checks here
+	// for the menu to open already resolved.
+	useAuthZ(checks.clone);
+
+	const menuItems = useMemo<AuthZDropdownItemType[]>(
+		() => [
+			{
+				type: 'item',
+				value: 'clone-rule',
+				label: 'Clone',
+				testId: 'alert-details-action-clone',
+				checks: checks.clone,
+				prefix: <Copy size={16} color={Color.BG_VANILLA_400} />,
+				onClick: handleAlertClone,
+			},
+			{
+				type: 'item',
+				value: 'delete-rule',
+				label: 'Delete',
+				testId: 'alert-details-action-delete',
+				checks: checks.delete,
+				prefix: <Trash2 size={16} color={Color.BG_CHERRY_400} />,
+				onClick: handleAlertDelete,
+				danger: true,
+			},
+		],
+		[checks, handleAlertClone, handleAlertDelete],
+	);
 
 	// state for immediate UI feedback rather than waiting for onSuccess of handleAlertStateTiggle to updating the alertRuleState
 	const [isAlertRuleDisabled, setIsAlertRuleDisabled] = useState<
@@ -73,13 +95,23 @@ function AlertActionButtons({
 
 	return (
 		<div className="alert-action-buttons">
-			<Tooltip title={isAlertRuleDisabled ? 'Enable alert' : 'Disable alert'}>
+			<Tooltip
+				title={
+					toggleLock.disabled
+						? undefined
+						: isAlertRuleDisabled
+							? 'Enable alert'
+							: 'Disable alert'
+				}
+			>
 				{isAlertRuleDisabled !== undefined && (
 					<Switch
 						color="primary"
 						textPlacement="right"
 						onChange={toggleAlertRule}
 						value={!isAlertRuleDisabled}
+						disabled={toggleLock.disabled}
+						disabledTooltip={toggleLock.disabledTooltip}
 						testId="alert-actions-toggle"
 					/>
 				)}
@@ -92,7 +124,7 @@ function AlertActionButtons({
 
 			<Tooltip title="More options">
 				<span className="dropdown-trigger-wrapper">
-					<Dropdown items={menuItems} nativeButton align="end" side="bottom">
+					<AuthZDropdown items={menuItems} nativeButton align="end" side="bottom">
 						<Button
 							type="text"
 							data-testid="alert-actions-menu"
@@ -103,7 +135,7 @@ function AlertActionButtons({
 								/>
 							}
 						/>
-					</Dropdown>
+					</AuthZDropdown>
 				</span>
 			</Tooltip>
 		</div>

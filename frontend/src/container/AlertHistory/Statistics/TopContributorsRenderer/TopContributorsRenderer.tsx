@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { useGetAlertRuleDetailsTopContributors } from 'pages/AlertDetails/hooks';
 import { labelsArrayToObject } from 'container/AlertHistory/utils/labelAdapters';
 import DataStateRenderer from 'periscope/components/DataStateRenderer/DataStateRenderer';
@@ -13,8 +15,9 @@ type TopContributorsRendererProps = {
 function TopContributorsRenderer({
 	totalCurrentTriggers,
 }: TopContributorsRendererProps): JSX.Element {
-	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+	const { isLoading, isRefetching, data, error, isValidRuleId, ruleId } =
 		useGetAlertRuleDetailsTopContributors();
+	const apiError = useMemo(() => convertToApiError(error), [error]);
 
 	// TODO(shaheer): render the DataStateRenderer inside the TopContributorsCard, it should display the title and view all
 	const adaptedData = useMemo((): AlertRuleTopContributors[] | null => {
@@ -31,11 +34,19 @@ function TopContributorsRenderer({
 		}));
 	}, [data?.data]);
 
+	if (apiError) {
+		return (
+			<div data-testid="top-contributors-error">
+				<ErrorContent error={apiError} />
+			</div>
+		);
+	}
+
 	return (
 		<DataStateRenderer
 			isLoading={isLoading}
 			isRefetching={isRefetching}
-			isError={isError || !isValidRuleId || !ruleId}
+			isError={!isValidRuleId || !ruleId}
 			data={adaptedData}
 		>
 			{(topContributorsData): JSX.Element => (

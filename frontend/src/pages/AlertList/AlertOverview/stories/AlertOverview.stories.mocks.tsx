@@ -7,7 +7,10 @@ import { rest } from 'msw';
 import { userEvent, waitFor, within } from 'storybook/test';
 
 import { getRuleCreateChecks } from 'container/CreateAlert/ruleSaveChecks';
+import { getRuleActionChecks } from 'container/ListAlertRules/utils';
+import { buildNotificationChannelDetachPermission } from 'lib/authz/hooks/useAuthZ/permissions/notification-channel.permissions';
 import {
+	buildRuleDetachPermission,
 	buildRuleReadPermission,
 	buildRuleUpdatePermission,
 } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
@@ -172,7 +175,9 @@ export const alertOverviewMocks = defineStoryMocks({
 type AlertOverviewArgs = PageStoryArgs<typeof alertOverviewMocks>;
 
 /** `ops-slack`, the channel the story rule notifies: the first one listed. */
-const SAVED_CHANNEL_ID = '1';
+export const SAVED_CHANNEL_ID = '1';
+
+const RULE_ACTIONS = getRuleActionChecks(STORY_RULE_ID);
 
 const passes = (
 	args: AlertOverviewArgs,
@@ -183,6 +188,30 @@ const passes = (
 export const showsRuleForm = (args: AlertOverviewArgs): boolean =>
 	args.dataState === 'loaded' &&
 	passes(args, buildRuleReadPermission(STORY_RULE_ID));
+
+/** The rule loads, but the page refuses it for want of `read`. */
+export const deniesRuleRead = (args: AlertOverviewArgs): boolean =>
+	args.dataState === 'loaded' &&
+	!passes(args, buildRuleReadPermission(STORY_RULE_ID));
+
+export const canToggleRule = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) && passes(args, ...RULE_ACTIONS.toggle);
+
+export const canCloneRule = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) && passes(args, ...RULE_ACTIONS.clone);
+
+export const canDeleteRule = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) && passes(args, ...RULE_ACTIONS.delete);
+
+/** Whether the saved channel can be taken off the rule; it must be listed to be checked. */
+export const canDetachSavedChannel = (args: AlertOverviewArgs): boolean =>
+	showsRuleForm(args) &&
+	args.channels > 0 &&
+	passes(
+		args,
+		buildRuleDetachPermission(STORY_RULE_ID),
+		buildNotificationChannelDetachPermission(SAVED_CHANNEL_ID),
+	);
 
 /** Saving the rule unchanged needs `update` alone. */
 export const canSaveRule = (args: AlertOverviewArgs): boolean =>

@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { X } from '@signozhq/icons';
+import { Button } from '@signozhq/ui/button';
 import { useNotifications } from 'hooks/useNotifications';
 
 import { LabelInputState, LabelsInputProps } from './types';
@@ -8,6 +9,8 @@ function LabelsInput({
 	labels,
 	onLabelsChange,
 	validateLabelsKey,
+	disabled = false,
+	disabledTooltip,
 }: LabelsInputProps): JSX.Element {
 	const { notifications } = useNotifications();
 	const [inputState, setInputState] = useState<LabelInputState>({
@@ -134,6 +137,8 @@ function LabelsInput({
 								type="button"
 								className="labels-input__remove-button"
 								aria-label={`Remove label ${key}`}
+								data-testid={`label-remove-${key}`}
+								disabled={disabled}
 								onClick={(): void => handleRemoveLabel(key)}
 							>
 								<X size="md" />
@@ -144,14 +149,19 @@ function LabelsInput({
 			)}
 
 			{!isAdding ? (
-				<button
-					className="labels-input__add-button"
-					type="button"
-					onClick={handleAddLabelsClick}
-					data-testid="alert-add-label-button"
-				>
-					+ Add labels
-				</button>
+				<div className="labels-input__add">
+					<Button
+						variant="outlined"
+						color="secondary"
+						size="sm"
+						disabled={disabled}
+						disabledTooltip={disabledTooltip}
+						onClick={handleAddLabelsClick}
+						testId="alert-add-label-button"
+					>
+						+ Add labels
+					</Button>
+				</div>
 			) : (
 				<div className="labels-input__input-container">
 					<input
