@@ -1,4 +1,4 @@
-"""Seed data for the queriercommon keyless-semantics tests.
+"""Seed data for the queriercommon keyless-semantics and explicit-context tests.
 
 Three identities exist in every signal. GOLD and SILVER carry the test keys.
 NONE carries no key at all. The tests assert which identities a filter
@@ -8,6 +8,7 @@ The attribute names are outside every semantic-convention family, so the
 seeded data pins base behavior with any semconv overlay state.
 """
 
+import json
 from collections.abc import Callable, Generator
 from datetime import UTC, datetime, timedelta
 
@@ -122,3 +123,103 @@ def keyless_series(insert_metrics: Callable[[list[Metrics]], None]) -> Generator
         ]
     )
     yield start, start + points * 60
+
+
+EXPLICIT_PREFIX = "explicit-ctx"
+# String attribute that identifies the row. It has one context only. Each
+# assertion reads it back.
+IDENTITY_KEY = "probe.id"
+# Attribute with no column of the same name. It tests a key under the
+# signal's own context that metadata does not know. On logs, the rows without
+# the attribute have the value nested in the body JSON.
+ATTRIBUTE_ONLY_KEY = "route.tag"
+CONTESTED_VALUE = "checkout"
+
+# Row identities. Each row shows where the contested value is:
+# - COLUMN_ONLY: in the column (`name` on spans, `severity_text` on logs).
+# - ATTRIBUTE_ONLY: in the string attribute with the same name.
+# - BOTH: in the column and in the string attribute.
+# - NEITHER: in none of them.
+# - NUMBER_ATTRIBUTE: in a number attribute with the same name. Its data
+#   type is different from the column.
+COLUMN_ONLY = f"{EXPLICIT_PREFIX}-column"
+ATTRIBUTE_ONLY = f"{EXPLICIT_PREFIX}-attribute"
+BOTH = f"{EXPLICIT_PREFIX}-both"
+NEITHER = f"{EXPLICIT_PREFIX}-neither"
+NUMBER_ATTRIBUTE = f"{EXPLICIT_PREFIX}-number"
+NUMBER_VALUE = 42
+
+# (identity, value in the column, value in the string attribute, value in
+#  the number attribute, resource service.name, attribute service.name,
+#  has route.tag, insert offset in seconds)
+ROWS = [
+    (COLUMN_ONLY, True, False, False, "svc-a", None, True, 1),
+    (ATTRIBUTE_ONLY, False, True, False, "svc-b", "svc-a", False, 2),
+    (BOTH, True, True, False, "svc-a", "svc-a", True, 3),
+    (NEITHER, False, False, False, "svc-b", "svc-b", False, 4),
+    (NUMBER_ATTRIBUTE, False, False, True, "svc-b", None, False, 5),
+]
+
+# Logs only. The scope name is a declared path. A scope attribute also has
+# the name `name`. A second scope attribute has a plain name.
+SCOPE_NAME = "scope-a"
+SCOPE_ATTRIBUTE_KEY = "env"
+SCOPE_ATTRIBUTE_VALUE = "prod"
+
+
+@pytest.fixture(name="ambiguous_rows", scope="function")
+def ambiguous_rows(
+    insert_logs: Callable[[list[Logs]], None],
+    insert_traces: Callable[[list[Traces]], None],
+) -> Generator[datetime]:
+    """Inserts one span and one log for each identity. Every row has a
+    resource `service.name`. Some rows also have a span or log attribute
+    `service.name` with a different value. On logs, the rows without the
+    `route.tag` attribute have the value in the body JSON. Logs with the
+    column value have the scope name. Logs with the attribute value have the
+    scope attributes. Yields the base timestamp."""
+    now = datetime.now(tz=UTC).replace(microsecond=0) - timedelta(minutes=1)
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=offset),
+                duration=timedelta(milliseconds=10),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                name=CONTESTED_VALUE if column else "other",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                resources={"service.name": resource_service},
+                attributes={
+                    IDENTITY_KEY: identity,
+                    **({"name": CONTESTED_VALUE} if attribute else {}),
+                    **({"name": NUMBER_VALUE} if number else {}),
+                    **({"service.name": attribute_service} if attribute_service else {}),
+                    **({ATTRIBUTE_ONLY_KEY: CONTESTED_VALUE} if tagged else {}),
+                },
+            )
+            for identity, column, attribute, number, resource_service, attribute_service, tagged, offset in ROWS
+        ]
+    )
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=offset),
+                body=json.dumps({} if tagged else {"route": {"tag": CONTESTED_VALUE}}),
+                severity_text="ERROR" if column else "INFO",
+                scope_name=SCOPE_NAME if column else "",
+                scope_attributes={"name": CONTESTED_VALUE, SCOPE_ATTRIBUTE_KEY: SCOPE_ATTRIBUTE_VALUE} if attribute else {},
+                resources={"service.name": resource_service},
+                attributes={
+                    IDENTITY_KEY: identity,
+                    **({"severity_text": "ERROR"} if attribute else {}),
+                    **({"severity_text": NUMBER_VALUE} if number else {}),
+                    **({"service.name": attribute_service} if attribute_service else {}),
+                    **({ATTRIBUTE_ONLY_KEY: CONTESTED_VALUE} if tagged else {}),
+                },
+            )
+            for identity, column, attribute, number, resource_service, attribute_service, tagged, offset in ROWS
+        ]
+    )
+    yield now
