@@ -4,13 +4,17 @@ import (
 	"context"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 )
 
+var _ telemetrystore.TelemetryStoreProfileHook = (*provider)(nil)
+
 type provider struct {
 	settings telemetrystore.QuerySettings
+	profile  string
 }
 
 func NewSettingsFactory() factory.ProviderFactory[telemetrystore.TelemetryStoreHook, telemetrystore.Config] {
@@ -25,7 +29,7 @@ func NewSettings(ctx context.Context, providerSettings factory.ProviderSettings,
 	}, nil
 }
 
-func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
+func (hook *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent) context.Context {
 	settings := clickhouse.Settings{}
 
 	settings["log_comment"] = ctxtypes.CommentFromContext(ctx).String()
@@ -35,27 +39,27 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 	settings["use_variant_as_common_type"] = 0
 
 	if ctx.Value("enforce_max_result_rows") != nil {
-		settings["max_result_rows"] = h.settings.MaxResultRows
+		settings["max_result_rows"] = hook.settings.MaxResultRows
 	}
 
-	if h.settings.MaxBytesToRead != 0 {
-		settings["max_bytes_to_read"] = h.settings.MaxBytesToRead
+	if hook.settings.MaxBytesToRead != 0 {
+		settings["max_bytes_to_read"] = hook.settings.MaxBytesToRead
 	}
 
-	if h.settings.MaxExecutionTime != 0 {
-		settings["max_execution_time"] = h.settings.MaxExecutionTime
+	if hook.settings.MaxExecutionTime != 0 {
+		settings["max_execution_time"] = hook.settings.MaxExecutionTime
 	}
 
-	if h.settings.MaxExecutionTimeLeaf != 0 {
-		settings["max_execution_time_leaf"] = h.settings.MaxExecutionTimeLeaf
+	if hook.settings.MaxExecutionTimeLeaf != 0 {
+		settings["max_execution_time_leaf"] = hook.settings.MaxExecutionTimeLeaf
 	}
 
-	if h.settings.TimeoutBeforeCheckingExecutionSpeed != 0 {
-		settings["timeout_before_checking_execution_speed"] = h.settings.TimeoutBeforeCheckingExecutionSpeed
+	if hook.settings.TimeoutBeforeCheckingExecutionSpeed != 0 {
+		settings["timeout_before_checking_execution_speed"] = hook.settings.TimeoutBeforeCheckingExecutionSpeed
 	}
 
-	if h.settings.IgnoreDataSkippingIndices != "" {
-		settings["ignore_data_skipping_indices"] = h.settings.IgnoreDataSkippingIndices
+	if hook.settings.IgnoreDataSkippingIndices != "" {
+		settings["ignore_data_skipping_indices"] = hook.settings.IgnoreDataSkippingIndices
 	}
 
 	if ctx.Value("clickhouse_max_threads") != nil {
@@ -76,8 +80,20 @@ func (h *provider) BeforeQuery(ctx context.Context, _ *telemetrystore.QueryEvent
 		settings["result_overflow_mode"] = ctx.Value("result_overflow_mode")
 	}
 
+	if hook.profile != "" {
+		// The server rejects profile as a plain setting over the native protocol but applies it as a custom
+		// one. Every query sends it, so a SETTINGS clause in the query cannot escape its constraints.
+		settings["profile"] = clickhouse.CustomSetting{Value: hook.profile}
+	}
+
 	ctx = clickhouse.Context(ctx, clickhouse.WithSettings(settings))
 	return ctx
 }
 
-func (h *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}
+func (hook *provider) WithProfile(profile string) telemetrystore.TelemetryStoreHook {
+	profiled := *hook
+	profiled.profile = profile
+	return &profiled
+}
+
+func (hook *provider) AfterQuery(ctx context.Context, event *telemetrystore.QueryEvent) {}

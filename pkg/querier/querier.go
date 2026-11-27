@@ -233,7 +233,7 @@ func (q *querier) buildQueries(
 			if !ok {
 				return nil, nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid clickhouse query spec %T", query.Spec)
 			}
-			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore, chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
+			chSQLQuery := newchSQLQuery(q.logger, q.telemetryStore.WithProfile(ClickHouseSQLProfile), chQuery, nil, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType, tmplVars)
 			queries[chQuery.Name] = chSQLQuery
 		case qbtypes.QueryTypeTraceOperator:
 			traceOpQuery, ok := query.Spec.(qbtypes.QueryBuilderTraceOperator)
@@ -925,7 +925,7 @@ func (q *querier) createRangedQuery(_ valuer.UUID, originalQuery qbtypes.Query, 
 		queryCopy := qt.query.Copy()
 		argsCopy := make([]any, len(qt.args))
 		copy(argsCopy, qt.args)
-		return newchSQLQuery(q.logger, q.telemetryStore, queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
+		return newchSQLQuery(q.logger, q.telemetryStore.WithProfile(ClickHouseSQLProfile), queryCopy, argsCopy, timeRange, qt.kind, qt.vars)
 
 	// A builder query's window was moved into the shifted clock when it was
 	// built, so a range taken from that window must not be shifted again.
