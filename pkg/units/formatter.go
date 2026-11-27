@@ -26,7 +26,7 @@ func FormatterFromUnit(u string) Formatter {
 		return DataRateFormatter
 	case "percent", "percentunit", "%":
 		return PercentFormatter
-	case "bool", "bool_yes_no", "bool_true_false", "bool_1_0":
+	case "bool", "bool_yes_no", "bool_on_off", "bool_true_false", "bool_1_0":
 		return BoolFormatter
 	case "cps", "ops", "reqps", "rps", "wps", "iops", "cpm", "opm", "rpm", "wpm", "{count}/s", "{ops}/s", "{req}/s", "{read}/s", "{write}/s", "{iops}/s", "{count}/min", "{ops}/min", "{read}/min", "{write}/min":
 		return ThroughputFormatter
