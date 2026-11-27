@@ -19,9 +19,8 @@ function AuditLogs(): JSX.Element {
 
 	const { handleRunQuery } = useQueryBuilder();
 
-	const { logs, isLoading, isFetching, isError, error } = useAuditLogsQuery({
-		listAuditLogsKeyRef,
-	});
+	const { logs, isLoading, isFetching, isError, error, onEndReached } =
+		useAuditLogsQuery({ listAuditLogsKeyRef });
 
 	useEffect(() => {
 		if (isFetching) {
@@ -66,6 +65,7 @@ function AuditLogs(): JSX.Element {
 							isFetching={isFetching}
 							isError={isError}
 							error={error}
+							onEndReached={onEndReached}
 						/>
 					)}
 				</div>

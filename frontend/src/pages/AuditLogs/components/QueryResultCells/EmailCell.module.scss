@@ -1,0 +1,18 @@
+.emailCell {
+	--tanstack-table-cell-color: var(--l1-foreground);
+
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	min-width: 0;
+	padding-right: var(--spacing-8);
+}
+
+.email {
+	min-width: 0;
+}
+
+.badge {
+	display: inline-flex;
+	flex-shrink: 0;
+}

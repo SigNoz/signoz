@@ -33,6 +33,7 @@ export const DATE_TIME_FORMATS = {
 	SPAN_POPOVER_DATE: 'D/M/YY - HH:mm:ss',
 
 	// Month name formats
+	MONTH_DAY: 'MMM DD',
 	MONTH_DATE: 'MMM D, YYYY',
 	MONTH_DATE_FULL: 'MMMM DD, YYYY',
 	MONTH_DATE_SHORT: 'DD MMM YYYY',

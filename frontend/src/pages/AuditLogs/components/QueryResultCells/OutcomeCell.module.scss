@@ -1,0 +1,25 @@
+.pill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	padding: var(--spacing-3) var(--spacing-4);
+	color: var(--pill-color);
+	background: color-mix(in srgb, var(--pill-color) 15%, transparent);
+	border: 1px solid color-mix(in srgb, var(--pill-color) 40%, transparent);
+	border-radius: var(--radius-2);
+}
+
+.success {
+	--pill-color: var(--success-background);
+}
+
+.failure {
+	--pill-color: var(--danger-background);
+}
+
+.dot {
+	width: 6px;
+	height: 6px;
+	background: currentcolor;
+	border-radius: 50%;
+}

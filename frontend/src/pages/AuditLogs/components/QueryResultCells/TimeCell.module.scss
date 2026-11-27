@@ -1,0 +1,7 @@
+.timeCell {
+	--tanstack-table-cell-color: var(--text-neutral-dark-200);
+
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}

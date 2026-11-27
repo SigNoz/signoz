@@ -19,10 +19,11 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
-import { ILog } from 'types/api/logs/log';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getListOrderBy } from 'utils/explorerUtils';
+
+import { AuditLog } from '../AuditLogs.types';
 
 const PAGE_SIZE = DEFAULT_PER_PAGE_VALUE;
 
@@ -31,7 +32,7 @@ interface UseAuditLogsQueryProps {
 }
 
 interface UseAuditLogsQueryResult {
-	logs: ILog[];
+	logs: AuditLog[];
 	isLoading: boolean;
 	isFetching: boolean;
 	isError: boolean;
@@ -51,7 +52,7 @@ export function useAuditLogsQuery({
 	const currentMinTimeRef = useRef<number>(minTime);
 
 	const [page, setPage] = useState<number>(1);
-	const [logs, setLogs] = useState<ILog[]>([]);
+	const [logs, setLogs] = useState<AuditLog[]>([]);
 	const [hasMore, setHasMore] = useState<boolean>(true);
 	const [requestData, setRequestData] = useState<Query | null>(null);
 
@@ -109,10 +110,7 @@ export function useAuditLogsQuery({
 			return;
 		}
 
-		const pageLogs: ILog[] = list.map((item) => ({
-			...item.data,
-			timestamp: item.timestamp,
-		}));
+		const pageLogs = list.map((item) => item.data as unknown as AuditLog);
 
 		setLogs((previous) => [...previous, ...pageLogs]);
 		setHasMore(pageLogs.length === PAGE_SIZE);

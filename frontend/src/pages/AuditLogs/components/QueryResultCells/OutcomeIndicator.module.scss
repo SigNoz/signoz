@@ -1,0 +1,26 @@
+.outcomeIndicator {
+	width: 3px;
+	height: 100%;
+	margin: 0 var(--spacing-4);
+	border-radius: 50px;
+}
+
+.small {
+	min-height: 16px;
+}
+
+.medium {
+	min-height: 20px;
+}
+
+.large {
+	min-height: 24px;
+}
+
+.success {
+	background: var(--success-background);
+}
+
+.failure {
+	background: var(--danger-background);
+}
