@@ -22,8 +22,8 @@ jest.mock('d3-hierarchy', () => ({
 	}),
 	treemapBinary: jest.fn(),
 }));
-jest.mock('react-use', () => ({
-	useWindowSize: jest.fn().mockReturnValue({ width: 1000, height: 1000 }),
+jest.mock('hooks/useDimensions', () => ({
+	useResizeObserver: jest.fn().mockReturnValue({ width: 640, height: 400 }),
 }));
 
 const mockData = [
