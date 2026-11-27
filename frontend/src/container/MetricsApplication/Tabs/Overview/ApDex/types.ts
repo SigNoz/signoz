@@ -13,6 +13,5 @@ export interface ApDexDataSwitcherProps extends ApDexApplicationProps {
 }
 
 export interface ApDexMetricsProps extends ApDexDataSwitcherProps {
-	delta?: boolean;
-	metricsBuckets?: number[];
+	metricsBuckets: number[];
 }

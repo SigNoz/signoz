@@ -1,9 +1,15 @@
 import { ReactNode } from 'react';
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesComparisonSpaceAggregationParamDTO,
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
+import { DataSource } from 'types/common/queryBuilder';
+
+import type { WidgetKeys } from '../constant';
 
 export interface IServiceName {
 	servicename: string;
@@ -30,8 +36,8 @@ export interface BuilderQueriesProps {
 	aggregateOperator?: string[];
 	dataSource: DataSource;
 	queryNameAndExpression?: string[];
-	timeAggregateOperators: MetricAggregateOperator[];
-	spaceAggregateOperators: MetricAggregateOperator[];
+	timeAggregateOperators: MetrictypesTimeAggregationDTO[];
+	spaceAggregateOperators: MetrictypesSpaceAggregationDTO[];
 }
 
 export interface BuilderQuerieswithFormulaProps {
@@ -42,14 +48,12 @@ export interface BuilderQuerieswithFormulaProps {
 	expressions: string[];
 	legendFormulas: string[];
 	additionalItems: TagFilterItem[][];
-	timeAggregateOperators: MetricAggregateOperator[];
-	spaceAggregateOperators: MetricAggregateOperator[];
+	timeAggregateOperators: MetrictypesTimeAggregationDTO[];
+	spaceAggregateOperators: MetrictypesSpaceAggregationDTO[];
 	comparisonSpaceAggregationParams?: (
 		| MetrictypesComparisonSpaceAggregationParamDTO
 		| undefined
 	)[];
-	// v5 picks its own step when none is sent; v4 needs one
-	stepInterval?: number;
 	dataSource: DataSource;
 }
 
@@ -70,7 +74,7 @@ export interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
-	threashold: number;
+	threshold: number;
 }
 
 export interface TableRendererProps {
@@ -78,7 +82,12 @@ export interface TableRendererProps {
 	renderFunction: (record: RowData) => ReactNode;
 }
 
+export interface LatencyAtOrBelowAggregation {
+	key: WidgetKeys;
+	spaceAggregation: MetrictypesSpaceAggregationDTO;
+	param?: MetrictypesComparisonSpaceAggregationParamDTO;
+}
+
 export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
-	delta: boolean;
 	metricsBuckets: number[];
 }

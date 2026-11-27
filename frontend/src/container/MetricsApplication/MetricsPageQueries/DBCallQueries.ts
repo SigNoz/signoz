@@ -1,14 +1,14 @@
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import { FORMULA, MetricsType, WidgetKeys } from '../constant';
 import { DatabaseCallProps, DatabaseCallsRPSProps } from '../types';
@@ -55,8 +55,8 @@ export const databaseCallsRPS = ({
 	const legends = [legend];
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators = [MetricAggregateOperator.RATE];
-	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+	const timeAggregateOperators = [MetrictypesTimeAggregationDTO.rate];
+	const spaceAggregateOperators = [MetrictypesSpaceAggregationDTO.sum];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -113,12 +113,12 @@ export const databaseCallsAvgDuration = ({
 	const legendFormulas = ['Average Duration'];
 	const expressions = [FORMULA.DATABASE_CALLS_AVG_DURATION];
 	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
 	];
 	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
 	];
 	const dataSource = DataSource.METRICS;
 

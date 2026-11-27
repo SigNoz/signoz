@@ -29,17 +29,24 @@ describe('Error Rate', () => {
 
 describe('getNearestHighestBucketValue', () => {
 	it('should return nearest higher bucket value', () => {
-		expect(getNearestHighestBucketValue(50, [10, 20, 30, 40, 60, 70])).toBe('60');
+		expect(getNearestHighestBucketValue(50, [10, 20, 30, 40, 60, 70])).toBe(60);
 	});
 
-	it('should return +Inf for value higher than any bucket', () => {
-		expect(getNearestHighestBucketValue(80, [10, 20, 30, 40, 60, 70])).toBe(
-			'+Inf',
-		);
+	it('should return undefined for value higher than any bucket', () => {
+		expect(
+			getNearestHighestBucketValue(80, [10, 20, 30, 40, 60, 70]),
+		).toBeUndefined();
 	});
 
 	it('should return the first bucket for value lower than all buckets', () => {
-		expect(getNearestHighestBucketValue(5, [10, 20, 30, 40, 60, 70])).toBe('10');
+		expect(getNearestHighestBucketValue(5, [10, 20, 30, 40, 60, 70])).toBe(10);
+	});
+
+	it('should not reorder the buckets it is given', () => {
+		const buckets = [60, 10, 30];
+
+		expect(getNearestHighestBucketValue(20, buckets)).toBe(30);
+		expect(buckets).toStrictEqual([60, 10, 30]);
 	});
 });
 

@@ -31,7 +31,6 @@ function ApDexMetricsApplication({
 		<ApDexMetrics
 			topLevelOperationsRoute={topLevelOperationsRoute}
 			handleGraphClick={handleGraphClick}
-			delta={data?.data.delta}
 			metricsBuckets={data?.data.le || []}
 			onDragSelect={onDragSelect}
 			tagFilterItems={tagFilterItems}

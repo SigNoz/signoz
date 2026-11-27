@@ -30,23 +30,10 @@ export const SERVICE_DETAIL_DRILLDOWN_ENABLED = true;
 export enum FORMULA {
 	ERROR_PERCENTAGE = 'A*100/B',
 	DATABASE_CALLS_AVG_DURATION = 'A/B',
-	// The apdex formula is (satisfied_count + 0.5 * tolerating_count + 0 * frustating_count) / total_count
-	// The satisfied_count is B, tolerating_count is C, total_count is A
-	// But why do we have (B+C)/2 instead of B + C/2?
-	// The way we issue the query is latency <= threshold, which means we over count i.e
-	// query B => durationNano <= 500ms
-	// query C => durationNano <= 2000ms
-	// Since <= 2000ms includes <= 500ms, we over count, to correct we subtract B/2
-	// so the full expression would be (B + C/2) - B/2 = (B+C)/2
-	// However, if you add a filter on durationNano > 500ms, (filterItemC in overviewQueries) the query would be
-	// B + C/2
-	APDEX_TRACES = '((B + C)/2)/A',
-	// The delta span metrics store delta compared to previous reporting interval
-	// but not the counts for the current interval. The bucket counts are cumulative
-	APDEX_DELTA_SPAN_METRICS = '((B + C)/2)/A',
-	// Cumulative span metrics store the counts for all buckets
-	// so we need to subtract B/2 to correct the over counting
-	APDEX_CUMULATIVE_SPAN_METRICS = '((B + C)/2)/A',
+	// Apdex is (satisfied + tolerating / 2) / total, with satisfied B, tolerating C and total A.
+	// C counts requests up to the bucket covering 4x the threshold, so it includes B:
+	// B + (C - B) / 2 = (B + C) / 2
+	APDEX = '((B + C)/2)/A',
 }
 
 export const TOP_LEVEL_OPERATIONS = ['{{.top_level_operations}}'];
@@ -80,17 +67,13 @@ export enum MetricsType {
 }
 
 export enum WidgetKeys {
-	Le = 'le',
 	Name = 'name',
-	HasError = 'hasError',
 	Address = 'address',
-	DurationNano = 'durationNano',
-	SpanDurationNano = 'duration_nano',
+	DurationNano = 'duration_nano',
 	StatusCode = 'status.code',
 	Operation = 'operation',
 	OperationName = 'operationName',
 	OTelServiceName = 'service.name',
-	ServiceName = 'serviceName',
 	SignozLatencyCount = 'signoz_latency.count',
 	SignozDBLatencyCount = 'signoz_db_latency_count',
 	DatabaseCallCount = 'signoz_database_call_count',

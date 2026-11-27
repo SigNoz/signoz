@@ -1,15 +1,14 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
 	DataTypes,
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
-import {
-	DataSource,
-	MetricAggregateOperator,
-	QueryBuilderData,
-} from 'types/common/queryBuilder';
+import { DataSource, QueryBuilderData } from 'types/common/queryBuilder';
 
 import {
 	FORMULA,
@@ -26,11 +25,11 @@ import {
 	LatencyProps,
 	OperationPerSecProps,
 } from '../Tabs/types';
-import { getNearestHighestBucketValue } from '../utils';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
+import { getLatencyAtOrBelowAggregation } from './utils';
 
 export const latency = ({
 	servicename,
@@ -43,7 +42,7 @@ export const latency = ({
 	const newAutoCompleteData: BaseAutocompleteData = {
 		key: isSpanMetricEnable
 			? signozLatencyBucketMetrics
-			: WidgetKeys.SpanDurationNano,
+			: WidgetKeys.DurationNano,
 		dataType: DataTypes.Float64,
 		type: isSpanMetricEnable ? '' : MetricsType.Tag,
 	};
@@ -83,14 +82,14 @@ export const latency = ({
 	const queryNameAndExpression = QUERYNAME_AND_EXPRESSION;
 
 	const timeAggregateOperators = [
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
-		MetricAggregateOperator.EMPTY,
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
+		MetrictypesTimeAggregationDTO[''],
 	];
 	const spaceAggregateOperators = [
-		MetricAggregateOperator.P50,
-		MetricAggregateOperator.P90,
-		MetricAggregateOperator.P99,
+		MetrictypesSpaceAggregationDTO.p50,
+		MetrictypesSpaceAggregationDTO.p90,
+		MetrictypesSpaceAggregationDTO.p99,
 	];
 
 	return getQueryBuilderQueries({
@@ -109,33 +108,17 @@ export const apDexMetricsQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperationsRoute,
-	threashold,
-	delta,
+	threshold,
 	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
-	// the comparison count stops at the largest finite bucket, so a threshold past it
-	// reads the count metric, which is the +Inf bucket
-	const countAtOrBelow = (
-		ms: number,
-	): {
-		key: string;
-		spaceAggregation: MetricAggregateOperator;
-		param?: MetrictypesComparisonSpaceAggregationParamDTO;
-	} => {
-		const bucket = getNearestHighestBucketValue(ms, metricsBuckets);
-		return bucket === '+Inf'
-			? {
-					key: WidgetKeys.SignozLatencyCount,
-					spaceAggregation: MetricAggregateOperator.SUM,
-				}
-			: {
-					key: WidgetKeys.SignozLatencyBucket,
-					spaceAggregation: MetricAggregateOperator.COUNT,
-					param: { operator: '<=', threshold: Number(bucket) },
-				};
-	};
-	const satisfied = countAtOrBelow(threashold * 1000);
-	const tolerating = countAtOrBelow(threashold * 1000 * 4);
+	const satisfied = getLatencyAtOrBelowAggregation(
+		threshold * 1000,
+		metricsBuckets,
+	);
+	const tolerating = getLatencyAtOrBelowAggregation(
+		threshold * 1000 * 4,
+		metricsBuckets,
+	);
 
 	const autoCompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,
@@ -213,63 +196,27 @@ export const apDexMetricsQueryBuilderQueries = ({
 		...tagFilterItems,
 	];
 
-	const filterItemC: TagFilterItem[] = [
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.StatusCode,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['!='],
-			value: 'STATUS_CODE_ERROR',
-		},
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.OTelServiceName,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS['='],
-			value: servicename,
-		},
-		{
-			id: '',
-			key: {
-				key: WidgetKeys.Operation,
-				dataType: DataTypes.String,
-				type: MetricsType.Tag,
-			},
-			op: OPERATORS.IN,
-			value: [...topLevelOperationsRoute],
-		},
-		...tagFilterItems,
-	];
-
 	const autocompleteData = [
 		autoCompleteDataA,
 		autoCompleteDataB,
 		autoCompleteDataC,
 	];
 
-	const additionalItems = [filterItemA, filterItemB, filterItemC];
+	const additionalItems = [filterItemA, filterItemB, filterItemB];
 	const legends = [GraphTitle.APDEX];
 	const disabled = Array(3).fill(true);
-	const expressions = delta
-		? [FORMULA.APDEX_DELTA_SPAN_METRICS]
-		: [FORMULA.APDEX_CUMULATIVE_SPAN_METRICS];
+	const expressions = [FORMULA.APDEX];
 	const legendFormulas = [GraphTitle.APDEX];
 	// v5 forces increase on histograms, so the total matches it
 	const timeAggregateOperators = [
-		MetricAggregateOperator.INCREASE,
-		MetricAggregateOperator.INCREASE,
-		MetricAggregateOperator.INCREASE,
+		MetrictypesTimeAggregationDTO.increase,
+		MetrictypesTimeAggregationDTO.increase,
+		MetrictypesTimeAggregationDTO.increase,
 	];
 
 	// a plain sum keeps the le label on B and C, and the formula then cannot join them
 	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
+		MetrictypesSpaceAggregationDTO.sum,
 		satisfied.spaceAggregation,
 		tolerating.spaceAggregation,
 	];
@@ -336,8 +283,8 @@ export const operationPerSec = ({
 	const legends = OPERATION_LEGENDS;
 	const dataSource = DataSource.METRICS;
 
-	const timeAggregateOperators = [MetricAggregateOperator.RATE];
-	const spaceAggregateOperators = [MetricAggregateOperator.SUM];
+	const timeAggregateOperators = [MetrictypesTimeAggregationDTO.rate];
+	const spaceAggregateOperators = [MetrictypesSpaceAggregationDTO.sum];
 
 	return getQueryBuilderQueries({
 		autocompleteData,
@@ -431,12 +378,12 @@ export const errorPercentage = ({
 	const expressions = [FORMULA.ERROR_PERCENTAGE];
 	const legendFormulas = [GraphTitle.ERROR_PERCENTAGE];
 	const timeAggregateOperators = [
-		MetricAggregateOperator.RATE,
-		MetricAggregateOperator.RATE,
+		MetrictypesTimeAggregationDTO.rate,
+		MetrictypesTimeAggregationDTO.rate,
 	];
 	const spaceAggregateOperators = [
-		MetricAggregateOperator.SUM,
-		MetricAggregateOperator.SUM,
+		MetrictypesSpaceAggregationDTO.sum,
+		MetrictypesSpaceAggregationDTO.sum,
 	];
 	const dataSource = DataSource.METRICS;
 

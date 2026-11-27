@@ -1,4 +1,8 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	MetrictypesComparisonSpaceAggregationParamDTO,
+	MetrictypesSpaceAggregationDTO,
+	MetrictypesTimeAggregationDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import {
 	alphabet,
 	initialFormulaBuilderFormValues,
@@ -7,7 +11,6 @@ import {
 import getStep from 'lib/getStep';
 import store from 'store';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { SpaceAggregation, TimeAggregation } from 'types/api/v5/queryRange';
 import {
 	DataSource,
 	MetricAggregateOperator,
@@ -34,8 +37,8 @@ const getAggregations = ({
 	dataSource: DataSource;
 	key: string;
 	aggregateOperator: string;
-	timeAggregation: MetricAggregateOperator;
-	spaceAggregation: MetricAggregateOperator;
+	timeAggregation: MetrictypesTimeAggregationDTO;
+	spaceAggregation: MetrictypesSpaceAggregationDTO;
 	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 }): IBuilderQuery['aggregations'] =>
 	dataSource === DataSource.TRACES
@@ -44,8 +47,8 @@ const getAggregations = ({
 				{
 					metricName: key,
 					temporality: '',
-					timeAggregation: timeAggregation as TimeAggregation,
-					spaceAggregation: spaceAggregation as SpaceAggregation,
+					timeAggregation,
+					spaceAggregation,
 					reduceTo: ReduceOperators.AVG,
 					...(comparisonSpaceAggregationParam && {
 						comparisonSpaceAggregationParam,
@@ -124,7 +127,6 @@ export const getQueryBuilderQuerieswithFormula = ({
 	timeAggregateOperators,
 	spaceAggregateOperators,
 	comparisonSpaceAggregationParams = [],
-	stepInterval,
 	dataSource,
 }: BuilderQuerieswithFormulaProps): QueryBuilderData => ({
 	queryFormulas: expressions.map((expression, index) => ({
@@ -156,7 +158,7 @@ export const getQueryBuilderQuerieswithFormula = ({
 			items: additionalItems[index],
 			op: 'AND',
 		},
-		stepInterval: stepInterval ?? null,
+		stepInterval: null,
 		dataSource,
 	})),
 	queryTraceOperator: [],
