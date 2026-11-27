@@ -4,6 +4,7 @@ import { AxiosError } from 'axios';
 import { ErrorV2Resp, RawSuccessResponse, SuccessResponseV2 } from 'types/api';
 import { Props } from 'types/api/user/signup';
 import { SignupResponse } from 'types/api/v1/register/post';
+import { hashPassword } from 'utils/hashPassword';
 
 const post = async (
 	props: Props,
@@ -13,6 +14,7 @@ const post = async (
 			`/register`,
 			{
 				...props,
+				password: await hashPassword(props.password),
 			},
 		);
 		return {
