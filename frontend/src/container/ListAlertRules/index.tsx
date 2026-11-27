@@ -76,15 +76,12 @@ function ListAlertRules(): JSX.Element {
 	const { filter, applyFilter, submitQuery, changeStates, changeSort } =
 		useAlertRulesListFilter({ orderBy, setOrderBy, setPage });
 
-	const ruleList = useAuthZ(RULE_LIST_CHECKS);
-	const isRuleListDenied =
-		!ruleList.isLoading &&
-		!ruleList.error &&
-		!ruleList.isGranted(RuleListPermission);
+	const listAccess = useAuthZ(RULE_LIST_CHECKS);
 	const ruleViews = useAlertRuleViews({
 		filter,
 		applyFilter,
-		canListRules: !isRuleListDenied,
+		// A failed check denies nothing, so the views still load.
+		enabled: !listAccess.isLoading && listAccess.deniedPermissions.length === 0,
 	});
 
 	const railCollapsed = useAlertRuleViewsStore((s) => s.railCollapsed);

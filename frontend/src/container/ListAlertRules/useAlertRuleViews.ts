@@ -13,8 +13,7 @@ import { isDefaultRuleListFilter, isSameRuleListFilter } from './utils';
 interface UseAlertRuleViewsArgs {
 	filter: RuleListFilter;
 	applyFilter: (next: RuleListFilter) => void;
-	/** False once `rule:list` is denied; views load while its check runs or fails. */
-	canListRules: boolean;
+	enabled: boolean;
 }
 
 export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilter> {
@@ -26,9 +25,9 @@ export interface UseAlertRuleViewsResult extends UseListViewsResult<RuleListFilt
 export function useAlertRuleViews({
 	filter,
 	applyFilter,
-	canListRules,
+	enabled,
 }: UseAlertRuleViewsArgs): UseAlertRuleViewsResult {
-	const api = useRuleViews({ enabled: canListRules });
+	const api = useRuleViews({ enabled });
 
 	const ctx = useRuleViewCtx();
 

@@ -182,6 +182,25 @@ describe('ListAlertRules — permissions', () => {
 			listViews.mockRestore();
 		});
 
+		it('asks for no views while the list check runs', async () => {
+			jest.mocked(useAuthZ).mockImplementation((checks) => ({
+				...mockUseAuthZGrantAll(checks),
+				isLoading: true,
+				permissions: null,
+				allowed: false,
+				deniedPermissions: [],
+			}));
+			const listViews = jest.spyOn(rulesApi, 'useListRuleViews');
+			renderListAlertRules();
+
+			await screen.findByTestId(NEW_ALERT);
+			expect(listViews).toHaveBeenCalled();
+			for (const [options] of listViews.mock.calls) {
+				expect(options?.query?.enabled).toBe(false);
+			}
+			listViews.mockRestore();
+		});
+
 		it('still lists the views when the permission check fails', async () => {
 			jest.mocked(useAuthZ).mockImplementation((checks) => ({
 				...mockUseAuthZGrantAll(checks),

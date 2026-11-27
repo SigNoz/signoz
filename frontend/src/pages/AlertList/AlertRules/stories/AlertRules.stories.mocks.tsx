@@ -13,7 +13,10 @@ import {
 	toggleControl,
 } from '@/storybook/controls/controls';
 import { defineStoryMocks } from '@/storybook/controls/defineStoryMocks';
-import { RuleCreatePermission } from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
+import {
+	RuleCreatePermission,
+	RuleListPermission,
+} from 'lib/authz/hooks/useAuthZ/permissions/rule.permissions';
 
 import { grantsAll } from '@/storybook/access/access';
 import type { PageStoryArgs } from '@/storybook/runtime/resolveStory';
@@ -379,5 +382,9 @@ export const showsNoRulesPage = (args: AlertRulesArgs): boolean =>
 	args.dataState === 'loaded' &&
 	args.rules === 0;
 
+/** Views load once the list check answers, and also when it fails. */
 export const listsSavedViews = (args: AlertRulesArgs): boolean =>
-	args.ruleViews > 0 && args.ruleViewsState === 'success';
+	args.authzState !== 'loading' &&
+	(args.authzState === 'error' || grantsAll(args, RuleListPermission)) &&
+	args.ruleViews > 0 &&
+	args.ruleViewsState === 'success';

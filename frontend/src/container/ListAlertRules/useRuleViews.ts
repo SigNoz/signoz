@@ -61,12 +61,14 @@ const toastApiError =
 		});
 	};
 
+interface UseRuleViewsArgs {
+	enabled: boolean;
+}
+
 /** Org-shared saved views for the alert rules list, backed by the rule views API. */
 export function useRuleViews({
 	enabled,
-}: {
-	enabled: boolean;
-}): SavedListViewsApi<RuleListFilter> {
+}: UseRuleViewsArgs): SavedListViewsApi<RuleListFilter> {
 	const queryClient = useQueryClient();
 	const { data, isLoading } = useListRuleViews({ query: { enabled } });
 
