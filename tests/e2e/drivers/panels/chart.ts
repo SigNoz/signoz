@@ -20,6 +20,11 @@ export interface Chart {
 	plotArea(): Locator;
 	/** Throws when there is no plot, usually because the panel shows No Data. */
 	scales(): Promise<Record<string, UPlotScaleState>>;
+	/**
+	 * One array per series, as plotted: cumulative when the chart stacks. Throws
+	 * when there is no plot.
+	 */
+	values(): Promise<(number | null)[][]>;
 	click(): Promise<void>;
 	/**
 	 * Clicks the first series' middle data point inside the visible window,
@@ -51,6 +56,18 @@ export function chartAt(page: Page, host: () => Locator): Chart {
 						{ min: scale.min ?? null, max: scale.max ?? null },
 					]),
 				);
+			});
+		},
+		async values() {
+			await expect(host()).toBeVisible();
+			return host().evaluate((node) => {
+				const plot = (node as { __uplot?: unknown }).__uplot as
+					| { data: [number[], ...(number | null)[][]] }
+					| undefined;
+				if (!plot) {
+					throw new Error('no uPlot instance on the chart container');
+				}
+				return plot.data.slice(1).map((series) => Array.from(series));
 			});
 		},
 		async click() {

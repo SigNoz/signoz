@@ -3,6 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 import { antdDriver } from '../antd';
 import { allowFor, SEEDED_DATA_TIMEOUT, SEEDED_TEST_BUDGET } from '../kit';
+import { chartAt, type Chart } from '../panels/chart';
 import {
 	expressionParams,
 	querySearchDriver,
@@ -14,7 +15,7 @@ import { timePickerDriver, type TimePicker } from '../timepicker';
 import { logDetailDriver, type LogDetail } from './detail';
 import { liveTailDriver, type LiveTail } from './liveTail';
 import { ROW_SELECTOR } from './rows';
-import { seedOne } from './seed';
+import { seedBursts, seedOne } from './seed';
 import { wheelTo } from '../scroll';
 
 export const LOGS_EXPLORER_PATH = '/logs/logs-explorer';
@@ -25,6 +26,7 @@ const FORMAT_OPTIONS = 'periscope-btn-format-options';
 const ROW_PREFIX = 'logs-table-row-';
 const LOG_DETAIL_DRAWER = 'log-detail-drawer';
 const LIST = 'logs-list-virtuoso';
+const FREQUENCY_CHART = 'logs-frequency-chart';
 const RUN_QUERY = 'explorer-run-query-btn';
 const ANNOUNCEMENT_DISMISSED_KEY = 'QUICK_FILTERS_SETTINGS_ANNOUNCEMENT';
 const RELOAD_BUDGET_MS = 60_000;
@@ -101,6 +103,8 @@ export interface LogsExplorer {
 	timeSeriesCanvas(): Locator;
 	timeSeriesHeader(): Locator;
 	frequencyChart(): Locator;
+	/** The frequency chart's live plot: the counts it draws and its scales. */
+	frequency: Chart;
 	/** Turn the frequency chart on. It is off until a viewer enables it. */
 	showFrequencyChart(): Promise<void>;
 	queryTable(): Locator;
@@ -123,6 +127,11 @@ export interface LogsExplorer {
 	copyRowLink(row: Locator): Promise<string>;
 	/** Seed one row under `service`, `offsetMs` from now. */
 	seedRow(service: string, body: string, offsetMs?: number): Promise<void>;
+	/**
+	 * Seed `counts[i]` rows under `service` into a frequency chart bucket of
+	 * their own, oldest first.
+	 */
+	seedBursts(service: string, body: string, counts: number[]): Promise<void>;
 	toast(text: string): Locator;
 	reload(): Promise<void>;
 	/** Open `url` in a new tab of the same context. */
@@ -261,7 +270,8 @@ export function logsExplorerDriver(page: Page): LogsExplorer {
 		timeSeriesCanvas: () =>
 			page.getByTestId('time-series-graph').locator('canvas').first(),
 		timeSeriesHeader: () => page.getByTestId('time-series-view-header'),
-		frequencyChart: () => page.getByTestId('logs-frequency-chart'),
+		frequencyChart: () => page.getByTestId(FREQUENCY_CHART),
+		frequency: chartAt(page, () => page.getByTestId(FREQUENCY_CHART)),
 		showFrequencyChart: async () => {
 			const toggle = page.getByTestId('logs-frequency-chart-toggle');
 			if ((await toggle.getAttribute('aria-checked')) !== 'true') {
@@ -355,6 +365,9 @@ export function logsExplorerDriver(page: Page): LogsExplorer {
 
 		seedRow: (service, body, offsetMs = 0) =>
 			seedOne(page.request, service, body, offsetMs),
+
+		seedBursts: (service, body, counts) =>
+			seedBursts(page.request, service, body, counts),
 
 		toast: (text) => page.getByText(text, { exact: true }),
 
