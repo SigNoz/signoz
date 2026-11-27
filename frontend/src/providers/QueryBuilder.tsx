@@ -69,6 +69,7 @@ import { sanitizeOrderByForExplorer } from 'utils/sanitizeOrderBy';
 import { v4 as uuid } from 'uuid';
 import { getUnstableCurrentSearchParams } from 'utils/getUnstableCurrentSearchParams';
 import { readPanelTypeFromUrl } from 'utils/readPanelTypeFromUrl';
+import { compactQueryForUrl } from 'utils/compactQueryForUrl';
 
 export const QueryBuilderContext = createContext<QueryBuilderContextType>({
 	currentQuery: initialQueriesMap.metrics,
@@ -1025,7 +1026,9 @@ export function QueryBuilderProvider({
 
 			urlQuery.set(
 				QueryParams.compositeQuery,
-				encodeURIComponent(JSON.stringify(currentGeneratedQuery)),
+				encodeURIComponent(
+					JSON.stringify(compactQueryForUrl(currentGeneratedQuery)),
+				),
 			);
 
 			if (searchParams) {
@@ -1136,7 +1139,9 @@ export function QueryBuilderProvider({
 				const urlQuery = getUnstableCurrentSearchParams();
 				urlQuery.set(
 					QueryParams.compositeQuery,
-					encodeURIComponent(JSON.stringify(compositeQueryParam)),
+					encodeURIComponent(
+						JSON.stringify(compactQueryForUrl(compositeQueryParam)),
+					),
 				);
 				safeNavigate(`${location.pathname}?${urlQuery}`, { replace: true });
 				return;

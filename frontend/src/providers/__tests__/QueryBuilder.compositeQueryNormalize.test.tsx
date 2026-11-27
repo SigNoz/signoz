@@ -123,7 +123,7 @@ describe('QueryBuilderProvider with page constraints', () => {
 
 		expect(urlQuery().queryType).toBe(EQueryType.QUERY_BUILDER);
 		expect(urlQuery().builder.queryData[0].dataSource).toBe(DataSource.LOGS);
-		expect(urlQuery().clickhouse_sql[0].query).toBe('');
+		expect(urlQuery()).not.toHaveProperty('clickhouse_sql');
 		expect(activeLogIdParam()).toBe('"log-1"');
 		expect(replaceState).toHaveBeenCalled();
 		expect(pushState).not.toHaveBeenCalled();
@@ -166,5 +166,37 @@ describe('QueryBuilderProvider with page constraints', () => {
 			expect(result.current.stagedQuery?.queryType).toBe(EQueryType.CLICKHOUSE),
 		);
 		expect(urlQuery().clickhouse_sql[0].query).toBe('SELECT 1');
+	});
+
+	it('writes compact query URLs and stages them without rewriting history', async () => {
+		const { result } = renderOn(ROUTES.LOGS_EXPLORER, initialQueriesMap.logs);
+		await waitFor(() => expect(result.current.stagedQuery).not.toBeNull());
+
+		const replaceState = jest.spyOn(window.history, 'replaceState');
+		const pushState = jest.spyOn(window.history, 'pushState');
+		act(() => {
+			result.current.redirectWithQueryBuilderData(initialQueriesMap.logs);
+		});
+
+		const compactQuery = urlQuery();
+		expect(compactQuery).not.toHaveProperty('promql');
+		expect(compactQuery).not.toHaveProperty('clickhouse_sql');
+		expect(compactQuery.builder).not.toHaveProperty('queryFormulas');
+		expect(compactQuery.builder).not.toHaveProperty('queryTraceOperator');
+		await waitFor(() =>
+			expect(result.current.stagedQuery?.id).toBe(compactQuery.id),
+		);
+		expect(result.current.stagedQuery?.promql).toStrictEqual(
+			initialQueriesMap.logs.promql,
+		);
+		expect(result.current.stagedQuery?.clickhouse_sql).toStrictEqual(
+			initialQueriesMap.logs.clickhouse_sql,
+		);
+		expect(result.current.stagedQuery?.builder.queryFormulas).toStrictEqual([]);
+		expect(result.current.stagedQuery?.builder.queryTraceOperator).toStrictEqual(
+			[],
+		);
+		expect(pushState).toHaveBeenCalledTimes(1);
+		expect(replaceState).not.toHaveBeenCalled();
 	});
 });

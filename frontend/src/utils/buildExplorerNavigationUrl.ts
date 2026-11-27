@@ -1,6 +1,8 @@
 import { QueryParams } from 'constants/query';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
+import { compactQueryForUrl } from './compactQueryForUrl';
+
 /**
  * Builds an explorer URL the same way `redirectWithQueryBuilderData` does —
  * without inheriting stale query params from the current page's `urlQuery`.
@@ -13,7 +15,7 @@ export function buildExplorerNavigationUrl(
 	const params = new URLSearchParams();
 	params.set(
 		QueryParams.compositeQuery,
-		encodeURIComponent(JSON.stringify(query)),
+		encodeURIComponent(JSON.stringify(compactQueryForUrl(query))),
 	);
 	Object.entries(searchParams).forEach(([key, value]) => {
 		params.set(key, JSON.stringify(value));
