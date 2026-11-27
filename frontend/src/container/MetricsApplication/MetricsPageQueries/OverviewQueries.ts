@@ -1,4 +1,3 @@
-import { MetrictypesComparisonSpaceAggregationParamDTO } from 'api/generated/services/sigNoz.schemas';
 import { OPERATORS } from 'constants/queryBuilder';
 import {
 	BaseAutocompleteData,
@@ -23,11 +22,11 @@ import {
 	LatencyProps,
 	OperationPerSecProps,
 } from '../Tabs/types';
-import { getNearestHighestBucketValue } from '../utils';
 import {
 	getQueryBuilderQueries,
 	getQueryBuilderQuerieswithFormula,
 } from './MetricsPageQueriesFactory';
+import { getLatencyCountAtOrBelow } from './utils';
 
 export const latency = ({
 	servicename,
@@ -101,29 +100,11 @@ export const apDexMetricsQueryBuilderQueries = ({
 	threashold,
 	metricsBuckets,
 }: ApDexMetricsQueryBuilderQueriesProps): QueryBuilderData => {
-	// the comparison count stops at the largest finite bucket, so a threshold past it
-	// reads the count metric, which is the +Inf bucket
-	const countAtOrBelow = (
-		ms: number,
-	): {
-		key: string;
-		spaceAggregation: SpaceAggregation;
-		param?: MetrictypesComparisonSpaceAggregationParamDTO;
-	} => {
-		const bucket = getNearestHighestBucketValue(ms, metricsBuckets);
-		return bucket === '+Inf'
-			? {
-					key: WidgetKeys.SignozLatencyCount,
-					spaceAggregation: 'sum',
-				}
-			: {
-					key: WidgetKeys.SignozLatencyBucket,
-					spaceAggregation: 'count',
-					param: { operator: '<=', threshold: Number(bucket) },
-				};
-	};
-	const satisfied = countAtOrBelow(threashold * 1000);
-	const tolerating = countAtOrBelow(threashold * 1000 * 4);
+	const satisfied = getLatencyCountAtOrBelow(threashold * 1000, metricsBuckets);
+	const tolerating = getLatencyCountAtOrBelow(
+		threashold * 1000 * 4,
+		metricsBuckets,
+	);
 
 	const autoCompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozLatencyCount,

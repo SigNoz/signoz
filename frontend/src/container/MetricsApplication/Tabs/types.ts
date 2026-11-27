@@ -80,6 +80,12 @@ export interface TableRendererProps {
 	renderFunction: (record: RowData) => ReactNode;
 }
 
+export interface LatencyCountAtOrBelow {
+	key: string;
+	spaceAggregation: SpaceAggregation;
+	param?: MetrictypesComparisonSpaceAggregationParamDTO;
+}
+
 export interface ApDexMetricsQueryBuilderQueriesProps extends ApDexProps {
 	metricsBuckets: number[];
 }

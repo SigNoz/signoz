@@ -47,11 +47,9 @@ export const navigateToTrace = ({
 export const getNearestHighestBucketValue = (
 	value: number,
 	buckets: number[],
-): string => {
-	// sort the buckets
-	buckets.sort((a, b) => a - b);
-	const nearestBucket = buckets.find((bucket) => bucket >= value);
-	return nearestBucket?.toString() || '+Inf';
+): number | undefined => {
+	// sort a copy, the buckets come from the query cache
+	return [...buckets].sort((a, b) => a - b).find((bucket) => bucket >= value);
 };
 
 export const convertedTracesToDownloadData = (
