@@ -20,19 +20,44 @@ import {
 } from '../AuditLogs.utils';
 
 import { DetailsField } from './DetailsField';
+import { NavigationHint } from './NavigationHint';
 import { OutcomeCell } from './QueryResultCells/OutcomeCell';
 import { OutcomeIndicator } from './QueryResultCells/OutcomeIndicator';
 
 import styles from './DetailsDrawer.module.scss';
+import { useLogNavigation } from '@/components/LogDetail/LogDetailsHeader/useLogNavigation';
+import LogNavigation from '@/components/LogDetail/LogDetailsHeader/LogNavigation';
+import { useArrowKeyNavigation } from '@/container/TracesExplorer/SpanDrawer/useArrowKeyNavigation';
 
 export const DetailsDrawer = ({
+	logs,
 	activeLog,
 	handleCloseLogDetail,
+	handleSetActiveLog,
+	onScrollToLog,
 }: {
+	logs: AuditLog[];
 	activeLog: AuditLog | null;
+	handleSetActiveLog: (log: AuditLog) => void;
 	handleCloseLogDetail: () => void;
+	onScrollToLog: (logId: string) => void;
 }): JSX.Element => {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	const { goToPrev, goToNext, isPrevDisabled, isNextDisabled } =
+		useLogNavigation<AuditLog>({
+			logs,
+			activeLogId: activeLog?.id ?? '',
+			onNavigateLog: handleSetActiveLog,
+			onScrollToLog,
+		});
+
+	useArrowKeyNavigation({
+		enabled: true,
+		onNext: goToNext,
+		onPrev: goToPrev,
+	});
+
 	return (
 		<Drawer
 			type="inspector"
@@ -46,6 +71,14 @@ export const DetailsDrawer = ({
 							DATE_TIME_FORMATS.ISO_DATETIME_MS,
 						)
 					: ''
+			}
+			headerSuffix={
+				<LogNavigation
+					onNavigatePrev={goToPrev}
+					onNavigateNext={goToNext}
+					isPrevDisabled={isPrevDisabled}
+					isNextDisabled={isNextDisabled}
+				/>
 			}
 			width="extra-wide"
 			testId="audit-log-detail-drawer"
@@ -98,12 +131,15 @@ export const DetailsDrawer = ({
 					</DetailsField>
 				</div>
 			) : null}
-			<DataViewer
-				data={activeLog ? activeLog : {}}
-				drawerKey="audit-log-detail"
-				fontSize={13}
-				jsonString={JSON.stringify(activeLog ?? {}, null, 2)}
-			/>
+			<div className={styles.dataViewer}>
+				<DataViewer
+					data={activeLog ? activeLog : {}}
+					drawerKey="audit-log-detail"
+					fontSize={13}
+					jsonString={JSON.stringify(activeLog ?? {}, null, 2)}
+				/>
+			</div>
+			{activeLog ? <NavigationHint /> : null}
 		</Drawer>
 	);
 };

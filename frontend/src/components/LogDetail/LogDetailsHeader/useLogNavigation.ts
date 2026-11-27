@@ -1,10 +1,13 @@
 import { useCallback, useMemo } from 'react';
-import { ILog } from 'types/api/logs/log';
 
-interface UseLogNavigationParams {
-	logs?: ILog[];
+interface LogWithId {
+	id: string;
+}
+
+interface UseLogNavigationParams<T extends LogWithId> {
+	logs?: T[];
 	activeLogId: string;
-	onNavigateLog?: (log: ILog) => void;
+	onNavigateLog?: (log: T) => void;
 	onScrollToLog?: (id: string) => void;
 }
 
@@ -15,12 +18,12 @@ interface UseLogNavigationReturn {
 	isNextDisabled: boolean;
 }
 
-export function useLogNavigation({
+export function useLogNavigation<T extends LogWithId>({
 	logs,
 	activeLogId,
 	onNavigateLog,
 	onScrollToLog,
-}: UseLogNavigationParams): UseLogNavigationReturn {
+}: UseLogNavigationParams<T>): UseLogNavigationReturn {
 	const currentIndex = useMemo(
 		() => logs?.findIndex((l) => l.id === activeLogId) ?? -1,
 		[logs, activeLogId],

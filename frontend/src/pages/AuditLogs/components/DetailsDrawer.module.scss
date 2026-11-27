@@ -1,8 +1,12 @@
+[data-testid='audit-log-detail-drawer'] {
+	--drawer-body-padding: 0 var(--spacing-8);
+}
+
 .summary {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: var(--spacing-8) var(--spacing-10);
-	padding: var(--spacing-2) var(--spacing-0) var(--spacing-10);
+	padding: var(--spacing-8) var(--spacing-0) var(--spacing-10);
 	border-bottom: 1px solid var(--l1-border);
 }
 

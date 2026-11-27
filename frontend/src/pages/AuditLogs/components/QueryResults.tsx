@@ -1,10 +1,12 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useRef } from 'react';
 import { Typography } from '@signozhq/ui/typography';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import APIError from 'types/api/error';
-import TanStackTable from 'components/TanStackTableView';
+import TanStackTable, {
+	TanStackTableHandle,
+} from 'components/TanStackTableView';
 
 import { AuditLog } from '../AuditLogs.types';
 import { getRowHoverColor } from '../AuditLogs.utils';
@@ -13,6 +15,7 @@ import styles from './QueryResults.module.scss';
 import { useAuditLogColumns } from '../hooks/useAuditLogColumns';
 import { useAuditLogDetail } from '../hooks/useAuditLogDetail';
 import { DetailsDrawer } from './DetailsDrawer';
+import useScrollToLog from '@/hooks/logs/useScrollToLog';
 
 interface QueryResultsProps {
 	logs: AuditLog[];
@@ -34,6 +37,8 @@ export function QueryResults({
 	const { columns, fontSize } = useAuditLogColumns();
 	const isDarkMode = useIsDarkMode();
 
+	const ref = useRef<TanStackTableHandle>(null);
+
 	const { activeLog, handleSetActiveLog, handleCloseLogDetail } =
 		useAuditLogDetail();
 
@@ -41,6 +46,8 @@ export function QueryResults({
 	const showError = !showLoading && isError && !!error;
 	const showEmpty = !showLoading && !showError && logs.length === 0;
 	const showTable = !showLoading && !showError && logs.length > 0;
+
+	const handleScrollToLog = useScrollToLog({ logs, virtuosoRef: ref });
 
 	return (
 		<div className={styles.container}>
@@ -67,6 +74,7 @@ export function QueryResults({
 			{showTable && (
 				<div className={styles.results} data-testid="audit-logs-results">
 					<TanStackTable<AuditLog>
+						ref={ref}
 						className={styles.auditLogsTable}
 						testId="audit-logs-table"
 						columns={columns}
@@ -94,8 +102,11 @@ export function QueryResults({
 				</div>
 			)}
 			<DetailsDrawer
+				logs={logs}
 				activeLog={activeLog}
 				handleCloseLogDetail={handleCloseLogDetail}
+				handleSetActiveLog={handleSetActiveLog}
+				onScrollToLog={handleScrollToLog}
 			/>
 		</div>
 	);
