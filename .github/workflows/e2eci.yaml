@@ -184,6 +184,22 @@ jobs:
           name: playwright-artifacts-${{ matrix.project }}-${{ matrix.shard }}
           path: tests/e2e/artifacts/
           retention-days: 5
+      - name: find-flaky
+        id: flaky
+        if: always()
+        run: |
+          results=tests/e2e/artifacts/json/results.json
+          if [ -f "$results" ] && [ "$(jq '.stats.flaky' "$results")" -gt 0 ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+      # The weekly flakyci report reads these; the window is 7 days.
+      - name: upload-flaky
+        if: always() && steps.flaky.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-flaky-${{ matrix.project }}-${{ matrix.shard }}
+          path: tests/e2e/artifacts/json/results.json
+          retention-days: 8
   # Required status check. Fails when e2e was needed but did not pass.
   e2e:
     # Runs for other labels must not report as e2e, or their pass would hide the real result.
