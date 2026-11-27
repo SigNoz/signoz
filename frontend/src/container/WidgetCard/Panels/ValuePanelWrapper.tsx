@@ -15,7 +15,7 @@ function ValuePanelWrapper({
 			?.rows?.[0]?.data || {},
 	);
 
-	// this is for handling both query_range v3 and v5 responses
+	// a value panel gets a scalar response, which has no series, only a table row
 	const gridValueData = data?.[0].length > 0 ? data : [[0], dataNew];
 
 	return (

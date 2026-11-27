@@ -17,7 +17,7 @@ describe('mapQueryDataFromApi function tests', () => {
 	it('should not update the step interval when query is passed', () => {
 		const output = mapQueryDataFromApi(compositeQueryWithoutVariables);
 
-		// composite query is the response from the `v3/query_range/format` API call.
+		// composite query is the response from the `substitute_vars` API call.
 		// even if the composite query returns stepInterval updated do not modify it
 		expect(output).toStrictEqual(stepIntervalUnchanged);
 	});
