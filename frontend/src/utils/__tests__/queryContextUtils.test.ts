@@ -409,6 +409,44 @@ describe('extractQueryPairs', () => {
 		expect(result[1].valuesPosition).toStrictEqual([]);
 		expect(result[1].isComplete).toBe(true);
 	});
+
+	it.each([
+		["a BETWEEN 1 AND 10 AND b = '2'", false],
+		["a NOT BETWEEN 1 AND 10 AND b = '2'", true],
+	])('keeps both bounds of a range in one pair: %s', (input, hasNegation) => {
+		const pairs = extractQueryPairs(input);
+		const low = input.indexOf('1 AND');
+		const high = input.indexOf('10');
+
+		expect(pairs.map((pair) => pair.key)).toStrictEqual(['a', 'b']);
+		expect(pairs[0]).toMatchObject({
+			operator: 'BETWEEN',
+			hasNegation,
+			value: '1 AND 10',
+			valueList: ['1', '10'],
+			valuesPosition: [
+				{ start: low, end: low },
+				{ start: high, end: high + 1 },
+			],
+			isMultiValue: true,
+			isComplete: true,
+			position: { valueStart: low, valueEnd: high + 1 },
+		});
+	});
+
+	it('reads variable bounds as values, not as a new key', () => {
+		expect(
+			extractQueryPairs('a BETWEEN $lo AND $hi').map((pair) => pair.valueList),
+		).toStrictEqual([['$lo', '$hi']]);
+	});
+
+	it('keeps a range without its upper bound to the lower one', () => {
+		expect(extractQueryPairs('a BETWEEN 1 AND')[0]).toMatchObject({
+			value: '1',
+			valueList: [],
+			isMultiValue: false,
+		});
+	});
 });
 
 describe('createContext', () => {
@@ -659,6 +697,21 @@ describe('getQueryContextAtCursor - trailing dot in key/value', () => {
 		const ctx = getQueryContextAtCursor(q, q.length);
 		expect(ctx.isInKey).toBe(true);
 		expect(ctx.keyToken).toBe('k8s.namespace');
+	});
+});
+
+describe('getQueryContextAtCursor - range bounds', () => {
+	it.each([
+		[11, '1', 10, 10],
+		[18, '10', 16, 17],
+	])('targets the bound at cursor %i', (cursor, value, valueStart, valueEnd) => {
+		const ctx = getQueryContextAtCursor('a BETWEEN 1 AND 10', cursor);
+
+		expect(ctx.isInValue).toBe(true);
+		expect(ctx.currentPair).toMatchObject({
+			value,
+			position: { valueStart, valueEnd },
+		});
 	});
 });
 

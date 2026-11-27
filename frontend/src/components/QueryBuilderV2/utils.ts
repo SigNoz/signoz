@@ -53,6 +53,11 @@ const isArrayOperator = (operator: string): boolean => {
 	return arrayOperators.includes(operator);
 };
 
+const isRangeOperator = (operator: string): boolean =>
+	[OPERATORS.BETWEEN, `${OPERATORS.NOT} ${OPERATORS.BETWEEN}`].includes(
+		operator.trim().toUpperCase(),
+	);
+
 const isVariable = (
 	value: (string | number | boolean)[] | string | number | boolean,
 ): boolean => {
@@ -89,6 +94,18 @@ export const formatValueForExpression = (
 	value: (string | number | boolean)[] | string | number | boolean,
 	operator?: string,
 ): string => {
+	if (
+		isRangeOperator(operator || '') &&
+		Array.isArray(value) &&
+		value.length === 2
+	) {
+		return value
+			.map((bound) =>
+				isVariable(bound) ? String(bound) : formatSingleValue(bound),
+			)
+			.join(' AND ');
+	}
+
 	if (isVariable(value)) {
 		return String(value);
 	}
@@ -443,10 +460,15 @@ export const convertFiltersToExpressionWithExistingQuery = (
 			const existingPair = queryPairsMap.get(
 				`${filter.key?.key}-${filter.op}`.trim().toLowerCase(),
 			);
+			const rewritesRange =
+				Array.isArray(value) &&
+				value.length === 2 &&
+				!isEqual(formatValuesForFilter(existingPair?.valueList ?? []), value);
 			if (
 				existingPair &&
 				existingPair.position?.valueStart &&
-				existingPair.position?.valueEnd
+				existingPair.position?.valueEnd &&
+				(rewritesRange || !isRangeOperator(op))
 			) {
 				const formattedValue = formatValueForExpression(value, op);
 				// replace the value with the new value

@@ -199,9 +199,9 @@ describe('carryOverListFilters', () => {
 	it.each([
 		"k8s.node.name BETWEEN 'node-a' AND 'node-z' AND k8s.cluster.name = 'cluster-a'",
 		"k8s.node.name NOT BETWEEN 'node-a' AND 'node-z' AND k8s.cluster.name = 'cluster-a'",
-	])('leaves out a range clause and keeps the rest: %s', (expression) => {
+	])('carries a range clause whole: %s', (expression) => {
 		expect(carryOverListFilters(expression, InfraMonitoringEntity.PODS)).toBe(
-			"k8s.cluster.name = 'cluster-a'",
+			expression,
 		);
 	});
 

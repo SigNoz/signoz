@@ -1,6 +1,5 @@
 import { CharStreams, CommonTokenStream } from 'antlr4';
 import { formatValueForExpression } from 'components/QueryBuilderV2/utils';
-import { OPERATORS } from 'constants/antlrQueryConstants';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryPair, IToken } from 'types/antlrQueryTypes';
 import { extractQueryPairs } from 'utils/queryContextUtils';
@@ -249,7 +248,7 @@ export function resolveRelatedCategory(
  * not a plain AND of clauses (it has an OR, or a NOT over a group), so no
  * subset of its clauses means the same thing.
  */
-function findNegatedKeyStarts(
+function findNegatedKeyStartsInAndChain(
 	expression: string,
 	pairs: IQueryPair[],
 ): Set<number> | null {
@@ -300,7 +299,7 @@ export function carryOverListFilters(
 	}
 
 	const pairs = extractQueryPairs(expression);
-	const negatedKeyStarts = findNegatedKeyStarts(expression, pairs);
+	const negatedKeyStarts = findNegatedKeyStartsInAndChain(expression, pairs);
 
 	if (!negatedKeyStarts) {
 		return '';
@@ -311,9 +310,7 @@ export function carryOverListFilters(
 	return pairs
 		.filter(
 			(pair) =>
-				supported.has(pair.key) &&
-				!negatedKeyStarts.has(pair.position.keyStart) &&
-				pair.operator.toUpperCase() !== OPERATORS.BETWEEN,
+				supported.has(pair.key) && !negatedKeyStarts.has(pair.position.keyStart),
 		)
 		.map((pair) => {
 			const end = pair.position.valueEnd ?? pair.position.operatorEnd;

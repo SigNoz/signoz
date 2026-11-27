@@ -19,6 +19,7 @@ import {
 	formatValueForExpression,
 	parseLimit,
 	removeKeysFromExpression,
+	removeVariableFromExpression,
 	sanitizeLimit,
 } from '../utils';
 
@@ -831,6 +832,18 @@ describe('convertFiltersToExpression', () => {
 
 		expect(result.filters.items).toHaveLength(2);
 		expect(result.filter.expression).toBe("service.name = 'old-service'");
+	});
+
+	it.each([
+		"path REGEXP '/api/.*' AND b = '2'",
+		"path NOT REGEXP '/api/.*' AND b = '2'",
+	])('keeps the clause through filters and back: %s', (expression) => {
+		const items = convertExpressionToFilters(expression);
+
+		expect(
+			convertFiltersToExpressionWithExistingQuery({ items, op: 'AND' }, expression)
+				.filter.expression,
+		).toBe(expression);
 	});
 });
 
@@ -1684,6 +1697,59 @@ describe('formatValueForExpression', () => {
 				pass1.filter.expression,
 			);
 			expect(pass2.filter.expression).toBe(EXPR);
+		});
+	});
+
+	describe('BETWEEN and NOT BETWEEN operators', () => {
+		it('writes the bounds as low AND high', () => {
+			expect(formatValueForExpression([1, 10], 'BETWEEN')).toBe('1 AND 10');
+			expect(formatValueForExpression(['x', '$hi'], 'not between')).toBe(
+				"'x' AND $hi",
+			);
+		});
+
+		it.each([
+			"a BETWEEN 1 AND 10 AND b = '2'",
+			"a NOT BETWEEN 1 AND 10 AND b = '2'",
+			"k BETWEEN 'x' AND $hi",
+			'a between 1 and 10',
+			'a BETWEEN 1 AND b',
+		])('keeps the clause through filters and back: %s', (expression) => {
+			const items = convertExpressionToFilters(expression);
+
+			expect(
+				convertFiltersToExpressionWithExistingQuery(
+					{ items, op: 'AND' },
+					expression,
+				).filter.expression,
+			).toBe(expression);
+		});
+
+		it.each([
+			[1, 'a BETWEEN 1 AND 10'],
+			[[5, 50], 'a BETWEEN 5 AND 50'],
+		])('applies a filter value of %j to the range', (value, expected) => {
+			const items = [
+				{
+					id: '1',
+					key: { key: 'a' } as BaseAutocompleteData,
+					op: 'BETWEEN',
+					value,
+				},
+			];
+
+			expect(
+				convertFiltersToExpressionWithExistingQuery(
+					{ items, op: 'AND' },
+					'a BETWEEN 1 AND 10',
+				).filter.expression,
+			).toBe(expected);
+		});
+
+		it('drops a range clause whose upper bound is the removed variable', () => {
+			expect(
+				removeVariableFromExpression("a BETWEEN $lo AND $hi AND b = '2'", 'hi'),
+			).toBe("b = '2'");
 		});
 	});
 });
