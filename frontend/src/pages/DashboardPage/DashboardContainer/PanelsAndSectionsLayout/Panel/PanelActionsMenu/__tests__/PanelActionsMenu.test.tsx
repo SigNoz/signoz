@@ -1,7 +1,11 @@
 import type { DashboardtypesPanelDTO } from 'api/generated/services/sigNoz.schemas';
 import type { PanelQueryData } from 'pages/DashboardPage/DashboardContainer/queryV5/types';
-import { render, screen, userEvent } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import type { DashboardSection } from '../../../../utils';
 import PanelActionsMenu from '../PanelActionsMenu';

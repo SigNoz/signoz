@@ -1,6 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { screen, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { screen, waitFor, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import { renderTriggeredAlerts } from './_helpers';
 

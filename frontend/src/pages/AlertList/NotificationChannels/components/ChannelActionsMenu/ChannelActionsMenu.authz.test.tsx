@@ -6,8 +6,13 @@ import {
 } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import ChannelActionsMenu from './ChannelActionsMenu';
 

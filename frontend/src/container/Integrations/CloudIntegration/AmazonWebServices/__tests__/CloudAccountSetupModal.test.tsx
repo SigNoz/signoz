@@ -1,6 +1,12 @@
 import { ComponentProps } from 'react';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { rest, server } from 'mocks-server/server';
 import { RestRequest } from 'msw';
 import type { Region } from 'utils/regions';

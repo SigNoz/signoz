@@ -1,7 +1,11 @@
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { useAlertRuleViewsStore } from 'container/ListAlertRules/useAlertRuleViewsStore';
-import { screen, userEvent, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 

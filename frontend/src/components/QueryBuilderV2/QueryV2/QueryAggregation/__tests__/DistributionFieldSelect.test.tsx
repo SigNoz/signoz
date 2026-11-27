@@ -8,8 +8,14 @@ import { ENVIRONMENT } from 'constants/env';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
-import { act, render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	act,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import type { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import DistributionFieldSelect from '../DistributionFieldSelect';

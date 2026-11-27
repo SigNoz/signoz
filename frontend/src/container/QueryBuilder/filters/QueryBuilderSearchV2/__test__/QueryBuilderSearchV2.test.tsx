@@ -19,7 +19,7 @@ import { QueryBuilderContext } from 'providers/QueryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { FieldDataType, TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import QueryBuilderSearchV2 from '../QueryBuilderSearchV2';
 

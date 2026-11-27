@@ -11,8 +11,14 @@ import { server } from 'mocks-server/server';
 import { safeNavigateMock } from '__tests__/safeNavigateMock';
 import { rest } from 'msw';
 import store from 'store';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import AllErrors from '../index';

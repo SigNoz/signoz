@@ -8,8 +8,7 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { getCurrentNuqsSearchParams } from 'tests/nuqs-helpers';
-import { screen, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { screen, waitFor, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import { renderListAlertRules } from './_helpers';
 

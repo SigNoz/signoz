@@ -3,8 +3,13 @@ import logEvent from 'api/common/logEvent';
 import type { SpantypesGettableTraceSummaryDTO } from 'api/generated/services/sigNoz.schemas';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import ROUTES from 'constants/routes';
-import { fireEvent, render, screen, userEvent } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import { TraceDetailsTab } from '../../constants';
 import { TraceDetailEvents } from '../../events';

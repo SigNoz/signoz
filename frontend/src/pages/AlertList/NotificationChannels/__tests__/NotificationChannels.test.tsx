@@ -1,7 +1,11 @@
 import { setupAuthzAdmin } from 'lib/authz/utils/authz-test-utils';
 import { server } from 'mocks-server/server';
-import { screen, userEvent, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import { renderChannels } from './renderChannels';
 

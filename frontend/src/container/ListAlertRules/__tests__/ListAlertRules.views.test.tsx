@@ -15,8 +15,8 @@ import {
 	userEvent,
 	waitFor,
 	within,
+	NO_DELAY_USER_EVENT,
 } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 
 import { renderListAlertRules, runSearchQuery } from './_helpers';
 

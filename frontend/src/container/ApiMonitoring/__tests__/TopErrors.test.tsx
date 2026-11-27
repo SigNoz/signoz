@@ -8,8 +8,8 @@ import {
 	userEvent,
 	waitFor,
 	within,
+	NO_DELAY_USER_EVENT,
 } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { SPAN_ATTRIBUTES } from '../Explorer/Domains/DomainDetails/constants';

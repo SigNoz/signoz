@@ -1,8 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ROUTES from 'constants/routes';
-import { render } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { render, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 import { SpanV3 } from 'types/api/trace/getTraceV3';
 
 import { SpanDetailVariant } from '../constants';

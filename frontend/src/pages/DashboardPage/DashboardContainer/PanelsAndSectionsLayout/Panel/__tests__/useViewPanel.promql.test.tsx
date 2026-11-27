@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
-import { screen, userEvent } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { screen, userEvent, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports

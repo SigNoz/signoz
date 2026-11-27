@@ -11,8 +11,13 @@ import {
 } from 'api/generated/services/sigNoz.schemas';
 import type { ErrorType } from 'api/generatedAPIInstance';
 import { mockAppLocation, mockNavigate } from 'tests/router-mocks';
-import { render, screen, userEvent, within } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import { PlannedDowntime } from '../PlannedDowntime';

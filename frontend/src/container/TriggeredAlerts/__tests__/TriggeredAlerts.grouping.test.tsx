@@ -1,5 +1,10 @@
-import { screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 
 import { renderTriggeredAlerts } from './_helpers';
 

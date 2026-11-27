@@ -19,8 +19,14 @@ import {
 } from 'mocks-server/__mockdata__/customQuickFilters';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { render, screen, userEvent, waitFor, within } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	within,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { TelemetryFieldKey } from 'types/api/v5/queryRange';
 import { QueryBuilderContextType } from 'types/common/queryBuilder';
 

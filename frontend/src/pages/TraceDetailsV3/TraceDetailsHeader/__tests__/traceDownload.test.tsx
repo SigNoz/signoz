@@ -4,8 +4,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fetchExportData } from 'api/v1/download/downloadExportData';
 import { downloadFile } from 'lib/exportData/downloadFile';
-import { render } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import { render, NO_DELAY_USER_EVENT } from 'tests/test-utils';
 
 import TraceDownloadPanel from '../TraceDownloadPanel';
 import TraceOptionsMenu from '../TraceOptionsMenu';

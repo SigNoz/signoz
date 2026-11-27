@@ -2,8 +2,13 @@ import {
 	GetMetricQueryRange,
 	GetQueryResultsProps,
 } from 'lib/dashboard/getQueryResults';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { NO_DELAY_USER_EVENT } from 'tests/noDelayUserEvent';
+import {
+	render,
+	screen,
+	userEvent,
+	waitFor,
+	NO_DELAY_USER_EVENT,
+} from 'tests/test-utils';
 import { MetricQueryRangeSuccessResponse } from 'types/api/metrics/getQueryRange';
 
 import EndPointPicker from '../Explorer/Domains/DomainDetails/components/EndPointPicker';
